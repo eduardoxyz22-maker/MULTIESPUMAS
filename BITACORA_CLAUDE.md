@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; en la rama, versión de la página 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente)
+### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; PÁGINA PUBLICADA 07/11 (dueño: «Ok»), `main` = `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente, enlace fijo `fb048e04560d65c493a8c1d8724d7cadb8a0c207`, 6.726 líneas)
 Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:
 los tres de la página retomaron con su trabajo sin guardar, que no se había perdido). Commits: `7b38ffa` (servidor), `6d57688` (120), `94106c0`
 (118), `9a9a31c` (119).

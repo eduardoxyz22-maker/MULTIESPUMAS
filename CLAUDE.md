@@ -1619,7 +1619,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 - ⚠️ Cambiar la lista = cambiar `VEHICULOS` y las pruebas que nombran choferes (`test_choferes_rotan`, `test_camiones_admin`, `test_chofer_efectivo`,
   `test_chofer_cobro_auto`, `test_ficha_mejoras`, `test_nueve_4js`, `test_patio`, `test_plata_borrar`, `test_fabrica_vida`). `tests/test_choferes_rotan.js` (12).
 
-## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; en la rama, página 2026-11-07-b; servidor `2026-11-07-a` lo implementa el dueño)
+## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` lo implementa el dueño, enlace fijo `fb048e0…`, 6.726 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 06-e de `92714a6…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO`; el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
