@@ -17357,6 +17357,27 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4ow — 💵 «¿QUIÉN RECIBIÓ EL EFECTIVO?» OBLIGATORIO (07/11; dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió la plata»*; PÁGINA en la rama, falta su «publica»; el `.gs` no cambia)
+- **El caso**: la 10-382 de Maria Flores (Andrea Duran Muñoz, Especial Ortopédico 140x190, Bs 3.410). La nota de venta 1938 (30/10) dice
+  *«Pago efectivo al personal de logística a Luis»*: el cliente le pagó al chofer Luis Eyzaguirre al recibir el 31/10. María anotó el pago el
+  03/11 desde el formulario, con la fecha de ese día y sin marcar quién lo recibió: el Cuadre se lo pedía a ella y a Luis no le pedía nada (y
+  Luis Eyzaguirre no tiene ningún retiro cargado en el panel). Se le dijo al dueño que lo corrija en Contabilidad → ✏️ Corregir este pago
+  (31/10, recibió Luis Eyzaguirre) y que pregunte a Contabilidad si Luis rindió (con sus Bs 4.260 de octubre, Bs 7.670).
+- **Formulario** (`recibioObligatorio`, `formEfectivoMonto`, `formEfectivoFirma`, `recibioFormHace/Falta/Pintar/Elegir`, `FORM_RECIBIO`): cuando
+  entra efectivo (A cuenta o «SÍ, pagado» con 💵, el 2° método en efectivo, el flete «Sí, ya lo cobré» en efectivo) aparece `#wrap-recibio`
+  «¿Quién recibió el efectivo? *» con la vendedora y «🚚 El chofer» (+ la lista, `choferesParaSelect`). Sin tocar, Guardar frena; «Para
+  guardar» tiene su chip «Quién recibió el efectivo» (el de «Saldo o pagado» no lo mira: `fxPasosEstado(true)`) y el paso del cobro
+  (`fxPasosEstado()[3]`) no queda listo. No en venta de tienda, ATC/RPT, ni Eduardo/ROHO/internos. Al editar, si el efectivo está como al
+  abrir (`EDIT_PLATA0.ef`), no pregunta. Se repinta con cualquier click/input/change de `#view-form`.
+- **`recibioAplicar`**: el chofer va SOLO en los renglones de efectivo NUEVOS de ese guardado (los que el pedido de antes no tenía por tipo,
+  método, monto, fecha y nota; el adelanto suelto de antes cuenta como existente vía `anticipoDe`). El adelanto suelto nuevo («Efectivo %IMG»)
+  con chofer pasa a renglón `~Efectivo monto @día #nota >Chofer %IMG`. La vendedora no lleva marca (como siempre). Un pago ya registrado no
+  cambia de mano desde el formulario.
+- **Contabilidad → «Registrar pago»** (`ctaRecibioObliga`, `ctaRecibioFalta`): en efectivo la vendedora ya NO viene marcada; sin tocar
+  (`CTA_PAGO.rEleg`) no se registra. El chofer puesto solo el día de la entrega (§4ok-112) cuenta como marcado. «Corregir» no cambia.
+- Bloki («¿Cómo anoto el pago o un adelanto?») suma el paso. En Playwright solo con `RECIBIO_PRUEBA`.
+- `tests/test_recibio_obligatorio.js` (21; contra `d90cf4b` no existe la función).
+
 ### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA en la rama (`3016b04`), falta su «publica»; la regla también va en el `.gs` 07-f (`8d65c13`, 7.571 líneas) que el dueño implementa el lunes)
 - **La causa, con la planilla real (07/11 18:10)**: «Efectivo cobrado vs. retirado» restaba los retiros del MES a lo cobrado en el MISMO mes.
   Mirian: el retiro del 03/11 de Bs 5.440 es el cobro del 30/10 de la 10-343 → noviembre «se retiró 5.440 de más» y octubre con esos 5.440

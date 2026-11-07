@@ -1617,6 +1617,12 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09). `choferesConocidos()` incluye a los que ya no están (Giordano salió de `VEHICULOS` el
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
+**💵 «¿Quién recibió el efectivo?» es OBLIGATORIO** (§4ow, 07/11, dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió
+la plata»*; en la rama): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
+o el chofer; sin eso no se guarda («Para guardar» y el paso del cobro lo piden igual). El chofer va solo en los renglones de efectivo NUEVOS
+(`recibioAplicar`; el adelanto suelto nuevo pasa a renglón `~… >Chofer`). No en venta de tienda, ATC/RPT, Eduardo, ROHO ni internos; al editar sin
+tocar el efectivo (`EDIT_PLATA0.ef`) no pregunta; el chofer puesto solo el día de la entrega (§4ok-112) cuenta. ⚠️ Un camino NUEVO que anote efectivo
+pide lo mismo. Playwright solo con `RECIBIO_PRUEBA`. `tests/test_recibio_obligatorio.js` (21).
 **💵🔗 Cada retiro tapa sus cobros** (§4ov, 07/11, dueño: *«¿no cuadra porque ingresó en octubre y se retiró en noviembre?… al darle al efectivo
 ¿no debería mostrar qué clientes pagaron?»*; en la rama): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
 que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira seguida que dé justo, la más nueva primero → del más viejo; mismo

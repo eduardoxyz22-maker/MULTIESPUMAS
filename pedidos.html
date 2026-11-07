@@ -2730,6 +2730,11 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         </div>
         <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Lo que no pongas acá queda con el primer método.</div>
       </div>
+      <!-- 💵 (07/11) ¿Quién recibió el efectivo? Obligatorio cuando entra efectivo (ver `recibioObligatorio`). -->
+      <div class="field" id="wrap-recibio" style="display:none">
+        <label class="lb">¿Quién recibió el efectivo? <span class="req">*</span> <span class="hint">el Cuadre se lo pide a esa persona</span></label>
+        <div id="f-recibio-box"></div>
+      </div>
       </div><!-- /wrap-cobro-todo -->
 
       <div class="sec">📝 Observaciones</div>
@@ -8589,6 +8594,106 @@ function preciosFaltan(vend){
     out.push({ c:c, e:e, n:dn, her: !!(c.getAttribute('data-sin-precio') && c.getAttribute('data-de-pedido') && c.getAttribute('data-orig')===ahora) });
   });
   return out;
+}
+/* 💵 ¿QUIÉN RECIBIÓ EL EFECTIVO? OBLIGATORIO (07/11, dueño: «debe ser obligatorio que los vendedores marquen quién carajo recibió la
+   plata»). La 10-382 de Maria Flores: el cliente le pagó Bs 3.410 al CHOFER al recibir (lo dice la nota de venta) y el pago se anotó el
+   03/11 sin marcarlo: el panel se los pedía a ella, y el chofer nunca los rindió. Cuando en el formulario entra efectivo (el A cuenta o
+   «SÍ, pagado» con 💵, el 2° método en efectivo o el flete «Sí, ya lo cobré»), hay que tocar quién lo tiene: la vendedora o un chofer
+   (`>Nombre`, §4eq). Sin tocar, no se guarda; tampoco en «Registrar pago» de Contabilidad (`ctaRecibioFalta`). No en una venta de
+   tienda (se paga en el mostrador), ni para Eduardo, ROHO o los internos (como el precio, §4oe). Al editar, si el efectivo está como
+   al abrir (`EDIT_PLATA0.ef`) no se pregunta: ya está anotado. Lo elegido va SOLO a los renglones de efectivo NUEVOS de ese guardado
+   (`recibioAplicar`): un pago ya registrado no cambia de mano (eso se corrige en Contabilidad → ✏️ Corregir este pago). Lo mismo
+   piden «Para guardar» y `fxPasosEstado`. En Playwright solo con `RECIBIO_PRUEBA`. */
+var FORM_RECIBIO={ eleg:false, quien:'' };   // quien: '' = la vendedora · nombre = el chofer
+function recibioObligatorio(vend){
+  if(navigator.webdriver && !window.RECIBIO_PRUEBA) return false;
+  return !esVendedorLite(vend) && !cliEsInterno(vend);
+}
+/* Cuánto efectivo entra por el formulario (0 si nada): lo que se ve en el bloque del cobro. */
+function formEfectivoMonto(){
+  var w=document.getElementById('wrap-cobro-todo'); if(!w || w.style.display==='none' || docTipoSel()!=='OC' || VENTA_TIENDA) return 0;
+  var pag=segVal('f-pagado')==='SI', base=pag ? montoForm('f-cobrado') : montoForm('f-acuenta'), t=0;
+  var m2=(MIXTO ? (mixtoMonto2()||0) : 0);
+  if(base>0.005){
+    if(segVal('f-metodo')==='Efectivo') t+=Math.max(0, base-m2);
+    if(MIXTO && segVal('f-metodo2')==='Efectivo') t+=m2;
+  }
+  var env=montoForm('f-envio'), wEC=document.getElementById('wrap-envio-cob');
+  if(env>0.005 && segVal('f-envio-cob')==='SI' && wEC && wEC.style.display!=='none' && (segVal('f-metodo')||'Efectivo')==='Efectivo') t+=env;
+  return r2(t);
+}
+/* La plata en efectivo tal como está a la vista: si al guardar es la misma que al abrir la edición, no entró nada nuevo. */
+function formEfectivoFirma(){
+  var pag=segVal('f-pagado')==='SI';
+  return [segVal('f-pagado'), segVal('f-metodo'), r2(pag ? montoForm('f-cobrado') : montoForm('f-acuenta')), MIXTO?1:0, segVal('f-metodo2'),
+          r2(MIXTO ? (mixtoMonto2()||0) : 0), r2(montoForm('f-envio')), segVal('f-envio-cob')].join('|');
+}
+function recibioFormHace(vend){
+  if(!recibioObligatorio(vend)) return false;
+  if(!(formEfectivoMonto()>0.005)) return false;
+  if(EDIT_ID && EDIT_PLATA0 && EDIT_PLATA0.id===String(EDIT_ID) && EDIT_PLATA0.ef===formEfectivoFirma()) return false;
+  return true;
+}
+function recibioFormFalta(vend){ return recibioFormHace(vend) && !FORM_RECIBIO.eleg; }
+function recibioFormOlvidar(){ FORM_RECIBIO={ eleg:false, quien:'' }; }
+function recibioFormElegir(quien){
+  FORM_RECIBIO={ eleg:true, quien:limpiaRecibio(quien||'') };
+  var w=document.getElementById('wrap-recibio'); if(w) w.classList.remove('seg-err');
+  recibioFormPintar();
+  try{ fxFormPintar(); }catch(e){}
+}
+function recibioFormPintar(){
+  var w=document.getElementById('wrap-recibio'), box=document.getElementById('f-recibio-box'); if(!w || !box) return;
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), on=recibioFormHace(v);
+  w.style.display=on ? '' : 'none';
+  if(!on){ box.innerHTML=''; box._h=''; return; }
+  var p=EDIT_ID ? findById(EDIT_ID) : null, lista=choferesParaSelect(p||{});
+  var q=FORM_RECIBIO.quien, esCh=FORM_RECIBIO.eleg && !!q, esV=FORM_RECIBIO.eleg && !q;
+  if(esCh && lista.indexOf(q)<0) lista=lista.concat([q]);
+  var primero=(p && String(p.chofer||'').trim()) || lista[0] || '';
+  var vend=nombreCanonico(v)||'La vendedora';
+  var b=function(on2, txt, quien){
+    return '<button type="button" class="'+(on2?'active':'')+'" onclick="'+esc('recibioFormElegir('+JSON.stringify(quien)+')')+'">'+txt+'</button>';
+  };
+  var h='<div class="seg" id="f-recibio">'+b(esV, '🧑‍💼 '+esc(vend), '')+(primero ? b(esCh, '🚚 El chofer', esCh ? q : primero) : '')+'</div>'+
+    (esCh ? ('<div style="margin-top:6px"><select id="f-recibio-sel" aria-label="Qué chofer recibió el efectivo" onchange="recibioFormElegir(this.value)">'+
+               lista.map(function(c){ return '<option'+(c===q?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select></div>') : '')+
+    '<div class="rc-ayuda" style="font-size:.75rem;margin-top:5px;color:'+(FORM_RECIBIO.eleg?'var(--muted)':'var(--amber)')+'">'+
+      (!FORM_RECIBIO.eleg ? '👆 Tocá quién tiene la plata: '+esc(vend)+' o el chofer que la cobró en la puerta. Sin esto no se guarda.'
+       : esCh ? ('🚚 Queda <b>en la mano de '+esc(q)+'</b> hasta que la rinda a Contabilidad.')
+       : ('🧑‍💼 Queda <b>en la mano de '+esc(vend)+'</b> hasta que cargue su retiro.'))+'</div>';
+  if(box._h!==h){ box.innerHTML=h; box._h=h; }
+}
+/* Pone el chofer elegido en los renglones de EFECTIVO NUEVOS del texto de pagos (los que el pedido de antes no tenía, por tipo, método,
+   monto, fecha y nota). El adelanto SUELTO de una venta nueva («Efectivo %IMG», sin renglón) no tiene dónde llevar el `>Nombre`: si lo
+   cobró un chofer pasa a renglón (`~Efectivo monto @día #nota >Nombre %IMG`), como lo arma `anticipoDe`. La vendedora no lleva marca. */
+function recibioAplicar(txt, prev, quien, acu, nota, fecha){
+  quien=limpiaRecibio(quien); if(!quien || !String(txt||'').trim()) return txt;
+  var reg=sinMarcaReg(txt)!==String(txt), base=sinMarcaReg(txt);
+  var clave=function(c){ return [c.anticipo?'a':(c.envio?'e':'c'), normMetodo(c.metodo)||String(c.metodo||''), r2(Number(c.monto)||0), c.fecha||'', limpiaNota(c.nota)].join('|'); };
+  var ya={}, suma=function(c){ var k=clave(c); ya[k]=(ya[k]||0)+1; }, pc0=parseCobros(prev ? prev.metodoPago : '');
+  pc0.forEach(suma);
+  /* El adelanto SUELTO de antes («Efectivo %IMG» + A cuenta) no es un renglón, pero ya existía: si el guardado lo pasa a renglón
+     («SÍ, pagado» con lo que faltaba), sigue en la mano de quien lo tenía. */
+  if(prev && !pc0.some(function(c){ return c.anticipo; })){ var a0=anticipoDe(prev); if(a0) suma(a0); }
+  var adelNuevo = !prev || r2(Number(prev.acuenta)||0)!==r2(Number(acu)||0) || metodoFormulario(prev).metodo!=='Efectivo';
+  var cambio=false;
+  var segs=String(base).split('+').map(function(s){ return s.trim(); }).filter(Boolean).map(function(s){
+    var cs=parseCobros(s);
+    if(cs.length===1){
+      var c=cs[0];
+      if(normMetodo(c.metodo)!=='Efectivo' || limpiaRecibio(c.recibio)) return s;
+      var k=clave(c); if(ya[k]){ ya[k]--; return s; }
+      c.recibio=quien; cambio=true; return textoCobros([c]);
+    }
+    if(!cs.length && adelNuevo && (Number(acu)||0)>0.005 && s.charAt(0)!=='^' && normMetodo(compDeTexto(s).txt)==='Efectivo'){
+      var cd=compDeTexto(s); cambio=true;
+      return textoCobros([{ anticipo:true, metodo:'Efectivo', banco:'', monto:r2(Number(acu)||0), fecha:fecha||todayStr(), nota:nota||'', recibio:quien, comps:cd.comps }]);
+    }
+    return s;
+  });
+  if(!cambio) return txt;
+  return conMarcaReg(segs.join(' + '), reg);
 }
 /* El asterisco de «Precio c/u» (y el aviso de abajo) según quién vende y qué documento es: lo pintan `applyVendedorLite` y `pintarDocTipo`. */
 function precioObligPintar(){
@@ -15643,17 +15748,28 @@ function ctaRecibioHtml(p, opts){
       (on?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+
       '" onclick="'+esc(fn+'('+JSON.stringify(String(p.id))+','+JSON.stringify(quien)+')')+'">'+txt+'</button>';
   };
-  return '<div style="margin-top:8px" id="cta-recibio" data-modo="'+(opts.edit?'ed':'pa')+'" data-sug="'+esc(ctaRecibioFirma(p, opts))+'"><label class="lb">¿Quién recibió la plata?</label>'+
+  /* 💵 (07/11) En un pago NUEVO la vendedora ya no viene marcada: hay que tocar quién la tiene (`ctaRecibioFalta`). */
+  var _falta=!opts.edit && !esCh && !CTA_PAGO.rEleg && ctaRecibioObliga(p);
+  return '<div style="margin-top:8px" id="cta-recibio" data-modo="'+(opts.edit?'ed':'pa')+'" data-sug="'+esc(ctaRecibioFirma(p, opts))+'"><label class="lb">¿Quién recibió la plata?'+(opts.edit?'':' <span class="req">*</span>')+'</label>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
-      b(!esCh,'🧑‍💼 '+esc(vend),'')+
+      b(!esCh && !_falta,'🧑‍💼 '+esc(vend),'')+
       (primero ? b(esCh,'🚚 El chofer',primero) : '')+
       (esCh ? ('<select id="cta-recibio-sel" onchange="'+esc(fn+'('+JSON.stringify(String(p.id))+',this.value)')+'" style="width:auto;padding:5px 8px;font-size:.8rem">'+
                  lista.map(function(c){ return '<option'+(c===actual?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>') : '')+
     '</div>'+
     ctaRecibioNotaHtml(p, opts, _sug, actual)+   // §4ok-112 por qué está puesto (o la pista, al corregir)
+    (_falta ? ('<div class="ctr-falta" style="font-size:.74rem;color:#7c4b00;margin-top:4px">👆 Tocá quién tiene esta plata: '+esc(vend)+' o el chofer que la cobró en la puerta. Sin esto no se registra.</div>') : '')+
     (esCh ? ('<div style="font-size:.72rem;color:var(--muted);margin-top:3px">🚚 El efectivo queda <b>en la mano de '+esc(actual)+'</b> hasta que lo rinda a Contabilidad. '+
              'Ese retiro se anota en Cuadre → 💵 Retiro de efectivo (entrega: el chofer · retira: Contabilidad).</div>') : '')+
   '</div>';
+}
+/* 💵 (07/11, dueño: «obligatorio que los vendedores marquen quién recibió la plata») En «Registrar pago» un efectivo no se anota sin decir
+   quién lo tiene: tocar la vendedora o el chofer (`rEleg`), o el chofer que se puso solo el día de la entrega (§4ok-112: ya dice cuál y por
+   qué). No en una venta de tienda, ATC/RPT, ni para Eduardo, ROHO o los internos (`recibioObligatorio`, como el formulario). */
+function ctaRecibioObliga(p){ return !!p && recibioObligatorio(p.vendedor) && !esVentaTienda(p) && !noSeCobra(p); }
+function ctaRecibioFalta(p, fecha){
+  if(!p || CTA_PAGO.metodo!=='Efectivo' || CTA_PAGO.rEleg || !ctaRecibioObliga(p)) return false;
+  return !ctaChoferSugerido(p, fecha);
 }
 function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); CTA_PAGO.rEleg=true; showContaModal(id); }   // §4ok-112 lo eligió la persona
 function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); CTA_EDIT_RAUTO=null; showContaModal(id); }
@@ -15801,6 +15917,13 @@ function ctaRegistrarPago(id){
   }
   /* 🚚 §4ok-112 Quién tiene el efectivo, con la fecha que quedó: puesto solo (nadie eligió) = el chofer de ese día, si es el día de la
      entrega; elegido a mano = se pregunta si es el chofer de OTRO camión ese día. */
+  if(ctaRecibioFalta(p, fecha)){
+    ctaPagoRecordar(); showContaModal(id);
+    var _crB=document.getElementById('cta-recibio');
+    if(_crB){ _crB.classList.add('seg-err'); setTimeout(function(){ _crB.classList.remove('seg-err'); },1600); try{ _crB.scrollIntoView({block:'center'}); }catch(e){} }
+    toast('💵 Tocá QUIÉN RECIBIÓ la plata: '+(nombreCanonico(p.vendedor)||'la vendedora')+' o el chofer que la cobró en la puerta. El Cuadre se la pide a esa persona.','err',9000);
+    return;
+  }
   if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
   else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !confirm(_cxR)) return; }
   var falta=Number(p.saldo)||0;
@@ -17088,6 +17211,14 @@ function submitPedido(){
       if(_mx2===segVal('f-metodo') && (_mx2!=='QR' || segVal('f-banco2')===segVal('f-banco'))){ toast('El segundo método es igual al primero. Si pagó todo con '+_mx2+', quitá el segundo método.','err'); _irA('wrap-mixto'); return; }
       if(!compsArr(FORM_COMPS2).length){ toast('Falta la imagen del SEGUNDO pago: '+nombreComprobante(_mx2),'err'); _irA('wrap-comp2'); return; }
     }
+    /* 💵 (07/11) Entra efectivo y nadie dijo quién lo tiene (`recibioFormFalta`): no se guarda. */
+    if(recibioFormFalta(vendedor)){
+      recibioFormPintar();
+      var _wRc=document.getElementById('wrap-recibio');
+      toast('💵 Tocá QUIÉN RECIBIÓ EL EFECTIVO: '+(nombreCanonico(vendedor)||'la vendedora')+' o el chofer que lo cobró en la puerta. El Cuadre se lo pide a esa persona.','err',9000);
+      if(_wRc){ _wRc.classList.add('seg-err'); setTimeout(function(){ _wRc.classList.remove('seg-err'); },1600); try{ _wRc.scrollIntoView({block:'center'}); }catch(e){} }
+      return;
+    }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
     /* (27/09) …salvo que la venta ya tenga cobros registrados aparte: corregido el precio (decisión del dueño), saldo 0 es que
@@ -17777,6 +17908,9 @@ function submitPedido(){
      esto copia del pedido anterior cualquier campo que el formulario no maneje. Lo que el
      formulario SÍ maneja ya está en `rec` y no se pisa. */
   if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }
+  /* 💵 (07/11) el chofer que recibió el efectivo va en los renglones de efectivo NUEVOS de este guardado (`recibioAplicar`) */
+  if(rec.metodoPago && recibioFormHace(vendedor) && FORM_RECIBIO.eleg && FORM_RECIBIO.quien)
+    rec.metodoPago=recibioAplicar(rec.metodoPago, prev, FORM_RECIBIO.quien, rec.acuenta, rec.nota, (prev && contaFecha(prev)) || todayStr());
   if(_fvNueva && rec.metodoPago) rec.metodoPago=pagosAlDia(rec.metodoPago, _fvAntes, _fvNueva);   // 📅 (§4nm) lo cobrado el día de la venta va con ella
   /* 📥 La marca del lead de Kommo va adentro de los productos, y `productos` se rearma de cero:
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
@@ -18908,6 +19042,7 @@ function confirmarReemplazoForm(){
 }
 function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
+  recibioFormOlvidar();                        // 💵 (07/11) quién recibió el efectivo se elige de nuevo en cada pedido
   REPETIR_DE='';                               // 🔁 (§4ok-101)
   OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
   totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
@@ -19090,7 +19225,8 @@ function editPedido(id){
   pintarMixto();
   if(_mx) segSet('f-banco2', _mx.banco||'');
   // 💵 La plata tal como quedó a la vista (ver EDIT_PLATA0).
-  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), metodo:segVal('f-metodo'), banco:segVal('f-banco') };
+  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), metodo:segVal('f-metodo'), banco:segVal('f-banco'), ef:formEfectivoFirma() };
+  recibioFormOlvidar(); recibioFormPintar();   // 💵 (07/11) el efectivo que ya estaba no se vuelve a preguntar
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -20338,7 +20474,8 @@ function fxDerPintar(){
   if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
   if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
   if(!tienda && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado()[3]]); }   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
+  if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
     var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
     if(!lite) chk.push(['Celular',!!cel]);
@@ -20883,7 +21020,7 @@ function cobroSinMonto(vend, cobAparte){
 /* En Playwright, solo con `window.SALDO_PRUEBA` (como `OBS_PRUEBA`): las pruebas de siempre guardan ventas de ejemplo sin monto. */
 function saldoObligActivo(){ return !(navigator.webdriver && !window.SALDO_PRUEBA); }
 function ventaGuardadaSinMonto(p){ return !!p && !p.pagado && !esATC(p.oc) && !esRPT(p.oc) && !(ventaTotal(p)>0.005); }
-function fxPasosEstado(){
+function fxPasosEstado(sinRecibio){   // sinRecibio: el chip «Saldo o pagado» de «Para guardar» (quién recibió va en su propio chip)
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
   var lite=esVendedorLite(val('f-vendedor')), tipo=docTipoSel(), tienda=VENTA_TIENDA;
   var prods=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return !!d.value.trim(); });
@@ -20907,7 +21044,8 @@ function fxPasosEstado(){
       (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
     tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal()),   // §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
-    tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))
+    (tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))) &&
+      (!!sinRecibio || !recibioFormFalta(val('f-vendedor')))   // 💵 (07/11) quién recibió el efectivo, lo mismo que Guardar
   ];
 }
 function fxPasosPintar(){
@@ -55011,7 +55149,7 @@ function asisEditarEn(id, sel){
 /* ---------- la ayuda: preguntas escritas para este panel ---------- */
 var ASIS_AYUDA=[
   { q:'¿Cómo cargo un pedido nuevo?', k:'pedido nuevo cargar oc venta guardar video ver mirar ensenar aprender', v:'form', f:'#f-cliente', vid:'pedido', p:['Tocá «＋ Nuevo pedido».','Escribí tu nombre, el cliente y su celular.','Escribí el código del producto: el nombre y la medida se completan solos. Mirá el cuadrito del saldo que aparece debajo.','Elegí el día y el turno (no sale camión los domingos ni los feriados).','Anotá el pago con la foto del recibo (también en efectivo) y tocá «Guardar pedido».','🎬 Hay un video de 3 minutos con todo el recorrido: «▶️ Ver el video».'] },
-  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Lo que paga después (el saldo) se registra en Contabilidad desde la ficha de la venta: «💵 Registrar un pago».','🎬 Hay un video de cómo cobrar el saldo: «▶️ Ver el video».'], vid:'pago' },
+  { q:'¿Cómo anoto el pago o un adelanto?', k:'pago adelanto a cuenta cobro qr efectivo tarjeta comprobante saldo', v:'form', f:['#wrap-metodo','#wrap-cobro-todo'], alt:[['#f-doc-tipo',['🧾 En una ATC o RPT no se cobra','Elegí 📄 OC arriba y aparece la parte del pago.']]], p:['Elegí cómo pagó: efectivo, QR o tarjeta.','Si pagó una parte, poné el monto en «A cuenta»: el saldo se calcula solo.','Adjuntá la foto del recibo que le diste (también en efectivo: sin foto no se guarda). Con QR o tarjeta, sumá la captura del pago.','Si pagó en efectivo, tocá quién recibió la plata: vos, o el chofer si le pagó en la puerta (sin eso no se guarda).','Lo que paga después (el saldo) se registra en Contabilidad desde la ficha de la venta: «💵 Registrar un pago».','🎬 Hay un video de cómo cobrar el saldo: «▶️ Ver el video».'], vid:'pago' },
   { q:'¿Por qué no me deja elegir un día?', k:'dia fecha feriado cupo lleno domingo camion turno', v:'form', f:'#f-fecha', p:['El camión no sale los domingos ni los feriados.','Cada turno tiene cupo: 12 a la mañana y 13 a la tarde (el sábado 15, solo a la mañana).','Si el turno está lleno, elegí otro día. Administración puede forzar uno con su clave.'] },
   { q:'¿Qué significa el cuadrito debajo del producto?', k:'saldo stock disponible produccion moreno fabricar almacen', v:'form', f:'#f-productos', p:['✅ DISPONIBLE: hay en PTF o Banzer, podés agendar.','📥 HAY EN MORENO: logística lo trae en 1 día.','🏭 NO HAY: se manda a producir; decile al cliente cuántos días tarda.','⏳ EN PRODUCCIÓN: ya se pidió a fábrica; dice qué día llega.','📐 MEDIDA ESPECIAL: se fabrica a pedido, nunca sale del stock.','📅 Los números son para el día que elegiste: lo vendido para después no se descuenta, y abajo dice cuánto hay pendiente en total.','Siempre podés guardar igual: es un aviso.'] },
   { q:'¿Cómo cargo una ATC (reclamo o reparación)?', k:'atc reclamo reparacion garantia', v:'form', f:'#f-doc-tipo', vid:'atc', p:['En Nuevo pedido, arriba, elegí 🎧 ATC en vez de 📄 OC.','Obligatorio: si es 🛡️ garantía o 🔧 contra costo (STC), el motivo, el detalle de qué le pasa, la fecha de compra y qué se le recoge. Sin eso no se guarda.','Podés adjuntar hasta 2 fotos del producto. No se cobra: la parte del pago se esconde sola.'] },
@@ -57246,6 +57384,9 @@ document.addEventListener('DOMContentLoaded',function(){
   window.addEventListener('resize', function(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(fxFormPintar, 200); });
   document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
   document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
+  /* 💵 (07/11) «¿Quién recibió el efectivo?» aparece y se va con lo que se toca del formulario (método, montos, flete, vendedor, tipo). */
+  (function(){ var vf=document.getElementById('view-form'); if(!vf) return; var t=function(){ setTimeout(recibioFormPintar,0); };
+    vf.addEventListener('click',t); vf.addEventListener('input',t); vf.addEventListener('change',t); })();
   document.addEventListener('keydown',function(e){ if(e.key==='Escape'){
     /* ✏️ (18/10, §4ls textos, VB-9) El cartel final de «Aplicar» («Entendido») también se cierra con Escape, como las demás ventanas
        (mientras guarda no: el botón está escondido hasta que termina). */
