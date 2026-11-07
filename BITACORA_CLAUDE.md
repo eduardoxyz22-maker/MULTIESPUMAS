@@ -17392,7 +17392,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - `tests/test_wa_13_25_26.js` (90; 61 rojas contra la 07-e; §3b compara con `pryMomDe` de la página, vendedor por vendedor). Cambiadas A
   CONCIENCIA: `test_wa_bot` (las dos plantillas nuevas y un botón más) y `test_servidor` §l (la versión).
 
-### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h PUBLICADA 07/11 (`main` = `2c50384`), con los arreglos de las pruebas de §4os; el `.gs` no cambia; batería: lo rojo con la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— pasa solo)
+### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h PUBLICADA 07/11 (`main` = `2c50384`; Pages ✅ recién en la corrida 46, 21:14 UTC: las 43-45 se colgaron en GitHub al subir los archivos), con los arreglos de las pruebas de §4os; el `.gs` no cambia; batería: lo rojo con la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— pasa solo)
 - **Qué es**: Bloki ya contestaba stock, cupos, entregas, el saldo de un cliente y los códigos. Ahora entiende 17 preguntas más, en los siete
   grupos de la muestra, y las contesta con cuentas que el panel YA tiene: nada se calcula aparte, no gasta IA y SOLO MIRA (no escribe nada).
   Todo vive en el bloque «BLOKI CONTESTA MÁS» (`blokiTipo2` decide qué es; va DESPUÉS de `codigo` y ANTES de cupos/entregas/cliente).
