@@ -17357,6 +17357,19 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4oq — 🎙️ AL QUE LE MANDA UN AUDIO AL BOT, QUE ENTIENDA QUE ES UN BOT (07/11; dueño, con la tarjeta de un cliente que mandó un audio y Claude le contestó «No puedo escuchar audios por acá, ¿me lo podés escribir?»: *«debería recordarle que sos un bot o sistema automatizado y no puedes oír audios (de manera cordial y que entiendan)»*; servidor `2026-11-07-d` para el dueño; la página solo cambia `SCRIPT_VERSION_ESPERADA`, se publica DESPUÉS de que él implemente)
+- La firma «🤖 _Asistente automático · <marca>_» ya iba arriba de cada respuesta, pero en letra chica y en cursiva: el cliente no la lee.
+- **Regla 9 de `iaSistema_`**: con audios, videos, fotos, stickers o documentos, Claude recuerda cordial que este número es un asistente
+  automático (un bot), no una persona, y por eso no puede escuchar/ver; pide que lo escriba y da el contacto de su vendedor/a. La 11 y la
+  última línea dejan decir «asistente automático» solo en ese caso.
+- **Red por si Claude no lo dice**: `iaSoloMedios_(g)` = todo lo que mandó en esa vuelta son «[audio]»/«[video]»/«[foto]»… sin ninguna
+  palabra; si hay un audio o un video y la respuesta no dice «automático/a», «bot» ni «robot» (`iaDiceBot_`; «botón» no cuenta), sale
+  `iaMedioTxt_` en su lugar (también si Claude dijo «no hace falta contestar»): «Hola <nombre del pedido> 😊 Te cuento que este número es un
+  asistente automático (un bot), no una persona, así que no puede escuchar audios. ¿Me lo escribís en un mensaje? Así te ayudo con tu
+  pedido. Si preferís hablar con una persona, escribile a tu vendedora Carola 👉 wa.me/…». Sin pedido: pide el nombre con el que compró o el
+  N° de pedido. Una foto sola o un audio con un texto: queda lo de Claude. Lo que salió va a la columna P (la tarjeta del panel).
+- `test_wa_bot` §15d (11). `probarAntesDeImplementar` pide `iaSoloMedios_`/`iaMedioTxt_`. Versión en `test_servidor` §11 y `test_avisa_cuando` 1a.
+
 ### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c` IMPLEMENTADO 07/11 por el dueño (contesta `2026-11-07-c`, 1.816 filas; trae también la 07-a y la 07-b), enlace fijo `aa40393…`, 6.790 líneas; PÁGINA 2026-11-07-e PUBLICADA, `main` = `aa40393`; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`, 6.257 líneas)
 - Lo que saca a alguien del aviso del efectivo es el RETIRO cargado (Contabilidad → 💵 Retiro de efectivo) a su nombre: no hay tilde de
   «recogido» por venta. `waEfeCuentas_` empareja: cada retiro cubre lo de esa persona cobrado hasta su día; primero un cobro del mismo monto,
