@@ -3063,6 +3063,10 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
           <div class="field">
             <button class="btn btn-sm ccm-btn" id="pry-cierre-btn" onclick="ccmAbrir()">🏁 Cierre comercial del mes</button>
           </div>
+          <!-- 📄 (07/11, idea 120) El informe del mes en PDF, tipo presentación (como el de ATC): ventas, marcas, productos, ATC, stock y cobranza. -->
+          <div class="field">
+            <button class="btn btn-sm imes-btn" id="pry-informe-btn" onclick="imesAbrir()">📄 Informe del mes</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
@@ -5274,6 +5278,66 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
   body.printing-atci #atci-hojas{ zoom:1 !important; }
   body.printing-atci .ai-pag{ margin:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
+/* 📄 Informe del mes (07/11, idea 120): las hojas son las del informe de ATC (`.ai-pag`, `.ai-kpi`, `.ai-caja`, `.ai-tabla`) con los colores
+   del panel (turquesa). ⚠️ Las mismas reglas que §4le: sin color-mix(), oklch() ni sombras en la copia; tablas con `table-layout:fixed`. */
+.imes-btn{ background:#f0fdfa; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
+.imes-bar{ padding:9px 12px; background:#0f766e; color:#fff; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.imes-bar input[type=month]{ border:none; border-radius:7px; padding:4px 8px; font:inherit; font-size:.82rem; font-weight:700; color:#0f766e; width:auto; background:#fff; }
+#imes-estado.ocupado{ background:#f0fdfa; color:#0f766e; font-weight:700; }
+#imes-body{ flex:1; overflow:auto; padding:16px; }
+#imes-hojas{ width:1123px; margin:0 auto; }
+.imes-pag .ai-franja{ background:linear-gradient(90deg,#00B5AD 0%,#00B5AD 72%,#FFD400 72%,#FFD400 100%); }
+.imes-pag .ai-kick{ color:#0f766e; letter-spacing:.08em; }
+.imes-pag .ai-cab{ margin-bottom:14px; }
+.imes-pag .ai-cab h2{ font-size:28px; }
+.imes-kpis{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px 12px; }
+.imes-kpis4{ grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.imes-pag .ai-kpi{ padding:10px 14px 9px; min-width:0; }
+.imes-pag .ai-kpi b{ font-size:28px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.imes-pag .ai-kpi span b{ display:inline; font-size:inherit; margin:0; white-space:normal; }
+.imes-g2{ margin-top:14px; grid-template-columns:1.15fr 1fr; gap:22px; }
+.imes-pag .ai-brs{ gap:6px; }
+.imes-br{ grid-template-columns:150px 1fr 148px; gap:10px; }
+.imes-br .ai-br-t{ height:14px; }
+.imes-br .ai-br-v b{ font-size:14px; }
+.imes-pag .ai-tabla td{ padding:6px 9px; }
+.imes-1l{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.imes-dif{ font-weight:800; color:#64748b; } .imes-dif.up{ color:#15803d; } .imes-dif.down{ color:#b91c1c; }
+.imes-br .imes-dif{ font-size:12px; margin-left:2px; }
+.imes-mirar{ border-radius:14px; background:#f0fdfa; border:1px solid #99f6e4; padding:14px 18px; }
+.imes-mirar h3{ margin:0 0 10px; font-size:16px; font-weight:850; color:#0f766e; }
+.imes-mirar ol{ margin:0; padding:0 0 0 20px; display:grid; gap:10px; font-size:14.5px; line-height:1.4; }
+.imes-mirar li b{ color:#0f172a; }
+.imes-mirar-n{ margin-top:12px; font-size:11.5px; color:#64748b; }
+.imes-fuente{ position:absolute; left:54px; right:54px; bottom:50px; font-size:10.5px; line-height:1.3; color:#94a3b8; }
+.imes-marcas{ display:grid; gap:18px; }
+.imes-marca{ border:1px solid #e2e8f0; border-top:6px solid #00B5AD; border-radius:14px; padding:12px 14px; background:#fff; min-width:0; }
+.imes-m-t{ font-size:16px; font-weight:850; color:#0f172a; } .imes-m-t small{ font-size:12px; font-weight:700; color:#64748b; margin-left:6px; }
+.imes-m-n{ font-size:30px; font-weight:900; line-height:1.15; margin-top:2px; font-variant-numeric:tabular-nums; }
+.imes-m-s{ font-size:12.5px; color:#475569; margin-top:3px; }
+.imes-vt{ margin-top:10px; font-size:12px; }
+.imes-vt td{ padding:5px 8px; }
+.imes-aparte{ margin-top:14px; font-size:13px; color:#475569; border:1px dashed #cbd5e1; border-radius:12px; padding:9px 14px; }
+.imes-linea{ font-size:14px; color:#334155; margin:0 0 12px; }
+.imes-mini{ display:block; height:12px; border-radius:999px; background:#eef2f5; overflow:hidden; margin-top:2px; }
+.imes-mini i{ display:block; height:100%; border-radius:999px; }
+.imes-lin-m{ border-left:5px solid #94a3b8; padding:1px 0 1px 10px; margin:10px 0 5px; font-size:14px; }
+.imes-lin-m:first-of-type{ margin-top:0; }
+.imes-lin-m span{ color:#64748b; font-size:12.5px; margin-left:4px; }
+.imes-lin{ display:grid; grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr); gap:8px; align-items:baseline; font-size:13px; padding:3px 0 3px 15px; border-bottom:1px solid #eef2f5; }
+.imes-lin span{ overflow:hidden; white-space:nowrap; text-overflow:ellipsis; font-weight:700; color:#1e293b; }
+.imes-lin b{ text-align:right; font-variant-numeric:tabular-nums; }
+.imes-lin small{ color:#64748b; font-size:12px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.imes-lin.imes-lin-mas{ grid-template-columns:1fr; } .imes-lin.imes-lin-mas span{ color:#94a3b8; font-weight:600; font-size:12px; }
+.imes-ant{ display:inline-block; border-radius:999px; padding:0 7px; font-size:10.5px; font-weight:800; background:#fef3c7; color:#92400e; white-space:nowrap; }
+@media print{
+  body.printing-imes > *{ display:none !important; }
+  body.printing-imes #imes-ov{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-imes #imes-ov .no-print{ display:none !important; }
+  body.printing-imes #imes-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-imes #imes-hojas{ zoom:1 !important; }
+  body.printing-imes .ai-pag{ margin:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
 
 @media (prefers-reduced-motion:reduce){ .asis *, .asis-foco{ animation:none!important; } }
 /* A · la barra y B · la dona */
@@ -5781,6 +5845,10 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><select id="atci-alc" onchange="atciPintar()" aria-label="Qué ATC entran en el informe"><option value="mes">📅 Un mes</option><option value="todas">🗂️ Todas, desde el inicio</option></select><select id="atci-tipo" onchange="atciPintar()" aria-label="Garantía o contra costo"><option value="">🎧 Garantía y contra costo</option><option value="gar">🛡️ Solo garantía</option><option value="stc">🔧 Solo contra costo (STC)</option><option value="sin">❓ Solo sin marcar</option></select><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
 <div id="atci-body"><div id="atci-hojas"></div></div></div>
+<!-- 📄 (07/11, idea 120) El informe del mes: Contabilidad → Proyección, solo con la contraseña. Las mismas hojas A4 apaisadas del de ATC. -->
+<div id="imes-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="imes-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print imes-bar"><b id="imes-tit" style="font-size:.95rem">📄 Informe del mes</b><input type="month" id="imes-mes" onchange="imesPintar()" aria-label="Mes del informe"><span id="imes-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="imes-pdf" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:800" onclick="imesPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="imesImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="imesCerrar()">✕ Cerrar</button></div>
+<div class="no-print atci-ayuda" id="imes-estado">El mes por la <b>entrega agendada</b>, como la Proyección; la plata y las ATC, como están <b>hoy</b>.</div>
+<div id="imes-body"><div id="imes-hojas"></div></div></div>
 <!-- 🔗 (15/10, §4lf) Completar las ATC con lo que dice Trello: propone, se revisa y se guarda solo lo tildado. -->
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -25730,23 +25798,21 @@ function atciCargarLibs(){
     });
   });
 }
-function atciPdf(){
-  if(ATCI_OCUPADO) return;
-  if(!ATCI_ULT || !document.querySelector('#atci-hojas .ai-pag')) atciPintar();
-  var D=ATCI_ULT, nombre=atciArchivo(D.mes, D.tipo), btn=document.getElementById('atci-pdf'), host=null;
-  ATCI_OCUPADO=true; if(btn) btn.disabled=true;
-  atciEstado('⏳ Preparando el PDF…', true);
-  atciCargarLibs().then(function(){
-    /* Se fotografía una copia SIN achicar, debajo de la ventana: con el `zoom` de la vista previa la foto saldría corrida. */
+/* La foto de las hojas para el PDF, la MISMA para el informe de ATC y el informe del mes (idea 120): se fotografía una copia SIN achicar
+   (`#atci-render`, sin la sombra), debajo de la ventana —con el `zoom` de la vista previa la foto saldría corrida—, una hoja A4 apaisada
+   por página. `avance(t)` dice por dónde va. Devuelve cuántas hojas; la copia se saca siempre, salga bien o mal. */
+function hojasAPdf(box, nombre, titulo, avance){
+  var host=null, quitar=function(){ if(host && host.parentNode) host.parentNode.removeChild(host); host=null; };
+  return atciCargarLibs().then(function(){
     host=document.createElement('div'); host.id='atci-render';
     host.style.cssText='position:absolute;left:0;top:0;width:'+ATCI_W+'px;z-index:0;pointer-events:none;';
-    host.innerHTML=document.getElementById('atci-hojas').innerHTML;
+    host.innerHTML=box.innerHTML;
     document.body.appendChild(host);
     var hojas=[].slice.call(host.querySelectorAll('.ai-pag')), i=0;
     var pdf=new window.jspdf.jsPDF({ orientation:'landscape', unit:'mm', format:'a4', compress:true });
     var una=function(){
       if(i>=hojas.length) return Promise.resolve();
-      atciEstado('⏳ Armando el PDF… hoja '+(i+1)+' de '+hojas.length, true);
+      if(avance) avance('⏳ Armando el PDF… hoja '+(i+1)+' de '+hojas.length);
       return window.html2canvas(hojas[i], { scale:2, backgroundColor:'#ffffff', logging:false, useCORS:true, scrollX:0, scrollY:-(window.scrollY||0),
           windowWidth:Math.max(1300, document.documentElement.clientWidth), onclone:sinAgrandarCopia }).then(function(cv){
         if(i>0) pdf.addPage('a4', 'landscape');
@@ -25755,20 +25821,499 @@ function atciPdf(){
       });
     };
     return una().then(function(){
-      pdf.setProperties({ title:'Informe de ATC · '+atciMesTxt(D.mes), author:'Multiespumas', creator:'Panel de pedidos' });
+      pdf.setProperties({ title:titulo, author:'Multiespumas', creator:'Panel de pedidos' });
       downloadBlob(pdf.output('blob'), nombre, 'application/pdf');
-      atciEstado('✅ Listo: se bajó <b>'+esc(nombre)+'</b> ('+hojas.length+' hojas).');
-      toast('📄 PDF listo: '+nombre, 'ok');
+      return hojas.length;
     });
+  }).then(function(n){ quitar(); return n; }, function(e){ quitar(); throw e; });
+}
+/* Sin las librerías (sin internet) se rinde con 'no_cargo' o 'tardo': ahí va la ventana de imprimir. */
+function hojasPdfSinLibs(e){ return !!(e && (e.message==='no_cargo' || e.message==='tardo')); }
+function hojasPdfErrorTxt(e){
+  return hojasPdfSinLibs(e) ? '⚠️ No se pudo bajar lo que arma el PDF (¿sin internet?). Se abre la ventana de imprimir: elegí <b>«Guardar como PDF»</b>.'
+    : '⚠️ No se pudo armar el PDF ('+esc(String((e && e.message) || e).slice(0, 120))+'). Probá con <b>🖨 Imprimir</b> → «Guardar como PDF».';
+}
+function atciPdf(){
+  if(ATCI_OCUPADO) return;
+  if(!ATCI_ULT || !document.querySelector('#atci-hojas .ai-pag')) atciPintar();
+  var D=ATCI_ULT, nombre=atciArchivo(D.mes, D.tipo), btn=document.getElementById('atci-pdf');
+  ATCI_OCUPADO=true; if(btn) btn.disabled=true;
+  atciEstado('⏳ Preparando el PDF…', true);
+  hojasAPdf(document.getElementById('atci-hojas'), nombre, 'Informe de ATC · '+atciMesTxt(D.mes), function(t){ atciEstado(t, true); }).then(function(n){
+    atciEstado('✅ Listo: se bajó <b>'+esc(nombre)+'</b> ('+n+' hojas).');
+    toast('📄 PDF listo: '+nombre, 'ok');
   }).catch(function(e){
     console.error(e);
-    var sinLibs=!!(e && (e.message==='no_cargo' || e.message==='tardo'));
-    atciEstado(sinLibs ? '⚠️ No se pudo bajar lo que arma el PDF (¿sin internet?). Se abre la ventana de imprimir: elegí <b>«Guardar como PDF»</b>.'
-                       : '⚠️ No se pudo armar el PDF ('+esc(String((e && e.message) || e).slice(0, 120))+'). Probá con <b>🖨 Imprimir</b> → «Guardar como PDF».');
-    if(sinLibs) atciImprimir();
+    atciEstado(hojasPdfErrorTxt(e));
+    if(hojasPdfSinLibs(e)) atciImprimir();
   }).then(function(){
-    if(host && host.parentNode) host.parentNode.removeChild(host);
     ATCI_OCUPADO=false; if(btn) btn.disabled=false;
+  });
+}
+/* ==========================================================================
+   📄 INFORME DEL MES (idea 120, 07/11; el dueño vio la muestra y la aprobó). Contabilidad → 📈 Proyección → «📄 Informe del mes»: solo
+   con la contraseña de Administración, como la pestaña. Un PDF tipo presentación con la MISMA maquinaria del informe de ATC (§4le): hojas
+   `.ai-pag` A4 apaisadas de 1123×794, `atciCargarLibs` (html2canvas + jsPDF de cdnjs, al tocar), la copia `#atci-render` sin achicar
+   (`hojasAPdf`) y, sin internet, la ventana de imprimir.
+   · El mes: por defecto el último CERRADO; el mes en curso también se puede, y dice «a la fecha».
+   · ⚠️ NINGÚN número se calcula aparte (una sola verdad):
+     – vendido, unidades, por vendedora y por marca = la Proyección (`proyeccionMes` → `pryVentas`/`pryUnidadesDe`: el equipo de tiendas,
+       el mes por la ENTREGA AGENDADA `fechaSalida`); contra el mes anterior con la regla de «A esta altura» (`pryAltura` con «Comparar
+       con» = el mes anterior: entero si el mes ya cerró, al mismo día y hora si está en curso) y el MoM de cada vendedora (`pryMomDe`);
+     – la plata = Contabilidad → Ventas con «🚚 Entrega agendada» y el mes, que son las MISMAS ventas: «Vendido en el período»
+       (`ventaTotal`), «Ya ingresó» (`contaCobrado`) y «Falta cobrar» (`contaFaltaCobrar`); la antigüedad de cada deuda como «Falta cobrar
+       → Ver quiénes» (`deudaEdad` desde la fecha de la venta) y, en el mes en curso, los saldos de meses anteriores aparte
+       (`saldosAnteriores`, §4ok-E7). La plata es la de HOY (lo cobrado después del mes también cuenta), como en Contabilidad;
+     – las ATC = el informe de ATC (`atciDatos`: las que ENTRARON en el mes);
+     – lo que faltó = las marcas de los productos en los pedidos con entrega agendada en el mes: `chk:'no'` (✗ no hay) y `enProduccion`
+       (🏭 mandado a fabricar, `prodF`). Sin ventas de tienda, ATC, borradores ni productos de tienda (`semanaCuenta`); las RPT y los
+       pedidos de Eduardo y ROHO sí (salen del depósito).
+   · «👀 3 cosas para mirar»: reglas fijas, sin IA (`imesMirar`).
+   · Solo mira: no guarda nada. En Playwright no aparece solo (se abre con el botón o con `imesAbrir`).
+   ========================================================================== */
+var IMES={ ult:null, ocupado:false };
+var IMES_CAIDA_MIN=0.10;        // una caída de ventas cuenta para «3 cosas» desde el 10 % menos que el mes anterior
+var IMES_ATC_MIN=2;             // una línea y motivo de ATC, desde 2 casos
+/* cuántas filas entran en cada hoja (medido con `test_informe_mes` §4r-4s: con más, se salen por abajo); lo que no entra sigue en otra hoja */
+var IMES_VEND_BARRAS=10, IMES_TOP_PROD=15, IMES_FILAS=18, IMES_FILAS_FALTO=11, IMES_FILAS_DEUDA=9;
+var IMES_ORDEN=['ventas','cobro','stock','atc'];
+var IMES_AYUDA='El mes por la <b>entrega agendada</b>, como la Proyección; la plata y las ATC, como están <b>hoy</b>. «⬇️ Descargar PDF» baja el archivo (en el iPad queda en Archivos → Descargas).';
+function imesMesDef(){ return atciMesMas(diaNegocio().slice(0,7), -1); }
+function imesMes(ym){ return atciMesTxt(ym).toLowerCase(); }                       // «octubre 2026»
+function imesNomMes(ym){ return MESES_ES[+String(ym).slice(5,7)-1]||String(ym); }   // «octubre»
+/* El mes contra el ANTERIOR con la regla de «A esta altura» (`pryAltura`): se le pone «Comparar con» = el mes anterior un momento y se
+   devuelve lo que estaba elegido en la Proyección. Sin el mes anterior en el panel (antes de `PRY_PRIMER_MES`), null. */
+function imesAltura(R){
+  var c=PRY_CMP, d=PRY_CMP_DE, ant=atciMesMas(R.ym, -1), A=null;
+  try{ PRY_CMP_DE=R.ym; PRY_CMP=ant; A=pryAltura(R); } finally { PRY_CMP=c; PRY_CMP_DE=d; }
+  return (A && A.cmp===ant) ? A : null;
+}
+/* Las ventas del mes = las de la Proyección (equipo de tiendas, por la entrega agendada), por su id. */
+function imesVentas(R){
+  var ids={}; R.V.forEach(function(x){ if(x.ym===R.ym && x.amb==='tienda') ids[x.id]=1; });
+  return STATE.filter(function(p){ return p && ids[p.id]; });
+}
+/* La plata de esas ventas, con las funciones de las fichas de Contabilidad → Ventas (`renderContaMetrics`) y de «Ver quiénes» (`porCobrarDatos`). */
+function imesPlata(ventas, ym){
+  var hoy=todayStr(), o={ n:ventas.length, vendido:0, cobrado:0, falta:0, nDeben:0, deudas:[], porV:{} };
+  ventas.forEach(function(p){
+    var v=ventaTotal(p), c=contaCobrado(p), f=contaFaltaCobrar(p), nom=nombreCanonico(p.vendedor)||'(sin vendedor)';
+    var q=o.porV[nom]||(o.porV[nom]={ v:nom, g:(marcaDe(nom)||''), n:0, vendido:0, cobrado:0, falta:0, nDeben:0 });
+    o.vendido=r2(o.vendido+v); o.cobrado=r2(o.cobrado+c); q.n++; q.vendido=r2(q.vendido+v); q.cobrado=r2(q.cobrado+c);
+    if(f>0.005){
+      o.falta=r2(o.falta+f); o.nDeben++; q.falta=r2(q.falta+f); q.nDeben++;
+      o.deudas.push(Object.assign(deudaEdad(contaFecha(p), hoy), { p:p, saldo:r2(f) }));
+    }
+  });
+  o.deudas.sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+  o.ant=saldosAnteriores(ym, function(p){ return !fueraDeConta(p,'tienda'); }, function(p){ return fechaSalida(p)||contaFecha(p); });
+  o.antTot=cuadreSuma(o.ant);
+  o.vend=Object.keys(o.porV).map(function(k){ return o.porV[k]; }).sort(function(a,b){ return (b.vendido-a.vendido) || a.v.localeCompare(b.v,'es'); });
+  return o;
+}
+/* Los productos de esas ventas, en unidades: la regla de `pryUnidadesDe` renglón por renglón (colchones y somieres; un combo, 2), por la
+   identidad del stock (`stockClave`), como los productos de ROHO en la Proyección. La suma da las unidades de la Proyección. */
+function imesProductos(ventas){
+  var P={}, tot=0;
+  ventas.forEach(function(p){
+    var mv=marcaDe(nombreCanonico(p.vendedor)||p.vendedor)||'', vis={};
+    (p.productos||[]).forEach(function(x){
+      var t=pryTipoProd(x), n=(Number(x&&x.cant)||0)*(t==='combo' ? 2 : 1); if(!t || !(n>0)) return;
+      var k=stockClave(x), o=P[k]||(P[k]={ k:k, u:0, ped:0, marca:'' });
+      o.u+=n; tot+=n;
+      if(!vis[k]){ vis[k]=1; o.ped++; }
+      if(!o.marca) o.marca=stockMarcaDeNombre(k.split('|')[0])||mv;
+    });
+  });
+  return { tot:tot, lista:Object.keys(P).map(function(k){ return P[k]; }).sort(function(a,b){ return (b.u-a.u) || (b.ped-a.ped) || (a.k<b.k ? -1 : 1); }) };
+}
+/* Lo que faltó: en los pedidos con entrega agendada en el mes, los productos marcados ✗ no hay y los mandados a fabricar (🏭). */
+function imesFalto(ym){
+  var P={}, o={ nPed:0, nNo:0, nFab:0, uNo:0, uFab:0, prods:[] };
+  STATE.forEach(function(p){
+    if(!stockCuenta(p) || esVentaTienda(p) || entregaAConfirmar(p)) return;
+    var f=fechaSalida(p); if(!f || f.slice(0,7)!==ym) return;
+    var ls=(p.productos||[]).filter(function(x){ return semanaCuenta(x) && (Number(x.cant)||0)>0; });
+    if(!ls.length) return;
+    o.nPed++;
+    var no=false, fab=false;
+    ls.forEach(function(x){
+      var esNo=(x.chk==='no'), esFab=enProduccion(x); if(!esNo && !esFab) return;
+      var c=Number(x.cant)||0, k=stockClave(x), q=P[k]||(P[k]={ k:k, no:0, fab:0, pNo:{}, pFab:{} });
+      if(esNo){ q.no+=c; q.pNo[p.id]=1; no=true; o.uNo+=c; }
+      if(esFab){ q.fab+=c; q.pFab[p.id]=1; fab=true; o.uFab+=c; }
+    });
+    if(no) o.nNo++;
+    if(fab) o.nFab++;
+  });
+  o.prods=Object.keys(P).map(function(k){ var q=P[k]; return { k:k, no:q.no, fab:q.fab, nNo:Object.keys(q.pNo).length, nFab:Object.keys(q.pFab).length }; })
+    .sort(function(a,b){ return (b.no-a.no) || (b.nNo-a.nNo) || (b.fab-a.fab) || (a.k<b.k ? -1 : 1); });
+  return o;
+}
+/* «TITANIO LATEX|140X190» → nombre y medida, para mostrar. */
+function imesProdNom(k){ var p=String(k||'').split('|'); return { n:p[0]||String(k||''), m:String(p[1]||'').toLowerCase() }; }
+/* El % contra el mes anterior: { p, cls, txt } («▲ 12%»); sin mes anterior, null; con el anterior en 0, sin %. */
+function imesVs(a, b){
+  if(b==null) return null;
+  if(!(b>0.009)) return { p:null, cls:(a>0.009 ? 'up' : ''), txt:(a>0.009 ? 'nuevo' : 'igual') };   // «nuevo», como el MoM de la Proyección
+  var p=Math.round((a/b-1)*100);
+  return { p:p, cls:(p>0 ? 'up' : (p<0 ? 'down' : '')), txt:((p>0 ? '▲ ' : (p<0 ? '▼ ' : '= '))+Math.abs(p)+'%') };
+}
+function imesVsHtml(v){ return v ? '<b class="imes-dif '+v.cls+'">'+v.txt+'</b>' : ''; }
+/* 👀 «3 COSAS PARA MIRAR»: reglas fijas (sin IA). Una candidata por tema y, de cada una, su TAMAÑO = qué parte de su total es:
+     · ventas: la vendedora o la marca que más cayó en Bs contra el mes anterior (al menos `IMES_CAIDA_MIN`), sobre lo que vendió el
+       equipo el mes anterior;
+     · cobro: lo que falta cobrar (del mes y, en el mes en curso, de meses anteriores) sobre lo vendido; nombra la deuda más vieja;
+     · stock: los pedidos con algún ✗ no hay sobre los pedidos del mes; nombra el producto que más faltó;
+     · ATC: la línea y el motivo que más se repiten (al menos `IMES_ATC_MIN`; si ninguna línea, el motivo) sobre las ATC del mes.
+   Se eligen las 3 más grandes de temas distintos (empate: ventas, cobro, stock, ATC); si hay menos de 3 temas, se completa con las que
+   quedan. */
+function imesMirar(D){
+  var C=[], cm=D.cmpTxt;
+  if(D.eqAnt && D.eqAnt.bs>0.009){
+    var base=D.eqAnt.bs, cae=function(x, act, ant){ var d=r2(ant-act); return (d>0.009 && d/ant>=IMES_CAIDA_MIN) ? d : 0; }, mv=null, mm=null;
+    D.vend.forEach(function(v){ if(!v.ant || !(v.ant.bs>0.009)) return; var d=cae(v, v.bs, v.ant.bs); if(d && (!mv || d>mv.d)) mv={ x:v, d:d }; });
+    D.marcas.forEach(function(m){ if(!m.ant || !(m.ant.bs>0.009)) return; var d=cae(m, m.bs, m.ant.bs); if(d && (!mm || d>mm.d)) mm={ x:m, d:d }; });
+    if(mv) C.push({ cat:'ventas', k:'vend', quien:mv.x.v, s:mv.d/base,
+      t:'📉 Mirá las ventas de <b>'+esc(mv.x.v)+'</b>: '+fmtBs0(mv.x.bs)+' contra '+fmtBs0(mv.x.ant.bs)+' de '+esc(cm)+' (<b>−'+Math.round(mv.d/mv.x.ant.bs*100)+'%</b>, '+fmtBs0(mv.d)+' menos).' });
+    if(mm) C.push({ cat:'ventas', k:'marca', quien:mm.x.lbl, s:mm.d/base,
+      t:'📉 <b>'+esc(mm.x.lbl)+'</b> vendió '+fmtBs0(mm.x.bs)+' contra '+fmtBs0(mm.x.ant.bs)+' de '+esc(cm)+' (<b>−'+Math.round(mm.d/mm.x.ant.bs*100)+'%</b>, '+fmtBs0(mm.d)+' menos).' });
+  }
+  var P=D.plata, falta=r2(P.falta+P.antTot);
+  if(falta>0.005 && P.vendido>0.009){
+    var deu=P.deudas.concat(P.ant).slice().sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); }), v0=deu[0], p0=v0 && v0.p, n=P.nDeben+P.ant.length;
+    C.push({ cat:'cobro', k:'cobro', quien:(p0 && p0.cliente)||'', s:falta/P.vendido,
+      t:'💵 Cobrá: faltan <b>'+fmtBs0(falta)+'</b> de '+n+' venta'+(n===1?'':'s')+(P.ant.length ? (' ('+fmtBs0(P.antTot)+' de meses anteriores)') : '')+
+        (p0 ? ('; la más vieja es <b>'+esc(p0.cliente||'—')+'</b> ('+esc(nombreCanonico(p0.vendedor)||p0.vendedor||'—')+', '+fmtBs0(v0.saldo)+
+          (v0.sinF ? ', sin fecha' : (', desde el '+esc(fmtFecha(v0.desde))+': '+v0.dias+' día'+(v0.dias===1?'':'s')))+')') : '')+'.' });
+  }
+  var F=D.falto, f0=F.prods.filter(function(x){ return x.no>0; })[0];
+  if(F.nNo && F.nPed && f0){
+    var nm=imesProdNom(f0.k);
+    C.push({ cat:'stock', k:'stock', quien:f0.k, s:F.nNo/F.nPed,
+      t:'📦 Faltó <b>'+esc(nm.n+(nm.m ? ' '+nm.m : ''))+'</b>: ✗ no hay en '+f0.nNo+' pedido'+(f0.nNo===1?'':'s')+' ('+f0.no+' unidad'+(f0.no===1?'':'es')+'). '+
+        'En el mes, '+F.nNo+' de '+F.nPed+' pedidos tuvieron algún ✗.' });
+  }
+  var T=D.atc, lt=null;
+  if(T.n){
+    (T.lin.marcas||[]).forEach(function(m){ (m.top||[]).forEach(function(x){ if(x.n>=IMES_ATC_MIN && (!lt || x.n>lt.n)) lt={ n:x.n, lin:x.lin, mot:x.mot, marca:m.lbl }; }); });
+    if(lt) C.push({ cat:'atc', k:'atc', quien:lt.lin+'|'+lt.mot, s:lt.n/T.n,
+      t:'🎧 Revisá <b>'+esc(lt.lin)+'</b> ('+esc(lt.marca)+') por <b>«'+esc(lt.mot)+'»</b>: '+lt.n+' de las '+T.n+' ATC del mes.' });
+    else if(T.motTop && T.motTop.n>=IMES_ATC_MIN) C.push({ cat:'atc', k:'atc', quien:'|'+T.motTop.lbl, s:T.motTop.n/T.n,
+      t:'🎧 Revisá el motivo <b>«'+esc(T.motTop.lbl)+'»</b>: '+T.motTop.n+' de las '+T.n+' ATC del mes.' });
+  }
+  C.sort(function(a,b){ return (b.s-a.s) || (IMES_ORDEN.indexOf(a.cat)-IMES_ORDEN.indexOf(b.cat)); });
+  var out=[], cats={};
+  C.forEach(function(c){ if(out.length<3 && !cats[c.cat]){ cats[c.cat]=1; out.push(c); } });
+  C.forEach(function(c){ if(out.length<3 && out.indexOf(c)<0) out.push(c); });
+  return out;
+}
+/* Todas las cuentas del informe. Sin pantalla: se puede probar sola. */
+function imesDatos(ym){
+  var hoy=diaNegocio(), cur=hoy.slice(0,7);
+  ym=/^\d{4}-\d{2}$/.test(String(ym||'')) ? String(ym) : imesMesDef();
+  if(ym>cur) ym=cur;
+  var ant=atciMesMas(ym, -1), R=proyeccionMes(ym), E=R.equipo, A=imesAltura(R), alt=!!(A && A.curso && !A.enteroAntes);
+  /* las vendedoras: las del mes (por marca y sin marca, como la Proyección) y las que vendieron el mes anterior y este no */
+  var filas=[];
+  R.marcas.forEach(function(m){ m.filas.forEach(function(r){ filas.push(r); }); });
+  R.sinMarca.filas.forEach(function(r){ filas.push(r); });
+  if(A){
+    var hay={}; filas.forEach(function(r){ hay[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)]=1; });
+    R.V.forEach(function(x){ if(x.amb==='tienda' && x.ym===A.cmp && !hay[x.vk]){ hay[x.vk]=1; filas.push({ vendedor:x.v, amb:'tienda', marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, u:0, vendido:0, soloAnt:true }); } });
+  }
+  var vend=filas.map(function(r){
+    var M=A ? pryMomDe(R, A, r) : null, t=M && M.tres;
+    return { v:r.vendedor, g:r.marca||'', n:r.n, u:r.u, bs:r.vendido, ant:(t ? { n:t.ant.n, u:t.ant.u, bs:r2(t.ant.bs) } : null), soloAnt:!!r.soloAnt };
+  }).filter(function(v){ return !v.soloAnt || (v.ant && v.ant.bs>0.009); })   // la que no vendió en ninguno de los dos (a esta altura), no suma nada
+    .sort(function(a,b){ return (b.bs-a.bs) || ((b.ant ? b.ant.bs : 0)-(a.ant ? a.ant.bs : 0)) || a.v.localeCompare(b.v,'es'); });
+  var marcas=R.marcas.map(function(m){
+    var k=m.g.k, pa=A && A.ant[k];
+    return { k:k, lbl:m.g.lbl, ico:m.g.ico, col:m.g.col, txt:m.g.txt, bs:m.tot.vendido, n:m.tot.n, u:m.tot.u, c:m.tot.c, s:m.tot.s,
+             ant:(pa ? { bs:r2(pa.bs), u:pa.u, n:pa.n } : null) };
+  });
+  var sinM=R.sinMarca.filas.length ? { k:'', lbl:'Sin marca', ico:'⚠️', col:'#94a3b8', txt:'#475569', bs:R.sinMarca.tot.vendido, n:R.sinMarca.tot.n, u:R.sinMarca.tot.u,
+             c:R.sinMarca.tot.c, s:R.sinMarca.tot.s, ant:null } : null;
+  var ventas=imesVentas(R);
+  var D={
+    mes:ym, ant:ant, hoy:hoy, enCurso:(ym===cur), hora:horaCorta(), antTxt:imesNomMes(ant),
+    cmpTxt:(A ? (imesNomMes(ant)+(alt ? ' a esta altura' : '')) : ''), alt:alt, A:A, R:R,
+    eq:{ bs:E.vendido, n:E.n, u:E.u, c:E.c, s:E.s }, eqAnt:(A ? { bs:r2(A.ant.equipo.bs), n:A.ant.equipo.n, u:A.ant.equipo.u } : null),
+    vend:vend, marcas:marcas, sinMarca:sinM, mayor:R.mayor.tot, roho:R.roho.tot,
+    plata:imesPlata(ventas, ym), prods:imesProductos(ventas), atc:atciDatos(ym), falto:imesFalto(ym), faltoAnt:imesFalto(ant)
+  };
+  var tL=(typeof ULTIMO_REFRESCO!=='undefined' && ULTIMO_REFRESCO) || 0, z=function(v){ return (v<10?'0':'')+v; };
+  D.fuente=tL ? ('planilla leída a las '+z(new Date(tL).getHours())+':'+z(new Date(tL).getMinutes())) : 'la copia guardada en este aparato';
+  D.mirar=imesMirar(D);
+  return D;
+}
+/* ---- las piezas de las hojas (las del informe de ATC: `.ai-pag`, `.ai-kpi`, `.ai-caja`, `.ai-tabla`) ---- */
+function imesHoja(titulo, sub, cuerpo, fuente){
+  return '<section class="ai-pag imes-pag"><div class="ai-franja"></div>'+
+    '<header class="ai-cab"><div class="ai-kick">{{KICK}}</div><h2>'+titulo+'</h2>'+(sub ? ('<p>'+sub+'</p>') : '')+'</header>'+
+    '<div class="ai-cuerpo">'+cuerpo+'</div>'+(fuente ? ('<div class="imes-fuente">ℹ️ '+fuente+'</div>') : '')+
+    '<footer class="ai-pie"><span><b>Multiespumas</b> · Informe del mes · {{MES}}</span><span>{{PAG}}</span></footer></section>';
+}
+/* Barras con el valor ya escrito (`der`); `c` (opcional) va en verde encima (lo cobrado). */
+function imesBarras(items){
+  var max=0; items.forEach(function(x){ if(x.v>max) max=x.v; });
+  return '<div class="ai-brs">'+items.map(function(x){
+    var w=(max && x.v>0) ? Math.max(2, Math.round(x.v/max*100)) : 0, wc=(max && x.c>0) ? Math.round(Math.min(x.c, x.v)/max*100) : 0;
+    return '<div class="ai-br imes-br"><span class="ai-br-l">'+esc(atciCorta(x.lbl, 24))+'</span>'+
+      '<span class="ai-br-t"><i style="width:'+w+'%;background:'+(x.col||'#00B5AD')+'"></i>'+(x.c!=null ? '<em style="width:'+wc+'%"></em>' : '')+'</span>'+
+      '<span class="ai-br-v">'+x.der+'</span>'+(x.sub ? '<span class="ai-br-s">'+x.sub+'</span>' : '')+'</div>';
+  }).join('')+'</div>';
+}
+function imesTabla(cols, filas, cls){
+  return '<table class="ai-tabla'+(cls ? ' '+cls : '')+'"><colgroup>'+cols.map(function(c){ return '<col style="width:'+c.w+'">'; }).join('')+'</colgroup>'+
+    '<thead><tr>'+cols.map(function(c){ return '<th'+(c.n ? ' class="n"' : '')+'>'+c.t+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    filas.map(function(f){ return '<tr>'+f.map(function(v, i){ return '<td'+(cols[i].n ? ' class="n"' : '')+'>'+v+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table>';
+}
+/* Una lista larga en trozos: `primero` en la hoja principal y de a `resto` en las que siguen (nada queda en «y N más»). */
+function imesTrozos(L, primero, resto){ var out=[L.slice(0, primero)]; for(var i=primero; i<L.length; i+=resto) out.push(L.slice(i, i+resto)); return out; }
+function imesMarcaDe(k){ for(var i=0;i<ATCI_MARCAS.length;i++) if(ATCI_MARCAS[i].k===k) return ATCI_MARCAS[i]; return ATCI_MARCAS[ATCI_MARCAS.length-1]; }
+function imesColVend(g){ for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===g) return MARCAS[i].col; return '#94a3b8'; }
+/* ---- las hojas ---- */
+function imesResumen(D){
+  var E=D.eq, Ea=D.eqAnt, P=D.plata, T=D.atc, F=D.falto, Fa=D.faltoAnt, cm=esc(D.cmpTxt), am=esc(D.antTxt);
+  var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
+  var vs=function(a, b, fmt){ var v=imesVs(a, b); return v ? (imesVsHtml(v)+' vs '+cm+' ('+fmt(b)+')') : 'sin el mes anterior en el panel'; };
+  var amE=am+(D.enCurso ? ' entero' : '');   // las ATC y los ✗ del mes en curso van contra el mes anterior ENTERO (como el informe de ATC)
+  var difA=T.n-T.nAnt, atcVs=T.nAnt ? (difA===0 ? 'igual que '+amE : ('<b class="imes-dif '+(difA>0 ? 'down' : 'up')+'">'+(difA>0 ? '▲ ' : '▼ ')+Math.abs(difA)+(difA>0 ? ' más' : ' menos')+'</b> que '+amE+' ('+T.nAnt+')'))
+    : ('en '+amE+' no entró ninguna');
+  var kpis='<div class="ai-kpis imes-kpis">'+
+    atciKpi('#0f766e', 'Vendido', fmtBs0(E.bs), nV(E.n)+' · '+vs(E.bs, Ea ? Ea.bs : null, fmtBs0))+
+    atciKpi('#00A09A', 'Colchones y somieres', String(E.u), E.c+' colch. · '+E.s+' som. · '+vs(E.u, Ea ? Ea.u : null, String))+
+    atciKpi('#15803d', 'Cobrado', fmtBs0(P.cobrado), P.vendido>0.009 ? (atciPc(P.cobrado, P.vendido)+'% de lo vendido, ya cobrado') : 'no hay ventas en el mes')+
+    atciKpi(P.falta>0.005 ? '#d97706' : '#15803d', 'Falta cobrar', P.falta>0.005 ? fmtBs0(P.falta) : '✅ Nada',
+      (P.nDeben ? (nV(P.nDeben)+' con saldo') : 'no queda saldo del mes')+(P.ant.length ? (' · <b>+ '+fmtBs0(P.antTot)+'</b> de meses anteriores ('+P.ant.length+')') : ''))+
+    atciKpi('#a21caf', 'ATC', String(T.n), (T.n || T.nAnt) ? atcVs : 'no entró ninguna')+
+    atciKpi(F.nNo ? '#dc2626' : '#15803d', 'Pedidos con ✗ no hay', String(F.nNo),
+      'de '+F.nPed+' pedido'+(F.nPed===1?'':'s')+' del mes · '+F.uNo+' unidad'+(F.uNo===1?'':'es')+' ✗ · en '+amE+': '+Fa.nNo)+
+  '</div>';
+  var V=D.vend.slice(0, IMES_VEND_BARRAS);
+  var barras=V.length ? imesBarras(V.map(function(v){
+      var x=v.ant ? imesVs(v.bs, v.ant.bs) : null;
+      return { lbl:v.v, v:v.bs, col:imesColVend(v.g), der:'<b>'+fmtBs0(v.bs)+'</b> '+(x ? imesVsHtml(x) : '') };
+    })) : '<div class="ai-nota">Sin ventas del equipo en el mes.</div>';
+  var resto=D.vend.length-V.length;
+  var izq='<div class="ai-caja"><h3>👤 Vendido por vendedora <small>'+(Ea ? ('el % es contra '+cm) : 'el equipo de tiendas')+'</small></h3>'+barras+
+    (resto>0 ? '<div class="ai-nota">Las '+D.vend.length+' están en la hoja «Por marca».</div>' : '')+'</div>';
+  var M=D.mirar;
+  var der='<div class="imes-mirar"><h3>👀 3 cosas para mirar</h3>'+(M.length ? ('<ol>'+M.map(function(c){ return '<li>'+c.t+'</li>'; }).join('')+'</ol>') :
+      '<div class="ai-nota" style="margin:0;font-size:13.5px;color:#0f766e">✅ Nada fuera de lo normal: ninguna caída de ventas, deuda, faltante ni ATC repetida para señalar.</div>')+
+    '<div class="imes-mirar-n">Elegidas solas, por tamaño: la caída sobre lo vendido el mes anterior, lo que falta cobrar sobre lo vendido, los pedidos con ✗ sobre los del mes y las ATC repetidas sobre las del mes.</div></div>';
+  var nom=imesNomMes(D.mes);
+  return imesHoja(D.enCurso ? ('Cómo va '+esc(nom)+', a la fecha') : ('Cómo fue '+esc(nom)),
+    D.enCurso ? ('Mes en curso: lo vendido hasta hoy, '+esc(fmtFecha(D.hoy))+', con entrega en '+esc(nom)+(Ea ? ('; contra '+cm+' (el mismo día y la misma hora)') : '')+'.')
+              : ('Lo vendido con entrega agendada en '+esc(nom)+'. La plata y las ATC, como están hoy, '+esc(fmtFecha(D.hoy))+' a las '+esc(D.hora)+'.'),
+    kpis+'<div class="ai-g2 imes-g2">'+izq+der+'</div>',
+    'Vendido y unidades: la Proyección del mes (entrega agendada; unidades = colchones y somieres). Cobrado y falta cobrar: Contabilidad → Ventas con «🚚 Entrega agendada». '+
+    'ATC: el informe de ATC (las que entraron en el mes). ✗: las marcas de los productos en los pedidos del mes. Datos de '+esc(D.fuente)+'.');
+}
+function imesMarcasHoja(D){
+  var E=D.eq, cm=esc(D.cmpTxt), cards=D.marcas.filter(function(m){ return m.n || (m.ant && m.ant.n); })
+    .sort(function(a,b){ return (b.bs-a.bs) || ((b.ant ? b.ant.bs : 0)-(a.ant ? a.ant.bs : 0)); });   // la que más vendió, primero
+  if(D.sinMarca) cards.push(D.sinMarca);
+  var nU=function(u){ return u+' unidad'+(u===1?'':'es'); };
+  var cs=function(m){ return m.c+' colch'+(m.c===1 ? 'ón' : 'ones')+', '+m.s+' somier'+(m.s===1 ? '' : 'es'); };
+  var html=cards.map(function(m){
+    var vb=m.ant ? imesVs(m.bs, m.ant.bs) : null, vu=m.ant ? imesVs(m.u, m.ant.u) : null;
+    var filas=D.vend.filter(function(v){ return (v.g||'')===m.k; }).map(function(v){
+      var x=v.ant ? imesVs(v.bs, v.ant.bs) : null;
+      return [esc(atciCorta(v.v, 22)), String(v.n), String(v.u), fmtBs0(v.bs), x ? imesVsHtml(x) : '—'];
+    });
+    return '<div class="imes-marca" style="border-top-color:'+m.col+'">'+
+      '<div class="imes-m-t">'+m.ico+' '+esc(m.lbl)+' <small>'+(E.bs>0.009 ? (atciPc(m.bs, E.bs)+'% del equipo') : '')+'</small></div>'+
+      '<div class="imes-m-n" style="color:'+m.txt+'">'+fmtBs(m.bs)+'</div>'+
+      '<div class="imes-m-s">'+m.n+' venta'+(m.n===1?'':'s')+' · '+nU(m.u)+' ('+cs(m)+')'+(m.u ? (' · '+fmtBs0(m.bs/m.u)+' por unidad') : '')+'</div>'+
+      '<div class="imes-m-s">'+(m.ant ? ('Contra '+cm+': '+imesVsHtml(vb)+' en Bs ('+fmtBs0(m.ant.bs)+') · '+imesVsHtml(vu)+' en unidades ('+m.ant.u+')') : (D.eqAnt ? 'Sin el mes anterior para comparar.' : 'Sin el mes anterior en el panel.'))+'</div>'+
+      (filas.length ? imesTabla([{ t:'Vendedora', w:'38%' }, { t:'Ventas', w:'13%', n:1 }, { t:'Unid.', w:'12%', n:1 }, { t:'Bs', w:'21%', n:1 }, { t:'vs ant.', w:'16%', n:1 }], filas, 'imes-vt') : '')+
+    '</div>';
+  }).join('');
+  var Ma=D.mayor, Ro=D.roho, ap=[];
+  if(Ma && Ma.n) ap.push('🏭 <b>Mayoristas</b> ('+esc(mayoristasTxt())+'): '+fmtBs(Ma.vendido)+' en '+Ma.n+' venta'+(Ma.n===1?'':'s')+' · '+nU(Ma.u));
+  if(Ro && Ro.n) ap.push('🛏️ <b>ROHO</b>, en unidades: '+nU(Ro.u)+' ('+cs(Ro)+') en '+Ro.n+' pedido'+(Ro.n===1?'':'s'));
+  return imesHoja('Por marca', 'El equipo de tiendas: '+fmtBs(E.bs)+' en '+E.n+' venta'+(E.n===1?'':'s')+' y '+nU(E.u)+'.',
+    (cards.length ? ('<div class="imes-marcas" style="grid-template-columns:repeat('+Math.max(1, cards.length)+',minmax(0,1fr))">'+html+'</div>') : '<div class="ai-vacio">📭 Sin ventas del equipo en el mes.</div>')+
+    (ap.length ? ('<div class="imes-aparte">Aparte del equipo (no suman arriba): '+ap.join(' · ')+'.</div>') : ''),
+    'La Proyección del mes: el equipo de tiendas, cada vendedora en la marca que vende. Contra '+(D.cmpTxt ? cm : 'el mes anterior')+' con la regla de «A esta altura» de la Proyección.');
+}
+function imesProductosHojas(D){
+  var L=D.prods.lista, E=D.eq, max=L.length ? L[0].u : 0, T=imesTrozos(L, IMES_TOP_PROD, IMES_FILAS), H=[];
+  var cols=[{ t:'#', w:'5%', n:1 }, { t:'Producto', w:'37%' }, { t:'Medida', w:'13%' }, { t:'Marca', w:'12%' }, { t:'Ventas', w:'9%', n:1 }, { t:'Unidades', w:'10%', n:1 }, { t:'', w:'14%' }];
+  var fila=function(x, i){
+    var nm=imesProdNom(x.k), mk=imesMarcaDe(x.marca);
+    return [String(i+1), esc(atciCorta(nm.n, 42)), esc(nm.m), esc(x.marca ? mk.lbl.replace(/ \(.*\)$/, '') : '—'), String(x.ped), '<b>'+x.u+'</b>',
+      '<span class="imes-mini"><i style="width:'+(max ? Math.max(3, Math.round(x.u/max*100)) : 0)+'%;background:'+mk.col+'"></i></span>'];
+  };
+  var fuente='Las ventas de la Proyección del mes, renglón por renglón: solo colchones y somieres (un combo es uno de cada). La suma da las unidades del resumen.';
+  T.forEach(function(trozo, h){
+    var desde=h ? (IMES_TOP_PROD+(h-1)*IMES_FILAS) : 0;
+    var cuerpo=(h ? '' : ('<div class="imes-linea"><b>'+E.u+'</b> unidad'+(E.u===1?'':'es')+': <b>'+E.c+'</b> colch'+(E.c===1?'ón':'ones')+' y <b>'+E.s+'</b> somier'+(E.s===1?'':'es')+', en <b>'+E.n+'</b> venta'+(E.n===1?'':'s')+
+        ' · <b>'+L.length+'</b> producto'+(L.length===1?'':'s')+' distinto'+(L.length===1?'':'s')+'</div>'))+
+      (trozo.length ? imesTabla(cols, trozo.map(function(x, i){ return fila(x, desde+i); })) : '<div class="ai-vacio">📭 Ningún colchón ni somier vendido en el mes.</div>')+
+      (!h && T.length>1 ? '<div class="ai-nota">Los otros '+(L.length-IMES_TOP_PROD)+' siguen en la hoja siguiente.</div>' : '');
+    H.push(imesHoja(h ? ('Los demás productos: '+(desde+1)+' a '+(desde+trozo.length)+' de '+L.length) : 'Los productos más vendidos', h ? '' : 'Por unidades, del que más al que menos.', cuerpo, fuente));
+  });
+  return H;
+}
+function imesAtcHoja(D){
+  var T=D.atc, nom=imesNomMes(D.mes), am=esc(D.antTxt)+(D.enCurso ? ' entero' : ''), fuente='El informe de ATC del mes (Pestaña ATC → «📄 Informe PDF»): las ATC que entraron en '+esc(nom)+'; dónde están, como hoy.';
+  if(!T.n) return imesHoja('Atención al cliente (ATC)', '', '<div class="ai-vacio">📭 En '+esc(nom)+' no entró ninguna ATC.</div>'+
+    (T.antes.length ? ('<div class="ai-nota" style="font-size:14px">Quedan <b>'+T.antes.length+'</b> ATC de meses anteriores sin cerrar.</div>') : ''), fuente);
+  var dif=T.n-T.nAnt, vs=T.nAnt ? (dif===0 ? 'igual que '+am : ((dif>0 ? '▲ ' : '▼ ')+Math.abs(dif)+(dif>0 ? ' más' : ' menos')+' que '+am+' ('+T.nAnt+')')) : 'en '+am+' no entró ninguna';
+  var kpis='<div class="ai-kpis imes-kpis4">'+
+    atciKpi('#a21caf', 'Entraron', T.n, vs)+
+    atciKpi('#15803d', 'Volvieron al cliente', T.cerr.length+' <em>de '+T.n+'</em>', atciPc(T.cerr.length, T.n)+'% ya cerradas')+
+    atciKpi(T.mas15 ? '#dc2626' : '#d97706', 'Siguen abiertas', T.abiertas.length, T.abiertas.length ? (T.mas15 ? T.mas15+' hace más de 15 días' : 'ninguna pasa de 15 días') : 'ninguna pendiente')+
+    atciKpi('#0f766e', 'Días del circuito', atciNum(T.prom), T.cerr.length ? 'en promedio, de las cerradas' : 'todavía ninguna cerrada')+
+  '</div>';
+  var antC=esc(D.antTxt.slice(0,3))+'.';
+  var items=T.mot.map(function(m){ return { lbl:m.lbl, n:m.n, c:m.c, col:(m.sin ? '#dc2626' : '#a21caf'), extra:' · '+antC+' '+m.ant }; });
+  var izq='<div class="ai-caja"><h3>💬 Por qué <small>'+T.n+' ATC · lo verde ya volvió al cliente</small></h3>'+atciBarras(items, T.n)+'</div>';
+  var LM=(T.lin.marcas||[]).filter(function(m){ return m.n>0; }), cupo=LM.length<=1 ? 11 : (LM.length===2 ? 6 : 3);   // lo que entra en la caja; el resto, en el informe de ATC
+  var lin=LM.map(function(m){
+    return '<div class="imes-lin-m" style="border-left-color:'+m.col+'"><b style="color:'+m.txt+'">'+m.ico+' '+esc(m.lbl)+'</b> <span>'+m.n+' ATC</span></div>'+
+      m.lineas.slice(0, cupo).map(function(L){
+        var top=Object.keys(L.mot).filter(function(t){ return t!==ATCI_SIN_MOTIVO; }).sort(function(a,b){ return (L.mot[b]-L.mot[a]) || (a<b ? -1 : 1); })[0];
+        return '<div class="imes-lin"><span>'+esc(atciCorta(L.lbl, 26))+'</span><b>'+L.n+'</b><small>'+(top ? esc(atciCorta(top, 22))+' '+L.mot[top] : 'sin motivo')+'</small></div>';
+      }).join('')+(m.lineas.length>cupo ? '<div class="imes-lin imes-lin-mas"><span>Las otras '+(m.lineas.length-cupo)+' línea'+(m.lineas.length-cupo===1?'':'s')+', en el informe de ATC («Por marca y línea»)</span></div>' : '');
+  }).join('');
+  var der='<div class="ai-caja"><h3>🧩 Por línea <small>con el motivo que más se repite</small></h3>'+(lin || '<div class="ai-nota">Sin productos en las ATC.</div>')+'</div>';
+  return imesHoja('Atención al cliente (ATC)', 'Las que entraron en '+esc(nom)+(D.enCurso ? ' hasta hoy' : '')+'. El detalle completo, en el informe de ATC.', kpis+'<div class="ai-g2" style="margin-top:16px">'+izq+der+'</div>', fuente);
+}
+function imesFaltoHojas(D){
+  var F=D.falto, Fa=D.faltoAnt, nom=imesNomMes(D.mes), am=esc(D.antTxt)+(D.enCurso ? ' entero' : ''), L=F.prods, H=[];
+  var fuente='Los pedidos con entrega agendada en '+esc(nom)+' (sin ventas de tienda, ATC ni productos de tienda; con las reposiciones y los pedidos de Eduardo y ROHO): '+
+    '✗ = el producto marcado «no hay»; 🏭 = mandado a fabricar. Una línea ✗ que ya se mandó a fabricar cuenta en las dos.';
+  var kpis='<div class="ai-kpis imes-kpis4">'+
+    atciKpi('#0f766e', 'Pedidos del mes', F.nPed, 'con entrega agendada en '+esc(nom))+
+    atciKpi(F.nNo ? '#dc2626' : '#15803d', 'Con ✗ no hay', F.nNo, (F.nPed ? atciPc(F.nNo, F.nPed)+'% de los pedidos · ' : '')+F.uNo+' unidad'+(F.uNo===1?'':'es')+' · en '+am+': '+Fa.nNo)+
+    atciKpi('#7c3aed', 'Hechos a pedido 🏭', F.nFab, F.uFab+' unidad'+(F.uFab===1?'':'es')+' mandada'+(F.uFab===1?'':'s')+' a fabricar')+
+    atciKpi('#d97706', 'Productos que faltaron', L.filter(function(x){ return x.no>0; }).length, 'distintos, con algún ✗')+
+  '</div>';
+  var cols=[{ t:'#', w:'5%', n:1 }, { t:'Producto', w:'39%' }, { t:'Medida', w:'14%' }, { t:'Pedidos ✗', w:'11%', n:1 }, { t:'Unid. ✗', w:'10%', n:1 }, { t:'Pedidos 🏭', w:'11%', n:1 }, { t:'Unid. 🏭', w:'10%', n:1 }];
+  var fila=function(x, i){ var nm=imesProdNom(x.k); return [String(i+1), esc(atciCorta(nm.n, 44)), esc(nm.m), x.nNo ? String(x.nNo) : '·', x.no ? '<b style="color:#b91c1c">'+x.no+'</b>' : '·', x.nFab ? String(x.nFab) : '·', x.fab ? '<b style="color:#7c3aed">'+x.fab+'</b>' : '·']; };
+  var T=imesTrozos(L, IMES_FILAS_FALTO, IMES_FILAS);
+  T.forEach(function(trozo, h){
+    var desde=h ? (IMES_FILAS_FALTO+(h-1)*IMES_FILAS) : 0;
+    var cuerpo=(h ? '' : kpis)+(trozo.length ? ('<div style="margin-top:'+(h ? 0 : 16)+'px">'+imesTabla(cols, trozo.map(function(x, i){ return fila(x, desde+i); }))+'</div>')
+        : '<div class="ai-vacio" style="margin-top:16px">✅ En '+esc(nom)+' ningún pedido tuvo un producto ✗ no hay ni hecho a pedido.</div>')+
+      (!h && T.length>1 ? '<div class="ai-nota">Los otros '+(L.length-IMES_FILAS_FALTO)+' siguen en la hoja siguiente.</div>' : '');
+    H.push(imesHoja(h ? ('Lo que faltó, sigue: '+(desde+1)+' a '+(desde+trozo.length)+' de '+L.length) : 'El stock que faltó', h ? '' : 'Por producto: lo marcado ✗ no hay y lo hecho a pedido.', cuerpo, fuente));
+  });
+  return H;
+}
+function imesCobroHojas(D){
+  var P=D.plata, nom=imesNomMes(D.mes), H=[];
+  var fuente='Contabilidad → Ventas con «🚚 Entrega agendada» y '+esc(nom)+': «Vendido en el período», «Ya ingresó» y «Falta cobrar» (las mismas ventas de la Proyección), como están hoy. '+
+    'Desde = la fecha de la venta, como «Falta cobrar → Ver quiénes».'+(P.ant.length ? ' «De antes» = ya entregadas en meses anteriores y sin cobrar (desde la entrega): van aparte, no suman en el mes.' : '');
+  var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
+  var kpis='<div class="ai-kpis imes-kpis4">'+
+    atciKpi('#0f766e', 'Vendido', fmtBs0(P.vendido), nV(P.n))+
+    atciKpi('#15803d', 'Ya ingresó', fmtBs0(P.cobrado), P.vendido>0.009 ? (atciPc(P.cobrado, P.vendido)+'% de lo vendido') : '—')+
+    atciKpi(P.falta>0.005 ? '#d97706' : '#15803d', 'Falta cobrar', P.falta>0.005 ? fmtBs0(P.falta) : '✅ Nada', P.nDeben ? (nV(P.nDeben)+' con saldo') : 'no queda saldo')+
+    (P.ant.length ? atciKpi('#b45309', 'De meses anteriores', fmtBs0(P.antTot), nV(P.ant.length)+' ya entregadas, sin cobrar')
+                  : atciKpi('#64748b', 'Cobradas enteras', P.n-P.nDeben, P.n ? ('de '+nV(P.n)) : '—'))+
+  '</div>';
+  var barras=P.vend.length ? imesBarras(P.vend.slice(0, IMES_VEND_BARRAS).map(function(q){
+      return { lbl:q.v, v:q.vendido, c:q.cobrado, col:'#b5ece8', der:(q.falta>0.005 ? ('falta <b>'+fmtBs0(q.falta)+'</b>') : '<b style="color:#15803d">✅ cobrado</b>') };
+    })) : '<div class="ai-nota">Sin ventas en el mes.</div>';
+  var otras=P.vend.slice(IMES_VEND_BARRAS), otrasF=otras.reduce(function(s, q){ return r2(s+q.falta); }, 0);
+  var izq='<div class="ai-caja"><h3>👤 Por vendedora <small>la barra es lo vendido; lo verde, lo cobrado</small></h3>'+barras+
+    (otras.length ? ('<div class="ai-nota">Las otras '+otras.length+': '+(otrasF>0.005 ? ('falta '+fmtBs0(otrasF)+' entre todas; cada venta está en «Las que deben»') : 'todo cobrado')+'.</div>') : '')+'</div>';
+  var L=P.deudas.map(function(x){ return { x:x, ant:false }; }).concat(P.ant.map(function(x){ return { x:x, ant:true }; }));
+  var cols=[{ t:'Cliente', w:'31%' }, { t:'Vendedora', w:'29%' }, { t:'Desde', w:'22%' }, { t:'Saldo', w:'18%', n:1 }];
+  var cols2=[{ t:'#', w:'5%', n:1 }, { t:'Cliente', w:'27%' }, { t:'Nota', w:'10%' }, { t:'Vendedora', w:'18%' }, { t:'Desde', w:'16%' }, { t:'Venta', w:'12%', n:1 }, { t:'Saldo', w:'12%', n:1 }];
+  var desdeTxt=function(e){ return e.sinF ? 'sin fecha' : (fmtFechaCorta(e.desde)+' · '+deudaEdadTxt(e)); };
+  var desdeTd=function(e){ return '<span style="white-space:nowrap">'+esc(desdeTxt(e))+'</span>'; };
+  var cli=function(it){ return '<span class="imes-1l">'+(it.ant ? '<span class="imes-ant">de antes</span> ' : '')+esc(it.x.p.cliente||'—')+'</span>'; };
+  var ven=function(p){ return '<span class="imes-1l">'+esc(nombreCanonico(p.vendedor)||p.vendedor||'—')+'</span>'; };
+  var T=imesTrozos(L, IMES_FILAS_DEUDA, IMES_FILAS);
+  T.forEach(function(trozo, h){
+    if(!h){
+      var der='<div class="ai-caja"><h3>⏳ Las que deben, de la más vieja <small>'+L.length+'</small></h3>'+(trozo.length ? imesTabla(cols, trozo.map(function(it){
+          return [cli(it), ven(it.x.p), desdeTd(it.x), '<b>'+fmtBs0(it.x.saldo)+'</b>'];
+        })) : '<div class="ai-nota" style="font-size:14px;color:#15803d">✅ Ninguna venta del mes debe nada.</div>')+
+        (T.length>1 ? '<div class="ai-nota">Las otras '+(L.length-IMES_FILAS_DEUDA)+' siguen en la hoja siguiente.</div>' : '')+'</div>';
+      H.push(imesHoja('La cobranza', 'Lo vendido con entrega en '+esc(nom)+': cuánto ya entró y quién debe todavía.', kpis+'<div class="ai-g2" style="margin-top:16px">'+izq+der+'</div>', fuente));
+      return;
+    }
+    var desde=IMES_FILAS_DEUDA+(h-1)*IMES_FILAS;
+    H.push(imesHoja('Las que deben, sigue: '+(desde+1)+' a '+(desde+trozo.length)+' de '+L.length, '', imesTabla(cols2, trozo.map(function(it, i){
+      var p=it.x.p; return [String(desde+i+1), cli(it), '<span class="imes-1l">'+esc(p.nota||'—')+'</span>', ven(p), desdeTd(it.x), fmtBs0(ventaTotal(p)), '<b>'+fmtBs0(it.x.saldo)+'</b>'];
+    })), fuente));
+  });
+  return H;
+}
+/* Todas las hojas, numeradas: el resumen (hoja 1), por marca, los productos, ATC, el stock que faltó y la cobranza. */
+function imesHojas(D){
+  var H=[imesResumen(D), imesMarcasHoja(D)].concat(imesProductosHojas(D), [imesAtcHoja(D)], imesFaltoHojas(D), imesCobroHojas(D));
+  var titulo='Informe de '+esc(imesMes(D.mes))+(D.enCurso ? ' · a la fecha ('+esc(fmtFechaCorta(D.hoy))+')' : '')+' · Multiespumas';
+  var mesT=esc(atciMesTxt(D.mes))+(D.enCurso ? ' (a la fecha)' : '');
+  return H.map(function(h, i){ return h.replace('{{KICK}}', titulo+' · hoja '+(i+1)+' de '+H.length).replace('{{MES}}', mesT).replace('{{PAG}}', 'Hoja '+(i+1)+' de '+H.length); });
+}
+/* ---- la ventana ---- */
+function imesAbierto(){ var ov=document.getElementById('imes-ov'); return !!(ov && ov.style.display!=='none'); }
+function imesEstado(t, ocupado){ var e=document.getElementById('imes-estado'); if(!e) return; e.classList.toggle('ocupado', !!ocupado); e.innerHTML=t||IMES_AYUDA; }
+function imesEscala(){
+  var b=document.getElementById('imes-body'), h=document.getElementById('imes-hojas'); if(!b || !h) return;
+  var w=b.clientWidth-32, z=w>0 ? Math.min(1, w/ATCI_W) : 1;
+  h.style.zoom=String(Math.round(z*1000)/1000);
+}
+function imesAbrir(ym){
+  var ov=document.getElementById('imes-ov'); if(!ov) return false;
+  if(!UNLOCKED){ toast('📄 El informe del mes es con la contraseña de Administración (como la Proyección)','err',7000); return false; }
+  var inp=document.getElementById('imes-mes'), cur=diaNegocio().slice(0,7);
+  if(inp){ inp.max=cur; inp.min=PRY_PRIMER_MES; inp.value=(/^\d{4}-\d{2}$/.test(String(ym||'')) && ym<=cur) ? ym : imesMesDef(); }
+  ov.style.display='flex';
+  atciPaginaCss(true);
+  imesEstado();
+  imesPintar();
+  window.addEventListener('resize', imesEscala);
+  /* Con la planilla de hace más de un minuto, se relee y se vuelve a dibujar (como el informe de ATC): tiene que salir al día. */
+  if(CONNECTED && !(ULTIMO_REFRESCO && Date.now()-ULTIMO_REFRESCO<60000)){
+    imesEstado('⏳ Trayendo la planilla para que el informe salga al día…', true);
+    refrescarEstado().catch(function(){}).then(function(){
+      if(!imesAbierto() || IMES.ocupado) return;
+      imesPintar(); imesEstado();
+    });
+  }
+  return true;
+}
+function imesPintar(){
+  var inp=document.getElementById('imes-mes'), box=document.getElementById('imes-hojas'); if(!box) return;
+  var cur=diaNegocio().slice(0,7), ym=(inp && inp.value) || imesMesDef();
+  if(ym>cur){ ym=cur; if(inp) inp.value=cur; }
+  var D=imesDatos(ym), H=imesHojas(D);
+  IMES.ult=D;
+  box.innerHTML=H.join('');
+  var info=document.getElementById('imes-info'); if(info) info.textContent=atciMesTxt(D.mes)+(D.enCurso ? ' · a la fecha' : '')+' · '+H.length+' hojas';
+  imesEscala();
+}
+function imesCerrar(){
+  var ov=document.getElementById('imes-ov'); if(ov) ov.style.display='none';
+  window.removeEventListener('resize', imesEscala);
+  if(!atciAbierto()) atciPaginaCss(false);
+}
+function imesArchivo(D){ return 'Informe-del-mes-'+imesNomMes(D.mes)+'-'+D.mes.slice(0,4)+(D.enCurso ? '-a-la-fecha' : '')+'.pdf'; }
+function imesImprimir(){ atciPaginaCss(true); document.body.classList.add('printing-imes'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-imes'); }, 600); }
+function imesPdf(){
+  if(IMES.ocupado) return;
+  if(!IMES.ult || !document.querySelector('#imes-hojas .ai-pag')) imesPintar();
+  var D=IMES.ult, nombre=imesArchivo(D), btn=document.getElementById('imes-pdf');
+  IMES.ocupado=true; if(btn) btn.disabled=true;
+  imesEstado('⏳ Preparando el PDF…', true);
+  hojasAPdf(document.getElementById('imes-hojas'), nombre, 'Informe del mes · '+atciMesTxt(D.mes), function(t){ imesEstado(t, true); }).then(function(n){
+    imesEstado('✅ Listo: se bajó <b>'+esc(nombre)+'</b> ('+n+' hojas).');
+    toast('📄 PDF listo: '+nombre, 'ok');
+  }).catch(function(e){
+    console.error(e);
+    imesEstado(hojasPdfErrorTxt(e));
+    if(hojasPdfSinLibs(e)) imesImprimir();
+  }).then(function(){
+    IMES.ocupado=false; if(btn) btn.disabled=false;
   });
 }
 /* ==========================================================================
