@@ -17357,6 +17357,50 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; en la rama, versión de la página 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente)
+Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:
+los tres de la página retomaron con su trabajo sin guardar, que no se había perdido). Commits: `7b38ffa` (servidor), `6d57688` (120), `94106c0`
+(118), `9a9a31c` (119).
+- ☀️ **114 «Buen día»** (`.gs`, plantilla `vendedora_buen_dia`, 7 datos): 08:30 de lunes a sábado hábil (`waPhHabil_`), una vez por día, a cada
+  vendedora del equipo que está en `WA_VENDEDORAS` (sin Eduardo, ROHO ni internos; «Maria» encuentra a «Maria Flores»). Entregas de hoy con sus OC,
+  por cobrar en la puerta (`waSaldoACobrar_` = `saldoACobrar`), ventas sin N° de factura (`waDocVentaFalta_` = `docVentaFalta`), Kommo sin responder
+  y avisos de Contabilidad (`__avisos_conta__`). Sin nada pendiente no sale. ⚠️ El domingo NO sale (pregunta abierta: Mia Plaza y Tienda Banzer).
+- 🌙 **115 cierre del día** (`cierre_del_dia`, 7 datos): 21:15 todos los días a `WA_DUENO`, una vez por día; no sale un día sin ventas cargadas ni
+  entregas. Lo cargado hoy por marca y vendedora (`waVentaTotal_`, `waFueraDeConta_`, `waContaFecha_`), entregas con ✅, Kommo nuevos/sin responder
+  > 1 h, y el mes de la ÚLTIMA foto de `__pry_hist__` (no recalcula la proyección).
+  ⚠️ Las copias del `.gs` (`ventaTotal`, `saldoACobrar`, `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`) se comparan con la página
+  en `tests/test_wa_buen_dia_cierre.js` (96): si cambia una de la página, cambia la del `.gs`.
+- 📥 **Kommo «sin responder»** (`waKmLeer_`): `/events` sin `filter[entity]` (§4ng) de 48 h, `incoming_chat_message`/`outgoing_chat_message`, el
+  responsable de cada lead de a 50 y `/users` (sin « - Sucursal», sin tildes). La respuesta del bot de Kommo (`created_by` 0) NO cuenta. Una vez por
+  vuelta del bot. Con > 4.000 eventos de un tipo, > 1.000 leads o una vendedora que no aparece en Kommo: «sin dato» (nunca «ninguno» por adivinar).
+- 🧽 **Acción `bloki`** (`blokiPreguntar_`, afuera del candado, después de la clave del equipo): `{pregunta ≤300, contexto ≤12.000, quien}` →
+  `{ok, respuesta, usadas, tope, version}` o `{ok:false, error:'tope'|'ia_apagada'|'sin_clave'|'muy_largo'|'ia_error'|'vacia', detalle}`. Tope por día de
+  Bolivia `BLOKI_TOPE_DIA` (30; uso en `BLOKI_USO`), aparte del de WhatsApp; lo que no llegó a Claude no gasta. Pide `IA_ACTIVA` + la clave, no
+  `WA_ACTIVO`; comparte la pausa con el bot del cliente. ⚠️ Sin `PANEL_KEY` cualquiera con el `/exec` puede preguntar: el tope es el único freno.
+- Editor: `probarMensajesDelDia()` (qué diría cada mensaje ahora, sin mandar), `probarAntesDeImplementar` §17, `estadoBotWhatsApp` con el Buen día y Bloki.
+- 💬 **118 Bloki contesta** (página): la pestaña de su ayuda es «💬 Preguntame» (la ayuda escrita sigue abajo, «📚 ¿Cómo hago…?»). Con los números del
+  panel, sin gastar: stock (`blokiStock` = el cuadrito del formulario, `saldoVeredicto`; dos productos parecidos → pregunta cuál), saldo de un
+  cliente por nombre, celular u OC (`blokiCliente`), cupos (`blokiCupos`) y entregas (`blokiEntregas`). «mañana» = el día, «a la mañana» = el turno
+  (`blokiDia`). Una vendedora ve lo suyo (el nombre de Mis pedidos, no es control de acceso); clave/Administración/Contabilidad/Logística, todo.
+  Lo libre va a Claude SOLO con `UNLOCKED` y `servidorTiene('2026-11-07-a')` (`blokiClaude`, contexto `blokiContexto` ~2 KB). Lo que la ayuda escrita
+  ya contesta abre esa respuesta y ofrece «🤖 Preguntarle a Claude igual». `apiPost` conserva `quien` del pedido SOLO para `action:'bloki'`.
+  `tests/test_bloki_preguntas.js` (66; 65 rojas contra `b8676ca`).
+- 📝 **119 Revisar las observaciones** (página): al final de `submitPedido` (después de todo lo de siempre) `obsRevisar` compara las «Observaciones»
+  con día/turno (y el sábado solo AM), cantidades y plata; ventana «Corregir» / «Guardar igual», nunca frena. ⚠️ El final de `submitPedido` va
+  adentro de **`seguirAlGuardar`**: algo nuevo ahí, adentro. `OBS_REV_OK` recuerda un «Guardar igual» para un reintento. Calla en lo dudoso (dos
+  días o montos, «no», «ya pagó», «llamar», «retira», «hasta», SET/PAR, mañana domingo o feriado, «el resto con QR»). 12:00-12:59 no es ningún
+  turno (la lectura de `fichaNota`). Eduardo/ROHO sin aviso de plata con saldo 0. «Para guardar» lo dice. En Playwright solo con `OBS_REV_PRUEBA`.
+  `tests/test_revisar_obs.js` (72; 62 rojas contra `b8676ca`).
+- 📄 **120 Informe del mes** (página): Proyección → «📄 Informe del mes» (`#pry-informe-btn`, solo con la contraseña; `#imes-ov` con `adm-ov`).
+  Seis hojas A4 apaisadas: resumen con «3 cosas para mirar» (por reglas, sin IA: la mayor caída sobre lo vendido, falta cobrar sobre lo vendido, ✗
+  sobre los pedidos del mes y la ATC que más se repite), por marca, productos, ATC, stock que faltó (✗ y 🏭; cuenta RPT, Eduardo y ROHO) y cobranza.
+  Una sola verdad: `proyeccionMes`/`pryAltura`, las fichas de Contabilidad, `atciDatos`, `deudaEdad`. La foto a PDF salió de `atciPdf` a
+  **`hojasAPdf`** (la usan los dos informes). `tests/test_informe_mes.js` (51).
+- Preguntas abiertas al dueño: domingo del Buen día; el nombre «💬 Preguntame»; si Logística ve saldos de clientes; «sábado en la tarde» en un pedido
+  del sábado ¿ofrecer «pasar al lunes PM»?; pesos de «3 cosas para mirar»; ✗ solo ventas o también RPT/Eduardo/ROHO.
+- Para publicar: el dueño corre `crearPlantillasWhatsApp` (las dos plantillas nuevas) e implementa el `.gs` 07-a; volver atrás = ✏️ a la versión
+  anotada Y pegar la 06-e de `92714a6…`. La página anda igual con la 06-e (Bloki solo no llama a Claude).
+
 ### §4om — 🚚 LOS CHOFERES DEL 06/11 Y QUE ROTAN (06/11 a la noche; PUBLICADO, versión 2026-11-06-d)
 El dueño mandó: *«Carry Omar-Ysrael · Fotón nuevo Fernando- Luis Pierre · Fotón encarpado Cristhian-Diego · Fotón insumo Miguel Melgar — Es rotativo
 sí, por si falta actualizar la lista de choferes»*. Antes: Carry Luis Pierre/Ysrael, Foton nuevo Luis Eyzaguirre, Foton encarpado Cristhian/Miguel,
