@@ -8655,7 +8655,8 @@ function recibioFormPintar(){
   var b=function(on2, txt, quien){
     return '<button type="button" class="'+(on2?'active':'')+'" onclick="'+esc('recibioFormElegir('+JSON.stringify(quien)+')')+'">'+txt+'</button>';
   };
-  var h='<div class="seg" id="f-recibio">'+b(esV, '🧑‍💼 '+esc(vend), '')+(primero ? b(esCh, '🚚 El chofer', esCh ? q : primero) : '')+'</div>'+
+  /* El grupo no lleva id ni initSeg: cada botón trae su onclick. */
+  var h='<div class="seg">'+b(esV, '🧑‍💼 '+esc(vend), '')+(primero ? b(esCh, '🚚 El chofer', esCh ? q : primero) : '')+'</div>'+
     (esCh ? ('<div style="margin-top:6px"><select id="f-recibio-sel" aria-label="Qué chofer recibió el efectivo" onchange="recibioFormElegir(this.value)">'+
                lista.map(function(c){ return '<option'+(c===q?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select></div>') : '')+
     '<div class="rc-ayuda" style="font-size:.75rem;margin-top:5px;color:'+(FORM_RECIBIO.eleg?'var(--muted)':'var(--amber)')+'">'+

@@ -75,7 +75,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     var w = document.getElementById('wrap-recibio');
     return { ve: !!w && w.style.display !== 'none', hace: recibioFormHace(document.getElementById('f-vendedor').value),
       paso: fxPasosEstado()[3], der: ((document.getElementById('fx-der') || {}).textContent || '').replace(/\s+/g, ' '),
-      botones: [].map.call(document.querySelectorAll('#f-recibio button'), function (b) { return (b.classList.contains('active') ? '*' : '') + b.textContent.trim(); }) };
+      botones: [].map.call(document.querySelectorAll('#f-recibio-box .seg button'), function (b) { return (b.classList.contains('active') ? '*' : '') + b.textContent.trim(); }) };
   });
   const guardar = () => ev(async () => {
     var n0 = window._saves; submitPedido();
@@ -92,7 +92,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('1c · Guardar sin tocar quién recibió NO guarda y dice qué falta', !r.guardo && /QUIÉN RECIBIÓ EL EFECTIVO/.test(r.toast), r.toast);
 
   // ============ 2. la vendedora ============
-  await page.click('#f-recibio button:has-text("Carola")');
+  await page.click('#f-recibio-box .seg button:has-text("Carola")');
   e = await estado();
   chk('2a · tocando a la vendedora queda marcada y el paso listo', e.botones[0][0] === '*' && /✓ Quién recibió el efectivo/.test(e.der) && e.paso === true, e);
   r = await guardar();
@@ -101,7 +101,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
 
   // ============ 3. un chofer ============
   await llenar({ cliente: 'OTRO CLIENTE', img: 2 });
-  await page.click('#f-recibio button:has-text("El chofer")');
+  await page.click('#f-recibio-box .seg button:has-text("El chofer")');
   await page.selectOption('#f-recibio-sel', 'Luis Pierre');
   e = await estado();
   chk('3a · tocando «🚚 El chofer» sale la lista y se elige cuál', e.botones[1][0] === '*' && /Luis Pierre/.test(await page.textContent('#f-recibio-box')), e);
@@ -150,7 +150,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     return { hace: recibioFormHace(document.getElementById('f-vendedor').value), guardo: window._saves > n0, toast: (document.getElementById('toast') || {}).textContent || '' };
   }, idVend);
   chk('5b · «SÍ, pagado» con lo que faltaba en efectivo SÍ pregunta y no guarda sin elegir', ed2.hace && !ed2.guardo && /QUIÉN RECIBIÓ/.test(ed2.toast), ed2);
-  await page.click('#f-recibio button:has-text("El chofer")');
+  await page.click('#f-recibio-box .seg button:has-text("El chofer")');
   await page.selectOption('#f-recibio-sel', 'Luis Pierre');
   r = await guardar();
   const cob5 = await ev((id) => { var p = findById(id); return { a: anticipoDe(p), c: cobrosDe(p).map(function (c) { return { m: c.metodo, monto: c.monto, f: c.fecha, r: c.recibio }; }), pag: !!p.pagado, mp: p.metodoPago }; }, idVend);
