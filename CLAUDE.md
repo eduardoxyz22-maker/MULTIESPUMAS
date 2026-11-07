@@ -1453,7 +1453,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15, §15b y §15c (al vuelo), `tests/test_wa_claude.js` (11).
   ⚠️ **Nunca dos respuestas**: `IA_HECHO` (Propiedades) se anota ANTES de mandar y la toma de mensajes lo respeta; un número con un mensaje
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
-  🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
+  🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
 - `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
@@ -1623,12 +1623,20 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 
 ## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor: la 07-b no se implementó, el dueño implementó directo la `2026-11-07-c` (07/11, §4op) que la trae; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
+  👔 `WA_DUENO` puede tener varios (el dueño PRIMERO y su jefe): a todos el cierre, el reclamo y la alerta de leads; el efectivo, solo al primero (§4or, `.gs` 07-e
+  IMPLEMENTADO 07/11, enlace fijo `1eb5c58…`, 6.938 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 07-d de `ff6f932…`). Con más de 50 propiedades la pantalla
+  es de solo lectura: el jefe se agrega con una función en un archivo aparte que SUMA al final de WA_DUENO (el número nunca al repo).
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO` (desde la 07-d, §4oq: CADA vendedor con «N prod., Bs X», `waCdProds_`, y la v2 con el botón «Ver qué vendió cada uno» → `waCdPide_`/`waCdResponder_` le mandan, como texto, cada vendedor con sus productos sumados y su monto, sin OC ni cliente; también si el dueño escribe «productos»); el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
   Kommo «sin responder» = `/events` sin `filter[entity]` (§4ng), la respuesta del bot de Kommo no cuenta, lo dudoso dice «sin dato».
 - 🧽 **Acción `bloki`** (afuera del candado, tope `BLOKI_TOPE_DIA`=30 por día, `IA_ACTIVA` + clave). 💬 En la página, «💬 Preguntame»: stock, saldo
   de un cliente, cupos y entregas con las cuentas del panel (`blokiStock` = `saldoVeredicto`, etc.; «a la mañana» = turno, «mañana» = día); a Claude
   solo con `UNLOCKED` y `servidorTiene('2026-11-07-a')`. Una vendedora ve lo suyo. `tests/test_bloki_preguntas.js` (66).
+  🏷️ **El código de un producto** (§4os, página 07-g; dueño: *«¿y no que Bloki respondía preguntas?»*): «código del cloud 90x190», «¿qué es el CH1220?»
+  (`blokiCodigo`): la lista de precios, los Excel de los almacenes (lo que la lista no tiene, `blokiCodIdx().alm`) y, si en ninguno, el histórico
+  (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
+  El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
+  `d:"CLOUD"`: la clave del stock no cambia.
 - 📝 **Revisar las observaciones** (`obsRevisar`, al final de `submitPedido`): día/turno, cantidades y plata contra lo cargado; «Corregir» / «Guardar
   igual», nunca frena; calla en lo dudoso. ⚠️ El final de `submitPedido` vive en **`seguirAlGuardar`**: algo nuevo ahí va adentro. `OBS_REV_PRUEBA`.
   `tests/test_revisar_obs.js` (72).
