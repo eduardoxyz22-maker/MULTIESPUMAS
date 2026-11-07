@@ -5739,6 +5739,9 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .obsrev li{ margin:7px 0; line-height:1.45; font-size:.9rem; }
 .obsrev-nota{ margin-top:10px; font-size:.8rem; line-height:1.4; color:#5b4214; background:#fff; border:1px dashed var(--amber-border); border-radius:8px; padding:7px 9px; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow:auto; }
 .obsrev-mira{ outline:3px solid var(--amber)!important; outline-offset:2px; }
+.obsrev-mover{ margin-top:10px; display:flex; flex-direction:column; gap:5px; }
+.obsrev-mover .btn{ width:100%; }
+.obsrev-mover small{ font-size:.78rem; line-height:1.35; color:#5b4214; }
 .fx-der .fx-mes{ display:block !important; margin:0; }
 .fx-hoy{ display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#0b1730,#1e3a5f); color:#fff; border-radius:12px; padding:10px 12px; }
 .fx-hoy .g{ font-size:1.5rem; font-weight:900; line-height:1; } .fx-hoy .s{ font-size:.72rem; opacity:.85; }
@@ -6906,7 +6909,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-07-a';   // (07/11, 11-07-a) ☀️ el «Buen día» a cada vendedora (08:30) y 🌙 el cierre del día al dueño (21:15) por WhatsApp (solo el servidor) · 🧽 la acción `bloki` (Bloki le pregunta a Claude con lo que el panel calculó): esta página la llama solo con esta versión (servidorTiene); lo demás anda igual con la 06-e · (06/11, 11-06-e) 🗓️ el efectivo del día solo de ventas de noviembre (solo el servidor) · (06/11, 11-06-d) 📅 el efectivo de cada día (lo que ingresó y lo acumulado sin recoger) por WhatsApp (solo el servidor) · (06/11, 11-06-c) 🚚 el efectivo de los choferes sin rendir va a Contabilidad, no al dueño (solo el servidor) · (06/11, 11-06-b) 💵 el WhatsApp del efectivo sin retirar al dueño (solo el servidor: la página anda igual con la 06-a) · (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
+var SCRIPT_VERSION_ESPERADA='2026-11-07-b';   // (07/11, 11-07-b) ☀️ el «Buen día» también el domingo para las vendedoras de Mia Plaza y Tienda Banzer (solo el servidor) · (07/11, 11-07-a) ☀️ el «Buen día» a cada vendedora (08:30) y 🌙 el cierre del día al dueño (21:15) por WhatsApp (solo el servidor) · 🧽 la acción `bloki` (Bloki le pregunta a Claude con lo que el panel calculó): esta página la llama solo con esta versión (servidorTiene); lo demás anda igual con la 06-e · (06/11, 11-06-e) 🗓️ el efectivo del día solo de ventas de noviembre (solo el servidor) · (06/11, 11-06-d) 📅 el efectivo de cada día (lo que ingresó y lo acumulado sin recoger) por WhatsApp (solo el servidor) · (06/11, 11-06-c) 🚚 el efectivo de los choferes sin rendir va a Contabilidad, no al dueño (solo el servidor) · (06/11, 11-06-b) 💵 el WhatsApp del efectivo sin retirar al dueño (solo el servidor: la página anda igual con la 06-a) · (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -16264,6 +16267,46 @@ function onCompFormElegido(ev){
    ============================================================================ */
 var OBS_REV_OK='';   // «Guardar igual» de ESTA lista: si el servidor dijo que no, el próximo intento no vuelve a preguntar. Una sola vez.
 function obsRevActiva(){ return !(navigator.webdriver && !window.OBS_REV_PRUEBA); }
+/* 📅 (07/11, dueño: «Sí, lógico, sábado en la tarde no trabajamos») LAS OBSERVACIONES PIDEN EL SÁBADO A LA TARDE, que no existe (el sábado
+   el camión sale solo a la mañana). Además del aviso de siempre, la ventana ofrece «📅 Pasarlo al lunes DD/MM a la tarde»: el primer día
+   hábil DESPUÉS de ese sábado (sin domingo, feriado, día cerrado ni día sin tarde: `sigDiaHabil` + `limTurno`), turno PM. El botón solo
+   cambia la fecha y el turno del formulario como lo haría la persona (con sus eventos: cupos, saldo y agenda se repintan), cierra la
+   ventana y NO guarda: se vuelve a tocar «Guardar», con todas las reglas de siempre (los cupos incluidos: si esa tarde está llena, lo dice).
+   · ¿Qué sábado? El de la fecha escrita («sábado 14/11»); si no, el del pedido si es sábado; si no («el sábado», con el pedido otro día),
+     el sábado más cerca de la fecha del pedido que no haya pasado.
+   · `OBS_REV_MOVIDO` recuerda lo que propuso el panel (el pedido que se edita, la nota tal cual, el día y el turno): al guardar con ESO, el
+     aviso del sábado a la tarde de ESA nota no vuelve. Cualquier otra cosa (otra nota, otro día, otro turno, otro pedido) se mira como
+     siempre, y los otros avisos (cuántos, cuánto cobrar) siguen. `resetForm` lo olvida. */
+var OBS_REV_MOVIDO=null;
+function obsRevSabado(dia, F, hoy){
+  if(dia && dia.iso) return dowDe(dia.iso)===6 ? dia.iso : '';
+  if(dowDe(F)===6) return F;
+  if(!dia || dia.dow!==6 || dowDe(F)<0) return '';
+  var s1=obsRevMas(F, (6-dowDe(F)+7)%7), s0=obsRevMas(s1, -7);   // el sábado de esa semana y el de la anterior
+  return (s0>=hoy && diasEntre(s0, F)<diasEntre(F, s1)) ? s0 : s1;
+}
+function obsRevSabMover(dia, F, hoy){
+  var s=obsRevSabado(dia, F, hoy); if(!s) return null;
+  var d=sigDiaHabil(s);
+  for(var n=0; n<30 && (limTurno(d, 'PM')<=0 || diaCerrado(d)); n++) d=sigDiaHabil(d);
+  if(!d || d<hoy) return null;
+  return { sab:s, f:d, t:'PM' };
+}
+/* ¿Lo que se guarda es justo lo que propuso el botón, con la misma nota y en el mismo pedido? */
+function obsRevMovidoVale(rec){
+  var M=OBS_REV_MOVIDO; if(!M || !rec) return false;
+  return M.id===String(EDIT_ID||'') && M.obs===String(rec.observaciones||'').trim() && String(rec.fecha||'')===M.f && turnoDe(rec)===M.t;
+}
+/* El botón: la fecha y el turno, como si los cambiara la persona (igual que `fxElegirDia`). */
+function obsRevMoverAplicar(mv, rec){
+  var i=document.getElementById('f-fecha');
+  if(i && i.value!==mv.f){ i.value=mv.f; i.dispatchEvent(new Event('input', { bubbles:true })); i.dispatchEvent(new Event('change', { bubbles:true })); }
+  try{ ajustarTurnoSeg(mv.f); }catch(e){}   // el PM se habilita para ESE día (con un sábado en la fecha estaba apagado)
+  var b=document.querySelector('#f-turno button[data-val="'+mv.t+'"]'); if(b && !b.classList.contains('active')) b.click();
+  OBS_REV_MOVIDO={ id:String(EDIT_ID||''), obs:String((rec&&rec.observaciones)||'').trim(), f:mv.f, t:mv.t };
+  try{ toast('📅 Lo pasé al '+nxDiaTxt(mv.f)+' a la tarde: revisá y tocá «Guardar».', 'ok', 6000); }catch(e){}
+  obsRevIr({ foco:{ id:'f-fecha' } });
+}
 /* Mayúsculas sin tildes, LETRA POR LETRA: el largo no cambia, así la posición de lo leído sirve para citar el texto original. */
 function obsRevMay(s){
   s=String(s==null?'':s); var o='';
@@ -16338,7 +16381,8 @@ function obsRevUbicarHora(U, N){
   if(k>=0) r={ i:k, j:k+txt.length, cita:1 };
   if(!r){
     var mm=/\d{1,2}(?::\d{2})?/.exec(N.horaTxt||N.hora||'');
-    if(mm){ var re=new RegExp('(^|[^\\d:])('+mm[0].replace(':','\\s*:')+')(?![\\d:])'), x=re.exec(U); if(x){ var a=x.index+x[1].length; r={ i:a, j:a+x[2].length }; } }
+    /* (07/11) un número pegado a «/» es de una fecha, no la hora: «sábado 14/11 en la tarde» no es «a las 11 pm» */
+    if(mm){ var re=new RegExp('(^|[^\\d:\\/])('+mm[0].replace(':','\\s*:')+')(?![\\d:\\/])'), x=re.exec(U); if(x){ var a=x.index+x[1].length; r={ i:a, j:a+x[2].length }; } }
   }
   if(!r && /MEDIO\s*DIA/.test(txt)){ var x2=/MEDIO\s*DIA/.exec(U); if(x2) r={ i:x2.index, j:x2.index+x2[0].length }; }
   if(r && /^\s*(DIAS?|SEMANAS?|MESES|ANOS|PLAZAS?|CM|MTS?|METROS?|CUADRAS?|KM|UNIDADES?|BS|HORAS?\s+ANTES)\b/.test(U.slice(r.j))) return null;
@@ -16510,7 +16554,11 @@ function obsRevisar(p, o){
       if(sab) t+=' Además, el sábado el camión sale solo a la mañana.';
       else if(malDia && dia.dow===0) t+=' Además, los domingos el camión no sale.';
       if(malDia && dia.iso && feriadoDe(dia.iso)) t+=' Además, el '+fmtFechaCorta(dia.iso)+' es feriado ('+feriadoDe(dia.iso)+'): el camión no sale.';
-      out.push({ k:'dia', t:t, foco:(malDia || sab) ? { id:'f-fecha' } : { turno:tur.t } });
+      var av={ k:'dia', t:t, foco:(malDia || sab) ? { id:'f-fecha' } : { turno:tur.t } };
+      /* 📅 (07/11, dueño: «Sí, lógico, sábado en la tarde no trabajamos») piden el sábado a la tarde, que no existe: se ofrece pasarlo
+         al primer día hábil después de ESE sábado, a la tarde (`obsRevPreguntar` pone el botón; `OBS_REV_MOVIDO` lo recuerda) */
+      if(sab){ av.sab=1; var mv=obsRevSabMover(dia, F, hoy); if(mv && !(mv.f===F && tuP===mv.t)) av.mover=mv; }   // (ya está ahí: sin botón)
+      out.push(av);
     }
   }
   /* 2 · cuántos */
@@ -16533,6 +16581,8 @@ function obsRevAvisos(rec, prev, tipo){
     var ya={}; obsRevisar(prev, { rel:false, tipo:tipo }).forEach(function(x){ ya[x.t]=1; });
     A=A.filter(function(x){ return !ya[x.t]; });
   }
+  /* 📅 lo que el propio panel propuso para el sábado a la tarde («Pasarlo al lunes…»): ese aviso, con esa nota, no vuelve */
+  if(A.length && obsRevMovidoVale(rec)) A=A.filter(function(x){ return !(x.k==='dia' && x.sab); });
   return A;
 }
 /* Lo mismo con lo que hay en el formulario ahora (para «Para guardar»). */
@@ -16550,10 +16600,21 @@ function obsRevPreguntar(L, rec, seguir){
   var ya=(OBS_REV_OK===firma); OBS_REV_OK='';
   if(ya) return false;
   var obs=String((rec&&rec.observaciones)||'').trim();
+  /* 📅 piden el sábado a la tarde: «Pasarlo al lunes DD/MM a la tarde» (cambia fecha y turno, no guarda) */
+  var mv=null; L.forEach(function(x){ if(!mv && x.mover) mv=x.mover; });
+  var mvH='';
+  if(mv){
+    var lim=limTurno(mv.f, 'PM'), us=cuposUsadosTurno(mv.f, 'PM'), lib=lim-us;
+    mvH='<div class="obsrev-mover">'+
+      '<button type="button" class="btn btn-primary" id="obsrev-mover">📅 Pasarlo al '+esc(nxDiaTxt(mv.f))+' a la tarde</button>'+
+      '<small>'+(lib>0 ? ('Cambia la fecha y el turno del pedido (esa tarde quedan '+lib+' lugar'+(lib===1?'':'es')+'). No guarda: después tocá «Guardar».')
+                       : ('Cambia la fecha y el turno del pedido. ⚠️ Esa tarde ya está llena ('+us+' de '+lim+'): al guardar te lo va a decir.'))+'</small></div>';
+  }
   openModal('<div class="modal-h" style="background:var(--amber)"><h3>⚠️ Antes de guardar, revisá</h3></div>'+
     '<div class="modal-b obsrev-b">'+
       '<div class="obsrev" id="obsrev-lista"><div class="obsrev-s">Las observaciones dicen otra cosa que lo que cargaste:</div>'+
         '<ul>'+L.map(function(x){ return '<li>'+esc(x.t)+'</li>'; }).join('')+'</ul></div>'+
+      mvH+
       '<div class="obsrev-nota"><b>📝 Observaciones:</b> '+esc(obs.length>400 ? (obs.slice(0, 400)+'…') : obs)+'</div>'+
       '<div class="modal-actions">'+
         '<button type="button" class="btn btn-primary" id="obsrev-corregir" style="flex:1;min-width:140px">Corregir</button>'+
@@ -16563,6 +16624,8 @@ function obsRevPreguntar(L, rec, seguir){
   var hecho=false;
   document.getElementById('obsrev-corregir').onclick=function(){ if(hecho) return; hecho=true; closeModal(); obsRevIr(L[0]); };
   document.getElementById('obsrev-igual').onclick=function(){ if(hecho) return; hecho=true; OBS_REV_OK=firma; closeModal(); seguir(); };
+  var bm=document.getElementById('obsrev-mover');
+  if(bm) bm.onclick=function(){ if(hecho) return; hecho=true; closeModal(); obsRevMoverAplicar(mv, rec); };
   try{ document.getElementById('obsrev-corregir').focus(); }catch(e){}
   return true;
 }
@@ -18565,6 +18628,7 @@ function confirmarReemplazoForm(){
 function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   REPETIR_DE='';                               // 🔁 (§4ok-101)
+  OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
   totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
@@ -51465,7 +51529,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-07-b';
+var PANEL_V='2026-11-07-c';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -55021,6 +55085,9 @@ function asisPreguntasHtml(){
    dd/mm. Cada respuesta lleva «con los números del panel · no gasta».
    QUIÉN VE QUÉ: una vendedora, solo lo suyo (sus ventas y sus entregas); con la contraseña, o quien entró como Administración,
    Contabilidad o Logística, todo (`blokiAlcance`). El stock y los cupos, todos.
+   🔒 (07/11, dueño: *«No y no deberían, no les interesa»*) LO QUE DEBE UN CLIENTE, LOGÍSTICA NO: quien entró como Logística SIN la
+   contraseña (`blokiPlataNo`) recibe «eso lo ve su vendedora o Contabilidad» y nada de la plata (ni si el cliente existe). Las entregas,
+   el stock y los cupos los sigue viendo como antes. A Claude no le llega nada (va solo con la contraseña, `blokiClaudePuede`).
      5. 🤖 LO DEMÁS, A CLAUDE — solo con la contraseña de Administración (`UNLOCKED`) y con el servidor ≥ `BLOKI_CLAUDE_DESDE`:
         `apiPost({action:'bloki', pregunta, contexto, quien})` → `{ok:true, respuesta, usadas, tope, version}` o `{ok:false, error:'tope'|
         'ia_apagada'|'sin_clave'|'muy_largo'|'ia_error'|'vacia', detalle, usadas, tope}` (el servidor es `blokiPreguntar_`, `7b38ffa`; la
@@ -55228,6 +55295,11 @@ function blokiAlcance(){
   var todo=!!UNLOCKED || rol==='admin' || rol==='conta' || rol==='logistica' || (function(){ try{ return asisVeAdm(); }catch(e){ return false; } })();
   return { todo:todo, yo:asisVendedor(), rol:rol };
 }
+/* 🔒 (07/11, dueño) Lo que le falta pagar a un cliente no es para Logística: solo con la contraseña. Las entregas, el stock y los cupos, sí. */
+function blokiPlataNo(){
+  var rol=''; try{ rol=quienRol(); }catch(e){}
+  return rol==='logistica' && !UNLOCKED;
+}
 function blokiQuienSos(que){
   return { h:'👋 Primero decime quién sos: así te muestro '+esc(que)+'.', btns:[['👋 Elegir mi nombre', function(){ quienAbrir(true); }]] };
 }
@@ -55375,6 +55447,9 @@ function blokiCliDatos(L){
 function blokiOcTxt(p){ return 'OC '+(String((p&&p.oc)||'').trim()||'s/n'); }
 function blokiAbrirVenta(id){ asisCerrar(); try{ showContaModal(id); }catch(e){ try{ showMisModal(id); }catch(e2){} } }
 function blokiCliente(o){
+  /* 🔒 Logística sin la contraseña: ni se busca (no dice si el cliente existe ni cuánto debe) */
+  if(blokiPlataNo()) return { h:'🔒 Lo que le falta pagar a un cliente lo ve su vendedora o Contabilidad: preguntales a ellas.',
+    sub:['Yo te ayudo con lo de logística: el stock («¿hay titanio ice 140 para el jueves?»), los cupos del camión («¿hay lugar el sábado?») y las entregas («¿qué sale mañana?»).'] };
   var S=blokiAlcance();
   if(!S.todo && !S.yo) return blokiQuienSos('las ventas de tus clientes');
   var r=o.resto, ventas=STATE.filter(function(p){ return clfEntra(p) && !esATC(p.oc) && (S.todo || mismoVendedor(p.vendedor, S.yo)); });
@@ -55575,7 +55650,9 @@ function blokiBurbuja(it){
 }
 function blokiChatHtml(){
   var c=BLOKI_P.chat;
+  var sinPlata=blokiPlataNo();   // 🔒 a Logística no se le sugiere preguntar lo que debe un cliente
   if(!c.length) return '<div id="asis-chat" class="bkp-chat"><div class="bkp-ej"><small>Por ejemplo:</small>'+BLOKI_EJ.map(function(q, i){
+    if(sinPlata && /falta pagar/i.test(q)) return '';
     return '<button type="button" onclick="blokiEjemplo('+i+')">'+esc(/ $/.test(q) ? (q+'…?') : q)+'</button>'; }).join('')+'</div></div>';
   return '<div id="asis-chat" class="bkp-chat" aria-live="polite">'+c.map(blokiBurbuja).join('')+'</div>';
 }

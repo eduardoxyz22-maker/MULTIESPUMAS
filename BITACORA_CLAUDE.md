@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; en la rama, versión de la página 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente)
+### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; PÁGINA PUBLICADA 07/11 (dueño: «Ok»), `main` = `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente, enlace fijo `fb048e04560d65c493a8c1d8724d7cadb8a0c207`, 6.726 líneas)
 Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:
 los tres de la página retomaron con su trabajo sin guardar, que no se había perdido). Commits: `7b38ffa` (servidor), `6d57688` (120), `94106c0`
 (118), `9a9a31c` (119).
@@ -17396,6 +17396,19 @@ los tres de la página retomaron con su trabajo sin guardar, que no se había pe
   sobre los pedidos del mes y la ATC que más se repite), por marca, productos, ATC, stock que faltó (✗ y 🏭; cuenta RPT, Eduardo y ROHO) y cobranza.
   Una sola verdad: `proyeccionMes`/`pryAltura`, las fichas de Contabilidad, `atciDatos`, `deudaEdad`. La foto a PDF salió de `atciPdf` a
   **`hojasAPdf`** (la usan los dos informes). `tests/test_informe_mes.js` (51).
+- **Respuestas del dueño (07/11, noche)**: *«Sí, los domingos para los que trabajan domingos · Sí, así está bien Bloki · No, y no deberían, no les
+  interesa · Sí, lógico, sábado en la tarde no trabajamos»*. Hecho:
+  · ☀️ **Servidor `2026-11-07-b`** (`bb1a97f`): el «Buen día» también el DOMINGO, solo a las vendedoras cuya sucursal en KOMMO («Nombre - Sucursal»,
+  `waKmSinResp_` → `sucs`) está en `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer; «Banzer» solo es el almacén y no cuenta). Se decide al ARMAR
+  (`waBdDomingo_` en `waArmar_`): Kommo caído, usuario no encontrado, sin sucursal o nombre repetido → no sale y queda una fila en «Bot WhatsApp».
+  Lunes a sábado no cambió ni depende de Kommo. El domingo no lista entregas. `test_wa_buen_dia_cierre` §9 (→ 119).
+  · 🔒 **Bloki no le dice a Logística cuánto debe un cliente** (`blokiPlataNo`: rol logística sin la contraseña); stock, cupos y entregas sí.
+  · 📅 **«Sábado en la tarde» ofrece «Pasarlo al lunes DD/MM a la tarde»** (`obsRevSabMover`/`obsRevMoverAplicar`: el primer día después de ese
+  sábado que no es domingo, feriado, día cerrado ni sin tarde; pone fecha y 🌆 PM, NO guarda); `OBS_REV_MOVIDO` evita que el mismo aviso vuelva al
+  guardar con lo propuesto. `obsRevUbicarHora` ya no lee «14/11» como «las 11». `test_bloki_preguntas` §9 (74), `test_revisar_obs` §14 (89).
+  · Pregunta abierta: Kommo y `VENDEDOR_SUCURSAL` del panel no coinciden (Carola, Jonathan, Isabel, Fabián): ¿se pasan las de Kommo al panel?
+  · 💵 El 06/11 a Contabilidad le llegó el efectivo y al dueño no: el servidor contesta `2026-11-06-d`; lo probable es que a las 18:00 todavía
+  corría la 06-b/c (al dueño solo con efectivo de 48 h+, y la marca `ef18` del día ya quedó puesta). Con la 06-d sale a los dos desde el 07/11 9:00.
 - Preguntas abiertas al dueño: domingo del Buen día; el nombre «💬 Preguntame»; si Logística ve saldos de clientes; «sábado en la tarde» en un pedido
   del sábado ¿ofrecer «pasar al lunes PM»?; pesos de «3 cosas para mirar»; ✗ solo ventas o también RPT/Eduardo/ROHO.
 - Para publicar: el dueño corre `crearPlantillasWhatsApp` (las dos plantillas nuevas) e implementa el `.gs` 07-a; volver atrás = ✏️ a la versión

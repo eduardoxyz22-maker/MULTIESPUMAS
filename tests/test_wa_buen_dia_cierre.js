@@ -1,8 +1,9 @@
 /* ☀️🌙🧽 SERVIDOR 2026-11-07-a: EL «BUEN DÍA» A LAS VENDEDORAS (idea 114), EL CIERRE DEL DÍA AL DUEÑO (idea 115) Y LA ACCIÓN `bloki`
-   (la mitad del servidor de la idea 118: Bloki le pregunta a Claude con lo que el panel ya calculó).
+   (la mitad del servidor de la idea 118: Bloki le pregunta a Claude con lo que el panel ya calculó). ☀️ 2026-11-07-b: el «Buen día» del
+   DOMINGO, solo a las de las tiendas que abren el domingo (§9).
      1. Las plantillas: `vendedora_buen_dia` y `cierre_del_dia` en WA_PLANTILLAS (7 datos, ejemplo de 7, UTILITY) y en WA_TIPOS.
-     2. El «Buen día»: 08:30 de lunes a sábado (no domingo ni feriado), una vez, a cada vendedora del EQUIPO de WA_VENDEDORAS (sin Eduardo,
-        ROHO ni internos); sin nada pendiente no sale; WA_PRUEBA.
+     2. El «Buen día»: 08:30 de lunes a sábado (no en un feriado; el domingo, ver 9), una vez, a cada vendedora del EQUIPO de WA_VENDEDORAS
+        (sin Eduardo, ROHO ni internos); sin nada pendiente no sale; WA_PRUEBA.
      3. Cada dato: las entregas de hoy sin ✅ (mañana primero, 6 y «y N más»), lo de cobrar en la puerta (sin ATC), las ventas sin factura o
         remisión, Kommo sin responder (el bot de Kommo no es una respuesta; fuera de las 48 h no cuenta) y los avisos de Contabilidad abiertos.
      4. Kommo: «sin dato» si no contesta o falta KOMMO_TOKEN (el mensaje sale igual; si era lo único, no sale); `/events` SIN `filter[entity]`;
@@ -14,6 +15,9 @@
      7. La página y el servidor cuentan igual: `ventaTotal`, `saldoACobrar`, `docVentaFalta`, `fueraDeConta`, las ventas cargadas hoy,
         `ctaAvSoloFecha`/`ctaAvAbiertos` y las constantes copiadas (DOCV_DESDE, CTA_AV_ID, PRY_HIST_ID).
      8. probarAntesDeImplementar y probarMensajesDelDia.
+     9. (2026-11-07-b) El domingo: solo a las vendedoras de Mia Plaza y Tienda Banzer (la tienda, de su usuario de Kommo «Nombre - Sucursal»,
+        sin tildes ni mayúsculas; «Banzer» a secas es el almacén); sin Kommo, sin su usuario, sin la tienda o con dos usuarios con su nombre,
+        a nadie; sin entregas (no sale el camión); una vez; Kommo leído una vez; el sábado no cambia ni depende de Kommo.
    Datos SINTÉTICOS (el repo es público). Reloj de Bolivia. Las pruebas no salen a la red (Meta, Kommo y Claude de mentira).
    Se corre:  node tests/test_wa_buen_dia_cierre.js   (desde la raíz del repo; GS=<otro .gs> para probar contra otra versión) */
 const fs = require('fs'), vm = require('vm'), path = require('path');
@@ -248,7 +252,8 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     S.limpiar(); poner(HOY + ' 09:10'); S.repaso();
     chk('2f una vez por día (a las 09:10 no se repite)', bd().length === 0, S.salen());
     const S2 = lleno(); poner('2026-11-15 08:35'); S2.repaso();
-    chk('2g el domingo no sale', S2.salen('vendedora_buen_dia').length === 0, S2.salen());
+    chk('2g el domingo (07-b) solo a las de las tiendas que abren: Carola (Tienda Banzer) sí; Maria (Buenos Aires, con una factura pendiente) no',
+        JSON.stringify(S2.salen('vendedora_buen_dia').map(x => x.to)) === JSON.stringify(['59170000001']), S2.salen());
     const S3 = lleno(); poner('2026-12-25 08:35'); S3.repaso();
     chk('2h en un feriado (25/12) no sale', S3.salen('vendedora_buen_dia').length === 0, S3.salen());
     const S4 = lleno(); poner('2026-11-14 08:35'); S4.repaso();
@@ -467,6 +472,92 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
         M.some(l => /^🌙 El cierre del día diría: martes 10\/11 \| Bs 13\.500 · 7 ventas/.test(l)) && S.meta.llamadas.length === 0, M);
     const E = S.ctx.estadoBotWhatsApp();
     chk('8i estadoBotWhatsApp dice a quién va el buen día y el uso de Bloki', Array.isArray(E.buenDia) && E.buenDia.length === 4 && E.bloki && E.blokiTope === 30, { buenDia: E.buenDia, bloki: E.bloki });
+  });
+
+  seccion('9. (2026-11-07-b) El «Buen día» del domingo: solo las tiendas que abren el domingo', () => {
+    const DOM = '2026-11-15', SAB = '2026-11-14';   // domingo y sábado
+    const Ev = (lead, cuando) => ({ type: 'incoming_chat_message', entity_type: 'lead', entity_id: lead, created_at: SEG(cuando), created_by: 0 });
+    /* Lo de cada una el domingo: Carola (Tienda Banzer) sus facturas y avisos de siempre + un pedido que quedó con fecha de domingo;
+       Mirian (Mia Plaza) un lead de Kommo de hoy; Isabel (Central) un lead de hoy; Maria (Buenos Aires) su factura pendiente. */
+    const domingo = (props, ajustar) => {
+      const S = lleno(props);
+      Object.assign(S.kommo.resp, { 9010: 14, 9011: 13 });
+      S.kommo.eventos.push(Ev(9010, DOM + ' 08:00'), Ev(9011, DOM + ' 07:00'));
+      S.cargar([P('cdom', 'Carola Chavez', { oc: '11-120', fecha: DOM, turno: 'AM', nroDia: 1, saldo: 800, ts: TS('2026-11-12'), productos: DOC(20) })]);
+      if (ajustar) ajustar(S);
+      return S;
+    };
+    /* Los usuarios de Kommo con el MISMO id de cada una que en `kommoLleno` (así sus leads siguen siendo suyos); uno repetido, 21+. */
+    const ID = { carola: 11, maria: 12, isabel: 13, mirian: 14 };
+    const usuarios = (S, L) => { const ya = {}; S.kommo.usuarios = L.map((n, i) => { const k = n.trim().split(/\s+/)[0].toLowerCase(), id = ya[k] ? 21 + i : ID[k]; ya[k] = 1; return { id, name: n }; }); };
+    const bd = (S) => S.salen('vendedora_buen_dia'), tos = (S) => bd(S).map(x => x.to).sort();
+    const salteados = (S) => S.hoja().filter(f => f[3] === 'Vendedora: buen día' && f[7] === '⏭️ no se manda');
+
+    const S = domingo(); poner(DOM + ' 08:25'); S.repaso();
+    chk('9a el domingo a las 08:25 todavía no', bd(S).length === 0, S.salen());
+    S.limpiar(); poner(DOM + ' 08:35'); S.repaso();
+    chk('9b a las 08:35 sale SOLO a Carola (Tienda Banzer) y a Mirian (Mia Plaza)', JSON.stringify(tos(S)) === JSON.stringify(['59170000001', '59170000004']), bd(S).map(x => x.to + ' ' + x.p[0]));
+    chk('9c …ni a Maria (Buenos Aires) ni a Isabel (Central), aunque tienen algo pendiente; y no se anota (su tienda cierra el domingo: es lo normal)',
+        !tos(S).some(t => /5917000000[23]/.test(t)) && salteados(S).length === 0, { a: tos(S), hoja: S.hoja().map(f => f[3] + ' ' + f[4] + ' ' + f[7] + ' ' + f[8]) });
+    const c = (bd(S).find(x => x.to === '59170000001') || { p: [] }).p, mi = (bd(S).find(x => x.to === '59170000004') || { p: [] }).p;
+    chk('9d Carola: el domingo no sale el camión → «Hoy se entregan: ninguno» y «nada» por cobrar (aunque un pedido quedó con fecha de domingo); lo demás, igual',
+        JSON.stringify(c) === JSON.stringify(['Carola', 'domingo 15/11', 'ninguno', 'nada', '3 ventas · 11-101 · 11-104 · 11-110', 'ninguno', '2 avisos · 11-101 · 11-105 (1 solo la fecha de la foto)']), c);
+    chk('9e Mirian: su lead de hoy', JSON.stringify(mi) === JSON.stringify(['Mirian', 'domingo 15/11', 'ninguno', 'nada', 'ninguna', '1 lead (de hoy 08:00)', 'ninguno']), mi);
+    chk('9f Kommo se lee UNA vez en la vuelta (los usuarios, una vez), aunque son 4 vendedoras', S.kommo.llamadas.filter(u => /\/users/.test(u)).length === 1 && eventos(S).length === 2,
+        { users: S.kommo.llamadas.filter(u => /\/users/.test(u)).length, events: eventos(S).length });
+    S.limpiar(); poner(DOM + ' 09:10'); S.repaso();
+    chk('9g una vez por día: a las 09:10 no se repite (ni vuelve a preguntarle a Kommo por el «Buen día»)', bd(S).length === 0 && S.kommo.llamadas.filter(u => /\/users/.test(u)).length === 0, S.salen());
+
+    const F = domingo(null, (X) => { X.kommo.falla = true; }); poner(DOM + ' 08:35'); F.repaso();
+    chk('9h Kommo no contesta: el domingo a NADIE (no se adivina la tienda)', bd(F).length === 0, bd(F));
+    chk('9i …y queda anotado por qué, una fila por vendedora', salteados(F).length === 4 && salteados(F).every(f => /domingo y no pude leer Kommo/.test(f[8])), salteados(F).map(f => f[4] + ' ' + f[8]));
+    F.limpiar(); F.kommo.falla = false; poner(DOM + ' 09:10'); F.repaso();
+    chk('9j …y no se repite cuando Kommo vuelve (el «Buen día» es una vez por día)', bd(F).length === 0, bd(F));
+    const N = domingo({ KOMMO_TOKEN: '' }); poner(DOM + ' 08:35'); N.repaso();
+    chk('9k sin KOMMO_TOKEN: el domingo a nadie, sin preguntarle nada a Kommo', bd(N).length === 0 && N.kommo.llamadas.length === 0 && salteados(N).length === 4, { salen: bd(N), kommo: N.kommo.llamadas.length });
+
+    const U = domingo(null, (X) => usuarios(X, ['Carola Chávez - Tienda Banzer', 'Maria Flores - Buenos Aires', 'Isabel Robledo - Central']));
+    poner(DOM + ' 08:35'); U.repaso();
+    chk('9l Mirian sin usuario en Kommo: no le sale y queda anotado; Carola sí', JSON.stringify(tos(U)) === JSON.stringify(['59170000001']) &&
+        salteados(U).some(f => f[4] === 'Mirian Salazar' && /no encontré su usuario en Kommo/.test(f[8])), { a: tos(U), hoja: salteados(U).map(f => f[4] + ' ' + f[8]) });
+    const Bz = domingo(null, (X) => usuarios(X, ['Carola Chávez - Banzer', 'Maria Flores - Buenos Aires', 'Isabel Robledo - Central', 'Mirian Salazar - Mia Plaza']));
+    poner(DOM + ' 08:35'); Bz.repaso();
+    chk('9m «Banzer» a secas es el ALMACÉN, no la tienda: a Carola no le sale', JSON.stringify(tos(Bz)) === JSON.stringify(['59170000004']), tos(Bz));
+    const Sf = domingo(null, (X) => usuarios(X, ['Carola Chávez', 'Maria Flores - Buenos Aires', 'Isabel Robledo - Central', 'MIRIAN SALAZAR – MÍA  PLAZA']));
+    poner(DOM + ' 08:35'); Sf.repaso();
+    chk('9n un usuario sin « - Sucursal» no dice la tienda: a Carola no (anotado); «MÍA  PLAZA» con tilde, mayúsculas y la raya larga sí cuenta',
+        JSON.stringify(tos(Sf)) === JSON.stringify(['59170000004']) && salteados(Sf).some(f => f[4] === 'Carola Chavez' && /no dice la tienda/.test(f[8])), { a: tos(Sf), hoja: salteados(Sf).map(f => f[4] + ' ' + f[8]) });
+    const D2 = domingo(null, (X) => usuarios(X, ['Carola Chávez - Tienda Banzer', 'Carola Chavez - Central', 'Maria Flores - Buenos Aires', 'Isabel Robledo - Central', 'Mirian Salazar - Mia Plaza']));
+    poner(DOM + ' 08:35'); D2.repaso();
+    chk('9o dos usuarios de Kommo con su nombre (en dos tiendas): a Carola no le sale (no se adivina) y se anota', JSON.stringify(tos(D2)) === JSON.stringify(['59170000004']) &&
+        salteados(D2).some(f => f[4] === 'Carola Chavez' && /dos usuarios con su nombre/.test(f[8])), { a: tos(D2), hoja: salteados(D2).map(f => f[4] + ' ' + f[8]) });
+    const Ot = domingo(null, (X) => usuarios(X, ['Carola Chávez - Tienda Banzer Norte', 'Maria Flores - Buenos Aires', 'Isabel Robledo - Central', 'Mirian Salazar - Mia Plaza']));
+    poner(DOM + ' 08:35'); Ot.repaso();
+    chk('9p la tienda se compara ENTERA: «Tienda Banzer Norte» no es «Tienda Banzer»', JSON.stringify(tos(Ot)) === JSON.stringify(['59170000004']), tos(Ot));
+    const sd = S.ctx.waSucDomingo_;
+    chk('9q waSucDomingo_: Mia Plaza, «tienda banzer», «Mía Plaza» sí; Banzer, Central, Buenos Aires, Ventura Mall y vacío no',
+        sd('Mia Plaza') && sd('tienda banzer') && sd('Mía Plaza') && sd('TIENDA BANZER') && !sd('Banzer') && !sd('Central') && !sd('Buenos Aires') && !sd('Ventura Mall') && !sd(''),
+        Array.from(S.ctx.WA_SUC_DOMINGO));
+
+    const Sa = domingo(null, (X) => { X.kommo.falla = true; }); poner(SAB + ' 08:35'); Sa.repaso();
+    const ma = (bd(Sa).find(x => x.to === '59170000002') || { p: [] }).p;
+    chk('9r el sábado no cambia ni depende de Kommo: con Kommo caído sale igual a Maria (Buenos Aires) y a Carola, con «sin dato»',
+        tos(Sa).indexOf('59170000002') >= 0 && tos(Sa).indexOf('59170000001') >= 0 && ma[1] === 'sábado 14/11' && ma[5] === 'sin dato' && salteados(Sa).length === 0, { a: tos(Sa), ma, hoja: salteados(Sa).map(f => f[8]) });
+    const Sb = domingo(); poner(SAB + ' 08:35'); Sb.repaso();
+    chk('9s el sábado, con Kommo, a todas las que tienen algo (las de Central y Buenos Aires también)', ['59170000001', '59170000002'].every(t => tos(Sb).indexOf(t) >= 0) && salteados(Sb).length === 0, tos(Sb));
+    const Lu = domingo(); poner('2026-11-16 08:35'); Lu.repaso();
+    chk('9t el lunes, a las de siempre (Maria con su factura, aunque Buenos Aires no abre el domingo)', tos(Lu).indexOf('59170000002') >= 0, tos(Lu));
+    const Fe = domingo(); poner('2026-12-25 08:35'); Fe.repaso();
+    chk('9u un feriado de lunes a sábado (viernes 25/12) sigue sin «Buen día», ni para Mia Plaza ni para Tienda Banzer', bd(Fe).length === 0, bd(Fe));
+
+    const P2 = domingo(); poner(DOM + ' 08:00');
+    const M = P2.ctx.probarMensajesDelDia().lineas;
+    chk('9v probarMensajesDelDia el domingo: a quién le saldría y por qué no a las otras', M.some(l => /^☀️ Carola Chavez diría: Carola \| domingo 15\/11 \| ninguno \| nada/.test(l)) &&
+        M.some(l => /^☀️ Maria Flores: es domingo y su tienda \(Buenos Aires\) no abre, no le saldría\./.test(l)) && M.some(l => /^☀️ Isabel Robledo: es domingo y su tienda \(Central\) no abre/.test(l)) &&
+        M.some(l => /^☀️ Mirian Salazar diría: Mirian/.test(l)) && P2.meta.llamadas.length === 0, M.filter(l => /☀️/.test(l)));
+    const Lp = P2.ctx.probarAntesDeImplementar().lineas;
+    chk('9w probarAntesDeImplementar lo dice (sin preguntarle a Kommo) y sin frenar', Lp.some(l => /^✅ ☀️ El domingo \(2026-11-07-b\) el «Buen día» va solo a las de las tiendas que abren el domingo \(MIA PLAZA, TIENDA BANZER\)/.test(l)) &&
+        !Lp.some(l => /^❌/.test(l)), Lp.filter(l => /domingo|^❌/.test(l)));
   });
 
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

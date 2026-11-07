@@ -5,6 +5,9 @@
    «llamar el sábado», «de lunes a viernes», «a la mañana» ≠ «mañana», «1 1/2 plazas», «ya pagó»…), el sábado sin tarde, que no tapa un
    error de siempre, que no corre en ATC ni en una venta de tienda, que editando solo dice lo NUEVO, «Para guardar» y que sin
    `OBS_REV_PRUEBA` queda apagado en Playwright.
+   §14 (07/11, dueño: «Sí, lógico, sábado en la tarde no trabajamos»): cuando la nota pide el sábado a la tarde, la ventana ofrece
+   «📅 Pasarlo al lunes DD/MM a la tarde» (el primer día hábil después de ESE sábado; feriado → martes); cambia fecha y turno sin guardar;
+   al volver a guardar ese aviso no vuelve (los otros sí; otro turno, otra nota u otro pedido, sí); con la tarde llena, mandan los cupos.
    Se corre:  TZ=America/La_Paz HTTPS_PROXY=http://127.0.0.1:9 node tests/test_revisar_obs.js
    `PEDIDOS=<archivo>` corre contra otra página (para ver los dientes contra la de antes). */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -342,6 +345,103 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   r = await guardar();
   const dup = await ev(async () => { var n0 = window._saves; document.getElementById('obsrev-igual').click(); await new Promise(r => setTimeout(r, 700)); return window._saves - n0; });
   chk('13 · después de «Guardar igual» sigue la pregunta de siempre (¿pedido repetido?) y se guarda una vez', r.modal && dup === 1 && preguntas.some(function (q) { return /REPETIDO/.test(q); }), { r: r.modal, dup, preguntas });
+
+  // ============ 14. 📅 el sábado a la tarde: «Pasarlo al lunes … a la tarde» (dueño, 07/11: «Sí, lógico, sábado en la tarde no trabajamos») ============
+  await ev(() => closeModal());
+  const boton = () => ev(() => { var b = document.getElementById('obsrev-mover'), s = document.querySelector('.obsrev-mover small');
+    return { hay: !!b, txt: b ? b.textContent : '', sub: s ? s.textContent : '' }; });
+  const mover = () => ev(async () => {
+    window._chg = 0; var f = document.getElementById('f-fecha'); if (!f._oyePrueba) { f._oyePrueba = 1; f.addEventListener('change', function () { window._chg++; }); }
+    var n0 = window._saves; document.getElementById('obsrev-mover').click(); document.getElementById('obsrev-mover') && document.getElementById('obsrev-mover').click();
+    await new Promise(r => setTimeout(r, 300));
+    var cf = document.getElementById('cupo-form');
+    return { guardo: window._saves - n0, abierta: document.getElementById('modal').classList.contains('on'), fecha: f.value, turno: segVal('f-turno'), chg: window._chg,
+      foco: (document.activeElement || {}).id || '', toast: (document.getElementById('toast') || {}).textContent || '', cupo: cf ? (cf.className + ' | ' + cf.textContent) : '' };
+  });
+  // 14a-c: el ejemplo de la muestra sin lo demás: el pedido el lunes a la mañana, la nota dice el sábado a la tarde
+  await llenar({ obs: 'Entregar el sábado en la tarde' });
+  r = await guardar();
+  let b = await boton();
+  chk('14a · «sábado en la tarde»: el aviso de siempre y el botón «📅 Pasarlo al lunes 09/11 a la tarde» (con los lugares de esa tarde)',
+    r.guardo === 0 && r.modal && /Además, el sábado el camión sale solo a la mañana/.test(r.items[0] || '') && b.txt === '📅 Pasarlo al lunes 09/11 a la tarde' &&
+    /esa tarde quedan \d+ lugares\)\. No guarda: después tocá «Guardar»/.test(b.sub), { r, b });
+  let m = await mover();
+  chk('14b · el botón cierra la ventana, NO guarda, pone el lunes 09/11 🌆 PM, lleva a la fecha y lo dice', m.guardo === 0 && !m.abierta && m.fecha === '2026-11-09' && m.turno === 'PM' &&
+    m.foco === 'f-fecha' && /Lo pasé al lunes 09\/11 a la tarde: revisá y tocá «Guardar»/.test(m.toast), m);
+  const derMov = await ev(() => { fxDerPintar(); return !!document.querySelector('#fx-der .fx-obsrev'); });
+  r = await guardar();
+  chk('14c · al volver a tocar «Guardar» el aviso del sábado a la tarde no vuelve (lo propuso el panel) y se guarda el lunes a la tarde; «Para guardar» tampoco lo dice',
+    r.guardo === 1 && !r.modal && r.ult && r.ult.fecha === '2026-11-09' && r.ult.turno === 'PM' && r.ult.observaciones === 'Entregar el sábado en la tarde' && derMov === false, { r: { g: r.guardo, m: r.modal, items: r.items }, derMov });
+  // 14d: con una fecha escrita y el pedido el viernes: el lunes siguiente a ESE sábado, y los eventos de la fecha (cupos y saldo se repintan)
+  await llenar({ obs: 'Entregar el sábado 14/11 en la tarde', fecha: '2026-11-13' });
+  r = await guardar(); b = await boton(); m = await mover();
+  chk('14d · «sábado 14/11 en la tarde» con el pedido el viernes 13/11: «Pasarlo al lunes 16/11 a la tarde», y la fecha cambia con su evento (como la persona)',
+    r.modal && b.txt === '📅 Pasarlo al lunes 16/11 a la tarde' && m.fecha === '2026-11-16' && m.turno === 'PM' && m.chg >= 1 && m.guardo === 0 && /Cupos del 16\/11\/2026/.test(m.cupo), { b, m });
+  chk('14d1 · …y cita la nota entera: el «11» de «14/11» es el mes, no «a las 11 pm»',
+    r.items[0] === 'Las observaciones dicen «sábado 14/11 en la tarde», pero el pedido es para el viernes 13/11 a la mañana. Además, el sábado el camión sale solo a la mañana.', r.items);
+  r = await guardar();
+  chk('14d2 · …y se guarda el lunes 16/11 a la tarde sin volver a preguntar', r.guardo === 1 && !r.modal && r.ult && r.ult.fecha === '2026-11-16' && r.ult.turno === 'PM', { g: r.guardo, m: r.modal, items: r.items });
+  // 14e: el lunes es feriado → el martes
+  await ev(() => { FERIADOS['2026-11-16'] = 'Feriado de prueba'; });
+  await llenar({ obs: 'Entregar el sábado 14/11 en la tarde', fecha: '2026-11-13' });
+  r = await guardar(); b = await boton(); m = await mover();
+  r = await guardar();
+  await ev(() => { delete FERIADOS['2026-11-16']; });
+  chk('14e · con el lunes 16/11 feriado: «Pasarlo al martes 17/11 a la tarde» (sin domingo ni feriado) y se guarda ahí',
+    b.txt === '📅 Pasarlo al martes 17/11 a la tarde' && m.fecha === '2026-11-17' && m.turno === 'PM' && r.guardo === 1 && r.ult && r.ult.fecha === '2026-11-17' && r.ult.turno === 'PM', { b, m: { f: m.fecha, t: m.turno }, g: r.guardo });
+  // 14f: el pedido el sábado a la mañana y la nota «en la tarde»: el sábado de la tarde tampoco existe
+  await llenar({ obs: 'Entregar en la tarde', fecha: '2026-11-07' });
+  r = await guardar(); b = await boton(); m = await mover();
+  r = await guardar();
+  chk('14f · pedido el sábado 07/11 y la nota «en la tarde»: «Pasarlo al lunes 09/11 a la tarde» (el PM se habilita) y se guarda',
+    b.txt === '📅 Pasarlo al lunes 09/11 a la tarde' && m.fecha === '2026-11-09' && m.turno === 'PM' && r.guardo === 1 && r.ult && r.ult.fecha === '2026-11-09' && r.ult.turno === 'PM', { b, m: { f: m.fecha, t: m.turno }, g: r.guardo, items: r.items });
+  // 14g: la tarde del lunes llena: se ofrece igual, y al guardar mandan los cupos de siempre (no se saltea nada)
+  await ev(() => { for (var i = 0; i < 13; i++) { var p = { id: 'lleno' + i, oc: '11-3' + (10 + i), fecha: '2026-11-23', turno: 'PM', vendedor: 'Carola Chavez', cliente: 'LLENO ' + i, celular: '7600000' + i,
+    zona: 'Sur', direccion: 'CALLE 3', observaciones: '', productos: [{ desc: 'COLCHON ORO ANATOMICO', medida: '140x190', cant: 1, precio: 2990 }], pagado: true, saldo: 0, ts: Date.now() - 3600000, rev: 1 };
+    window._pl.push(JSON.parse(JSON.stringify(p))); STATE.push(p); } saveMirror(); });
+  await llenar({ obs: 'Entregar el sábado 21/11 en la tarde', fecha: '2026-11-20' });
+  r = await guardar(); b = await boton(); m = await mover();
+  const r2l = await guardar();
+  chk('14g · el lunes 23/11 a la tarde lleno: el botón está igual y dice «ya está llena (13 de 13)»', r.modal && b.txt === '📅 Pasarlo al lunes 23/11 a la tarde' && /ya está llena \(13 de 13\): al guardar te lo va a decir/.test(b.sub), b);
+  chk('14g2 · …pone el día y el turno (el cartel de cupos se repinta: lleno), y al guardar frena el cupo de siempre: no se guarda',
+    m.fecha === '2026-11-23' && m.turno === 'PM' && /full/.test(m.cupo) && r2l.guardo === 0 && !r2l.modal && /lleno/i.test(r2l.toast), { m: { f: m.fecha, t: m.turno, c: m.cupo }, r: { g: r2l.guardo, m: r2l.modal, t: r2l.toast } });
+  await ev(() => { closeModal(); window._pl = window._pl.filter(function (p) { return !/^lleno/.test(p.id); }); STATE = STATE.filter(function (p) { return !/^lleno/.test(p.id); }); saveMirror(); });
+  // 14h: el botón SOLO para el sábado a la tarde
+  await llenar({ obs: 'Entregar en la tarde' });
+  r = await guardar(); b = await boton();
+  const solo = await ev(() => {
+    var P = function (obs, extra) { var p = Object.assign({ fecha: '2026-11-09', turno: 'AM', saldo: 2990, pagado: false, oc: '10-500',
+      productos: [{ desc: 'COLCHON ORO ANATOMICO', medida: '140x190', cant: 1 }], observaciones: obs }, extra || {});
+      return obsRevisar(p, { rel: true, tipo: 'OC' }).map(function (x) { return x.k + (x.mover ? ('>' + x.mover.f + ' ' + x.mover.t) : ''); }); };
+    return { viernes: P('Entregar el viernes'), sabMan: P('Entregar el sábado en la mañana'), domTarde: P('Entregar el domingo en la tarde'), tarde: P('Entregar en la tarde'),
+      sabTarde: P('Entregar el sábado en la tarde'), yaAhi: P('Entregar el sábado en la tarde', { turno: 'PM' }), sab0711: P('Entregar el 07/11 en la tarde', { fecha: '2026-11-12' }) };
+  });
+  chk('14h · «en la tarde» con el pedido el lunes a la mañana: la ventana sin el botón', r.modal && /«en la tarde»/.test(r.items[0] || '') && !b.hay, { items: r.items, b });
+  chk('14h2 · sin botón para «el viernes», «el sábado en la mañana» y «el domingo en la tarde»; con botón para el sábado a la tarde (también «07/11 en la tarde» con el pedido el jueves)',
+    solo.viernes.join() === 'dia' && solo.sabMan.join() === 'dia' && solo.domTarde.join() === 'dia' && solo.tarde.join() === 'dia' &&
+    solo.sabTarde.join() === 'dia>2026-11-09 PM' && solo.sab0711.join() === 'dia>2026-11-09 PM', solo);
+  chk('14h3 · el pedido ya está el lunes 09/11 a la tarde que propondría: el aviso sale igual (no lo propuso el panel) y sin botón', solo.yaAhi.join() === 'dia', solo.yaAhi);
+  await ev(() => closeModal());
+  // 14i: la memoria es SOLO para eso: los otros avisos siguen; otro turno, otra nota u otro pedido vuelven a preguntar
+  await llenar({ obs: 'Entregar el sábado en la tarde. Son 2 almohadas.' });
+  r = await guardar(); m = await mover();
+  r = await guardar();
+  chk('14i · los otros avisos siguen: con la misma nota, después del botón sale solo «Dicen «2 almohadas» y cargaste 1.»',
+    r.guardo === 0 && r.modal && r.items.length === 1 && r.items[0] === 'Dicen «2 almohadas» y cargaste 1.', { items: r.items });
+  await ev(() => { closeModal(); var b = document.querySelector('#f-turno button[data-val="AM"]'); b.click(); });
+  r = await guardar(); b = await boton();
+  chk('14i2 · si después la persona vuelve a la mañana, el aviso del sábado a la tarde vuelve (con su botón)', r.modal && r.items.some(function (t) { return /«sábado en la tarde»/.test(t); }) && b.hay, { items: r.items, b });
+  m = await mover();
+  await ev(() => { var o = document.getElementById('f-obs'); o.value = o.value + ' Llamar antes.'; });
+  r = await guardar();
+  chk('14i3 · con la nota cambiada (otra nota), se vuelve a mirar: el aviso vuelve', r.modal && r.items.some(function (t) { return /«sábado en la tarde»/.test(t); }), { items: r.items });
+  await ev(() => closeModal());
+  await llenar({ obs: 'Entregar el sábado en la tarde', turno: 'PM' });
+  const mem = await ev(() => OBS_REV_MOVIDO);
+  r = await guardar(); b = await boton();
+  chk('14i4 · otro pedido (el formulario de cero) con la misma nota y el lunes 09/11 a la tarde puesto a mano: el aviso sale (la memoria se olvidó), sin botón',
+    mem === null && r.modal && /«sábado en la tarde», pero el pedido es para el lunes 09\/11 a la tarde/.test(r.items[0] || '') && !b.hay, { mem, items: r.items, b });
+  await ev(() => closeModal());
 
   chk('sin errores en la página', errors.length === 0, errors);
   await browser.close();
