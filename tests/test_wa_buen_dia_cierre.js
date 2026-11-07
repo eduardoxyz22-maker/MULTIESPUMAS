@@ -382,11 +382,9 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     S.limpiar(); poner('2026-11-11 08:10');
     hook(S, '59177000007', { type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } });
     const T = textos(S, '59177000007'), t = T.join('\n');
-    chk('5b3 tocó el botón: le llega UN texto con el detalle del 10/11 (aunque sea el 11/11)', T.length === 1 && /^🛏️ \*Qué vendió cada uno\* \(martes 10\/11\)\n🛒 Bs 13\.500 · 7 ventas · 7 productos/.test(t), T);
-    chk('5b4 cada vendedor (de más a menos, igual que el cierre) y debajo cada venta: OC, cliente, productos y monto',
-        /🧑‍💼 \*Juan Pablo Paredes\* · 1 prod\. · Bs 4\.500\n• OC 11-304 · CLIENTE S4: 1 × COLCHON TITANIO 140x190 · Bs 4\.500/.test(t) &&
-        /🧑‍💼 \*Carola Chavez\* · 1 prod\. · Bs 3\.000\n• OC 11-301 · CLIENTE S1: 1 × COLCHON TITANIO 140x190 · Bs 3\.000/.test(t) &&
-        t.indexOf('Juan Pablo') < t.indexOf('Carola') && t.indexOf('Carola') < t.indexOf('Pedro'), t);
+    chk('5b3 tocó el botón: le llega UN texto con el detalle del 10/11 (aunque sea el 11/11)', T.length === 1 && /^🛏️ \*Qué vendió cada uno\* \(martes 10\/11\)\n\n\*Juan\* · 1 prod\. · Bs 4\.500\n1 × TITANIO 140x190\n\n\*Carola\* · 1 prod\. · Bs 3\.000\n1 × TITANIO 140x190/.test(t), T);
+    chk('5b4 (dueño: «no nos interesa la OC ni el nombre») cada vendedor, de más a menos como el cierre: cuántos productos, el monto y la lista; SIN OC ni cliente',
+        !/OC 11-|CLIENTE|•/.test(t) && t.indexOf('*Juan*') < t.indexOf('*Carola*') && t.indexOf('*Carola*') < t.indexOf('*Pedro*') && /\*Pedro\* · 1 prod\. · Bs 300\n1 × TITANIO 140x190$/.test(t), t);
     chk('5b5 lo mismo que el cierre: sin Eduardo, ROHO, ALBA, ATC, RPT, borradores ni lo de ayer', !/11-311|11-312|11-313|ATC 11-010|RPT 11-003|11-318/.test(t), t);
     chk('5b6 no es un cliente: no hay fila «💬 Respondió», ni Claude, ni la respuesta automática; queda anotado para el equipo',
         !S.hoja().some(f => f[3] === '💬 Respondió') && S.claude.llamadas.length === 0 && !S.hoja().some(f => f[3] === 'Respuesta automática') &&
@@ -399,11 +397,11 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     chk('5b7 el mismo aviso de Meta dos veces: una sola respuesta', textos(S).length === 0, textos(S));
     // Escrito: «productos» (hoy) y «Productos de ayer»
     S.limpiar(); poner(HOY + ' 22:00'); hook(S, '59177000007', { type: 'text', text: { body: 'Productos' } });
-    chk('5b8 el dueño escribe «Productos»: el detalle de hoy', /\(martes 10\/11\)\n🛒 Bs 13\.500/.test(textos(S, '59177000007').join('\n')), textos(S));
+    chk('5b8 el dueño escribe «Productos»: el detalle de hoy', /\(martes 10\/11\)\n\n\*Juan\* · 1 prod\. · Bs 4\.500/.test(textos(S, '59177000007').join('\n')), textos(S));
     S.limpiar(); poner('2026-11-11 09:00'); hook(S, '59177000007', { type: 'text', text: { body: '¿Productos de ayer?' } });
     chk('5b9 «¿Productos de ayer?»: el del día anterior', /\(martes 10\/11\)/.test(textos(S, '59177000007').join('\n')), textos(S));
     S.limpiar(); poner('2026-11-11 09:05'); hook(S, '59177000007', { type: 'text', text: { body: 'productos' } });
-    chk('5b10 un día sin ventas cargadas: lo dice', /\(miércoles 11\/11\)\n\nNo hay ventas del equipo cargadas ese día\./.test(textos(S, '59177000007').join('\n')), textos(S));
+    chk('5b10 un día sin ventas cargadas: lo dice', /\(miércoles 11\/11\)\nNo hay ventas del equipo cargadas ese día\./.test(textos(S, '59177000007').join('\n')), textos(S));
     // Un cliente que escribe «productos» o toca algo: el camino de siempre (nunca le llega el detalle)
     S.limpiar(); hook(S, '59170111222', { type: 'text', text: { body: 'productos' } });
     hook(S, '59170111222', { type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } });
@@ -416,9 +414,10 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const M = [];
     for (let i = 0; i < 140; i++) M.push(P('mx' + i, ['Carola Chavez', 'Isabel Robledo', 'Mirian Salazar', 'Maria Flores'][i % 4], { oc: '11-9' + String(i).padStart(2, '0'), ts: TS(HOY, '15:00'), saldo: 1000, cliente: 'CLIENTE CON UN NOMBRE BASTANTE LARGO ' + i,
       productos: [{ desc: 'COLCHON TITANIO LATEX', medida: '160x200', cant: 1, precio: 600, fdoc: 'F', fdocn: '9' + i }, { desc: 'ALMOHADA FIBRA SILICONADA', medida: '50x70', cant: 2, precio: 200, fdoc: 'F', fdocn: '9' + i }] }));
-    const D = S.ctx.waCdDetalle_(FIX.concat(M).map(x => S.ctx.rowToRec_(S.ctx.recToRow(x))), HOY);
-    chk('5b13 140 ventas más: el detalle va en varios mensajes, cada uno de 4.000 letras o menos, y no se pierde ninguna venta',
-        D.length > 1 && D.every(x => x.length <= 4000) && M.every(x => D.join('\n').indexOf('OC ' + x.oc + ' ') >= 0), D.map(x => x.length));
+    const D = S.ctx.waCdDetalle_(FIX.concat(M).map(x => S.ctx.rowToRec_(S.ctx.recToRow(x))), HOY), dj = D.join('\n');
+    chk('5b13 140 ventas más: el mismo producto se SUMA en una línea por vendedor («35 × TITANIO LATEX 160x200 · 70 × ALMOHADA…», el que más primero) y entra en UN mensaje',
+        D.length === 1 && D[0].length <= 4000 && /\*Carola\* · 106 prod\. · Bs 38\.000\n70 × ALMOHADA FIBRA SILICONADA 50x70 · 35 × TITANIO LATEX 160x200 · 1 × TITANIO 140x190/.test(dj) &&
+        /\*Isabel\* · 106 prod\./.test(dj), { largo: D.map(x => x.length), dj });
   });
 
   seccion('6. bloki', () => {

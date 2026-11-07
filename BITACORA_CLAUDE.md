@@ -17380,12 +17380,12 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   respuesta rápida **«Ver qué vendió cada uno»** (`WA_CD_BOTON`, ≤ 25 letras; `payload` «cd|<día>», `waEnviar_` ganó el 5° argumento
   `botones`). Al tocarlo, `waHookAnotar_` lo ve ANTES de tratarlo como cliente (`waCdPide_`: solo de WA_DUENO o WA_PRUEBA) y
   `waCdResponder_` le manda TEXTO LIBRE (Meta lo deja: el dueño acaba de escribir) con `waCdDetalle_`: cada vendedor (el mismo orden y las
-  mismas ventas que el cierre) y debajo cada venta «• OC 11-056 · CLIENTE: 1 × PRODUCTO medida · Bs X»; en trozos de 3.500 letras (un
-  vendedor que no entra se parte con «(sigue)»). Escribirle «productos» / «productos de ayer» / «detalle» hace lo mismo (sirve mientras Meta
+  mismas ventas que el cierre): «*Mirian* · 3 prod. · Bs 6.900» y debajo sus productos SUMADOS en una línea («2 × TITANIO ICE 160x190 ·
+  1 × CLOUD 140x190», el que más primero, sin el «COLCHON» de adelante). SIN OC ni cliente: la primera versión los traía venta por venta y
+  el dueño dijo *«mucho texto y varios mensajes… solo la cantidad y lista de productos vendidos por vendedor y su monto total»*. Escribirle «productos» / «productos de ayer» / «detalle» hace lo mismo (sirve mientras Meta
   no apruebe la v2: hasta entonces sale `cierre_del_dia`, sin botón, con los mismos 7 datos). Un cliente que escribe «productos» sigue el
   camino de siempre. Queda anotado en «Bot WhatsApp» («🌙 Dueño pidió…» con el wamid: Meta a veces avisa dos veces). ⚠️ Después de
-  implementar, `crearPlantillasWhatsApp` otra vez (crea la v2). Con la planilla real del 06/11: 10 ventas, 12 productos, un mensaje de 1.243
-  letras. `test_wa_buen_dia_cierre` §5b (13), `test_wa_bot` (la v2 con su botón al crear).
+  implementar, `crearPlantillasWhatsApp` otra vez (crea la v2). Con la planilla real del 06/11: 7 vendedores en UN mensaje de 574 letras. `test_wa_buen_dia_cierre` §5b (13), `test_wa_bot` (la v2 con su botón al crear).
 
 ### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c` IMPLEMENTADO 07/11 por el dueño (contesta `2026-11-07-c`, 1.816 filas; trae también la 07-a y la 07-b), enlace fijo `aa40393…`, 6.790 líneas; PÁGINA 2026-11-07-e PUBLICADA, `main` = `aa40393`; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`, 6.257 líneas)
 - Lo que saca a alguien del aviso del efectivo es el RETIRO cargado (Contabilidad → 💵 Retiro de efectivo) a su nombre: no hay tilde de

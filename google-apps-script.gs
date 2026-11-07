@@ -4494,30 +4494,34 @@ var WA_CD_BOTON = 'Ver qué vendió cada uno';   // ⚠️ el texto del botón e
 var WA_CD_TROZO = 3500;                        // un mensaje de texto aguanta 4.096
 /** Los mensajes del detalle del día `dia` (uno o varios trozos). */
 function waCdDetalle_(lista, dia) {
+  /* (07/11, el dueño al ver la primera versión: *«mucho texto… no nos interesa la OC ni el nombre, solo la cantidad y la lista de productos
+     vendidos por vendedor y su monto total»*) Por vendedor: el nombre, cuántos productos, el monto, y la lista de productos SUMADOS (el mismo
+     producto en dos ventas = una línea «2 × …»), sin OC ni cliente. «COLCHON» adelante se saca (es casi todo). */
   var D = waCdDatos_(lista, { hoy:dia }), bs0 = function (n) { return waBs_(Math.round(Number(n) || 0)); }, porV = {};
   (lista || []).forEach(function (p) {
     if (!p || !waEsVentaConta_(p) || waContaFecha_(p) !== dia) return;
     var k = waEfeNorm_(p.vendedor) || '(sin vendedor)'; (porV[k] = porV[k] || []).push(p);
   });
   var v = D.ventas;
-  if (!v.n) return ['🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')\n\nNo hay ventas del equipo cargadas ese día.'];
-  var cab = '🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')\n🛒 ' + bs0(v.bs) + ' · ' + v.n + ' venta' + (v.n === 1 ? '' : 's') + ' · ' + v.u + ' producto' + (v.u === 1 ? '' : 's');
-  var out = [], cur = cab;
+  if (!v.n) return ['🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')\nNo hay ventas del equipo cargadas ese día.'];
+  var dup = {}, pri = function (o) { return String(o.nombre).split(' ')[0]; };
+  D.vend.forEach(function (o) { var f = waEfeNorm_(pri(o)); dup[f] = (dup[f] || 0) + 1; });
+  var out = [], cur = '🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')';
   D.vend.forEach(function (o) {
-    var ps = (porV[o.k] || []).slice().sort(function (a, b) { return (Number(a.ts) || 0) - (Number(b.ts) || 0); });
-    var L = ['🧑‍💼 *' + o.nombre + '* · ' + o.u + ' prod. · ' + bs0(o.bs) + (o.n > 1 ? ' · ' + o.n + ' ventas' : '')];
-    ps.forEach(function (p) {
-      var cli = String(p.cliente || '').replace(/\s+/g, ' ').trim(); if (cli.length > 30) cli = cli.slice(0, 29) + '…';
-      L.push('• ' + waOc_(p.oc) + (cli ? ' · ' + cli : '') + ': ' + waProds_(p) + ' · ' + bs0(waVentaTotal_(p)));
+    var prods = {}, orden = [];
+    (porV[o.k] || []).forEach(function (p) {
+      ((p && p.productos) || []).forEach(function (x) {
+        var d = String((x && x.desc) || '').replace(/\s+/g, ' ').trim(); if (!d) return;
+        d = d.replace(/^COLCHON\s+(?=\S)/i, '');
+        var nom = (d + (x.medida ? ' ' + String(x.medida).replace(/\s+/g, '').trim() : '')).trim(), kk = waEfeNorm_(nom);
+        if (!prods[kk]) { prods[kk] = { t:nom, u:0 }; orden.push(kk); }
+        prods[kk].u += Math.max(1, Math.round(Number(x.cant) || 1));
+      });
     });
-    var b = L.join('\n');
-    if ((cur + '\n\n' + b).length <= WA_CD_TROZO) { cur += '\n\n' + b; return; }    // entra en el mensaje de ahora
-    if (b.length <= WA_CD_TROZO) { out.push(cur); cur = b; return; }                  // entra entero en uno nuevo: no se parte
-    L.forEach(function (x, i) {                                                        // un vendedor con muchísimas ventas: por renglones
-      var sep = i ? '\n' : '\n\n';
-      if ((cur + sep + x).length > WA_CD_TROZO) { out.push(cur); cur = (i ? '🧑‍💼 *' + o.nombre + '* (sigue)\n' : '') + x; }
-      else cur += sep + x;
-    });
+    var lis = orden.map(function (kk) { return prods[kk]; }).sort(function (a, b) { return b.u - a.u; })
+                   .map(function (x) { return x.u + ' × ' + x.t; }).join(' · ');
+    var b = '*' + (dup[waEfeNorm_(pri(o))] > 1 ? o.nombre : pri(o)) + '* · ' + o.u + ' prod. · ' + bs0(o.bs) + (lis ? '\n' + lis : '');
+    if ((cur + '\n\n' + b).length > WA_CD_TROZO) { out.push(cur); cur = b; } else cur += '\n\n' + b;
   });
   out.push(cur);
   return out.map(function (t) { return t.length > 4000 ? t.slice(0, 3997) + '…' : t; });
