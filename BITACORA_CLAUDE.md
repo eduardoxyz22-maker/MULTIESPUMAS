@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4oo — 🏪 LA TIENDA DE CADA VENDEDOR, LA DE KOMMO (07/11; dueño: «Si» a *«¿pongo en el panel las sucursales que dice Kommo? Hoy no coinciden para Carola, Jonathan, Isabel y Fabián»*; versión 2026-11-07-d)
+### §4oo — 🏪 LA TIENDA DE CADA VENDEDOR, LA DE KOMMO (07/11; dueño: «Si» a *«¿pongo en el panel las sucursales que dice Kommo? Hoy no coinciden para Carola, Jonathan, Isabel y Fabián»*; PUBLICADO 07/11, `main` = `7a9f338`, versión 2026-11-07-d)
 - `VENDEDOR_SUCURSAL` = lo que dice Kommo desde noviembre («Nombre - Sucursal»): **Carola → Tienda Banzer, Jonathan → Mia Plaza, Isabel →
   Central, Fabián → Central** (Ventura Mall todavía no abrió; si abre y Fabián pasa allá, cambiar esa línea), Andrea → Tienda Banzer; Mirian
   (Mia Plaza), María Flores (Buenos Aires), Mauricio (Mutualista), Peinado (Charcas) y Juan Pablo (Carmelo) sin cambio.
@@ -17369,6 +17369,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   adelante: otra fecha y otra lista, igual.
 - El servidor no tiene esa lista (el «Buen día» del domingo lee la sucursal del nombre de Kommo, §4on). El dashboard tampoco (`SUC_DE_USUARIO`).
 - `test_vendedores_nuevos` §2 cambiado a conciencia (Fabián → Central, Isabel → Central) + 4 nuevas (40).
+- Batería (07/11, sábado): en rojo `test_banzer` (1, «IM y Banzer empatados») y `test_circuito.cjs` (2) — fallan IGUAL en `main` (`9eedc2f`):
+  no son de este cambio (parecen del calendario); las de siempre (`actualizar_espera`, `fabrica_vida`, `mispedidos`, `patio`) dan bien solas.
 
 ### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; PÁGINA PUBLICADA 07/11 (dueño: «Ok»), `main` = `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente, enlace fijo `fb048e04560d65c493a8c1d8724d7cadb8a0c207`, 6.726 líneas)
 Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:

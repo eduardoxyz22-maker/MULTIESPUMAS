@@ -2671,7 +2671,7 @@ atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): M
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
-🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
+🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; PUBLICADO `7a9f338`, versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
 Jonathan → Mia Plaza, Isabel y Fabián → Central). ⚠️ Una venta de antes de `VENDEDOR_SUC_DESDE` (01/11) sin la tienda escrita sigue con la de
 entonces (`VENDEDOR_SUCURSAL_ANTES`): `sucursalDeVendedor(v, fecha)` con el día de la venta. Un cambio de tienda futuro = otra fecha y otra lista.
 
