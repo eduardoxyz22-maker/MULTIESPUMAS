@@ -1610,8 +1610,9 @@ Eduardo. `tests/test_chofer_efectivo.js`.
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)
-- `VEHICULOS` con la lista del dueño; el PRIMERO de cada camión es el que se pone solo al elegir el camión (Carry → Omar). Luis Eyzaguirre no está en
-  la lista nueva: sus pedidos lo conservan (`choferesParaSelect`, `choferesConocidos`).
+- `VEHICULOS` con la lista del dueño; el PRIMERO de cada camión es el que se pone solo al elegir el camión (Carry → Omar). Luis Eyzaguirre YA NO
+  TRABAJA (dueño, 07/11; es otra persona que Luis Pierre: un alias que los juntaba se hizo y se deshizo, `6d720d7`/`fd8b621`): sus pedidos lo
+  conservan (`choferesParaSelect`, `choferesConocidos`).
 - **Rotan**: elegir un chofer ya NO pasa el pedido al camión «suyo» de la lista (`choferCamionSiFalta`: solo pone camión si el pedido no tenía),
   en la ficha (`setChofer`) y en el mapa (`asignarChoferMapa`). El chofer que se muestra de un camión en la fábrica de Eduardo es el de sus pedidos
   (`choferDeCamion`), si no el primero. Los camiones de Administración ya usaban el de los pedidos. `ctaChoferCruce` sigue preguntando con la lista.
@@ -2680,6 +2681,7 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   remisión les tocará… que lo puedan colocar en contabilidad»*): el formulario del pedido NO la pide (no volver a ponerla ahí). Fila de la ficha de
   Contabilidad (`ctaDocHtml`/`ctaDocGuardar`): tipo + N° en los productos (`fdoc`/`fdocn`; `submitPedido` los rescata de `prev`). Obligatoria desde
   `DOCV_DESDE` (`docVentaFalta`): «Para hacer» de la vendedora (abre la ficha de Contabilidad) y de Contabilidad (filtro `sdoc`), el cierre en rojo,
+  ⚠️ su botón dice «💾 Guardar N°» (07/11, versión 2026-11-07-a): con «💾 Guardar» `test_rev30_plata` tocaba ese en vez del de «✏️ Corregir este pago»;
   `docVentaChip` y dos columnas al FINAL del Excel («FALTA» en el tipo o el N° que falta). Todavía NO decide FACTURADO / NO FACTURADO de los retiros.
   `tests/test_factura_remision.js`, `tests/test_factura_conflicto.js` (página + `.gs`: la vendedora sin contraseña, y la carrera con el formulario abierto).
 - 🚚 **Recargos por vendedor** (dueño eligió «el recargo por entrega»): `exportRecargos` (Contabilidad → ⬇️ Bajar): «Resumen» + una hoja por

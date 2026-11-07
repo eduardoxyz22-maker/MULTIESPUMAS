@@ -17371,6 +17371,13 @@ desde el 15/10 casi todo va con el primero de cada camión (el que se pone solo)
   vuelve a aparecer).
 - Pruebas: `test_choferes_rotan` (12; 9 rojas contra `b2ef22b`) y nueve suites que nombraban la lista vieja, cambiadas a conciencia.
 
+
+**07/11.** El dueño escribió *«Luis Pierre es Eyzaguirre 🤣»*; se hizo un alias que los juntaba (`6d720d7`, sin publicar) y, cuando confirmó *«ya no
+trabaja Eyzaguirre»*, se deshizo (`fd8b621`): son dos personas. Quedan 2 pedidos sin entregar con su nombre (06/11 y 07/11): logística les cambia el chofer.
+**Y una falla de lo publicado el 06/11 (06-c)**: en la ficha de Contabilidad quedaron DOS «Guardar» (el de la factura y el de «✏️ Corregir este pago»);
+`test_rev30_plata` (13/17 desde `c8745c6`, encontrado por bisección) tocaba el de la factura y la corrección del pago no se guardaba. El de la factura
+pasó a «💾 Guardar N°» (`bc42135`, versión 2026-11-07-a): 17/17. Batería entera: 338 suites, 335 en verde; `test_fabrica_vida`, `test_patio` y
+`test_actualizar_espera` fallaron solo con la máquina cargada (solas: 42/42, 48/48, 14/14).
 ### §4ol — 🧾💵🚚 FACTURA O REMISIÓN, EL EFECTIVO SIN RETIRAR Y LOS RECARGOS POR VENDEDOR (06/11; dueño: *«vamos con lo demás · factura/nota remisión. obligatorio · avisar retiros de efectivo pendientes o sin cargar luego de 48 horas (aplica desde noviembre) y que llegue a mi telf · una planilla aparte de "cobro por entrega" pero por cada vendedor»*; PÁGINA PUBLICADA 06/11, `51b4896`, versión 2026-11-06-c; servidor `2026-11-06-e` lo implementa el dueño)
 Se le preguntó qué era cada cosa. Contestó: el efectivo «dos veces, 9:00 y 18:00»; el cobro por entrega = «el recargo por entrega»; la factura y
 a quién, «sin preferencia» → quedó lo propuesto.
