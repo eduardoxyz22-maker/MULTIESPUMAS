@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c`, página 2026-11-07-e)
+### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c` para el dueño, enlace fijo `aa40393…`, 6.790 líneas; PÁGINA 2026-11-07-e PUBLICADA, `main` = `aa40393`; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`, 6.257 líneas)
 - Lo que saca a alguien del aviso del efectivo es el RETIRO cargado (Contabilidad → 💵 Retiro de efectivo) a su nombre: no hay tilde de
   «recogido» por venta. `waEfeCuentas_` empareja: cada retiro cubre lo de esa persona cobrado hasta su día; primero un cobro del mismo monto,
   después del más viejo.
