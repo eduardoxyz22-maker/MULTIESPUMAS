@@ -17,6 +17,9 @@
    8. 🤖 CLAUDE: solo con la contraseña Y el servidor ≥ 2026-11-07-a; lleva `pregunta`, `contexto` (números del panel, ≤ 12.000 letras) y
       `quien`; «con Claude · pregunta N de M de hoy»; «tope» → «Ya se usaron las 30 preguntas de hoy»; un error → una frase y la ayuda (o
       se anota); lo que la ayuda ya explica no gasta (botón «Preguntarle a Claude igual»). `apiPost` no le pisa el `quien`.
+   9. 🔒 (07/11, dueño: «No y no deberían, no les interesa») LOGÍSTICA sin la contraseña no ve lo que debe un cliente (ni por nombre, celular
+      u OC; ni si existe): «lo ve su vendedora o Contabilidad». Stock, cupos y entregas como antes; sin el ejemplo de la plata; con la
+      contraseña, Administración o Contabilidad, como antes; lo que va a Claude no nombra clientes.
    Datos SINTÉTICOS. Reloj clavado el martes 10/11/2026 a las 10:00 de Bolivia.
    Se corre:  node tests/test_bloki_preguntas.js   (desde la raíz del repo; PEDIDOS=<otro html> para los dientes) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -366,6 +369,50 @@ function PREPARAR(){
     return bodies.map(function(b){ return b.action+':'+b.quien; });
   });
   chk('`apiPost` no le pisa el `quien` a la pregunta de Bloki (las otras siguen con el de siempre)', Array.isArray(r) && r[0]==='bloki:Administración' && r[1]==='histStockLeer:Mirian Salazar', r);
+
+  /* ---------------------------------------------------------------- 9 */
+  console.log('\n── 9. 🔒 Logística no ve lo que debe un cliente (dueño, 07/11: «No y no deberían, no les interesa») ──');
+  r = await ev(async () => {
+    STATE=FIX(); STK(); BLOKI_P.chat=[]; localStorage.removeItem('me_asis_preg');
+    var calls=[], ap0=apiPost; apiPost=function(p){ calls.push(p && p.action); return Promise.resolve({ ok:true, respuesta:'x', usadas:1, tope:30 }); };
+    SERVER_VER='2026-11-07-a';
+    QUIEN({ rol:'logistica' });
+    var nom=await PREG('cuánto le falta pagar a la señora rosa mendoza');
+    var cel=await PREG('saldo de 70011111');
+    var oc=await PREG('saldo de la 11-034');
+    var carlos=await PREG('cuánto debe carlos mendoza');
+    var stock=await PREG('hay CH1220?');
+    var cupo=await PREG('¿hay lugar el sábado?');
+    var ent=await PREG('qué sale mañana');
+    var libre=await PREG('¿quién vendió más este mes?');   // sin la contraseña no se le pregunta a Claude
+    var nCalls=calls.length;
+    /* los ejemplos de la ventana vacía: a Logística no se le sugiere «¿Cuánto le falta pagar a…?» */
+    BLOKI_P.chat=[]; asisCerrar(); asisAbrir('ayuda');
+    var ejLog=[].map.call(document.querySelectorAll('#asis-chat .bkp-ej button'), function(b){ return b.textContent; });
+    QUIEN({ v:'Mirian Salazar' }); BLOKI_P.chat=[]; asisCerrar(); asisAbrir('ayuda');
+    var ejVend=[].map.call(document.querySelectorAll('#asis-chat .bkp-ej button'), function(b){ return b.textContent; });
+    /* con la contraseña, Administración o Contabilidad: como antes */
+    QUIEN({ rol:'logistica', clave:1 }); var logClave=await PREG('cuánto le falta pagar a rosa mendoza');
+    QUIEN({ rol:'admin' }); var adm=await PREG('cuánto le falta pagar a rosa mendoza');
+    QUIEN({ rol:'conta' }); var conta=await PREG('cuánto le falta pagar a rosa mendoza');
+    /* lo que se le manda a Claude (solo con la contraseña) no trae ningún cliente: lo que falta cobrar va por vendedora */
+    QUIEN({ clave:1 }); var ctx=blokiContexto();
+    apiPost=ap0; QUIEN({ v:'Mirian Salazar' });
+    return { nom:nom, cel:cel, oc:oc, carlos:carlos, stock:stock, cupo:cupo, ent:ent, libre:libre, nCalls:nCalls, ejLog:ejLog, ejVend:ejVend, logClave:logClave, adm:adm, conta:conta,
+      ctxCli:/ROSA|CARLOS MENDOZA|JUAN PEREZ|70011111|11-034/.test(ctx), ctxFalta:/FALTA COBRAR/.test(ctx) };
+  });
+  const sinPlata = (a) => a && /Lo que le falta pagar a un cliente lo ve su vendedora o Contabilidad/.test(a.t) && !/ROSA|CARLOS|Bs|Vendido|Cobrado|Último pago/.test(a.t) && !a.nums.length && !a.btns.length && !a.opc.length;
+  chk('Logística pregunta lo que debe un cliente (por nombre): «lo ve su vendedora o Contabilidad», sin nada de la plata', sinPlata(r.nom), r.nom && r.nom.t);
+  chk('…tampoco por celular, por la OC ni por otro cliente (no dice si existe)', sinPlata(r.cel) && sinPlata(r.oc) && sinPlata(r.carlos), [r.cel && r.cel.t, r.oc && r.oc.t, r.carlos && r.carlos.t]);
+  chk('…y no es un error (sin rojo): ofrece lo que sí le sirve (stock, cupos, entregas)', r.nom && !r.nom.mal && /stock/.test(r.nom.t) && /cupos/.test(r.nom.t) && /entregas/.test(r.nom.t), r.nom && r.nom.t);
+  chk('Logística sigue viendo el stock, los cupos y las entregas como antes', r.stock && /TITANIO ICE 140x190/.test(r.stock.t) && r.cupo && /quedan 4/.test(r.cupo.t) && r.ent && /salen 3 entregas/.test(r.ent.t),
+    [r.stock && r.stock.t, r.cupo && r.cupo.t, r.ent && r.ent.t]);
+  chk('Logística sin la contraseña no le pregunta nada a Claude (ni lo del cliente ni lo demás)', r.nCalls===0 && r.libre && /No tengo esa respuesta todavía/.test(r.libre.t), { n:r.nCalls, t:r.libre && r.libre.t });
+  chk('los ejemplos: a Logística no se le sugiere «¿Cuánto le falta pagar a…?»; a una vendedora sí', r.ejLog.length>=3 && !r.ejLog.some(function(t){ return /falta pagar/.test(t); }) &&
+    r.ejVend.some(function(t){ return /falta pagar/.test(t); }), { log:r.ejLog, vend:r.ejVend });
+  chk('con la contraseña (aunque haya elegido Logística), Administración y Contabilidad: como antes', r.logClave && /ROSA MENDOZA le falta pagar/.test(r.logClave.t) &&
+    r.adm && /ROSA MENDOZA le falta pagar/.test(r.adm.t) && r.conta && /ROSA MENDOZA le falta pagar/.test(r.conta.t), [r.logClave && r.logClave.t, r.adm && r.adm.t]);
+  chk('lo que se le manda a Claude no nombra clientes (lo que falta cobrar va por vendedora)', r.ctxCli===false && r.ctxFalta===true, { cli:r.ctxCli, falta:r.ctxFalta });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3).join(' | '));
   await browser.close();
