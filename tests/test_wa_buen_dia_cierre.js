@@ -225,12 +225,13 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
   seccion('1. Las plantillas', () => {
     const S = servidor(ON);
     const T = Array.from(S.ctx.WA_PLANTILLAS), vars = (t) => (t.match(/\{\{\d+\}\}/g) || []);
-    [['vendedora_buen_dia', 'bd'], ['cierre_del_dia', 'cd']].forEach(([n, k]) => {
+    /* 🛏️ (2026-11-07-d) el cierre sale con la v2 (el botón) y la de antes queda de respaldo (`vieja`). */
+    [['vendedora_buen_dia', 'bd', 'plantilla'], ['cierre_del_dia_v2', 'cd', 'plantilla'], ['cierre_del_dia', 'cd', 'vieja']].forEach(([n, k, campo]) => {
       const pl = T.find(x => x.n === n);
       chk('1a ' + n + ' en WA_PLANTILLAS con {{1}}…{{7}} y un ejemplo de 7', !!pl && vars(pl.t).join() === '{{1}},{{2}},{{3}},{{4}},{{5}},{{6}},{{7}}' && pl.e.length === 7, pl && vars(pl.t));
       chk('1b ' + n + ': no empieza ni termina con un dato, sin dos pegados', !!pl && !/^\{\{/.test(pl.t) && !/\}\}$/.test(pl.t.trim()) && !/\}\}\s*\{\{/.test(pl.t));
       chk('1c ' + n + ': cada ejemplo sin saltos de línea, ni tabs, ni 4 espacios, y de 200 letras o menos', !!pl && pl.e.every(x => !/[\r\n\t]/.test(x) && !/ {4}/.test(x) && x.length <= 200), pl && pl.e.map(x => x.length));
-      chk('1d ' + n + ' en WA_TIPOS (' + k + ')', S.ctx.WA_TIPOS[k] && S.ctx.WA_TIPOS[k].plantilla === n, S.ctx.WA_TIPOS[k]);
+      chk('1d ' + n + ' en WA_TIPOS (' + k + ', ' + campo + ')', S.ctx.WA_TIPOS[k] && S.ctx.WA_TIPOS[k][campo] === n, S.ctx.WA_TIPOS[k]);
     });
     const bd = T.find(x => x.n === 'vendedora_buen_dia');
     chk('1e el texto del buen día: «Buen día, {{1}}», entregas, cobrar, factura, Kommo, Contabilidad y «Para hacer»', !!bd && /Buen día, \{\{1\}\}\* \(\{\{2\}\}\)/.test(bd.t) && /Hoy se entregan: \*\{\{3\}\}\*/.test(bd.t) &&
@@ -312,7 +313,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
   });
 
   seccion('5. El cierre del día', () => {
-    const S = lleno(); const cd = () => S.salen('cierre_del_dia');
+    const S = lleno(); const cd = () => S.salen('cierre_del_dia_v2');
     poner(HOY + ' 21:10'); S.repaso();
     chk('5a a las 21:10 todavía no', cd().length === 0, S.salen());
     S.limpiar(); poner(HOY + ' 21:20'); S.repaso();
@@ -342,22 +343,82 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     // Sin la foto de hoy
     const S2 = lleno(); const fila = S2.sh._datos.find(f => f[0] === '__pry_hist__'); fila[16] = JSON.stringify({ v: 1, d: { '2026-11-09': PRY.d['2026-11-09'], '2026-10-31': { h: '18:00', v: 1, p: 2 } } });
     poner(HOY + ' 21:20'); S2.repaso();
-    chk('5l sin la foto de hoy: «sin cálculo de hoy» con la última del mes', (S2.salen('cierre_del_dia')[0] || { p: [] }).p[6] === 'sin cálculo de hoy (el último, del 09/11: Bs 250.000 vendidos · proyección Bs 990.000)', S2.salen('cierre_del_dia'));
+    chk('5l sin la foto de hoy: «sin cálculo de hoy» con la última del mes', (S2.salen('cierre_del_dia_v2')[0] || { p: [] }).p[6] === 'sin cálculo de hoy (el último, del 09/11: Bs 250.000 vendidos · proyección Bs 990.000)', S2.salen('cierre_del_dia_v2'));
     const fila2 = S2.sh._datos.find(f => f[0] === '__pry_hist__');
     chk('5m sin ninguna del mes: «sin cálculo de hoy»', S2.ctx.waCdPry_({ observaciones: JSON.stringify({ v: 1, d: { '2026-10-31': { h: '18:00', v: 1, p: 2 } } }) }, S2.ctx.waBo_(RELOJ.ms)) === 'sin cálculo de hoy' && !!fila2);
     // Kommo que no contesta
     const F = lleno(); F.kommo.falla = true; poner(HOY + ' 21:20'); F.repaso();
-    chk('5n Kommo no contesta: «sin dato» y sale igual', (F.salen('cierre_del_dia')[0] || { p: [] }).p[5] === 'sin dato', F.salen('cierre_del_dia'));
+    chk('5n Kommo no contesta: «sin dato» y sale igual', (F.salen('cierre_del_dia_v2')[0] || { p: [] }).p[5] === 'sin dato', F.salen('cierre_del_dia_v2'));
     // Domingo: con ventas sale; sin nada no
     const D = servidor(ON); kommoLleno(D); D.cargar([P('d1', 'Carola Chavez', { oc: '11-601', ts: TS('2026-11-15', '12:00'), saldo: 800, productos: DOC(9) })]);
     poner('2026-11-15 21:20'); D.repaso();
-    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia').length === 1 && D.salen('cierre_del_dia')[0].p[1] === 'Bs 800 · 1 venta · 1 producto' && D.salen('cierre_del_dia')[0].p[3] === 'Carola: 1 prod., Bs 800' && D.salen('cierre_del_dia')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia'));
+    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia_v2').length === 1 && D.salen('cierre_del_dia_v2')[0].p[1] === 'Bs 800 · 1 venta · 1 producto' && D.salen('cierre_del_dia_v2')[0].p[3] === 'Carola: 1 prod., Bs 800' && D.salen('cierre_del_dia_v2')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia_v2'));
     const V = servidor(ON); V.cargar(FIX); poner('2026-11-16 21:20'); V.repaso();
-    chk('5p un día sin ventas cargadas ni entregas no sale (y no queda como error en la hoja)', V.salen('cierre_del_dia').length === 0 && !V.hoja().some(f => f[3] === 'Dueño: cierre del día'), V.salen());
+    chk('5p un día sin ventas cargadas ni entregas no sale (y no queda como error en la hoja)', V.salen('cierre_del_dia_v2').length === 0 && !V.hoja().some(f => f[3] === 'Dueño: cierre del día'), V.salen());
     const W = servidor(Object.assign({}, ON, { WA_DUENO: '' })); W.cargar(FIX); poner(HOY + ' 21:20'); W.repaso();
-    chk('5q sin WA_DUENO no sale', W.salen('cierre_del_dia').length === 0);
+    chk('5q sin WA_DUENO no sale', W.salen('cierre_del_dia_v2').length === 0);
     const Q = lleno(); poner(HOY + ' 23:30'); Q.repaso();
-    chk('5r después de las 23:15 (el bot estuvo parado) ya no sale', Q.salen('cierre_del_dia').length === 0);
+    chk('5r después de las 23:15 (el bot estuvo parado) ya no sale', Q.salen('cierre_del_dia_v2').length === 0);
+  });
+
+  seccion('5b. (2026-11-07-d) 🛏️ El botón «Ver qué vendió cada uno»: el detalle por vendedor, como texto, solo al dueño', () => {
+    let nW = 0;
+    const hook = (S, from, msg) => S.ctx.doPost({ parameter: { wa: 'clave-hook' }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages',
+      value: { messaging_product: 'whatsapp', metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: from, profile: { name: 'Eduardo' } }],
+               messages: [Object.assign({ id: 'wamid.in' + (++nW), from, timestamp: String(Math.floor(RELOJ.ms / 1000)) }, msg)] } }] }] }) } });
+    const textos = (S, to) => S.meta.llamadas.filter(c => c.body && c.body.type === 'text' && (!to || c.body.to === to)).map(c => c.body.text.body);
+    const H = { WA_HOOK_KEY: 'clave-hook' };
+    const S = lleno(H); poner(HOY + ' 21:20'); S.repaso();
+    const c = S.meta.llamadas.find(x => x.body && x.body.template && x.body.template.name === 'cierre_del_dia_v2');
+    chk('5b1 el cierre sale con la v2 y su botón trae el día («cd|2026-11-10»)', !!c && c.body.template.components.length === 2 &&
+        JSON.stringify(c.body.template.components[1]) === JSON.stringify({ type: 'button', sub_type: 'quick_reply', index: '0', parameters: [{ type: 'payload', payload: 'cd|2026-11-10' }] }), c && c.body.template.components);
+    // Sin la v2 aprobada: la de antes, SIN botón y con los mismos 7 datos
+    const V = lleno(H); V.meta.responder = (b) => (b.template && b.template.name === 'cierre_del_dia_v2') ? { code: 404, body: { error: { code: 132001, message: 'Template name does not exist in the translation' } } } : null;
+    poner(HOY + ' 21:20'); V.repaso();
+    const ll = V.meta.llamadas.filter(x => x.body && x.body.template && /^cierre_del_dia/.test(x.body.template.name));
+    chk('5b2 la v2 todavía no aprobada: sale cierre_del_dia (la de antes), sin botón, con los mismos 7 datos', ll.length === 2 && ll[1].body.template.name === 'cierre_del_dia' && ll[1].body.template.components.length === 1 &&
+        JSON.stringify(ll[1].body.template.components[0].parameters) === JSON.stringify(ll[0].body.template.components[0].parameters), ll.map(x => x.body.template.name + ':' + x.body.template.components.length));
+    // El dueño toca el botón (al otro día a la mañana: el detalle es el del día del cierre)
+    S.limpiar(); poner('2026-11-11 08:10');
+    hook(S, '59177000007', { type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } });
+    const T = textos(S, '59177000007'), t = T.join('\n');
+    chk('5b3 tocó el botón: le llega UN texto con el detalle del 10/11 (aunque sea el 11/11)', T.length === 1 && /^🛏️ \*Qué vendió cada uno\* \(martes 10\/11\)\n🛒 Bs 13\.500 · 7 ventas · 7 productos/.test(t), T);
+    chk('5b4 cada vendedor (de más a menos, igual que el cierre) y debajo cada venta: OC, cliente, productos y monto',
+        /🧑‍💼 \*Juan Pablo Paredes\* · 1 prod\. · Bs 4\.500\n• OC 11-304 · CLIENTE S4: 1 × COLCHON TITANIO 140x190 · Bs 4\.500/.test(t) &&
+        /🧑‍💼 \*Carola Chavez\* · 1 prod\. · Bs 3\.000\n• OC 11-301 · CLIENTE S1: 1 × COLCHON TITANIO 140x190 · Bs 3\.000/.test(t) &&
+        t.indexOf('Juan Pablo') < t.indexOf('Carola') && t.indexOf('Carola') < t.indexOf('Pedro'), t);
+    chk('5b5 lo mismo que el cierre: sin Eduardo, ROHO, ALBA, ATC, RPT, borradores ni lo de ayer', !/11-311|11-312|11-313|ATC 11-010|RPT 11-003|11-318/.test(t), t);
+    chk('5b6 no es un cliente: no hay fila «💬 Respondió», ni Claude, ni la respuesta automática; queda anotado para el equipo',
+        !S.hoja().some(f => f[3] === '💬 Respondió') && S.claude.llamadas.length === 0 && !S.hoja().some(f => f[3] === 'Respuesta automática') &&
+        S.hoja().some(f => f[3] === '🌙 Dueño pidió qué vendió cada uno' && f[8] === 'wamid.in' + nW) && S.hoja().some(f => f[3] === '🌙 Dueño: qué vendió cada uno' && /enviado/.test(f[7])), S.hoja().map(f => f[3] + ' ' + f[7]));
+    // Meta manda el mismo aviso dos veces: no se contesta dos veces
+    S.limpiar(); const yaN = nW;
+    S.ctx.doPost({ parameter: { wa: 'clave-hook' }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages',
+      value: { messaging_product: 'whatsapp', metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: '59177000007', profile: { name: 'Eduardo' } }],
+               messages: [{ id: 'wamid.in' + yaN, from: '59177000007', timestamp: String(Math.floor(RELOJ.ms / 1000)), type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } }] } }] }] }) } });
+    chk('5b7 el mismo aviso de Meta dos veces: una sola respuesta', textos(S).length === 0, textos(S));
+    // Escrito: «productos» (hoy) y «Productos de ayer»
+    S.limpiar(); poner(HOY + ' 22:00'); hook(S, '59177000007', { type: 'text', text: { body: 'Productos' } });
+    chk('5b8 el dueño escribe «Productos»: el detalle de hoy', /\(martes 10\/11\)\n🛒 Bs 13\.500/.test(textos(S, '59177000007').join('\n')), textos(S));
+    S.limpiar(); poner('2026-11-11 09:00'); hook(S, '59177000007', { type: 'text', text: { body: '¿Productos de ayer?' } });
+    chk('5b9 «¿Productos de ayer?»: el del día anterior', /\(martes 10\/11\)/.test(textos(S, '59177000007').join('\n')), textos(S));
+    S.limpiar(); poner('2026-11-11 09:05'); hook(S, '59177000007', { type: 'text', text: { body: 'productos' } });
+    chk('5b10 un día sin ventas cargadas: lo dice', /\(miércoles 11\/11\)\n\nNo hay ventas del equipo cargadas ese día\./.test(textos(S, '59177000007').join('\n')), textos(S));
+    // Un cliente que escribe «productos» o toca algo: el camino de siempre (nunca le llega el detalle)
+    S.limpiar(); hook(S, '59170111222', { type: 'text', text: { body: 'productos' } });
+    hook(S, '59170111222', { type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } });
+    chk('5b11 otro número que escribe «productos» o manda el mismo botón: NO recibe el detalle (queda como mensaje de un cliente)',
+        !textos(S).some(x => /Qué vendió cada uno/.test(x)) && S.hoja().filter(f => f[3] === '💬 Respondió' && f[5] === '59170111222').length === 2, textos(S));
+    // El dueño escribe otra cosa: no se confunde
+    S.limpiar(); hook(S, '59177000007', { type: 'text', text: { body: 'Hola, ¿cómo están los productos de Carola?' } });
+    chk('5b12 el dueño escribe otra cosa (aunque diga «productos» en el medio): no es el pedido del detalle', !textos(S).some(x => /Qué vendió cada uno/.test(x)), textos(S));
+    // Muchas ventas: en varios mensajes, ninguno de más de 4.000 letras
+    const M = [];
+    for (let i = 0; i < 140; i++) M.push(P('mx' + i, ['Carola Chavez', 'Isabel Robledo', 'Mirian Salazar', 'Maria Flores'][i % 4], { oc: '11-9' + String(i).padStart(2, '0'), ts: TS(HOY, '15:00'), saldo: 1000, cliente: 'CLIENTE CON UN NOMBRE BASTANTE LARGO ' + i,
+      productos: [{ desc: 'COLCHON TITANIO LATEX', medida: '160x200', cant: 1, precio: 600, fdoc: 'F', fdocn: '9' + i }, { desc: 'ALMOHADA FIBRA SILICONADA', medida: '50x70', cant: 2, precio: 200, fdoc: 'F', fdocn: '9' + i }] }));
+    const D = S.ctx.waCdDetalle_(FIX.concat(M).map(x => S.ctx.rowToRec_(S.ctx.recToRow(x))), HOY);
+    chk('5b13 140 ventas más: el detalle va en varios mensajes, cada uno de 4.000 letras o menos, y no se pierde ninguna venta',
+        D.length > 1 && D.every(x => x.length <= 4000) && M.every(x => D.join('\n').indexOf('OC ' + x.oc + ' ') >= 0), D.map(x => x.length));
   });
 
   seccion('6. bloki', () => {

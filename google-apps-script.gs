@@ -261,7 +261,7 @@ function probarAntesDeImplementar() {
     entregaAConfirmar_: typeof entregaAConfirmar_, avisaDeFila_: typeof avisaDeFila_,   // (2026-10-30-a)
     waBdDatos_: typeof waBdDatos_, waCdDatos_: typeof waCdDatos_, waKmSinResp_: typeof waKmSinResp_, blokiPreguntar_: typeof blokiPreguntar_,   // (2026-11-07-a)
     waBdDomingo_: typeof waBdDomingo_,   // (2026-11-07-b)
-    iaSoloMedios_: typeof iaSoloMedios_, iaMedioTxt_: typeof iaMedioTxt_,   // (2026-11-07-d)
+    iaSoloMedios_: typeof iaSoloMedios_, iaMedioTxt_: typeof iaMedioTxt_, waCdDetalle_: typeof waCdDetalle_, waCdPide_: typeof waCdPide_, waCdResponder_: typeof waCdResponder_,   // (2026-11-07-d)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -3181,7 +3181,9 @@ var WA_TIPOS = {
   /* ☀️🌙 (2026-11-07-a, ideas 114 y 115) A las 08:30 a cada vendedora del equipo (WA_VENDEDORAS) lo suyo de hoy; a las 21:15 al dueño
      (WA_DUENO) el cierre del día. Sin plantilla de respaldo: mientras Meta no las apruebe, no salen (queda anotado en la hoja). */
   bd:  { plantilla:'vendedora_buen_dia', txt:'Vendedora: buen día' },
-  cd:  { plantilla:'cierre_del_dia', txt:'Dueño: cierre del día' }
+  /* 🛏️ (2026-11-07-d) La v2 lleva el botón «Ver qué vendió cada uno» (el detalle por vendedor llega como texto al tocarlo: `waCdResponder_`).
+     Mientras Meta no la apruebe, sale la de antes, sin botón (el dueño igual puede escribirle «productos» al bot). */
+  cd:  { plantilla:'cierre_del_dia_v2', vieja:'cierre_del_dia', nv:7, txt:'Dueño: cierre del día' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -4431,7 +4433,7 @@ function waCdDatos_(lista, B) {
       var t = waVentaTotal_(p), mk = waCdMarca_(p.vendedor), k = waEfeNorm_(p.vendedor) || '(sin vendedor)', u = waCdProds_(p);
       V.n++; V.bs = waR2_(V.bs + t); V.u += u;
       marcas[mk] = waR2_((marcas[mk] || 0) + t);
-      if (!vend[k]) { vend[k] = { nombre:waBdNombre_(p.vendedor) || '(sin vendedor)', bs:0, n:0, u:0 }; orden.push(k); }
+      if (!vend[k]) { vend[k] = { k:k, nombre:waBdNombre_(p.vendedor) || '(sin vendedor)', bs:0, n:0, u:0 }; orden.push(k); }
       vend[k].bs = waR2_(vend[k].bs + t); vend[k].n++; vend[k].u += u;
     }
     if (waCdEntregaHoy_(p, B.hoy)) { ent.total++; if (p.entregado) ent.con++; }
@@ -4483,6 +4485,73 @@ function waCdParams_(D, B, K, nuevos, fh, ahora) {
   var kommo = (km1 && km2) ? km1 + ' · ' + km2 : (km1 ? km1 + ' · sin dato de los sin responder' : (km2 ? 'sin dato de los nuevos · ' + km2 : 'sin dato'));
   return [waDiaTxt_(B.hoy), ventas, marcas, quien.length ? quien.join(' · ') : 'nadie cargó ventas', ents, kommo, waCdPry_(fh, B)];
 }
+/* 🛏️ (2026-11-07-d) QUÉ VENDIÓ CADA UNO. El dueño (07/11), con el cierre en la mano: *«pero no dice qué productos vendió cada vendedor»*.
+   Un dato de plantilla no aguanta la lista (250 letras, sin saltos de línea), así que el cierre lleva el botón «Ver qué vendió cada uno»
+   (`cierre_del_dia_v2`) y al tocarlo el bot le contesta con TEXTO LIBRE (Meta lo deja: el dueño acaba de escribir), con saltos de línea y
+   hasta 4.096 letras por mensaje: cada vendedor y, debajo, cada venta del día con su OC, el cliente, los productos y el monto. Las mismas
+   ventas que el cierre (`waCdDatos_`). También si el dueño le escribe «productos» (o «productos ayer»). Solo a WA_DUENO (o WA_PRUEBA). */
+var WA_CD_BOTON = 'Ver qué vendió cada uno';   // ⚠️ el texto del botón en Meta (máx. 25 letras)
+var WA_CD_TROZO = 3500;                        // un mensaje de texto aguanta 4.096
+/** Los mensajes del detalle del día `dia` (uno o varios trozos). */
+function waCdDetalle_(lista, dia) {
+  var D = waCdDatos_(lista, { hoy:dia }), bs0 = function (n) { return waBs_(Math.round(Number(n) || 0)); }, porV = {};
+  (lista || []).forEach(function (p) {
+    if (!p || !waEsVentaConta_(p) || waContaFecha_(p) !== dia) return;
+    var k = waEfeNorm_(p.vendedor) || '(sin vendedor)'; (porV[k] = porV[k] || []).push(p);
+  });
+  var v = D.ventas;
+  if (!v.n) return ['🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')\n\nNo hay ventas del equipo cargadas ese día.'];
+  var cab = '🛏️ *Qué vendió cada uno* (' + waDiaTxt_(dia) + ')\n🛒 ' + bs0(v.bs) + ' · ' + v.n + ' venta' + (v.n === 1 ? '' : 's') + ' · ' + v.u + ' producto' + (v.u === 1 ? '' : 's');
+  var out = [], cur = cab;
+  D.vend.forEach(function (o) {
+    var ps = (porV[o.k] || []).slice().sort(function (a, b) { return (Number(a.ts) || 0) - (Number(b.ts) || 0); });
+    var L = ['🧑‍💼 *' + o.nombre + '* · ' + o.u + ' prod. · ' + bs0(o.bs) + (o.n > 1 ? ' · ' + o.n + ' ventas' : '')];
+    ps.forEach(function (p) {
+      var cli = String(p.cliente || '').replace(/\s+/g, ' ').trim(); if (cli.length > 30) cli = cli.slice(0, 29) + '…';
+      L.push('• ' + waOc_(p.oc) + (cli ? ' · ' + cli : '') + ': ' + waProds_(p) + ' · ' + bs0(waVentaTotal_(p)));
+    });
+    var b = L.join('\n');
+    if ((cur + '\n\n' + b).length <= WA_CD_TROZO) { cur += '\n\n' + b; return; }    // entra en el mensaje de ahora
+    if (b.length <= WA_CD_TROZO) { out.push(cur); cur = b; return; }                  // entra entero en uno nuevo: no se parte
+    L.forEach(function (x, i) {                                                        // un vendedor con muchísimas ventas: por renglones
+      var sep = i ? '\n' : '\n\n';
+      if ((cur + sep + x).length > WA_CD_TROZO) { out.push(cur); cur = (i ? '🧑‍💼 *' + o.nombre + '* (sigue)\n' : '') + x; }
+      else cur += sep + x;
+    });
+  });
+  out.push(cur);
+  return out.map(function (t) { return t.length > 4000 ? t.slice(0, 3997) + '…' : t; });
+}
+/** ¿El dueño pidió el detalle? Devuelve el día ('AAAA-MM-DD') o ''. El botón trae el día en su `payload` («cd|2026-11-07»); escrito,
+    «productos», «detalle», «qué vendió» (hoy) o con «ayer». Solo de WA_DUENO (o del número de prueba). */
+function waCdPide_(m, de, cfg) {
+  var nums = ((cfg && cfg.dueno) || []).map(function (L) { return L.cel; });
+  if (cfg && cfg.prueba) nums.push(cfg.prueba);
+  if (!de || nums.indexOf(String(de)) < 0) return '';
+  var hoy = waBo_(Date.now()).hoy, t = String((m && m.type) || '');
+  if (t === 'button') {
+    var b = m.button || {}, pl = String(b.payload || ''), mm = pl.match(/^cd\|(\d{4}-\d{2}-\d{2})$/);
+    if (mm) return mm[1];
+    return waEfeNorm_(b.text) === waEfeNorm_(WA_CD_BOTON) ? hoy : '';
+  }
+  if (t !== 'text') return '';
+  var s = waEfeNorm_(String((m.text || {}).body || '')).replace(/[¿?¡!.,;:]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!/^(ver )?(los )?(productos|detalle|que vendio|que vendieron|que vendio cada uno)( de)?( hoy| ayer)?$/.test(s)) return '';
+  return /\bayer$/.test(s) ? waMasDias_(hoy, -1) : hoy;
+}
+/** Le contesta al dueño con el detalle (texto libre) y lo anota en «Bot WhatsApp» (el pedido con su wamid: Meta a veces avisa dos veces). */
+function waCdResponder_(sh, de, dia, m, cfg) {
+  sh.appendRow([waHookHora_(m.timestamp), '', '', '🌙 Dueño pidió qué vendió cada uno', String(m._nom || ''), de, '', '💬 pedido', String(m.id || ''),
+                iaCorte_(waHookTxtMsg_(m), 200) + ' → ' + waDiaTxt_(dia)]);
+  var lista = [];
+  try { lista = readAll(); } catch (e) { lista = null; }
+  var msgs = lista ? waCdDetalle_(lista, dia) : ['🛏️ No pude leer la planilla en este momento. Probá de nuevo en un rato.'];
+  var B = waBo_(Date.now());
+  msgs.forEach(function (t) {
+    var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:t, preview_url:false } });
+    sh.appendRow([B.txt, '', '', '🌙 Dueño: qué vendió cada uno', String(m._nom || ''), de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]);
+  });
+}
 /** ▶ Desde el editor: lo que dirían AHORA el «Buen día» (a cada vendedora) y el cierre del día. Lee Kommo (solo lee); no manda nada. */
 function probarMensajesDelDia() {
   var B = waBo_(Date.now()), sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME), vals = sh ? sh.getDataRange().getValues() : [], L = [];
@@ -4500,6 +4569,7 @@ function probarMensajesDelDia() {
   if (!C.ventas.n && !C.ent.total) L.push('🌙 El cierre del día de hoy no saldría: no hubo ventas cargadas ni entregas.');
   else L.push('🌙 El cierre del día diría: ' + waCdParams_(C, B, K, waKmNuevosHoy_(cfg, B), por[WA_PRY_HIST_ID], Date.now()).map(waParam_).join(' | '));
   L.push(cfg.dueno.length ? 'El cierre le llega a: ' + cfg.dueno.map(function (x) { return x.nombre; }).join(', ') + ', a las 21:15.' : '⚠️ Falta WA_DUENO: el cierre del día no le llega a nadie.');
+  L.push('🛏️ Al tocar «' + WA_CD_BOTON + '» (o escribirle «productos» al bot) le llegaría:\n' + waCdDetalle_(lista, B.hoy).join('\n— — —\n'));   // (2026-11-07-d)
   if (typeof Logger !== 'undefined') Logger.log(L.join('\n'));
   return { lineas:L };
 }
@@ -4583,6 +4653,7 @@ function waArmar_(m, recs, cfg, B) {
       var DC = waCdDatos_(lisD, B);
       if (!DC.ventas.n && !DC.ent.total) return { saltar:'hoy no hubo ventas cargadas ni entregas', anotar:false };
       out.params = waCdParams_(DC, B, waKmLeer_(cfg), waKmNuevosHoy_(cfg, B), recs[WA_PRY_HIST_ID], Date.now());
+      out.botones = ['cd|' + B.hoy];   // 🛏️ (2026-11-07-d) «Ver qué vendió cada uno» de ESTE día (aunque lo toque mañana)
     }
   } else if (m.k === 'al' || m.k === 'alv') {
     /* 📉 §4ok-102 Lo que contó el vigía en ESE momento (un reintento de minutos después dice lo mismo). */
@@ -4609,10 +4680,12 @@ function waArmar_(m, recs, cfg, B) {
   return out;
 }
 /** Manda UNA plantilla. {ok, id} · {reintentar, detalle} · {fatal, detalle} · {detalle} (no se reintenta). */
-function waEnviar_(cfg, numero, plantilla, params) {
+function waEnviar_(cfg, numero, plantilla, params, botones) {
+  var comp = [{ type:'body', parameters:params.map(function (t) { return { type:'text', text:t }; }) }];
+  /* 🛏️ (2026-11-07-d) `botones` = lo que devuelve cada botón de respuesta rápida al tocarlo (el `payload`), en orden. */
+  (botones || []).forEach(function (pl, i) { comp.push({ type:'button', sub_type:'quick_reply', index:String(i), parameters:[{ type:'payload', payload:String(pl) }] }); });
   return waPost_(cfg, { messaging_product:'whatsapp', to:numero, type:'template',
-                        template:{ name:plantilla, language:{ code:cfg.idioma },
-                                   components:[{ type:'body', parameters:params.map(function (t) { return { type:'text', text:t }; }) }] } });
+                        template:{ name:plantilla, language:{ code:cfg.idioma }, components:comp } });
 }
 /* (2026-10-12-c) El envío a Meta, para una plantilla o para un texto libre (la respuesta automática). */
 function waPost_(cfg, body) {
@@ -4789,7 +4862,7 @@ function waRepasoBot_() {
       if (a.anotar) filas.push(base.concat([p ? String(p.cliente || '') : (m.a || ''), '', T.plantilla, '⏭️ no se manda', a.saltar]));
       continue;
     }
-    var r = waEnviar_(cfg, a.numero, a.plantilla, a.params);
+    var r = waEnviar_(cfg, a.numero, a.plantilla, a.params, a.botones);   // 🛏️ (2026-11-07-d) el respaldo de abajo va SIN botones
     /* (2026-10-12-d) La v2 todavía no está aprobada (o la pausaron): sale la de antes, con sus datos. */
     /* (2026-10-14-a) Y si la de antes tampoco está, la siguiente (`vieja2`): «en camino» → cambio de día v2 → cambio de día. */
     /* §4ok-E `a.alts` = otro orden de respaldo (la «_ubic», §4ok-108); `a.viejos` = otros datos para el respaldo (§4ok-97), o null = sin respaldo. */
@@ -4953,6 +5026,10 @@ function waHookAnotar_(est, resp) {
   var cfgIa = null, hayIa = false, numsIa = [];
   resp.forEach(function (m) {
     var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
+    /* 🛏️ (2026-11-07-d) El dueño tocó «Ver qué vendió cada uno» (o escribió «productos»): el detalle, y no es un cliente. */
+    var cdDia = '';
+    try { cfgIa = cfgIa || waConfig_(); cdDia = waCdPide_(m, String(m.from || ''), cfgIa); } catch (er) { cdDia = ''; }
+    if (cdDia) { try { waCdResponder_(sh, String(m.from || ''), cdDia, m, cfgIa); } catch (er) {} fila[w] = sh.getLastRow(); return; }
     var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de, desde), ms = (Number(m.timestamp) * 1000) || Date.now();
     /* 🧠 (2026-10-14-b) Si a este número le contesta Claude: «⏳» en la columna M y NADA en el momento (el cliente suele mandar dos o
        tres mensajes seguidos y Meta no puede esperar a Claude); `iaRepaso` lo contesta a los ~30 s. Una reacción (👍) no se contesta. */
@@ -5811,7 +5888,13 @@ var WA_PLANTILLAS = [
   { n:'cierre_del_dia',
     t:'🤖 🌙 *Cierre del día* ({{1}})\n\n🛒 Ventas cargadas hoy: *{{2}}*\n🏷️ Por marca: {{3}}\n🧑‍💼 Quién vendió: {{4}}\n🚚 Entregas de hoy: *{{5}}*\n📥 Kommo: {{6}}\n📈 El mes: {{7}}\n\nEl detalle está en el panel: Contabilidad → 📋 Ventas y 📈 Proyección.',
     e:['sábado 07/11', 'Bs 48.900 · 12 ventas', 'Heaven Bs 36.200 · Sueña Bs 12.700', 'Mirian Bs 12.300 (3) · Isabel Bs 9.800 (2) · Carola Bs 8.100 (2) · Mauricio Bs 7.200 (2) · otros Bs 11.500 (3)',
-       '22 de 25 con ✅ · 3 sin marcar', '31 leads nuevos · 6 sin responder hace más de 1 h', 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)'] }
+       '22 de 25 con ✅ · 3 sin marcar', '31 leads nuevos · 6 sin responder hace más de 1 h', 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)'] },
+  /* 🛏️ (2026-11-07-d) La misma, con el botón «Ver qué vendió cada uno» (al tocarlo, el detalle por vendedor: `waCdResponder_`). */
+  { n:'cierre_del_dia_v2',
+    t:'🤖 🌙 *Cierre del día* ({{1}})\n\n🛒 Ventas cargadas hoy: *{{2}}*\n🏷️ Por marca: {{3}}\n🧑‍💼 Quién vendió: {{4}}\n🚚 Entregas de hoy: *{{5}}*\n📥 Kommo: {{6}}\n📈 El mes: {{7}}\n\n👇 Tocá el botón para ver qué productos vendió cada uno.',
+    e:['sábado 07/11', 'Bs 48.900 · 12 ventas · 17 productos', 'Heaven Bs 36.200 · Sueña Bs 12.700', 'Mirian: 4 prod., Bs 12.300 · Isabel: 3 prod., Bs 9.800 · Carola: 2 prod., Bs 8.100',
+       '22 de 25 con ✅ · 3 sin marcar', '31 leads nuevos · 6 sin responder hace más de 1 h', 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)'],
+    bt:[WA_CD_BOTON] }
     /* (2026-11-07-d) Desde la 07-d {{2}} suma «· 17 productos» y {{4}} trae a TODOS: «Mirian: 4 prod., Bs 12.300 · Isabel: 3 prod., Bs 9.800 · …».
        La plantilla de Meta no cambia (solo cambian los datos). */
 ];
@@ -5828,6 +5911,7 @@ function crearPlantillasWhatsApp() {
   WA_PLANTILLAS.forEach(function (pl) {
     var body = { name:pl.n, language:K.c.idioma, category:'UTILITY',
                  components:[{ type:'BODY', text:pl.t, example:{ body_text:[pl.e] } }] };
+    if (pl.bt && pl.bt.length) body.components.push({ type:'BUTTONS', buttons:pl.bt.map(function (x) { return { type:'QUICK_REPLY', text:x }; }) });   // 🛏️ (2026-11-07-d)
     var code = 0, o = {};
     try {
       var r = UrlFetchApp.fetch(K.base, { method:'post', contentType:'application/json', headers:{ Authorization:'Bearer ' + K.c.token },
