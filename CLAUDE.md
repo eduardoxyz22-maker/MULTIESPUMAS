@@ -2671,7 +2671,7 @@ atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): M
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
-🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
+🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; PUBLICADO `7a9f338`, versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
 Jonathan → Mia Plaza, Isabel y Fabián → Central). ⚠️ Una venta de antes de `VENDEDOR_SUC_DESDE` (01/11) sin la tienda escrita sigue con la de
 entonces (`VENDEDOR_SUCURSAL_ANTES`): `sucursalDeVendedor(v, fecha)` con el día de la venta. Un cambio de tienda futuro = otra fecha y otra lista.
 
@@ -2717,7 +2717,8 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   octubre siguen solo para emparejar con los retiros. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
   quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
   (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
-  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
+  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). 🧾 **07-c** (§4op): un retiro que es JUSTO la suma de lo más
+  nuevo sin recoger de esa persona se lleva eso (si no, del más viejo): el efectivo de octubre sin retiro ya no se come el retiro de noviembre. Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
   `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`; de la 06-e, pegar la 06-d de `ca63dd15…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
 
 ## Campo "Canal" en Kommo
