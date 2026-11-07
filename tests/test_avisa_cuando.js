@@ -115,8 +115,8 @@ const gem = (Srv, p) => (typeof Srv.ctx.entregaAConfirmar_ === 'function') ? Srv
   {
     const ph = fs.readFileSync(PEDIDOS, 'utf8');
     const vG = (SRC.match(/var SCRIPT_VERSION = '([^']+)'/) || [])[1], vE = (SRC.match(/var ESTA_VERSION = '([^']+)'/) || [])[1], vP = (ph.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/) || [])[1];
-    chk('⚠️ 1a. la versión es 2026-11-07-d en SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA de la página',
-        vG === '2026-11-07-d' && vE === vG && vP === vG, { vG, vE, vP });
+    chk('⚠️ 1a. la versión es 2026-11-07-e en SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA de la página',
+        vG === '2026-11-07-e' && vE === vG && vP === vG, { vG, vE, vP });
   }
   poner(HOY + ' 10:00');
   let S = servidor(SRC, ON);

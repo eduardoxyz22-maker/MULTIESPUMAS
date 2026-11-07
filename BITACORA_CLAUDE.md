@@ -17357,6 +17357,13 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4or — 👔 EL JEFE DEL DUEÑO EN WA_DUENO: TODO MENOS EL EFECTIVO (07/11; dueño: *«para que también le llegue a mi jefe solo coloco su nombre y número al lado del mío, ¿cierto?»* → *«todo menos lo del efectivo»*; servidor `2026-11-07-e` para el dueño; la página solo cambia `SCRIPT_VERSION_ESPERADA`, se publica DESPUÉS de que él implemente)
+- `WA_DUENO` acepta varios («Eduardo:7…, Jefe:7…», separados por coma). A TODOS: el cierre del día de las 21:15 (y el botón «Ver qué vendió
+  cada uno» / «productos», `waCdPide_`), el reclamo a la fábrica de las 10:00 y la alerta de leads. El efectivo de los vendedores (9:00 y
+  18:00) **solo al PRIMERO** de la lista (`c.duenoEfe` = `c.dueno.slice(0, 1)`, en la cola del efectivo y en `waArmar_`). ⚠️ El dueño va
+  primero: si el orden cambia, el efectivo le llega al otro. `estadoEfectivo`/probar lo dicen («los demás de WA_DUENO no reciben el efectivo»).
+- `test_wa_buen_dia_cierre` §5c (4). Versión en `test_servidor` §11 y `test_avisa_cuando` 1a.
+
 ### §4oq — 🎙️ AL QUE LE MANDA UN AUDIO AL BOT, QUE ENTIENDA QUE ES UN BOT (07/11; dueño, con la tarjeta de un cliente que mandó un audio y Claude le contestó «No puedo escuchar audios por acá, ¿me lo podés escribir?»: *«debería recordarle que sos un bot o sistema automatizado y no puedes oír audios (de manera cordial y que entiendan)»*; servidor `2026-11-07-d` IMPLEMENTADO 07/11 por el dueño (contesta `2026-11-07-d`), enlace fijo `ff6f932…`, 6.933 líneas; PÁGINA 2026-11-07-f PUBLICADA, `main` = `63b947d` (solo cambia `SCRIPT_VERSION_ESPERADA`); volver atrás: ✏️ a la versión anotada Y pegar la 07-c de `aa40393…`, 6.790 líneas; ⚠️ falta que el dueño corra otra vez `crearPlantillasWhatsApp` para crear `cierre_del_dia_v2` y que Meta la apruebe)
 - La firma «🤖 _Asistente automático · <marca>_» ya iba arriba de cada respuesta, pero en letra chica y en cursiva: el cliente no la lee.
 - **Regla 9 de `iaSistema_`**: con audios, videos, fotos, stickers o documentos, Claude recuerda cordial que este número es un asistente

@@ -420,6 +420,25 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
         /\*Isabel\* · 106 prod\./.test(dj), { largo: D.map(x => x.length), dj });
   });
 
+  seccion('5c. (2026-11-07-e) 👔 El jefe en WA_DUENO: todo menos el efectivo', () => {
+    const DOS = { WA_DUENO: 'Eduardo:59177000007, Jefe:59177000008', WA_HOOK_KEY: 'clave-hook' };
+    const S = lleno(DOS);
+    poner(HOY + ' 18:05'); S.repaso();
+    const ef = S.salen('efectivo_del_dia').map(x => x.to);
+    chk('5c1 el efectivo de las 18:00 le llega SOLO al primero de WA_DUENO (el dueño)', JSON.stringify(ef) === JSON.stringify(['59177000007']), S.salen().map(x => x.pl + ':' + x.to));
+    S.limpiar(); poner(HOY + ' 21:20'); S.repaso();
+    const cd = S.salen('cierre_del_dia_v2').map(x => x.to).sort();
+    chk('5c2 el cierre del día les llega a los DOS', JSON.stringify(cd) === JSON.stringify(['59177000007', '59177000008']), S.salen().map(x => x.pl + ':' + x.to));
+    S.limpiar(); poner(HOY + ' 21:30');
+    S.ctx.doPost({ parameter: { wa: 'clave-hook' }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages',
+      value: { messaging_product: 'whatsapp', metadata: { phone_number_id: '1234567890' }, contacts: [{ wa_id: '59177000008', profile: { name: 'Jefe' } }],
+               messages: [{ id: 'wamid.jefe1', from: '59177000008', timestamp: String(Math.floor(RELOJ.ms / 1000)), type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } }] } }] }] }) } });
+    const t = S.meta.llamadas.filter(c => c.body && c.body.type === 'text' && c.body.to === '59177000008').map(c => c.body.text.body);
+    chk('5c3 el jefe toca «Ver qué vendió cada uno»: le llega el detalle a él', t.length === 1 && /Qué vendió cada uno\* \(martes 10\/11\)/.test(t[0]), t);
+    const U = lleno({ WA_DUENO: 'Eduardo:59177000007' }); poner(HOY + ' 18:05'); U.repaso();
+    chk('5c4 con uno solo en WA_DUENO, como siempre: el efectivo le llega a él', JSON.stringify(U.salen('efectivo_del_dia').map(x => x.to)) === JSON.stringify(['59177000007']));
+  });
+
   seccion('6. bloki', () => {
     const IA = { IA_ACTIVA: '1', ANTHROPIC_API_KEY: 'sk-de-mentira' };
     poner(HOY + ' 10:00');

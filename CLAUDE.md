@@ -1623,6 +1623,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 
 ## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor: la 07-b no se implementó, el dueño implementó directo la `2026-11-07-c` (07/11, §4op) que la trae; volver atrás: ✏️ a la versión anotada Y pegar la 06-d de `ca63dd15…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
+  👔 `WA_DUENO` puede tener varios (el dueño PRIMERO y su jefe): a todos el cierre, el reclamo y la alerta de leads; el efectivo, solo al primero (§4or, `.gs` 07-e).
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO` (desde la 07-d, §4oq: CADA vendedor con «N prod., Bs X», `waCdProds_`, y la v2 con el botón «Ver qué vendió cada uno» → `waCdPide_`/`waCdResponder_` le mandan, como texto, cada vendedor con sus productos sumados y su monto, sin OC ni cliente; también si el dueño escribe «productos»); el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
   Kommo «sin responder» = `/events` sin `filter[entity]` (§4ng), la respuesta del bot de Kommo no cuenta, lo dudoso dice «sin dato».
