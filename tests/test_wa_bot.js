@@ -428,12 +428,13 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const nombres = Object.keys(tipos).map(k => tipos[k].plantilla).sort();
   /* §4ok-E (05/11) + las del jueves: logistica_hoy_falta (en vez de logistica_sin_camion_v2),
      alerta_leads, alerta_leads_volvieron, reclamo_fabrica y las «_ubic» de confirmación y recordatorio (`ubic` en WA_TIPOS). */
-  const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).filter((n, i, a) => a.indexOf(n) === i).sort();
+  /* 🛏️ (2026-11-07-d) + `cierre_del_dia`: la de antes del botón sigue en la lista (es el respaldo de `cierre_del_dia_v2` y se creó desde acá). */
+  const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).concat(['cierre_del_dia']).filter((n, i, a) => a.indexOf(n) === i).sort();
   chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
                      alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5, efectivo_del_dia: 5,   // 💵 (2026-11-06-b) → 📅 (06-d) el efectivo de cada día
-                     vendedora_buen_dia: 7, cierre_del_dia: 7,   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño
+                     vendedora_buen_dia: 7, cierre_del_dia: 7, cierre_del_dia_v2: 7,   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño (07-d: la v2 con el botón)
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
@@ -441,6 +442,10 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const r = S.ctx.crearPlantillasWhatsApp();
   const ll = S.meta.llamadas;
   chk('crear: una llamada por plantilla a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === T.length && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
+  const v2 = ll.find(c => c.body.name === 'cierre_del_dia_v2');
+  chk('🛏️ (07-d) cierre_del_dia_v2 se crea con el botón de respuesta rápida «Ver qué vendió cada uno» (≤ 25 letras); las demás sin botones',
+      !!v2 && v2.body.components.length === 2 && v2.body.components[1].type === 'BUTTONS' && JSON.stringify(v2.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver qué vendió cada uno' }]) &&
+      [...'Ver qué vendió cada uno'].length <= 25 && ll.filter(c => c.body.components.length > 1).length === 1, v2 && v2.body.components);
   chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === T.length - 1, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
@@ -1000,6 +1005,49 @@ console.log('\n── 15c. Al vuelo: contesta en el mismo aviso (5 s de espera),
   S.ctx.Utilities.sleep = (ms) => { RELOJ.ms += ms; };
   escribe(S, '59170111222', 'hola');
   chk('un número que no es de Claude (IA_SOLO): la automática al instante, sin esperar 5 s ni preguntarle a Claude', iaLl(S).length === 0 && /Este número solo envía/.test((textos(S)[0] || {}).t));
+}
+
+// ══ 15d. (2026-11-07-d) El que le manda un AUDIO al bot: que entienda que es un bot ══════════════
+console.log('\n── 15d. Audio o video al bot: «este número es un asistente automático (un bot)», cordial y con el contacto ──');
+{
+  const AUD = { type: 'audio', audio: { id: 'media1', mime_type: 'audio/ogg; codecs=opus', voice: true } };
+  const SIN_BOT = 'Hola Juan 😊 No puedo escuchar audios por acá, ¿me lo podés escribir? Así te ayudo con tu pedido del jueves 15/10.';
+  const CON_BOT = 'Hola Juan 😊 Este número es un asistente automático y no puede escuchar audios. ¿Me lo escribís? 🙏';
+  const audio = (props, resp, extraMsg, desde) => {
+    const { S } = conPedido(Object.assign({ WA_VENDEDORAS: 'Carola Chavez:59170000001' }, props || {}));
+    let visto = null;
+    conClaude(S, (b) => { visto = b; return claude(Object.assign({ categoria: 'otro', resumen: 'Mandó un audio; se le pidió que lo escriba', respuesta: SIN_BOT }, resp || {})); });
+    (extraMsg || [AUD]).forEach((m, i) => { if (i) pasar(5 / 60); escribe(S, desde || '59170111222', '', 'Yoli💕', m); });
+    pasar(1); S.ctx.iaDespierta();
+    return { S, visto, T: textos(S) };
+  };
+  let r = audio();
+  chk('la regla 9 le pide a Claude que recuerde que es un asistente automático (un bot) y que no puede escuchar audios, y dé el contacto',
+      /asistente automático \(un bot\), no una persona/.test(r.visto.system) && /no puede escuchar audios/.test(r.visto.system) && /contacto de su vendedor\/a/.test(r.visto.system), r.visto.system.slice(0, 200));
+  chk('Claude ve el mensaje como «[audio]»', /Yoli💕: \[audio\]\n<\/mensaje_cliente>/.test(r.visto.messages[0].content), r.visto.messages[0].content.slice(-120));
+  const FIJO = 'Hola Juan 😊 Te cuento que este número es un asistente automático (un bot), no una persona, así que no puede escuchar audios.\n' +
+               '¿Me lo escribís en un mensaje? Así te ayudo con tu pedido.\nSi preferís hablar con una persona, escribile a tu vendedora Carola 👉 https://wa.me/59170000001';
+  chk('⚠️ Claude contestó sin decir que es un bot: sale el texto fijo (nombre del pedido, «asistente automático (un bot)», el contacto de su vendedora)',
+      r.T.length === 1 && r.T[0].t === '🤖 _Asistente automático · Heaven Colchones_\n\n' + FIJO, r.T);
+  chk('…y eso es lo que queda en la columna P (lo que ve la vendedora en el panel)', cli(r.S)[0][15] === FIJO && cli(r.S)[0][12] === '🤖 contestó', cli(r.S)[0].slice(12));
+  r = audio(null, { respuesta: CON_BOT });
+  chk('si Claude ya lo dijo («asistente automático»), sale lo de Claude tal cual', r.T.length === 1 && r.T[0].t.endsWith(CON_BOT), r.T);
+  r = audio(null, { contestar: false, respuesta: '' });
+  chk('un audio nunca queda sin respuesta: aunque Claude diga «no hace falta», sale el texto fijo', r.T.length === 1 && r.T[0].t.endsWith(FIJO), r.T);
+  r = audio(null, null, [{ type: 'video', video: { id: 'v1' } }]);
+  chk('un video solo: «no puede ver videos»', r.T.length === 1 && /un bot\), no una persona, así que no puede ver videos\./.test(r.T[0].t), r.T);
+  r = audio(null, null, [AUD, { type: 'video', video: { id: 'v1' } }]);
+  chk('audio y video: «no puede escuchar audios ni ver videos»', r.T.length === 1 && /no puede escuchar audios ni ver videos\./.test(r.T[0].t), r.T);
+  r = audio(null, null, [AUD, { type: 'text', text: { body: '¿a qué hora llega?' } }]);
+  chk('audio + un texto: contesta Claude lo que escribió, sin el texto fijo', r.T.length === 1 && r.T[0].t.endsWith(SIN_BOT), r.T);
+  r = audio(null, { respuesta: 'Hola Juan 😊 No puedo ver fotos por acá: ¿me contás qué es?' }, [{ type: 'image', image: { id: 'f1' } }]);
+  chk('una foto sola: queda lo de Claude (el reemplazo es solo para audios y videos)', r.T.length === 1 && /No puedo ver fotos/.test(r.T[0].t) && !/un bot/.test(r.T[0].t), r.T);
+  r = audio(null, null, null, '59170999000');
+  chk('un número sin pedido: el texto fijo pide el nombre con el que compró o el número de pedido (sin contacto de vendedora)',
+      r.T.length === 1 && /Hola Yoli💕 😊 Te cuento que este número es un asistente automático \(un bot\)/.test(r.T[0].t) && /decime el nombre con el que compraste o el número de pedido\.$/.test(r.T[0].t) && !/wa\.me/.test(r.T[0].t), r.T);
+  r = audio({ WA_VENDEDORAS: '' });
+  chk('sin el WhatsApp de la vendedora: «escribile a tu vendedora por el WhatsApp de siempre» (sin enlace)', r.T.length === 1 && /escribile a tu vendedora por el WhatsApp de siempre$/.test(r.T[0].t) && !/wa\.me/.test(r.T[0].t), r.T);
+  chk('iaDiceBot_: «automático», «automática», «bot» y «robot» sí; «sistema» o «botón» no', ['asistente automático', 'respuesta automática', 'soy un bot', 'un robot'].every(x => r.S.ctx.iaDiceBot_(x)) && !['el sistema', 'tocá el botón'].some(x => r.S.ctx.iaDiceBot_(x)));
 }
 
 // ══ 16. (2026-10-29-b) Cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» ══════════════
