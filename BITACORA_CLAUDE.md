@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama; lo implementa el dueño; la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después)
+### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama, enlace fijo `8093135…` (7.565 líneas); lo implementa el dueño — volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…` (6.938 líneas); la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después; batería 344 suites · 10.968 bien · 6 mal, las 6 de la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— y `test_avisa_cuando` (la versión escrita a mano, corregida): solas, todas bien)
 - **13 A · `pedir_ubicacion`** (al cliente): a las 10:00, a cada pedido que se entrega dentro de 2 días SIN pin exacto (vacío o `&aprox=1`:
   `waSinPin_`); el sábado también los del martes (`waUbDias_`: el domingo no se manda nada; lunes → sábado, martes → sábado). Una vez por pedido
   (`WA_UB_PEDIDA` = {id: día de la entrega}, 20 días, tope 200: si después lo mueven de día no se le vuelve a pedir). Las reglas del bot al cliente
@@ -17386,7 +17386,10 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - `probarAntesDeImplementar` §18 (`probarBotG_`), `probarPreguntasDelDueno()` (lo que harían ahora, sin mandar ni preguntarle a Claude),
   `estadoBotWhatsApp` (`ubicacionPedida`, `preguntasDueno`). Propiedades nuevas que maneja el script: `WA_UB_PEDIDA`, `WA_PREG_USO`; opcional
   `WA_PREG_TOPE_DIA`. Plantillas nuevas: `pedir_ubicacion` (6 datos) y `vendedoras_bajan` (5 datos + botón) → correr `crearPlantillasWhatsApp`.
-- `tests/test_wa_13_25_26.js` (88; 61 rojas contra la 07-e; §3b compara con `pryMomDe` de la página, vendedor por vendedor). Cambiadas A
+- Con la copia de la planilla real del sábado 07/11 (sin mandar nada): el lunes 09/11 a las 08:00 saldrían 5 de 8 más de 20 % abajo (con 3
+  productos cada uno, el dato de 250 letras mostraba UNO solo: por eso la lista se achica de a poco, `waVbParams_`); la ubicación de 2 días antes
+  tocaría 0-1 pedidos por día esa semana (casi todos ya tienen pin); el contexto de Claude, ~5.800 letras.
+- `tests/test_wa_13_25_26.js` (90; 61 rojas contra la 07-e; §3b compara con `pryMomDe` de la página, vendedor por vendedor). Cambiadas A
   CONCIENCIA: `test_wa_bot` (las dos plantillas nuevas y un botón más) y `test_servidor` §l (la versión).
 
 ### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h PUBLICADA 07/11 (`main` = `2c50384`), con los arreglos de las pruebas de §4os; el `.gs` no cambia; batería: lo rojo con la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— pasa solo)
