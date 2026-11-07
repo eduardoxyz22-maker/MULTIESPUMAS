@@ -17357,6 +17357,19 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4op — 🧾 EL RETIRO QUE ES JUSTO LO ÚLTIMO SIN RECOGER SE LLEVA ESO (07/11; dueño: *«Ya me llegó el mensaje. Si está cargado como "Recogido" o algo así en el panel ya no lo toma en cuenta cierto?»*; servidor `2026-11-07-c`, página 2026-11-07-e)
+- Lo que saca a alguien del aviso del efectivo es el RETIRO cargado (Contabilidad → 💵 Retiro de efectivo) a su nombre: no hay tilde de
+  «recogido» por venta. `waEfeCuentas_` empareja: cada retiro cubre lo de esa persona cobrado hasta su día; primero un cobro del mismo monto,
+  después del más viejo.
+- 🐞 Con la planilla real del 07/11: Mauricio cargó hoy Bs 3.290 = sus dos cobros de noviembre (700 + 2.590) y el aviso lo seguía mostrando;
+  Juan Pablo cargó el 06/11 Bs 4.620 = 990 (31/10) + 910 + 1.480 + 1.240 y lo mismo. El efectivo de OCTUBRE que nadie cargó como retiro (el
+  dueño: «lo de octubre ya se recogió»; 06-e solo dejó de AVISARLO) se comía primero el retiro de noviembre.
+- **07-c**: después del «mismo monto», si el retiro es JUSTO la suma de lo más nuevo sin recoger hasta su día (de atrás hacia adelante), se
+  lleva eso; si no, del más viejo como antes. Con la planilla real: de Fernando 4.630, Juan Pablo 3.630, Mauricio 3.290 y Luis Pierre 1.860
+  (chofer) → quedan Fernando (sin retiros desde el 30/10) y Luis Pierre (11-011, una venta de Fernando que cobró el chofer).
+- ⚠️ La página no tiene esta cuenta (es solo del aviso); `test_wa_efectivo` §5 (4; 3 rojas contra la 07-b). Versión en `test_servidor` §11 y
+  `test_avisa_cuando` 1a. El dueño todavía no había implementado la 07-b (el servidor contestaba 06-d): implementa directo la 07-c.
+
 ### §4oo — 🏪 LA TIENDA DE CADA VENDEDOR, LA DE KOMMO (07/11; dueño: «Si» a *«¿pongo en el panel las sucursales que dice Kommo? Hoy no coinciden para Carola, Jonathan, Isabel y Fabián»*; PUBLICADO 07/11, `main` = `7a9f338`, versión 2026-11-07-d)
 - `VENDEDOR_SUCURSAL` = lo que dice Kommo desde noviembre («Nombre - Sucursal»): **Carola → Tienda Banzer, Jonathan → Mia Plaza, Isabel →
   Central, Fabián → Central** (Ventura Mall todavía no abrió; si abre y Fabián pasa allá, cambiar esa línea), Andrea → Tienda Banzer; Mirian

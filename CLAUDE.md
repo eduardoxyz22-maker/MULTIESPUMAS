@@ -2717,7 +2717,8 @@ por su número, calcula OC/N° del día/total, día lleno → siguiente hábil a
   octubre siguen solo para emparejar con los retiros. `waEfeCuentas_` empareja cobros y retiros — el efectivo es de
   quien lo recibió; un retiro cubre lo de esa persona hasta su día (mismo monto primero, después del más viejo); se avisa lo cobrado desde el 01/11
   (`WA_EFE_DESDE`) y de hace 2 días o más. ⚠️ Copia la lectura de pagos de la página: si cambia `parseCobros`/`anticipoDe`/`cobrosDe`/`contaPagos` o
-  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
+  `CONTA_EXCLUIR`, cambia `waEfe*` también (`tests/test_wa_efectivo.js` compara). 🧾 **07-c** (§4op): un retiro que es JUSTO la suma de lo más
+  nuevo sin recoger de esa persona se lleva eso (si no, del más viejo): el efectivo de octubre sin retiro ya no se come el retiro de noviembre. Volver atrás de la 06-b: ✏️ a la versión anotada Y pegar la 06-a de
   `faf46c3…`; de la 06-c, pegar la 06-b de `06898746…`; de la 06-d, pegar la 06-c de `68822ae2…`; de la 06-e, pegar la 06-d de `ca63dd15…`. `crearPlantillasWhatsApp` lee «la categoría… MARKETING» como «ya existía» (sale igual).
 
 ## Campo "Canal" en Kommo

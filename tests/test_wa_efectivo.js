@@ -288,6 +288,31 @@ const FIX = [
       pr.lineas.some(l => /Lo de los vendedores le llega a: Eduardo/.test(l)) && pr.lineas.some(l => /Lo de los choferes le llega a: Contabilidad/.test(l)) && pr.lineas.some(l => /Retiros que no tienen efectivo cobrado antes/.test(l)), pr.lineas);
   chk('4f sin WA_CONTABILIDAD probarEfectivo lo avisa (y que al dueño no va)', pr5.lineas.some(l => /Falta la propiedad WA_CONTABILIDAD.*al dueño no va/.test(l)), pr5.lineas);
 
+  console.log('\n── 5. (07-c) El retiro que es justo lo último que tenía sin recoger se lleva eso, no lo de octubre ──');
+  /* El 07/11 Mauricio cargó Bs 3.290 = sus dos cobros de noviembre, pero tenía efectivo de octubre que nadie cargó como retiro (el dueño:
+     «lo de octubre ya se recogió») y el retiro se iba primero ahí: el aviso lo seguía mostrando. Datos inventados con la misma forma. */
+  poner('2026-11-07 10:00');
+  const S7 = servidor(ON);
+  S7.cargar([
+    V('q0', 'Mauricio Merida', '~Efectivo 470 @2026-10-27 #1', { ts: TS('2026-10-27') }),
+    V('q1', 'Mauricio Merida', '~Efectivo 700 @2026-11-03 #2', { ts: TS('2026-11-03') }), V('q2', 'Mauricio Merida', '~Efectivo 2590 @2026-11-04 #3', { ts: TS('2026-11-04') }),
+    R('q1', 'Mauricio Merida', 3290, '2026-11-07', '9'),
+    // Juan Pablo: el retiro del 06/11 = 990 (31/10) + 910 + 1.480 + 1.240 → todo cubierto
+    V('j0', 'Juan Pablo Paredes', '~Efectivo 2000 @2026-10-28 #4', { ts: TS('2026-10-28') }), V('j1', 'Juan Pablo Paredes', '~Efectivo 990 @2026-10-31 #5', { ts: TS('2026-10-31') }),
+    V('j2', 'Juan Pablo Paredes', '~Efectivo 910 @2026-11-03 #6', { ts: TS('2026-11-03') }), V('j3', 'Juan Pablo Paredes', '~Efectivo 1480 @2026-11-03 #7', { ts: TS('2026-11-03') }),
+    V('j4', 'Juan Pablo Paredes', '~Efectivo 1240 @2026-11-05 #8', { ts: TS('2026-11-05') }),
+    R('j1', 'Juan Pablo Paredes', 4620, '2026-11-06', '10'),
+    // Fernando: el retiro (1.200) no es la suma de lo último → como antes, del más viejo: 900 de octubre + 300 de noviembre, quedan 700
+    V('k0', 'Fernando Peinado', '~Efectivo 900 @2026-10-29 #11', { ts: TS('2026-10-29') }), V('k1', 'Fernando Peinado', '~Efectivo 1000 @2026-11-03 #12', { ts: TS('2026-11-03') }),
+    R('k1', 'Fernando Peinado', 1200, '2026-11-05', '12')
+  ]);
+  const P7 = S7.ctx.waEfePendiente_(S7.lista(), '2026-11-07'), nom7 = P7.map(o => o.nombre + ' ' + o.bs);
+  chk('5a Mauricio: el retiro de 3.290 (= 700 + 2.590 de noviembre) lo saca del aviso, aunque quede efectivo de octubre sin retiro', !P7.some(o => o.nombre === 'Mauricio Merida'), nom7);
+  chk('5b Juan Pablo: el retiro de 4.620 (= 990 + 910 + 1.480 + 1.240) lo saca del aviso', !P7.some(o => o.nombre === 'Juan Pablo Paredes'), nom7);
+  chk('5c un retiro que no es la suma de lo último sigue yendo primero a lo más viejo (Fernando: quedan 700)', P7.some(o => o.nombre === 'Fernando Peinado' && o.bs === 700), nom7);
+  const R7 = S7.ctx.waEfeResumen_(S7.lista(), '2026-11-07', '2026-11-06', '2026-11-06');
+  chk('5d el resumen del día (el mensaje) dice lo mismo: solo Fernando con 700', R7.filter(o => o.bs > 0).map(o => o.nombre + ' ' + o.bs).join('|') === 'Fernando Peinado 700', R7);
+
   chk('sin errores en la página', errores.length === 0, errores);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');
   process.exit(FAIL ? 1 : 0);
