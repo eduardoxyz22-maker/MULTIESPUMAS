@@ -1633,6 +1633,9 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 - 📄 **Informe del mes** (Proyección → «📄 Informe del mes», solo con la contraseña, `#imes-ov`): 6 hojas A4 con «3 cosas para mirar» por reglas;
   números de `proyeccionMes`/las fichas de Contabilidad/`atciDatos`, nada aparte. `hojasAPdf` es la foto a PDF de los dos informes (ATC y este).
   `tests/test_informe_mes.js` (51).
+- ☀️ **Domingo** (servidor `2026-11-07-b`): el «Buen día» sale también el domingo SOLO a las vendedoras cuya sucursal en Kommo está en
+  `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer); sin Kommo, no sale (`waBdDomingo_`). 🔒 Bloki no le muestra saldos de clientes a Logística sin la
+  contraseña (`blokiPlataNo`). 📅 «Sábado en la tarde» ofrece pasarlo al lunes (o el próximo hábil) a la tarde (`obsRevSabMover`, `OBS_REV_MOVIDO`).
 
 ## 🎟️ Cupos del camión (§4fh)
 - Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM; domingo y feriados cerrados, §4gy).

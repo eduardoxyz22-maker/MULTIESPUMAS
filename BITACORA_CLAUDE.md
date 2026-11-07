@@ -17396,6 +17396,19 @@ los tres de la página retomaron con su trabajo sin guardar, que no se había pe
   sobre los pedidos del mes y la ATC que más se repite), por marca, productos, ATC, stock que faltó (✗ y 🏭; cuenta RPT, Eduardo y ROHO) y cobranza.
   Una sola verdad: `proyeccionMes`/`pryAltura`, las fichas de Contabilidad, `atciDatos`, `deudaEdad`. La foto a PDF salió de `atciPdf` a
   **`hojasAPdf`** (la usan los dos informes). `tests/test_informe_mes.js` (51).
+- **Respuestas del dueño (07/11, noche)**: *«Sí, los domingos para los que trabajan domingos · Sí, así está bien Bloki · No, y no deberían, no les
+  interesa · Sí, lógico, sábado en la tarde no trabajamos»*. Hecho:
+  · ☀️ **Servidor `2026-11-07-b`** (`bb1a97f`): el «Buen día» también el DOMINGO, solo a las vendedoras cuya sucursal en KOMMO («Nombre - Sucursal»,
+  `waKmSinResp_` → `sucs`) está en `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer; «Banzer» solo es el almacén y no cuenta). Se decide al ARMAR
+  (`waBdDomingo_` en `waArmar_`): Kommo caído, usuario no encontrado, sin sucursal o nombre repetido → no sale y queda una fila en «Bot WhatsApp».
+  Lunes a sábado no cambió ni depende de Kommo. El domingo no lista entregas. `test_wa_buen_dia_cierre` §9 (→ 119).
+  · 🔒 **Bloki no le dice a Logística cuánto debe un cliente** (`blokiPlataNo`: rol logística sin la contraseña); stock, cupos y entregas sí.
+  · 📅 **«Sábado en la tarde» ofrece «Pasarlo al lunes DD/MM a la tarde»** (`obsRevSabMover`/`obsRevMoverAplicar`: el primer día después de ese
+  sábado que no es domingo, feriado, día cerrado ni sin tarde; pone fecha y 🌆 PM, NO guarda); `OBS_REV_MOVIDO` evita que el mismo aviso vuelva al
+  guardar con lo propuesto. `obsRevUbicarHora` ya no lee «14/11» como «las 11». `test_bloki_preguntas` §9 (74), `test_revisar_obs` §14 (89).
+  · Pregunta abierta: Kommo y `VENDEDOR_SUCURSAL` del panel no coinciden (Carola, Jonathan, Isabel, Fabián): ¿se pasan las de Kommo al panel?
+  · 💵 El 06/11 a Contabilidad le llegó el efectivo y al dueño no: el servidor contesta `2026-11-06-d`; lo probable es que a las 18:00 todavía
+  corría la 06-b/c (al dueño solo con efectivo de 48 h+, y la marca `ef18` del día ya quedó puesta). Con la 06-d sale a los dos desde el 07/11 9:00.
 - Preguntas abiertas al dueño: domingo del Buen día; el nombre «💬 Preguntame»; si Logística ve saldos de clientes; «sábado en la tarde» en un pedido
   del sábado ¿ofrecer «pasar al lunes PM»?; pesos de «3 cosas para mirar»; ✗ solo ventas o también RPT/Eduardo/ROHO.
 - Para publicar: el dueño corre `crearPlantillasWhatsApp` (las dos plantillas nuevas) e implementa el `.gs` 07-a; volver atrás = ✏️ a la versión
