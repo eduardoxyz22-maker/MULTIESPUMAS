@@ -17379,7 +17379,10 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - **El «no sé» dice qué sí contesta** (`blokiQueSe`, abajo de «No tengo esa respuesta todavía»): el stock o el código de un producto, si
   hay lugar, qué se entrega y (no a Logística sin la contraseña) cuánto le falta pagar a un cliente; las preguntas libres, Claude con la
   contraseña de Administración.
-- `tests/test_bloki_codigo.js` (25; las del producto que solo está en los Excel usan uno INVENTADO, «NIMBO» CH9101/CH9102). `test_bloki_preguntas` 74/0, `test_asis_no_se`, `test_bloki`, `test_asistente` igual.
+- `tests/test_bloki_codigo.js` (25; las del producto que solo está en los Excel usan uno INVENTADO, «NIMBO» CH9101/CH9102).
+- 🧪 Las 3 rojas que daban igual con `63b947d` (`test_circuito` 2, `test_banzer` 1) eran de las PRUEBAS, no del panel: programaban la recogida de
+  Moreno para `tomorrowStr()`, y desde §4ls (18/10) `guardarStockRecogida` no agenda en domingo ni feriado → los sábados (y vísperas de feriado)
+  fallaban. Ahora usan `proximoDiaEntrega()`. ⚠️ Una prueba nueva que agende algo «para mañana» usa el próximo día hábil, nunca `tomorrowStr()`. `test_bloki_preguntas` 74/0, `test_asis_no_se`, `test_bloki`, `test_asistente` igual.
 - 👔 En el mismo rato: el dueño no podía agregar a su jefe en `WA_DUENO` («no me deja editar, porque ya tiene 50»: la pantalla de Propiedades
   es de solo lectura con más de 50). Se le pasó por el chat una función CORTA para un archivo aparte (`agregar_jefe` → `agregarJefeUnaVez()`)
   que lee WA_DUENO y le suma «, Alberto:591…» al FINAL (el dueño sigue primero: el efectivo solo a él) si no está; si WA_DUENO está vacía no

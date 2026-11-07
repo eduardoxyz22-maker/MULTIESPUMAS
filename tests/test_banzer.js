@@ -522,7 +522,7 @@ const BASE = `
       abrirStockRecogida(); await new Promise(r=>setTimeout(r,150));
       document.getElementById('stk-rec-k').value=K;
       document.getElementById('stk-rec-u').value='3';
-      document.getElementById('stk-rec-f').value=tomorrowStr();
+      document.getElementById('stk-rec-f').value=proximoDiaEntrega();   // (07/11) no «mañana»: un sábado es domingo y desde §4ls no se agenda una recogida en domingo ni en feriado
       guardarStockRecogida(); await new Promise(r=>setTimeout(r,200));
       var q=(STOCK.p||[])[0]||{};
       return { de:q.de||'', corto:recogerAlmCorto(q.de||''), u:q.u||0 };
