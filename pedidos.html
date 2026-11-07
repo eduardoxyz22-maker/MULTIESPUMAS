@@ -5731,6 +5731,14 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .fx-chk{ display:flex; flex-wrap:wrap; gap:5px; }
 .fx-chk span{ font-size:.7rem; font-weight:800; border-radius:20px; padding:3px 9px; background:var(--gray-lt); color:var(--muted); }
 .fx-chk span.ok{ background:var(--green-lt); color:var(--green); } .fx-chk span.no{ background:var(--amber-lt); color:var(--amber); }
+/* 📝 (idea 119) las observaciones que dicen otra cosa: la línea de «Para guardar» y la ventana «⚠️ Antes de guardar, revisá» */
+.fx-obsrev{ margin-top:6px; font-size:.72rem; font-weight:800; color:#7c4b00; background:var(--amber-lt); border:1px solid var(--amber-border); border-radius:10px; padding:5px 9px; cursor:help; }
+.obsrev{ background:var(--amber-lt); border:1px solid var(--amber-border); border-left:5px solid var(--amber); border-radius:12px; padding:12px 14px; color:#4a2c00; }
+.obsrev-s{ font-weight:800; font-size:.86rem; color:#7c4b00; margin-bottom:4px; }
+.obsrev ul{ margin:0 0 0 18px; padding:0; }
+.obsrev li{ margin:7px 0; line-height:1.45; font-size:.9rem; }
+.obsrev-nota{ margin-top:10px; font-size:.8rem; line-height:1.4; color:#5b4214; background:#fff; border:1px dashed var(--amber-border); border-radius:8px; padding:7px 9px; white-space:pre-wrap; word-break:break-word; max-height:120px; overflow:auto; }
+.obsrev-mira{ outline:3px solid var(--amber)!important; outline-offset:2px; }
 .fx-der .fx-mes{ display:block !important; margin:0; }
 .fx-hoy{ display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#0b1730,#1e3a5f); color:#fff; border-radius:12px; padding:10px 12px; }
 .fx-hoy .g{ font-size:1.5rem; font-weight:900; line-height:1; } .fx-hoy .s{ font-size:.72rem; opacity:.85; }
@@ -16234,6 +16242,347 @@ function onCompFormElegido(ev){
   });
 }
 
+/* ============================================================================
+   📝 LAS OBSERVACIONES QUE DICEN OTRA COSA (idea 119, 07/11; el dueño vio la muestra y la aprobó)
+   Al guardar una venta (📄 OC) o una reposición (🏪 RPT), el panel lee las «Observaciones» y, si contradicen lo cargado, avisa ANTES
+   de guardar en una ventana ámbar «⚠️ Antes de guardar, revisá»:
+     · el DÍA («el sábado», «mañana», «pasado mañana», «hoy», «10/11») contra la fecha de entrega;
+     · el TURNO («en/a/por la tarde», «PM», «a las 15:00» —la hora la lee `fichaNota`, la MISMA lectura de la ficha de logística,
+       §4mb/§4mc—) contra el turno; el sábado el camión sale solo a la mañana;
+     · las CANTIDADES («son 2 almohadas», «dos colchones») contra la suma de los renglones de ese producto;
+     · lo que hay que COBRAR («cobrar Bs 2.000», «saldo 2.000», «paga 2.000 en efectivo») contra el saldo (regla del centavo, §4mm).
+   «Corregir» cierra y lleva al primer campo que no coincide (no guarda); «Guardar igual» sigue con el guardado de siempre, sin volver
+   a preguntar. Nunca frena. Sin IA: reglas fijas.
+   · Conservador: solo avisa lo que se lee sin dudas. Se saltea una frase con «no», «ya pagó», «llamar», «viaja», «retira», «hasta»…;
+     dos días distintos, dos montos distintos o dos cantidades distintas del mismo producto no avisan nada.
+   · Editando, solo lo NUEVO: lo que ya contradecía antes de abrirlo no se vuelve a decir (`obsRevAvisos` mira el pedido de antes);
+     «hoy», «mañana» y «pasado mañana» cuentan solo si la nota se escribió o cambió ahora (contra el día de Bolivia, `diaNegocio`).
+   · Ni venta de tienda (no tiene entrega), ni ATC, ni un pedido ya entregado. En una RPT no se mira la plata.
+   · Va en `submitPedido` DESPUÉS de todas las validaciones de siempre (no tapa ningún error) y antes de la última lectura de la planilla
+     (el N° de OC se sigue asignando con la planilla recién bajada). «Para guardar» (`fxDerPintar`) lo adelanta en una línea ámbar.
+   · En Playwright apagado salvo `window.OBS_REV_PRUEBA` (como `PRECIO_PRUEBA`): las pruebas de siempre guardan notas de ejemplo.
+   ============================================================================ */
+var OBS_REV_OK='';   // «Guardar igual» de ESTA lista: si el servidor dijo que no, el próximo intento no vuelve a preguntar. Una sola vez.
+function obsRevActiva(){ return !(navigator.webdriver && !window.OBS_REV_PRUEBA); }
+/* Mayúsculas sin tildes, LETRA POR LETRA: el largo no cambia, así la posición de lo leído sirve para citar el texto original. */
+function obsRevMay(s){
+  s=String(s==null?'':s); var o='';
+  for(var i=0;i<s.length;i++){
+    var c=s.charAt(i), d=c;
+    if(c==='\n' || c==='\r'){ o+='\n'; continue; }
+    try{ d=c.normalize('NFD').replace(/[\u0300-\u036f]/g,'')||c; }catch(e){ d=c; }
+    d=d.charAt(0).toUpperCase().charAt(0);
+    o+=/\s/.test(d) ? ' ' : d;
+  }
+  return o;
+}
+function obsRevHoy(){ try{ return diaNegocio(); }catch(e){ return todayStr(); } }
+function obsRevMas(iso, n){ var d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return isoLocal(d); }
+/* Las frases: lo que dice una parte de la nota no se mezcla con la otra («Cliente viaja el viernes, entregar el jueves»). */
+var OBS_REV_CORTE=/\.(?!\d)|[;\n!?¡¿()·]|,(?!\d)|\s(?:Y|PERO|AUNQUE)\s|\s[-–—]\s/g;
+function obsRevCortes(U){
+  var r=[], m, re=new RegExp(OBS_REV_CORTE.source, 'g');
+  while((m=re.exec(U))){ r.push([m.index, m.index+m[0].length]); if(!m[0].length) re.lastIndex++; }
+  return r;
+}
+function obsRevFrase(U, C, i, j){
+  var a=0, b=U.length;
+  for(var k=0;k<C.length;k++){ if(C[k][1]<=i && C[k][1]>a) a=C[k][1]; if(C[k][0]>=j && C[k][0]<b) b=C[k][0]; }
+  return { t:U.slice(a,b), antes:U.slice(a,i), despues:U.slice(j,b) };
+}
+/* Una frase que habla de OTRA COSA que la entrega (pagar, llamar, viajar, retirar…) o que niega no dice qué día ni qué turno. */
+var OBS_REV_OTRO=/\b(PAG\w*|COBR\w*|COMPR\w*|DEPOSIT\w*|TRANSF\w*|ABON\w*|ADELANT\w*|LLAM\w*|AVIS\w*|CONFIRM\w*|COORDIN\w*|VIAJ\w*|REGRES\w*|VUELV\w*|VOLVER\w*|VIENE|VIENEN|VINO|VENDRA|FUE|FUERON|ESTUVO|FACTUR\w*|CERRAD\w*|CIERRA\w*|TRABAJ\w*|ATIENDE\w*|ABRE|RESERV\w*|COTIZ\w*|PREGUNT\w*|ESCRIB\w*|MENSAJE\w*|WHATSAPP|WSP|CUMPLE\w*|ENTREGAD[OA]S?|ENTREGO|RETIR\w*|RECOG\w*)\b/;
+var OBS_REV_NIEGA=/\b(NO|NI|NUNCA|MENOS|EXCEPTO|SALVO|TAMPOCO)\b/;
+/* Justo antes del día: «hasta el sábado», «antes del lunes», «a partir del martes», «o el jueves» no son UN día. */
+var OBS_REV_LIMITE=/\b(HASTA|ANTES|DESPUES|DESDE|PARTIR|MENOS|EXCEPTO|SALVO|NO|NI|O|U)\s+(?:(?:DE|DEL|EL|LA|LOS|LAS|ESTE|ESTA|PROXIMO|PROXIMA|SIGUIENTE)\s+){0,2}$/;
+var OBS_REV_DIRECCION=/\b(MZ|MZA|MANZANA|UV|LOTE|CALLE|AV|AVENIDA|NRO|CASA|DPTO|DEPTO|PISO|BLOQUE|EDIF\w*|CONDOMINIO|BARRIO|URB\w*|KM|ANILLO|ESQ\w*|PASAJE)\b/;
+var OBS_REV_DOW={ DOMINGO:0, LUNES:1, MARTES:2, MIERCOLES:3, JUEVES:4, VIERNES:5, SABADO:6 };
+function obsRevSaltaDia(F){ return OBS_REV_OTRO.test(F.t) || OBS_REV_NIEGA.test(F.t) || OBS_REV_LIMITE.test(F.antes) || /^\s*[OU]\b/.test(F.despues); }
+/* Los días que nombra la nota: { iso } (una fecha) o { dow } (un día de la semana), con su lugar en el texto. */
+function obsRevDias(U, C, hoy, rel){
+  var R=[], m, F;
+  var reW=/\b(DOMINGO|LUNES|MARTES|MIERCOLES|JUEVES|VIERNES|SABADO)\b/g;
+  while((m=reW.exec(U))){ F=obsRevFrase(U, C, m.index, m.index+m[0].length); if(!obsRevSaltaDia(F)) R.push({ dow:OBS_REV_DOW[m[1]], i:m.index, j:m.index+m[0].length }); }
+  if(rel){   // «hoy», «mañana», «pasado mañana»: contra HOY, solo si la nota es de ahora (ver `obsRevAvisos`)
+    var reR=/\b(PASADO\s+MANANA|HOY|MANANA)\b/g;
+    while((m=reR.exec(U))){
+      var w=m[1], i=m.index, j=i+m[0].length, n=(w==='HOY') ? 0 : (w==='MANANA' ? 1 : 2);
+      /* «a la mañana», «en la mañana», «por la mañana», «de mañana», «esta mañana», «media mañana»: es el TURNO, no el día */
+      if(w==='MANANA' && /\b(LA|LAS|MEDIA|ESTA|DE|TODA|PASADO)\s+$/.test(U.slice(0, i))) continue;
+      F=obsRevFrase(U, C, i, j); if(obsRevSaltaDia(F)) continue;
+      var iso=obsRevMas(hoy, n);
+      if(n>0 && (diaDomingo(iso) || feriadoDe(iso))) continue;   // «mañana» un domingo o un feriado: no se sabe qué día quiso decir
+      R.push({ iso:iso, rel:1, i:i, j:j });
+    }
+  }
+  /* «10/11», «10/11/2026» (con «/»: «10-11» es un horario). «1 1/2 plazas» no es una fecha; una fecha de una dirección tampoco; una
+     fecha que ya pasó o a más de 4 meses no es la de la entrega. */
+  var reF=/(^|[^\d\/.,:])(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?![\d\/])/g;
+  while((m=reF.exec(U))){
+    var a=m.index+m[1].length, b=m.index+m[0].length;
+    if(/\d\s*$/.test(U.slice(0, a)) || /^\s*(PLAZAS?|PLZS?|PL)\b/.test(U.slice(b))) continue;
+    F=obsRevFrase(U, C, a, b); if(obsRevSaltaDia(F) || OBS_REV_DIRECCION.test(F.t)) continue;
+    var d=Number(m[2]), mo=Number(m[3]); if(!(d>=1 && d<=31 && mo>=1 && mo<=12)) continue;
+    var y=m[4] ? (m[4].length===2 ? 2000+Number(m[4]) : Number(m[4])) : Number(hoy.slice(0,4));
+    var mk=function(yy){ var t=new Date(yy, mo-1, d); return (t.getMonth()===mo-1) ? isoLocal(t) : ''; };
+    var iso2=mk(y); if(!iso2) continue;
+    if(!m[4] && diasEntre(hoy, iso2)<-30){ iso2=mk(y+1); if(!iso2) continue; }
+    var dd=diasEntre(hoy, iso2); if(dd<0 || dd>120) continue;
+    R.push({ iso:iso2, i:a, j:b });
+  }
+  return R.sort(function(x, z){ return x.i-z.i; });
+}
+/* ¿Dónde está la hora que leyó `fichaNota`? (para mirar su frase y citarla). Un «de 2 a 3 días» no es una hora. */
+function obsRevUbicarHora(U, N){
+  var txt=obsRevMay(N.horaTxt||'').replace(/\s+/g,' ').trim(), k=txt ? U.indexOf(txt) : -1, r=null;
+  if(k>=0) r={ i:k, j:k+txt.length, cita:1 };
+  if(!r){
+    var mm=/\d{1,2}(?::\d{2})?/.exec(N.horaTxt||N.hora||'');
+    if(mm){ var re=new RegExp('(^|[^\\d:])('+mm[0].replace(':','\\s*:')+')(?![\\d:])'), x=re.exec(U); if(x){ var a=x.index+x[1].length; r={ i:a, j:a+x[2].length }; } }
+  }
+  if(!r && /MEDIO\s*DIA/.test(txt)){ var x2=/MEDIO\s*DIA/.exec(U); if(x2) r={ i:x2.index, j:x2.index+x2[0].length }; }
+  if(r && /^\s*(DIAS?|SEMANAS?|MESES|ANOS|PLAZAS?|CM|MTS?|METROS?|CUADRAS?|KM|UNIDADES?|BS|HORAS?\s+ANTES)\b/.test(U.slice(r.j))) return null;
+  return r;
+}
+/* Los turnos que pide la nota: { t:'AM'|'PM' }. Las palabras («en la tarde», «PM») y la hora de `fichaNota` («a las 15:00»). */
+function obsRevTurnos(U, C, crudo){
+  var R=[], m, F, re=/\b(?:EN|A|POR|DE|DURANTE|TODA|PARA)\s+LA\s+(TARDE|MANANA|NOCHE)\b|\b(AM|PM|A\.M\.|P\.M\.)(?![A-Z])/g;
+  while((m=re.exec(U))){
+    F=obsRevFrase(U, C, m.index, m.index+m[0].length);
+    if(OBS_REV_OTRO.test(F.t) || OBS_REV_NIEGA.test(F.t) || /\b[OU]\b/.test(F.t)) continue;
+    var w=m[1]||m[2];
+    R.push({ t:(w==='MANANA' || /^A/.test(w)) ? 'AM' : 'PM', i:m.index, j:m.index+m[0].length });
+  }
+  try{
+    var N=fichaNota({ observaciones:crudo, celular:'', productos:[] });
+    if(N.hora && N.horaT){
+      var pos=obsRevUbicarHora(U, N);
+      if(pos){
+        F=obsRevFrase(U, C, pos.i, pos.j);
+        if(!(OBS_REV_OTRO.test(F.t) || OBS_REV_NIEGA.test(F.t))) R.push({ t:N.horaT, i:pos.i, j:pos.j, hora:1, q:pos.cita ? '' : N.hora });
+      }
+    }
+  }catch(e){}
+  return R;
+}
+/* Los productos que la nota puede contar. `g` = el género, para «no hay almohadas cargadas» / «no hay colchones cargados». */
+var OBS_REV_CAT=[
+  { k:'alm', w:/^(ALMOHADAS?|ALMOH|ALM)$/, pl:'almohadas', g:'a', es:function(o){ return /\b(ALMOHADAS?|ALMOH|ALM|TRAVESSEIROS?|NASA)\b/.test(o.d); } },
+  { k:'cnt', w:/^COLCHONETAS?$/, pl:'colchonetas', g:'a', es:function(o){ return /\bCOLCHONETAS?\b/.test(o.d); } },
+  { k:'col', w:/^COLCHON(ES)?$/, pl:'colchones', g:'o', es:function(o){ var t=obsRevTipo(o.x); return t==='colchon' || t==='combo'; } },
+  { k:'som', w:/^SOM+IER(ES|S)?$/, pl:'somieres', g:'o', es:function(o){ var t=obsRevTipo(o.x); return t==='somier' || t==='combo'; } },
+  { k:'pro', w:/^PROTECTOR(ES)?$/, pl:'protectores', g:'o', es:function(o){ return /\bPROTECTOR(ES)?\b/.test(o.d); } },
+  { k:'sab', w:/^SABANAS?$/, pl:'sábanas', g:'a', es:function(o){ return /\bSABANAS?\b/.test(o.d); } },
+  { k:'res', w:/^(RESPALDAR(ES)?|RESPALDOS?|CABECERAS?)$/, pl:'respaldares', g:'o', es:function(o){ return /\b(RESPALDAR(ES)?|RESPALDOS?|CABECERAS?)\b/.test(o.d); } },
+  { k:'cub', w:/^CUBRECAMAS?$/, pl:'cubrecamas', g:'o', es:function(o){ return /\bCUBRECAMAS?\b/.test(o.d); } },
+  { k:'edr', w:/^(EDREDON(ES)?|PLUMON(ES)?|ACOLCHADOS?)$/, pl:'edredones', g:'o', es:function(o){ return /\b(EDREDON(ES)?|PLUMON(ES)?|ACOLCHADOS?)\b/.test(o.d); } }
+];
+function obsRevTipo(x){ try{ return pryTipoProd(x); }catch(e){ return ''; } }
+function obsRevCat(w){ for(var i=0;i<OBS_REV_CAT.length;i++) if(OBS_REV_CAT[i].w.test(w)) return OBS_REV_CAT[i]; return null; }
+var OBS_REV_NUM={ DOS:2, TRES:3, CUATRO:4, CINCO:5, SEIS:6, SIETE:7, OCHO:8, NUEVE:9, DIEZ:10 };
+/* Una frase que dice que eso NO va en este viaje (ya se entregó, sale de tienda, se recoge, falta, va después…) no se cuenta. */
+var OBS_REV_NO_LLEVA=/\b(NO|SIN|NI|YA|ENTREGAD\w*|ENTREGO|ENTREGARON|TIENDA|RETIR\w*|RECOG\w*|VIEJ\w*|USAD\w*|CAMBI\w*|DEVOL\w*|DEVUEL\w*|FALTA\w*|PENDIENTE\w*|DESPUES|LUEGO|OTRA|OTRO|OTRAS|OTROS|PROXIM\w*|ANTERIOR\w*|APARTE|SEPARAD\w*|GARANTIA|ATC)\b/;
+/* Lo que sigue a la palabra del producto: se para en estas… */
+var OBS_REV_PARA=['Y','O','U','E','CON','PARA','MAS','SIN','PERO','QUE','A','AL','EN','POR','SE','LO','LE','ES','SON','SU','SUS','CADA','C'];
+/* …y estas no distinguen un producto de otro (se saltean). */
+var OBS_REV_GEN=['DE','DEL','LA','LAS','LOS','EL','REGALO','EXTRA','EXTRAS','ADICIONAL','ADICIONALES','NUEVA','NUEVAS','NUEVO','NUEVOS','GRANDE','GRANDES',
+  'CHICA','CHICAS','CHICO','CHICOS','IGUALES','MISMA','MISMAS','MISMO','MISMOS','TIPO','MODELO','MARCA','COLOR','COLCHON','COLCHONES','ALMOHADA','ALMOHADAS',
+  'ALM','SOMIER','SOMIERES','PLAZAS','PLAZA','HEAVEN','SUENA','UNA','UNO','UNAS','UNOS','DOS','TRES'];
+/* Un renglón que ya es un juego («SET DE 2 ALMOHADAS», «PAR», «X2») no se cuenta por renglones: la categoría no se mira. */
+var OBS_REV_PACK=/\b(PAR|PARES|SET|KIT|PACK|PAQUETES?|COMBOS?|JUEGOS?|DUO|DUPLA)\b|\bX\s?[2-9]\b|\b\d+\s*(UNIDADES|UNDS?|PIEZAS|PZAS|ALMOHADAS|PROTECTORES|SABANAS)\b/;
+function obsRevCantidades(U, C, prods, cita){
+  var porCat={}, m;
+  var re=/(^|[^\d.,\/:A-Z#°º])(?:(\d{1,2})\s*|(DOS|TRES|CUATRO|CINCO|SEIS|SIETE|OCHO|NUEVE|DIEZ)\s+)(?:(?:UNIDADES|UNIDAD|UNDS|UND|UNID|UDS|UD|PZAS|PZA|PIEZAS|PIEZA)\.?\s+(?:DE\s+)?)?(?:JUEGOS?\s+DE\s+)?([A-Z]+)/g;
+  while((m=re.exec(U))){
+    var cat=obsRevCat(m[4]); if(!cat) continue;
+    var i=m.index+m[1].length, jw=m.index+m[0].length;
+    if(/(N[°ºO]|NRO|NUM\w*|#|OC|NOTA|CASA|LOTE|MZA?|MANZANA|UV|CALLE|AV|ANILLO|KM|PISO|DPTO|BLOQUE|NIT|CEL\w*|TEL\w*)\.?\s*$/.test(U.slice(0, i))) continue;
+    var F=obsRevFrase(U, C, i, jw); if(OBS_REV_NO_LLEVA.test(F.t)) continue;
+    var n=m[2] ? Number(m[2]) : OBS_REV_NUM[m[3]]; if(!(n>=1 && n<=50)) continue;
+    var ls=prods.filter(cat.es), o=porCat[cat.k]||(porCat[cat.k]={ cat:cat, L:[], amb:false });
+    if(cat.k!=='col' && cat.k!=='som' && cat.k!=='cnt' && ls.some(function(x){ return OBS_REV_PACK.test(x.d); })){ o.amb=true; continue; }
+    /* lo que sigue: «2 almohadas NASA» se compara solo con las NASA (si hay alguna cargada) */
+    var tail=U.slice(jw), pos=jw, k=0, mm, sub=null, fin=jw, reS=/^\s+([A-Z]+)/;
+    while(k<4 && (mm=reS.exec(tail))){
+      var w=mm[1]; if(OBS_REV_PARA.indexOf(w)>=0) break;
+      pos+=mm[0].length; tail=tail.slice(mm[0].length); k++;
+      if(w.length<3 || OBS_REV_GEN.indexOf(w)>=0) continue;
+      var rw=new RegExp('\\b'+w+'\\b'), s=ls.filter(function(x){ return rw.test(x.d); });
+      if(s.length){ sub=(sub||[]).concat(s.filter(function(x){ return (sub||[]).indexOf(x)<0; })); fin=pos; }
+    }
+    /* «2 almohadas nasa y 1 de fibra», «2 almohadas fibra y nasa», «2 colchones, 1 de 140…»: el resto se reparte de otra forma → no se adivina */
+    var resto=U.slice(fin), mo2=/^\s*(?:,|\bY\b|\bE\b|\bO\b|\+|\bMAS\b)\s*(\d{1,2}|UNA|UNO|DOS|TRES|CUATRO|CINCO|SEIS)?\s*([A-Z]+)?/.exec(resto);
+    if(mo2 && (mo2[1] || mo2[2])){
+      var w2=mo2[2]||'', esOtra=!!obsRevCat(w2);
+      if(mo2[1] && !esOtra && !/^(PLAZAS?|PLZS?|PL|METROS?|MTS?|CM|X)$/.test(w2)){ o.amb=true; continue; }
+      if(!mo2[1] && w2 && !esOtra && w2.length>=3 && OBS_REV_GEN.indexOf(w2)<0 && ls.some(function(x){ return new RegExp('\\b'+w2+'\\b').test(x.d); })){ o.amb=true; continue; }
+    }
+    var set=sub||ls, tot=0; set.forEach(function(x){ tot+=Number(x.n)||0; });
+    o.L.push({ n:n, set:set, tot:tot, q:cita(i, fin), clave:n+'|'+set.map(function(x){ return x.ix; }).join(','), ls:ls.length });
+  }
+  var out=[];
+  Object.keys(porCat).forEach(function(k){
+    var o=porCat[k]; if(o.amb || !o.L.length) return;
+    var claves={}; o.L.forEach(function(x){ claves[x.clave]=1; }); if(Object.keys(claves).length>1) return;   // dos cantidades distintas: no se adivina
+    var x=o.L[0]; if(x.tot===x.n) return;
+    out.push({ k:'cant', t:'Dicen «'+x.q+'» y '+(x.ls ? ('cargaste '+x.tot+'.') : ('no hay '+o.cat.pl+' cargad'+o.cat.g+'s.')),
+               foco: x.set.length ? { ix:x.set[0].ix } : { prod:1 } });
+  });
+  return out;
+}
+/* Lo que la nota pide COBRAR, contra el saldo (o el saldo + el recargo por entrega que falta cobrar). */
+var OBS_REV_PLATA=[
+  /\b(?:COBRARA|COBRAR|COBREN|COBRE|COBRA)\s*:?\s*(?:EL\s+|LA\s+)?(?:(?:SALDO|DIFERENCIA|MONTO|TOTAL)\s+)?(?:DE\s+)?:?\s*(?:BS\.?\s*)?(\d[\d.,]*\d|\d)/g,
+  /\bSALDO\s*(?:(?:A|POR)\s+COBRAR\s*|PENDIENTE\s*)?(?:DE\s+)?:?\s*(?:BS\.?\s*)?(\d[\d.,]*\d|\d)/g,
+  /\bPAGA(?:RA|R)?\s+(?:EL\s+SALDO\s+)?(?:DE\s+)?(?:BS\.?\s*)?(\d[\d.,]*\d|\d)\s*(?:BS\.?\s*)?(?:EN\s+EFECTIVO|AL\s+ENTREGAR|AL\s+RECIBIR|CONTRA\s*ENTREGA|EN\s+LA\s+ENTREGA|AL\s+MOMENTO)/g
+];
+var OBS_REV_PLATA_NO=/\b(NO|NADA|YA|SIN|CANCELAD[OA]S?|CANCELO|PAGAD[OA]S?)\b|\bPAGO\s+(?:TODO|EL\s+TOTAL|TOTAL|COMPLETO)\b/;
+/* «cobrar 2.000 y el resto con QR», «a cuenta…», «la mitad», «2.000 en efectivo y 990 por QR»: lo que se cobra es UNA PARTE, no el
+   saldo (en cualquier lugar de la nota; «más», «+» o «y <otro monto>» en la misma frase). No vale para «saldo N»: eso es el saldo, y se
+   compara siempre. */
+var OBS_REV_PLATA_PARTE=/\b(RESTO|RESTANTE|DIFERENCIA|PARTE|MITAD|ADELANTO|ANTICIPO|CUENTA|CUOTAS?)\b/, OBS_REV_PLATA_MAS=/\bMAS\b|\+/;
+function obsRevPlata(U, C, p, cita){
+  var pag=!!p.pagado, S=pag ? 0 : Math.max(0, r2(Number(p.saldo)||0)), fl=0;
+  /* Eduardo y ROHO no cargan el saldo (no es obligatorio para ellos, §4cb): sin saldo ni pago, la nota es la que manda. */
+  if(!pag && S<0.005 && p.vendedor && esVendedorLite(p.vendedor)) return [];
+  var hits=[], m, partes=OBS_REV_PLATA_PARTE.test(U) || (/\bEFECTIVO\b/.test(U) && /\b(QR|TRANSF\w*|TARJETA|DEPOSIT\w*)\b/.test(U));
+  OBS_REV_PLATA.forEach(function(re0, kind){
+    var re=new RegExp(re0.source, 'g');
+    while((m=re.exec(U))){
+      var i=m.index, num=m[1], jn=m.index+m[0].lastIndexOf(num)+num.length;
+      var F=obsRevFrase(U, C, i, jn); if(OBS_REV_PLATA_NO.test(F.t)) continue;
+      if(/^\s*(?:BS\.?\s*)?(?:DE\s+|DEL\s+|POR\s+|EN\s+)?(?:EL\s+|LA\s+)?(ENVIOS?|FLETES?|RECARGOS?|TRANSPORTES?|DELIVERY|PASAJES?|TRASLADOS?|ARMADO|INSTALACION|EXTRA)\b/.test(U.slice(jn))) continue;   // es el flete
+      var v=parseMonto(num); if(!(v>=10)) continue;
+      if(hits.some(function(h){ return h.i===i; })) continue;
+      var otro=/^[^.;\n]{0,25}?\b(?:Y|MAS)\s+(?:BS\.?\s*)?\d/.test(U.slice(jn));   // «2.000 en efectivo y 990…»
+      hits.push({ v:v, i:i, j:jn, parte:(kind!==1) && (partes || otro || OBS_REV_PLATA_MAS.test(F.t)) });
+    }
+  });
+  if(!hits.length) return [];
+  try{ fl=(p._fl!=null) ? (Number(p._fl)||0) : envioPorCobrar(p); }catch(e){ fl=0; }
+  var cuadra=function(v){ return Math.abs(v-S)<0.005 || (fl>0.005 && (Math.abs(v-r2(S+fl))<0.005 || Math.abs(v-fl)<0.005)); };
+  if(hits.some(function(h){ return cuadra(h.v); })) return [];
+  hits=hits.filter(function(h){ return !h.parte; });
+  if(!hits.length) return [];
+  var vs={}; hits.forEach(function(h){ vs[h.v]=1; }); if(Object.keys(vs).length>1) return [];   // dos montos distintos: no se adivina
+  hits.sort(function(a, b){ return a.i-b.i; });
+  var h=hits[0], bs=function(n){ return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); };
+  var t='Dicen «'+cita(h.i, h.j)+'» y '+(pag ? 'la venta está marcada «SÍ, pagado».' : (S<0.005 ? 'no hay saldo por cobrar.' : ('el saldo es '+bs(S)+'.')));
+  return [{ k:'plata', t:t, foco:{ plata:1 } }];
+}
+/* Todo lo que la nota contradice de `p` (un pedido o lo que tiene el formulario). `o.rel`: leer «hoy/mañana/pasado mañana»; `o.tipo`. */
+function obsRevisar(p, o){
+  o=o||{}; var out=[];
+  var crudo=String((p&&p.observaciones)||'').replace(/&#xa;/gi,'\n'); if(!crudo.trim()) return out;
+  var orig=crudo.replace(/https?:\/\/\S+/g, function(u){ return new Array(u.length+1).join(' '); });
+  var U=obsRevMay(orig), C=obsRevCortes(U), hoy=obsRevHoy();
+  var cita=function(i, j){ return orig.slice(i, j).replace(/\s+/g,' ').trim().toLowerCase().replace(/\bbs\b/g,'Bs'); };
+  /* 1 · el día y el turno */
+  var F=String(p.fecha||'');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(F)){
+    var D=obsRevDias(U, C, hoy, !!o.rel), T=obsRevTurnos(U, C, crudo), dia=null, tur=null;
+    if(D.length){
+      var isos={}, dows={}; D.forEach(function(r){ if(r.iso) isos[r.iso]=1; else dows[r.dow]=1; });
+      var li=Object.keys(isos), ld=Object.keys(dows).map(Number);
+      if(li.length<=1 && ld.length<=1 && !(li.length && ld.length && dowDe(li[0])!==ld[0])){
+        var a=D[0].i, b=D[0].j; D.forEach(function(r){ if(r.i-b<=12 && r.i>=a){ b=Math.max(b, r.j); } });   // «sábado 07/11»
+        dia={ iso:li[0]||'', dow:li.length ? dowDe(li[0]) : ld[0], rel:D.some(function(r){ return r.rel; }), i:a, j:b };
+      }
+    }
+    if(T.length){
+      var ts={}; T.forEach(function(r){ ts[r.t]=1; });
+      if(Object.keys(ts).length===1){ var hr=T.filter(function(r){ return r.hora; })[0]; tur=hr || T.sort(function(x, z){ return x.i-z.i; })[0]; }
+    }
+    var tuP=turnoDe(p);
+    var malDia=!!dia && (dia.iso ? dia.iso!==F : dowDe(F)!==dia.dow);
+    var malTur=!!tur && !!tuP && tur.t!==tuP;
+    var sab=!!tur && tur.t==='PM' && (dia ? dia.dow===6 : dowDe(F)===6);
+    if(malDia || malTur){
+      var cit=[], conDia=false;
+      if(dia && tur && !tur.q && Math.max(dia.i, tur.i)-Math.min(dia.j, tur.j)<=12 && !/[.;,\n]/.test(U.slice(Math.min(dia.j, tur.j), Math.max(dia.i, tur.i)))){
+        cit.push(cita(Math.min(dia.i, tur.i), Math.max(dia.j, tur.j))); conDia=true;   // «sábado en la tarde»
+      }else{
+        if(dia && malDia){ cit.push(cita(dia.i, dia.j)); conDia=true; }
+        if(tur && (malTur || sab)) cit.push(tur.q || cita(tur.i, tur.j));
+      }
+      var t='Las observaciones dicen '+cit.map(function(c){ return '«'+c+'»'; }).join(' y ')+((conDia && dia.rel) ? (' ('+nxDiaTxt(dia.iso)+')') : '')+
+            ', pero el pedido es para el '+nxDiaTxt(F)+(tuP ? (tuP==='PM' ? ' a la tarde' : ' a la mañana') : '')+'.';
+      if(sab) t+=' Además, el sábado el camión sale solo a la mañana.';
+      else if(malDia && dia.dow===0) t+=' Además, los domingos el camión no sale.';
+      if(malDia && dia.iso && feriadoDe(dia.iso)) t+=' Además, el '+fmtFechaCorta(dia.iso)+' es feriado ('+feriadoDe(dia.iso)+'): el camión no sale.';
+      out.push({ k:'dia', t:t, foco:(malDia || sab) ? { id:'f-fecha' } : { turno:tur.t } });
+    }
+  }
+  /* 2 · cuántos */
+  var prods=((p&&p.productos)||[]).map(function(x, ix){ return { x:x, ix:ix, d:obsRevMay(String((x&&x.desc)||'')+' '+String((x&&x.medida)||'')), n:Number(x&&x.cant)||1 }; })
+                                .filter(function(z){ return z.x && String(z.x.desc||'').trim(); });
+  out=out.concat(obsRevCantidades(U, C, prods, cita));
+  /* 3 · cuánto cobrar (no en una reposición: no se cobra) */
+  if(o.tipo!=='RPT' && !esRPT(p.oc)) out=out.concat(obsRevPlata(U, C, p, cita));
+  return out;
+}
+/* Lo que hay que decir de `rec` al guardarlo. Editando (`prev`), lo que ya contradecía antes con la misma nota no se repite. */
+function obsRevAvisos(rec, prev, tipo){
+  if(!obsRevActiva() || !rec) return [];
+  if(VENTA_TIENDA || tipo==='ATC' || esATC(rec.oc) || esVentaTienda(rec) || rec.entregado || esFilaSistema(rec)) return [];
+  if(!String(rec.observaciones||'').trim()) return [];
+  var rel=!prev || String(prev.observaciones||'').trim()!==String(rec.observaciones||'').trim();
+  var A=obsRevisar(rec, { rel:rel, tipo:tipo });
+  if(prev && A.length){
+    /* (lo de antes, SIN «hoy/mañana»: esos eran de otro día, y la nota que se escribe ahora sí se lee) */
+    var ya={}; obsRevisar(prev, { rel:false, tipo:tipo }).forEach(function(x){ ya[x.t]=1; });
+    A=A.filter(function(x){ return !ya[x.t]; });
+  }
+  return A;
+}
+/* Lo mismo con lo que hay en el formulario ahora (para «Para guardar»). */
+function obsRevRecForm(){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||''); };
+  var pag=segVal('f-pagado')==='SI', fl=0;
+  try{ var ev=montoForm('f-envio'); if(ev>0 && segVal('f-envio-cob')!=='SI') fl=ev; }catch(e){}
+  var sinDia=false; try{ sinDia=avisaFormOn(); }catch(e){}
+  return { id:String(EDIT_ID||''), oc:'', vendedor:val('f-vendedor').trim(), observaciones:val('f-obs').trim(), fecha:(sinDia || VENTA_TIENDA) ? '' : val('f-fecha'), turno:segVal('f-turno'),
+           productos:getProductos(), saldo:pag ? 0 : montoForm('f-saldo'), pagado:pag, _fl:fl };
+}
+/* La ventana. Devuelve true si quedó abierta esperando (quien llama no sigue); false si no hay que preguntar. */
+function obsRevPreguntar(L, rec, seguir){
+  var firma=String(EDIT_ID||'')+'|'+String((rec&&rec.cliente)||'')+'|'+L.map(function(x){ return x.t; }).join('|');
+  var ya=(OBS_REV_OK===firma); OBS_REV_OK='';
+  if(ya) return false;
+  var obs=String((rec&&rec.observaciones)||'').trim();
+  openModal('<div class="modal-h" style="background:var(--amber)"><h3>⚠️ Antes de guardar, revisá</h3></div>'+
+    '<div class="modal-b obsrev-b">'+
+      '<div class="obsrev" id="obsrev-lista"><div class="obsrev-s">Las observaciones dicen otra cosa que lo que cargaste:</div>'+
+        '<ul>'+L.map(function(x){ return '<li>'+esc(x.t)+'</li>'; }).join('')+'</ul></div>'+
+      '<div class="obsrev-nota"><b>📝 Observaciones:</b> '+esc(obs.length>400 ? (obs.slice(0, 400)+'…') : obs)+'</div>'+
+      '<div class="modal-actions">'+
+        '<button type="button" class="btn btn-primary" id="obsrev-corregir" style="flex:1;min-width:140px">Corregir</button>'+
+        '<button type="button" class="btn btn-ghost" id="obsrev-igual" style="flex:1;min-width:140px">Guardar igual</button>'+
+      '</div>'+
+    '</div>');
+  var hecho=false;
+  document.getElementById('obsrev-corregir').onclick=function(){ if(hecho) return; hecho=true; closeModal(); obsRevIr(L[0]); };
+  document.getElementById('obsrev-igual').onclick=function(){ if(hecho) return; hecho=true; OBS_REV_OK=firma; closeModal(); seguir(); };
+  try{ document.getElementById('obsrev-corregir').focus(); }catch(e){}
+  return true;
+}
+/* «Corregir»: al campo del primer aviso, con un borde ámbar un momento. */
+function obsRevIr(x){
+  var f=(x&&x.foco)||{}, el=null;
+  if(f.id) el=document.getElementById(f.id);
+  else if(f.turno) el=document.querySelector('#f-turno button[data-val="'+f.turno+'"]');
+  else if(f.ix!=null){
+    var cs=[].filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){ var d=c.querySelector('.prod-desc'); return d && String(d.value||'').trim(); });
+    if(cs[f.ix]) el=cs[f.ix].querySelector('.prod-cant');
+  }else if(f.prod){ var ds=document.querySelectorAll('#f-productos .prod-desc'); el=ds.length ? ds[ds.length-1] : null; }
+  else if(f.plata){ var sa=document.getElementById('f-saldo'); el=(sa && sa.offsetParent!==null) ? sa : (document.querySelector('#f-pagado button.active')||sa); }
+  if(!el || el.offsetParent===null) el=document.getElementById('f-obs');
+  if(!el) return;
+  try{ el.scrollIntoView({ block:'center' }); }catch(e){}
+  try{ el.focus({ preventScroll:true }); }catch(e){ try{ el.focus(); }catch(e2){} }
+  el.classList.add('obsrev-mira'); setTimeout(function(){ el.classList.remove('obsrev-mira'); }, 2500);
+}
+
 function submitPedido(){
   clearErr();
   var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
@@ -17181,6 +17530,15 @@ function submitPedido(){
     }
   }
 
+  /* 📝 (idea 119, 07/11) ¿LAS OBSERVACIONES DICEN OTRA COSA? Con todas las validaciones de arriba ya pasadas (no tapa ningún error) y
+     antes de la última lectura de la planilla: la ventana ámbar «⚠️ Antes de guardar, revisá» (`obsRevPreguntar`). «Corregir» no guarda;
+     «Guardar igual» sigue por `seguirAlGuardar`, el MISMO camino de siempre (lectura, ¿repetido?, saldo, N° de OC, `guardarYa`), sin
+     volver a pasar por las preguntas de arriba. Sin nada que decir, sigue derecho. */
+  var _obsRev=[]; try{ _obsRev=obsRevAvisos(rec, (isEdit && !_deBorrador) ? prev : null, docTipoSel()); }catch(eO){ console.error(eO); _obsRev=[]; }
+  if(_obsRev.length && obsRevPreguntar(_obsRev, rec, seguirAlGuardar)) return;
+  seguirAlGuardar();
+
+  function seguirAlGuardar(){
   /* Recordar quién soy en esta compu… solo al CARGAR un pedido. (26/09, revisión de Pedidos) Editando, el
      vendedor es el DEL PEDIDO, no el de quien corrige: logística le arreglaba la dirección a una venta de
      Carola y esa computadora pasaba a ser «Carola» — el próximo pedido nuevo ya salía a su nombre. Si
@@ -17258,6 +17616,7 @@ function submitPedido(){
   if(!fxDupConfirmar()) return;                                          // 🧰 (§4ih) ¿el mismo pedido dos veces?
   if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
   guardarYa();
+  }   // fin de `seguirAlGuardar` (idea 119)
 
   function guardarYa(){
   /* 📦 (02/10, §4hj) Lo que este pedido saca del saldo del almacén, para el libro de reservas del servidor 2026-10-02-a.
@@ -19642,7 +20001,11 @@ function fxDerPintar(){
     chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
     chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
   }
-  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div></div>';
+  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
+  /* 📝 (idea 119) lo que Guardar va a preguntar de las observaciones, adelantado en una línea (la MISMA cuenta: `obsRevAvisos`) */
+  var _orv=[]; try{ if(!tienda && tipo!=='ATC') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
+  if(_orv.length) h+='<div class="fx-obsrev" title="'+esc(_orv.map(function(x){ return x.t; }).join('\n'))+'">⚠️ Las observaciones dicen otra cosa</div>';
+  h+='</div>';
   if(v && !EDIT_ID){
     var o=fxMesDe(nombreCanonico(v)), hoy=todayStr(), nH=0, bH=0;
     (STATE||[]).forEach(function(p){ if(p && !esFilaSistema(p) && !borradorDe(p.id) && !esATC(p.oc) && !esRPT(p.oc) && mismoVendedor(p.vendedor,v) && contaFecha(p)===hoy){ nH++; bH+=ventaTotal(p); } });
