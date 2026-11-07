@@ -17357,7 +17357,34 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama, enlace fijo `8093135…` (7.565 líneas); lo implementa el dueño EL LUNES 09/11 (dueño, 07/11: *«no haré lo del gs… lo haré lunes»*; hasta entonces la página con ESPERADA 07-f NO se publica) — volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…` (6.938 líneas); la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después; batería 344 suites · 10.968 bien · 6 mal, las 6 de la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— y `test_avisa_cuando` (la versión escrita a mano, corregida): solas, todas bien)
+### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA en la rama (`3016b04`), falta su «publica»; la regla también va en el `.gs` 07-f (`8d65c13`, 7.571 líneas) que el dueño implementa el lunes)
+- **La causa, con la planilla real (07/11 18:10)**: «Efectivo cobrado vs. retirado» restaba los retiros del MES a lo cobrado en el MISMO mes.
+  Mirian: el retiro del 03/11 de Bs 5.440 es el cobro del 30/10 de la 10-343 → noviembre «se retiró 5.440 de más» y octubre con esos 5.440
+  «en la mano». Juan Pablo: de los 15.630 retirados en noviembre, 10.140 eran de octubre (con la regla). El dueño tenía razón.
+- **`efePareo()`** (página) = `waEfeCuentas_` (.gs): cada retiro se empareja con los cobros en efectivo de esa persona (quien TIENE la plata,
+  `pagoRecibio`; en el retiro, quien entrega) desde `EFE_EMPAREJA`='2026-10-01': 1. el del mismo monto (el más nuevo hasta el día del retiro);
+  2. una tira de cobros SEGUIDOS sin recoger que sume justo, **terminando en cualquier cobro, la más nueva primero** (antes solo la que termina
+  en el último: el 07/11 Mauricio cargó 3.290 = 700 + 2.590 y ese mismo día entró otro de 1.480 → el retiro se iba a lo de octubre y el
+  WhatsApp lo mostraba con 4.770); 3. del más viejo al más nuevo. Desempate fijo en los dos lados (cobros: día, id, lugar; retiros: día, id).
+  Con la planilla real los dos dan lo mismo en los 139 cobros desde octubre. Se arma una vez por tarea (`EFE_MEMO`, se olvida con `setTimeout 0`).
+- **`cuadreEfectivo(pe, vend)`** (desde octubre; «Todo» y antes, la cuenta de siempre): `falta` = lo cobrado en el período que NINGÚN retiro
+  tapó todavía; `antes` (+ `antesM`) = lo retirado en el período que era de un mes anterior (↩️); `sobra` = retiro que no tapa ningún cobro
+  desde octubre (⚠️); `despues` (+ `despuesM`) = lo cobrado en el período que se retiró después (📅). Siempre: cobrado − falta = ret − antes −
+  sobra + despues. Lo usan la tabla, las fichas («Efectivo por retirar» = Σ falta; «Efectivo retirado» dice lo de antes), el texto, el Excel
+  (dos columnas AL FINAL: «DE LO RETIRADO, ERA DE ANTES», «SE RETIRÓ DESPUÉS»), «☀️ Tu día» (`misEfectivoDatos`: tot = falta, «eran de lo
+  cobrado el mes pasado» = antes + sobra) y lo que ya leía `o.falta` (Bloki, «Quién tiene el efectivo»).
+- **👁 `abrirEfectivo(q)`**: el monto cobrado de cada fila (y del TOTAL) y la ficha «Efectivo (caja)» (`mcToca`) abren los cobros del período
+  con «¿Se retiró?» (✅ el día del retiro / ◐ parcial / ⏳ en la mano) y los retiros con qué tapó cada uno (↩️ cliente y día). Un cliente abre
+  su venta (`efeAbrirVenta`, «← Volver al efectivo cobrado» con `POR_COBRAR_VOLVER.origen='efe'`). Con una vendedora elegida, va también lo que
+  de sus ventas recibió un chofer (`fuera[].cobs`). «📋 Copiar la lista» (`copiarEfectivo`).
+- **Noviembre con la planilla real**: Juan Pablo 1.580 (los dos de 790 de hoy), Fernando 3.695, Mauricio 1.480, Maria Flores 3.410 (su retiro de
+  500 del 03/11 tapa el cobro de 500 del 29/10), Mirian ✅, Luis Pierre 1.860, Ysrael 910; total 12.935 (la tabla vieja decía «3.145 de más»).
+- ⚠️ **Octubre sigue con plata «en la mano»** según el panel (Jonathan 18.559, Miguel 12.900, Juan Pablo 11.590, Fernando 8.360…): el dueño dijo
+  que lo de octubre ya se recogió, así que son retiros que no se cargaron en el panel. No se tocó (la tabla vieja decía lo mismo o más).
+- `tests/test_efe_pareo.js` (24; 19 rojas contra `4509692`; 9b/9c comparan con el `.gs` y se saltan solas con uno anterior a la 07-f, salvo
+  `GS=…`). `test_rev2_cuadre` §4 cambió a conciencia (la fila del Excel lleva las dos columnas nuevas).
+
+### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama, enlace fijo `8d65c13…` (7.571 líneas: el 07/11 a la noche se le sumó la regla del efectivo de §4ov; el de antes era `8093135…`, 7.565); lo implementa el dueño EL LUNES 09/11 (dueño, 07/11: *«no haré lo del gs… lo haré lunes»*; hasta entonces la página con ESPERADA 07-f NO se publica) — volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…` (6.938 líneas); la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después; batería 344 suites · 10.968 bien · 6 mal, las 6 de la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— y `test_avisa_cuando` (la versión escrita a mano, corregida): solas, todas bien)
 - **13 A · `pedir_ubicacion`** (al cliente): a las 10:00, a cada pedido que se entrega dentro de 2 días SIN pin exacto (vacío o `&aprox=1`:
   `waSinPin_`); el sábado también los del martes (`waUbDias_`: el domingo no se manda nada; lunes → sábado, martes → sábado). Una vez por pedido
   (`WA_UB_PEDIDA` = {id: día de la entrega}, 20 días, tope 200: si después lo mueven de día no se le vuelve a pedir). Las reglas del bot al cliente

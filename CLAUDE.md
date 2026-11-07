@@ -1617,6 +1617,12 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09). `choferesConocidos()` incluye a los que ya no están (Giordano salió de `VEHICULOS` el
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
+**💵🔗 Cada retiro tapa sus cobros** (§4ov, 07/11, dueño: *«¿no cuadra porque ingresó en octubre y se retiró en noviembre?… al darle al efectivo
+¿no debería mostrar qué clientes pagaron?»*; en la rama): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
+que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira seguida que dé justo, la más nueva primero → del más viejo; mismo
+desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
+no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
+abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)
