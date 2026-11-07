@@ -17371,6 +17371,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - `test_vendedores_nuevos` §2 cambiado a conciencia (Fabián → Central, Isabel → Central) + 4 nuevas (40).
 - Batería (07/11, sábado): en rojo `test_banzer` (1, «IM y Banzer empatados») y `test_circuito.cjs` (2) — fallan IGUAL en `main` (`9eedc2f`):
   no son de este cambio (parecen del calendario); las de siempre (`actualizar_espera`, `fabrica_vida`, `mispedidos`, `patio`) dan bien solas.
+- 🚧 Pages: la corrida 38 se colgó en `deploy-pages` («syncing_files» 10 min, de GitHub). ⚠️ «Re-run failed jobs» NO sirve en esa misma corrida
+  (`Multiple artifacts named "github-pages"`): hay que lanzar una corrida NUEVA del workflow (`402814225`, Run workflow sobre `main`). La 39 salió bien.
 
 ### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; PÁGINA PUBLICADA 07/11 (dueño: «Ok»), `main` = `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente, enlace fijo `fb048e04560d65c493a8c1d8724d7cadb8a0c207`, 6.726 líneas)
 Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:
