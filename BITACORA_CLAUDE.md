@@ -17357,6 +17357,38 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama; lo implementa el dueño; la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después)
+- **13 A · `pedir_ubicacion`** (al cliente): a las 10:00, a cada pedido que se entrega dentro de 2 días SIN pin exacto (vacío o `&aprox=1`:
+  `waSinPin_`); el sábado también los del martes (`waUbDias_`: el domingo no se manda nada; lunes → sábado, martes → sábado). Una vez por pedido
+  (`WA_UB_PEDIDA` = {id: día de la entrega}, 20 días, tope 200: si después lo mueven de día no se le vuelve a pedir). Las reglas del bot al cliente
+  (`waNoCliente_`) + no al que espera su confirmación en la cola ni al confirmado hoy (esa ya la pide). Se arma con la planilla de ese momento: ya
+  con pin o cambiado de día, no sale. Sin plantilla de respaldo (si Meta no la aprobó: ❌ anotado y no queda como pedida). Datos: nombre, marca,
+  OC, día + turno, horario, contacto de la vendedora. Lo que el cliente manda sigue entrando solo (§4ok-108).
+  · Por qué (planilla real del 07/11): 0 ubicaciones mandadas desde el 05/11, 11 de 78 entregas del bot sin pin en 14 días, mediana de 8 días
+    entre la carga y la entrega (la confirmación llega muy temprano y el recordatorio muy tarde).
+- **26 A · `vendedoras_bajan`** (al dueño): el LUNES a las 08:00, desde el día 7 del mes (`WA_VB_DIA_MIN`), a TODOS los de WA_DUENO (no es efectivo:
+  también al jefe). `waVbDatos_` = el MoM de Proyección (`pryMomDe`): el mes por la entrega agendada, «cargada al» por día y hora (`waCargadaAl_` =
+  `pryCargadaAl`), el otro mes al mismo día y a la misma hora (entero si era más corto). Salen los que van MÁS de `WA_VB_UMBRAL` (20 %) abajo (justo
+  el 20 % no), el que más bajó primero, con hasta 3 productos en que bajaron (`waVbProd_`: el nombre escrito sin «COLCHON» ni la medida; la primera
+  palabra decide que almohadas, patas, envíos… no son producto; solo para NOMBRAR, el % sale de `waVentaTotal_`). Los nuevos (sin ventas a esa
+  altura el mes pasado) aparte; alguien que ya no está en WA_MARCAS y no vendió este mes no entra (en el total del equipo sí, como Proyección). Si
+  nadie bajó, no sale. Botón «Ver el detalle» = `vb|<ms>`: el detalle (`waVbDetalle_`) se rearma con ESA altura aunque lo toquen otro día.
+- **25 C · preguntas del dueño por WhatsApp** (`waPregQuien_`: los de WA_DUENO y WA_PRUEBA; va en `waHookAnotar_` después de «productos» de la 07-d):
+  el menú SIN IA (`waPregQue_`): `ventas` / `ventas ayer` / `ventas semana` (lo CARGADO, como el cierre), `mes` (MoM del equipo y por marca + la
+  última foto de `__pry_hist__`), `bajaron` (= el detalle de la 26), `cobrar` (sin «pagado» y con saldo: entregadas / por entregar / las 5 más
+  grandes; los mayoristas de Eduardo aparte), `efectivo` (`waEfeResumen_`: SOLO el primero de WA_DUENO; al jefe «🔒 le llega solo a Eduardo»),
+  `entregas` (hoy y el próximo día con camión, cupos como el portero, sin revisar), `camiones` (la caché del GPS), `stock <producto>` (lo que dice
+  cada Excel de `__stock__`, por palabras; dice que NO descuenta lo vendido sin entregar). Lo demás → Claude (`waPregClaude_`, `blokiLlamar_`) con
+  ESOS mismos textos como `<datos_panel>` (`waPregContexto_`; sin el efectivo para el jefe), lo hablado en 3 h (`<conversacion>`), tope
+  `WA_PREG_TOPE_DIA`=40 (el menú no cuenta), la pausa de la IA compartida. «ok», un emoji o una reacción: nada; un audio: «escribime». Todo queda en
+  «Bot WhatsApp» como «🧠 Dueño preguntó» / «🧠 Dueño: respuesta (vía)» (la respuesta en la columna P). Sin candado. Solo lee.
+  ⚠️ Antes de la 07-f lo que escribía el dueño (salvo «productos») entraba como un CLIENTE (Claude le contestaba como a un cliente).
+- `probarAntesDeImplementar` §18 (`probarBotG_`), `probarPreguntasDelDueno()` (lo que harían ahora, sin mandar ni preguntarle a Claude),
+  `estadoBotWhatsApp` (`ubicacionPedida`, `preguntasDueno`). Propiedades nuevas que maneja el script: `WA_UB_PEDIDA`, `WA_PREG_USO`; opcional
+  `WA_PREG_TOPE_DIA`. Plantillas nuevas: `pedir_ubicacion` (6 datos) y `vendedoras_bajan` (5 datos + botón) → correr `crearPlantillasWhatsApp`.
+- `tests/test_wa_13_25_26.js` (88; 61 rojas contra la 07-e; §3b compara con `pryMomDe` de la página, vendedor por vendedor). Cambiadas A
+  CONCIENCIA: `test_wa_bot` (las dos plantillas nuevas y un botón más) y `test_servidor` §l (la versión).
+
 ### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h PUBLICADA 07/11 (`main` = `2c50384`), con los arreglos de las pruebas de §4os; el `.gs` no cambia; batería: lo rojo con la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— pasa solo)
 - **Qué es**: Bloki ya contestaba stock, cupos, entregas, el saldo de un cliente y los códigos. Ahora entiende 17 preguntas más, en los siete
   grupos de la muestra, y las contesta con cuentas que el panel YA tiene: nada se calcula aparte, no gasta IA y SOLO MIRA (no escribe nada).

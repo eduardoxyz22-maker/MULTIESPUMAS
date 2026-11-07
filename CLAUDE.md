@@ -1455,6 +1455,14 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; en la rama, lo implementa el dueño): **13 A** `pedir_ubicacion` a las 10:00 al
+  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, también el martes; domingo nada), una vez por pedido (`WA_UB_PEDIDA`), con
+  `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo de su mes pasado a esta
+  altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
+  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
+  (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
+  tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
+  del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
 - `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
