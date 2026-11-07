@@ -314,7 +314,7 @@ function PREPARAR(){
       if(modo==='tope') return Promise.resolve({ ok:false, error:'tope', usadas:30, tope:30, version:'2026-11-07-a' });
       if(modo==='pausa') return Promise.resolve({ ok:false, error:'ia_error', detalle:'Claude está en pausa: sin crédito', usadas:4, tope:30, version:'2026-11-07-a' });
       return Promise.reject(new Error('http500')); };
-    var Q='¿quién vendió más este mes?';
+    var Q='¿por qué bajaron las ventas de sueña?';   // (07/11, idea 9) «¿quién vendió más?» ya lo contesta Bloki solo: esta sigue siendo libre
     /* sin contraseña, servidor nuevo: no se pregunta a Claude */
     SERVER_VER='2026-11-07-a'; QUIEN({ v:'Mirian Salazar' }); var sinClave=await PREG(Q);
     /* con contraseña, servidor viejo: tampoco */
@@ -326,7 +326,7 @@ function PREPARAR(){
     asisAbrir('ayuda'); ASIS.q=Q; asisAyudaLista(); var pista=(document.getElementById('asis-lista')||{}).textContent||'';
     await PREG(Q); var cargando=(document.querySelector('#asis-chat .bkp-a:last-child')||{}).textContent||''; await _esp(400);
     var ok=ULT(), c=calls[calls.length-1];
-    modo='tope'; var tope=await PREG('¿cuánto vendió Sueña el mes pasado?'); await _esp(60); tope=ULT();
+    modo='tope'; var tope=await PREG('¿qué conviene ofrecer este mes?'); await _esp(60); tope=ULT();
     modo='mal'; var mal=await PREG('¿y cómo vamos contra octubre?'); await _esp(60); mal=ULT();
     var ls=JSON.parse(localStorage.getItem('me_asis_preg')||'[]').map(function(x){ return x.t; });
     modo='ok'; var nAntes=calls.length, ay=await PREG('cómo anoto el pago'); var nAy=calls.length-nAntes;
@@ -336,7 +336,7 @@ function PREPARAR(){
     var nN=calls.length, num=await PREG('hay lugar el sábado?'), gastaNum=calls.length-nN;
     /* la contestación del servidor de verdad (7b38ffa): «ia_error» con su detalle, y una pregunta de más de 300 letras no viaja */
     modo='pausa'; var pausa=await PREG('¿qué vendedora tiene más ventas sin cobrar?'); await _esp(60); pausa=ULT();
-    var nL=calls.length, larga=await PREG('¿quién vendió más? '+new Array(60).join('blabla ')), gastaLarga=calls.length-nL; larga=ULT();
+    var nL=calls.length, larga=await PREG('¿por qué bajaron las ventas? '+new Array(60).join('blabla ')), gastaLarga=calls.length-nL; larga=ULT();
     return { pausa:pausa, larga:larga, gastaLarga:gastaLarga, sinClave:sinClave, viejo:viejo, n0:n0, pista:pista, cargando:cargando, ok:ok, c:c && { action:c.action, pregunta:c.pregunta, quien:c.quien, len:(c.contexto||'').length,
       ctx:(c.contexto||'').slice(0,4000) }, tope:tope, mal:mal, ls:ls, ay:ay, nAy:nAy, igual:igual, nIgual:nIgual, gastaNum:gastaNum, num:num };
   });
@@ -344,7 +344,7 @@ function PREPARAR(){
       r.viejo && /No tengo esa respuesta todavía/.test(r.viejo.t), { n0:r.n0, a:r.sinClave && r.sinClave.t, b:r.viejo && r.viejo.t });
   chk('con la contraseña y el servidor nuevo, la pista dice que se la pregunta a Claude', /se la pregunto a Claude/.test(r.pista||''), r.pista);
   chk('mientras espera: «Le pregunto a Claude…»', /Le pregunto a Claude/.test(r.cargando||''), r.cargando);
-  chk('manda {action:"bloki", pregunta, contexto, quien} y el contexto son números del panel, ≤ 12.000 letras', r.c && r.c.action==='bloki' && r.c.pregunta==='¿quién vendió más este mes?' &&
+  chk('manda {action:"bloki", pregunta, contexto, quien} y el contexto son números del panel, ≤ 12.000 letras', r.c && r.c.action==='bloki' && r.c.pregunta==='¿por qué bajaron las ventas de sueña?' &&
       r.c.quien==='Administración' && r.c.len>200 && r.c.len<=12000 && /VENTAS DE NOVIEMBRE DE 2026/.test(r.c.ctx) && /Mirian Salazar \(Heaven\)/.test(r.c.ctx) && /CUPOS DEL CAMIÓN/.test(r.c.ctx) &&
       /FALTA COBRAR/.test(r.c.ctx) && /STOCK DE LO MÁS VENDIDO/.test(r.c.ctx), r.c);
   chk('la respuesta de Claude, con «con Claude · pregunta 3 de 30 de hoy» (y la negrita)', r.ok && r.ok.ia && /La que más vendió es Mirian Salazar/.test(r.ok.t) && /<b>Mirian Salazar<\/b>/.test(r.ok.html) &&
@@ -352,7 +352,7 @@ function PREPARAR(){
   chk('«ia_error» con detalle (Claude en pausa): lo dice', r.pausa && /No pude preguntarle a Claude ahora \(Claude está en pausa: sin crédito\)/.test(r.pausa.t), r.pausa && r.pausa.t);
   chk('una pregunta de más de 300 letras no se manda (el servidor la rechaza): «acortala»', r.gastaLarga===0 && r.larga && /más de 300 letras/.test(r.larga.t), { n:r.gastaLarga, t:r.larga && r.larga.t });
   chk('el tope: «Ya se usaron las 30 preguntas de hoy»', r.tope && /Ya se usaron las 30 preguntas de hoy/.test(r.tope.t), r.tope && r.tope.t);
-  chk('un error: una frase y, sin ayuda escrita, se anota (lo que Claude contestó, no)', r.mal && /No pude preguntarle a Claude ahora/.test(r.mal.t) && r.ls.indexOf('¿y cómo vamos contra octubre?')>=0 && r.ls.indexOf('¿quién vendió más este mes?')<0, { t:r.mal && r.mal.t, ls:r.ls });
+  chk('un error: una frase y, sin ayuda escrita, se anota (lo que Claude contestó, no)', r.mal && /No pude preguntarle a Claude ahora/.test(r.mal.t) && r.ls.indexOf('¿y cómo vamos contra octubre?')>=0 && r.ls.indexOf('¿por qué bajaron las ventas de sueña?')<0, { t:r.mal && r.mal.t, ls:r.ls });
   chk('lo que la ayuda ya explica no gasta: abre la ayuda y ofrece «Preguntarle a Claude igual»', r.nAy===0 && r.ay && r.ay.btns.some(function(b){ return /Preguntarle a Claude igual/.test(b); }), { n:r.nAy, b:r.ay && r.ay.btns });
   chk('…y tocarlo sí le pregunta', r.nIgual===1 && r.igual && r.igual.ia, { n:r.nIgual, t:r.igual && r.igual.t });
   chk('una pregunta de números del panel no gasta aunque haya Claude', r.gastaNum===0 && r.num && r.num.tag==='con los números del panel · no gasta', r.gastaNum);
@@ -384,7 +384,7 @@ function PREPARAR(){
     var stock=await PREG('hay CH1220?');
     var cupo=await PREG('¿hay lugar el sábado?');
     var ent=await PREG('qué sale mañana');
-    var libre=await PREG('¿quién vendió más este mes?');   // sin la contraseña no se le pregunta a Claude
+    var libre=await PREG('¿qué conviene ofrecer este mes?');   // sin la contraseña no se le pregunta a Claude («¿quién vendió más?» ya lo contesta Bloki, idea 9)
     var nCalls=calls.length;
     /* los ejemplos de la ventana vacía: a Logística no se le sugiere «¿Cuánto le falta pagar a…?» */
     BLOKI_P.chat=[]; asisCerrar(); asisAbrir('ayuda');
