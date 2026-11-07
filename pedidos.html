@@ -15292,11 +15292,11 @@ var CTA_EDIT_RAUTO=null;   // el chofer que se puso solo al pasar el pago a efec
 /* El chofer de un camión un día: el del pedido si va en ese camión; si no, el que más pedidos de ese camión tiene ese día; si no, el primero. */
 function ctaChoferDia(veh, f, p){
   if(!veh) return '';
-  if(p && vehiculoDe(p)===veh && String(p.chofer||'').trim()) return String(p.chofer).trim();
+  if(p && vehiculoDe(p)===veh && String(p.chofer||'').trim()) return choferCanon(p.chofer);
   var C={}, best='', bn=0;
   (STATE||[]).forEach(function(q){
     if(!q || esFilaSistema(q) || String(q.fecha||'')!==String(f) || vehiculoDe(q)!==veh) return;
-    var c=String(q.chofer||'').trim(); if(!c) return;
+    var c=choferCanon(q.chofer); if(!c) return;
     C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; }
   });
   return best || ((VEHICULOS[veh]||[])[0]||'');
@@ -15307,7 +15307,7 @@ function ctaChoferSugerido(p, fecha){
   try{ if(typeof fichaRetira==='function' && fichaRetira(p)) return null; }catch(e){}
   var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
   if(ll && ll.veh){ var cg=ctaChoferDia(ll.veh, p.fecha, p); if(cg) return { ch:cg, veh:ll.veh, por:'gps', ll:ll }; }
-  var ch=String(p.chofer||'').trim(), veh=vehiculoDe(p);
+  var ch=choferCanon(p.chofer), veh=vehiculoDe(p);
   if(ch) return { ch:ch, veh:veh, por:'pedido' };
   if(veh){ var c2=ctaChoferDia(veh, p.fecha, p); if(c2) return { ch:c2, veh:veh, por:'pedido' }; }
   return null;
@@ -15318,8 +15318,8 @@ function ctaChoferCruce(p, fecha, ch){
   var vc=vehiculoDeChofer(ch); if(!vc) return '';          // un chofer sin camión conocido: no se puede saber
   var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
   var ref=(ll && ll.veh) || vehiculoDe(p); if(!ref || ref===vc) return '';
-  if(!(ll && ll.veh) && ch===String(p.chofer||'').trim()) return '';   // el pedido dice ese chofer
-  var deRef=(ref===vehiculoDe(p) && String(p.chofer||'').trim()) || (VEHICULOS[ref]||[]).join(' o ');
+  if(!(ll && ll.veh) && choferCanon(ch)===choferCanon(p.chofer)) return '';   // el pedido dice ese chofer (06/11: con el nombre de la lista)
+  var deRef=(ref===vehiculoDe(p) && choferCanon(p.chofer)) || (VEHICULOS[ref]||[]).join(' o ');
   return '⚠️ ¿'+ch+' recibió esta plata?\n\nEse día el pedido lo llevó el '+ref+(deRef?(' ('+deRef+')'):'')+(ll && ll.veh ? ' — el GPS lo vio en la casa del cliente' : '')+
     ', y '+ch+' es del '+vc+'.\n\nSi la recibió '+ch+', tocá Aceptar. Si no, Cancelar y elegí al chofer que la cobró.';
 }
@@ -24220,7 +24220,7 @@ function cargaAgrupar(list){
   list.forEach(function(p){
     var k=vehiculoDe(p)||'Sin vehículo';
     if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},prodProd:{},prodAlm:{},sale:{},saleOrden:[],bultos:0,choferes:{}}; order.push(k); }
-    byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
+    byV[k].stops.push(p); if(p.chofer) byV[k].choferes[choferCanon(p.chofer)]=1;
     (p.productos||[]).forEach(function(x){
       var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0, V=byV[k];
       V.bultos+=c;
@@ -27356,7 +27356,7 @@ function llenarSelectChoferes(){
   var actual=sel.value||getChoferMem();
   var seen={}, list=[];
   allChoferes().forEach(function(c){ if(c&&!seen[c]){ seen[c]=1; list.push(c); } });
-  STATE.forEach(function(p){ var c=String(p.chofer||'').trim(); if(c&&!seen[c]){ seen[c]=1; list.push(c); } });
+  STATE.forEach(function(p){ var c=choferCanon(p.chofer); if(c&&!seen[c]){ seen[c]=1; list.push(c); } });
   list.sort();
   sel.innerHTML='<option value="">Elegí tu nombre…</option>'+list.map(function(c){ return '<option>'+esc(c)+'</option>'; }).join('');
   if(actual && list.indexOf(actual)>=0) sel.value=actual;
@@ -27407,7 +27407,7 @@ function renderChofer(){
   var box=document.getElementById('cho-metrics'), cont=document.getElementById('cho-lista'),
       empty=document.getElementById('cho-empty'), chips=document.getElementById('cho-chips');
   if(!c && !todos){ box.innerHTML=''; cont.innerHTML=''; chips.innerHTML=''; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus entregas.'; return; }
-  var mias=todos ? STATE.slice() : STATE.filter(function(p){ return String(p.chofer||'').trim().toLowerCase()===c.toLowerCase(); });
+  var mias=todos ? STATE.slice() : STATE.filter(function(p){ return choferCanon(p.chofer).toLowerCase()===choferCanon(c).toLowerCase(); });
   chips.innerHTML=CHO_DEFS.map(function(d){
     var n=mias.filter(d.test).length;
     return '<button class="qchip'+(CHO_FILTER===d.k?' active':'')+'" onclick="setChoFiltro(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
@@ -30686,12 +30686,12 @@ function cobrosDe(p){
    puerta, o —sin marca— de la vendedora de la venta. Es lo que el cuadre suma por persona
    y lo que un retiro descuenta. */
 function pagoRecibio(c, p){
-  var r=limpiaRecibio(c&&c.recibio);
+  var r=choferCanon(limpiaRecibio(c&&c.recibio));   // (06/11) Luis Eyzaguirre = Luis Pierre: una sola persona en el cuadre
   if(r) return r;
   return nombreCanonico(p&&p.vendedor)||String((p&&p.vendedor)||'').replace(/\s+/g,' ').trim()||'(sin vendedor)';
 }
 function recibioBadge(c, chico){
-  var r=limpiaRecibio(c&&c.recibio); if(!r) return '';
+  var r=choferCanon(limpiaRecibio(c&&c.recibio)); if(!r) return '';
   return ' <span class="badge b-amber" style="font-size:'+(chico?'.58rem':'.62rem')+'" title="El efectivo lo recibió el chofer: lo tiene él hasta que lo rinda a Contabilidad">🚚 recibió '+esc(r)+'</span>';
 }
 /* El ANTICIPO: lo que el cliente dejó al comprar. Si todavía no está escrito en el
@@ -44601,10 +44601,15 @@ var VEHICULOS = {
   'Foton encarpado': ['Cristhian','Diego'],
   'Foton insumo':    ['Miguel Melgar']
 };
+/* (06/11, dueño: «Luis Pierre es Eyzaguirre 🤣») Un mismo chofer cargado con dos nombres. El panel lo muestra, lo elige y le
+   suma el efectivo con UNO (el de `VEHICULOS`), sin reescribir la planilla: un pedido viejo con el otro nombre se ve con este y,
+   si se vuelve a guardar, queda con este. Clave = `normNombre` del nombre que NO va. */
+var CHOFER_ALIAS = { 'luis eyzaguirre':'Luis Pierre', 'luis pierre eyzaguirre':'Luis Pierre' };
+function choferCanon(n){ var s=String(n==null?'':n).replace(/\s+/g,' ').trim(), A=(typeof CHOFER_ALIAS==='object' && CHOFER_ALIAS)||{}; return (s && A[normNombre(s)]) || s; }
 /* (06/11, «es rotativo») El chofer que va en un camión: el que más aparece en esos pedidos; si ninguno lo dice, el primero de la lista. */
 function choferDeCamion(v, peds){
   var C={}, best='', bn=0;
-  (peds||[]).forEach(function(p){ if(!p || vehiculoDe(p)!==v) return; var c=String(p.chofer||'').trim(); if(!c) return; C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; } });
+  (peds||[]).forEach(function(p){ if(!p || vehiculoDe(p)!==v) return; var c=choferCanon(p.chofer); if(!c) return; C[c]=(C[c]||0)+1; if(C[c]>bn){ bn=C[c]; best=c; } });
   return best || ((VEHICULOS[v]||[])[0]||'');
 }
 /* 🛰️ (12/10, dueño) La placa de cada camión en el GPS de Monnet (i-monnet 5.0). Todavía no se usa: es para cuando el panel sepa
@@ -44614,7 +44619,7 @@ var VEHICULO_PLACA = { 'Foton nuevo':'6663-CCP', 'Carry':'6409-TIG', 'Foton insu
    ya tenga guardado, aunque no esté más en la lista — si no, un pedido viejo mostraba
    «Chofer…» como si no tuviera ninguno. */
 function choferesParaSelect(p){
-  var list=allChoferes().slice(), c=String((p&&p.chofer)||'').trim();
+  var list=allChoferes().slice(), c=choferCanon(p&&p.chofer);   // (06/11) con el nombre de la lista (Luis Eyzaguirre = Luis Pierre)
   if(c && list.indexOf(c)<0) list.push(c);
   return list;
 }
@@ -44623,13 +44628,13 @@ function choferesParaSelect(p){
    su historial y su efectivo por rendir. */
 function choferesConocidos(){
   var seen={}, out=[];
-  var meter=function(c){ c=String(c||'').replace(/\s+/g,' ').trim(); var k=normNombre(c); if(!k||seen[k]) return; seen[k]=1; out.push(c); };
+  var meter=function(c){ c=choferCanon(c); var k=normNombre(c); if(!k||seen[k]) return; seen[k]=1; out.push(c); };
   allChoferes().forEach(meter);
   STATE.forEach(function(p){ meter(p.chofer); parseCobros(p&&p.metodoPago).forEach(function(c){ meter(c.recibio); }); });
   return out;
 }
 function choferesConocidosSet(){ var s={}; choferesConocidos().forEach(function(c){ s[normNombre(c)]=c; }); return s; }
-function esChoferNombre(n){ return !!choferesConocidosSet()[normNombre(n)]; }
+function esChoferNombre(n){ return !!choferesConocidosSet()[normNombre(choferCanon(n))]; }
 function vehiculoSelect(p){
   var opts='<option value="">Vehículo…</option>';
   Object.keys(VEHICULOS).forEach(function(v){ opts+='<option'+(p.vehiculo===v?' selected':'')+'>'+v+'</option>'; });
@@ -44641,13 +44646,14 @@ function allChoferes(){
   return out;
 }
 /* Cada chofer pertenece a un solo camión: deducir el vehículo a partir del chofer. */
-function vehiculoDeChofer(c){ c=String(c||'').trim(); if(!c) return ''; var ks=Object.keys(VEHICULOS); for(var i=0;i<ks.length;i++){ if(VEHICULOS[ks[i]].indexOf(c)>=0) return ks[i]; } return ''; }
+function vehiculoDeChofer(c){ c=choferCanon(c); if(!c) return ''; var ks=Object.keys(VEHICULOS); for(var i=0;i<ks.length;i++){ if(VEHICULOS[ks[i]].indexOf(c)>=0) return ks[i]; } return ''; }
 /* Vehículo efectivo de un pedido: el guardado, o el que corresponde al chofer. */
 function vehiculoDe(p){ return String((p&&p.vehiculo)||'').trim() || vehiculoDeChofer(p&&p.chofer) || ''; }
 function choferSelect(p){
   var list=choferesParaSelect(p); // TODOS los choferes, para poder cambiarlo por cualquiera aunque se autollene
   var opts='<option value="">'+(p.vehiculo?'Chofer…':'(elegí vehículo)')+'</option>';
-  list.forEach(function(c){ opts+='<option'+(p.chofer===c?' selected':'')+'>'+c+'</option>'; });
+  var pc=choferCanon(p.chofer);
+  list.forEach(function(c){ opts+='<option'+(pc===c?' selected':'')+'>'+c+'</option>'; });
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
 }
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
@@ -46467,7 +46473,7 @@ function mapaKey(p){
     for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===k) return MARCAS[i].ico+' '+MARCAS[i].lbl;
     return 'Otros';
   }
-  return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
+  return String(choferCanon(p.chofer)||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
 }
 function mapaVisible(p){ return !MAPA_SOLO_SIN || mapaKey(p)==='Sin chofer'; }
 function mapaColorFor(k){ if(!MAPA_COLOROF[k]){ MAPA_COLOROF[k]=CHOFER_COLORS[MAPA_COLIDX % CHOFER_COLORS.length]; MAPA_COLIDX++; } return MAPA_COLOROF[k]; }
