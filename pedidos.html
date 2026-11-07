@@ -4711,6 +4711,15 @@ body.anu-tiembla > .nav, body.anu-tiembla > .wrap{ animation:ag-sacude .45s cubi
 .bkp-cod span{ min-width:0; font-size:.8rem; font-weight:600; }
 .bkp-cod small{ display:block; font-size:.68rem; font-weight:500; color:var(--muted); }
 .bkp-w{ color:#9a5b00; font-size:.76rem; margin-top:5px; font-weight:600; }
+/* 💬 (07/11, idea 9) renglones (ranking, camiones, «Para hacer») y el mensaje armado para el cliente */
+.bkp-filas{ display:grid; gap:4px; margin-top:7px; max-height:280px; overflow:auto; }
+.bkp-fila{ display:flex; gap:8px; align-items:center; background:#fff; border:1px solid var(--gray-md); border-radius:10px; padding:6px 9px; min-width:0; }
+.bkp-fila.bkp-sr{ border-left:4px solid var(--red); } .bkp-fila.bkp-sa{ border-left:4px solid #f59e0b; } .bkp-fila.bkp-si{ border-left:4px solid var(--teal); }   /* ⚠️ nunca «bkp-a»: es la burbuja de la respuesta */
+.bkp-ft{ flex:1; min-width:0; font-size:.8rem; } .bkp-ft b{ display:block; font-weight:700; overflow-wrap:anywhere; }
+.bkp-ft small{ display:block; color:var(--muted); font-size:.72rem; overflow-wrap:anywhere; } .bkp-ft a{ color:var(--teal-dk); font-weight:800; }
+.bkp-fila em{ font-style:normal; font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:.8rem; }
+.bkp-fila .asis-b{ flex:none; }
+.bkp-msg{ margin-top:7px; background:#fff; border:1px dashed var(--teal); border-radius:10px; padding:8px 10px; white-space:pre-wrap; font-size:.8rem; line-height:1.45; user-select:all; -webkit-user-select:all; }
 .bkp-li{ max-height:220px; }
 .bkp-opc{ display:grid; gap:4px; margin-top:7px; }
 .bkp-opc button{ text-align:left; border:1px solid var(--teal); background:#fff; color:var(--teal-dk); border-radius:10px; padding:7px 10px; min-height:38px; font:inherit; font-size:.8rem; font-weight:700; cursor:pointer; }
@@ -9807,6 +9816,7 @@ function cxTopPintar(list, vSel, R){
   if(esqCargando()){ el.innerHTML=esqContaHtml(); el._h=''; var _v=document.getElementById('cta-empty'); if(_v) _v.style.display='none'; return; }   // ⏳ (V6)
   var M=CX_TOP_M||{ vendido:0, cobrado:0, falta:0, nDeben:0, n:0 };
   var I=cxHacerDatos(list, R), V=I.slice(0, I.length>6?5:6), resto=I.slice(V.length), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
+  CX_HACER_ULT=I;   // 💬 (idea 9) Bloki contesta «¿qué me falta hacer?» con el último que se dibujó
   var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
   var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'antes del cierre del mes':'')+'</small></div>'+
@@ -51551,7 +51561,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-07-g';
+var PANEL_V='2026-11-07-h';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -55109,6 +55119,8 @@ function asisPreguntasHtml(){
         CLOUD) y, si en ninguno de los dos, en el histórico del sistema (`VENTAS_HIST`). Si no está en esa medida, dice en cuáles sí, con
         su código (`blokiCodigo`, `blokiCodIdx`). Lo del Excel también vale para el STOCK: un producto que la lista no tiene se busca ahí
         (`blokiProductos` prueba la lista y, si no encuentra nada, los Excel).
+     4c. 💬 (07/11, idea 9; dueño: «Idea 9 todas de Bloki») SIETE GRUPOS MÁS: mis ventas, cobranza, mis pedidos, productos, logística,
+        «¿qué me falta hacer?» y el mensaje al cliente. Ver el bloque «BLOKI CONTESTA MÁS» (`blokiTipo2` y lo que sigue).
    «a la mañana» / «de la tarde» es el TURNO; «mañana» a secas, el DÍA. Días: hoy, mañana, pasado mañana, lunes…domingo (el próximo) y
    dd/mm. Cada respuesta lleva «con los números del panel · no gasta».
    QUIÉN VE QUÉ: una vendedora, solo lo suyo (sus ventas y sus entregas); con la contraseña, o quien entró como Administración,
@@ -55152,7 +55164,8 @@ var BLOKI_PV=blokiMapa('HAY STOCK SALDO DE DEL EL LA LOS LAS LO LE LES PARA QUE 
   'MEDIDAS MEDIA CM X ALMACEN ALMACENES DEPOSITO PTF BANZER MORENO FABRICA AHORA TODAVIA AUN MAS UNIDAD UNIDADES POR FAVOR PORFA DIME DECIME SABES '+
   'SABE ESTA ESTAN ESTE ESTOS ESAS ESOS ENTREGAR ENTREGA VENDER VENTA VENTAS CLIENTE PEDIDO PEDIDOS HOLA BLOKI VEO VER MIRA MIRAR SABER CONSULTAR '+
   'REVISAR CHE ALGUN ALGUNO ALGUNA ALGO LLEGA LLEGAN PUEDO PODEMOS PUEDE PROGRAMAR AGENDAR MI MIS SU SUS TU TUS ES SON HABRA HABIA QUIERO NECESITO '+
-  'BUSCO CUAL CUALES COMO DONDE TOTAL ALCANZA SALE SALEN CODIGO CODIGOS COD PRODUCTO PRODUCTOS NOMBRE');
+  'BUSCO CUAL CUALES COMO DONDE TOTAL ALCANZA SALE SALEN CODIGO CODIGOS COD PRODUCTO PRODUCTOS NOMBRE PRECIO PRECIOS CUESTA CUESTAN VALE VALEN '+
+  'COBRA COBRAMOS VENDE VENDEN VENDEMOS VENDO CUANDO VUELVE VUELVEN HABER REPONEN TAMANO TAMANOS EXISTE EXISTEN MIOS MIAS');
 /* Lo que NO es el nombre de un cliente (en minúsculas, sin tildes) */
 var BLOKI_CV=blokiMapa('cuanto cuanta le les falta faltan pagar pago pagos pago paga pagado debe deben deuda deudas adeuda saldo de del la el los las a al '+
   'que cual es tiene tienen senora senor sra sr don dona cliente clienta mi mis su sus ultimo ultima cobrar cobrarle cobro queda y o con por para me nos '+
@@ -55346,16 +55359,18 @@ function blokiLbl(x){ return nombreVenta(x.d, x.code)+(x.m?(' '+x.m):''); }
 function blokiEntender(q){
   var raw=String(q||'').trim(); if(raw.length<3) return null;
   var t=blokiNorm(raw); if(!t) return null;
-  if(BLOKI_RE.como.test(t) && asisBuscar(raw).length) return null;     // «¿cómo hago…?» con su respuesta escrita: es de la ayuda
+  if(BLOKI_RE.como.test(t) && !/^como\s+(?:voy|vamos|va|van|estoy|estamos)\b/.test(t) && asisBuscar(raw).length) return null;     // «¿cómo hago…?» con su respuesta escrita: es de la ayuda («¿cómo voy?» no)
   var D=blokiDia(t), r=D.resto, o={ t:t, raw:raw, dia:D.dia, turno:D.turno, resto:r };
   if(BLOKI_RE.codigo.test(r)){ o.tipo='codigo'; return o; }               // 🏷️ «código del cloud 90x190»
+  var comoHago=/^(?:como|por\s+que|porque|que\s+significa|me\s+mostras)\b/.test(t) && !/^como\s+(?:voy|vamos|va|van|estoy|estamos)\b/.test(t);
+  var t2=comoHago ? '' : blokiTipo2(r, t, o); if(t2){ o.tipo=t2; return o; }   // «¿cómo hago el cierre de entregas?» es de la ayuda, aunque la ayuda no se la muestre a esta persona             // 💬 (07/11, idea 9) ventas, cobranza, pedidos, productos, logística, «qué me falta», el mensaje
   if(BLOKI_RE.cupos.test(r)){ o.tipo='cupos'; return o; }
   if(BLOKI_RE.entregas.test(r) && !BLOKI_RE.noEntregas.test(r)){ o.tipo='entregas'; return o; }
   if(BLOKI_RE.cliente.test(r) || (BLOKI_RE.oc.test(r) && /\b(saldo|debe|falta|pago|pagos|cobrar)\b/.test(r))){ o.tipo='cliente'; return o; }
   var P=blokiProductos(r, true);
   if(P.porCodigo && BLOKI_RE.queEs.test(r) && !BLOKI_RE.stockFuerte.test(r)){ o.tipo='codigo'; return o; }   // 🏷️ «¿qué es el CH1220?»
   if(BLOKI_RE.saldoDe.test(r) && !P.cands.length && !P.porCodigo){ o.tipo='cliente'; return o; }   // «saldo de Juan Pérez»: no es un producto
-  if(P.cands.length && (P.porCodigo || BLOKI_RE.stockFuerte.test(r) || BLOKI_RE.stockDebil.test(r))){ o.tipo='stock'; return o; }
+  if(P.cands.length && (P.porCodigo || BLOKI_RE.stockFuerte.test(r) || BLOKI_RE.stockDebil.test(r) || BLOKI_RE2.vuelve.test(r))){ o.tipo='stock'; return o; }   // (idea 9) «¿cuándo vuelve a haber…?»
   if(BLOKI_RE.stockFuerte.test(r) && (P.palabras.length || P.med)){ o.tipo='stock'; return o; }   // «stock de xyz»: no lo encuentra, y lo dice
   return null;
 }
@@ -55385,7 +55400,10 @@ function blokiResponder(o){
   if(o.tipo==='cliente') return blokiCliente(o);
   if(o.tipo==='stock') return blokiStock(o);
   if(o.tipo==='codigo') return blokiCodigo(o);
-  return null;
+  var F={ ventas:blokiVentas, deben:blokiDeben, efectivo:blokiEfectivo, avisos:blokiAvisos, factura:blokiFactura, sinstock:blokiSinStock, sincamion:blokiSinCamion,
+          llega:blokiLlega, precio:blokiPrecio, medidas:blokiMedidasR, top:blokiTop, cargar:blokiCargar, moreno:blokiMoreno, cierre:blokiCierre, gps:blokiGps,
+          hacer:blokiHacer, mensaje:blokiMensaje }[o.tipo];
+  return F ? F(o) : null;
 }
 /* ---------- 📦 stock ---------- */
 function blokiStock(o){
@@ -55540,6 +55558,7 @@ function blokiEntregas(o){
   var S=blokiAlcance(), mio=!!S.yo && /\b(mis|mios|mias|entrego|tengo|llevo)\b/.test(o.t);
   if(!S.todo && !S.yo) return blokiQuienSos('tus entregas');
   var deMi=!S.todo || mio, yo=S.yo;
+  var Rg=!o.dia ? blokiRango(o.t) : null; if(Rg) return blokiEntregasRango(o, Rg);   // 🗓️ (idea 9) «la semana que viene»
   var hoy=todayStr(), f=o.dia || hoy, dn=blokiDiaNom(f), tn=o.turno ? (o.turno==='AM' ? ' a la mañana' : ' a la tarde') : '';
   var L=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && p.fecha===f &&
       (!deMi || mismoVendedor(p.vendedor, yo)) && (!o.turno || normTurno(p.turno)===o.turno); }).sort(cierreEntOrden);
@@ -55621,6 +55640,680 @@ function blokiCliResp(T){
     a.btns.push(['🧾 Abrir la venta'+(X.length>1 ? (' '+String(p.oc||'')) : ''), function(){ blokiAbrirVenta(String(p.id)); }]); });
   return a;
 }
+/* ============================================================================
+   💬 (07/11, idea 9; dueño: «Idea 9 todas de Bloki») BLOKI CONTESTA MÁS, CON LOS NÚMEROS DEL PANEL. Siete grupos de preguntas que
+   el dueño vio en la muestra (https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT) y eligió TODOS. Igual que lo de antes: cada respuesta
+   sale de una cuenta que el panel YA tiene (acá no se calcula nada aparte), no gasta IA y SOLO MIRA (no escribe nada).
+     1. 📈 MIS VENTAS (`ventas`) — «¿cuánto vendí hoy / esta semana / este mes?», «¿cómo voy contra el mes pasado?», «¿cuánto me falta
+        para la meta?», «¿cuál fue mi venta más grande?», «¿quién vendió más?». Las ventas son las de Proyección (`pryVentas`): el mes
+        por la fecha de entrega agendada; hoy, ayer y la semana por el día en que se CARGÓ (`reg`). «A esta altura» = `pryCargadaAl` con
+        el mismo día y la misma hora (la cuenta de `pryMomDe`). La meta: la de cada vendedora del cierre comercial (`ccmVdDe`, solo si
+        está guardada para ese mes) y la de la marca (`metaDe` / `metaVendidoMes`).
+     2. 💵 COBRANZA — `deben` («¿quiénes me deben?»: `contaFaltaCobrar`, primero lo ya entregado), `efectivo` («¿cuánto efectivo tengo sin
+        rendir?»: `misEfectivoDatos`, el mismo «Efectivo en tu mano»; el equipo, `misEqEfectivo`), `avisos` (lo que pidió Contabilidad:
+        `ctaAvAbiertos`) y `factura` (ventas sin N° de factura o nota de remisión: `docVentaFalta`).
+     3. 📋 MIS PEDIDOS — `sinstock` (lo ✗ / ⬜ / 🏭 de lo que se entrega desde hoy: `semanaLinea`, la del botón «Semana»), `sincamion`
+        (sin camión hasta el próximo día de camión / sin ubicación de Maps), `llega` («¿cuándo llega el pedido de Lidia?», por cliente,
+        OC o celular: la fecha, el turno, el camión, «Salió» y lo que vio el GPS: `pedidoViajeDatos`, `camionSalio`, `gpsLlegadaDe`) y
+        las entregas de una SEMANA («¿qué entrego la semana que viene?», `blokiRango`).
+     4. 🛏️ PRODUCTOS — `precio` (lo que se cobró de verdad en los últimos `BLOKI_PRECIO_DIAS` días: el típico, el más bajo y el más alto;
+        sin Eduardo, ROHO, ATC ni reposiciones), `medidas` (en qué medidas existe, con sus códigos) y `top` (lo más vendido, en unidades:
+        `pryTipoProd`). «¿Cuándo vuelve a haber…?» es la del STOCK (el cuadrito dice cuándo llega).
+     5. 🚚 LOGÍSTICA — `cargar` (lo que falta tildar en la Lista de carga de hoy o del próximo día de camión, por camión: `cargaVivaDatos`),
+        `moreno` (lo que hay que ir a buscar: `admLugaresDatos`), `cierre` (lo que falta tildar en el ✅ Cierre de entregas, con lo que vio el
+        GPS) y `gps` («¿dónde está el carry?»: `camionGps`, `gpsDondeTxt`).
+     6. 📋 «¿QUÉ ME FALTA HACER?» (`hacer`) — el MISMO «Para hacer» de su pestaña: la vendedora el de Mis pedidos (`misHacerDatos`),
+        Logística y Administración el de Administración (`admHacerDatos`), Contabilidad el de Contabilidad (`cxHacerDatos`, el último que se
+        dibujó, `CX_HACER_ULT`; si no se abrió, lo principal). Cada renglón con su botón: lleva a la pestaña y hace lo mismo que el de allá.
+     7. 💬 ESCRIBIRLE AL CLIENTE (`mensaje`) — «armame el mensaje para Raúl de que debe», «avisale a Lidia que llega mañana»: Bloki ARMA el
+        texto (el de siempre, `nxMsgCliente`, o el del saldo con lo que dice Contabilidad) y el botón de WhatsApp. LO MANDA LA VENDEDORA: Bloki
+        no manda nada. Si lo que escribió no coincide con el pedido (otro monto, otro día), usa lo del pedido y lo dice.
+   QUIÉN VE QUÉ (igual que antes): una vendedora, lo suyo; con la contraseña, Administración, Contabilidad o Logística, todo
+   (`blokiAlcance`). 🔒 Logística SIN la contraseña no ve plata (`blokiPlataNo`): ni ventas, ni deudas, ni efectivo, ni el mensaje del
+   saldo; las entregas, la carga, el GPS y los productos sí. `tests/test_bloki_mas.js`.
+   ========================================================================== */
+var BLOKI_PRECIO_DIAS=60, BLOKI_MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+var BLOKI_RE2={
+  mensaje:/\b(?:armame|arma|armar|armalo|escribime|redacta|redactame|prepara|preparame|haceme|pasame|dame)\s+(?:el\s+|un\s+)?(?:mensaje|whatsapp|wsp|texto)\b|^(?:mensaje|whatsapp|wsp)\s+(?:para|a|al)\b|\b(?:avisale|avisales|recordale|recordarle|escribile|escribirle|decile|decirle|cobrale|reclamale|confirmale)\s+a\b/,
+  hacer:/\b(?:que|cosas?)\s+(?:me\s+|nos\s+|te\s+)?(?:falta|faltan|queda|quedan)\s+(?:por\s+)?(?:hacer|resolver|completar)\b|\b(?:que|cosas?)\s+(?:tengo|tenemos|hay)\s+que\s+hacer\b|\bpara\s+hacer\b|\b(?:mis|tengo|tenemos)\s+pendientes?\b|\bque\s+(?:tengo|tenemos|hay)\s+pendiente\b|^(?:que\s+)?hago\s+(?:ahora|primero)\b/,
+  cierre:/\bcierre\s+de\s+(?:entregas?|hoy)\b|\b(?:falta|faltan|queda|quedan)\s+(?:por\s+)?(?:tildar|confirmar|marcar\s+(?:como\s+)?entregad\w*)\b|\bsin\s+(?:tildar|confirmar)\b|\bentregad\w*\s+sin\s+(?:marcar|tildar|confirmar)\b/,
+  cargar:/\b(?:falta|faltan|queda|quedan|hay\s+que|tengo\s+que|tenemos\s+que)\s+(?:por\s+)?cargar\b|\bpor\s+cargar\b|\bque\s+(?:se\s+)?carga\b|\blista\s+de\s+carga\b|\bque\s+lleva\s+(?:el\s+)?(?:camion|carry|foton)\b|\bcarga\s+(?:de|del)\s+(?:camion|dia)\b/,
+  moreno:/\b(?:recoger|recogemos|recojo|recoge|traer|traemos|buscar)\b[\w\s]*\bmoreno\b|\bmoreno\b[\w\s]*\b(?:recoger|traer|buscar)\b|\b(?:que|cuanto)\s+(?:hay\s+que\s+|tengo\s+que\s+|tenemos\s+que\s+)?(?:recoger|ir\s+a\s+buscar)\b/,
+  gps:/\bgps\b|\bdonde\s+(?:esta|estan|anda|andan|va|van)\s+(?:el\s+|los\s+)?(?:camion\w*|carry|foton\w*|chofer\w*)\b|\bya\s+(?:salio|volvio)\s+(?:el\s+)?(?:camion|carry|foton)\b/,
+  deben:/\bquien(?:es)?\s+(?:me\s+|nos\s+|te\s+)?(?:debe|deben|adeuda\w*)\b|\b(?:clientes|ventas)\s+(?:que\s+)?(?:me\s+|nos\s+)?(?:deben|con\s+saldo|por\s+cobrar)\b|\bdeudores\b|\b(?:mis|los)\s+saldos\b|\bcuanto\s+(?:me\s+|nos\s+)deben\b|\bpor\s+cobrar\b/,
+  efectivo:/\befectivo\b[\w\s]*\b(?:tengo|tenemos|tiene|tienen|mano|rendir|rendi|rendido|retir\w*|junt\w*)\b|\b(?:cuanto|que)\s+(?:efectivo|plata)\s+(?:tengo|tenemos|tiene)\b|\b(?:sin|por|para)\s+rendir\b|\ben\s+(?:mi|la)\s+mano\b/,
+  avisos:/\baviso\w*\s+(?:de\s+)?contabilidad\b|\bcontabilidad\s+(?:me\s+|nos\s+)?(?:pide|pidio|pidieron|avis\w*|marc\w*|reclam\w*)\b|\bpagos?\s+(?:con|que\s+tienen?)\s+(?:un\s+)?aviso\w*\b/,
+  factura:/\b(?:sin|no\s+tienen?|no\s+tiene|falta\w*)\s+(?:el\s+|la\s+)?(?:(?:n|nro|numero)\s+de\s+)?(?:la\s+)?(?:factura|remision|nota\s+de\s+remision)\b|\bfactura\s+o\s+(?:nota\s+de\s+)?remision\b/,
+  top:/\b(?:lo\s+|los\s+|el\s+|producto\s+|productos\s+)?mas\s+vendid[oa]s?\b|\blo\s+que\s+mas\s+se\s+vende\w*\b|\b(?:que|cual(?:es)?)\s+(?:producto\s+|productos\s+|colchon\w*\s+)?(?:se\s+vende\w*\s+mas|mas\s+se\s+vende\w*|vende\w*\s+mas)\b|\b(?:que|cual(?:es)?)\s+(?:es|son)\s+(?:lo|los)\s+que\s+mas\s+(?:se\s+)?vend\w*\b|\bmas\s+rota\w*\b/,
+  precio:/\bprecios?\b|\bcuanto\s+(?:cuesta|cuestan|vale|valen|cobramos|se\s+cobra)\b|\ba\s+cuanto\s+(?:se\s+)?(?:vende\w*|vendemos|vendo|sale|salen|esta|estan)\b/,
+  medidas:/\b(?:que|cuales|en\s+que)\s+(?:medidas|tamanos)\b|\bmedidas\s+(?:de|del|hay|tiene|tienen|existe|existen)\b|\btamanos?\s+(?:de|del|hay|tiene)\b|\ben\s+cuantas\s+medidas\b/,
+  ventas:/\b(?:cuanto|cuantas|cuantos|que)\s+(?:he\s+|hemos\s+|llevo\s+|llevamos\s+|se\s+|ya\s+)?vend(?:i|imos|io|ieron|iste|ido|e|en|emos|o)\b|\bmis\s+ventas\b|\bventas?\s+(?:de\s+|del\s+)?(?:hoy|ayer|la\s+semana|esta\s+semana|este\s+mes|mes|equipo)\b|^como\s+(?:voy|vamos|va|van|estoy|estamos)\b|\b(?:mi|la|nuestra)\s+meta\b|\bmeta\s+(?:de|del)\b|\bpresupuesto\b|\b(?:venta\s+mas\s+grande|mayor\s+venta|mejor\s+venta)\b|\branking\b|\bquien\s+(?:vendio|vende|va)\s+(?:mas|primer\w*|mejor)\b/,
+  llega:/\bcuando\s+(?:le\s+)?(?:llega|llegan|se\s+entrega|entregan|entregamos|sale)\b|\b(?:donde|como)\s+(?:esta|va|anda)\s+(?:el\s+)?(?:pedido|oc)\b|\bestado\s+del?\s+(?:pedido|oc)\b|\bya\s+(?:llego|se\s+entrego|entregaron|le\s+llego)\b/,
+  sinstock:/\bsin\s+stock\b|\bno\s+(?:tienen?|hay)\s+stock\b|\b(?:pedidos?|productos?)\s+(?:que\s+)?no\s+hay\b|\b(?:que|cuales)\s+(?:pedidos?\s+)?no\s+(?:hay|tienen?\s+stock)\b|\bsin\s+revisar\b|\ben\s+produccion\b/,
+  sincamion:/\bsin\s+(?:camion|vehiculo|ubicacion|mapa|pin)\b|\bno\s+tienen?\s+(?:camion|vehiculo|ubicacion|mapa|pin)\b|\bfalta\w*\s+(?:la\s+)?(?:ubicacion|camion)\b/,
+  vuelve:/\bcuando\s+(?:vuelve|vuelven|habra|hay|llega|llegan|entra|entran|repone\w*)\b|\bvuelve\s+a\s+haber\b/
+};
+/* Las palabras que no son el nombre de un cliente en estas preguntas (además de `BLOKI_CV`) */
+var BLOKI_CV2=blokiMapa('armame arma armar armalo escribime redacta redactame prepara preparame haceme pasame dame mensaje mensajes whatsapp wsp texto '+
+  'avisale avisales recordale recordarle escribile escribirle decile decirle cobrale reclamale confirmale avisa avisar recordar confirmar confirma '+
+  'llega llegan llego entrega entregan entregamos entrego entregaron sale salen salio cuando donde esta anda va como estado pedido pedidos oc '+
+  'manana tarde hoy semana viene proxima recibe recibir recibio lleva llevamos camion turno dia cambio cambia cambiaron cambiamos paso pasamos '+
+  'reprogramado reprogramamos movimos debe deben saldo plata bs pago pague pagar pagos cobro cobranza recordatorio el la los las lo un una de del '+
+  'que a al para por su sus tu tus mi mis le les se es y o ya hay todavia aun cuanto cuanta');
+function blokiPalabrasCli(r){
+  return String(r||'').split(/\s+/).filter(function(w){ return w.length>=2 && !/\d/.test(w) && !BLOKI_CV[w] && !BLOKI_CV2[w]; });
+}
+/* ¿Qué tipo de las nuevas es? `r` = la pregunta sin el día ni el turno. Antes que cupos/entregas/cliente: son más precisas. */
+function blokiTipo2(r, t, o){
+  if(BLOKI_RE2.mensaje.test(r)) return 'mensaje';
+  if(BLOKI_RE2.hacer.test(r)) return 'hacer';
+  if(BLOKI_RE2.cierre.test(r)) return 'cierre';
+  if(BLOKI_RE2.cargar.test(r)) return 'cargar';
+  if(BLOKI_RE2.moreno.test(r)) return 'moreno';
+  if(BLOKI_RE2.gps.test(r) || (/\bdonde\s+(?:esta|estan|anda|andan|va|van)\b/.test(r) && blokiNombraCamion(r))) return 'gps';
+  if(BLOKI_RE2.avisos.test(r)) return 'avisos';
+  if(BLOKI_RE2.factura.test(r)) return 'factura';
+  if(BLOKI_RE2.efectivo.test(r)) return 'efectivo';
+  if(BLOKI_RE2.deben.test(r)) return 'deben';
+  if(BLOKI_RE2.top.test(r)) return 'top';
+  if(BLOKI_RE2.precio.test(r)) return 'precio';
+  if(BLOKI_RE2.medidas.test(r)) return 'medidas';
+  if(BLOKI_RE2.ventas.test(r) || (/\bvend(?:i|imos|io|ieron|iste|ido)\b/.test(r) && /\b(cuant\w*|mes|semana|ayer|hoy)\b/.test(t))) return 'ventas';
+  if(BLOKI_RE2.sincamion.test(r)) return 'sincamion';
+  if(BLOKI_RE2.sinstock.test(r)){ var P=blokiProductos(r, true); if(!P.cands.length) return 'sinstock'; }
+  if(BLOKI_RE2.llega.test(r)) return 'llega';
+  if(BLOKI_RE.oc.test(r) && !/\b(saldo|debe|falta|pago|pagos|cobrar)\b/.test(r)) return 'llega';   // «11-040» a secas: cómo está ese pedido
+  return '';
+}
+/* ¿Nombra un camión (Carry, Fotón…), su placa o un chofer? */
+function blokiNombraCamion(r){
+  var t=' '+String(r||'')+' ';
+  return Object.keys(VEHICULO_PLACA).some(function(v){ return new RegExp('\\b'+normNombre(v).split(' ')[0]+'\\b').test(t); }) ||
+    Object.keys(VEHICULOS).some(function(v){ return (VEHICULOS[v]||[]).some(function(c){ var w=normNombre(c).split(' ')[0]; return w && new RegExp('\\b'+w+'\\b').test(t); }); });
+}
+/* ---------- quién: la vendedora, una nombrada o el equipo ---------- */
+function blokiVendNombrado(t){
+  var s=' '+String(t||'')+' ', hit='';
+  VENDEDORES.forEach(function(v){
+    if(hit || esRoho(v)) return;
+    var w=normNombre(v).split(/[^a-z0-9]+/).filter(Boolean); if(!w.length) return;
+    if(new RegExp('\\b'+w[0]+'\\b').test(s) && (w[0]!=='maria' || (w[1] && new RegExp('\\b'+w[1]+'\\b').test(s)))) hit=v;   // «maria» sola puede ser una clienta
+  });
+  return hit;
+}
+/* `v` = de quién mira ('' = el equipo). Una vendedora sin la contraseña ve SOLO lo suyo. `null` si hay que contestar otra cosa (`.a`). */
+function blokiDeQuien(o, que){
+  var S=blokiAlcance(), nom=blokiVendNombrado(o.t), primera=/\b(vendi|vendo|voy|llevo|mis|mi|me|tengo|rendi|rendir|estoy)\b/.test(o.t);
+  if(nom && !(S.yo && mismoVendedor(nom, S.yo))){
+    if(!S.todo) return { a:{ h:'🔒 Te muestro solo lo tuyo: lo de '+esc(nom.split(' ')[0])+' lo ve ella o Administración.' } };
+    return { v:nom, S:S };
+  }
+  if(nom) return { v:nom, S:S };
+  if(S.yo && (primera || !S.todo)) return { v:S.yo, S:S };
+  if(S.todo) return { v:'', S:S };
+  return { a:blokiQuienSos(que) };
+}
+function blokiPlataLog(que){
+  return { h:'🔒 '+blokiCap(que)+' lo ven cada vendedora, Contabilidad y Administración.',
+    sub:['Yo te ayudo con lo de logística: «¿qué falta cargar hoy?», «¿qué hay que recoger de Moreno?», «¿dónde está el carry?», «¿qué falta tildar en el cierre?», el stock y los cupos.'] };
+}
+function blokiPad(n){ return (n<10?'0':'')+n; }
+function blokiMesN(ym){ return mesNombre(ym).replace(/ de \d{4}$/,''); }
+function blokiYmDe(t){
+  var m=new RegExp('\\b('+BLOKI_MESES.join('|')+'|setiembre)\\b').exec(t||''); if(!m) return '';
+  var i=(m[1]==='setiembre') ? 8 : BLOKI_MESES.indexOf(m[1]), hoy=diaNegocio(), y=+hoy.slice(0,4), ym=y+'-'+blokiPad(i+1);
+  return ym>hoy.slice(0,7) ? ((y-1)+ym.slice(4)) : ym;
+}
+/* El período de «cuánto vendí»: hoy, ayer, la semana (por el día en que se cargó) o un mes (por la fecha de entrega, como Proyección). */
+function blokiPeriodo(o){
+  var t=o.t, hoy=diaNegocio(), ym=hoy.slice(0,7), dw=(dowDe(hoy)+6)%7;
+  if(/\bayer\b/.test(t)){ var a=stockSumarDias(hoy, -1); return { k:'dias', desde:a, hasta:a, txt:'ayer, '+saldoDiaTxt(a) }; }
+  if(o.dia===todayStr() || /\bhoy\b/.test(t)) return { k:'dias', desde:hoy, hasta:hoy, txt:'hoy, '+saldoDiaTxt(hoy) };
+  if(/\bsemana\s+pasada\b/.test(t)){ var l0=stockSumarDias(hoy, -dw-7); return { k:'dias', desde:l0, hasta:stockSumarDias(l0, 6), txt:'la semana pasada ('+fmtFechaCorta(l0)+' al '+fmtFechaCorta(stockSumarDias(l0, 6))+')' }; }
+  if(/\bsemana\b/.test(t)){ var l=stockSumarDias(hoy, -dw); return { k:'dias', desde:l, hasta:hoy, txt:'esta semana (desde el lunes '+fmtFechaCorta(l)+')' }; }
+  if(/\bmes\s+(?:pasado|anterior)\b/.test(t)){ var mp=blokiYmAnt(ym); return { k:'mes', ym:mp, txt:'para '+blokiMesN(mp)+' (el mes pasado)' }; }
+  var yn=blokiYmDe(t); if(yn && yn!==ym) return { k:'mes', ym:yn, txt:'para '+mesNombre(yn) };
+  return { k:'mes', ym:ym, curso:true, txt:'para '+blokiMesN(ym)+' (hasta hoy, '+saldoDiaTxt(hoy)+')' };
+}
+function blokiSuma(A){ var o={ n:0, bs:0, u:0 }; A.forEach(function(x){ o.n++; o.bs=r2(o.bs+(Number(x.bs)||0)); o.u+=Number(x.u)||0; }); return o; }
+function blokiEnPer(x, P){ return P.k==='dias' ? (x.reg>=P.desde && x.reg<=P.hasta) : (x.ym===P.ym); }
+/* ---------- 1 · 📈 mis ventas ---------- */
+function blokiVentas(o){
+  if(blokiPlataNo()) return blokiPlataLog('las ventas');
+  var Q=blokiDeQuien(o, 'tus ventas'); if(Q.a) return Q.a;
+  var v=Q.v, S=Q.S, P=blokiPeriodo(o), V=[]; try{ V=pryVentas(); }catch(e){ V=[]; }
+  var mio=function(x){ return v ? mismoVendedor(x.v, v) : x.amb==='tienda'; };
+  var rank=/\b(ranking|quien\s+(?:vendio|vende|va)\s+(?:mas|primer\w*|mejor))\b/.test(o.t);
+  if(rank && !S.todo) return { h:'🔒 El ranking del equipo lo ve Administración (con la contraseña). Te muestro lo tuyo: preguntame «¿cuánto vendí este mes?».' };
+  if(rank) v='';
+  var A=V.filter(function(x){ return mio(x) && blokiEnPer(x, P); }), T=blokiSuma(A), roho=!!(v && esRoho(v));
+  var byId={}; STATE.forEach(function(p){ if(p) byId[String(p.id)]=p; });
+  var falta=0; A.forEach(function(x){ var p=byId[String(x.id)]; if(p) falta=r2(falta+contaFaltaCobrar(p)); });
+  var yo=!!(v && S.yo && mismoVendedor(v, S.yo)), quien=v ? (yo ? 'Vos' : v.split(' ')[0]) : 'El equipo';
+  var a={ h:'', nums:[], sub:[], warn:[], btns:[], filas:[], lista:[] };
+  var monto=roho ? (T.u+' colchones y somieres') : fmtBs0(T.bs);
+  a.h='📈 '+(yo ? 'Vendiste' : (esc(quien)+' vendió'))+' '+esc(P.txt)+': <b>'+esc(monto)+'</b>'+(T.n ? (' en '+T.n+' venta'+(T.n===1?'':'s')) : '')+'.';
+  if(!T.n) a.h='📭 '+(yo ? 'No tenés' : (esc(quien)+' no tiene'))+' ventas '+esc(P.txt)+'.';
+  if(T.n){
+    if(!roho) a.nums.push({ n:fmtBs0(T.bs), l:'vendido' });
+    a.nums.push({ n:String(T.n), l:'venta'+(T.n===1?'':'s') }, { n:String(T.u), l:'colchones y somieres' });
+    if(!roho && T.n>1) a.nums.push({ n:fmtBs0(r2(T.bs/T.n)), l:'por venta' });
+    if(!roho) a.nums.push({ n:fmtBs0(falta), l:'falta cobrar', cls:falta>0.005 ? 'mal' : 'ok' });
+  }
+  /* contra el mes pasado A ESTA ALTURA (mismo día y hora: `pryCargadaAl`, la cuenta de `pryMomDe`); un mes cerrado, contra el anterior entero */
+  if(P.k==='mes'){
+    var pv=blokiYmAnt(P.ym), alt=0, ent=0, pFin=+pryFinDeMes(pv).slice(8,10), d=+diaNegocio().slice(8,10), entero=!P.curso || d>pFin;
+    var lim=pv+'-'+blokiPad(Math.min(d, pFin)), min=pryMinBo(Date.now());
+    V.forEach(function(x){ if(!mio(x) || x.ym!==pv) return; ent=r2(ent+(roho ? x.u : x.bs)); if(entero || pryCargadaAl(x, lim, min)) alt=r2(alt+(roho ? x.u : x.bs)); });
+    var act=roho ? T.u : T.bs;
+    if(alt>0.009){
+      var pct=Math.round((act/alt-1)*100);
+      a.nums.push({ n:(pct>0?'+':'')+pct+' %', l:'vs '+blokiMesN(pv)+(entero ? ' entero' : ' a esta altura'), cls:pct>=0 ? 'ok' : 'mal' });
+      if(!entero) a.sub.push(esc(blokiCap(blokiMesN(pv)))+' a esta altura (día '+Math.min(d, pFin)+', '+pryHoraTxt(min)+'): '+(roho ? (alt+' unidades') : fmtBs0(alt))+' · entero: '+(roho ? (ent+' unidades') : fmtBs0(ent))+
+        (act<ent ? (' · '+(roho ? ((ent-act)+' unidades') : fmtBs0(r2(ent-act)))+' para igualarlo.') : ' · ¡ya lo pasaste!'));
+    } else if(T.n) a.sub.push('En '+esc(blokiMesN(pv))+' no '+(v ? 'hay ventas suyas' : 'hay ventas del equipo')+' para comparar.');
+    a.sub.push('Por la fecha de entrega agendada, como Proyección (con las ventas de tienda; sin ATC ni reposiciones).');
+  } else a.sub.push('Lo que se CARGÓ en esos días (la fecha de la venta), con las ventas de tienda; sin ATC ni reposiciones.');
+  if(!v && !rank) a.sub.push('Sin Eduardo (mayorista) ni ROHO, como el total del equipo de Proyección.');
+  /* 🎯 la meta: la de la vendedora (cierre comercial, si está guardada) y la de la marca */
+  var ym=P.k==='mes' ? P.ym : diaNegocio().slice(0,7), pideMeta=/\b(meta|presupuesto|minima)\b/.test(o.t);
+  if(P.k==='mes' && !roho){
+    var vd=ccmVdDe(ym), metas=[];
+    if(v && vd){ var mm=ccmMetaDe(vd, v), bsV=V.filter(function(x){ return mismoVendedor(x.v, v) && x.ym===ym && x.amb==='tienda'; }).reduce(function(s,x){ return r2(s+x.bs); }, 0);
+      if(mm[0]>0) metas.push('🎯 Mínima de '+blokiMesN(ym)+': '+fmtBs0(mm[0])+(bsV>=mm[0] ? ' · ✅ ya la pasó' : (' · faltan '+fmtBs0(r2(mm[0]-bsV)))));
+      if(mm[1]>0) metas.push('🏁 Presupuesto: '+fmtBs0(mm[1])+(bsV>=mm[1] ? ' · ✅ ya lo pasó' : (' · faltan '+fmtBs0(r2(mm[1]-bsV))))); }
+    var gs=v ? [marcaDe(v)].filter(Boolean) : MARCAS.map(function(g){ return g.k; }), VM=null;
+    gs.forEach(function(g){ var mt=metaDe(ym, g); if(!(mt>0)) return; VM=VM||metaVendidoMes(ym); var lv=Number(VM[g])||0;
+      metas.push('🏷️ Meta de '+blokiMarcaNom(g)+' (todo el equipo): '+fmtBs0(mt)+' · lleva '+fmtBs0(lv)+' ('+Math.round(lv*100/mt)+' %)'+(lv<mt ? (' · faltan '+fmtBs0(r2(mt-lv))) : ' · ✅')); });
+    metas.forEach(function(m){ a.sub.push(esc(m)); });
+    if(pideMeta && !metas.length) a.warn.push('Todavía no hay meta cargada para '+blokiMesN(ym)+': la carga Administración en Proyección → 🎯 Metas.');
+  } else if(pideMeta) a.warn.push('La meta es del mes: preguntame «¿cuánto me falta para la meta de este mes?».');
+  /* 🏆 la venta más grande */
+  if(/\b(mas\s+grande|mayor\s+venta|mejor\s+venta|venta\s+mayor)\b/.test(o.t) && A.length){
+    var big=A.slice().sort(function(x,y){ return y.bs-x.bs; })[0], pb=byId[String(big.id)];
+    a.h='🏆 '+(yo ? 'Tu venta más grande ' : 'La venta más grande ')+esc(P.txt)+(v && !yo ? (' de '+esc(v)) : '')+': <b>'+esc(fmtBs0(big.bs))+'</b>'+(pb ? (' · '+esc(String(pb.cliente||'—').trim())) : '')+'.';
+    if(pb) a.lista.push({ id:String(pb.id), t:(pb.oc ? (pb.oc+' · ') : '')+String(pb.cliente||'—').trim(), s:[pb.fecha ? ('entrega '+saldoDiaTxt(pb.fecha)) : '', nombreCanonico(pb.vendedor||'')].filter(Boolean).join(' · '), m:fmtBs0(big.bs), ped:!!S.todo });
+  }
+  /* 👥 el equipo: cada vendedora (ranking) */
+  if(!v){
+    var G={}; V.forEach(function(x){ if(x.amb!=='tienda' || !blokiEnPer(x, P)) return; (G[x.v]=G[x.v]||[]).push(x); });
+    var R=Object.keys(G).map(function(k){ return { v:k, s:blokiSuma(G[k]) }; }).sort(function(x,y){ return y.s.bs-x.s.bs; });
+    if(rank && R.length) a.h='🏆 '+esc(blokiCap(P.txt))+' vendió más <b>'+esc(R[0].v)+'</b>: '+esc(fmtBs0(R[0].s.bs))+'.';
+    a.filas=R.slice(0, 12).map(function(r, i){ return { t:(i+1)+'. '+r.v, s:r.s.n+' venta'+(r.s.n===1?'':'s')+' · '+r.s.u+' unid. · '+blokiMarcaNom(marcaDe(r.v)||'sin'), m:fmtBs0(r.s.bs) }; });
+  }
+  if(yo) a.btns.push(['📋 Ver mis pedidos', function(){ asisCerrar(); try{ showView('mis'); }catch(e){} }]);
+  else if(UNLOCKED) a.btns.push(['📈 Ver Proyección', function(){ asisCerrar(); try{ showView('conta'); segSet('cta-tab','proy'); setContaTab('proy'); }catch(e){} }]);
+  return a;
+}
+/* ---------- 2 · 💵 cobranza ---------- */
+function blokiDeben(o){
+  if(blokiPlataNo()) return blokiCliente(o);   // el mismo «lo ve su vendedora o Contabilidad»
+  var noms=blokiPalabrasCli(o.resto).filter(function(w){ return !/^(quien|quienes|clientes|ventas|deudores|saldos|me|nos|cobrar|cobranza|adeudan|adeuda|todos|todas|equipo|lista)$/.test(w); });
+  if(noms.length) return blokiCliente(Object.assign({}, o, { resto:noms.join(' ') }));   // «quién me debe, Raúl?»: el de un cliente
+  var Q=blokiDeQuien(o, 'quiénes te deben'); if(Q.a) return Q.a;
+  var v=Q.v, hoy=todayStr();
+  var L=STATE.filter(function(p){ return p && contaFaltaCobrar(p)>0.005 && (v ? (clfEntra(p) && !esATC(p.oc) && mismoVendedor(p.vendedor, v)) : (!esBorrador(p) && !fueraDeConta(p, 'tienda'))); });
+  var G={}, orden=[];
+  L.forEach(function(p){ var k=cliCelClave(p.celular) || ('n:'+clfNom(p)); if(!G[k]){ G[k]=[]; orden.push(k); } G[k].push(p); });
+  var C=orden.map(function(k){
+    var ps=G[k], f=0, rec=ps.some(function(p){ return p.entregado || (p.fecha && p.fecha<hoy) || esVentaTienda(p); }), fe='';
+    ps.forEach(function(p){ f=r2(f+contaFaltaCobrar(p)); var d=p.fecha||contaFecha(p); if(!fe || d<fe) fe=d; });
+    return { ps:ps, f:f, rec:rec, fe:fe, nom:String(ps[0].cliente||'—').trim() };
+  }).sort(function(a,b){ return (b.rec-a.rec) || (a.fe<b.fe ? -1 : (a.fe>b.fe ? 1 : 0)); });
+  var tot=0; C.forEach(function(c){ tot=r2(tot+c.f); });
+  var quien=v ? (Q.S.yo && mismoVendedor(v, Q.S.yo) ? 'te' : ('le')) : 'le';
+  if(!C.length) return { h:'✅ '+(v ? (quien==='te' ? 'Nadie te debe nada' : ('Nadie le debe nada a '+esc(v.split(' ')[0]))) : 'Nadie le debe nada al equipo')+': todo cobrado.' };
+  var nRec=C.filter(function(c){ return c.rec; }).length;
+  var a={ h:'💵 <b>'+C.length+'</b> cliente'+(C.length===1?'':'s')+' '+(v ? (quien==='te' ? 'te deben' : ('le deben a '+esc(v.split(' ')[0]))) : 'le deben al equipo')+' <b>'+esc(fmtBs(tot))+'</b>'+(nRec ? '. Primero los que ya recibieron:' : ':'),
+    nums:[{ n:fmtBs0(tot), l:'falta cobrar', cls:'mal' }, { n:String(C.length), l:'cliente'+(C.length===1?'':'s') }, { n:String(nRec), l:'ya recibieron', cls:nRec ? 'am' : 'ok' }], sub:[], lista:[] };
+  a.lista=C.slice(0, BLOKI_LISTA_MAX).map(function(c){
+    var p=c.ps[0], d=p.fecha||'', est=esVentaTienda(p) ? ('venta de tienda del '+fmtFechaCorta(contaFecha(p))) :
+      (p.entregado ? ('entregado el '+fmtFechaCorta(d)) : (d && d<hoy ? ('se entregaba el '+fmtFechaCorta(d)+' (sin ✅)') : (d ? ('se entrega '+blokiDiaNom(d)) : 'sin fecha')));
+    if(c.rec && d && d<hoy){ var dd=Math.round((new Date(hoy+'T12:00')-new Date(d+'T12:00'))/864e5); if(dd>=2) est+=' · hace '+dd+' días'; }
+    return { id:String(p.id), t:c.nom+(c.ps.length>1 ? (' · '+c.ps.length+' ventas') : (p.oc ? (' · '+p.oc) : '')), s:est+(v ? '' : (' · '+nombreCanonico(p.vendedor||''))), m:fmtBs(c.f), cta:1 };
+  });
+  if(C.length>BLOKI_LISTA_MAX) a.sub.push('… y '+(C.length-BLOKI_LISTA_MAX)+' más: miralos en Contabilidad → «Falta cobrar».');
+  a.sub.push('Lo que dice Contabilidad (de todas las fechas). Tocá uno para abrir su venta y registrar el pago.');
+  return a;
+}
+function blokiEfectivo(o){
+  if(blokiPlataNo()) return blokiPlataLog('el efectivo');
+  var Q=blokiDeQuien(o, 'tu efectivo'); if(Q.a) return Q.a;
+  var v=Q.v, mesN;
+  if(v){
+    var E=misEfectivoDatos(v); mesN=blokiMesN(E.mes);
+    var yo=Q.S.yo && mismoVendedor(v, Q.S.yo);
+    var a={ h:(E.tot>0.005 ? '💵 '+(yo ? 'Tenés' : (esc(v.split(' ')[0])+' tiene'))+' <b>'+esc(fmtBs(E.tot))+'</b> de efectivo sin rendir.' : ('✅ '+(yo ? 'No tenés' : (esc(v.split(' ')[0])+' no tiene'))+' efectivo sin rendir.')),
+      nums:[{ n:fmtBs0(E.tot), l:'en la mano', cls:E.tot>0.005 ? 'am' : 'ok' }, { n:fmtBs0(E.cobrado), l:'recibido en '+mesN }, { n:fmtBs0(E.retirado), l:'rendido en '+mesN }], sub:[], btns:[] };
+    a.sub.push('De '+esc(mesN)+': recibió '+esc(fmtBs0(E.cobrado))+' en efectivo y rindió '+esc(fmtBs0(E.retirado))+'. Es lo mismo que «Efectivo en tu mano» de Tu día y que el Cuadre del mes.');
+    if(E.deMas) a.sub.push(esc(fmtBs0(E.deMas))+' de lo rendido eran de lo cobrado el mes pasado.');
+    if(E.ult) a.sub.push('Último retiro: '+esc(fmtBs(E.ult.monto))+' el '+esc(saldoDiaTxt(E.ult.fecha))+(E.ult.retira ? (' ('+esc(E.ult.retira)+')') : '')+'.');
+    if(yo) a.btns.push(['💵 Ver los cobros', function(){ asisCerrar(); try{ showView('mis'); MIS_EF_ABIERTO=true; renderMis(); }catch(e){} }]);
+    return a;
+  }
+  var vends=VENDEDORES.filter(function(x){ return !contaExcluido(x); }), EF=misEqEfectivo(vends); mesN=blokiMesN(EF.mes);
+  return { h:EF.tot>0.005 ? ('💵 En '+esc(mesN)+' hay <b>'+esc(fmtBs(EF.tot))+'</b> de efectivo sin rendir'+(EF.nC ? (', '+EF.nC+' de choferes') : '')+'.') : '✅ No hay efectivo sin rendir este mes.',
+    filas:EF.F.slice(0, 14).map(function(f){ return { t:(f.cho ? '🚚 ' : '')+f.v, s:f.cho ? 'chofer · rinde a Contabilidad' : 'vendedora', m:fmtBs0(f.t) }; }),
+    sub:['Lo recibido en efectivo en el mes menos lo retirado (el Cuadre del mes, por persona).'] };
+}
+function blokiAvisos(o){
+  if(blokiPlataNo()) return blokiPlataLog('los pagos');
+  var Q=blokiDeQuien(o, 'los avisos de Contabilidad'); if(Q.a) return Q.a;
+  var v=Q.v, L=ctaAvAbiertos(v||''), LP=L.filter(function(x){ return !ctaAvSoloFecha(x); }), LF=L.filter(ctaAvSoloFecha);
+  if(!L.length) return { h:'✅ Contabilidad no '+(v ? 'te pide' : 'pide')+' revisar ningún pago'+(v && !(Q.S.yo && mismoVendedor(v, Q.S.yo)) ? (' de '+esc(v.split(' ')[0])) : '')+'.' };
+  var a={ h:'📣 Contabilidad pide revisar <b>'+L.length+'</b> pago'+(L.length===1?'':'s')+(LF.length ? (' ('+LF.length+' solo de la fecha de la foto)') : '')+':', mal:LP.length>0,
+    lista:LP.concat(LF).slice(0, BLOKI_LISTA_MAX).map(function(x){ return { id:String(x.pid), t:x.cli+(x.nota ? (' · nota '+x.nota) : ''), s:fmtFechaCorta(x.f)+' · '+fmtBs(x.m)+' '+String(x.met||'')+' → '+String(x.txt||'')+(v ? '' : (' · '+String(x.vend||'').split(' ')[0])), m:ctaAvSoloFecha(x) ? '📅' : '', cta:1 }; }),
+    btns:[] };
+  if(v) a.btns.push(['📣 Ver los avisos', function(){ asisCerrar(); try{ ctaAvVer(v); }catch(e){} }]);
+  return a;
+}
+function blokiFactura(o){
+  if(blokiPlataNo()) return blokiPlataLog('las ventas');
+  var Q=blokiDeQuien(o, 'tus ventas sin factura'); if(Q.a) return Q.a;
+  var v=Q.v, L=STATE.filter(function(p){ return p && docVentaFalta(p) && (v ? mismoVendedor(p.vendedor, v) : !fueraDeConta(p, 'tienda')); })
+    .sort(function(a,b){ var x=contaFecha(a), y=contaFecha(b); return x<y ? -1 : (x>y ? 1 : 0); });
+  if(!L.length) return { h:'✅ '+(v ? 'Todas '+(Q.S.yo && mismoVendedor(v, Q.S.yo) ? 'tus' : 'sus')+' ventas' : 'Todas las ventas')+' tienen su N° de factura o nota de remisión.' };
+  return { h:'🧾 <b>'+L.length+'</b> venta'+(L.length===1?'':'s')+' sin N° de factura o nota de remisión:', mal:1,
+    lista:L.slice(0, BLOKI_LISTA_MAX).map(function(p){ return { id:String(p.id), t:(p.oc ? (p.oc+' · ') : '')+String(p.cliente||'—').trim(), s:'cargada el '+fmtFechaCorta(contaFecha(p))+(v ? '' : (' · '+nombreCanonico(p.vendedor||''))), m:'', cta:1 }; }),
+    sub:['Es obligatorio. Tocá cada una: en su ficha de Contabilidad elegí 🧾 Factura o 📄 Remisión y anotá el N°.'].concat(L.length>BLOKI_LISTA_MAX ? ['… y '+(L.length-BLOKI_LISTA_MAX)+' más.'] : []) };
+}
+/* ---------- 3 · 📋 mis pedidos ---------- */
+function blokiMisPedidos(o, que){
+  var Q=blokiDeQuien(o, que); if(Q.a) return Q;
+  var hoy=todayStr();
+  Q.L=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && !p.entregado && !!p.fecha && p.fecha>=hoy && !entregaAConfirmar(p) &&
+    (Q.v ? mismoVendedor(p.vendedor, Q.v) : true); }).sort(cierreEntOrden);
+  return Q;
+}
+var BLOKI_SEM_EST={ nohay:{ o:0, ic:'✗', m:'no hay' }, tarde:{ o:1, ic:'⚠️', m:'puede no llegar' }, rev:{ o:2, ic:'⬜', m:'sin revisar' }, prod:{ o:3, ic:'🏭', m:'en producción' } };
+function blokiSinStock(o){
+  var Q=blokiMisPedidos(o, 'tus pedidos'); if(Q.a) return Q.a;
+  var R=[], cuenta={ nohay:0, tarde:0, rev:0, prod:0 };
+  Q.L.forEach(function(p){
+    if(esATC(p.oc)) return;
+    var ls=[]; (p.productos||[]).forEach(function(x){ var e=semanaLinea(p, x); if(BLOKI_SEM_EST[e]){ ls.push({ e:e, x:x }); cuenta[e]++; } });
+    if(!ls.length) return;
+    ls.sort(function(a,b){ return BLOKI_SEM_EST[a.e].o-BLOKI_SEM_EST[b.e].o; });
+    R.push({ p:p, ls:ls, peor:BLOKI_SEM_EST[ls[0].e].o });
+  });
+  var mio=Q.v && Q.S.yo && mismoVendedor(Q.v, Q.S.yo);
+  if(!R.length) return { h:'✅ '+(mio ? 'Todos tus pedidos' : 'Todos los pedidos')+' de hoy en adelante tienen el stock marcado (✔).' };
+  R.sort(function(a,b){ return (a.peor-b.peor) || (a.p.fecha<b.p.fecha ? -1 : (a.p.fecha>b.p.fecha ? 1 : 0)); });
+  var a={ h:'📦 <b>'+R.length+'</b> pedido'+(R.length===1?'':'s')+(mio ? ' tuyo'+(R.length===1?'':'s') : '')+' '+(R.length===1?'tiene':'tienen')+' algo sin stock, sin revisar o en producción:', mal:(cuenta.nohay+cuenta.tarde)>0,
+    nums:[], lista:[], sub:[] };
+  ['nohay','tarde','rev','prod'].forEach(function(k){ if(cuenta[k]) a.nums.push({ n:String(cuenta[k]), l:BLOKI_SEM_EST[k].ic+' '+BLOKI_SEM_EST[k].m, cls:(k==='nohay'||k==='tarde') ? 'mal' : (k==='rev' ? 'am' : '') }); });
+  a.lista=R.slice(0, BLOKI_LISTA_MAX).map(function(r){
+    var l=r.ls[0], E=BLOKI_SEM_EST[l.e];
+    return { id:String(r.p.id), t:(r.p.oc ? (r.p.oc+' · ') : '')+String(r.p.cliente||'—').trim(), ped:!mio,
+      s:E.ic+' '+semanaProdTxt(l.x)+(r.ls.length>1 ? (' y '+(r.ls.length-1)+' más') : '')+' · se entrega '+blokiDiaNom(r.p.fecha), m:E.m };
+  });
+  if(R.length>BLOKI_LISTA_MAX) a.sub.push('… y '+(R.length-BLOKI_LISTA_MAX)+' más.');
+  if(cuenta.nohay) a.sub.push('✗ = logística marcó que no hay: avisale al cliente que hay que esperar, o mandalo a producir.');
+  if(cuenta.rev) a.sub.push('⬜ = todavía nadie marcó si hay: lo revisa logística.');
+  return a;
+}
+function blokiSinCamion(o){
+  var Q=blokiMisPedidos(o, 'tus pedidos'); if(Q.a) return Q.a;
+  var pideCam=/\b(camion|vehiculo)\b/.test(o.t), pideUb=/\b(ubicacion|mapa|pin|direccion)\b/.test(o.t); if(!pideCam && !pideUb){ pideCam=pideUb=true; }
+  var hasta=proximoDiaEntrega(), mio=Q.v && Q.S.yo && mismoVendedor(Q.v, Q.S.yo);
+  var sinC=pideCam ? Q.L.filter(function(p){ return p.fecha<=hasta && !vehiculoDe(p); }) : [];
+  var sinU=pideUb ? Q.L.filter(function(p){ return !String(p.maps||'').trim() && !esRPT(p.oc); }) : [];
+  var a={ h:'', nums:[], lista:[], sub:[], btns:[] }, txt=[];
+  if(pideCam) txt.push(sinC.length ? ('<b>'+sinC.length+'</b> sin camión hasta '+esc(blokiDiaNom(hasta))) : 'todos con camión hasta '+esc(blokiDiaNom(hasta)));
+  if(pideUb) txt.push(sinU.length ? ('<b>'+sinU.length+'</b> sin ubicación de Google Maps') : 'todos con ubicación');
+  a.h=((sinC.length+sinU.length) ? '📍 ' : '✅ ')+blokiCap(txt.join(' y '))+'.';
+  if(sinC.length+sinU.length) a.mal=1;
+  var vistos={};
+  sinC.concat(sinU).forEach(function(p){
+    if(vistos[p.id] || a.lista.length>=BLOKI_LISTA_MAX) return; vistos[p.id]=1;
+    var f=[]; if(sinC.indexOf(p)>=0) f.push('🚚 sin camión'); if(sinU.indexOf(p)>=0) f.push('📍 sin ubicación');
+    a.lista.push({ id:String(p.id), t:(p.oc ? (p.oc+' · ') : '')+String(p.cliente||'—').trim(), s:'se entrega '+blokiDiaNom(p.fecha)+(String(p.zona||'').trim() ? (' · '+String(p.zona).trim()) : '')+(mio ? '' : (' · '+nombreCanonico(p.vendedor||''))), m:f.join(' · '), ped:!mio });
+  });
+  if(sinU.length && mio) a.sub.push('📍 Pedile al cliente su ubicación de Google Maps y pegala en el pedido (✏️ Editar).');
+  if(sinC.length && !mio) a.btns.push(['💡 Sugerir camión', function(){ asisCerrar(); try{ showView('admin'); setTimeout(function(){ try{ admSugIr('manana'); }catch(e){} }, 200); }catch(e){} }]);
+  return a;
+}
+/* ¿Qué pedidos nombra la pregunta? Por la OC, el celular o el nombre del cliente. `base` = los pedidos donde buscar. */
+function blokiBuscaPed(r, base){
+  var moc=/\b(\d{2}-\d{3,4})\b/.exec(r), dg=(r.match(/\d[\d\s\-]{5,}\d/)||[''])[0].replace(/\D/g,''), kc=dg.length>=7 ? dg.slice(-8) : '', ws=blokiPalabrasCli(r);
+  if(moc) return { M:base.filter(function(p){ return String(p.oc||'').indexOf(moc[1])>=0; }), por:'la OC '+moc[1], oc:1 };
+  if(kc) return { M:base.filter(function(p){ return cliCelClave(p.celular)===kc; }), por:'el celular '+dg };
+  if(ws.length) return { M:base.filter(function(p){ return blokiNombreVale(ws, p.cliente); }), por:'«'+ws.join(' ')+'»', ws:ws };
+  return { M:[], por:'' };
+}
+/* De varios pedidos del mismo cliente, el que importa: el próximo sin entregar; si no, el más nuevo. */
+function blokiPedPrincipal(L){
+  var hoy=todayStr(), fut=L.filter(function(p){ return !p.entregado && p.fecha && p.fecha>=hoy; }).sort(function(a,b){ return a.fecha<b.fecha ? -1 : 1; });
+  if(fut.length) return fut[0];
+  return L.slice().sort(function(a,b){ var x=a.fecha||contaFecha(a), y=b.fecha||contaFecha(b); return x<y ? 1 : -1; })[0];
+}
+function blokiGruposCli(M){
+  var G={}, orden=[];
+  M.forEach(function(p){ var k=cliCelClave(p.celular) || ('n:'+clfNom(p)); if(!G[k]){ G[k]=[]; orden.push(k); } G[k].push(p); });
+  return orden.map(function(k){ return G[k]; });
+}
+function blokiLlega(o){
+  var S=blokiAlcance();
+  if(!S.todo && !S.yo) return blokiQuienSos('tus pedidos');
+  var base=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && (S.todo || mismoVendedor(p.vendedor, S.yo)); });
+  var B=blokiBuscaPed(o.resto, base);
+  if(!B.M.length){
+    var P=blokiProductos(o.resto, true);   // «¿cuándo llega el titanio?»: es del stock
+    if(P.cands.length) return blokiStock(o);
+    if(!B.por) return { h:'¿De qué pedido? Escribí el nombre del cliente, su celular o la OC: «¿cuándo llega el pedido de Lidia?».' };
+    return { h:'No encontré '+esc(B.por)+(S.todo ? ' entre los pedidos' : ' entre tus pedidos')+'. Revisá cómo está escrito o probá con su celular o la OC.' };
+  }
+  var grupos=blokiGruposCli(B.M);
+  if(grupos.length>1 && !B.oc) return { h:'Encontré '+grupos.length+' clientes con '+esc(B.por)+'. ¿Cuál es?',
+    opc:grupos.slice(0, BLOKI_OPC_MAX).map(function(L){ var p=blokiPedPrincipal(L), lbl=String(p.cliente||'—').trim()+(p.oc ? (' · '+p.oc) : '')+(p.fecha ? (' · '+saldoDiaTxt(p.fecha)) : '');
+      return [lbl, function(){ blokiContestar(lbl, function(){ return blokiLlegaDe(p, S); }); }]; }),
+    sub:grupos.length>BLOKI_OPC_MAX ? ['… y '+(grupos.length-BLOKI_OPC_MAX)+' más: escribí el apellido entero, el celular o la OC.'] : [] };
+  return blokiLlegaDe(blokiPedPrincipal(grupos[0]), S);
+}
+function blokiLlegaDe(p, S){
+  var hoy=todayStr(), veh=vehiculoDe(p)||'', f=String(p.fecha||''), mio=!S.todo || (S.yo && mismoVendedor(p.vendedor, S.yo));
+  var tn=normTurno(p.turno)==='AM' ? '🌅 a la mañana' : (normTurno(p.turno)==='PM' ? '🌆 a la tarde' : 'sin turno');
+  var a={ h:'<b>'+esc(String(p.cliente||'—').trim())+'</b>'+(p.oc ? (' · '+esc(p.oc)) : ''), nums:[], sub:[], warn:[], btns:[] };
+  if(entregaAConfirmar(p)){ a.h+=': 📞 sin fecha todavía (el cliente avisa cuándo).'; }
+  else if(p.entregado) a.h+=': ✅ ya se entregó'+(f ? (' ('+esc(saldoDiaTxt(f))+')') : '')+'.';
+  else if(f && f<hoy){ a.h+=': ❓ se entregaba '+esc(blokiDiaNom(f))+' y nadie marcó ✅.'; a.mal=1; }
+  else if(f) a.h+=': se entrega <b>'+esc(blokiDiaNom(f))+'</b> '+esc(tn)+'.';
+  else a.h+=': todavía sin fecha.';
+  if(f && !p.entregado && f>=hoy){
+    a.nums.push({ n:fmtFechaCorta(f), l:saldoDiaTxt(f).split(' ')[0]+' · '+(normTurno(p.turno)==='PM' ? 'tarde' : (normTurno(p.turno)==='AM' ? 'mañana' : 'sin turno')) });
+    a.nums.push({ n:veh || '—', l:veh ? ('camión'+(p.chofer ? (' · '+String(p.chofer).split(' ')[0]) : '')) : 'sin camión todavía', cls:veh ? '' : 'am' });
+  }
+  var V=null; try{ V=pedidoViajeDatos(p); }catch(e){ V=null; }
+  if(V && V.pasos[1] && !p.entregado) a.sub.push((V.pasos[1].hecho ? '📦 ' : ((V.pasos[1].ico||'')+' '))+'Mercadería: '+esc(V.pasos[1].lbl)+'.');
+  if(f===hoy && !p.entregado && veh){
+    var sal=camionSalio(f, veh); if(sal) a.sub.push('🚚 El camión salió a las '+esc(sal)+'.');
+    var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+    if(ll){ a.sub.push('📍 Según el GPS, '+esc(gpsLlegadaTxt(ll))+'.'); a.warn.push('Falta que logística marque ✅ en el cierre de entregas.'); }
+    else { var x=camionGps(veh); if(x) a.sub.push('🛰️ Ahora el camión está '+esc(gpsDondeTxt(x))+' ('+esc(gpsHace(x))+').'); }
+  }
+  var pr=(p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); });
+  if(pr.length) a.sub.push('🛏️ '+esc(pr.slice(0, 4).map(semanaProdTxt).join(' · '))+(pr.length>4 ? (' y '+(pr.length-4)+' más') : '')+'.');
+  a.btns.push(['Abrir el pedido', function(){ asisAbrirPedido(String(p.id), !mio); }]);
+  return a;
+}
+/* «la semana que viene», «esta semana», «los próximos 5 días»: un rango de días para las entregas */
+function blokiRango(t){
+  var hoy=todayStr(), dw=(dowDe(hoy)+6)%7, m;
+  if(/\b(?:semana\s+que\s+viene|proxima\s+semana|la\s+otra\s+semana|siguiente\s+semana)\b/.test(t)){ var l=stockSumarDias(hoy, 7-dw); return { desde:l, hasta:stockSumarDias(l, 5), txt:'la semana que viene' }; }
+  if(/\besta\s+semana\b/.test(t)) return { desde:hoy, hasta:stockSumarDias(hoy, Math.max(0, 5-dw)), txt:'lo que queda de esta semana' };
+  if((m=/\bproximos?\s+(\d{1,2})\s+dias\b/.exec(t))){ var n=Math.min(31, Math.max(1, +m[1])); return { desde:hoy, hasta:stockSumarDias(hoy, n-1), txt:'los próximos '+n+' días' }; }
+  return null;
+}
+function blokiEntregasRango(o, R){
+  var S=blokiAlcance(), mio=!!S.yo && /\b(mis|mios|mias|entrego|tengo|llevo)\b/.test(o.t);
+  if(!S.todo && !S.yo) return blokiQuienSos('tus entregas');
+  var deMi=!S.todo || mio, yo=S.yo;
+  var L=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && p.fecha>=R.desde && p.fecha<=R.hasta && (!deMi || mismoVendedor(p.vendedor, yo)); })
+    .sort(function(a,b){ return (a.fecha<b.fecha ? -1 : (a.fecha>b.fecha ? 1 : 0)) || cierreEntOrden(a,b); });
+  var rng=' ('+saldoDiaTxt(R.desde)+' al '+saldoDiaTxt(R.hasta)+')';
+  if(!L.length) return { h:'📭 '+(deMi ? 'No tenés entregas' : 'No hay entregas')+' '+esc(R.txt)+esc(rng)+'.' };
+  var D={}; L.forEach(function(p){ D[p.fecha]=(D[p.fecha]||0)+1; });
+  var a={ h:'🚚 '+esc(blokiCap(R.txt))+esc(rng)+(deMi ? ' tenés ' : ' salen ')+'<b>'+L.length+'</b> entrega'+(L.length===1?'':'s')+'.',
+    sub:[esc(Object.keys(D).sort().map(function(f){ return saldoDiaTxt(f)+': '+D[f]; }).join(' · '))], lista:[] };
+  a.lista=L.slice(0, BLOKI_LISTA_MAX).map(function(p){
+    var veh=''; try{ veh=vehiculoDe(p)||''; }catch(e){}
+    return { id:String(p.id), t:(p.oc ? (p.oc+' · ') : '')+(String(p.cliente||'').trim()||'—'), ped:!deMi,
+      s:[saldoDiaTxt(p.fecha), normTurno(p.turno)==='AM' ? '🌅 mañana' : '🌆 tarde', String(p.zona||'').trim(), deMi ? '' : nombreCanonico(p.vendedor||''), veh ? ('🚚 '+veh) : ''].filter(Boolean).join(' · '), m:p.entregado ? '✅' : '' };
+  });
+  if(L.length>BLOKI_LISTA_MAX) a.sub.push('… y '+(L.length-BLOKI_LISTA_MAX)+' más: miralos en '+(deMi ? '📋 Mis pedidos' : '🔒 Administración')+'.');
+  return a;
+}
+/* ---------- 4 · 🛏️ productos ---------- */
+function blokiUnProducto(o, fn, porCod){
+  var P=blokiProductos(o.resto, false, porCod);
+  if(!P.cands.length){
+    if(!P.palabras.length) return { h:'¿De qué producto? Escribí el nombre y la medida («titanio ice 140», «oro anatómico 2 plazas») o el código.' };
+    if(P.medidas.length) return { h:'No tengo <b>'+esc(P.nombre.toLowerCase())+'</b> en '+esc(blokiMedTxt(P.med))+'. Está en: '+esc(P.medidas.join(' · '))+'.' };
+    return { h:'No encontré «'+esc((P.palabras.join(' ')||o.raw).toLowerCase())+'» en la lista de productos. Probá con el código (por ejemplo CH1220) o con el nombre y la medida.' };
+  }
+  var uno=(P.cands.length===1) ? P.cands[0] : null;
+  if(!uno){ var ex=P.cands.filter(function(c){ return c.exacto; }); if(ex.length===1) uno=ex[0]; }
+  if(uno) return fn(uno);
+  if(P.cands.length>BLOKI_OPC_MAX*3) return { h:'Hay '+P.cands.length+' productos con «'+esc(P.nombre.toLowerCase())+'»: decime el modelo y la medida («titanio ice 140») o el código.' };
+  return { h:'Encontré '+(P.cands.length>BLOKI_OPC_MAX ? (P.cands.length+' productos') : 'estos')+' con «'+esc(P.nombre.toLowerCase())+'». ¿Cuál es?',
+    opc:P.cands.slice(0, BLOKI_OPC_MAX).map(function(c){ return [c.lbl, function(){ blokiContestar(c.lbl, function(){ return fn(c); }); }]; }),
+    sub:P.cands.length>BLOKI_OPC_MAX ? ['… y '+(P.cands.length-BLOKI_OPC_MAX)+' más: decime la medida o el código.'] : [] };
+}
+function blokiPrecio(o){ return blokiUnProducto(o, function(c){ return blokiPrecioDe(c, o); }); }
+function blokiPrecioDe(c, o){
+  var hoy=diaNegocio(), mira=function(dias){
+    var desde=stockSumarDias(hoy, -dias), L=[];
+    STATE.forEach(function(p){
+      if(!p || fueraDeConta(p, 'tienda') || esBorrador(p)) return;
+      var f=contaFecha(p); if(!f || f<desde || f>hoy) return;
+      (p.productos||[]).forEach(function(x){ var pr=prodPrecio(x), n=Number(x&&x.cant)||0; if(!(pr>0) || !(n>0)) return; var k=''; try{ k=stockClave(x); }catch(e){} if(k && k===c.k) L.push({ pr:pr, n:n }); });
+    });
+    return L;
+  };
+  var dias=BLOKI_PRECIO_DIAS, L=mira(dias); if(L.length<3){ dias=180; L=mira(dias); }
+  var a={ h:'', nums:[], sub:[], btns:[] };
+  if(!L.length){ a.h='💲 No encontré ventas de <b>'+esc(c.lbl)+'</b> con precio en los últimos '+dias+' días.'; a.mal=1; blokiCodStockBtn(a, c, o); return a; }
+  var ps=L.map(function(x){ return x.pr; }).sort(function(x,y){ return x-y; }), m=Math.floor(ps.length/2), med=ps.length%2 ? ps[m] : r2((ps[m-1]+ps[m])/2), u=0;
+  L.forEach(function(x){ u+=x.n; });
+  a.h='💲 <b>'+esc(c.lbl)+'</b>'+(c.code ? (' · '+esc(c.code)) : '')+', en las ventas de los últimos '+dias+' días:';
+  a.nums=[{ n:fmtBs0(med), l:'el precio típico' }, { n:fmtBs0(ps[0]), l:'el más bajo' }, { n:fmtBs0(ps[ps.length-1]), l:'el más alto' }, { n:String(u), l:'vendido'+(u===1?'':'s') }];
+  a.sub.push('Es el precio c/u que se cobró de verdad en '+L.length+' venta'+(L.length===1?'':'s')+' (el típico = el del medio). Sin Eduardo (mayorista), ROHO, ATC ni reposiciones.');
+  blokiCodStockBtn(a, c, o);
+  return a;
+}
+function blokiMedidasR(o){
+  var P=blokiProductos(o.resto, false, true);
+  if(!P.cands.length){
+    if(!P.palabras.length) return { h:'¿De qué producto? Escribí el nombre: «¿en qué medidas existe el cloud?».' };
+    return { h:'No encontré «'+esc(P.palabras.join(' ').toLowerCase())+'» en la lista de productos ni en los Excel de los almacenes.' };
+  }
+  var G={}, orden=[];
+  P.cands.forEach(function(c){ var k=nombreVenta(c.d, c.code); if(!G[k]){ G[k]=[]; orden.push(k); } G[k].push(c); });
+  var ord=function(L){ return L.slice().sort(function(a,b){ return (blokiAncho(a.m)-blokiAncho(b.m)) || String(a.m).localeCompare(String(b.m)); }); };
+  if(orden.length===1){
+    var L=ord(G[orden[0]]);
+    return { h:'<b>'+esc(orden[0])+'</b> existe en '+L.length+' medida'+(L.length===1?'':'s')+':', cods:L.map(function(c){ return { c:c.code, n:c.m || 'sin medida', s:c.src==='lista' ? '' : (c.src==='alm' ? 'del Excel del almacén' : 'del histórico'), x1:!!c.x1 }; }) };
+  }
+  return { h:'Encontré '+orden.length+' modelos con «'+esc((P.nombre||P.palabras.join(' ')).toLowerCase())+'»:',
+    filas:orden.slice(0, 12).map(function(k){ var L=ord(G[k]); return { t:k, s:L.map(function(c){ return (c.m||'sin medida')+' ('+c.code+')'; }).join(' · ') }; }),
+    sub:orden.length>12 ? ['… y '+(orden.length-12)+' más: decime el modelo.'] : [] };
+}
+function blokiTop(o){
+  var P=blokiPeriodo(o), V=[]; try{ V=pryVentas(); }catch(e){ V=[]; }
+  var S=blokiAlcance(), mio=!!S.yo && /\b(mis|mi|vendi|vendo|me)\b/.test(o.t);
+  var byId={}; STATE.forEach(function(p){ if(p) byId[String(p.id)]=p; });
+  var U={}, nV=0;
+  V.forEach(function(x){
+    if(x.amb==='roho' || !blokiEnPer(x, P) || (mio && !mismoVendedor(x.v, S.yo))) return;
+    var p=byId[String(x.id)]; if(!p) return; nV++;
+    (p.productos||[]).forEach(function(y){ var n=Number(y&&y.cant)||0; if(!(n>0) || !pryTipoProd(y)) return; var k=''; try{ k=stockClave(y); }catch(e){} if(!k || k==='|') return; U[k]=(U[k]||0)+n; });
+  });
+  var ks=Object.keys(U).sort(function(a,b){ return (U[b]-U[a]) || (a<b ? -1 : 1); });
+  if(!ks.length) return { h:'📭 No hay ventas de colchones ni somieres '+esc(P.txt)+(mio ? ' tuyas' : '')+'.' };
+  return { h:'🏆 Lo más vendido '+esc(P.txt)+(mio ? ' (lo tuyo)' : '')+', en unidades:',
+    filas:ks.slice(0, 10).map(function(k, i){ return { t:(i+1)+'. '+stockNombreClave(k), m:U[k]+' u.' }; }),
+    sub:['Colchones y somieres, en '+nV+' venta'+(nV===1?'':'s')+(P.k==='mes' ? ' (por la fecha de entrega, como Proyección)' : ' (por el día en que se cargaron)')+(mio ? '' : '; con las de tienda y las de Eduardo')+'.'] };
+}
+/* ---------- 5 · 🚚 logística ---------- */
+function blokiDiaLog(o){
+  var hoy=todayStr(), px=proximoDiaEntrega();
+  if(o.dia && o.dia!==hoy && o.dia!==px) return { f:hoy, otro:o.dia };
+  return { f:(o.dia===px && px!==hoy) ? px : hoy };
+}
+function blokiCargar(o){
+  var DL=blokiDiaLog(o), f=DL.f, hoy=todayStr(), D=null, k0=[CV_DIA, CV_SEL];
+  try{ CV_DIA=(f===hoy) ? 'hoy' : 'manana'; D=cargaVivaDatos(); }catch(e){ D=null; } finally{ CV_DIA=k0[0]; CV_SEL=k0[1]; }
+  if(!D) return { h:'No pude leer la Lista de carga ahora: probá en un rato.', mal:1 };
+  var dn=blokiDiaNom(f), falta=0, nCam=0, filas=[];
+  D.cams.forEach(function(c){
+    if(c.sin){ if(c.paradas) filas.push({ t:'⚠️ Sin camión asignado', s:c.paradas+' pedido'+(c.paradas===1?'':'s')+' sin camión: asignalos para que entren en la carga', m:'', sev:'r' }); return; }
+    if(!c.total) return;
+    var fl=c.lineas.filter(function(l){ return !l.on && l.cu>0; }), fu=0; fl.forEach(function(l){ fu+=l.cu; });
+    var sal=f===hoy ? camionSalio(f, c.k) : '';
+    if(fu){ falta+=fu; nCam++; }
+    filas.push({ t:'🚚 '+c.k+(c.choferes.length ? (' · '+c.choferes.slice(0, 2).join(', ')) : ''),
+      s:fu ? fl.slice(0, 4).map(function(l){ return l.cu+'× '+l.kk+(l.lugar!=='fabrica' ? (' (de '+l.lugar+')') : '')+(l.rec ? ' 📥' : '')+(l.t==='PM' ? ' 🌆' : ''); }).join(' · ')+(fl.length>4 ? (' y '+(fl.length-4)+' más') : '') : ('cargado entero: '+c.dentro+' de '+c.total),
+      m:sal ? ('🛣️ salió '+sal) : (fu ? ('faltan '+fu+' de '+c.total) : '✅ listo'), sev:fu ? 'a' : 'i' });
+  });
+  var a={ h:'', filas:filas, sub:[], btns:[] };
+  if(DL.otro) a.sub.push('Te muestro '+esc(dn)+': la Lista de carga es de hoy y del próximo día de camión.');
+  if(!filas.length) a.h='📭 '+esc(blokiCap(dn))+' no hay nada para cargar.';
+  else if(falta) a.h='📦 '+esc(blokiCap(dn))+' falta cargar <b>'+falta+'</b> producto'+(falta===1?'':'s')+' en '+nCam+(nCam===1 ? ' camión' : ' camiones')+':';
+  else a.h='✅ '+esc(blokiCap(dn))+' está todo cargado.';
+  a.sub.push('Los tildes de la Lista de carga (los mismos de los camiones de Administración). 📥 = hay que traerlo de Moreno primero.');
+  try{ if(asisVeAdm()) a.btns.push(['📋 Abrir la Lista de carga', function(){ asisCerrar(); try{ showView('admin'); setTimeout(function(){ try{ abrirCarga(); }catch(e){} }, 150); }catch(e){} }]); }catch(e){}
+  return a;
+}
+function blokiMoreno(o){
+  var DL=blokiDiaLog(o), f=DL.otro || DL.f, C=null;
+  try{ C=admLugaresDatos(f).C; }catch(e){ C=null; }
+  if(!C) return { h:'No pude leer lo del día ahora: probá en un rato.', mal:1 };
+  var L=C.trae.concat(C.tda), dn=blokiDiaNom(f), por={}, u=0;
+  L.forEach(function(r){ var d=r.de||'Moreno'; por[d]=(por[d]||0)+r.u; u+=r.u; });
+  if(!L.length) return { h:'✅ '+esc(blokiCap(dn))+' no hay nada para ir a buscar (ni a Moreno ni a una tienda).', sub:['Lo marcado «📥 recoger» en los pedidos de ese día.'] };
+  return { h:'📥 '+esc(blokiCap(dn))+' hay que ir a buscar <b>'+stockUnid(u)+'</b>: '+esc(Object.keys(por).map(function(k){ return k+' '+stockUnid(por[k]); }).join(' · '))+'.',
+    lista:L.slice(0, BLOKI_LISTA_MAX).map(function(r){ return { id:String(r.id), t:stockUnid(r.u)+'× '+r.t, s:'de '+(r.de||'Moreno')+' · '+String(r.cli||'').split(' ').slice(0,2).join(' ')+' · '+r.veh, m:'', ped:1 }; }),
+    sub:['Lo marcado «📥 recoger» en los pedidos de ese día (lo mismo de «📍 Lo del día, por lugar»).'].concat(L.length>BLOKI_LISTA_MAX ? ['… y '+(L.length-BLOKI_LISTA_MAX)+' más.'] : []) };
+}
+function blokiCierre(o){
+  var S=blokiAlcance(); if(!S.todo && !S.yo) return blokiQuienSos('tus entregas');
+  var hoy=todayStr(), desde=stockSumarDias(hoy, -14), deMi=!S.todo;
+  var dia=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && p.fecha===hoy && (!deMi || mismoVendedor(p.vendedor, S.yo)); });
+  var hoyF=dia.filter(function(p){ return cierreEntEntra(p); }).sort(cierreEntOrden);
+  var atr=STATE.filter(function(p){ return cierreEntEntra(p) && p.fecha<hoy && p.fecha>=desde && !entregaAConfirmar(p) && (!deMi || mismoVendedor(p.vendedor, S.yo)); });
+  var gps=hoyF.filter(function(p){ try{ return !!gpsLlegadaDe(p); }catch(e){ return false; } });
+  var a={ h:'', nums:[], lista:[], sub:[], btns:[] };
+  if(!dia.length && !atr.length) a.h='📭 Hoy no hay entregas para cerrar.';
+  else if(!hoyF.length) a.h='✅ Las '+dia.length+' entrega'+(dia.length===1?'':'s')+' de hoy ya tienen ✅.';
+  else a.h='✅ Hoy falta tildar <b>'+hoyF.length+'</b> de '+dia.length+' entrega'+(dia.length===1?'':'s')+' en el cierre.';
+  if(dia.length || atr.length){
+    a.nums.push({ n:String(dia.length-hoyF.length), l:'ya con ✅ hoy', cls:'ok' }, { n:String(hoyF.length), l:'sin ✅ hoy', cls:hoyF.length ? 'am' : 'ok' });
+    if(gps.length) a.nums.push({ n:String(gps.length), l:'📍 los vio el GPS' });
+    if(atr.length) a.nums.push({ n:String(atr.length), l:'atrasados (14 días)', cls:'mal' });
+  }
+  a.lista=hoyF.concat(atr).slice(0, BLOKI_LISTA_MAX).map(function(p){
+    var ll=null; try{ ll=p.fecha===hoy ? gpsLlegadaDe(p) : null; }catch(e){}
+    return { id:String(p.id), t:(p.oc ? (p.oc+' · ') : '')+String(p.cliente||'—').trim(), ped:!deMi,
+      s:[p.fecha===hoy ? (normTurno(p.turno)==='AM' ? '🌅 mañana' : '🌆 tarde') : ('era el '+saldoDiaTxt(p.fecha)), vehiculoDe(p) ? ('🚚 '+vehiculoDe(p)) : '', deMi ? '' : nombreCanonico(p.vendedor||'')].filter(Boolean).join(' · '),
+      m:ll ? ('📍 '+gpsHoraTxt(ll.t0)) : '' };
+  });
+  if(gps.length) a.sub.push('📍 El GPS vio '+gps.length+' en la puerta: en el cierre está «📍 Tildar los '+gps.length+' que vio el GPS» (lo confirma logística).');
+  if(deMi) a.sub.push('El cierre lo hace logística desde las '+CIERRE_ENT_HORA+'.');
+  try{ if(asisVeAdm()) a.btns.push(['✅ Hacer el cierre', function(){ asisCerrar(); try{ abrirCierreEntregas(); }catch(e){} }]); }catch(e){}
+  return a;
+}
+function blokiGps(o){
+  var t=' '+o.t+' ', V=Object.keys(VEHICULO_PLACA), elegidos=V.filter(function(v){
+    var w=normNombre(v).split(/[^a-z0-9]+/).filter(Boolean), pl=gpsPlaca(VEHICULO_PLACA[v]);
+    return (w.length && w.every(function(x){ return new RegExp('\\b'+x+'\\b').test(t); })) || t.toUpperCase().replace(/[^A-Z0-9 ]/g,' ').indexOf(pl.slice(0,4))>=0 || (w[0]==='carry' && /\bcarry\b/.test(t));
+  });
+  if(!elegidos.length){ var fo=V.filter(function(v){ return /^foton/.test(normNombre(v)); }); if(/\bfoton\b/.test(t)) elegidos=fo; }
+  if(!elegidos.length){ var ch=''; Object.keys(VEHICULOS).forEach(function(v){ (VEHICULOS[v]||[]).forEach(function(c){ var w=normNombre(c).split(' ')[0]; if(w && new RegExp('\\b'+w+'\\b').test(t)) ch=v; }); }); if(ch) elegidos=[ch]; }
+  if(!elegidos.length) elegidos=V;
+  if(!gpsVigente()) return { h:'🛰️ Ahora no tengo el GPS de los camiones: el servidor no lo trae o hace más de '+Math.round(GPS_VIGENCIA_MS/60000)+' minutos que no hay noticias.', mal:1,
+    sub:['Lo marcado a mano sigue valiendo: «🚚 Ya salió» en los camiones de Administración.'] };
+  var hoy=todayStr(), filas=elegidos.map(function(v){
+    var x=camionGps(v), sal=camionSalio(hoy, v);
+    if(!x) return { t:'🚚 '+v+' ('+VEHICULO_PLACA[v]+')', s:'el GPS no dice nada de este camión ahora', m:sal ? ('salió '+sal) : '', sev:'a' };
+    var par=0; try{ par=gpsParadas(v).length; }catch(e){}
+    return { t:'🚚 '+v+' ('+VEHICULO_PLACA[v]+')', s:gpsDondeTxt(x)+' · '+x.v+' km/h'+(x.m ? '' : ' · motor apagado')+(x.r ? (' · '+gpsHace(x)) : '')+(sal ? (' · salió '+sal) : '')+(x.vu ? (' · volvió '+x.vu) : '')+(par ? (' · '+par+' parada'+(par===1?'':'s')+' hoy') : ''),
+      m:x.f ? '🛣️ en la calle' : '🅿️ parado', href:'https://www.google.com/maps?q='+x.la+','+x.lo };
+  });
+  return { h:'🛰️ '+(elegidos.length===1 ? ('Dónde está el '+esc(elegidos[0])+':') : 'Dónde están los camiones:'), filas:filas, sub:['Lo que dijo el GPS en el último reporte. «ver ↗» abre el punto en Google Maps.'] };
+}
+/* ---------- 6 · 📋 qué me falta hacer ---------- */
+var CX_HACER_ULT=null;
+function blokiIrHacer(vista, code, v){
+  asisCerrar();
+  try{ if(asisVista()!==vista) showView(vista); }catch(e){}
+  if(vista==='mis' && v){ var mv=document.getElementById('mis-vendedor'); if(mv && !String(mv.value||'').trim()){ mv.value=v; try{ renderMis(); }catch(e){} } }
+  setTimeout(function(){ try{ (new Function(code))(); }catch(e){} }, 220);
+}
+function blokiHacerConta(){
+  if(CX_HACER_ULT && CX_HACER_ULT.length) return CX_HACER_ULT;
+  var I=[], add=function(x){ if(x && x.n>0) I.push(x); };
+  try{ var pst=nxPstLista(); add({ sev:'r', ic:'🧾', n:pst.length, t:'Pagos sin terminar', s:'recibo, foto o banco · completalos antes del cierre', b:'Completar', fn:'nxPstAbrir()' }); }catch(e){}
+  var L=STATE.filter(function(p){ return p && !esBorrador(p) && !fueraDeConta(p, 'tienda'); });
+  add({ sev:'r', ic:'🧾', n:L.filter(docVentaFalta).length, t:'Sin N° de factura o nota de remisión', s:'obligatorio', b:'Ver', fn:"cxTopFiltro('sdoc')" });
+  add({ sev:'r', ic:'👯', n:(DUP_IDX && DUP_IDX.n) || 0, t:'Pueden estar cargadas dos veces', s:'revisalas antes de facturar', b:'Revisar', fn:'cxDupAbrir()' });
+  var deb=L.filter(function(p){ return contaFaltaCobrar(p)>0.005; }), sb=0; deb.forEach(function(p){ sb=r2(sb+contaFaltaCobrar(p)); });
+  add({ sev:'a', ic:'⏳', n:deb.length, t:'Ventas con saldo · '+fmtBs0(sb), s:'la más vieja primero', b:'Ver quiénes', fn:"abrirPorCobrar('ventas')" });
+  return I;
+}
+function blokiHacer(o){
+  var S=blokiAlcance(), rol=S.rol, adm=false; try{ adm=asisVeAdm(); }catch(e){}
+  var mio=/\b(mis|mi|me)\b/.test(o.t) && !!S.yo, v=S.yo, I, vista, quien;
+  if(rol==='conta' && !mio){ I=blokiHacerConta(); vista='conta'; quien='Contabilidad'; }
+  else if((rol==='logistica' || rol==='admin' || (adm && !v)) && !mio){ I=admHacerDatos(); vista='admin'; quien=rol==='logistica' ? 'logística' : 'Administración'; }
+  else if(v){ var mine=STATE.filter(function(p){ return p && mismoVendedor(p.vendedor, v); }); I=misHacerDatos(v, mine); vista='mis'; quien=v.split(' ')[0]; }
+  else return blokiQuienSos('lo que te falta hacer');
+  if(!I.length) return { h:'✅ '+(vista==='mis' ? 'No tenés nada pendiente' : 'No hay nada pendiente')+'. ¡Bien ahí!', sub:(I.ok && I.ok.length) ? [esc('Al día: '+I.ok.join(' · '))] : [] };
+  var rojos=I.filter(function(x){ return x.sev==='r'; }).length;
+  var a={ h:'📋 '+(vista==='mis' ? ('Tu «Para hacer», '+esc(quien)) : ('El «Para hacer» de '+esc(quien)))+': <b>'+I.length+'</b> cosa'+(I.length===1?'':'s')+(rojos ? (', '+rojos+' urgente'+(rojos===1?'':'s')) : '')+'.',
+    filas:I.slice(0, 10).map(function(x){ return { t:(x.ic ? (x.ic+' ') : '')+x.t, s:x.s||'', m:x.nTxt||String(x.n), sev:x.sev, b:x.b, fn:function(){ blokiIrHacer(vista, x.fn, v); } }; }), sub:[] };
+  if(I.length>10) a.sub.push('… y '+(I.length-10)+' más en tu pestaña.');
+  if(vista==='admin' && !Object.keys(ADM_AV||{}).length) a.sub.push('Para verlo completo (stock, cierre, reposiciones), abrí 🔒 Administración una vez.');
+  if(vista==='conta' && !(CX_HACER_ULT && CX_HACER_ULT.length)) a.sub.push('Lo principal: abrí Contabilidad → Ventas para verlo entero.');
+  return a;
+}
+/* ---------- 7 · 💬 el mensaje al cliente ---------- */
+function blokiMensaje(o){
+  var S=blokiAlcance(); if(!S.todo && !S.yo) return blokiQuienSos('tus clientes');
+  var t=o.t, cobro=/\b(debe|deben|deuda|saldo|pagar|pague|pago|cobr\w*|abon\w*|plata)\b/.test(t), conf=/\bconfirm\w*/.test(t);
+  var cambio=/\b(cambi\w*|reprogram\w*|movimos|pasamos|pasa\s+(?:para|al)|nueva\s+fecha)\b/.test(t);
+  var entrega=!cobro && (conf || cambio || /\b(llega|llegan|entrega\w*|sale|salen|lleva\w*|recib\w*|camion)\b/.test(t) || !!o.dia || !!o.turno);
+  if(cobro && blokiPlataNo()) return { h:'🔒 El mensaje del saldo lo arma su vendedora o Contabilidad.', sub:['Yo te armo el de la entrega: «avisale a Lidia que llega mañana».'] };
+  var base=STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !esATC(p.oc) && !esRPT(p.oc) && (S.todo || mismoVendedor(p.vendedor, S.yo)); });
+  var B=blokiBuscaPed(o.resto, base);
+  if(!B.por) return { h:'¿Para qué cliente? Escribí su nombre, su celular o la OC: «armame el mensaje para Raúl de que debe», «avisale a Lidia que llega mañana».' };
+  if(!B.M.length) return { h:'No encontré '+esc(B.por)+(S.todo ? ' entre los pedidos' : ' entre tus pedidos')+'. Revisá cómo está escrito o probá con su celular o la OC.' };
+  var grupos=blokiGruposCli(B.M);
+  var hacer=function(L){ return blokiMensajeDe(L, { cobro:cobro, entrega:entrega, conf:conf, cambio:cambio, dia:o.dia, turno:o.turno, t:t }); };
+  if(grupos.length>1 && !B.oc) return { h:'Encontré '+grupos.length+' clientes con '+esc(B.por)+'. ¿Para cuál es el mensaje?',
+    opc:grupos.slice(0, BLOKI_OPC_MAX).map(function(L){ var p=blokiPedPrincipal(L), lbl=String(p.cliente||'—').trim()+(p.oc ? (' · '+p.oc) : '');
+      return [lbl, function(){ blokiContestar(lbl, function(){ return hacer(L); }); }]; }) };
+  return hacer(grupos[0]);
+}
+function blokiMensajeDe(L, Q){
+  var hoy=todayStr(), deben=L.filter(function(p){ return contaFaltaCobrar(p)>0.005; }), falta=0; deben.forEach(function(p){ falta=r2(falta+contaFaltaCobrar(p)); });
+  var cobro=Q.cobro || (!Q.entrega && deben.length && !L.some(function(p){ return !p.entregado && p.fecha && p.fecha>=hoy; }));
+  if(cobro && blokiPlataNo()) return { h:'🔒 El mensaje del saldo lo arma su vendedora o Contabilidad.' };
+  var p=cobro && deben.length ? blokiPedPrincipal(deben) : blokiPedPrincipal(L), a={ h:'', warn:[], sub:[], btns:[] }, txt='';
+  var nom=nxNombreCorto(p.cliente);
+  if(cobro){
+    if(!deben.length) return { h:'✅ <b>'+esc(String(p.cliente||'—').trim())+'</b> no debe nada: no hace falta el mensaje del saldo.' };
+    var ocs=deben.map(function(x){ return ocEtiq(x.oc); }).filter(Boolean);
+    var yaRec=deben.some(function(x){ return x.entregado || (x.fecha && x.fecha<hoy) || esVentaTienda(x); });
+    txt=['Hola'+(nom ? (' '+nom) : '')+' 👋, te escribimos de '+nxMarcaTxt(p)+'.',
+      yaRec ? ('Te recordamos que de tu compra'+(ocs.length ? (' '+ocs.join(', ')) : '')+' quedó un saldo de '+fmtBs(falta)+'.')
+            : ('Te recordamos que de tu compra'+(ocs.length ? (' '+ocs.join(', ')) : '')+' queda un saldo de '+fmtBs(falta)+(p.fecha && p.fecha>=hoy ? (', a pagar al recibir el '+nxDiaTxt(p.fecha)) : '')+'.'),
+      'Cualquier consulta, escribinos por acá. ¡Gracias!', String(p.vendedor||'').trim()].filter(Boolean).join('\n');
+    var mm=/\b(\d{1,3}(?:[.,]\d{3})+|\d{3,6})(?:[.,]\d{1,2})?\b/.exec(Q.t.replace(/\b\d{2}-\d{3,4}\b/g,' ').replace(/\b\d{7,}\b/g,' ')), dijo=mm ? parseMonto(mm[0]) : 0;
+    if(dijo>0 && Math.abs(dijo-falta)>0.005) a.warn.push('Escribiste '+fmtBs(dijo)+', pero Contabilidad dice que debe '+fmtBs(falta)+': el mensaje usa lo de Contabilidad.');
+    a.h='💬 Mensaje del saldo para <b>'+esc(String(p.cliente||'—').trim())+'</b> ('+esc(fmtBs(falta))+'):';
+  } else {
+    if(!p.fecha){ return { h:'📞 <b>'+esc(String(p.cliente||'—').trim())+'</b> todavía no tiene fecha de entrega: primero agendala.' }; }
+    if(p.entregado) a.warn.push('Este pedido ya figura entregado (✅ el '+fmtFechaCorta(p.fecha)+').');
+    var tipo=Q.cambio ? 'cambio' : ((p.fecha===hoy || p.fecha===proximoDiaEntrega() || p.fecha===stockSumarDias(hoy, 1)) && !Q.conf ? 'manana' : '');
+    txt=nxMsgCliente(p, tipo);
+    if((Q.dia && Q.dia!==p.fecha) || (Q.turno && normTurno(p.turno) && Q.turno!==normTurno(p.turno)))
+      a.warn.push('El pedido dice '+saldoDiaTxt(p.fecha)+(normTurno(p.turno) ? (' a la '+(normTurno(p.turno)==='AM' ? 'mañana' : 'tarde')) : '')+': el mensaje usa eso. Si cambió, primero reprogramalo (📅 en el pedido) y después armá el mensaje.');
+    a.h='💬 Mensaje '+(tipo==='cambio' ? 'del cambio de día' : (tipo==='manana' ? 'de la entrega' : 'de confirmación'))+' para <b>'+esc(String(p.cliente||'—').trim())+'</b>'+(p.oc ? (' ('+esc(p.oc)+')') : '')+':';
+  }
+  a.msg=txt;
+  var url=nxWaClienteUrl(p.celular, txt);
+  if(url) a.btns.push(['💬 Abrir WhatsApp', function(){ try{ window.open(url, '_blank', 'noopener'); }catch(e){} }]);
+  else a.warn.push('Este cliente no tiene un celular de WhatsApp anotado: copiá el texto.');
+  a.btns.push(['📋 Copiar el texto', function(){ blokiCopiar(txt); }]);
+  a.sub.push('Lo mandás vos: Bloki solo lo arma. Revisalo antes de enviarlo.');
+  return a;
+}
+function blokiCopiar(txt){
+  var ok=function(){ try{ toast('Copiado ✓ Pegalo en WhatsApp.', 'ok'); }catch(e){} };
+  try{ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok, function(){ blokiCopiarViejo(txt); ok(); }); return; } }catch(e){}
+  blokiCopiarViejo(txt); ok();
+}
+function blokiCopiarViejo(txt){ try{ var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }catch(e){} }
 /* ---------- 🤖 Claude (solo con la contraseña y el servidor que lo sabe hacer) ---------- */
 function blokiClaudePuede(){ return !!UNLOCKED && servidorTiene(BLOKI_CLAUDE_DESDE); }
 function blokiYmAnt(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1; if(m<1){ m=12; y--; } return y+'-'+(m<10?'0':'')+m; }
@@ -55716,6 +56409,7 @@ function blokiBtn(k){ var f=BLOKI_P.fn[k]; if(typeof f==='function'){ try{ f(); 
 /* Las funciones de los botones quedan registradas UNA vez, al contestar (la ventana se repinta sin crear otras). */
 function blokiPreparar(a, item){
   ['btns','opc'].forEach(function(k){ (a[k]||[]).forEach(function(b){ if(typeof b[1]==='function') b[1]=blokiFn(b[1], item); }); });
+  (a.filas||[]).forEach(function(r){ if(typeof r.fn==='function'){ r.k=blokiFn(r.fn, item); delete r.fn; } });   // (idea 9) el botón de cada renglón de «Para hacer»
   return a;
 }
 function blokiNuevo(q){
@@ -55759,10 +56453,11 @@ function blokiPreguntar(qIn){
 /* 🏷️ (07/11) Con el «no sé», qué SÍ contesta (el dueño creía que contestaba cualquier cosa): lo de los números del panel, y que lo demás
    va a Claude solo con la contraseña de Administración. A Logística sin la contraseña no se le ofrece lo que debe un cliente. */
 function blokiQueSe(){
-  return '💡 Con los números del panel te contesto: el stock o el código de un producto, si hay lugar un día, qué se entrega'+(blokiPlataNo() ? '' : ' y cuánto le falta pagar a un cliente')+
-    '. Las preguntas libres las contesta Claude, solo con la contraseña de Administración.';
+  return '💡 Con los números del panel te contesto: el stock, el código, el precio o las medidas de un producto, lo más vendido, si hay lugar un día, qué se entrega, '+
+    'cuándo llega un pedido, qué falta cargar, recoger o tildar, dónde está un camión, '+(blokiPlataNo() ? '' : 'cuánto vendiste, quiénes te deben, tu efectivo, ')+
+    'qué te falta hacer y te armo el mensaje para un cliente. Las preguntas libres las contesta Claude, solo con la contraseña de Administración.';
 }
-var BLOKI_EJ=['¿Hay titanio ice 140 para el jueves?', '¿Hay lugar el sábado?', '¿Qué entrego mañana?', '¿Cuánto le falta pagar a '];
+var BLOKI_EJ=['¿Hay titanio ice 140 para el jueves?', '¿Hay lugar el sábado?', '¿Qué entrego mañana?', '¿Cuánto le falta pagar a ', '¿Qué me falta hacer?', '¿Cuánto vendí este mes?'];
 function blokiEjemplo(i){
   var q=BLOKI_EJ[i]; if(!q) return;
   if(/ $/.test(q)){ var inp=document.getElementById('asis-q'); if(inp){ inp.value=q; ASIS.q=q; try{ inp.focus(); inp.setSelectionRange(q.length, q.length); }catch(e){} } return; }
@@ -55781,8 +56476,13 @@ function blokiBurbuja(it){
   (a.warn||[]).forEach(function(w){ c+='<div class="bkp-w">'+esc(w)+'</div>'; });
   if(a.cods && a.cods.length) c+='<div class="bkp-cods">'+a.cods.map(function(r){
       return '<div class="bkp-cod"><b>'+esc(r.c||'—')+'</b><span>'+esc(r.n)+(r.s?('<small>'+esc(r.s)+'</small>'):'')+(r.x1?'<small>ya no se fabrica</small>':'')+'</span></div>'; }).join('')+'</div>';
+  if(a.msg) c+='<div class="bkp-msg">'+esc(a.msg)+'</div>';
+  if(a.filas && a.filas.length) c+='<div class="bkp-filas">'+a.filas.map(function(r){
+      return '<div class="bkp-fila'+(r.sev?(' bkp-s'+r.sev):'')+'"><span class="bkp-ft"><b>'+esc(r.t)+'</b>'+((r.s||r.href)?('<small>'+esc(r.s||'')+
+        (r.href?(' <a href="'+esc(r.href)+'" target="_blank" rel="noopener">ver ↗</a>'):'')+'</small>'):'')+'</span>'+(r.m?('<em>'+esc(r.m)+'</em>'):'')+
+        ((r.b && r.k)?('<button type="button" class="asis-b asis-mini" onclick="blokiBtn(\''+r.k+'\')">'+esc(r.b)+'</button>'):'')+'</div>'; }).join('')+'</div>';
   if(a.lista && a.lista.length) c+='<div class="asis-li bkp-li">'+a.lista.map(function(r){
-      return '<button type="button" data-id="'+esc(r.id)+'" onclick="asisAbrirPedido(this.getAttribute(\'data-id\')'+(r.ped?',1':'')+')"><i><b>'+esc(r.t)+'</b><small>'+esc(r.s)+'</small></i>'+
+      return '<button type="button" data-id="'+esc(r.id)+'" onclick="'+(r.cta ? 'blokiAbrirVenta(this.getAttribute(\'data-id\'))' : ('asisAbrirPedido(this.getAttribute(\'data-id\')'+(r.ped?',1':'')+')'))+'"><i><b>'+esc(r.t)+'</b><small>'+esc(r.s)+'</small></i>'+
         (r.m ? ('<em>'+esc(r.m)+'</em>') : '')+'<u>Abrir ›</u></button>'; }).join('')+'</div>';
   if(a.opc && a.opc.length) c+='<div class="bkp-opc">'+a.opc.map(function(b){ return '<button type="button" onclick="blokiBtn(\''+b[1]+'\')">'+esc(b[0])+'</button>'; }).join('')+'</div>';
   if(a.btns && a.btns.length) c+='<div class="bkp-acc">'+a.btns.map(function(b){ return '<button type="button" class="asis-b asis-mini" onclick="blokiBtn(\''+b[1]+'\')">'+esc(b[0])+'</button>'; }).join('')+'</div>';
@@ -55793,7 +56493,7 @@ function blokiChatHtml(){
   var c=BLOKI_P.chat;
   var sinPlata=blokiPlataNo();   // 🔒 a Logística no se le sugiere preguntar lo que debe un cliente
   if(!c.length) return '<div id="asis-chat" class="bkp-chat"><div class="bkp-ej"><small>Por ejemplo:</small>'+BLOKI_EJ.map(function(q, i){
-    if(sinPlata && /falta pagar/i.test(q)) return '';
+    if(sinPlata && /falta pagar|vendí/i.test(q)) return '';
     return '<button type="button" onclick="blokiEjemplo('+i+')">'+esc(/ $/.test(q) ? (q+'…?') : q)+'</button>'; }).join('')+'</div></div>';
   return '<div id="asis-chat" class="bkp-chat" aria-live="polite">'+c.map(blokiBurbuja).join('')+'</div>';
 }

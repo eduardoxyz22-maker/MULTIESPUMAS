@@ -1637,6 +1637,12 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
   El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
   `d:"CLOUD"`: la clave del stock no cambia.
+  💬 **Idea 9: siete grupos más** (§4ot, página 07-h; dueño: *«Idea 9 todas de Bloki»*): mis ventas (= Proyección, a esta altura, meta, la más grande,
+  ranking con alcance de todo), cobranza (quiénes deben, efectivo = «Efectivo en tu mano», avisos de Contabilidad, sin factura), mis pedidos (sin stock =
+  `semanaLinea`, sin camión/ubicación, «¿cuándo llega el pedido de…?», la semana que viene), productos (precio cobrado de verdad en 60 días, medidas,
+  lo más vendido), logística (qué falta cargar = tildes de la Lista de carga, recoger de Moreno, cierre, GPS), «¿qué me falta hacer?» (el «Para hacer»
+  de su pestaña, con botones) y el mensaje al cliente (texto + WhatsApp; **Bloki no manda nada**). Todo en `blokiTipo2` y lo que sigue, solo mira.
+  🔒 Logística sin la contraseña no ve plata (`blokiPlataLog`). ⚠️ El color de un renglón es `bkp-s*`, nunca `bkp-a` (la burbuja). `tests/test_bloki_mas.js` (59).
 - 📝 **Revisar las observaciones** (`obsRevisar`, al final de `submitPedido`): día/turno, cantidades y plata contra lo cargado; «Corregir» / «Guardar
   igual», nunca frena; calla en lo dudoso. ⚠️ El final de `submitPedido` vive en **`seguirAlGuardar`**: algo nuevo ahí va adentro. `OBS_REV_PRUEBA`.
   `tests/test_revisar_obs.js` (72).

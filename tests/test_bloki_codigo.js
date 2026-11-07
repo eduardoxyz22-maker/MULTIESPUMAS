@@ -140,9 +140,9 @@ function PREPARAR(){
   console.log('\n── 4. El «no sé» dice qué sí contesta ──');
   r = await ev(() => PREG('cual es la capital de francia'));
   chk('«No tengo esa respuesta todavía» + qué contesta con los números del panel y que lo demás va a Claude con la contraseña',
-    /No tengo esa respuesta todavía/.test(r.t) && /el stock o el código de un producto/.test(r.t) && /contraseña de Administración/.test(r.t), r.t);
+    /No tengo esa respuesta todavía/.test(r.t) && /el stock, el código, el precio o las medidas de un producto/.test(r.t) && /contraseña de Administración/.test(r.t), r.t);
   r = await ev(async () => { quienRol('logistica'); var x=await PREG('cual es la capital de italia'); quienRol(''); return x; });
-  chk('a Logística sin la contraseña no le ofrece «cuánto le falta pagar a un cliente»', /el código de un producto/.test(r.t) && !/falta pagar/.test(r.t), r.t);
+  chk('a Logística sin la contraseña no le ofrece «cuánto le falta pagar a un cliente»', /el código, el precio o las medidas de un producto/.test(r.t) && !/falta pagar|te deben|vendiste|efectivo/.test(r.t), r.t);
 
   chk('sin errores de la página', !errores.length, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

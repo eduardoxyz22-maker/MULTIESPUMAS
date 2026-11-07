@@ -17357,6 +17357,44 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4ot — 💬 BLOKI CONTESTA MÁS: LOS SIETE GRUPOS DE LA IDEA 9 (07/11; dueño, después de ver la muestra https://claude.ai/artifact/4eSLLeXYCBBhvvdBTo9YsT: *«Idea 9 todas de Bloki»*; PÁGINA 2026-11-07-h; el `.gs` no cambia)
+- **Qué es**: Bloki ya contestaba stock, cupos, entregas, el saldo de un cliente y los códigos. Ahora entiende 17 preguntas más, en los siete
+  grupos de la muestra, y las contesta con cuentas que el panel YA tiene: nada se calcula aparte, no gasta IA y SOLO MIRA (no escribe nada).
+  Todo vive en el bloque «BLOKI CONTESTA MÁS» (`blokiTipo2` decide qué es; va DESPUÉS de `codigo` y ANTES de cupos/entregas/cliente).
+  1. 📈 **Mis ventas** (`ventas`): el mes = `pryVentas` por la fecha de entrega (= Proyección); hoy, ayer y la semana = lo CARGADO esos días
+     (`reg`); contra el mes pasado A ESTA ALTURA (mismo día y hora, `pryCargadaAl`, la cuenta de `pryMomDe`); la meta: la de la vendedora del
+     cierre comercial (`ccmVdDe`, solo si está GUARDADA para ese mes) y la de la marca (`metaDe`/`metaVendidoMes`); la venta más grande; el
+     ranking del equipo (sin Eduardo ni ROHO, como el total de Proyección) solo con alcance de todo.
+  2. 💵 **Cobranza**: `deben` (por cliente, lo de `contaFaltaCobrar`, primero lo ya entregado; con un nombre va a `blokiCliente`), `efectivo`
+     (= `misEfectivoDatos`, el «Efectivo en tu mano»; el equipo con `misEqEfectivo`), `avisos` (`ctaAvAbiertos`) y `factura` (`docVentaFalta`).
+     Cada venta abre su ficha de Contabilidad (`cta:1` → `blokiAbrirVenta`).
+  3. 📋 **Mis pedidos**: `sinstock` (`semanaLinea` = la del botón «Semana»: ✗, ⚠️, ⬜, 🏭; de hoy en adelante), `sincamion` (sin camión hasta el
+     próximo día de camión, sin ubicación), `llega` (por cliente, OC o celular: fecha, turno, camión, la mercadería de `pedidoViajeDatos`,
+     «salió», `gpsLlegadaDe` y dónde está el camión) y las entregas de una semana (`blokiRango` dentro de `blokiEntregas`).
+  4. 🛏️ **Productos**: `precio` (lo cobrado de verdad en `BLOKI_PRECIO_DIAS`=60 días, sin Eduardo/ROHO/ATC/RPT: el del medio, el más bajo, el
+     más alto, cuántos), `medidas` (cada medida con su código; varios modelos → uno por renglón), `top` (en unidades, `pryTipoProd`).
+     «¿Cuándo vuelve a haber…?» es el STOCK de siempre (`BLOKI_RE2.vuelve`).
+  5. 🚚 **Logística**: `cargar` (los tildes de la Lista de carga, `cargaVivaDatos` con `CV_DIA`/`CV_SEL` puestos y devueltos en `finally`),
+     `moreno` (`admLugaresDatos`: lo marcado «📥 recoger»), `cierre` (sin ✅ hoy + atrasados de 14 días, lo que vio el GPS) y `gps`
+     (`camionGps`/`gpsDondeTxt`; por camión, placa o chofer; sin GPS vigente lo dice).
+  6. 📋 **«¿Qué me falta hacer?»** (`hacer`): el MISMO «Para hacer» de su pestaña — vendedora `misHacerDatos`, Logística/Administración
+     `admHacerDatos`, Contabilidad el último que se dibujó (`CX_HACER_ULT`, lo deja `cxTopPintar`; si no se abrió, lo principal). Cada renglón con
+     su botón (`blokiIrHacer`: cambia de pestaña y corre el mismo código del botón de allá).
+  7. 💬 **El mensaje al cliente** (`mensaje`: «armame el mensaje para…», «avisale a … que…»): el del saldo (con lo que dice Contabilidad; si
+     escribió otro monto, usa el de Contabilidad y lo dice) o el de la entrega (`nxMsgCliente`; si escribió otro día o turno que el pedido, usa
+     el del pedido y dice «primero reprogramalo»). Botones «💬 Abrir WhatsApp» (`nxWaClienteUrl`) y «📋 Copiar el texto». **Bloki no manda nada.**
+- **Quién ve qué** (`blokiDeQuien`): una vendedora, lo suyo («lo de Maria lo ve ella o Administración»); con alcance de todo, el equipo o la
+  vendedora que nombre. 🔒 **Logística sin la contraseña no ve plata** (`blokiPlataLog`): ni ventas, ni deudas, ni efectivo, ni facturas, ni el
+  mensaje del saldo; las entregas, la carga, el GPS, el cierre, los precios y las medidas sí.
+- «¿Cómo hago…?» sigue yendo a la ayuda aunque la ayuda no se la muestre a esa persona («¿cómo hago el cierre de entregas?» a una vendedora:
+  `comoHago` saltea las preguntas nuevas). «¿Cómo voy?» sí es de ventas. Los dos ejemplos nuevos de la ventana vacía: «¿Qué me falta hacer?» y
+  «¿Cuánto vendí este mes?» (este, no a Logística sin la contraseña). El «no sé» (`blokiQueSe`) lista todo lo que contesta.
+- Respuesta nueva: `filas` (renglones con `t`, `s`, `m`, `sev`, `href`, y `fn` → botón) y `msg` (el texto armado). ⚠️ El color de un renglón es
+  `bkp-sr`/`bkp-sa`/`bkp-si`, NUNCA `bkp-a`: esa es la clase de la burbuja de la respuesta (con `bkp-a` las pruebas leían el renglón como la respuesta).
+- `tests/test_bloki_mas.js` (59, datos inventados, reloj el martes 10/11/2026 10:00). Cambiadas A CONCIENCIA: `test_bloki_preguntas` (la pregunta
+  libre para Claude era «¿quién vendió más este mes?», que ahora contesta Bloki: pasa a «¿por qué bajaron las ventas de sueña?» y «¿qué conviene
+  ofrecer este mes?») y `test_bloki_codigo` (el texto nuevo del «no sé»).
+
 ### §4os — 🏷️ BLOKI CONTESTA EL CÓDIGO DE UN PRODUCTO (07/11; dueño, con la captura de Bloki diciendo «No tengo esa respuesta todavía» a «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*; PÁGINA 2026-11-07-g PUBLICADA 07/11 (`main` = `1b14876`, Pages corrida 42 ✅), con la `SCRIPT_VERSION_ESPERADA` 07-e; batería: lo rojo con la máquina cargada pasa solo, y `test_circuito` 2 + `test_banzer` 1 fallan igual con `63b947d`)
 - **Por qué no contestaba**: Bloki entiende cuatro preguntas con los números del panel (stock, saldo de un cliente, cupos, entregas) y las
   preguntas libres van a Claude SOLO con la contraseña de Administración (`blokiClaudePuede`). «El código de…» no era ninguna de las cuatro.
