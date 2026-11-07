@@ -432,7 +432,8 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
-                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5,
+                     alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5, efectivo_del_dia: 5,   // 💵 (2026-11-06-b) → 📅 (06-d) el efectivo de cada día
+                     vendedora_buen_dia: 7, cierre_del_dia: 7,   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
@@ -445,6 +446,10 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
   const r2 = S.ctx.crearPlantillasWhatsApp();
   chk('con el token vencido lo dice («generá otro»)', !r2.ok && r2.plantillas.every(x => /token no sirve/.test(x.txt)), r2.plantillas[0]);
+  /* (2026-11-06-c) Meta pasó a MARKETING una que ya existía (logistica_pedir_hoy, alerta_leads): existe y sale igual, no es un error. */
+  S.limpiar(); S.meta.responder = () => ({ code: 400, body: { error: { code: 100, message: 'Invalid parameter', error_user_msg: 'La categoría UTILITY no coincide con la que ya está asociada a esta plantilla: MARKETING.' } } });
+  const r3 = S.ctx.crearPlantillasWhatsApp();
+  chk('la que Meta tiene como MARKETING se lee como «ya existía» (sale igual), no como ❌', r3.ok && r3.plantillas.every(x => x.ya && /MARKETING: sale igual/.test(x.txt)), r3.plantillas[0]);
   S.limpiar(); S.meta.responder = () => ({ code: 200, body: { data: [
     { name: 'confirmacion_pedido_v2', language: 'es', status: 'APPROVED', category: 'UTILITY' },
     { name: 'cambio_entrega_v2', language: 'es', status: 'REJECTED', rejected_reason: 'INVALID_FORMAT' },
