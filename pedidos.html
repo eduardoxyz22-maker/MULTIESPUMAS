@@ -21306,7 +21306,7 @@ function ctaDocHtml(p){
   var b=function(v){ return '<button type="button" class="btn btn-sm'+(d===v?' btn-primary':'')+'" style="width:auto;'+(d===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaDocTipo(\''+esc(p.id)+'\',\''+v+'\')">'+DOCV_TXT[v]+'</button>'; };
   return '<div id="cta-doc" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+b('F')+b('R')+
     '<input type="text" id="cta-doc-num" value="'+esc(n)+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:110px" oninput="ctaDocNum(\''+esc(p.id)+'\', this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaDocGuardar(\''+esc(p.id)+'\');}">'+
-    '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar</button></div>'+
+    '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar N°</button></div>'+   // (07/11) «Guardar N°»: en la misma ficha está el «Guardar» de «✏️ Corregir este pago»
     (falta ? '<div style="font-size:.74rem;color:var(--amber-dk,#92400e);margin-top:4px">❗ Obligatorio: anotá si va con factura o con nota de remisión y su número.</div>' : '');
 }
 function ctaDocNum(id, v){ if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null }; CTA_DOC.n=String(v==null?'':v); }
@@ -50522,7 +50522,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-06-d';
+var PANEL_V='2026-11-07-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
