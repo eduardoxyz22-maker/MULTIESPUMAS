@@ -17357,6 +17357,19 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4oo — 🏪 LA TIENDA DE CADA VENDEDOR, LA DE KOMMO (07/11; dueño: «Si» a *«¿pongo en el panel las sucursales que dice Kommo? Hoy no coinciden para Carola, Jonathan, Isabel y Fabián»*; versión 2026-11-07-d)
+- `VENDEDOR_SUCURSAL` = lo que dice Kommo desde noviembre («Nombre - Sucursal»): **Carola → Tienda Banzer, Jonathan → Mia Plaza, Isabel →
+  Central, Fabián → Central** (Ventura Mall todavía no abrió; si abre y Fabián pasa allá, cambiar esa línea), Andrea → Tienda Banzer; Mirian
+  (Mia Plaza), María Flores (Buenos Aires), Mauricio (Mutualista), Peinado (Charcas) y Juan Pablo (Carmelo) sin cambio.
+- ⚠️ **Lo de antes queda donde estaba**: una venta de tienda vieja sin la sucursal escrita en la dirección se deduce por la vendedora (§4dv), así
+  que cambiar la lista a secas pasaba lo que Carola vendió en Central en octubre a la Tienda Banzer (stock de las tiendas, talonario, «para clientes
+  de»). `sucursalDeVendedor(v, fecha)` mira el día: antes de **`VENDEDOR_SUC_DESDE`='2026-11-01'** usa `VENDEDOR_SUCURSAL_ANTES` (la lista vieja,
+  tal cual); sin fecha, hoy. Pasan el día de la venta (`contaFecha`): `sucursalDeVenta`, `talTiendaDe` y `producirTiendaCliente`. Lo que mira el
+  presente (la sugerencia de «¿de qué tienda?» en una venta nueva, la tienda «suya» primero en «🏬 Tienda») usa hoy. Un cambio de tienda más
+  adelante: otra fecha y otra lista, igual.
+- El servidor no tiene esa lista (el «Buen día» del domingo lee la sucursal del nombre de Kommo, §4on). El dashboard tampoco (`SUC_DE_USUARIO`).
+- `test_vendedores_nuevos` §2 cambiado a conciencia (Fabián → Central, Isabel → Central) + 4 nuevas (40).
+
 ### §4on — ☀️🌙🧽📝📄 LAS IDEAS 114, 115, 118, 119 Y 120 (07/11; dueño: *«Todas menos la 116 y 117 no me convence lo del chat»*; PÁGINA PUBLICADA 07/11 (dueño: «Ok»), `main` = `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` espera que el dueño lo implemente, enlace fijo `fb048e04560d65c493a8c1d8724d7cadb8a0c207`, 6.726 líneas)
 Muestra que vio el dueño: https://claude.ai/artifact/CD21Ey7BjKbRJcZnyAkExH. Cuatro agentes en worktrees (el contenedor se reinició a mitad:
 los tres de la página retomaron con su trabajo sin guardar, que no se había perdido). Commits: `7b38ffa` (servidor), `6d57688` (120), `94106c0`
@@ -17406,6 +17419,7 @@ los tres de la página retomaron con su trabajo sin guardar, que no se había pe
   · 📅 **«Sábado en la tarde» ofrece «Pasarlo al lunes DD/MM a la tarde»** (`obsRevSabMover`/`obsRevMoverAplicar`: el primer día después de ese
   sábado que no es domingo, feriado, día cerrado ni sin tarde; pone fecha y 🌆 PM, NO guarda); `OBS_REV_MOVIDO` evita que el mismo aviso vuelva al
   guardar con lo propuesto. `obsRevUbicarHora` ya no lee «14/11» como «las 11». `test_bloki_preguntas` §9 (74), `test_revisar_obs` §14 (89).
+  · PÁGINA 2026-11-07-c PUBLICADA 07/11 (`main` = `9eedc2f`); servidor `2026-11-07-b` para implementar: enlace fijo `7f283ff…`, 6.775 líneas.
   · Pregunta abierta: Kommo y `VENDEDOR_SUCURSAL` del panel no coinciden (Carola, Jonathan, Isabel, Fabián): ¿se pasan las de Kommo al panel?
   · 💵 El 06/11 a Contabilidad le llegó el efectivo y al dueño no: el servidor contesta `2026-11-06-d`; lo probable es que a las 18:00 todavía
   corría la 06-b/c (al dueño solo con efectivo de 48 h+, y la marca `ef18` del día ya quedó puesta). Con la 06-d sale a los dos desde el 07/11 9:00.

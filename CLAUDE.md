@@ -1619,7 +1619,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 - ⚠️ Cambiar la lista = cambiar `VEHICULOS` y las pruebas que nombran choferes (`test_choferes_rotan`, `test_camiones_admin`, `test_chofer_efectivo`,
   `test_chofer_cobro_auto`, `test_ficha_mejoras`, `test_nueve_4js`, `test_patio`, `test_plata_borrar`, `test_fabrica_vida`). `tests/test_choferes_rotan.js` (12).
 
-## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `6a07f86`, versión 2026-11-07-b; servidor `2026-11-07-a` lo implementa el dueño, enlace fijo `fb048e0…`, 6.726 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 06-e de `92714a6…`)
+## ☀️🌙💬📝📄 Buen día, cierre del día, Bloki contesta, revisar observaciones e informe del mes (§4on, 07/11; dueño: *«Todas menos la 116 y 117»*; PÁGINA PUBLICADA 07/11, `9eedc2f`, versión 2026-11-07-c; servidor `2026-11-07-b` lo implementa el dueño, enlace fijo `7f283ff…`, 6.775 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 06-e de `92714a6…`)
 - ☀️ **`vendedora_buen_dia`** 08:30 lun-sáb hábil a cada vendedora de `WA_VENDEDORAS` (sin Eduardo/ROHO/internos; sin nada pendiente no sale) y
   🌙 **`cierre_del_dia`** 21:15 a `WA_DUENO`; el mes sale de la última foto de `__pry_hist__`. ⚠️ El `.gs` copia `ventaTotal`, `saldoACobrar`,
   `docVentaFalta`, `fueraDeConta`, `ctaAvAbiertos`, `ctaAvSoloFecha`: si cambia uno en la página, cambia en el `.gs` (`test_wa_buen_dia_cierre` compara).
@@ -2520,7 +2520,7 @@ correo + el mensaje de **WhatsApp**.
 
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.
-**👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall**,
+**👥 Desde el 02/11/2026 (dueño): Andrea Orias y Fabián Godoy, los dos de Heaven** — Andrea en la **Tienda Banzer** y Fabián en **Ventura Mall** (desde el 07/11, como dice Kommo, Fabián en Central hasta que abra Ventura, §4oo),
 tiendas nuevas. Un vendedor nuevo va en: `VENDEDORES`, `MARCAS`, `BANCOS_POR_VENDEDOR`, `VENDEDOR_SUCURSAL` (pedidos.html) y en el `.gs`
 `WA_MARCAS` + `WA_VENDEDOR_HOMBRE` (servidor **`2026-11-02-a`**, solo eso; IMPLEMENTADO por el dueño, el 04/11 ya contesta `2026-11-02-a`; volver atrás: ✏️ a la
 versión anotada Y pegar la 30-a de `89ca847…`). Su WhatsApp para el bot: la propiedad `WA_VENDEDORAS` (la pone el dueño).
@@ -2671,6 +2671,9 @@ atienden domingos»*, *«los domingos es de 10 a 16:00 banzer y mia plaza»*): M
 del template lo dice. `test_generar_integridad` §9-10 (31).
 ⚠️ **El dashboard cuenta SOLO Kommo** (lead en «Compradores» con «Fecha contrato» del mes): una venta cargada en el panel sin lead en Kommo no
 suma. Desde el 06/11 la 91 (`KOMMO_CIERRE=1`) pasa el lead a Compradores al guardar la venta; lo de antes, no.
+🏪 **El panel usa las mismas sucursales** (§4oo, 07/11, dueño: «Si»; versión 2026-11-07-d): `VENDEDOR_SUCURSAL` = Kommo (Carola → Tienda Banzer,
+Jonathan → Mia Plaza, Isabel y Fabián → Central). ⚠️ Una venta de antes de `VENDEDOR_SUC_DESDE` (01/11) sin la tienda escrita sigue con la de
+entonces (`VENDEDOR_SUCURSAL_ANTES`): `sucursalDeVendedor(v, fecha)` con el día de la venta. Un cambio de tienda futuro = otra fecha y otra lista.
 
 ## 📧 Pedidos de Multicenter y de Copacaba que llegan por correo (06/11; dueño: *«cuando entren pedidos de multi center, juan carlos arce los
 cargues en el panel»* y *«SOLO CARGA los actuales de esta semana»*)

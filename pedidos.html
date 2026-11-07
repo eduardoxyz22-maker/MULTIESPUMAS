@@ -9447,7 +9447,7 @@ function talAnulado(v, n, S){ return !!(S||talSet())[talClaveAnul(v, n)]; }
 /* 🏪 Las tiendas cuyas ventas se cargan al sistema contable en otro lado (lista VACÍA de entrada: lo decide el dueño). */
 function talTiendasAfuera(S){ S=S||talSet(); return Object.keys(S).filter(function(k){ return k.indexOf('t|')===0; }).map(function(k){ return k.slice(2); }); }
 /* De qué tienda es una venta: la venta de tienda dice su sucursal; si no, la de quien vendió. */
-function talTiendaDe(p){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p && p.vendedor) || ''; }
+function talTiendaDe(p){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p && p.vendedor, p && contaFecha(p)) || ''; }
 function talCargaAfuera(p, S){ var t=talTiendaDe(p); return (t && (S||talSet())['t|'+t]) ? t : ''; }
 /* ¿Hay que cargarla al sistema contable? La ÚNICA cuenta de «por cargar al sistema» (tarjetas, chip, Revisar antes de cerrar, el
    control del cierre). Una venta de una tienda tildada en «se cargan en otro lado» no cuenta. */
@@ -18033,23 +18033,37 @@ function esVentaTienda(p){
      Mauricio Mérida → Mutualista · Fernando Peinado → Charcas · Juan Pablo Paredes → Carmelo
      Carola Chávez y Jonathan Monje → Central · María Flores → Buenos Aires
      Mirian Salazar e Isabel Robledo → Mia Plaza
-   (02/11, dueño) Andrea Orias → la Tienda Banzer (nueva) · Fabián Godoy → Ventura Mall (nueva) */
+   (02/11, dueño) Andrea Orias → la Tienda Banzer (nueva) · Fabián Godoy → Ventura Mall (nueva)
+   (07/11, dueño: «Si», a «¿pongo en el panel las sucursales que dice Kommo?») Desde noviembre Kommo nombra a cada uno «Nombre - Sucursal»:
+   Isabel Robledo - Central, Jonathan Monje - Mia Plaza, Carola Chávez - Tienda Banzer, Fabián Godoy - Central (Ventura Mall todavía no
+   abrió), Andrea Orias - Tienda Banzer. ⚠️ Una venta de ANTES de `VENDEDOR_SUC_DESDE` sin la tienda escrita sigue con la de antes
+   (`VENDEDOR_SUCURSAL_ANTES`): si no, lo que Carola vendió en Central en octubre pasaba a la Tienda Banzer. */
+var VENDEDOR_SUC_DESDE='2026-11-01';
 var VENDEDOR_SUCURSAL=[
+  [/MAURICIO/i, 'Mutualista'], [/PEINADO/i, 'Charcas'], [/JUAN PABLO/i, 'Carmelo'],
+  [/CAROLA/i, 'Tienda Banzer'], [/JONATHAN/i, 'Mia Plaza'], [/MARIA FLORES|FLORES/i, 'Buenos Aires'],
+  [/MIRIAN|MIRIAM/i, 'Mia Plaza'], [/ISABEL/i, 'Central'],
+  [/ANDREA|ORIAS/i, 'Tienda Banzer'], [/FABIAN|GODOY/i, 'Central']
+];
+var VENDEDOR_SUCURSAL_ANTES=[
   [/MAURICIO/i, 'Mutualista'], [/PEINADO/i, 'Charcas'], [/JUAN PABLO/i, 'Carmelo'],
   [/CAROLA/i, 'Central'], [/JONATHAN/i, 'Central'], [/MARIA FLORES|FLORES/i, 'Buenos Aires'],
   [/MIRIAN|MIRIAM/i, 'Mia Plaza'], [/ISABEL/i, 'Mia Plaza'],
   [/ANDREA|ORIAS/i, 'Tienda Banzer'], [/FABIAN|GODOY/i, 'Ventura Mall']
 ];
-function sucursalDeVendedor(v){
+/* La tienda de quien vendió ese día: `fecha` (AAAA-MM-DD, el día de la venta; sin ella, hoy) anterior a `VENDEDOR_SUC_DESDE` → la de entonces. */
+function sucursalDeVendedor(v, fecha){
   var n=normNombre(v||''); if(!n) return '';
-  for(var i=0;i<VENDEDOR_SUCURSAL.length;i++) if(VENDEDOR_SUCURSAL[i][0].test(n)) return VENDEDOR_SUCURSAL[i][1];
+  var f=String(fecha||todayStr()).slice(0,10);
+  var L=(f && f<VENDEDOR_SUC_DESDE) ? VENDEDOR_SUCURSAL_ANTES : VENDEDOR_SUCURSAL;
+  for(var i=0;i<L.length;i++) if(L[i][0].test(n)) return L[i][1];
   return '';
 }
 function sucursalDeVenta(p){
   if(!p || !esVentaTienda(p)) return '';
   var d=String(p.direccion||''), i=d.indexOf('·');
   if(i>=0){ var s=sucursalDe(d.slice(i+1).trim()); if(s) return s.n; }
-  return sucursalDeVendedor(p.vendedor);
+  return sucursalDeVendedor(p.vendedor, contaFecha(p));
 }
 /* A qué sucursal fue una reposición: por el cliente («Charcas», «TIENDA CHARCAS», «REPOSICION MIA PLAZA»). */
 function sucursalDeRpt(p){
@@ -37846,7 +37860,7 @@ function almLadoFrac(p, Z){
    vende casi todo con entrega a domicilio (176 de 186 colchones desde agosto) y en la columna de su local quedaba en 0. Sin tienda, el vendedor
    (Eduardo; ROHO → Tiendas Roho). */
 function producirTiendaCliente(p){
-  var s=sucursalDeVendedor(p && p.vendedor); if(s) return s;
+  var s=sucursalDeVendedor(p && p.vendedor, p && contaFecha(p)); if(s) return s;
   if(stockEsEduardo(p)) return 'Eduardo';
   var v=String((p && p.vendedor)||'').trim();
   if(/ROHO/i.test(v)) return 'Tiendas Roho';
@@ -51529,7 +51543,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-07-c';
+var PANEL_V='2026-11-07-d';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

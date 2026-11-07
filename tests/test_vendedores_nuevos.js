@@ -59,8 +59,22 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     // una venta de tienda vieja (sin la sucursal en la dirección) cae en la del vendedor
     va:sucursalDeVenta({ id:'t1', vendedor:'Andrea Orias', direccion:DIR_TIENDA, zona:ZONA_TIENDA, productos:[] }),
     vf:sucursalDeVenta({ id:'t2', vendedor:'Fabián Godoy', direccion:DIR_TIENDA+' · Ventura Mall', zona:ZONA_TIENDA, productos:[] }) }));
-  chk('Andrea → Tienda Banzer, Fabián → Ventura Mall (Isabel sigue en Mia Plaza)', r.a==='Tienda Banzer' && r.f==='Ventura Mall' && r.i==='Mia Plaza', r);
-  chk('…y sus ventas de tienda caen en su tienda', r.va==='Tienda Banzer' && r.vf==='Ventura Mall', r);
+  /* (07/11) Cambiado a conciencia: el dueño dijo «Si» a usar las sucursales de Kommo («Nombre - Sucursal» desde noviembre): Fabián en
+     Central (Ventura Mall todavía no abrió), Isabel en Central, Carola en la Tienda Banzer, Jonathan en Mia Plaza. */
+  chk('Andrea → Tienda Banzer, Fabián → Central, Isabel → Central (las de Kommo)', r.a==='Tienda Banzer' && r.f==='Central' && r.i==='Central', r);
+  chk('…y sus ventas de tienda caen en su tienda (la escrita en la venta manda)', r.va==='Tienda Banzer' && r.vf==='Ventura Mall', r);
+  r = await ev(() => {
+    var ts=function(d){ return new Date(d+'T15:00:00-04:00').getTime(); };
+    var vt=function(v, d){ return sucursalDeVenta({ id:'x'+v+d, vendedor:v, direccion:DIR_TIENDA, zona:ZONA_TIENDA, ts:ts(d), productos:[] }); };
+    return { c:sucursalDeVendedor('Carola Chávez'), j:sucursalDeVendedor('Jonathan Monje'), m:sucursalDeVendedor('Mirian Salazar'),
+      cOct:vt('Carola Chávez','2026-10-28'), cNov:vt('Carola Chávez','2026-11-02'), iOct:vt('Isabel Robledo','2026-10-31'), iNov:vt('Isabel Robledo','2026-11-01'),
+      jOct:sucursalDeVendedor('Jonathan Monje','2026-10-15'), tal:talTiendaDe({ vendedor:'Carola Chávez', ts:ts('2026-10-10'), direccion:'Calle 1', productos:[] }),
+      pap:producirTiendaCliente({ vendedor:'Isabel Robledo', ts:ts('2026-10-20'), productos:[] }), papN:producirTiendaCliente({ vendedor:'Isabel Robledo', ts:ts('2026-11-04'), productos:[] }) };
+  });
+  chk('Carola → Tienda Banzer, Jonathan → Mia Plaza, Mirian sigue en Mia Plaza', r.c==='Tienda Banzer' && r.j==='Mia Plaza' && r.m==='Mia Plaza', r);
+  chk('una venta de tienda de octubre sin la tienda escrita sigue en la de entonces (Carola → Central, Isabel → Mia Plaza)', r.cOct==='Central' && r.iOct==='Mia Plaza', r);
+  chk('…y desde el 01/11, la nueva (Carola → Tienda Banzer, Isabel → Central)', r.cNov==='Tienda Banzer' && r.iNov==='Central', r);
+  chk('el talonario y «para clientes de» miran el día de la venta', r.jOct==='Central' && r.tal==='Central' && r.pap==='Mia Plaza' && r.papN==='Central', r);
 
   console.log('\n── 3. Las tiendas nuevas, sin zona ni pin inventados ──');
   r = await ev(() => {
