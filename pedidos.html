@@ -21306,7 +21306,7 @@ function ctaDocHtml(p){
   var b=function(v){ return '<button type="button" class="btn btn-sm'+(d===v?' btn-primary':'')+'" style="width:auto;'+(d===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaDocTipo(\''+esc(p.id)+'\',\''+v+'\')">'+DOCV_TXT[v]+'</button>'; };
   return '<div id="cta-doc" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+b('F')+b('R')+
     '<input type="text" id="cta-doc-num" value="'+esc(n)+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:110px" oninput="ctaDocNum(\''+esc(p.id)+'\', this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaDocGuardar(\''+esc(p.id)+'\');}">'+
-    '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar</button></div>'+
+    '<button type="button" class="btn btn-primary btn-sm" style="width:auto" onclick="ctaDocGuardar(\''+esc(p.id)+'\')">💾 Guardar N°</button></div>'+   // (07/11) «Guardar N°»: en la misma ficha está el «Guardar» de «✏️ Corregir este pago»
     (falta ? '<div style="font-size:.74rem;color:var(--amber-dk,#92400e);margin-top:4px">❗ Obligatorio: anotá si va con factura o con nota de remisión y su número.</div>' : '');
 }
 function ctaDocNum(id, v){ if(CTA_DOC.id!==id) CTA_DOC={ id:id, t:'', n:null }; CTA_DOC.n=String(v==null?'':v); }
