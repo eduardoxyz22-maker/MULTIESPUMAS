@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4os — 🏷️ BLOKI CONTESTA EL CÓDIGO DE UN PRODUCTO (07/11; dueño, con la captura de Bloki diciendo «No tengo esa respuesta todavía» a «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*; página 2026-11-07-g, va con la `SCRIPT_VERSION_ESPERADA` 07-e)
+### §4os — 🏷️ BLOKI CONTESTA EL CÓDIGO DE UN PRODUCTO (07/11; dueño, con la captura de Bloki diciendo «No tengo esa respuesta todavía» a «cual es el codigo del colchon cloud de 90×190»: *«¿y no que Bloki respondía preguntas?»*; PÁGINA 2026-11-07-g PUBLICADA 07/11 (`main` = `1b14876`, Pages corrida 42 ✅), con la `SCRIPT_VERSION_ESPERADA` 07-e; batería: lo rojo con la máquina cargada pasa solo, y `test_circuito` 2 + `test_banzer` 1 fallan igual con `63b947d`)
 - **Por qué no contestaba**: Bloki entiende cuatro preguntas con los números del panel (stock, saldo de un cliente, cupos, entregas) y las
   preguntas libres van a Claude SOLO con la contraseña de Administración (`blokiClaudePuede`). «El código de…» no era ninguna de las cuatro.
   Y el CLOUD **no está en la lista de precios** (`CODIGOS`): solo en los Excel (planilla real del 07/11: CH2511 = CLOUD 105x190 en PTF,

@@ -1632,7 +1632,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 - 🧽 **Acción `bloki`** (afuera del candado, tope `BLOKI_TOPE_DIA`=30 por día, `IA_ACTIVA` + clave). 💬 En la página, «💬 Preguntame»: stock, saldo
   de un cliente, cupos y entregas con las cuentas del panel (`blokiStock` = `saldoVeredicto`, etc.; «a la mañana» = turno, «mañana» = día); a Claude
   solo con `UNLOCKED` y `servidorTiene('2026-11-07-a')`. Una vendedora ve lo suyo. `tests/test_bloki_preguntas.js` (66).
-  🏷️ **El código de un producto** (§4os, página 07-g; dueño: *«¿y no que Bloki respondía preguntas?»*): «código del cloud 90x190», «¿qué es el CH1220?»
+  🏷️ **El código de un producto** (§4os, página 07-g PUBLICADA `1b14876`; dueño: *«¿y no que Bloki respondía preguntas?»*): «código del cloud 90x190», «¿qué es el CH1220?»
   (`blokiCodigo`): la lista de precios, los Excel de los almacenes (lo que la lista no tiene, `blokiCodIdx().alm`) y, si en ninguno, el histórico
   (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
   El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
