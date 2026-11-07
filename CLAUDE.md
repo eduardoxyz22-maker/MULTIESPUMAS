@@ -1453,7 +1453,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   el editor (una consulta, sin WhatsApp). Página: `waRespIaHtml`/`waRespIaHechas`. `test_wa_bot` §15, §15b y §15c (al vuelo), `tests/test_wa_claude.js` (11).
   ⚠️ **Nunca dos respuestas**: `IA_HECHO` (Propiedades) se anota ANTES de mandar y la toma de mensajes lo respeta; un número con un mensaje
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
-  🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
+  🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
 - `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
