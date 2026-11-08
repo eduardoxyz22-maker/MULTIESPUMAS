@@ -597,7 +597,7 @@ function PREPARAR(){
   chk('Sueña 40.000 y 8 contra 80.000 y 16; el equipo 71.340 y 19 contra 164.000 y 30 (con el sin marca)',
       r.aS && r.aS.bs===40000 && r.aS.u===8 && r.bS.bs===80000 && r.bS.u===16 && r.aE.bs===71340 && r.aE.u===19 && r.bE.bs===164000 && r.bE.u===30, [r.aS, r.bS, r.aE, r.bE]);
   chk('arriba del todo: «Heaven: 64% abajo en plata (Bs 30.000 contra Bs 84.000) y 29% abajo en unidades (10 contra 14)», y lo mismo para Sueña y el equipo',
-      /📊 A ESTA ALTURA — OCTUBRE DE 2026 AL DÍA 14/i.test(r.txt) && /cargado hasta ahora, contra lo que tenía septiembre de 2026 al día 14 a las 15:00\./.test(r.txt) &&
+      /📊 A ESTA ALTURA — OCTUBRE DE 2026 AL DÍA 14/i.test(r.txt) && /cargado hasta ahora, contra lo que tenía septiembre de 2026 al día 14 a las 15:00 \(los mismos 12 días hábiles\)\./.test(r.txt) &&
       /Heaven: 64% abajo en plata \(Bs 30\.000 contra Bs 84\.000\) y 29% abajo en unidades \(10 contra 14\)\./.test(r.txt) &&
       /Sueña: 50% abajo en plata \(Bs 40\.000 contra Bs 80\.000\) y 50% abajo en unidades \(8 contra 16\)\./.test(r.txt) &&
       /Todo el equipo: \d+% abajo en plata \(Bs 71\.340 contra Bs 164\.000\) y 37% abajo en unidades \(19 contra 30\)\./.test(r.txt), r.txt);
@@ -631,7 +631,7 @@ function PREPARAR(){
   await reloj('2026-10-14T11:00:00-04:00');
   r = await horaFix();
   chk('a las 11:00, septiembre entra al día 14 hasta las 11:00: la venta de las 10:00 sí y la de las 12:00 no (Bs 85.000), y lo dice',
-      r.bH===85000 && r.hora==='11:00' && /contra lo que tenía septiembre de 2026 al día 14 a las 11:00\./.test(r.intro), [r.bH, r.hora, r.intro && r.intro.slice(0,200), r.__error]);
+      r.bH===85000 && r.hora==='11:00' && /contra lo que tenía septiembre de 2026 al día 14 a las 11:00 \(los mismos 12 días hábiles\)\./.test(r.intro), [r.bH, r.hora, r.intro && r.intro.slice(0,200), r.__error]);
   chk('…la curva también: a las 11:00 cuenta 1.000 menos de ese día que a las 13:00, y sin hora cuenta el día entero',
       r.r>0 && Math.abs((r.f13-r.f11)*r.T-1000)<0.01 && Math.abs(r.fDia-r.f13)<1e-9, r);
   chk('un mes más corto (septiembre, 30 días) contra el día 31 entra ENTERO, sin cortar por hora', r.corto===r.entero && r.entero>0, [r.corto, r.entero]);

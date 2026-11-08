@@ -172,8 +172,8 @@ function PREPARAR(){
   });
   chk('«cuánto vendí este mes»: lo de Proyección para noviembre (17.200 = 4.000 + 6.300 + 2.900 + 2.000 + 2.000), con ventas, unidades y lo que falta cobrar', r.mes && r.mesBs==='Bs 17.200' &&
     r.mes.h.indexOf('Vendiste para noviembre')>=0 && r.mes.h.indexOf(r.mesBs)>=0 && r.mes.nums.some(function(n){ return /^5 ventas/.test(n); }) && r.mes.nums.some(function(n){ return /^6 colchones y somieres/.test(n); }) && r.mes.nums.some(function(n){ return /falta cobrar/.test(n) && /1\.540/.test(n); }), r.mes);
-  chk('…contra octubre A ESTA ALTURA (al 10/10 a las 10:00 solo estaba cargada la de 5.000): +244 %, y octubre entero 12.000', r.mes && r.mes.nums.some(function(n){ return /\+244 %/.test(n) && /octubre a esta altura/.test(n); }) &&
-    r.mes.sub.some(function(s){ return /Octubre a esta altura \(día 10, 10:00\): Bs 5\.000 · entero: Bs 12\.000 · ¡ya lo pasaste!/.test(s); }), r.mes && r.mes.sub);
+  chk('…contra octubre A ESTA ALTURA, a los mismos 7 días hábiles (al 08/10 a las 10:00 solo estaba cargada la de 5.000): +244 %, y octubre entero 12.000', r.mes && r.mes.nums.some(function(n){ return /\+244 %/.test(n) && /octubre a esta altura/.test(n); }) &&
+    r.mes.sub.some(function(s){ return /Octubre a esta altura \(día 8, 10:00, los mismos 7 días hábiles\): Bs 5\.000 · entero: Bs 12\.000 · ¡ya lo pasaste!/.test(s); }), r.mes && r.mes.sub);
   chk('…su meta del mes (mínima 10.000 ya pasada, presupuesto 20.000: faltan 2.800) y la de Heaven del equipo (lleva 34.350)', r.mes && r.mes.sub.some(function(s){ return /Mínima de noviembre: Bs 10\.000 · ✅/.test(s); }) &&
     r.mes.sub.some(function(s){ return /Presupuesto: Bs 20\.000 · faltan Bs 2\.800/.test(s); }) && r.mes.sub.some(function(s){ return /Meta de Heaven \(todo el equipo\): Bs 50\.000 · lleva Bs 34\.350 \(69 %\)/.test(s); }), r.mes && r.mes.sub);
   chk('«hoy»: lo CARGADO hoy (PEDRO, 2.900)', r.hoy && r.hoyBs==='Bs 2.900' && /Vendiste hoy, martes 10\/11: Bs 2\.900 en 1 venta/.test(r.hoy.h), r.hoy && r.hoy.h);

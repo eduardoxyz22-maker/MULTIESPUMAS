@@ -6,7 +6,8 @@
         la planilla de ese momento; WA_PRUEBA.
      3. 26 A: el lunes a las 08:00 (desde el día 7), a todos los de WA_DUENO, los que van MÁS de 20 % abajo de su mes pasado a esta altura
         (justo el 20 % no), con los productos en que bajaron; los nuevos aparte; si nadie bajó no sale; el botón trae el detalle de ESA
-        altura. 3b: la página (`pryMomDe`) y el servidor dan lo mismo, vendedor por vendedor.
+        altura (desde el 08/11, a los mismos días hábiles: 3w). 3b: la página (`pryMomDe`, `pryCorteAltura`) y el servidor dan lo mismo,
+        vendedor por vendedor y día por día.
      4. 25 C: el dueño (y su jefe, y el de prueba) le pregunta al bot: el menú (ventas, mes, bajaron, cobrar, efectivo, entregas, camiones,
         stock), el efectivo solo al primero, «ok» y reacciones sin respuesta, audios, «productos» de la 07-d, un cliente no entra acá, Meta
         repetido, bot apagado.
@@ -169,7 +170,8 @@ const UB = [
   P('u16', 'Mauricio Merida', { celular: '70000026' })                                     // Sueña, sin pin → sí
 ];
 
-/* 26 A · el lunes 09/11/2026 a las 08:05: noviembre al día 9 contra octubre al día 9 a las 08:05. */
+/* 26 A · el lunes 09/11/2026 a las 08:05: noviembre al día 9 (6° día hábil: el 1 domingo, el 2 feriado) contra octubre a sus mismos 6 días
+   hábiles, el 07/10 a las 08:05 (desde el 08/11, P1: el dueño eligió la «A»; antes, al día 9). */
 const V = (id, vend, fecha, ts, saldo, prods, o) => P(id, vend, Object.assign({ fecha, ts, saldo, celular: '', productos: prods }, o || {}));
 const PR = (desc, cant, medida) => ({ desc, medida: medida == null ? '140x190' : medida, cant, precio: 1000 });
 const VB = [
@@ -343,7 +345,7 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     const sal = S.salen('vendedoras_bajan');
     chk('3b a las 08:05 les llega a los DOS de WA_DUENO (no es efectivo)', JSON.stringify(sal.map(x => x.to).sort()) === JSON.stringify(['59177000007', '59177000008']), sal.map(x => x.to));
     const p = (sal[0] || { p: [] }).p;
-    chk('3c el día y la altura', p[0] === 'lunes 09/11' && p[1] === 'noviembre al día 9 contra octubre al día 9, a las 08:05', p.slice(0, 2));
+    chk('3c el día y la altura: octubre a los MISMOS 6 días hábiles (el 07/10), no al día 9', p[0] === 'lunes 09/11' && p[1] === 'noviembre al día 9 contra octubre al día 7 (los mismos 6 días hábiles), a las 08:05', p.slice(0, 2));
     chk('3d cuántos: 2 del equipo, más de 20 %', p[2] === '2 del equipo, más de 20 %', p[2]);
     chk('3e quiénes, la que más bajó primero, con los productos (sin almohadas): Carola ▼ 50 % y Mirian ▼ 21 %',
         p[3] === 'Carola ▼ 50 % (Bs 12.000 contra Bs 24.000), bajó en TITANIO ICE −6, ORO ANATOMICO −2 · Mirian ▼ 21 % (Bs 7.900 contra Bs 10.000), bajó en SOFT −1', p[3]);
@@ -371,7 +373,7 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     S.limpiar(); poner('2026-11-10 09:30');
     hook(S, '59177000008', { type: 'button', button: { payload: 'vb|' + MS_LUNES, text: 'Ver el detalle' } });
     const T = textos(S, '59177000008'), t = T.join('\n');
-    chk('3o tocó «Ver el detalle»: le llega el detalle de la altura del lunes (la venta del martes no entra)', T.length === 1 && /^📉 \*Cada vendedor a esta altura\* \(lunes 09\/11, 08:05\)\nNoviembre al día 9 contra octubre al día 9, a la misma hora\./.test(t) &&
+    chk('3o tocó «Ver el detalle»: le llega el detalle de la altura del lunes (la venta del martes no entra)', T.length === 1 && /^📉 \*Cada vendedor a esta altura\* \(lunes 09\/11, 08:05\)\nNoviembre al día 9 contra octubre al día 7 \(los mismos 6 días hábiles\), a la misma hora\./.test(t) &&
         /⚠️ \*Carola\* ▼ 50 % · Bs 12\.000 contra Bs 24\.000 · 2 ventas contra 3\nBajó en: TITANIO ICE −6, ORO ANATOMICO −2/.test(t), T);
     chk('3p todo el equipo, de más abajo a más arriba, con ⚠️ los que bajaron; los nuevos aparte; y el equipo', t.indexOf('*Carola*') < t.indexOf('*Mirian*') && t.indexOf('*Mirian*') < t.indexOf('*Jonathan*') && t.indexOf('*Jonathan*') < t.indexOf('*Isabel*') &&
         /\*Jonathan\* ▼ 20 % · Bs 8\.000 contra Bs 10\.000/.test(t) && !/⚠️ \*Jonathan\*/.test(t) && /🆕 Sin ventas a esta altura el mes pasado: Maria Bs 5\.000 \(1\)/.test(t) && /👥 Equipo: Bs 41\.900 contra Bs 61\.000 \(▼ 31 %\)/.test(t), t);   // el equipo, como Proyección: con lo de octubre de quien ya no está
@@ -379,6 +381,18 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     // Un mes más corto: marzo 30 contra febrero entero
     const D = S.ctx.waVbDatos_(S.lista(), TS('2026-03-30', '08:00'));
     chk('3r al día 30 de marzo se compara contra febrero ENTERO (era más corto)', D.entero === true && D.cmp === '2026-02' && D.dd === 28, { entero: D.entero, cmp: D.cmp, dd: D.dd });
+    // 📅 (08/11, P1) Los mismos días hábiles: el corte del otro mes (`waVbCorte_` = `pryCorteAltura` de la página)
+    const K = S.ctx.waVbCorte_, kj = o => JSON.stringify(o);
+    chk('3w lunes 09/11 08:05 (6° día hábil) → octubre corta el miércoles 07/10 a las 08:05', kj(K('2026-11-09', '2026-10', 485)) === kj({ lim: '2026-10-07', min: 485, entero: false, n: 6, hab: true, dia: 7 }), K('2026-11-09', '2026-10', 485));
+    chk('3w2 domingo 08/11 (5 días hábiles enteros) → octubre hasta el martes 06/10 entero', kj(K('2026-11-08', '2026-10', 600)) === kj({ lim: '2026-10-06', min: null, entero: false, n: 5, hab: false, dia: 6 }), K('2026-11-08', '2026-10', 600));
+    chk('3w3 el feriado del lunes 02/11 (ningún día hábil todavía) → octubre antes de su primer día hábil', kj(K('2026-11-02', '2026-10', 600)) === kj({ lim: '2026-09-30', min: null, entero: false, n: 0, hab: false, dia: 0 }), K('2026-11-02', '2026-10', 600));
+    chk('3w4 septiembre sin el 24 ni el 25 (no se trabajó): el 26/10 (22° día hábil) contra el 28/09 (septiembre corta en su 22°, no el 26)', K('2026-10-26', '2026-09', 600).lim === '2026-09-28', K('2026-10-26', '2026-09', 600));
+    chk('3w5 febrero tiene menos días hábiles que marzo al 30: entero', K('2026-03-30', '2026-02', 480).entero === true, K('2026-03-30', '2026-02', 480));
+    // Una venta cargada el 08/10 (después del 6° día hábil de octubre) ya no cuenta para «a esta altura»: con el mismo día del mes, sí
+    const H = arma(null, [V('hj1', 'Jonathan Monje', '2026-10-06', TS('2026-10-05'), 10000, [PR('COLCHON TITANIO', 2)]), V('hj2', 'Jonathan Monje', '2026-10-20', TS('2026-10-08', '10:00'), 5000, [PR('COLCHON SOFT', 1)]),
+                          V('hj3', 'Jonathan Monje', '2026-11-12', TS('2026-11-04'), 9000, [PR('COLCHON TITANIO', 2)])]);
+    const Dh = H.ctx.waVbDatos_(H.lista(), MS_LUNES), jh = Dh.vend.filter(o => o.v === 'Jonathan Monje')[0] || {};
+    chk('3w6 lo cargado el 08/10 queda afuera: Jonathan Bs 9.000 contra Bs 10.000 (▼ 10 %, no baja); con el día 9 eran Bs 15.000 (▼ 40 %)', jh.ant && jh.ant.bs === 10000 && jh.act.bs === 9000 && jh.baja === false && jh.pct === -10, jh);
     chk('3s enero contra diciembre del año anterior', S.ctx.waMesAntes_('2026-01') === '2025-12' && S.ctx.waFinDeMes_('2026-02') === '2026-02-28' && S.ctx.waFinDeMes_('2028-02') === '2028-02-29');
     // Muchos que bajan con productos de nombre largo: entran TODOS (se achica: sin productos, después sin montos)
     const NOMS = ['Carola Chavez', 'Isabel Robledo', 'Jonathan Monje', 'Mirian Salazar', 'Maria Flores', 'Andrea Orias', 'Fabián Godoy'];
@@ -399,7 +413,7 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
 
   console.log('\n── 3b. La página y el servidor cuentan igual (el MoM de Proyección) ──');
   try {
-    const S = servidor(Object.assign({}, ON, DOS)); S.cargar(VB); poner(LUNES + ' 08:05');
+    const S = servidor(Object.assign({}, ON, DOS)); S.cargar(VB.concat([V('jo2', 'Jonathan Monje', '2026-10-21', TS('2026-10-08', '10:00'), 4000, [PR('COLCHON SOFT', 1)])])); poner(LUNES + ' 08:05');   // jo2: entre el 6° día hábil y el día 9
     const L = S.lista(), D = S.ctx.waVbDatos_(L, MS_LUNES);
     const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
     const errores = [];
@@ -411,13 +425,20 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     await page.goto('file://' + PEDIDOS, { waitUntil: 'load' });
     await page.waitForTimeout(250);
     const vends = Array.from(D.vend).map(o => o.v);
-    const pag = await page.evaluate(({ L, vends }) => {
+    let pag = await page.evaluate(({ L, vends }) => {
       STATE = L.filter(function (p) { return !esBorrador(p); });
-      var R = { V: pryVentas(), ym: '2026-11' }, A = { cmp: '2026-10', curso: true, dia: 9, min: pryMinBo(Date.now()), enteroAntes: false };
+      var R = { V: pryVentas(), ym: '2026-11', hoy: '2026-11-09' }, A = { cmp: '2026-10', curso: true, dia: 9, min: pryMinBo(Date.now()), enteroAntes: false };
       var out = {};
       vends.forEach(function (v) { var M = pryMomDe(R, A, { amb: 'tienda', vendedor: v }); out[v] = [r2(M.act), r2(M.ant), M.tres.act.n, M.tres.ant.n]; });
-      return out;
+      var dias = [], f = '2026-08-01'; while (f <= '2026-12-31') { dias.push(f); f = stockSumarDias(f, 1); }
+      var cortes = {}; dias.forEach(function (d) { var y = +d.slice(0, 4), m = +d.slice(5, 7) - 1; if (m < 1) { m = 12; y--; } var cm = y + '-' + (m < 10 ? '0' : '') + m;
+        [0, 485, 1439].forEach(function (mi) { cortes[d + '|' + cm + '|' + mi] = JSON.stringify(pryCorteAltura(d, cm, mi)); }); });
+      return { out: out, cortes: cortes, fp: JSON.stringify(FERIADOS_PASADOS) };
     }, { L, vends });
+    const pagC = pag.cortes, difC = Object.keys(pagC).filter(k => { const q = k.split('|'); return JSON.stringify(S.ctx.waVbCorte_(q[0], q[1], Number(q[2]))) !== pagC[k]; });
+    chk('3b3 el corte del otro mes (los mismos días hábiles) da lo mismo en la página y en el servidor, todos los días de agosto a diciembre (' + Object.keys(pagC).length + ' casos)', Object.keys(pagC).length > 400 && difC.length === 0, difC.slice(0, 5).map(k => k + ' página ' + pagC[k]));
+    chk('3b4 los días que no se trabajaron (FERIADOS_PASADOS) son los mismos en la página y en el servidor', pag.fp === JSON.stringify(S.ctx.WA_FERIADOS_PASADOS), [pag.fp, JSON.stringify(S.ctx.WA_FERIADOS_PASADOS)]);
+    pag = pag.out;
     const srv = {}; Array.from(D.vend).forEach(o => { srv[o.v] = [o.act.bs, o.ant.bs, o.act.n, o.ant.n]; });
     const dif = vends.filter(v => JSON.stringify(srv[v]) !== JSON.stringify(pag[v]));
     chk('3b1 cada vendedor: lo de noviembre y lo de octubre a esta altura (Bs y ventas) dan lo mismo que el MoM de Proyección (' + vends.length + ' vendedores)', dif.length === 0 && vends.length === 5,
