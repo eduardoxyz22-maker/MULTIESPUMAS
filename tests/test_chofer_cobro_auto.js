@@ -147,7 +147,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     _abrir('p7'); await _esp(40); ctaEditarPago('p7', 1); await _esp(60); ctaEditRecibio('p7', 'Fernando'); await _esp(40);
     ctaGuardarPago('p7', 1); await _esp(80); var r=cobrosDe(findById('p7'))[0].recibio; closeModal(); return r;
   });
-  chk('5e. corregir a un chofer de otro camión (Fernando, Foton insumo) pregunta, y Cancelar deja el de antes', r5e==='Luis Pierre' && dialogos.some(m=>/Fernando es del Foton insumo/.test(m)), { r5e, dialogos });
+  chk('5e. corregir a un chofer de otro camión (Fernando, Foton nuevo desde el 06/11) pregunta, y Cancelar deja el de antes', r5e==='Luis Pierre' && dialogos.some(m=>/Fernando es del Foton nuevo/.test(m)), { r5e, dialogos });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();

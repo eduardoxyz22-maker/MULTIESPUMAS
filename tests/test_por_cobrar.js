@@ -160,7 +160,8 @@ function PREPARAR(){
     return { txt:f?f.innerText.replace(/\s+/g,' ').trim():'', toca:!!(f && f.classList.contains('mc-toca')), al:_txt('#cua-alertas') };
   });
   chk('la ficha «Por cobrar» del Cuadre (Bs 5.500,00 · 2 ventas de octubre) se puede tocar', /POR COBRAR Bs 5\.500,00 2 ventas de octubre de 2026/i.test(r.txt) && r.toca, r.txt);
-  await page.click('#cua-metrics .mc-toca');
+  // (07/11, §4ov) «Efectivo (caja)» también se toca ahora: se elige la ficha por su título
+  await page.locator('#cua-metrics .mc-toca').filter({ has: page.locator('.mc-lbl', { hasText: /^Por cobrar$/ }) }).click();
   await page.waitForTimeout(150);
   r = await ev(() => ({ m:_modal(), filas:_filas() }));
   chk('…y abre la lista del Cuadre: los mismos 2 clientes, «Carola Chavez · octubre de 2026 (por la fecha de la venta)»',

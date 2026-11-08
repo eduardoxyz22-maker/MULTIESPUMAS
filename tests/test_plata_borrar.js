@@ -330,8 +330,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('c6 · desde la ficha (💵 Efectivo): pregunta; «Cancelar» vuelve a la ficha sin guardar; 📱 QR BISA no pregunta y cobra',
       r.c6 && /Quién recibió la plata/.test(r.c6.pregunta) && /CLIENTE/.test(r.c6.volvio) && !/Quién recibió/.test(r.c6.volvio) && r.c6.sinGuardar===0 && r.c6.f.pagado===true && r.c6.f.pagos.some(x=>!x.ant && x.met==='QR BISA'),
       r.c6 && [r.c6.sinGuardar, r.c6.f.pagos, (r.c6.volvio||'').slice(0,60), (r.c6.pregunta||'').slice(0,60)]);
-  chk('c7 · el desplegable trae a los otros choferes (Ysrael, Luis Eyzaguirre…), sin el del pedido; elegir uno lo anota a su nombre',
-      r.c7 && r.c7.opciones.some(t=>/Ysrael/.test(t)) && r.c7.opciones.some(t=>/Eyzaguirre/.test(t)) && !r.c7.opciones.some(t=>/Luis Pierre/.test(t)) && r.c7.quien[0]==='Ysrael' && r.c7.f.pagado===true, r.c7 && [r.c7.opciones, r.c7.quien]);
+  chk('c7 · el desplegable trae a los otros choferes (Ysrael, Miguel Melgar…: la lista del 06/11), sin el del pedido; elegir uno lo anota a su nombre',
+      r.c7 && r.c7.opciones.some(t=>/Ysrael/.test(t)) && r.c7.opciones.some(t=>/Miguel Melgar/.test(t)) && !r.c7.opciones.some(t=>/Luis Pierre/.test(t)) && r.c7.quien[0]==='Ysrael' && r.c7.f.pagado===true, r.c7 && [r.c7.opciones, r.c7.quien]);
   chk('el Cuadre «Efectivo cobrado vs. retirado» se la pide al chofer: Luis Pierre (chofer) con 1.000, Ysrael con 1.000, y Mirian con lo suyo',
       r.cuadre && r.cuadre.some(f=>f[0]==='Luis Pierre' && f[1]===true && f[2]===1000) && r.cuadre.some(f=>f[0]==='Ysrael' && f[1]===true && f[2]===1000) && r.cuadre.some(f=>/Mirian/.test(f[0]) && f[1]===false && f[2]>=1000), r.cuadre);
 

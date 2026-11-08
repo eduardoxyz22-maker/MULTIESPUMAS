@@ -1455,6 +1455,14 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; en la rama, lo implementa el dueño): **13 A** `pedir_ubicacion` a las 10:00 al
+  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, también el martes; domingo nada), una vez por pedido (`WA_UB_PEDIDA`), con
+  `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo de su mes pasado a esta
+  altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
+  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
+  (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
+  tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
+  del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
 - `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)
@@ -1609,6 +1617,27 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09). `choferesConocidos()` incluye a los que ya no están (Giordano salió de `VEHICULOS` el
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
+**💵 «¿Quién recibió el efectivo?» es OBLIGATORIO** (§4ow, 07/11, dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió
+la plata»*; PUBLICADO 08/11, versión 2026-11-08-a): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
+o el chofer; sin eso no se guarda («Para guardar» y el paso del cobro lo piden igual). El chofer va solo en los renglones de efectivo NUEVOS
+(`recibioAplicar`; el adelanto suelto nuevo pasa a renglón `~… >Chofer`). No en venta de tienda, ATC/RPT, Eduardo, ROHO ni internos; al editar sin
+tocar el efectivo (`EDIT_PLATA0.ef`) no pregunta; el chofer puesto solo el día de la entrega (§4ok-112) cuenta. ⚠️ Un camino NUEVO que anote efectivo
+pide lo mismo. Playwright solo con `RECIBIO_PRUEBA`. `tests/test_recibio_obligatorio.js` (21).
+**💵🔗 Cada retiro tapa sus cobros** (§4ov, 07/11, dueño: *«¿no cuadra porque ingresó en octubre y se retiró en noviembre?… al darle al efectivo
+¿no debería mostrar qué clientes pagaron?»*; PUBLICADO 08/11, versión 2026-11-08-a): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
+que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira seguida que dé justo, la más nueva primero → del más viejo; mismo
+desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
+no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
+abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
+**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a; va también en el `.gs` 07-f, que el dueño implementa el lunes 09/11): 🔒 `EFE_CERRADO`
+(31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
+cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
+fecha de otro día = el final de ese día). Orden (`efeTapar` = `waEfeTapar_`): 0. los tildados al cargarlo, 1. mismo monto, 2. tira que dé justo, 3. del
+más viejo — hasta el día de gracia (`efeGracia`: primer hábil después de fin de mes) el mes anterior primero, después solo su mes. Lo que quedó de un
+mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro lista los cobros sin recoger con CLIENTE y nota (nunca la OC), tildados como
+los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
+avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
+un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)
@@ -1637,7 +1666,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   (`VENTAS_HIST`); en otra medida dice en cuáles hay, con su código. El STOCK también busca en los Excel si la lista no tiene nada (`blokiCandDe`).
   El «no sé» dice qué sí contesta (`blokiQueSe`). `tests/test_bloki_codigo.js` (25). ☁️ El CLOUD en `CODIGOS` (CH2510 90x190 … CH2514 180x190, del dueño) con
   `d:"CLOUD"`: la clave del stock no cambia.
-  💬 **Idea 9: siete grupos más** (§4ot, página 07-h; dueño: *«Idea 9 todas de Bloki»*): mis ventas (= Proyección, a esta altura, meta, la más grande,
+  💬 **Idea 9: siete grupos más** (§4ot, página 07-h PUBLICADA `2c50384`; dueño: *«Idea 9 todas de Bloki»*): mis ventas (= Proyección, a esta altura, meta, la más grande,
   ranking con alcance de todo), cobranza (quiénes deben, efectivo = «Efectivo en tu mano», avisos de Contabilidad, sin factura), mis pedidos (sin stock =
   `semanaLinea`, sin camión/ubicación, «¿cuándo llega el pedido de…?», la semana que viene), productos (precio cobrado de verdad en 60 días, medidas,
   lo más vendido), logística (qué falta cargar = tildes de la Lista de carga, recoger de Moreno, cierre, GPS), «¿qué me falta hacer?» (el «Para hacer»

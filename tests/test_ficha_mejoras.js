@@ -64,7 +64,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('C · listo para cargar y sin camión: lo avisa', r.avisos.some(a=>/Listo para cargar» y no tiene camión/.test(a)), r.avisos);
   chk('D · sugiere el camión que ya va a Norte', /Carry/.test(r.sug) && /ya va a Norte/.test(r.sug), r.sug);
   const usado=await page.evaluate(()=>{ document.querySelector('#modal-box .fl-sug .fl-btn').click(); var p=findById('m3'); return { v:p.vehiculo, c:p.chofer, sug:!!document.querySelector('#modal-box .fl-sug'), abierta:document.getElementById('modal').classList.contains('on') }; });
-  chk('D · «✓ Usar este» pone el camión y su chofer, y la ficha sigue abierta sin la sugerencia', usado.v==='Carry' && usado.c==='Luis Pierre' && !usado.sug && usado.abierta, usado);
+  chk('D · «✓ Usar este» pone el camión y su chofer, y la ficha sigue abierta sin la sugerencia', usado.v==='Carry' && usado.c==='Omar' && !usado.sug && usado.abierta, usado);
 
   r=await ver('m4');
   chk('C · fecha que pasó sin entregar, sin ubicación y sin celular', r.avisos.some(a=>/Era para el 20\/10/.test(a)) && r.avisos.some(a=>/No tiene ubicación/.test(a)) && r.avisos.some(a=>/celular/.test(a)), r.avisos);

@@ -8,7 +8,7 @@
         de Eduardo (hoy, mañana, por cargar, atrasados, entregados) y de lo que falta cargar.
      2. Lo que dice Eduardo usa esos números (falta cargar, hoy, mañana, entregados).
    Con three.js (copia local: PATIO_THREE=<carpeta del paquete three 0.128>, la misma que usa test_patio):
-     3. Arma a Eduardo, Isabel, el perro, un chofer por camión (el primero de VEHICULOS), la pizarra, el reloj y los banderines del tema.
+     3. Arma a Eduardo, Isabel, el perro, un chofer por camión (el de sus pedidos o, si no, el primero de VEHICULOS; lista del 06/11), la pizarra, el reloj y los banderines del tema.
      4. Una burbuja dice quién habla y se va sola.
      5. El café: Isabel pregunta, va a la cafetera, se lo lleva y Eduardo queda con la taza.
      6. Con el piso vacío hay un montacargas estacionado; con montacargas cargando, no.
@@ -89,7 +89,7 @@ const armar = (PEND) => {
       chk('3. con three.js arma la vida', ok);
       let r = await page.evaluate(() => ({ q: Object.keys(VIDA.q), chof: VIDA.chof.map(k => VIDA.q[k].n), flags: VIDA.flags.length, piz: !!VIDA.piz, reloj: !!VIDA.reloj, mcE: !!VIDA.mcE,
         colores: VIDA.flags.slice(0, 6).map(m => '#' + m.material.color.clone().convertLinearToSRGB().getHexString()), velas: VIDA.velas.length, toca: DEP.w3.toca.length }));
-      chk('…Eduardo, Isabel, el perro y un chofer por camión (el primero de cada uno)', r.q.indexOf('edu') >= 0 && r.q.indexOf('isa') >= 0 && r.q.indexOf('perro') >= 0 && r.chof.join(',') === 'Luis:,Luis:,Cristhian:,Fernando:', r);
+      chk('…Eduardo, Isabel, el perro y un chofer por camión (el primero de cada uno)', r.q.indexOf('edu') >= 0 && r.q.indexOf('isa') >= 0 && r.q.indexOf('perro') >= 0 && r.chof.join(',') === 'Omar:,Fernando:,Cristhian:,Miguel:', r);
       chk('…la pizarra, el reloj y los banderines', r.piz && r.reloj && r.flags > 40, r.flags);
       chk('…los banderines con los colores de Todos Santos, y las velitas', r.colores.join(',') === '#ec4899,#f97316,#facc15,#14b8a6,#8b5cf6,#ef4444' && r.velas >= 4, r.colores.join(',') + ' velas ' + r.velas);
       chk('6. con el piso vacío, un montacargas estacionado', r.mcE === true);

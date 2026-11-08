@@ -265,7 +265,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       var plano=m.map(function(f){ return (f||[]).map(function(c){ return (c&&typeof c==='object')?c.v:c; }).join('|'); });
       return { pantRet:/1\.000,00/.test(pant), txtRet:/se le retiró Bs 1\.000,00/.test(txt), bajo:!!window.__XLSX,
                retiro:plano.some(function(l){ return /^2026-09-16\|Carola Chavez\|Eduardo Añez\|10\|Facturado\|1000/.test(l); }),
-               efectivo:plano.some(function(l){ return /^Carola Chavez\|\|0\|1000\|0\|1000\|-1000$/.test(l); }), nombre:window.__NOMBRE };
+               /* (07/11, test_efe_pareo) la fila lleva al final «era de antes» y «se retiró después» (0 y 0: septiembre no se empareja) */
+               efectivo:plano.some(function(l){ return /^Carola Chavez\|\|0\|1000\|0\|1000\|-1000\|0\|0$/.test(l); }), nombre:window.__NOMBRE };
     });
     chk('4 · la pantalla y el texto muestran el retiro del día', r.pantRet && r.txtRet, J(r));
     chk('4 · ⚠️ el Excel del día BAJA aunque no haya pagos', r.bajo===true, J(r));
