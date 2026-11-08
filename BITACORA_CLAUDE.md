@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA en la rama, falta su «publica»; la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11: enlace fijo `6507d19…`, 7.590 líneas)
+### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11 — hasta entonces el WhatsApp del efectivo (07-e) empareja con la regla de antes: enlace fijo `6507d19…`, 7.590 líneas)
 - **Lo que pidió el dueño** (07/11, a la noche): *«octubre cerrado… no tomar en cuenta los retiros que se hicieron el 3 de noviembre»*; *«el dinero de
   Fernando se recogió a las 11 o 10 de la mañana. Lógicamente pudo haber entrado más dinero hoy»*; *«si fue una venta que entró el 30 de octubre y
   recién el cliente pagó en noviembre, debe figurar su efectivo en noviembre»*; y que al cargar un retiro se vea el NOMBRE del cliente y la nota, no la
@@ -17398,7 +17398,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   octubre cerrado en vez de «en la mano»; la identidad suma `cerrado`) y `test_wa_efectivo` (1f/1q por la fecha del cobro; 3c/3g/3g2; 5c/5d: Fernando
   ya no está pendiente y su sobrante de 200 se lista).
 
-### §4ow — 💵 «¿QUIÉN RECIBIÓ EL EFECTIVO?» OBLIGATORIO (07/11; dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió la plata»*; PÁGINA en la rama, falta su «publica»; el `.gs` no cambia)
+### §4ow — 💵 «¿QUIÉN RECIBIÓ EL EFECTIVO?» OBLIGATORIO (07/11; dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió la plata»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`); el `.gs` no cambia)
 - **El caso**: la 10-382 de Maria Flores (Andrea Duran Muñoz, Especial Ortopédico 140x190, Bs 3.410). La nota de venta 1938 (30/10) dice
   *«Pago efectivo al personal de logística a Luis»*: el cliente le pagó al chofer Luis Eyzaguirre al recibir el 31/10. María anotó el pago el
   03/11 desde el formulario, con la fecha de ese día y sin marcar quién lo recibió: el Cuadre se lo pedía a ella y a Luis no le pedía nada (y
@@ -17419,7 +17419,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - Bloki («¿Cómo anoto el pago o un adelanto?») suma el paso. En Playwright solo con `RECIBIO_PRUEBA`.
 - `tests/test_recibio_obligatorio.js` (21; contra `d90cf4b` no existe la función).
 
-### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA en la rama (`3016b04`), falta su «publica»; la regla también va en el `.gs` 07-f que el dueño implementa el lunes: enlace fijo `6507d19…`, 7.590 líneas, con la regla de §4ox)
+### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (con el servidor 07-e; dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla también va en el `.gs` 07-f que el dueño implementa el lunes: enlace fijo `6507d19…`, 7.590 líneas, con la regla de §4ox)
 - **La causa, con la planilla real (07/11 18:10)**: «Efectivo cobrado vs. retirado» restaba los retiros del MES a lo cobrado en el MISMO mes.
   Mirian: el retiro del 03/11 de Bs 5.440 es el cobro del 30/10 de la 10-343 → noviembre «se retiró 5.440 de más» y octubre con esos 5.440
   «en la mano». Juan Pablo: de los 15.630 retirados en noviembre, 10.140 eran de octubre (con la regla). El dueño tenía razón.

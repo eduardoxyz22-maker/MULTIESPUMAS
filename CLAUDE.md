@@ -1618,18 +1618,18 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
 **💵 «¿Quién recibió el efectivo?» es OBLIGATORIO** (§4ow, 07/11, dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió
-la plata»*; en la rama): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
+la plata»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
 o el chofer; sin eso no se guarda («Para guardar» y el paso del cobro lo piden igual). El chofer va solo en los renglones de efectivo NUEVOS
 (`recibioAplicar`; el adelanto suelto nuevo pasa a renglón `~… >Chofer`). No en venta de tienda, ATC/RPT, Eduardo, ROHO ni internos; al editar sin
 tocar el efectivo (`EDIT_PLATA0.ef`) no pregunta; el chofer puesto solo el día de la entrega (§4ok-112) cuenta. ⚠️ Un camino NUEVO que anote efectivo
 pide lo mismo. Playwright solo con `RECIBIO_PRUEBA`. `tests/test_recibio_obligatorio.js` (21).
 **💵🔗 Cada retiro tapa sus cobros** (§4ov, 07/11, dueño: *«¿no cuadra porque ingresó en octubre y se retiró en noviembre?… al darle al efectivo
-¿no debería mostrar qué clientes pagaron?»*; en la rama): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
+¿no debería mostrar qué clientes pagaron?»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
 que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira seguida que dé justo, la más nueva primero → del más viejo; mismo
 desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
-**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; en la rama, va en el `.gs` 07-f): 🔒 `EFE_CERRADO`
+**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, que el dueño implementa el lunes 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
 fecha de otro día = el final de ese día). Orden (`efeTapar` = `waEfeTapar_`): 0. los tildados al cargarlo, 1. mismo monto, 2. tira que dé justo, 3. del
