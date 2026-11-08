@@ -11788,8 +11788,10 @@ function pryVentas(){
     var f=fechaSalida(p); if(!f) return;
     var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p), ts=Number(p.ts)||0;
     /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). `id`: el cierre comercial (74) anota qué ventas entraron. */
+    /* `st` (08/11): la tienda de la venta = la de la venta de tienda o la de quien vendió ESE día (`talTiendaDe`), para «🏬 Por tienda». */
     out.push({ id:p.id, amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
-               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
+               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s,
+               st:(amb==='tienda' ? (talTiendaDe(p)||'') : '') });
   });
   return out;
 }
@@ -11967,10 +11969,17 @@ function proyeccionMes(ym){
     }
     metodos[g]=o;
   });
+  /* 🆕 (08/11; dueño: «¿no debería ser Fabián y Andrea sus ventas que son en entregas en el mes?») A quien EMPIEZA este mes (no vendió
+     ningún mes anterior, con el panel ya en uso: hay ventas del equipo de antes) el ritmo se le mide con TODO lo vendido para el mes
+     (entregado y agendado), no solo con lo ya entregado: las primeras ventas de un vendedor nuevo son todas para más adelante y su
+     ritmo daba 0 (Andrea Bs 7.260 → Bs 27.588, Fabián Bs 2.580 → Bs 9.804 el 08/11). Los demás, igual que siempre (§4gt). */
+  var antes={}, hayAntes=false;
+  V.forEach(function(x){ if(x.amb==='tienda' && x.ym<ym){ antes[x.vk]=1; hayAntes=true; } });
   var lista=Object.keys(filas).map(function(k){
     var r=filas[k], mt=metodos[r.g];
     r.vendido=r2(r.a+r.b);
-    r.ritmo = dt>0 ? r.a/dt : 0;
+    r.nuevo = (estado==='curso' && r.amb==='tienda' && hayAntes && !antes[k]);
+    r.ritmo = dt>0 ? (r.nuevo ? r.vendido : r.a)/dt : 0;
     r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
     r.metodo=mt.m;
     r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
@@ -12356,6 +12365,7 @@ function renderProyeccion(){
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
     if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
     if(r.sinMonto) det.push(r.sinMonto+' sin monto');
+    if(r.nuevo) det.push('🆕 empezó este mes: su ritmo va con lo vendido para el mes');
     var mom=''; try{ mom=pryMomHtml(R, _A, r); }catch(e){}
     /* 📊 (§4nj) con MoM, la fila se toca y abre la tablita de ventas, unidades y Bs */
     var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), ab=!!(mom && PRY_MOM_ABIERTO[vk]), det2='';
