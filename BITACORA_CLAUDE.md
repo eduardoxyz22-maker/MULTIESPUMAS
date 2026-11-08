@@ -17362,14 +17362,18 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   días hábiles que faltan)). Un ritmo especial para quien empieza en el mes se hizo y se SACÓ el mismo día (dueño: «igual que los demás»): no
   volver a ponerlo sin que lo pida.
 - **🏬 Por tienda** (Fable, revisado acá): debajo de las fichas de marca de Proyección, el título «🏬 Por tienda» y una ficha por tienda con el
-  MISMO diseño (`cxPryPintar` → `ficha(o)`; `cxPryTiendas(R)`). Cada venta sabe su tienda (`pryVentas` → `st` = `talTiendaDe`: la venta de
-  tienda con su sucursal escrita, o la de quien vendió ESE día, §4oo). La proyección de cada vendedor se reparte entre sus tiendas por lo que
-  vendió en cada una (con Bs 0, por cantidad de ventas): la suma de las tiendas = el equipo. Ordenadas de la que más llegaría a la que menos,
+  MISMO diseño (`cxPryPintar` → `ficha(o)`; `cxPryTiendas(R)`). Cada venta sabe su tienda (`pryVentas` → `st`): la de QUIEN VENDIÓ en el mes
+  en que cuenta (`sucursalDeVendedor(v, ym+'-01')`: noviembre con las tiendas de hoy, octubre con las de entonces); la escrita en una venta de
+  tienda solo vale para quien no tiene tienda en la lista. Cada vendedor queda ENTERO en una tienda; la suma de las tiendas = el equipo.
+  · 🔁 La primera versión iba por el día en que se CARGÓ (`talTiendaDe`, la regla de §4oo): Central salía con Carola (4 ventas de septiembre y
+    octubre que se entregan en noviembre) y Jonathan (2 ventas de tienda del 05/11 que decían «Central»: antes del 07/11 el panel lo tenía en
+    Central), e Isabel en Mia Plaza (3 de octubre). Dueño, con la captura: *«están mal los nombres de vendedores por sucursal… espero no sea así
+    el real»* → por la tienda del mes. No volver al día de carga. Ordenadas de la que más llegaría a la que menos,
   con el color de la marca de la mayoría; «Sin tienda» solo si hay. CSS `.cx-kt`, `.cx-kf-t`, `.cx-kf-s` (con los colores de Halloween y
   Todos Santos). ⚠️ Las pruebas de las fichas de marca miran `.cx-kfs:not(.cx-kfs-t) .cx-kf` / `#cx-pry .cx-kf:not(.cx-kf-t)`.
-  · Con la planilla del 08/11 00:08: equipo Bs 287.693 → 841.800. Por la regla de §4oo, lo que Carola y Jonathan vendieron antes del 01/11
-    (entregado en noviembre) cuenta en Central e Isabel lo de octubre en Mia Plaza: la Tienda Banzer muestra solo lo de este mes (Bs 11.710 →
-    15.252). La otra forma (la tienda de HOY de cada vendedor) se le ofreció al dueño.
+  · Con la planilla del 08/11 00:08: equipo Bs 287.693 → 841.800; Buenos Aires 66.623 → 203.328 (Maria), Central 63.370 → 181.860 (Fabián,
+    Isabel), Mia Plaza 50.420 → 131.904 (Jonathan, Mirian), Charcas 22.235 → 97.464, Tienda Banzer 52.750 → 88.956 (Andrea, Carola), Mutualista
+    20.255 → 84.288, Carmelo 12.040 → 54.000.
   · ⚠️ Las capturas de Fable contaban los borradores de Kommo (STATE sin `esBorrador`: 324.153): el panel nunca los tiene en STATE. Una captura
     con la planilla real filtra `!esFilaSistema(x) && !esBorrador(x)` (scratchpad `pry_tiendas/shot3.js`).
 - **📅 La marca del mes** (`ventaMesMarca`, `ventaMes`, `setVentaMes`, `ventaMesPuede`, `contaFechaMesBase`): `vmes:'AAAA-MM'` en los productos
@@ -17387,7 +17391,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   · El `.gs` 07-f la cuenta igual en «cómo va cada vendedor» (`waVentaMes_` en `waVbVentas_`, `beca780`); `test_wa_13_25_26` §3b5-3b6 compara
     una venta marcada en la página y en el servidor.
   · ⚠️ Un lugar NUEVO que mida lo VENDIDO de un mes por la entrega usa `ventaMes(p)`, nunca `p.fecha.slice(0,7)`.
-- Pruebas: `tests/test_pry_tiendas.js` (25), `tests/test_venta_mes.js` (26; contra `6edbde1` falla de entrada), `test_wa_13_25_26` 103. Las 36
+- Pruebas: `tests/test_pry_tiendas.js` (27; contra `5389095`, con el día de carga, 10 rojas), `tests/test_venta_mes.js` (26; contra `6edbde1` falla de entrada), `test_wa_13_25_26` 103. Las 36
   suites de Proyección/Contabilidad/Mis pedidos y las 17 del servidor en verde (`test_mispedidos` y `test_velocidad_4oa` dieron 1 roja cada una
   con la máquina cargada; solas, bien).
 

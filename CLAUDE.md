@@ -2245,8 +2245,9 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   Bs 0 en Ventas y «1 sin monto» en Proyección). Una fila del sistema NUEVA va en `esFilaSistema`.
 - 🎯 **Metas por marca**: muestra para el dueño (https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj), nada hecho en el panel todavía.
 - **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; en la rama, se publica con la 07-f): debajo de las fichas de
-  marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = `talTiendaDe`, la de quien
-  vendió ESE día; la proyección de cada vendedor se reparte por lo que vendió en cada tienda y la suma da el equipo). Andrea y Fabián se
+  marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = la de quien vendió en ESE
+  MES, `sucursalDeVendedor(v, ym+'-01')`: cada vendedor entero en su tienda y la suma da el equipo; ⚠️ NO por el día de carga: el dueño lo vio
+  mal, «están mal los nombres de vendedores por sucursal»). Andrea y Fabián se
   proyectan IGUAL que todos (dueño). La marca `vmes` (en los productos, la pone Contabilidad en la ficha con la contraseña, solo en una venta
   cargada un mes antes de su entrega): `ventaMes(p)` = el mes de la entrega o el marcado si es anterior; la usan `pryVentas` (`ym`), Ventas por
   entrega agendada en «Mes» y sus saldos anteriores (`contaFechaMesBase`), «Tu mes» y Productos del mes; la entrega, los cupos, el stock y los

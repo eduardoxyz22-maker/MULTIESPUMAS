@@ -10808,23 +10808,25 @@ function cxPryPintar(R){
                    entra:function(x){ return x.g===m.g.k; }, pie:metaPieTxt(R.ym, m) }, anima);
   }).join('');
   /* 🏬 Por tienda (§4pb, 08/11; dueño: «¿y también por tienda, cómo quedaría?» → la ficha de marca, «esa»). La tienda NO entra en ninguna
-     cuenta: solo REPARTE lo que ya está. Cada venta trae su tienda (`x.st`, de `pryVentas`: la de la venta de tienda o la de quien vendió
-     ese día, `talTiendaDe`); la proyección de una tienda = la suma, por vendedor, de su `r.proy` × (lo que vendió en esa tienda ÷ lo que
-     vendió en total; si vendió Bs 0, por cantidad de ventas): así las tiendas suman EXACTAMENTE el equipo (redondeo aparte) y los números
-     de cada vendedor y de cada marca no cambian. El color es el de la marca de la mayoría de sus ventas. De la que más llegaría a la que menos. */
+     cuenta: solo REPARTE lo que ya está. Cada venta trae su tienda (`x.st`, de `pryVentas`: la de quien vendió en ESE mes; dueño: «están mal
+     los nombres de vendedores por sucursal» con el reparto por el día de carga), así cada vendedor queda ENTERO en una tienda; la proyección
+     de una tienda = la suma, por vendedor, de su `r.proy` × (lo que vendió en esa tienda ÷ lo que vendió en total; si vendió Bs 0, por
+     cantidad de ventas; solo parte a quien no tiene tienda en la lista): así las tiendas suman EXACTAMENTE el equipo (redondeo aparte) y los
+     números de cada vendedor y de cada marca no cambian. El color es el de la marca de la mayoría de sus ventas. De la que más llegaría a la que menos. */
   var tiendasHtml='';
   if(T.length){
     var animaT=visAnimar('cxPryT', R.ym+'|'+T.map(function(t){ return t.k+t.vendido; }).join('|'));
-    tiendasHtml='<div class="cx-kt" id="cx-pry-tiendas"><b>🏬 Por tienda</b><span>lo de cada vendedor repartido en la tienda donde vendió'+(conProy ? '; la proyección se reparte igual, así las tiendas suman el equipo' : '')+'</span></div>'+
+    tiendasHtml='<div class="cx-kt" id="cx-pry-tiendas"><b>🏬 Por tienda</b><span>cada vendedor en su tienda de ese mes'+(conProy ? '; las tiendas suman el equipo' : '')+'</span></div>'+
       '<div class="cx-kfs cx-kfs-t">'+T.map(function(t){
         return ficha({ ico:'🏬', lbl:t.k, col:t.col, txt:t.txt, n:t.n, u:t.u, vendido:t.vendido, proy:t.proy, cls:'cx-kf-t',
                        entra:function(x){ return (x.st||'')===t.st; }, sub:t.vendedores.join(' · '),
-                       pie:(t.vendedores.length===1 ? 'Su proyección es la de '+t.vendedores[0] : 'La proyección de cada vendedor, repartida según lo que vendió acá') }, animaT);
+                       pie:(t.vendedores.length===1 ? 'Su proyección es la de '+t.vendedores[0] : 'La suma de la proyección de sus vendedores') }, animaT);
       }).join('')+'</div>';
   }
   box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml;
 }
-/* 🏬 (§4pb) Las tiendas del mes de `R` (la cuenta de `proyeccionMes`): por tienda, ventas, unidades, lo vendido, la proyección repartida,
+/* 🏬 (§4pb) Las tiendas del mes de `R` (la cuenta de `proyeccionMes`): por tienda (la de cada vendedor en ese mes, `pryVentas` → `st`: cada
+   vendedor entero en una; el reparto por lo vendido queda para quien no tiene tienda en la lista), ventas, unidades, lo vendido, la proyección,
    sus vendedores y el color de la marca mayoritaria. «Sin tienda» solo si hay una venta sin tienda. Ordenadas por lo que llegarían a
    (lo vendido, con el mes cerrado). Solo mira: ninguna cuenta de la proyección cambia por esto. */
 function cxPryTiendas(R){
@@ -11884,10 +11886,15 @@ function pryVentas(){
     var f=fechaSalida(p); if(!f) return;
     var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p), ts=Number(p.ts)||0;
     /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). `id`: el cierre comercial (74) anota qué ventas entraron. */
-    /* `st` (08/11): la tienda de la venta = la de la venta de tienda o la de quien vendió ESE día (`talTiendaDe`), para «🏬 Por tienda». */
+    /* `st` (08/11): la tienda de la venta para «🏬 Por tienda» = la de QUIEN VENDIÓ en el mes en que cuenta (`sucursalDeVendedor` con el día 1 de
+       `ym`: noviembre con las tiendas de hoy, octubre con las de entonces). Dueño, con la primera captura (que repartía por el día en que se
+       cargó: Carola y Jonathan salían en Central por ventas de octubre): «están mal los nombres de vendedores por sucursal». Cada vendedor
+       cuenta ENTERO en su tienda; la tienda escrita de una venta de tienda solo vale para quien no tiene tienda en la lista. */
     out.push({ id:p.id, amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
                f:f, ym:ventaMes(p), reg:(contaFecha(p)||f),   /* 📅 (08/11) `ym`: el mes de la entrega, o el que marcó Contabilidad */ m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s,
-               st:(amb==='tienda' ? (talTiendaDe(p)||'') : '') });
+               st:'' });
+    var x=out[out.length-1];
+    if(amb==='tienda') x.st=sucursalDeVendedor(v, x.ym+'-01') || (esVentaTienda(p) ? (sucursalDeVenta(p)||'') : '') || '';
   });
   return out;
 }

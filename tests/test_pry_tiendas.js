@@ -6,12 +6,12 @@
    LO QUE ESTA PRUEBA CUIDA (contra lo publicado antes de §4pb, sin fichas por tienda, las de §3-§5 se ponen rojas):
    1. Andrea y Fabián se proyectan IGUAL que los demás (§4gt): hasta hoy + máx(agendado, ritmo de lo entregado × días que faltan). Nada
       especial para quien empieza en el mes.
-   2. Cada venta sabe su tienda (`pryVentas` → `st`): la de quien vendió ESE día (`talTiendaDe`): Carola en Central hasta el 31/10 y en la
-      Tienda Banzer desde el 01/11 (`VENDEDOR_SUCURSAL_ANTES` / `VENDEDOR_SUC_DESDE`); una venta de TIENDA con la sucursal escrita va a esa
-      sucursal, la venda quien la venda.
-   3. `cxPryTiendas(R)`: una por tienda con ventas, unidades, lo vendido y la proyección REPARTIDA (la de cada vendedor × la parte que vendió
-      en esa tienda; con Bs 0, por cantidad de ventas); la suma de las tiendas = el equipo (vendido y proyección); ordenadas de la que más
-      llegaría a la que menos; el color de la marca mayoritaria; «Sin tienda» solo si hay.
+   2. Cada venta sabe su tienda (`pryVentas` → `st`): la de QUIEN VENDIÓ en el mes en que cuenta (dueño, con la primera captura, que repartía por
+      el día en que se cargó: «están mal los nombres de vendedores por sucursal»). En noviembre Carola es de la Tienda Banzer, también lo que
+      cargó en octubre para entregar en noviembre; en octubre, de Central (`VENDEDOR_SUCURSAL_ANTES`). Una venta de tienda va a la tienda de
+      quien la vendió aunque diga otra (Jonathan, «· Charcas» → Mia Plaza); la escrita vale solo para quien no tiene tienda en la lista.
+   3. `cxPryTiendas(R)`: una por tienda con ventas, unidades, lo vendido y la proyección (cada vendedor ENTERO en la suya); la suma de las tiendas
+      = el equipo (vendido y proyección); ordenadas de la que más llegaría a la que menos; el color de la marca mayoritaria; «Sin tienda» solo si hay.
    4. Lo que se ve: debajo de las fichas de marca, el título «🏬 Por tienda» y una ficha por tienda con el MISMO diseño (vendedores, N ventas ·
       u., Vendido, 📈 Llegaría a, la línea), sin scroll de costado en el iPad (1000) ni en el celular (390); un mes cerrado sin «Llegaría a».
    5. Las fichas de marca no cambian de texto, y ninguna cuenta de la proyección cambia por tener tiendas.
@@ -57,10 +57,10 @@ function PREPARAR(){
     /* 🆕 Andrea (Tienda Banzer): todo para más adelante. Fabián (Central): una entregada y una agendada. */
     out.push(V('Andrea Orias','2026-11-17','2026-11-09',3000), V('Andrea Orias','2026-11-24','2026-11-11',2000));
     out.push(V('Fabián Godoy','2026-11-10','2026-11-09',2500), V('Fabián Godoy','2026-11-19','2026-11-11',1500));
-    /* Jonathan (Mia Plaza): una entrega y una VENTA DE TIENDA con la sucursal escrita: salió de Charcas. */
+    /* Jonathan (Mia Plaza): una entrega y una VENTA DE TIENDA que dice «· Charcas»: las dos son de Mia Plaza. */
     out.push(V('Jonathan Monje','2026-11-06','2026-11-05',7000));
     out.push(V('Jonathan Monje','','2026-11-07',1000,{ direccion:DIR_TIENDA+' · Charcas', zona:ZONA_TIENDA }));
-    /* Isabel (Central): dos ventas SIN monto, una de ellas de tienda en Mia Plaza (el reparto va por cantidad). */
+    /* Isabel (Central): dos ventas SIN monto, una de ellas de tienda que dice Mia Plaza: las dos van a Central. */
     out.push(V('Isabel Robledo','2026-11-09','2026-11-06',0));
     out.push(V('Isabel Robledo','','2026-11-06',0,{ direccion:DIR_TIENDA+' · Mia Plaza', zona:ZONA_TIENDA }));
     /* Lo que no entra: ATC, RPT, ROHO y un mayorista. */
@@ -115,17 +115,25 @@ function PREPARAR(){
     V.forEach(function(x){ (o[x.v]=o[x.v]||[]).push([x.reg, x.st, x.bs, x.amb]); });
     return o;
   });
-  chk('Carola: la cargada el 28/10 (se entrega en noviembre) es de CENTRAL, donde vendía; las de noviembre, de la Tienda Banzer',
-      r['Carola Chavez'] && r['Carola Chavez'].filter(function(x){ return x[0]==='2026-10-28' && x[1]==='Central'; }).length===1
-      && r['Carola Chavez'].filter(function(x){ return x[0]>='2026-11-01' && x[1]==='Tienda Banzer'; }).length===2, r['Carola Chavez']);
-  chk('Jonathan: su entrega es de Mia Plaza, pero la venta de tienda «SALIÓ DE TIENDA · Charcas» es de CHARCAS (la sucursal escrita manda)',
-      r['Jonathan Monje'] && r['Jonathan Monje'].some(function(x){ return x[1]==='Mia Plaza' && x[2]===7000; }) && r['Jonathan Monje'].some(function(x){ return x[1]==='Charcas' && x[2]===1000; }), r['Jonathan Monje']);
+  chk('Carola: TODO lo de noviembre es de la Tienda Banzer, también la cargada el 28/10 (cuando estaba en Central) que se entrega en noviembre',
+      r['Carola Chavez'] && r['Carola Chavez'].length===3 && r['Carola Chavez'].every(function(x){ return x[1]==='Tienda Banzer'; }), r['Carola Chavez']);
+  chk('Jonathan: su entrega y la venta de tienda que dice «· Charcas» son de MIA PLAZA, su tienda (la escrita no lo saca de ahí)',
+      r['Jonathan Monje'] && r['Jonathan Monje'].length===2 && r['Jonathan Monje'].every(function(x){ return x[1]==='Mia Plaza'; }), r['Jonathan Monje']);
+  chk('Isabel: las dos de Central (también la venta de tienda que dice Mia Plaza)', r['Isabel Robledo'] && r['Isabel Robledo'].length===2 && r['Isabel Robledo'].every(function(x){ return x[1]==='Central'; }), r['Isabel Robledo']);
   chk('Andrea → Tienda Banzer, Fabián → Central, Maria → Buenos Aires; el mayorista no lleva tienda',
       r['Andrea Orias'].every(function(x){ return x[1]==='Tienda Banzer'; }) && r['Fabián Godoy'].every(function(x){ return x[1]==='Central'; })
       && r['Maria Flores'].every(function(x){ return x[1]==='Buenos Aires'; }) && r['Eduardo Añez'].every(function(x){ return x[3]==='mayor' && x[1]===''; }), [r['Andrea Orias'], r['Fabián Godoy'], r['Eduardo Añez']]);
+  r = await ev(() => {
+    var antes=STATE.slice();
+    STATE=STATE.concat([V('Pedro Inventado','','2026-11-07',700,{ direccion:DIR_TIENDA+' · Carmelo', zona:ZONA_TIENDA }), V('Carola Chavez','2026-10-20','2026-10-10',500)]);
+    var V2=pryVentas(), o={ pedro:(V2.filter(function(x){ return x.v==='Pedro Inventado'; })[0]||{}).st, carolaOct:(V2.filter(function(x){ return x.v==='Carola Chavez' && x.ym==='2026-10' && x.bs===500; })[0]||{}).st };
+    STATE=antes; return o;
+  });
+  chk('quien no tiene tienda en la lista toma la escrita en su venta de tienda (Carmelo); y en OCTUBRE Carola es de Central (la tienda de ese mes)',
+      r.pedro==='Carmelo' && r.carolaOct==='Central', r);
 
   // ═══ 3. La cuenta por tienda ═════════════════════════════════════════════════════════════════
-  console.log('\n── 3. cxPryTiendas: reparto, suma y orden ──');
+  console.log('\n── 3. cxPryTiendas: suma y orden ──');
   r = await ev(() => {
     var R=proyeccionMes('2026-11'), T=cxPryTiendas(R), o={ E:R.equipo, orden:T.map(function(t){ return t.k; }), sumaP:0, sumaV:0, n:0, u:0 };
     T.forEach(function(t){ o.sumaP=r2(o.sumaP+t.proy); o.sumaV=r2(o.sumaV+t.vendido); o.n+=t.n; o.u+=t.u; o[t.k]={ vendido:t.vendido, proy:t.proy, n:t.n, u:t.u, vend:t.vendedores, marca:t.marca, col:t.col }; });
@@ -137,17 +145,18 @@ function PREPARAR(){
       && ['Buenos Aires','Central','Tienda Banzer','Mutualista','Charcas','Mia Plaza'].every(function(k){ return r.orden.indexOf(k)>=0; }), r.orden);
   chk('la suma de las tiendas es EXACTAMENTE el equipo: vendido y proyección (y ventas y unidades)',
       r.E && Math.abs(r.sumaV-r.E.vendido)<0.05 && Math.abs(r.sumaP-r.E.proy)<0.05 && r.n===r.E.n && r.u===r.E.u, [r.sumaV, r.sumaP, r.E, r.n, r.u]);
-  chk('Tienda Banzer = Carola (sus 2 de noviembre, 8.000) + Andrea (5.000): vendido Bs 13.000; proyección = 2/3 de la de Carola (14.222,22) + la de Andrea (5.000) = Bs 19.222,22',
-      r['Tienda Banzer'] && r['Tienda Banzer'].vendido===13000 && r['Tienda Banzer'].proy===19222.22 && r['Tienda Banzer'].vend.join('|')==='Andrea Orias|Carola Chavez', r['Tienda Banzer']);
-  chk('Central = la de Carola de octubre (4.000, 1/3 de su proyección: 7.111,11) + Fabián (4.000 → 6.666,67) + Isabel (0): vendido Bs 8.000, llegaría a Bs 13.777,78',
-      r['Central'] && r['Central'].vendido===8000 && r['Central'].proy===13777.78 && r['Central'].vend.join('|')==='Carola Chavez|Fabián Godoy|Isabel Robledo', r['Central']);
-  chk('Jonathan vendió 8.000 (7.000 en Mia Plaza y la de tienda de 1.000 en Charcas) → proyección 21.333,33 repartida 7/8 y 1/8: Charcas = Fernando 9.000 + 2.666,67 = Bs 11.666,67 (vendido 10.000); Mia Plaza = 18.666,67 + Isabel 0 (vendido 7.000; el centavo del redondeo de la parte de Jonathan)',
-      r['Charcas'] && r['Charcas'].vendido===10000 && r['Charcas'].proy===11666.67 && r['Mia Plaza'] && r['Mia Plaza'].vendido===7000 && Math.abs(r['Mia Plaza'].proy-18666.67)<0.02
-      && r['Mia Plaza'].vend.join('|')==='Isabel Robledo|Jonathan Monje', [r['Charcas'], r['Mia Plaza']]);
-  chk('Isabel vendió Bs 0 en dos tiendas: se cuenta por cantidad de ventas (1 y 1), sin dividir por cero', r['Central'] && r['Central'].n===4 && r['Mia Plaza'].n===2, [r['Central'].n, r['Mia Plaza'].n]);
-  chk('ordenadas de la que más llegaría a la que menos: Mutualista (26.667) · Tienda Banzer (19.222) · Mia Plaza (18.667) · Buenos Aires (16.000) · Central (13.778) · Charcas (11.667)',
-      r.orden && r.orden.join('|')==='Mutualista|Tienda Banzer|Mia Plaza|Buenos Aires|Central|Charcas', r.orden);
-  chk('el color es el de la marca de la mayoría: Tienda Banzer y Central turquesa (Heaven), Mutualista amarillo (Sueña); Charcas (1 Sueña, 1 Heaven) sale con el de Sueña, la primera que llegó al empate',
+  chk('cada tienda con SOLO sus vendedores: Central = Fabián e Isabel; Mia Plaza = Jonathan; Tienda Banzer = Andrea y Carola; Charcas = Fernando',
+      r['Central'] && r['Central'].vend.join('|')==='Fabián Godoy|Isabel Robledo' && r['Mia Plaza'].vend.join('|')==='Jonathan Monje'
+      && r['Tienda Banzer'].vend.join('|')==='Andrea Orias|Carola Chavez' && r['Charcas'].vend.join('|')==='Fernando Peinado', [r['Central'], r['Mia Plaza'], r['Tienda Banzer'], r['Charcas']]);
+  chk('Tienda Banzer = Carola entera (12.000 vendido → 21.333,33) + Andrea (5.000): vendido Bs 17.000, llegaría a Bs 26.333,33, 5 ventas',
+      r['Tienda Banzer'].vendido===17000 && r['Tienda Banzer'].proy===26333.33 && r['Tienda Banzer'].n===5, r['Tienda Banzer']);
+  chk('Central = Fabián (4.000 → 6.666,67) + Isabel (dos de Bs 0): vendido Bs 4.000, llegaría a Bs 6.666,67, 4 ventas',
+      r['Central'].vendido===4000 && r['Central'].proy===6666.67 && r['Central'].n===4, r['Central']);
+  chk('Mia Plaza = Jonathan entero (7.000 + la de tienda de 1.000 → 21.333,33); Charcas = Fernando (9.000)',
+      r['Mia Plaza'].vendido===8000 && r['Mia Plaza'].proy===21333.33 && r['Mia Plaza'].n===2 && r['Charcas'].vendido===9000 && r['Charcas'].proy===9000, [r['Mia Plaza'], r['Charcas']]);
+  chk('ordenadas de la que más llegaría a la que menos: Mutualista (26.667) · Tienda Banzer (26.333) · Mia Plaza (21.333) · Buenos Aires (16.000) · Charcas (9.000) · Central (6.667)',
+      r.orden && r.orden.join('|')==='Mutualista|Tienda Banzer|Mia Plaza|Buenos Aires|Charcas|Central', r.orden);
+  chk('el color es el de la marca de la mayoría: Tienda Banzer y Central turquesa (Heaven), Mutualista amarillo (Sueña)',
       r['Tienda Banzer'].col===r.colHea && r['Central'].col===r.colHea && r['Mutualista'].col===r.colSue && r['Charcas'].marca, [r['Tienda Banzer'].col, r['Mutualista'].col, r['Charcas'].marca]);
 
   // ═══ 4. Lo que se ve ═════════════════════════════════════════════════════════════════════════
@@ -168,12 +177,12 @@ function PREPARAR(){
              tBz:(tiendas[1]||{ style:{ getPropertyValue:function(){ return ''; } } }).style.getPropertyValue('--c'), tBzTxt:tiendas[1] ? tiendas[1].innerText.replace(/\s+/g,' ').trim() : '',
              scroll:document.documentElement.scrollWidth>document.documentElement.clientWidth, anchoCol:getComputedStyle(tiendas[0]||document.body).width };
   });
-  chk('con la contraseña: las 2 fichas de marca siguen, y debajo el título «🏬 Por tienda» con 6 fichas', r.unlocked && r.nMarcas===2 && r.nTiendas===6 && /🏬 Por tienda/i.test(r.tit) && r.titArriba, [r.nMarcas, r.nTiendas, r.tit, r.titArriba, r.__error]);
+  chk('con la contraseña: las 2 fichas de marca siguen, y debajo el título «🏬 Por tienda» con 6 fichas', r.unlocked && r.nMarcas===2 && r.nTiendas===6 && /🏬 Por tienda/i.test(r.tit) && /cada vendedor en su tienda de ese mes; las tiendas suman el equipo/.test(r.tit) && r.titArriba, [r.nMarcas, r.nTiendas, r.tit, r.titArriba, r.__error]);
   chk('la primera ficha es Mutualista: su vendedor, «2 ventas · 2 u.», «Vendido Bs 10.000» y «📈 Llegaría a Bs 26.667», con la línea llena y la punteada',
       /^🏬 Mutualista 2 ventas · 2 u\. Mauricio Merida Vendido Bs 10\.000 📈 Llegaría a Bs 26\.667/.test(r.t0) && r.t0svg && r.t0punt, r.t0);
   chk('…con el color de Sueña (la marca de sus ventas); la Tienda Banzer, con el de Heaven', /#FFD400/i.test(r.t0c) && /#00B5AD/i.test(r.tBz), [r.t0c, r.tBz]);
-  chk('la Tienda Banzer dice sus dos vendedoras: «🏬 Tienda Banzer 4 ventas · 4 u. Andrea Orias · Carola Chavez Vendido Bs 13.000 📈 Llegaría a Bs 19.222»',
-      /^🏬 Tienda Banzer 4 ventas · 4 u\. Andrea Orias · Carola Chavez Vendido Bs 13\.000 📈 Llegaría a Bs 19\.222/.test(r.tBzTxt), r.tBzTxt);
+  chk('la Tienda Banzer dice sus dos vendedoras: «🏬 Tienda Banzer 5 ventas · 5 u. Andrea Orias · Carola Chavez Vendido Bs 17.000 📈 Llegaría a Bs 26.333»',
+      /^🏬 Tienda Banzer 5 ventas · 5 u\. Andrea Orias · Carola Chavez Vendido Bs 17\.000 📈 Llegaría a Bs 26\.333/.test(r.tBzTxt) && /La suma de la proyección de sus vendedores/.test(r.tBzTxt), r.tBzTxt);
   chk('la ficha de marca no cambió de texto: «🛏️ Sueña N ventas · N u. Vendido … 📈 Llegaría a …» (y la meta)', /^🛏️ Sueña \d+ ventas · \d+ u\. Vendido Bs [\d.]+ 📈 Llegaría a Bs [\d.]+/.test(r.m0) && /línea llena = lo vendido según el día en que se cargó; punteada = la proyección/.test(r.m0), r.m0);
   chk('en el iPad (1000 px) no hay scroll de costado', !r.scroll, r.anchoCol);
 
