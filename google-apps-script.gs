@@ -4718,7 +4718,8 @@ function waVbCorte_(hoy, cmp, min) {
 function waDm_(f) { return String(f).slice(8, 10) + '/' + String(f).slice(5, 7); }
 
 /* ── 13 A · pedir la ubicación ── */
-/** Los días de entrega a los que HOY se les pide la ubicación: dentro de 2 días; el sábado, también el martes (el domingo no se manda). */
+/** Los días de entrega a los que HOY se les pide la ubicación: dentro de 2 días; el sábado, solo el martes (el lunes lo cubre el recordatorio de
+    esa tarde); nunca el próximo día con camión; el domingo no se manda. */
 function waUbDias_(hoy) {
   var dow = waDow_(hoy);
   if (dow === 0) return [];
@@ -5247,7 +5248,7 @@ function probarPreguntasDelDueno() {
 function probarBotG_(bien, ojo) {
   if (typeof waUbDias_ !== 'function' || typeof waVbDatos_ !== 'function' || typeof waPregResponder_ !== 'function') { ojo('Este código no tiene la ubicación de 2 días antes, «cómo va cada vendedor» ni las preguntas del dueño (2026-11-07-f): ¿es un pegado viejo?'); return; }
   var c = waConfig_(), prende = waActivo_() && c.ok ? '' : ' (sale con el bot de WhatsApp prendido: WA_ACTIVO, WA_TOKEN y WA_PHONE_ID)';
-  bien('📍 A las 10:00 el bot le pide la ubicación al cliente de cada pedido sin pin que se entrega en 2 días (el sábado, también los del martes), una vez por pedido (plantilla pedir_ubicacion)' + prende + '.');
+  bien('📍 A las 10:00 el bot le pide la ubicación al cliente de cada pedido sin pin que se entrega en 2 días (el sábado, solo los del martes: a los del lunes les llega el recordatorio con la ubicación), una vez por pedido; no a quien retira (plantilla pedir_ubicacion)' + prende + '.');
   bien(c.dueno.length ? ('📉 Los lunes a las 08:00 (desde el día ' + WA_VB_DIA_MIN + ') «cómo va cada vendedor» a: ' + c.dueno.map(function (x) { return x.nombre; }).join(', ') + ' (los que van más de ' + Math.round(WA_VB_UMBRAL * 100) + ' % abajo; si nadie, no sale)' + prende + '.')
                       : '📉 «Cómo va cada vendedor» de los lunes no le llega a nadie: falta la propiedad WA_DUENO (Eduardo:591…).');
   if (!c.dueno.length) bien('💬 Nadie le puede preguntar al bot: falta WA_DUENO.');
@@ -5264,7 +5265,7 @@ function probarBotG_(bien, ojo) {
  *     `waEfeCuentas_`, desde WA_EFE_DESDE): un botón por chofer (hasta 2, y «Los dos») o una lista (3 o más, y «Todos»).
  *   · Elegir = el bot carga el RETIRO en el panel igual que Contabilidad → 💵 Retiro de efectivo: entrega el chofer, retira «Contabilidad»,
  *     el monto que tiene sin recoger, la hora de ahora y sus cobros TILDADOS (columna «Garantía», la regla del efectivo). Otro monto
- *     («Ysrael 500») pregunta «¿Anoto…? Le quedan…» y con «Sí» lo carga sin tildes (los toma la regla, como en el panel).
+ *     («Ysrael 500») pregunta «¿Anoto…? Le quedan…» y con «Sí» lo carga tildando sus cobros del más viejo al más nuevo hasta el monto (§4pa C1).
  *   · «DESHACER» (WA_ER_DESHACER_MIN, 15 min) borra lo último que cargó el bot, con su sello: si alguien lo corrigió en el panel, no lo toca.
  *   · Solo los números de WA_CONTABILIDAD (y el de WA_PRUEBA cuando lo que escribe es de esto: si no, siguen sus preguntas de la 25 C).
  *     Lo demás que escriba Contabilidad recibe la ayuda de esto: no es un cliente (ni Claude ni la respuesta automática le contestan).
