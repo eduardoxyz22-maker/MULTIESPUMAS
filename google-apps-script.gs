@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-07-f';   // ⬅️ 📍📉💬 (11-07-f, ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-07-f';   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -3693,7 +3693,8 @@ function waEfeCuentas_(lista) {
       if (c.fecha < WA_EFE_EMPAREJA) return;
       var quien = c.recibio || String(p.vendedor || '').replace(/\s+/g, ' ').trim() || '(sin vendedor)', k = waEfeNorm_(quien);
       if (!nombres[k]) nombres[k] = quien;
-      (cob[k] = cob[k] || []).push({ f:c.fecha, t:(dv === c.fecha ? (Number(p.ts) || null) : null), m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, id:id, j:jj });
+      (cob[k] = cob[k] || []).push({ f:c.fecha, t:(dv === c.fecha ? (Number(p.ts) || null) : null), m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, id:id, j:jj,
+                                     nv:String(p.nota || '').trim(), rc:c.nota });   // 💵✅ (07-f) la nota de venta y el recibo: el retiro de «Ya lo recibí» los anota
     });
   });
   /* Desempate fijo, el mismo de `efePareo`: cobros por (día, id del pedido, lugar entre sus cobros en efectivo) y retiros por (día, hora, id). */
@@ -3923,6 +3924,8 @@ function probarBotE_(bien, ojo, horaBolivia) {
   if (c.conta.length) bien('A Contabilidad (' + c.conta.map(function (L) { return L.nombre; }).join(', ') + '): el efectivo de los choferes (lo del día y lo acumulado sin recoger) a las 9:00 y 18:00, con el botón «' + WA_ER_BOTON + '»: al tocarlo (o al escribirle «recibí» al bot) elige de qué chofer y el bot carga el retiro en el panel (efectivo_del_dia_boton; mientras Meta no la apruebe sale la de antes, sin botón, y escribir «recibí» anda igual).' +
                          (prop_('WA_HOOK_KEY') ? '' : ' ⚠️ Falta WA_HOOK_KEY: sin ella el bot no escucha a Meta y no se entera del «' + WA_ER_BOTON + '».'));
   else bien('El efectivo de los choferes sin rendir no le llega a nadie: falta la propiedad WA_CONTABILIDAD (Contabilidad:591…). Al dueño no va.');   // opcional, como WA_DUENO
+  /* (Revisión del 08/11, C4) Un número en WA_CONTABILIDAD y en WA_DUENO: «Ya lo recibí» lo trata como el de prueba (solo lo que es de esto). */
+  c.conta.forEach(function (L) { if (c.dueno.some(function (D) { return D.cel === L.cel; })) ojo('El número de ' + L.nombre + ' está en WA_CONTABILIDAD y también en WA_DUENO: «' + WA_ER_BOTON + '» y «recibí» andan, pero lo demás que escriba se contesta como pregunta del dueño. Si es solo de Contabilidad, sacalo de WA_DUENO.'); });
   if (!c.dueno.length) bien('El vigía de leads no corre: falta la propiedad WA_DUENO (Eduardo:591…). El reclamo a la fábrica de las 10:00 va' + (c.avisosLog.length ? ' solo a logística (' + c.avisosLog.map(function (L) { return L.nombre; }).join(', ') + ').' : ' a nadie (faltan WA_DUENO y WA_PEDIR_HOY).'));
   else {
     var st = waJsonProp_('WA_LEADS', null);
@@ -4700,7 +4703,22 @@ function waUbDias_(hoy) {
   if (dow === 0) return [];
   var out = [waMasDias_(hoy, WA_UB_ANTES)];
   if (dow === 6) out.push(waMasDias_(hoy, WA_UB_ANTES + 1));
-  return out;
+  /* (Revisión del 08/11, B5) Sin el próximo día con camión: a ese le llega esa misma tarde el recordatorio, que ya pide la ubicación (el sábado,
+     el del lunes; antes de un feriado, el del día siguiente). Si no, el cliente recibía dos pedidos de ubicación el mismo día. */
+  var prox = waProximoDia_(hoy);
+  return out.filter(function (f) { return f !== prox; });
+}
+/** (Revisión del 08/11, S1) ¿Lo RETIRA el cliente (en la tienda, Banzer, PTF…)? = `fichaRetira` de la página (solo el sí o el no): a ese no
+    se le pide la ubicación «para que el chofer llegue a tu puerta». ⚠️ Si cambia FL_RETIRA o fichaRetira en la página, cambia acá. */
+var WA_RETIRA_RE = '(RECOGE|RECOGERA|RECOGEN|RECOGERAN|RETIRA|RETIRARA|RETIRAN|RETIRARAN|RECOJO|RETIRO|PASA A (?:RECOGER|BUSCAR|RETIRAR)|PASARA A (?:RECOGER|BUSCAR|RETIRAR)|VIENE A (?:RECOGER|BUSCAR|RETIRAR)|VENDRA A (?:RECOGER|BUSCAR|RETIRAR))';
+function waRetira_(p) {
+  if (!p || waNorm_(p.direccion).indexOf('salio de tienda') === 0 || waNorm_(p.zona) === 'tienda') return false;   // una venta de tienda, como la página
+  var may = function (t) { return waNorm_(t).toUpperCase().replace(/\s+/g, ' '); };
+  var dir = ' ' + may(p.direccion) + ' ', obs = ' ' + may(p.observaciones) + ' ';
+  var enDir = new RegExp('[^A-Z]' + WA_RETIRA_RE + '[^A-Z]').test(dir) || /CLIENTE (LO |LOS )?(RECOGE|RETIRA|PASA)/.test(dir);
+  var enObs = /CLIENTE (LO |LOS |LA |LAS )?(RECOGE|RECOGERA|RETIRA|RETIRARA|PASA|PASARA|VIENE|VENDRA)/.test(obs) ||
+    /[^A-Z](RECOGERA|RETIRARA|PASARA A (RECOGER|BUSCAR|RETIRAR)|VENDRA A (RECOGER|BUSCAR|RETIRAR)) (DE|EN|DEL|POR) (EL |LA )?(ALMACEN|FABRICA|TIENDA|BANZER|PTF|DEPOSITO|PLANTA)/.test(obs);
+  return enDir || enObs;
 }
 function waUbLeer_() { var o = waJsonProp_('WA_UB_PEDIDA', {}); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }
 /** Anota los pedidos a los que ya se les pidió ({id, f}): `{id: día de la entrega}`. Lo viejo se va. */
@@ -4715,7 +4733,7 @@ function waUbAnotar_(L, hoy) {
 }
 /** ¿A este pedido se le pide hoy la ubicación? `dias` = `waUbDias_`, `ya` = `waUbLeer_`. */
 function waUbToca_(p, hoy, dias, ya) {
-  if (!p || !p.id || (ya && ya[String(p.id)]) || dias.indexOf(String(p.fecha)) < 0 || !waSinPin_(p.maps)) return false;
+  if (!p || !p.id || (ya && ya[String(p.id)]) || dias.indexOf(String(p.fecha)) < 0 || !waSinPin_(p.maps) || waRetira_(p)) return false;
   return !waNoCliente_(p, hoy);
 }
 
@@ -5234,30 +5252,45 @@ var WA_ER_PASO_MIN = 60;                   // una pregunta del bot («¿de quié
 var WA_ER_TITULO = '💵 RETIRO DE EFECTIVO — fila del sistema, NO BORRAR';   // = retiroTitulo() de la página
 var WA_ER_RETIRA = 'Contabilidad';         // = RETIRA_CHOFER de la página: el chofer rinde a Contabilidad (§4eq)
 var WA_ER_LISTA_MAX = 9;                   // filas de la lista de Meta (10 como mucho): 9 choferes y «Todos»
-/** 'conta' (WA_CONTABILIDAD), 'prueba' (WA_PRUEBA) o ''. */
+/** 'conta' (WA_CONTABILIDAD), 'prueba' (WA_PRUEBA) o ''. (Revisión del 08/11, C4) Un número de Contabilidad que TAMBIÉN está en WA_DUENO se
+    trata como el de prueba: entra acá solo con lo que es de esto, y sus preguntas al bot y «Ver qué vendió cada uno» siguen andando. */
 function waErQuien_(de, cfg) {
   de = String(de || ''); if (!de || !cfg) return '';
+  var duenoTambien = (cfg.dueno || []).some(function (L) { return L.cel === de; });
   var L = cfg.conta || [];
-  for (var i = 0; i < L.length; i++) if (L[i].cel === de) return 'conta';
+  for (var i = 0; i < L.length; i++) if (L[i].cel === de) return duenoTambien ? 'prueba' : 'conta';
   if (cfg.prueba && cfg.prueba === de) return 'prueba';
   return '';
 }
-/* Lo que el bot espera de cada número (propiedad WA_ER): {<celular>: {paso:'elegir'|'confirmar', t, ops:[{q, nombre, bs}], conf:{q, nombre, bs},
-   hechos:[{id, rev, t, g, nombre, bs}]}}. Lo vencido se va solo. */
+/* Lo que el bot espera de cada número (propiedad WA_ER): {<celular>: {paso:'elegir'|'confirmar', id, t, ops:[{q, nombre, bs}], conf:{q, nombre, bs},
+   bs, hechos:[{id, rev, t, g, nombre, bs}]}}. `id` = qué pregunta es (va en cada botón: uno de una lista vieja no vale). Lo vencido se va solo.
+   ⚠️ (revisión del 08/11, B3) Lo que CARGA o BORRA se decide releyendo WA_ER ADENTRO del candado (`waErCargar_`, `waErDeshacer_`): dos toques
+   seguidos (dos avisos de Meta a la vez) no cargan dos veces. Fuera del candado solo se guarda una pregunta nueva o un «no» (`waErEstPoner_`). */
 function waErEstLeer_() { var e = waJsonProp_('WA_ER', {}); return (e && typeof e === 'object' && !Array.isArray(e)) ? e : {}; }
 function waErEst_(E, de) {
   var s = E[de] || {}, ahora = Date.now();
-  if (s.paso && ahora - (Number(s.t) || 0) > WA_ER_PASO_MIN * 60000) { delete s.paso; delete s.ops; delete s.conf; }
+  if (s.paso && ahora - (Number(s.t) || 0) > WA_ER_PASO_MIN * 60000) waErSinPaso_(s);
   s.hechos = (s.hechos || []).filter(function (h) { return ahora - (Number(h.t) || 0) < WA_ER_DESHACER_MIN * 60000; });
   E[de] = s;
   return s;
 }
+function waErSinPaso_(s) { delete s.paso; delete s.id; delete s.ops; delete s.conf; delete s.bs; }
 function waErEstGuardar_(E) {
-  for (var k in E) { var s = waErEst_(E, k); if (!s.paso && !s.hechos.length) delete E[k]; }
-  try { PropertiesService.getScriptProperties().setProperty('WA_ER', JSON.stringify(E)); } catch (e) {}
+  /* Se guarda una COPIA sin los números que no esperan nada: `E` y sus objetos siguen siendo los mismos (quien los tiene en la mano puede
+     seguir anotando en ellos y guardar otra vez). */
+  var out = {};
+  for (var k in E) { var s = waErEst_(E, k); if (s.paso || s.hechos.length) out[k] = s; }
+  try { PropertiesService.getScriptProperties().setProperty('WA_ER', JSON.stringify(out)); } catch (e) {}
 }
-/** Los choferes con efectivo SIN RECOGER hasta hoy: [{q, nombre, bs, n, desde, cobs:[{id, f, m, falta, oc}]}], el de más plata primero.
-    = el `bs` de `waEfeDe_(waEfeResumen_(…), true)` del mensaje de las 9:00 y las 18:00. */
+/** Guarda SOLO la pregunta de este número (la de `s`, o ninguna), sobre lo que hay ahora en WA_ER (los `hechos` no se tocan acá). */
+function waErEstPoner_(de, s) {
+  var E = waErEstLeer_(), x = waErEst_(E, de);
+  waErSinPaso_(x);
+  if (s && s.paso) { x.paso = s.paso; x.id = s.id; x.t = s.t; if (s.ops) x.ops = s.ops; if (s.conf) x.conf = s.conf; if (s.bs != null) x.bs = s.bs; }
+  waErEstGuardar_(E);
+}
+/** Los choferes con efectivo SIN RECOGER hasta hoy: [{q, nombre, bs, n, desde, cobs:[{id, f, m, falta, oc, nv, rc}]}], el de más plata primero
+    (los cobros, del más viejo al más nuevo). = el `bs` de `waEfeDe_(waEfeResumen_(…), true)` del mensaje de las 9:00 y las 18:00. */
 function waErPend_(lista, hoy) {
   var K = waEfeCuentas_(lista), out = [];
   for (var k in K.cob) {
@@ -5267,14 +5300,26 @@ function waErPend_(lista, hoy) {
       if (c.f < WA_EFE_DESDE || c.f > hoy) return;
       var falta = Math.round((c.m - c.cub) * 100) / 100; if (falta <= 0.005) return;
       o.bs = Math.round((o.bs + falta) * 100) / 100; o.n++; if (!o.desde || c.f < o.desde) o.desde = c.f;
-      o.cobs.push({ id:c.id, f:c.f, m:c.m, falta:falta, oc:c.oc });
+      o.cobs.push({ id:c.id, f:c.f, m:c.m, falta:falta, oc:c.oc, nv:c.nv || '', rc:c.rc || '' });
     });
     if (o.bs > 0.005) out.push(o);
   }
   out.sort(function (a, b) { return b.bs - a.bs || (a.nombre < b.nombre ? -1 : 1); });
   return out;
 }
-/** Qué escribió: {t:'nada'|'medio'|'otro'|'inicio'(solo)|'elegir'(i)|'num'(i)|'todos'|'si'|'no'|'deshacer'|'monto'(q, bs)}. */
+/** (Revisión del 08/11, C2/C3) Los N° de nota de venta y de recibo de los cobros que entrega, para la columna «Nota» del retiro: con ellos el
+    aviso de «retiro repetido» de la página vuelve a andar y ✏️ Corregir no pide inventar una nota. */
+function waErNotas_(cobs) {
+  var out = [];
+  (cobs || []).forEach(function (c) {
+    [c.nv, c.rc].forEach(function (t) {
+      (String(t || '').match(/[A-Za-z]*\d[\w-]*/g) || []).forEach(function (w) { if (out.indexOf(w) < 0) out.push(w); });
+    });
+  });
+  return out.slice(0, 12).join(', ');
+}
+/** Qué escribió: {t:'nada'|'medio'|'otro'|'inicio'(solo)|'elegir'(i, k)|'num'(i)|'todos'(k)|'si'(k)|'no'(k)|'deshacer'|'monto'(q, bs, r)}.
+    `k` = de qué pregunta es el botón tocado (los botones de «Ya lo recibí» llevan `er:<qué>:<id de la pregunta>`). */
 function waErQue_(m) {
   var t = String((m && m.type) || '');
   if (t === 'reaction') return { t:'nada' };
@@ -5284,11 +5329,13 @@ function waErQue_(m) {
   }
   if (t === 'interactive') {
     var it = m.interactive || {}, id = String(((it.button_reply || it.list_reply) || {}).id || '');
-    if (id === 'er:t') return { t:'todos', de:'boton' };
-    if (id === 'er:si') return { t:'si', de:'boton' };
-    if (id === 'er:no') return { t:'no', de:'boton' };
-    var mi = id.match(/^er:(\d{1,2})$/);
-    return mi ? { t:'elegir', i:Number(mi[1]) } : { t:'otro' };
+    var mi = id.match(/^er:(\d{1,2}|t|si|no)(?::([A-Za-z0-9]+))?$/);
+    if (!mi) return { t:'otro' };
+    var k = mi[2] || '';
+    if (mi[1] === 't') return { t:'todos', de:'boton', k:k };
+    if (mi[1] === 'si') return { t:'si', de:'boton', k:k };
+    if (mi[1] === 'no') return { t:'no', de:'boton', k:k };
+    return { t:'elegir', i:Number(mi[1]), k:k };
   }
   if (t !== 'text') return { t:'medio' };
   /* Sin los signos; el punto y la coma solo entre dos números (es un monto: «1.500»). */
@@ -5336,27 +5383,41 @@ function waErAyuda_(medio) {
     '· ¿Te equivocaste? Escribí *DESHACER* (hasta ' + WA_ER_DESHACER_MIN + ' minutos después).\n' +
     'Lo demás, en el panel (Contabilidad → 💵 Retiro de efectivo).';
 }
-/** «¿De quién?»: el texto con todos y los botones (hasta 2 choferes) o la lista (3 o más). Deja en `s` lo que se ofreció. */
-function waErPregunta_(P, s, pre) {
+/** «¿De quién?»: el texto con todos y los botones (hasta 2 choferes) o la lista (3 o más). Deja en `s` la pregunta (con su `id`, que va en cada
+    botón). `bs` = un monto que ya escribió («recibí 500»): al elegir, se pregunta «¿Anoto Bs 500?» en vez de cargar todo. */
+function waErPregunta_(P, s, pre, bs) {
   var tot = 0; P.forEach(function (o) { tot = Math.round((tot + o.bs) * 100) / 100; });
   var lineas = P.map(function (o, i) { return (i + 1) + '. *' + o.nombre + '* ' + waBs_(o.bs) + ' (' + o.n + ' cobro' + (o.n === 1 ? '' : 's') + ', desde el ' + waErDm_(o.desde) + ')'; });
   var ej = String(P[0].nombre || '').split(' ')[0] + ' ' + Math.max(1, Math.floor(P[0].bs / 2));
-  var cab = (pre ? pre + '\n\n' : '') + '💵 *¿De quién recibiste el efectivo?* Sin recoger en el panel:\n\n';
-  var pie = '\n\nTocá el nombre y lo anoto como retiro, con todo lo que tiene. Si te dio otro monto, escribí el nombre y el monto (ej.: *' + ej + '*).';
+  var cab = (pre ? pre + '\n\n' : '') + '💵 *¿De quién recibiste ' + (bs != null ? waBs_(bs) : 'el efectivo') + '?* Sin recoger en el panel:\n\n';
+  var pie = bs != null ? '\n\nTocá el nombre y te pregunto antes de anotarlo.'
+                       : '\n\nTocá el nombre y lo anoto como retiro, con todo lo que tiene. Si te dio otro monto, escribí el nombre y el monto (ej.: *' + ej + '*).';
   var cuerpo = lineas.join('\n');
   while ((cab + cuerpo + pie).length > 1000 && lineas.length > 1) { lineas.pop(); cuerpo = lineas.join('\n') + '\n…y ' + (P.length - lineas.length) + ' más (en «Todos»).'; }
-  s.paso = 'elegir'; s.t = Date.now(); s.ops = P.map(function (o) { return { q:o.q, nombre:o.nombre, bs:o.bs }; }); delete s.conf;
-  var R = { txt:cab + cuerpo + pie, alt:'\n\nEscribí el número (1' + (P.length > 1 ? ', 2…' : '') + ')' + (P.length > 1 ? ' o *todos*' : '') + '.' };
+  waErSinPaso_(s);
+  s.paso = 'elegir'; s.id = waErUid_(); s.t = Date.now(); s.ops = P.map(function (o) { return { q:o.q, nombre:o.nombre, bs:o.bs }; });
+  if (bs != null) s.bs = bs;
+  s._cambio = true;
+  var R = { txt:cab + cuerpo + pie, alt:'\n\nEscribí el número (1' + (P.length > 1 ? ', 2…' : '') + ')' + (P.length > 1 && bs == null ? ' o *todos*' : '') + '.' };
   if (P.length <= 2) {
-    R.botones = P.map(function (o, i) { return { id:'er:' + i, title:waErTit_(o, 20) }; });
-    if (P.length === 2) R.botones.push({ id:'er:t', title:'Los dos' });
+    R.botones = P.map(function (o, i) { return { id:'er:' + i + ':' + s.id, title:waErTit_(o, 20) }; });
+    if (P.length === 2 && bs == null) R.botones.push({ id:'er:t:' + s.id, title:'Los dos' });
   } else {
-    R.lista = P.slice(0, WA_ER_LISTA_MAX).map(function (o, i) { return { id:'er:' + i, title:waErTit_(o, 24), description:o.n + ' cobro' + (o.n === 1 ? '' : 's') + ', desde el ' + waErDm_(o.desde) }; });
-    R.lista.push({ id:'er:t', title:'Todos', description:waBs_(tot) + ' de ' + P.length + ' choferes' });
+    R.lista = P.slice(0, WA_ER_LISTA_MAX).map(function (o, i) { return { id:'er:' + i + ':' + s.id, title:waErTit_(o, 24), description:o.n + ' cobro' + (o.n === 1 ? '' : 's') + ', desde el ' + waErDm_(o.desde) }; });
+    if (bs == null) R.lista.push({ id:'er:t:' + s.id, title:'Todos', description:waBs_(tot) + ' de ' + P.length + ' choferes' });
   }
   return R;
 }
-function waErUid_() { return 'w' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36); }
+/** «¿Anoto que X te entregó Bs N?» con «Sí, anotalo» / «No» (los dos con el `id` de esta pregunta). */
+function waErConfirmar_(o, pide, s) {
+  waErSinPaso_(s);
+  s.paso = 'confirmar'; s.id = waErUid_(); s.t = Date.now(); s.conf = { q:o.q, nombre:o.nombre, bs:pide }; s._cambio = true;
+  var todoO = Math.abs(pide - o.bs) < 0.005;
+  return { txt:'¿Anoto que *' + o.nombre + '* te entregó *' + waBs_(pide) + '*?' + (todoO ? ' Es todo lo que tiene sin recoger en el panel.'
+               : ' En el panel tiene ' + waBs_(o.bs) + ' sin recoger: le quedarían *' + waBs_(Math.round((o.bs - pide) * 100) / 100) + '*.'),
+           botones:[{ id:'er:si:' + s.id, title:'Sí, anotalo' }, { id:'er:no:' + s.id, title:'No' }], alt:'\n\nRespondé *sí* o *no*.' };
+}
+function waErUid_() { return Date.now().toString(36).slice(-5) + Math.floor(Math.random() * 46656).toString(36); }
 /** La respuesta de doSave/doDelete (un TextOutput de Apps Script) como objeto. */
 function waErJson_(r) {
   if (!r) return null;
@@ -5364,46 +5425,58 @@ function waErJson_(r) {
   try { if (r._t != null) return JSON.parse(r._t); } catch (e2) {}
   return r.ok != null ? r : null;
 }
-/** Carga los retiros (`sel` = [{q, nombre, bs (null = todo lo que tiene)}]) ADENTRO del candado del panel, con la planilla de ese momento:
-    {busy} o {res:[{ok, id, rev, nombre, bs, todo, n, ocs, queda} | {nombre, nada} | {nombre, mas, pend, bs} | {nombre, err}]}. */
-function waErCargar_(sel, por) {
+/** Carga los retiros (`sel` = [{q, nombre, bs (null = todo lo que tiene)}]) ADENTRO del candado del panel, con la planilla y WA_ER de ese momento.
+    `preg` = el id de la pregunta que se está contestando (si ya no está abierta, otro aviso de Meta la contestó: {usado}). Devuelve {busy},
+    {usado} o {res:[{ok, id, rev, nombre, bs, todo, n, ocs, queda} | {nombre, nada} | {nombre, mas, pend, bs} | {nombre, err}]}.
+    (Revisión del 08/11, C1) Los cobros que entrega van SIEMPRE tildados, del más viejo al más nuevo hasta el monto: «otro monto» ya no se lo
+    lleva un cobro de octubre (cerrado) por ser del mismo monto, y lo que el bot dice que le queda es lo que queda en el panel. */
+function waErCargar_(sel, por, de, preg) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (e) { return { busy:true }; }
   try {
-    var lista = readAll(), B = waBo_(Date.now()), P = waErPend_(lista, B.hoy), res = [];
+    var E = waErEstLeer_(), s = waErEst_(E, de);
+    if (preg) {
+      if (!(s.paso && String(s.id || '') === String(preg))) return { usado:true };
+      waErSinPaso_(s); waErEstGuardar_(E);   // usada ANTES de guardar nada: un segundo aviso de Meta ya no la encuentra abierta
+    }
+    var lista = readAll(), B = waBo_(Date.now()), P = waErPend_(lista, B.hoy), res = [], g = Date.now();
+    s.hechos.forEach(function (h) { if ((Number(h.g) || 0) >= g) g = (Number(h.g) || 0) + 1; });   // lo de esta vez va junto (DESHACER)
     sel.forEach(function (x) {
       var o = null; for (var i = 0; i < P.length; i++) if (P[i].q === x.q) o = P[i];
       if (!o) { res.push({ nombre:x.nombre, nada:true }); return; }
       var pide = x.bs == null ? o.bs : Math.round((Number(x.bs) || 0) * 100) / 100;
       if (!(pide > 0.005)) { res.push({ nombre:o.nombre, nada:true }); return; }
       if (pide > o.bs + 0.005) { res.push({ nombre:o.nombre, mas:true, pend:o.bs, bs:pide }); return; }
-      var todo = Math.abs(pide - o.bs) < 0.005, ahora = Date.now();
-      var ocs = []; o.cobs.forEach(function (c) { if (c.oc && ocs.indexOf(c.oc) < 0) ocs.push(c.oc); });
+      var todo = Math.abs(pide - o.bs) < 0.005, ahora = Date.now(), tick = [], acu = 0;
+      for (var j = 0; j < o.cobs.length && acu < pide - 0.005; j++) { tick.push(o.cobs[j]); acu = Math.round((acu + o.cobs[j].falta) * 100) / 100; }
+      var ocs = []; tick.forEach(function (c) { if (c.oc && ocs.indexOf(c.oc) < 0) ocs.push(c.oc); });
       var rec = { id:'__ret_' + waErUid_() + '__', fecha:'', turno:'', vendedor:o.nombre, productos:[], cliente:WA_ER_TITULO, celular:'', zona:'FACTURADO',
                   direccion:'Retiro del ' + B.hoy.slice(8, 10) + '/' + B.hoy.slice(5, 7) + '/' + B.hoy.slice(0, 4), maps:'', pagado:false, saldo:0, ts:ahora,
-                  metodoPago:'', estado:'', entregado:false, vehiculo:'', chofer:WA_ER_RETIRA, nota:'', acuenta:pide, facturarA:'', nit:'',
+                  metodoPago:'', estado:'', entregado:false, vehiculo:'', chofer:WA_ER_RETIRA, nota:waErNotas_(tick), acuenta:pide, facturarA:'', nit:'',
                   nroDia:0, verificado:false, fotos:[],
-                  /* Los cobros que entrega (`efe:id|día|monto;…`, = retTicksTxt): todos los suyos sin recoger si es todo; si es otro monto, la regla. */
-                  garantia:todo ? 'efe:' + o.cobs.map(function (c) { return String(c.id).replace(/[|;]/g, '') + '|' + c.f + '|' + (Math.round(c.m * 100) / 100); }).join(';') : '',
+                  /* Los cobros que entrega (`efe:id|día|monto;…`, = retTicksTxt): el paso 0 de la regla toma de cada uno lo que le falta, en orden. */
+                  garantia:'efe:' + tick.map(function (c) { return String(c.id).replace(/[|;]/g, '') + '|' + c.f + '|' + (Math.round(c.m * 100) / 100); }).join(';'),
                   observaciones:'🤖 Lo cargó el bot: ' + (por || 'Contabilidad') + ' tocó «' + WA_ER_BOTON + '» por WhatsApp el ' + B.txt + '.' +
-                                (todo ? '' : ' Otro monto: los cobros los toma la regla del efectivo.') };
+                                (todo ? '' : ' Otro monto: se tildaron sus cobros más viejos hasta ' + waBs_(pide) + '.') };
       var r = waErJson_(doSave(rec, false, false, null, undefined, false, true, false));
-      if (r && r.ok) res.push({ ok:true, id:rec.id, rev:Number((r.pedido || {}).rev) || 0, nombre:o.nombre, bs:pide, todo:todo, n:o.n, ocs:ocs,
-                                queda:Math.round((o.bs - pide) * 100) / 100 });
-      else res.push({ nombre:o.nombre, err:String((r && (r.error || r.motivo)) || 'sin respuesta') });
+      if (r && r.ok) {
+        var rev = Number((r.pedido || {}).rev) || 0;
+        s.hechos.push({ id:rec.id, rev:rev, t:Date.now(), g:g, nombre:o.nombre, bs:pide });
+        res.push({ ok:true, id:rec.id, rev:rev, nombre:o.nombre, bs:pide, todo:todo, n:tick.length, ocs:ocs, queda:Math.round((o.bs - pide) * 100) / 100 });
+      } else res.push({ nombre:o.nombre, err:String((r && (r.error || r.motivo)) || 'sin respuesta') });
     });
+    waErEstGuardar_(E);
     return { res:res };
   } finally { try { lock.releaseLock(); } catch (e3) {} }
 }
-/** Lo que se dice después de cargar (y lo que se guarda para DESHACER en `s.hechos`). */
-function waErCargadoTxt_(C, s) {
+/** Lo que se dice después de cargar. */
+function waErCargadoTxt_(C) {
   if (C.busy) return '⏳ El panel está ocupado guardando otra cosa. Tocá de nuevo en un minuto (no anoté nada).';
-  /* `g` = qué vez fue (lo de un mismo toque va junto): DESHACER borra la última. */
-  var L = [], ok = [], g = Date.now();
-  s.hechos.forEach(function (h) { if ((Number(h.g) || 0) >= g) g = (Number(h.g) || 0) + 1; });
+  if (C.usado) return '✅ Eso ya lo anoté (llegó dos veces). Si te equivocaste, escribí *DESHACER*.';
+  var L = [], ok = 0;
   C.res.forEach(function (x) {
     if (x.ok) {
-      ok.push(x); s.hechos.push({ id:x.id, rev:x.rev, t:Date.now(), g:g, nombre:x.nombre, bs:x.bs });
+      ok++;
       L.push('✅ Anoté en el panel: *' + x.nombre + '* le entregó *' + waBs_(x.bs) + '* a ' + WA_ER_RETIRA + '.' +
              (x.todo ? ' Es todo lo que tenía sin recoger (' + x.n + ' cobro' + (x.n === 1 ? '' : 's') + (x.ocs.length ? ': ' + x.ocs.slice(0, 6).map(function (oc) { return 'OC ' + oc; }).join(', ') + (x.ocs.length > 6 ? '…' : '') : '') + ').'
                      : ' Le quedan *' + waBs_(x.queda) + '* sin recoger.'));
@@ -5411,27 +5484,28 @@ function waErCargadoTxt_(C, s) {
     else if (x.mas) L.push('⚠️ *' + x.nombre + '* tiene ' + waBs_(x.pend) + ' sin recoger en el panel: no anoté ' + waBs_(x.bs) + '. Si te dio más, revisá en el panel que sus cobros digan que la plata la recibió él.');
     else L.push('❌ No pude anotar el retiro de *' + x.nombre + '* (' + x.err + '). Cargalo desde el panel (Contabilidad → 💵 Retiro de efectivo).');
   });
-  if (ok.length) L.push('\n¿Te equivocaste? Escribí *DESHACER* (hasta las ' + waBo_(Date.now() + WA_ER_DESHACER_MIN * 60000).txt.split(' ')[1] + ').');
+  if (ok) L.push('\n¿Te equivocaste? Escribí *DESHACER* (hasta las ' + waBo_(Date.now() + WA_ER_DESHACER_MIN * 60000).txt.split(' ')[1] + ').');
   return L.join('\n');
 }
-/** DESHACER: borra lo último que cargó el bot (lo de la misma vez), con su sello. */
-function waErDeshacer_(s, por) {
-  if (!s.hechos.length) return 'No tengo nada reciente para deshacer (vale ' + WA_ER_DESHACER_MIN + ' minutos). Para borrar un retiro, entrá al panel: Contabilidad → 💵 Retiro de efectivo.';
-  var g = 0; s.hechos.forEach(function (h) { if ((Number(h.g) || 0) > g) g = Number(h.g) || 0; });
-  var esos = s.hechos.filter(function (h) { return (Number(h.g) || 0) === g; });
+/** DESHACER: borra lo último que cargó el bot (lo de la misma vez), con su sello. Lee y guarda WA_ER adentro del candado. */
+function waErDeshacer_(de, por) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(20000); } catch (e) { return '⏳ El panel está ocupado. Escribí *DESHACER* de nuevo en un minuto.'; }
   var L = [];
   try {
-    esos.forEach(function (h) {
+    var E = waErEstLeer_(), s = waErEst_(E, de);
+    if (!s.hechos.length) return 'No tengo nada reciente para deshacer (vale ' + WA_ER_DESHACER_MIN + ' minutos). Para borrar un retiro, entrá al panel: Contabilidad → 💵 Retiro de efectivo.';
+    var g = 0; s.hechos.forEach(function (h) { if ((Number(h.g) || 0) > g) g = Number(h.g) || 0; });
+    s.hechos.filter(function (h) { return (Number(h.g) || 0) === g; }).forEach(function (h) {
       var r = waErJson_(doDelete(h.id, h.rev, { quien:(por || 'Contabilidad') + ' por WhatsApp (bot)', dispositivo:'botwa' }));
       if (r && r.ok) L.push('↩️ Borré del panel el retiro de *' + h.nombre + '* (' + waBs_(h.bs) + '). Su efectivo vuelve a figurar sin recoger.');
       else if (r && r.error === 'conflicto') L.push('⚠️ El retiro de *' + h.nombre + '* lo corrigieron en el panel después: no lo borré. Si hay que sacarlo, borralo desde el panel.');
       else if (r && r.error === 'not found') L.push('ℹ️ El retiro de *' + h.nombre + '* ya no estaba en el panel (alguien lo borró).');
       else L.push('❌ No pude borrar el retiro de *' + h.nombre + '* (' + String((r && r.error) || 'sin respuesta') + '). Borralo desde el panel.');
     });
+    s.hechos = s.hechos.filter(function (h) { return (Number(h.g) || 0) !== g; });
+    waErEstGuardar_(E);
   } finally { try { lock.releaseLock(); } catch (e3) {} }
-  s.hechos = s.hechos.filter(function (h) { return (Number(h.g) || 0) !== g; });
   return L.join('\n');
 }
 /** Manda la respuesta: botones o lista de Meta (dentro de las 24 h: la persona acaba de escribir) y, si Meta no la toma, en texto. */
@@ -5451,7 +5525,7 @@ function waErMandar_(cfg, de, R) {
 }
 /** El webhook: true = era de esto (ya está anotado y contestado); false = lo del número de prueba que no es de esto (sigue el resto). */
 function waErResponder_(sh, de, m, quien, cfg) {
-  var E = waErEstLeer_(), s = waErEst_(E, de), Q = waErQue_(m), conta = quien === 'conta';
+  var s = waErEst_(waErEstLeer_(), de), Q = waErQue_(m), conta = quien === 'conta';
   var paso = s.paso || '', boton = String(m.type) === 'interactive' || String(m.type) === 'button';
   var deEsto = (Q.t === 'inicio' && !Q.solo) || (boton && Q.t !== 'otro') || (paso && ['todos', 'num', 'si', 'no', 'monto'].indexOf(Q.t) >= 0) ||
                (Q.t === 'deshacer' && s.hechos.length > 0);
@@ -5460,67 +5534,67 @@ function waErResponder_(sh, de, m, quien, cfg) {
   sh.appendRow([waHookHora_(m.timestamp), '', '', '💵 Contabilidad: ' + Q.t, nom, de, '', '💬 recibí', String(m.id || ''), iaCorte_(waHookTxtMsg_(m), 300), '', (Number(m.timestamp) * 1000) || Date.now()]);
   if (Q.t === 'nada' || (Q.t === 'si' && !paso && Q.de !== 'boton')) return true;   // un «ok» suelto: no se contesta
   if (!waActivo_() || !cfg || !cfg.ok) return true;
-  var R = null;
+  /* (Revisión del 08/11, B1/B2) Un botón vale solo si es de la pregunta ABIERTA: uno de una lista vieja (o de un mensaje de la mañana) no carga
+     nada, y se manda la lista de ahora. */
+  var botonViejo = Q.de === 'boton' || Q.t === 'elegir' ? !(paso && Q.k && Q.k === s.id) : false;
+  var R = null, sinNada = '👍 No hay efectivo de choferes sin recoger en el panel. Si un chofer te dio plata, revisá en el panel que el cobro diga quién la recibió.';
+  var fin = function (C) { return { txt:waErCargadoTxt_(C) }; };
   try {
     if (Q.t === 'medio' || Q.t === 'otro') R = { txt:waErAyuda_(Q.t === 'medio') };
-    else if (Q.t === 'deshacer') R = { txt:waErDeshacer_(s, por) };
+    else if (Q.t === 'deshacer') R = { txt:waErDeshacer_(de, por) };
     else if (Q.t === 'no') {
-      R = { txt:paso ? 'Listo, no anoté nada. Cuando un chofer te entregue la plata, tocá *' + WA_ER_BOTON + '* o escribime *recibí*.' : waErAyuda_(false) };
-      delete s.paso; delete s.ops; delete s.conf;
-    } else if (Q.t === 'si' && !(paso === 'elegir' && s.ops && s.ops.length > 1)) {
-      /* «Sí» a «¿Anoto…?», o a la lista de un solo chofer. */
-      var uno = paso === 'confirmar' ? s.conf : (paso === 'elegir' && s.ops && s.ops.length === 1 ? s.ops[0] : null);
-      if (!uno) R = { txt:'Esa pregunta ya venció (vale ' + WA_ER_PASO_MIN + ' minutos). Tocá *' + WA_ER_BOTON + '* o escribime *recibí* de nuevo.' };
-      else { var C0 = waErCargar_([uno], por); R = { txt:waErCargadoTxt_(C0, s) }; if (!C0.busy) { delete s.paso; delete s.ops; delete s.conf; } }
+      if (botonViejo) R = { txt:'Ese botón es de una pregunta anterior: no cambié nada.' };
+      else { R = { txt:paso ? 'Listo, no anoté nada. Cuando un chofer te entregue la plata, tocá *' + WA_ER_BOTON + '* o escribime *recibí*.' : waErAyuda_(false) }; if (paso) { waErSinPaso_(s); s._cambio = true; } }
+    } else if (Q.t === 'si' && paso === 'confirmar' && s.conf && !botonViejo) {
+      R = fin(waErCargar_([s.conf], por, de, s.id));
     } else {
       var lista = readAll(), B = waBo_(Date.now()), P = waErPend_(lista, B.hoy), ops = (paso === 'elegir' && s.ops) || null;
-      var sinNada = '👍 No hay efectivo de choferes sin recoger en el panel. Si un chofer te dio plata, revisá en el panel que el cobro diga quién la recibió.';
-      if (Q.t === 'inicio' || Q.t === 'si') R = P.length ? waErPregunta_(P, s, Q.t === 'si' ? '¿De quién?' : '') : { txt:sinNada };
+      var de1 = function (q) { return P.filter(function (o) { return o.q === q; })[0] || null; };
+      if (botonViejo) R = P.length ? waErPregunta_(P, s, 'Ese botón es de una lista anterior: te mando la de ahora.') : { txt:sinNada };
+      else if (Q.t === 'inicio') R = P.length ? waErPregunta_(P, s) : { txt:sinNada };
+      else if (Q.t === 'si') R = P.length ? waErPregunta_(P, s, paso === 'elegir' ? 'Tocá el nombre del chofer (o escribí su nombre).' : 'Esa pregunta ya venció: ¿de quién?') : { txt:sinNada };
       else if (Q.t === 'elegir' || Q.t === 'num') {
         var op = ops && ops[Q.i];
         if (!op) R = P.length ? waErPregunta_(P, s, Q.t === 'num' ? 'No tengo ese número en la lista.' : 'Esa lista ya venció: te la mando de nuevo.') : { txt:sinNada };
-        else { var C1 = waErCargar_([op], por); R = { txt:waErCargadoTxt_(C1, s) }; if (!C1.busy) { delete s.paso; delete s.ops; } }
+        else if (s.bs != null) {   // (B6) escribió el monto antes («recibí 500»): se pregunta con ese monto
+          var o6 = de1(op.q);
+          if (!o6) R = { txt:'ℹ️ *' + op.nombre + '* ya no tiene efectivo sin recoger en el panel (¿ya cargaron el retiro?). No anoté nada.' };
+          else if (s.bs > o6.bs + 0.005) R = { txt:'⚠️ *' + o6.nombre + '* tiene ' + waBs_(o6.bs) + ' sin recoger en el panel: no puedo anotar ' + waBs_(s.bs) + '.' };
+          else R = waErConfirmar_(o6, s.bs, s);
+        } else R = fin(waErCargar_([op], por, de, s.id));
       } else if (Q.t === 'todos') {
-        var sel = ops || (conta ? P.map(function (o) { return { q:o.q, nombre:o.nombre, bs:o.bs }; }) : null);
-        if (!sel || !sel.length) R = { txt:sinNada };
-        else if (!ops && !boton) R = waErPregunta_(P, s);   // «todos» sin haber visto la lista: primero se la muestra
-        else { var C2 = waErCargar_(sel, por); R = { txt:waErCargadoTxt_(C2, s) }; if (!C2.busy) { delete s.paso; delete s.ops; } }
+        if (!ops) R = P.length ? waErPregunta_(P, s) : { txt:sinNada };   // «todos» sin haber visto la lista: primero se la muestra
+        else R = fin(waErCargar_(ops, por, de, s.id));
       } else if (Q.t === 'monto') {
         var hits = Q.q ? waErBuscar_(P, Q.q) : (ops && ops.length === 1 ? P.filter(function (o) { return o.q === ops[0].q; }) : []);
-        if (!Q.q && !hits.length) R = P.length ? waErPregunta_(P, s, '¿De quién? Escribí el nombre y el monto (ej.: *' + String(P[0].nombre).split(' ')[0] + ' 500*).') : { txt:sinNada };
+        if (!Q.q && !hits.length) R = P.length ? waErPregunta_(P, s, Q.bs != null ? '' : '¿De quién? Escribí el nombre y el monto (ej.: *' + String(P[0].nombre).split(' ')[0] + ' 500*).', Q.bs) : { txt:sinNada };
         else if (!hits.length) {
           /* ¿Es alguien que el bot recién anotó? (dos toques, o lo escribió después de tocar el botón) */
           var yaH = waErBuscar_(s.hechos.map(function (h) { return { q:waEfeNorm_(h.nombre), nombre:h.nombre, bs:h.bs }; }), Q.q);
-          /* Un «hola» o algo que no es un nombre, sin haber preguntado nada: la ayuda. */
           if (yaH.length === 1) R = { txt:'✅ Ya anoté el retiro de *' + yaH[0].nombre + '* (' + waBs_(yaH[0].bs) + ') hace un momento: no tiene más efectivo sin recoger en el panel. Si te equivocaste, escribí *DESHACER*.' };
-          else if (!(paso || Q.bs != null || Q.r)) R = { txt:waErAyuda_(false) };
+          else if (!(paso || Q.bs != null || Q.r)) R = { txt:waErAyuda_(false) };   // un «hola» o algo que no es un nombre, sin haber preguntado nada
           else R = P.length ? waErPregunta_(P, s, 'No encuentro a «' + Q.q + '» entre los choferes con efectivo sin recoger.') : { txt:sinNada };
         }
-        else if (hits.length > 1) R = waErPregunta_(hits, s, '¿Cuál de estos?');
+        else if (hits.length > 1) R = waErPregunta_(hits, s, '¿Cuál de estos?', Q.bs);
         else {
-          /* Con el monto, con «recibí de…» o contestando «¿de quién?», se anota; el nombre solo, de la nada, se pregunta antes. */
-          var o = hits[0], pide = Q.bs == null ? o.bs : Q.bs, todoO = Math.abs(pide - o.bs) < 0.005, directo = Q.bs != null || Q.r || paso === 'elegir';
+          /* Con el monto justo, con «recibí de…» o contestando «¿de quién?», se anota; el nombre solo, de la nada, u otro monto, se pregunta antes. */
+          var o = hits[0], pide = Q.bs == null ? (s.bs != null && paso === 'elegir' ? s.bs : o.bs) : Q.bs;
+          var todoO = Math.abs(pide - o.bs) < 0.005, directo = Q.bs != null || Q.r || paso === 'elegir';
           if (pide > o.bs + 0.005) R = { txt:'⚠️ *' + o.nombre + '* tiene ' + waBs_(o.bs) + ' sin recoger en el panel: no puedo anotar ' + waBs_(pide) + '. Si te dio más, revisá en el panel que sus cobros digan que la plata la recibió él.' };
-          else if (todoO && directo) { var C3 = waErCargar_([{ q:o.q, nombre:o.nombre, bs:null }], por); R = { txt:waErCargadoTxt_(C3, s) }; if (!C3.busy) { delete s.paso; delete s.ops; delete s.conf; } }
-          else {
-            s.paso = 'confirmar'; s.t = Date.now(); s.conf = { q:o.q, nombre:o.nombre, bs:pide }; delete s.ops;
-            R = { txt:'¿Anoto que *' + o.nombre + '* te entregó *' + waBs_(pide) + '*?' + (todoO ? ' Es todo lo que tiene sin recoger en el panel.'
-                       : ' En el panel tiene ' + waBs_(o.bs) + ' sin recoger: le quedarían *' + waBs_(Math.round((o.bs - pide) * 100) / 100) + '*.'),
-                  botones:[{ id:'er:si', title:'Sí, anotalo' }, { id:'er:no', title:'No' }], alt:'\n\nRespondé *sí* o *no*.' };
-          }
+          else if (todoO && directo) R = fin(waErCargar_([{ q:o.q, nombre:o.nombre, bs:null }], por, de, paso === 'elegir' ? s.id : ''));
+          else R = waErConfirmar_(o, pide, s);
         }
       }
     }
   } catch (er) {
     R = { txt:'🤖 Algo falló al anotarlo: no sé si quedó. Mirá el panel (Contabilidad → 💵 Retiro de efectivo) antes de cargarlo a mano.' };
   }
-  waErEstGuardar_(E);
+  if (s._cambio) waErEstPoner_(de, s);   // una pregunta nueva (o un «no»); lo cargado y lo borrado ya se guardaron adentro del candado
   if (!R) R = { txt:waErAyuda_(false) };
   var r = waErMandar_(cfg, de, R);
   sh.appendRow([waBo_(Date.now()).txt, '', '', '💵 Contabilidad: respuesta', nom, de, r.como, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(R.txt, 1500)]);
   return true;
 }
-
 function waArmar_(m, recs, cfg, B) {
   var T = WA_TIPOS[m.k], p = null;
   if (!T) return { saltar:'tipo desconocido', anotar:true };
@@ -5553,6 +5627,7 @@ function waArmar_(m, recs, cfg, B) {
     /* 📍 (2026-11-07-f) Con la planilla de AHORA: si ya le pusieron la ubicación (o la mandó) o cambió de día, no sale. */
     if (String(p.fecha) !== String(m.dia)) return { saltar:'cambió de día', anotar:false, p:p };
     if (!waSinPin_(p.maps)) return { saltar:'ya tiene la ubicación', anotar:false, p:p };
+    if (waRetira_(p)) return { saltar:'lo retira el cliente', anotar:false, p:p };   // (revisión del 08/11, S1)
     out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   }
   else if (m.k === 'tr4') out.params = waTr4Params_(p);   // 📥 (2026-11-07-f)
@@ -5640,7 +5715,7 @@ function waArmar_(m, recs, cfg, B) {
   }
   out.params = out.params.map(N);
   /* 📍 §4ok-108 Sin pin exacto, la confirmación y el recordatorio le piden la ubicación (si Meta no aprobó esa, la de siempre). */
-  if (T.ubic && p && waSinPin_(p.maps)) { out.plantilla = T.ubic; out.alts = [[T.plantilla, out.params.length], [T.vieja, T.nv]]; }
+  if (T.ubic && p && waSinPin_(p.maps) && !waRetira_(p)) { out.plantilla = T.ubic; out.alts = [[T.plantilla, out.params.length], [T.vieja, T.nv]]; }
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -5827,6 +5902,7 @@ function waRepasoBot_() {
     var Ru = planilla(), yaUb = waUbLeer_();
     for (var idu in Ru) {
       if (colaN[idu] || confHoy.ids.indexOf(idu) >= 0) continue;
+      if (msgs.some(function (x) { return x.id === idu && x.k === 'conf'; })) continue;   // (revisión del 08/11, B5) su confirmación sale en esta misma vuelta
       if (waUbToca_(Ru[idu], B.hoy, ubDias, yaUb)) msgs.push({ id:idu, k:'ub', a:'cliente', dia:String(Ru[idu].fecha), n:0 });
     }
   }

@@ -1644,6 +1644,11 @@ un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara pág
 carga el RETIRO con la fila de `filaDeRetiro` (entrega el chofer, retira «Contabilidad», FACTURADO, `ts` ahora, cobros tildados en `garantia`) con
 `doSave` adentro del candado (`waErCargar_`). «Ysrael 500» pregunta y va sin tildes; DESHACER 15 min con el sello. Solo WA_CONTABILIDAD (y WA_PRUEBA con
 lo de esto); lo demás de Contabilidad recibe la ayuda. ⚠️ Si cambia `filaDeRetiro` o `efePareo` en la página, cambia `waEr*`: `tests/test_wa_er.js` §10.
+🔎 **Revisado con 4 agentes antes de implementar** (§4pa, 08/11): cada botón lleva el id de su pregunta (`er:<qué>:<id>`: uno viejo no carga), lo que
+carga o borra relee WA_ER ADENTRO del candado (dos avisos de Meta no cargan dos veces), el retiro tilda SIEMPRE sus cobros del más viejo al más nuevo
+hasta el monto y lleva en `nota` las notas de venta y recibos (`waErNotas_`). La 13 A no le escribe a quien RETIRA (`waRetira_` = `fichaRetira`,
+`test_wa_er` §10f) ni al cliente del próximo día con camión (le llega el recordatorio). ⚠️ Espera al dueño: «cómo va cada vendedor» compara el mismo
+día del mes, no los mismos días hábiles (P1).
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)

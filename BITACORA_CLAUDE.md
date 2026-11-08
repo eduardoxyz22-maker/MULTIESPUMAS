@@ -17357,6 +17357,49 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pa — 🔎 LA REVISIÓN DEL `.gs` 07-f CON CUATRO AGENTES ANTES DE IMPLEMENTAR (08/11; dueño: *«pones un agente a revisar Contabilidad, otro a revisar lo de los bots y otro a revisar cómo va la proyección, y un súper agente que revise lo que hicieron los 3 anteriores para estar seguros de implementar y cambiar el gs»*; los arreglos van en el `.gs` 07-f del lunes 09/11)
+- **Cómo**: un Workflow (3 revisores en paralelo + un súper revisor que rehízo cada hallazgo), con la planilla real del 08/11 00:08 (en el
+  scratchpad, nunca al repo) y el reloj del lunes 09/11. Veredicto: **implementar con arreglos**. Lo que ya estaba en producción sigue igual
+  (el Buen día idéntico en 07-e y 07-f, volver a 07-e no rompe nada, la regla del efectivo empareja igual en página y servidor los 139 cobros).
+- **Arreglado en el `.gs`** (todo en lo nuevo de la 07-f; `tests/test_wa_er.js` §11 y `test_wa_13_25_26` §2v-2x):
+  · **C1** «otro monto» («Luis Pierre 1000» → Sí) iba sin tildes y la regla se lo daba a un cobro de OCTUBRE del mismo monto (paso 1): el bot
+    decía «le quedan 860» y el panel seguía en 1.860. Ahora el retiro del bot tilda SIEMPRE sus cobros pendientes del más viejo al más nuevo
+    hasta el monto (`waErCargar_`); el paso 0 de la regla toma de cada uno lo que le falta.
+  · **B1/B2** un botón de una lista VIEJA (o el «Sí» de una pregunta anterior, o «Los dos» del mensaje de la mañana) cargaba a otro chofer o a
+    uno que no estaba en ese mensaje. Cada pregunta tiene un `id` que va en cada botón (`er:<qué>:<id>`); uno que no es de la pregunta abierta
+    no carga y manda la lista de ahora («Ese botón es de una lista anterior»).
+  · **B3** dos avisos del mismo «Sí» a la vez cargaban dos retiros. `waErCargar_` y `waErDeshacer_` releen WA_ER ADENTRO del candado y marcan
+    la pregunta como usada antes de guardar; los `hechos` solo se escriben ahí (`waErEstPoner_` guarda afuera solo una pregunta nueva o un «no»).
+    ⚠️ `waErEstGuardar_` guarda una COPIA filtrada: si borra del objeto `E`, lo que se anota después se pierde (me pasó y la prueba lo atajó).
+  · **B4** «ok»/«listo» a la lista de UN chofer cargaba el retiro: el «sí» escrito vale solo para «¿Anoto…?».
+  · **B6** «recibí 500» y después tocar el chofer cargaba TODO: ahora pregunta «¿Anoto Bs 500?» (`s.bs`).
+  · **C2/C3** el retiro del bot iba sin N° de nota: el aviso de «retiro repetido» de la página no saltaba y ✏️ Corregir no dejaba guardar. Ahora
+    `nota` = los N° de nota de venta y de recibo de los cobros tildados (`waErNotas_`; `waEfeCuentas_` suma `nv`/`rc` a cada cobro).
+    `test_wa_er` §10e: la página lo corrige y guarda.
+  · **C4** un número en WA_CONTABILIDAD y en WA_DUENO perdía las preguntas del dueño: `waErQuien_` lo trata como el de prueba y probar avisa.
+  · **S1** (lo encontró el súper revisor) la 13 A le escribía «para que el chofer llegue a tu puerta» a quien RETIRA en la tienda (el lunes 09/11
+    era el ÚNICO mensaje: la OC 11-068, «RECOGE DE TIENDA BANZER»). `waRetira_` = `fichaRetira` de la página (sin las ventas de tienda, como
+    ella): fuera de la 13 A y de las «_ubic» de la confirmación y el recordatorio. `test_wa_er` §10f compara las dos (con `REAL=` sobre la
+    planilla real: 1.722 pedidos, 17 lo retiran, 0 diferencias).
+  · **B5** el sábado, el cliente del lunes recibía la 13 A a las 10:00 y el recordatorio con la ubicación a las 17:00: `waUbDias_` saca el
+    próximo día con camión (el sábado queda solo el martes; antes de un feriado, sin el día siguiente) y un pedido cuya confirmación sale en esa
+    misma vuelta no recibe la 13 A. ⚠️ Cambia lo que había dicho el dueño en §4ou («el sábado también los del martes» → el del lunes lo cubre el
+    recordatorio): decírselo.
+- **Espera al dueño — P1**: «cómo va cada vendedor» (lunes 08:00) compara el MISMO DÍA del mes (la regla de §4ou, = `pryMomDe` de la página).
+  El 09/11 noviembre lleva 5 días hábiles (domingo 01 + feriado 02) y octubre al 9 llevaba 7: el mensaje diría que bajan 5 (Jonathan ▼69, Mirian
+  ▼66, Fernando ▼34, Juan Pablo ▼26, Maria ▼24; equipo −27 %); con los mismos días hábiles bajan Jonathan (−63) y Mirian (−52), y el equipo
+  va −3 %. Opciones: (a) comparar por días hábiles, en el `.gs` y en la página juntos; (b) decir los días hábiles en el mensaje; (c) dejarlo.
+  Si no decide antes, implementar después de las 10:00 del lunes: el primero sale el 16/11.
+- **Para después del lunes** (no son de la 07-f o no hacen daño): B7 una vendedora que le contesta al Buen día queda como cliente (desde la 07-a);
+  P2 la línea «El mes» del cierre del día usa lo vendido de la foto de las 17:00; C5 el Excel del Cuadre no trae «🔒 cerrado» ni lo que no tapa
+  nada (página); N2 un COMBO cuenta 1 unidad en el `.gs` (no se muestra); B9 mientras Meta no apruebe las plantillas nuevas, la 13 A, el «cómo
+  va cada vendedor» y el TR4 no salen (el TR4 hay que subirlo a mano hasta entonces).
+- **Lo que juntaron para el dueño** (planilla del 08/11): el Buen día del lunes les llega a las 10 vendedoras (todas tienen algo pendiente); el
+  efectivo de las 9:00 dice Bs 6.755 de 3 vendedores (la 07-e diría 10.045: Mauricio 4.770 → 1.480, correcto por la regla) y a Contabilidad Bs
+  2.770 de 2 choferes; la proyección de noviembre va en Bs 841.800 (ritmo; vendido 287.693), y el lunes la pestaña baja sola a ~791.300 (con el
+  ritmo, el lunes ya cuenta como día pasado).
+- Pruebas: `test_wa_er` 83 (con REAL), `test_wa_13_25_26` 93, las 48 suites que cargan el `.gs` en verde, `test_efe_regla` con REAL 20/0.
+
 ### §4oz — 💵✅ «YA LO RECIBÍ»: CONTABILIDAD ANOTA POR WHATSAPP LA PLATA QUE LE ENTREGA UN CHOFER, Y EL BOT CARGA EL RETIRO (08/11; dueño, con la propuesta: *«Si así está bien / No sólo para contabilidad / Si es el [número] a la que le avisa que tienen los choferes»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (el enlace fijo nuevo reemplaza al de `47366d8…`, ver «Enlace» abajo); la página no cambia)
 - **Qué pidió**: el mensaje del efectivo de los choferes (el de Contabilidad, 9:00 y 18:00) tiene que tener un botón para decir «ya me la dio»,
   y que con eso quede cargado el retiro en el panel. Solo Contabilidad (WA_CONTABILIDAD, el mismo número al que ya le llega ese mensaje): ni

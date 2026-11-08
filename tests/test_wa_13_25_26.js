@@ -275,13 +275,14 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     chk('2i una vez por día: a las 10:35 no se repite', S.salen('pedir_ubicacion').length === 0, S.salen());
     S.limpiar(); poner('2026-11-13 10:05'); S.repaso();
     chk('2j el viernes: el domingo no hay entregas → nada', S.salen('pedir_ubicacion').length === 0, S.salen());
-    // El sábado: lunes y martes. u1 se pasó al lunes: ya se le pidió, no otra vez.
-    S.ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pedidos').getRange(2, 2).setValue('2026-11-16');   // u1 → lunes 16/11
+    // El sábado: SOLO los del martes. El lunes es el próximo día con camión: el recordatorio de las 17:00 ya le pide la ubicación (revisión del 08/11, B5).
+    // u1 se pasó al martes: ya se le pidió, no otra vez.
+    S.ctx.SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Pedidos').getRange(2, 2).setValue('2026-11-17');   // u1 → martes 17/11
     S.limpiar(); poner('2026-11-14 10:05'); S.repaso();
     const sab = S.salen('pedir_ubicacion'), tosS = sab.map(x => x.to).sort();
-    chk('2k el sábado: los del lunes y los del martes (u10, u11), no los del miércoles (u12)', JSON.stringify(tosS) === JSON.stringify(['59170000020', '59170000021']), sab.map(x => x.to + ' ' + x.p[3]));
+    chk('2k el sábado: los del martes (u11); no los del lunes (u10: les llega el recordatorio con la ubicación esa tarde) ni los del miércoles (u12)', JSON.stringify(tosS) === JSON.stringify(['59170000021']), sab.map(x => x.to + ' ' + x.p[3]));
     chk('2l el de la tarde dice «por la tarde» y su horario', JSON.stringify(((sab.find(x => x.to === '59170000021') || { p: [] }).p).slice(3, 5)) === JSON.stringify(['martes 17/11 por la tarde', '14:30 y las 18:30']), sab);
-    chk('2m una vez por PEDIDO: u1 se movió al lunes y no se le vuelve a pedir', !tosS.includes('59170000011'), tosS);
+    chk('2m una vez por PEDIDO: u1 se movió al martes y no se le vuelve a pedir', !tosS.includes('59170000011'), tosS);
     S.limpiar(); poner('2026-11-15 10:05'); S.repaso();
     chk('2n el domingo no sale nada', S.salen('pedir_ubicacion').length === 0, S.salen());
     // Pasadas las 12:00 (el bot estuvo parado): ese día ya no
@@ -306,8 +307,25 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     chk('2s con WA_PRUEBA todo va a ese número', Pr.salen('pedir_ubicacion').length === 5 && Pr.salen('pedir_ubicacion').every(x => x.to === '59170099999'), Pr.salen('pedir_ubicacion').map(x => x.to));
     // waUbDias_
     const d = S.ctx.waUbDias_;
-    chk('2t waUbDias_: jueves → sábado; sábado → lunes y martes; domingo → nada; lunes → miércoles', JSON.stringify(Array.from(d('2026-11-12'))) === '["2026-11-14"]' &&
-        JSON.stringify(Array.from(d('2026-11-14'))) === '["2026-11-16","2026-11-17"]' && d('2026-11-15').length === 0 && JSON.stringify(Array.from(d('2026-11-16'))) === '["2026-11-18"]');
+    chk('2t waUbDias_: jueves → sábado; sábado → martes (el lunes es el próximo día: recordatorio); domingo → nada; lunes → miércoles; antes de un feriado, sin el día siguiente', JSON.stringify(Array.from(d('2026-11-12'))) === '["2026-11-14"]' &&
+        JSON.stringify(Array.from(d('2026-11-14'))) === '["2026-11-17"]' && d('2026-11-15').length === 0 && JSON.stringify(Array.from(d('2026-11-16'))) === '["2026-11-18"]' &&
+        JSON.stringify(Array.from(d('2026-12-24'))) === '[]', [d('2026-11-14'), d('2026-12-24')]);
+    // S1 (revisión del 08/11): a quien RETIRA en la tienda no se le pide la ubicación, ni la confirmación lleva «_ubic»
+    const RT = servidor(ON);
+    RT.cargar([P('r1', 'Carola Chavez', { celular: '70000031', direccion: 'RECOGE DE TIENDA BANZER' }),
+               P('r2', 'Carola Chavez', { celular: '70000032', direccion: 'Av. Banzer 4to anillo', observaciones: 'EL CLIENTE PASARA A RECOGER DE FABRICA' }),
+               P('r3', 'Carola Chavez', { celular: '70000033', direccion: 'Calle Retiro de los Andes 12' }),   // «Retiro» en el nombre de la calle: SÍ es «retiro» para la regla de la página (la misma)
+               P('r4', 'Carola Chavez', { celular: '70000034', direccion: 'Barrio Las Palmas, casa 3' })]);
+    poner('2026-11-12 10:05'); RT.repaso();
+    const tosR = RT.salen('pedir_ubicacion').map(x => x.to).sort();
+    chk('2v (S1) la ubicación no se le pide a quien retira (en la dirección o en las observaciones); a los demás sí', JSON.stringify(tosR) === JSON.stringify(['59170000034']), tosR);
+    const R2s = servidor(ON); R2s.cargar([P('r5', 'Carola Chavez', { celular: '70000035', direccion: 'RECOGE DE TIENDA BANZER', fecha: '2026-11-20' })]);
+    poner('2026-11-12 10:30'); R2s.P.WA_COLA = JSON.stringify([{ id: 'r5', t: 'n', ms: RELOJ.ms - 5 * 60000 }]); R2s.repaso();
+    chk('2w (S1) su confirmación sale sin pedir la ubicación (confirmacion_pedido_v2, no la «_ubic»)', JSON.stringify(R2s.salen().filter(x => x.to === '59170000035').map(x => x.pl)) === '["confirmacion_pedido_v2"]', R2s.salen().map(x => x.pl));
+    // B5: un pedido para el sábado cuya confirmación sale en ESTA vuelta (10:05) no recibe además el pedido de ubicación
+    const B5 = servidor(ON); B5.cargar([P('b1', 'Carola Chavez', { celular: '70000041' })]);
+    poner('2026-11-12 10:05'); B5.P.WA_COLA = JSON.stringify([{ id: 'b1', t: 'n', ms: RELOJ.ms - 5 * 60000 }]); B5.repaso();
+    chk('2x (B5) cargado a las 09:57 para el sábado: a las 10:05 sale SOLO la confirmación (que ya pide la ubicación)', JSON.stringify(B5.salen().filter(x => x.to === '59170000041').map(x => x.pl)) === '["confirmacion_pedido_ubic"]', B5.salen().map(x => x.pl));
     // Muchos pedidos: WA_UB_PEDIDA no pasa de WA_UB_TOPE ni guarda lo viejo
     const G = servidor(ON);
     const L = []; for (let i = 0; i < 260; i++) L.push({ id: 'p-con-un-id-largo-' + i, f: '2026-11-' + String(1 + (i % 28)).padStart(2, '0') });
