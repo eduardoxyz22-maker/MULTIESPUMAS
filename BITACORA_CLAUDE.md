@@ -17357,6 +17357,47 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4oz — 💵✅ «YA LO RECIBÍ»: CONTABILIDAD ANOTA POR WHATSAPP LA PLATA QUE LE ENTREGA UN CHOFER, Y EL BOT CARGA EL RETIRO (08/11; dueño, con la propuesta: *«Si así está bien / No sólo para contabilidad / Si es el [número] a la que le avisa que tienen los choferes»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (el enlace fijo nuevo reemplaza al de `47366d8…`, ver «Enlace» abajo); la página no cambia)
+- **Qué pidió**: el mensaje del efectivo de los choferes (el de Contabilidad, 9:00 y 18:00) tiene que tener un botón para decir «ya me la dio»,
+  y que con eso quede cargado el retiro en el panel. Solo Contabilidad (WA_CONTABILIDAD, el mismo número al que ya le llega ese mensaje): ni
+  las vendedoras ni Eduardo.
+- **La plantilla**: `efectivo_del_dia_boton` (los mismos 5 datos que `efectivo_del_dia`, con el título «Efectivo de los choferes» y el botón de
+  respuesta rápida **«Ya lo recibí»**, `WA_ER_BOTON`). El tipo `efc` la usa con `vieja:'efectivo_del_dia'` (sin botón) mientras Meta no la
+  apruebe: escribir «recibí» anda igual. `waArmar_` le pone el payload `er|<día>`. Se crea el lunes con `crearPlantillasWhatsApp`.
+- **El flujo** (`waErResponder_`, desde `waHookAnotar_` ANTES que todo lo demás, solo para `waErQuien_` = 'conta' o 'prueba'):
+  · Tocar el botón (o escribir «recibí», «ya lo recibí», «efectivo») → «¿De quién recibiste el efectivo?» con cada chofer que tiene plata SIN
+    RECOGER hoy (`waErPend_` = el `bs` de `waEfeDe_(waEfeResumen_(…), true)`: la misma cuenta del mensaje). Hasta 2 choferes, botones de Meta
+    («Luis Pierre 1.860», «Ysrael 910», «Los dos»; 20 letras); 3 o más, una LISTA (24 letras, hasta 9 y «Todos»). Si Meta no toma los botones,
+    va en texto con «Escribí el número (1, 2…) o todos».
+  · Elegir un chofer (o «Los dos»/«Todos», o el número, o el nombre después de la pregunta) → **el retiro en la planilla** con la MISMA fila
+    de `filaDeRetiro` de la página: `vendedor` = el chofer (entrega), `chofer` = «Contabilidad» (retira, `RETIRA_CHOFER`), `acuenta` = lo que
+    tenía sin recoger, `zona` FACTURADO, `ts` = ahora (la hora cuenta para la regla de §4ox), `direccion` «Retiro del dd/mm/aaaa», `garantia` =
+    sus cobros TILDADOS (`efe:id|día|monto;…`, la regla los toma primero) y en Observaciones «🤖 Lo cargó el bot: Contabilidad tocó «Ya lo
+    recibí» por WhatsApp el …». Se guarda con `doSave` ADENTRO del candado del panel (`waErCargar_` relee la planilla ahí: si en el medio
+    alguien cargó el retiro desde el panel, dice «ya no tiene efectivo sin recoger» y no anota). Contesta «✅ Anoté en el panel: X le entregó
+    Bs N a Contabilidad (k cobros: OC…). ¿Te equivocaste? Escribí DESHACER (hasta las HH:MM)».
+  · **Otro monto**: «Ysrael 500» → «¿Anoto…? Le quedarían Bs 410» con «Sí, anotalo» / «No»; con «Sí» el retiro va SIN tildes (los cobros los
+    toma la regla, como cuando el monto no da justo en el panel). Más de lo que tiene → no lo anota y explica. El nombre SOLO, sin que el bot
+    haya preguntado nada, pregunta antes («¿Anoto Bs 910, todo lo que tiene?»); con el monto, con «recibí de Ysrael» o contestando la lista, va
+    directo.
+  · **DESHACER** (`WA_ER_DESHACER_MIN` = 15 min): borra lo de la ÚLTIMA vez (los retiros de un mismo toque van juntos, `g`), con `doDelete` y el
+    sello que le dio `doSave`: si alguien lo corrigió en el panel, no lo borra y lo dice. Una pregunta del bot vence a los `WA_ER_PASO_MIN` = 60
+    min («Esa lista ya venció: te la mando de nuevo»). Lo que espera cada número vive en la propiedad `WA_ER` (se poda sola).
+  · Contabilidad NO es un cliente: lo demás que escriba recibe la ayuda de esto (ni Claude ni la respuesta automática); «gracias», «ok» o una
+    reacción no se contestan; un audio, «no puedo escuchar audios». El número de PRUEBA entra acá solo con lo que es de esto (el botón,
+    «recibí», contestar una pregunta del bot): sus «ventas», «mes»… siguen con las preguntas del dueño (25 C). Con el bot apagado, solo se anota.
+  · No toca ningún pedido ni marca nada ✅: solo agrega (o borra con DESHACER) la fila del retiro. Todo queda en «Bot WhatsApp» con el wamid
+    (Meta repetido no carga dos veces) y lo que se contestó.
+- ⚠️ **Dos copias que tienen que ir juntas**: lo «sin recoger» es `waEfeCuentas_` (= `efePareo` del Cuadre) y la fila es la de `filaDeRetiro`
+  (título, `zona`, `chofer`, `acuenta`, `direccion`, `garantia`). `test_wa_er` §10 abre la página con la planilla que dejó el bot: `retiroDe` la
+  lee como un retiro de Luis Pierre a Contabilidad con 2 cobros tildados, `filaDeRetiro` arma la MISMA fila y en el Cuadre de noviembre Luis
+  Pierre queda en 0. Si cambia una de las dos en la página, esa prueba lo dice.
+- `probarAntesDeImplementar` lo dice en la línea de Contabilidad (y avisa si falta WA_HOOK_KEY: sin ella el bot no se entera del botón);
+  `estadoBotWhatsApp` suma `contabilidad` y `yaLoRecibiEsperando`.
+- Pruebas: **`tests/test_wa_er.js`** (63; contra el `.gs` de `47366d8` 32 rojas: no existe nada de esto). Cambiadas a conciencia: `test_wa_bot`
+  (la plantilla nueva en la lista, con su botón: ahora son 3 las que llevan botón) y `test_wa_efectivo` (a Contabilidad sale la del botón, con
+  `er|<día>`; 3i4 nueva).
+
 ### §4oy — 📥 EL PEDIDO QUE CARGA LA REVISIÓN DE CORREOS LE LLEGA AL DUEÑO POR WHATSAPP, PARA SUBIRLO AL TR4 (08/11; dueño: *«cada vez que revises mi correo y entre un pedido de lo que ya está configurado, y por cada pedido que generes en el panel, necesito que el bot me envíe un mensaje únicamente a mí con los datos del pedido que acabas de cargar y recordarme de que lo debo subir al TR4, el sistema que yo utilizo»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (enlace fijo `47366d8…`, 7.620 líneas); la página no cambia)
 - **`cargar_pedidos.py`** guarda con `tr4:1`. `doPost` → `doSave(…, tr4)` → `waAlGuardar_(viejo, eco, adelanto, tr4)`: SOLO un pedido NUEVO
   (`!viejo`, `ev.t==='n'`) lleva `ev.tr4=1` en `WA_COLA` (un «nuevo + cambio» en la cola lo conserva). `waRepasoBot_`, al tomar ese «nuevo», suma

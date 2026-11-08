@@ -1638,6 +1638,12 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
+`.gs` 07-f del lunes 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
+`efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot
+carga el RETIRO con la fila de `filaDeRetiro` (entrega el chofer, retira «Contabilidad», FACTURADO, `ts` ahora, cobros tildados en `garantia`) con
+`doSave` adentro del candado (`waErCargar_`). «Ysrael 500» pregunta y va sin tildes; DESHACER 15 min con el sello. Solo WA_CONTABILIDAD (y WA_PRUEBA con
+lo de esto); lo demás de Contabilidad recibe la ayuda. ⚠️ Si cambia `filaDeRetiro` o `efePareo` en la página, cambia `waEr*`: `tests/test_wa_er.js` §10.
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)

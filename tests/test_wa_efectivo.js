@@ -83,7 +83,8 @@ function servidor(props) {
   /* Las filas van directo a la hoja (sin pasar por «guardar»: así no se encolan las confirmaciones de cada pedido). */
   const cargar = (lista) => { lista.forEach(p => sh._datos.push(ctx.recToRow(p))); };
   const hoja = () => (hojas['Bot WhatsApp'] ? hojas['Bot WhatsApp']._datos.slice(1) : []);
-  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text),
+    bt: c.body.template.components.slice(1).map(x => x.parameters[0].payload) }));
   const limpiar = () => { meta.llamadas.length = 0; };
   const lista = () => sh._datos.slice(1).map(f => ctx.rowToRec_(f));
   return { ctx, sh, P, meta, triggers, cargar, hoja, salen, limpiar, lista, repaso: () => ctx.waRepaso() };
@@ -210,7 +211,7 @@ const FIX = [
   await browser.close();
 
   console.log('\n── 3. El envío (📅 06-d: el efectivo de CADA DÍA) ──');
-  const efe = () => S.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const efe = () => S.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   const aDue = () => efe().filter(x => x.to === '59177000007'), aCon = () => efe().filter(x => x.to === '59177000008');
   S = servidor(ONC); S.cargar(FIX);
   poner('2026-11-06 08:50'); S.repaso();
@@ -251,22 +252,23 @@ const FIX = [
   chk('3h3 en un feriado (25/12) no sale', efe().length === 0, S.salen());
   const S2 = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001' }); S2.cargar(FIX);
   poner('2026-11-06 09:05'); S2.repaso();
-  chk('3i sin WA_DUENO ni WA_CONTABILIDAD no sale', S2.salen().filter(x => x.pl === 'efectivo_del_dia').length === 0, S2.salen());
+  chk('3i sin WA_DUENO ni WA_CONTABILIDAD no sale', S2.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl)).length === 0, S2.salen());
   const S2c = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001', WA_CONTABILIDAD: 'Contabilidad:59177000008' }); S2c.cargar(FIX);
   poner('2026-11-06 09:05'); S2c.repaso();
-  const e2c = S2c.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e2c = S2c.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3i2 sin WA_DUENO pero con WA_CONTABILIDAD: a Contabilidad lo de los choferes igual', e2c.length === 1 && e2c[0].to === '59177000008' && /1 chofer/.test(e2c[0].p[3]), e2c);
+  chk('3i4 💵✅ (07-f) a Contabilidad va con el botón «Ya lo recibí» (efectivo_del_dia_boton, con «er|<día>» de respuesta)', e2c[0] && e2c[0].pl === 'efectivo_del_dia_boton' && JSON.stringify(e2c[0].bt) === '["er|2026-11-06"]', e2c[0]);
   const S2d = servidor(ON); S2d.cargar(FIX);
   poner('2026-11-06 09:05'); S2d.repaso();
-  const e2d = S2d.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e2d = S2d.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3i3 sin WA_CONTABILIDAD lo de los choferes NO va al dueño (dueño: «no a Eduardo»)', e2d.length === 1 && e2d[0].to === '59177000007' && !/Luis Pierre/.test(e2d[0].p[4]), e2d.map(x => x.to + ' ' + x.p[4]));
   const S3 = servidor(ON); S3.cargar(FIX.filter(p => /^[mx]/.test(p.id) || /^__ret_m/.test(p.id)));
   poner('2026-11-06 09:05'); S3.repaso();
-  const e3 = S3.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e3 = S3.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3j con todo recogido sale IGUAL, en 0 (el dueño lo quiere cada día)', e3.length === 1 && e3[0].p[2] === 'Bs 0' && e3[0].p[3] === 'Bs 0, todo recogido' && e3[0].p[4] === 'nada pendiente', e3.map(x => x.p));
   const S4 = servidor(Object.assign({}, ON, { WA_PRUEBA: '59170000099' })); S4.cargar(FIX);
   poner('2026-11-06 09:05'); S4.repaso();
-  const e4 = S4.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e4 = S4.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3k con WA_PRUEBA va al número de prueba', e4.length === 1 && e4[0].to === '59170000099', e4);
   /* El resumen y el tramo, directo */
   const Rm = S3.ctx.waEfeResumen_(S3.lista(), '2026-11-03', '2026-11-03', '2026-11-03');
@@ -277,7 +279,7 @@ const FIX = [
   console.log('\n── 4. La plantilla ──');
   const pl = Array.from(S.ctx.WA_PLANTILLAS).find(x => x.n === 'efectivo_del_dia');
   chk('4a está en WA_PLANTILLAS con {{1}}…{{5}} y un ejemplo de 5 (y la de antes, efectivo_sin_retirar, ya no)', pl && /\{\{5\}\}/.test(pl.t) && !/\{\{6\}\}/.test(pl.t) && pl.e.length === 5 && !Array.from(S.ctx.WA_PLANTILLAS).some(x => x.n === 'efectivo_sin_retirar'), pl);
-  chk('4b está en WA_TIPOS (al dueño y a Contabilidad)', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.plantilla === 'efectivo_del_dia', [S.ctx.WA_TIPOS.ef, S.ctx.WA_TIPOS.efc]);
+  chk('4b está en WA_TIPOS (al dueño; a Contabilidad la del botón «Ya lo recibí», con la de siempre de respaldo)', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.plantilla === 'efectivo_del_dia_boton' && S.ctx.WA_TIPOS.efc.vieja === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.nv === 5, [S.ctx.WA_TIPOS.ef, S.ctx.WA_TIPOS.efc]);   // 💵✅ (2026-11-07-f) a Contabilidad con «Ya lo recibí»; sin aprobar, la de siempre
   poner('2026-11-06 09:05');
   const S6 = servidor(ONC); S6.cargar(FIX);
   const pr = S6.ctx.probarEfectivo();
