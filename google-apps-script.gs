@@ -4773,9 +4773,17 @@ function waVbProd_(x) {
        .replace(/\s+/g, ' ').replace(/^[\s,.;:+\/-]+|[\s,.;:+\/-]+$/g, '').trim();
   return s;
 }
+/** 📅 (08/11; dueño: «marcar ventas puntuales que cuentan en octubre, pero se entregan en noviembre») El mes en que CUENTA una venta =
+    `ventaMes` de la página: el de la entrega (`f`), salvo que Contabilidad la marcó como venta de un mes ANTERIOR (`vmes` adentro de los
+    productos, como `fdoc`). Una marca que no es anterior a la entrega (la movieron de mes) no vale. Solo el mes: la entrega sigue en su día. */
+function waVentaMes_(p, f) {
+  var ym = String(f || '').slice(0, 7), m = '';
+  ((p && p.productos) || []).some(function (x) { var v = String((x && x.vmes) || ''); if (/^\d{4}-\d{2}$/.test(v)) { m = v; return true; } return false; });
+  return (m && ym && m < ym) ? m : ym;
+}
 /** Las ventas del equipo como las cuenta Proyección (`pryVentas` de la página, la planilla del equipo `fueraDeConta(p,'tienda')`): el MES
-    es el de la entrega agendada (`fechaSalida`: la fecha, o el día en que se cargó una venta sin fecha) y `reg`/`m` el día y los minutos
-    (en Bolivia) en que se cargó. `pr` = unidades por producto (`waVbProd_`). */
+    es el de la entrega agendada (`fechaSalida`: la fecha, o el día en que se cargó una venta sin fecha), o el que marcó Contabilidad
+    (`waVentaMes_`), y `reg`/`m` el día y los minutos (en Bolivia) en que se cargó. `pr` = unidades por producto (`waVbProd_`). */
 function waVbVentas_(lista) {
   var out = [];
   (lista || []).forEach(function (p) {
@@ -4783,7 +4791,7 @@ function waVbVentas_(lista) {
     var reg = waContaFecha_(p), f = String(p.fecha || '') || reg; if (!f) return;
     var ts = Number(p.ts) || 0, pr = {}, u = 0;
     (p.productos || []).forEach(function (x) { var k = waVbProd_(x), c = Number(x && x.cant) || 0; if (k && c > 0) { pr[k] = (pr[k] || 0) + c; u += c; } });
-    out.push({ k:waEfeNorm_(p.vendedor) || '(sin vendedor)', v:String(p.vendedor || ''), ym:f.slice(0, 7), reg:reg || f, m:ts ? waMinBo_(ts) : 1440, bs:waVentaTotal_(p), u:u, pr:pr });
+    out.push({ k:waEfeNorm_(p.vendedor) || '(sin vendedor)', v:String(p.vendedor || ''), ym:waVentaMes_(p, f), reg:reg || f, m:ts ? waMinBo_(ts) : 1440, bs:waVentaTotal_(p), u:u, pr:pr });
   });
   return out;
 }
