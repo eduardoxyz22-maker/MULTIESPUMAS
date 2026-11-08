@@ -301,9 +301,10 @@ function PREPARAR(){
   await page.waitForTimeout(150);
   r = await ev(() => {
     var R=proyeccionMes('2026-09');
-    var cs=[].map.call(document.querySelectorAll('#cx-pry .cx-kf'), function(c){ return c.innerText.replace(/\s+/g,' '); });
+    /* (§4pb, 08/11) debajo de las de marca van las fichas «🏬 Por tienda» (`.cx-kf-t`): acá se miran SOLO las de marca */
+    var cs=[].map.call(document.querySelectorAll('#cx-pry .cx-kf:not(.cx-kf-t)'), function(c){ return c.innerText.replace(/\s+/g,' '); });
     var ms=R.marcas.filter(function(m){ return m.tot.n; }).map(function(m){ return m.g.lbl+':'+Math.round(m.tot.vendido)+':'+Math.round(m.tot.proy); });
-    return { cs:cs, ms:ms, lineas:document.querySelectorAll('#cx-pry .cx-k-l').length, punt:document.querySelectorAll('#cx-pry .cx-k-p').length,
+    return { cs:cs, ms:ms, lineas:document.querySelectorAll('#cx-pry .cx-kf:not(.cx-kf-t) .cx-k-l').length, punt:document.querySelectorAll('#cx-pry .cx-kf:not(.cx-kf-t) .cx-k-p').length,
              fmt:R.marcas.filter(function(m){ return m.tot.n; }).map(function(m){ return fmtBs0(m.tot.vendido)+'|'+fmtBs0(m.tot.proy); }) };
   });
   chk('una ficha por marca con ventas, con su línea llena y la punteada hasta el cierre', r.cs.length===r.ms.length && r.cs.length>=2 && r.lineas===r.cs.length && r.punt===r.cs.length, r);

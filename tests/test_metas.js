@@ -65,7 +65,7 @@ const fotoPry = page => page.evaluate(()=>{ var R=proyeccionMes('2026-10'); retu
   let { ctx, page } = await abrir(1280, true);
   const antes=await fotoPry(page);
   let r=await page.evaluate(()=>({ caja:document.getElementById('pry-metas').innerText.replace(/\s+/g,' '), met:document.getElementById('pry-metrics').innerText,
-    pie:[].map.call(document.querySelectorAll('#cx-pry .cx-kf-pie'), function(e){ return e.innerText; }), btn:!!document.getElementById('pry-metas-btn') }));
+    pie:[].map.call(document.querySelectorAll('#cx-pry .cx-kf:not(.cx-kf-t) .cx-kf-pie'), function(e){ return e.innerText; }), btn:!!document.getElementById('pry-metas-btn') }));   // (§4pb) solo las de marca: las de tienda no llevan meta
   chk('1 · sin metas de octubre: «Todavía no hay metas para octubre» con su botón, y el botón «🎯 Metas» arriba', /Todavía no hay metas para octubre/i.test(r.caja) && /Cargar las metas/.test(r.caja) && r.btn, r.caja);
   chk('1 · sin la ficha «Meta del equipo»', !/Meta del equipo/.test(r.met), r.met);
   chk('1 · la curva de cada marca dice «Meta: sin cargar»', r.pie.length && r.pie.every(function(t){ return /Meta: sin cargar/.test(t); }), r.pie);
@@ -102,7 +102,7 @@ const fotoPry = page => page.evaluate(()=>{ var R=proyeccionMes('2026-10'); retu
   r=await page.evaluate(()=>{ var R=proyeccionMes('2026-10'), h=R.marcas.filter(function(m){ return m.g.k==='heaven'; })[0], d=metaMarcaDatos(R, h);
     var card=document.querySelector('#pry-metas .mt-card[data-marca="heaven"]');
     return { d:d, dr:R.dr, v:h.tot.vendido, p:h.tot.proy, txt:card ? card.innerText.replace(/\s+/g,' ') : '', bar:card ? card.querySelector('.mt-bv').style.width : '',
-             met:document.getElementById('pry-metrics').innerText.replace(/\s+/g,' '), pie:[].map.call(document.querySelectorAll('#cx-pry .cx-kf-pie'), function(e){ return e.innerText; }) }; });
+             met:document.getElementById('pry-metrics').innerText.replace(/\s+/g,' '), pie:[].map.call(document.querySelectorAll('#cx-pry .cx-kf:not(.cx-kf-t) .cx-kf-pie'), function(e){ return e.innerText; }) }; });
   chk('3 · Heaven: % vendido = vendido ÷ 150.000, en la caja y en la barra', r.d && r.d.pv===Math.round(r.v/150000*100) && new RegExp('\\b'+r.d.pv+'%').test(r.txt) && r.bar===Math.min(100,r.d.pv)+'%', { d:r.d, v:r.v, txt:r.txt });
   chk('3 · % proyectado y «📈 Proyección» con la misma cuenta de la proyección', r.d.pp===Math.round(r.p/150000*100) && /📈 Proyección Bs/.test(r.txt), r.d);
   const diasQ=r.dr+1;   // el martes es día hábil: cuenta hoy
