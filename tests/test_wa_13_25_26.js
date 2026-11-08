@@ -413,7 +413,10 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
 
   console.log('\n── 3b. La página y el servidor cuentan igual (el MoM de Proyección) ──');
   try {
-    const S = servidor(Object.assign({}, ON, DOS)); S.cargar(VB.concat([V('jo2', 'Jonathan Monje', '2026-10-21', TS('2026-10-08', '10:00'), 4000, [PR('COLCHON SOFT', 1)])])); poner(LUNES + ' 08:05');   // jo2: entre el 6° día hábil y el día 9
+    /* jmk (08/11, §4pb): cargada el 06/10 y entregada el 05/11, que Contabilidad marcó «cuenta en octubre» (`vmes`): en la página y en el
+       servidor va a OCTUBRE (sin la marca sería de noviembre). */
+    const jmk = V('jmk', 'Jonathan Monje', '2026-11-05', TS('2026-10-06', '10:00'), 3000, [PR('COLCHON SOFT', 1)]); jmk.productos.forEach(x => { x.vmes = '2026-10'; });
+    const S = servidor(Object.assign({}, ON, DOS)); S.cargar(VB.concat([V('jo2', 'Jonathan Monje', '2026-10-21', TS('2026-10-08', '10:00'), 4000, [PR('COLCHON SOFT', 1)]), jmk])); poner(LUNES + ' 08:05');   // jo2: entre el 6° día hábil y el día 9
     const L = S.lista(), D = S.ctx.waVbDatos_(L, MS_LUNES);
     const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
     const errores = [];
@@ -443,6 +446,13 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     const dif = vends.filter(v => JSON.stringify(srv[v]) !== JSON.stringify(pag[v]));
     chk('3b1 cada vendedor: lo de noviembre y lo de octubre a esta altura (Bs y ventas) dan lo mismo que el MoM de Proyección (' + vends.length + ' vendedores)', dif.length === 0 && vends.length === 5,
         dif.map(v => v + ': gs ' + JSON.stringify(srv[v]) + ' · página ' + JSON.stringify(pag[v])).concat([vends.join(', ')]));
+    chk('3b5 la marcada «cuenta en octubre» (entrega 05/11) va a octubre en el servidor y en la página: Jonathan noviembre Bs 8.000 (1 venta), octubre a esta altura Bs 13.000 (2)',
+        JSON.stringify(srv['Jonathan Monje']) === JSON.stringify([8000, 13000, 1, 2]) && JSON.stringify(pag['Jonathan Monje']) === JSON.stringify([8000, 13000, 1, 2]), [srv['Jonathan Monje'], pag['Jonathan Monje']]);
+    const vm = S.ctx.waVentaMes_, pv = (m) => ({ productos: [{ desc: 'COLCHON SOFT', cant: 1, vmes: m }] });
+    chk('3b6 waVentaMes_: la marca manda solo si es ANTERIOR al mes de la entrega (una posterior, una igual o una rota no cambian nada)',
+        vm(pv('2026-10'), '2026-11-05') === '2026-10' && vm(pv('2026-10'), '2026-10-20') === '2026-10' && vm(pv('2026-12'), '2026-11-05') === '2026-11' &&
+        vm(pv('x'), '2026-11-05') === '2026-11' && vm({ productos: [{ desc: 'COLCHON SOFT', cant: 1 }] }, '2026-11-05') === '2026-11',
+        [vm(pv('2026-10'), '2026-11-05'), vm(pv('2026-12'), '2026-11-05'), vm(pv('x'), '2026-11-05')]);
     chk('3b2 sin errores en la página', errores.length === 0, errores);
     await browser.close();
   } catch (e) { chk('la sección corre sin reventar', false, String((e && e.stack) || e).split('\n').slice(0, 3).join(' | ')); }

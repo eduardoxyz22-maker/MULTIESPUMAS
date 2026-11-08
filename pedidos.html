@@ -6041,7 +6041,7 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 /* 6 · La ficha en el celular: cada parte de «Qué hacer» en su renglón, sin la flechita sola. */
 @media (max-width:600px){ .fl-qh-s{ display:none; } .fl-qh > span:not(.fl-qh-k){ flex:1 1 100%; } }
 </style>
-<script src="productos-mes.js?v=20261025a"></script>
+<script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
 <script src="escritorio.js?v=20261030b" defer></script>
 <script>
@@ -9216,6 +9216,38 @@ function cuadreEsDe(p, v){ return !v || mismoVendedor(p&&p.vendedor, v); }
    Las ventas de tienda no tienen fecha de entrega: para ellas las dos son la misma. */
 function contaBase(){ return segVal('cta-base')==='entrega' ? 'entrega' : 'ingreso'; }
 function contaFechaBase(p){ return contaBase()==='entrega' ? (fechaSalida(p)||contaFecha(p)) : contaFecha(p); }
+/* ============================================================================
+   📅 (08/11) LA VENTA QUE CUENTA EN EL MES EN QUE SE CARGÓ. El dueño: «a fin de mes hay una o dos ventas que se entregan el siguiente
+   mes, pero ya se facturaron y entraron en las ventas de octubre… marcar esta venta entró en octubre para no contaminar las métricas» y
+   «no necesito ver todas las listas: marcar ventas puntuales que cuentan en octubre pero se entregan en noviembre».
+   · Una venta cuenta en el mes de su entrega AGENDADA (`fechaSalida`: la regla de Proyección y de «Entrega agendada»). Con la marca
+     `vmes:'AAAA-MM'` (en los productos, como `fdoc`: la planilla tiene columnas fijas) cuenta en ESE mes, si es anterior al de la entrega
+     (`ventaMes`). Reprogramada al mismo mes en que se cargó, la marca no hace nada.
+   · La pone Contabilidad en la ficha de la venta, con la contraseña de Administración, y solo se ofrece en una venta cargada un mes
+     antes del de su entrega (`ventaMesPuede`). Una casilla, sin listas.
+   · Mueve SOLO dónde se MIDE la venta: Proyección y todo lo que lee `pryVentas` (fichas de marca y de tienda, cierre comercial, informe del
+     mes, Bloki), «Tu mes» de Mis pedidos, Ventas por «Entrega agendada» (y sus saldos de meses anteriores) y Productos del mes por entrega.
+     La entrega, los cupos, el camión, el stock y los cobros no cambian. Un mes ya cerrado en el cierre comercial la recibe como ajuste.
+   · ⚠️ El bot la cuenta igual (`waVentaMes_` del .gs, «cómo va cada vendedor»): tests/test_wa_13_25_26.js compara las dos.
+   ========================================================================== */
+function ventaMesMarca(p){
+  var m=''; ((p&&p.productos)||[]).some(function(x){ var v=String((x&&x.vmes)||''); if(/^\d{4}-\d{2}$/.test(v)){ m=v; return true; } return false; });
+  return m;
+}
+function ventaMes(p){ var ym=String(fechaSalida(p)||'').slice(0,7), m=ventaMesMarca(p); return (m && ym && m<ym) ? m : ym; }
+function setVentaMes(p, m){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(m) x.vmes=m; else delete x.vmes; }); }
+/* ¿Se le puede poner? Una venta (no ATC, RPT, venta de tienda ni fila del sistema) con productos, con fecha de entrega en un mes posterior
+   al de su carga. */
+function ventaMesPuede(p){
+  if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc) || esVentaTienda(p) || !(p.productos||[]).length) return false;
+  var c=String(contaFecha(p)||'').slice(0,7), e=String(p.fecha||'').slice(0,7);
+  return !!c && !!e && c<e;
+}
+/* La fecha con la que Ventas pone la venta en un MES: la del corte o, por entrega agendada con la marca, el último día del mes marcado. */
+function contaFechaMesBase(p){
+  var f=contaFechaBase(p); if(contaBase()!=='entrega') return f;
+  var m=ventaMes(p); return (m && m<String(f||'').slice(0,7)) ? pryFinDeMes(m) : f;
+}
 function setContaBase(){
   var l=document.getElementById('cta-base-lbl');
   // §4fz: es la fecha AGENDADA (p.fecha), no la del día que salió: si se reprograma, la venta se muda de mes.
@@ -9249,7 +9281,7 @@ function contaLista(){
     if(!deEsta(p)) return false;
     var f=contaFechaBase(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||diaNegocio());
-    if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
+    if(modo==='mes') return contaFechaMesBase(p).slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));   // 📅 (08/11) con la marca del mes
     return true;
   });
   return list.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });   // lo último cargado, arriba
@@ -9289,7 +9321,7 @@ function saldosAnteriores(ym, deEsta, fechaDe){
 /* Los de la pantalla de Ventas (solo con «Mes» y el mes en curso). */
 function contaSaldosAnteriores(){
   if((segVal('cta-mode')||'mes')!=='mes') return [];
-  return saldosAnteriores(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7), contaFiltro(), contaFechaBase);
+  return saldosAnteriores(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7), contaFiltro(), contaFechaMesBase);   // 📅 (08/11) la marcada en el mes anterior no se pierde
 }
 /* Los del Cuadre (su vendedor; por la fecha de la venta, como `cuadrePendientes`). */
 function cuadreSaldosAnteriores(){
@@ -10139,9 +10171,10 @@ function renderConta(){
 function entregaFechaHtml(p){
   if(esVentaTienda(p)) return '<span class="badge b-gray" style="font-size:.6rem">🏪 EN TIENDA</span>';
   if(!p.fecha) return '<span style="color:var(--muted)">—</span>';
-  var otro = contaFecha(p).slice(0,7)!==String(p.fecha).slice(0,7);
+  var otro = contaFecha(p).slice(0,7)!==String(p.fecha).slice(0,7), vm=ventaMes(p);
   return esc(fmtFecha(p.fecha))+
-    (otro?('<br><span class="badge b-amber" style="font-size:.6rem">📆 OTRO MES</span>'):'')+
+    (vm && vm<String(p.fecha).slice(0,7) ? ('<br><span class="badge b-blue" style="font-size:.6rem" title="Contabilidad la marcó: cuenta en las ventas de '+esc(mesNombre(vm))+'">📅 CUENTA EN '+esc(mesNombre(vm).replace(/ de \d{4}$/,'').toUpperCase())+'</span>')
+      : (otro?('<br><span class="badge b-amber" style="font-size:.6rem">📆 OTRO MES</span>'):''))+
     (p.entregado?'':'<br><span style="color:var(--muted);font-size:.85em">sin entregar</span>');
 }
 /* "se pagó en julio": marca los pagos que cayeron en otro mes que la venta. */
@@ -11853,7 +11886,7 @@ function pryVentas(){
     /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). `id`: el cierre comercial (74) anota qué ventas entraron. */
     /* `st` (08/11): la tienda de la venta = la de la venta de tienda o la de quien vendió ESE día (`talTiendaDe`), para «🏬 Por tienda». */
     out.push({ id:p.id, amb:amb, g:(amb==='mayor' ? 'mayor' : (amb==='roho' ? 'roho' : (marcaDe(v)||'sin'))), v:v, vk:amb+'|'+(normNombre(v)||v),
-               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s,
+               f:f, ym:ventaMes(p), reg:(contaFecha(p)||f),   /* 📅 (08/11) `ym`: el mes de la entrega, o el que marcó Contabilidad */ m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s,
                st:(amb==='tienda' ? (talTiendaDe(p)||'') : '') });
   });
   return out;
@@ -15697,6 +15730,7 @@ function showContaModal(id){
       row('Celular', esc(p.celular))+
       row('Productos', prods)+
       ((esATC(p.oc) || esRPT(p.oc)) ? '' : row('Factura o remisión', ctaDocHtml(p)))+   // 🧾 (06/11) la anota Contabilidad
+      ((ventaMesPuede(p) || ventaMesMarca(p)) ? row('📅 Mes de la venta', ctaVentaMesHtml(p)) : '')+   // 📅 (08/11) se entrega el mes siguiente
       row('Facturar a', esc(p.facturarA)||'—')+
       row('NIT', esc(p.nit)||'—')+
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
@@ -18183,6 +18217,8 @@ function submitPedido(){
   /* 🧾 (06/11) La factura o nota de remisión la anota CONTABILIDAD (`fdoc`/`fdocn` en los productos): la vendedora no la ve, y corregir el
      pedido desde el formulario (que rearma los productos) no se la tiene que llevar. Una ATC o una RPT no la llevan. */
   if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && (docVentaDe(prev) || docNumDe(prev))) setDocVenta(rec, docVentaDe(prev), docNumDe(prev));
+  /* 📅 (08/11) La marca «cuenta en el mes en que se cargó» la pone Contabilidad (`vmes`): corregir el pedido no se la lleva. */
+  if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && ventaMesMarca(prev)) setVentaMes(rec, ventaMesMarca(prev));
   /* 📅 (§4ok-96) Una vez más que se le mueve la fecha (desde una fecha puesta; también al pasar a «avisa cuándo»). */
   if(isEdit && prev && prev.fecha && String(rec.fecha||'')!==String(prev.fecha) && fmovPuede(rec)) setFmov(rec, fmovDe(prev)+1);
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
@@ -22533,6 +22569,33 @@ function ctaDocGuardar(id){
   setDocVenta(p, t, num); ctaDocOlvidar();
   persistPedido(p);
   toast('🧾 '+(t==='F'?'Factura':'Nota de remisión')+' N° '+num+' anotada ✓','ok');
+  showContaModal(id);
+  try{ renderConta(); }catch(x){}
+}
+/* 📅 (08/11) La casilla «esta venta cuenta en las ventas de <el mes en que se cargó>» (ver `ventaMes`). Solo con la contraseña. */
+function ctaVentaMesHtml(p){
+  var c=String(contaFecha(p)||'').slice(0,7), e=String(p.fecha||'').slice(0,7), m=ventaMesMarca(p), mm=m||c, vale=!!m && !!e && m<e;
+  var h='<label id="cta-vmes-lbl" style="display:flex;gap:8px;align-items:flex-start;cursor:'+(UNLOCKED?'pointer':'not-allowed')+'">'+
+    '<input type="checkbox" id="cta-vmes"'+(m?' checked':'')+(UNLOCKED?'':' disabled')+' style="width:auto;margin-top:3px" onchange="ctaVentaMesPoner(\''+esc(p.id)+'\', this.checked)">'+
+    '<span>Esta venta cuenta en las ventas de <b>'+esc(mesNombre(mm))+'</b>'+
+    '<span style="display:block;font-size:.76rem;color:var(--muted)">Se cargó el '+esc(fmtFecha(contaFecha(p)))+' y se entrega el '+esc(fmtFecha(p.fecha))+'. '+
+    (vale ? ('Proyección, comisiones y «Entrega agendada» la cuentan en '+esc(mesNombre(m))+'; la entrega no cambia.')
+          : (m ? ('Ahora se entrega en '+esc(mesNombre(e))+': la marca no cambia nada.') : ('Sin marcar, cuenta en '+esc(mesNombre(e))+', el mes de su entrega.')))+
+    '</span></span></label>';
+  if(!UNLOCKED) h+='<div style="font-size:.74rem;color:var(--muted);margin-top:3px">🔒 Se marca con la contraseña de Administración.</div>';
+  return h;
+}
+function ctaVentaMesPoner(id, on){
+  var p=findById(id); if(!p) return;
+  if(!UNLOCKED){ toast('📅 Para marcar en qué mes cuenta una venta hace falta la contraseña de Administración.','err',6000); showContaModal(id); return; }
+  var c=String(contaFecha(p)||'').slice(0,7), e=String(p.fecha||'').slice(0,7), m=ventaMesMarca(p);
+  if(on && !ventaMesPuede(p)){ toast('📅 Solo una venta que se entrega en un mes posterior al de su carga.','err',6000); showContaModal(id); return; }
+  if((on && m===c) || (!on && !m)){ showContaModal(id); return; }
+  try{ ctaPagoRecordar(); }catch(x){}   // §4fy: con un pago a medio cargar no se lo borra
+  setVentaMes(p, on ? c : '');
+  persistPedido(p);
+  toast(on ? ('📅 Cuenta en las ventas de '+mesNombre(c)+' ✓ (se sigue entregando el '+fmtFecha(p.fecha)+')')
+           : ('📅 Vuelve a contar en el mes de su entrega ('+mesNombre(e)+') ✓'),'ok',6000);
   showContaModal(id);
   try{ renderConta(); }catch(x){}
 }
@@ -29964,7 +30027,7 @@ function misMesLineaHtml(mine, R, pct){
   var xs=[];
   mine.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
-    var m=String(p.fecha||'').slice(0,7); if(m!==R.mes && m!==R.ant) return;
+    var m=p.fecha ? ventaMes(p) : ''; if(m!==R.mes && m!==R.ant) return;   // 📅 (08/11) con la marca del mes, como `misAnilloDatos`
     var ts=Number(p.ts)||0;
     xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p)||0 });   // `m` = la hora de carga, como `pryVentas`
   });
@@ -48732,7 +48795,7 @@ function misAnilloDatos(mine){
   var R={ mes:mes, ant:ant, bs:0, bsAnt:0, n:0, ent:0, cobrar:0 };
   mine.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
-    var m=String(p.fecha||'').slice(0,7);
+    var m=p.fecha ? ventaMes(p) : '';   // 📅 (08/11) el mes de la entrega, o el que marcó Contabilidad (sin fecha, como siempre, no entra)
     if(m===ant) R.bsAnt+=ventaTotal(p)||0;
     if(m!==mes) return;
     R.n++; R.bs+=ventaTotal(p)||0;
