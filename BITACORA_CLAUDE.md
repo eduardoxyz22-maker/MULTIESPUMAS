@@ -17365,6 +17365,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - **La regla** (comentario «LA REGLA DEL EFECTIVO» en `pedidos.html`, al lado de `EFE_EMPAREJA`; la MISMA en el `.gs`):
   · 🔒 **`EFE_CERRADO`='2026-10-31'**: un cobro en efectivo de esa fecha o antes sin retiro no se le pide a nadie (`cuadreEfectivo` → `o.cerrado`,
     «🔒 Bs … sin retiro cargado: octubre está cerrado»; en `abrirEfectivo`, «🔒 octubre cerrado»). Cuenta la FECHA DEL COBRO, no la de la venta.
+    Todo pregunta **`efeCerrado(f)`** = fecha ≤ `EFE_CERRADO` Y `diaNegocio()` después de esa fecha: con el reloj antes (una prueba clavada en
+    octubre, `test_efectivo_tu_dia`) el mes sigue abierto y la plata sigue «en la mano».
   · **Un retiro se lleva solo cobros de su mes (R) y del anterior (P), y solo los que ya habían entrado**: de días anteriores o, del mismo día, de
     una venta cargada antes de la hora del retiro. La hora de un cobro (`t`) es el `ts` de la venta SOLO si el cobro es del día en que se cargó; si
     no, no se sabe y cuenta como cualquier hora. La del retiro = su `ts`, salvo los cargados con la fecha de otro día (`retTs` los pone a las 12:00:00

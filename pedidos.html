@@ -13960,7 +13960,7 @@ function retCobrosDatos(R){
   var monto=parseMonto(R.monto||'');
   if(!R.entrega || !R.fecha) return null;
   var sim=efeSimular(R.entrega, R.fecha, monto>0 ? monto : 0, R.id);
-  var auto=sim.tapa.filter(function(t){ return t.c.f>EFE_CERRADO; }).map(function(t){ return retTickDe(t.c); });
+  var auto=sim.tapa.filter(function(t){ return !efeCerrado(t.c.f); }).map(function(t){ return retTickDe(t.c); });
   var tick=(R.tickMano && R.tick) ? R.tick : auto, set={};
   tick.forEach(function(k){ set[retTickClave(k)]=1; });
   var suma=0; sim.pend.forEach(function(c){ if(set[retTickClave(retTickDe(c))]) suma=r2(suma+r2(c.m-c.cub)); });
@@ -14307,6 +14307,8 @@ var EFE_EMPAREJA='2026-10-01';
      la gracia, solo el mes del retiro (un cobro del mes anterior entra solo si da justo, pasos 1-2).
    · Lo que quedó sin retirar de un mes que no está cerrado aparece en el mes siguiente como «Faltante de <mes>» (pasada su gracia). */
 var EFE_CERRADO='2026-10-31';
+/* Un cobro de un mes cerrado: con fecha hasta EFE_CERRADO y SOLO una vez terminado ese mes (con el reloj antes, el mes sigue abierto). */
+function efeCerrado(f){ return !!f && f<=EFE_CERRADO && diaNegocio()>EFE_CERRADO; }
 function efeMesAnt(ym){ var y=+String(ym).slice(0,4), m=+String(ym).slice(5,7)-1; if(!m){ m=12; y--; } return y+'-'+(m<10?'0':'')+m; }
 function efeFinMes(ym){ var y=+String(ym).slice(0,4), m=+String(ym).slice(5,7); return new Date(Date.UTC(y,m,0)).toISOString().slice(0,10); }
 function efeGracia(ym){ return sigDiaHabil(efeFinMes(ym)); }   // octubre → mar 03/11 (dom 1 y feriado 2); noviembre → mar 01/12
@@ -14400,7 +14402,7 @@ function efeSimular(quien, f, monto, sinId){
   efeSinRetiro=String(sinId||'');
   var PAR; try{ PAR=efePareo(); } finally { efeSinRetiro=''; }
   var L=PAR.cob[normNombre(quien)]||[], R=String(f||'').slice(0,7), P=efeMesAnt(R);
-  var pend=L.filter(function(c){ var ym=c.f.slice(0,7); return r2(c.m-c.cub)>0.005 && c.f>EFE_CERRADO && c.f<=f && (ym===R || ym===P); });
+  var pend=L.filter(function(c){ var ym=c.f.slice(0,7); return r2(c.m-c.cub)>0.005 && !efeCerrado(c.f) && c.f<=f && (ym===R || ym===P); });
   var x={ f:f, t:(f===todayStr() ? Date.now() : Infinity), m:r2(monto), tick:[], tapa:[], sobra:0 };
   /* sobre una copia: no tocar la cuenta */
   var copia=L.map(function(c){ return { f:c.f, t:c.t, m:c.m, cub:c.cub, id:c.id, j:c.j, orig:c }; });
@@ -14453,7 +14455,7 @@ function cuadreEfectivo(pe, vend){
       if(!fuera[kq]){ fuera[kq]={nombre:q, monto:0, cobs:[], falta:0}; fueraOrden.push(kq); }
       fuera[kq].monto=r2(fuera[kq].monto+c.monto);
       fuera[kq].cobs.push({ c:c, pc:pc });   // 👁 (07/11) para la lista de «Efectivo (caja)» con una vendedora elegida
-      if(!(c.fecha && c.fecha<=EFE_CERRADO)) fuera[kq].falta=r2(fuera[kq].falta+(pc ? Math.max(0, r2(pc.m-pc.cub)) : c.monto));   // 🔒 octubre cerrado
+      if(!efeCerrado(c.fecha)) fuera[kq].falta=r2(fuera[kq].falta+(pc ? Math.max(0, r2(pc.m-pc.cub)) : c.monto));   // 🔒 octubre cerrado
       return;
     }
     var o=meter(q); o.cobrado=r2(o.cobrado+c.monto);
@@ -14461,7 +14463,7 @@ function cuadreEfectivo(pe, vend){
     if(PAR){
       var _fa=(pc ? Math.max(0, r2(pc.m-pc.cub)) : c.monto);
       /* 🔒 (07/11) lo de octubre que nadie cargó como retiro está cerrado: no se le pide a nadie */
-      if(c.fecha && c.fecha<=EFE_CERRADO) o.cerrado=r2(o.cerrado+_fa); else o.falta=r2(o.falta+_fa);
+      if(efeCerrado(c.fecha)) o.cerrado=r2(o.cerrado+_fa); else o.falta=r2(o.falta+_fa);
       if(pc) pc.de.forEach(function(d){ if(d.x.f>LIM.d1){ o.despues=r2(o.despues+d.u); o.despuesM[d.x.f.slice(0,7)]=1; } });
     }
   });
@@ -14482,7 +14484,7 @@ function cuadreEfectivo(pe, vend){
     var _P=efeMesAnt(pe.val);
     if(efeFinMes(_P)>EFE_CERRADO && diaNegocio()>efeGracia(_P)){
       Object.keys(PAR.cob).forEach(function(kk){ PAR.cob[kk].forEach(function(pc){
-        var fa=r2(pc.m-pc.cub); if(fa<=0.005 || pc.f.slice(0,7)!==_P || pc.f<=EFE_CERRADO) return;
+        var fa=r2(pc.m-pc.cub); if(fa<=0.005 || pc.f.slice(0,7)!==_P || efeCerrado(pc.f)) return;
         if(vend && (!mismoVendedor(pc.p.vendedor, vend) || esCh(pc.q))) return;
         var o=meter(pc.q); o.faltAnt=r2(o.faltAnt+fa); o.faltAntCobs.push(pc); o.faltAntMes=_P;
       }); });
@@ -14586,7 +14588,7 @@ function abrirEfectivo(q){
     var fa=r2(pc.m-pc.cub);
     var dias=pc.de.map(function(d){ return fmtFechaCorta(d.x.f); }).filter(function(v,i,a){ return a.indexOf(v)===i; }).join(', ');
     if(fa<=0.005) return '<span class="efe-ok">✅ retirado el '+esc(dias)+'</span>';
-    if(pc.f<=EFE_CERRADO) return '<span style="color:var(--muted)">🔒 octubre cerrado</span>'+(pc.cub>0.005?('<br><span style="color:var(--muted);font-size:.86em">'+fmtBs(pc.cub)+' retirado el '+esc(dias)+'</span>'):'');
+    if(efeCerrado(pc.f)) return '<span style="color:var(--muted)">🔒 octubre cerrado</span>'+(pc.cub>0.005?('<br><span style="color:var(--muted);font-size:.86em">'+fmtBs(pc.cub)+' retirado el '+esc(dias)+'</span>'):'');
     if(pc.cub>0.005) return '<span class="efe-par">◐ '+fmtBs(fa)+' en la mano</span><br><span style="color:var(--muted);font-size:.86em">'+fmtBs(pc.cub)+' retirado el '+esc(dias)+'</span>';
     return '<span class="efe-mano">⏳ en la mano</span>';
   };

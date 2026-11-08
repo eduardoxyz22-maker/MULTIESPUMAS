@@ -1630,7 +1630,7 @@ desempate). «Le queda en la mano» = lo cobrado en el período que nadie retir�
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
 **💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; en la rama, va en el `.gs` 07-f): 🔒 `EFE_CERRADO`
-(31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
+(31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
 fecha de otro día = el final de ese día). Orden (`efeTapar` = `waEfeTapar_`): 0. los tildados al cargarlo, 1. mismo monto, 2. tira que dé justo, 3. del
 más viejo — hasta el día de gracia (`efeGracia`: primer hábil después de fin de mes) el mes anterior primero, después solo su mes. Lo que quedó de un
