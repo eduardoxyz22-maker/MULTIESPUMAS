@@ -86,7 +86,7 @@ const GS = process.env.GS || path.resolve('google-apps-script.gs');
       document.getElementById('cua-vendedor').value=vend||'';
       renderCuadre(); await esperar(80);
       var E=cuadreEfectivo(), f={};
-      E.filas.forEach(function(o){ f[o.nombre]={ cobrado:o.cobrado, ret:o.ret, falta:o.falta, antes:o.antes||0, sobra:o.sobra||0, despues:o.despues||0 }; });
+      E.filas.forEach(function(o){ f[o.nombre]={ cobrado:o.cobrado, ret:o.ret, falta:o.falta, antes:o.antes||0, sobra:o.sobra||0, despues:o.despues||0, cerrado:o.cerrado||0 }; });
       return { pareo:E.pareo, f:f, txt:document.getElementById('cua-retiros').innerText.replace(/\s+/g,' '),
                cards:[].slice.call(document.querySelectorAll('#cua-metrics .mc')).map(function(x){ return x.innerText.replace(/\s+/g,' '); }) };
     };
@@ -134,12 +134,13 @@ const GS = process.env.GS || path.resolve('google-apps-script.gs');
   chk('2b. en la lista de Mauricio, el de 1.480 está ⏳ en la mano y los otros dos ✅ retirados el 07/11', /CLIENTE VELEZ[\s\S]*⏳ en la mano/.test(r.listaMauricio) && (r.listaMauricio.match(/✅ retirado el 07\/11/g)||[]).length===2, r.listaMauricio.slice(0,500));
   // 3. Juan Pablo
   chk('3a. Juan Pablo noviembre: 3.630 cobrados, 5.620 retirados, ↩️ 1.990 de octubre (1.000 del 10/10 + 990 del 31/10), le queda 0', N['Juan Pablo Paredes'] && N['Juan Pablo Paredes'].falta===0 && N['Juan Pablo Paredes'].antes===1990, N['Juan Pablo Paredes']);
-  chk('3b. Juan Pablo octubre: del de 3.000 quedan 2.000 (se retiró 1.000 en noviembre) y el de 990 se retiró en noviembre', O['Juan Pablo Paredes'] && O['Juan Pablo Paredes'].falta===2000 && O['Juan Pablo Paredes'].despues===1990, O['Juan Pablo Paredes']);
+  /* (07/11, la regla aprobada) octubre está CERRADO: lo que quedó sin retiro cargado no se le pide a nadie («🔒»), ya no queda «en la mano» */
+  chk('3b. Juan Pablo octubre: del de 3.000 quedan 2.000 sin retiro cargado → 🔒 cerrado (no «en la mano»); el de 990 se retiró en noviembre', O['Juan Pablo Paredes'] && O['Juan Pablo Paredes'].falta===0 && O['Juan Pablo Paredes'].cerrado===2000 && O['Juan Pablo Paredes'].despues===1990 && /🔒 Bs 2\.000,00 sin retiro cargado/.test(r.oct.txt), O['Juan Pablo Paredes']);
   // 4. Septiembre
   chk('4. Isabel: el retiro de octubre por plata de septiembre no tapa nada y lo dice', O['Isabel Robledo'] && O['Isabel Robledo'].sobra===300 && O['Isabel Robledo'].falta===0 && /no tapa ningún cobro anotado desde octubre/.test(r.oct.txt), O['Isabel Robledo']);
   // 5. la cuenta cierra en todas las filas, en noviembre, octubre y el día
-  const cierra=(F)=>Object.keys(F).every(k=>{ const o=F[k]; return Math.abs((o.cobrado-o.falta)-(o.ret-o.antes-o.sobra+o.despues))<0.005; });
-  chk('5. en cada fila: cobrado − queda = retirado − era de antes − sin cobro + se retiró después', cierra(N) && cierra(O) && cierra(r.dia.f), { N, O });
+  const cierra=(F)=>Object.keys(F).every(k=>{ const o=F[k]; return Math.abs((o.cobrado-o.falta-(o.cerrado||0))-(o.ret-o.antes-o.sobra+o.despues))<0.005; });
+  chk('5. en cada fila: cobrado − queda − 🔒 cerrado = retirado − era de antes − sin cobro + se retiró después', cierra(N) && cierra(O) && cierra(r.dia.f), { N, O });
   chk('5b. el día 03/11: Mirian cobró 2.140, se le retiró 7.580 (5.440 de octubre) y le queda 0', r.dia.pareo && r.dia.f['Mirian Salazar'] && r.dia.f['Mirian Salazar'].falta===0 && r.dia.f['Mirian Salazar'].antes===5440, r.dia.f['Mirian Salazar']);
   // 6. fichas y Tu día
   const tot=Object.keys(N).reduce((a,k)=>a+N[k].falta,0);

@@ -151,7 +151,7 @@ const FIX = [
   chk('1c Mauricio: 3.290 en 2 cobros desde el 03/11', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290 && de('Mauricio Merida').n === 2, de('Mauricio Merida'));
   chk('1d el cobro del chofer es de Luis Pierre, no de Fernando (y el QR no cuenta)', de('Luis Pierre') && de('Luis Pierre').bs === 1860 && !de('Fernando Peinado'), [de('Luis Pierre'), de('Fernando Peinado')]);
   chk('1e Juan Pablo: el retiro de 5.000 es el de octubre (mismo monto) → avisa los 900 de noviembre', de('Juan Pablo Paredes') && de('Juan Pablo Paredes').bs === 900, de('Juan Pablo Paredes'));
-  chk('1f Isabel: un retiro de 1.200 cubre 1.000 + 200 (del más viejo) → quedan 300 del 03/11', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && de('Isabel Robledo').desde === '2026-11-03', de('Isabel Robledo'));
+  chk('1f Isabel: un retiro de 1.200 cubre 1.000 + 200 (del más viejo) → quedan 300 del 03/11 (+ los 777 de la venta de octubre pagada el 03/11, 1q)', de('Isabel Robledo') && de('Isabel Robledo').bs === 1077 && de('Isabel Robledo').desde === '2026-11-03', de('Isabel Robledo'));
   chk('1f2 lo de octubre sin retiro no se avisa (Fabián)', !de('Fabián Godoy'), de('Fabián Godoy'));
   chk('1f3 un retiro de noviembre que es del mismo monto que un cobro de octubre se lo lleva (Mauricio sigue con 3.290)', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290, de('Mauricio Merida'));
   chk('1g Carola: un retiro de ANTES del cobro no lo cubre', de('Carola Chavez') && de('Carola Chavez').bs === 900, de('Carola Chavez'));
@@ -160,7 +160,9 @@ const FIX = [
   chk('1j afuera: Eduardo, ROHO, internos, ATC, RPT, borradores', !de('Eduardo Añez') && !de('ROHO') && !de('ALBA') && E.every(o => o.bs < 9000), E.map(o => o.nombre + ' ' + o.bs));
   chk('1k el que más tiene primero', E.length === 7 && E[0].nombre === 'Maria Flores', E.map(o => o.nombre));
   chk('1p 🚚 lo de Luis Pierre (lo recibió en la puerta, «>Luis Pierre») es de chofer; lo de los vendedores no', de('Luis Pierre') && de('Luis Pierre').ch === true && E.filter(o => o.ch).length === 1, E.map(o => o.nombre + (o.ch ? ' (chofer)' : '')));
-  chk('1q 🗓️ una venta cargada en octubre con el pago anotado en noviembre NO se avisa (Isabel sigue con 300, no 1.077)', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && E.viejas && E.viejas.n === 1 && E.viejas.bs === 777, [de('Isabel Robledo'), E.viejas]);
+  /* (07-f, la regla del efectivo del 07/11) cuenta la FECHA DEL COBRO: el dueño, «si fue una venta que entró el 30 de octubre y recién el cliente
+     pagó en noviembre, debe figurar su efectivo lógicamente en noviembre» (antes, 06-e, no se avisaba). */
+  chk('1q 🗓️ una venta cargada en octubre con el pago anotado en noviembre SÍ se avisa (por la fecha del cobro: Isabel 300 + 777 = 1.077)', de('Isabel Robledo') && de('Isabel Robledo').bs === 1077 && E.viejas === undefined, [de('Isabel Robledo'), E.viejas]);
   const Sw = servidor(ON); Sw.cargar([V('w2', 'Carola Chavez', '~Efectivo 600 @2026-11-02 #8101', { ts: TS('2026-10-31') }), V('w3', 'Carola Chavez', '~Efectivo 400 @2026-11-03 #8102'), R('w2', 'Carola Chavez', 600, '2026-11-04', '9')]);
   const Ew = Sw.ctx.waEfePendiente_(Sw.lista(), '2026-11-06');
   chk('1r …y un retiro por esa plata de octubre se la lleva a ella: lo de noviembre (400) sigue sin recoger', Ew.length === 1 && Ew[0].bs === 400, Ew);
@@ -218,7 +220,7 @@ const FIX = [
   chk('3b a las 09:05 sale UNO al dueño y UNO a Contabilidad', e.length === 1 && ec.length === 1 && efe().length === 2, S.salen());
   chk('3c al dueño, 5 datos: el día y la hora, de cuándo es lo que ingresó (ayer), cuánto ingresó, lo acumulado sin recoger y la lista (SIN el chofer)',
       e[0] && e[0].p.length === 5 && /viernes 06\/11, 09:0/.test(e[0].p[0]) && e[0].p[1] === 'ayer, jueves 05/11' && e[0].p[2] === 'Bs 1.500 (1 cobro)' &&
-      e[0].p[3] === 'Bs 11.150 de 7 vendedores' && /^⚠️ Maria Flores Bs 3\.410 desde 03\/11 · ⚠️ Mauricio Merida Bs 3\.290 desde 03\/11/.test(e[0].p[4]) && !/Luis Pierre/.test(e[0].p[4]), e[0] && e[0].p);
+      e[0].p[3] === 'Bs 11.927 de 7 vendedores' && /^⚠️ Maria Flores Bs 3\.410 desde 03\/11 · ⚠️ Mauricio Merida Bs 3\.290 desde 03\/11/.test(e[0].p[4]) && !/Luis Pierre/.test(e[0].p[4]), e[0] && e[0].p);
   chk('3c4 lo cobrado ayer: sin ⚠️ (no tiene 48 h) y con lo que ingresó entre paréntesis', e[0] && / · Andrea Orias Bs 1\.500 desde 05\/11 \(\+Bs 1\.500\)/.test(e[0].p[4]), e[0] && e[0].p[4]);
   chk('3c3 🚚 a Contabilidad, solo lo de los choferes: Luis Pierre Bs 1.860 (de hace 48 h: ⚠️)', ec[0] && ec[0].p[2] === 'Bs 0' && ec[0].p[3] === 'Bs 1.860 de 1 chofer' && ec[0].p[4] === '⚠️ Luis Pierre Bs 1.860 desde 04/11', ec[0] && ec[0].p);
   chk('3c2 la hora va como HH:MM después de la coma', e[0] && /, \d\d:\d\d$/.test(e[0].p[0]), e[0] && e[0].p[0]);
@@ -231,10 +233,10 @@ const FIX = [
   S.cargar([R('f1', 'Maria Flores', 3410, '2026-11-06'), V('h1', 'Isabel Robledo', '~Efectivo 250 @2026-11-06 #7010', { ts: TS('2026-11-06') })]);
   S.limpiar(); poner('2026-11-06 18:05'); S.repaso(); e = aDue();
   chk('3g a las 18:05 sale el de la tarde: lo que ingresó HOY y lo acumulado con la planilla de ahora (el retiro de Maria ya no la nombra)',
-      e.length === 1 && e[0].p[1] === 'hoy, viernes 06/11' && e[0].p[2] === 'Bs 250 (1 cobro)' && e[0].p[3] === 'Bs 7.990 de 6 vendedores' && !/Maria Flores/.test(e[0].p[4]) &&
+      e.length === 1 && e[0].p[1] === 'hoy, viernes 06/11' && e[0].p[2] === 'Bs 250 (1 cobro)' && e[0].p[3] === 'Bs 8.767 de 6 vendedores' && !/Maria Flores/.test(e[0].p[4]) &&
       / y 1 más$/.test(e[0].p[4]) && aCon().length === 1, e[0] && e[0].p);
   const Ri = S.ctx.waEfeResumen_(S.lista(), '2026-11-06', '2026-11-06', '2026-11-06').find(o => o.nombre === 'Isabel Robledo');
-  chk('3g2 Isabel (la que no entró en los 250 de Meta: «y 1 más»): Bs 550 sin recoger desde 03/11, de los que Bs 250 ingresaron hoy', Ri && Ri.bs === 550 && Ri.ing === 250 && Ri.desde === '2026-11-03' && Ri.atr === true, Ri);
+  chk('3g2 Isabel (la que no entró en los 250 de Meta: «y 1 más»): Bs 1.327 sin recoger desde 03/11 (300 + 777 + 250), de los que Bs 250 ingresaron hoy', Ri && Ri.bs === 1327 && Ri.ing === 250 && Ri.desde === '2026-11-03' && Ri.atr === true, Ri);
   S.limpiar(); poner('2026-11-07 09:05'); S.repaso();
   chk('3h2 el sábado 07/11 sí sale (lo de ayer viernes)', aDue().length === 1 && aCon().length === 1 && aDue()[0].p[1] === 'ayer, viernes 06/11', S.salen());
   S.limpiar(); poner('2026-11-08 09:05'); S.repaso();
@@ -302,16 +304,17 @@ const FIX = [
     V('j2', 'Juan Pablo Paredes', '~Efectivo 910 @2026-11-03 #6', { ts: TS('2026-11-03') }), V('j3', 'Juan Pablo Paredes', '~Efectivo 1480 @2026-11-03 #7', { ts: TS('2026-11-03') }),
     V('j4', 'Juan Pablo Paredes', '~Efectivo 1240 @2026-11-05 #8', { ts: TS('2026-11-05') }),
     R('j1', 'Juan Pablo Paredes', 4620, '2026-11-06', '10'),
-    // Fernando: el retiro (1.200) no es la suma de lo último → como antes, del más viejo: 900 de octubre + 300 de noviembre, quedan 700
+    // Fernando: el retiro (1.200, del 05/11: pasada la gracia del 03/11) no da justo → solo lo de noviembre (1.000); los 200 que sobran se dicen aparte
     V('k0', 'Fernando Peinado', '~Efectivo 900 @2026-10-29 #11', { ts: TS('2026-10-29') }), V('k1', 'Fernando Peinado', '~Efectivo 1000 @2026-11-03 #12', { ts: TS('2026-11-03') }),
     R('k1', 'Fernando Peinado', 1200, '2026-11-05', '12')
   ]);
   const P7 = S7.ctx.waEfePendiente_(S7.lista(), '2026-11-07'), nom7 = P7.map(o => o.nombre + ' ' + o.bs);
   chk('5a Mauricio: el retiro de 3.290 (= 700 + 2.590 de noviembre) lo saca del aviso, aunque quede efectivo de octubre sin retiro', !P7.some(o => o.nombre === 'Mauricio Merida'), nom7);
   chk('5b Juan Pablo: el retiro de 4.620 (= 990 + 910 + 1.480 + 1.240) lo saca del aviso', !P7.some(o => o.nombre === 'Juan Pablo Paredes'), nom7);
-  chk('5c un retiro que no es la suma de lo último sigue yendo primero a lo más viejo (Fernando: quedan 700)', P7.some(o => o.nombre === 'Fernando Peinado' && o.bs === 700), nom7);
+  chk('5c (07-f) pasada la gracia, un retiro que no da justo se lleva solo lo de su mes: Fernando no queda con nada de noviembre y los 200 que sobran se dicen aparte',
+      !P7.some(o => o.nombre === 'Fernando Peinado') && (P7.sobra || []).some(x => x.nombre === 'Fernando Peinado' && x.bs === 200), { nom7, sobra: P7.sobra });
   const R7 = S7.ctx.waEfeResumen_(S7.lista(), '2026-11-07', '2026-11-06', '2026-11-06');
-  chk('5d el resumen del día (el mensaje) dice lo mismo: solo Fernando con 700', R7.filter(o => o.bs > 0).map(o => o.nombre + ' ' + o.bs).join('|') === 'Fernando Peinado 700', R7);
+  chk('5d el resumen del día (el mensaje) dice lo mismo: nadie con plata de noviembre sin recoger', R7.filter(o => o.bs > 0).length === 0, R7);
 
   chk('sin errores en la página', errores.length === 0, errores);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');

@@ -3595,8 +3595,58 @@ function waEfeFuera_(v) { var k = waEfeNorm_(v); for (var i = 0; i < WA_EFE_FUER
    `nombreCanonico`/`mismoVendedor`: «Fernando» (chofer del Foton insumo) y «Fernando Peinado» son dos personas. */
 /** Las cuentas del efectivo (las usan el resumen del día y `waEfePendiente_`): por persona (clave = nombre normalizado) sus cobros en
     efectivo desde WA_EFE_EMPAREJA con lo que ya cubrió algún retiro (`cub`), y lo que hay que decir en `probarEfectivo`. */
+/* 💵🔒 (2026-11-07-f, LA REGLA DEL EFECTIVO aprobada por el dueño el 07/11: «Sí, armá la regla del efectivo así») = `efePareo`/`efeTapar` de la
+   página (el Cuadre del mes). `tests/test_efe_regla.js` compara las dos con la planilla real.
+   · 🔒 Octubre cerrado: lo cobrado hasta el 31/10 se dio por retirado (el aviso cuenta desde WA_EFE_DESDE, por la FECHA DEL COBRO: una venta
+     de octubre que el cliente pagó en noviembre es efectivo de noviembre — dueño, 07/11; antes, 06-e, se miraba el día de la venta).
+   · Un retiro solo se lleva cobros de su mes y del anterior que ya habían entrado: de días anteriores o, del mismo día, de una venta cargada
+     antes de la hora del retiro (`t`). Un retiro cargado con la fecha de otro día (12:00:00 en punto) cuenta como el final de ese día.
+   · Orden: 0. los cobros TILDADOS al cargarlo (columna «Garantía» de la fila: `efe:id|día|monto;…`); 1. el mismo monto (el más nuevo); 2.
+     cobros seguidos que den justo (la tira más nueva primero); 3. del más viejo al más nuevo: hasta el día de gracia (el primer día hábil
+     después de fin de mes) primero el mes anterior y después el nuevo; pasada la gracia, solo el mes del retiro. */
+function waEfeHoraRet_(ts) {
+  ts = Number(ts) || 0; if (!ts) return Infinity;
+  var d = new Date(ts - 4 * 3600000);
+  return (d.getUTCHours() === 12 && !d.getUTCMinutes() && !d.getUTCSeconds() && !d.getUTCMilliseconds()) ? Infinity : ts;
+}
+function waEfeMesAnt_(ym) { var y = +String(ym).slice(0, 4), m = +String(ym).slice(5, 7) - 1; if (!m) { m = 12; y--; } return y + '-' + (m < 10 ? '0' : '') + m; }
+function waEfeGracia_(ym) { var y = +String(ym).slice(0, 4), m = +String(ym).slice(5, 7); return waPhSig_(new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10)); }
+function waEfeTicks_(t) {
+  var s = String(t == null ? '' : t).trim(); if (s.indexOf('efe:') !== 0) return [];
+  return s.slice(4).split(';').map(function (x) { var a = x.split('|'); return a.length === 3 ? { id:a[0].trim(), f:a[1].trim(), m:Math.round((parseFloat(a[2]) || 0) * 100) / 100 } : null; })
+    .filter(function (x) { return x && x.id && /^\d{4}-\d{2}-\d{2}$/.test(x.f) && x.m > 0; });
+}
+function waEfeTapar_(L, x) {
+  var r2 = function (n) { return Math.round(n * 100) / 100; };
+  var resto = x.m, i, R = x.f.slice(0, 7), P = waEfeMesAnt_(R), enGracia = x.f <= waEfeGracia_(P);
+  var falta = function (c) { return r2(c.m - c.cub); };
+  var tomar = function (c, u) { u = r2(u); if (u <= 0.005) return; c.cub = r2(c.cub + u); resto = r2(resto - u); };
+  var vale = function (c) { var ym = c.f.slice(0, 7); return falta(c) > 0.005 && (ym === R || ym === P) && (c.f < x.f || (c.f === x.f && (c.t == null || c.t <= x.t))); };
+  (x.tick || []).forEach(function (k) {
+    if (resto <= 0.005) return;
+    for (var j = 0; j < L.length; j++) { var c = L[j]; if (c.id === k.id && c.f === k.f && Math.abs(c.m - k.m) < 0.005 && falta(c) > 0.005) { tomar(c, Math.min(resto, falta(c))); return; } }
+  });
+  if (resto > 0.005) { var ex = null; for (i = 0; i < L.length; i++) if (vale(L[i]) && Math.abs(falta(L[i]) - resto) < 0.005) ex = L[i]; if (ex) tomar(ex, falta(ex)); }
+  for (var e = L.length - 1; e >= 0 && resto > 0.005; e--) {
+    if (!vale(L[e])) continue;
+    var acc = 0, s0 = -1;
+    for (var s2 = e; s2 >= 0; s2--) {
+      if (!vale(L[s2])) continue;
+      acc = r2(acc + falta(L[s2]));
+      if (Math.abs(acc - resto) < 0.005) { s0 = s2; break; }
+      if (acc > resto) break;
+    }
+    if (s0 >= 0) for (var t = s0; t <= e; t++) if (vale(L[t])) tomar(L[t], falta(L[t]));
+  }
+  for (i = 0; i < L.length && resto > 0.005; i++) {
+    var c3 = L[i]; if (!vale(c3)) continue;
+    if (!enGracia && c3.f.slice(0, 7) !== R) continue;
+    tomar(c3, Math.min(resto, falta(c3)));
+  }
+  return Math.max(0, r2(resto));
+}
 function waEfeCuentas_(lista) {
-  var cob = {}, ret = [], nombres = {}, sinF = { n:0, bs:0 }, sobra = [], leidos = { n:0, sinMonto:0 }, viejas = { n:0, bs:0 };
+  var cob = {}, ret = [], nombres = {}, sinF = { n:0, bs:0 }, sobra = [], leidos = { n:0, sinMonto:0 };
   (lista || []).forEach(function (p) {
     var id = String((p && p.id) || '');
     if (!id) return;
@@ -3605,61 +3655,31 @@ function waEfeCuentas_(lista) {
       /* Cuántos se leyeron (desde WA_EFE_EMPAREJA) y cuántos sin monto que se pueda leer: `probarEfectivo` los dice, así un retiro que
          la planilla trae sin número (escrito a mano como texto) no se pierde callado. */
       if (f && f >= WA_EFE_EMPAREJA) { leidos.n++; if (!((Number(p.acuenta) || 0) > 0)) leidos.sinMonto++; }
-      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, m:Math.round((Number(p.acuenta) || 0) * 100) / 100, nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim(), id:id });
+      if (f && f >= WA_EFE_EMPAREJA && q && (Number(p.acuenta) || 0) > 0) ret.push({ q:q, f:f, t:waEfeHoraRet_(p.ts), m:Math.round((Number(p.acuenta) || 0) * 100) / 100,
+        nombre:String(p.vendedor || '').replace(/\s+/g, ' ').trim(), id:id, tick:waEfeTicks_(p.garantia) });
       return;
     }
     if (id.indexOf('__') === 0 || String(p.estado || '') === BORRADOR_EST) return;
     if (/^(ATC|RPT)\b/i.test(String(p.oc || '').trim()) || waEfeFuera_(p.vendedor)) return;
+    var dv = waEfeDia_(p.ts);
     waEfePagos_(p).forEach(function (c, jj) {
-      if (!c.fecha) { if (waEfeDia_(p.ts) >= WA_EFE_DESDE) { sinF.n++; sinF.bs = Math.round((sinF.bs + c.monto) * 100) / 100; } return; }
+      if (!c.fecha) { if (dv >= WA_EFE_DESDE) { sinF.n++; sinF.bs = Math.round((sinF.bs + c.monto) * 100) / 100; } return; }
       if (c.fecha < WA_EFE_EMPAREJA) return;
       var quien = c.recibio || String(p.vendedor || '').replace(/\s+/g, ' ').trim() || '(sin vendedor)', k = waEfeNorm_(quien);
       if (!nombres[k]) nombres[k] = quien;
-      /* 🗓️ (2026-11-06-e, dueño: «debe avisar desde noviembre… no de octubre, eso ya se recogió… lo que hay pendiente desde el 1ro») `v` = el
-         día en que se CARGÓ la venta: un cobro anotado en noviembre de una venta de octubre (la 10-382 del 30/10, con el pago anotado el 03/11)
-         no se avisa, pero sigue acá para que un retiro por esa plata se lo lleve a él y no tape lo de noviembre. */
-      var v = waEfeDia_(p.ts) || c.fecha;
-      if (v < WA_EFE_DESDE && c.fecha >= WA_EFE_DESDE) { viejas.n++; viejas.bs = Math.round((viejas.bs + c.monto) * 100) / 100; }
-      (cob[k] = cob[k] || []).push({ f:c.fecha, m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, v:v, id:id, j:jj });
+      (cob[k] = cob[k] || []).push({ f:c.fecha, t:(dv === c.fecha ? (Number(p.ts) || null) : null), m:c.monto, cub:0, oc:String(p.oc || '').trim(), ch:!!c.recibio, id:id, j:jj });
     });
   });
-  /* (2026-11-07-f) Con desempate fijo —el mismo de `efePareo` en la página (el Cuadre del mes)—: cobros por (día, id del pedido, lugar entre
-     sus cobros en efectivo) y retiros por (día, id). Si no, dos retiros del mismo día podían repartirse distinto acá y en el panel. */
+  /* Desempate fijo, el mismo de `efePareo`: cobros por (día, id del pedido, lugar entre sus cobros en efectivo) y retiros por (día, hora, id). */
   for (var k0 in cob) cob[k0].sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : (a.id < b.id ? -1 : a.id > b.id ? 1 : a.j - b.j); });
-  ret.sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : (a.id < b.id ? -1 : a.id > b.id ? 1 : 0); });
+  ret.sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : (a.t < b.t ? -1 : a.t > b.t ? 1 : (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)); });
   ret.forEach(function (r) {
-    var L = cob[r.q] || [], resto = r.m, ex = null;
-    for (var i = 0; i < L.length; i++) if (L[i].f <= r.f && Math.abs((L[i].m - L[i].cub) - resto) < 0.005) ex = L[i];   // el del mismo monto más cercano
-    if (ex) { ex.cub = ex.m; resto = 0; }
-    /* 🧾 (2026-11-07-c, dueño: «si está cargado como recogido ya no lo toma en cuenta, ¿cierto?») Si el retiro es JUSTO lo último que esa
-       persona tenía sin recoger hasta su día (lo más nuevo hacia atrás), se lleva eso. Sin esto iba primero a lo más viejo: el efectivo de
-       octubre que nadie cargó como retiro (el dueño: «lo de octubre ya se recogió») se comía el retiro de noviembre. El 07/11 Mauricio cargó
-       Bs 3.290 = sus dos cobros de noviembre (700 + 2.590) y el aviso lo seguía mostrando; Juan Pablo, Bs 4.620 = 990 + 910 + 1.480 + 1.240. */
-    /* (2026-11-07-f, el Cuadre del mes del 07/11) La tira puede terminar en CUALQUIER cobro sin recoger, la más nueva primero: el mismo 07/11
-       Mauricio cobró otro de Bs 1.480 después de cargar el retiro de 3.290 (= 700 + 2.590), y como la tira solo podía terminar en el último
-       (1.480 + 2.590 > 3.290) el retiro se iba a lo de octubre y noviembre quedaba entero «en la mano». La MISMA regla en `efePareo` de la
-       página: `tests/test_efe_pareo.js` compara las dos. */
-    for (var e = L.length - 1; e >= 0 && resto > 0.005; e--) {
-      if (L[e].f > r.f || Math.round((L[e].m - L[e].cub) * 100) / 100 <= 0.005) continue;
-      var acc = 0, desde = -1;
-      for (var s = e; s >= 0; s--) {
-        var fa = Math.round((L[s].m - L[s].cub) * 100) / 100; if (fa <= 0.005) continue;
-        acc = Math.round((acc + fa) * 100) / 100;
-        if (Math.abs(acc - resto) < 0.005) { desde = s; break; }
-        if (acc > resto) break;
-      }
-      if (desde >= 0) { for (var s2 = desde; s2 <= e; s2++) L[s2].cub = L[s2].m; resto = 0; }
-    }
-    for (var j = 0; j < L.length && resto > 0.005; j++) {
-      if (L[j].f > r.f) break;
-      var u = Math.min(resto, L[j].m - L[j].cub); if (u <= 0) continue;
-      L[j].cub = Math.round((L[j].cub + u) * 100) / 100; resto = Math.round((resto - u) * 100) / 100;
-    }
-    /* Lo que sobró de un retiro de noviembre (no había nada cobrado antes de ese día): se dice en `probarEfectivo` (un cobro anotado con
+    var resto = waEfeTapar_(cob[r.q] || [], r);
+    /* Lo que sobró de un retiro de noviembre en adelante (no había nada que tapar): se dice en `probarEfectivo` (un cobro anotado con
        una fecha de más adelante, o un retiro a nombre de otra persona). */
     if (resto > 0.005 && r.f >= WA_EFE_DESDE) sobra.push({ q:r.q, nombre:r.nombre, f:r.f, bs:resto });
   });
-  return { cob:cob, nombres:nombres, sinF:sinF, sobra:sobra, leidos:leidos, viejas:viejas };
+  return { cob:cob, nombres:nombres, sinF:sinF, sobra:sobra, leidos:leidos };
 }
 /** Lo que está sin retirar de hace WA_EFE_DIAS días o más: [{nombre, bs, n, desde, ocs:[…], ch}], el que más tiene primero. `hoy` = día de
     Bolivia. Además `.sinFecha` ({n, bs}: cobros sin día, no entran), `.sobra` (retiros que no taparon nada) y `.retiros` ({n, sinMonto}). */
@@ -3675,7 +3695,7 @@ function waEfePendiente_(lista, hoy) {
     var o = { nombre:K.nombres[k], bs:0, n:0, desde:'', ocs:[], ch:cob[k].some(function (c) { return c.ch; }) };
     cob[k].forEach(function (c) {
       var falta = Math.round((c.m - c.cub) * 100) / 100;
-      if (falta > 0.005 && c.f >= WA_EFE_DESDE && c.v >= WA_EFE_DESDE && c.f <= lim) {
+      if (falta > 0.005 && c.f >= WA_EFE_DESDE && c.f <= lim) {
         o.bs = Math.round((o.bs + falta) * 100) / 100; o.n++; if (!o.desde || c.f < o.desde) o.desde = c.f;
         if (c.oc && o.ocs.indexOf(c.oc) < 0) o.ocs.push(c.oc);
       }
@@ -3683,7 +3703,7 @@ function waEfePendiente_(lista, hoy) {
     if (o.n) out.push(o);
   }
   out.sort(function (a, b) { return b.bs - a.bs || (a.nombre < b.nombre ? -1 : 1); });
-  out.sinFecha = K.sinF; out.sobra = K.sobra; out.retiros = K.leidos; out.viejas = K.viejas;
+  out.sinFecha = K.sinF; out.sobra = K.sobra; out.retiros = K.leidos;
   return out;
 }
 /** 📅 (2026-11-06-d, dueño: «la idea es que cada día llegue el mensaje haciendo recuerdo de cuánto efectivo ingresó y cuánto no se marcó como
@@ -3696,7 +3716,7 @@ function waEfeResumen_(lista, hoy, de, a) {
   for (var k in cob) {
     var o = { nombre:K.nombres[k], bs:0, n:0, desde:'', atr:false, ing:0, ingN:0, ocs:[], ch:cob[k].some(function (c) { return c.ch; }) };
     cob[k].forEach(function (c) {
-      if (c.f < WA_EFE_DESDE || c.v < WA_EFE_DESDE || c.f > hoy) return;   // (06-e) solo ventas cargadas desde el 01/11
+      if (c.f < WA_EFE_DESDE || c.f > hoy) return;   // (07-f) desde el 01/11 por la fecha del COBRO: octubre está cerrado
       if (c.f >= de && c.f <= a) { o.ing = Math.round((o.ing + c.m) * 100) / 100; o.ingN++; }
       var falta = Math.round((c.m - c.cub) * 100) / 100;
       if (falta > 0.005) {
@@ -3708,7 +3728,7 @@ function waEfeResumen_(lista, hoy, de, a) {
     if (o.bs > 0.005 || o.ing > 0.005) out.push(o);
   }
   out.sort(function (x, y) { return y.bs - x.bs || y.ing - x.ing || (x.nombre < y.nombre ? -1 : 1); });
-  out.sinFecha = K.sinF; out.sobra = K.sobra; out.retiros = K.leidos; out.viejas = K.viejas;
+  out.sinFecha = K.sinF; out.sobra = K.sobra; out.retiros = K.leidos;
   return out;
 }
 /** El tramo de «lo que ingresó» de cada aviso: a las 9:00 el día hábil anterior (el lunes junta sábado y domingo: las tiendas abren el
@@ -3722,7 +3742,7 @@ function waEfeTramo_(hoy, h) {
 /** 🚚 (2026-11-06-c) Solo los choferes (`ch`, a Contabilidad) o solo los vendedores (al dueño), conservando `sinFecha`/`sobra`/`retiros`. */
 function waEfeDe_(E, choferes) {
   var r = (E || []).filter(function (o) { return !!o.ch === !!choferes; });
-  r.sinFecha = E && E.sinFecha; r.sobra = E && E.sobra; r.retiros = E && E.retiros; r.viejas = E && E.viejas;
+  r.sinFecha = E && E.sinFecha; r.sobra = E && E.sobra; r.retiros = E && E.retiros;
   return r;
 }
 /** Los datos de `efectivo_del_dia`: [el día y la hora, de qué día es lo que ingresó, cuánto ingresó, cuánto hay sin recoger y de cuántos,
@@ -3758,7 +3778,6 @@ function probarEfectivo() {
   L.push('🚚 Choferes · el aviso de las ' + h + ':00 a Contabilidad diría: ' + waEfeParams_(Rc, B, true, T).join(' | '));
   porOc(Rc);
   if (R.retiros) L.push('📒 Retiros leídos desde el ' + WA_EFE_EMPAREJA + ': ' + R.retiros.n + (R.retiros.sinMonto ? (' · ⚠️ ' + R.retiros.sinMonto + ' sin un monto que se pueda leer (la columna «A cuenta» no es un número): esos no tapan nada.') : '.'));
-  if (R.viejas && R.viejas.n) L.push('ℹ️ ' + R.viejas.n + ' cobro(s) en efectivo anotados en noviembre de ventas cargadas en octubre (' + waBs_(R.viejas.bs) + '): no entran (lo de octubre ya se recogió).');
   if (R.sinFecha && R.sinFecha.n) L.push('⚠️ ' + R.sinFecha.n + ' cobro(s) en efectivo sin fecha (' + waBs_(R.sinFecha.bs) + '): no entran en el aviso. Corregilos en Contabilidad → ✏️ Corregir este pago.');
   if (R.sobra && R.sobra.length) L.push('ℹ️ Retiros que no tienen efectivo cobrado antes de su día (un cobro anotado con otra fecha o un retiro a nombre de otra persona): ' +
     R.sobra.map(function (x) { return (x.nombre || x.q) + ' ' + waBs_(x.bs) + ' (' + x.f.slice(8, 10) + '/' + x.f.slice(5, 7) + ')'; }).join(' · '));

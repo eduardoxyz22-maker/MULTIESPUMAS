@@ -17357,6 +17357,45 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA en la rama, falta su «publica»; la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11)
+- **Lo que pidió el dueño** (07/11, a la noche): *«octubre cerrado… no tomar en cuenta los retiros que se hicieron el 3 de noviembre»*; *«el dinero de
+  Fernando se recogió a las 11 o 10 de la mañana. Lógicamente pudo haber entrado más dinero hoy»*; *«si fue una venta que entró el 30 de octubre y
+  recién el cliente pagó en noviembre, debe figurar su efectivo en noviembre»*; y que al cargar un retiro se vea el NOMBRE del cliente y la nota, no la
+  OC. «1 listo»: corrigió la 10-382 en Contabilidad (31/10, la recibió Luis Eyzaguirre, §4ow). «2. Si entregó el dinero»: Luis rindió lo de octubre.
+- **La regla** (comentario «LA REGLA DEL EFECTIVO» en `pedidos.html`, al lado de `EFE_EMPAREJA`; la MISMA en el `.gs`):
+  · 🔒 **`EFE_CERRADO`='2026-10-31'**: un cobro en efectivo de esa fecha o antes sin retiro no se le pide a nadie (`cuadreEfectivo` → `o.cerrado`,
+    «🔒 Bs … sin retiro cargado: octubre está cerrado»; en `abrirEfectivo`, «🔒 octubre cerrado»). Cuenta la FECHA DEL COBRO, no la de la venta.
+  · **Un retiro se lleva solo cobros de su mes (R) y del anterior (P), y solo los que ya habían entrado**: de días anteriores o, del mismo día, de
+    una venta cargada antes de la hora del retiro. La hora de un cobro (`t`) es el `ts` de la venta SOLO si el cobro es del día en que se cargó; si
+    no, no se sabe y cuenta como cualquier hora. La del retiro = su `ts`, salvo los cargados con la fecha de otro día (`retTs` los pone a las 12:00:00
+    en punto: `efeHoraRet` → Infinity = el final de ese día).
+  · **El orden** (`efeTapar` = `waEfeTapar_`): 0. los cobros TILDADOS al cargarlo; 1. el del mismo monto (el más nuevo); 2. una tira seguida que dé
+    justo (la más nueva primero, terminando en cualquiera, como §4ov); 3. del más viejo al más nuevo — hasta el día de GRACIA (`efeGracia` /
+    `waEfeGracia_` = el primer día hábil después de fin de mes: octubre → mar 03/11, porque el 01/11 es domingo y el 02/11 feriado) primero el mes
+    anterior y después el nuevo; pasada la gracia, SOLO el mes del retiro (uno del mes anterior entra solo si da justo, pasos 1-2).
+  · **El faltante**: lo que quedó sin retirar de un mes que NO está cerrado aparece en el mes siguiente, pasada su gracia, como «⚠️ Faltante de
+    <mes>: Bs … sin retirar» (`o.faltAnt`, `faltAntCobs`, `faltAntMes`; solo con el período en «Mes»). La ficha «Efectivo por retirar» lo suma
+    aparte («+ Bs X faltante de <mes>»).
+- **El formulario del retiro** (`#ret-cobros`, `retCobrosDatos`/`retCobrosPintar`/`retTickToggle`): al elegir quién entrega y el monto, la lista
+  de sus cobros sin recoger (su mes y el anterior, sin lo cerrado) con el CLIENTE, el día, la hora si se sabe (`hhmmDeTs`) y el N° de nota — nunca
+  la OC —, tildados como los tomaría la regla (`efeSimular`, que corre la cuenta sin el retiro que se corrige: `efeSinRetiro`). La suma dice
+  «✅ = el monto» o cuánto sobra/falta; tocar uno lo deja «elegidos a mano» (`RET_FORM.tickMano`). Al guardar, los tildados van en la columna
+  «Garantía» de la fila del retiro (`retTicksTxt` → `efe:id|día|monto;…`; `retTicksDe` los lee, la página y el `.gs`) y, si no dan el monto,
+  pregunta (Playwright solo con `RETIRO_TICK_PRUEBA`). Corregir el retiro los trae de vuelta. Cambiar quién entrega los vuelve a proponer.
+  ⚠️ **`hhmmBolivia` ya existía** (la hora de AHORA, sin argumento, para el parte del día): la mía la pisaba y la lista mostraba la hora del reloj
+  en cada cobro. Se llama `hhmmDeTs(t)`. Antes de nombrar una función nueva, buscar que no exista.
+- **El `.gs`** (`waEfeCuentas_` reescrita; `waEfeHoraRet_`, `waEfeMesAnt_`, `waEfeGracia_`, `waEfeTicks_`, `waEfeTapar_`): devuelve `{cob, nombres,
+  sinF, sobra, leidos}` — ya no `viejas`. Los avisos del efectivo (`waEfePendiente_`, `waEfeResumen_`) cuentan los cobros desde `WA_EFE_DESDE`
+  ('2026-11-01') POR LA FECHA DEL COBRO: la condición de la 06-e sobre la fecha de la VENTA (`c.v`) se sacó (el cobro de noviembre de una venta de
+  octubre es de noviembre).
+- **Con la planilla real** (08/11 00:08, 1.833 filas): página y servidor iguales en los 139 cobros en efectivo desde octubre. Noviembre por recoger
+  **Bs 9.525**: Juan Pablo 1.580, Fernando 3.695 y Mauricio 1.480 (lo cobrado el 07/11), Luis Pierre 1.860 e Ysrael 910 (choferes). Maria Flores ya no
+  aparece (la 10-382 es de Luis Eyzaguirre, 31/10: cerrado). Octubre: Bs 83.619 cerrado.
+- `tests/test_efe_regla.js` (19 + 1 con `REAL=<copia de la planilla>`; escenarios A la hora, B la gracia, C octubre cerrado, D el faltante de un
+  mes no cerrado y su gracia, E tildados, F el formulario, G página = `.gs`, H la planilla real). Cambiadas a conciencia: `test_efe_pareo` (3b:
+  octubre cerrado en vez de «en la mano»; la identidad suma `cerrado`) y `test_wa_efectivo` (1f/1q por la fecha del cobro; 3c/3g/3g2; 5c/5d: Fernando
+  ya no está pendiente y su sobrante de 200 se lista).
+
 ### §4ow — 💵 «¿QUIÉN RECIBIÓ EL EFECTIVO?» OBLIGATORIO (07/11; dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió la plata»*; PÁGINA en la rama, falta su «publica»; el `.gs` no cambia)
 - **El caso**: la 10-382 de Maria Flores (Andrea Duran Muñoz, Especial Ortopédico 140x190, Bs 3.410). La nota de venta 1938 (30/10) dice
   *«Pago efectivo al personal de logística a Luis»*: el cliente le pagó al chofer Luis Eyzaguirre al recibir el 31/10. María anotó el pago el
