@@ -1456,10 +1456,13 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
 - **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; en la rama, lo implementa el dueño): **13 A** `pedir_ubicacion` a las 10:00 al
-  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, también el martes; domingo nada), una vez por pedido (`WA_UB_PEDIDA`), con
-  `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo de su mes pasado a esta
-  altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
-  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
+  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, solo el martes: el del lunes lo cubre el recordatorio, §4pa; domingo nada), una vez
+  por pedido (`WA_UB_PEDIDA`), con `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo
+  de su mes pasado a esta altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
+  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). 📅 **«A esta altura» = los MISMOS DÍAS HÁBILES** (§4pa P1, dueño 08/11: «A»):
+  el otro mes corta en su n-ésimo día hábil a la misma hora (`pryCorteAltura` en la página = `waVbCorte_` en el `.gs`, con `FERIADOS_PASADOS` =
+  `WA_FERIADOS_PASADOS`), en el bot, Proyección («A esta altura», la fila y la tablita de cada vendedor), «Tu mes» y Bloki. ⚠️ Una comparación nueva «a
+  esta altura» usa `pryCorteAltura`, nunca el mismo día del mes; un día que no se trabajó va en las DOS listas. **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
   (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
   tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
   del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
@@ -1647,8 +1650,8 @@ lo de esto); lo demás de Contabilidad recibe la ayuda. ⚠️ Si cambia `filaDe
 🔎 **Revisado con 4 agentes antes de implementar** (§4pa, 08/11): cada botón lleva el id de su pregunta (`er:<qué>:<id>`: uno viejo no carga), lo que
 carga o borra relee WA_ER ADENTRO del candado (dos avisos de Meta no cargan dos veces), el retiro tilda SIEMPRE sus cobros del más viejo al más nuevo
 hasta el monto y lleva en `nota` las notas de venta y recibos (`waErNotas_`). La 13 A no le escribe a quien RETIRA (`waRetira_` = `fichaRetira`,
-`test_wa_er` §10f) ni al cliente del próximo día con camión (le llega el recordatorio). ⚠️ Espera al dueño: «cómo va cada vendedor» compara el mismo
-día del mes, no los mismos días hábiles (P1).
+`test_wa_er` §10f) ni al cliente del próximo día con camión (le llega el recordatorio). 📅 P1 decidido (dueño, 08/11: «A»): «cómo va cada vendedor» y
+todo «a esta altura» del panel comparan los mismos días hábiles (`waVbCorte_` = `pryCorteAltura`); el lunes 09/11 bajan Jonathan y Mirian, no 5.
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)

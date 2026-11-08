@@ -17385,11 +17385,23 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
     próximo día con camión (el sábado queda solo el martes; antes de un feriado, sin el día siguiente) y un pedido cuya confirmación sale en esa
     misma vuelta no recibe la 13 A. ⚠️ Cambia lo que había dicho el dueño en §4ou («el sábado también los del martes» → el del lunes lo cubre el
     recordatorio): decírselo.
-- **Espera al dueño — P1**: «cómo va cada vendedor» (lunes 08:00) compara el MISMO DÍA del mes (la regla de §4ou, = `pryMomDe` de la página).
-  El 09/11 noviembre lleva 5 días hábiles (domingo 01 + feriado 02) y octubre al 9 llevaba 7: el mensaje diría que bajan 5 (Jonathan ▼69, Mirian
-  ▼66, Fernando ▼34, Juan Pablo ▼26, Maria ▼24; equipo −27 %); con los mismos días hábiles bajan Jonathan (−63) y Mirian (−52), y el equipo
-  va −3 %. Opciones: (a) comparar por días hábiles, en el `.gs` y en la página juntos; (b) decir los días hábiles en el mensaje; (c) dejarlo.
-  Si no decide antes, implementar después de las 10:00 del lunes: el primero sale el 16/11.
+- **P1 — decidido por el dueño (08/11): la «A», comparar por los MISMOS DÍAS HÁBILES, en el bot y en el panel.** Antes, «cómo va cada vendedor»
+  (lunes 08:00) comparaba el MISMO DÍA del mes (la regla de §4ou, = `pryMomDe`). El 09/11 noviembre lleva 5 días hábiles enteros (domingo 01 +
+  feriado 02) y octubre al 9 llevaba 7: el mensaje decía que bajan 5 (Jonathan ▼69, Mirian ▼66, Fernando ▼34, Juan Pablo ▼26, Maria ▼24; equipo
+  −27 %). Ahora, con la planilla del 08/11, bajan Jonathan (−63) y Mirian (−52), y el equipo va −3 % (`p1/vb_real.js` del scratchpad, viejo y nuevo).
+  · La regla (UNA, en los dos lados): hoy es el n-ésimo día hábil del mes, contando hoy si es hábil (`pryDiaHabil` = sin domingos, `FERIADOS` ni
+    `FERIADOS_PASADOS`). El otro mes corta en SU n-ésimo día hábil, a la misma hora. Si hoy no es hábil (domingo o feriado), entra hasta el día
+    antes de su (n+1)-ésimo, entero. Si el otro mes no llega a ese día hábil, entra entero. El 09/11 08:00 → el 07/10 08:00.
+  · Página: `pryCorteAltura(hoy, cmp, min)` → `{lim, min, entero, n, hab, dia}` y `pryCorteTxt` («al día 7 a las 08:00 (los mismos 6 días
+    hábiles)»). La usan `pryAltura` (`A.corte`, `A.diaCmp`; `pryAcum` acepta el `lim` ya calculado), `pryMomDe` (la fila y la tablita de cada
+    vendedor), `misMesLineaHtml` («Tu mes» de Mis pedidos) y Bloki («¿cuánto vendí este mes?»). `enteroAntes` = el otro mes tenía menos días hábiles.
+  · `.gs`: `waVbCorte_` (= `pryCorteAltura`), `WA_FERIADOS_PASADOS` (= `FERIADOS_PASADOS`: `FERIADOS_GS` no mira atrás), `waVbHabil_`; `waVbDatos_`
+    corta con eso, `waVbAltura_` dice «noviembre al día 9 contra octubre al día 7 (los mismos 6 días hábiles)» (el dato 2 de la plantilla, que no
+    cambia en Meta; el ejemplo `e` de `WA_PLANTILLAS` sí, para cuando se crea) y «mes» del menú del dueño usa el mismo texto.
+  · ⚠️ Una comparación «a esta altura» nueva usa `pryCorteAltura`. Un día que no se trabajó va en `FERIADOS_PASADOS` Y en `WA_FERIADOS_PASADOS`.
+  · Pruebas: `test_wa_13_25_26` §3w (el corte en domingo, feriado, septiembre sin el 24-25 y febrero entero; una venta del 08/10 que ya no entra)
+    y §3b3-3b4 (página = servidor en 459 casos, agosto a diciembre, y las dos listas de días). `test_proyeccion` y `test_bloki_mas` cambiaron el
+    texto a conciencia («(los mismos 12 días hábiles)», «día 8, 10:00, los mismos 7 días hábiles»); los montos dan igual.
 - **Para después del lunes** (no son de la 07-f o no hacen daño): B7 una vendedora que le contesta al Buen día queda como cliente (desde la 07-a);
   P2 la línea «El mes» del cierre del día usa lo vendido de la foto de las 17:00; C5 el Excel del Cuadre no trae «🔒 cerrado» ni lo que no tapa
   nada (página); N2 un COMBO cuenta 1 unidad en el `.gs` (no se muestra); B9 mientras Meta no apruebe las plantillas nuevas, la 13 A, el «cómo
@@ -17399,11 +17411,11 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   2.770 de 2 choferes; la proyección de noviembre va en Bs 841.800 (ritmo; vendido 287.693), y el lunes la pestaña baja sola a ~791.300 (con el
   ritmo, el lunes ya cuenta como día pasado).
 - Pruebas: `test_wa_er` 83 (con REAL), `test_wa_13_25_26` 93, las 48 suites que cargan el `.gs` en verde, `test_efe_regla` con REAL 20/0.
-- **Enlace para el lunes**: https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/4baadd44337917fe01035a42b745cbfccf0510a8/google-apps-script.gs
-  (8.024 líneas, termina en `}` con `return borrador;` antes). Reemplaza a `47366d8…` y a `8fa5606…`. Volver atrás: ✏️ a la versión anotada Y pegar
+- **Enlace para el lunes**: https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/35ce242d333e405afd94ee7dac7a8c13c2ce3a8e/google-apps-script.gs
+  (8.050 líneas, termina en `}` con `return borrador;` antes; con P1 por días hábiles). Reemplaza a `4baadd4…`, `47366d8…` y `8fa5606…`. Volver atrás: ✏️ a la versión anotada Y pegar
   la 07-e de `1eb5c58…` (6.938 líneas).
 
-### §4oz — 💵✅ «YA LO RECIBÍ»: CONTABILIDAD ANOTA POR WHATSAPP LA PLATA QUE LE ENTREGA UN CHOFER, Y EL BOT CARGA EL RETIRO (08/11; dueño, con la propuesta: *«Si así está bien / No sólo para contabilidad / Si es el [número] a la que le avisa que tienen los choferes»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (enlace fijo `4baadd4…`, 8.024 líneas, con los arreglos de §4pa); la página no cambia)
+### §4oz — 💵✅ «YA LO RECIBÍ»: CONTABILIDAD ANOTA POR WHATSAPP LA PLATA QUE LE ENTREGA UN CHOFER, Y EL BOT CARGA EL RETIRO (08/11; dueño, con la propuesta: *«Si así está bien / No sólo para contabilidad / Si es el [número] a la que le avisa que tienen los choferes»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (enlace fijo `35ce242…`, 8.050 líneas, con los arreglos de §4pa y P1); la página no cambia)
 - **Qué pidió**: el mensaje del efectivo de los choferes (el de Contabilidad, 9:00 y 18:00) tiene que tener un botón para decir «ya me la dio»,
   y que con eso quede cargado el retiro en el panel. Solo Contabilidad (WA_CONTABILIDAD, el mismo número al que ya le llega ese mensaje): ni
   las vendedoras ni Eduardo.
@@ -17444,7 +17456,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   (la plantilla nueva en la lista, con su botón: ahora son 3 las que llevan botón) y `test_wa_efectivo` (a Contabilidad sale la del botón, con
   `er|<día>`; 3i4 nueva).
 
-### §4oy — 📥 EL PEDIDO QUE CARGA LA REVISIÓN DE CORREOS LE LLEGA AL DUEÑO POR WHATSAPP, PARA SUBIRLO AL TR4 (08/11; dueño: *«cada vez que revises mi correo y entre un pedido de lo que ya está configurado, y por cada pedido que generes en el panel, necesito que el bot me envíe un mensaje únicamente a mí con los datos del pedido que acabas de cargar y recordarme de que lo debo subir al TR4, el sistema que yo utilizo»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (enlace fijo `4baadd4…`, 8.024 líneas); la página no cambia)
+### §4oy — 📥 EL PEDIDO QUE CARGA LA REVISIÓN DE CORREOS LE LLEGA AL DUEÑO POR WHATSAPP, PARA SUBIRLO AL TR4 (08/11; dueño: *«cada vez que revises mi correo y entre un pedido de lo que ya está configurado, y por cada pedido que generes en el panel, necesito que el bot me envíe un mensaje únicamente a mí con los datos del pedido que acabas de cargar y recordarme de que lo debo subir al TR4, el sistema que yo utilizo»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11 (enlace fijo `35ce242…`, 8.050 líneas); la página no cambia)
 - **`cargar_pedidos.py`** guarda con `tr4:1`. `doPost` → `doSave(…, tr4)` → `waAlGuardar_(viejo, eco, adelanto, tr4)`: SOLO un pedido NUEVO
   (`!viejo`, `ev.t==='n'`) lleva `ev.tr4=1` en `WA_COLA` (un «nuevo + cambio» en la cola lo conserva). `waRepasoBot_`, al tomar ese «nuevo», suma
   `{k:'tr4'}` para `cfg.duenoEfe` (el PRIMERO de WA_DUENO, como el efectivo: el jefe no). `waArmar_` lo arma con la planilla de ese momento
@@ -17461,7 +17473,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   «factura a» y centavos; sin `tr4`, corregir uno que estaba, sin WA_DUENO, WA_PRUEBA, Meta sin la plantilla, bot apagado; el `.py` manda `tr4`).
   `test_wa_bot` suma la plantilla a la lista.
 
-### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11 — hasta entonces el WhatsApp del efectivo (07-e) empareja con la regla de antes: enlace fijo `4baadd4…`, 8.024 líneas (con el TR4 de §4oy))
+### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11 — hasta entonces el WhatsApp del efectivo (07-e) empareja con la regla de antes: enlace fijo `35ce242…`, 8.050 líneas (con el TR4 de §4oy))
 - **Lo que pidió el dueño** (07/11, a la noche): *«octubre cerrado… no tomar en cuenta los retiros que se hicieron el 3 de noviembre»*; *«el dinero de
   Fernando se recogió a las 11 o 10 de la mañana. Lógicamente pudo haber entrado más dinero hoy»*; *«si fue una venta que entró el 30 de octubre y
   recién el cliente pagó en noviembre, debe figurar su efectivo en noviembre»*; y que al cargar un retiro se vea el NOMBRE del cliente y la nota, no la
@@ -17523,7 +17535,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - Bloki («¿Cómo anoto el pago o un adelanto?») suma el paso. En Playwright solo con `RECIBIO_PRUEBA`.
 - `tests/test_recibio_obligatorio.js` (21; contra `d90cf4b` no existe la función).
 
-### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (con el servidor 07-e; dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla también va en el `.gs` 07-f que el dueño implementa el lunes: enlace fijo `4baadd4…`, 8.024 líneas (con el TR4 de §4oy), con la regla de §4ox)
+### §4ov — 💵🔗 EL CUADRE DEL EFECTIVO EMPAREJA CADA RETIRO CON LOS COBROS QUE TAPA, Y TOCAR EL EFECTIVO DICE QUÉ CLIENTES PAGARON (07/11; dueño, con dos capturas del Cuadre de noviembre: *«¿Revisa por qué no cuadra? ¿Porque ingresó en octubre y se retiró en noviembre? ¿Por eso figura con retiros de más? Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (con el servidor 07-e; dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla también va en el `.gs` 07-f que el dueño implementa el lunes: enlace fijo `35ce242…`, 8.050 líneas (con el TR4 de §4oy), con la regla de §4ox)
 - **La causa, con la planilla real (07/11 18:10)**: «Efectivo cobrado vs. retirado» restaba los retiros del MES a lo cobrado en el MISMO mes.
   Mirian: el retiro del 03/11 de Bs 5.440 es el cobro del 30/10 de la 10-343 → noviembre «se retiró 5.440 de más» y octubre con esos 5.440
   «en la mano». Juan Pablo: de los 15.630 retirados en noviembre, 10.140 eran de octubre (con la regla). El dueño tenía razón.
@@ -17550,7 +17562,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - `tests/test_efe_pareo.js` (24; 19 rojas contra `4509692`; 9b/9c comparan con el `.gs` y se saltan solas con uno anterior a la 07-f, salvo
   `GS=…`). `test_rev2_cuadre` §4 cambió a conciencia (la fila del Excel lleva las dos columnas nuevas).
 
-### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama, enlace fijo `4baadd44337917fe01035a42b745cbfccf0510a8` (8.024 líneas, termina en `}` con `return borrador;` antes: el 07/11 a la noche se le sumó el emparejado de §4ov, el 08/11 la regla de §4ox, el aviso del TR4 de §4oy, «Ya lo recibí» de §4oz y los arreglos de la revisión de §4pa; los de antes eran `47366d8…`, 7.620, `8fa5606…`, 7.948, `6507d19…`, 7.590, `8d65c13…`, 7.571, y `8093135…`, 7.565); lo implementa el dueño EL LUNES 09/11 (dueño, 07/11: *«no haré lo del gs… lo haré lunes»*; hasta entonces la página con ESPERADA 07-f NO se publica) — volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…` (6.938 líneas); la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después; batería 344 suites · 10.968 bien · 6 mal, las 6 de la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— y `test_avisa_cuando` (la versión escrita a mano, corregida): solas, todas bien)
+### §4ou — 📍📉💬 SERVIDOR `2026-11-07-f`: LA UBICACIÓN 2 DÍAS ANTES, «CÓMO VA CADA VENDEDOR» LOS LUNES Y EL DUEÑO LE PREGUNTA AL BOT (07/11; dueño, con la muestra https://claude.ai/artifact/UwAYoZNiwRDFNw4ZShUX9D: *«13 A, 25 C, 26 A con 20%»*; en la rama, enlace fijo `35ce242d333e405afd94ee7dac7a8c13c2ce3a8e` (8.050 líneas, termina en `}` con `return borrador;` antes: el 07/11 a la noche se le sumó el emparejado de §4ov, el 08/11 la regla de §4ox, el aviso del TR4 de §4oy, «Ya lo recibí» de §4oz y los arreglos de la revisión de §4pa y P1 por días hábiles; los de antes eran `4baadd4…`, 8.024, `47366d8…`, 7.620, `8fa5606…`, 7.948, `6507d19…`, 7.590, `8d65c13…`, 7.571, y `8093135…`, 7.565); lo implementa el dueño EL LUNES 09/11 (dueño, 07/11: *«no haré lo del gs… lo haré lunes»*; hasta entonces la página con ESPERADA 07-f NO se publica) — volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…` (6.938 líneas); la página solo sube `SCRIPT_VERSION_ESPERADA` a 07-f y se publica después; batería 344 suites · 10.968 bien · 6 mal, las 6 de la máquina cargada —`test_actualizar_espera`, `test_fabrica_vida`, `test_patio`— y `test_avisa_cuando` (la versión escrita a mano, corregida): solas, todas bien)
 - **13 A · `pedir_ubicacion`** (al cliente): a las 10:00, a cada pedido que se entrega dentro de 2 días SIN pin exacto (vacío o `&aprox=1`:
   `waSinPin_`); el sábado también los del martes (`waUbDias_`: el domingo no se manda nada; lunes → sábado, martes → sábado). Una vez por pedido
   (`WA_UB_PEDIDA` = {id: día de la entrega}, 20 días, tope 200: si después lo mueven de día no se le vuelve a pedir). Las reglas del bot al cliente
