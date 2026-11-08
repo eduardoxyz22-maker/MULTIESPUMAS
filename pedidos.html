@@ -5540,6 +5540,15 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 @keyframes cx-late{ 50%{ transform:scale(1.35); } }
 .cx-kf-x{ display:flex; justify-content:space-between; font-size:.64rem; color:var(--muted); margin-top:-2px; }
 .cx-kf-pie{ font-size:.7rem; color:var(--muted); margin-top:5px; }
+/* 🏬 (§4pb) las fichas por tienda: el título va DIRECTO sobre la tarjeta grande (con el vidrio de la noche, letra clara); la línea de
+   vendedores adentro de la ficha. En el celular, la misma rejilla que las marcas (una por fila). */
+.cx-kt{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 10px; margin:-6px 0 10px; }
+.cx-kt b{ font-size:.68rem; font-weight:800; color:var(--teal); text-transform:uppercase; letter-spacing:.1em; }
+.cx-kt span{ font-size:.72rem; color:var(--muted); }
+html.tema-halloween .cx-kt b{ color:#fdba74; } html.tema-halloween .cx-kt span{ color:#e2d3f3; }
+html.tema-todos-santos .cx-kt b{ color:#fcd34d; } html.tema-todos-santos .cx-kt span{ color:#ecdcf7; }
+.cx-kf-s{ font-size:.7rem; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cx-kf-t .cx-kf-n b{ font-size:1.04rem; }
 @media (prefers-reduced-motion:reduce){ #view-conta *, #view-conta *::after{ animation:none!important; } }
 </style>
 <style>
@@ -10730,35 +10739,89 @@ function cxTiempoVer(i){
    llegaría (punteada, la proyección de siempre) y la meta, cuando haya dónde cargarla. */
 function cxPryPintar(R){
   var box=document.getElementById('cx-pry'); if(!box) return;
-  var ms=(R.marcas||[]).filter(function(m){ return m.tot.n; });
-  if(!ms.length){ box.innerHTML=''; return; }
+  var ms=(R.marcas||[]).filter(function(m){ return m.tot.n; }), T=cxPryTiendas(R);
+  if(!ms.length && !T.length){ box.innerHTML=''; return; }
   var V=pryVentas(), y=+R.ym.slice(0,4), mo=+R.ym.slice(5,7), N=new Date(y, mo, 0).getDate(), ini=R.ym+'-01';
   var conProy=(R.estado!=='cerrado'), hoyD=(R.estado==='cerrado') ? N : (R.estado==='curso' ? Math.min(N, +String(todayStr()).slice(8,10)) : 0);
   var anima=visAnimar('cxPry', R.ym+'|'+ms.map(function(m){ return m.g.k+m.tot.vendido; }).join('|'));
-  var cards=ms.map(function(m){
+  /* Una ficha (la de una marca o la de una tienda, §4pb): `o` = {ico, lbl, col, txt, n, u, vendido, proy, entra(x), pie, cls}; `entra` dice
+     qué ventas del mes arman la línea llena (acumulado por el día en que se cargó, `x.reg`). */
+  var ficha=function(o, anim){
     var c=[]; for(var i=0;i<=N;i++) c.push(0);
     V.forEach(function(x){
-      if(x.amb!=='tienda' || x.g!==m.g.k || x.ym!==R.ym) return;
+      if(x.amb!=='tienda' || x.ym!==R.ym || !o.entra(x)) return;
       var d = x.reg<ini ? 0 : (x.reg.slice(0,7)>R.ym ? N : +x.reg.slice(8,10));
       c[Math.max(0, Math.min(N, d))]+=x.bs;
     });
     for(var k=1;k<=N;k++) c[k]+=c[k-1];
-    var vend=m.tot.vendido, proy=conProy ? m.tot.proy : vend, top=Math.max(proy, vend, c[N], 1)*1.12;
+    var vend=o.vendido, proy=conProy ? o.proy : vend, top=Math.max(proy, vend, c[N], 1)*1.12;
     var W=300, H=110, X=function(d){ return 4+d/N*(W-8); }, Y=function(v){ return H-4-v/top*(H-12); };
     var pts=[]; for(var d=0; d<=hoyD; d++) pts.push(X(d).toFixed(1)+','+Y(c[d]).toFixed(1));
-    var linea=pts.length>1 ? ('<polyline class="cx-k-l" points="'+pts.join(' ')+'" fill="none" stroke="'+m.g.col+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
-      '<polygon points="'+X(0).toFixed(1)+','+(H-4)+' '+pts.join(' ')+' '+X(hoyD).toFixed(1)+','+(H-4)+'" fill="'+m.g.col+'" opacity=".12"/>') : '';
-    var punt=(conProy && hoyD<N) ? ('<line class="cx-k-p" x1="'+X(hoyD).toFixed(1)+'" y1="'+Y(c[hoyD]).toFixed(1)+'" x2="'+X(N).toFixed(1)+'" y2="'+Y(proy).toFixed(1)+'" stroke="'+m.g.col+'" stroke-width="2" stroke-dasharray="5 4"/>'+
-      '<circle cx="'+X(N).toFixed(1)+'" cy="'+Y(proy).toFixed(1)+'" r="4" fill="#fff" stroke="'+m.g.col+'" stroke-width="2"/>') : '';
-    var hoy=(hoyD>0) ? ('<circle class="cx-k-hoy" cx="'+X(hoyD).toFixed(1)+'" cy="'+Y(c[hoyD]).toFixed(1)+'" r="4.5" fill="'+m.g.col+'"/>') : '';
-    var svg='<svg viewBox="0 0 '+W+' '+H+'" class="cx-k-svg'+(anima?' anima':'')+'" aria-hidden="true">'+
+    var linea=pts.length>1 ? ('<polyline class="cx-k-l" points="'+pts.join(' ')+'" fill="none" stroke="'+o.col+'" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<polygon points="'+X(0).toFixed(1)+','+(H-4)+' '+pts.join(' ')+' '+X(hoyD).toFixed(1)+','+(H-4)+'" fill="'+o.col+'" opacity=".12"/>') : '';
+    var punt=(conProy && hoyD<N) ? ('<line class="cx-k-p" x1="'+X(hoyD).toFixed(1)+'" y1="'+Y(c[hoyD]).toFixed(1)+'" x2="'+X(N).toFixed(1)+'" y2="'+Y(proy).toFixed(1)+'" stroke="'+o.col+'" stroke-width="2" stroke-dasharray="5 4"/>'+
+      '<circle cx="'+X(N).toFixed(1)+'" cy="'+Y(proy).toFixed(1)+'" r="4" fill="#fff" stroke="'+o.col+'" stroke-width="2"/>') : '';
+    var hoy=(hoyD>0) ? ('<circle class="cx-k-hoy" cx="'+X(hoyD).toFixed(1)+'" cy="'+Y(c[hoyD]).toFixed(1)+'" r="4.5" fill="'+o.col+'"/>') : '';
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" class="cx-k-svg'+(anim?' anima':'')+'" aria-hidden="true">'+
       '<line x1="4" x2="'+(W-4)+'" y1="'+(H-4)+'" y2="'+(H-4)+'" stroke="#e5e9eb"/>'+linea+punt+hoy+'</svg>';
-    return '<div class="cx-kf" style="--c:'+m.g.col+';--t:'+(m.g.txt||m.g.col)+'"><div class="cx-kf-h"><b>'+m.g.ico+' '+esc(m.g.lbl)+'</b><span>'+m.tot.n+' venta'+(m.tot.n===1?'':'s')+' · '+m.tot.u+' u.</span></div>'+
+    return '<div class="cx-kf'+(o.cls ? ' '+o.cls : '')+'" style="--c:'+o.col+';--t:'+(o.txt||o.col)+'"><div class="cx-kf-h"><b>'+o.ico+' '+esc(o.lbl)+'</b><span>'+o.n+' venta'+(o.n===1?'':'s')+' · '+o.u+' u.</span></div>'+
+      (o.sub ? '<div class="cx-kf-s">'+esc(o.sub)+'</div>' : '')+
       '<div class="cx-kf-n"><div><small>Vendido</small><b>'+fmtBs0(vend)+'</b></div>'+(conProy?('<div><small>📈 Llegaría a</small><b class="cx-kf-p">'+fmtBs0(proy)+'</b></div>'):'')+'</div>'+
       svg+'<div class="cx-kf-x"><span>1</span><span>'+N+'</span></div>'+
-      '<div class="cx-kf-pie">'+metaPieTxt(R.ym, m)+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
+      '<div class="cx-kf-pie">'+o.pie+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
+  };
+  var cards=ms.map(function(m){
+    return ficha({ ico:m.g.ico, lbl:m.g.lbl, col:m.g.col, txt:m.g.txt, n:m.tot.n, u:m.tot.u, vendido:m.tot.vendido, proy:m.tot.proy,
+                   entra:function(x){ return x.g===m.g.k; }, pie:metaPieTxt(R.ym, m) }, anima);
   }).join('');
-  box.innerHTML='<div class="cx-kfs">'+cards+'</div>';
+  /* 🏬 Por tienda (§4pb, 08/11; dueño: «¿y también por tienda, cómo quedaría?» → la ficha de marca, «esa»). La tienda NO entra en ninguna
+     cuenta: solo REPARTE lo que ya está. Cada venta trae su tienda (`x.st`, de `pryVentas`: la de la venta de tienda o la de quien vendió
+     ese día, `talTiendaDe`); la proyección de una tienda = la suma, por vendedor, de su `r.proy` × (lo que vendió en esa tienda ÷ lo que
+     vendió en total; si vendió Bs 0, por cantidad de ventas): así las tiendas suman EXACTAMENTE el equipo (redondeo aparte) y los números
+     de cada vendedor y de cada marca no cambian. El color es el de la marca de la mayoría de sus ventas. De la que más llegaría a la que menos. */
+  var tiendasHtml='';
+  if(T.length){
+    var animaT=visAnimar('cxPryT', R.ym+'|'+T.map(function(t){ return t.k+t.vendido; }).join('|'));
+    tiendasHtml='<div class="cx-kt" id="cx-pry-tiendas"><b>🏬 Por tienda</b><span>lo de cada vendedor repartido en la tienda donde vendió'+(conProy ? '; la proyección se reparte igual, así las tiendas suman el equipo' : '')+'</span></div>'+
+      '<div class="cx-kfs cx-kfs-t">'+T.map(function(t){
+        return ficha({ ico:'🏬', lbl:t.k, col:t.col, txt:t.txt, n:t.n, u:t.u, vendido:t.vendido, proy:t.proy, cls:'cx-kf-t',
+                       entra:function(x){ return (x.st||'')===t.st; }, sub:t.vendedores.join(' · '),
+                       pie:(t.vendedores.length===1 ? 'Su proyección es la de '+t.vendedores[0] : 'La proyección de cada vendedor, repartida según lo que vendió acá') }, animaT);
+      }).join('')+'</div>';
+  }
+  box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml;
+}
+/* 🏬 (§4pb) Las tiendas del mes de `R` (la cuenta de `proyeccionMes`): por tienda, ventas, unidades, lo vendido, la proyección repartida,
+   sus vendedores y el color de la marca mayoritaria. «Sin tienda» solo si hay una venta sin tienda. Ordenadas por lo que llegarían a
+   (lo vendido, con el mes cerrado). Solo mira: ninguna cuenta de la proyección cambia por esto. */
+function cxPryTiendas(R){
+  var filas={};
+  (R.marcas||[]).forEach(function(m){ m.filas.forEach(function(r){ filas[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)]=r; }); });
+  ((R.sinMarca && R.sinMarca.filas)||[]).forEach(function(r){ filas[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)]=r; });
+  var porV={}, T={};
+  (R.V||[]).forEach(function(x){
+    if(x.amb!=='tienda' || x.ym!==R.ym) return;
+    var pv=porV[x.vk]||(porV[x.vk]={ v:x.v, bs:0, n:0, st:{} }), st=x.st||'';
+    pv.bs=r2(pv.bs+x.bs); pv.n++;
+    var e=pv.st[st]||(pv.st[st]={ bs:0, n:0, u:0, g:{} }); e.bs=r2(e.bs+x.bs); e.n++; e.u+=x.u; e.g[x.g]=(e.g[x.g]||0)+1;
+  });
+  Object.keys(porV).forEach(function(vk){
+    var pv=porV[vk], r=filas[vk], proyV=r ? (R.estado==='cerrado' ? r.vendido : r.proy) : pv.bs;
+    Object.keys(pv.st).forEach(function(st){
+      var e=pv.st[st], prop = pv.bs>0.009 ? e.bs/pv.bs : (pv.n ? e.n/pv.n : 0);
+      var t=T[st]||(T[st]={ st:st, k:(st||'Sin tienda'), n:0, u:0, vendido:0, proy:0, vendedores:[], g:{} });
+      t.n+=e.n; t.u+=e.u; t.vendido=r2(t.vendido+e.bs); t.proy=r2(t.proy+proyV*prop);
+      if(t.vendedores.indexOf(pv.v)<0) t.vendedores.push(pv.v);
+      Object.keys(e.g).forEach(function(g){ t.g[g]=(t.g[g]||0)+e.g[g]; });
+    });
+  });
+  return Object.keys(T).map(function(st){
+    var t=T[st], gk='', gn=-1; Object.keys(t.g).forEach(function(g){ if(t.g[g]>gn){ gn=t.g[g]; gk=g; } });
+    var m=MARCAS.filter(function(g){ return g.k===gk; })[0];
+    t.col=m ? m.col : '#64748b'; t.txt=m ? (m.txt||m.col) : '#475569'; t.marca=gk;
+    t.vendedores.sort(function(a,b){ return a.localeCompare(b,'es'); });
+    return t;
+  }).sort(function(a,b){ return (b.proy-a.proy) || (b.vendido-a.vendido) || a.k.localeCompare(b.k,'es'); });
 }
 
 /* ============================================================================
@@ -11969,17 +12032,12 @@ function proyeccionMes(ym){
     }
     metodos[g]=o;
   });
-  /* 🆕 (08/11; dueño: «¿no debería ser Fabián y Andrea sus ventas que son en entregas en el mes?») A quien EMPIEZA este mes (no vendió
-     ningún mes anterior, con el panel ya en uso: hay ventas del equipo de antes) el ritmo se le mide con TODO lo vendido para el mes
-     (entregado y agendado), no solo con lo ya entregado: las primeras ventas de un vendedor nuevo son todas para más adelante y su
-     ritmo daba 0 (Andrea Bs 7.260 → Bs 27.588, Fabián Bs 2.580 → Bs 9.804 el 08/11). Los demás, igual que siempre (§4gt). */
-  var antes={}, hayAntes=false;
-  V.forEach(function(x){ if(x.amb==='tienda' && x.ym<ym){ antes[x.vk]=1; hayAntes=true; } });
+  /* (08/11) Se probó darle a quien EMPIEZA en el mes (Andrea, Fabián) un ritmo con todo lo vendido para el mes y el dueño lo descartó:
+     «si ya aparecen como los demás al cargar sus ventas o entregas, está bien que sea igual que los demás». Todos con el ritmo de §4gt. */
   var lista=Object.keys(filas).map(function(k){
     var r=filas[k], mt=metodos[r.g];
     r.vendido=r2(r.a+r.b);
-    r.nuevo = (estado==='curso' && r.amb==='tienda' && hayAntes && !antes[k]);
-    r.ritmo = dt>0 ? (r.nuevo ? r.vendido : r.a)/dt : 0;
+    r.ritmo = dt>0 ? r.a/dt : 0;
     r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
     r.metodo=mt.m;
     r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
@@ -12365,7 +12423,6 @@ function renderProyeccion(){
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
     if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
     if(r.sinMonto) det.push(r.sinMonto+' sin monto');
-    if(r.nuevo) det.push('🆕 empezó este mes: su ritmo va con lo vendido para el mes');
     var mom=''; try{ mom=pryMomHtml(R, _A, r); }catch(e){}
     /* 📊 (§4nj) con MoM, la fila se toca y abre la tablita de ventas, unidades y Bs */
     var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), ab=!!(mom && PRY_MOM_ABIERTO[vk]), det2='';
