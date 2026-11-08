@@ -12,6 +12,9 @@ Eduardo Añez. Antes de cada uno relee la planilla:
   · el total es SIEMPRE Σ cantidad × precio unitario (si el PDF trae otro total, se anota y no se usa);
   · si el servidor dice que el día está lleno, cerrado o es feriado, prueba el siguiente día hábil (sin domingos) en el
     mismo turno (el sábado solo AM) y lo anota en las observaciones. Nunca fuerza.
+  · cada guardado va con `tr4:1` (08/11, dueño: «por cada pedido que generes en el panel… un mensaje únicamente a mí… y recordarme
+    que lo debo subir al TR4»): desde el servidor 2026-11-07-f, a los ~2 minutos el bot le manda `pedido_correo_tr4` al PRIMERO de
+    WA_DUENO con los datos del pedido. Un servidor anterior lo ignora.
 
 Uso:  python3 -I cargar_pedidos.py <pedidos.json>            (solo muestra lo que haría)
       python3 -I cargar_pedidos.py <pedidos.json> --guardar  (guarda)
@@ -171,7 +174,7 @@ def main():
         obs_base = rec['observaciones']
         res = None
         for intento in range(6):
-            res = post({"action": "save", "pedido": rec, "av": 1})
+            res = post({"action": "save", "pedido": rec, "av": 1, "tr4": 1})   # tr4: el bot le avisa al dueño que lo suba al TR4 (servidor 07-f)
             if res.get('ok'):
                 break
             if res.get('error') not in REINTENTA:

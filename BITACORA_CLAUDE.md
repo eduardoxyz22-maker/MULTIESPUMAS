@@ -17357,6 +17357,23 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4oy — 📥 EL PEDIDO QUE CARGA LA REVISIÓN DE CORREOS LE LLEGA AL DUEÑO POR WHATSAPP, PARA SUBIRLO AL TR4 (08/11; dueño: *«cada vez que revises mi correo y entre un pedido de lo que ya está configurado, y por cada pedido que generes en el panel, necesito que el bot me envíe un mensaje únicamente a mí con los datos del pedido que acabas de cargar y recordarme de que lo debo subir al TR4, el sistema que yo utilizo»*; va en el `.gs` 07-f que el dueño implementa el lunes 09/11; la página no cambia)
+- **`cargar_pedidos.py`** guarda con `tr4:1`. `doPost` → `doSave(…, tr4)` → `waAlGuardar_(viejo, eco, adelanto, tr4)`: SOLO un pedido NUEVO
+  (`!viejo`, `ev.t==='n'`) lleva `ev.tr4=1` en `WA_COLA` (un «nuevo + cambio» en la cola lo conserva). `waRepasoBot_`, al tomar ese «nuevo», suma
+  `{k:'tr4'}` para `cfg.duenoEfe` (el PRIMERO de WA_DUENO, como el efectivo: el jefe no). `waArmar_` lo arma con la planilla de ese momento
+  (`waTr4Params_`): N° del panel + N° del día (el que puso el servidor), cliente (+ «factura a» si es otro nombre), su número de pedido (la
+  «nota»; Copacaba no la trae: el «OP-…» de las observaciones; si no, «sin número»), productos «2 × CH1220 COLCHON TITANIO ICE 140x190 a Bs 4.275»
+  unidos con « · » (`waParam_` corta a 250 letras), total Σ cantidad × precio y la entrega (`waCuandoTxt_`). Las reglas de logística de
+  `waArmar_` valen: un pedido ya entregado o con la fecha pasada no sale.
+- **Plantilla `pedido_correo_tr4`** (6 datos, UTILITY, sin respaldo: mientras Meta no la apruebe no sale, queda anotado ❌ en «Bot WhatsApp»). La
+  crea `crearPlantillasWhatsApp` el lunes junto con las otras de la 07-f. `estadoBotWhatsApp` lo dice en la línea del dueño.
+- ⚠️ **Me equivoqué y la prueba lo atajó**: puse la marca entre el `if (!viejo…)` y su `else if`, y un pedido nuevo SIN `tr4` (el formulario)
+  salía como «cambio de día» a logística. La marca va DESPUÉS de la cadena (`if (!ev) return;`). Un `if` nuevo en una cadena `if / else if`
+  la parte en dos.
+- `tests/test_wa_tr4.js` (29: la plantilla; Multicenter al dueño y no al jefe, los 6 datos, logística igual, sin repetir; Copacaba con el «OP-…»,
+  «factura a» y centavos; sin `tr4`, corregir uno que estaba, sin WA_DUENO, WA_PRUEBA, Meta sin la plantilla, bot apagado; el `.py` manda `tr4`).
+  `test_wa_bot` suma la plantilla a la lista.
+
 ### §4ox — 💵🔒 LA REGLA DEL EFECTIVO: OCTUBRE CERRADO, UN DÍA DE GRACIA, LA HORA DEL RETIRO, EL FALTANTE DEL MES Y EL RETIRO CON SUS COBROS TILDADOS (07-08/11; dueño, con las muestras https://claude.ai/artifact/KyRJTk47PcPaD2bSZBaDYv y https://claude.ai/artifact/M2CC7Hk9GBtUhMtBeMZ8LM: *«Sí, armá la regla del efectivo así, 1 listo ya lo hice 2. Si entrego el dinero»*; PÁGINA PUBLICADA 08/11, versión 2026-11-08-a (`529c21a`) (dueño, 08/11: *«Publica el arreglo de efectivo… y del gs para el lunes»*); la regla va también en el `.gs` 07-f que el dueño implementa el lunes 09/11 — hasta entonces el WhatsApp del efectivo (07-e) empareja con la regla de antes: enlace fijo `6507d19…`, 7.590 líneas)
 - **Lo que pidió el dueño** (07/11, a la noche): *«octubre cerrado… no tomar en cuenta los retiros que se hicieron el 3 de noviembre»*; *«el dinero de
   Fernando se recogió a las 11 o 10 de la mañana. Lógicamente pudo haber entrado más dinero hoy»*; *«si fue una venta que entró el 30 de octubre y

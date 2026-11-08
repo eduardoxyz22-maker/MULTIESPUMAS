@@ -1458,7 +1458,7 @@ function doPostCuerpo_(e) {
   try {
     if (action === 'delete') return doDelete(body.id, body.rev, body);
     if (action === 'histStock') return histGuardar_(body);   // 📚 (2026-10-09-a)
-    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto, !!body.av);   // (2026-10-30-a) `av`: la página sabe de «el cliente avisa cuándo» (ver entregaAConfirmar_)   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
+    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto, !!body.av, !!body.tr4);   // 📥 (2026-11-07-f) `tr4`: lo cargó la revisión de correos (cargar_pedidos.py): al dueño, «subilo al TR4» (waAlGuardar_)   // (2026-10-30-a) `av`: la página sabe de «el cliente avisa cuándo» (ver entregaAConfirmar_)   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();
   }
@@ -2300,7 +2300,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro, sinFreno) {
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
 /* (2026-10-02-a) `reserva`: lo que este pedido saca del saldo del almacén, según el panel (ver RESERVAS). Se mira al FINAL,
    con la fila ya escrita: nunca frena ni cambia nada de lo de arriba. */
-function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa) {
+function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa, tr4) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -2442,7 +2442,7 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa) {
   var saldoR = null;
   if (reserva && String(p.id).indexOf('__') !== 0) { try { saldoR = reservaProcesar_(String(p.id), reserva, Date.now()); } catch (eR) { saldoR = null; } }
   /* 🤖 (2026-10-11-a) El bot de WhatsApp: anota si el pedido es nuevo o cambió de día (sin red; lo manda `waRepaso` afuera). */
-  if (String(p.id).indexOf('__') !== 0) { try { waAlGuardar_(viejo, eco, adelanto); } catch (eW) {} }
+  if (String(p.id).indexOf('__') !== 0) { try { waAlGuardar_(viejo, eco, adelanto, tr4); } catch (eW) {} }
   /* (2026-09-30-a) `ahora` = cuándo quedó escrito, con el reloj de Google, DESPUÉS de releer la fila. Una lectura con un
      `ahora` posterior lo tiene adentro: si no lo trae, lo borraron (el panel ya no lo adivina, §4he). */
   var outS = { ok:true, version:SCRIPT_VERSION, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add'), ahora: Date.now() };
@@ -3196,7 +3196,10 @@ var WA_TIPOS = {
   /* 📍 (2026-11-07-f, idea 13 A) Al cliente, 2 días antes a las 10:00, si su pedido no tiene pin: que mande la ubicación. Sin respaldo. */
   ub:  { plantilla:'pedir_ubicacion', txt:'Pedir la ubicación (2 días antes)', cli:true },
   /* 📉 (2026-11-07-f, idea 26 A) Al dueño, los lunes a las 08:00: quién va más de 20 % abajo de su mes pasado a esta altura. Sin respaldo. */
-  vb:  { plantilla:'vendedoras_bajan', txt:'Dueño: vendedores abajo de su mes pasado' }
+  vb:  { plantilla:'vendedoras_bajan', txt:'Dueño: vendedores abajo de su mes pasado' },
+  /* 📥 (2026-11-07-f, dueño, 08/11) A él solo (el primero de WA_DUENO), por cada pedido que cargó la revisión de correos (Multicenter,
+     Copacaba, ROHO): los datos del pedido y que lo suba al TR4. Sin respaldo: mientras Meta no la apruebe, no sale (queda anotado). */
+  tr4: { plantilla:'pedido_correo_tr4', txt:'Dueño: pedido del correo (subirlo al TR4)' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -3322,6 +3325,22 @@ function waSaldo_(p) {
   if (falta <= 0.01) return 'Recargo por entrega a pagar al recibir: ' + waBs_(flete);
   return 'Saldo a pagar al recibir: ' + waBs_(falta) + (flete > 0.01 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '');
 }
+/** 📥 (2026-11-07-f) Los 6 datos de `pedido_correo_tr4`: el N° del panel (y el del día), el cliente (y a quién se factura), su número de
+    pedido (la OC en «nota»; Copacaba no la trae: el «OP-…» de las observaciones), los productos con código, cantidad y precio, el total
+    (Σ cantidad × precio, como lo carga cargar_pedidos.py) y la entrega. */
+function waTr4Params_(p) {
+  var prods = (p.productos || []).filter(function (x) { return x && x.desc; }), tot = 0;
+  var lis = prods.map(function (x) {
+    var c = Number(x.cant) || 1, pr = Math.round((Number(x.precio) || 0) * 100) / 100; tot += c * pr;
+    return c + ' × ' + (x.codigo ? String(x.codigo).trim().toUpperCase() + ' ' : '') + String(x.desc).trim() + (x.medida ? ' ' + String(x.medida).trim() : '') + (pr > 0 ? ' a ' + waBs_(pr) : '');
+  }).join(' · ');
+  var obs = String(p.observaciones || ''), op = obs.match(/\bOP-[\w-]+/i);
+  var num = String(p.nota || '').trim() || (op ? op[0].toUpperCase() : 'sin número');
+  var cli = String(p.cliente || '').trim() || 'sin nombre', fa = String(p.facturarA || '').trim();
+  if (fa && waNorm_(fa) !== waNorm_(cli)) cli += ' (factura a ' + fa + ')';
+  return [waOc_(p.oc) + (Number(p.nroDia) ? ' · N° ' + Number(p.nroDia) + ' del día' : ''), cli, num, lis || 'sin productos',
+          waBs_(tot > 0.005 ? tot : (Number(p.saldo) || 0)), waCuandoTxt_(p)];
+}
 /* Meta no acepta un dato vacío, con saltos de línea o con más de 4 espacios seguidos. */
 function waParam_(t) {
   t = String(t == null ? '' : t).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
@@ -3388,8 +3407,11 @@ function waColaGuardar_(c) {
 }
 /** Lo llama doSave con la fila YA escrita (`viejo` = la fila de antes, o null si es nueva). Nunca frena un guardado.
     🚀 (2026-10-14-a) `adelanto` = el panel lo pasó de la TARDE a la MAÑANA del mismo día porque el camión salió con él cargado: al
-    cliente le sale «cargado y en camino» (`e`) en vez del cambio de día, y a logística nada (ellos lo cargaron). */
-function waAlGuardar_(viejo, rec, adelanto) {
+    cliente le sale «cargado y en camino» (`e`) en vez del cambio de día, y a logística nada (ellos lo cargaron).
+    📥 (2026-11-07-f, dueño, 08/11: «por cada pedido que generes en el panel, el bot me envíe un mensaje únicamente a mí con los datos del
+    pedido… y recordarme que lo debo subir al TR4») `tr4` = lo cargó la revisión de correos (cargar_pedidos.py manda `tr4:1`): un pedido
+    NUEVO lleva la marca y `waRepaso` le manda `pedido_correo_tr4` al PRIMERO de WA_DUENO (como el efectivo: el jefe no). */
+function waAlGuardar_(viejo, rec, adelanto, tr4) {
   if (!waActivo_() || !rec) return;
   var id = String(rec.id || '');
   if (!id || id.indexOf('__') === 0 || String(rec.estado || '') === BORRADOR_EST || !rec.fecha) return;   // (12/10) por el estado, no por `kommo-`
@@ -3401,12 +3423,14 @@ function waAlGuardar_(viejo, rec, adelanto) {
   else if (adelanto && fV === String(rec.fecha) && fV === waBo_(Date.now()).hoy && tV === 'PM' && turnoNorm_(rec.turno) === 'AM') ev = { id:id, t:'e', de:fV + '|PM' };   // solo HOY: otro día es un cambio común
   else if (fV !== String(rec.fecha) || tV !== turnoNorm_(rec.turno)) ev = { id:id, t:'c', de:fV + '|' + tV };
   if (!ev) return;
+  if (tr4 && !viejo && ev.t === 'n') ev.tr4 = 1;                   // 📥 (2026-11-07-f) recién cargado desde el correo (DESPUÉS de la cadena de arriba)
   var cola = waColaLeer_(), ya = null, ms = Date.now();
   for (var i = 0; i < cola.length; i++) if (cola[i].id === id) { ya = cola[i]; break; }
   if (ya) {
     /* Nuevo + cambio = UN mensaje de nuevo con el día último; dos cambios = uno, desde el día de ANTES del primero.
        (2026-10-14-a) Un cambio que termina adelantado sale «en camino»; uno adelantado que después se mueve, como cambio de día. */
     if (ev.t === 'n') { ya.t = 'n'; delete ya.de; }
+    if (ev.tr4) ya.tr4 = 1;
     else if (ya.t !== 'n') { if (ev.t === 'e') ya.t = 'e'; else if (ya.t === 'e') ya.t = 'c'; }
     ya.ms = ms;
   } else { ev.ms = ms; cola.push(ev); }
@@ -3899,7 +3923,7 @@ function probarBotE_(bien, ojo, horaBolivia) {
   if (!c.dueno.length) bien('El vigía de leads no corre: falta la propiedad WA_DUENO (Eduardo:591…). El reclamo a la fábrica de las 10:00 va' + (c.avisosLog.length ? ' solo a logística (' + c.avisosLog.map(function (L) { return L.nombre; }).join(', ') + ').' : ' a nadie (faltan WA_DUENO y WA_PEDIR_HOY).'));
   else {
     var st = waJsonProp_('WA_LEADS', null);
-    bien('Al dueño (' + c.dueno.map(function (L) { return L.nombre; }).join(', ') + '): el vigía de leads cada hora de 8 a 22 y el reclamo a la fábrica de las 10:00; el efectivo de los vendedores (lo del día y lo acumulado sin recoger) a las 9:00 y 18:00 solo a ' + c.dueno[0].nombre + ' (el primero de WA_DUENO).' +
+    bien('Al dueño (' + c.dueno.map(function (L) { return L.nombre; }).join(', ') + '): el vigía de leads cada hora de 8 a 22 y el reclamo a la fábrica de las 10:00; el efectivo de los vendedores (lo del día y lo acumulado sin recoger) a las 9:00 y 18:00 solo a ' + c.dueno[0].nombre + ' (el primero de WA_DUENO); a él también, cada pedido que carga la revisión de correos, para subirlo al TR4 (pedido_correo_tr4).' +
          (st && st.ts ? ' Último conteo: ' + horaBolivia(Number(st.ts)) + ' · ' + (st.err ? st.err : (st.n + ' lead(s) en 3 h contra ' + st.n7 + ' hace una semana' + (st.alerta ? ' · ⚠️ en alerta' : ''))) : ''));
     if (!kProp_('KOMMO_TOKEN')) ojo('WA_DUENO está puesta pero falta KOMMO_TOKEN: el vigía de leads no puede contar.');
   }
@@ -5195,8 +5219,8 @@ function waArmar_(m, recs, cfg, B) {
     out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
-    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv' || m.k === 'ef' || m.k === 'cd' || m.k === 'vb', co = m.k === 'efc', bd = m.k === 'bd';   // 📉 §4ok-102 · 💵 (2026-11-06-b) al dueño · 🚚 (06-c) a Contabilidad · ☀️🌙 (2026-11-07-a) a la vendedora / al dueño
-    var aQuien = bd ? waBdEquipo_() : (co ? cfg.conta : (m.k === 'rf' ? cfg.reclamo : (m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : (m.k === 'ef' ? cfg.duenoEfe : (du ? cfg.dueno : cfg.logistica))))));   // 🏭 §4ok-105 · 👔 (07-e) el efectivo, solo al primero
+    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv' || m.k === 'ef' || m.k === 'cd' || m.k === 'vb' || m.k === 'tr4', co = m.k === 'efc', bd = m.k === 'bd';   // 📉 §4ok-102 · 💵 (2026-11-06-b) al dueño · 🚚 (06-c) a Contabilidad · ☀️🌙 (2026-11-07-a) a la vendedora / al dueño
+    var aQuien = bd ? waBdEquipo_() : (co ? cfg.conta : (m.k === 'rf' ? cfg.reclamo : (m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : ((m.k === 'ef' || m.k === 'tr4') ? cfg.duenoEfe : (du ? cfg.dueno : cfg.logistica))))));   // 🏭 §4ok-105 · 👔 (07-e) el efectivo, solo al primero
     var L = null; for (var i = 0; i < aQuien.length; i++) if (aQuien[i].nombre === m.a) L = aQuien[i];
     if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (bd ? 'WA_VENDEDORAS (o ya no es del equipo)' : (co ? 'WA_CONTABILIDAD' : (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du || m.k === 'rf' ? 'WA_DUENO' : 'WA_LOGISTICA'))))), anotar:true };
     out.para = L.nombre; out.numero = L.cel;
@@ -5219,6 +5243,7 @@ function waArmar_(m, recs, cfg, B) {
     if (!waSinPin_(p.maps)) return { saltar:'ya tiene la ubicación', anotar:false, p:p };
     out.params = [waNombre_(p.cliente), marca, waOc_(p.oc), waCuandoTxt_(p), waHorasTxt_(p), waContactoVend_(p.vendedor)];
   }
+  else if (m.k === 'tr4') out.params = waTr4Params_(p);   // 📥 (2026-11-07-f)
   else if (m.k === 'ln') out.params = [waDiaTxt_(p.fecha), waTurno_(p) || 'sin turno', String(p.cliente || '').trim(), String(p.zona || '').trim() || 'sin zona', waProds_(p), String(p.vendedor || '').trim() || 'sin vendedor'];
   else if (m.k === 'lc') {
     var de = String(m.de || '').split('|'), antes = { fecha:de[0], turno:de[1] || '' };
@@ -5381,6 +5406,7 @@ function waRepasoBot_() {
       if (ev.t === 'n') {
         msgs.push({ id:ev.id, k:'conf', a:'cliente', n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'ln', a:L.nombre, n:0 }); });
+        if (ev.tr4) cfg.duenoEfe.forEach(function (L) { msgs.push({ id:ev.id, k:'tr4', a:L.nombre, n:0 }); });   // 📥 (2026-11-07-f) solo al dueño
       } else if (ev.t === 'c') {
         msgs.push({ id:ev.id, k:'camb', a:'cliente', de:ev.de, n:0 });
         cfg.logistica.forEach(function (L) { msgs.push({ id:ev.id, k:'lc', a:L.nombre, de:ev.de, n:0 }); });
@@ -6555,7 +6581,11 @@ var WA_PLANTILLAS = [
     e:['lunes 09/11', 'noviembre al día 9 contra octubre al día 9, a las 08:00', '2 del equipo, más de 20 %',
        'Lucía ▼ 38 % (Bs 12.400 contra Bs 20.100), bajó en TITANIO ICE −6, ORO −3 · Andrés ▼ 31 % (Bs 9.800 contra Bs 14.300), bajó en SOFT −4',
        '6 más van igual, arriba o menos de 20 % abajo'],
-    bt:[WA_VB_BOTON] }
+    bt:[WA_VB_BOTON] },
+  /* 📥 (2026-11-07-f, dueño, 08/11) Al dueño solo: el pedido que cargó la revisión de correos, para que lo suba al TR4 (`waTr4Params_`). */
+  { n:'pedido_correo_tr4',
+    t:'🤖 📥 *Cargué en el panel un pedido que llegó por correo*\n\n🧾 *N° del panel:* {{1}}\n👤 *Cliente:* {{2}}\n🔢 *Su número de pedido:* {{3}}\n🛏️ *Productos:* {{4}}\n💵 *Total:* {{5}}\n🚚 *Entrega:* {{6}}\n\n⚠️ *Recordá subirlo al TR4.*',
+    e:['OC 11-061 · N° 7 del día', 'MULTICENTER', '33278', '1 × CH1220 COLCHON TITANIO ICE 140x190 a Bs 4.275', 'Bs 4.275', 'lunes 09/11 por la tarde'] }
     /* (2026-11-07-d) Desde la 07-d {{2}} suma «· 17 productos» y {{4}} trae a TODOS: «Mirian: 4 prod., Bs 12.300 · Isabel: 3 prod., Bs 9.800 · …».
        La plantilla de Meta no cambia (solo cambian los datos). */
 ];
