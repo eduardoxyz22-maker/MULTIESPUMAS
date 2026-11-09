@@ -1058,7 +1058,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .efe-mano{color:var(--red);font-weight:800;white-space:nowrap}
 .efe-par{color:#b45309;font-weight:800;white-space:nowrap}
 .efe-fila:hover td{background:var(--gray-lt,#f4f6f8)}
-/* 📅 (09/11) «Efectivo a una fecha» (`abrirEfectivoFecha`). */
+/* 📒 (09/11) «Mayor y saldos» del efectivo (`abrirEfectivoFecha`). */
 .efd-ctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .efd-ctl input[type=date]{width:auto;flex:0 0 auto;max-width:190px;min-height:38px;padding:4px 8px;border:1px solid var(--gray-md);border-radius:8px;font:inherit;margin:0}
 .efd-ctl .lb{margin:0 4px 0 0}
@@ -1068,6 +1068,17 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .efd-res{background:var(--gray-lt,#f4f6f8);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.88rem;line-height:1.5}
 .efd-t{font-size:.84rem;font-weight:800;margin:12px 0 4px}
 .efd-hoy td{background:var(--amber-lt,#fff7e6);font-weight:700}
+#mys-desde-box[hidden]{display:none}
+.efd-tabs{display:flex;gap:6px;margin-bottom:10px}
+.efd-tabs button{font:inherit;font-weight:700;font-size:.86rem;border:1px solid var(--gray-md);background:#fff;border-radius:999px;padding:7px 14px;cursor:pointer;color:var(--muted)}
+.efd-tabs button.on{background:var(--green);border-color:var(--green);color:#fff}
+.efd-ctl select{min-height:38px;padding:4px 8px;border:1px solid var(--gray-md);border-radius:8px;font:inherit;width:auto;max-width:100%}
+.mys-tab td.m,.mys-tab th.m{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mys-tab tr.mys-ant td{background:var(--gray-lt,#f4f6f8)}
+.mys-tab tr.mys-sum td{border-top:2px solid var(--gray-md)}
+.mys-tab tr.mys-cierre td{color:var(--muted);font-style:italic}
+.mys-tab tr.mys-ret td:nth-child(2){color:var(--teal-dk)}
+.mys-blq{margin-bottom:14px}
 .cua-alerta{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-lt);font-size:.83rem}
 .cua-alerta:last-child{border-bottom:none}
 /* ---- Avisos plegables (§4bk): un titular por renglón, y los nombres se abren al tocar.
@@ -14679,7 +14690,7 @@ function renderCuadreRetiros(){
   box.innerHTML='<div class="cua-box">'+
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
       '<div class="cua-t" style="margin:0">💵 Efectivo cobrado vs. retirado — '+esc(mesTxt)+'</div>'+
-      '<button type="button" id="efd-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="abrirEfectivoFecha(\'\', normNombre(cuadreVendedor()||\'\'))" title="Cuánto tenía cada uno sin recoger al cerrar cualquier día">📅 Efectivo a una fecha</button>'+
+      '<button type="button" id="efd-btn" class="btn btn-ghost btn-sm" style="margin-left:auto;width:auto" onclick="abrirEfectivoFecha(\'\', normNombre(cuadreVendedor()||\'\'))" title="Mayor de cada cuenta de caja y saldos al cierre de cualquier día">📒 Mayor y saldos</button>'+
       '<button class="btn btn-sm" style="background:#155e75;color:#fff;width:auto" onclick="abrirRetiros()">💵 Registrar retiro</button>'+
     '</div>'+
     (filas.length
@@ -14827,7 +14838,7 @@ function copiarEfectivo(q){
    (`efePareo`): los retiros se emparejan en orden de fecha y hora, así que lo que había al cierre del día D es el emparejamiento cortado en los
    retiros de hasta D (las partes `c.de` con `x.f<=D`). No hace falta otra cuenta ni guardar nada: siempre da lo mismo que el Cuadre.
    ⚠️ El panel no guarda CUÁNDO se anotó cada cobro: uno anotado después con una fecha vieja cuenta en su fecha. Solo mira. */
-var EFD={ d:'', q:'', cerr:false };
+var EFD={ d:'', q:'', vista:'saldos', desde:'' };
 function efdDatos(D){
   var PAR=efePareo(), R=D.slice(0,7), d0=R+'-01', CH=choferesConocidosSet(), por={}, orden=[];
   var meter=function(k, nom){
@@ -14891,18 +14902,83 @@ function efdDias(k, D){
   return out;
 }
 function efdMesCorto(ym){ return mesNombre(ym).replace(/ de \d{4}$/, ''); }
+/* 📒⚖️ MAYOR Y SALDOS (09/11; dueño: «En contabilidad se llama Mayor y saldos, eso andan pidiendo»). Cada persona que tiene plata es una
+   CUENTA de caja: DEBE = lo que cobró en efectivo, HABER = lo que se le retiró, SALDO = lo que tiene. Dos asientos que no son un papel:
+   · «Saldo de antes del 01/10»: lo que un retiro de octubre se llevó de cobros anteriores a `EFE_EMPAREJA` (el `sobra` de esos retiros). Así
+     la cuenta no arranca en negativo por plata cobrada antes de que el panel emparejara.
+   · «🔒 Cierre de <mes>»: lo de un mes cerrado (`efeCerrado`) que NINGÚN retiro tapó, con la fecha de su día de gracia (`efeGracia`; el dueño:
+     «todo lo de octubre se retiró el 03/11»). Antes de ese día, esa plata sigue en el saldo: la persona la tenía.
+   Con eso, el saldo de cada día = lo que el Cuadre empareja (`efePareo`): lo sin recoger + lo de antes que un retiro tapa más tarde. Un retiro de
+   noviembre en adelante que no tapa ningún cobro baja el saldo (y lo dice ⚠️): es para revisar. */
+function mysMovs(k, hasta){
+  var PAR=efePareo(), L=PAR.cob[k]||[], M=[], m0=EFE_EMPAREJA.slice(0,7), ini=0, nIni=0;
+  PAR.ret.forEach(function(x){ if(x.k===k && x.f.slice(0,7)===m0 && x.sobra>0.005){ ini=r2(ini+x.sobra); nIni++; } });
+  if(ini>0.005 && EFE_EMPAREJA<=hasta) M.push({ f:EFE_EMPAREJA, o:0, tipo:'ini', debe:ini, haber:0, n:nIni });
+  L.forEach(function(c){ if(c.f<=hasta) M.push({ f:c.f, o:1, tipo:'cob', debe:c.m, haber:0, c:c }); });
+  PAR.ret.forEach(function(x){ if(x.k===k && x.f<=hasta) M.push({ f:x.f, o:2, tipo:'ret', debe:0, haber:x.m, x:x }); });
+  var pm={};
+  L.forEach(function(c){ if(!efeCerrado(c.f)) return; var q=r2(c.m-c.cub); if(q<=0.005) return; var ym=c.f.slice(0,7); if(!pm[ym]) pm[ym]={ m:0, n:0 }; pm[ym].m=r2(pm[ym].m+q); pm[ym].n++; });
+  Object.keys(pm).forEach(function(ym){ var g=efeGracia(ym); if(g<=hasta) M.push({ f:g, o:3, tipo:'cierre', debe:0, haber:pm[ym].m, ym:ym, n:pm[ym].n }); });
+  M.sort(function(a,b){
+    if(a.f!==b.f) return a.f<b.f?-1:1;
+    if(a.o!==b.o) return a.o-b.o;
+    if(a.c && b.c) return efeOrdenCob(a.c,b.c);
+    if(a.x && b.x) return efeCmpT(a.x.t,b.x.t) || (a.x.id<b.x.id?-1:a.x.id>b.x.id?1:0);
+    return 0;
+  });
+  var sal=0; M.forEach(function(m){ sal=r2(sal+m.debe-m.haber); m.saldo=sal; });
+  return M;
+}
+function mysSaldoAl(M, f){ var sal=0; for(var i=0;i<M.length;i++){ if(M[i].f>f) break; sal=M[i].saldo; } return sal; }
+function mysNombre(PAR, k){
+  var L=PAR.cob[k]||[], n=L.length?L[0].q:''; if(!n) PAR.ret.forEach(function(x){ if(!n && x.k===k) n=x.r.entrega; });
+  return nombreCanonico(n)||n||k;
+}
+/* El balance de saldos al cierre de D: por cuenta, saldo al terminar el mes anterior + debe − haber del mes hasta D = saldo al D. */
+function mysSaldos(D){
+  var X=efdDatos(D), PAR=X.PAR, ayer=stockSumarDias(X.d0,-1), ks={}, CH=choferesConocidosSet(), filas=[];
+  Object.keys(PAR.cob).forEach(function(k){ ks[k]=1; }); PAR.ret.forEach(function(x){ ks[x.k]=1; });
+  Object.keys(ks).forEach(function(k){
+    var M=mysMovs(k, D); if(!M.length) return;
+    var ini=mysSaldoAl(M, ayer), debe=0, haber=0;
+    M.forEach(function(m){ if(m.f>=X.d0){ debe=r2(debe+m.debe); haber=r2(haber+m.haber); } });
+    var sal=M[M.length-1].saldo;
+    if(Math.abs(ini)<0.005 && debe<0.005 && haber<0.005 && Math.abs(sal)<0.005) return;
+    var e=X.por[k]||null;
+    filas.push({ k:k, nombre:mysNombre(PAR,k), chofer:!!CH[k], ini:ini, debe:debe, haber:haber, saldo:sal, mes:(e?e.mano:0), e:e });
+  });
+  filas.sort(function(a,b){ return (b.saldo-a.saldo) || a.nombre.localeCompare(b.nombre,'es'); });
+  var tot={ ini:0, debe:0, haber:0, saldo:0, mes:0 };
+  filas.forEach(function(o){ Object.keys(tot).forEach(function(z){ tot[z]=r2(tot[z]+o[z]); }); });
+  return { D:D, d0:X.d0, ayer:ayer, R:X.R, X:X, filas:filas, tot:tot };
+}
+/* Lo que dice cada renglón del Mayor. */
+function mysConcepto(m, mes){
+  if(m.tipo==='ini') return 'Saldo de antes del '+fmtFechaCorta(EFE_EMPAREJA)+' (lo cobrado antes y retirado en '+efdMesCorto(EFE_EMPAREJA.slice(0,7))+')';
+  if(m.tipo==='cierre') return '🔒 Cierre de '+efdMesCorto(m.ym)+': se dio por retirado ('+m.n+' cobro'+(m.n===1?'':'s')+' sin retiro anotado)';
+  if(m.tipo==='cob'){ var p=m.c.p; return 'Cobro · '+(p.cliente||'—')+(p.oc?(' · '+(ocEtiq(p.oc)||p.oc)):'')+(p.nota?(' · nota '+p.nota):''); }
+  var r=m.x.r, dentro=0, antes=0; m.x.tapa.forEach(function(t){ if(t.c.f.slice(0,7)===m.f.slice(0,7)) dentro=r2(dentro+t.u); else antes=r2(antes+t.u); });
+  var q=[]; if(antes>0.005) q.push('↩️ '+fmtBs(antes)+' de antes'); if(m.x.sobra>0.005 && m.f.slice(0,7)!==EFE_EMPAREJA.slice(0,7)) q.push('⚠️ '+fmtBs(m.x.sobra)+' no tapa ningún cobro');
+  return 'Retiro '+(r.tipo==='Facturado'?'🧾 facturado':'📄 no facturado')+(r.retira?(' · retira '+r.retira):'')+(q.length?(' ('+q.join(' · ')+')'):'');
+}
 function abrirEfectivoFecha(d, q){
   if(d) EFD.d=d;
-  if(q!=null) EFD.q=q;
+  if(q!=null){ EFD.q=q; if(q) EFD.vista='mayor'; }
   var hoy=diaNegocio();
   if(!EFD.d || EFD.d>hoy) EFD.d=hoy;
   if(EFD.d<EFE_EMPAREJA) EFD.d=EFE_EMPAREJA;
   if(typeof POR_COBRAR_VOLVER!=='undefined') POR_COBRAR_VOLVER=null;
   var finAnt=efeFinMes(efeMesAnt(hoy.slice(0,7)));
-  var html='<div class="modal-h" style="background:var(--green)"><h3>📅 Efectivo a una fecha</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  var html='<div class="modal-h" style="background:var(--green)"><h3>📒 Mayor y saldos · efectivo</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b" id="efd">'+
+      '<div class="efd-tabs" role="tablist">'+
+        '<button type="button" role="tab" id="mys-t-saldos" onclick="mysVista(\'saldos\')">⚖️ Saldos</button>'+
+        '<button type="button" role="tab" id="mys-t-mayor" onclick="mysVista(\'mayor\')">📒 Mayor</button>'+
+      '</div>'+
       '<div class="efd-ctl">'+
-        '<label class="lb" for="efd-dia" style="margin:0">Al cierre del día</label>'+
+        '<span id="mys-desde-box" class="efd-ctl" style="margin:0"><label class="lb" for="mys-desde">Desde</label>'+
+          '<input type="date" id="mys-desde" min="'+EFE_EMPAREJA+'" max="'+hoy+'" onchange="mysDesde(this.value)"></span>'+
+        '<label class="lb" for="efd-dia" id="efd-dia-lb">Al cierre del día</label>'+
         '<button type="button" class="btn btn-ghost btn-sm efd-fl" onclick="efdMover(-1)" title="Día anterior" aria-label="Día anterior">◀</button>'+
         '<input type="date" id="efd-dia" value="'+esc(EFD.d)+'" min="'+EFE_EMPAREJA+'" max="'+hoy+'" onchange="efdElegirDia(this.value)">'+
         '<button type="button" class="btn btn-ghost btn-sm efd-fl" onclick="efdMover(1)" title="Día siguiente" aria-label="Día siguiente">▶</button>'+
@@ -14921,160 +14997,160 @@ function efdElegirDia(v){
   efdPintar();
 }
 function efdMover(n){ efdElegirDia(stockSumarDias(EFD.d, n)); }
-function efdPersona(k){ EFD.q=String(k||''); efdPintar(); var b=document.getElementById('efd'); if(b) b.scrollTop=0; }
+function efdPersona(k){ EFD.q=String(k||''); if(EFD.q) EFD.vista='mayor'; efdPintar(); var b=document.getElementById('efd'); if(b) b.scrollTop=0; }
+function mysVista(v){ EFD.vista=(v==='mayor'?'mayor':'saldos'); efdPintar(); }
+function mysDesde(v){ v=String(v||''); if(!/^\d{4}-\d{2}-\d{2}$/.test(v)) v=''; EFD.desde=v; efdPintar(); }
+function mysCuenta(k){ EFD.q=String(k||''); efdPintar(); }
 function efdAbrirVenta(id){ POR_COBRAR_VOLVER={ origen:'efd', id:String(id) }; showContaModal(id); }
 function efdDiaTxt(f){ var d=new Date(f+'T12:00:00'); return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]+' '+fmtFechaCorta(f); }
+/* Desde cuándo va el Mayor: lo elegido, si no el 1° del mes del día de cierre; nunca después del cierre ni antes de EFE_EMPAREJA. */
+function mysDesdeDe(){ var D=EFD.d, d=EFD.desde||(D.slice(0,7)+'-01'); if(d>D) d=D.slice(0,7)+'-01'; if(d<EFE_EMPAREJA) d=EFE_EMPAREJA; return d; }
 function efdPintar(){
   var box=document.getElementById('efd-cuerpo'); if(!box) return;
-  var D=EFD.d, X=efdDatos(D), mes=efdMesCorto(X.R), ant=efdMesCorto(X.P);
-  var bs=function(v, col){ return Math.abs(v)<0.005 ? '<span style="color:var(--muted)">—</span>' : '<b'+(col?(' style="color:'+col+'"'):'')+'>'+fmtBs(v)+'</b>'; };
-  var sub=function(t, col){ return '<br><span style="font-size:.74rem;font-weight:600;color:'+(col||'var(--muted)')+'">'+t+'</span>'; };
-  var antCel=function(o){
-    var h=o.ant>0.005 ? '<b style="color:var(--red)">'+fmtBs(o.ant)+'</b>' : '';
-    if(o.antCerr>0.005) h+=(h?'<br>':'')+'<span style="color:var(--muted)" title="Ese mes está cerrado: lo que quedó sin retiro anotado se dio por retirado">🔒 '+fmtBs(o.antCerr)+'</span>';
-    return h || '<span style="color:var(--muted)">—</span>';
-  };
-  var retCel=function(o){
-    var h=bs(o.ret, 'var(--teal-dk)');
-    if(o.aAnt>0.005) h+=sub('↩️ '+fmtBs(o.aAnt)+' era de antes de '+esc(mes), '#7c4b00');
-    if(o.sobra>0.005) h+=sub('⚠️ '+fmtBs(o.sobra)+' no tapa ningún cobro', 'var(--red)');
-    return h;
-  };
-  var cuandoCel=function(o){
-    if(!(o.mano>0.005)) return '<span style="color:var(--muted)">—</span>';
-    if(o.recogioTodo) return '<span class="efe-ok">✅ '+(o.pend.filter(function(x){ return x.mes; }).length>1?'todo, hasta el ':'el ')+esc(fmtFechaCorta(o.recogioUlt))+'</span>';
-    return '<span class="efe-mano">⏳ falta '+fmtBs(o.faltaHoy)+'</span>'+(o.recogioUlt?sub('parte, el '+esc(fmtFechaCorta(o.recogioUlt))):'');
-  };
-  var aviso='<div style="font-size:.74rem;color:var(--muted);margin-top:10px">💡 Es la misma cuenta del Cuadre, cortada al cierre del '+esc(fmtFecha(D))+
-    ': lo que cada uno cobró en efectivo hasta ese día, menos lo que se le retiró hasta ese día (cada retiro tapa los cobros con la regla del Cuadre). '+
-    '«🔒» = de un mes cerrado: lo que quedó sin retiro anotado se dio por retirado. Un cobro anotado después con una fecha vieja cuenta en su fecha.</div>';
-  var botones=function(){ return '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+  var mayor=(EFD.vista==='mayor');
+  var t1=document.getElementById('mys-t-saldos'), t2=document.getElementById('mys-t-mayor');
+  if(t1){ t1.className=mayor?'':'on'; t1.setAttribute('aria-selected', mayor?'false':'true'); }
+  if(t2){ t2.className=mayor?'on':''; t2.setAttribute('aria-selected', mayor?'true':'false'); }
+  var db=document.getElementById('mys-desde-box'); if(db) db.hidden=!mayor;
+  var lb=document.getElementById('efd-dia-lb'); if(lb) lb.textContent=mayor?'Hasta el':'Al cierre del día';
+  var di=document.getElementById('mys-desde'); if(di) di.value=mysDesdeDe();
+  var aviso='<div style="font-size:.74rem;color:var(--muted);margin-top:10px">💡 Cada persona que tiene plata es una cuenta de caja: <b>Debe</b> = lo que cobró en efectivo, '+
+    '<b>Haber</b> = lo que se le retiró, <b>Saldo</b> = lo que tiene. Es la misma cuenta del Cuadre. «🔒 Cierre de octubre» = lo de octubre sin retiro anotado que se dio por retirado '+
+    '(el día de gracia, el 03/11). Un cobro anotado después con una fecha vieja cuenta en su fecha.</div>';
+  var botones='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="efdCopiar()">📋 Copiar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="efdExcel()">⬇️ Excel</button>'+
-    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>'; };
-  var o=EFD.q ? X.por[EFD.q] : null;
-  if(EFD.q && !o){
-    /* la persona elegida no tiene nada en esa fecha: igual se muestra su día por día */
-    var dd=efdDias(EFD.q, D), nom=EFD.q;
-    (Object.keys(X.PAR.cob[EFD.q]||{}).length ? [X.PAR.cob[EFD.q][0].q] : []).forEach(function(n){ nom=nombreCanonico(n)||n; });
-    o={ k:EFD.q, nombre:nom, chofer:false, cob:0, nCob:0, ret:0, nRet:0, aMes:0, aAnt:0, sobra:0, mano:0, ant:0, antCerr:0, pend:[], rets:[], vacio:true, dias:dd };
-  }
-  if(o){
-    var dias=efdDias(o.k, D), hayAnt=dias.some(function(e){ return e.ant>0.005; });
-    var filaPend=function(x){
-      var c=x.c, p=c.p, ref=[p.oc?(ocEtiq(p.oc)||''):'', p.nota?('nota '+p.nota):''].filter(Boolean).join(' · ');
-      var est = x.cuando ? '<span class="efe-ok">✅ el '+esc(fmtFechaCorta(x.cuando))+'</span>'
-              : x.cerr ? '<span style="color:var(--muted)">🔒 mes cerrado</span>'
-              : ('<span class="efe-mano">⏳ todavía'+(x.faltaHoy<x.queda-0.005?(' falta '+fmtBs(x.faltaHoy)):'')+'</span>');
-      return '<tr class="efe-fila" data-id="'+esc(String(p.id))+'" onclick="efdAbrirVenta(this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta">'+
-        '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.f))+'</td>'+
-        '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ref)+'</span>'):'')+'</td>'+
-        '<td>'+esc(p.vendedor||'—')+'</td>'+
-        '<td style="text-align:right;white-space:nowrap">'+(x.queda<c.m-0.005?('<span style="color:var(--muted);font-size:.86em">de '+fmtBs(c.m)+'</span> '):'')+'<b>'+fmtBs(x.queda)+'</b></td>'+
-        '<td style="text-align:right">'+est+'</td></tr>';
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
+  var D=EFD.d, S=mysSaldos(D), mes=efdMesCorto(S.R);
+  var bs=function(v, col){ return Math.abs(v)<0.005 ? '<span style="color:var(--muted)">—</span>' : '<span'+(col?(' style="color:'+col+'"'):'')+'>'+fmtBs(v)+'</span>'; };
+  if(mayor){
+    var ctas=S.filas.slice().sort(function(a,b){ return a.nombre.localeCompare(b.nombre,'es'); });
+    if(EFD.q && !ctas.some(function(o){ return o.k===EFD.q; })) ctas.push({ k:EFD.q, nombre:mysNombre(S.X.PAR, EFD.q) });
+    var sel='<div class="efd-ctl"><label class="lb" for="mys-cta">Cuenta</label><select id="mys-cta" onchange="mysCuenta(this.value)">'+
+      '<option value="">Todas las cuentas</option>'+ctas.map(function(o){ return '<option value="'+esc(o.k)+'"'+(o.k===EFD.q?' selected':'')+'>Caja · '+esc(o.nombre)+'</option>'; }).join('')+'</select></div>';
+    var desde=mysDesdeDe(), antDia=stockSumarDias(desde,-1);
+    var bloque=function(k, nombre){
+      var M=mysMovs(k, D), ant=mysSaldoAl(M, antDia), sd=0, sh=0;
+      var filas=M.filter(function(m){ return m.f>=desde; }).map(function(m){
+        sd=r2(sd+m.debe); sh=r2(sh+m.haber);
+        var tr=m.tipo==='cob' ? ('<tr class="efe-fila" data-id="'+esc(String(m.c.p.id))+'" onclick="efdAbrirVenta(this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta">') : ('<tr class="mys-'+m.tipo+'">');
+        return tr+'<td style="white-space:nowrap">'+esc(fmtFechaCorta(m.f))+'</td><td>'+esc(mysConcepto(m, mes))+'</td>'+
+          '<td class="m">'+(m.debe?fmtBs(m.debe):'')+'</td><td class="m">'+(m.haber?fmtBs(m.haber):'')+'</td>'+
+          '<td class="m"><b'+(m.saldo<-0.005?' style="color:var(--red)"':'')+'>'+fmtBs(m.saldo)+'</b></td></tr>';
+      }).join('');
+      var fin=r2(ant+sd-sh);
+      return '<div class="mys-blq"><div class="efd-t">📒 Caja · '+esc(nombre)+'</div>'+
+        '<div class="tw"><table class="mini mys-tab"><thead><tr><th>Fecha</th><th>Concepto</th><th class="m">Debe</th><th class="m">Haber</th><th class="m">Saldo</th></tr></thead><tbody>'+
+          '<tr class="mys-ant"><td style="white-space:nowrap">'+esc(fmtFechaCorta(antDia))+'</td><td>Saldo anterior</td><td></td><td></td><td class="m"><b>'+fmtBs(ant)+'</b></td></tr>'+
+          (filas||'<tr><td colspan="5" style="color:var(--muted)">Sin movimientos del '+esc(fmtFechaCorta(desde))+' al '+esc(fmtFechaCorta(D))+'.</td></tr>')+
+          '<tr class="mys-sum"><td></td><td><b>Sumas</b></td><td class="m"><b>'+fmtBs(sd)+'</b></td><td class="m"><b>'+fmtBs(sh)+'</b></td><td class="m"><b>'+fmtBs(fin)+'</b></td></tr>'+
+        '</tbody></table></div>'+
+        '<div style="font-size:.8rem;color:var(--muted);margin-top:4px">Saldo anterior '+fmtBs(ant)+' + debe '+fmtBs(sd)+' − haber '+fmtBs(sh)+' = <b style="color:var(--ink,inherit)">saldo al '+esc(fmtFechaCorta(D))+': '+fmtBs(fin)+'</b></div></div>';
     };
-    var pM=o.pend.filter(function(x){ return !x.cerr; }), pC=o.pend.filter(function(x){ return x.cerr; });
-    var pend=pM.map(filaPend).join('');
-    var pendC=pC.map(filaPend).join('');
-    var rets=o.rets.map(function(x){
-      var dentro=0, antes=0; x.tapa.forEach(function(t){ if(t.c.f>=X.d0) dentro=r2(dentro+t.u); else antes=r2(antes+t.u); });
-      var q=[]; if(dentro>0.005) q.push(fmtBs(dentro)+' de '+esc(mes)); if(antes>0.005) q.push('↩️ '+fmtBs(antes)+' de antes'); if(x.sobra>0.005) q.push('<span style="color:var(--red)">⚠️ '+fmtBs(x.sobra)+' sin cobro</span>');
-      return '<tr><td style="white-space:nowrap">'+esc(fmtFechaCorta(x.f))+'</td><td style="text-align:right"><b>'+fmtBs(x.m)+'</b></td><td>'+(q.join(' · ')||'—')+'</td></tr>';
-    }).join('');
-    var filasD=dias.map(function(e){
-      var lib=!diaHabil(e.f), hoyD=(e.f===D);
-      return '<tr class="'+(hoyD?'efd-hoy':'')+'"'+(lib&&!(e.cob||e.ret)?' style="color:var(--muted)"':'')+'><td style="white-space:nowrap">'+esc(efdDiaTxt(e.f))+'</td>'+
-        '<td style="text-align:right">'+(e.cob?fmtBs(e.cob):'')+'</td>'+
-        '<td style="text-align:right">'+(e.ret?('<span style="color:var(--teal-dk)">'+fmtBs(e.ret)+'</span>'):'')+'</td>'+
-        '<td style="text-align:right">'+(e.mano>0.005?('<b style="color:var(--red)">'+fmtBs(e.mano)+'</b>'):'<span style="color:var(--muted)">0</span>')+'</td>'+
-        (hayAnt?('<td style="text-align:right;color:var(--muted)">'+(e.ant>0.005?fmtBs(e.ant):'')+'</td>'):'')+'</tr>';
-    }).join('');
-    box.innerHTML=
-      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin:6px 0 8px" onclick="efdPersona(\'\')">← Todos</button>'+
-      '<div class="efd-res"><b style="font-size:1rem">'+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+
-        '<div>Al cierre del <b>'+esc(efdDiaTxt(D))+'</b>: '+(o.mano>0.005?('<b style="color:var(--red)">'+fmtBs(o.mano)+'</b> de '+esc(mes)+' sin recoger'):'✅ nada de '+esc(mes)+' sin recoger')+
-          (o.ant>0.005?(' · <b style="color:var(--red)">'+fmtBs(o.ant)+'</b> de antes'):'')+
-          (o.antCerr>0.005?(' · <span style="color:var(--muted)">🔒 '+fmtBs(o.antCerr)+' de '+esc(ant)+' (cerrado)</span>'):'')+'</div>'+
-        '<div style="font-size:.84rem;color:var(--muted)">En '+esc(mes)+' hasta ese día: cobró '+fmtBs(o.cob)+' en '+o.nCob+' pago'+(o.nCob===1?'':'s')+' · retiró '+fmtBs(o.ret)+' en '+o.nRet+' retiro'+(o.nRet===1?'':'s')+(o.aAnt>0.005?(' (↩️ '+fmtBs(o.aAnt)+' era de antes)'):'')+'</div></div>'+
-      (pend ? ('<div class="efd-t">⏳ Lo que tenía sin recoger ese día</div><div class="tw"><table class="mini"><thead><tr><th>Cobró</th><th>Cliente</th><th>Vendedor</th><th style="text-align:right">Sin recoger</th><th style="text-align:right">¿Se recogió?</th></tr></thead><tbody>'+pend+'</tbody></table></div>') : '')+
-      (pendC ? ('<details class="efd-cerr"><summary class="efd-mas">🔒 De un mes cerrado: '+pC.length+' cobro'+(pC.length===1?'':'s')+' por '+fmtBs(o.antCerr)+' sin retiro anotado (se dio por retirado) ▸ ver</summary>'+
-                '<div class="tw"><table class="mini"><thead><tr><th>Cobró</th><th>Cliente</th><th>Vendedor</th><th style="text-align:right">Sin recoger</th><th style="text-align:right">¿Se recogió?</th></tr></thead><tbody>'+pendC+'</tbody></table></div></details>') : '')+
-      '<div class="efd-t">📅 Día por día de '+esc(mes)+'</div><div class="tw"><table class="mini"><thead><tr><th>Día</th><th style="text-align:right">Cobró</th><th style="text-align:right">Retiró</th><th style="text-align:right">Le quedaba al cerrar</th>'+(hayAnt?'<th style="text-align:right">De antes</th>':'')+'</tr></thead><tbody>'+filasD+'</tbody></table></div>'+
-      (rets ? ('<div class="efd-t">💵 Retiros de '+esc(mes)+' hasta ese día</div><div class="tw"><table class="mini"><thead><tr><th>Día</th><th style="text-align:right">Monto</th><th>Qué tapó</th></tr></thead><tbody>'+rets+'</tbody></table></div>') : '')+
-      aviso+botones();
+    var cuerpo;
+    if(EFD.q){
+      var o=S.filas.filter(function(x){ return x.k===EFD.q; })[0], e=S.X.por[EFD.q];
+      var pend=(e?e.pend:[]).filter(function(x){ return !x.cerr; }).map(function(x){
+        var c=x.c, p=c.p;
+        return '<tr class="efe-fila" data-id="'+esc(String(p.id))+'" onclick="efdAbrirVenta(this.getAttribute(\'data-id\'))" style="cursor:pointer" title="Abrir esta venta">'+
+          '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.f))+'</td><td><b>'+esc(p.cliente||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.86em">'+esc(ocEtiq(p.oc)||p.oc)+(p.nota?(' · nota '+esc(p.nota)):'')+'</span>'):'')+'</td>'+
+          '<td class="m">'+(x.queda<c.m-0.005?('<span style="color:var(--muted);font-size:.86em">de '+fmtBs(c.m)+'</span> '):'')+'<b>'+fmtBs(x.queda)+'</b></td>'+
+          '<td class="m">'+(x.cuando?('<span class="efe-ok">✅ el '+esc(fmtFechaCorta(x.cuando))+'</span>'):('<span class="efe-mano">⏳ todavía'+(x.faltaHoy<x.queda-0.005?(' falta '+fmtBs(x.faltaHoy)):'')+'</span>'))+'</td></tr>';
+      }).join('');
+      cuerpo=bloque(EFD.q, o?o.nombre:mysNombre(S.X.PAR, EFD.q))+
+        (pend?('<div class="efd-t">⏳ De '+esc(mes)+', sin recoger al cierre del '+esc(fmtFechaCorta(D))+'</div><div class="tw"><table class="mini"><thead><tr><th>Cobró</th><th>Cliente</th><th class="m">Sin recoger</th><th class="m">¿Se recogió?</th></tr></thead><tbody>'+pend+'</tbody></table></div>'):'');
+    } else {
+      cuerpo=ctas.length ? ctas.map(function(o){ return bloque(o.k, o.nombre); }).join('') : '<div class="empty" style="padding:18px 0">No hay cuentas con movimientos.</div>';
+    }
+    box.innerHTML=(EFD.q?'<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin:0 0 6px" onclick="mysVista(\'saldos\')">← Saldos de todos</button>':'')+sel+cuerpo+aviso+botones;
     return;
   }
-  var soloC=function(o){ return o.cob<=0.005 && o.ret<=0.005 && o.mano<=0.005 && o.ant<=0.005; };
-  var nC=X.filas.filter(soloC).length, totC=r2(X.filas.filter(soloC).reduce(function(s,o){ return s+o.antCerr; },0));
-  var filas=X.filas.filter(function(o){ return EFD.cerr || !soloC(o); }).map(function(o){
-    return '<tr class="efe-fila" data-k="'+esc(o.k)+'" onclick="efdPersona(this.getAttribute(\'data-k\'))" style="cursor:pointer" title="Ver el detalle y el día por día">'+
-      '<td><b>'+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+' <span class="efe-ojo">👁</span></td>'+
-      '<td style="text-align:right">'+bs(o.cob)+'</td>'+
-      '<td style="text-align:right">'+retCel(o)+'</td>'+
-      '<td style="text-align:right">'+(o.mano>0.005?('<b style="color:var(--red)">'+fmtBs(o.mano)+'</b>'):'<span class="efe-ok">✅ 0</span>')+'</td>'+
-      '<td style="text-align:right">'+antCel(o)+'</td>'+
-      '<td style="text-align:right">'+cuandoCel(o)+'</td></tr>';
+  var T=S.tot;
+  var filas=S.filas.map(function(o){
+    var de='';
+    if(o.saldo>0.005){
+      var antes=r2(o.saldo-o.mes), p=[];
+      if(o.mes>0.005) p.push(fmtBs(o.mes)+' de '+esc(mes));
+      if(antes>0.005) p.push(fmtBs(antes)+' de antes');
+      de=p.join(' · ');
+      if(o.e && o.mes>0.005) de+='<br><span style="font-size:.74rem;font-weight:600;color:'+(o.e.recogioTodo?'var(--green)':'var(--red)')+'">'+
+        (o.e.recogioTodo?('✅ lo de '+esc(mes)+' se recogió hasta el '+esc(fmtFechaCorta(o.e.recogioUlt))):('⏳ hoy todavía falta '+fmtBs(o.e.faltaHoy)))+'</span>';
+    } else if(o.saldo<-0.005) de='<span style="color:var(--red)">⚠️ se retiró más de lo cobrado</span>';
+    return '<tr class="efe-fila" data-k="'+esc(o.k)+'" onclick="efdPersona(this.getAttribute(\'data-k\'))" style="cursor:pointer" title="Ver el mayor de esta cuenta">'+
+      '<td><b>Caja · '+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+' <span class="efe-ojo">👁</span></td>'+
+      '<td class="m">'+bs(o.ini)+'</td><td class="m">'+bs(o.debe)+'</td><td class="m">'+bs(o.haber,'var(--teal-dk)')+'</td>'+
+      '<td class="m">'+(Math.abs(o.saldo)<0.005?'<span class="efe-ok">✅ 0</span>':('<b style="color:var(--red)">'+fmtBs(o.saldo)+'</b>'))+'</td>'+
+      '<td>'+de+'</td></tr>';
   }).join('');
-  if(!filas && X.filas.length) filas='<tr><td colspan="6" style="color:var(--muted)">Nadie tenía efectivo de '+esc(mes)+' ese día.</td></tr>';
-  var T=X.tot;
   box.innerHTML=
-    '<div class="efd-res">Al cierre del <b>'+esc(efdDiaTxt(D))+'</b> había <b style="color:'+(T.mano>0.005?'var(--red)':'var(--green)')+'">'+fmtBs(T.mano)+'</b> de '+esc(mes)+' sin recoger'+
-      (T.ant>0.005?(' y <b style="color:var(--red)">'+fmtBs(T.ant)+'</b> de antes'):'')+'.'+
-      (T.mano>0.005?(' '+(T.faltaHoy>0.005?('De eso, hoy todavía falta recoger <b>'+fmtBs(T.faltaHoy)+'</b>.'):'Hoy ya está todo recogido.')):'')+
-      '<div style="font-size:.78rem;color:var(--muted)">👆 Tocá una persona para ver qué cobros eran y su día por día.</div></div>'+
+    '<div class="efd-res">Al cierre del <b>'+esc(efdDiaTxt(D))+'</b> las cuentas de caja suman <b style="color:'+(T.saldo>0.005?'var(--red)':'var(--green)')+'">'+fmtBs(T.saldo)+'</b> sin recoger'+
+      (T.mes>0.005?(' ('+fmtBs(T.mes)+' de '+esc(mes)+')'):'')+'.'+
+      '<div style="font-size:.78rem;color:var(--muted)">👆 Tocá una cuenta para ver su mayor: cada cobro y cada retiro, con el saldo de cada día.</div></div>'+
     (filas
-      ? ('<div class="tw"><table class="mini"><thead><tr><th>Quién tiene la plata</th><th style="text-align:right">Cobró en '+esc(mes)+'<br><span style="font-weight:400">hasta ese día</span></th>'+
-          '<th style="text-align:right">Retiró en '+esc(mes)+'<br><span style="font-weight:400">hasta ese día</span></th><th style="text-align:right">Sin recoger<br><span style="font-weight:400">al cierre</span></th>'+
-          '<th style="text-align:right">De meses<br>anteriores</th><th style="text-align:right">¿Cuándo se recogió?</th></tr></thead><tbody>'+filas+
-          '<tr style="border-top:2px solid var(--gray-md)"><td><b>TOTAL</b></td><td style="text-align:right">'+bs(T.cob)+'</td><td style="text-align:right">'+bs(T.ret,'var(--teal-dk)')+'</td>'+
-          '<td style="text-align:right">'+bs(T.mano,'var(--red)')+'</td><td style="text-align:right">'+(T.ant>0.005?bs(T.ant,'var(--red)'):'')+(T.antCerr>0.005?((T.ant>0.005?'<br>':'')+'<span style="color:var(--muted)">🔒 '+fmtBs(T.antCerr)+'</span>'):'')+(T.ant<=0.005&&T.antCerr<=0.005?'<span style="color:var(--muted)">—</span>':'')+'</td>'+
-          '<td style="text-align:right">'+(T.mano>0.005?(T.faltaHoy>0.005?('<span class="efe-mano">⏳ falta '+fmtBs(T.faltaHoy)+'</span>'):'<span class="efe-ok">✅ todo</span>'):'')+'</td></tr>'+
-        '</tbody></table></div>'+
-        (nC ? ('<button type="button" class="efd-mas" onclick="EFD.cerr=!EFD.cerr;efdPintar()">'+(EFD.cerr
-            ? '▴ Esconder a los que solo tienen lo de un mes cerrado'
-            : ('🔒 '+nC+' persona'+(nC===1?'':'s')+' más solo con lo de un mes cerrado ('+fmtBs(totC)+' sin retiro anotado, se dio por retirado) ▸ mostrar'))+'</button>') : ''))
-      : '<div class="empty" style="padding:18px 0">Nadie tenía efectivo ese día.</div>')+
-    aviso+botones();
+      ? ('<div class="tw"><table class="mini mys-tab"><thead><tr><th>Cuenta</th><th class="m">Saldo al '+esc(fmtFechaCorta(S.ayer))+'</th><th class="m">Debe<br><span style="font-weight:400">cobró</span></th>'+
+          '<th class="m">Haber<br><span style="font-weight:400">retiros y cierres</span></th><th class="m">Saldo al '+esc(fmtFechaCorta(D))+'</th><th>De qué es</th></tr></thead><tbody>'+filas+
+          '<tr class="mys-sum"><td><b>TOTAL</b></td><td class="m"><b>'+fmtBs(T.ini)+'</b></td><td class="m"><b>'+fmtBs(T.debe)+'</b></td><td class="m"><b>'+fmtBs(T.haber)+'</b></td>'+
+          '<td class="m"><b>'+fmtBs(T.saldo)+'</b></td><td></td></tr>'+
+        '</tbody></table></div>')
+      : '<div class="empty" style="padding:18px 0">Ninguna cuenta tiene movimientos ese mes.</div>')+
+    aviso+botones;
 }
 function efdCopiar(){
-  var D=EFD.d, X=efdDatos(D), mes=efdMesCorto(X.R), L=['💵 *Efectivo sin recoger al cierre del '+efdDiaTxt(D)+'*', ''];
-  var lista=EFD.q ? X.filas.filter(function(o){ return o.k===EFD.q; }) : X.filas;
-  lista.forEach(function(o){
-    L.push('*'+o.nombre+'*'+(o.chofer?' (chofer)':'')+': '+(o.mano>0.005?('*'+fmtBs(o.mano)+'* de '+mes+' sin recoger'):'nada de '+mes+' sin recoger')+
-      (o.ant>0.005?(' · '+fmtBs(o.ant)+' de antes'):'')+
-      (o.mano>0.005?(o.recogioTodo?(' · se recogió hasta el '+fmtFechaCorta(o.recogioUlt)):(' · hoy falta '+fmtBs(o.faltaHoy))):''));
-    if(EFD.q) o.pend.forEach(function(x){ var p=x.c.p; L.push('• '+fmtFechaCorta(x.c.f)+' · '+(p.cliente||'—')+(p.oc?(' · '+ocEtiq(p.oc)):'')+' · '+fmtBs(x.queda)+(x.cuando?(' ✅ '+fmtFechaCorta(x.cuando)):(x.cerr?' 🔒':' ⏳'))); });
-  });
-  if(!lista.length) L.push('Nadie tenía efectivo ese día.');
-  else if(!EFD.q){ L.push(''); L.push('*TOTAL sin recoger: '+fmtBs(X.tot.mano)+'*'+(X.tot.ant>0.005?(' + '+fmtBs(X.tot.ant)+' de antes'):'')); }
+  var D=EFD.d, S=mysSaldos(D), mes=efdMesCorto(S.R), L=[];
+  if(EFD.vista==='mayor'){
+    var desde=mysDesdeDe(), antDia=stockSumarDias(desde,-1);
+    var ks=EFD.q ? [EFD.q] : S.filas.map(function(o){ return o.k; });
+    ks.forEach(function(k){
+      var M=mysMovs(k, D), ant=mysSaldoAl(M, antDia);
+      L.push('📒 *Caja · '+mysNombre(S.X.PAR,k)+'* — del '+fmtFechaCorta(desde)+' al '+fmtFechaCorta(D));
+      L.push('Saldo anterior: '+fmtBs(ant));
+      M.filter(function(m){ return m.f>=desde; }).forEach(function(m){ L.push('• '+fmtFechaCorta(m.f)+' · '+mysConcepto(m, mes)+' · '+(m.debe?('debe '+fmtBs(m.debe)):('haber '+fmtBs(m.haber)))+' → saldo '+fmtBs(m.saldo)); });
+      L.push('*Saldo al '+fmtFechaCorta(D)+': '+fmtBs(mysSaldoAl(M, D))+'*', '');
+    });
+  } else {
+    L.push('⚖️ *Saldos de caja (efectivo) al cierre del '+efdDiaTxt(D)+'*', '');
+    S.filas.forEach(function(o){ L.push('*'+o.nombre+'*'+(o.chofer?' (chofer)':'')+': saldo al '+fmtFechaCorta(S.ayer)+' '+fmtBs(o.ini)+' + debe '+fmtBs(o.debe)+' − haber '+fmtBs(o.haber)+' = *'+fmtBs(o.saldo)+'*'); });
+    if(!S.filas.length) L.push('Ninguna cuenta tiene movimientos ese mes.');
+    else { L.push(''); L.push('*TOTAL: '+fmtBs(S.tot.saldo)+'*'); }
+  }
   copyText(L.join('\n').trim());
 }
 function efdExcel(){
-  var D=EFD.d, X=efdDatos(D), mes=efdMesCorto(X.R).toUpperCase(), H=1, num=function(v){ return {v:r2(v||0), t:'n', s:2}; };
+  var D=EFD.d, S=mysSaldos(D), X=S.X, mes=efdMesCorto(S.R), H=1, num=function(v){ return {v:r2(v||0), t:'n', s:2}; };
   var cab=function(a){ return a.map(function(t){ return {v:t, s:H}; }); };
-  var res=[[{v:'EFECTIVO SIN RECOGER AL CIERRE DEL '+fmtFecha(D), s:H}], [],
-    cab(['QUIÉN TIENE LA PLATA','CHOFER','COBRÓ EN '+mes+' (Bs)','RETIRÓ EN '+mes+' (Bs)','DE ESO, ERA DE ANTES (Bs)','SIN RECOGER AL CIERRE (Bs)','DE MESES ANTERIORES (Bs)','MES CERRADO (Bs)','SE RECOGIÓ HASTA EL','HOY TODAVÍA FALTA (Bs)'])];
-  X.filas.forEach(function(o){
-    res.push([o.nombre, o.chofer?'SÍ':'', num(o.cob), num(o.ret), num(o.aAnt), num(o.mano), num(o.ant), num(o.antCerr),
-      (o.mano>0.005 && o.recogioUlt) ? fmtFecha(o.recogioUlt) : '', num(o.mano>0.005?o.faltaHoy:0)]);
+  var sal=[[{v:'SALDOS DE CAJA (EFECTIVO) AL CIERRE DEL '+fmtFecha(D), s:H}], [],
+    cab(['CUENTA','CHOFER','SALDO AL '+fmtFecha(S.ayer)+' (Bs)','DEBE: COBRÓ (Bs)','HABER: RETIROS Y CIERRES (Bs)','SALDO AL '+fmtFecha(D)+' (Bs)','DE '+mes.toUpperCase()+' (Bs)','DE ANTES (Bs)','SE RECOGIÓ HASTA EL','HOY TODAVÍA FALTA (Bs)'])];
+  S.filas.forEach(function(o){
+    var e=o.e;
+    sal.push(['Caja · '+o.nombre, o.chofer?'SÍ':'', num(o.ini), num(o.debe), num(o.haber), num(o.saldo), num(o.mes), num(Math.max(0, r2(o.saldo-o.mes))),
+      (e && o.mes>0.005 && e.recogioUlt) ? fmtFecha(e.recogioUlt) : '', num(e && o.mes>0.005 ? e.faltaHoy : 0)]);
   });
-  var T=X.tot;
-  res.push([{v:'TOTAL', s:H}, '', num(T.cob), num(T.ret), num(T.aAnt), num(T.mano), num(T.ant), num(T.antCerr), '', num(T.faltaHoy)]);
-  res.push([]);
-  res.push(['Misma regla del Cuadre: lo cobrado en efectivo hasta ese día menos lo retirado hasta ese día. Un cobro anotado después con una fecha vieja cuenta en su fecha.']);
-  var det=[cab(['QUIÉN TIENE LA PLATA','DÍA DEL COBRO','CLIENTE','N° OC','N° NOTA','VENDEDOR','COBRO (Bs)','SIN RECOGER AL CIERRE (Bs)','MES','SE RECOGIÓ EL','HOY TODAVÍA FALTA (Bs)'])];
+  var T=S.tot;
+  sal.push([{v:'TOTAL', s:H}, '', num(T.ini), num(T.debe), num(T.haber), num(T.saldo), num(T.mes), '', '', '']);
+  sal.push([]);
+  sal.push(['Cada persona que tiene plata es una cuenta de caja: Debe = lo que cobró en efectivo, Haber = lo que se le retiró. «Cierre de octubre» = lo de octubre sin retiro anotado que se dio por retirado. Misma cuenta del Cuadre.']);
+  var desde=mysDesdeDe(), antDia=stockSumarDias(desde,-1);
+  var may=[cab(['CUENTA','FECHA','CONCEPTO','CLIENTE','N° OC','N° NOTA','DEBE (Bs)','HABER (Bs)','SALDO (Bs)'])];
+  S.filas.forEach(function(o){
+    var M=mysMovs(o.k, D);
+    may.push(['Caja · '+o.nombre, fmtFecha(antDia), 'Saldo anterior', '', '', '', '', '', num(mysSaldoAl(M, antDia))]);
+    M.filter(function(m){ return m.f>=desde; }).forEach(function(m){
+      var p=m.c?m.c.p:null;
+      may.push(['Caja · '+o.nombre, fmtFecha(m.f), mysConcepto(m, mes), p?(p.cliente||''):'', p?(p.oc||''):'', p?(p.nota||''):'', m.debe?num(m.debe):'', m.haber?num(m.haber):'', num(m.saldo)]);
+    });
+    may.push([]);
+  });
+  var det=[cab(['CUENTA','DÍA DEL COBRO','CLIENTE','N° OC','N° NOTA','VENDEDOR','COBRO (Bs)','SIN RECOGER AL CIERRE (Bs)','MES','SE RECOGIÓ EL','HOY TODAVÍA FALTA (Bs)'])];
   X.filas.forEach(function(o){ o.pend.forEach(function(x){ var p=x.c.p;
-    det.push([o.nombre, fmtFecha(x.c.f), p.cliente||'', p.oc||'', p.nota||'', p.vendedor||'', num(x.c.m), num(x.queda), x.mes?efdMesCorto(X.R):(x.cerr?'cerrado':'anterior'),
+    det.push(['Caja · '+o.nombre, fmtFecha(x.c.f), p.cliente||'', p.oc||'', p.nota||'', p.vendedor||'', num(x.c.m), num(x.queda), x.mes?mes:(x.cerr?'cerrado':'anterior'),
       x.cuando?fmtFecha(x.cuando):'', num(x.cuando?0:x.faltaHoy)]); }); });
-  var dia=[cab(['QUIÉN TIENE LA PLATA','DÍA','COBRÓ (Bs)','RETIRÓ (Bs)','LE QUEDABA AL CERRAR (Bs)','DE ANTES (Bs)'])];
-  X.filas.forEach(function(o){ efdDias(o.k, D).forEach(function(e){ if(!(e.cob||e.ret||e.mano>0.005||e.ant>0.005)) return; dia.push([o.nombre, fmtFecha(e.f), num(e.cob), num(e.ret), num(e.mano), num(e.ant)]); }); });
   var bytes=buildXlsx([
-    { name:'Al '+D.slice(8,10)+'-'+D.slice(5,7), cols:[{w:24},{w:8},{w:16},{w:16},{w:18},{w:18},{w:18},{w:14},{w:16},{w:18}], matrix:res },
-    { name:'Sin recoger', cols:[{w:22},{w:13},{w:26},{w:11},{w:11},{w:20},{w:12},{w:18},{w:10},{w:13},{w:16}], matrix:det },
-    { name:'Dia por dia', cols:[{w:22},{w:12},{w:12},{w:12},{w:20},{w:14}], matrix:dia }
+    { name:'Saldos al '+D.slice(8,10)+'-'+D.slice(5,7), cols:[{w:28},{w:8},{w:18},{w:16},{w:20},{w:18},{w:14},{w:13},{w:16},{w:18}], matrix:sal },
+    { name:'Mayor', cols:[{w:26},{w:12},{w:54},{w:24},{w:10},{w:10},{w:12},{w:12},{w:12}], matrix:may },
+    { name:'Sin recoger', cols:[{w:26},{w:13},{w:26},{w:11},{w:11},{w:20},{w:12},{w:18},{w:10},{w:13},{w:16}], matrix:det }
   ]);
-  downloadBlob(bytes, 'efectivo-al-'+D+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('📅 Efectivo al '+fmtFecha(D)+' descargado — sin recoger '+fmtBs(T.mano));
+  downloadBlob(bytes, 'mayor-y-saldos-al-'+D+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('📒 Mayor y saldos al '+fmtFecha(D)+' descargado — saldo total '+fmtBs(T.saldo));
 }
 
 /* ---- Para WhatsApp e impresora ---- */
@@ -15994,7 +16070,7 @@ function showContaModal(id){
       clfVolverHtml(p.id)+(POR_COBRAR_VOLVER ? (POR_COBRAR_VOLVER.origen==='efe'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivo(EFE_VER_QUIEN)">← Volver al efectivo cobrado</button>')
           : POR_COBRAR_VOLVER.origen==='efd'
-          ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivoFecha()">← Volver al efectivo a una fecha</button>')
+          ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivoFecha()">← Volver al mayor y saldos</button>')
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
