@@ -1472,8 +1472,8 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
   tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
   del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
-- **👥 `.gs` `2026-11-09-a`: lo que escribe un número del EQUIPO no es un cliente** (§4pe, 09/11; dueño: «si hazlo»; en la rama, ESPERA que el dueño
-  lo implemente; después se publica la página con `SCRIPT_VERSION_ESPERADA` 09-a): el saludo automático del WhatsApp Business de Isabel contestó el
+- **👥 `.gs` `2026-11-09-a`: lo que escribe un número del EQUIPO no es un cliente** (§4pe, 09/11; dueño: «si hazlo»; IMPLEMENTADO 09/11 por el dueño,
+  contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; página 2026-11-09-c PUBLICADA `eb21cdf`): el saludo automático del WhatsApp Business de Isabel contestó el
   «Buen día» y el bot lo tomó por un cliente (tarjeta «No sé de qué pedido es» + la respuesta automática de vuelta). `waEquipoCels_`/`waEquipoQuien_`
   = WA_VENDEDORAS, WA_LOGISTICA, WA_PEDIR_HOY, WA_AVISOS, WA_CONTABILIDAD y WA_DUENO, SIN WA_PRUEBA: después de «recibí», «productos» y las preguntas
   del dueño, fila «👥 Del equipo» y nada más (ni tarjeta, ni Claude, ni la automática, ni ubicación); `waRespuestasLeer_` los saltea también en las filas

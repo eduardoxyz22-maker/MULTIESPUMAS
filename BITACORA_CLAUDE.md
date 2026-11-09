@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; en la rama, ESPERA que el dueño lo implemente)
+### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; el dueño lo IMPLEMENTÓ el 09/11 (contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; la tarjeta de Isabel ya no sale) y dijo «publica»: página 2026-11-09-c PUBLICADA 09/11 ~15:56 de Bolivia, `main` = `eb21cdf`)
 - **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
   saludo («Gracias por comunicarte a colchones HEAVEN MIA PLAZA. Mi nombre es ISABEL…»). El bot no sabía que ese número era del equipo: fila
   «💬 Respondió» → tarjeta «No sé de qué pedido es» en la pestaña Bot y, como Claude ya salteaba a logística y vendedoras (`iaEsEquipo_`), le
