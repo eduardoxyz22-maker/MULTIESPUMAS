@@ -5,6 +5,8 @@ var PM_REPORTE=null, PM_TURNO=0, PM_PESTANA='consolidado';
 function pmNorm(v){return String(v==null?'':v).trim().replace(/\s+/g,' ').toUpperCase();}
 function pmNumero(v){return v!==null&&v!==undefined&&String(v).trim()!==''&&isFinite(Number(v))?Number(v):null;}
 function pmFecha(p,base){return base==='entrega'?(fechaSalida(p)||contaFecha(p)):contaFecha(p);}
+/* 📅 (08/11) El mes de la venta: por entrega agendada, el que marcó Contabilidad si es anterior al de la entrega (`ventaMes` de pedidos.html). */
+function pmMes(p,base){return (base==='entrega'&&p&&p.fecha&&typeof ventaMes==='function')?ventaMes(p):pmFecha(p,base).slice(0,7);}
 function pmMesTexto(m){return new Date(m+'-15T12:00:00').toLocaleDateString('es-BO',{month:'long',year:'numeric'});}
 function pmMonto(n){return n==null?'Sin dato':fmtBs(n);}
 /* Marcada PAGADA sin que nadie anotara cuánto: su monto vivía en `cobradoBs`, que no viaja en la planilla. */
@@ -16,7 +18,7 @@ function pmCalcular(lista,cfg,pendientes){
   var unicos=(lista||[]).filter(function(p){if(!p)return false;var id=String(p.id||'');if(id&&vistos[id]){repetidos++;return false;}if(id)vistos[id]=1;return true;});
   var pedidos=unicos.filter(function(p){
     return !esFilaSistema(p)&&!esBorrador(p)&&!fueraDeConta(p,'tienda')&&
-      (!cfg.vendedor||mismoVendedor(p.vendedor,cfg.vendedor))&&pmFecha(p,cfg.base).slice(0,7)===cfg.mes;
+      (!cfg.vendedor||mismoVendedor(p.vendedor,cfg.vendedor))&&pmMes(p,cfg.base)===cfg.mes;
   });
   var dup=indiceDuplicados(pedidos), grupos=Object.create(null), detalle=[], ajustes=[], avisos=[];
   var unidades=0,sinCantidad=0,sinPrecio=0,sinProductos=0,totalPedidos=0,sinTotal=0,conocido=0;

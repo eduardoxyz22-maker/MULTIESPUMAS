@@ -83,7 +83,8 @@ function servidor(props) {
   /* Las filas van directo a la hoja (sin pasar por «guardar»: así no se encolan las confirmaciones de cada pedido). */
   const cargar = (lista) => { lista.forEach(p => sh._datos.push(ctx.recToRow(p))); };
   const hoja = () => (hojas['Bot WhatsApp'] ? hojas['Bot WhatsApp']._datos.slice(1) : []);
-  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text) }));
+  const salen = () => meta.llamadas.filter(c => c.body && c.body.template).map(c => ({ to: c.body.to, pl: c.body.template.name, p: c.body.template.components[0].parameters.map(x => x.text),
+    bt: c.body.template.components.slice(1).map(x => x.parameters[0].payload) }));
   const limpiar = () => { meta.llamadas.length = 0; };
   const lista = () => sh._datos.slice(1).map(f => ctx.rowToRec_(f));
   return { ctx, sh, P, meta, triggers, cargar, hoja, salen, limpiar, lista, repaso: () => ctx.waRepaso() };
@@ -151,7 +152,7 @@ const FIX = [
   chk('1c Mauricio: 3.290 en 2 cobros desde el 03/11', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290 && de('Mauricio Merida').n === 2, de('Mauricio Merida'));
   chk('1d el cobro del chofer es de Luis Pierre, no de Fernando (y el QR no cuenta)', de('Luis Pierre') && de('Luis Pierre').bs === 1860 && !de('Fernando Peinado'), [de('Luis Pierre'), de('Fernando Peinado')]);
   chk('1e Juan Pablo: el retiro de 5.000 es el de octubre (mismo monto) → avisa los 900 de noviembre', de('Juan Pablo Paredes') && de('Juan Pablo Paredes').bs === 900, de('Juan Pablo Paredes'));
-  chk('1f Isabel: un retiro de 1.200 cubre 1.000 + 200 (del más viejo) → quedan 300 del 03/11', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && de('Isabel Robledo').desde === '2026-11-03', de('Isabel Robledo'));
+  chk('1f Isabel: un retiro de 1.200 cubre 1.000 + 200 (del más viejo) → quedan 300 del 03/11 (+ los 777 de la venta de octubre pagada el 03/11, 1q)', de('Isabel Robledo') && de('Isabel Robledo').bs === 1077 && de('Isabel Robledo').desde === '2026-11-03', de('Isabel Robledo'));
   chk('1f2 lo de octubre sin retiro no se avisa (Fabián)', !de('Fabián Godoy'), de('Fabián Godoy'));
   chk('1f3 un retiro de noviembre que es del mismo monto que un cobro de octubre se lo lleva (Mauricio sigue con 3.290)', de('Mauricio Merida') && de('Mauricio Merida').bs === 3290, de('Mauricio Merida'));
   chk('1g Carola: un retiro de ANTES del cobro no lo cubre', de('Carola Chavez') && de('Carola Chavez').bs === 900, de('Carola Chavez'));
@@ -160,7 +161,9 @@ const FIX = [
   chk('1j afuera: Eduardo, ROHO, internos, ATC, RPT, borradores', !de('Eduardo Añez') && !de('ROHO') && !de('ALBA') && E.every(o => o.bs < 9000), E.map(o => o.nombre + ' ' + o.bs));
   chk('1k el que más tiene primero', E.length === 7 && E[0].nombre === 'Maria Flores', E.map(o => o.nombre));
   chk('1p 🚚 lo de Luis Pierre (lo recibió en la puerta, «>Luis Pierre») es de chofer; lo de los vendedores no', de('Luis Pierre') && de('Luis Pierre').ch === true && E.filter(o => o.ch).length === 1, E.map(o => o.nombre + (o.ch ? ' (chofer)' : '')));
-  chk('1q 🗓️ una venta cargada en octubre con el pago anotado en noviembre NO se avisa (Isabel sigue con 300, no 1.077)', de('Isabel Robledo') && de('Isabel Robledo').bs === 300 && E.viejas && E.viejas.n === 1 && E.viejas.bs === 777, [de('Isabel Robledo'), E.viejas]);
+  /* (07-f, la regla del efectivo del 07/11) cuenta la FECHA DEL COBRO: el dueño, «si fue una venta que entró el 30 de octubre y recién el cliente
+     pagó en noviembre, debe figurar su efectivo lógicamente en noviembre» (antes, 06-e, no se avisaba). */
+  chk('1q 🗓️ una venta cargada en octubre con el pago anotado en noviembre SÍ se avisa (por la fecha del cobro: Isabel 300 + 777 = 1.077)', de('Isabel Robledo') && de('Isabel Robledo').bs === 1077 && E.viejas === undefined, [de('Isabel Robledo'), E.viejas]);
   const Sw = servidor(ON); Sw.cargar([V('w2', 'Carola Chavez', '~Efectivo 600 @2026-11-02 #8101', { ts: TS('2026-10-31') }), V('w3', 'Carola Chavez', '~Efectivo 400 @2026-11-03 #8102'), R('w2', 'Carola Chavez', 600, '2026-11-04', '9')]);
   const Ew = Sw.ctx.waEfePendiente_(Sw.lista(), '2026-11-06');
   chk('1r …y un retiro por esa plata de octubre se la lleva a ella: lo de noviembre (400) sigue sin recoger', Ew.length === 1 && Ew[0].bs === 400, Ew);
@@ -208,7 +211,7 @@ const FIX = [
   await browser.close();
 
   console.log('\n── 3. El envío (📅 06-d: el efectivo de CADA DÍA) ──');
-  const efe = () => S.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const efe = () => S.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   const aDue = () => efe().filter(x => x.to === '59177000007'), aCon = () => efe().filter(x => x.to === '59177000008');
   S = servidor(ONC); S.cargar(FIX);
   poner('2026-11-06 08:50'); S.repaso();
@@ -218,7 +221,7 @@ const FIX = [
   chk('3b a las 09:05 sale UNO al dueño y UNO a Contabilidad', e.length === 1 && ec.length === 1 && efe().length === 2, S.salen());
   chk('3c al dueño, 5 datos: el día y la hora, de cuándo es lo que ingresó (ayer), cuánto ingresó, lo acumulado sin recoger y la lista (SIN el chofer)',
       e[0] && e[0].p.length === 5 && /viernes 06\/11, 09:0/.test(e[0].p[0]) && e[0].p[1] === 'ayer, jueves 05/11' && e[0].p[2] === 'Bs 1.500 (1 cobro)' &&
-      e[0].p[3] === 'Bs 11.150 de 7 vendedores' && /^⚠️ Maria Flores Bs 3\.410 desde 03\/11 · ⚠️ Mauricio Merida Bs 3\.290 desde 03\/11/.test(e[0].p[4]) && !/Luis Pierre/.test(e[0].p[4]), e[0] && e[0].p);
+      e[0].p[3] === 'Bs 11.927 de 7 vendedores' && /^⚠️ Maria Flores Bs 3\.410 desde 03\/11 · ⚠️ Mauricio Merida Bs 3\.290 desde 03\/11/.test(e[0].p[4]) && !/Luis Pierre/.test(e[0].p[4]), e[0] && e[0].p);
   chk('3c4 lo cobrado ayer: sin ⚠️ (no tiene 48 h) y con lo que ingresó entre paréntesis', e[0] && / · Andrea Orias Bs 1\.500 desde 05\/11 \(\+Bs 1\.500\)/.test(e[0].p[4]), e[0] && e[0].p[4]);
   chk('3c3 🚚 a Contabilidad, solo lo de los choferes: Luis Pierre Bs 1.860 (de hace 48 h: ⚠️)', ec[0] && ec[0].p[2] === 'Bs 0' && ec[0].p[3] === 'Bs 1.860 de 1 chofer' && ec[0].p[4] === '⚠️ Luis Pierre Bs 1.860 desde 04/11', ec[0] && ec[0].p);
   chk('3c2 la hora va como HH:MM después de la coma', e[0] && /, \d\d:\d\d$/.test(e[0].p[0]), e[0] && e[0].p[0]);
@@ -231,10 +234,10 @@ const FIX = [
   S.cargar([R('f1', 'Maria Flores', 3410, '2026-11-06'), V('h1', 'Isabel Robledo', '~Efectivo 250 @2026-11-06 #7010', { ts: TS('2026-11-06') })]);
   S.limpiar(); poner('2026-11-06 18:05'); S.repaso(); e = aDue();
   chk('3g a las 18:05 sale el de la tarde: lo que ingresó HOY y lo acumulado con la planilla de ahora (el retiro de Maria ya no la nombra)',
-      e.length === 1 && e[0].p[1] === 'hoy, viernes 06/11' && e[0].p[2] === 'Bs 250 (1 cobro)' && e[0].p[3] === 'Bs 7.990 de 6 vendedores' && !/Maria Flores/.test(e[0].p[4]) &&
+      e.length === 1 && e[0].p[1] === 'hoy, viernes 06/11' && e[0].p[2] === 'Bs 250 (1 cobro)' && e[0].p[3] === 'Bs 8.767 de 6 vendedores' && !/Maria Flores/.test(e[0].p[4]) &&
       / y 1 más$/.test(e[0].p[4]) && aCon().length === 1, e[0] && e[0].p);
   const Ri = S.ctx.waEfeResumen_(S.lista(), '2026-11-06', '2026-11-06', '2026-11-06').find(o => o.nombre === 'Isabel Robledo');
-  chk('3g2 Isabel (la que no entró en los 250 de Meta: «y 1 más»): Bs 550 sin recoger desde 03/11, de los que Bs 250 ingresaron hoy', Ri && Ri.bs === 550 && Ri.ing === 250 && Ri.desde === '2026-11-03' && Ri.atr === true, Ri);
+  chk('3g2 Isabel (la que no entró en los 250 de Meta: «y 1 más»): Bs 1.327 sin recoger desde 03/11 (300 + 777 + 250), de los que Bs 250 ingresaron hoy', Ri && Ri.bs === 1327 && Ri.ing === 250 && Ri.desde === '2026-11-03' && Ri.atr === true, Ri);
   S.limpiar(); poner('2026-11-07 09:05'); S.repaso();
   chk('3h2 el sábado 07/11 sí sale (lo de ayer viernes)', aDue().length === 1 && aCon().length === 1 && aDue()[0].p[1] === 'ayer, viernes 06/11', S.salen());
   S.limpiar(); poner('2026-11-08 09:05'); S.repaso();
@@ -249,22 +252,23 @@ const FIX = [
   chk('3h3 en un feriado (25/12) no sale', efe().length === 0, S.salen());
   const S2 = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001' }); S2.cargar(FIX);
   poner('2026-11-06 09:05'); S2.repaso();
-  chk('3i sin WA_DUENO ni WA_CONTABILIDAD no sale', S2.salen().filter(x => x.pl === 'efectivo_del_dia').length === 0, S2.salen());
+  chk('3i sin WA_DUENO ni WA_CONTABILIDAD no sale', S2.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl)).length === 0, S2.salen());
   const S2c = servidor({ WA_ACTIVO: '1', WA_TOKEN: 't', WA_PHONE_ID: '1', WA_LOGISTICA: 'Ernesto:59171000001', WA_CONTABILIDAD: 'Contabilidad:59177000008' }); S2c.cargar(FIX);
   poner('2026-11-06 09:05'); S2c.repaso();
-  const e2c = S2c.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e2c = S2c.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3i2 sin WA_DUENO pero con WA_CONTABILIDAD: a Contabilidad lo de los choferes igual', e2c.length === 1 && e2c[0].to === '59177000008' && /1 chofer/.test(e2c[0].p[3]), e2c);
+  chk('3i4 💵✅ (07-f) a Contabilidad va con el botón «Ya lo recibí» (efectivo_del_dia_boton, con «er|<día>» de respuesta)', e2c[0] && e2c[0].pl === 'efectivo_del_dia_boton' && JSON.stringify(e2c[0].bt) === '["er|2026-11-06"]', e2c[0]);
   const S2d = servidor(ON); S2d.cargar(FIX);
   poner('2026-11-06 09:05'); S2d.repaso();
-  const e2d = S2d.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e2d = S2d.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3i3 sin WA_CONTABILIDAD lo de los choferes NO va al dueño (dueño: «no a Eduardo»)', e2d.length === 1 && e2d[0].to === '59177000007' && !/Luis Pierre/.test(e2d[0].p[4]), e2d.map(x => x.to + ' ' + x.p[4]));
   const S3 = servidor(ON); S3.cargar(FIX.filter(p => /^[mx]/.test(p.id) || /^__ret_m/.test(p.id)));
   poner('2026-11-06 09:05'); S3.repaso();
-  const e3 = S3.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e3 = S3.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3j con todo recogido sale IGUAL, en 0 (el dueño lo quiere cada día)', e3.length === 1 && e3[0].p[2] === 'Bs 0' && e3[0].p[3] === 'Bs 0, todo recogido' && e3[0].p[4] === 'nada pendiente', e3.map(x => x.p));
   const S4 = servidor(Object.assign({}, ON, { WA_PRUEBA: '59170000099' })); S4.cargar(FIX);
   poner('2026-11-06 09:05'); S4.repaso();
-  const e4 = S4.salen().filter(x => x.pl === 'efectivo_del_dia');
+  const e4 = S4.salen().filter(x => /^efectivo_del_dia(_boton)?$/.test(x.pl));
   chk('3k con WA_PRUEBA va al número de prueba', e4.length === 1 && e4[0].to === '59170000099', e4);
   /* El resumen y el tramo, directo */
   const Rm = S3.ctx.waEfeResumen_(S3.lista(), '2026-11-03', '2026-11-03', '2026-11-03');
@@ -275,7 +279,7 @@ const FIX = [
   console.log('\n── 4. La plantilla ──');
   const pl = Array.from(S.ctx.WA_PLANTILLAS).find(x => x.n === 'efectivo_del_dia');
   chk('4a está en WA_PLANTILLAS con {{1}}…{{5}} y un ejemplo de 5 (y la de antes, efectivo_sin_retirar, ya no)', pl && /\{\{5\}\}/.test(pl.t) && !/\{\{6\}\}/.test(pl.t) && pl.e.length === 5 && !Array.from(S.ctx.WA_PLANTILLAS).some(x => x.n === 'efectivo_sin_retirar'), pl);
-  chk('4b está en WA_TIPOS (al dueño y a Contabilidad)', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.plantilla === 'efectivo_del_dia', [S.ctx.WA_TIPOS.ef, S.ctx.WA_TIPOS.efc]);
+  chk('4b está en WA_TIPOS (al dueño; a Contabilidad la del botón «Ya lo recibí», con la de siempre de respaldo)', S.ctx.WA_TIPOS.ef && S.ctx.WA_TIPOS.ef.plantilla === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.plantilla === 'efectivo_del_dia_boton' && S.ctx.WA_TIPOS.efc.vieja === 'efectivo_del_dia' && S.ctx.WA_TIPOS.efc.nv === 5, [S.ctx.WA_TIPOS.ef, S.ctx.WA_TIPOS.efc]);   // 💵✅ (2026-11-07-f) a Contabilidad con «Ya lo recibí»; sin aprobar, la de siempre
   poner('2026-11-06 09:05');
   const S6 = servidor(ONC); S6.cargar(FIX);
   const pr = S6.ctx.probarEfectivo();
@@ -302,16 +306,17 @@ const FIX = [
     V('j2', 'Juan Pablo Paredes', '~Efectivo 910 @2026-11-03 #6', { ts: TS('2026-11-03') }), V('j3', 'Juan Pablo Paredes', '~Efectivo 1480 @2026-11-03 #7', { ts: TS('2026-11-03') }),
     V('j4', 'Juan Pablo Paredes', '~Efectivo 1240 @2026-11-05 #8', { ts: TS('2026-11-05') }),
     R('j1', 'Juan Pablo Paredes', 4620, '2026-11-06', '10'),
-    // Fernando: el retiro (1.200) no es la suma de lo último → como antes, del más viejo: 900 de octubre + 300 de noviembre, quedan 700
+    // Fernando: el retiro (1.200, del 05/11: pasada la gracia del 03/11) no da justo → solo lo de noviembre (1.000); los 200 que sobran se dicen aparte
     V('k0', 'Fernando Peinado', '~Efectivo 900 @2026-10-29 #11', { ts: TS('2026-10-29') }), V('k1', 'Fernando Peinado', '~Efectivo 1000 @2026-11-03 #12', { ts: TS('2026-11-03') }),
     R('k1', 'Fernando Peinado', 1200, '2026-11-05', '12')
   ]);
   const P7 = S7.ctx.waEfePendiente_(S7.lista(), '2026-11-07'), nom7 = P7.map(o => o.nombre + ' ' + o.bs);
   chk('5a Mauricio: el retiro de 3.290 (= 700 + 2.590 de noviembre) lo saca del aviso, aunque quede efectivo de octubre sin retiro', !P7.some(o => o.nombre === 'Mauricio Merida'), nom7);
   chk('5b Juan Pablo: el retiro de 4.620 (= 990 + 910 + 1.480 + 1.240) lo saca del aviso', !P7.some(o => o.nombre === 'Juan Pablo Paredes'), nom7);
-  chk('5c un retiro que no es la suma de lo último sigue yendo primero a lo más viejo (Fernando: quedan 700)', P7.some(o => o.nombre === 'Fernando Peinado' && o.bs === 700), nom7);
+  chk('5c (07-f) pasada la gracia, un retiro que no da justo se lleva solo lo de su mes: Fernando no queda con nada de noviembre y los 200 que sobran se dicen aparte',
+      !P7.some(o => o.nombre === 'Fernando Peinado') && (P7.sobra || []).some(x => x.nombre === 'Fernando Peinado' && x.bs === 200), { nom7, sobra: P7.sobra });
   const R7 = S7.ctx.waEfeResumen_(S7.lista(), '2026-11-07', '2026-11-06', '2026-11-06');
-  chk('5d el resumen del día (el mensaje) dice lo mismo: solo Fernando con 700', R7.filter(o => o.bs > 0).map(o => o.nombre + ' ' + o.bs).join('|') === 'Fernando Peinado 700', R7);
+  chk('5d el resumen del día (el mensaje) dice lo mismo: nadie con plata de noviembre sin recoger', R7.filter(o => o.bs > 0).length === 0, R7);
 
   chk('sin errores en la página', errores.length === 0, errores);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');

@@ -435,7 +435,10 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
                      alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5, efectivo_del_dia: 5,   // 💵 (2026-11-06-b) → 📅 (06-d) el efectivo de cada día
                      vendedora_buen_dia: 7, cierre_del_dia: 7, cierre_del_dia_v2: 7,   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño (07-d: la v2 con el botón)
-                     confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9 };
+                     confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9,
+                     pedir_ubicacion: 6, vendedoras_bajan: 5,
+                     pedido_correo_tr4: 6,
+                     efectivo_del_dia_boton: 5 };   // 💵✅ (2026-11-07-f) a Contabilidad, con «Ya lo recibí»   // 📥 (2026-11-07-f) al dueño, el pedido que cargó la revisión de correos (subirlo al TR4)   // 📍📉 (2026-11-07-f) la ubicación 2 días antes y «cómo va cada vendedor» de los lunes
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
@@ -443,9 +446,13 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   const ll = S.meta.llamadas;
   chk('crear: una llamada por plantilla a /2901139558521747/message_templates, en español, Utilidad, con el texto y los ejemplos', ll.length === T.length && ll.every(c => /\/2901139558521747\/message_templates$/.test(c.url) && c.body.language === 'es' && c.body.category === 'UTILITY' && c.body.components[0].type === 'BODY' && c.body.components[0].example.body_text[0].length === esperado[c.body.name]) && /Bearer tok-de-mentira/.test(ll[0].o.headers.Authorization), ll.map(c => c.url));
   const v2 = ll.find(c => c.body.name === 'cierre_del_dia_v2');
-  chk('🛏️ (07-d) cierre_del_dia_v2 se crea con el botón de respuesta rápida «Ver qué vendió cada uno» (≤ 25 letras); las demás sin botones',
+  const vb = ll.find(c => c.body.name === 'vendedoras_bajan');
+  const er = ll.find(c => c.body.name === 'efectivo_del_dia_boton');
+  chk('🛏️ (07-d) cierre_del_dia_v2 se crea con el botón de respuesta rápida «Ver qué vendió cada uno» (≤ 25 letras); 📉 (07-f) vendedoras_bajan con «Ver el detalle»; 💵 efectivo_del_dia_boton con «Ya lo recibí»; las demás sin botones',
       !!v2 && v2.body.components.length === 2 && v2.body.components[1].type === 'BUTTONS' && JSON.stringify(v2.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver qué vendió cada uno' }]) &&
-      [...'Ver qué vendió cada uno'].length <= 25 && ll.filter(c => c.body.components.length > 1).length === 1, v2 && v2.body.components);
+      [...'Ver qué vendió cada uno'].length <= 25 && !!vb && JSON.stringify(vb.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver el detalle' }]) &&
+      !!er && JSON.stringify(er.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ya lo recibí' }]) &&   // 💵✅ (2026-11-07-f)
+      ll.filter(c => c.body.components.length > 1).length === 3, v2 && v2.body.components);
   chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === T.length - 1, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });

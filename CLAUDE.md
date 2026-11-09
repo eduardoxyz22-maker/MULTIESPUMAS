@@ -1455,11 +1455,14 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
-- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; en la rama, lo implementa el dueño): **13 A** `pedir_ubicacion` a las 10:00 al
-  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, también el martes; domingo nada), una vez por pedido (`WA_UB_PEDIDA`), con
-  `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo de su mes pasado a esta
-  altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
-  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
+  cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, solo el martes: el del lunes lo cubre el recordatorio, §4pa; domingo nada), una vez
+  por pedido (`WA_UB_PEDIDA`), con `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo
+  de su mes pasado a esta altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
+  `test_wa_13_25_26` §3b compara), botón «Ver el detalle» (`vb|<ms>`). 📅 **«A esta altura» = los MISMOS DÍAS HÁBILES** (§4pa P1, dueño 08/11: «A»):
+  el otro mes corta en su n-ésimo día hábil a la misma hora (`pryCorteAltura` en la página = `waVbCorte_` en el `.gs`, con `FERIADOS_PASADOS` =
+  `WA_FERIADOS_PASADOS`), en el bot, Proyección («A esta altura», la fila y la tablita de cada vendedor), «Tu mes» y Bloki. ⚠️ Una comparación nueva «a
+  esta altura» usa `pryCorteAltura`, nunca el mismo día del mes; un día que no se trabajó va en las DOS listas. **25 C** lo que escribe un número de WA_DUENO/WA_PRUEBA es una PREGUNTA
   (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
   tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
   del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
@@ -1618,18 +1621,18 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
 **💵 «¿Quién recibió el efectivo?» es OBLIGATORIO** (§4ow, 07/11, dueño: *«debe ser obligatorio que los vendedores marquen quién carajo recibió
-la plata»*; PUBLICADO 08/11, versión 2026-11-08-a): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
+la plata»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`): en el formulario, cuando entra efectivo (`formEfectivoMonto`), y en «Registrar pago» de Contabilidad, hay que tocar la vendedora
 o el chofer; sin eso no se guarda («Para guardar» y el paso del cobro lo piden igual). El chofer va solo en los renglones de efectivo NUEVOS
 (`recibioAplicar`; el adelanto suelto nuevo pasa a renglón `~… >Chofer`). No en venta de tienda, ATC/RPT, Eduardo, ROHO ni internos; al editar sin
 tocar el efectivo (`EDIT_PLATA0.ef`) no pregunta; el chofer puesto solo el día de la entrega (§4ok-112) cuenta. ⚠️ Un camino NUEVO que anote efectivo
 pide lo mismo. Playwright solo con `RECIBIO_PRUEBA`. `tests/test_recibio_obligatorio.js` (21).
 **💵🔗 Cada retiro tapa sus cobros** (§4ov, 07/11, dueño: *«¿no cuadra porque ingresó en octubre y se retiró en noviembre?… al darle al efectivo
-¿no debería mostrar qué clientes pagaron?»*; PUBLICADO 08/11, versión 2026-11-08-a): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
+¿no debería mostrar qué clientes pagaron?»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`): desde `EFE_EMPAREJA` (octubre) el Cuadre empareja cada retiro con los cobros en efectivo
 que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira seguida que dé justo, la más nueva primero → del más viejo; mismo
 desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
-**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a; va también en el `.gs` 07-f, que el dueño implementa el lunes 09/11): 🔒 `EFE_CERRADO`
+**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, IMPLEMENTADO 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
 fecha de otro día = el final de ese día). Orden (`efeTapar` = `waEfeTapar_`): 0. los tildados al cargarlo, 1. mismo monto, 2. tira que dé justo, 3. del
@@ -1638,6 +1641,17 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
+`.gs` 07-f, IMPLEMENTADO 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
+`efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot
+carga el RETIRO con la fila de `filaDeRetiro` (entrega el chofer, retira «Contabilidad», FACTURADO, `ts` ahora, cobros tildados en `garantia`) con
+`doSave` adentro del candado (`waErCargar_`). «Ysrael 500» pregunta y va sin tildes; DESHACER 15 min con el sello. Solo WA_CONTABILIDAD (y WA_PRUEBA con
+lo de esto); lo demás de Contabilidad recibe la ayuda. ⚠️ Si cambia `filaDeRetiro` o `efePareo` en la página, cambia `waEr*`: `tests/test_wa_er.js` §10.
+🔎 **Revisado con 4 agentes antes de implementar** (§4pa, 08/11): cada botón lleva el id de su pregunta (`er:<qué>:<id>`: uno viejo no carga), lo que
+carga o borra relee WA_ER ADENTRO del candado (dos avisos de Meta no cargan dos veces), el retiro tilda SIEMPRE sus cobros del más viejo al más nuevo
+hasta el monto y lleva en `nota` las notas de venta y recibos (`waErNotas_`). La 13 A no le escribe a quien RETIRA (`waRetira_` = `fichaRetira`,
+`test_wa_er` §10f) ni al cliente del próximo día con camión (le llega el recordatorio). 📅 P1 decidido (dueño, 08/11: «A»): «cómo va cada vendedor» y
+todo «a esta altura» del panel comparan los mismos días hábiles (`waVbCorte_` = `pryCorteAltura`); el lunes 09/11 bajan Jonathan y Mirian, no 5.
 
 ## 🚚 Los choferes de cada camión, que rotan (§4om, 06/11; dueño: *«Carry Omar-Ysrael · Fotón nuevo Fernando-Luis Pierre · Fotón encarpado
 Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 06/11, versión 2026-11-06-d)
@@ -2230,6 +2244,15 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   ⚠️ **Ninguna fila del sistema es una venta**: `fueraDeConta` devuelve true para `esFilaSistema(p)` (el `__anuncio__` contaba como venta de
   Bs 0 en Ventas y «1 sin monto» en Proyección). Una fila del sistema NUEVA va en `esFilaSistema`.
 - 🎯 **Metas por marca**: muestra para el dueño (https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj), nada hecho en el panel todavía.
+- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a): debajo de las fichas de
+  marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = la de quien vendió en ESE
+  MES, `sucursalDeVendedor(v, ym+'-01')`: cada vendedor entero en su tienda y la suma da el equipo; ⚠️ NO por el día de carga: el dueño lo vio
+  mal, «están mal los nombres de vendedores por sucursal»). Andrea y Fabián se
+  proyectan IGUAL que todos (dueño). La marca `vmes` (en los productos, la pone Contabilidad en la ficha con la contraseña, solo en una venta
+  cargada un mes antes de su entrega): `ventaMes(p)` = el mes de la entrega o el marcado si es anterior; la usan `pryVentas` (`ym`), Ventas por
+  entrega agendada en «Mes» y sus saldos anteriores (`contaFechaMesBase`), «Tu mes» y Productos del mes; la entrega, los cupos, el stock y los
+  cobros no cambian. ⚠️ Lo VENDIDO de un mes por la entrega va con `ventaMes(p)`, nunca `p.fecha.slice(0,7)`; el `.gs` la cuenta con
+  `waVentaMes_` (`test_wa_13_25_26` §3b5 compara). `tests/test_pry_tiendas.js`, `tests/test_venta_mes.js`.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
@@ -2741,6 +2764,10 @@ precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06
 sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
+📥 **Cada pedido que carga, un WhatsApp al dueño para subirlo al TR4** (§4oy, 08/11; dueño: *«un mensaje únicamente a mí con los datos del pedido…
+y recordarme de que lo debo subir al TR4»*; `.gs` 07-f IMPLEMENTADO 09/11): `cargar_pedidos.py` guarda con `tr4:1` → solo un pedido NUEVO → plantilla
+`pedido_correo_tr4` al PRIMERO de WA_DUENO (`cfg.duenoEfe`, el jefe no), con N° del panel y del día, cliente, su número (nota u «OP-…»), productos
+con código/cantidad/precio, total y entrega (`waTr4Params_`). `tests/test_wa_tr4.js`.
 
 ## 🧾💵🚚 Factura o remisión, el efectivo sin retirar y los recargos por vendedor (§4ol, 06/11; PÁGINA PUBLICADA 06/11, `51b4896`, versión 2026-11-06-c; servidor `2026-11-06-e` lo implementa el dueño, enlace fijo `92714a6…`, 6.263 líneas)
 - 🧾 **Factura o nota de remisión obligatoria, la anota la vendedora DESPUÉS, en Contabilidad** (dueño: *«aún no saben qué nro de factura o nota
