@@ -17357,6 +17357,30 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pd — ✂️ LA FICHA LEE BIEN «YA SE ENTREGÓ EN TIENDA»: MEDIDA, CANTIDAD, LISTAS Y «LAS ALMOHADAS» (09/11; dueño, con dos capturas de la ficha del 11-077 de Isabel: *«porque el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*; en la rama, falta «publica»)
+- **El caso**: el pedido tenía COLCHON TITANIO ICE 200x200, COLCHON TITANIO ICE 160x190 y dos renglones de ALMOHADA 50x70 ×2. La nota: «RECOGER
+  COLCHON DE 3.5 PLZ ICE DE TIENDA BUENOS AIRES… ⏎ ENTREGADOS EN TIENDA: ⏎ * LAS 4 ALMOHADAS YA SE ENTREGARON EN TIENDA ⏎ * 1 COLCHON TITANIO ICE DE
+  2.5 PLZ». La ficha tachaba LOS DOS colchones («✂️ No se lleva») y NINGUNA almohada (las mandaba a cargar en Banzer).
+- **Por qué**: `fichaNota` pasaba la nota por `flMay` (los renglones se volvían espacios), partía las frases en el «.» de «2.5», no miraba ni la
+  medida ni la cantidad, y «ALMOHADA» está en la lista de palabras genéricas (si no, «colchón» tacharía todos los colchones): un producto que se
+  llama solo «ALMOHADA» no se reconocía nunca.
+- **Ahora** (`fichaNoLlevar`, llamada desde `fichaNota`): frases por renglón, «.» que no está entre números, «;», viñeta (*, •, -), SOLO, PERO; un
+  encabezado «ENTREGADOS EN TIENDA:» vale para las viñetas de abajo; cada frase en cosas («,», « Y », «+», paréntesis, «=», « - »); una cosa sin la
+  frase de entregado la hereda solo si es corta y no dice otra acción (`FL_NL_VA`: llevar, cargar, recoger, falta, recibir…); cada producto por sus
+  palabras propias o, si la cosa no nombra ninguna de su familia, por la FAMILIA («LAS 4 ALMOHADAS» = todas), salvo «DE/PARA COLCHON» (el
+  protector) y salvo que nombre OTRO producto de la lista de precios de esa familia (`flNlQual`: «4 ALM NASA» con la almohada común en el pedido);
+  la MEDIDA (`flNlMedida`: «2.5 PLZ», «2,5 plazas», «2 1/2», «160X190») deja solo esos renglones; la CANTIDAD menor que lo del pedido: si un solo
+  renglón tiene justo esa cantidad, ese; si no, no tacha nada y va a «⛔» (`N.noLlevarDuda`): «fijate cuál no se lleva» / «1 de los 2: se carga
+  solo 1». El renglón tachado dice el motivo (`N.noLlevarPor`: «ya se entregó» / «sale de tienda» / «no hay que llevarlo»). «✨ Marcar los N como
+  dice el stock» ya no cuenta ni marca lo que no se lleva.
+- **Contra las 1.078 notas reales** (copia local, nunca al repo): antes tachaban algo 11, ahora 19; cambian 12 y las revisé una por una:
+  las almohadas «ya fueron entregadas en tienda» (08-050, 09-049, 10-106, 11-003, 10-189, 10-227), «no llevar las almohadas» (09-366, sin tocar
+  el colchón que dice «recibir su colchón»), mantas y protector (09-132), «1 de los 2 juegos de sábana» como aviso (09-145), «sale de tienda»
+  (10-058, 10-354) y el 11-077. El «4 ALM NASA + PROTECTOR DE COLCHON» (02-08) sigue sin tachar nada (no es el colchón ni la almohada del pedido).
+- Solo la ficha de Administración: el stock, la carga y el `.gs` no leen esto (el renglón entregado en tienda sigue reservando en el stock
+  hasta que logística lo marque, como antes).
+- `tests/test_ficha_no_llevar.js` (20); `test_ficha_nota` 26, `test_revisar_obs` 89, las fichas y Bloki, bien.
+
 ### §4pc — 🚀 LA 07-f IMPLEMENTADA Y LA PÁGINA 2026-11-09-a (09/11; dueño: *«6. publica, ya subi el gs.»*, el paso 6 de la lista del lunes; PUBLICADA 09/11 ~10:14 de Bolivia, `main` = `9c78e8f`; Pages: corrida 51 de «Publicar el panel», achicado y publicado a las 10:15)
 - **El servidor**: el dueño pegó la 07-f del enlace fijo `7b7cb6e39931d7637fa88f48abe19e1bd1b233aa` (8.059 líneas) e implementó. Verificado a las
   10:01 de Bolivia con una lectura (`action:'list'`, la de `cargar_pedidos.py`): contesta `version: 2026-11-07-f` (1.842 filas). Volver atrás:
