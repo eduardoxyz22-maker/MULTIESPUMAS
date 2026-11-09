@@ -17357,6 +17357,20 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pc — 🚀 LA 07-f IMPLEMENTADA Y LA PÁGINA 2026-11-09-a (09/11; dueño: *«6. publica, ya subi el gs.»*, el paso 6 de la lista del lunes)
+- **El servidor**: el dueño pegó la 07-f del enlace fijo `7b7cb6e39931d7637fa88f48abe19e1bd1b233aa` (8.059 líneas) e implementó. Verificado a las
+  10:01 de Bolivia con una lectura (`action:'list'`, la de `cargar_pedidos.py`): contesta `version: 2026-11-07-f` (1.842 filas). Volver atrás:
+  ✏️ a la versión anotada Y pegar la 07-e de `1eb5c5816f7af1c48dc97ca887c31819157cd0aa` (6.938 líneas).
+- **La página** (`PANEL_V` y `panel-version.json` = `2026-11-09-a`, `SCRIPT_VERSION_ESPERADA` = `2026-11-07-f`): todo lo de la rama desde la
+  2026-11-08-a (`21696f4`): «a esta altura» por los mismos días hábiles (P1, §4pa), las fichas «🏬 Por tienda» de Proyección y la marca «esta
+  venta cuenta en <mes>» de Contabilidad (§4pb). A `main` van, copiados de la rama: `pedidos.html` (igual a `main` salvo lo de esta publicación:
+  la única diferencia de antes era la línea de `SCRIPT_VERSION_ESPERADA`), `google-apps-script.gs` (= `7b7cb6e`), `productos-mes.js`
+  (`?v=20261108a`), `panel-version.json`, las notas y 18 pruebas (las del servidor 07-f y las de §4ol/§4om que no estaban en `main`).
+  `herramientas/pedidos_correo/` sigue solo en la rama.
+- **Plantillas**: la 07-f trae cuatro nuevas (`efectivo_del_dia_boton`, `pedido_correo_tr4`, `pedir_ubicacion`, `vendedoras_bajan`); salen recién
+  con Meta aprobándolas (`crearPlantillasWhatsApp`). Sin aprobar: el efectivo sale con `efectivo_del_dia` sin botón; las otras tres no salen.
+- Batería: corriendo al anotar esto (se completa al terminar). Sola, `test_adelanto` 14/0; `test_actualizar_espera` (del dashboard, no cambió) falla con la máquina cargada, como siempre.
+
 ### §4pb — 🏬 PROYECCIÓN «POR TIENDA» Y 📅 LA VENTA QUE CUENTA EN EL MES EN QUE SE CARGÓ (08/11; dueño, sobre Andrea y Fabián: *«si ya aparecen como los demás al cargar sus ventas o entregas, está bien que sea igual que los demás. Sólo añadiría lo de por tienda»* + la captura de las fichas de marca: *«Esa»*; y *«marcar ventas puntuales que cuentan en octubre, pero se entregan en noviembre… no necesito ver todas las listas»*; PÁGINA PUBLICADA 09/11 con la 07-f, versión 2026-11-09-a (§4pc); el `.gs` 07-f IMPLEMENTADO 09/11 por el dueño, enlace fijo `7b7cb6e39931d7637fa88f48abe19e1bd1b233aa` (8.059 líneas))
 - **Los nuevos, igual que todos**: Andrea Orias y Fabián Godoy se proyectan con la regla de siempre (§4gt: hasta hoy + máx(agendado, ritmo ×
   días hábiles que faltan)). Un ritmo especial para quien empieza en el mes se hizo y se SACÓ el mismo día (dueño: «igual que los demás»): no
