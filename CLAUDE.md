@@ -1455,7 +1455,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
-- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA `9c78e8f`; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
   cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, solo el martes: el del lunes lo cubre el recordatorio, §4pa; domingo nada), una vez
   por pedido (`WA_UB_PEDIDA`), con `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo
   de su mes pasado a esta altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
@@ -2244,7 +2244,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   ⚠️ **Ninguna fila del sistema es una venta**: `fueraDeConta` devuelve true para `esFilaSistema(p)` (el `__anuncio__` contaba como venta de
   Bs 0 en Ventas y «1 sin monto» en Proyección). Una fila del sistema NUEVA va en `esFilaSistema`.
 - 🎯 **Metas por marca**: muestra para el dueño (https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj), nada hecho en el panel todavía.
-- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a): debajo de las fichas de
+- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a, `9c78e8f`): debajo de las fichas de
   marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = la de quien vendió en ESE
   MES, `sucursalDeVendedor(v, ym+'-01')`: cada vendedor entero en su tienda y la suma da el equipo; ⚠️ NO por el día de carga: el dueño lo vio
   mal, «están mal los nombres de vendedores por sucursal»). Andrea y Fabián se
