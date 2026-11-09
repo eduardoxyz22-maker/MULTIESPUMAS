@@ -17372,6 +17372,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - ⚠️ Un número nuevo del equipo (otra propiedad con celulares del personal) va en `waEquipoCels_`.
 - Pruebas: `tests/test_wa_equipo.js` (18; 11 rojas contra la 07-f). Cambiados a conciencia: `test_wa_bot` (el «ok» de logística ahora es «👥 Del
   equipo» y sin la automática), `test_wa_13_25_26` 1e (la versión, «o una posterior»), `test_servidor` §11 l (09-a).
+- Batería (09/11): 353 suites, 11.132 bien; 3 rojas, ninguna del cambio: `test_avisa_cuando` 1a tenía la versión escrita (cambiada a 09-a,
+  `3ac5407`) y `test_asistente` / `test_producir_reparto`, por la carga (solas 24/0 y 65/0, como a la mañana).
 - **Publicar**: el dueño pega el `.gs` (enlace fijo al commit), `probarAntesDeImplementar` ✅ y implementa; después se publica la página con
   `SCRIPT_VERSION_ESPERADA` = 09-a (la página no cambia nada más). Volver atrás: ✏️ a la versión anotada Y pegar la 07-f de `7b7cb6e…` (8.059 líneas).
 
