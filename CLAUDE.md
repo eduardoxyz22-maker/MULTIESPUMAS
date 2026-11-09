@@ -1128,7 +1128,7 @@ coincide (`fichaContras`, ⛔) en «Antes de cargar» con etiquetas para tildar 
 (`me_ficha_vista`) y cambios por renglón; «🧭 Qué hacer» en una línea; los botones de dónde sale A LA VISTA en cada producto (`prodBtnsHtml(…,true)`:
 «✔ PTF»); lo de tienda SOLO en la línea de los bultos; Dónde + Camión a la derecha; la tira del stock abajo (sin «Qué quiere decir cada botón»).
 ⚠️ No volver a esconder los botones de los productos ni a repetir lo de tienda. `tests/test_ficha_nota.js`.
-✂️ **«Ya se entregó en tienda» con medida y cantidad** (§4pd, 09/11, PUBLICADO 09/11, versión 2026-11-09-b; dueño: *«marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA
+✂️ **«Ya se entregó en tienda» con medida y cantidad** (§4pd, 09/11, PUBLICADO 09/11, versión 2026-11-09-b, `bbd2d4d`; dueño: *«marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA
 MEDIDA»*): `fichaNoLlevar` (desde `fichaNota`) lee por renglón y viñeta (el encabezado «ENTREGADOS EN TIENDA:» vale para las viñetas), no corta en el
 «.» de «2.5», filtra por la MEDIDA (`flNlMedida`) y la CANTIDAD (menos que lo del pedido y sin un renglón justo → `N.noLlevarDuda` en «⛔», sin tachar),
 y «LAS ALMOHADAS» = la familia entera salvo «DE/PARA COLCHON» u otro producto de la lista (`flNlQual`). El renglón dice el motivo (`N.noLlevarPor`).

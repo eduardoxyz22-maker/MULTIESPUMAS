@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pd — ✂️ LA FICHA LEE BIEN «YA SE ENTREGÓ EN TIENDA»: MEDIDA, CANTIDAD, LISTAS Y «LAS ALMOHADAS» (09/11; dueño, con dos capturas de la ficha del 11-077 de Isabel: *«porque el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*; dueño: «publica»; PUBLICADO 09/11, versión 2026-11-09-b)
+### §4pd — ✂️ LA FICHA LEE BIEN «YA SE ENTREGÓ EN TIENDA»: MEDIDA, CANTIDAD, LISTAS Y «LAS ALMOHADAS» (09/11; dueño, con dos capturas de la ficha del 11-077 de Isabel: *«porque el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*; dueño: «publica»; PUBLICADO 09/11, versión 2026-11-09-b, `main` = `bbd2d4d`)
 - **El caso**: el pedido tenía COLCHON TITANIO ICE 200x200, COLCHON TITANIO ICE 160x190 y dos renglones de ALMOHADA 50x70 ×2. La nota: «RECOGER
   COLCHON DE 3.5 PLZ ICE DE TIENDA BUENOS AIRES… ⏎ ENTREGADOS EN TIENDA: ⏎ * LAS 4 ALMOHADAS YA SE ENTREGARON EN TIENDA ⏎ * 1 COLCHON TITANIO ICE DE
   2.5 PLZ». La ficha tachaba LOS DOS colchones («✂️ No se lleva») y NINGUNA almohada (las mandaba a cargar en Banzer).
