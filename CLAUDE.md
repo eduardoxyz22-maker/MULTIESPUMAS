@@ -1128,7 +1128,7 @@ coincide (`fichaContras`, ⛔) en «Antes de cargar» con etiquetas para tildar 
 (`me_ficha_vista`) y cambios por renglón; «🧭 Qué hacer» en una línea; los botones de dónde sale A LA VISTA en cada producto (`prodBtnsHtml(…,true)`:
 «✔ PTF»); lo de tienda SOLO en la línea de los bultos; Dónde + Camión a la derecha; la tira del stock abajo (sin «Qué quiere decir cada botón»).
 ⚠️ No volver a esconder los botones de los productos ni a repetir lo de tienda. `tests/test_ficha_nota.js`.
-✂️ **«Ya se entregó en tienda» con medida y cantidad** (§4pd, 09/11, PUBLICADO 09/11, versión 2026-11-09-b; dueño: *«marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA
+✂️ **«Ya se entregó en tienda» con medida y cantidad** (§4pd, 09/11, PUBLICADO 09/11, versión 2026-11-09-b, `bbd2d4d`; dueño: *«marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA
 MEDIDA»*): `fichaNoLlevar` (desde `fichaNota`) lee por renglón y viñeta (el encabezado «ENTREGADOS EN TIENDA:» vale para las viñetas), no corta en el
 «.» de «2.5», filtra por la MEDIDA (`flNlMedida`) y la CANTIDAD (menos que lo del pedido y sin un renglón justo → `N.noLlevarDuda` en «⛔», sin tachar),
 y «LAS ALMOHADAS» = la familia entera salvo «DE/PARA COLCHON» u otro producto de la lista (`flNlQual`). El renglón dice el motivo (`N.noLlevarPor`).
@@ -1472,6 +1472,13 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
   tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
   del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
+- **👥 `.gs` `2026-11-09-a`: lo que escribe un número del EQUIPO no es un cliente** (§4pe, 09/11; dueño: «si hazlo»; en la rama, ESPERA que el dueño
+  lo implemente; después se publica la página con `SCRIPT_VERSION_ESPERADA` 09-a): el saludo automático del WhatsApp Business de Isabel contestó el
+  «Buen día» y el bot lo tomó por un cliente (tarjeta «No sé de qué pedido es» + la respuesta automática de vuelta). `waEquipoCels_`/`waEquipoQuien_`
+  = WA_VENDEDORAS, WA_LOGISTICA, WA_PEDIR_HOY, WA_AVISOS, WA_CONTABILIDAD y WA_DUENO, SIN WA_PRUEBA: después de «recibí», «productos» y las preguntas
+  del dueño, fila «👥 Del equipo» y nada más (ni tarjeta, ni Claude, ni la automática, ni ubicación); `waRespuestasLeer_` los saltea también en las filas
+  de antes. ⚠️ Una propiedad nueva con celulares del personal va en `waEquipoCels_`. `tests/test_wa_equipo.js` (18). Volver atrás: ✏️ a la versión
+  anotada Y pegar la 07-f de `7b7cb6e…` (8.059 líneas).
 - `tests/test_wa_bot.js` (208), `tests/test_wa_pagina.js` (12), `tests/test_wa_resp.js` (7). Bitácora §4jt, §4ki, §4kk, §4lb, §4lc.
 
 ## 🧑‍💼 Eduardo: las ideas A–K (§4kh, 12/10; dueño: «A,B,C,D,E,F,G,H,I,K»; PUBLICADA 12/10, `c13dc1c`)

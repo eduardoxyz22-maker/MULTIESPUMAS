@@ -17357,7 +17357,27 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pd — ✂️ LA FICHA LEE BIEN «YA SE ENTREGÓ EN TIENDA»: MEDIDA, CANTIDAD, LISTAS Y «LAS ALMOHADAS» (09/11; dueño, con dos capturas de la ficha del 11-077 de Isabel: *«porque el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*; dueño: «publica»; PUBLICADO 09/11, versión 2026-11-09-b)
+### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; en la rama, ESPERA que el dueño lo implemente)
+- **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
+  saludo («Gracias por comunicarte a colchones HEAVEN MIA PLAZA. Mi nombre es ISABEL…»). El bot no sabía que ese número era del equipo: fila
+  «💬 Respondió» → tarjeta «No sé de qué pedido es» en la pestaña Bot y, como Claude ya salteaba a logística y vendedoras (`iaEsEquipo_`), le
+  salió la **respuesta automática** («Este número solo envía los avisos…») de vuelta a Isabel. Lo mismo con un «ok» de Ernesto (la prueba
+  vieja de `test_wa_bot` lo daba por bueno: sin Claude, pero con la automática). Va a pasar cada mañana con cualquier vendedora con saludo automático.
+- **Arreglo** (`waEquipoCels_` / `waEquipoQuien_`): el equipo = WA_VENDEDORAS, WA_LOGISTICA, WA_PEDIR_HOY, WA_AVISOS, WA_CONTABILIDAD y WA_DUENO,
+  SIN el número de prueba (WA_PRUEBA: con él se prueba lo del cliente). En `waHookAnotar_`, DESPUÉS de «recibí» (Contabilidad), «productos» y las
+  preguntas del dueño (que siguen igual) y ANTES de buscar el pedido: fila **«👥 Del equipo»** (`WA_EQUIPO_FILA`) con el texto y «— del equipo
+  (<rol>): no se contesta» en la columna M; sin pedido, sin «⏳», sin respuesta automática, sin ubicación pegada a un pedido. `waRespuestasLeer_`
+  saltea los números del equipo también en las filas de ANTES (la tarjeta de Isabel del 09/11 se va sola al implementar). `iaEsEquipo_` =
+  `waEquipoQuien_` (antes solo logística y vendedoras). `probarAntesDeImplementar` dice cuántos números son del equipo.
+- ⚠️ Un número nuevo del equipo (otra propiedad con celulares del personal) va en `waEquipoCels_`.
+- Pruebas: `tests/test_wa_equipo.js` (18; 11 rojas contra la 07-f). Cambiados a conciencia: `test_wa_bot` (el «ok» de logística ahora es «👥 Del
+  equipo» y sin la automática), `test_wa_13_25_26` 1e (la versión, «o una posterior»), `test_servidor` §11 l (09-a).
+- Batería (09/11): 353 suites, 11.132 bien; 3 rojas, ninguna del cambio: `test_avisa_cuando` 1a tenía la versión escrita (cambiada a 09-a,
+  `3ac5407`) y `test_asistente` / `test_producir_reparto`, por la carga (solas 24/0 y 65/0, como a la mañana).
+- **Publicar**: el dueño pega el `.gs` (enlace fijo al commit), `probarAntesDeImplementar` ✅ y implementa; después se publica la página con
+  `SCRIPT_VERSION_ESPERADA` = 09-a (la página no cambia nada más). Volver atrás: ✏️ a la versión anotada Y pegar la 07-f de `7b7cb6e…` (8.059 líneas).
+
+### §4pd — ✂️ LA FICHA LEE BIEN «YA SE ENTREGÓ EN TIENDA»: MEDIDA, CANTIDAD, LISTAS Y «LAS ALMOHADAS» (09/11; dueño, con dos capturas de la ficha del 11-077 de Isabel: *«porque el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*; dueño: «publica»; PUBLICADO 09/11, versión 2026-11-09-b, `main` = `bbd2d4d`)
 - **El caso**: el pedido tenía COLCHON TITANIO ICE 200x200, COLCHON TITANIO ICE 160x190 y dos renglones de ALMOHADA 50x70 ×2. La nota: «RECOGER
   COLCHON DE 3.5 PLZ ICE DE TIENDA BUENOS AIRES… ⏎ ENTREGADOS EN TIENDA: ⏎ * LAS 4 ALMOHADAS YA SE ENTREGARON EN TIENDA ⏎ * 1 COLCHON TITANIO ICE DE
   2.5 PLZ». La ficha tachaba LOS DOS colchones («✂️ No se lleva») y NINGUNA almohada (las mandaba a cargar en Banzer).

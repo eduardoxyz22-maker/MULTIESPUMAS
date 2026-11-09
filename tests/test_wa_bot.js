@@ -789,7 +789,10 @@ function conPedido(props, extra) {
   const { S } = conPedido();
   conClaude(S, () => claude());
   escribe(S, '59171000001', 'ok', 'Ernesto');
-  chk('logística le contesta al bot («ok»): eso no va a Claude', cli(S, '59171000001')[0][12] === '' && iaTrig(S) === 0 && iaLl(S).length === 0);
+  /* 👥 (2026-11-09-a) Desde la 09-a lo del equipo ni siquiera es «💬 Respondió»: «👥 Del equipo», sin respuesta ni tarjeta (test_wa_equipo.js). */
+  const eqF = S.hoja().filter(f => String(f[5]) === '59171000001' && (f[3] === '👥 Del equipo' || f[3] === 'Respuesta automática'));
+  chk('logística le contesta al bot («ok»): eso no va a Claude ni a la automática, y queda como «👥 Del equipo»', !cli(S, '59171000001').length && eqF.length === 1 && eqF[0][3] === '👥 Del equipo' &&
+      iaTrig(S) === 0 && iaLl(S).length === 0 && textos(S).length === 0, eqF.map(f => f[3] + '|' + f[12]));
   S.limpiar(); escribe(S, '59170111222', '', 'Juan', { type: 'reaction', reaction: { message_id: 'wamid.1', emoji: '👍' } });
   chk('una reacción (👍) no se contesta: ni Claude ni la automática, y no le queda pendiente a nadie', /^— reacción/.test(cli(S, '59170111222')[0][12]) && /^🤖 reacción/.test(cli(S, '59170111222')[0][10]) && textos(S).length === 0 && iaTrig(S) === 0, cli(S, '59170111222')[0].slice(10));
 }
