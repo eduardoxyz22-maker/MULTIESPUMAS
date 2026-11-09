@@ -1654,6 +1654,12 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**📅💵 «Efectivo a una fecha»** (§4pf, 09/11, Contabilidad por el dueño: *«cuánto efectivo pendiente de retiro tenía Juan Pablo el 2, el 5 y el 8 de
+noviembre… no tenemos una forma o historial»* → «si hazlo»; EN LA RAMA, versión 2026-11-09-d): botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`):
+por persona, lo que tenía sin recoger al cierre de cualquier día, cobrado/retirado en el mes hasta ese día, lo de meses anteriores (🔒 cerrado) y cuándo
+se recogió; detalle con el día por día, Copiar y Excel. Es `efePareo` cortado en los retiros de hasta ese día (`efdDatos`/`efdDias`: `c.de` con `x.f<=D`):
+no hay otra cuenta ni nada guardado. ⚠️ Si cambia la regla del efectivo, esto cambia solo; si el emparejamiento deja de ir en orden de fecha, ya no vale
+cortar así. `tests/test_efectivo_fecha.js` (27).
 **💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
 `.gs` 07-f, IMPLEMENTADO 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
 `efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot

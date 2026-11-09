@@ -17357,6 +17357,24 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pf — 📅💵 «EFECTIVO A UNA FECHA» EN EL CUADRE (09/11; Contabilidad, por el dueño: *«contabilidad me preguntó cuánto efectivo pendiente de retiro tenían por ejemplo Juan Pablo el 2 de noviembre, cuándo el 5 y cuándo el 8… creo que no tenemos una forma o historial de ver eso»* → se le calculó a mano (02/11: 0 de noviembre y 21.730 de octubre; 05/11: 5.490; 08/11: 1.580) y se le propuso → *«si hazlo»*; EN LA RAMA, versión 2026-11-09-d, espera «publica»; el `.gs` no cambia)
+- **Qué hace**: Contabilidad → 🧮 Cuadre → caja «💵 Efectivo cobrado vs. retirado» → botón **«📅 Efectivo a una fecha»** (`#efd-btn`, `abrirEfectivoFecha`).
+  Se elige un día (◀ ▶, «Hoy», «Fin de <mes anterior>»; entre `EFE_EMPAREJA` y hoy) y dice, por persona: lo cobrado en efectivo en el mes hasta ese día,
+  lo retirado (con «↩️ era de antes» y «⚠️ no tapa ningún cobro»), lo que tenía **sin recoger al cierre**, lo de meses anteriores (🔒 si es de un mes
+  cerrado) y **cuándo se recogió** después (o «⏳ falta Bs X» hoy). Tocar a una persona: sus cobros sin recoger ese día (lo de un mes cerrado plegado),
+  el **día por día** del mes y sus retiros; un cobro abre la venta con «← Volver al efectivo a una fecha» (`POR_COBRAR_VOLVER.origen==='efd'`).
+  📋 Copiar (texto para WhatsApp) y ⬇️ Excel (`efectivo-al-<día>.xlsx`: «Al dd-mm», «Sin recoger», «Dia por dia»). Los que solo tienen lo de un mes
+  cerrado van plegados («🔒 N personas más… ▸ mostrar», `EFD.cerr`). Solo mira.
+- **La cuenta**: la MISMA del Cuadre (`efePareo`). Los retiros se emparejan en orden de fecha y hora, así que lo que había al cierre del día D es el
+  emparejamiento cortado en los retiros de hasta D: por cobro, `m − Σ c.de[x.f ≤ D]` (`efdDatos`, `efdDias`). No hay otra cuenta ni nada guardado:
+  hoy da EXACTO «Le queda en la mano» del Cuadre (con la planilla real del 09/11: Fabián 10.602, Fernando 5.455, Mauricio 4.160, Juan Pablo 1.580).
+  ⚠️ El panel no guarda cuándo se ANOTÓ cada cobro: uno cargado después con una fecha vieja cuenta en su fecha (la ventana lo dice). Si algún día
+  hace falta «lo que decía el panel ese día» tal cual, hay que guardar una foto diaria (como `__pry_hist__`); hoy no.
+- Con la planilla real (09/11): al 05/11 había 13.200 de noviembre sin recoger (Juan Pablo 5.490, Mauricio 3.290, Fernando 2.560, Luis Pierre 1.860),
+  todo recogido entre el 06 y el 09/11. ⚠️ En el chat le dije al dueño «Bs 103.699» sin recoger al 01/11 sumando a mano; la cuenta da **99.699**.
+- Pruebas: `tests/test_efectivo_fecha.js` (27; los datos de `test_efe_pareo`, reloj el 09/11 19:00): por persona y día, hoy = el Cuadre, el día por
+  día = la tabla de cada día, la pantalla, volver, ◀ ▶, plegado, Copiar y Excel.
+
 ### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; el dueño lo IMPLEMENTÓ el 09/11 (contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; la tarjeta de Isabel ya no sale) y dijo «publica»: página 2026-11-09-c PUBLICADA 09/11 ~15:56 de Bolivia, `main` = `eb21cdf`)
 - **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
   saludo («Gracias por comunicarte a colchones HEAVEN MIA PLAZA. Mi nombre es ISABEL…»). El bot no sabía que ese número era del equipo: fila
