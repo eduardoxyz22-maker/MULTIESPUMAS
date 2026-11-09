@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pc — 🚀 LA 07-f IMPLEMENTADA Y LA PÁGINA 2026-11-09-a (09/11; dueño: *«6. publica, ya subi el gs.»*, el paso 6 de la lista del lunes; PUBLICADA 09/11 ~10:14 de Bolivia, `main` = `9c78e8f`)
+### §4pc — 🚀 LA 07-f IMPLEMENTADA Y LA PÁGINA 2026-11-09-a (09/11; dueño: *«6. publica, ya subi el gs.»*, el paso 6 de la lista del lunes; PUBLICADA 09/11 ~10:14 de Bolivia, `main` = `9c78e8f`; Pages: corrida 51 de «Publicar el panel», achicado y publicado a las 10:15)
 - **El servidor**: el dueño pegó la 07-f del enlace fijo `7b7cb6e39931d7637fa88f48abe19e1bd1b233aa` (8.059 líneas) e implementó. Verificado a las
   10:01 de Bolivia con una lectura (`action:'list'`, la de `cargar_pedidos.py`): contesta `version: 2026-11-07-f` (1.842 filas). Volver atrás:
   ✏️ a la versión anotada Y pegar la 07-e de `1eb5c5816f7af1c48dc97ca887c31819157cd0aa` (6.938 líneas).
