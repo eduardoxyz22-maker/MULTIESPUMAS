@@ -17377,6 +17377,8 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   octubre se lleva 11.590 → 3.380; el 05/11 6.480 (5.490 de noviembre + 990 de octubre que un retiro tapó el 06/11); el 06/11 0; el 07/11 1.580.
   ⚠️ En el chat le dije al dueño «Bs 103.699» sin recoger al 01/11 sumando a mano; la cuenta da **99.699**.
 - Pruebas: `tests/test_efectivo_fecha.js` (36; los datos de `test_efe_pareo`, reloj el 09/11 19:00).
+- Batería (09/11, `2cf28f5`): 354 suites, 11.167 bien; 2 rojas por la máquina cargada (`test_actualizar_espera` 11/3 y `test_teclado_320`
+  14/1): solas, 14/0 y 15/0. Página para el dueño con capturas (clientes inventados) y pruebas: https://claude.ai/artifact/1RKmnxVzoPJpHhYePdV1Bv
 
 ### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; el dueño lo IMPLEMENTÓ el 09/11 (contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; la tarjeta de Isabel ya no sale) y dijo «publica»: página 2026-11-09-c PUBLICADA 09/11 ~15:56 de Bolivia, `main` = `eb21cdf`)
 - **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
