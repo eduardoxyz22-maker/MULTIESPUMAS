@@ -248,7 +248,7 @@ const preg = (props) => { const S = servidor(Object.assign({}, ON, DOS, props ||
     const W = S.ctx.WA_TIPOS;
     chk('1d WA_TIPOS: ub (al cliente) y vb (al dueño) con esas plantillas y sin respaldo', W.ub && W.ub.plantilla === 'pedir_ubicacion' && W.ub.cli === true && !W.ub.vieja &&
         W.vb && W.vb.plantilla === 'vendedoras_bajan' && !W.vb.cli && !W.vb.vieja, { ub: W.ub, vb: W.vb });
-    chk('1e la versión es la 2026-11-07-f', S.ctx.SCRIPT_VERSION === '2026-11-07-f', S.ctx.SCRIPT_VERSION);
+    chk('1e la versión es la 2026-11-07-f o una posterior', S.ctx.SCRIPT_VERSION >= '2026-11-07-f', S.ctx.SCRIPT_VERSION);
   });
 
   seccion('2. 13 A · el bot pide la ubicación 2 días antes, a las 10:00', () => {
