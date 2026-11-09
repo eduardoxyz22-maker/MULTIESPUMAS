@@ -1455,7 +1455,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
-- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; en la rama, lo implementa el dueño): **13 A** `pedir_ubicacion` a las 10:00 al
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
   cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, solo el martes: el del lunes lo cubre el recordatorio, §4pa; domingo nada), una vez
   por pedido (`WA_UB_PEDIDA`), con `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo
   de su mes pasado a esta altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
@@ -1632,7 +1632,7 @@ que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira segu
 desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
-**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, que el dueño implementa el lunes 09/11): 🔒 `EFE_CERRADO`
+**💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, IMPLEMENTADO 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
 fecha de otro día = el final de ese día). Orden (`efeTapar` = `waEfeTapar_`): 0. los tildados al cargarlo, 1. mismo monto, 2. tira que dé justo, 3. del
@@ -1642,7 +1642,7 @@ los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
 **💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
-`.gs` 07-f del lunes 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
+`.gs` 07-f, IMPLEMENTADO 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
 `efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot
 carga el RETIRO con la fila de `filaDeRetiro` (entrega el chofer, retira «Contabilidad», FACTURADO, `ts` ahora, cobros tildados en `garantia`) con
 `doSave` adentro del candado (`waErCargar_`). «Ysrael 500» pregunta y va sin tildes; DESHACER 15 min con el sello. Solo WA_CONTABILIDAD (y WA_PRUEBA con
@@ -2244,7 +2244,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   ⚠️ **Ninguna fila del sistema es una venta**: `fueraDeConta` devuelve true para `esFilaSistema(p)` (el `__anuncio__` contaba como venta de
   Bs 0 en Ventas y «1 sin monto» en Proyección). Una fila del sistema NUEVA va en `esFilaSistema`.
 - 🎯 **Metas por marca**: muestra para el dueño (https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj), nada hecho en el panel todavía.
-- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; en la rama, se publica con la 07-f): debajo de las fichas de
+- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a): debajo de las fichas de
   marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = la de quien vendió en ESE
   MES, `sucursalDeVendedor(v, ym+'-01')`: cada vendedor entero en su tienda y la suma da el equipo; ⚠️ NO por el día de carga: el dueño lo vio
   mal, «están mal los nombres de vendedores por sucursal»). Andrea y Fabián se
@@ -2765,7 +2765,7 @@ sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran p
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 📥 **Cada pedido que carga, un WhatsApp al dueño para subirlo al TR4** (§4oy, 08/11; dueño: *«un mensaje únicamente a mí con los datos del pedido…
-y recordarme de que lo debo subir al TR4»*; va en el `.gs` 07-f): `cargar_pedidos.py` guarda con `tr4:1` → solo un pedido NUEVO → plantilla
+y recordarme de que lo debo subir al TR4»*; `.gs` 07-f IMPLEMENTADO 09/11): `cargar_pedidos.py` guarda con `tr4:1` → solo un pedido NUEVO → plantilla
 `pedido_correo_tr4` al PRIMERO de WA_DUENO (`cfg.duenoEfe`, el jefe no), con N° del panel y del día, cliente, su número (nota u «OP-…»), productos
 con código/cantidad/precio, total y entrega (`waTr4Params_`). `tests/test_wa_tr4.js`.
 
