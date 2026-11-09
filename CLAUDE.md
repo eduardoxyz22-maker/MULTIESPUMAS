@@ -1128,6 +1128,12 @@ coincide (`fichaContras`, ⛔) en «Antes de cargar» con etiquetas para tildar 
 (`me_ficha_vista`) y cambios por renglón; «🧭 Qué hacer» en una línea; los botones de dónde sale A LA VISTA en cada producto (`prodBtnsHtml(…,true)`:
 «✔ PTF»); lo de tienda SOLO en la línea de los bultos; Dónde + Camión a la derecha; la tira del stock abajo (sin «Qué quiere decir cada botón»).
 ⚠️ No volver a esconder los botones de los productos ni a repetir lo de tienda. `tests/test_ficha_nota.js`.
+✂️ **«Ya se entregó en tienda» con medida y cantidad** (§4pd, 09/11, PUBLICADO 09/11, versión 2026-11-09-b; dueño: *«marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA
+MEDIDA»*): `fichaNoLlevar` (desde `fichaNota`) lee por renglón y viñeta (el encabezado «ENTREGADOS EN TIENDA:» vale para las viñetas), no corta en el
+«.» de «2.5», filtra por la MEDIDA (`flNlMedida`) y la CANTIDAD (menos que lo del pedido y sin un renglón justo → `N.noLlevarDuda` en «⛔», sin tachar),
+y «LAS ALMOHADAS» = la familia entera salvo «DE/PARA COLCHON» u otro producto de la lista (`flNlQual`). El renglón dice el motivo (`N.noLlevarPor`).
+⚠️ Probar un cambio acá contra las notas reales (copia local) antes de publicar: el 09/11 la primera versión tachaba el colchón por «PROTECTOR DE
+COLCHON». `tests/test_ficha_no_llevar.js` (20).
 **🕐 + ✨ (§4mc, 24/10, PUBLICADA `1816a4a`)**: la etiqueta de la hora sale de `fichaNota` (UNA lectura: «de 11 a 12», «a las 12:00», «después del medio día»…);
 cada producto dice «Stock para este pedido: …» con «💡 Marcar…» y «✨ Marcar los N como dice el stock» (`stockAsignar` + `revStkMarcarLinea`, la misma
 de «Aplicar»; lo marcado a mano no se toca); `fichaAcomodar` pone Dónde y Camión lado a lado en un pedido corto; la nota sin nada para tildar va
@@ -1455,7 +1461,7 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   tomado por otra vuelta espera entero; lo que Claude contestó va en la columna **P** (la J es de Meta). `waAnotar_` va con `appendRow`.
   🎙️ **Un audio o un video solo** (§4oq, `.gs` `2026-11-07-d` IMPLEMENTADO 07/11, página 07-f PUBLICADA `63b947d`, dueño: *«debería recordarle que sos un bot… de manera cordial y que entiendan»*):
   la regla 9 le pide a Claude decir que es un asistente automático (un bot) y dar el contacto; si no lo dice (`iaDiceBot_`), sale `iaMedioTxt_`.
-- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
+- **📍📉💬 `.gs` `2026-11-07-f`** (§4ou, dueño: *«13 A, 25 C, 26 A con 20%»*; IMPLEMENTADO 09/11 por el dueño, contesta `2026-11-07-f`, enlace fijo `7b7cb6e…`, 8.059 líneas; página 2026-11-09-a PUBLICADA `9c78e8f`; volver atrás: ✏️ a la versión anotada Y pegar la 07-e de `1eb5c58…`, 6.938 líneas): **13 A** `pedir_ubicacion` a las 10:00 al
   cliente de cada pedido SIN pin que se entrega en 2 días (el sábado, solo el martes: el del lunes lo cubre el recordatorio, §4pa; domingo nada), una vez
   por pedido (`WA_UB_PEDIDA`), con `waNoCliente_`. **26 A** `vendedoras_bajan` el lunes 08:00 (desde el día 7) a todos los de WA_DUENO: más de 20 % abajo
   de su mes pasado a esta altura = el MoM de Proyección (`waVbDatos_` copia `pryVentas`/`pryCargadaAl`/`pryMomDe`: si cambian en la página, cambian acá;
@@ -2244,7 +2250,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   ⚠️ **Ninguna fila del sistema es una venta**: `fueraDeConta` devuelve true para `esFilaSistema(p)` (el `__anuncio__` contaba como venta de
   Bs 0 en Ventas y «1 sin monto» en Proyección). Una fila del sistema NUEVA va en `esFilaSistema`.
 - 🎯 **Metas por marca**: muestra para el dueño (https://claude.ai/artifact/5btePeM2nYNDbWdrYhuiaj), nada hecho en el panel todavía.
-- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a): debajo de las fichas de
+- **🏬 Por tienda y 📅 la venta que cuenta en el mes en que se cargó** (§4pb, 08/11; PUBLICADO 09/11 con la 07-f, versión 2026-11-09-a, `9c78e8f`): debajo de las fichas de
   marca, una ficha por tienda con el MISMO diseño (`cxPryTiendas`; cada venta lleva su tienda en `pryVentas` → `st` = la de quien vendió en ESE
   MES, `sucursalDeVendedor(v, ym+'-01')`: cada vendedor entero en su tienda y la suma da el equipo; ⚠️ NO por el día de carga: el dueño lo vio
   mal, «están mal los nombres de vendedores por sucursal»). Andrea y Fabián se

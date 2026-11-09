@@ -44235,7 +44235,8 @@ function fichaHayTxt(l){
 function fichaSugUsarStock(id, cual){
   var p=findById(id); if(!p) return;
   var S=fichaSugStock(p, true); if(!S){ toast('No hay propuesta del stock para este pedido.','err'); return; }
-  var ls=S.g.lineas.filter(function(l){ return l.cambia && !l.sinContar && (cual==='todo' ? fichaSugAuto(l) : String(l.i)===String(cual)); });
+  var NL=cual==='todo' ? fichaNota(p).noLlevar : [];   // (09/11) «Marcar los N» no toca lo que la nota dice que ya se entregó
+  var ls=S.g.lineas.filter(function(l){ return l.cambia && !l.sinContar && (cual==='todo' ? (fichaSugAuto(l) && NL.indexOf(l.i)<0) : String(l.i)===String(cual)); });
   if(!ls.length){ reabrirFicha(id); return; }
   var seQuito=false;
   ls.forEach(function(l){ var x=(p.productos||[])[l.i]; if(!x) return; if(x.chk==='no' && l.ahora!=='no') seQuito=true; revStkMarcarLinea(x, l); });
@@ -44258,7 +44259,7 @@ function fichaProdsHtml(p, N, S){
     var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
     return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
-      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que ya se entregó</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div>'+
+      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que '+esc((N.noLlevarPor&&N.noLlevarPor[ix])||'ya se entregó')+'</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div>'+
       (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+
       (S && !no && S.por[ix] ? fichaHayHtml(p, S.por[ix]) : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
   }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
@@ -44566,15 +44567,8 @@ function fichaNota(p){
       if(Math.abs(diasEntre(p.fecha, iso))<=60) N.fechaNota=(d<10?'0':'')+d+'/'+(m<10?'0':'')+m;
     }
   }
-  // ✂️ lo que la nota dice que NO se lleva («las ALM NASA ya se entregaron en tienda, solo llevar las de FIBRA»)
-  var GEN=['COLCHON','COLCHONES','ALMOHADA','ALMOHADAS','ALM','SOMIER','SOMIERES','PLAZAS','PLAZA','HEAVEN','SUENA','CON','PARA','LAS','LOS','DOS','UNA','UNO'];
-  T.split(/[.;\n]|\bSOLO\b|\bPERO\b/).forEach(function(fr){
-    if(!/YA SE ENTREG|YA ENTREG|SE ENTREGO EN TIENDA|NO LLEVAR|NO SE LLEVA|SALE DE TIENDA|SALDRA DE TIENDA|ENTREGADO EN TIENDA/.test(fr)) return;
-    ((p&&p.productos)||[]).forEach(function(x, ix){
-      var pal=flMay(x.desc).split(/[^A-Z0-9]+/).filter(function(w){ return w.length>=3 && GEN.indexOf(w)<0 && !/^\d+$/.test(w); });
-      if(pal.some(function(w){ return new RegExp('\\b'+w+'\\b').test(fr); }) && N.noLlevar.indexOf(ix)<0) N.noLlevar.push(ix);
-    });
-  });
+  // ✂️ lo que la nota dice que NO se lleva («las ALM NASA ya se entregaron en tienda, solo llevar las de FIBRA»): fichaNoLlevar
+  fichaNoLlevar(p, sinUrl, N);
   // 🧹 la nota limpia
   var L=crudo.replace(/https?:\/\/\S+/g,' ')
     .replace(/·?\s*Importado del Excel de ROHO/gi,' ')
@@ -44585,10 +44579,127 @@ function fichaNota(p){
   N.limpio=L;
   return N;
 }
+/* ✂️ Lo que la nota dice que NO se lleva (ya se entregó en tienda, «no llevar», sale de tienda) → `N.noLlevar` (renglones) y, si no se
+   sabe cuál, `N.noLlevarDuda` (textos para «⛔»).
+   (09/11, dueño, con la ficha del 11-077: *«el bot marca LOS 2 COLCHONES ENTREGADOS si la nota dice claramente 1 y INDICA LA MEDIDA»*;
+   el pedido tenía un TITANIO ICE 200x200 y otro 160x190, y la nota «ENTREGADOS EN TIENDA: * LAS 4 ALMOHADAS YA SE ENTREGARON EN TIENDA
+   * 1 COLCHON TITANIO ICE DE 2.5 PLZ»). Antes tachaba los dos colchones y ninguna almohada: el «.» de «2.5» cortaba la frase, los
+   renglones y las viñetas eran una sola frase, no miraba ni la medida ni la cantidad, y «ALMOHADA» a secas es una palabra genérica.
+   · FRASES: renglón, «.» que no está entre números, «;», viñeta (*, •, -), SOLO, PERO. Un encabezado que dice que se entregó y termina
+     en «:» («ENTREGADOS EN TIENDA:») vale para las viñetas que siguen.
+   · COSAS dentro de la frase («,», « Y », «+»): una cosa sin la frase de entregado la hereda de su frase, salvo que diga llevar, cargar,
+     entregar, recoger, mandar o enviar («LAS ALMOHADAS YA SE ENTREGARON, LLEVAR EL COLCHON» no tacha el colchón).
+   · Cada cosa nombra un producto por sus palabras propias (TITANIO, NASA, FIBRA); si no nombra ninguna palabra propia de los productos de
+     una FAMILIA (almohada, colchón, somier), la familia sola alcanza: «LAS 4 ALMOHADAS» = todas las almohadas.
+   · La MEDIDA de la cosa («DE 2.5 PLZ», «160X190», «2 1/2 PLAZAS») deja solo esos renglones.
+   · La CANTIDAD («1 COLCHON», «LAS 4 ALMOHADAS»): menos que lo que suman esos renglones → si UN solo renglón tiene justo esa cantidad,
+     ese; si no, no se tacha nada y se avisa en «⛔» que hay que fijarse cuál (antes se tachaban todos). */
+var FL_NL_GEN=['COLCHON','COLCHONES','ALMOHADA','ALMOHADAS','ALM','SOMIER','SOMIERES','PLAZAS','PLAZA','HEAVEN','SUENA','CON','PARA','LAS','LOS','DOS','UNA','UNO'];
+var FL_NL_DEL=/YA SE ENTREG|YA ENTREG|SE ENTREGO EN (?:LA )?TIENDA|SE ENTREGARON EN (?:LA )?TIENDA|NO LLEVAR|NO SE LLEVA|SALE DE (?:LA )?TIENDA|SALDRA DE (?:LA )?TIENDA|ENTREGAD[OA]S? EN (?:LA )?TIENDA/;
+var FL_NL_VA=/\b(?:LLEVAR|LLEVA|LLEVEN|CARGAR|ENTREGAR|RECOGER|MANDAR|ENVIAR|FALTA|FALTAN|PENDIENTE|LLAMAR|RECIBIR|RECIBE)\b/;
+var FL_NL_FAMS=[ { k:'alm', re:/\bALM(?:OHADA|OHADAS|S)?\b|\bTRAVESSEIRO/g }, { k:'som', re:/\bSOMM?IER(?:ES|S)?\b|\bBOX ?SPRING/g }, { k:'col', re:/\bCOLCHON(?:ES)?\b/g } ];
+var FL_NL_NUM={ UN:1, UNA:1, UNO:1, DOS:2, TRES:3, CUATRO:4, CINCO:5, SEIS:6 };
+function flNlFam(x){
+  if(/\bALM(?:OHADA|OHADAS)?\b|NASA|TRAVESSEIRO/.test(flMay((x&&x.desc)||''))) return 'alm';
+  var t=pryTipoProd(x); return t==='somier' ? 'som' : (t==='colchon' || t==='combo') ? 'col' : '';
+}
+/* Las palabras propias de los productos de la lista de precios, por familia (NASA, FIBRA, TITANIO, NEGRO…): si la nota nombra una que
+   el pedido no tiene («4 ALM NASA» y el pedido tiene la almohada común), habla de OTRO producto y la familia sola no alcanza. */
+var FL_NL_QUAL=null;
+function flNlQual(){
+  if(FL_NL_QUAL) return FL_NL_QUAL;
+  var Q={ alm:{}, som:{}, col:{} };
+  try{ Object.keys(CODIGOS||{}).forEach(function(k){
+    var d=CODIGOS[k] && CODIGOS[k].d; if(!d) return;
+    var f=flNlFam({ desc:d, codigo:k }); if(!Q[f]) return;
+    flMay(d).split(/[^A-Z0-9]+/).forEach(function(w){ if(w.length>=3 && FL_NL_GEN.indexOf(w)<0 && !/^\d+$/.test(w)) Q[f][w]=1; });
+  }); }catch(e){}
+  return (FL_NL_QUAL=Q);
+}
+/* ¿La cosa nombra la familia (no como «PROTECTOR DE COLCHON» / «PARA SOMIER»)? */
+function flNlNombraFam(t, re){
+  re.lastIndex=0; var m;
+  while((m=re.exec(t))){ if(!/(?:\bDE|\bPARA|P\/)\s*$/.test(t.slice(0, m.index))) return true; }
+  return false;
+}
+/* La medida que nombra un pedazo de la nota (cm o plazas), o ''. El decimal viene protegido con «․» (no corta la frase). */
+function flNlMedida(t){
+  var s=String(t||'').replace(/․/g,'.');
+  var m=s.match(/(\d{2,3})\s*[X*]\s*(\d{2,3})/); if(m) return m[1]+'x'+m[2];
+  var q=s.match(/(?:^|[^\d.])(\d)(?:\s+1\/2|\s*½|\.(\d))?\s*(?:PLZ|PLAZAS?|PL)\b/);
+  if(!q) return '';
+  return medidaPlzNum(q[1]+(q[2]!==undefined ? '.'+q[2] : (/1\/2|½/.test(q[0]) ? '.5' : '')));
+}
+function flNlPor(t){ return /SALE DE|SALDRA DE/.test(t) ? 'sale de tienda' : /NO LLEVAR|NO SE LLEVA/.test(t) ? 'no hay que llevarlo' : 'ya se entregó'; }
+function fichaNoLlevar(p, texto, N){
+  var prods=(p&&p.productos)||[], dudas=[], por={};
+  var info=prods.map(function(x){
+    return { fam:flNlFam(x), cant:Number(x.cant)||1, med:String(x.medida||''), desc:String(x.desc||''),
+             pal:flMay(x.desc).split(/[^A-Z0-9]+/).filter(function(w){ return w.length>=3 && FL_NL_GEN.indexOf(w)<0 && !/^\d+$/.test(w); }) };
+  });
+  var tiene=function(t, w){ return new RegExp('\\b'+w+'\\b').test(t); };
+  var cosa=function(t0, motivo){
+    var t=' '+t0+' ', cand=[];
+    info.forEach(function(I, ix){ if(I.pal.some(function(w){ return tiene(t, w); })) cand.push(ix); });
+    FL_NL_FAMS.forEach(function(F){
+      if(!flNlNombraFam(t, F.re)) return;
+      var deFam=[]; info.forEach(function(I, ix){ if(I.fam===F.k) deFam.push(ix); });
+      if(deFam.some(function(ix){ return cand.indexOf(ix)>=0; })) return;      // nombró uno en particular (NASA): solo ese
+      var Q=flNlQual()[F.k]||{};
+      if(t.split(/[^A-Z0-9]+/).some(function(w){ return Q[w]; })) return;      // nombró OTRO producto de la familia
+      deFam.forEach(function(ix){ if(cand.indexOf(ix)<0) cand.push(ix); });   // la familia sola: todas las almohadas
+    });
+    var med=flNlMedida(t);
+    if(med) cand=cand.filter(function(ix){ return saldoMismaMedida(info[ix].med, med); });
+    if(!cand.length) return;
+    var pals=[]; cand.forEach(function(ix){ info[ix].pal.forEach(function(w){ if(pals.indexOf(w)<0) pals.push(w); }); });
+    var nm=t.match(new RegExp('(?:^|[^\\d\\u2024/])(\\d{1,2}|UNA?|UNO|DOS|TRES|CUATRO|CINCO|SEIS)\\s+(?:(?:LAS|LOS|EL|LA)\\s+)?(?:ALM\\w*|COLCHON\\w*|SOMM?IER\\w*'+(pals.length?('|'+pals.join('|')):'')+')\\b'));
+    var suma=0; cand.forEach(function(ix){ suma+=info[ix].cant; });
+    if(nm){
+      var n=FL_NL_NUM[nm[1]] || Number(nm[1]);
+      if(n>0 && n<suma){
+        var justo=cand.filter(function(ix){ return info[ix].cant===n; });
+        if(justo.length===1) cand=justo;
+        else {
+          var nom=function(ix){ return info[ix].desc.toLowerCase()+(info[ix].med?(' '+info[ix].med.replace(/x/gi,'×')):''); };
+          dudas.push(cand.length===1
+            ? ('La nota dice que '+motivo+' '+n+' de los '+suma+' «'+nom(cand[0])+'»: se carga solo '+(suma-n)+'.')
+            : ('La nota dice que '+motivo+' «'+t0.replace(/․/g,'.').trim().toLowerCase()+'» y el pedido tiene '+suma+' así ('+
+                cand.map(function(ix){ return info[ix].cant+' '+nom(ix); }).join(', ')+'): fijate cuál no se lleva.'));
+          return;
+        }
+      }
+    }
+    cand.forEach(function(ix){ if(N.noLlevar.indexOf(ix)<0){ N.noLlevar.push(ix); por[ix]=motivo; } });
+  };
+  var T=' '+flMay(String(texto||'').replace(/\r/g,'').replace(/\n/g,' ¶ '))+' ';
+  T=T.replace(/(\d)[.,](\d)/g,'$1․$2').replace(/\s*[*•]\s*/g,' ¶* ');
+  var ctx=false, ctxPor='';
+  var PARTE=/,|\bY\b|\+|\(|\)|=|\s-{1,2}\s/;
+  // una cosa SIN la frase de entregado la hereda solo si es corta y no dice otra acción («…a recibir su colchón (NO LLEVAR LAS ALMOHADAS)»)
+  var hereda=function(s){ var w=s.trim().split(/\s+/).filter(Boolean); return w.length && w.length<=9 && !FL_NL_VA.test(s.replace(/\bNO (?:SE )?LLEV\w*/g,' ')); };
+  T.split(/¶|\.|;|\bSOLO\b|\bPERO\b/).forEach(function(f){
+    var c=f.replace(/\s+/g,' ').trim(); if(!c) return;
+    var bul=/^[*•\-]/.test(c); if(bul) c=c.replace(/^[*•\-]+\s*/,'');
+    if(!bul) ctx=false;
+    var del=FL_NL_DEL.test(c), hd=c.indexOf(':'), head=hd>=0 ? c.slice(0,hd) : c, resto=hd>=0 ? c.slice(hd+1).trim() : '';
+    if(!bul && del && hd>=0 && !resto){ ctx=true; ctxPor=flNlPor(c); return; }      // «ENTREGADOS EN TIENDA:» y la lista abajo
+    if(!del && !(bul && ctx)) return;
+    if(hd>=0 && FL_NL_DEL.test(head) && resto){ resto.split(PARTE).forEach(function(s){ cosa(s, flNlPor(head)); }); return; }   // «ENTREGADO EN TIENDA: 4 ALMOHADAS Y …»
+    var dp=del ? flNlPor(c) : ctxPor;
+    c.split(PARTE).forEach(function(s){
+      if(FL_NL_DEL.test(s)) cosa(s, flNlPor(s));
+      else if(hereda(s)) cosa(s, dp);
+    });
+  });
+  N.noLlevar.sort(function(a,b){ return a-b; });
+  N.noLlevarDuda=dudas; N.noLlevarPor=por;
+}
 /* ⛔ 2 · Lo que la nota dice y el pedido NO (rojo, arriba). */
 function fichaContras(p, N){
   var c=[]; if(!p || p.entregado) return c;
   if(N.noArmar) c.push('La nota dice «'+N.noArmarTxt.toLowerCase()+'»: confirmá antes de cargarlo.');
+  (N.noLlevarDuda||[]).forEach(function(t){ c.push(t); });
   var tu=p.turno ? normTurno(p.turno) : '';
   if(N.horaT && tu && N.horaT!==tu) c.push('La nota dice «'+N.horaTxt.toLowerCase()+'» y el pedido está en el turno de la '+(tu==='PM'?'TARDE':'MAÑANA')+'.');
   if(N.fechaNota && p.fecha && N.fechaNota!==fmtFechaCorta(p.fecha)) c.push('La nota habla del '+N.fechaNota+' y la entrega está para el '+fmtFechaCorta(p.fecha)+'.');
@@ -44732,7 +44843,7 @@ function showPedidoModal(id){
       '</div></div>';
   var obs=String(p.observaciones||'').trim();
   // 📝 «Antes de cargar»: lo que no coincide (rojo) + lo que falta (ámbar) + las etiquetas para tildar + la nota (plegada si ya se leyó en etiquetas)
-  var leida=chips.length || N.recibe || N.hora || N.llamar || N.cobrar || N.noLlevar.length;
+  var leida=chips.length || N.recibe || N.hora || N.llamar || N.cobrar || N.noLlevar.length || (N.noLlevarDuda||[]).length;
   var notaHtml=!obs ? '' : (leida
       ? ('<details class="fl-leer"><summary>📝 Leer la nota completa</summary><div class="x">'+esc(N.limpio||N.crudo)+'</div>'+
           (N.limpio!==N.crudo?('<div class="fl-orig">Como la escribió el vendedor: '+esc(N.crudo)+'</div>'):'')+'</details>')
@@ -44769,7 +44880,7 @@ function showPedidoModal(id){
     '</div>');
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
-  var S=fichaSugStock(p), nAuto=S ? S.g.lineas.filter(fichaSugAuto).length : 0;
+  var S=fichaSugStock(p), nAuto=S ? S.g.lineas.filter(function(l){ return fichaSugAuto(l) && N.noLlevar.indexOf(l.i)<0; }).length : 0;   // (09/11) lo que no se lleva no se marca
   var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde'+
         (nAuto ? ('<button type="button" class="fl-auto" onclick="fichaSugUsarStock(\''+pid+'\',\'todo\')" title="Marca lo que está sin marcar o en «✗ no hay» como dice la 🤖 Revisión automática">✨ Marcar '+(nAuto===1?'el producto':('los '+nAuto))+' como dice el stock</button>') : '')+
       '</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N, S)+
@@ -52281,7 +52392,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-09-a';
+var PANEL_V='2026-11-09-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
