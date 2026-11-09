@@ -8,7 +8,8 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
 
 1. Buscar en Gmail (`search_threads`) los correos de los **últimos 3 días** de:
    - `from:vvargas@multicenter.com` (Multicenter, asunto «PEDIDO MULTICENTER - MULTIESPUMAS»)
-   - `from:jcarlosarce78@gmail.com` (Juan Carlos Arce → José Carlos Copacaba, asunto «PEDIDO ARCE-JOSE CARLOS COPACABA…»)
+   - `from:jcarlosarce78@gmail.com` (Juan Carlos Arce → José Carlos Copacaba, asunto «PEDIDO ARCE-JOSE CARLOS COPACABA…», y Luis Franco,
+     «PEDIDO ARCE-LUIS FRANCO-VILLAMONTES»: ver abajo)
    - `from:yrojas@gruporoda.com` y `from:csejas@gruporoda.com` (ROHO: Yessica Rojas y Christopher Sejas)
    Leer cada hilo ENTERO (`get_thread`, PLAIN_TEXT): el texto trae datos que el PDF no tiene (quién recibe, fecha, «pendiente de coordinar»).
    ⚠️ Los correos de Flavia Ordoñez (fordonez@) con «OC del reporte de entregas» NO son pedidos nuevos: no se cargan.
@@ -45,6 +46,13 @@ Todos van a nombre de **Eduardo Añez**, sin cobro (`saldo` = total, a crédito)
 | observaciones | `A CRÉDITO — DEBE Bs X. OC Multicenter N (sucursal). ENTREGA A DOMICILIO: recibe …, cel. …` | `Pedido OP-… de JOSE CARLOS COPACABA (CIUDAD), del dd/mm, mandado por Juan Carlos Arce. «PUESTOS EN TRANSPORTADORA».` | Empieza con `Tienda N · OC ROHO N «descripción de la OC»` + lo del correo (coordinar con Flavia la ventana horaria) |
 
 Domingo no hay camión; el sábado solo a la mañana.
+
+👤 **Juan Carlos Arce manda también los de LUIS FRANCO (Villamontes, Tarija)** (09/11, asunto «PEDIDO ARCE-LUIS FRANCO-VILLAMONTES», PDF
+«PEDIDO LUIS FRANCO dd-mm-aa», misma numeración «OP-NN-MM-AA» que Copacaba): se arma IGUAL que Copacaba con `cliente`
+`LUIS FRANCO VILLAMONTES`, `facturarA` `LUIS FRANCO`, `direccion` `TRANSPORTADORA ZONA BIMODAL — enviar a VILLAMONTES (TARIJA)`, el
+mismo celular de Copacaba, zona `BIMODAL`, la misma fecha por el plazo de fábrica. Es mayorista: el stock no lo cuenta como demanda (`STOCK_CLIENTES_FUERA`),
+eso ya lo hace el panel solo. Sus «COLT89»/«COLT90» = COLT0089/COLT0090 «COLCHON SEMIORTOPEDICO 22 CM» 105x190/140x190 (están en el
+histórico de ventas, no en la lista de precios). Primero cargado: 11-083 (OP-02-11-26).
 
 ## Productos: el nombre manda
 
