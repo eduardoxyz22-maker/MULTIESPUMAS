@@ -17369,7 +17369,9 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   `herramientas/pedidos_correo/` sigue solo en la rama.
 - **Plantillas**: la 07-f trae cuatro nuevas (`efectivo_del_dia_boton`, `pedido_correo_tr4`, `pedir_ubicacion`, `vendedoras_bajan`); salen recién
   con Meta aprobándolas (`crearPlantillasWhatsApp`). Sin aprobar: el efectivo sale con `efectivo_del_dia` sin botón; las otras tres no salen.
-- Batería: corriendo al anotar esto (se completa al terminar). Sola, `test_adelanto` 14/0; `test_actualizar_espera` (del dashboard, no cambió) falla con la máquina cargada, como siempre.
+- Batería (09/11 10:00-10:40): 351 suites, 11.094 comprobaciones; 2 rojas con la máquina cargada que solas dan bien (`test_adelanto` 14/0,
+  `test_actualizar_espera` 14/0). En la copia de `main`: version_nueva 27, pry_tiendas 27, venta_mes 26, servidor 414, wa_13_25_26 103, todas sin rojas
+  (`test_achicar` se salta sin esbuild: lo achica el workflow de Pages).
 
 ### §4pb — 🏬 PROYECCIÓN «POR TIENDA» Y 📅 LA VENTA QUE CUENTA EN EL MES EN QUE SE CARGÓ (08/11; dueño, sobre Andrea y Fabián: *«si ya aparecen como los demás al cargar sus ventas o entregas, está bien que sea igual que los demás. Sólo añadiría lo de por tienda»* + la captura de las fichas de marca: *«Esa»*; y *«marcar ventas puntuales que cuentan en octubre, pero se entregan en noviembre… no necesito ver todas las listas»*; PÁGINA PUBLICADA 09/11 con la 07-f, versión 2026-11-09-a (§4pc); el `.gs` 07-f IMPLEMENTADO 09/11 por el dueño, enlace fijo `7b7cb6e39931d7637fa88f48abe19e1bd1b233aa` (8.059 líneas))
 - **Los nuevos, igual que todos**: Andrea Orias y Fabián Godoy se proyectan con la regla de siempre (§4gt: hasta hoy + máx(agendado, ritmo ×
