@@ -46422,8 +46422,7 @@ function cierreEntDia(id, v){
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
    que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
-function cierreEntMarcar(p, quien, dia, ts){
-  entDonde('✅ Cierre de entregas'+(quien?(' (cierra '+quien+')'):''));
+function cierreEntMarcar(p, quien, dia, ts){ entDonde('✅ Cierre de entregas'+(quien?(' (cierra '+quien+')'):''));   // 🧾 (10/11) quién tocó el «Entregado»
   p.entregado=true; atcAlMarcarEntregado(p); if(typeof sonidoPanel==='function') sonidoPanel('ding');   // 🔔 (§4ni) una vez aunque sean muchos
   (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
 }

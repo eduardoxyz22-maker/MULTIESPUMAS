@@ -17378,6 +17378,8 @@ Cierre de entregas con quién cierra, cambio de fecha, Deshacer; si no, la pesta
   saltea (Deshacer suma «sacado», no borra «puesto»); `heredarMarcas` lo pasa a todos los renglones.
 - Se ve en la ficha de Administración (debajo de los interruptores) y en la de Mis pedidos (`entHistHtml`: «🧾 Quién tocó «Entregado» (N) · último…»,
   desplegable); si el último renglón no coincide con el ✅ de ahora, avisa que lo cambió un aparato sin actualizar.
+- Batería: 350 suites, seis rojas por carga que pasan solas, y `test_temas_mejoras` §5 (busca `sonidoPanel('ding')` en la línea siguiente a `function
+  cierreEntMarcar`): el `entDonde` del cierre va en la misma línea de la función.
 - En Playwright apagado salvo `ENT_HIST_PRUEBA`. `tests/test_entregado_quien.js` (14). ⚠️ Un camino NUEVO que cambie `entregado` llama a
   `entDonde('…')` antes (si no, dice la pestaña) y guarda por `guardarDurable`/`apiSave` (si no, no queda anotado).
 
