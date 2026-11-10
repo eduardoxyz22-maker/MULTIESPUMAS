@@ -832,7 +832,7 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
   (`stockInfoChips`; el texto sigue empezando con «corte del …»; en el celular, el texto de siempre).
 - 🪄 **168**: `openModal` → `naceAbrir` (crece desde lo tocado, `Element.animate`) y `closeModal` → `naceCerrar` (contorno `.nace-eco`). Nunca
   cambia cuándo abre o cierra. `NACE_PRUEBA`. ⚠️ La entrada `pop` de `.modal` se apaga al abrir y NO se repone con la ventana a la vista (reponerla
-  la corría de nuevo: el «doble parpadeo» del 10/11, página 2026-11-10-e); la repone la próxima apertura. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
+  la corría de nuevo: el «doble parpadeo» del 10/11, página 2026-11-10-e, PUBLICADA `5a9d06f`); la repone la próxima apertura. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
   (`me_bienv`). `BIENV_PRUEBA`.
 - 🏁 **166 carrera** (`pryCarreraDatos`: las ventas de «Por vendedor» en su día de carga; el último día = lo «vendido» de Proyección) y 🟩 **167
   calendario** (`pryCalorDatos`: vendido por la CARGA, entregas agendadas, cobrado por la fecha del pago; el pie avisa que no es el total de la
@@ -1882,9 +1882,12 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   tabla y lo aclara al lado.
   · **«Productos del mes» muestra lo conocido** con «Incompleto» en vez de «Sin dato» (§4fw,
   `productos-mes.js`, `?v=20260923a`).
-  · ⚠️ **Esperan al dueño**: «Entrega» corta por la fecha PROGRAMADA (no hay campo con el día
-  real de entrega), y el `SUMA` de la columna MONTO del Excel del Cuadre. El SALDO crudo del
+  · ⚠️ **Espera al dueño**: «Entrega» corta por la fecha PROGRAMADA (se le explicó el 10/11 y quedó como está). El SALDO crudo del
   Excel se deja **a propósito** (es lo que hace cerrar cada fila desde §4fm).
+  · 📊 **El Excel del Cuadre va en DOS hojas** (§4pk, 10/11, dueño: *«si arregla lo del excel»*; en la rama, versión 2026-11-10-f): «Cuadre»
+  = SOLO los pagos (la columna MONTO se suma entera; ⚠️ ni una fila más ahí, ni total ni nota) y «Cierre y efectivo» (`CUADRE_HOJA_CIERRE`)
+  = cierre por forma de pago (con encabezado, columnas A-E), efectivo cobrado vs. retirado y detalle de los retiros. En el cierre del mes la
+  2ª se llama «Cuadre (cierre)». Una prueba que lea el cierre o el efectivo del Excel junta las hojas. `test_rev2_cuadre` §8.
 - **💰 Los ocho botones de plata (§4fy)**, `tests/test_botones.js` (50; 42 rojos contra el panel viejo):
   · **El chofer toca SOLO lo suyo**: `cobroDeLaPuerta(c)` = sin recibo, sin imagen, con monto, ni
   anticipo ni flete ni `sinMonto`. ↺ y ✕ de su ficha no pasan de ahí (antes ↺ hacía

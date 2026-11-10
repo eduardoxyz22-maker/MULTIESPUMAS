@@ -17357,6 +17357,29 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pk — 📊 EL EXCEL DEL CUADRE EN DOS HOJAS: LA COLUMNA MONTO YA SE PUEDE SUMAR (10/11; dueño: *«si arregla lo del excel»*; en la rama, versión 2026-11-10-f, espera «publica»)
+
+Era el pendiente de §4fj→§4fw («`SUMA(columna MONTO)` del Excel del Cuadre duplica»). El Excel del Cuadre era UNA hoja: los pagos y,
+debajo, el «CIERRE POR FORMA DE PAGO» con su monto en la MISMA columna H (y desde el 07/11 también «DE LO RETIRADO, ERA DE ANTES» del
+efectivo caía en H). Seleccionar la columna en Excel daba el doble. Se le explicó al dueño con un ejemplo y dijo que lo arregle.
+
+**Qué cambió (`exportCuadre`).** El archivo trae dos hojas:
+- **«Cuadre»**: el encabezado y los pagos, NADA más (las mismas 15 columnas, sin mover ninguna). ⚠️ No agregar ahí ni una fila de total ni
+  una nota: cualquier número debajo vuelve a duplicar la suma.
+- **«Cierre y efectivo»** (`CUADRE_HOJA_CIERRE`): el cierre por forma de pago, ahora con su encabezado propio (FORMA DE PAGO · PAGOS · MONTO
+  SEGÚN EL PANEL · CONTADO (ARQUEO) · DIFERENCIA, columnas A-E; antes iba sin títulos en G-J, debajo de «BANCO / MONTO / ANTICIPO / N° NOTA»),
+  el «EFECTIVO COBRADO VS. RETIRADO» y el «DETALLE DE LOS RETIROS», igual que antes. «PAGOS» va como número.
+- El aviso al bajar dice «el cierre y el efectivo van en la 2ª hoja». En «🗂️ Bajar el cierre» del mes (`nxCierreBajar`) las hojas quedan
+  Ventas · Cuadre · **Cuadre (cierre)** · Productos · Productos (detalle).
+- Los números no cambiaron: es solo dónde va cada bloque.
+
+**Verificación.** El archivo de verdad (con `buildXlsx` real) abierto con openpyxl: dos hojas, y la suma de la columna H de «Cuadre» =
+el total de los pagos. `test_rev2_cuadre` §8 lo mide (la columna MONTO ENTERA de la hoja de pagos = 4.150, 6 filas, ningún otro número
+suelto; la 2ª hoja con sus tres bloques y el mismo total). Cambiadas a conciencia (leían el cierre en la hoja 1 o en las columnas H-J):
+`test_cuadre_alta`, `test_medias`, `test_rev2_cuadre`, `test_rev3_conta`, `test_nueve_4js` (nombres de las hojas del cierre del mes).
+
+**Sigue esperando al dueño (se le explicó el 10/11 y no lo pidió):** «Entrega agendada» corta por la fecha programada; quedó como está.
+
 ### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11 ~11:05 de Bolivia, versión 2026-11-10-d, `main` = `a7a5363`, Pages corrida 62 OK)
 
 **Qué pidió.** De la propuesta 158-173 (ya había sacado 163, 165, 169 y 170) quedan afuera 158, 160, 164 y 173; de la 162 quiere SOLO el
@@ -17426,7 +17449,7 @@ con las de las fichas de atrás (la primera captura). Ahora `pop` se apaga al ab
 la próxima apertura, que arranca con `animation=''`), y la ventana se hace sólida al 30 % del camino. ⚠️ No volver a tocar `style.animation`
 de `#modal-box` con la ventana a la vista: cualquier cambio de `none` a otra cosa vuelve a correr la entrada. La prueba miraba solo las
 animaciones de `Element.animate` y por eso no lo vio: ahora exige que al terminar no quede NINGUNA animación (`getAnimations().length===0`,
-`animationName` = `none`, opacidad 1). Página 2026-11-10-e.
+`animationName` = `none`, opacidad 1). Página 2026-11-10-e. **PUBLICADA 10/11 ~12:00 de Bolivia (dueño: «ok publicas»), `main` = `5a9d06f`.**
 
 **Lo que hay que respetar.**
 - El cielo es un velo: un tema NUEVO con luna propia tiene que esconder `.h-astro[data-luna="1"]` como Halloween y Navidad.

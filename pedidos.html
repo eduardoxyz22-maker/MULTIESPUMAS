@@ -14143,6 +14143,7 @@ function cuadreTexto(){
   return L.join('\n');
 }
 function copiarCuadre(){ copyText(cuadreTexto()); }
+var CUADRE_HOJA_CIERRE='Cierre y efectivo';   // la 2ª hoja del Excel del Cuadre (10/11): todo lo que no es un pago
 function exportCuadre(){
   var pagos=cuadrePagos(), CIE=cuadreCierre(pagos);
   // §4fz: un arqueo contado sin ningún pago detrás también es algo para bajar (la diferencia ENTERA).
@@ -14162,15 +14163,21 @@ function exportCuadre(){
                (c.metodo==='Efectivo'?pagoRecibio(c, c.p):''),
                (esEnvio(c)?'SÍ — flete, no es de la venta':'')]);
   });
+  /* 📊 (10/11, dueño: «sí, arreglá lo del Excel») Los pagos quedan SOLOS en la hoja «Cuadre»: así la columna MONTO se puede sumar entera en
+     Excel. Antes el cierre por forma de pago iba debajo, en esa misma columna (y «era de antes» del efectivo también caía ahí): seleccionar
+     la columna daba el doble. El cierre, el efectivo cobrado vs. retirado y el detalle de los retiros van en la hoja «Cierre y efectivo».
+     ⚠️ En la hoja «Cuadre» no va NINGUNA fila más (ni total ni nota): cualquier número debajo vuelve a duplicar la suma. */
+  var pagosRows=rows; rows=[];
   var arqueoOn=CIE.arqueoOn;   // con filtro por vendedora no se compara con la caja (§4ew)
-  rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO'+(arqueoOn?'':' (solo '+cuadreVendedor()+' — el arqueo se hace con Todos)'),s:H}]);
+  rows.push([{v:'CIERRE POR FORMA DE PAGO'+(arqueoOn?'':' (solo '+cuadreVendedor()+' — el arqueo se hace con Todos)'),s:H}]);
+  rows.push(['FORMA DE PAGO','PAGOS','MONTO SEGÚN EL PANEL (Bs)','CONTADO (ARQUEO)','DIFERENCIA (contado − panel)'].map(function(t){return {v:t,s:H};}));
   /* §4fz: las mismas filas que la pantalla, con el arqueo que quedó SIN pagos (§4fo) y la
      diferencia total. Antes el Excel recorría solo las formas con pagos y ese arqueo no salía. */
   CIE.filas.forEach(function(f){
     var a=f.arqueo;
-    rows.push([f.forma+(f.huerfano?' — contado a mano, SIN pagos en el período':''), '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:f.dif,t:'n',s:fc})]);
+    rows.push([f.forma+(f.huerfano?' — contado a mano, SIN pagos en el período':''), {v:f.n,t:'n'}, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:f.dif,t:'n',s:fc})]);
   });
-  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)'+(CIE.anotadas<CIE.filas.length?(' — '+CIE.anotadas+' de '+CIE.filas.length+' formas contadas'):''), '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
+  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)'+(CIE.anotadas<CIE.filas.length?(' — '+CIE.anotadas+' de '+CIE.filas.length+' formas contadas'):''), '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
   var E=cuadreEfectivo(), efe=E.filas;
   if(efe.length || E.fuera.length){
@@ -14205,13 +14212,16 @@ function exportCuadre(){
   var pe=cuadrePeriodo();
   var bytes=buildXlsx([{name:'Cuadre',
     cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20},{w:28}],
+    matrix:pagosRows},
+   {name:CUADRE_HOJA_CIERRE,
+    cols:[{w:44},{w:16},{w:26},{w:22},{w:26},{w:18},{w:22},{w:30},{w:22}],
     matrix:rows}]);
   /* 26/09: con filtro por vendedora el nombre lo dice, como el Excel de Ventas: antes se llamaba
      igual que el del equipo entero y el segundo que se bajaba se confundía con el primero. */
   var _vA=(cuadreVendedor()||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+(_vA?('-'+_vA):'')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+(CIE.huerfanos.length?(' + '+CIE.huerfanos.length+' arqueo'+(CIE.huerfanos.length===1?'':'s')+' sin pagos'):'')+
-        (rets.length?(' · '+rets.length+' retiro'+(rets.length===1?'':'s')):'')+' ✓','ok');
+        (rets.length?(' · '+rets.length+' retiro'+(rets.length===1?'':'s')):'')+' ✓ · el cierre y el efectivo van en la 2ª hoja','ok');
 }
 /* ============================================================================
    💵 RETIROS DE EFECTIVO — cuánto efectivo se le recogió a cada vendedor
@@ -53320,7 +53330,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-10-e';
+var PANEL_V='2026-11-10-f';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -55581,7 +55591,7 @@ function nxCierreBajar(){
     var ven=H.hojas.ventas.length ? H.hojas.ventas : [{ name:'Ventas', cols:[{w:40}], matrix:[[{v:'Sin ventas en '+mesNombre(mes),s:1}]] }];
     var cua=H.hojas.cuadre.length ? H.hojas.cuadre : [{ name:'Cuadre', cols:[{w:40}], matrix:[[{v:'Sin pagos ni retiros en '+mesNombre(mes),s:1}]] }];
     ven.forEach(function(h,i){ h.name=i?('Ventas '+(i+1)):'Ventas'; });
-    cua.forEach(function(h,i){ h.name=i?('Cuadre '+(i+1)):'Cuadre'; });
+    cua.forEach(function(h,i){ h.name=(h.name===CUADRE_HOJA_CIERRE)?'Cuadre (cierre)':(i?('Cuadre '+(i+1)):'Cuadre'); });   // 📊 (10/11) la 2ª hoja del Cuadre: cierre por forma de pago, efectivo y retiros
     PR.hojas.forEach(function(h){ h.name=(h.name==='Detalle')?'Productos (detalle)':'Productos'; h.cols=(h.cols||[]).map(function(w){ return typeof w==='number'?{w:w}:w; }); });
     var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
     var tag=mes+(vSel?('-'+vSel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')):'')+'-'+contaBase();
