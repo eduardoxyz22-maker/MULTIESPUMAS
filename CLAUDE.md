@@ -832,7 +832,7 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
   (`stockInfoChips`; el texto sigue empezando con «corte del …»; en el celular, el texto de siempre).
 - 🪄 **168**: `openModal` → `naceAbrir` (crece desde lo tocado, `Element.animate`) y `closeModal` → `naceCerrar` (contorno `.nace-eco`). Nunca
   cambia cuándo abre o cierra. `NACE_PRUEBA`. ⚠️ La entrada `pop` de `.modal` se apaga al abrir y NO se repone con la ventana a la vista (reponerla
-  la corría de nuevo: el «doble parpadeo» del 10/11, página 2026-11-10-e); la repone la próxima apertura. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
+  la corría de nuevo: el «doble parpadeo» del 10/11, página 2026-11-10-e, PUBLICADA `5a9d06f`); la repone la próxima apertura. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
   (`me_bienv`). `BIENV_PRUEBA`.
 - 🏁 **166 carrera** (`pryCarreraDatos`: las ventas de «Por vendedor» en su día de carga; el último día = lo «vendido» de Proyección) y 🟩 **167
   calendario** (`pryCalorDatos`: vendido por la CARGA, entregas agendadas, cobrado por la fecha del pago; el pie avisa que no es el total de la

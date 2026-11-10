@@ -17426,7 +17426,7 @@ con las de las fichas de atrás (la primera captura). Ahora `pop` se apaga al ab
 la próxima apertura, que arranca con `animation=''`), y la ventana se hace sólida al 30 % del camino. ⚠️ No volver a tocar `style.animation`
 de `#modal-box` con la ventana a la vista: cualquier cambio de `none` a otra cosa vuelve a correr la entrada. La prueba miraba solo las
 animaciones de `Element.animate` y por eso no lo vio: ahora exige que al terminar no quede NINGUNA animación (`getAnimations().length===0`,
-`animationName` = `none`, opacidad 1). Página 2026-11-10-e.
+`animationName` = `none`, opacidad 1). Página 2026-11-10-e. **PUBLICADA 10/11 ~12:00 de Bolivia (dueño: «ok publicas»), `main` = `5a9d06f`.**
 
 **Lo que hay que respetar.**
 - El cielo es un velo: un tema NUEVO con luna propia tiene que esconder `.h-astro[data-luna="1"]` como Halloween y Navidad.
