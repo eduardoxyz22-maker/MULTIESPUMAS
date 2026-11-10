@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d)
+### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11 ~11:05 de Bolivia, versión 2026-11-10-d, `main` = `a7a5363`, Pages corrida 62 OK)
 
 **Qué pidió.** De la propuesta 158-173 (ya había sacado 163, 165, 169 y 170) quedan afuera 158, 160, 164 y 173; de la 162 quiere SOLO el
 cielo según la hora sobre el encabezado de hoy (ni «depósito PTF» ni camiones nuevos). Van: 159, 161, 166, 167, 168, 171, 172 + el cielo.
@@ -17417,6 +17417,16 @@ habían quedado de 40 px (siguen de 44, §4mo: `test_estetica_4mo`); tres medida
 **Pruebas.** `tests/test_visual_4pj.js` (51; datos sintéticos, reloj clavado el 11/11): cielo, gestos, «no tapa», ATC/Stock en compu y
 celular, las ventanas (con y sin `NACE_PRUEBA`), la bienvenida (una vez por apertura), la carrera contra `proyeccionMes` y el calendario
 contra el fixture. Las de siempre de Bloki, el asistente, el anuncio, la ficha y Stock siguen verdes.
+
+**🪄 El doble parpadeo al abrir una ficha (10/11, a la hora de publicada; dueño, con dos capturas de la ficha del 11-083: *«¿por qué hace un doble
+parpadeo en abrirse la ficha?»*).** Era la 168. Para crecer desde lo tocado, `naceAbrir` apagaba la entrada de siempre de la ventana (`.modal`
+tiene `animation:pop`) y, al terminar, la REPONÍA con `box.style.animation=''`: para el navegador eso es una animación NUEVA, así que la ventana
+crecía y enseguida corría `pop` (opacidad 0 → 1): dos parpadeos. Además arrancaba al 35 % de opacidad y a medio camino sus letras se mezclaban
+con las de las fichas de atrás (la primera captura). Ahora `pop` se apaga al abrir y queda apagada mientras la ventana esté abierta (la repone
+la próxima apertura, que arranca con `animation=''`), y la ventana se hace sólida al 30 % del camino. ⚠️ No volver a tocar `style.animation`
+de `#modal-box` con la ventana a la vista: cualquier cambio de `none` a otra cosa vuelve a correr la entrada. La prueba miraba solo las
+animaciones de `Element.animate` y por eso no lo vio: ahora exige que al terminar no quede NINGUNA animación (`getAnimations().length===0`,
+`animationName` = `none`, opacidad 1). Página 2026-11-10-e.
 
 **Lo que hay que respetar.**
 - El cielo es un velo: un tema NUEVO con luna propia tiene que esconder `.h-astro[data-luna="1"]` como Halloween y Navidad.

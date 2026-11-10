@@ -821,7 +821,7 @@ Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante
 escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
 valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
-## 🎨 Las mejoras visuales 159, 161, 166, 167, 168, 171, 172 y el cielo según la hora (§4ph → §4pj, 10/11; dueño: *«me gustan todas para publicar menos 158, 160, 162, 164, 173… solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d)
+## 🎨 Las mejoras visuales 159, 161, 166, 167, 168, 171, 172 y el cielo según la hora (§4ph → §4pj, 10/11; dueño: *«me gustan todas para publicar menos 158, 160, 162, 164, 173… solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d, `a7a5363`)
 Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 163, 164, 165, 169, 170, 173 y la 162 entera salvo el cielo. Solo dibujo.
 - 🌅 **Cielo**: `hdrCieloPintar(h)` (hora de Bolivia) → `#h-cielo` + `.h-astro` (en `.h-ruta`, detrás de los edificios) con variables en `.header`
   y `data-momento`. ⚠️ Un tema con luna propia esconde `.h-astro[data-luna="1"]` (como Halloween y Navidad).
@@ -831,7 +831,8 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 - 🧹 **161**: ATC desde 1100 px con los filtros en un renglón y las fichas en una fila (`data-min="150"`); Stock con `#stock-info` en pastillas
   (`stockInfoChips`; el texto sigue empezando con «corte del …»; en el celular, el texto de siempre).
 - 🪄 **168**: `openModal` → `naceAbrir` (crece desde lo tocado, `Element.animate`) y `closeModal` → `naceCerrar` (contorno `.nace-eco`). Nunca
-  cambia cuándo abre o cierra. `NACE_PRUEBA`. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
+  cambia cuándo abre o cierra. `NACE_PRUEBA`. ⚠️ La entrada `pop` de `.modal` se apaga al abrir y NO se repone con la ventana a la vista (reponerla
+  la corría de nuevo: el «doble parpadeo» del 10/11, página 2026-11-10-e); la repone la próxima apertura. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
   (`me_bienv`). `BIENV_PRUEBA`.
 - 🏁 **166 carrera** (`pryCarreraDatos`: las ventas de «Por vendedor» en su día de carga; el último día = lo «vendido» de Proyección) y 🟩 **167
   calendario** (`pryCalorDatos`: vendido por la CARGA, entregas agendadas, cobrado por la fecha del pago; el pie avisa que no es el total de la
