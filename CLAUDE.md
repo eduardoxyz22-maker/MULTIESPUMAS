@@ -1157,6 +1157,10 @@ COLCHON». `tests/test_ficha_no_llevar.js` (24).
 ↩️ **«Lo demás / el resto ya se entregó»** (§4pi, 10/11, ficha del 11-097; EN LA RAMA, espera «publica»): «ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO
 EN TIENDA» tachaba el colchón. Ahora lo nombrado justo antes es lo que SÍ se lleva y se tacha lo otro (`FL_NL_RESTO`, `resto()`/`nombrados()` en
 `fichaNoLlevar`); sin decir qué se lleva, no tacha y avisa en «⛔». Contra las 1.108 notas reales del 09/11 no cambia ninguna otra.
+🏪 **En una REPOSICIÓN (RPT) lo «de tienda» SÍ viaja** (§4pi, 10/11, dueño y David Alba: *«se abre y solo muestra el colchón… no muestra las bolsas»*;
+EN LA RAMA): **`deTiendaNoViaja(p, x)`** = `esProdDeTienda(x)` y el pedido NO es RPT. La usan la ficha (renglones, bultos, «Qué hacer», `fichaLugarHtml(x, p)`),
+la ficha rápida y su color, «Lo del día, por lugar», `rutaSalida` y el viaje de Mis pedidos. ⚠️ Una vista NUEVA de «qué se carga» usa esa; las cuentas
+del STOCK siguen con `esProdDeTienda` (bolsas y protectores nunca son stock de fábrica). `tests/test_rpt_tienda_viaja.js` (8).
 **🕐 + ✨ (§4mc, 24/10, PUBLICADA `1816a4a`)**: la etiqueta de la hora sale de `fichaNota` (UNA lectura: «de 11 a 12», «a las 12:00», «después del medio día»…);
 cada producto dice «Stock para este pedido: …» con «💡 Marcar…» y «✨ Marcar los N como dice el stock» (`stockAsignar` + `revStkMarcarLinea`, la misma
 de «Aplicar»; lo marcado a mano no se toca); `fichaAcomodar` pone Dónde y Camión lado a lado en un pedido corto; la nota sin nada para tildar va

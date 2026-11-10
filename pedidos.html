@@ -24320,7 +24320,7 @@ function admFichaColor(p){
   if(entregaAConfirmar(p)) return '';   // 📦 (propuesta 76) sin día: ni verde ni rojo, la etiqueta dice cuándo se llama
   /* (24/10, dueño: «protectores y adicionales NO se recogen de tienda… los entregan ellos en tienda al momento de la compra,
      por más que el vendedor lo diga») Lo de tienda (`esProdDeTienda`) no cuenta para el color, esté marcado como esté. */
-  var carga=(p.productos||[]).filter(function(x){ return !esProdDeTienda(x); });
+  var carga=(p.productos||[]).filter(function(x){ return !deTiendaNoViaja(p, x); });
   if(!carga.length) return 'stock';
   p=Object.assign({}, p, { productos:carga });
   if(rowKind(p)==='nohay') return 'nohay';
@@ -24332,7 +24332,7 @@ function admFichaColor(p){
 function admFichaHtml(p, dn){
   var pid=String(p.id).replace(/'/g,"\\'"), E=admFichaEstado(p), N=dn[p.id];
   var tipo=esATC(p.oc)?'🎧 ':esRPT(p.oc)?'🏪 ':'';
-  var pr=(p.productos||[]), tienda=pr.filter(esProdDeTienda), carga=pr.filter(function(x){ return !esProdDeTienda(x); });
+  var pr=(p.productos||[]), tienda=pr.filter(function(x){ return deTiendaNoViaja(p, x); }), carga=pr.filter(function(x){ return !deTiendaNoViaja(p, x); });
   var MAX=4, filas=carga.slice(0, MAX).map(function(x){
     var tag=prodLugarTag(x) || ' <span class="lug lug-sr">sin revisar</span>';
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
@@ -33811,6 +33811,11 @@ var PROD_NO_STOCK=/^VARIOS$|^(?:A\s+)?RECOGER\b|\bTAPIZADO\b|\bDESPERDICIOS?\b|\
 /* 🔎 (19/10, §4ls verificación final, CO-5) De esas, las que dicen que el PRODUCTO todavía no está definido (el viaje del pedido en Mis
    pedidos dice «Producto por confirmar», no «📦 Mercadería»). */
 var PROD_POR_CONFIRMAR=/^POR\s+(?:CONFIRMAR|FAVOR)\b|\bMEDICION\b/;
+/* 🏪 (10/11, dueño, con la ficha de una reposición: «en las reposiciones de tienda omite los pedidos… no muestra las bolsas») Lo de
+   tienda (protectores, sábanas, bolsas…) «lo entrega la tienda» en una VENTA, y por eso la ficha de logística no lo carga (24/10). En una
+   REPOSICIÓN (RPT) es al revés: es justo lo que hay que LLEVARLE a la tienda. Todo lo que MUESTRA qué se carga usa esto; las cuentas del
+   stock siguen con `esProdDeTienda` (no son stock de fábrica en ningún caso). */
+function deTiendaNoViaja(p, x){ return esProdDeTienda(x) && !(p && esRPT(p.oc)); }
 function esProdDeTienda(x){
   var t=String((x&&x.desc)||''); if(esTextoDeTienda(t)) return true;
   // Con un código del catálogo es un producto aunque el nombre diga «VARIOS»: el código manda.
@@ -44598,11 +44603,11 @@ function eliminarDesdeCarga(id){
    camión y entrega. La venta, el cobro y la facturación quedan en «Más datos» (no se borró nada: mismas funciones, mismos botones).
    Las marcas de cada producto quedan en «✏️ Cambiar de dónde sale…»; la revisión automática las pone casi siempre. */
 var FICHA_MAS_ABIERTA=false, FICHA_MARCAS_ABIERTA=false;
-function fichaLugarHtml(x){
+function fichaLugarHtml(x, p){
   if(!x) return '';
   if(x.chk==='no') return '<span class="fl-pl no">✗ No hay</span>';
   var pa=prodPartes(x);
-  if(!pa.length && esProdDeTienda(x)) return '<span class="fl-pl sin">🛍️ De tienda</span>';   // (24/10) protectores, sábanas…: no salen de PTF ni Banzer
+  if(!pa.length && deTiendaNoViaja(p, x)) return '<span class="fl-pl sin">🛍️ De tienda</span>';   // (24/10) protectores, sábanas…: no salen de PTF ni Banzer
   if(!pa.length) return (enProduccion(x) && !x.prodR) ? '<span class="fl-pl trae">🏭 En producción'+esc(prodDondeSePide(x)?(' · '+prodLugarCorto(prodDondeSePide(x))):'')+'</span>' : '<span class="fl-pl sin">Sin revisar</span>';
   var varias=pa.length>1;
   return pa.map(function(e){
@@ -44675,14 +44680,14 @@ function fichaProdsHtml(p, N, S){
   var C=N ? fichaCambiosProd(p) : { nuevo:{}, cant:{}, quitados:[] };
   return pr.map(function(x, ix){
     // 🛍️ (24/10, dueño: «si ya lo aclarás, ¿para qué lo volvés a poner?») lo de tienda ya va en la línea de los bultos, con su medida
-    if(N && esProdDeTienda(x) && N.noLlevar.indexOf(ix)<0) return '';
+    if(N && deTiendaNoViaja(p, x) && N.noLlevar.indexOf(ix)<0) return '';
     var no=N && N.noLlevar.indexOf(ix)>=0, k=prodCorto(x), esp=false;
     try{ esp=!!(N && saldoMedidaEspecial(x)); }catch(e){}
     var cam=C.nuevo[k] ? '<span class="fl-cam">🆕 NUEVO</span>' : (C.cant[k] ? ('<span class="fl-cam">🔢 antes '+esc(C.cant[k].de)+', ahora '+esc(C.cant[k].a)+'</span>') : '');
     var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
     return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
-      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que '+esc((N.noLlevarPor&&N.noLlevarPor[ix])||'ya se entregó')+'</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x))+'</div>'+
+      (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que '+esc((N.noLlevarPor&&N.noLlevarPor[ix])||'ya se entregó')+'</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x, p))+'</div>'+
       (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+
       (S && !no && S.por[ix] ? fichaHayHtml(p, S.por[ix]) : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
   }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
@@ -45183,8 +45188,8 @@ function fichaBultos(p, N){
   ((p&&p.productos)||[]).forEach(function(x, ix){
     if(N.noLlevar.indexOf(ix)>=0) return;
     var n=Number(x.cant)||0;
-    if(esProdDeTienda(x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()+(x.medida?(' '+String(x.medida).replace(/x/gi,'×')):'')); return; }
-    u+=n; var t=pryTipoProd(x);
+    if(deTiendaNoViaja(p, x)){ tienda.push(n+' '+String(x.desc||'').toLowerCase()+(x.medida?(' '+String(x.medida).replace(/x/gi,'×')):'')); return; }
+    u+=n; var t=esProdDeTienda(x) ? '' : pryTipoProd(x);   // 🏪 (10/11) una «bolsa para colchón» de una RPT es «otro», no un colchón
     if(t==='colchon') col+=n; else if(t==='somier') som+=n; else if(t==='combo'){ col+=n; som+=n; } else if(/ALMOHAD|\bALM\b|NASA|TRAVESSEIRO/.test(flMay(x.desc))) alm+=n; else otr+=n;
   });
   var det=[]; if(col) det.push(col+' colchón'+(col===1?'':'es')); if(som) det.push(som+' somier'+(som===1?'':'es')); if(alm) det.push(alm+' almohada'+(alm===1?'':'s')); if(otr) det.push(otr+' otro'+(otr===1?'':'s'));
@@ -45196,7 +45201,7 @@ function fichaBultos(p, N){
 function fichaQueHacer(p, N, ret){
   var lug={}, orden=[];
   ((p&&p.productos)||[]).forEach(function(x, ix){
-    if(N.noLlevar.indexOf(ix)>=0 || esProdDeTienda(x)) return;
+    if(N.noLlevar.indexOf(ix)>=0 || deTiendaNoViaja(p, x)) return;
     var n=Number(x.cant)||0, pa=prodPartes(x);
     var add=function(k, u){ if(!lug[k]){ lug[k]=0; orden.push(k); } lug[k]+=u; };
     if(x.chk==='no') add('✗ sin stock', n);
@@ -46721,7 +46726,7 @@ function admLugaresDatos(f){
     var veh=vehiculoDe(p)||'sin camión';
     (p.productos||[]).forEach(function(x){
       if(!x || !(Number(x.cant)>0)) return;
-      if(esProdDeTienda(x)) return;   // (24/10, dueño) protectores y adicionales los entrega la tienda: no se cargan ni se recogen
+      if(deTiendaNoViaja(p, x)) return;   // (24/10, dueño) protectores y adicionales los entrega la tienda: no se cargan ni se recogen (en una RPT sí viajan)
       var nom=(x.desc||'')+(x.medida?(' '+x.medida):'');
       if(x.chk==='no'){ C.no.push({ t:nom, u:Number(x.cant), cli:p.cliente||'', veh:veh, id:p.id }); return; }
       var pa=prodPartes(x);
@@ -49075,7 +49080,7 @@ function mapaRutaOrden(items, desde){
 function rutaSalida(pedidos){
   var aca=false, bz=false;
   (pedidos||[]).forEach(function(p){ (p.productos||[]).forEach(function(x){
-    if(typeof esProdDeTienda==='function' && esProdDeTienda(x)) return;
+    if(typeof deTiendaNoViaja==='function' && deTiendaNoViaja(p, x)) return;
     prodPartesCarga(x).forEach(function(e){ if(e.u>0){ if(e.tipo==='sale') bz=true; else aca=true; } });
   }); });
   var P=almUbic('ptf'), B=almUbic('banzer'), deps=[];
@@ -51276,7 +51281,7 @@ function saludCerrar(){ clearTimeout(SALUD_TIMER); var ov=document.getElementByI
 /* Cinco pasos: cargado → mercadería → agendado → en camino → entregado. Lo que no es un paso de verdad para ese pedido
    (una venta de tienda no viaja) no se dibuja. «Entregado» sigue la regla de siempre: ✅, o la fecha ya pasó (§4co). */
 function pedidoViajeDatos(p){
-  var hoy=todayStr(), lin=(p.productos||[]).filter(function(x){ return x && !esProdDeTienda(x) && Number(x.cant)>0; });
+  var hoy=todayStr(), lin=(p.productos||[]).filter(function(x){ return x && !deTiendaNoViaja(p, x) && Number(x.cant)>0; });
   var merc;
   /* 🔎 (19/10, §4ls verificación final, CO-5) Un pedido cuyo único renglón es una nota («POR CONFIRMAR», «POR FAVOR IR HACER MEDICION»):
      §4ls T1 la sacó del stock (bien) y el viaje pasaba a «📦 Mercadería» lista, con el producto todavía sin definir. Sin entregar, dice

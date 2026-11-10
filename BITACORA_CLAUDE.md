@@ -17366,6 +17366,13 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
     lleva, no se tacha nada y sale en «⛔» («fijate qué se carga»). `nombrados()` = la parte de `cosa()` que decide qué renglones nombra un texto.
   · Probado contra las 1.108 notas reales de la copia del 09/11 (viejo vs nuevo): no cambia ninguna otra ficha. `test_ficha_no_llevar` 20-23 (24;
     4 rojas contra lo publicado). Fichas: nota 26, auto 14, logística 14, mejoras 23, adm_fichas 13, revisar_obs 89.
+  **🏪 Y en una REPOSICIÓN la ficha escondía lo «de tienda»** (mismo día; dueño con la captura de David Alba, RPT 11-006: *«se abre y solo muestra el
+  colchón»*, *«en las reposiciones de tienda omite los pedidos, no muestra las bolsas»*): desde el 24/10 la ficha de logística saca de la carga lo de
+  tienda (protectores, sábanas, bolsas: «lo entrega la tienda»). Eso vale para una VENTA; en una RPT es justo lo que hay que llevarle a la tienda (la
+  RPT tenía 1 colchón + 8 bolsas y decía «1 bulto · 1 colchón»). `deTiendaNoViaja(p, x)` (no vale para RPT) reemplaza a `esProdDeTienda` en lo que
+  MUESTRA la carga: renglones y bultos de la ficha («9 bultos · 1 colchón · 8 otros»), «Qué hacer», etiqueta del lugar, ficha rápida de Administración y
+  su color, «Lo del día, por lugar», `rutaSalida` y el viaje de Mis pedidos. Las cuentas del stock no cambian. `tests/test_rpt_tienda_viaja.js` (8; 4
+  rojas contra lo publicado); `test_rpt` 110, `test_fichas_4ip` 60, `test_adm_arriba` 27, `test_camiones_admin` 40, `test_ruta_salida` 12.
 
 ### §4ph — 🎨 PROPUESTA VISUAL 158-173 (10/11; dueño: *«¿Qué mejoras visuales podés poner al panel?»* → *«Mostrarme cómo quedaría todo menos 170, 169, 165, 163»*; NADA programado en el panel)
   Página con las 12 muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (antes/después del panel real con clientes inventados para
