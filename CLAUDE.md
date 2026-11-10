@@ -821,6 +821,10 @@ Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante
 escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
 valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
+## 🎨 Propuesta visual 158-173 (§4ph, 10/11; NADA programado)
+Muestras para el dueño: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (158-162, 164, 166-168, 171-173). Descartó 163, 165, 169 y 170. Espera que
+diga qué números van; al programarlas, arreglar «RPT RPT …» y «Mañana MAÑANA» de la ficha de logística. Detalle: bitácora §4ph.
+
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
@@ -1149,7 +1153,15 @@ MEDIDA»*): `fichaNoLlevar` (desde `fichaNota`) lee por renglón y viñeta (el e
 «.» de «2.5», filtra por la MEDIDA (`flNlMedida`) y la CANTIDAD (menos que lo del pedido y sin un renglón justo → `N.noLlevarDuda` en «⛔», sin tachar),
 y «LAS ALMOHADAS» = la familia entera salvo «DE/PARA COLCHON» u otro producto de la lista (`flNlQual`). El renglón dice el motivo (`N.noLlevarPor`).
 ⚠️ Probar un cambio acá contra las notas reales (copia local) antes de publicar: el 09/11 la primera versión tachaba el colchón por «PROTECTOR DE
-COLCHON». `tests/test_ficha_no_llevar.js` (20).
+COLCHON». `tests/test_ficha_no_llevar.js` (24).
+↩️ **«Lo demás / el resto ya se entregó»** (§4pi, 10/11, ficha del 11-097; PUBLICADO 10/11, versión 2026-11-10-c): «ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO
+EN TIENDA» tachaba el colchón. Ahora lo nombrado justo antes es lo que SÍ se lleva y se tacha lo otro (`FL_NL_RESTO`, `resto()`/`nombrados()` en
+`fichaNoLlevar`); sin decir qué se lleva, no tacha y avisa en «⛔». Contra las 1.108 notas reales del 09/11 no cambia ninguna otra.
+🏪 **En una REPOSICIÓN (RPT) las BOLSAS sí viajan; protectores y sábanas no** (§4pi, 10/11, dueño: *«en RPT, si piden a fábrica bolsas, sí deben
+llevar; protectores y sábanas no»*; PUBLICADO 10/11, versión 2026-11-10-c): **`deTiendaNoViaja(p, x)`** = `esProdDeTienda(x)` salvo `esEmpaqueDeRpt` (`PROD_EMPAQUE` en una RPT).
+La usan la ficha (renglones, bultos, «Qué hacer», `fichaLugarHtml(x, p)`), la ficha rápida y su color, «Lo del día, por lugar», `rutaSalida` y el
+viaje de Mis pedidos. ⚠️ Una vista NUEVA de «qué se carga» usa esa; las cuentas del STOCK siguen con `esProdDeTienda` (las bolsas nunca son stock de
+fábrica). `tests/test_rpt_tienda_viaja.js` (9).
 **🕐 + ✨ (§4mc, 24/10, PUBLICADA `1816a4a`)**: la etiqueta de la hora sale de `fichaNota` (UNA lectura: «de 11 a 12», «a las 12:00», «después del medio día»…);
 cada producto dice «Stock para este pedido: …» con «💡 Marcar…» y «✨ Marcar los N como dice el stock» (`stockAsignar` + `revStkMarcarLinea`, la misma
 de «Aplicar»; lo marcado a mano no se toca); `fichaAcomodar` pone Dónde y Camión lado a lado en un pedido corto; la nota sin nada para tildar va

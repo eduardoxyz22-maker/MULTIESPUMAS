@@ -17357,6 +17357,38 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pi — ↩️ «LO DEMÁS SE ENTREGÓ EN TIENDA» TACHABA EL COLCHÓN (10/11; dueño, con la ficha del 11-097: *«¿por qué aparece marcado si la observación dice entregar colchón, lo demás ya se entregó?»*; PUBLICADO 10/11, versión 2026-11-10-c, dueño: «Si publica»)
+  Nota: «ESTARA EN CASA SOLO HASTA LAS 10 AM-TOMAR EN CUENTA X FAVOR--ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA». `fichaNoLlevar`
+  parte la frase en «SOLO» y le quedaba «EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA»: nombraba COLCHON en una frase de «se entregó» → tachaba el
+  colchón (lo único que había que llevar) y la ficha decía «0 bultos · nada que cargar».
+  · Arreglo: si la frase de entregado habla de «LO/LOS/LAS DEMÁS», «LO OTRO», «EL RESTO» (`FL_NL_RESTO`), lo que nombra justo antes (en la misma
+    frase o, si ahí no nombra nada, en la anterior) es lo que SÍ se lleva y se tacha TODO lo otro del pedido (`resto()`); si no se entiende qué se
+    lleva, no se tacha nada y sale en «⛔» («fijate qué se carga»). `nombrados()` = la parte de `cosa()` que decide qué renglones nombra un texto.
+  · Probado contra las 1.108 notas reales de la copia del 09/11 (viejo vs nuevo): no cambia ninguna otra ficha. `test_ficha_no_llevar` 20-23 (24;
+    4 rojas contra lo publicado). Fichas: nota 26, auto 14, logística 14, mejoras 23, adm_fichas 13, revisar_obs 89.
+  **🏪 Y en una REPOSICIÓN la ficha escondía lo «de tienda»** (mismo día; dueño con la captura de David Alba, RPT 11-006: *«se abre y solo muestra el
+  colchón»*, *«en las reposiciones de tienda omite los pedidos, no muestra las bolsas»*): desde el 24/10 la ficha de logística saca de la carga lo de
+  tienda (protectores, sábanas, bolsas: «lo entrega la tienda»). Eso vale para una VENTA; en una RPT es justo lo que hay que llevarle a la tienda (la
+  RPT tenía 1 colchón + 8 bolsas y decía «1 bulto · 1 colchón»). `deTiendaNoViaja(p, x)` (no vale para RPT) reemplaza a `esProdDeTienda` en lo que
+  MUESTRA la carga: renglones y bultos de la ficha («9 bultos · 1 colchón · 8 otros»), «Qué hacer», etiqueta del lugar, ficha rápida de Administración y
+  su color, «Lo del día, por lugar», `rutaSalida` y el viaje de Mis pedidos. Las cuentas del stock no cambian. `tests/test_rpt_tienda_viaja.js` (8; 4
+  rojas contra lo publicado); `test_rpt` 110, `test_fichas_4ip` 60, `test_adm_arriba` 27, `test_camiones_admin` 40, `test_ruta_salida` 12.
+  ↪️ **Corregido por el dueño enseguida** (*«pero en RPT, si piden a fábrica bolsas, sí deben llevar; protectores y sábanas no»*): la excepción es
+  SOLO para las BOLSAS (`PROD_EMPAQUE`) de una RPT (`esEmpaqueDeRpt`); protectores y sábanas de una reposición siguen en la línea «De tienda, no sale
+  de PTF ni Banzer» y no cuentan como bultos. La prueba quedó en 9 (RPT con colchón + 8 bolsas + 3 protectores + sábanas → 9 bultos).
+
+### §4ph — 🎨 PROPUESTA VISUAL 158-173 (10/11; dueño: *«¿Qué mejoras visuales podés poner al panel?»* → *«Mostrarme cómo quedaría todo menos 170, 169, 165, 163»*; NADA programado en el panel)
+  Página con las 12 muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (antes/después del panel real con clientes inventados para
+  158-161; demos para tocar de las otras ocho, con los totales reales por vendedor y día, sin clientes). Espera que el dueño diga qué números van.
+  · 158 carteles de arriba en una línea (conexión + «Poné el panel en tu escritorio» → botoncitos del encabezado) · 159 Bloki no tapa (se
+    achica cuando hay algo debajo) · 160 íconos propios en todo el panel · 161 ordenar arriba de ATC y de Stock · 162 encabezado vivo (cielo por
+    la hora de Bolivia + los 4 camiones según GPS/«Ya salió») · 164 el día en 30 segundos (recorrido del GPS en el mapa) · 166 la carrera del
+    mes (Proyección) · 167 calendario de calor (vendido/entregas/cobrado; sin donas) · 168 las ventanas nacen de lo que tocás · 171 Bloki con
+    gestos (MISMO dibujo: festeja, señala, mira, duerme) · 172 bienvenida al abrir el panel instalado · 173 tarjeta para compartir (Mi día / El
+    día del equipo, sin clientes ni saldos).
+  · Descartadas por el dueño: 163 (dibujo de cada producto), 165 (stock en 3D), 169 (pantalla de pared), 170 (cada uno elige su tema).
+  · De paso, al programar lo que elija: dos textos repetidos de la ficha de logística («RPT RPT 11-006» y «Mañana MAÑANA»).
+
 ### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; **PUBLICADO 10/11 con las 14 mejoras 144-157, versión 2026-11-10-b, `6c25405`**; el `.gs` no cambia)
 - **Qué se veía mal** (mirando la escena cuadro por cuadro): la gente cambiaba de postura y giraba DE GOLPE, arrancaba y frenaba en seco con las
   piernas patinando (el paso iba por el reloj, no por lo avanzado), los colchones aparecían de la nada sobre el pallet, la carga del camión bajaba
