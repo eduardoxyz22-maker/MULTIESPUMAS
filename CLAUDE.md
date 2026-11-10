@@ -821,6 +821,10 @@ Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante
 escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
 valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
+## 🎨 Propuesta visual 158-173 (§4ph, 10/11; NADA programado)
+Muestras para el dueño: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (158-162, 164, 166-168, 171-173). Descartó 163, 165, 169 y 170. Espera que
+diga qué números van; al programarlas, arreglar «RPT RPT …» y «Mañana MAÑANA» de la ficha de logística. Detalle: bitácora §4ph.
+
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
