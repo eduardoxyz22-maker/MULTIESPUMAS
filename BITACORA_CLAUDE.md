@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d)
+### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11 ~11:05 de Bolivia, versión 2026-11-10-d, `main` = `a7a5363`, Pages corrida 62 OK)
 
 **Qué pidió.** De la propuesta 158-173 (ya había sacado 163, 165, 169 y 170) quedan afuera 158, 160, 164 y 173; de la 162 quiere SOLO el
 cielo según la hora sobre el encabezado de hoy (ni «depósito PTF» ni camiones nuevos). Van: 159, 161, 166, 167, 168, 171, 172 + el cielo.

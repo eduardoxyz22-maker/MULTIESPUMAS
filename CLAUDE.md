@@ -821,7 +821,7 @@ Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante
 escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
 valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
-## 🎨 Las mejoras visuales 159, 161, 166, 167, 168, 171, 172 y el cielo según la hora (§4ph → §4pj, 10/11; dueño: *«me gustan todas para publicar menos 158, 160, 162, 164, 173… solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d)
+## 🎨 Las mejoras visuales 159, 161, 166, 167, 168, 171, 172 y el cielo según la hora (§4ph → §4pj, 10/11; dueño: *«me gustan todas para publicar menos 158, 160, 162, 164, 173… solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d, `a7a5363`)
 Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 163, 164, 165, 169, 170, 173 y la 162 entera salvo el cielo. Solo dibujo.
 - 🌅 **Cielo**: `hdrCieloPintar(h)` (hora de Bolivia) → `#h-cielo` + `.h-astro` (en `.h-ruta`, detrás de los edificios) con variables en `.header`
   y `data-momento`. ⚠️ Un tema con luna propia esconde `.h-astro[data-luna="1"]` (como Halloween y Navidad).
