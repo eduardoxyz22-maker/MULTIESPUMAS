@@ -221,16 +221,17 @@ function PREPARAR(){
     var box=document.getElementById('modal-box'), an=box.getAnimations().filter(function(a){ return !a.animationName; });
     var o={ on:document.getElementById('modal').classList.contains('on'), de:NACE.de===c, an:an.length, dur:an[0] && an[0].effect.getTiming().duration };
     await new Promise(function(r){ setTimeout(r, 500); });
-    o.limpio=box.getAnimations().filter(function(a){ return !a.animationName; }).length===0 && box.style.animation==='' && box.style.transform==='';
+    /* ⚠️ (10/11, «doble parpadeo») al terminar de crecer NO vuelve a correr la entrada de siempre (`pop`): ninguna animación, de ninguna clase */
+    o.limpio=box.getAnimations().length===0 && getComputedStyle(box).animationName==='none' && box.style.transform==='' && getComputedStyle(box).opacity==='1';
     closeModal(); o.cerrada=!document.getElementById('modal').classList.contains('on'); o.eco=!!document.querySelector('.nace-eco');
     await new Promise(function(r){ setTimeout(r, 700); }); o.ecoSeVa=!document.querySelector('.nace-eco'); o.deFin=NACE.de===null;
     /* pasado un rato del toque, ya no nace de ahí */
-    NACE.t=Date.now()-5000; showMisModal(STATE[0].id); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); o.viejo=!NACE.de; closeModal();
+    NACE.t=Date.now()-5000; showMisModal(STATE[0].id); await new Promise(function(r){ requestAnimationFrame(function(){ requestAnimationFrame(r); }); }); o.viejo=!NACE.de && getComputedStyle(box).animationName==='pop'; closeModal();
     return o;
   });
-  chk('con el toque, la ventana crece desde la ficha tocada (una animación corta, sin dejar estilos puestos)', r.on && r.de && r.an===1 && r.dur>200 && r.dur<600 && r.limpio, r);
+  chk('con el toque, la ventana crece desde la ficha tocada (UNA animación corta; al terminar no parpadea de nuevo)', r.on && r.de && r.an===1 && r.dur>200 && r.dur<600 && r.limpio, r);
   chk('al cerrar, la ventana se cierra en el acto y el contorno vuelve y se va solo', r.cerrada && r.eco && r.ecoSeVa && r.deFin, r);
-  chk('si el toque fue hace rato, abre como siempre', r.viejo, r);
+  chk('si el toque fue hace rato, abre como siempre (con su entrada de siempre)', r.viejo, r);
   await page._ctx.close();
 
   console.log('\n── 6. La bienvenida del panel instalado (172) ──');
