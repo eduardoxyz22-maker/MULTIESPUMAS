@@ -533,6 +533,8 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:540px;width:100%;margin:auto;overflow:hidden;animation:pop .18s ease}
 #modal-box:focus{outline:none}   /* ⌨️ (§4mk) la ventana recibe el foco al abrir: sin el marco del foco alrededor de toda la ventana */
 @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+/* 🪄 (§4pj, 168) el contorno que vuelve a lo que se tocó al cerrar una ventana */
+.nace-eco{position:fixed;z-index:4001;border-radius:16px;background:rgba(255,255,255,.55);border:2px solid rgba(0,181,173,.55);pointer-events:none;transform-origin:50% 50%}
 .modal-h{background:var(--grad-header);background-size:300% 300%;color:#fff;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .modal-h h3{font-size:1rem;font-weight:700}
 .modal-x{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;min-width:30px;border-radius:50%;font-size:1rem;cursor:pointer;line-height:1}
@@ -1045,6 +1047,40 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .subtabs button{padding:10px 18px;font-size:.84rem}
 .cua-box{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);padding:16px 18px;margin-bottom:18px}
 .cua-t{font-size:.68rem;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+/* 🏁 (§4pj, 166) La carrera del mes */
+.pcar-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.pcar-ctl input[type=range]{flex:1 1 160px;min-width:120px;accent-color:var(--teal)}
+.pcar-ctl #pcar-play{width:auto;flex:none;min-width:104px}
+.pcar-dia{font-weight:900;font-size:1.05rem;color:#1f3b73;font-variant-numeric:tabular-nums}
+.pcar-tot{font-weight:800;font-size:.82rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.pcar-pista{position:relative}
+.pcar-f{position:absolute;left:0;right:0;height:34px;display:flex;align-items:center;gap:8px;transition:top .55s cubic-bezier(.3,.9,.3,1)}
+.pcar-f .p{flex:none;width:24px;text-align:center;font-weight:900;font-size:.8rem;color:var(--muted)}
+.pcar-f .n{flex:none;width:132px;font-size:.8rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;color:var(--text)}
+.pcar-f .b{flex:1;min-width:0;height:24px;position:relative}
+.pcar-f .b i{position:absolute;left:0;top:0;bottom:0;border-radius:0 8px 8px 0;background:var(--c);transition:width .55s linear;min-width:3px;width:calc(var(--w,0) * var(--pcar-max,76%))}
+.pcar-f .b em{position:absolute;top:3px;font-style:normal;font-size:.78rem;font-weight:900;font-variant-numeric:tabular-nums;padding-left:7px;white-space:nowrap;transition:left .55s linear;color:var(--text);left:calc(var(--w,0) * var(--pcar-max,76%))}
+.pcar-ley{display:flex;gap:14px;flex-wrap:wrap;font-size:.76rem;color:var(--muted);margin-top:8px;align-items:baseline}
+.pcar-ley i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.pcar-ley .pcar-nota{flex:1 1 260px}
+@media (max-width:520px){.pcar-pista{--pcar-max:52%}.pcar-f .n{width:84px;font-size:.72rem}.pcar-f .b em{font-size:.7rem}}
+@media (prefers-reduced-motion: reduce){.pcar-f,.pcar-f .b i,.pcar-f .b em{transition:none}}
+/* 🟩 (§4pj, 167) El calendario de calor */
+.pcal-q{margin-bottom:10px}
+.pcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;max-width:640px}
+.pcal .h{font-size:.66rem;font-weight:900;letter-spacing:.08em;color:var(--muted);text-align:center;text-transform:uppercase;padding-bottom:2px}
+.pcal .c{aspect-ratio:1.25;border-radius:9px;border:1px solid rgba(0,0,0,.05);padding:4px 6px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;font:inherit;text-align:left;min-width:0;background:#f1f5f6;color:var(--text)}
+.pcal .c.v{visibility:hidden}
+.pcal .c.cer{background:repeating-linear-gradient(135deg,#f1f4f5 0 6px,#e6ecee 6px 12px);color:#8a999e;cursor:default}
+.pcal .c b{font-size:.72rem;font-weight:800;opacity:.85}
+.pcal .c span{font-size:clamp(.62rem,1.9vw,.86rem);font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pcal .c.hoy{box-shadow:inset 0 0 0 2px #f59e0b}
+.pcal .c.sel{outline:3px solid #1f3b73;outline-offset:1px}
+.pcal-esc{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--muted);margin-top:8px}
+.pcal-esc i{width:22px;height:11px;border-radius:3px;display:inline-block}
+.pcal-d{margin-top:10px;font-size:.9rem;min-height:1.5em;color:var(--text)}
+.pcal-d b{font-variant-numeric:tabular-nums}
+.pcal-pie{margin-top:4px;font-size:.76rem;color:var(--muted);line-height:1.45;max-width:640px}
 input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;padding:6px 9px;display:inline-block}
 .cua-dif-ok{color:var(--green);font-weight:800}
 .cua-dif-mal{color:var(--red);font-weight:800}
@@ -1320,6 +1356,35 @@ html.tema-navidad .h-ruta::after{ content:''; position:absolute; inset:0; pointe
    <head> elige UNO). Los colores de aviso (verde, ámbar, rojo) no cambian. Lo que se mueve (pétalos, confeti, burbujas, fuegos) va en
    el lienzo `#hdr-fx`, debajo de las letras (ver `hdrFx` más abajo). Para ver uno cualquier día: `pedidos.html?tema=todos-santos`. */
 .hdr-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+/* 🍃 (§4pj, 10/11, idea 172; dueño: «me gustan todas para publicar…») LA BIENVENIDA DEL PANEL INSTALADO: un segundo y medio con las tres
+   hojas de la marca mientras carga, en vez de la pantalla en blanco. Solo al abrir el programa instalado, una vez por apertura
+   (`me_bienv` en la sesión); en una pestaña del navegador no sale. Tocarla la saca. Solo dibujo. */
+.bienv{position:fixed;inset:0;z-index:20000;display:grid;place-items:center;background:linear-gradient(160deg,#ffffff,#e6f7f6 60%,#d9f1ef);transition:transform .55s cubic-bezier(.7,0,.3,1),opacity .45s}
+.bienv[hidden]{display:none!important}
+.bienv.fuera{transform:translateY(-104%);opacity:.6}
+.bienv-in{text-align:center}
+.bienv svg{width:min(150px,30vw);height:auto;display:block;margin:0 auto 10px;overflow:visible}
+.bienv path{transform-box:fill-box;transform-origin:60% 100%;transform:scale(0) rotate(-40deg);opacity:0}
+.bienv.va path{animation:bienv-hoja .6s cubic-bezier(.3,1.5,.4,1) forwards}.bienv.va path:nth-child(2){animation-delay:.14s}.bienv.va path:nth-child(3){animation-delay:.28s}
+@keyframes bienv-hoja{to{transform:none;opacity:1}}
+.bienv b{display:block;font-family:Inter,system-ui,sans-serif;font-size:clamp(1.3rem,4vw,2rem);font-weight:900;color:#1f3b73;letter-spacing:-.01em;opacity:0;transform:translateY(8px)}
+.bienv small{display:block;font-family:Inter,system-ui,sans-serif;color:#00A09A;font-weight:800;letter-spacing:.2em;font-size:.78rem;opacity:0;transform:translateY(8px)}
+.bienv.va b{animation:bienv-sube .4s .5s forwards}.bienv.va small{animation:bienv-sube .4s .68s forwards}
+@keyframes bienv-sube{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.bienv,.bienv path,.bienv b,.bienv small{transition:none!important;animation:none!important;transform:none!important;opacity:1!important}.bienv.fuera{opacity:0!important}}
+/* 🌅 (§4pj, 10/11; dueño, de la muestra 162: «a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche») El cielo del
+   encabezado sigue la hora de Bolivia: un velo de color encima del tema del mes (que sigue igual) y el sol o la luna que cruzan. Solo dibujo;
+   lo pone `hdrCieloPintar` con variables en `.header`. El sol y la luna van en la franja de la ciudad (`.h-ruta`), DETRÁS de los edificios:
+   arriba taparían el nombre y los cupos. Los temas que ya traen su luna (Halloween, Navidad) no llevan la de acá. */
+.h-cielo{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;background:linear-gradient(var(--cielo-a,transparent),var(--cielo-b,transparent) 80%)}
+.h-cielo::before{content:'';position:absolute;inset:0 0 40% 0;opacity:var(--cielo-est,0);transition:opacity 1.2s;
+  background-image:radial-gradient(#fff 1px,transparent 1.5px),radial-gradient(rgba(255,255,255,.8) 1px,transparent 1.4px);background-size:97px 53px,139px 71px;background-position:11px 9px,63px 31px}
+.h-astro{position:absolute;pointer-events:none;left:var(--astro-x,50%);top:var(--astro-y,20%);width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
+  background:var(--astro-c,#fff6c8);box-shadow:0 0 22px 7px var(--astro-g,rgba(255,236,170,.5));transition:left 1.2s,top 1.2s,background 1.2s}
+html.tema-halloween .h-astro[data-luna="1"], html.tema-navidad .h-astro[data-luna="1"]{display:none}
+@media(max-width:700px){ .h-astro{width:16px;height:16px;margin:-8px 0 0 -8px} }
+@media(prefers-reduced-motion:reduce){ .h-cielo::before,.h-astro{transition:none} }
+@media print{ .h-cielo{display:none!important} }
 /* 🌼 Todos Santos (todo noviembre): cielo de la tarde, papel picado que se mueve con el viento, calaverita, velas y flores en la vereda. */
 html.tema-todos-santos{ --grad-header:linear-gradient(135deg,#1e0a35,#4a1060,#7a1858,#c2410c,#4a1060,#1e0a35); }
 html.tema-todos-santos .header{ overflow:hidden; }
@@ -2319,7 +2384,27 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
 </script>
 </head>
 <body>
+<div id="bienv" class="bienv no-print" hidden aria-hidden="true"><div class="bienv-in"><svg viewBox="0 0 300 356"><path d="M150 0 C140 60 175 100 230 140 C280 176 300 230 296 282 C280 230 240 205 190 180 C130 150 115 90 150 0 Z" fill="#f6c437"/><path d="M62 78 C70 140 120 165 180 190 C240 215 280 255 296 318 C262 275 220 262 160 252 C90 240 52 180 62 78 Z" fill="#f08a24"/><path d="M0 168 C22 230 80 248 140 256 C200 264 262 290 296 352 C250 318 200 318 140 322 C70 326 18 270 0 168 Z" fill="#e9609a"/></svg><b>MultiEspumas</b><small>PEDIDOS</small></div></div>
+<script>
+/* 🍃 (§4pj, idea 172) La bienvenida: solo en el panel INSTALADO (se abre como programa), una vez por apertura. Va acá arriba, antes que
+   todo, para que tape la carga. En Playwright, solo con `window.BIENV_PRUEBA`. `window.bienvFuera()` la saca. */
+(function(){ try{
+  var d=document.getElementById('bienv'); if(!d) return;
+  var inst=false;
+  try{ inst=!!(navigator.standalone || (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches || matchMedia('(display-mode: minimal-ui)').matches))); }catch(e){}
+  if(window.BIENV_PRUEBA) inst=true;
+  if(!inst || (navigator.webdriver && !window.BIENV_PRUEBA)) return;
+  try{ if(sessionStorage.getItem('me_bienv')==='1') return; sessionStorage.setItem('me_bienv','1'); }catch(e){}
+  var quieto=false; try{ quieto=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  var t=0, fuera=function(){ clearTimeout(t); if(d.hidden) return; d.classList.add('fuera'); setTimeout(function(){ d.hidden=true; }, quieto?60:620); };
+  window.bienvFuera=fuera;
+  d.hidden=false; d.getBoundingClientRect(); d.classList.add('va');
+  d.addEventListener('click', fuera);
+  t=setTimeout(fuera, quieto?400:1550);
+}catch(e){} })();
+</script>
 <div class="header">
+  <span id="h-cielo" class="h-cielo no-print" aria-hidden="true"></span>
   <canvas id="hdr-fx" class="hdr-fx no-print" aria-hidden="true"></canvas>
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
@@ -2329,9 +2414,34 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
     <div class="hstat"><div class="hstat-v" id="stat-hoy" hidden>0</div><div class="h-anillos" id="h-anillos" role="img" aria-label="Cupos libres del próximo camión"></div></div>
   </div>
   <!-- 🚚 (§4iw, 09/10, dueño: «A») La ruta del camión: el camión mira a la izquierda y va de derecha a izquierda (de frente). -->
-  <div class="h-ruta no-print" aria-hidden="true"><span class="h-lejos"></span><span class="h-luna"></span><span class="h-murc"><i></i><i></i><i></i></span><span class="h-cerca"></span><span class="h-calle"></span><span class="h-camion"><svg viewBox="0 0 86 40"><g class="hc-humo"><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/></g><g class="hc-cuerpo"><rect x='26' y='3' width='57' height='25' rx='3' fill='#fff' stroke='#d5dde6'/><g transform='translate(29 8) scale(0.78)' opacity='1'><path d='M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z' fill='#e9609a'/><path d='M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z' fill='#f08a24'/><path d='M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z' fill='#f6c437'/></g><text x='46.5' y='15.2' textLength='34.5' lengthAdjust='spacingAndGlyphs' font-size='7' font-weight='800' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Multi<tspan font-weight='900'>ESPUMAS</tspan></text><text x='46.7' y='20.6' textLength='20' lengthAdjust='spacingAndGlyphs' font-size='3.6' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Viscarra S.R.L.</text><rect x='26' y='24' width='57' height='1.6' fill='#e9609a'/><rect x='26' y='25.6' width='57' height='1.2' fill='#f08a24'/><rect x='26' y='26.8' width='57' height='1.2' fill='#f6c437'/><path d='M25 9 h-11 q-6 0 -9 6 l-4 8 v6 q0 2 2 2 h22 z' fill='#1f3b73'/><path d='M22 11.5 h-8 q-4 0 -6 4 l-2.5 5.5 h16.5 z' fill='#bfe9ff'/><rect class='hc-faro' x='1' y='24' width='3.4' height='2.6' rx='1' fill='#fde68a'/><rect x='2' y='28' width='80' height='3' rx='1.2' fill='#1f2937'/><rect x='82' y='26' width='4' height='1.6' fill='#6b7280'/></g><g><circle cx='14' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='14' cy='31' r='3.2' fill='#9ca3af'/><rect x='13.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='10.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='60' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='60' cy='31' r='3.2' fill='#9ca3af'/><rect x='59.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='56.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='72' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='72' cy='31' r='3.2' fill='#9ca3af'/><rect x='71.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='68.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g></svg></span></div>
+  <div class="h-ruta no-print" aria-hidden="true"><span class="h-astro"></span><span class="h-lejos"></span><span class="h-luna"></span><span class="h-murc"><i></i><i></i><i></i></span><span class="h-cerca"></span><span class="h-calle"></span><span class="h-camion"><svg viewBox="0 0 86 40"><g class="hc-humo"><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/></g><g class="hc-cuerpo"><rect x='26' y='3' width='57' height='25' rx='3' fill='#fff' stroke='#d5dde6'/><g transform='translate(29 8) scale(0.78)' opacity='1'><path d='M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z' fill='#e9609a'/><path d='M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z' fill='#f08a24'/><path d='M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z' fill='#f6c437'/></g><text x='46.5' y='15.2' textLength='34.5' lengthAdjust='spacingAndGlyphs' font-size='7' font-weight='800' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Multi<tspan font-weight='900'>ESPUMAS</tspan></text><text x='46.7' y='20.6' textLength='20' lengthAdjust='spacingAndGlyphs' font-size='3.6' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Viscarra S.R.L.</text><rect x='26' y='24' width='57' height='1.6' fill='#e9609a'/><rect x='26' y='25.6' width='57' height='1.2' fill='#f08a24'/><rect x='26' y='26.8' width='57' height='1.2' fill='#f6c437'/><path d='M25 9 h-11 q-6 0 -9 6 l-4 8 v6 q0 2 2 2 h22 z' fill='#1f3b73'/><path d='M22 11.5 h-8 q-4 0 -6 4 l-2.5 5.5 h16.5 z' fill='#bfe9ff'/><rect class='hc-faro' x='1' y='24' width='3.4' height='2.6' rx='1' fill='#fde68a'/><rect x='2' y='28' width='80' height='3' rx='1.2' fill='#1f2937'/><rect x='82' y='26' width='4' height='1.6' fill='#6b7280'/></g><g><circle cx='14' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='14' cy='31' r='3.2' fill='#9ca3af'/><rect x='13.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='10.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='60' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='60' cy='31' r='3.2' fill='#9ca3af'/><rect x='59.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='56.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='72' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='72' cy='31' r='3.2' fill='#9ca3af'/><rect x='71.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='68.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g></svg></span></div>
 </div>
 <script>
+/* 🌅 EL CIELO SEGÚN LA HORA (§4pj, 10/11). `hdrCieloPintar(h)`: h = hora de Bolivia con decimales (sin argumento, la de ahora). Deja en
+   `window.hdrCielo` qué puso ({h, momento}) y en `.header[data-momento]` amanecer / dia / atardecer / noche. Se repinta cada 5 minutos y al
+   volver a la pestaña. Solo dibujo. */
+function hdrCieloPintar(h){
+  var H=document.querySelector('.header'), C=document.getElementById('h-cielo'); if(!H || !C) return null;
+  if(typeof h!=='number' || !(h>=0 && h<24)){ var d=new Date(), b=new Date(d.getTime()+d.getTimezoneOffset()*60000-4*3600000); h=b.getHours()+b.getMinutes()/60; }
+  var NO=[[6,12,40,.58],[14,22,64,.42]], DI=[[120,200,255,.12],[255,255,255,.06]];
+  var K=[[0,NO],[5.2,NO],[6.3,[[80,90,170,.34],[255,176,116,.66]]],[8,DI],[16.3,DI],[18,[[84,44,128,.44],[255,128,56,.72]]],[19.3,[[30,24,80,.52],[150,60,70,.44]]],[20.3,NO],[24,NO]];
+  var i=0; while(i<K.length-2 && h>=K[i+1][0]) i++;
+  var a=K[i], z=K[i+1], t=Math.max(0, Math.min(1, (h-a[0])/((z[0]-a[0])||1)));
+  var mez=function(x, y){ return 'rgba('+[0,1,2].map(function(j){ return Math.round(x[j]+(y[j]-x[j])*t); }).join(',')+','+(x[3]+(y[3]-x[3])*t).toFixed(3)+')'; };
+  H.style.setProperty('--cielo-a', mez(a[1][0], z[1][0])); H.style.setProperty('--cielo-b', mez(a[1][1], z[1][1]));
+  var noche=(h<5.2||h>=20.3)?1:(h<6.3?(6.3-h)/1.1:(h>19.3?(h-19.3):0)); noche=Math.max(0, Math.min(1, noche));
+  H.style.setProperty('--cielo-est', (noche*.85).toFixed(2));
+  var dia=h>=5.8 && h<18.8, f=dia ? (h-5.8)/13 : ((h<5.8?h+24:h)-18.8)/11, A=H.querySelector('.h-astro');
+  H.style.setProperty('--astro-x', (6+f*88).toFixed(1)+'%'); H.style.setProperty('--astro-y', Math.round(80-Math.sin(f*Math.PI)*66)+'%');
+  H.style.setProperty('--astro-c', dia ? (h>16.6 ? '#ffd28a' : (h<7 ? '#ffe2b0' : '#fff6c8')) : '#eef2ff');
+  H.style.setProperty('--astro-g', dia ? 'rgba(255,225,150,.55)' : 'rgba(210,220,255,.35)');
+  if(A) A.setAttribute('data-luna', dia?'0':'1');
+  var m=h<5.6 ? 'noche' : h<7.6 ? 'amanecer' : h<16.8 ? 'dia' : h<19.2 ? 'atardecer' : 'noche';
+  H.setAttribute('data-momento', m);
+  return (window.hdrCielo={ h:Math.round(h*100)/100, momento:m });
+}
+try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPintar(); }, 300000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) hdrCieloPintar(); }); }catch(e){}
 /* ✨ LO QUE SE MUEVE EN EL ENCABEZADO (§4ni, 27/10; dueño: «Quiero las mejoras: 1, 6, 8, 14, 15, 16… falta el tema de noviembre»).
    Un lienzo detrás de las letras (`#hdr-fx`) con lo de cada tema: burbujas de espuma los días sin tema (14), pétalos de flor de muerto y
    chispas de vela en noviembre, confeti en Carnaval, corazones el Día de la Madre, confeti con los colores de la bandera el 6 de Agosto y
@@ -3028,11 +3138,11 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
           <label class="lb">Mes</label>
           <input type="month" id="atc-mes">
         </div>
-        <div class="field" style="min-width:165px">
+        <div class="field atc-f-sel">
           <label class="lb">Motivo</label>
           <select id="atc-motivo"><option value="">Todos los motivos</option></select>
         </div>
-        <div class="field" style="min-width:150px">
+        <div class="field atc-f-sel">
           <label class="lb">Tipo</label>
           <select id="atc-tipo">
             <option value="">Todas</option>
@@ -3041,7 +3151,7 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
             <option value="sin">❓ Sin marcar</option>
           </select>
         </div>
-        <div class="field" style="min-width:150px">
+        <div class="field atc-f-sel">
           <label class="lb">Estado</label>
           <select id="atc-estado">
             <option value="">Todas</option>
@@ -3055,22 +3165,22 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
             <option value="sinmotivo">⚠️ Sin motivo anotado</option>
           </select>
         </div>
-        <div class="field" style="flex:1;min-width:180px">
+        <div class="field atc-f-bus">
           <label class="lb">Buscar</label>
           <input type="text" id="atc-search" placeholder="Cliente, N° ATC, producto, qué se hizo…" autocomplete="off">
         </div>
-        <div class="field">
+        <div class="field atc-f-btn">
           <button class="btn btn-ghost btn-sm" onclick="refreshAtc()">🔄 Actualizar</button>
         </div>
         <!-- 🧹 (15/10, §4lm, dueño: «demasiados botones… copiar debería estar en la ficha… completar Trello ya no sirve, ya importamos
              todo»): «📋 Copiar» pasó a la ficha de cada ATC (`copiarAtcUna`) y «🔗 Completar con Trello» se sacó (`abrirAtcTrello` queda). -->
-        <div class="field" id="atc-informe-wrap" style="display:none">
+        <div class="field atc-f-btn" id="atc-informe-wrap" style="display:none">
           <!-- 📄 (15/10, §4le) El informe del mes en PDF, tipo presentación. Solo gerencia (§4lm): con la clave o como Administración / Logística. -->
           <button class="btn btn-sm" id="atc-informe-btn" style="background:#a21caf;color:#fff;font-weight:700" onclick="abrirInformeAtc()" title="Un informe del mes elegido, tipo presentación: cuántas entraron, por qué, qué productos, dónde están hoy, cuánto tardan y el detalle">📄 Informe PDF</button>
         </div>
       </div>
 
-      <div class="metrics" id="atc-metrics"></div>
+      <div class="metrics" id="atc-metrics" data-min="150"></div>
       <div id="atv-viaje"></div>
       <div id="atc-por-motivo"></div>
       <div id="atv-cards" class="atv-cards"></div>
@@ -3123,6 +3233,9 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         <!-- 💵 (10/10, §4je) De dónde sale lo vendido: cobrado en el mes, adelantos de antes y lo que falta, y cómo se llega al Cuadre. -->
         <div id="pry-plata"></div>
         <div id="pry-vendedores"></div>
+        <!-- 🏁 y 🟩 (§4pj, 10/11, ideas 166 y 167): la carrera del mes y el calendario de calor. Solo miran. -->
+        <div id="pry-carrera"></div>
+        <div id="pry-calor"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
         <div id="pry-hist"></div>
@@ -4142,6 +4255,39 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
   #stock-overlay .stk-acc{ display:flex; order:4; flex:1 1 100%; flex-wrap:nowrap; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:3px; }
   #stock-overlay .stk-acc .btn{ flex:none; white-space:nowrap; }
 }
+/* 🧹 (§4pj, 10/11, idea 161; dueño: «me gustan todas para publicar…») ORDENAR ARRIBA DE ATC Y DE STOCK. Solo presentación.
+   ATC: en la compu los filtros van en UN renglón (antes dos, con «Buscar» suelto abajo) y las siete fichas en una fila (`data-min` en
+   `#atc-metrics`: `acomodarFichas` decide cuántas entran). Más angosto queda como estaba. */
+#view-atc .filters .atc-f-sel{ min-width:150px; }
+#view-atc .filters .atc-f-bus{ flex:1; min-width:180px; }
+@media (min-width:1100px){
+  #view-atc .filters{ flex-wrap:nowrap; gap:8px; }
+  #view-atc .filters .field{ min-width:0; flex:1 1 0; max-width:none; }
+  #view-atc .filters .field:first-child{ flex:0 0 auto; }
+  #view-atc .filters #atc-wrap-mes{ flex:0 1 150px; }
+  #view-atc .filters .atc-f-btn{ flex:0 0 auto; }
+  #view-atc .filters .atc-f-bus{ flex:1.2 1 0; min-width:0; }
+  #view-atc .filters .field:has(#atc-motivo){ flex:1.3 1 0; }
+  #view-atc .filters .lb{ font-size:.68rem; margin-bottom:3px; }
+  #view-atc .filters .field > input:not([type=checkbox]):not([type=radio]), #view-atc .filters .field > select, #view-atc .filters .field > .seg{ height:40px; min-height:40px; font-size:.84rem; }
+  #view-atc .filters .btn{ height:40px; white-space:nowrap; }
+  #atc-metrics{ gap:8px; }
+  #atc-metrics .mc{ min-width:0; padding:10px 10px 9px; }
+  #atc-metrics .mc-lbl{ font-size:.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:26px; }
+  #atc-metrics .mc-val{ font-size:1.5rem; }
+  #atc-metrics .mc-sub{ font-size:.68rem; line-height:1.25; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  #atc-metrics .cx-esc{ transform:scale(.8); transform-origin:top right; }
+}
+/* Stock: la línea de arriba en pastillas (`stockInfoChips`; en el celular sigue el texto de dos renglones, §4ls PA-6). */
+#stock-overlay #stock-info.si-chips{ display:inline-flex; flex-wrap:wrap; gap:6px; align-items:center; opacity:1 !important; }
+#stock-info .si-sep{ font-size:0; }
+#stock-info .si-c{ display:inline-flex; align-items:center; gap:4px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); border-radius:999px; padding:4px 10px; font-size:.74rem; font-weight:700; white-space:nowrap; color:#fff; }
+#stock-info .si-c b{ font-weight:900; }
+#stock-info .si-c.si-ok{ background:#dcfce7; color:#14532d; border-color:#86efac; }
+#stock-info .si-c.si-ok::before{ content:"✓"; font-weight:900; }
+#stock-info .si-c.si-am{ background:#fef3c7; color:#7c2d12; border-color:#fcd34d; }
+#stock-info .si-c.si-am::before{ content:"⚠"; }
+#stock-info .si-c.si-ro{ background:#fee2e2; color:#7f1d1d; border-color:#fca5a5; }
 /* ✏️ (18/10, §4ls textos, VB-7) «Ya pedí N» del Plan: casilla de 16 px dentro de una fila que también se toca. Ahora la zona de toque mide
    ≥ 32 px y tiene su propio fondo. */
 .pl-ya-chk{ min-height:32px; padding:3px 9px 3px 6px; border:1px solid #b9e3df; border-radius:8px; background:#f0fbfa; }
@@ -4564,6 +4710,22 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 @keyframes asis-onda{ 0%,100%{ width:74px; opacity:.95; } 50%{ width:106px; opacity:.5; } }
 .asis-yo.asis-salta .asis-fig{ animation:asis-salta .9s cubic-bezier(.3,1.5,.5,1) 1, asis-mece 6.5s ease-in-out .9s infinite; }
 @keyframes asis-salta{ 0%{ transform:translateX(-50%) translateY(0); } 30%{ transform:translateX(-50%) translateY(-18px) rotate(-4deg); } 55%{ transform:translateX(-50%) scale(1.04,.96); } 75%{ transform:translateX(-50%) translateY(-6px) rotate(2deg); } 100%{ transform:translateX(-50%); } }
+/* 🫣 (§4pj, 159) se achica y se asoma cuando tapa algo · 🙌 (171) los gestos */
+.asis-yo{ transition:transform .3s cubic-bezier(.3,1.2,.4,1), opacity .2s; transform-origin:100% 100%; }
+.asis.asis-chico .asis-yo{ transform:translate(24px,20px) scale(.56); opacity:.97; }
+.asis.asis-chico .asis-yo:hover, .asis.asis-chico .asis-yo:focus-visible{ transform:none; opacity:1; }
+.asis.asis-chico .asis-n{ transform:scale(1.5); transform-origin:100% 0; }
+.asis-yo.asis-g-festeja .asis-fig{ animation:asis-salta .7s cubic-bezier(.3,1.5,.5,1) 3; }
+.asis-yo.asis-g-senala .asis-fig{ animation:none; transform:translateX(-50%) rotate(-9deg) translateX(-8px); transition:transform .35s cubic-bezier(.3,1.4,.4,1); }
+.asis-yo.asis-g-mira .asis-fig{ animation:none; transform:translateX(-50%) translateY(-6px); transition:transform .3s; }
+.asis-yo.asis-g-duerme .asis-fig{ animation:asis-respira 3.4s ease-in-out infinite; }
+@keyframes asis-respira{ 0%,100%{ transform:translateX(-50%) scale(1,1); } 50%{ transform:translateX(-50%) scale(1.02,.96); } }
+.asis-zz{ position:absolute; right:14px; top:2px; font-weight:900; font-size:.9rem; color:#5b6b70; opacity:0; pointer-events:none; text-shadow:0 1px 0 #fff; }
+.asis-yo.asis-g-duerme .asis-zz{ animation:asis-zz 2.7s ease-out infinite; } .asis-yo.asis-g-duerme .asis-zz:nth-of-type(2){ animation-delay:.9s; font-size:1.1rem; } .asis-yo.asis-g-duerme .asis-zz:nth-of-type(3){ animation-delay:1.8s; font-size:1.3rem; }
+@keyframes asis-zz{ 0%{ opacity:0; transform:translate(0,10px); } 25%{ opacity:.9; } 100%{ opacity:0; transform:translate(16px,-26px); } }
+.asis-conf{ position:absolute; left:50%; top:40%; width:7px; height:10px; border-radius:2px; opacity:0; pointer-events:none; animation:asis-conf 1.1s ease-out 2; }
+@keyframes asis-conf{ 0%{ opacity:1; transform:translate(0,0) rotate(0); } 100%{ opacity:0; transform:translate(var(--x),var(--y)) rotate(300deg); } }
+@media(prefers-reduced-motion:reduce){ .asis-yo, .asis-yo .asis-fig{ transition:none!important; } .asis-conf, .asis-zz{ animation:none!important; } .asis-yo.asis-g-duerme .asis-zz:nth-of-type(3){ opacity:.8; } }
 .asis-n{ position:absolute; top:4px; right:4px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:var(--red); color:#fff; font-size:.75rem; font-weight:900; display:grid; place-items:center; border:2px solid #fff; }
 .asis-globo{ max-width:min(300px, calc(calc(100vw / var(--vz,1)) - 110px)); background:#fff; color:var(--text); border:1px solid var(--gray-md); border-left:4px solid var(--teal); border-radius:14px 14px 4px 14px;
   padding:9px 12px; box-shadow:0 12px 30px -14px rgba(0,0,0,.45); font-size:.82rem; cursor:pointer; animation:mi-entra .35s cubic-bezier(.2,1.3,.4,1) both; margin:0 108px -92px 0; }
@@ -11928,6 +12090,132 @@ function pryVentas(){
   });
   return out;
 }
+/* 🏁 (§4pj, 10/11, idea 166; dueño: «me gustan todas para publicar…») LA CARRERA DEL MES. Los vendedores del equipo avanzan día por día
+   según lo que fueron cargando: se ve quién arrancó fuerte, quién remontó y cuándo se cruzaron. SOLO MIRA.
+   ⚠️ Una sola verdad: son las MISMAS ventas de «👤 Por vendedor» (`pryVentas`, las del equipo con `ym` = el mes elegido), puestas en el día
+   en que se cargaron (`reg`); lo cargado antes del 1° ya está el día 1 y lo cargado después del cierre entra el último día. Por eso el
+   último día de la carrera da, vendedor por vendedor, lo «vendido» de arriba (`tests/test_pry_carrera_calor.js` lo compara). */
+var PRY_CAR={ D:null, d:0, t:0 };
+function pryCarreraDatos(R){
+  var ym=R.ym, fin=pryFinDeMes(ym), n=+fin.slice(8), hoy=diaNegocio();
+  var hasta = R.estado==='curso' ? +hoy.slice(8) : (R.estado==='cerrado' ? n : 0), F={};
+  pryVentas().forEach(function(x){
+    if(x.amb!=='tienda' || x.ym!==ym) return;
+    var o=F[x.vk]||(F[x.vk]={ k:x.vk, v:x.v, g:x.g, d:[], tot:0 });
+    var dia = x.reg<ym+'-01' ? 1 : (x.reg>fin ? n : +x.reg.slice(8));
+    o.d[dia]=(o.d[dia]||0)+x.bs; o.tot=r2(o.tot+x.bs);
+  });
+  var L=Object.keys(F).map(function(k){ return F[k]; }).filter(function(o){ return o.tot>0.009; });
+  L.forEach(function(o){ var a=0; o.ac=[0]; for(var d=1;d<=n;d++){ a+=o.d[d]||0; o.ac[d]=r2(a); } });
+  L.sort(function(a,b){ return b.tot-a.tot || a.v.localeCompare(b.v,'es'); });
+  return { ym:ym, n:n, hasta:hasta, L:L };
+}
+function pryCarreraColor(g){ for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===g) return MARCAS[i].col; return '#f59e0b'; }
+function pryCarreraPoner(R){
+  var box=document.getElementById('pry-carrera'); if(!box) return;
+  var D=pryCarreraDatos(R), sigue=!!(PRY_CAR.t && PRY_CAR.D && PRY_CAR.D.ym===D.ym);
+  if(!sigue) pryCarreraParar();
+  if(!D.L.length || D.hasta<1){ box.innerHTML=''; PRY_CAR.D=null; return; }
+  var d=(sigue && PRY_CAR.d>=1 && PRY_CAR.d<=D.hasta) ? PRY_CAR.d : D.hasta;
+  PRY_CAR.D=D;
+  var ley=MARCAS.filter(function(g){ return D.L.some(function(o){ return o.g===g.k; }); }).map(function(g){ return '<span><i style="background:'+g.col+'"></i>'+esc(g.lbl)+'</span>'; }).join('')+
+          (D.L.some(function(o){ return o.g==='sin'; }) ? '<span><i style="background:#f59e0b"></i>Sin marca</span>' : '');
+  box.innerHTML='<div class="cua-box" id="pry-carrera-box"><div class="cua-t">🏁 La carrera del mes — '+esc(mesNombre(D.ym))+'</div>'+
+    '<div class="pcar-ctl"><button type="button" class="btn btn-sm btn-primary" id="pcar-play" onclick="pryCarreraPlay()">'+(sigue?'⏸ Parar':'▶ Largar')+'</button>'+
+      '<input type="range" id="pcar-d" min="1" max="'+D.hasta+'" step="1" value="'+d+'" oninput="pryCarreraParar();pryCarreraPintar(+this.value)" aria-label="Día del mes">'+
+      '<span class="pcar-dia" id="pcar-dia"></span><span class="pcar-tot" id="pcar-tot"></span></div>'+
+    '<div class="pcar-pista" id="pcar-pista" style="height:'+(D.L.length*38)+'px">'+
+      D.L.map(function(o, i){ return '<div class="pcar-f" data-i="'+i+'" style="--c:'+pryCarreraColor(o.g)+';top:'+(i*38)+'px"><span class="p"></span><span class="n" title="'+esc(o.v)+'">'+esc(o.v)+'</span><span class="b"><i></i><em></em></span></div>'; }).join('')+
+    '</div>'+
+    '<div class="pcar-ley">'+ley+'<span class="pcar-nota">Cada venta avanza el día en que se cargó. Son las ventas con entrega en '+esc(mesNombre(D.ym))+', las mismas de «Por vendedor»; lo cargado antes del 1° ya está el día 1.</span></div></div>';
+  pryCarreraPintar(d);
+}
+function pryCarreraPintar(d){
+  var D=PRY_CAR.D, pista=document.getElementById('pcar-pista'); if(!D || !pista) return;
+  d=Math.max(1, Math.min(D.hasta, Math.round(d)||1)); PRY_CAR.d=d;
+  var max=0, tot=0; D.L.forEach(function(o){ max=Math.max(max, o.ac[D.hasta]); });
+  var ord=D.L.map(function(o, i){ return i; }).sort(function(a,b){ return D.L[b].ac[d]-D.L[a].ac[d] || a-b; });
+  ord.forEach(function(i, pos){
+    var o=D.L[i], e=pista.querySelector('.pcar-f[data-i="'+i+'"]'); if(!e) return;
+    var v=o.ac[d], w=max>0 ? Math.max(.008, v/max) : .008; tot=r2(tot+v);
+    e.style.top=(pos*38)+'px'; e.style.setProperty('--w', w.toFixed(4));   // el ancho lo decide el CSS (en el celular la barra más larga deja lugar al monto)
+    var em=e.querySelector('em'); em.textContent=fmtBs0(v);
+    e.querySelector('.p').textContent=(pos+1)+'°';
+  });
+  var a=document.getElementById('pcar-dia'), b=document.getElementById('pcar-tot'), r=document.getElementById('pcar-d');
+  if(a) a.textContent='Día '+d+' de '+MESES_ES[+D.ym.slice(5,7)-1];
+  if(b) b.textContent='El equipo lleva '+fmtBs0(tot);
+  if(r && +r.value!==d) r.value=d;
+}
+function pryCarreraParar(){ if(PRY_CAR.t){ clearInterval(PRY_CAR.t); PRY_CAR.t=0; } var b=document.getElementById('pcar-play'); if(b) b.textContent='▶ Largar'; }
+function pryCarreraPlay(){
+  if(PRY_CAR.t){ pryCarreraParar(); return; }
+  var D=PRY_CAR.D; if(!D) return;
+  var b=document.getElementById('pcar-play'); if(b) b.textContent='⏸ Parar';
+  pryCarreraPintar(1);
+  PRY_CAR.t=setInterval(function(){
+    if(!PRY_CAR.D || !document.getElementById('pcar-pista')){ pryCarreraParar(); return; }
+    if(PRY_CAR.d>=PRY_CAR.D.hasta){ pryCarreraParar(); return; }
+    pryCarreraPintar(PRY_CAR.d+1);
+  }, visQuieto() ? 80 : 600);
+}
+/* 🟩 (§4pj, 10/11, idea 167) EL CALENDARIO DE CALOR. El mes elegido en cuadritos: cuanto más oscuro, más fuerte fue el día. Con un toque se
+   cambia entre lo VENDIDO (las ventas del equipo que se cargaron ese día: `contaFecha` + `ventaTotal`), las ENTREGAS (pedidos agendados para
+   ese día, sin las ventas de tienda) y lo COBRADO (los pagos de las ventas del equipo por su fecha: `contaPagos`). SOLO MIRA.
+   ⚠️ «Vendido» acá es por el día en que se CARGÓ la venta; la ficha de arriba cuenta por el mes de la ENTREGA: por eso el total del
+   calendario no es el «Vendido en <mes>» (el pie lo dice). */
+var PRY_CALOR_Q='v', PRY_CALOR=null;
+var PRY_CALOR_COL=['#e3f4f2','#a9e0da','#5cc6bc','#17998f','#0b5e58'];
+function pryCalorDatos(ym){
+  var c={ ym:ym, v:{}, e:{}, c:{} };
+  STATE.forEach(function(p){
+    if(!fueraDeConta(p,'tienda')){
+      var d=contaFecha(p)||''; if(d.slice(0,7)===ym) c.v[d]=r2((c.v[d]||0)+ventaTotal(p));
+      contaPagos(p).forEach(function(q){ var f=String(q.fecha||''), m=Number(q.monto)||0; if(f.slice(0,7)===ym && m>0) c.c[f]=r2((c.c[f]||0)+m); });
+    }
+    if(p.fecha && String(p.fecha).slice(0,7)===ym && !esVentaTienda(p)) c.e[p.fecha]=(c.e[p.fecha]||0)+1;
+  });
+  return c;
+}
+function pryCalorPoner(R){
+  var box=document.getElementById('pry-calor'); if(!box) return;
+  PRY_CALOR=pryCalorDatos(R.ym);
+  box.innerHTML='<div class="cua-box" id="pry-calor-box"><div class="cua-t">🟩 Calendario de calor — '+esc(mesNombre(R.ym))+'</div>'+
+    '<div class="seg pcal-q" id="pcal-q">'+[['v','Vendido'],['e','Entregas'],['c','Cobrado']].map(function(x){ return '<button type="button" data-val="'+x[0]+'" class="'+(PRY_CALOR_Q===x[0]?'active':'')+'" onclick="pryCalorQ(\''+x[0]+'\')">'+x[1]+'</button>'; }).join('')+'</div>'+
+    '<div class="pcal" id="pcal"></div>'+
+    '<div class="pcal-esc"><span>menos</span>'+PRY_CALOR_COL.map(function(c){ return '<i style="background:'+c+'"></i>'; }).join('')+'<span>más</span></div>'+
+    '<div class="pcal-d" id="pcal-d"></div><div class="pcal-pie" id="pcal-pie"></div></div>';
+  pryCalorPintar();
+}
+function pryCalorQ(q){ PRY_CALOR_Q=q; segSet('pcal-q', q); pryCalorPintar(); }
+function pryCalorTxt(q, v){ return q==='e' ? (v+' pedido'+(v===1?'':'s')) : fmtBs0(v); }
+function pryCalorPintar(){
+  var C=PRY_CALOR, G=document.getElementById('pcal'); if(!C || !G) return;
+  var q=PRY_CALOR_Q, D=C[q]||{}, ym=C.ym, n=+pryFinDeMes(ym).slice(8), max=0, tot=0, k, hoy=diaNegocio();
+  for(k in D){ max=Math.max(max, D[k]); tot=r2(tot+D[k]); }
+  var h=['lun','mar','mié','jue','vie','sáb','dom'].map(function(x){ return '<div class="h">'+x+'</div>'; }).join('');
+  var p=(new Date(+ym.slice(0,4), +ym.slice(5,7)-1, 1).getDay()+6)%7;
+  for(var i=0;i<p;i++) h+='<div class="c v"></div>';
+  for(var d=1;d<=n;d++){
+    var f=ym+'-'+(d<10?'0':'')+d, v=D[f]||0, fer=feriadoDe(f)||FERIADOS_PASADOS[f]||'', dom=(new Date(+ym.slice(0,4), +ym.slice(5,7)-1, d).getDay()===0);
+    if((dom || fer) && !v){ h+='<div class="c cer" title="'+esc(fer || 'domingo')+'"><b>'+d+'</b><span>'+(fer?'feriado':'')+'</span></div>'; continue; }
+    var niv = v<=0 ? -1 : Math.min(4, Math.floor(v/max*4.999)), txt = q==='e' ? (v||'') : (v ? (v>=1000 ? (Math.round(v/1000)+' mil') : Math.round(v)) : '');
+    h+='<button type="button" class="c'+(f===hoy?' hoy':'')+'" data-f="'+f+'" onclick="pryCalorDia(\''+f+'\')" aria-label="'+d+' de '+MESES_ES[+ym.slice(5,7)-1]+': '+esc(pryCalorTxt(q, v))+'" style="'+(niv>=0 ? ('background:'+PRY_CALOR_COL[niv]+';color:'+(niv>=3?'#fff':'#0c3a36')) : '')+((f>hoy && q!=='e')?';opacity:.45':'')+'"><b>'+d+'</b><span>'+txt+'</span></button>';
+  }
+  G.innerHTML=h;
+  var det=document.getElementById('pcal-d'); if(det) det.textContent='Tocá un día para ver su número.';
+  var pie=document.getElementById('pcal-pie');
+  if(pie) pie.innerHTML = q==='v' ? ('En el mes se cargaron ventas por <b>'+fmtBs0(tot)+'</b>, por el día en que se cargó cada una. La ficha «Vendido en '+esc(mesNombre(ym))+'» de arriba cuenta por la fecha de entrega: por eso no es el mismo número.')
+                 : q==='e' ? ('<b>'+tot+'</b> entrega'+(tot===1?'':'s')+' agendada'+(tot===1?'':'s')+' en el mes (pedidos, ATC y reposiciones; sin las ventas de tienda).')
+                 : ('En el mes entraron <b>'+fmtBs0(tot)+'</b> en pagos de las ventas del equipo, por la fecha de cada pago (con los recargos por entrega cobrados).');
+}
+function pryCalorDia(f){
+  var C=PRY_CALOR, G=document.getElementById('pcal'), det=document.getElementById('pcal-d'); if(!C || !G || !det) return;
+  [].forEach.call(G.querySelectorAll('.sel'), function(x){ x.classList.remove('sel'); });
+  var b=G.querySelector('[data-f="'+f+'"]'); if(b) b.classList.add('sel');
+  var q=PRY_CALOR_Q, v=(C[q]||{})[f]||0, dd=new Date(+f.slice(0,4), +f.slice(5,7)-1, +f.slice(8)), DS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  det.innerHTML='El <b>'+DS[dd.getDay()]+' '+(+f.slice(8))+'/'+f.slice(5,7)+'</b> '+({ v:'se cargaron ventas por', e:(f>diaNegocio()?'hay agendadas':'se agendaron'), c:'se cobraron' })[q]+' <b>'+esc(pryCalorTxt(q, v))+'</b>.';
+}
 /* (29/09, §4gy) Los minutos del día en Bolivia (UTC−4 fija, como `isoDeTsBolivia`). «A esta altura» y la curva comparan lo
    cargado HASTA AHORA con lo que el otro mes tenía cargado al mismo día Y A LA MISMA HORA. Antes el otro mes entraba con el
    día entero, y el mismo mes daba «1% arriba» a las 09:30 y «7% arriba» a las 20:00 (revisión del 29/09, A3). */
@@ -12562,6 +12850,8 @@ function renderProyeccion(){
       : (R.roho && R.roho.tot.n ? rohoGrupo() : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>'))+'</div>';
 
   document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
+  try{ pryCarreraPoner(R); }catch(e){}   // 🏁 (§4pj, 166) la carrera del mes
+  try{ pryCalorPoner(R); }catch(e){}     // 🟩 (§4pj, 167) el calendario de calor
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
   var _ph=document.getElementById('pry-hist'); if(_ph) _ph.innerHTML=pryHistHtml(R);   // 📒 (§4mn) lo que dijo cada día
@@ -37878,6 +38168,20 @@ function stockFabricaTxt(t, nombre){
   return nombre+': '+(t.medido ? ('medido '+t.base+' día'+(t.base===1?'':'s')+(t.prestado ? ' (según la otra fábrica)' : (' ('+t.n+(t.n===1?' vez':' veces')+')'))) : 'sin medir')+
     ' · lo que se pide hoy se entrega desde el '+sfDiaTxt(stockEntregaDesde(hoy, d))+(regla?' (48 h hábiles + 1)':'');
 }
+/* 🧹 (§4pj, 10/11, idea 161; dueño: «me gustan todas…») LA LÍNEA DE ARRIBA DE STOCK, EN PASTILLAS (compu): el corte (verde si es de hoy,
+   ámbar si no, rojo sin contar), cuántos productos y cada fábrica con su plazo y desde qué día se entrega lo que se pide hoy. Los mismos
+   datos de `stockFabricasTxt` (mismas cuentas); el texto sigue empezando con «corte del …» (lo lee `test_stock_final_pantalla`). */
+function stockInfoChips(d, T){
+  var h=[], hoy=todayStr(), sep='<i class="si-sep"> · </i>';
+  if(d.contado){
+    var cuando=(d.diasConteo===0?'hoy':(d.diasConteo===1?'ayer':('hace '+d.diasConteo+' días')));
+    h.push('<span class="si-c '+(d.diasConteo===0?'si-ok':'si-am')+'" title="'+(d.diasConteo===0?'El Excel de fábrica es de hoy':'El Excel de fábrica NO es de hoy: pedile a logística que suba el de hoy')+'">corte del '+esc(String(d.contado).slice(8,10)+'/'+String(d.contado).slice(5,7))+(STOCK.c.hora?(' <b>'+esc(String(STOCK.c.hora).slice(0,5))+'</b>'):'')+' ('+cuando+')</span>');
+    h.push('<span class="si-c" title="Venta de los últimos '+STOCK_VENTANA+' días"><b>'+d.nConteo+'</b> producto'+(d.nConteo===1?'':'s')+'</span>');
+  } else h.push('<span class="si-c si-ro">sin contar todavía</span>');
+  PROD_LUGARES.forEach(function(L){ var t=T.de(L.corto), f=stockEntregaDesde(hoy, Math.max(1, t.dias||0));
+    h.push('<span class="si-c" title="'+esc(stockFabricaTxt(t, L.corto))+'">'+esc(L.v)+' '+(t.medido ? ('<b>'+t.base+' día'+(t.base===1?'':'s')+'</b>') : 'sin medir')+' → '+esc(sfDiaTxt(f))+'</span>'); });
+  return h.join(sep);
+}
 /* Lo mismo para «Plazo de fábrica: N días» del detalle de un producto: decía «(medido)» también cuando N era la regla. */
 function stockPlazoPorqueTxt(o){
   var t=stockTiemposFabrica().de(o.fabLead||o.fab||''), lead=o.lead||t.dias;
@@ -38091,7 +38395,11 @@ function renderStockAhora(){
   /* ✏️ (19/10, §4ls verificación final, PA-6) En el celular (dos renglones) los plazos de las fábricas van primero: es lo que no está en
      ningún otro lugar fijo. En la compu, como siempre. */
   var _infCel=false; try{ _infCel=!!(window.matchMedia && window.matchMedia('(max-width:600px)').matches); }catch(e){}
-  if(inf) inf.textContent = _infCel ? (stockFabricasTxt(T)+' · '+_infCorte) : (_infCorte+' · '+stockFabricasTxt(T));
+  if(inf){
+    if(_infCel) inf.textContent=stockFabricasTxt(T)+' · '+_infCorte;
+    else inf.innerHTML=stockInfoChips(d, T);   // 🧹 (§4pj, idea 161) en la compu, cada dato en su pastilla: se lee de un vistazo
+    inf.classList.toggle('si-chips', !_infCel);
+  }
   if(inf) inf.title=stockFabricasTxt(T, true);   // ✏️ (§4ls VF6) lo medido y la regla, con las veces medidas
   /* Un reporte de existencias trae TODO el almacén —forros, patas, esponja por metro—, y
      200 renglones que nadie vende tapan los seis que importan. Por defecto se muestra lo
@@ -44391,9 +44699,70 @@ function openModal(html, ancha){
   if(antes===null || antes!==modalTitulo()){ ov.scrollTop=0; box.scrollTop=0; }
   if(!box.contains(document.activeElement)){ try{ box.focus({ preventScroll:true }); }catch(e){} }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
+  if(antes===null) try{ naceAbrir(box); }catch(e){}   // 🪄 (§4pj, 168) la ventana nace de lo que se tocó
+}
+/* 🪄 (§4pj, 10/11, idea 168; dueño: «me gustan todas para publicar…») LAS VENTANAS NACEN DE LO QUE TOCÁS: la ventana crece desde la ficha,
+   el renglón o el botón que se tocó, y al cerrarla un contorno vuelve a ese lugar. Solo dibujo (`Element.animate`: no deja estilos
+   puestos, no cambia cuándo se abre ni se cierra). No corre con «reducir movimiento», con la ficha al costado (§4ni, 3: tiene su entrada),
+   si lo tocado ya no está o si pasó más de 1,5 s desde el toque. En Playwright, solo con `window.NACE_PRUEBA`. */
+var NACE={ el:null, t:0, de:null };
+function naceActivo(){
+  if(navigator.webdriver && !window.NACE_PRUEBA) return false;
+  try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return false; }catch(e){}
+  return typeof document.body.animate==='function';
+}
+function naceAnotar(el){ if(el && el.nodeType===1){ NACE.el=el; NACE.t=Date.now(); } }
+document.addEventListener('pointerdown', function(e){ naceAnotar(e.target); }, true);
+document.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' ') naceAnotar(document.activeElement); }, true);
+function naceOrigen(){
+  var el=NACE.el; if(!el || Date.now()-NACE.t>1500 || !document.contains(el)) return null;
+  var o=el.closest ? (el.closest('.af-f, .cho-card, .mc, .cps-r, .ah-it, tr, li, button, a, [role="button"], [onclick]') || el) : el;
+  var box=document.getElementById('modal-box'); if(box && box.contains(o)) return null;
+  var r=o.getBoundingClientRect(); if(!(r.width>4 && r.height>4)) return null;
+  return o;
+}
+function naceAbrir(box){
+  NACE.de=null;
+  if(!naceActivo()) return;
+  var o=naceOrigen(); if(!o) return;
+  NACE.de=o;
+  requestAnimationFrame(function(){
+    try{
+      if(document.body.classList.contains('ficha-costado') || !document.getElementById('modal').classList.contains('on')) return;
+      var a=o.getBoundingClientRect(), b=box.getBoundingClientRect(), z=zoomPag()||1; if(!(b.width>20 && b.height>20)) return;
+      var alto=Math.min(b.height, window.innerHeight-b.top);   // de una ventana más alta que la pantalla, lo que se ve
+      var dx=((a.left+a.width/2)-(b.left+b.width/2))/z, dy=((a.top+a.height/2)-(b.top+alto/2))/z;
+      var sx=Math.max(.12, Math.min(1, a.width/b.width)), sy=Math.max(.08, Math.min(1, a.height/alto));
+      box.style.animation='none';
+      var an=box.animate([
+        { transform:'translate('+dx+'px,'+dy+'px) scale('+sx+','+sy+')', opacity:.35, transformOrigin:'50% '+(alto/2/z)+'px' },
+        { transform:'none', opacity:1, transformOrigin:'50% '+(alto/2/z)+'px' } ],
+        { duration:340, easing:'cubic-bezier(.3,1,.3,1)' });
+      NACE.an=an;
+      var fin=function(){ box.style.animation=''; if(NACE.an===an) NACE.an=null; };
+      an.onfinish=fin; an.oncancel=fin;
+    }catch(e){ box.style.animation=''; }
+  });
+}
+/* Al cerrar: un contorno del tamaño de la ventana vuelve a lo que la abrió y se apaga. La ventana se cierra en el acto, como siempre. */
+function naceCerrar(box){
+  var o=NACE.de; NACE.de=null;
+  if(!o || !naceActivo() || !document.contains(o) || document.body.classList.contains('ficha-costado')) return;
+  var a=o.getBoundingClientRect(), b=box.getBoundingClientRect(), z=zoomPag()||1;
+  if(!(a.width>4 && a.height>4 && b.width>20) || a.bottom<0 || a.top>window.innerHeight) return;
+  var alto=Math.min(b.height, window.innerHeight-b.top);
+  var g=document.createElement('div'); g.className='nace-eco'; g.setAttribute('aria-hidden','true');
+  g.style.cssText='left:'+(b.left/z)+'px;top:'+(b.top/z)+'px;width:'+(b.width/z)+'px;height:'+(alto/z)+'px';
+  document.body.appendChild(g);
+  var an=g.animate([
+    { transform:'none', opacity:.55 },
+    { transform:'translate('+(((a.left+a.width/2)-(b.left+b.width/2))/z)+'px,'+(((a.top+a.height/2)-(b.top+alto/2))/z)+'px) scale('+Math.max(.05, Math.min(1, a.width/b.width))+','+Math.max(.04, Math.min(1, a.height/alto))+')', opacity:0 } ],
+    { duration:260, easing:'cubic-bezier(.5,0,.7,.4)' });
+  var fin=function(){ try{ g.remove(); }catch(e){} }; an.onfinish=fin; an.oncancel=fin; setTimeout(fin, 600);
 }
 function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
+  if(estaba) try{ naceCerrar(document.getElementById('modal-box')); }catch(e){}   // 🪄 (§4pj, 168) antes de esconderla: hace falta su lugar
   try{ ctaDocOlvidar(); }catch(e){}   // 🧾 (06/11) la factura o remisión elegida y sin guardar no queda para la próxima vez
   ov.classList.remove('on');
   if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
@@ -45263,7 +45632,7 @@ function showPedidoModal(id){
         }).join('')+
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
       '</div>') : '';
-  var turnoTxt=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 Tarde' : '🌅 Mañana') : 'sin turno';
+  var turnoTxt=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 a la tarde' : '🌅 a la mañana') : 'sin turno';   // (10/11) decía «🌅 Mañana MAÑANA»
   var ret=fichaRetira(p), chips=fichaObsChips(p), avisos=fichaAvisos(p, ret, chips), dias=fichaDias(p.fecha), hace=fichaHaceTxt(p.ts);
   var vec=fichaVecinos(p); FICHA_VEC=vec;
   var N=fichaNota(p), contras=fichaContras(p, N);
@@ -45282,12 +45651,12 @@ function showPedidoModal(id){
       '<button type="button" class="fl-modok" onclick="'+esc("verVistoModif('"+String(p.id)+"')")+'">✓ Ya lo revisé</button></div>') : '';
   var top='<div class="fl-top">'+
       '<div class="fl-num"><b>'+(dnum?('#'+dnum):'—')+'</b><small>del día</small></div>'+
-      '<div class="fl-cli"><div class="n">'+clfNombre(p, p.cliente||'—', 'admin')+'</div><div class="s">'+(atc?'ATC':rpt?'RPT':'Pedido')+' '+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+
+      '<div class="fl-cli"><div class="n">'+clfNombre(p, p.cliente||'—', 'admin')+'</div><div class="s">'+((atc||rpt)?'':'Pedido ')+esc(p.oc||'—')+' · '+(rpt?'pidió ':'vendió ')+esc(p.vendedor||'—')+
         ' · 📥 Ingresó '+esc(fichaIngresoTxt(p))+(hace?(' ('+esc(hace)+')'):'')+'</div></div>'+
       '<div class="fl-pills">'+
         (entregaAConfirmar(p) ? ('<span class="fl-pill" title="Sin día de entrega: no ocupa cupo, el bot no le escribe y no sale en la carga">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</span>')   // 📦 (propuesta 76)
-        : ('<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
-          (dias.t&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'))+
+        : ('<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+((dias.c==='hoy'||dias.c==='man')&&!p.entregado?('<i class="fl-hace">'+esc(dias.t)+'</i> '):'')+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
+          (dias.t&&dias.c!=='hoy'&&dias.c!=='man'&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'))+
         (ret ? ('<span class="fl-pill fl-ret">🏪 Retira en '+esc(ret.donde)+'</span>') : ('<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'))+
         (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
@@ -55789,7 +56158,7 @@ function blokiTemaPartes(tema, traje){
   }
   return P;
 }
-function blokiSvg(traje){
+function blokiSvg(traje, gesto){
   traje=BLOKI_TRAJES[traje] ? traje : 'bloki';
   var K='#1d1d1f', T='#1aafa4', TO='#0f8f86', SW=6;
   var tema=blokiTema(), TP=blokiTemaPartes(tema, traje);
@@ -55862,6 +56231,7 @@ function blokiSvg(traje){
       '@keyframes bk-brilla{0%,100%{transform:scale(.85) rotate(0);opacity:.85}50%{transform:scale(1.12) rotate(18deg);opacity:1}}'+
       '@keyframes bk-vibra{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}'+
       '@keyframes bk-ondas{0%{opacity:.2}40%{opacity:1}100%{opacity:.2}}'+
+      (BLOKI_GESTOS[gesto]||'')+
       '@media (prefers-reduced-motion:reduce){*{animation:none!important}}</style>'+
     '<defs><clipPath id="bk-cuerpo"><rect x="48" y="50" width="144" height="148" rx="30"/></clipPath></defs>'+
     extraAtras+
@@ -55886,9 +56256,18 @@ function blokiSvg(traje){
   '</svg>';
 }
 var BLOKI_SRC={};
-/* la memoria va por traje Y tema: el mismo traje en otro mes es otro dibujo */
-function blokiSrc(traje){ traje=BLOKI_TRAJES[traje] ? traje : 'bloki'; var k=traje+'|'+blokiTema();
-  return BLOKI_SRC[k] || (BLOKI_SRC[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(blokiSvg(traje))); }
+/* 🙌 (§4pj, 10/11, idea 171; dueño: «me gustan todas…») LOS GESTOS: el MISMO dibujo, con la mano y los ojos puestos de otra forma. Va
+   adentro del SVG (la figura es una imagen: desde la página no se llega a sus partes); el salto, la inclinación y el «Zzz» van en la página
+   (`.asis-g-…`). `blokiGesto(g, ms)` lo pone un rato y vuelve solo. No cambia el traje ni el tema. */
+var BLOKI_GESTOS={
+  festeja:'.bk-mano{animation:bk-fiesta .42s ease-in-out infinite}.bk-chispa{animation-duration:.7s}@keyframes bk-fiesta{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(10deg)}}',
+  senala:'.bk-mano{animation:none;transform:rotate(-38deg)}.bk-ojos{animation:none;transform:translateX(-7px)}',
+  mira:'.bk-ojos{animation:none;transform:translate(-6px,-3px) scale(1.12)}',
+  duerme:'.bk-ojos{animation:none;transform:scaleY(.1)}.bk-mano{animation:none;transform:rotate(14deg)}.bk-chispa{animation:none;opacity:.25}'
+};
+/* la memoria va por traje Y tema (el mismo traje en otro mes es otro dibujo) y, si hay, por gesto */
+function blokiSrc(traje, gesto){ traje=BLOKI_TRAJES[traje] ? traje : 'bloki'; gesto=BLOKI_GESTOS[gesto] ? gesto : ''; var k=traje+'|'+blokiTema()+(gesto?('|'+gesto):'');
+  return BLOKI_SRC[k] || (BLOKI_SRC[k]='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(blokiSvg(traje, gesto))); }
 function blokiTraje(){
   if(ASIS.anuncioFig) return 'anuncio';
   /* 🧽 SEGÚN LA PESTAÑA, PARA TODOS (27/10 a la noche; el dueño cambió de pestaña con su nombre elegido y Bloki seguía igual, y eligió
@@ -55906,8 +56285,50 @@ function blokiTraje(){
   return 'bloki';
 }
 function blokiPoner(){
-  var t=blokiTraje(), img=document.querySelector('#asis-yo img');
-  if(img && img.getAttribute('data-traje')!==t){ img.setAttribute('src', blokiSrc(t)); img.setAttribute('data-traje', t); }
+  var t=blokiTraje(), g=(t==='anuncio') ? '' : (ASIS.gesto||''), img=document.querySelector('#asis-yo img');
+  if(img && (img.getAttribute('data-traje')!==t || (img.getAttribute('data-gesto')||'')!==g)){ img.setAttribute('src', blokiSrc(t, g)); img.setAttribute('data-traje', t); img.setAttribute('data-gesto', g); }
+}
+/* 🙌 Un gesto por un rato (`ms`; «duerme» queda hasta que alguien toque algo). Solo dibujo. */
+var BLOKI_GESTO_T=0;
+function blokiGesto(g, ms){
+  var yo=document.getElementById('asis-yo'); if(!yo || !ASIS.montado) return;
+  g=BLOKI_GESTOS[g] ? g : '';
+  if(g===(ASIS.gesto||'')){ if(g && ms){ clearTimeout(BLOKI_GESTO_T); BLOKI_GESTO_T=setTimeout(function(){ blokiGesto(''); }, ms); } return; }
+  clearTimeout(BLOKI_GESTO_T);
+  ['festeja','senala','mira','duerme'].forEach(function(x){ yo.classList.toggle('asis-g-'+x, x===g); });
+  ASIS.gesto=g; blokiPoner();
+  var vieja=yo.querySelectorAll('.asis-conf'); for(var i=0;i<vieja.length;i++) vieja[i].remove();
+  if(g==='festeja'){ var C=['#f6c437','#00B5AD','#e9569a','#3b82f6','#f97316','#22c55e'];
+    for(var j=0;j<12;j++){ var s=document.createElement('span'); s.className='asis-conf'; s.style.cssText='--x:'+Math.round((j-5.5)*14+(j%2?6:-6))+'px;--y:'+(-60-(j*17)%50)+'px;background:'+C[j%6]+';animation-delay:'+(j%4)*60+'ms'; yo.appendChild(s); } }
+  if(g && g!=='duerme') BLOKI_GESTO_T=setTimeout(function(){ blokiGesto(''); }, ms||2600);
+  try{ asisTapaMirar(); }catch(e){}
+}
+/* 😴 Se duerme si nadie toca nada por `BLOKI_DUERME_MS`; cualquier toque, tecla o rueda lo despierta. */
+var BLOKI_DUERME_MS=180000, BLOKI_ULT=Date.now();
+function blokiActividad(){ BLOKI_ULT=Date.now(); if(ASIS.gesto==='duerme') blokiGesto(''); }
+/* 🫣 (§4pj, idea 159) BLOKI NO TAPA: si debajo de él hay algo para leer o tocar (un botón, un renglón, un campo), se achica y se asoma
+   desde la esquina; con el puntero encima, con el globo o con la ventana abierta vuelve a su tamaño. Mira nueve puntos de su lugar. */
+function asisTapaMirar(){
+  var d=document.getElementById('asis'), yo=document.getElementById('asis-yo'); if(!d || !yo) return false;
+  var gl=document.getElementById('asis-globo'), tapa=false;
+  if(!(ASIS.abierto || (gl && !gl.hidden) || (ASIS.gesto && ASIS.gesto!=='duerme') || ASIS.anuncioFig || document.hidden)){
+    var z=1; try{ z=zoomPag()||1; }catch(e){}
+    var r=d.getBoundingClientRect(), w=yo.offsetWidth*z, h=yo.offsetHeight*z, x0=r.right-w, y0=r.bottom-h;
+    for(var i=0;i<9 && !tapa;i++){
+      var x=x0+w*(.2+.3*(i%3)), y=y0+h*(.2+.3*Math.floor(i/3)), els=[];
+      try{ els=document.elementsFromPoint(x, y)||[]; }catch(e){}
+      for(var j=0;j<els.length;j++){ var e=els[j]; if(d.contains(e)) continue;
+        if(e===document.body || e===document.documentElement) break;
+        if(e.closest && e.closest('button,a,input,select,textarea,label,[onclick],[role="button"],td,th,img,svg,canvas')){ tapa=true; break; }
+        /* letras sueltas: solo si de verdad pasan por ese punto (un renglón a lo ancho con el texto en la otra punta no cuenta) */
+        for(var n=e.firstChild; n && !tapa; n=n.nextSibling){ if(n.nodeType===3 && /\S/.test(n.nodeValue)){
+          try{ var rg=document.createRange(); rg.selectNodeContents(n); var rs=rg.getClientRects();
+            for(var q=0;q<rs.length;q++){ if(x>=rs[q].left-10 && x<=rs[q].right+10 && y>=rs[q].top-8 && y<=rs[q].bottom+8){ tapa=true; break; } } }catch(_e){ tapa=true; } } }
+        break; }
+    }
+  }
+  d.classList.toggle('asis-chico', tapa);
+  return tapa;
 }
 function asisActivo(){ return !(navigator.webdriver && !window.ASIS_PRUEBA); }
 function asisMudo(){ try{ return localStorage.getItem(ASIS_LS_MUDO)==='1'; }catch(e){ return false; } }
@@ -56067,6 +56488,7 @@ function asisResumenDia(){
    Ni en una venta de tienda, ni en una ATC o RPT (la sucursal va sin pin a propósito), ni el celular para Eduardo o ROHO. */
 function asisAlGuardar(rec, tienda){
   if(!asisActivo() || !rec) return;
+  try{ blokiGesto('festeja', 2600); }catch(e){}   // 🙌 festeja el guardado
   var id=String(rec.id||''), cli=String(rec.cliente||'').trim();
   if(!id || !cli || tienda || rec.entregado || esATC(rec.oc) || esRPT(rec.oc)) return;
   var L=[], t=Date.now(), ir=function(sel){ return 'asisEditarEn('+JSON.stringify(id)+','+JSON.stringify(sel)+')'; };
@@ -56215,6 +56637,7 @@ function asisPrimero(sels){ var L=[].concat(sels||[]); for(var i=0;i<L.length;i+
 function asisFoco(sel, fijo){
   if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
   var el=(sel && sel.nodeType===1) ? sel : (asisPrimero(sel) || document.querySelector([].concat(sel)[0])); if(!el) return null;
+  try{ blokiGesto('senala', 4000); }catch(e){}   // 🙌 señala lo que nombra
   ASIS_FOCO=el; el.classList.add('asis-foco');
   try{ el.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
   if(/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) setTimeout(function(){ try{ el.focus({ preventScroll:true }); }catch(e){} }, 400);
@@ -56289,6 +56712,12 @@ function asisMontar(){
   var gs=document.getElementById('f-submit');
   if(gs && window.IntersectionObserver) try{ new IntersectionObserver(function(es){ document.body.classList.toggle('asis-guardar', !!(es[0] && es[0].isIntersecting)); }).observe(gs); }catch(e){}
   asisRefrescar();
+  /* 🫣🙌 (§4pj) no tapar y los gestos: se mira al mover la página y cada segundo y medio; se duerme sin actividad */
+  var _tt=0, _mirar=function(){ clearTimeout(_tt); _tt=setTimeout(function(){ try{ asisTapaMirar(); }catch(e){} }, 120); };
+  window.addEventListener('scroll', _mirar, { passive:true, capture:true }); window.addEventListener('resize', _mirar);
+  setInterval(function(){ if(document.hidden) return; try{ asisTapaMirar(); if(!ASIS.gesto && !ASIS.abierto && Date.now()-BLOKI_ULT>BLOKI_DUERME_MS) blokiGesto('duerme'); }catch(e){} }, 1500);
+  ['pointerdown','keydown','wheel','touchstart'].forEach(function(ev){ document.addEventListener(ev, blokiActividad, { passive:true, capture:true }); });
+  d.querySelector('#asis-yo').insertAdjacentHTML('beforeend', '<span class="asis-zz" aria-hidden="true">z</span><span class="asis-zz" aria-hidden="true">z</span><span class="asis-zz" aria-hidden="true">Z</span>');
   clearInterval(ANUNCIO.tic); ANUNCIO.tic=setInterval(anuncioTic, ANUNCIO_TIC_MS);   // 📢 (13/10) el reloj del anuncio
   anuncioEscuchar();   // 📣 (14/10) teclas, Esc y el primer toque que lo deja gritar
 }
@@ -56305,7 +56734,7 @@ function asisRefrescar(nuevoYa){
   ASIS.firma=firma;
   /* abierta: se repinta solo si cambió algo (el reloj de cada minuto ya no le saca el foco al buscador ni sube la lista) */
   if(ASIS.abierto){ if(cambio) asisPanelPintar(); }
-  else if(nuevos.length) asisGlobo(nuevos[0], ASIS.primera && !nuevoYa);
+  else if(nuevos.length){ asisGlobo(nuevos[0], ASIS.primera && !nuevoYa); if(!ASIS.primera) try{ blokiGesto('mira', 3200); }catch(e){} }   // 🙌 mira el aviso nuevo
   ASIS.primera=false;
   anuncioTic();
   blokiPoner();   // 🧽 el traje de quien usa el panel (o de la pestaña)

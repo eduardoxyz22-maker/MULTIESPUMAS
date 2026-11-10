@@ -821,9 +821,22 @@ Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante
 escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
 valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
-## 🎨 Propuesta visual 158-173 (§4ph, 10/11; NADA programado)
-Muestras para el dueño: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (158-162, 164, 166-168, 171-173). Descartó 163, 165, 169 y 170. Espera que
-diga qué números van; al programarlas, arreglar «RPT RPT …» y «Mañana MAÑANA» de la ficha de logística. Detalle: bitácora §4ph.
+## 🎨 Las mejoras visuales 159, 161, 166, 167, 168, 171, 172 y el cielo según la hora (§4ph → §4pj, 10/11; dueño: *«me gustan todas para publicar menos 158, 160, 162, 164, 173… solo añadiría lo del amanecer, día, atardecer, noche»*)
+Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 163, 164, 165, 169, 170, 173 y la 162 entera salvo el cielo. Solo dibujo.
+- 🌅 **Cielo**: `hdrCieloPintar(h)` (hora de Bolivia) → `#h-cielo` + `.h-astro` (en `.h-ruta`, detrás de los edificios) con variables en `.header`
+  y `data-momento`. ⚠️ Un tema con luna propia esconde `.h-astro[data-luna="1"]` (como Halloween y Navidad).
+- 🙌 **171 Bloki con gestos** (el MISMO dibujo): `BLOKI_GESTOS` adentro del SVG + `blokiGesto(g, ms)` (`.asis-g-<g>`): festeja al guardar, señala al
+  llevar a algo, mira un aviso nuevo, duerme a los 3 min sin actividad. 🫣 **159 no tapa**: `asisTapaMirar()` → `.asis-chico` si debajo hay algo
+  para tocar o leer (las letras sueltas se miden con un `Range`: un renglón a lo ancho con el texto lejos NO cuenta).
+- 🧹 **161**: ATC desde 1100 px con los filtros en un renglón y las fichas en una fila (`data-min="150"`); Stock con `#stock-info` en pastillas
+  (`stockInfoChips`; el texto sigue empezando con «corte del …»; en el celular, el texto de siempre).
+- 🪄 **168**: `openModal` → `naceAbrir` (crece desde lo tocado, `Element.animate`) y `closeModal` → `naceCerrar` (contorno `.nace-eco`). Nunca
+  cambia cuándo abre o cierra. `NACE_PRUEBA`. 🍃 **172**: `#bienv` + script justo después de `<body>`, solo instalado, una vez por apertura
+  (`me_bienv`). `BIENV_PRUEBA`.
+- 🏁 **166 carrera** (`pryCarreraDatos`: las ventas de «Por vendedor» en su día de carga; el último día = lo «vendido» de Proyección) y 🟩 **167
+  calendario** (`pryCalorDatos`: vendido por la CARGA, entregas agendadas, cobrado por la fecha del pago; el pie avisa que no es el total de la
+  ficha, que va por entrega). ⚠️ No calculan plata aparte: salen de `pryVentas`, `contaFecha`, `ventaTotal`, `contaPagos`.
+- La ficha de logística ya no dice «RPT RPT …» ni «Mañana MAÑANA». `tests/test_visual_4pj.js` (51).
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,

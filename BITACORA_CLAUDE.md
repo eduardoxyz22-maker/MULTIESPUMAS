@@ -17357,6 +17357,66 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»*)
+
+**Qué pidió.** De la propuesta 158-173 (ya había sacado 163, 165, 169 y 170) quedan afuera 158, 160, 164 y 173; de la 162 quiere SOLO el
+cielo según la hora sobre el encabezado de hoy (ni «depósito PTF» ni camiones nuevos). Van: 159, 161, 166, 167, 168, 171, 172 + el cielo.
+Todo es dibujo: nada guarda ni cambia una cuenta. El `.gs` no se tocó.
+
+**Qué quedó hecho (todo en `pedidos.html`).**
+- **🌅 El cielo según la hora** (de la 162): `<span id="h-cielo">` (primer hijo de `.header`) + `<span class="h-astro">` (primer hijo de
+  `.h-ruta`, DETRÁS de los edificios: arriba tapaba el nombre y los cupos). `hdrCieloPintar(h)` (hora de Bolivia con decimales; sin argumento,
+  la de ahora) mezcla cuatro cielos (noche / amanecer / día / atardecer) y deja en `.header` las variables `--cielo-a/-b/-est` y
+  `--astro-x/-y/-c/-g` + `data-momento`; devuelve `window.hdrCielo={h, momento}`. Corre al abrir, cada 5 minutos y al volver a la pestaña.
+  Es un velo encima del tema del mes (que sigue igual); Halloween y Navidad, que ya traen su luna, no llevan la de acá.
+- **🙌 171 · Bloki con gestos** (el MISMO dibujo, sin rediseño): `blokiSvg(traje, gesto)` suma `BLOKI_GESTOS[gesto]` al `<style>` de adentro
+  del SVG (la figura es una imagen: desde la página no se llega a sus partes); `blokiSrc(traje, gesto)` recuerda por `traje|tema|gesto`;
+  `blokiGesto(g, ms)` pone `.asis-g-<g>` en `#asis-yo` y vuelve solo. **festeja** al guardar un pedido (`asisAlGuardar`, con papel picado
+  `.asis-conf`), **señala** cuando lleva a algo (`asisFoco`), **mira** con un aviso nuevo (`asisRefrescar`), **duerme** tras
+  `BLOKI_DUERME_MS` (3 min) sin tocar nada (`blokiActividad` lo despierta; «z» en `.asis-zz`). Con «reducir movimiento», sin saltos.
+- **🫣 159 · Bloki no tapa**: `asisTapaMirar()` mira nueve puntos de su lugar con `elementsFromPoint`; si debajo hay algo para tocar o leer
+  (botón, enlace, campo, celda, imagen, o LETRAS que de verdad pasan por ese punto) pone `.asis-chico` en `#asis` (se achica y se asoma
+  desde la esquina; el puntero encima lo vuelve a su tamaño). No se achica con su ventana o su globo abiertos, con el anuncio ni durante un
+  gesto corto (dormido sí). Se mira al hacer scroll, al cambiar el tamaño y cada 1,5 s. ⚠️ La primera versión contaba cualquier renglón a
+  lo ancho con texto (el pie de la página) y Bloki quedaba chico SIEMPRE en Administración: las letras sueltas se miden con un `Range`.
+- **🧹 161 · Ordenar arriba de ATC y de Stock**: ATC, desde 1100 px, filtros en UN renglón (clases `atc-f-sel/-bus/-btn`; los anchos
+  mínimos que iban escritos a mano en el HTML pasaron al CSS) y las fichas en una fila (`data-min="150"` en `#atc-metrics`: decide
+  `acomodarFichas`); más angosto queda como estaba. Stock: en la compu `#stock-info` va en pastillas (`stockInfoChips(d, T)`, clase
+  `si-chips`): el corte (verde si es de hoy, ámbar si no, rojo sin contar), cuántos productos y cada fábrica «Moreno 3 días → jue 12/11».
+  El texto sigue empezando con «corte del …» (lo lee `test_stock_final_pantalla`); en el celular sigue el texto de dos renglones (§4ls PA-6).
+- **🪄 168 · Las ventanas nacen de lo que tocás**: `naceAnotar` guarda lo último tocado (puntero, Enter o Espacio); `openModal`, en una
+  apertura NUEVA, llama a `naceAbrir(box)`: la ventana crece desde la ficha / renglón / botón tocado (`Element.animate`, 340 ms, no deja
+  estilos puestos); `closeModal` llama a `naceCerrar` ANTES de esconderla y un contorno `.nace-eco` vuelve a ese lugar. No corre con «reducir
+  movimiento», con la ficha al costado (§4ni, 3), si lo tocado ya no está o no se ve, ni pasados 1,5 s del toque. Con el panel agrandado
+  (§4oc) las medidas pasan por `zoomPag()`. En Playwright solo con `window.NACE_PRUEBA`. La ventana abre y cierra CUANDO siempre.
+- **🍃 172 · La bienvenida del panel instalado**: `#bienv` + un script chico justo después de `<body>` (antes que todo, para tapar la carga):
+  un segundo y medio con las tres hojas de la marca, «MultiEspumas · PEDIDOS». Solo abierto como programa (`display-mode` standalone /
+  window-controls-overlay / minimal-ui, o `navigator.standalone` del iPhone), una vez por apertura (`me_bienv` en la sesión); tocarla la saca.
+  En Playwright solo con `window.BIENV_PRUEBA`. ⚠️ `.bienv[hidden]{display:none!important}` (la lección de §4nt).
+- **🏁 166 · La carrera del mes** (Proyección, `#pry-carrera`, debajo de «Por vendedor»): `pryCarreraDatos(R)` = las MISMAS ventas de «Por
+  vendedor» (`pryVentas`, equipo, `ym` = el mes elegido) puestas en el día en que se cargaron (`reg`); lo cargado antes del 1° ya está el
+  día 1 y lo cargado después del cierre entra el último día → **el último día da, vendedor por vendedor, lo «vendido» de arriba** (la
+  prueba lo compara; con la planilla real del 09/11: 10 vendedores, Bs 399.756,97 = el equipo). «▶ Largar» avanza un día cada 0,6 s
+  (`pryCarreraPlay`; repintar Proyección no la corta), la barra elige el día, color por marca. El ancho de cada barra lo decide el CSS
+  (`--w` × `--pcar-max`: en el celular la más larga deja lugar al monto). Mes sin ventas o que no empezó: no se dibuja.
+- **🟩 167 · El calendario de calor** (Proyección, `#pry-calor`): `pryCalorDatos(ym)` → **Vendido** (ventas del equipo por el día en que se
+  CARGARON: `contaFecha` + `ventaTotal`), **Entregas** (pedidos agendados ese día, con ATC y reposiciones, sin ventas de tienda) y
+  **Cobrado** (pagos de las ventas del equipo por su fecha: `contaPagos`). Cinco tonos de turquesa, feriados y domingos sin nada rayados,
+  hoy con borde, lo que no pasó apagado (menos en Entregas), tocar un día dice su número. ⚠️ «Vendido» acá es por la CARGA y la ficha
+  «Vendido en <mes>» es por la ENTREGA: el pie lo dice para que nadie espere el mismo total. Sin donas (el dueño no las quiere).
+- **Ficha de logística** (lo anotado en §4ph): ya no dice «RPT RPT 11-006» (el encabezado ponía «Pedido»/tipo dos veces) ni «Mañana
+  MAÑANA»: el turno va «a la mañana / a la tarde» y la etiqueta HOY/MAÑANA va pegada a «Entrega».
+
+**Pruebas.** `tests/test_visual_4pj.js` (51; datos sintéticos, reloj clavado el 11/11): cielo, gestos, «no tapa», ATC/Stock en compu y
+celular, las ventanas (con y sin `NACE_PRUEBA`), la bienvenida (una vez por apertura), la carrera contra `proyeccionMes` y el calendario
+contra el fixture. Las de siempre de Bloki, el asistente, el anuncio, la ficha y Stock siguen verdes.
+
+**Lo que hay que respetar.**
+- El cielo es un velo: un tema NUEVO con luna propia tiene que esconder `.h-astro[data-luna="1"]` como Halloween y Navidad.
+- Un gesto NUEVO de Bloki va en `BLOKI_GESTOS` (adentro del SVG) + su regla `.asis-g-<g>` y la lista de `blokiGesto`; nada de otro dibujo.
+- La carrera y el calendario no calculan plata aparte: si cambia `pryVentas`, `contaFecha`, `ventaTotal` o `contaPagos`, cambian solos.
+- Una ventana NUEVA que no pase por `openModal` no «nace»: es a propósito (las de pantalla completa tienen su entrada).
+
 ### §4pi — ↩️ «LO DEMÁS SE ENTREGÓ EN TIENDA» TACHABA EL COLCHÓN (10/11; dueño, con la ficha del 11-097: *«¿por qué aparece marcado si la observación dice entregar colchón, lo demás ya se entregó?»*; PUBLICADO 10/11, versión 2026-11-10-c, dueño: «Si publica»)
   Nota: «ESTARA EN CASA SOLO HASTA LAS 10 AM-TOMAR EN CUENTA X FAVOR--ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA». `fichaNoLlevar`
   parte la frase en «SOLO» y le quedaba «EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA»: nombraba COLCHON en una frase de «se entregó» → tachaba el
