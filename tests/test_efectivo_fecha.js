@@ -145,10 +145,53 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
     out.xls={ nom:nom, hojas:hojas?hojas.map(function(h){ return h.name; }):[],
               jp:hojas?JSON.stringify(hojas[0].matrix.filter(function(f){ return f[0]==='Caja · Juan Pablo Paredes'; })[0]):'',
               may:hojas?hojas[1].matrix.length:0 };
+    /* 10. la revisión de Fable (10/11) */
+    if(hojas){ var det=hojas[2].matrix.slice(1), sr=0; det.forEach(function(f){ if(f[7] && typeof f[7]==='object') sr=r2(sr+f[7].v); });
+      out.xlsSin={ suma:sr, pos:mysSaldos('2026-11-05').tot.pos, jpOct10:det.filter(function(f){ return f[0]==='Caja · Juan Pablo Paredes' && f[1]===fmtFecha('2026-10-10'); }).length,
+                   plata:det.every(function(f){ return !f[7] || (typeof f[7]==='object' && f[7].t==='n' && f[7].s===2); }) }; }
+    /* 10b la lista de lo sin recoger de cada cuenta suma su saldo, todos los días del 01/10 al 09/11 */
+    var malLista=[], PR2=efePareo(), ks2={}; Object.keys(PR2.cob).forEach(function(k){ ks2[k]=1; }); PR2.ret.forEach(function(x){ ks2[x.k]=1; });
+    for(var dd2='2026-10-01', n2=0; dd2<='2026-11-09' && n2<60; dd2=stockSumarDias(dd2,1), n2++){
+      var X2=efdDatos(dd2);
+      Object.keys(ks2).forEach(function(k){ var e=X2.por[k], ex=mysExtras(k, dd2), s=0; (e?e.pend:[]).forEach(function(x){ s=r2(s+x.saldo); });
+        s=r2(s+ex.antes-ex.demas); var sal=mysSaldoAl(mysMovs(k, dd2), dd2); if(Math.abs(s-sal)>0.005) malLista.push([k, dd2, s, sal]); });
+    }
+    out.malLista=malLista;
+    /* 10c el Mayor desde el 01/10 trae también las cuentas que no se movieron en noviembre (Isabel) */
+    mysVista('mayor'); mysCuenta(''); mysDesde('2026-10-01'); efdElegirDia('2026-11-09'); await esperar(60);
+    out.ctasOct=[].slice.call(document.querySelectorAll('#mys-cta option')).map(function(o){ return o.textContent; });
+    /* 10d reabrir desde el botón: hoy, Saldos, sin «Desde» */
+    closeModal(); await esperar(40); document.getElementById('efd-btn').click(); await esperar(120);
+    out.reabre={ vista:EFD.vista, d:EFD.d, desde:EFD.desde, q:EFD.q };
+    /* 10e una vendedora del Cuadre sin ningún movimiento sale con su nombre */
+    closeModal(); abrirEfectivoFecha('', normNombre('Andrea Orias'), 'Andrea Orias'); await esperar(80);
+    out.andrea=(document.getElementById('efd')||{}).innerText||'';
+    closeModal();
+    /* 10f un retiro que no tapa nada (Carola, 04/11) y un cobro tildado con fecha posterior al retiro (María, cobro 08/11, retiro 06/11) */
+    var mf=P('mf1', 'Maria Flores', 'CLIENTE FECHA', [{ monto:300, fecha:'2026-11-08' }], '2026-11-08');
+    var rmf=R('mf1', 'Maria Flores', 300, '2026-11-06'); rmf.garantia='efe:mf1|2026-11-08|300';
+    var L2=L.concat([R('cz1', 'Carola Chavez', 500, '2026-11-04'), mf, rmf]);
+    var posAntes=mysSaldos('2026-11-09').tot.pos;
+    apiList=function(){ return Promise.resolve({ ok:true, pedidos:JSON.parse(JSON.stringify(L2)) }); };
+    await refrescarEstado(); await esperar(150);
+    var T9=mysSaldos('2026-11-09').tot; out.neg9={ posAntes:posAntes, pos:T9.pos, neg:T9.neg, nNeg:T9.nNeg };
+    abrirEfectivoFecha('', ''); await esperar(80); out.txtNeg=document.getElementById('efd').innerText.replace(/\s+/g,' ');
+    efdPersona(normNombre('Carola Chavez')); await esperar(80); out.txtCarola=document.getElementById('efd').innerText.replace(/\s+/g,' ');
+    efdPersona(normNombre('Maria Flores')); efdElegirDia('2026-11-07'); await esperar(80); out.txtMaria=document.getElementById('efd').innerText.replace(/\s+/g,' ');
+    var cp2=copyText, cop2=''; copyText=function(t){ cop2=t; }; mysVista('saldos'); efdCopiar(); copyText=cp2; out.copiaNeg=cop2;
     closeModal();
     return out;
   });
   if(r.falta){ chk('existe abrirEfectivoFecha', false); console.log('\n'+PASS+' bien · '+FAIL+' mal'); await browser.close(); process.exit(1); }
+  /* 10i en el celular (390 px) los Saldos dejan el saldo a la vista: sin «Saldo al <ayer>» ni la columna «De qué es» (va debajo del nombre) */
+  await page.setViewportSize({ width:390, height:844 });
+  const cel = await page.evaluate(async () => {
+    abrirEfectivoFecha('', ''); await new Promise(function(r){ setTimeout(r, 150); });
+    var th=document.querySelector('.mys-sal th:nth-child(2)'), th6=document.querySelector('.mys-sal th:nth-child(6)'), de=document.querySelector('.mys-sal .mys-de-in'), tw=document.querySelector('#efd .tw');
+    var o={ th2:th?getComputedStyle(th).display:'', th6:th6?getComputedStyle(th6).display:'', de:de?getComputedStyle(de).display:'', sw:document.documentElement.scrollWidth,
+            tabla:(document.querySelector('.mys-sal')||{}).scrollWidth||0, caja:tw?tw.clientWidth:0 };
+    closeModal(); return o;
+  });
   const near=(a,b)=>Math.abs((a||0)-(b||0))<0.006;
   // 1
   chk('1a el botón 📅 Efectivo a una fecha está en el Cuadre', r.hayBtn);
@@ -183,7 +226,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   chk('9c Saldos al 02/11: lo de octubre sigue en el saldo (JP 3.990, Mauricio 400, Mirian 5.440)', near(S(r.s02,'Juan Pablo Paredes').saldo,3990) && near(S(r.s02,'Mauricio Merida').saldo,400) && near(S(r.s02,'Mirian Salazar').saldo,5440), r.s02);
   chk('9d Saldos al 05/11 de Mauricio: el cierre se lleva los 400 de octubre', near(S(r.s05,'Mauricio Merida').haber,400) && near(S(r.s05,'Mauricio Merida').saldo,3290), S(r.s05,'Mauricio Merida'));
   chk('9e hoy: el saldo de cada cuenta = «Le queda en la mano» del Cuadre', r.cmp.every(function(x){ return near(x[1], S(r.s09,x[0]).saldo||0); }), [r.cmp, r.s09]);
-  chk('9f Isabel: el retiro de plata de septiembre va contra «saldo de antes del 01/10» y no deja negativo', JSON.stringify(r.mayIsa)===JSON.stringify([['2026-10-01','ini',300,0,300],['2026-10-02','ret',0,300,0]]), r.mayIsa);
+  chk('9f Isabel: el retiro de plata de septiembre va contra «saldo de antes del 01/10» y no deja negativo', JSON.stringify(r.mayIsa)===JSON.stringify([['2026-09-30','ini',300,0,300],['2026-10-02','ret',0,300,0]]), r.mayIsa);
+  chk('9i Saldos al 05/10 de Isabel: lo de antes va en «Saldo al 30/09», no como debe de octubre', near(S(r.s1005,'Isabel Robledo').ini,300) && near(S(r.s1005,'Isabel Robledo').debe,0) && near(S(r.s1005,'Isabel Robledo').haber,300) && near(S(r.s1005,'Isabel Robledo').saldo,0), S(r.s1005,'Isabel Robledo'));
   chk('9g ninguna cuenta queda en negativo', r.neg.length===0, r.neg);
   chk('9h siempre: saldo anterior + debe − haber = saldo', r.cuadra.length===0, r.cuadra);
   // 8 pantalla
@@ -192,11 +236,23 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   chk('8c en Saldos no se ve «Desde»', r.desdeOculto===true);
   chk('8d ▶ pasa al día siguiente y no pasa de hoy; no va antes de octubre', r.dMas==='2026-11-06' && r.dTope==='2026-11-09' && r.dMin==='2026-10-01', [r.dMas, r.dTope, r.dMin]);
   chk('8e tocar una cuenta abre su Mayor desde el 1° del mes', r.vistaMayor.vista==='mayor' && r.vistaMayor.q===r.qJP && r.vistaMayor.desdeVisible && r.vistaMayor.desde==='2026-11-01', r.vistaMayor);
-  chk('8f el Mayor: saldo anterior, cobros, retiro, cierre de octubre, sumas', /Saldo anterior/.test(r.det) && /Cierre de octubre: se dio por retirado/.test(r.det) && /Sumas/.test(r.det) && /saldo al 05\/11: Bs 4\.620,00/.test(r.det) && /De noviembre, sin recoger al cierre del 05\/11/.test(r.det), r.det.slice(0,700));
+  chk('8f el Mayor: saldo anterior, cobros, retiro, cierre de octubre, sumas', /Saldo anterior/.test(r.det) && /Cierre de octubre: se dio por retirado/.test(r.det) && /Sumas/.test(r.det) && /saldo al 05\/11: Bs 4\.620,00/.test(r.det) && /Lo que tenía sin recoger al cierre del 05\/11/.test(r.det), r.det.slice(0,700));
+  chk('8f2 la lista de JP al 05/11 trae lo de octubre que tapó el retiro del 06/11 (990) y suma el saldo', /CLIENTE PENA de octubre/.test(r.det) && /Total = saldo al 05\/11 Bs 4\.620,00/.test(r.det), r.det.slice(-900));
   chk('8g abrir una venta desde el Mayor y volver', /Volver al mayor y saldos/.test(r.volTxt) && r.volvio.hay && r.volvio.d==='2026-11-05' && r.volvio.q===r.qJP && r.volvio.vista==='mayor', [r.volTxt, r.volvio]);
   chk('8h «Todas las cuentas» y «Desde»', r.bloques>=4 && r.desde04>=1, [r.bloques, r.desde04]);
   chk('8i Copiar: el Mayor y los Saldos', /Saldo anterior/.test(r.copiaMayor) && /Caja · Juan Pablo Paredes/.test(r.copiaMayor) && /Saldos de caja \(efectivo\) al cierre del jue 05\/11/.test(r.copia) && /4\.620/.test(r.copia), [r.copiaMayor.slice(0,200), r.copia.slice(0,200)]);
   chk('8k Excel: Saldos, Mayor y Sin recoger', r.xls.nom==='mayor-y-saldos-al-2026-11-05.xlsx' && JSON.stringify(r.xls.hojas)===JSON.stringify(['Saldos al 05-11','Mayor','Sin recoger']) && /4620/.test(r.xls.jp) && r.xls.may>5, r.xls);
+  // 10 la revisión de Fable
+  chk('10a Excel «Sin recoger»: sin lo de octubre que el cierre ya se llevó, y suma lo sin recoger', r.xlsSin && r.xlsSin.jpOct10===0 && near(r.xlsSin.suma, r.xlsSin.pos) && r.xlsSin.plata, r.xlsSin);
+  chk('10b la lista de lo sin recoger de cada cuenta suma su saldo, todos los días', r.malLista.length===0, r.malLista.slice(0,10));
+  chk('10c el Mayor desde el 01/10 trae a Isabel (sin movimiento en noviembre)', r.ctasOct.some(function(t){ return /Isabel Robledo/.test(t); }), r.ctasOct);
+  chk('10d reabrir desde el botón: hoy, Saldos, sin «Desde»', r.reabre.vista==='saldos' && r.reabre.d==='2026-11-09' && r.reabre.desde==='' && r.reabre.q==='', r.reabre);
+  chk('10e una vendedora sin movimientos sale con su nombre', /Caja · Andrea Orias/.test(r.andrea), r.andrea.slice(0,300));
+  chk('10f un retiro que no tapa nada no achica lo sin recoger y se dice aparte', near(r.neg9.pos, r.neg9.posAntes) && near(r.neg9.neg,500) && r.neg9.nNeg===1 &&
+        /Aparte, 1 cuenta con Bs 500,00 retirado de más/.test(r.txtNeg) && /retirado de más/.test(r.copiaNeg) && /TOTAL SIN RECOGER/.test(r.copiaNeg), [r.neg9, r.txtNeg.slice(0,400), r.copiaNeg.slice(-300)]);
+  chk('10g el Mayor de Carola: el retiro dice «no tapa ningún cobro» y la lista dice «retirado de más»', /no tapa ningún cobro/.test(r.txtCarola) && /Retirado de más/.test(r.txtCarola) && /Total = saldo al 09\/11 −?-?Bs ?500|Total = saldo al 09\/11 Bs -500|Total = saldo al 09\/11 -Bs 500/.test(r.txtCarola), r.txtCarola.slice(-600));
+  chk('10h un cobro tildado con fecha posterior al retiro se avisa en el Mayor', /posterior al retiro/.test(r.txtMaria), r.txtMaria.slice(0,800));
+  chk('10i celular: el saldo a la vista (sin deslizar) y la página no se sale de costado', cel.th2==='none' && cel.th6==='none' && cel.de==='block' && cel.sw<=390 && cel.tabla<=cel.caja+1, cel);
   chk('8j sin errores de la página', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
