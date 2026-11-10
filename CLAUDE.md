@@ -804,16 +804,22 @@ acolchadora, el producto terminado (Heaven/Sueña), un segundo montacargas, insp
 Eduardo SIN panza ni bigote (dueño, 01/11). **Yerson** en costura acullica coca (el cachete es el BOLO, nunca enfermedad; ojos grandes; habla de coca despalada, bolo, bico). Solo dibujo.
 ⚠️ `depFundir` junta lo fijo, también en `depAmbiente` (lo comparten los camiones 3D de Administración): algo que se mueva o se toque no va ahí.
 ⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (54 con `PATIO_THREE`).
-🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; EN LA RAMA, espera «publica»): las posturas se mezclan
+🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; PUBLICADO 10/11, versión 2026-11-10-b, `SHA_PUB`): las posturas se mezclan
 (`depVidaPoseDe` → `depVidaAnimar`), se camina arrancando y frenando (`depVidaMover`: `Q.v`, `Q.ac`, `P.fase`), los giros de parado van de a poco
 (⚠️ un giro NUEVO de alguien de `VIDA.q` va con `depVidaGira`/`depMirarA`, nunca `rotation.y=` a mano), el perro se sienta, el montacargas cabecea
 (`depFabCabeceo`), el colchón y la carga caen (`depFabCaer`, `depCae`, `depRebote`) y la cámara entra bajando la primera vez (`W.entro`). Con
 «reducir movimiento», todo de una. `cv3dConstruir` no cambió. 🧍 Los personajes tienen rodillas (`P.ri/rd`), codos (`P.mi/md`) y tronco
 (`P.tr`); ⚠️ lo que se lleva en la MANO va en `P.mi`/`P.md` (altura desde el codo), y dos colores en una pieza = `depUnir` (no sumar dibujos por cuadro).
-🎬 **Muestras 144-157** (10/11, dueño: *«Muéstrame todo como quedaría»*; https://claude.ai/artifact/8sbW1EvL1umborAuLXLuC7; espera que elija): 14
-ideas armadas en **`fabrica-mas.js`** (`window.fabMas`, cada una en `fabMas.on`), que se baja SOLO con `me_fab_mas`=1 o «#fabmas»
-(`fabMasQuiere`). Sin eso nada cambia. Ganchos: `fabMas.armar/paso/salir`. Al cambiarlo: `FABMAS_V` y `node --check fabrica-mas.js`. Detalle y
-qué falta para publicar: bitácora §4pg.
+🎬 **Las 14 mejoras 144-157** (§4pg, 10/11, dueño con las muestras: *«Me gusta hazlo y piblica»*; PUBLICADAS con lo de arriba): viven en
+**`fabrica-mas.js`** (`window.fabMas`, cada una en `fabMas.on`), que se baja al abrir la fábrica 3D (`fabMasCargar`, 6 s de tope; `fabMasQuiere()`:
+siempre salvo `me_fab_mas`=0 en ese aparato; en Playwright solo con `FAB_MAS_PRUEBA`). 144 el montacargas lleva al camión lo recién tildado · 145 el
+camión sale por el portón con «Ya salió»/GPS y vuelve (`afueraDe` = `camionSalio` sin `gpsVolvioDelTodo`) · 146 las pilas = stock de PTF
+(`saldoDatos().d.lista`, solo con el piso libre) · 147 torre de luz · 148 la luz por la hora de Bolivia (noche: lámparas y sereno) · 149 piso ·
+150 viruta, bolsa y dos operarios · 151 afuera del portón · 152 bocas y cejas · 153 gato, bocina, bandeja · 154 «Recorrer» y «Seguir a Eduardo» ·
+155 la pantalla (próximo camión y clientes del mes) · 156 sonido (apagado de entrada; se calla al esconderse y con el 🔇 de Bloki) · 157 festejo.
+Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante es compartido). SOLO DIBUJO: ⚠️ el archivo no puede nombrar nada que
+escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
+valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,

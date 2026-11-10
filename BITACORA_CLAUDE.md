@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; EN LA RAMA, espera «publica»; el `.gs` no cambia)
+### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; **PUBLICADO 10/11 con las 14 mejoras 144-157, versión 2026-11-10-b, `SHA_PUB`**; el `.gs` no cambia)
 - **Qué se veía mal** (mirando la escena cuadro por cuadro): la gente cambiaba de postura y giraba DE GOLPE, arrancaba y frenaba en seco con las
   piernas patinando (el paso iba por el reloj, no por lo avanzado), los colchones aparecían de la nada sobre el pallet, la carga del camión bajaba
   flotando y la cámara, la primera vez, salía desde adentro del piso (0,0,0).
@@ -17401,8 +17401,39 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
     `fabMas.paso(t, dt)` al final de `depVidaPaso`, `fabMas.salir()` en `depMudar` y `cv3dConstruir` (⚠️ la luz se devuelve: el dibujante es
     compartido), `D.sigue` en el perro, `F.stockPos`.
   · Medido con todo prendido: 884 dibujos por cuadro con montacargas cargando y 987 con el piso libre (sin las muestras, ~853).
-  · ⚠️ Para publicar las elegidas: apagar el resto en `fabMas.on`, decidir si `fabMasQuiere()` pasa a «siempre» y agregar la prueba de lo
-    publicado (hoy `fabrica-mas.js` no tiene prueba propia: se miró por capturas con el reloj propio de `scratchpad/anim3d/`).
+  · (Lo que faltaba para publicarlas quedó hecho abajo, en «LAS 14, PUBLICADAS».)
+- **🚀 LAS 14, PUBLICADAS** (10/11; dueño, con la página de muestras: *«Me gusta hazlo y piblica»*). Van las 14 (144-157), prendidas para todos:
+  · **`fabMasQuiere()` = siempre**, salvo `localStorage me_fab_mas`=`0` en ese aparato (el apagado de emergencia) y Playwright sin
+    `window.FAB_MAS_PRUEBA` (las pruebas de siempre siguen viendo la fábrica de antes). `fabMasCargar` espera el archivo como mucho 6 s: si no
+    baja, la fábrica sale sin las mejoras y entran en el próximo armado. `FABMAS_V='20261110b'`.
+  · **146 arreglada**: `stockData()` devuelve `{lista}` (la muestra leía un arreglo y con datos reales no habría dibujado nada). Ahora sale de
+    `saldoDatos().d.lista` (la cuenta del cuadrito, con su caché): lo que hay en PTF (`o.deposito`, ya sin lo que salió), solo colchones y
+    somieres (`pryTipoProd`), Heaven y lo de Moreno a la izquierda y Sueña a la derecha (`stockMarcaDeNombre`), lo que más rota primero; con
+    la fábrica ancha la columna de afuera es de somieres. `fabMas.stockDatos(cols.length)` desde `depFabStock`; un lugar sin producto = pallet
+    vacío; sin Excel → `null` y quedan de adorno. ⚠️ Las pilas del centro solo existen con el piso LIBRE (sin montacargas cargando), como antes.
+  · **145 arreglada**: «afuera» = `camionSalio(hoy, v)` Y el GPS no lo vio volver del todo (`gpsVolvioDelTodo(gpsDiaDe(v))`; antes, una vez
+    salido no volvía nunca porque la marca queda todo el día). Al irse, el camión queda escondido EN su andén y su cartel pasa a «🛣️ … salió a
+    las HH:MM · en camino» (`cartel`); al volver, el de siempre. Función solo si pasó mirando: al armar con `M.antes.sal` de hace < 15 s, o en
+    la mirada de cada 2 s; si la fábrica estuvo escondida (> 20 s sin mirar) se pone al día sin animación.
+  · **144 y 157**: valen contra la MISMA vista de hace menos de 15 min (`S.mismo`: período + día + clientes); cambiar de período no es cargar.
+    Como mucho 3 montacargas llevando a la vez (`S.llevando`); a un camión que está afuera no se le lleva nada.
+  · **148**: el momento del día se mira cada 20 s y, si cambió, la escena se rearma (`depConstruir`). En el celular (`S.chico`: caja < 700 px,
+    o táctil < 1000) de noche van 2 luces de verdad en vez de 7 (cada `PointLight` le cuesta a todos los materiales).
+  · **156**: el sonido se suspende solo cuando la fábrica no se ve (otra pestaña del panel, ventana escondida, la ciudad, el 🔇 de Bloki) y
+    vuelve al volver (mira cada 0,7 s). Con el 🔇 puesto, tocar el botón avisa y no arranca. Sigue apagado de entrada.
+  · **155**: «Mis clientes del mes» por `ventaMes(p)` y sin ATC ni RPT. `S.tele` guarda lo que pintó (para la prueba).
+  · **«Reducir movimiento»**: `armar` da UNA pasada (`M.paso(0,0)`) para que cada cosa quede en su lugar (el colchón entre los dos operarios
+    quedaba tirado en el medio); sin «Recorrer» ni «Seguir». «↺ Ver todo» suelta a Eduardo. En el celular los botones van solo con el ícono.
+  · `M.paso`: cada mejora va en su `try`; la que falla se saca sola (no rompe a las demás ni repite el error en cada cuadro).
+  · **Prueba nueva `tests/test_fabrica_mas.js`** (44 con `PATIO_THREE`; 5 sin): con `FAB_MAS_PRUEBA`, el tilde DE VERDAD de la Lista de carga
+    (`setCargaChk`) dispara el montacargas y el festejo, y «🚚 Ya salió» de verdad (`camionSalioMarcar`) saca el camión y lo trae al deshacer;
+    el stock con un `STOCK` armado; la luz por hora (`fabMas.hora`), el cambio de momento, la salida (`fabMas.salir` devuelve la luz), el
+    sonido que se suspende, «reducir movimiento» y el celular. ⚠️ El archivo no puede nombrar nada que escriba (`apiSave`, `setCargaChk`,
+    `camionSalioMarcar`…): la prueba lo mira. Dibujos por cuadro medidos en la prueba: ~700 (pide < 1.250).
+  · ⚠️ **El sonido no se pudo escuchar acá** (el contenedor no tiene parlantes): se probó que arranca, se suspende y se apaga; cómo suena lo
+    tiene que decir el dueño. Y el celular se miró en una ventana de 390 px con dibujo por software, no en un teléfono.
+  · Va con esta publicación lo que estaba en la rama sin publicar: «Mayor y saldos» en el celular (`6340f07`, la cuenta con su detalle en dos
+    columnas) y Tienda Amiga en `herramientas/pedidos_correo/LEEME.md`.
 - ⚠️ `g.rotation.order='YXZ'` en personas, perro y montacargas: la inclinación (x) va en el eje propio, mire para donde mire. Con «reducir
   movimiento» todo va de una (sin entrada de cámara). Los camiones 3D de Administración (`cv3dConstruir`) NO cambiaron.
 - **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 54 con `PATIO_THREE`).

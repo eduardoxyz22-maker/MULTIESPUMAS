@@ -49528,13 +49528,19 @@ function depSin3D(){ var b=document.getElementById('dep-esc'); if(!b || b.queryS
   b.insertAdjacentHTML('beforeend','<div class="dep-sin3d">La vista 3D no se pudo cargar en este equipo (sin internet o sin 3D).<br>Las columnas de abajo tienen todo.</div>'); }
 
 /* ---- three.js, que se baja recién cuando hace falta ---- */
-/* 🎬 (10/11, MUESTRAS 144-157 para el dueño: «Muéstrame todo como quedaría») Lo que se le suma a la fábrica de Eduardo vive en un archivo
-   aparte, `fabrica-mas.js`, y se baja SOLO si este aparato lo pidió (`me_fab_mas`=1 o «#fabmas» en la dirección): sin eso, nada cambia. */
-var FABMAS_V='20261110a';
-function fabMasQuiere(){ try{ return /fabmas/.test(location.hash) || localStorage.getItem('me_fab_mas')==='1'; }catch(e){ return false; } }
+/* 🎬 (10/11, §4pg; dueño, con las 14 muestras 144-157 a la vista: «Me gusta, hazlo y publica») Lo que se le sumó a la fábrica de Eduardo
+   vive en un archivo aparte, `fabrica-mas.js`, que se baja la primera vez que se abre la fábrica 3D. Si no baja (sin internet, o tarda
+   más de 6 s) la fábrica sale como antes. `me_fab_mas`=0 lo apaga en ese aparato; en Playwright solo con `FAB_MAS_PRUEBA`.
+   ⚠️ Al cambiar ese archivo: subir `FABMAS_V` y `node --check fabrica-mas.js`. */
+var FABMAS_V='20261110b';
+function fabMasQuiere(){ try{ if(localStorage.getItem('me_fab_mas')==='0') return false; return !navigator.webdriver || !!window.FAB_MAS_PRUEBA; }catch(e){ return true; } }
 function fabMasCargar(cb){
   if(window.fabMas || !fabMasQuiere() || DEP.masMal){ cb(); return; }
-  var s=document.createElement('script'); s.src='fabrica-mas.js?v='+FABMAS_V; s.onload=function(){ cb(); }; s.onerror=function(){ DEP.masMal=true; cb(); }; document.head.appendChild(s);
+  var hecho=false, sigue=function(){ if(hecho) return false; hecho=true; clearTimeout(tm); cb(); return true; };
+  var tm=setTimeout(sigue, 6000);
+  var s=document.createElement('script'); s.src='fabrica-mas.js?v='+FABMAS_V;
+  s.onload=function(){ if(!sigue()) DEP.firma=''; };          // llegó tarde: entra en el próximo armado de la escena
+  s.onerror=function(){ DEP.masMal=true; sigue(); }; document.head.appendChild(s);
 }
 function depLibs(cb){
   if(window.THREE && THREE.OrbitControls){ cb(true); return; }
@@ -50509,7 +50515,7 @@ function depFabEdificio(g, ancho, fz){
 function depFabStock(g, A, F){
   var W=DEP.w3, est=new THREE.Group(), cols=A>=14?[2.3,4.0,5.7]:[2.3,4.0], filas=[-2.9,-.7], i=0; F.geo.cb=F.geo.cb||new THREE.BoxGeometry(1.8,.26,1.25);
   [-1,1].forEach(function(sg){ cols.forEach(function(cx, ci){ filas.forEach(function(zz){
-    var SR=window.fabMas && fabMas.stockDatos && fabMas.stockDatos(), h=(SR && SR[i]) ? SR[i].h : 5+((i*3)%4), som=ci===2, cuerpo=som?'#2b3566':'#f8fafc', banda=som?'#5ccfc6':(sg<0?'#00a39b':'#e7b5d5'), p=new THREE.Group(); i++;
+    var SR=window.fabMas && fabMas.stockDatos && fabMas.stockDatos(cols.length), h=(SR && SR[i]) ? SR[i].h : 5+((i*3)%4), som=ci===2, cuerpo=som?'#2b3566':'#f8fafc', banda=som?'#5ccfc6':(sg<0?'#00a39b':'#e7b5d5'), p=new THREE.Group(); i++;
     p.position.set(sg*cx,0,zz); p.rotation.y=Math.PI/2; est.add(p); (F.stockPos=F.stockPos||[]).push({ x:sg*cx, z:zz, h:h }); p.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
     for(var j=0;j<h;j++){ p.add(depMesh(F.geo.cb, depMat(cuerpo), 0,.25+j*.28,0)); p.add(depMesh(F.geo.b, depMat(banda), 0,.25+j*.28,0)); }
     p.add(depMesh(F.geo.l, depMat('#2B3566'), .5,.13+h*.28,0)); }); }); });

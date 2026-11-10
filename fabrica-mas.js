@@ -1,9 +1,10 @@
 /* ============================================================================
-   🎬 LA FÁBRICA DE EDUARDO, LO QUE SE LE PUEDE SUMAR (10/11/2026; MUESTRAS 144-157 para el dueño: «Muéstrame todo como quedaría»).
-   Archivo aparte de pedidos.html: se baja SOLO si el aparato lo pidió (`fabMasQuiere()`: `me_fab_mas`=1 o «#fabmas»). Cada idea se prende
-   y se apaga sola en `fabMas.on`, para publicar únicamente las que el dueño elija. Usa las piezas de la fábrica (depCaja, depPersona,
-   depMontacargas, depTween, depVidaIr…) y los datos de siempre (cargaVivaDatos no: acá son los de Mis pedidos, `DEP`, `VIDA`).
-   SOLO DIBUJO: nada lee ni escribe pedidos, cupos ni la planilla. Con «reducir movimiento» no se arma nada que se mueva.
+   🎬 LA FÁBRICA DE EDUARDO, LAS 14 MEJORAS 144-157 (10/11/2026; el dueño las vio armadas y dijo «Me gusta, hazlo y publica»).
+   Archivo aparte de pedidos.html: se baja la primera vez que se abre la fábrica 3D de Mis pedidos (`fabMasCargar`; `fabMasQuiere()`:
+   siempre, salvo `me_fab_mas`=0 en ese aparato o en Playwright sin `FAB_MAS_PRUEBA`). Si no baja, la fábrica sale como antes.
+   Cada idea se prende y se apaga sola en `fabMas.on`. Usa las piezas de la fábrica (depCaja, depPersona, depMontacargas, depTween,
+   depVidaIr…) y los datos de siempre de Mis pedidos (`DEP`, `VIDA`), el stock del cuadrito (`saldoDatos`) y «Ya salió» (`camionSalio`).
+   SOLO DIBUJO: nada escribe pedidos, cupos, tildes ni la planilla. Con «reducir movimiento» queda todo quieto en su lugar.
    Al cambiarlo: subir `FABMAS_V` en pedidos.html y `node --check fabrica-mas.js`.
    ========================================================================== */
 (function(){
@@ -12,7 +13,7 @@ var M=window.fabMas={
   on:{ carga:1, camiones:1, stock:1, torre:1, luz:1, piso:1, linea:1, afuera:1, caras:1, situ:1, paseo:1, tele:1, sonido:1, festejo:1 },
   hora:null,            // para mirar otra hora del día sin esperar: 7, 12, 17.5, 21
   stockDemo:null,       // para la muestra: [{ n:'TITANIO 140', u:12 }]
-  S:null, antes:{ car:null, sal:null, falta:null }, luzDe:null, audio:null
+  S:null, antes:{ car:null, sal:null, salT:0, falta:null, ctx:'', t:0 }, luzDe:null, audio:null
 };
 function col(c){ return new THREE.Color(c).convertSRGBToLinear(); }
 function aditivo(c, op){ return new THREE.MeshBasicMaterial({ color:col(c), transparent:true, opacity:op, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide, fog:false }); }
@@ -29,12 +30,23 @@ var LUZ={ manana:{ sol:'#ffe9c4', si:1.0,  sp:[-17,14,12], hi:.62, cielo:'#e9f1f
 M.armar=function(ctx){
   var W=DEP.w3; if(!W || !VIDA) return;
   var S=M.S={ ctx:ctx, g:ctx.g, ancho:ctx.ancho, fz:ctx.fz, cada:[], mom:momento(horaAhora()), t:0 }, on=M.on;
+  /* el celular: menos luces de verdad (cada una le cuesta a TODOS los materiales) */
+  try{ S.chico=(W.box.clientWidth||900)<700 || !!(window.matchMedia && matchMedia('(pointer:coarse)').matches && (W.box.clientWidth||900)<1000); }catch(e){ S.chico=false; }
+  /* «se tildó recién» y «se terminó de cargar» valen solo contra la MISMA vista de hace un rato (mismos clientes y período): cambiar de
+     período o volver al otro día no es cargar nada */
+  var clave=(DEP.per||'')+'|'+todayStr()+'|'+(ctx.C||[]).map(function(c){ return c.c; }).join('¦');
+  S.mismo=M.antes.ctx===clave && Date.now()-M.antes.t<15*60000; if(!S.mismo){ M.antes.car=null; M.antes.falta=null; } M.antes.ctx=clave; M.antes.t=Date.now();
   [['luz',M.luz],['afuera',M.portones],['torre',M.torre],['piso',M.piso],['linea',M.linea],['stock',M.stockCarteles],['tele',M.tele],['caras',M.caras],
    ['situ',M.situ],['paseo',M.botones],['camiones',M.camiones],['carga',M.carga],['festejo',M.festejoMirar]].forEach(function(p){
     if(!on[p[0]] && !(p[0]==='afuera' && on.camiones) && !(p[0]==='paseo' && on.sonido)) return;
     try{ p[1](S); }catch(e){ console.error('fabMas.'+p[0], e); } });
+  /* la hora sigue corriendo: cuando cambia el momento del día (mañana → día → tarde → noche) la escena se arma de nuevo con su luz */
+  var mt=0; S.cada.push(function(t, dt){ mt+=dt; if(mt<20) return; mt=0; if(on.luz && momento(horaAhora())!==S.mom) setTimeout(function(){ if(M.S===S && DEP.w3 && DEP.w3.modo==='mis' && DEP.C) depConstruir(DEP.C); }, 0); });
+  /* con «reducir movimiento» nadie llama a `paso`: una pasada sola deja cada cosa en su lugar (el colchón entre los dos operarios…) */
+  if(quieto()) M.paso(0, 0, true);
 };
-M.paso=function(t, dt){ var S=M.S; if(!S || !VIDA) return; S.t=t; for(var i=0;i<S.cada.length;i++) S.cada[i](t, dt); };
+M.paso=function(t, dt, una){ var S=M.S; if(!S || !VIDA) return; S.t=t;
+  for(var i=0;i<S.cada.length;i++){ try{ S.cada[i](t, dt); }catch(e){ console.error('fabMas.paso', e); S.cada.splice(i--, 1); } } };   // lo que falla se saca: no rompe lo demás ni se repite en cada cuadro
 M.salir=function(){ M.luzVolver(); M.S=null; var b=document.getElementById('fab-mas-bot'); if(b) b.remove(); M.sonar(false); };
 
 /* ---------- 148 · la hora de Bolivia en la luz ---------- */
@@ -56,7 +68,7 @@ M.luz=function(S){
     S.cada.push(function(t){ rayos.forEach(function(m, i){ m.material.opacity=(mom==='tarde'?.15:.1)+Math.sin(t*.5+i)*.03; }); });
   }
   if(mom==='noche'){   // de noche alumbran las lámparas: tres luces de verdad (sin sombra) y su charco en el piso
-    [-1,0,1].forEach(function(l){ var p=new THREE.PointLight(0xffd9a0, .5, 17, 2); p.position.set(l*A/3, 6.2, S.fz+5); W.esc.add(p); M.luzDe.puntos.push(p);
+    (S.chico?[0]:[-1,0,1]).forEach(function(l){ var p=new THREE.PointLight(0xffd9a0, S.chico?.7:.5, S.chico?24:17, 2); p.position.set(l*A/3, 6.2, S.fz+5); W.esc.add(p); M.luzDe.puntos.push(p);
       var q=new THREE.PointLight(0xffd9a0, .42, 15, 2); q.position.set(l*A/3, 5.4, 9); W.esc.add(q); M.luzDe.puntos.push(q);
       [[S.fz+5,6.4],[9,5.6]].forEach(function(zy){ var cono=new THREE.Mesh(new THREE.ConeGeometry(3.6,zy[1],20,1,true), aditivo('#ffdca0', .028)); cono.position.set(l*A/3, zy[1]/2, zy[0]); g.add(cono);
         var ch=new THREE.Mesh(new THREE.CircleGeometry(3.7,24), aditivo('#ffd9a0', .07)); ch.rotation.x=-Math.PI/2; ch.position.set(l*A/3, .021, zy[0]); g.add(ch); }); });
@@ -69,7 +81,7 @@ M.sereno=function(S){
   P.g.position.set(-lx,0,4.9); S.g.add(P.g);
   P.md.add(depCaja(.07,.07,.26,'#374151',0,-.44,.1));
   var haz=new THREE.Mesh(new THREE.ConeGeometry(1.5,5.2,18,1,true), aditivo('#fff3c4', .11)); haz.rotation.x=-Math.PI/2; haz.position.set(0,-.44,2.85); P.md.add(haz);
-  var punto=new THREE.PointLight(0xfff0c0, .8, 8, 2); DEP.w3.esc.add(punto); M.luzDe.puntos.push(punto);
+  var punto=S.chico?new THREE.Object3D():new THREE.PointLight(0xfff0c0, .8, 8, 2); DEP.w3.esc.add(punto); M.luzDe.puntos.push(punto);
   var Q=VIDA.q.sereno={ P:P, n:'Sereno:', col:'#334155', dy:2.1, vel:1.1, modo:'quieto', i:0, ronda:ronda };
   S.cada.push(function(t, dt){ depVidaMover(Q, dt); if(!Q.path){ Q.i=(Q.i+1)%ronda.length; depVidaIr(Q, [ronda[Q.i]]); }
     depVidaAnimar(P, 'anda', t); P.bd.rotation.x=-.5; P.md.rotation.x=-.9+Math.sin(t*.8)*.12; P.bd.rotation.z=Math.sin(t*.5)*.25;
@@ -105,37 +117,51 @@ M.puerta=function(pu, abrir, ya){ pu.abierta=abrir; var y=abrir?4.15:2.15; if(ya
   depTween(pu.cort.position, { y:y }, 1.1, 0); depTween(pu.cort.scale, { y:abrir?.12:1 }, 1.1, 0); };
 
 /* ---------- 145 · los camiones salen y vuelven ---------- */
+/* «Está afuera» = lo marcaron «🚚 Ya salió» o lo dice el GPS (`camionSalio`, la de siempre) y el GPS todavía no lo vio volver del todo
+   (`gpsVolvioDelTodo`). Solo mira. */
+function afueraDe(v){ var s=''; try{ s=camionSalio(todayStr(), v)||''; if(s){ var d=gpsDiaDe(v); if(d && gpsVolvioDelTodo(d)) s=''; } }catch(e){} return s; }
+M.afueraDe=afueraDe;
+function etqDe(obj){ var r=null; DEP.w3.etqs.forEach(function(t){ if(t.obj===obj) r=t; }); return r; }
+function cartel(c, s){ var t=etqDe(c.t.g); if(!t) return; if(c.etq0==null) c.etq0=t.el.innerHTML;
+  t.el.innerHTML=s?('🛣️ '+esc(c.v)+'<small>salió a las '+esc(s)+' · en camino</small>'):c.etq0; t.el.style.setProperty('--c', s?'#1d4ed8':'#14232a'); t.w=0; }
 M.camiones=function(S){
-  var hoy=todayStr(), prev=M.antes.sal, ahora={};
-  S.ctx.cams.forEach(function(c){ var s=''; try{ s=camionSalio(hoy, c.v)||''; }catch(e){} ahora[c.v]=s; c.casa={ x:c.t.g.position.x, z:c.t.g.position.z };
-    if(s && (!prev || prev[c.v])) M.camionFuera(S, c);              // ya había salido: el andén queda vacío
-    else if(s && prev && !prev[c.v]) M.camionSale(S, c); });          // salió recién: se va por el portón
-  M.antes.sal=ahora; var tic=0;
-  S.cada.push(function(t, dt){ tic+=dt; if(tic<2) return; tic=0; S.ctx.cams.forEach(function(c){ var s=''; try{ s=camionSalio(hoy, c.v)||''; }catch(e){}
-    if(s && !M.antes.sal[c.v] && !c.fuera) M.camionSale(S, c); else if(!s && M.antes.sal[c.v] && c.fuera===2) M.camionVuelve(S, c); M.antes.sal[c.v]=s; }); });
+  var prev=M.antes.sal, fresco=!!prev && Date.now()-M.antes.salT<15000, ahora={};
+  S.ctx.cams.forEach(function(c){ var s=afueraDe(c.v); ahora[c.v]=s; c.casa={ x:c.t.g.position.x, z:c.t.g.position.z };
+    if(!s) return;
+    if(fresco && prev[c.v]==='') M.camionSale(S, c, s);       // salió recién, mirando la fábrica: se va por el portón
+    else M.camionFuera(S, c, s); });                             // ya estaba afuera: el andén queda vacío, con su cartel
+  M.antes.sal=ahora; M.antes.salT=Date.now(); var tic=0;
+  S.cada.push(function(t, dt){ tic+=dt; if(tic<2) return; tic=0; var viejo=Date.now()-M.antes.salT>20000;   // la fábrica estuvo escondida: se pone al día sin función
+    S.ctx.cams.forEach(function(c){ var s=afueraDe(c.v), a=M.antes.sal[c.v]||'';
+      if(s && !c.fuera){ if(viejo) M.camionFuera(S, c, s); else M.camionSale(S, c, s); }
+      else if(!s && c.fuera===2) M.camionVuelve(S, c, viejo);
+      else if(s && s!==a && c.fuera===2) cartel(c, s);
+      M.antes.sal[c.v]=s; }); M.antes.salT=Date.now(); });
 };
 function puertaDe(S, c){ var m=null; (S.puertas||[]).forEach(function(p){ if(!m || Math.abs(p.x-c.casa.x-1.2)<Math.abs(m.x-c.casa.x-1.2)) m=p; }); return m; }
 function choferDe(c){ var k=(VIDA.chof||[]).filter(function(q){ return VIDA.q[q].v===c.v; })[0]; return k?VIDA.q[k]:null; }
-M.camionFuera=function(S, c){ c.fuera=2; c.t.g.visible=false; var q=choferDe(c); if(q) q.P.g.visible=false; };
-M.camionSale=function(S, c){
-  if(c.fuera) return; c.fuera=1; var tg=c.t.g, pu=puertaDe(S, c), q=choferDe(c); if(quieto() || !pu){ M.camionFuera(S, c); return; }
+function puertaFija(S, pu){ return !!M.on.afuera && pu===S.puertas[S.puertas.length-1]; }
+M.camionFuera=function(S, c, s){ var tg=c.t.g; c.fuera=2; tg.visible=false; tg.position.set(c.casa.x, 0, c.casa.z); tg.rotation.y=0; var q=choferDe(c); if(q) q.P.g.visible=false; cartel(c, s||afueraDe(c.v)||'—'); };
+M.camionSale=function(S, c, s){
+  if(c.fuera) return; c.fuera=1; var tg=c.t.g, pu=puertaDe(S, c), q=choferDe(c); if(quieto() || !pu){ M.camionFuera(S, c, s); return; }
   if(q){ depDecir(VIDA.chof.filter(function(k){ return VIDA.q[k]===q; })[0], '¡Me voy a entregar! 🚚', 2.2); luego(function(){ q.P.g.visible=false; }, 900); }
   tg.rotation.order='YXZ'; M.puerta(pu, true); M.pitido(3);
   depTween(tg.position, { x:pu.x, z:c.casa.z+.9 }, 2.0, .9); depTween(tg.rotation, { y:Math.PI/2 }, 2.0, .9, depSuave, function(){
-    depTween(tg.position, { z:S.fz-15 }, 2.6, .15, depCae, function(){ tg.visible=false; c.fuera=2; M.puerta(pu, M.on.afuera && pu===S.puertas[S.puertas.length-1]); }); });
+    depTween(tg.position, { z:S.fz-15 }, 2.6, .15, depCae, function(){ M.camionFuera(S, c, s); M.puerta(pu, puertaFija(S, pu)); }); });
 };
-M.camionVuelve=function(S, c){
-  var tg=c.t.g, pu=puertaDe(S, c), q=choferDe(c); if(quieto() || !pu){ tg.visible=true; tg.position.set(c.casa.x,0,c.casa.z); tg.rotation.y=0; c.fuera=0; if(q) q.P.g.visible=true; return; }
-  c.fuera=1; tg.visible=true; tg.rotation.y=Math.PI/2; tg.position.set(pu.x, 0, S.fz-15); M.puerta(pu, true); M.pitido(4);
+M.camionVuelve=function(S, c, ya){
+  var tg=c.t.g, pu=puertaDe(S, c), q=choferDe(c); cartel(c, '');
+  if(ya || quieto() || !pu){ tg.visible=true; tg.position.set(c.casa.x,0,c.casa.z); tg.rotation.y=0; c.fuera=0; if(q) q.P.g.visible=true; return; }
+  c.fuera=1; tg.visible=true; tg.rotation.order='YXZ'; tg.rotation.y=Math.PI/2; tg.position.set(pu.x, 0, S.fz-15); M.puerta(pu, true); M.pitido(4);
   depTween(tg.position, { z:c.casa.z+.9 }, 2.6, .8, depSale, function(){ depTween(tg.position, { x:c.casa.x, z:c.casa.z }, 2.0, 0); depTween(tg.rotation, { y:0 }, 2.0, 0, depSuave, function(){
-    c.fuera=0; if(q) q.P.g.visible=true; M.puerta(pu, M.on.afuera && pu===S.puertas[S.puertas.length-1]); }); });
+    c.fuera=0; if(q) q.P.g.visible=true; M.puerta(pu, puertaFija(S, pu)); }); });
 };
 
 /* ---------- 144 · la carga se ve: el montacargas lleva al camión lo que se tildó ---------- */
 M.carga=function(S){
   var prev=M.antes.car, ahora={};
   S.ctx.cams.forEach(function(c){ (c.pgs||[]).forEach(function(d){ var k=c.v+'|'+d.k; ahora[k]=d.u;
-    if(prev && d.u>(prev[k]||0) && !quieto()){ var zi=-1; S.ctx.C.forEach(function(cl, i){ if(zi<0 && cl.prod[d.k] && cl.prod[d.k].cam && cl.prod[d.k].cam[c.v]) zi=i; });
+    if(prev && d.u>(prev[k]||0) && !quieto() && !c.fuera && (S.llevando||0)<3){ var zi=-1; S.llevando=(S.llevando||0)+1;   // como mucho tres a la vez: lo demás cae como siempre S.ctx.C.forEach(function(cl, i){ if(zi<0 && cl.prod[d.k] && cl.prod[d.k].cam && cl.prod[d.k].cam[c.v]) zi=i; });
       M.llevar(S, (S.ctx.zonas[zi]||{ x:0 }).x, c, d.pg); } }); });
   M.antes.car=ahora;
 };
@@ -150,22 +176,32 @@ M.llevar=function(S, x0, cam, pg){
   depVidaIr(Q, [{ x:x0, z:-2.6 }, { x:xc, z:-2.6 }, { x:xc, z:zc }], function(){
     depTween(mc.carro.position, { y:1.0 }, .7, 0, depRebote, function(){
       mc.carga.remove(pila); pg.visible=true; pg.position.y=.5; depTween(pg.position, { y:0 }, .35, 0, depCae, function(){ cam.t.g.position.y=-.05; depTween(cam.t.g.position, { y:0 }, .5, 0, depRebote); });
-      depTween(mc.carro.position, { y:.2 }, .7, .2, null, function(){ depVidaIr(Q, [{ x:xc, z:-2.6 }, { x:S.ancho/2+9, z:-2.6 }], function(){ vivo=false; S.g.remove(mc.g); }); }); }); });
+      depTween(mc.carro.position, { y:.2 }, .7, .2, null, function(){ depVidaIr(Q, [{ x:xc, z:-2.6 }, { x:S.ancho/2+9, z:-2.6 }], function(){ vivo=false; S.g.remove(mc.g); S.llevando=Math.max(0, (S.llevando||1)-1); }); }); }); });
   M.pitido(2);
 };
 
 /* ---------- 146 · «Producto terminado» con el stock de verdad ---------- */
-M.stockDatos=function(){
-  if(!M.on.stock) return null; if(M._sdT && Date.now()-M._sdT<1500) return M._sd;
-  var L=null; if(M.stockDemo) L=M.stockDemo; else { try{ var D=stockData(); D=Array.isArray(D)?D:(D&&(D.filas||D.rows))||[];
-      L=D.filter(function(o){ return o && o.deposito>0 && !o.descontinuado; }).sort(function(a,b){ return (b.vendidosRotacion||0)-(a.vendidosRotacion||0); }).slice(0,12)
-        .map(function(o){ return { n:String(o.d||o.desc||o.k||'').replace(/^COLCHON\s+/,'').slice(0,18)+(o.m?' '+String(o.m).split('x')[0]:''), u:Math.round(o.deposito) }; }); }catch(e){ L=null; } }
-  M._sdT=Date.now(); if(!L || !L.length) return M._sd=null;
-  return M._sd=L.map(function(o){ return { n:o.n, u:o.u, h:Math.max(1, Math.min(9, Math.ceil(o.u/2))) }; });
+/* Las pilas: a la izquierda HEAVEN (y lo de Moreno), a la derecha SUEÑA; con la fábrica ancha (3 columnas por lado) la de afuera es de
+   somieres. Sale del stock del cuadrito (`saldoDatos`, la MISMA cuenta de siempre): lo que hay en PTF (`o.deposito`), lo que más rota
+   primero; 2 unidades por colchón dibujado, hasta 9 de alto. Un lugar sin producto queda con el pallet vacío. Sin Excel cargado → null
+   y las pilas quedan de adorno, como antes. */
+M.stockDatos=function(nc){
+  if(!M.on.stock) return null; nc=nc||M._nc||3; M._nc=nc;
+  if(M._sdT && M._sdN===nc && Date.now()-M._sdT<1500) return M._sd;
+  var L=M.stockDemo;
+  if(!L){ try{ L=saldoDatos().d.lista.filter(function(o){ return o && o.deposito>0; }).map(function(o){ var tp=''; try{ tp=pryTipoProd({ codigo:o.cod||'', desc:o.desc })||''; }catch(e){}
+      return { n:depCorto({ d:String(o.desc||o.k||'').replace(/^COLCHON\s+(?=\S)/,''), m:String(o.medida||'').toLowerCase() }), u:Math.round(o.deposito), rot:o.vendidosRotacion||0, s:tp==='somier', ok:tp==='colchon'||tp==='somier', su:stockMarcaDeNombre(o.desc)==='suena' }; })
+      .filter(function(o){ return o.ok && o.u>0; }); }catch(e){ L=null; } }
+  M._sdT=Date.now(); M._sdN=nc; if(!L || !L.length) return M._sd=null;
+  var orden=function(a, b){ return (b.rot||0)-(a.rot||0) || b.u-a.u; }, de=function(su, som){ return L.filter(function(o){ return !!o.su===su && !!o.s===som; }).sort(orden); };
+  var R=[], lado=function(su){ var col=de(su, false), som=de(su, true), i; if(nc<3){ col=col.concat(som).sort(orden); som=[]; }
+    for(i=0;i<4;i++) R.push(col[i]||null); if(nc>=3) for(i=0;i<2;i++) R.push(som[i]||null); };
+  lado(false); lado(true);
+  return M._sd=R.map(function(o){ return o ? { n:o.n, u:o.u, h:Math.max(1, Math.min(9, Math.ceil(o.u/2))) } : { n:'', u:0, h:0 }; });
 };
 M.stockCarteles=function(S){
   var F=VIDA.fab, SR=M.stockDatos(); if(!F || !F.stockPos || !SR) return;
-  F.stockPos.forEach(function(p, i){ if(!SR[i]) return; var o=new THREE.Object3D(); o.position.set(p.x, .35+p.h*.28, p.z); S.g.add(o);
+  F.stockPos.forEach(function(p, i){ if(!SR[i] || !SR[i].u) return; var o=new THREE.Object3D(); o.position.set(p.x, .35+p.h*.28, p.z); S.g.add(o);
     depEtq(o, SR[i].u+' · '+esc(SR[i].n), 'dep-etq-pila dep-etq-mini', SR[i].u<=3?'#b4182b':'#0b6f69', .25); });
 };
 
@@ -267,7 +303,7 @@ M.situ=function(S){
         if(Math.hypot(q.x-p.x, q.z-p.z)>2.6) return false; enfria=16; var v=ern.vel; ern.vel=.02; M.bocina();
         depDecir('ern', '¡Piii-piiip! ¡Cuidado, que voy cargado! 📯', 2.4); luego(function(){ depDecir(k, depVidaUno(['¡Uy, perdón, Ernesto!','¡Pasá, pasá!','¡Casi me llevás puesto! 😅']), 2.2); }, 700); luego(function(){ ern.vel=v; }, 1700); return true; }); }
     /* el gato baja de la espuma, el perro le ladra y el gato vuelve a subir */
-    if(!gato || quieto()) return; gatoT-=dt;
+    if(!gato || !Dg || quieto()) return; gatoT-=dt;
     if(gst===0 && gatoT<=0){ gst=1; var gx=casa.x+2.6, gz=casa.z-2.8;
       depTween(gato.g.position, { x:casa.x+1.3, y:.02, z:casa.z-1.4 }, .7, 0, depCae, function(){ depTween(gato.g.position, { x:gx, z:gz }, 2.6, .3, null, function(){ gst=2; S.gatoQ=t; }); });
       gato.g.rotation.y=2.4; Dg.sigue=gato.g.position; Dg.vel=3.4; }
@@ -288,7 +324,7 @@ M.tele=function(S){
   function pintar(){
     var d='', am=0, pm=0, top=[], DIAS=['dom','lun','mar','mié','jue','vie','sáb'];
     try{ d=hdrProximoAbierto().d; am=Math.max(0, limTurno(d,'AM')-cuposUsadosTurno(d,'AM')); pm=Math.max(0, limTurno(d,'PM')-cuposUsadosTurno(d,'PM')); }catch(e){}
-    try{ var mes=todayStr().slice(0,7), por={}; (DEP.mine||[]).forEach(function(p){ if(String(p.fecha||'').slice(0,7)!==mes) return; var c=String(p.cliente||'').trim().toUpperCase(); if(!c) return; por[c]=(por[c]||0)+(ventaTotal(p)||0); });
+    try{ var mes=todayStr().slice(0,7), por={}; (DEP.mine||[]).forEach(function(p){ if(esATC(p.oc) || esRPT(p.oc) || ventaMes(p)!==mes) return; var c=String(p.cliente||'').trim().toUpperCase(); if(!c) return; por[c]=(por[c]||0)+(ventaTotal(p)||0); });
       top=Object.keys(por).map(function(c){ return [c, por[c]]; }).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3); }catch(e){}
     x.fillStyle='#0b1220'; x.fillRect(0,0,640,400); x.fillStyle='#00a39b'; x.fillRect(0,0,640,64);
     x.fillStyle='#fff'; x.font='900 34px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText('PRÓXIMO CAMIÓN', 24, 44);
@@ -299,7 +335,7 @@ M.tele=function(S){
     top.forEach(function(c, i){ var y=250+i*48; x.fillStyle=['#fbbf24','#cbd5e1','#d6a372'][i]; x.font='900 30px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText((i+1)+'°', 24, y);
       x.fillStyle='#f1f5f9'; x.font='700 28px system-ui,Arial,sans-serif'; x.fillText(c[0].slice(0,22), 74, y); x.textAlign='right'; x.fillStyle='#5eead4'; x.font='900 28px system-ui,Arial,sans-serif'; x.fillText('Bs '+Math.round(c[1]).toLocaleString('es-BO'), 616, y); });
     if(!top.length){ x.fillStyle='#94a3b8'; x.font='700 26px system-ui,Arial,sans-serif'; x.textAlign='left'; x.fillText('Todavía sin ventas este mes', 24, 252); }
-    T.t.needsUpdate=true;
+    S.tele={ d:d, am:am, pm:pm, top:top }; T.t.needsUpdate=true;
   }
   pintar(); var tic=0; S.cada.push(function(t, dt){ tic+=dt; if(tic>30){ tic=0; pintar(); } });
 };
@@ -308,11 +344,15 @@ M.tele=function(S){
 M.botones=function(S){
   var W=DEP.w3, v=document.getElementById('fab-mas-bot'); if(v) v.remove();
   var b=document.createElement('div'); b.id='fab-mas-bot'; b.style.cssText='position:absolute;right:10px;top:10px;z-index:2;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end';
-  function bot(txt, fn, id){ var e=document.createElement('button'); e.type='button'; e.textContent=txt; if(id) e.id=id; e.style.cssText='font:inherit;font-size:.78rem;font-weight:800;background:#fff;border:1px solid #cfd8dc;border-radius:9px;padding:6px 10px;cursor:pointer;min-height:34px';
+  var ch=!!S.chico, corto=function(t){ return ch?t.split(' ')[0]:t; };   // en el celular, solo el ícono: tres botones con letras tapaban media fábrica
+  function bot(txt, fn, id){ var e=document.createElement('button'); e.type='button'; e.textContent=corto(txt); e.title=txt.replace(/^\S+\s/,''); e.setAttribute('aria-label', e.title); if(id) e.id=id; e.style.cssText='font:inherit;font-size:.78rem;font-weight:800;background:#fff;border:1px solid #cfd8dc;border-radius:9px;padding:6px 10px;cursor:pointer;min-height:34px';
     e.addEventListener('click', function(ev){ ev.stopPropagation(); fn(e); }); b.appendChild(e); return e; }
-  if(M.on.paseo){ bot('▶ Recorrer', function(){ M.paseo(S); }, 'fab-paseo'); bot('🧔 Seguir a Eduardo', function(e){ S.sigue=!S.sigue; S.paseando=false; e.style.background=S.sigue?'#00B5AD':'#fff'; e.style.color=S.sigue?'#fff':''; if(!S.sigue) depVerTodo(false); }, 'fab-seguir'); }
-  if(M.on.sonido) bot(M.audio?'🔊 Sonido':'🔈 Sonido', function(e){ M.sonar(!M.audio); e.textContent=M.audio?'🔊 Sonido':'🔈 Sonido'; }, 'fab-sonido');
+  if(M.on.paseo && !quieto()){ bot('▶ Recorrer', function(){ M.paseo(S); }, 'fab-paseo'); bot('🧔 Seguir a Eduardo', function(e){ S.sigue=!S.sigue; S.paseando=false; e.style.background=S.sigue?'#00B5AD':'#fff'; e.style.color=S.sigue?'#fff':''; if(!S.sigue) depVerTodo(false); }, 'fab-seguir'); }
+  if(M.on.sonido) bot(M.audio?'🔊 Sonido':'🔈 Sonido', function(e){ if(!M.audio && mudo()){ try{ toast('Está puesto el silencio de Bloki (🔇): sacalo y la fábrica suena.', 'warn', 4500); }catch(x){} return; }
+    M.sonar(!M.audio); e.textContent=corto(M.audio?'🔊 Sonido':'🔈 Sonido'); }, 'fab-sonido');
   W.box.appendChild(b);
+  /* «↺ Ver todo» suelta a Eduardo y corta el recorrido */
+  var vt=W.box.querySelector('.dep-todo'); if(vt && !vt._fm){ vt._fm=1; vt.addEventListener('click', function(){ var s=M.S, e=document.getElementById('fab-seguir'); if(s){ s.sigue=false; s.paseando=false; } if(e){ e.style.background='#fff'; e.style.color=''; } }); }
   if(!M._pd){ M._pd=1; W.r.domElement.addEventListener('pointerdown', function(){ if(M.S){ M.S.paseando=false; } }); }
   S.cada.push(function(t, dt){ if(!S.sigue) return; var p=VIDA.q.edu.P.g.position, k=Math.min(1, dt*2.2), c=W.cam.position, tg=W.ctl.target;
     DEP.tw=DEP.tw.filter(function(x){ return x.o!==c && x.o!==tg; }); tg.x+=(p.x-tg.x)*k; tg.y+=(1.1-tg.y)*k; tg.z+=(p.z-tg.z)*k; c.x+=(p.x+3.4-c.x)*k; c.y+=(3.3-c.y)*k; c.z+=(p.z+4.4-c.z)*k; });
@@ -326,12 +366,15 @@ M.paseo=function(S){
 };
 /* el sonido de fábrica: sintetizado, apagado de entrada y callado por el 🔇 de Bloki */
 M.sonar=function(prender){
-  if(!prender){ if(M.audio){ try{ M.audio.c.close(); }catch(e){} M.audio=null; } return; }
+  if(!prender){ if(M.audio){ clearInterval(M.audio.iv); try{ M.audio.c.close(); }catch(e){} M.audio=null; } return; }
   if(mudo() || M.audio) return; var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
   var c=new AC(), n=c.sampleRate*2, buf=c.createBuffer(1,n,c.sampleRate), d=buf.getChannelData(0), u=0; for(var i=0;i<n;i++){ var w=Math.random()*2-1; u=(u+.02*w)/1.02; d[i]=u*3.2; }
   var src=c.createBufferSource(); src.buffer=buf; src.loop=true; var lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=210; var g=c.createGain(); g.gain.value=.16; src.connect(lp); lp.connect(g); g.connect(c.destination); src.start();
   var os=c.createOscillator(); os.type='square'; os.frequency.value=24; var bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=900; var g2=c.createGain(); g2.gain.value=.012; os.connect(bp); bp.connect(g2); g2.connect(c.destination); os.start();   // la máquina de coser
-  M.audio={ c:c };
+  /* suena solo mientras la fábrica se ve: otra pestaña del panel, la ventana escondida, la ciudad o el 🔇 de Bloki la callan */
+  var iv=setInterval(function(){ var A=M.audio; if(!A) return; var W=DEP.w3, ve=!!(M.S && W && W.box && W.box.offsetParent && !W.alt && !document.hidden && !mudo());
+    try{ if(ve && A.c.state==='suspended') A.c.resume(); else if(!ve && A.c.state==='running') A.c.suspend(); }catch(e){} }, 700);
+  M.audio={ c:c, iv:iv };
 };
 function tono(f, dur, vol, tipo, cuando){ var A=M.audio; if(!A || mudo()) return; var c=A.c, o=c.createOscillator(), g=c.createGain(), t0=c.currentTime+(cuando||0); o.type=tipo||'sine'; o.frequency.value=f; g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0+.01); g.gain.linearRampToValueAtTime(0, t0+dur); o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0+dur+.02); }
 M.pitido=function(n){ for(var i=0;i<(n||2);i++) tono(1180, .16, .05, 'square', i*.5); };
