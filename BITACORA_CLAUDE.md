@@ -17357,6 +17357,33 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; EN LA RAMA, espera «publica»; el `.gs` no cambia)
+- **Qué se veía mal** (mirando la escena cuadro por cuadro): la gente cambiaba de postura y giraba DE GOLPE, arrancaba y frenaba en seco con las
+  piernas patinando (el paso iba por el reloj, no por lo avanzado), los colchones aparecían de la nada sobre el pallet, la carga del camión bajaba
+  flotando y la cámara, la primera vez, salía desde adentro del piso (0,0,0).
+- **Qué cambió** (solo dibujo; nada lee ni escribe pedidos):
+  · `depVidaPoseDe(P, modo, t)` da la postura a la que hay que llegar y `depVidaAnimar` va hacia ella de a poco (cada persona guarda `P.pose`);
+    parados respiran, caminando se inclinan apenas (`lean`) y suben y bajan (`bob`), y **parpadean** (`P.ojos`, `P.ojoT`).
+  · `depVidaMover(Q, dt)`: la velocidad sube hasta `Q.vel` y baja cuando falta poco para el FINAL del camino (no en cada esquina); `Q.v`, `Q.ac`;
+    el paso de las piernas sale de lo avanzado (`P.fase += distancia × 4,1`). Sigue llegando JUSTO al punto y dejando `path=null`.
+  · `depVidaGira(Q, a)` / `depMirarA`: girar parado deja el ángulo en `Q.yawT` y `depVidaPaso` lo va llevando. ⚠️ Un giro NUEVO de alguien de
+    `VIDA.q` va con `depVidaGira`, no con `rotation.y=` a mano. `Q.fijo` (el montacargas de Ernesto, que gira con `depGirar`) y «reducir
+    movimiento» giran de una.
+  · El perro gira de a poco, trota con un saltito y, si Eduardo se queda quieto 2,5 s, **se sienta** (`D.sienta`); mueve la cola más rápido
+    cuando Eduardo habla.
+  · `depFabCabeceo(Q, dt, ad)`: el montacargas de Ernesto y el segundo levantan la trompa al arrancar y la bajan al frenar (2-3 grados, de `Q.ac`).
+  · `depFabCaer(m)`: el colchón que sale de la línea CAE sobre el pallet y se aplasta un instante. `depRebote` (se pasa un pelo y vuelve) y
+    `depCae` (acelera) son dos formas nuevas para `depTween`.
+  · Montacargas de adelante: llegan frenando con la trompa abajo, la horquilla sube con `depRebote` y la carga queda meciéndose (`mo.arriba`). La
+    carga de los camiones cae con su peso, rebota y el camión se hunde un pelo.
+  · `depVerTodo`: la PRIMERA vez (`W.entro`) la cámara llega bajando desde arriba y de costado en 2,6 s.
+- ⚠️ `g.rotation.order='YXZ'` en personas, perro y montacargas: la inclinación (x) va en el eje propio, mire para donde mire. Con «reducir
+  movimiento» todo va de una (sin entrada de cámara). Los camiones 3D de Administración (`cv3dConstruir`) NO cambiaron.
+- **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 52 con `PATIO_THREE`).
+  `test_mis_deposito` (27) y `test_camiones_3d` (28) sin cambios.
+- **Para el dueño**: clip de antes y después (dos escenas, grabadas cuadro por cuadro con un reloj propio: el contenedor dibuja a ~4 cuadros
+  por segundo y `page.clock` de Playwright no mueve `requestAnimationFrame` después de pausar).
+
 ### §4pf — 📒💵 «MAYOR Y SALDOS» DEL EFECTIVO EN EL CUADRE (09/11; Contabilidad, por el dueño: *«contabilidad me preguntó cuánto efectivo pendiente de retiro tenían por ejemplo Juan Pablo el 2 de noviembre, cuándo el 5 y cuándo el 8… creo que no tenemos una forma o historial de ver eso»* → se le calculó a mano y se le propuso «Efectivo a una fecha» → *«si hazlo»* → *«En contabilidad se llama Mayor y saldos, eso andan pidiendo, dame modelos pruebas y demás»* → *«Publica, pero antes que analice Fable esto y vea si no hay errores»* (y *«Usa Fable 5.2»*); PUBLICADO 10/11 ~20:55 de Bolivia, versión 2026-11-09-d, `main` = `8ae2aa2`; el `.gs` no cambia)
 - **Qué es**: Contabilidad → 🧮 Cuadre → caja «💵 Efectivo cobrado vs. retirado» → botón **«📒 Mayor y saldos»** (`#efd-btn`, `abrirEfectivoFecha`). Cada persona que
   tiene plata es una **cuenta de caja**: DEBE = lo que cobró en efectivo, HABER = lo que se le retiró, SALDO = lo que tiene.

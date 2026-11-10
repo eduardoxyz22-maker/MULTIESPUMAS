@@ -22,6 +22,8 @@
         «no es por enfermedad, es porque acullica hoja de coca… diálogos de "qué buena coca, es despalada"» y «ojos no le vi»):
         Yerson con el bolo de coca en el cachete, ojos grandes que se ven y su coca en la mesa; habla de coquear/bolear; el producto terminado en el centro con un segundo montacargas dando vueltas;
         el edificio (ventanales, paredes, estanterías llenas) junto en pocas piezas: menos dibujos por cuadro que antes de todo esto.
+    11. (10/11, dueño: «mejora mis animaciones 3D») Los movimientos con peso: girar de a poco, arrancar y frenar, el paso por lo
+        avanzado, las posturas que se mezclan, el perro que se sienta, el colchón que cae. Con «reducir movimiento», todo de una.
    Datos inventados (el repo es público). Se corre:  node tests/test_fabrica_vida.js   (las partes 3-8 solo con PATIO_THREE) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const fs = require('fs'), path = require('path');
@@ -156,6 +158,39 @@ const armar = (PEND) => {
       while (Date.now() - t0 < 30000 && !visto.y) { dijo = await page.evaluate(() => [].map.call(document.querySelectorAll('.dep-etq-habla'), e => e.innerText).join(' | ')); if (/Yerson:/.test(dijo)) visto.y = 1; if (/Eduardo:.*(Yerson|boleando|bolo|coca)/.test(dijo)) visto.e = 1; if (/paperas|barbijo|farmacia/i.test(dijo)) visto.malo = 1; await page.waitForTimeout(200); }
       chk('…Eduardo le habla a Yerson de la coca y Yerson le contesta (nada de paperas)', visto.y && visto.e && !visto.malo, visto);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
+      /* 11 (10/11, dueño: «mejora mis animaciones 3D»): los movimientos con peso. Se mueve el reloj a mano (60 cuadros por segundo),
+         con el bucle de la página sin tocar a la gente, para medir lo mismo en cualquier máquina. */
+      r = await page.evaluate(() => { var W = DEP.w3, cada = W.cada; W.cada = null; window.__cada = cada;
+        var E = VIDA.q.edu, D = VIDA.q.perro, T = VIDA.t, paso = function (n) { for (var i = 0; i < n; i++) { T += 1 / 60; depVidaPaso(T); } }, h = VIDA.home, o = {};
+        ['edu','isa'].forEach(depCallar); E.path = null; E.fin = null; E.st = 'demo'; E.espera = 999; VIDA.cafeProx = 9999; VIDA.fab.charla = 999; E.modo = 'quieto'; E.vel = 1.5; E.v = 0;
+        E.P.g.position.set(h.x, 0, h.z); E.P.g.rotation.y = 0; E.yawT = null; paso(30);
+        /* a) girar parado va de a poco */
+        depVidaGira(E, 1.5); o.g0 = E.P.g.rotation.y; paso(3); o.g1 = E.P.g.rotation.y; paso(150); o.g2 = E.P.g.rotation.y; o.gy = E.yawT;
+        /* b) arranca de a poco, llega a su velocidad, frena antes de llegar y queda JUSTO en el punto */
+        var x0 = E.P.g.position.x, f0 = E.P.fase || 0, lleg = 0, vFin = null, n = 0; depVidaIr(E, [{ x: x0 + 3, z: h.z }], function () { lleg = 1; }, 0);
+        paso(2); o.v1 = E.v; o.lean1 = E.P.g.rotation.x; paso(60); o.v2 = E.v; o.lean2 = E.P.g.rotation.x;
+        while (!lleg && n < 900) { paso(1); n++; if (vFin == null && x0 + 3 - E.P.g.position.x < .12) vFin = E.v; }
+        o.lleg = lleg; o.vFin = vFin; o.x = E.P.g.position.x - x0; o.fase = (E.P.fase || 0) - f0; o.yLleg = E.yawT; paso(150); o.rotFin = E.P.g.rotation.y; o.leanFin = E.P.g.rotation.x;
+        /* c) cambiar de postura no salta: el brazo va de a poco */
+        var b0 = E.P.bd.rotation.x; E.modo = 'senala'; paso(1); o.b1 = Math.abs(E.P.bd.rotation.x - b0); paso(90); o.b2 = Math.abs(E.P.bd.rotation.x - b0);
+        /* d) el perro: con Eduardo quieto un rato se sienta; cuando Eduardo se va, se para y lo sigue */
+        paso(60 * 5); o.sienta = D.sienta; o.perroX = D.P.g.rotation.x; depVidaIr(E, [{ x: x0, z: h.z }], null, -.25); paso(70); o.para = D.sienta; paso(400);
+        /* e) las formas de moverse nuevas */
+        o.rebote = [depRebote(0), depRebote(.75) > 1, depRebote(1)]; o.cae = [depCae(0), depCae(.5), depCae(1)];
+        /* f) el colchón cae sobre el pallet */
+        var F = VIDA.fab; if (F.fin.userData.n >= 6) F.fin.userData.n = 5; var nn = F.fin.userData.n; depFabApilar(F, F.fin); var m = F.fin.children[F.fin.children.length - 1]; window.__col = m; window.__colY = .12 + nn * .33; o.colY0 = m.position.y - window.__colY;
+        o.entro = W.entro === true; o.ojos = (E.P.ojos || []).length; return o; });
+      chk('11. girar parado va de a poco (no de golpe) y termina justo en el ángulo', r.g0 === 0 && r.g1 > 0 && r.g1 < .8 && Math.abs(r.g2 - 1.5) < .001 && r.gy === null, r);
+      chk('…al caminar arranca de a poco, llega a su velocidad, frena antes de llegar y queda justo en el punto', r.v1 > 0 && r.v1 < .4 && Math.abs(r.v2 - 1.5) < .01 && r.vFin < 1.4 && r.lleg === 1 && Math.abs(r.x - 3) < 1e-9, r);
+      chk('…el paso de las piernas sale de lo que avanzó (no patina) y camina apenas inclinado; parado queda derecho', Math.abs(r.fase - 3 * 4.1) < .01 && r.lean2 > .03 && Math.abs(r.leanFin) < .005, r);
+      chk('…al llegar gira de a poco hacia donde tiene que mirar', r.yLleg === 0 && Math.abs(Math.sin(r.rotFin)) < .01, r);
+      chk('…cambiar de postura no salta: el brazo va de a poco', r.b2 > .5 && r.b1 < r.b2 * .35, r);
+      chk('…el perro se sienta cuando Eduardo se queda quieto y se para cuando se va', r.sienta > .95 && r.perroX < -.3 && r.para < .2, r);
+      chk('…«rebote» se pasa un pelo y vuelve, «cae» acelera; las dos empiezan en 0 y terminan en 1', Math.abs(r.rebote[0]) < 1e-9 && r.rebote[1] === true && r.rebote[2] === 1 && r.cae.join(',') === '0,0.25,1', r);
+      chk('…Eduardo tiene ojos que parpadean y la cámara ya hizo su entrada', r.ojos === 2 && r.entro, r);
+      for (let i = 0; i < 100 && !(await page.evaluate(() => Math.abs(window.__col.position.y - window.__colY) < 1e-6 && Math.abs(window.__col.scale.y - 1) < 1e-6)); i++) await page.waitForTimeout(200);   // el bucle de la página lo baja (con la máquina cargada tarda)
+      const col = await page.evaluate(() => { var m = window.__col, o = { y: Math.abs(m.position.y - window.__colY), sy: m.scale.y }; DEP.w3.cada = window.__cada; var E = VIDA.q.edu; E.st = 'casa'; E.espera = 4; return o; });
+      chk('…el colchón que sale de la línea cae sobre el pallet (arranca más arriba y termina en su lugar, sin quedar aplastado)', r.colY0 > .4 && col.y < 1e-6 && Math.abs(col.sy - 1) < 1e-6, { desde: r.colY0, col: col });
       /* 7: los camiones de Administración (cv3d) usan el MISMO lienzo: al mudarlo o al armar su escena, la vida se va */
       r = await page.evaluate(() => { var src = String(cv3dConstruir) + String(depMudar); var tieneGuarda = /VIDA=null/.test(String(cv3dConstruir)) && /VIDA=null/.test(String(depMudar));
         var caja = document.createElement('div'); caja.style.cssText = 'width:300px;height:200px'; document.body.appendChild(caja); depMudar(caja); DEP.w3.modo = 'adm';
@@ -186,6 +221,9 @@ const armar = (PEND) => {
       const quieta = await page.evaluate((x0) => VIDA.fab.col.map(c => c.position.x.toFixed(3)).join(',') === x0 && VIDA.q.ern.st === 'casa', x0);
       chk('8. …y la línea de colchones queda quieta', quieta);
       const r = await page.evaluate(() => { depDecir('edu', 'hola', 5); return { burb: document.querySelectorAll('.dep-etq-habla').length, pos: VIDA.q.edu.P.g.position.x.toFixed(2) + ',' + VIDA.q.edu.P.g.position.z.toFixed(2), home: VIDA.home.x + ',' + VIDA.home.z }; });
+      const rq = await page.evaluate(() => { var E = VIDA.q.edu; depVidaGira(E, 1.2); var F = VIDA.fab, n = F.fin.userData.n; if (n >= 6) n = F.fin.userData.n = 5; depFabApilar(F, F.fin); var m = F.fin.children[F.fin.children.length - 1];
+        return { rot: E.P.g.rotation.y, yawT: E.yawT, colY: Math.abs(m.position.y - (.12 + n * .33)), sy: m.scale.y, cam: DEP.w3.entro === true }; });
+      chk('8. …los giros y la carga van de una, sin animación, y la cámara no hace su entrada', rq.rot === 1.2 && rq.yawT == null && rq.colY < 1e-9 && rq.sy === 1 && !rq.cam, rq);
       chk('8. con «reducir movimiento» nadie habla y Eduardo se queda en su lugar', r.burb === 0 && r.pos === (+r.home.split(',')[0]).toFixed(2) + ',' + (+r.home.split(',')[1]).toFixed(2), r);
       chk('…ningún error de JavaScript', errores.length === 0, errores);
       await page.close();
