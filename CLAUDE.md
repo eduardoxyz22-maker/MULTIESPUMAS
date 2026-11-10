@@ -1655,11 +1655,14 @@ los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
 **📒💵 «Mayor y saldos» del efectivo** (§4pf, 09/11, Contabilidad por el dueño: *«cuánto efectivo pendiente de retiro tenía Juan Pablo el 2, el 5 y el 8 de
-noviembre…»* → *«En contabilidad se llama Mayor y saldos»*; EN LA RAMA, versión 2026-11-09-d): botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`).
+noviembre…»* → *«En contabilidad se llama Mayor y saldos»* → *«Publica, pero antes que analice Fable»*; revisado por Fable 5.2 y PUBLICADO 10/11, versión 2026-11-09-d, `8ae2aa2`):
+botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`; desde el botón abre de nuevo en hoy y Saldos).
 Cada persona es una cuenta de caja (debe = cobró, haber = retiros, saldo): ⚖️ Saldos al cierre de cualquier día y 📒 Mayor de una cuenta o de todas, Copiar
 y Excel. `mysMovs` = `efePareo` + «Saldo de antes del 01/10» (`sobra` de los retiros de octubre) + «🔒 Cierre de <mes>» (lo de un mes cerrado que ningún
-retiro tapó, el día de gracia): nunca negativo y hoy = el Cuadre. ⚠️ Si cambia la regla del efectivo, esto cambia solo; si el emparejamiento deja de ir en
-orden de fecha, ya no vale cortarlo por fecha. `tests/test_efectivo_fecha.js` (36).
+retiro tapó, el día de gracia): nunca negativo y hoy = el Cuadre. El saldo de antes va el 30/09 (saldo anterior, no debe de octubre). Lo sin recoger de una
+cuenta (pantalla y hoja «Sin recoger») = `x.saldo` de `efdDatos` + `mysExtras` (antes del 01/10 − retirado de más): SUMA su saldo. Un retiro que no tapa
+nada deja la cuenta en negativo y va APARTE del total (`tot.pos`/`tot.neg`). El Mayor lista las cuentas con `mysCuentas(D, desde)`. ⚠️ Si cambia la regla
+del efectivo, esto cambia solo; si el emparejamiento deja de ir en orden de fecha, ya no vale cortarlo por fecha. `tests/test_efectivo_fecha.js` (47).
 **💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
 `.gs` 07-f, IMPLEMENTADO 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
 `efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot

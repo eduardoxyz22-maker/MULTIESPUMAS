@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pf — 📒💵 «MAYOR Y SALDOS» DEL EFECTIVO EN EL CUADRE (09/11; Contabilidad, por el dueño: *«contabilidad me preguntó cuánto efectivo pendiente de retiro tenían por ejemplo Juan Pablo el 2 de noviembre, cuándo el 5 y cuándo el 8… creo que no tenemos una forma o historial de ver eso»* → se le calculó a mano y se le propuso «Efectivo a una fecha» → *«si hazlo»* → *«En contabilidad se llama Mayor y saldos, eso andan pidiendo, dame modelos pruebas y demás»*; EN LA RAMA, versión 2026-11-09-d, espera «publica»; el `.gs` no cambia)
+### §4pf — 📒💵 «MAYOR Y SALDOS» DEL EFECTIVO EN EL CUADRE (09/11; Contabilidad, por el dueño: *«contabilidad me preguntó cuánto efectivo pendiente de retiro tenían por ejemplo Juan Pablo el 2 de noviembre, cuándo el 5 y cuándo el 8… creo que no tenemos una forma o historial de ver eso»* → se le calculó a mano y se le propuso «Efectivo a una fecha» → *«si hazlo»* → *«En contabilidad se llama Mayor y saldos, eso andan pidiendo, dame modelos pruebas y demás»* → *«Publica, pero antes que analice Fable esto y vea si no hay errores»* (y *«Usa Fable 5.2»*); PUBLICADO 10/11 ~20:55 de Bolivia, versión 2026-11-09-d, `main` = `8ae2aa2`; el `.gs` no cambia)
 - **Qué es**: Contabilidad → 🧮 Cuadre → caja «💵 Efectivo cobrado vs. retirado» → botón **«📒 Mayor y saldos»** (`#efd-btn`, `abrirEfectivoFecha`). Cada persona que
   tiene plata es una **cuenta de caja**: DEBE = lo que cobró en efectivo, HABER = lo que se le retiró, SALDO = lo que tiene.
   · **⚖️ Saldos** al cierre de un día (◀ ▶, «Hoy», «Fin de <mes anterior>»; entre `EFE_EMPAREJA` y hoy): por cuenta, saldo al terminar el mes anterior +
@@ -17379,6 +17379,18 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - Pruebas: `tests/test_efectivo_fecha.js` (36; los datos de `test_efe_pareo`, reloj el 09/11 19:00).
 - Batería (09/11, `2cf28f5`): 354 suites, 11.167 bien; 2 rojas por la máquina cargada (`test_actualizar_espera` 11/3 y `test_teclado_320`
   14/1): solas, 14/0 y 15/0. Página para el dueño con capturas (clientes inventados) y pruebas: https://claude.ai/artifact/1RKmnxVzoPJpHhYePdV1Bv
+
+- **Revisión de Fable 5.2 antes de publicar (10/11)**: con la planilla real los números daban bien (hoy = Cuadre, ningún negativo). Nueve detalles,
+  todos arreglados en `dbdbb02`: (1) la hoja «Sin recoger» listaba lo de octubre que el cierre ya se había llevado (52 filas, Bs 81.449 de más) → ahora
+  cada cobro lleva `saldo` (lo que sigue en la cuenta al cierre de D) y la hoja suma lo sin recoger (10 filas, Bs 21.797); (2) el Mayor con «Desde» en
+  octubre perdía 3 cuentas → `mysCuentas`; (3) un retiro que no tapa nada achicaba el total → `tot.pos` y aviso aparte; (4) el saldo de antes era debe
+  de octubre → asiento el 30/09; (5) cobro tildado posterior al retiro → aviso en el Mayor; (6) nombre en minúsculas de una vendedora sin movimientos →
+  `EFD.nom`; (7) la ventana recordaba vista/día/«Desde» → el botón la abre de nuevo; (8) celular: sin «Saldo al ayer» ni «De qué es» (va bajo el nombre),
+  la tabla entra en 324 px; (9) la lista de una cuenta trae también lo de antes que tapó un retiro posterior (JP al 05/11: los 990 de octubre), con
+  «¿Cuándo se recogió?» (✅ / 🔒 cierre / ⏳) y el total = saldo. Además, «hoy todavía falta» de un mes ya cerrado ahora dice el cierre.
+  Pruebas: `test_efectivo_fecha` 47/0 (10a-10i nuevas); `test_efe_pareo`, `test_efe_regla`, `test_version_nueva`, `test_cuadre_alta`,
+  `test_chofer_efectivo`, `test_efectivo_tu_dia`, `test_recibio_obligatorio`, `test_conta_alta`, `test_por_cobrar`: 0 rojas. Con la planilla real, todos
+  los días del 01/10 al 10/11: 0 negativos, la lista suma el saldo, debe/haber cuadran y hoy = Cuadre.
 
 ### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; el dueño lo IMPLEMENTÓ el 09/11 (contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; la tarjeta de Isabel ya no sale) y dijo «publica»: página 2026-11-09-c PUBLICADA 09/11 ~15:56 de Bolivia, `main` = `eb21cdf`)
 - **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
