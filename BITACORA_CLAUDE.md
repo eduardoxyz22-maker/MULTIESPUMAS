@@ -17377,9 +17377,16 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   · Montacargas de adelante: llegan frenando con la trompa abajo, la horquilla sube con `depRebote` y la carga queda meciéndose (`mo.arriba`). La
     carga de los camiones cae con su peso, rebota y el camión se hunde un pelo.
   · `depVerTodo`: la PRIMERA vez (`W.entro`) la cámara llega bajando desde arriba y de costado en 2,6 s.
+- **🧍 Segunda vuelta, misma noche** (dueño: *«Por ahí me dijeron que podías hacerlas más realistas»*): el cuerpo con ARTICULACIONES. `depPersona`
+  arma rodillas (`P.ri`/`P.rd`), codos (`P.mi`/`P.md` = el antebrazo con la mano) y tronco (`P.tr`: torso, brazos y cabeza), con piezas
+  redondeadas (`depPaquete`); la pantorrilla con el zapato y el antebrazo con la mano son UNA malla de dos colores (`depUnir` + `depMatColores`):
+  mismos dibujos por cuadro que antes (la prueba pide < 900). Posturas nuevas en `depVidaPoseDe`: `ki/kd` (la pierna que viene hacia adelante se
+  dobla, la que apoya va derecha), `ei/ed`, `ty` (el tronco gira contra las piernas) y `taz` (la taza va derecha y se inclina al tomar: antes
+  quedaba boca abajo con el brazo estirado hacia arriba). ⚠️ Lo que se lleva en la MANO va en `P.mi`/`P.md` con la altura contada desde el codo
+  (celular, taza, tabla del inspector, escoba), no en `P.bi`/`P.bd`. Los personajes de la ciudad (`patio.js`) son otros: no cambiaron.
 - ⚠️ `g.rotation.order='YXZ'` en personas, perro y montacargas: la inclinación (x) va en el eje propio, mire para donde mire. Con «reducir
   movimiento» todo va de una (sin entrada de cámara). Los camiones 3D de Administración (`cv3dConstruir`) NO cambiaron.
-- **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 52 con `PATIO_THREE`).
+- **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 54 con `PATIO_THREE`).
   `test_mis_deposito` (27) y `test_camiones_3d` (28) sin cambios.
 - **Para el dueño**: clip de antes y después (dos escenas, grabadas cuadro por cuadro con un reloj propio: el contenedor dibuja a ~4 cuadros
   por segundo y `page.clock` de Playwright no mueve `requestAnimationFrame` después de pausar).

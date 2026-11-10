@@ -49943,17 +49943,36 @@ var VIDA_TEMA_COL={ halloween:['#f97316','#7c3aed','#111827','#facc15'], 'todos-
   navidad:['#dc2626','#16a34a','#facc15','#f8fafc'], 'anio-nuevo':['#facc15','#e5e7eb','#a78bfa','#f8fafc'], carnaval:['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7','#ec4899'],
   madre:['#ec4899','#f9a8d4','#f8fafc'], patria:['#dc2626','#facc15','#16a34a'], 'santa-cruz':['#16a34a','#f8fafc'], espuma:['#00B5AD','#2B3566','#F7E7A0','#E7B5D5','#DA8B62'] };
 /* una persona de la misma forma que las de la ciudad (patio.js `persona`), a la escala de la fábrica: mira hacia +z */
+/* (10/11, dueño: «me dijeron que podías hacerlas más realistas») varias piezas en UNA sola malla, cada una con su color: la pantorrilla con el
+   zapato y el antebrazo con la mano se dibujan de una vez (las rodillas y los codos no suman dibujos por cuadro). `partes` = [geometría, color, x, y, z]. */
+function depUnir(clave, partes){
+  var G=DEP.w3.geo; if(G[clave]) return G[clave];
+  var pos=[], nor=[], col=[];
+  partes.forEach(function(q){ var ge=q[0].index?q[0].toNonIndexed():q[0].clone(); ge.translate(q[2]||0, q[3]||0, q[4]||0);
+    var c=new THREE.Color(q[1]).convertSRGBToLinear(), a=ge.attributes.position.array, n=ge.attributes.normal.array;
+    for(var i=0;i<a.length;i++){ pos.push(a[i]); nor.push(n[i]); } for(var k=0;k<a.length/3;k++) col.push(c.r, c.g, c.b); ge.dispose(); });
+  var o=new THREE.BufferGeometry(); o.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); o.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3)); o.setAttribute('color', new THREE.Float32BufferAttribute(col,3));
+  return G[clave]=o;
+}
+function depMatColores(){ var M=DEP.w3.mat; return M.__colores||(M.__colores=new THREE.MeshStandardMaterial({ vertexColors:true, roughness:.55, metalness:.05 })); }
+/* 🧍 (10/11) El cuerpo con ARTICULACIONES y piezas redondeadas: la pierna se dobla en la rodilla (`ri`/`rd`), el brazo en el codo (`mi`/`md` =
+   el antebrazo con la mano: ahí va lo que se lleva en la mano) y el tronco (`tr`: torso, brazos y cabeza) gira apenas contra las piernas al
+   caminar. `pi`/`pd` (muslo, desde la cadera) y `bi`/`bd` (brazo, desde el hombro) siguen siendo lo de siempre. */
 function depPersona(o){
-  var g=new THREE.Group(), piel=o.piel||'#e0b089', pant=o.pant||'#2f4f7f';
-  function pierna(x){ var p=new THREE.Group(); p.position.set(x,.95,0); g.add(p); p.add(depCaja(.24,.9,.26,pant,0,-.45,0)); p.add(depCaja(.26,.14,.36,'#1c242c',0,-.9,.06)); return p; }
-  function brazo(x){ var b=new THREE.Group(); b.position.set(x,1.72,0); g.add(b); b.add(depCaja(.18,.72,.2,o.camisa,0,-.32,0)); b.add(depCil(.1,.16,piel,0,-.74,0,8)); return b; }
+  var g=new THREE.Group(), piel=o.piel||'#e0b089', pant=o.pant||'#2f4f7f', zap='#1c242c', tr=new THREE.Group(); tr.position.y=.95; g.add(tr);
+  function pierna(x){ var p=new THREE.Group(); p.position.set(x,.95,0); g.add(p); p.add(depMesh(depPaquete(.24,.5,.26,.06), depMat(pant), 0,-.5,0));
+    var r=new THREE.Group(); r.position.set(0,-.45,0); p.add(r);
+    r.add(depMesh(depUnir('pantorrilla|'+pant, [[depPaquete(.22,.46,.24,.06), pant, 0,-.44,0], [depPaquete(.26,.14,.36,.05), zap, 0,-.52,.06]]), depMatColores())); p.userData.r=r; return p; }
+  function brazo(x){ var b=new THREE.Group(); b.position.set(x,.77,0); tr.add(b); b.add(depMesh(depPaquete(.18,.42,.2,.06), depMat(o.camisa), 0,-.4,0));
+    var m=new THREE.Group(); m.position.set(0,-.36,0); b.add(m);
+    m.add(depMesh(depUnir('antebrazo|'+o.camisa+'|'+piel, [[depPaquete(.16,.36,.18,.05), o.camisa, 0,-.34,0], [new THREE.CylinderGeometry(.1,.1,.16,8), piel, 0,-.38,0]]), depMatColores())); b.userData.m=m; return b; }
   var pi=pierna(-.16), pd=pierna(.16);
-  g.add(depCaja(.66,.82,.4,o.camisa,0,1.36,0));
-  if(o.refl){ g.add(depCaja(.68,.06,.42,'#f4f7fb',0,1.2,0)); g.add(depCaja(.68,.06,.42,'#f4f7fb',0,1.5,0)); }
-  if(o.panza){ var pz=depMesh(new THREE.SphereGeometry(.3,14,10), depMat(o.camisa), 0,1.18,.2); pz.scale.set(1,.9,.8); g.add(pz); }
-  var bi=brazo(-.43), bd=brazo(.43);
-  if(o.cel){ bi.add(depCaja(.13,.24,.05,'#111827',0,-.82,.13)); bi.add(depCaja(.1,.18,.01,'#8fd3ff',0,-.82,.16,{ emissive:new THREE.Color('#8fd3ff'), emissiveIntensity:.6 })); }
-  var cabeza=new THREE.Group(); cabeza.position.y=2.05; g.add(cabeza);
+  tr.add(depMesh(depPaquete(.66,.82,.4,.12), depMat(o.camisa), 0,0,0));
+  if(o.refl){ tr.add(depCaja(.68,.06,.42,'#f4f7fb',0,.25,0)); tr.add(depCaja(.68,.06,.42,'#f4f7fb',0,.55,0)); }
+  if(o.panza){ var pz=depMesh(new THREE.SphereGeometry(.3,14,10), depMat(o.camisa), 0,.23,.2); pz.scale.set(1,.9,.8); tr.add(pz); }
+  var bi=brazo(-.43), bd=brazo(.43), mi=bi.userData.m, md=bd.userData.m;
+  if(o.cel){ mi.add(depCaja(.13,.24,.05,'#111827',0,-.46,.13)); mi.add(depCaja(.1,.18,.01,'#8fd3ff',0,-.46,.16,{ emissive:new THREE.Color('#8fd3ff'), emissiveIntensity:.6 })); }
+  var cabeza=new THREE.Group(); cabeza.position.y=1.1; tr.add(cabeza);
   cabeza.add(depMesh(new THREE.SphereGeometry(.27,16,12), depMat(piel), 0,0,0));
   var ojos=[]; [-.09,.09].forEach(function(x){ var oj=depMesh(new THREE.SphereGeometry(.035,8,6), depMat('#1c242c'), x,.04,.25, false); ojos.push(oj); cabeza.add(oj); });
   if(o.bigote) cabeza.add(depCaja(.36,.1,.12,'#3b2a1e',0,-.1,.22));
@@ -49961,11 +49980,11 @@ function depPersona(o){
   else cabeza.add(depCaja(.5,.14,.5,o.pelo||'#2b2018',0,.2,0));
   if(o.melena){ var mp=o.pelo||'#2b2018'; cabeza.add(depCaja(.56,.66,.2,mp,0,-.16,-.18)); cabeza.add(depCaja(.08,.5,.36,mp,-.27,-.08,-.04)); cabeza.add(depCaja(.08,.5,.36,mp,.27,-.08,-.04)); }
   g.scale.setScalar(.88); g.rotation.order='YXZ';   // (10/11) primero hacia dónde mira y después la inclinación del cuerpo al caminar
-  return { g:g, pi:pi, pd:pd, bi:bi, bd:bd, cabeza:cabeza, ojos:ojos, sem:Math.random()*6 };
+  return { g:g, pi:pi, pd:pd, ri:pi.userData.r, rd:pd.userData.r, bi:bi, bd:bd, mi:mi, md:md, tr:tr, cabeza:cabeza, ojos:ojos, sem:Math.random()*6 };
 }
 /* la taza de café: va en la mano derecha (`bd`) del que la tenga */
 function depTaza(){ var t=new THREE.Group(); t.add(depCil(.075,.13,'#f8fafc',0,0,0,12)); t.add(depCil(.066,.01,'#5b3a22',0,.062,0,12));
-  var asa=depMesh(new THREE.TorusGeometry(.04,.012,6,10), depMat('#f8fafc'), .085,0,0); t.add(asa); t.position.set(0,-.88,.12); return t; }
+  var asa=depMesh(new THREE.TorusGeometry(.04,.012,6,10), depMat('#f8fafc'), .085,0,0); t.add(asa); t.position.set(0,-.52,.12); return t; }
 /* el perro de la fábrica: mira hacia +z */
 function depPerro(){
   var g=new THREE.Group(), c='#b07a45', o='#5b3a22';
@@ -50038,20 +50057,24 @@ function depCallar(quien){ var W=DEP.w3, Q=VIDA && VIDA.q[quien]; if(!Q || !Q.ha
    cuerpo apenas inclinado. El paso sale de lo que la persona AVANZÓ (`P.fase`, lo suma `depVidaMover`), no del reloj: los pies no
    patinan cuando arranca o frena. Con «reducir movimiento» o en el primer cuadro, la postura se pone de una. */
 function depVidaPoseDe(P, modo, t){
-  var o={ pi:0, pd:0, bix:0, bdx:P.taza?-.9:0, biz:0, bdz:0, cx:0, cy:0, bob:0, lean:0 }, w, s=t+(P.sem||0);
-  if(modo==='anda'){ var f=(P.fase!=null?P.fase:t*9); w=Math.sin(f); o.pi=w*.56; o.pd=-w*.56; o.bix=-w*.42; if(!P.taza) o.bdx=w*.42;
-    o.bob=Math.abs(Math.cos(f))*.05; o.lean=.07; o.cy=Math.sin(f*.5)*.05; return o; }
-  if(modo==='barre'){ var b=Math.sin(t*3.2); o.pi=Math.sin(t*4.5)*.25; o.pd=-o.pi; o.bix=o.bdx=-.7; o.biz=o.bdz=b*.35; o.cx=.3; o.cy=b*.15; o.lean=.05; return o; }   // 🧹 la limpieza
-  if(modo==='bolea'){ o.bix=-1.05+Math.sin(t*3.2)*.28; o.bdx=-1.05+Math.sin(t*3.2+1.7)*.28; o.cx=.04; o.cy=Math.sin(t*.6)*.22; return o; }   // 🌿 Yerson: cose con la cabeza levantada (se le ven los ojos y el bolo)
-  if(modo==='trabaja'){ o.bix=-1.05+Math.sin(t*3.2)*.28; o.bdx=-1.05+Math.sin(t*3.2+1.7)*.28; o.cx=.3; o.cy=Math.sin(t*.8)*.12; return o; }   // 🏭 los operarios de la línea
-  if(modo==='senala'){ o.bix=-2.3+Math.sin(t*2.2)*.06; o.biz=-.35; o.cy=-.35; return o; }
-  if(modo==='toma'){ o.bdx=-2.15; o.bdz=.35; o.cx=-.18; return o; }
+  /* ki/kd = cuánto se dobla cada rodilla, ei/ed = cada codo, ty = el tronco gira contra las piernas, taz = la taza se inclina para tomar */
+  var o={ pi:0, pd:0, ki:0, kd:0, bix:0, bdx:P.taza?-.25:0, ei:.15, ed:P.taza?1.15:.15, biz:0, bdz:0, ty:0, cx:0, cy:0, bob:0, lean:0, taz:0 }, w, s=t+(P.sem||0);
+  if(modo==='anda'){ var f=(P.fase!=null?P.fase:t*9), c=Math.cos(f); w=Math.sin(f); o.pi=w*.56; o.pd=-w*.56;
+    /* la pierna que viene de atrás hacia adelante se dobla (si no, arrastraría el pie); la que apoya va derecha */
+    o.ki=.1+Math.max(0,-c)*.95; o.kd=.1+Math.max(0,c)*.95;
+    o.bix=-w*.42; o.ei=.3+Math.max(0,w)*.4; if(!P.taza){ o.bdx=w*.42; o.ed=.3+Math.max(0,-w)*.4; }
+    o.ty=w*.1; o.bob=Math.abs(c)*.05; o.lean=.07; o.cy=-o.ty+Math.sin(f*.5)*.05; return o; }
+  if(modo==='barre'){ var b=Math.sin(t*3.2); o.pi=Math.sin(t*4.5)*.25; o.pd=-o.pi; o.ki=o.kd=.15; o.bix=o.bdx=-.45; o.ei=o.ed=.55; o.biz=o.bdz=b*.35; o.ty=b*.12; o.cx=.3; o.cy=b*.15; o.lean=.05; return o; }   // 🧹 la limpieza
+  if(modo==='bolea'){ o.bix=-.5+Math.sin(t*3.2)*.16; o.bdx=-.5+Math.sin(t*3.2+1.7)*.16; o.ei=1.1+Math.sin(t*3.2+.6)*.22; o.ed=1.1+Math.sin(t*3.2+2.3)*.22; o.cx=.04; o.cy=Math.sin(t*.6)*.22; return o; }   // 🌿 Yerson: cose con la cabeza levantada (se le ven los ojos y el bolo)
+  if(modo==='trabaja'){ o.bix=-.5+Math.sin(t*3.2)*.16; o.bdx=-.5+Math.sin(t*3.2+1.7)*.16; o.ei=1.1+Math.sin(t*3.2+.6)*.22; o.ed=1.1+Math.sin(t*3.2+2.3)*.22; o.cx=.3; o.cy=Math.sin(t*.8)*.12; return o; }   // 🏭 los operarios de la línea
+  if(modo==='senala'){ o.bix=-2.3+Math.sin(t*2.2)*.06; o.ei=.12; o.biz=-.35; o.cy=-.35; o.ty=-.12; return o; }
+  if(modo==='toma'){ o.bdx=-1.0; o.ed=1.9; o.bdz=.12; o.cx=-.16; o.taz=-.55; return o; }
   /* las posturas de parado respiran: los brazos se abren apenas y el cuerpo sube un pelo */
   var r=.045+Math.sin(s*1.7)*.025; o.biz=-r; o.bdz=r; o.bob=(1+Math.sin(s*1.7))*.006;
-  if(modo==='habla'){ if(!P.taza) o.bdx=-1.1+Math.sin(t*6)*.35; o.bix=-.22+Math.sin(t*3+1)*.16; o.cy=Math.sin(t*2.5)*.18; o.cx=Math.sin(t*5)*.05; o.bob+=Math.abs(Math.sin(t*3))*.012; return o; }
-  if(modo==='da'){ o.bdx=-1.35; return o; }
-  if(modo==='cel'){ o.bix=-1.15+Math.sin(t*7)*.025; o.bdx=0; o.cx=.38; o.cy=Math.sin(t*.7)*.1; return o; }
-  if(modo==='revisa'){ o.bix=-.3; if(!P.taza) o.bdx=-1.1; o.cy=Math.sin(t*1.3)*.5; o.cx=.1; return o; }
+  if(modo==='habla'){ if(!P.taza){ o.bdx=-.45+Math.sin(t*6)*.2; o.ed=1.2+Math.sin(t*6+1)*.35; } o.bix=-.22+Math.sin(t*3+1)*.16; o.ei=.35; o.ty=Math.sin(t*1.7)*.06; o.cy=Math.sin(t*2.5)*.18; o.cx=Math.sin(t*5)*.05; o.bob+=Math.abs(Math.sin(t*3))*.012; return o; }
+  if(modo==='da'){ o.bdx=-.9; o.ed=.5; return o; }
+  if(modo==='cel'){ o.bix=-.4+Math.sin(t*7)*.02; o.ei=1.5; o.bdx=0; o.cx=.38; o.cy=Math.sin(t*.7)*.1; return o; }
+  if(modo==='revisa'){ o.bix=-.35; o.ei=1.0; if(!P.taza){ o.bdx=-.5; o.ed=1.0; } o.cy=Math.sin(t*1.3)*.5; o.cx=.1; return o; }
   o.cy=Math.sin(t*.6)*.12; return o;
 }
 function depVidaAnimar(P, modo, t){
@@ -50059,6 +50082,8 @@ function depVidaAnimar(P, modo, t){
   P._t=t; if(!c) c=P.pose={};
   for(var n in o) c[n]=(c[n]==null?o[n]:c[n]+(o[n]-c[n])*k);
   P.pi.rotation.x=c.pi; P.pd.rotation.x=c.pd; P.bi.rotation.x=c.bix; P.bd.rotation.x=c.bdx; P.bi.rotation.z=c.biz; P.bd.rotation.z=c.bdz;
+  if(P.ri){ P.ri.rotation.x=c.ki; P.rd.rotation.x=c.kd; P.mi.rotation.x=-c.ei; P.md.rotation.x=-c.ed; P.tr.rotation.y=c.ty; }
+  if(P.taza) P.taza.rotation.x=-(c.bdx-c.ed)+c.taz;   // la taza va derecha aunque el brazo se doble; al tomar se inclina hacia la boca
   P.cabeza.rotation.x=c.cx; P.cabeza.rotation.y=c.cy;
   if(P.g){ if(P.y0==null) P.y0=P.g.position.y; P.g.position.y=P.y0+c.bob; P.g.rotation.x=c.lean; }
   /* parpadea cada tanto */
@@ -50163,9 +50188,9 @@ function depVidaCafe(){
     depVidaLuego(function(){ E.modo='habla'; depDecir('edu', depVidaUno(VIDA_PIDE), 2.8);
       depVidaLuego(function(){ E.modo='quieto';
         depVidaIr(I, [{ x:junto.x, z:zF }, { x:VIDA.cafPos.x, z:zF }, { x:VIDA.cafPos.x, z:VIDA.cafPos.z }], function(){ depVidaGira(I, 0); I.modo='quieto'; VIDA.vaporOn=true;
-          depVidaLuego(function(){ VIDA.vaporOn=false; I.P.taza=depTaza(); I.P.bd.add(I.P.taza);
+          depVidaLuego(function(){ VIDA.vaporOn=false; I.P.taza=depTaza(); I.P.md.add(I.P.taza);
             depVidaIr(I, [{ x:VIDA.cafPos.x, z:zF }, { x:junto.x, z:zF }, junto], function(){ depMirarA(I, ep.x, ep.z); I.modo='da'; depDecir('isa', 'Aquí tiene, jefe ☕', 2.5);
-              depVidaLuego(function(){ I.P.bd.remove(I.P.taza); I.P.taza=null; E.P.taza=depTaza(); E.P.bd.add(E.P.taza);
+              depVidaLuego(function(){ I.P.md.remove(I.P.taza); I.P.taza=null; E.P.taza=depTaza(); E.P.md.add(E.P.taza);
                 E.modo='quieto'; depDecir('edu', depVidaUno(['¡Gracias, Isabel! Esto sí es café.','¡Eso! Ahora sí arrancamos.','¡Qué rico! ¿Y las ventas de hoy?']), 3.2);
                 depVidaLuego(function(){ depDecir('perro','¡Guau! 🐾',1.8); }, 900);
                 VIDA.sorbos=3; VIDA.sorboT=4; E.st='casa'; E.espera=6;
@@ -50229,7 +50254,7 @@ function depVidaPaso(t){
   if(VIDA.cafeProx>0) VIDA.cafeProx-=dt;
   if(E.P.taza && VIDA.sorbos>0){ VIDA.sorboT-=dt; if(VIDA.sorboT<=0){ VIDA.sorbos--; VIDA.sorboT=5;
       if(!E.path){ E.modo='toma'; depVidaLuego(function(){ if(!E.path) E.modo='quieto'; }, 1200); }
-      if(!VIDA.sorbos){ depVidaLuego(function(){ if(!E.P.taza) return; E.P.bd.remove(E.P.taza); E.P.taza=null; if(!E.path) depDecir('edu','Ahh… ¡a trabajar!',2.5); }, 1600); } } }
+      if(!VIDA.sorbos){ depVidaLuego(function(){ if(!E.P.taza) return; E.P.md.remove(E.P.taza); E.P.taza=null; if(!E.path) depDecir('edu','Ahh… ¡a trabajar!',2.5); }, 1600); } } }
   depVidaAnimar(E.P, E.path&&E.path.length?'anda':E.modo, t); depVidaAnimar(I.P, I.path&&I.path.length?'anda':I.modo, t);
   /* el perro sigue a Eduardo de cerca y mueve la cola */
   var ep=E.P.g.position, pp=D.P.g.position, ty=E.P.g.rotation.y, bx=ep.x+.85, bz=ep.z+.6, dx=bx-pp.x, dz=bz-pp.z, L=Math.hypot(dx,dz);
@@ -50509,13 +50534,13 @@ function depFabCentro(g, A, F){
   var al=new THREE.Group(); al.position.set(sxp,0,-.15); g.add(al); al.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
   for(var j=0;j<9;j++){ var c3=j%3, f3=Math.floor(j/3); al.add(depMesh(depPaquete(.55,.17,.4,.07), depMat(j%2?'#ffffff':'#f8fafc'), -.6+c3*.6,.12+f3*.19,.2)); al.add(depMesh(depPaquete(.55,.17,.4,.07), depMat('#e7b5d5'), -.6+c3*.6,.12+f3*.19,-.25)); }
   /* el inspector de calidad */
-  var ins=depPersona({ camisa:'#f8fafc', pant:'#334155', pelo:'#1f2937' }); ins.bi.add(depCaja(.24,.32,.03,'#a16207',0,-.82,.14)); ins.bi.add(depCaja(.2,.24,.01,'#ffffff',0,-.8,.16));
+  var ins=depPersona({ camisa:'#f8fafc', pant:'#334155', pelo:'#1f2937' }); ins.mi.add(depCaja(.24,.32,.03,'#a16207',0,-.46,.14)); ins.mi.add(depCaja(.2,.24,.01,'#ffffff',0,-.44,.16));
   ins.g.position.set(-(A-6),0,2.5); g.add(ins.g);
   var rx2=Math.min(8.6, A-3); ins.g.position.set(-rx2,0,2.9);
   VIDA.q.cal={ P:ins, n:'Calidad:', col:'#0f766e', dy:2.1, vel:1.1, modo:'revisa', espera:3, ronda:[{ x:-rx2, z:2.9 }, { x:0, z:2.9 }, { x:0, z:-1.8 }, { x:0, z:2.9 }, { x:rx2, z:2.9 }, { x:0, z:2.9 }], i:0 };
   ins.g.userData.dep={ fn:function(){ depDecir('cal', depVidaUno(FAB_DICE.cal), 3.2); } }; W.toca.push(ins.g);
   /* doña de la limpieza, barriendo el centro en zigzag, con su cartel de «piso mojado» */
-  var li=depPersona({ camisa:'#16a34a', pant:'#14532d', pelo:'#6b7280', melena:true }), es=new THREE.Group(); es.position.set(0,-.78,.12); es.rotation.x=.55; li.bd.add(es);
+  var li=depPersona({ camisa:'#16a34a', pant:'#14532d', pelo:'#6b7280', melena:true }), es=new THREE.Group(); es.position.set(0,-.42,.12); es.rotation.x=.55; li.md.add(es);
   es.add(depCil(.025,1.3,'#a16207',0,-.25,.2,6)); es.add(depCaja(.42,.1,.12,'#f59e0b',0,-.9,.2)); es.add(depCaja(.42,.08,.04,'#78350f',0,-.97,.2));
   var zx=Math.min(8, A-4); li.g.position.set(-zx,0,3.7); g.add(li.g);
   VIDA.q.lim={ P:li, n:'Limpieza:', col:'#15803d', dy:2.1, vel:.55, modo:'barre', espera:1, ronda:[{ x:zx, z:3.7 }, { x:zx, z:4.2 }, { x:-zx, z:4.2 }, { x:-zx, z:3.7 }], i:-1 };

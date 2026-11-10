@@ -162,17 +162,23 @@ const armar = (PEND) => {
          con el bucle de la página sin tocar a la gente, para medir lo mismo en cualquier máquina. */
       r = await page.evaluate(() => { var W = DEP.w3, cada = W.cada; W.cada = null; window.__cada = cada;
         var E = VIDA.q.edu, D = VIDA.q.perro, T = VIDA.t, paso = function (n) { for (var i = 0; i < n; i++) { T += 1 / 60; depVidaPaso(T); } }, h = VIDA.home, o = {};
-        ['edu','isa'].forEach(depCallar); E.path = null; E.fin = null; E.st = 'demo'; E.espera = 999; VIDA.cafeProx = 9999; VIDA.fab.charla = 999; E.modo = 'quieto'; E.vel = 1.5; E.v = 0;
+        VIDA.gen++;   /* lo que quedó agendado de antes (el café, una charla) ya no corre: no le cambia la postura en medio de la medición */
+        ['edu','isa'].forEach(depCallar); if (E.P.taza) { E.P.md.remove(E.P.taza); E.P.taza = null; } VIDA.sorbos = 0; E.path = null; E.fin = null; E.st = 'demo'; E.espera = 999; VIDA.cafeProx = 9999; VIDA.fab.charla = 999; E.modo = 'quieto'; E.vel = 1.5; E.v = 0;
         E.P.g.position.set(h.x, 0, h.z); E.P.g.rotation.y = 0; E.yawT = null; paso(30);
         /* a) girar parado va de a poco */
         depVidaGira(E, 1.5); o.g0 = E.P.g.rotation.y; paso(3); o.g1 = E.P.g.rotation.y; paso(150); o.g2 = E.P.g.rotation.y; o.gy = E.yawT;
         /* b) arranca de a poco, llega a su velocidad, frena antes de llegar y queda JUSTO en el punto */
         var x0 = E.P.g.position.x, f0 = E.P.fase || 0, lleg = 0, vFin = null, n = 0; depVidaIr(E, [{ x: x0 + 3, z: h.z }], function () { lleg = 1; }, 0);
         paso(2); o.v1 = E.v; o.lean1 = E.P.g.rotation.x; paso(60); o.v2 = E.v; o.lean2 = E.P.g.rotation.x;
+        /* b2) las rodillas: en un paso entero, cada una se dobla cuando su pierna viene hacia adelante y va casi derecha cuando apoya */
+        var kMax = 0, kMin = 9, eMax = 0, tw = 0; for (var q = 0; q < 50; q++) { paso(1); n++; kMax = Math.max(kMax, E.P.ri.rotation.x); kMin = Math.min(kMin, E.P.ri.rotation.x); eMax = Math.max(eMax, -E.P.mi.rotation.x); tw = Math.max(tw, Math.abs(E.P.tr.rotation.y)); }
+        o.kMax = kMax; o.kMin = kMin; o.eMax = eMax; o.tw = tw;
         while (!lleg && n < 900) { paso(1); n++; if (vFin == null && x0 + 3 - E.P.g.position.x < .12) vFin = E.v; }
         o.lleg = lleg; o.vFin = vFin; o.x = E.P.g.position.x - x0; o.fase = (E.P.fase || 0) - f0; o.yLleg = E.yawT; paso(150); o.rotFin = E.P.g.rotation.y; o.leanFin = E.P.g.rotation.x;
         /* c) cambiar de postura no salta: el brazo va de a poco */
-        var b0 = E.P.bd.rotation.x; E.modo = 'senala'; paso(1); o.b1 = Math.abs(E.P.bd.rotation.x - b0); paso(90); o.b2 = Math.abs(E.P.bd.rotation.x - b0);
+        var b0 = E.P.bi.rotation.x; E.modo = 'senala'; paso(1); o.b1 = Math.abs(E.P.bi.rotation.x - b0); paso(90); o.b2 = Math.abs(E.P.bi.rotation.x - b0);
+        /* c2) tomar café: el codo se dobla y la taza queda derecha (apenas inclinada hacia la boca), no boca abajo */
+        E.P.taza = depTaza(); E.P.md.add(E.P.taza); E.modo = 'toma'; paso(120); o.codoToma = -E.P.md.rotation.x; o.tazaMundo = E.P.bd.rotation.x + E.P.md.rotation.x + E.P.taza.rotation.x; E.P.md.remove(E.P.taza); E.P.taza = null; E.modo = 'quieto'; paso(60);
         /* d) el perro: con Eduardo quieto un rato se sienta; cuando Eduardo se va, se para y lo sigue */
         paso(60 * 5); o.sienta = D.sienta; o.perroX = D.P.g.rotation.x; depVidaIr(E, [{ x: x0, z: h.z }], null, -.25); paso(70); o.para = D.sienta; paso(400);
         /* e) las formas de moverse nuevas */
@@ -184,7 +190,9 @@ const armar = (PEND) => {
       chk('…al caminar arranca de a poco, llega a su velocidad, frena antes de llegar y queda justo en el punto', r.v1 > 0 && r.v1 < .4 && Math.abs(r.v2 - 1.5) < .01 && r.vFin < 1.4 && r.lleg === 1 && Math.abs(r.x - 3) < 1e-9, r);
       chk('…el paso de las piernas sale de lo que avanzó (no patina) y camina apenas inclinado; parado queda derecho', Math.abs(r.fase - 3 * 4.1) < .01 && r.lean2 > .03 && Math.abs(r.leanFin) < .005, r);
       chk('…al llegar gira de a poco hacia donde tiene que mirar', r.yLleg === 0 && Math.abs(Math.sin(r.rotFin)) < .01, r);
-      chk('…cambiar de postura no salta: el brazo va de a poco', r.b2 > .5 && r.b1 < r.b2 * .35, r);
+      chk('…cambiar de postura no salta: el brazo va de a poco', r.b2 > 1.5 && r.b1 > 0 && r.b1 < r.b2 * .35, r);
+      chk('…camina doblando las rodillas (la que avanza se dobla, la que apoya va casi derecha), con los codos flexionados y el tronco girando apenas', r.kMax > .8 && r.kMin < .2 && r.eMax > .5 && r.tw > .05 && r.tw < .2, { kMax: r.kMax, kMin: r.kMin, eMax: r.eMax, tw: r.tw });
+      chk('…al tomar café dobla el codo y la taza va derecha, apenas inclinada hacia la boca', r.codoToma > 1.5 && Math.abs(r.tazaMundo + .55) < .02, { codo: r.codoToma, taza: r.tazaMundo });
       chk('…el perro se sienta cuando Eduardo se queda quieto y se para cuando se va', r.sienta > .95 && r.perroX < -.3 && r.para < .2, r);
       chk('…«rebote» se pasa un pelo y vuelve, «cae» acelera; las dos empiezan en 0 y terminan en 1', Math.abs(r.rebote[0]) < 1e-9 && r.rebote[1] === true && r.rebote[2] === 1 && r.cae.join(',') === '0,0.25,1', r);
       chk('…Eduardo tiene ojos que parpadean y la cámara ya hizo su entrada', r.ojos === 2 && r.entro, r);

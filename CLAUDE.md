@@ -803,12 +803,13 @@ café, choferes, perro, pizarra y reloj, adornos del tema; adelante la línea de
 acolchadora, el producto terminado (Heaven/Sueña), un segundo montacargas, inspector y limpieza; el galpón con ventanales y estanterías llenas.
 Eduardo SIN panza ni bigote (dueño, 01/11). **Yerson** en costura acullica coca (el cachete es el BOLO, nunca enfermedad; ojos grandes; habla de coca despalada, bolo, bico). Solo dibujo.
 ⚠️ `depFundir` junta lo fijo, también en `depAmbiente` (lo comparten los camiones 3D de Administración): algo que se mueva o se toque no va ahí.
-⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (52 con `PATIO_THREE`).
+⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (54 con `PATIO_THREE`).
 🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; EN LA RAMA, espera «publica»): las posturas se mezclan
 (`depVidaPoseDe` → `depVidaAnimar`), se camina arrancando y frenando (`depVidaMover`: `Q.v`, `Q.ac`, `P.fase`), los giros de parado van de a poco
 (⚠️ un giro NUEVO de alguien de `VIDA.q` va con `depVidaGira`/`depMirarA`, nunca `rotation.y=` a mano), el perro se sienta, el montacargas cabecea
 (`depFabCabeceo`), el colchón y la carga caen (`depFabCaer`, `depCae`, `depRebote`) y la cámara entra bajando la primera vez (`W.entro`). Con
-«reducir movimiento», todo de una. `cv3dConstruir` no cambió.
+«reducir movimiento», todo de una. `cv3dConstruir` no cambió. 🧍 Los personajes tienen rodillas (`P.ri/rd`), codos (`P.mi/md`) y tronco
+(`P.tr`); ⚠️ lo que se lleva en la MANO va en `P.mi`/`P.md` (altura desde el codo), y dos colores en una pieza = `depUnir` (no sumar dibujos por cuadro).
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
