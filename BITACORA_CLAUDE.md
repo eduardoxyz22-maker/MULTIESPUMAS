@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pk — 📊 EL EXCEL DEL CUADRE EN DOS HOJAS: LA COLUMNA MONTO YA SE PUEDE SUMAR (10/11; dueño: *«si arregla lo del excel»*; en la rama, versión 2026-11-10-f, espera «publica»)
+### §4pk — 📊 EL EXCEL DEL CUADRE EN DOS HOJAS: LA COLUMNA MONTO YA SE PUEDE SUMAR (10/11; dueño: *«si arregla lo del excel»* → *«publicas»*; PUBLICADO 10/11 ~13:10 de Bolivia, versión 2026-11-10-f, `main` = `261f139`; batería 357 suites, 0 mal — seis rojas por carga pasaron solas)
 
 Era el pendiente de §4fj→§4fw («`SUMA(columna MONTO)` del Excel del Cuadre duplica»). El Excel del Cuadre era UNA hoja: los pagos y,
 debajo, el «CIERRE POR FORMA DE PAGO» con su monto en la MISMA columna H (y desde el 07/11 también «DE LO RETIRADO, ERA DE ANTES» del

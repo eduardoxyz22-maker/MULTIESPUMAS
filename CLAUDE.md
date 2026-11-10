@@ -1884,7 +1884,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   `productos-mes.js`, `?v=20260923a`).
   · ⚠️ **Espera al dueño**: «Entrega» corta por la fecha PROGRAMADA (se le explicó el 10/11 y quedó como está). El SALDO crudo del
   Excel se deja **a propósito** (es lo que hace cerrar cada fila desde §4fm).
-  · 📊 **El Excel del Cuadre va en DOS hojas** (§4pk, 10/11, dueño: *«si arregla lo del excel»*; en la rama, versión 2026-11-10-f): «Cuadre»
+  · 📊 **El Excel del Cuadre va en DOS hojas** (§4pk, 10/11, dueño: *«si arregla lo del excel»*; PUBLICADO 10/11, versión 2026-11-10-f, `261f139`): «Cuadre»
   = SOLO los pagos (la columna MONTO se suma entera; ⚠️ ni una fila más ahí, ni total ni nota) y «Cierre y efectivo» (`CUADRE_HOJA_CIERRE`)
   = cierre por forma de pago (con encabezado, columnas A-E), efectivo cobrado vs. retirado y detalle de los retiros. En el cierre del mes la
   2ª se llama «Cuadre (cierre)». Una prueba que lea el cierre o el efectivo del Excel junta las hojas. `test_rev2_cuadre` §8.
