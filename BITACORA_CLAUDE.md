@@ -17357,7 +17357,33 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pk — 📊 EL EXCEL DEL CUADRE EN DOS HOJAS: LA COLUMNA MONTO YA SE PUEDE SUMAR (10/11; dueño: *«si arregla lo del excel»*; en la rama, versión 2026-11-10-f, espera «publica»)
+### §4pl — 🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11; dueño: *«¿algún pedido de Mirian y Andrea pasó de entregado a no entregado?»* → *«salía como entregado y era fecha 13»* → *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; en la rama, versión 2026-11-10-g, espera «publica»)
+
+**El caso.** El 11-096 (Yohana Moreno García, de Mirian, entrega vie 13/11 AM, en producción en Moreno) salía con el sello «ENTREGADO» en Mis
+pedidos (foto del dueño) y la ficha de Administración lo mostraba sin ✅. La planilla leída a las 15:30 decía NO entregado, último cambio 15:25
+(la edición del dueño). El sello sale SOLO con `p.entregado`: esa compu lo tenía con ✅. La planilla no guarda historia del ✅ y, al sacarlo, el
+panel borra la marca del cierre (`eF/eT/eQ`): no hubo forma de saber quién. Lo único: Google Sheets → Historial de versiones (la hora; el autor
+siempre es la cuenta del dueño) y el respaldo de la madrugada. Otra igual el mismo día: la RPT 11-013 (Mia Plaza, entrega 13/11) marcada
+entregada hoy a las 09:04 (`eF`=10/11).
+
+**Qué se hizo (solo la página; el `.gs` no cambia).** Cada guardado que cambia `entregado` deja un renglón ADENTRO del pedido: `eH` en cada producto
+(como `mod`/`eF`), las últimas `ENT_HIST_MAX`=8: `{v:1|0, t, q, a, d, f, k}` = puesto/sacado, cuándo, quién (`quienEdita()`: el nombre elegido en
+«¿Quién está usando el panel?» o Logística/Administración/Contabilidad; «?» si nadie eligió), el aparato (`entAparato`: Windows/iPad/iPhone/Android/
+Mac/Linux + 4 letras propias del navegador, `me_aparato`), desde dónde (`entDonde` en cada botón: ficha, Administración «Entregó», pestaña Chofer,
+Cierre de entregas con quién cierra, cambio de fecha, Deshacer; si no, la pestaña), para qué día era, y 🔑 con la contraseña.
+- Se anota al GUARDAR (`guardarDurable` y `apiSave`, `entHistAnotar`) comparando con lo último que dijo la planilla (`ENT_SRV`, de `mergePending` y
+  `aplicarSello`) y con el último renglón: dos llamadas no suman dos. Si la planilla ya tiene el valor que se manda y el cambio no salió de este
+  aparato (`ENT_PROPIO`), NO se anota: lo cambió una página sin F5 y no se le culpa a quien guarda otra cosa. Sin ninguna lectura todavía, tampoco.
+- No van filas del sistema, retiros, borradores ni ventas de tienda. `entregadoDeshacer`/`entregaRegistroBorrar` NO tocan `eH`; `deshDevolver` lo
+  saltea (Deshacer suma «sacado», no borra «puesto»); `heredarMarcas` lo pasa a todos los renglones.
+- Se ve en la ficha de Administración (debajo de los interruptores) y en la de Mis pedidos (`entHistHtml`: «🧾 Quién tocó «Entregado» (N) · último…»,
+  desplegable); si el último renglón no coincide con el ✅ de ahora, avisa que lo cambió un aparato sin actualizar.
+- Batería: 350 suites, seis rojas por carga que pasan solas, y `test_temas_mejoras` §5 (busca `sonidoPanel('ding')` en la línea siguiente a `function
+  cierreEntMarcar`): el `entDonde` del cierre va en la misma línea de la función.
+- En Playwright apagado salvo `ENT_HIST_PRUEBA`. `tests/test_entregado_quien.js` (14). ⚠️ Un camino NUEVO que cambie `entregado` llama a
+  `entDonde('…')` antes (si no, dice la pestaña) y guarda por `guardarDurable`/`apiSave` (si no, no queda anotado).
+
+### §4pk — 📊 EL EXCEL DEL CUADRE EN DOS HOJAS: LA COLUMNA MONTO YA SE PUEDE SUMAR (10/11; dueño: *«si arregla lo del excel»* → *«publicas»*; PUBLICADO 10/11 ~13:10 de Bolivia, versión 2026-11-10-f, `main` = `261f139`; batería 357 suites, 0 mal — seis rojas por carga pasaron solas)
 
 Era el pendiente de §4fj→§4fw («`SUMA(columna MONTO)` del Excel del Cuadre duplica»). El Excel del Cuadre era UNA hoja: los pagos y,
 debajo, el «CIERRE POR FORMA DE PAGO» con su monto en la MISMA columna H (y desde el 07/11 también «DE LO RETIRADO, ERA DE ANTES» del

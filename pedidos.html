@@ -3566,6 +3566,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .mis-ico .mi{ font-size:1.05rem; line-height:1.5; text-align:center; }
 .mis-ico .cho-row{ margin:2px 0; min-width:0; overflow-wrap:anywhere; }
 .mis-sello{ position:absolute; right:14px; top:54px; border:3px solid var(--green); color:var(--green); font-weight:900; letter-spacing:.12em; padding:2px 9px; border-radius:6px; transform:rotate(-12deg); background:rgba(255,255,255,.85); pointer-events:none; font-size:.86rem; }
+.ent-hist{ margin-top:8px; font-size:.78rem; color:var(--muted); background:var(--gray-lt,#f3f5f7); border-radius:8px; padding:5px 9px; }
+.ent-hist summary{ cursor:pointer; font-weight:600; color:#3d4a57; }
+.ent-hist ul{ margin:6px 0 2px; padding-left:16px; display:grid; gap:3px; }
+.ent-hist-n{ margin-top:4px; color:#8a5a00; }
 .mis-sello.golpe{ animation:misGolpe .5s cubic-bezier(.2,1.6,.4,1) both; }
 @keyframes misGolpe{ from{ transform:rotate(-12deg) scale(2.3); opacity:0; } to{ transform:rotate(-12deg) scale(1); opacity:1; } }
 .cho-links .cho-link.ico{ flex:1 1 40%; justify-content:center; white-space:nowrap; font-size:.84rem; padding:10px 8px; }
@@ -6652,7 +6656,8 @@ function errorCopiaDurable(){
   return { ok:false, local:false, error:'almacenamiento' };
 }
 function guardarDurable(rec, opts){
-  delete NO_ENCOLAR[rec.id];                  // un nuevo intento explícito, no el rechazo anterior
+  delete NO_ENCOLAR[rec.id];
+  try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
   if(esFilaRetiro(rec) && !(Number(rec.rev)>0)){
@@ -7457,6 +7462,7 @@ var BORRADO_AQUI={};
 function borradoAqui(id){ var t=BORRADO_AQUI[String(id)]; return !!(t && Date.now()-t<90000); }
 function apiSave(rec, opts){
   var id=rec&&rec.id;
+  try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
   if(!SAVE_EN_VUELO[id]){
@@ -7656,6 +7662,7 @@ function verificarEcoForm(srv, rec, prev){
 /* `ahora` (30/09, §4he): cuándo quedó escrito, con el reloj de Google (el servidor 2026-09-30-a lo manda en cada guardado).
    `localManda` lo compara con el `ahora` de cada lectura para saber si esa lectura ya lo tiene. */
 function aplicarSello(rec, srv, ahora){
+  try{ entSrvAnotar(srv && srv.id!=null ? srv : rec); }catch(e){}   // 🧾 (10/11) lo que quedó en la planilla
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
   var ret=null;
@@ -8972,7 +8979,9 @@ function heredarMarcas(nuevos, viejos){
   var rpf=null; (viejos||[]).some(function(x){ if(x && x.rpf){ rpf=x.rpf; return true; } return false; });
   /* 📅 (§4ok-96) …y cuántas veces se le movió la fecha (`fmov`): es del pedido, va a todos los renglones. */
   var fmov=0; (viejos||[]).forEach(function(x){ var n=Number(x && x.fmov)||0; if(n>fmov) fmov=n; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; return x; };
+  /* 🧾 (10/11) …y quién puso o sacó el «Entregado» (`eH`): corregir el pedido no lo borra. */
+  var eH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.eH) && x.eH.length){ eH=x.eH; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -9102,6 +9111,72 @@ function modDeQuienTxt(m){
   var conocido = por && por!=='?';
   if(conocido && (!q || mismoVendedor(por, q))) return '';
   return ' ('+(q?('el pedido es de '+esc(q)):'')+(conocido?'':((q?'; ':'')+'no se sabe quién lo cambió'))+')';
+}
+/* ============================================================================
+   🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11, dueño: «quiero ver quién lo puso o qué pasó» → «si armalo»)
+   El 10/11 el 11-096 (entrega el 13/11) apareció como ENTREGADO en Mis pedidos y nadie sabía quién lo había marcado: la planilla solo
+   guarda cómo está ahora. Desde acá, cada vez que un guardado cambia `entregado`, queda un renglón ADENTRO del pedido (`eH` en cada
+   producto, como `mod`/`eF`; las últimas `ENT_HIST_MAX`): v (1 puesto / 0 sacado), t (cuándo), q (`quienEdita()`: el nombre elegido en
+   «¿Quién está usando el panel?», o Logística / Administración / Contabilidad; '?' si nadie eligió), a (el aparato: Windows/iPad/… + una
+   marca de 4 letras propia de ese navegador), d (desde dónde: lo dice cada botón con `entDonde`, si no la pestaña), k (con la contraseña).
+   · Se anota al GUARDAR (`guardarDurable` y `apiSave`), comparando con lo último que dijo la planilla (`ENT_SRV`, de `mergePending` y de
+     cada guardado confirmado en `aplicarSello`) y con el último renglón: anotarlo dos veces no suma dos.
+   · Si la planilla ya tiene el mismo valor que se manda y el cambio no salió de este aparato, NO se anota: lo cambió una página sin F5
+     (que no conoce `eH`), y no se le echa la culpa a quien guarda otra cosa después.
+   · Sin lectura de la planilla todavía (el primer segundo del panel), no se sabe si cambió: no se anota.
+   · No van: filas del sistema, retiros, borradores de Kommo ni ventas de tienda (nacen entregadas).
+   · ⚠️ Deshacer el entregado (`entregadoDeshacer`, `entregaRegistroBorrar`) NO borra `eH`: es justamente lo que tiene que quedar.
+   · `heredarMarcas` lo pasa a todos los renglones (corregir el pedido no lo borra). En Playwright apagado salvo `ENT_HIST_PRUEBA` (las
+     pruebas de siempre comparan los productos tal cual). */
+var ENT_SRV={}, ENT_PROPIO={}, ENT_DONDE=null, ENT_HIST_MAX=8;
+function entHistActivo(){ return !(navigator.webdriver && !window.ENT_HIST_PRUEBA); }
+function entDonde(txt){ ENT_DONDE={ d:String(txt||''), t:Date.now() }; }
+function entVista(){
+  var v=document.querySelector('.view.active'), id=v ? String(v.id||'').replace(/^view-/,'') : '';
+  return ({ admin:'Administración', mis:'Mis pedidos', chofer:'pestaña Chofer', conta:'Contabilidad', form:'formulario del pedido', atc:'ATC', bot:'Bot' })[id]||(id||'panel');
+}
+function entAparato(){
+  var id=''; try{ id=localStorage.getItem('me_aparato')||''; if(!/^[a-z0-9]{4}$/.test(id)){ id=Math.random().toString(36).slice(2,6); localStorage.setItem('me_aparato', id); } }catch(e){}
+  var ua=String(navigator.userAgent||''), t=(/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints>1)) ? 'iPad' : /iPhone/.test(ua) ? 'iPhone' :
+    /Android/.test(ua) ? 'Android' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : /Linux|CrOS/.test(ua) ? 'Linux' : 'otro';
+  return t+(/^[a-z0-9]{4}$/.test(id)?(' · '+id):'');
+}
+function entHistDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].eH) && pr[i].eH.length) return pr[i].eH; return []; }
+function entHistNoVa(p){
+  if(!p || !p.id || typeof p!=='object') return true;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p) || esVentaTienda(p)) return true; }catch(e){ return true; }
+  return !Array.isArray(p.productos) || !p.productos.length;
+}
+/* Lo que dijo la planilla de este pedido (lectura o guardado confirmado). */
+function entSrvAnotar(x){ if(x && x.id!=null){ ENT_SRV[String(x.id)]=!!x.entregado; delete ENT_PROPIO[String(x.id)]; } }
+function entHistAnotar(rec){
+  if(!entHistActivo() || entHistNoVa(rec)) return;
+  var id=String(rec.id), cur=!!rec.entregado, H=entHistDe(rec), last=H.length?H[H.length-1]:null, known=ENT_SRV[id];
+  var base=last ? !!Number(last.v) : known;
+  if(base===undefined || base===cur) return;
+  if(known!==undefined && known===cur && !ENT_PROPIO[id]) return;   // lo cambió otra página (sin F5): no se le anota a quien guarda ahora
+  var e={ v:cur?1:0, t:Date.now(), q:quienEdita()||'?', a:entAparato(), d:(ENT_DONDE && Date.now()-ENT_DONDE.t<20000) ? ENT_DONDE.d : entVista() };
+  if(typeof UNLOCKED!=='undefined' && UNLOCKED) e.k=1;
+  if(rec.fecha) e.f=String(rec.fecha);
+  var N=H.concat([e]).slice(-ENT_HIST_MAX);
+  rec.productos.forEach(function(x){ if(x && typeof x==='object') x.eH=N.slice(); });
+  ENT_PROPIO[id]=1;
+  try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x.eH=N.slice(); }); }catch(err){}
+}
+function entTs(t){ var x=tsFmt(t); return x ? (fmtFechaCorta(x.slice(0,10))+' '+x.slice(11)) : ''; }
+function entHistLinea(e){
+  var q=String(e.q||'?');
+  return (Number(e.v) ? '✅ <b>Marcado entregado</b>' : '↩️ <b>Le sacaron el entregado</b>')+' · '+esc(entTs(e.t))+
+    ' · por <b>'+esc(q==='?'?'alguien que no eligió su nombre':q)+'</b>'+(e.k?' 🔑':'')+
+    (e.d?(' · desde '+esc(e.d)):'')+(e.a?(' · '+esc(e.a)):'')+(e.f?(' · el pedido era para el '+esc(fmtFechaCorta(e.f))):'');
+}
+function entHistHtml(p){
+  var H=entHistDe(p); if(!H.length) return '';
+  var u=H[H.length-1], raro=(!!Number(u.v))!==!!p.entregado;
+  return '<details class="ent-hist"><summary>🧾 Quién tocó «Entregado» ('+H.length+') · último: '+(Number(u.v)?'✅ ':'↩️ ')+esc(String(u.q||'?'))+' '+esc(entTs(u.t))+'</summary>'+
+    '<ul>'+H.slice().reverse().map(function(e){ return '<li>'+entHistLinea(e)+'</li>'; }).join('')+'</ul>'+
+    (raro?'<div class="ent-hist-n">⚠️ Después lo cambió un aparato con el panel sin actualizar (sin F5): ese cambio no dejó nombre.</div>':'')+
+    '</details>';
 }
 function avisoModifHtml(p, compacto, linea){
   var m=modDe(p); if(!m) return '';
@@ -20950,6 +21025,7 @@ function deshDevolver(cur, antes, despues){
   var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
   [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
   Object.keys(claves).forEach(function(k){
+    if(k==='eH') return;                                          // 🧾 (10/11) quién tocó el «Entregado»: deshacer no lo borra
     var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
     if(J(a)===J(d)) return;
     var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
@@ -20967,6 +21043,7 @@ function deshEntregaOfrecer(id, foto, ficha, pr){
     if(!q){ toast('No se pudo deshacer: el pedido ya no está en la lista.','err'); return; }
     // la marca, su registro del cierre y la ATC, como estaban — sobre la versión de ahora (§4nl, A01)
     if(!!q.entregado===despues.entregado) q.entregado=foto.entregado;
+    entDonde('↩️ Deshacer');
     (q.productos||[]).forEach(function(x, i){ var a=foto.productos[i], d=despues.productos[i]; if(x && a && d && prodClave(x)===prodClave(d)) deshDevolver(x, a, d); });
     persistPedido(q);
     if(ficha && document.getElementById('modal').classList.contains('on')) reabrirFicha(id);
@@ -22707,6 +22784,7 @@ function mergePending(serverList){
   serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
+  try{ serverList.forEach(function(p){ if(p) entSrvAnotar(p); }); }catch(e){}   // 🧾 (10/11) lo que dice la planilla del «Entregado» (`entHistAnotar`)
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
      deshace la marca: lo toca de nuevo y ese segundo guardado revierte en el servidor. Es
@@ -25558,7 +25636,7 @@ function entregadoSeMueve(p, f, desde){
   return !!(p && p.entregado && !esATC(p.oc) && !esVentaTienda(p) && /^\d{4}-\d{2}-\d{2}$/.test(f) && f!==String(d||'') && f>=todayStr());
 }
 function entregaRegistroBorrar(p){ ((p && p.productos)||[]).forEach(function(x){ if(x){ delete x.eF; delete x.eT; delete x.eQ; } }); }
-function entregadoDeshacer(p){ if(!p) return; p.entregado=false; entregaRegistroBorrar(p); }
+function entregadoDeshacer(p){ if(!p) return; if(p.entregado) entDonde('📅 cambio de fecha (Reprogramar o Editar)'); p.entregado=false; entregaRegistroBorrar(p); }
 function entregadoMueveTxt(p, f){
   var c=cierreEntDe(p);
   return '✅ Este pedido figura ENTREGADO'+(c&&c.q?(' (lo confirmó '+c.q+')'):'')+'.\n\n'+
@@ -30569,7 +30647,7 @@ function choEntregado(id){
      `rechazoFirme` ya puso en STATE). La plata NO se reintenta así: ahí el otro pudo haber
      registrado ese mismo pago. */
   var marcar=function(q, intento){
-    q.entregado=quiere; atcAlMarcarEntregado(q); if(!quiere) entregaRegistroBorrar(q); else entregaAdelantadaAnotar(q);   // (16/10, §4lo; §4lr U12)
+    entDonde('pestaña Chofer'); q.entregado=quiere; atcAlMarcarEntregado(q); if(!quiere) entregaRegistroBorrar(q); else entregaAdelantadaAnotar(q);   // (16/10, §4lo; §4lr U12)
     return persistPedido(q).then(function(r){
       if(intento>0 || !(r && r.error==='conflicto')) return r;
       var s=findById(id); if(!s) return r;
@@ -31386,7 +31464,7 @@ function showMisModal(id){
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
+    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -32904,7 +32982,7 @@ function copiarBusca(){
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
 function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr);   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
+function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); entDonde('Administración (botón Entregó)'); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr);   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
   rptFaltaAlEntregar(p, false); }   // 🏪 (30/10, propuesta 83) una RPT con ✗ o 🏭 sin llegar: ¿armamos la de lo que faltó?
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
@@ -45739,7 +45817,7 @@ function showPedidoModal(id){
       (ret ? '<div class="fl-ret-nota">Lo retira el cliente: no hace falta camión. Si igual lo llevan, elegilo acá.</div>' : '')+
       '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
       '<div class="fl-sws">'+fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
-      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+'</div>'+
+      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+'</div>'+entHistHtml(p)+
       '<div class="fl-sub">📷 Fotos de la entrega</div>'+fotosHtml(p, true)+
       '<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>'+
     '</div>';
@@ -45877,6 +45955,7 @@ function setEstado(id,val){
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
   var foto=deshFotoEntrega(p);                  // ↩️ (§4ni, 7) para «Deshacer»
+  entDonde('ficha (botón Entregado)');
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   if(!p.entregado) entregaRegistroBorrar(p);   // ✅ (16/10, §4lo) destildado: sin el registro del cierre (su `eF` manda en el stock)
   else entregaAdelantadaAnotar(p);              // ✅ (16/10, §4lr U12) entregado antes de su día: salió HOY
@@ -46343,7 +46422,7 @@ function cierreEntDia(id, v){
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
    que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
-function cierreEntMarcar(p, quien, dia, ts){
+function cierreEntMarcar(p, quien, dia, ts){ entDonde('✅ Cierre de entregas'+(quien?(' (cierra '+quien+')'):''));   // 🧾 (10/11) quién tocó el «Entregado»
   p.entregado=true; atcAlMarcarEntregado(p); if(typeof sonidoPanel==='function') sonidoPanel('ding');   // 🔔 (§4ni) una vez aunque sean muchos
   (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
 }
@@ -53330,7 +53409,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-10-f';
+var PANEL_V='2026-11-10-g';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
