@@ -17357,7 +17357,126 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; en la rama, ESPERA que el dueño lo implemente)
+### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; **PUBLICADO 10/11 con las 14 mejoras 144-157, versión 2026-11-10-b, `SHA_PUB`**; el `.gs` no cambia)
+- **Qué se veía mal** (mirando la escena cuadro por cuadro): la gente cambiaba de postura y giraba DE GOLPE, arrancaba y frenaba en seco con las
+  piernas patinando (el paso iba por el reloj, no por lo avanzado), los colchones aparecían de la nada sobre el pallet, la carga del camión bajaba
+  flotando y la cámara, la primera vez, salía desde adentro del piso (0,0,0).
+- **Qué cambió** (solo dibujo; nada lee ni escribe pedidos):
+  · `depVidaPoseDe(P, modo, t)` da la postura a la que hay que llegar y `depVidaAnimar` va hacia ella de a poco (cada persona guarda `P.pose`);
+    parados respiran, caminando se inclinan apenas (`lean`) y suben y bajan (`bob`), y **parpadean** (`P.ojos`, `P.ojoT`).
+  · `depVidaMover(Q, dt)`: la velocidad sube hasta `Q.vel` y baja cuando falta poco para el FINAL del camino (no en cada esquina); `Q.v`, `Q.ac`;
+    el paso de las piernas sale de lo avanzado (`P.fase += distancia × 4,1`). Sigue llegando JUSTO al punto y dejando `path=null`.
+  · `depVidaGira(Q, a)` / `depMirarA`: girar parado deja el ángulo en `Q.yawT` y `depVidaPaso` lo va llevando. ⚠️ Un giro NUEVO de alguien de
+    `VIDA.q` va con `depVidaGira`, no con `rotation.y=` a mano. `Q.fijo` (el montacargas de Ernesto, que gira con `depGirar`) y «reducir
+    movimiento» giran de una.
+  · El perro gira de a poco, trota con un saltito y, si Eduardo se queda quieto 2,5 s, **se sienta** (`D.sienta`); mueve la cola más rápido
+    cuando Eduardo habla.
+  · `depFabCabeceo(Q, dt, ad)`: el montacargas de Ernesto y el segundo levantan la trompa al arrancar y la bajan al frenar (2-3 grados, de `Q.ac`).
+  · `depFabCaer(m)`: el colchón que sale de la línea CAE sobre el pallet y se aplasta un instante. `depRebote` (se pasa un pelo y vuelve) y
+    `depCae` (acelera) son dos formas nuevas para `depTween`.
+  · Montacargas de adelante: llegan frenando con la trompa abajo, la horquilla sube con `depRebote` y la carga queda meciéndose (`mo.arriba`). La
+    carga de los camiones cae con su peso, rebota y el camión se hunde un pelo.
+  · `depVerTodo`: la PRIMERA vez (`W.entro`) la cámara llega bajando desde arriba y de costado en 2,6 s.
+- **🧍 Segunda vuelta, misma noche** (dueño: *«Por ahí me dijeron que podías hacerlas más realistas»*): el cuerpo con ARTICULACIONES. `depPersona`
+  arma rodillas (`P.ri`/`P.rd`), codos (`P.mi`/`P.md` = el antebrazo con la mano) y tronco (`P.tr`: torso, brazos y cabeza), con piezas
+  redondeadas (`depPaquete`); la pantorrilla con el zapato y el antebrazo con la mano son UNA malla de dos colores (`depUnir` + `depMatColores`):
+  mismos dibujos por cuadro que antes (la prueba pide < 900). Posturas nuevas en `depVidaPoseDe`: `ki/kd` (la pierna que viene hacia adelante se
+  dobla, la que apoya va derecha), `ei/ed`, `ty` (el tronco gira contra las piernas) y `taz` (la taza va derecha y se inclina al tomar: antes
+  quedaba boca abajo con el brazo estirado hacia arriba). ⚠️ Lo que se lleva en la MANO va en `P.mi`/`P.md` con la altura contada desde el codo
+  (celular, taza, tabla del inspector, escoba), no en `P.bi`/`P.bd`. Los personajes de la ciudad (`patio.js`) son otros: no cambiaron.
+- **🎬 MUESTRAS 144-157** (misma noche; dueño: *«Me encanta, ¿qué otras mejoras pondrías a la fábrica, al escenario, a lo visual y demás?»* → lista de
+  14 → *«Muéstrame todo como quedaría»*). Armadas DE VERDAD en un archivo aparte, **`fabrica-mas.js`** (`window.fabMas`), que se baja SOLO si el
+  aparato lo pidió (`fabMasQuiere()`: `localStorage me_fab_mas`=1 o «#fabmas»; `fabMasCargar` antes de `depConstruir`; `FABMAS_V`). Sin eso, nada
+  cambia: las pruebas de siempre corren con las muestras apagadas. Página para el dueño: https://claude.ai/artifact/8sbW1EvL1umborAuLXLuC7
+  (capturas + 2 clips, pedidos inventados). **Espera que diga qué números quiere.**
+  · Cada idea se prende sola en `fabMas.on`: `carga` 144 (el montacargas lleva al camión lo tildado: compara `c.pgs` con la vuelta anterior,
+    `M.llevar`), `camiones` 145 (con `camionSalio` el camión sale por el portón y vuelve: `camionSale`/`camionVuelve`, mira cada 2 s), `stock` 146
+    (las pilas del centro = `stockData()`: los que más rotan con `deposito`>0, alto = unidades/2; `depFabStock` pregunta `fabMas.stockDatos()`),
+    `torre` 147, `luz` 148 (`LUZ` por momento del día con `horaBolivia`; de noche 6 `PointLight` sin sombra + el sereno; `fabMas.hora` para
+    probar), `piso` 149, `linea` 150 (viruta de la sierra, bolsa del embolsado, dos operarios con un colchón), `afuera` 151 (`afueraTex` detrás
+    de cada portón + cortina), `caras` 152 (boca, cejas, miran al que habla), `situ` 153 (gato y perro, bocina de Ernesto, bandeja de Isabel),
+    `paseo` 154 (botones «▶ Recorrer» y «🧔 Seguir a Eduardo»), `tele` 155, `sonido` 156 (WebAudio, apagado de entrada, lo calla `me_asis_mudo`),
+    `festejo` 157 (pose `festeja` en `depVidaPoseDe`).
+  · Ganchos en pedidos.html (no hacen nada sin el archivo): `fabMas.armar(ctx)` al final de `depConstruir` (`vc` lleva `t` y `pgs`),
+    `fabMas.paso(t, dt)` al final de `depVidaPaso`, `fabMas.salir()` en `depMudar` y `cv3dConstruir` (⚠️ la luz se devuelve: el dibujante es
+    compartido), `D.sigue` en el perro, `F.stockPos`.
+  · Medido con todo prendido: 884 dibujos por cuadro con montacargas cargando y 987 con el piso libre (sin las muestras, ~853).
+  · (Lo que faltaba para publicarlas quedó hecho abajo, en «LAS 14, PUBLICADAS».)
+- **🚀 LAS 14, PUBLICADAS** (10/11; dueño, con la página de muestras: *«Me gusta hazlo y piblica»*). Van las 14 (144-157), prendidas para todos:
+  · **`fabMasQuiere()` = siempre**, salvo `localStorage me_fab_mas`=`0` en ese aparato (el apagado de emergencia) y Playwright sin
+    `window.FAB_MAS_PRUEBA` (las pruebas de siempre siguen viendo la fábrica de antes). `fabMasCargar` espera el archivo como mucho 6 s: si no
+    baja, la fábrica sale sin las mejoras y entran en el próximo armado. `FABMAS_V='20261110b'`.
+  · **146 arreglada**: `stockData()` devuelve `{lista}` (la muestra leía un arreglo y con datos reales no habría dibujado nada). Ahora sale de
+    `saldoDatos().d.lista` (la cuenta del cuadrito, con su caché): lo que hay en PTF (`o.deposito`, ya sin lo que salió), solo colchones y
+    somieres (`pryTipoProd`), Heaven y lo de Moreno a la izquierda y Sueña a la derecha (`stockMarcaDeNombre`), lo que más rota primero; con
+    la fábrica ancha la columna de afuera es de somieres. `fabMas.stockDatos(cols.length)` desde `depFabStock`; un lugar sin producto = pallet
+    vacío; sin Excel → `null` y quedan de adorno. ⚠️ Las pilas del centro solo existen con el piso LIBRE (sin montacargas cargando), como antes.
+  · **145 arreglada**: «afuera» = `camionSalio(hoy, v)` Y el GPS no lo vio volver del todo (`gpsVolvioDelTodo(gpsDiaDe(v))`; antes, una vez
+    salido no volvía nunca porque la marca queda todo el día). Al irse, el camión queda escondido EN su andén y su cartel pasa a «🛣️ … salió a
+    las HH:MM · en camino» (`cartel`); al volver, el de siempre. Función solo si pasó mirando: al armar con `M.antes.sal` de hace < 15 s, o en
+    la mirada de cada 2 s; si la fábrica estuvo escondida (> 20 s sin mirar) se pone al día sin animación.
+  · **144 y 157**: valen contra la MISMA vista de hace menos de 15 min (`S.mismo`: período + día + clientes); cambiar de período no es cargar.
+    Como mucho 3 montacargas llevando a la vez (`S.llevando`); a un camión que está afuera no se le lleva nada.
+  · **148**: el momento del día se mira cada 20 s y, si cambió, la escena se rearma (`depConstruir`). En el celular (`S.chico`: caja < 700 px,
+    o táctil < 1000) de noche van 2 luces de verdad en vez de 7 (cada `PointLight` le cuesta a todos los materiales).
+  · **156**: el sonido se suspende solo cuando la fábrica no se ve (otra pestaña del panel, ventana escondida, la ciudad, el 🔇 de Bloki) y
+    vuelve al volver (mira cada 0,7 s). Con el 🔇 puesto, tocar el botón avisa y no arranca. Sigue apagado de entrada.
+  · **155**: «Mis clientes del mes» por `ventaMes(p)` y sin ATC ni RPT. `S.tele` guarda lo que pintó (para la prueba).
+  · **«Reducir movimiento»**: `armar` da UNA pasada (`M.paso(0,0)`) para que cada cosa quede en su lugar (el colchón entre los dos operarios
+    quedaba tirado en el medio); sin «Recorrer» ni «Seguir». «↺ Ver todo» suelta a Eduardo. En el celular los botones van solo con el ícono.
+  · `M.paso`: cada mejora va en su `try`; la que falla se saca sola (no rompe a las demás ni repite el error en cada cuadro).
+  · **Prueba nueva `tests/test_fabrica_mas.js`** (44 con `PATIO_THREE`; 5 sin): con `FAB_MAS_PRUEBA`, el tilde DE VERDAD de la Lista de carga
+    (`setCargaChk`) dispara el montacargas y el festejo, y «🚚 Ya salió» de verdad (`camionSalioMarcar`) saca el camión y lo trae al deshacer;
+    el stock con un `STOCK` armado; la luz por hora (`fabMas.hora`), el cambio de momento, la salida (`fabMas.salir` devuelve la luz), el
+    sonido que se suspende, «reducir movimiento» y el celular. ⚠️ El archivo no puede nombrar nada que escriba (`apiSave`, `setCargaChk`,
+    `camionSalioMarcar`…): la prueba lo mira. Dibujos por cuadro medidos en la prueba: ~700 (pide < 1.250).
+  · ⚠️ **El sonido no se pudo escuchar acá** (el contenedor no tiene parlantes): se probó que arranca, se suspende y se apaga; cómo suena lo
+    tiene que decir el dueño. Y el celular se miró en una ventana de 390 px con dibujo por software, no en un teléfono.
+  · Va con esta publicación lo que estaba en la rama sin publicar: «Mayor y saldos» en el celular (`6340f07`, la cuenta con su detalle en dos
+    columnas) y Tienda Amiga en `herramientas/pedidos_correo/LEEME.md`.
+- ⚠️ `g.rotation.order='YXZ'` en personas, perro y montacargas: la inclinación (x) va en el eje propio, mire para donde mire. Con «reducir
+  movimiento» todo va de una (sin entrada de cámara). Los camiones 3D de Administración (`cv3dConstruir`) NO cambiaron.
+- **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 54 con `PATIO_THREE`).
+  `test_mis_deposito` (27) y `test_camiones_3d` (28) sin cambios.
+- **Para el dueño**: clip de antes y después (dos escenas, grabadas cuadro por cuadro con un reloj propio: el contenedor dibuja a ~4 cuadros
+  por segundo y `page.clock` de Playwright no mueve `requestAnimationFrame` después de pausar).
+
+### §4pf — 📒💵 «MAYOR Y SALDOS» DEL EFECTIVO EN EL CUADRE (09/11; Contabilidad, por el dueño: *«contabilidad me preguntó cuánto efectivo pendiente de retiro tenían por ejemplo Juan Pablo el 2 de noviembre, cuándo el 5 y cuándo el 8… creo que no tenemos una forma o historial de ver eso»* → se le calculó a mano y se le propuso «Efectivo a una fecha» → *«si hazlo»* → *«En contabilidad se llama Mayor y saldos, eso andan pidiendo, dame modelos pruebas y demás»* → *«Publica, pero antes que analice Fable esto y vea si no hay errores»* (y *«Usa Fable 5.2»*); PUBLICADO 10/11 ~20:55 de Bolivia, versión 2026-11-09-d, `main` = `8ae2aa2`; el `.gs` no cambia)
+- **Qué es**: Contabilidad → 🧮 Cuadre → caja «💵 Efectivo cobrado vs. retirado» → botón **«📒 Mayor y saldos»** (`#efd-btn`, `abrirEfectivoFecha`). Cada persona que
+  tiene plata es una **cuenta de caja**: DEBE = lo que cobró en efectivo, HABER = lo que se le retiró, SALDO = lo que tiene.
+  · **⚖️ Saldos** al cierre de un día (◀ ▶, «Hoy», «Fin de <mes anterior>»; entre `EFE_EMPAREJA` y hoy): por cuenta, saldo al terminar el mes anterior +
+    debe − haber del mes hasta ese día = saldo; «De qué es» (cuánto es del mes y cuánto de antes) y cuándo se recogió lo del mes (o «⏳ hoy todavía falta»).
+  · **📒 Mayor** de una cuenta o de todas, «Desde» (1° del mes) «Hasta el» (el día elegido): saldo anterior, cada cobro (abre la venta, «← Volver al mayor y
+    saldos»), cada retiro (qué tapó: «↩️ de antes», «⚠️ no tapa ningún cobro»), sumas y saldo; abajo, los cobros del mes sin recoger a esa fecha.
+  · 📋 Copiar (lo que se ve) y ⬇️ Excel `mayor-y-saldos-al-<día>.xlsx` (hojas «Saldos al dd-mm», «Mayor» con todas las cuentas, «Sin recoger»).
+- **La cuenta** (`mysMovs`, `mysSaldos`): la MISMA del Cuadre (`efePareo`). Dos asientos que no son un papel: **«Saldo de antes del 01/10»** (el `sobra` de
+  los retiros de octubre: plata cobrada antes de que el panel emparejara, así ninguna cuenta arranca negativa) y **«🔒 Cierre de octubre»** (lo de un mes
+  cerrado que NINGÚN retiro tapó, con la fecha de su día de gracia, el 03/11; antes de ese día esa plata está en el saldo: la persona la tenía). Con eso,
+  saldo de cada día = lo sin recoger del Cuadre + lo de antes que un retiro tapa más tarde. Un retiro de noviembre en adelante que no tapa nada baja el
+  saldo y lo dice. Lo «sin recoger / cuándo se recogió» sale de cortar el emparejamiento en los retiros de hasta ese día (`efdDatos`: `c.de` con `x.f<=D`).
+  ⚠️ El panel no guarda cuándo se ANOTÓ cada cobro: uno cargado después con una fecha vieja cuenta en su fecha. Si hace falta «lo que decía el panel ese
+  día» tal cual, hay que guardar una foto diaria (como `__pry_hist__`); hoy no.
+- Con la planilla real (09/11): ninguna cuenta queda en negativo nunca; hoy el saldo de cada cuenta = «Le queda en la mano» del Cuadre (Fabián 10.602,
+  Fernando 5.455, Mauricio 4.160, Juan Pablo 1.580; total 21.797). Juan Pablo: saldo al 31/10 21.730; el 03/11 cobra 2.390, retira 9.150 y el cierre de
+  octubre se lleva 11.590 → 3.380; el 05/11 6.480 (5.490 de noviembre + 990 de octubre que un retiro tapó el 06/11); el 06/11 0; el 07/11 1.580.
+  ⚠️ En el chat le dije al dueño «Bs 103.699» sin recoger al 01/11 sumando a mano; la cuenta da **99.699**.
+- Pruebas: `tests/test_efectivo_fecha.js` (36; los datos de `test_efe_pareo`, reloj el 09/11 19:00).
+- Batería (09/11, `2cf28f5`): 354 suites, 11.167 bien; 2 rojas por la máquina cargada (`test_actualizar_espera` 11/3 y `test_teclado_320`
+  14/1): solas, 14/0 y 15/0. Página para el dueño con capturas (clientes inventados) y pruebas: https://claude.ai/artifact/1RKmnxVzoPJpHhYePdV1Bv
+
+- **Revisión de Fable 5.2 antes de publicar (10/11)**: con la planilla real los números daban bien (hoy = Cuadre, ningún negativo). Nueve detalles,
+  todos arreglados en `dbdbb02`: (1) la hoja «Sin recoger» listaba lo de octubre que el cierre ya se había llevado (52 filas, Bs 81.449 de más) → ahora
+  cada cobro lleva `saldo` (lo que sigue en la cuenta al cierre de D) y la hoja suma lo sin recoger (10 filas, Bs 21.797); (2) el Mayor con «Desde» en
+  octubre perdía 3 cuentas → `mysCuentas`; (3) un retiro que no tapa nada achicaba el total → `tot.pos` y aviso aparte; (4) el saldo de antes era debe
+  de octubre → asiento el 30/09; (5) cobro tildado posterior al retiro → aviso en el Mayor; (6) nombre en minúsculas de una vendedora sin movimientos →
+  `EFD.nom`; (7) la ventana recordaba vista/día/«Desde» → el botón la abre de nuevo; (8) celular: sin «Saldo al ayer» ni «De qué es» (va bajo el nombre),
+  la tabla entra en 324 px; (9) la lista de una cuenta trae también lo de antes que tapó un retiro posterior (JP al 05/11: los 990 de octubre), con
+  «¿Cuándo se recogió?» (✅ / 🔒 cierre / ⏳) y el total = saldo. Además, «hoy todavía falta» de un mes ya cerrado ahora dice el cierre.
+  Pruebas: `test_efectivo_fecha` 47/0 (10a-10i nuevas); `test_efe_pareo`, `test_efe_regla`, `test_version_nueva`, `test_cuadre_alta`,
+  `test_chofer_efectivo`, `test_efectivo_tu_dia`, `test_recibio_obligatorio`, `test_conta_alta`, `test_por_cobrar`: 0 rojas. Con la planilla real, todos
+  los días del 01/10 al 10/11: 0 negativos, la lista suma el saldo, debe/haber cuadran y hoy = Cuadre.
+
+### §4pe — 👥 SERVIDOR `2026-11-09-a`: LO QUE ESCRIBE UN NÚMERO DEL EQUIPO NO ES UN CLIENTE (09/11; dueño, con la captura de la pestaña Bot: *«que mensaje llega a los vendedores en las mñanas ?»* → se le explicó y se le propuso → *«si hazlo»*; el dueño lo IMPLEMENTÓ el 09/11 (contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; la tarjeta de Isabel ya no sale) y dijo «publica»: página 2026-11-09-c PUBLICADA 09/11 ~15:56 de Bolivia, `main` = `eb21cdf`)
 - **El caso**: el «☀️ Buen día» de las 08:30 (`vendedora_buen_dia`) le llegó a Isabel y su WhatsApp Business contestó solo a las 08:34 con su
   saludo («Gracias por comunicarte a colchones HEAVEN MIA PLAZA. Mi nombre es ISABEL…»). El bot no sabía que ese número era del equipo: fila
   «💬 Respondió» → tarjeta «No sé de qué pedido es» en la pestaña Bot y, como Claude ya salteaba a logística y vendedoras (`iaEsEquipo_`), le

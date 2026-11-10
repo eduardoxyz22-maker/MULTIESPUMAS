@@ -803,7 +803,23 @@ café, choferes, perro, pizarra y reloj, adornos del tema; adelante la línea de
 acolchadora, el producto terminado (Heaven/Sueña), un segundo montacargas, inspector y limpieza; el galpón con ventanales y estanterías llenas.
 Eduardo SIN panza ni bigote (dueño, 01/11). **Yerson** en costura acullica coca (el cachete es el BOLO, nunca enfermedad; ojos grandes; habla de coca despalada, bolo, bico). Solo dibujo.
 ⚠️ `depFundir` junta lo fijo, también en `depAmbiente` (lo comparten los camiones 3D de Administración): algo que se mueva o se toque no va ahí.
-⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (42 con `PATIO_THREE`).
+⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (54 con `PATIO_THREE`).
+🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; PUBLICADO 10/11, versión 2026-11-10-b, `SHA_PUB`): las posturas se mezclan
+(`depVidaPoseDe` → `depVidaAnimar`), se camina arrancando y frenando (`depVidaMover`: `Q.v`, `Q.ac`, `P.fase`), los giros de parado van de a poco
+(⚠️ un giro NUEVO de alguien de `VIDA.q` va con `depVidaGira`/`depMirarA`, nunca `rotation.y=` a mano), el perro se sienta, el montacargas cabecea
+(`depFabCabeceo`), el colchón y la carga caen (`depFabCaer`, `depCae`, `depRebote`) y la cámara entra bajando la primera vez (`W.entro`). Con
+«reducir movimiento», todo de una. `cv3dConstruir` no cambió. 🧍 Los personajes tienen rodillas (`P.ri/rd`), codos (`P.mi/md`) y tronco
+(`P.tr`); ⚠️ lo que se lleva en la MANO va en `P.mi`/`P.md` (altura desde el codo), y dos colores en una pieza = `depUnir` (no sumar dibujos por cuadro).
+🎬 **Las 14 mejoras 144-157** (§4pg, 10/11, dueño con las muestras: *«Me gusta hazlo y piblica»*; PUBLICADAS con lo de arriba): viven en
+**`fabrica-mas.js`** (`window.fabMas`, cada una en `fabMas.on`), que se baja al abrir la fábrica 3D (`fabMasCargar`, 6 s de tope; `fabMasQuiere()`:
+siempre salvo `me_fab_mas`=0 en ese aparato; en Playwright solo con `FAB_MAS_PRUEBA`). 144 el montacargas lleva al camión lo recién tildado · 145 el
+camión sale por el portón con «Ya salió»/GPS y vuelve (`afueraDe` = `camionSalio` sin `gpsVolvioDelTodo`) · 146 las pilas = stock de PTF
+(`saldoDatos().d.lista`, solo con el piso libre) · 147 torre de luz · 148 la luz por la hora de Bolivia (noche: lámparas y sereno) · 149 piso ·
+150 viruta, bolsa y dos operarios · 151 afuera del portón · 152 bocas y cejas · 153 gato, bocina, bandeja · 154 «Recorrer» y «Seguir a Eduardo» ·
+155 la pantalla (próximo camión y clientes del mes) · 156 sonido (apagado de entrada; se calla al esconderse y con el 🔇 de Bloki) · 157 festejo.
+Ganchos: `fabMas.armar/paso/salir` (⚠️ `salir` devuelve la luz: el dibujante es compartido). SOLO DIBUJO: ⚠️ el archivo no puede nombrar nada que
+escriba (`tests/test_fabrica_mas.js` lo mira; 44 con `PATIO_THREE`). ⚠️ Al cambiarlo: subir `FABMAS_V` y `node --check fabrica-mas.js`. 144 y 157
+valen solo contra la misma vista de hace < 15 min (`S.mismo`); una mejora nueva que se mueva va en `S.cada` (con «reducir movimiento» corre UNA vez).
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
@@ -1472,8 +1488,8 @@ confirmación, cambio de día y recordatorio (17:00 los de la mañana y sin turn
   (`waPregQuien_` en `waHookAnotar_`, después de «productos»): el menú sin IA (`waPregQue_`) o Claude con esos mismos números (`waPregContexto_`,
   tope `WA_PREG_TOPE_DIA`); el efectivo, solo al PRIMERO de WA_DUENO (ni la palabra ni el contexto de Claude para el jefe). ⚠️ Una palabra nueva
   del menú va en `waPregQue_`, `waPregMenu_` y `waPregTexto_`. `tests/test_wa_13_25_26.js` (88).
-- **👥 `.gs` `2026-11-09-a`: lo que escribe un número del EQUIPO no es un cliente** (§4pe, 09/11; dueño: «si hazlo»; en la rama, ESPERA que el dueño
-  lo implemente; después se publica la página con `SCRIPT_VERSION_ESPERADA` 09-a): el saludo automático del WhatsApp Business de Isabel contestó el
+- **👥 `.gs` `2026-11-09-a`: lo que escribe un número del EQUIPO no es un cliente** (§4pe, 09/11; dueño: «si hazlo»; IMPLEMENTADO 09/11 por el dueño,
+  contesta `2026-11-09-a`, enlace fijo `fba6325…`, 8.087 líneas; página 2026-11-09-c PUBLICADA `eb21cdf`): el saludo automático del WhatsApp Business de Isabel contestó el
   «Buen día» y el bot lo tomó por un cliente (tarjeta «No sé de qué pedido es» + la respuesta automática de vuelta). `waEquipoCels_`/`waEquipoQuien_`
   = WA_VENDEDORAS, WA_LOGISTICA, WA_PEDIR_HOY, WA_AVISOS, WA_CONTABILIDAD y WA_DUENO, SIN WA_PRUEBA: después de «recibí», «productos» y las preguntas
   del dueño, fila «👥 Del equipo» y nada más (ni tarjeta, ni Claude, ni la automática, ni ubicación); `waRespuestasLeer_` los saltea también en las filas
@@ -1654,6 +1670,15 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**📒💵 «Mayor y saldos» del efectivo** (§4pf, 09/11, Contabilidad por el dueño: *«cuánto efectivo pendiente de retiro tenía Juan Pablo el 2, el 5 y el 8 de
+noviembre…»* → *«En contabilidad se llama Mayor y saldos»* → *«Publica, pero antes que analice Fable»*; revisado por Fable 5.2 y PUBLICADO 10/11, versión 2026-11-09-d, `8ae2aa2`):
+botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`; desde el botón abre de nuevo en hoy y Saldos).
+Cada persona es una cuenta de caja (debe = cobró, haber = retiros, saldo): ⚖️ Saldos al cierre de cualquier día y 📒 Mayor de una cuenta o de todas, Copiar
+y Excel. `mysMovs` = `efePareo` + «Saldo de antes del 01/10» (`sobra` de los retiros de octubre) + «🔒 Cierre de <mes>» (lo de un mes cerrado que ningún
+retiro tapó, el día de gracia): nunca negativo y hoy = el Cuadre. El saldo de antes va el 30/09 (saldo anterior, no debe de octubre). Lo sin recoger de una
+cuenta (pantalla y hoja «Sin recoger») = `x.saldo` de `efdDatos` + `mysExtras` (antes del 01/10 − retirado de más): SUMA su saldo. Un retiro que no tapa
+nada deja la cuenta en negativo y va APARTE del total (`tot.pos`/`tot.neg`). El Mayor lista las cuentas con `mysCuentas(D, desde)`. ⚠️ Si cambia la regla
+del efectivo, esto cambia solo; si el emparejamiento deja de ir en orden de fecha, ya no vale cortarlo por fecha. `tests/test_efectivo_fecha.js` (47).
 **💵✅ «Ya lo recibí»: Contabilidad anota por WhatsApp la plata de un chofer** (§4oz, 08/11, dueño: *«Si así está bien / No, sólo para contabilidad»*; va en el
 `.gs` 07-f, IMPLEMENTADO 09/11): el efectivo de los choferes a Contabilidad sale con `efectivo_del_dia_boton` (botón «Ya lo recibí», `WA_ER_BOTON`; sin aprobar,
 `efectivo_del_dia` sin botón). Tocarlo o escribir «recibí» → «¿De quién?» (`waErPend_` = lo sin recoger del mensaje; botones ≤ 2, lista ≥ 3) → el bot
@@ -2777,6 +2802,10 @@ precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06
 sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
+🛒 **Tienda Amiga** (09/11; dueño: *«cuando lleguen a mi correo mensajes de Denisse… con pedidos recuerda cárgalos»*): la rutina busca también
+`from:denisse.navarro@tiendaamiga.com.bo` (PDF «OC_Marketplace_N», cliente `TIENDA AMIGA ER S.A.`, Almacenes Ferrotodo Bodega 14, el día hábil
+siguiente AM; ⚠️ el PDF trae dos precios encimados: vale el MENOR; sus `COLT00N` no son los nuestros: tabla en LEEME.md). ⚠️ El 09/11 esos
+correos NO llegaban al Gmail conectado (mithoseg@gmail.com): el dueño tiene que reenviarlos ahí o subir los PDF al chat. Cargados 11-104/105/106.
 📥 **Cada pedido que carga, un WhatsApp al dueño para subirlo al TR4** (§4oy, 08/11; dueño: *«un mensaje únicamente a mí con los datos del pedido…
 y recordarme de que lo debo subir al TR4»*; `.gs` 07-f IMPLEMENTADO 09/11): `cargar_pedidos.py` guarda con `tr4:1` → solo un pedido NUEVO → plantilla
 `pedido_correo_tr4` al PRIMERO de WA_DUENO (`cfg.duenoEfe`, el jefe no), con N° del panel y del día, cliente, su número (nota u «OP-…»), productos
