@@ -11,6 +11,8 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
    - `from:jcarlosarce78@gmail.com` (Juan Carlos Arce → José Carlos Copacaba, asunto «PEDIDO ARCE-JOSE CARLOS COPACABA…», y Luis Franco,
      «PEDIDO ARCE-LUIS FRANCO-VILLAMONTES»: ver abajo)
    - `from:yrojas@gruporoda.com` y `from:csejas@gruporoda.com` (ROHO: Yessica Rojas y Christopher Sejas)
+   - `from:denisse.navarro@tiendaamiga.com.bo` (Tienda Amiga: Denisse Navarro; por si llegan reenviados, buscar también
+     `tiendaamiga.com.bo OR filename:OC_Marketplace`). Ver «Tienda Amiga» más abajo.
    Leer cada hilo ENTERO (`get_thread`, PLAIN_TEXT): el texto trae datos que el PDF no tiene (quién recibe, fecha, «pendiente de coordinar»).
    ⚠️ Los correos de Flavia Ordoñez (fordonez@) con «OC del reporte de entregas» NO son pedidos nuevos: no se cargan.
 2. Por cada PDF de pedido: `get_message` con `messageFormat: "RAW"` → el resultado queda en un archivo JSON →
@@ -53,6 +55,24 @@ Domingo no hay camión; el sábado solo a la mañana.
 mismo celular de Copacaba, zona `BIMODAL`, la misma fecha por el plazo de fábrica. Es mayorista: el stock no lo cuenta como demanda (`STOCK_CLIENTES_FUERA`),
 eso ya lo hace el panel solo. Sus «COLT89»/«COLT90» = COLT0089/COLT0090 «COLCHON SEMIORTOPEDICO 22 CM» 105x190/140x190 (están en el
 histórico de ventas, no en la lista de precios). Primero cargado: 11-083 (OP-02-11-26).
+
+🛒 **Tienda Amiga** (09/11, dueño, con tres OC adjuntas: *«Carga mis pedidos de tienda amiga en el panel y cuando lleguen a mi correo mensajes
+de Denisse denisse.navarro@tiendaamiga.com.bo con pedidos recuerda cárgalos»*). PDF «OC_Marketplace_NNNNN.pdf» = una «ORDEN DE COMPRA» de
+TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
+- `clave` y `nota` = ese Nro. Doc. · `cliente` y `facturarA` = `TIENDA AMIGA ER S.A.` · `celular` vacío ·
+  `direccion` = `Almacenes Ferrotodo, Bodega 14, Parque Industrial, Santa Cruz` · `zona` = `PARQUE INDUSTRIAL`.
+- Fecha: la OC dice «24 Hrs. posterior a la emisión» → el día hábil siguiente, turno AM (reciben de 09:00 a 16:00; si está lleno, el script lo pasa).
+- ⚠️ **El PDF trae DOS precios encimados en el mismo casillero** (ej. `510.00` y `679.99`; `630.00` y `840.00`): el de venta al público y el
+  que nos pagan (el 75 %). **Vale el MENOR**, como en todos los cargados antes (510, 630, 654, 1.170…). `total_impreso` = ese mismo.
+- El código viene como `PN20309-<código>`. Si lo que sigue es un código nuestro (`CH1473`, `CH1803`, `COLT44` = `COLT0044`) se usa ese. Los
+  `COLT00N` cortos son de ELLOS, no nuestros: `COLT002` = `COLT0029` COLCHON ORTOPEDICO SUEÑA 105x190 · `COLT003` = `COLT0037` COLCHON
+  SEMIORTOP. 105x190 · `COLT006` = `COLT0069` COLCHON SEMIORTOP. 180x190. Uno que no esté en esta lista: por el NOMBRE y la medida contra
+  `CODIGOS` («Ortopédico» = COLCHON ORTOPEDICO SUEÑA, «Semiortopédico» = COLCHON SEMIORTOP.), se anota en observaciones y se agrega acá.
+- `observaciones`: `A CRÉDITO — DEBE Bs X. OC Tienda Amiga N del dd/mm/aaaa (Marketplace NNNNN; pedido de venta de origen N). <producto como
+  lo dice la OC>; código en la OC: PN20309-…. Recepción en Almacenes Ferrotodo, Bodega 14, de 09:00 a 16:00.`
+- Es mayorista: el stock no lo cuenta como demanda (`STOCK_CLIENTES_FUERA`), eso lo hace el panel solo.
+- ⚠️ El 09/11 el Gmail conectado (mithoseg@gmail.com) NO tenía ningún correo de Tienda Amiga: las OC le llegan al dueño a otra casilla. Hasta
+  que las reenvíe a esa cuenta, la vuelta no encuentra nada y él las sube al chat. Primeros cargados acá: 11-104, 11-105 y 11-106.
 
 ## Productos: el nombre manda
 
