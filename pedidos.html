@@ -49491,7 +49491,7 @@ function misDepPintar(mine, v, todos){
   if(firma===DEP.firma){ if(VIDA) depVidaPizarraPintar(); return; }
   DEP.firma=firma;
   depColsPintar(); depLeyPintar();
-  depLibs(function(ok){ if(!ok){ depSin3D(); return; } if(depIniciar3D()) depConstruir(DEP.C); });
+  depLibs(function(ok){ if(!ok){ depSin3D(); return; } fabMasCargar(function(){ if(depIniciar3D()) depConstruir(DEP.C); }); });
 }
 function depPer(k){ DEP.per=k; DEP.perTocado=true; DEP.sel=null; DEP.firma=''; renderMis(); }
 /* Abajo, una columna por cliente (todo lo que la escena dice, en letras) */
@@ -49528,6 +49528,14 @@ function depSin3D(){ var b=document.getElementById('dep-esc'); if(!b || b.queryS
   b.insertAdjacentHTML('beforeend','<div class="dep-sin3d">La vista 3D no se pudo cargar en este equipo (sin internet o sin 3D).<br>Las columnas de abajo tienen todo.</div>'); }
 
 /* ---- three.js, que se baja recién cuando hace falta ---- */
+/* 🎬 (10/11, MUESTRAS 144-157 para el dueño: «Muéstrame todo como quedaría») Lo que se le suma a la fábrica de Eduardo vive en un archivo
+   aparte, `fabrica-mas.js`, y se baja SOLO si este aparato lo pidió (`me_fab_mas`=1 o «#fabmas» en la dirección): sin eso, nada cambia. */
+var FABMAS_V='20261110a';
+function fabMasQuiere(){ try{ return /fabmas/.test(location.hash) || localStorage.getItem('me_fab_mas')==='1'; }catch(e){ return false; } }
+function fabMasCargar(cb){
+  if(window.fabMas || !fabMasQuiere() || DEP.masMal){ cb(); return; }
+  var s=document.createElement('script'); s.src='fabrica-mas.js?v='+FABMAS_V; s.onload=function(){ cb(); }; s.onerror=function(){ DEP.masMal=true; cb(); }; document.head.appendChild(s);
+}
 function depLibs(cb){
   if(window.THREE && THREE.OrbitControls){ cb(true); return; }
   if(DEP.libsMal){ cb(false); return; }
@@ -49641,7 +49649,7 @@ function depHitDe(hits){
 }
 function depMudar(box){
   var W=DEP.w3; if(!W || !box) return;
-  W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; VIDA=null;
+  W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; VIDA=null; if(window.fabMas) fabMas.salir();
   if(W.grupo){ W.esc.remove(W.grupo); W.grupo=null; }
   box.insertBefore(W.r.domElement, box.firstChild);
   if(W.ro){ W.ro.disconnect(); W.ro.observe(box); }
@@ -49840,11 +49848,11 @@ function depConstruir(C){
   lista.forEach(function(v, i){
     var t=depCamion(), cx=-((lista.length-1)*8)/2+i*8, cv=cams[v]||[], tot=cv.reduce(function(s,d){ return s+d.u; },0), np=asg[v]||0;
     t.g.position.set(cx,0,fz+.6); t.g.userData.dep={ x:cx, z:fz, v:v }; g.add(t.g); W.toca.push(t.g);
-    cv.slice(0,3).forEach(function(d, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg); depPila(pg, d.k, d.q.d, d.q.m, d.u, 6, 1.3, 1.6);
+    var pgs=[]; cv.slice(0,3).forEach(function(d, j){ var pg=new THREE.Group(); pg.position.set(-1.6+j*1.5,0,.1); t.carga.add(pg); pgs.push({ k:d.k, u:d.u, pg:pg }); depPila(pg, d.k, d.q.d, d.q.m, d.u, 6, 1.3, 1.6);
       /* (10/11) la carga CAE con su peso (antes bajaba flotando), rebota apenas y el camión se hunde un pelo y vuelve */
       pg.position.y=3; depTween(pg.position, { y:0 }, .55, 1.2+i*.3+j*.25, depCae, function(){ if(visQuieto()) return;
         pg.scale.y=.88; depTween(pg.scale, { y:1 }, .42, 0, depRebote); t.g.position.y=-.05; depTween(t.g.position, { y:0 }, .5, 0, depRebote); }); });
-    var cho=choferDeCamion(v, [].concat.apply([], C.map(function(c){ return c.peds||[]; }))); vc.push({ x:cx, v:v, cho:cho, tot:tot });   // (06/11) el de sus pedidos: rotan
+    var cho=choferDeCamion(v, [].concat.apply([], C.map(function(c){ return c.peds||[]; }))); vc.push({ x:cx, v:v, cho:cho, tot:tot, t:t, pgs:pgs });   // (06/11) el de sus pedidos: rotan
     depEtq(t.g, '🚚 '+esc(v)+'<small>'+(cho?(esc(cho)+' · '):'')+(flota?'esperando carga':(tot+' ya cargado'+(tot===1?'':'s')+(np?(' · '+np+' pedido'+(np===1?'':'s')):'')))+'</small>', 'dep-etq-cam', '#14232a', 3.3+(i%2)*.7);   // alternados: dos carteles vecinos no se pisan (🏭 31/10: más bajos, con la cámara más cerca entran)
   });
   var mov=[];
@@ -49898,7 +49906,8 @@ function depConstruir(C){
     if(!visQuieto()){ o.mc.chofer.rotation.y=Math.sin(t*1.2+o.d*5)*.3; if(o.bal) o.bal.visible=(Math.floor(t*2.2+o.d*3)%2)===0;
       if(o.arriba) o.mc.carro.position.y=.7+Math.sin(t*1.5+o.d*7)*.014; } }); };
   W.ancho=ancho;
-  var cadaMov=W.cada; depVida(g, ancho, fz, vc, vz); W.cada=function(t){ cadaMov(t); depVidaPaso(t); };   // 🧔☕ (31/10) Eduardo, Isabel y compañía
+  var cadaMov=W.cada; depVida(g, ancho, fz, vc, vz); W.cada=function(t){ cadaMov(t); depVidaPaso(t); };
+  if(window.fabMas){ try{ fabMas.armar({ g:g, ancho:ancho, fz:fz, cams:vc, zonas:vz, C:C }); }catch(e){ console.error(e); } }   // 🧔☕ (31/10) Eduardo, Isabel y compañía
   var sel=DEP.sel && C.filter(function(c){ return c.c===DEP.sel; })[0];
   if(sel) depAcercar(sel._x, 1, sel._w);
   else if(W.cam.aspect<1 && C.length) depAcercar(C[0]._x, 1);    // celular: la fábrica entera queda chica; arranca cerca del primero
@@ -50068,6 +50077,7 @@ function depVidaPoseDe(P, modo, t){
   if(modo==='bolea'){ o.bix=-.5+Math.sin(t*3.2)*.16; o.bdx=-.5+Math.sin(t*3.2+1.7)*.16; o.ei=1.1+Math.sin(t*3.2+.6)*.22; o.ed=1.1+Math.sin(t*3.2+2.3)*.22; o.cx=.04; o.cy=Math.sin(t*.6)*.22; return o; }   // 🌿 Yerson: cose con la cabeza levantada (se le ven los ojos y el bolo)
   if(modo==='trabaja'){ o.bix=-.5+Math.sin(t*3.2)*.16; o.bdx=-.5+Math.sin(t*3.2+1.7)*.16; o.ei=1.1+Math.sin(t*3.2+.6)*.22; o.ed=1.1+Math.sin(t*3.2+2.3)*.22; o.cx=.3; o.cy=Math.sin(t*.8)*.12; return o; }   // 🏭 los operarios de la línea
   if(modo==='senala'){ o.bix=-2.3+Math.sin(t*2.2)*.06; o.ei=.12; o.biz=-.35; o.cy=-.35; o.ty=-.12; return o; }
+  if(modo==='festeja'){ var fj=Math.abs(Math.sin(t*6)); o.bix=-2.7+Math.sin(t*8)*.25; o.bdx=-2.7-Math.sin(t*8)*.25; o.ei=o.ed=.3; o.biz=-.3; o.bdz=.3; o.bob=fj*.16; o.ki=o.kd=(1-fj)*.5; o.cx=-.2; return o; }   // 🎉 todo cargado
   if(modo==='toma'){ o.bdx=-1.0; o.ed=1.9; o.bdz=.12; o.cx=-.16; o.taz=-.55; return o; }
   /* las posturas de parado respiran: los brazos se abren apenas y el cuerpo sube un pelo */
   var r=.045+Math.sin(s*1.7)*.025; o.biz=-r; o.bdz=r; o.bob=(1+Math.sin(s*1.7))*.006;
@@ -50257,7 +50267,7 @@ function depVidaPaso(t){
       if(!VIDA.sorbos){ depVidaLuego(function(){ if(!E.P.taza) return; E.P.md.remove(E.P.taza); E.P.taza=null; if(!E.path) depDecir('edu','Ahh… ¡a trabajar!',2.5); }, 1600); } } }
   depVidaAnimar(E.P, E.path&&E.path.length?'anda':E.modo, t); depVidaAnimar(I.P, I.path&&I.path.length?'anda':I.modo, t);
   /* el perro sigue a Eduardo de cerca y mueve la cola */
-  var ep=E.P.g.position, pp=D.P.g.position, ty=E.P.g.rotation.y, bx=ep.x+.85, bz=ep.z+.6, dx=bx-pp.x, dz=bz-pp.z, L=Math.hypot(dx,dz);
+  var ep=D.sigue||E.P.g.position, pp=D.P.g.position, ty=E.P.g.rotation.y, bx=ep.x+.85, bz=ep.z+.6, dx=bx-pp.x, dz=bz-pp.z, L=Math.hypot(dx,dz);
   /* (10/11) gira de a poco hacia donde va, trota con un saltito, y si Eduardo se queda quieto un rato, se SIENTA a mirarlo;
      mueve la cola más rápido cuando Eduardo habla */
   var anda=L>.35, dr=D.P.g.rotation.y; if(anda){ var v=Math.min(L, (L>2?3.2:1.8)*dt), ya=Math.atan2(dx,dz); pp.x+=dx/L*v; pp.z+=dz/L*v; D.P.g.rotation.y=dr+Math.atan2(Math.sin(ya-dr), Math.cos(ya-dr))*Math.min(1,dt*10); D.quietoT=0; }
@@ -50272,6 +50282,7 @@ function depVidaPaso(t){
   VIDA.velas.forEach(function(v, i){ var s=.85+Math.sin(t*(9+i)+i)*.15; v.scale.set(s, s*(1+Math.sin(t*13+i)*.12), s); });
   VIDA.vapor.forEach(function(m, i){ if(!VIDA.vaporOn){ m.visible=false; return; } m.visible=true; var f=((t*.8+i/3)%1); m.position.y=1.55+f*.55; m.position.x=-.25+Math.sin(t*3+i)*.05; m.material.opacity=.6*(1-f); m.scale.setScalar(.6+f*1.2); });
   depFabPaso(t, dt);
+  if(window.fabMas){ try{ fabMas.paso(t, dt); }catch(e){ if(!fabMas.err){ fabMas.err=1; console.error(e); } } }
   var hb=horaBolivia(); if(VIDA.reloj && VIDA.reloj.min!==hb.getHours()*60+hb.getMinutes()) depVidaRelojPintar();
 }
 
@@ -50498,8 +50509,8 @@ function depFabEdificio(g, ancho, fz){
 function depFabStock(g, A, F){
   var W=DEP.w3, est=new THREE.Group(), cols=A>=14?[2.3,4.0,5.7]:[2.3,4.0], filas=[-2.9,-.7], i=0; F.geo.cb=F.geo.cb||new THREE.BoxGeometry(1.8,.26,1.25);
   [-1,1].forEach(function(sg){ cols.forEach(function(cx, ci){ filas.forEach(function(zz){
-    var h=5+((i*3)%4), som=ci===2, cuerpo=som?'#2b3566':'#f8fafc', banda=som?'#5ccfc6':(sg<0?'#00a39b':'#e7b5d5'), p=new THREE.Group(); i++;
-    p.position.set(sg*cx,0,zz); p.rotation.y=Math.PI/2; est.add(p); p.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
+    var SR=window.fabMas && fabMas.stockDatos && fabMas.stockDatos(), h=(SR && SR[i]) ? SR[i].h : 5+((i*3)%4), som=ci===2, cuerpo=som?'#2b3566':'#f8fafc', banda=som?'#5ccfc6':(sg<0?'#00a39b':'#e7b5d5'), p=new THREE.Group(); i++;
+    p.position.set(sg*cx,0,zz); p.rotation.y=Math.PI/2; est.add(p); (F.stockPos=F.stockPos||[]).push({ x:sg*cx, z:zz, h:h }); p.add(depMesh(F.geo.pal, depMat('#b48a55'), 0,.06,0));
     for(var j=0;j<h;j++){ p.add(depMesh(F.geo.cb, depMat(cuerpo), 0,.25+j*.28,0)); p.add(depMesh(F.geo.b, depMat(banda), 0,.25+j*.28,0)); }
     p.add(depMesh(F.geo.l, depMat('#2B3566'), .5,.13+h*.28,0)); }); }); });
   if(A>=14){ var bq=[['#f6e7a8','#f5c2d0','#bfe8df'],['#bfdbfe','#f6e7a8'],['#f5c2d0','#bfe8df','#f6e7a8'],['#bfe8df','#bfdbfe']], bx=cols[cols.length-1]+3.7;
@@ -50741,7 +50752,7 @@ function cv3dPintar(D){
 }
 /* `suave`: el mismo día ya estaba armado (se tildó algo): nada vuelve a entrar; solo cae al camión lo recién cargado. */
 function cv3dConstruir(D, suave){
-  var W=DEP.w3; if(!W || !D) return; W.modo='adm'; W.esc.fog.near=70; W.esc.fog.far=170; VIDA=null;   // la vista de todo va más lejos · 🧔 la vida de la fábrica es solo de Mis pedidos
+  var W=DEP.w3; if(!W || !D) return; W.modo='adm'; W.esc.fog.near=70; W.esc.fog.far=170; VIDA=null; if(window.fabMas) fabMas.salir();   // la vista de todo va más lejos · 🧔 la vida de la fábrica es solo de Mis pedidos
   if(W.grupo) W.esc.remove(W.grupo);
   W.etqs.forEach(function(t){ t.el.remove(); }); W.etqs=[]; W.toca=[]; W.cada=null; DEP.tw=[]; depPanel(null);
   var g=new THREE.Group(); W.grupo=g; W.esc.add(g);

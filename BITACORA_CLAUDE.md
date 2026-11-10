@@ -17384,6 +17384,25 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   dobla, la que apoya va derecha), `ei/ed`, `ty` (el tronco gira contra las piernas) y `taz` (la taza va derecha y se inclina al tomar: antes
   quedaba boca abajo con el brazo estirado hacia arriba). ⚠️ Lo que se lleva en la MANO va en `P.mi`/`P.md` con la altura contada desde el codo
   (celular, taza, tabla del inspector, escoba), no en `P.bi`/`P.bd`. Los personajes de la ciudad (`patio.js`) son otros: no cambiaron.
+- **🎬 MUESTRAS 144-157** (misma noche; dueño: *«Me encanta, ¿qué otras mejoras pondrías a la fábrica, al escenario, a lo visual y demás?»* → lista de
+  14 → *«Muéstrame todo como quedaría»*). Armadas DE VERDAD en un archivo aparte, **`fabrica-mas.js`** (`window.fabMas`), que se baja SOLO si el
+  aparato lo pidió (`fabMasQuiere()`: `localStorage me_fab_mas`=1 o «#fabmas»; `fabMasCargar` antes de `depConstruir`; `FABMAS_V`). Sin eso, nada
+  cambia: las pruebas de siempre corren con las muestras apagadas. Página para el dueño: https://claude.ai/artifact/8sbW1EvL1umborAuLXLuC7
+  (capturas + 2 clips, pedidos inventados). **Espera que diga qué números quiere.**
+  · Cada idea se prende sola en `fabMas.on`: `carga` 144 (el montacargas lleva al camión lo tildado: compara `c.pgs` con la vuelta anterior,
+    `M.llevar`), `camiones` 145 (con `camionSalio` el camión sale por el portón y vuelve: `camionSale`/`camionVuelve`, mira cada 2 s), `stock` 146
+    (las pilas del centro = `stockData()`: los que más rotan con `deposito`>0, alto = unidades/2; `depFabStock` pregunta `fabMas.stockDatos()`),
+    `torre` 147, `luz` 148 (`LUZ` por momento del día con `horaBolivia`; de noche 6 `PointLight` sin sombra + el sereno; `fabMas.hora` para
+    probar), `piso` 149, `linea` 150 (viruta de la sierra, bolsa del embolsado, dos operarios con un colchón), `afuera` 151 (`afueraTex` detrás
+    de cada portón + cortina), `caras` 152 (boca, cejas, miran al que habla), `situ` 153 (gato y perro, bocina de Ernesto, bandeja de Isabel),
+    `paseo` 154 (botones «▶ Recorrer» y «🧔 Seguir a Eduardo»), `tele` 155, `sonido` 156 (WebAudio, apagado de entrada, lo calla `me_asis_mudo`),
+    `festejo` 157 (pose `festeja` en `depVidaPoseDe`).
+  · Ganchos en pedidos.html (no hacen nada sin el archivo): `fabMas.armar(ctx)` al final de `depConstruir` (`vc` lleva `t` y `pgs`),
+    `fabMas.paso(t, dt)` al final de `depVidaPaso`, `fabMas.salir()` en `depMudar` y `cv3dConstruir` (⚠️ la luz se devuelve: el dibujante es
+    compartido), `D.sigue` en el perro, `F.stockPos`.
+  · Medido con todo prendido: 884 dibujos por cuadro con montacargas cargando y 987 con el piso libre (sin las muestras, ~853).
+  · ⚠️ Para publicar las elegidas: apagar el resto en `fabMas.on`, decidir si `fabMasQuiere()` pasa a «siempre» y agregar la prueba de lo
+    publicado (hoy `fabrica-mas.js` no tiene prueba propia: se miró por capturas con el reloj propio de `scratchpad/anim3d/`).
 - ⚠️ `g.rotation.order='YXZ'` en personas, perro y montacargas: la inclinación (x) va en el eje propio, mire para donde mire. Con «reducir
   movimiento» todo va de una (sin entrada de cámara). Los camiones 3D de Administración (`cv3dConstruir`) NO cambiaron.
 - **Pruebas**: `tests/test_fabrica_vida.js` §11 (mueve el reloj a mano, 60 cuadros por segundo) y un control más en §8 (→ 54 con `PATIO_THREE`).

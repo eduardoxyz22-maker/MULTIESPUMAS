@@ -810,6 +810,10 @@ Eduardo SIN panza ni bigote (dueño, 01/11). **Yerson** en costura acullica coca
 (`depFabCabeceo`), el colchón y la carga caen (`depFabCaer`, `depCae`, `depRebote`) y la cámara entra bajando la primera vez (`W.entro`). Con
 «reducir movimiento», todo de una. `cv3dConstruir` no cambió. 🧍 Los personajes tienen rodillas (`P.ri/rd`), codos (`P.mi/md`) y tronco
 (`P.tr`); ⚠️ lo que se lleva en la MANO va en `P.mi`/`P.md` (altura desde el codo), y dos colores en una pieza = `depUnir` (no sumar dibujos por cuadro).
+🎬 **Muestras 144-157** (10/11, dueño: *«Muéstrame todo como quedaría»*; https://claude.ai/artifact/8sbW1EvL1umborAuLXLuC7; espera que elija): 14
+ideas armadas en **`fabrica-mas.js`** (`window.fabMas`, cada una en `fabMas.on`), que se baja SOLO con `me_fab_mas`=1 o «#fabmas»
+(`fabMasQuiere`). Sin eso nada cambia. Ganchos: `fabMas.armar/paso/salir`. Al cambiarlo: `FABMAS_V` y `node --check fabrica-mas.js`. Detalle y
+qué falta para publicar: bitácora §4pg.
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
