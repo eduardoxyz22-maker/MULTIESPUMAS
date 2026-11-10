@@ -4269,8 +4269,9 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
   #view-atc .filters .atc-f-bus{ flex:1.2 1 0; min-width:0; }
   #view-atc .filters .field:has(#atc-motivo){ flex:1.3 1 0; }
   #view-atc .filters .lb{ font-size:.68rem; margin-bottom:3px; }
-  #view-atc .filters .field > input:not([type=checkbox]):not([type=radio]), #view-atc .filters .field > select, #view-atc .filters .field > .seg{ height:40px; min-height:40px; font-size:.84rem; }
-  #view-atc .filters .btn{ height:40px; white-space:nowrap; }
+  /* los campos siguen de 44 px, como todos los de `.filters` (§4mo): solo se achica la letra para que entren */
+  #view-atc .filters .field > input:not([type=checkbox]):not([type=radio]), #view-atc .filters .field > select{ font-size:.84rem; }
+  #view-atc .filters .btn{ height:44px; white-space:nowrap; }
   #atc-metrics{ gap:8px; }
   #atc-metrics .mc{ min-width:0; padding:10px 10px 9px; }
   #atc-metrics .mc-lbl{ font-size:.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:26px; }
