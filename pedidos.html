@@ -45016,7 +45016,11 @@ function fichaNota(p){
      una FAMILIA (almohada, colchón, somier), la familia sola alcanza: «LAS 4 ALMOHADAS» = todas las almohadas.
    · La MEDIDA de la cosa («DE 2.5 PLZ», «160X190», «2 1/2 PLAZAS») deja solo esos renglones.
    · La CANTIDAD («1 COLCHON», «LAS 4 ALMOHADAS»): menos que lo que suman esos renglones → si UN solo renglón tiene justo esa cantidad,
-     ese; si no, no se tacha nada y se avisa en «⛔» que hay que fijarse cuál (antes se tachaban todos). */
+     ese; si no, no se tacha nada y se avisa en «⛔» que hay que fijarse cuál (antes se tachaban todos).
+   · «LO DEMÁS / EL RESTO ya se entregó» (10/11, dueño, con la ficha del 11-097: «ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN
+     TIENDA» tachaba el COLCHÓN, lo único que había que llevar): lo que la nota nombra justo antes es lo que SÍ se lleva, y se tacha
+     todo lo otro del pedido. Si no dice qué es lo que se lleva, no se tacha nada y se avisa en «⛔». */
+var FL_NL_RESTO=/\b(?:TODO )?(?:LO|LOS|LAS) (?:DEMAS|OTROS?|OTRAS)\b|\bEL RESTO\b/;
 var FL_NL_GEN=['COLCHON','COLCHONES','ALMOHADA','ALMOHADAS','ALM','SOMIER','SOMIERES','PLAZAS','PLAZA','HEAVEN','SUENA','CON','PARA','LAS','LOS','DOS','UNA','UNO'];
 var FL_NL_DEL=/YA SE ENTREG|YA ENTREG|SE ENTREGO EN (?:LA )?TIENDA|SE ENTREGARON EN (?:LA )?TIENDA|NO LLEVAR|NO SE LLEVA|SALE DE (?:LA )?TIENDA|SALDRA DE (?:LA )?TIENDA|ENTREGAD[OA]S? EN (?:LA )?TIENDA/;
 var FL_NL_VA=/\b(?:LLEVAR|LLEVA|LLEVEN|CARGAR|ENTREGAR|RECOGER|MANDAR|ENVIAR|FALTA|FALTAN|PENDIENTE|LLAMAR|RECIBIR|RECIBE)\b/;
@@ -45061,7 +45065,7 @@ function fichaNoLlevar(p, texto, N){
              pal:flMay(x.desc).split(/[^A-Z0-9]+/).filter(function(w){ return w.length>=3 && FL_NL_GEN.indexOf(w)<0 && !/^\d+$/.test(w); }) };
   });
   var tiene=function(t, w){ return new RegExp('\\b'+w+'\\b').test(t); };
-  var cosa=function(t0, motivo){
+  var nombrados=function(t0){
     var t=' '+t0+' ', cand=[];
     info.forEach(function(I, ix){ if(I.pal.some(function(w){ return tiene(t, w); })) cand.push(ix); });
     FL_NL_FAMS.forEach(function(F){
@@ -45074,6 +45078,16 @@ function fichaNoLlevar(p, texto, N){
     });
     var med=flNlMedida(t);
     if(med) cand=cand.filter(function(ix){ return saldoMismaMedida(info[ix].med, med); });
+    return cand;
+  };
+  /* «lo demás ya se entregó»: `va` = lo que la nota dice justo antes (lo que SÍ se lleva) */
+  var resto=function(va, motivo){
+    var queda=nombrados(va);
+    if(!queda.length){ if(info.length>1) dudas.push('La nota dice que «lo demás» '+motivo+' y no se entiende qué es lo que SÍ se lleva: fijate qué se carga.'); return; }
+    info.forEach(function(I, ix){ if(queda.indexOf(ix)<0 && N.noLlevar.indexOf(ix)<0){ N.noLlevar.push(ix); por[ix]=motivo; } });
+  };
+  var cosa=function(t0, motivo){
+    var t=' '+t0+' ', cand=nombrados(t0);
     if(!cand.length) return;
     var pals=[]; cand.forEach(function(ix){ info[ix].pal.forEach(function(w){ if(pals.indexOf(w)<0) pals.push(w); }); });
     var nm=t.match(new RegExp('(?:^|[^\\d\\u2024/])(\\d{1,2}|UNA?|UNO|DOS|TRES|CUATRO|CINCO|SEIS)\\s+(?:(?:LAS|LOS|EL|LA)\\s+)?(?:ALM\\w*|COLCHON\\w*|SOMM?IER\\w*'+(pals.length?('|'+pals.join('|')):'')+')\\b'));
@@ -45097,7 +45111,7 @@ function fichaNoLlevar(p, texto, N){
   };
   var T=' '+flMay(String(texto||'').replace(/\r/g,'').replace(/\n/g,' ¶ '))+' ';
   T=T.replace(/(\d)[.,](\d)/g,'$1․$2').replace(/\s*[*•]\s*/g,' ¶* ');
-  var ctx=false, ctxPor='';
+  var ctx=false, ctxPor='', antes='';
   var PARTE=/,|\bY\b|\+|\(|\)|=|\s-{1,2}\s/;
   // una cosa SIN la frase de entregado la hereda solo si es corta y no dice otra acción («…a recibir su colchón (NO LLEVAR LAS ALMOHADAS)»)
   var hereda=function(s){ var w=s.trim().split(/\s+/).filter(Boolean); return w.length && w.length<=9 && !FL_NL_VA.test(s.replace(/\bNO (?:SE )?LLEV\w*/g,' ')); };
@@ -45105,10 +45119,16 @@ function fichaNoLlevar(p, texto, N){
     var c=f.replace(/\s+/g,' ').trim(); if(!c) return;
     var bul=/^[*•\-]/.test(c); if(bul) c=c.replace(/^[*•\-]+\s*/,'');
     if(!bul) ctx=false;
-    var del=FL_NL_DEL.test(c), hd=c.indexOf(':'), head=hd>=0 ? c.slice(0,hd) : c, resto=hd>=0 ? c.slice(hd+1).trim() : '';
-    if(!bul && del && hd>=0 && !resto){ ctx=true; ctxPor=flNlPor(c); return; }      // «ENTREGADOS EN TIENDA:» y la lista abajo
+    var del=FL_NL_DEL.test(c), hd=c.indexOf(':'), head=hd>=0 ? c.slice(0,hd) : c, lista=hd>=0 ? c.slice(hd+1).trim() : '';
+    var mr=del ? c.match(FL_NL_RESTO) : null;
+    if(mr && FL_NL_DEL.test(c.slice(mr.index))){                                    // «…EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA»
+      var va=c.slice(0, mr.index);
+      resto(nombrados(va).length ? va : (antes+' '+va), flNlPor(c.slice(mr.index))); antes=''; return;
+    }
+    if(!del) antes=c;
+    if(!bul && del && hd>=0 && !lista){ ctx=true; ctxPor=flNlPor(c); return; }      // «ENTREGADOS EN TIENDA:» y la lista abajo
     if(!del && !(bul && ctx)) return;
-    if(hd>=0 && FL_NL_DEL.test(head) && resto){ resto.split(PARTE).forEach(function(s){ cosa(s, flNlPor(head)); }); return; }   // «ENTREGADO EN TIENDA: 4 ALMOHADAS Y …»
+    if(hd>=0 && FL_NL_DEL.test(head) && lista){ lista.split(PARTE).forEach(function(s){ cosa(s, flNlPor(head)); }); return; }   // «ENTREGADO EN TIENDA: 4 ALMOHADAS Y …»
     var dp=del ? flNlPor(c) : ctxPor;
     c.split(PARTE).forEach(function(s){
       if(FL_NL_DEL.test(s)) cosa(s, flNlPor(s));

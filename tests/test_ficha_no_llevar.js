@@ -27,6 +27,12 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var out={};
     out.real=C(CASO, NOTA);
     out.unaLinea=C(CASO, NOTA.replace(/\n/g,' '));
+    // (10/11, pedido 11-097) «entregar solo el colchón - lo demás se entregó en tienda»: se lleva el colchón, se tacha lo demás
+    var PROT={ cant:2, desc:'protector colchon 2 plz casal', medida:'' }, ESP={ cant:1, desc:'COLCHON ESPECIAL ORTOPEDICO D/C', medida:'140x190' };
+    out.demas=C([PROT, ESP], 'ESTARA EN CASA SOLO HASTA LAS 10 AM-TOMAR EN CUENTA X FAVOR--ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA');
+    out.demasPunto=C([ALM2, ICE160, { cant:1, desc:'SOMIER ORO', medida:'160x190' }], 'ENTREGAR SOLO EL COLCHON. LO DEMAS YA SE ENTREGO EN TIENDA');
+    out.elResto=C([ALM2, ICE160, { cant:1, desc:'SOMIER ORO', medida:'160x190' }], 'LLEVAR EL SOMIER Y EL COLCHON, EL RESTO YA SE ENTREGO');
+    out.demasSolo=C([ALM2, ICE160], 'LO DEMAS YA SE ENTREGO EN TIENDA');
     out.coma=C(CASO, 'ENTREGADOS EN TIENDA:\n* las 4 almohadas ya se entregaron en tienda\n* 1 colchón titanio ice de 2,5 plazas');
     out.cm=C(CASO, 'Entregado en tienda: 4 almohadas y 1 colchon titanio ice 160x190');
     out.mediaPlaza=C(CASO, 'YA SE ENTREGO EN TIENDA 1 COLCHON TITANIO ICE 2 1/2 PLAZAS');
@@ -74,6 +80,10 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('17 · «…a recibir su colchón (NO LLEVAR LAS ALMOHADAS…)»: solo las almohadas', JSON.stringify(r.recibir.no)==='[1]', r.recibir);
   chk('18 · «colchon CARIOCA PREMIER 2.5PL SALE DE TIENDA» tacha ese y dice «sale de tienda»', JSON.stringify(r.saleTienda.no)==='[0]' && r.saleTiendaPor[0]==='sale de tienda', { n:r.saleTienda, p:r.saleTiendaPor });
   chk('19 · «1 juego de sábanas» de 2: no tacha el renglón, avisa «se carga solo 1»; el edredón sí', JSON.stringify(r.parcial.no)==='[1]' && r.parcial.contras.some(x=>/1 de los 2/.test(x) && /se carga solo 1/.test(x)), r.parcial);
+  chk('20 · «ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA» (11-097): el colchón SE LLEVA, se tacha el protector', JSON.stringify(r.demas.no)==='[0]' && !r.demas.duda.length, r.demas);
+  chk('21 · «Entregar solo el colchón. Lo demás ya se entregó»: quedan tachados almohadas y somier', JSON.stringify(r.demasPunto.no)==='[0,2]', r.demasPunto);
+  chk('22 · «Llevar el somier y el colchón, el resto ya se entregó»: solo las almohadas', JSON.stringify(r.elResto.no)==='[0]', r.elResto);
+  chk('23 · «Lo demás ya se entregó» sin decir qué se lleva: no tacha nada y lo avisa en «⛔»', r.demasSolo.no.length===0 && r.demasSolo.contras.some(x=>/lo demás/.test(x) && /fijate qué se carga/.test(x)), r.demasSolo);
   chk('13 · la ficha: tachados las 4 almohadas y el colchón 160×190; queda el 200×200', r.tachados.length===3 && r.tachados.every(x=>/No se lleva/.test(x)) && r.medVivas.join(',').indexOf('200×200')>=0 && r.medVivas.join(',').indexOf('160×190')<0, { t:r.tachados, v:r.medVivas });
   chk('14 · la ficha cuenta 1 bulto (el colchón 200×200)', /1 bulto\b/.test(r.bultos) && /1 colchón/.test(r.bultos), r.bultos);
   chk('sin errores en la página', errs.length===0, errs);

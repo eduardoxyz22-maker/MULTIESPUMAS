@@ -17357,6 +17357,16 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
+### §4pi — ↩️ «LO DEMÁS SE ENTREGÓ EN TIENDA» TACHABA EL COLCHÓN (10/11; dueño, con la ficha del 11-097: *«¿por qué aparece marcado si la observación dice entregar colchón, lo demás ya se entregó?»*; EN LA RAMA, espera «publica»)
+  Nota: «ESTARA EN CASA SOLO HASTA LAS 10 AM-TOMAR EN CUENTA X FAVOR--ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA». `fichaNoLlevar`
+  parte la frase en «SOLO» y le quedaba «EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA»: nombraba COLCHON en una frase de «se entregó» → tachaba el
+  colchón (lo único que había que llevar) y la ficha decía «0 bultos · nada que cargar».
+  · Arreglo: si la frase de entregado habla de «LO/LOS/LAS DEMÁS», «LO OTRO», «EL RESTO» (`FL_NL_RESTO`), lo que nombra justo antes (en la misma
+    frase o, si ahí no nombra nada, en la anterior) es lo que SÍ se lleva y se tacha TODO lo otro del pedido (`resto()`); si no se entiende qué se
+    lleva, no se tacha nada y sale en «⛔» («fijate qué se carga»). `nombrados()` = la parte de `cosa()` que decide qué renglones nombra un texto.
+  · Probado contra las 1.108 notas reales de la copia del 09/11 (viejo vs nuevo): no cambia ninguna otra ficha. `test_ficha_no_llevar` 20-23 (24;
+    4 rojas contra lo publicado). Fichas: nota 26, auto 14, logística 14, mejoras 23, adm_fichas 13, revisar_obs 89.
+
 ### §4ph — 🎨 PROPUESTA VISUAL 158-173 (10/11; dueño: *«¿Qué mejoras visuales podés poner al panel?»* → *«Mostrarme cómo quedaría todo menos 170, 169, 165, 163»*; NADA programado en el panel)
   Página con las 12 muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (antes/después del panel real con clientes inventados para
   158-161; demos para tocar de las otras ocho, con los totales reales por vendedor y día, sin clientes). Espera que el dueño diga qué números van.
