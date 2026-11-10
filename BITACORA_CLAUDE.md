@@ -17373,6 +17373,9 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
   MUESTRA la carga: renglones y bultos de la ficha («9 bultos · 1 colchón · 8 otros»), «Qué hacer», etiqueta del lugar, ficha rápida de Administración y
   su color, «Lo del día, por lugar», `rutaSalida` y el viaje de Mis pedidos. Las cuentas del stock no cambian. `tests/test_rpt_tienda_viaja.js` (8; 4
   rojas contra lo publicado); `test_rpt` 110, `test_fichas_4ip` 60, `test_adm_arriba` 27, `test_camiones_admin` 40, `test_ruta_salida` 12.
+  ↪️ **Corregido por el dueño enseguida** (*«pero en RPT, si piden a fábrica bolsas, sí deben llevar; protectores y sábanas no»*): la excepción es
+  SOLO para las BOLSAS (`PROD_EMPAQUE`) de una RPT (`esEmpaqueDeRpt`); protectores y sábanas de una reposición siguen en la línea «De tienda, no sale
+  de PTF ni Banzer» y no cuentan como bultos. La prueba quedó en 9 (RPT con colchón + 8 bolsas + 3 protectores + sábanas → 9 bultos).
 
 ### §4ph — 🎨 PROPUESTA VISUAL 158-173 (10/11; dueño: *«¿Qué mejoras visuales podés poner al panel?»* → *«Mostrarme cómo quedaría todo menos 170, 169, 165, 163»*; NADA programado en el panel)
   Página con las 12 muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f (antes/después del panel real con clientes inventados para

@@ -33811,11 +33811,13 @@ var PROD_NO_STOCK=/^VARIOS$|^(?:A\s+)?RECOGER\b|\bTAPIZADO\b|\bDESPERDICIOS?\b|\
 /* 🔎 (19/10, §4ls verificación final, CO-5) De esas, las que dicen que el PRODUCTO todavía no está definido (el viaje del pedido en Mis
    pedidos dice «Producto por confirmar», no «📦 Mercadería»). */
 var PROD_POR_CONFIRMAR=/^POR\s+(?:CONFIRMAR|FAVOR)\b|\bMEDICION\b/;
-/* 🏪 (10/11, dueño, con la ficha de una reposición: «en las reposiciones de tienda omite los pedidos… no muestra las bolsas») Lo de
-   tienda (protectores, sábanas, bolsas…) «lo entrega la tienda» en una VENTA, y por eso la ficha de logística no lo carga (24/10). En una
-   REPOSICIÓN (RPT) es al revés: es justo lo que hay que LLEVARLE a la tienda. Todo lo que MUESTRA qué se carga usa esto; las cuentas del
-   stock siguen con `esProdDeTienda` (no son stock de fábrica en ningún caso). */
-function deTiendaNoViaja(p, x){ return esProdDeTienda(x) && !(p && esRPT(p.oc)); }
+/* 🏪 (10/11, dueño, con la ficha de una reposición: «en las reposiciones de tienda omite los pedidos… no muestra las bolsas» y después
+   «en RPT, si piden a fábrica bolsas, sí deben llevar; protectores y sábanas no») Lo de tienda (protectores, sábanas, bolsas…) no se
+   carga: lo entrega la tienda (24/10). La ÚNICA excepción son las BOLSAS (empaque, `PROD_EMPAQUE`) de una REPOSICIÓN (RPT): la tienda se
+   las pide a fábrica y hay que llevárselas. Protectores y sábanas de una RPT siguen sin cargarse. Todo lo que MUESTRA qué se carga usa
+   esto; las cuentas del stock siguen con `esProdDeTienda` (no son stock de fábrica en ningún caso). */
+function esEmpaqueDeRpt(p, x){ return !!(p && esRPT(p.oc) && PROD_EMPAQUE.test(stockNorm(String((x&&x.desc)||'')))); }
+function deTiendaNoViaja(p, x){ return esProdDeTienda(x) && !esEmpaqueDeRpt(p, x); }
 function esProdDeTienda(x){
   var t=String((x&&x.desc)||''); if(esTextoDeTienda(t)) return true;
   // Con un código del catálogo es un producto aunque el nombre diga «VARIOS»: el código manda.
