@@ -344,7 +344,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var celdas=[].slice.call(document.querySelectorAll('#cua-retiros tr')).filter(function(tr){ return /^\s*TOTAL/.test(tr.textContent); })
                   .map(function(tr){ return [].slice.call(tr.querySelectorAll('td')).map(function(td){ return td.textContent.trim(); }); })[0]||[];
     exportCuadre();
-    var m=window.__XLSX[0].matrix, ini=-1, tot=null;
+    var m=[].concat.apply([], (window.__XLSX||[]).map(function(h){ return (h.matrix||[]).concat([[]]); })), ini=-1, tot=null;   // (10/11) el efectivo va en la 2ª hoja
     for(var i=0;i<m.length;i++){ var c0=m[i]&&m[i][0]; var t=(c0&&typeof c0==='object')?c0.v:c0; if(t==='EFECTIVO COBRADO VS. RETIRADO') ini=i; }
     if(ini>=0) for(var j=ini+1;j<m.length && m[j] && m[j].length;j++){ var t0=m[j][0]; t0=(t0&&typeof t0==='object')?t0.v:t0; if(/^TOTAL/.test(String(t0))) tot=m[j].map(function(c){ return (c&&typeof c==='object')?c.v:c; }); }
     return { pantalla:celdas, excel:tot, ini:ini };

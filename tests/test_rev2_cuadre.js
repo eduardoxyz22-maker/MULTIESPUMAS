@@ -261,7 +261,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
                     R({ id:'__ret_d1__', monto:1000, notas:['10'] }) ], 'dia', hoy);
       var pant=document.getElementById('cua-retiros').innerText, txt=cuadreTexto();
       window.__XLSX=null; exportCuadre();
-      var m=window.__XLSX?window.__XLSX[0].matrix:[];
+      var m=[].concat.apply([], (window.__XLSX||[]).map(function(h){ return (h.matrix||[]).concat([[]]); }));   // (10/11) efectivo y retiros van en la 2ª hoja
       var plano=m.map(function(f){ return (f||[]).map(function(c){ return (c&&typeof c==='object')?c.v:c; }).join('|'); });
       return { pantRet:/1\.000,00/.test(pant), txtRet:/se le retiró Bs 1\.000,00/.test(txt), bajo:!!window.__XLSX,
                retiro:plano.some(function(l){ return /^2026-09-16\|Carola Chavez\|Eduardo Añez\|10\|Facturado\|1000/.test(l); }),
@@ -302,7 +302,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       var t2=document.getElementById('cua-metrics').innerText.replace(/\s+/g,' ');
       var txt=cuadreTexto();
       exportCuadre();
-      var m=window.__XLSX[0].matrix;
+      var m=[].concat.apply([], (window.__XLSX||[]).map(function(h){ return (h.matrix||[]).concat([[]]); }));
       var dif=m.filter(function(f){ return f && f[0] && /DIFERENCIA TOTAL/.test(String(f[0].v!=null?f[0].v:f[0])); })[0];
       return { t1:t1, t2:t2, txt:txt, dif:dif?String(dif[0].v!=null?dif[0].v:dif[0]):'' };
     });
@@ -406,13 +406,20 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       exportCuadre();
       var m=window.__XLSX[0].matrix, excel=0, filasPago=0;
       for(var i=1;i<m.length && m[i] && m[i].length;i++){ filasPago++; excel=r2(excel+Number(m[i][7].v)); }
+      /* 📊 (10/11, dueño: «sí, arreglá lo del Excel») la columna MONTO ENTERA de la hoja de pagos, como la suma Excel al seleccionarla */
+      var colH=0, numsFuera=0; m.forEach(function(f, k){ (f||[]).forEach(function(c, j){ if(k && c && typeof c==='object' && c.t==='n'){ if(j===7) colH=r2(colH+Number(c.v)); else numsFuera++; } }); });
+      var h2=window.__XLSX[1]||null, m2=h2?h2.matrix:[], celda=function(c){ return (c&&typeof c==='object')?c.v:c; };
+      var xl={ colH:colH, numsFuera:numsFuera, filas0:m.length, hojas:window.__XLSX.map(function(h){ return h.name; }),
+               tit2:String(celda((m2[0]||[])[0])||''), cab2:(m2[1]||[]).map(celda).join('|'),
+               bloques:m2.map(function(f){ return String(celda((f||[])[0])||''); }).filter(function(t){ return /^(CIERRE POR FORMA|EFECTIVO COBRADO VS|DETALLE DE LOS RETIROS)/.test(t); }).length,
+               cierre2:m2.filter(function(f){ return f && f.length===5 && typeof celda(f[1])==='number'; }).reduce(function(t,f){ return r2(t+Number(celda(f[2]))); },0) };
       var E=cuadreEfectivo().filas.map(function(o){ return o.nombre+':'+o.cobrado+'-'+o.ret+'='+o.falta; });
       segSet('cua-mode','mes'); document.getElementById('cua-mes').value='2027-01'; setCuadreModo('mes');
       var ene=cuadrePagos().map(function(c){ return c.p.id; });
       segSet('cua-mode','todo'); setCuadreModo('todo');
       var todo=cuadrePagos();
       return { hoy:hoy, totMes:totMes, n:mes.length, dias:dias, nDias:nDias, unicos:Object.keys(claves.reduce(function(o,k){ o[k]=1; return o; },{})).length,
-               ids:mes.map(function(c){ return c.p.id; }), pant:pant, txt:txt, excel:excel, filasPago:filasPago, E:E, ene:ene, todo:sumaTot(todo), nTodo:todo.length };
+               ids:mes.map(function(c){ return c.p.id; }), pant:pant, txt:txt, excel:excel, filasPago:filasPago, xl:xl, E:E, ene:ene, todo:sumaTot(todo), nTodo:todo.length };
     });
     const tag = '8 ('+cual+')';
     chk(tag+' · el reloj del panel está donde se dijo', r.hoy===(cual.startsWith('31')?'2026-12-31':'2027-01-01'), r.hoy);
@@ -423,6 +430,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     chk(tag+' · el 1° de enero va a enero, no a diciembre', J(r.ene)==='["i4"]', J(r.ene));
     chk(tag+' · «Todo» = diciembre + enero', r.todo===4550 && r.nTodo===6, J({todo:r.todo, n:r.nTodo}));
     chk(tag+' · pantalla = texto = Excel (Bs 4.150,00)', /Bs 4\.150,00/.test(r.pant) && /TOTAL: Bs 4\.150,00/.test(r.txt) && r.excel===4150 && r.filasPago===5, J({excel:r.excel, filas:r.filasPago}));
+    chk(tag+' · ⚠️ 📊 la hoja «Cuadre» trae SOLO los pagos: sumar la columna MONTO entera da 4.150 (antes, el doble)', r.xl.colH===4150 && r.xl.filas0===6 && r.xl.numsFuera===0, J(r.xl));
+    chk(tag+' · 📊 …y el cierre por forma de pago, el efectivo y los retiros van en la hoja «Cierre y efectivo», con sus títulos', J(r.xl.hojas)==='["Cuadre","Cierre y efectivo"]' && /^CIERRE POR FORMA DE PAGO/.test(r.xl.tit2) && /^FORMA DE PAGO\|PAGOS\|MONTO SEGÚN EL PANEL/.test(r.xl.cab2) && r.xl.bloques===3 && r.xl.cierre2===4150, J(r.xl));
     chk(tag+' · el efectivo: Carola 1000−1000 y Luis Pierre (chofer) 450−450', J(r.E)==='["Carola Chavez:1000-1000=0","Luis Pierre:450-450=0"]', J(r.E));
     await page.context().close();
   }

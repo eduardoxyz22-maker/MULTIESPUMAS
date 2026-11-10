@@ -261,7 +261,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { res:res, hojas:hojas, nombre:window.__NOMBRE, ctrl:ctrl, fin:fin };
   });
   chk('el resumen dice ventas, pagos y productos del mes', /2 ventas/.test(r.res) && /2 pagos/.test(r.res) && /2 productos/.test(r.res), r.res.replace(/\n/g,' | '));
-  chk('un solo Excel con Ventas, Cuadre y Productos', JSON.stringify(r.hojas)===JSON.stringify(['Ventas','Cuadre','Productos','Productos (detalle)']), r.hojas);
+  chk('un solo Excel con Ventas, Cuadre y Productos', JSON.stringify(r.hojas)===JSON.stringify(['Ventas','Cuadre','Cuadre (cierre)','Productos','Productos (detalle)']), r.hojas);
   chk('el archivo se llama cierre-2026-10-…', /^cierre-2026-10-(ingreso|entrega)\.xlsx$/.test(r.nombre), r.nombre);
   chk('los controles de Ventas vuelven como estaban (Día, la búsqueda)', r.ctrl.modo==='dia' && r.ctrl.q==='algo', r.ctrl);
   chk('dice que quedó listo', /cierre-2026-10/.test(r.fin), r.fin);

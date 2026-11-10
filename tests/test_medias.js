@@ -203,8 +203,8 @@ const BASE = `
       document.getElementById('cua-vendedor').value='Carola Chavez'; renderCuadre();
       var txt=cuadreTexto();
       exportCuadre();
-      var rows=window._xl[0].matrix, i=rows.findIndex(function(r){ return r[0] && /CIERRE POR FORMA DE PAGO/.test(String(r[0].v||r[0])); });
-      var filaEf=rows[i+1].map(function(c){ return (c && c.v!=null) ? c.v : c; });
+      var rows=[].concat.apply([], window._xl.map(function(h){ return h.matrix.concat([[]]); })), i=rows.findIndex(function(r){ return r[0] && /CIERRE POR FORMA DE PAGO/.test(String(r[0].v||r[0])); });
+      var filaEf=rows[i+2].map(function(c){ return (c && c.v!=null) ? c.v : c; });
       var tit=String((rows[i][0]||{}).v||rows[i][0]);
       // borrar un retiro: con el servidor diciendo que no, sin red, y con ok
       await new Promise(r=>setTimeout(r,120));           // que termine el refresco en vuelo (traería RETIROS vacío y el 2° y 3° borrado no encontrarían nada)
@@ -234,7 +234,7 @@ const BASE = `
     }, BASE);
     chk('con Todos, el WhatsApp del cuadre compara con el arqueo (1.200 ✅ cuadra)', /1\.200,00/.test(r.todos) && /cuadra/.test(r.todos), r.todos);
     chk('⚠️ con filtro por vendedora, el WhatsApp NO compara el total parcial con el arqueo global (antes: «sobra Bs 600»)', /600,00/.test(r.waEfectivo) && !/sobra|falta/.test(r.waEfectivo) && r.nota===true, r.waEfectivo);
-    chk('⚠️ …ni el Excel: la fila de Efectivo va sin contado ni diferencia y el título lo dice', r.excel[7]===600 && (r.excel[8]===''||r.excel[8]==null) && (r.excel[9]===''||r.excel[9]==null) && /solo Carola/.test(r.tit), J(r.excel)+' · '+r.tit);
+    chk('⚠️ …ni el Excel: la fila de Efectivo va sin contado ni diferencia y el título lo dice', r.excel[2]===600 && (r.excel[3]===''||r.excel[3]==null) && (r.excel[4]===''||r.excel[4]==null) && /solo Carola/.test(r.tit), J(r.excel)+' · '+r.tit);
     chk('⚠️ borrar un retiro mira la respuesta: si el servidor dice que no, lo avisa (antes: «Retiro borrado» y volvía con la lista)', !r.t1.some(function(t){ return /Retiro borrado/.test(t); }) && r.t1.some(function(t){ return /No se pudo borrar el retiro/.test(t); }), J(r.t1));
     chk('…si Google no contesta (dos veces), avisa que no se sabe si se borró, sin error JS (§4fz-b)', r.t2.some(function(t){ return /no confirmó/.test(t); }) && !r.t2.some(function(t){ return /Retiro borrado/.test(t); }), J(r.t2));
     chk('…y con ok dice «Retiro borrado»', r.t3.some(function(t){ return /Retiro borrado/.test(t); }), J(r.t3));
