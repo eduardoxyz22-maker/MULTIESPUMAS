@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»*)
+### §4pj — 🎨 LAS MEJORAS VISUALES ELEGIDAS: 159, 161, 166, 167, 168, 171, 172 Y EL CIELO SEGÚN LA HORA (10/11; dueño, con las muestras de §4ph: *«de tus muestras del panel visual me gustan todas para publicar menos 158, 160, 162, 164, 173 — la 162 dice depósito PTF, creo que eso confunde; creo que a lo que tenemos actualmente solo añadiría lo del amanecer, día, atardecer, noche»* → *«Publica»*; PUBLICADO 10/11, versión 2026-11-10-d)
 
 **Qué pidió.** De la propuesta 158-173 (ya había sacado 163, 165, 169 y 170) quedan afuera 158, 160, 164 y 173; de la 162 quiere SOLO el
 cielo según la hora sobre el encabezado de hoy (ni «depósito PTF» ni camiones nuevos). Van: 159, 161, 166, 167, 168, 171, 172 + el cielo.
@@ -17406,6 +17406,13 @@ Todo es dibujo: nada guarda ni cambia una cuenta. El `.gs` no se tocó.
   «Vendido en <mes>» es por la ENTREGA: el pie lo dice para que nadie espere el mismo total. Sin donas (el dueño no las quiere).
 - **Ficha de logística** (lo anotado en §4ph): ya no dice «RPT RPT 11-006» (el encabezado ponía «Pedido»/tipo dos veces) ni «Mañana
   MAÑANA»: el turno va «a la mañana / a la tarde» y la etiqueta HOY/MAÑANA va pegada a «Entrega».
+
+**Batería entera (10/11): 357 suites.** Marcó tres cosas de lo nuevo, corregidas antes de publicar: los campos de la fila de filtros de ATC
+habían quedado de 40 px (siguen de 44, §4mo: `test_estetica_4mo`); tres medidas `vw` sueltas (van `calc(N / var(--vz,1))`, §4oc:
+`test_vidrio_agrandar`); y la bienvenida `.bienv`, que es pantalla completa a propósito, entró a `CUBIERTOS_EXTRA` de `test_sin_barra` §5c
+(no lleva la franja: dura un segundo y medio y no tiene botones). Lo demás en rojo eran las de siempre con la máquina cargada
+(`test_actualizar_espera`, `test_fabrica_vida`, `test_fabrica_mas`, `test_patio`): solas, verdes. La copia achicada se probó con esbuild
+(`test_achicar` 25; `test_visual_4pj` y `test_bloki` contra la copia achicada, verdes).
 
 **Pruebas.** `tests/test_visual_4pj.js` (51; datos sintéticos, reloj clavado el 11/11): cielo, gestos, «no tapa», ATC/Stock en compu y
 celular, las ventanas (con y sin `NACE_PRUEBA`), la bienvenida (una vez por apertura), la carrera contra `proyeccionMes` y el calendario
