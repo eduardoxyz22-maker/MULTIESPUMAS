@@ -1760,6 +1760,14 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer); sin Kommo, no sale (`waBdDomingo_`). 🔒 Bloki no le muestra saldos de clientes a Logística sin la
   contraseña (`blokiPlataNo`). 📅 «Sábado en la tarde» ofrece pasarlo al lunes (o el próximo hábil) a la tarde (`obsRevSabMover`, `OBS_REV_MOVIDO`).
 
+## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; en la rama, versión 2026-11-10-g)
+El 11-096 (entrega 13/11) salió ENTREGADO en Mis pedidos y no había forma de saber quién: la planilla no guarda historia del ✅. Ahora cada guardado
+que cambia `entregado` deja `eH` en cada producto (últimas 8: puesto/sacado, cuándo, quién = `quienEdita()`, aparato `entAparato`, desde dónde
+`entDonde`, para qué día). `entHistAnotar` en `guardarDurable` y `apiSave`, contra `ENT_SRV` (`mergePending`/`aplicarSello`); un cambio de OTRA página
+sin F5 no se le anota a nadie (`ENT_PROPIO`). Deshacer, reprogramar y Editar no lo borran (`deshDevolver` saltea `eH`, `heredarMarcas` lo pasa). Se
+ve en la ficha de Administración y en la de Mis pedidos (`entHistHtml`). ⚠️ Un camino NUEVO que cambie `entregado` llama a `entDonde('…')` y guarda por
+`guardarDurable`/`apiSave`. Playwright solo con `ENT_HIST_PRUEBA`. `tests/test_entregado_quien.js` (14).
+
 ## 🎟️ Cupos del camión (§4fh)
 - Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM; domingo y feriados cerrados, §4gy).
   `cuposUsadosTurno(fecha,turno)` y el portero del `.gs` (`porteroFecha_`) cuentan **igual**:
