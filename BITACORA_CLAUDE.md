@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; **PUBLICADO 10/11 con las 14 mejoras 144-157, versión 2026-11-10-b, `SHA_PUB`**; el `.gs` no cambia)
+### §4pg — 🎬 LAS ANIMACIONES 3D DE LA FÁBRICA DE EDUARDO, CON PESO (10/11; dueño: *«Fable mejora mis animaciones 3D en mi panel de pedidos de Eduardo»*; **PUBLICADO 10/11 con las 14 mejoras 144-157, versión 2026-11-10-b, `6c25405`**; el `.gs` no cambia)
 - **Qué se veía mal** (mirando la escena cuadro por cuadro): la gente cambiaba de postura y giraba DE GOLPE, arrancaba y frenaba en seco con las
   piernas patinando (el paso iba por el reloj, no por lo avanzado), los colchones aparecían de la nada sobre el pallet, la carga del camión bajaba
   flotando y la cámara, la primera vez, salía desde adentro del piso (0,0,0).

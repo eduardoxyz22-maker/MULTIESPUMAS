@@ -804,7 +804,7 @@ acolchadora, el producto terminado (Heaven/Sueña), un segundo montacargas, insp
 Eduardo SIN panza ni bigote (dueño, 01/11). **Yerson** en costura acullica coca (el cachete es el BOLO, nunca enfermedad; ojos grandes; habla de coca despalada, bolo, bico). Solo dibujo.
 ⚠️ `depFundir` junta lo fijo, también en `depAmbiente` (lo comparten los camiones 3D de Administración): algo que se mueva o se toque no va ahí.
 ⚠️ Un camino terminado queda `null` (`depVidaMover`). `tests/test_fabrica_vida.js` (54 con `PATIO_THREE`).
-🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; PUBLICADO 10/11, versión 2026-11-10-b, `SHA_PUB`): las posturas se mezclan
+🎬 **Movimientos con peso** (§4pg, 10/11, dueño: *«mejora mis animaciones 3D»*; PUBLICADO 10/11, versión 2026-11-10-b, `6c25405`): las posturas se mezclan
 (`depVidaPoseDe` → `depVidaAnimar`), se camina arrancando y frenando (`depVidaMover`: `Q.v`, `Q.ac`, `P.fase`), los giros de parado van de a poco
 (⚠️ un giro NUEVO de alguien de `VIDA.q` va con `depVidaGira`/`depMirarA`, nunca `rotation.y=` a mano), el perro se sienta, el montacargas cabecea
 (`depFabCabeceo`), el colchón y la carga caen (`depFabCaer`, `depCae`, `depRebote`) y la cámara entra bajando la primera vez (`W.entro`). Con
