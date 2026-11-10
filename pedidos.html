@@ -1080,14 +1080,13 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .mys-tab tr.mys-ret td:nth-child(2){color:var(--teal-dk)}
 .mys-blq{margin-bottom:14px}
 .mys-sal .mys-de-in{display:none}
-/* en el celular los Saldos van con Cuenta (y debajo «de qué es») · Debe · Haber · Saldo: el saldo queda a la vista sin deslizar */
+/* en el celular los Saldos van en dos columnas: la Cuenta (con lo que cobró, lo retirado y de qué es, debajo del nombre) y su Saldo, a la vista
+   sin deslizar. El debe y el haber de cada asiento están en el Mayor, al tocar la cuenta. */
 @media (max-width:560px){
-  .mys-sal th:nth-child(2),.mys-sal td:nth-child(2),.mys-sal th:nth-child(6),.mys-sal td:nth-child(6){display:none}
-  .mys-sal .mys-de-in{display:block;font-size:.74rem;font-weight:400;margin-top:3px;line-height:1.35}
-  .mys-sal th,.mys-sal td{padding:6px 3px}
-  .mys-sal th.m{white-space:normal}
-  .mys-sal th.m span{display:none}
-  .mys-sal td.m{font-size:.7rem;letter-spacing:-.01em}
+  .mys-sal th:nth-child(2),.mys-sal td:nth-child(2),.mys-sal th:nth-child(3),.mys-sal td:nth-child(3),
+  .mys-sal th:nth-child(4),.mys-sal td:nth-child(4),.mys-sal th:nth-child(6),.mys-sal td:nth-child(6){display:none}
+  .mys-sal .mys-de-in{display:block;font-size:.76rem;font-weight:400;margin-top:3px;line-height:1.4}
+  .mys-sal .mys-dh{color:var(--muted)}
 }
 .cua-alerta{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-lt);font-size:.83rem}
 .cua-alerta:last-child{border-bottom:none}
@@ -15144,7 +15143,7 @@ function efdPintar(){
     } else if(o.saldo<-0.005) de='<span style="color:var(--red)">⚠️ se retiró más de lo cobrado</span>';
     return '<tr class="efe-fila" data-k="'+esc(o.k)+'" onclick="efdPersona(this.getAttribute(\'data-k\'))" style="cursor:pointer" title="Ver el mayor de esta cuenta">'+
       '<td><b>Caja · '+esc(o.nombre)+'</b>'+(o.chofer?' <span class="badge b-amber" style="font-size:.6rem">🚚 chofer</span>':'')+' <span class="efe-ojo">👁</span>'+
-        (de?('<div class="mys-de-in">'+de+'</div>'):'')+'</td>'+
+        '<div class="mys-de-in"><span class="mys-dh">Cobró '+fmtBs(o.debe)+' · retirado '+fmtBs(o.haber)+'</span>'+(de?('<br>'+de):'')+'</div></td>'+
       '<td class="m">'+bs(o.ini)+'</td><td class="m">'+bs(o.debe)+'</td><td class="m">'+bs(o.haber,'var(--teal-dk)')+'</td>'+
       '<td class="m">'+(Math.abs(o.saldo)<0.005?'<span class="efe-ok">✅ 0</span>':('<b style="color:var(--red)">'+fmtBs(o.saldo)+'</b>'))+'</td>'+
       '<td>'+de+'</td></tr>';
@@ -52816,7 +52815,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-09-d';
+var PANEL_V='2026-11-10-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

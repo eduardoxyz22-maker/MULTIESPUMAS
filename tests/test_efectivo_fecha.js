@@ -183,12 +183,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
     return out;
   });
   if(r.falta){ chk('existe abrirEfectivoFecha', false); console.log('\n'+PASS+' bien · '+FAIL+' mal'); await browser.close(); process.exit(1); }
-  /* 10i en el celular (390 px) los Saldos dejan el saldo a la vista: sin «Saldo al <ayer>» ni la columna «De qué es» (va debajo del nombre) */
+  /* 10i en el celular (390 px) los Saldos van en dos columnas, la cuenta (con lo cobrado, lo retirado y de qué es debajo del nombre) y su saldo */
   await page.setViewportSize({ width:390, height:844 });
   const cel = await page.evaluate(async () => {
     abrirEfectivoFecha('', ''); await new Promise(function(r){ setTimeout(r, 150); });
     var th=document.querySelector('.mys-sal th:nth-child(2)'), th6=document.querySelector('.mys-sal th:nth-child(6)'), de=document.querySelector('.mys-sal .mys-de-in'), tw=document.querySelector('#efd .tw');
-    var o={ th2:th?getComputedStyle(th).display:'', th6:th6?getComputedStyle(th6).display:'', de:de?getComputedStyle(de).display:'', sw:document.documentElement.scrollWidth,
+    var th3=document.querySelector('.mys-sal th:nth-child(3)'); var o={ th3:th3?getComputedStyle(th3).display:'', deTxt:de?de.innerText:'', th2:th?getComputedStyle(th).display:'', th6:th6?getComputedStyle(th6).display:'', de:de?getComputedStyle(de).display:'', sw:document.documentElement.scrollWidth,
             tabla:(document.querySelector('.mys-sal')||{}).scrollWidth||0, caja:tw?tw.clientWidth:0 };
     closeModal(); return o;
   });
@@ -252,7 +252,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
         /Aparte, 1 cuenta con Bs 500,00 retirado de más/.test(r.txtNeg) && /retirado de más/.test(r.copiaNeg) && /TOTAL SIN RECOGER/.test(r.copiaNeg), [r.neg9, r.txtNeg.slice(0,400), r.copiaNeg.slice(-300)]);
   chk('10g el Mayor de Carola: el retiro dice «no tapa ningún cobro» y la lista dice «retirado de más»', /no tapa ningún cobro/.test(r.txtCarola) && /Retirado de más/.test(r.txtCarola) && /Total = saldo al 09\/11 −?-?Bs ?500|Total = saldo al 09\/11 Bs -500|Total = saldo al 09\/11 -Bs 500/.test(r.txtCarola), r.txtCarola.slice(-600));
   chk('10h un cobro tildado con fecha posterior al retiro se avisa en el Mayor', /posterior al retiro/.test(r.txtMaria), r.txtMaria.slice(0,800));
-  chk('10i celular: el saldo a la vista (sin deslizar) y la página no se sale de costado', cel.th2==='none' && cel.th6==='none' && cel.de==='block' && cel.sw<=390 && cel.tabla<=cel.caja+1, cel);
+  chk('10i celular: el saldo a la vista (sin deslizar) y la página no se sale de costado', cel.th2==='none' && cel.th3==='none' && cel.th6==='none' && cel.de==='block' && /Cobró Bs .* retirado Bs /.test(cel.deTxt) && cel.sw<=390 && cel.tabla<=cel.caja+1, cel);
   chk('8j sin errores de la página', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
