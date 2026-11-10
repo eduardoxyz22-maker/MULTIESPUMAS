@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pi — ↩️ «LO DEMÁS SE ENTREGÓ EN TIENDA» TACHABA EL COLCHÓN (10/11; dueño, con la ficha del 11-097: *«¿por qué aparece marcado si la observación dice entregar colchón, lo demás ya se entregó?»*; EN LA RAMA, espera «publica»)
+### §4pi — ↩️ «LO DEMÁS SE ENTREGÓ EN TIENDA» TACHABA EL COLCHÓN (10/11; dueño, con la ficha del 11-097: *«¿por qué aparece marcado si la observación dice entregar colchón, lo demás ya se entregó?»*; PUBLICADO 10/11, versión 2026-11-10-c, dueño: «Si publica»)
   Nota: «ESTARA EN CASA SOLO HASTA LAS 10 AM-TOMAR EN CUENTA X FAVOR--ENTREGAR SOLO EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA». `fichaNoLlevar`
   parte la frase en «SOLO» y le quedaba «EL COLCHON-LO DEMAS SE ENTREGO EN TIENDA»: nombraba COLCHON en una frase de «se entregó» → tachaba el
   colchón (lo único que había que llevar) y la ficha decía «0 bultos · nada que cargar».
