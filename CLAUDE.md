@@ -1760,7 +1760,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer); sin Kommo, no sale (`waBdDomingo_`). 🔒 Bloki no le muestra saldos de clientes a Logística sin la
   contraseña (`blokiPlataNo`). 📅 «Sábado en la tarde» ofrece pasarlo al lunes (o el próximo hábil) a la tarde (`obsRevSabMover`, `OBS_REV_MOVIDO`).
 
-## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; en la rama, versión 2026-11-10-g)
+## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11, versión 2026-11-10-g, `4f830a3`)
 El 11-096 (entrega 13/11) salió ENTREGADO en Mis pedidos y no había forma de saber quién: la planilla no guarda historia del ✅. Ahora cada guardado
 que cambia `entregado` deja `eH` en cada producto (últimas 8: puesto/sacado, cuándo, quién = `quienEdita()`, aparato `entAparato`, desde dónde
 `entDonde`, para qué día). `entHistAnotar` en `guardarDurable` y `apiSave`, contra `ENT_SRV` (`mergePending`/`aplicarSello`); un cambio de OTRA página

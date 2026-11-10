@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pl — 🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11; dueño: *«¿algún pedido de Mirian y Andrea pasó de entregado a no entregado?»* → *«salía como entregado y era fecha 13»* → *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; en la rama, versión 2026-11-10-g, espera «publica»)
+### §4pl — 🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11; dueño: *«¿algún pedido de Mirian y Andrea pasó de entregado a no entregado?»* → *«salía como entregado y era fecha 13»* → *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11 (dueño: «Publica»), versión 2026-11-10-g, `4f830a3`)
 
 **El caso.** El 11-096 (Yohana Moreno García, de Mirian, entrega vie 13/11 AM, en producción en Moreno) salía con el sello «ENTREGADO» en Mis
 pedidos (foto del dueño) y la ficha de Administración lo mostraba sin ✅. La planilla leída a las 15:30 decía NO entregado, último cambio 15:25
