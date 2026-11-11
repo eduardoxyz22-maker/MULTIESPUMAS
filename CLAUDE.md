@@ -2884,6 +2884,16 @@ GitHub → Actions → **Generar Panel Heaven (Kommo → GitHub Pages)** → **R
 El botón "Actualizar" del dashboard dispara esa misma corrida por el Worker de Cloudflare (token de GitHub) y espera hasta 12 min mostrando el
 tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía a los 3,5 min sin avisar). `tests/test_actualizar_espera.js`.
 
+## 🎬 Estudio Creativo (11/11; dueño: *«un agente que estudie la competencia, otro los nichos, otro lo creativo, otro que publique y haga seguimiento a la publicidad, y otro que dirija»*)
+- El DIRECTOR es la skill **`/estudio`** (`.claude/skills/estudio/SKILL.md`): habla con el dueño y reparte a los cuatro agentes de
+  `.claude/agents/`: `estudio-competencia` (Biblioteca de anuncios de Meta + web; parte de `comparativo_precios.html`), `estudio-nichos`
+  (dashboard `PANEL_DATA`, `rotacion.html`, web), `estudio-creativo` (conceptos, textos, guiones 9:16, imágenes; fotos de `catalogo/`) y
+  `estudio-pauta` (Meta Ads: arma TODO EN PAUSA y hace el seguimiento). Los subagentes no se llaman entre ellos: los coordina la sesión principal.
+- 🛑 Activar, subir presupuesto o borrar en Meta = SOLO con un «sí» del dueño a eso. La conexión de Meta tiene cuentas de OTROS negocios
+  (dental, Griller, Ferromarc, AKME…): la cuenta se elige por el NOMBRE del cliente («Colchones Heaven BO» para Heaven).
+- Sirve para cualquier negocio del dueño: la ficha de cada cliente y lo hecho en cada ciclo van en Google Drive, carpeta «Estudio Creativo».
+  🔐 Nada de eso (informes, gastos, resultados, ids de cuentas) va al repo: es público.
+
 ## Reglas de oro
 - NO pushear a `main` mientras el workflow del panel corre (el push del bot falla en silencio).
 - Validar `generar.py` con `ast.parse` y el template con `node --check` antes de pushear.
