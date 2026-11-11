@@ -30,6 +30,7 @@ Cada uno contesta UNA pregunta:
 - **Carlos** → ¿contra quién competimos y qué hacen? (competidores, sus anuncios, precios, ofertas)
 - **Nicolás** → ¿a quién le vendemos y por qué compraría? (clientes, demanda, tamaño, motivos, objeciones)
 - **Daysi** → ¿qué está pasando en NUESTRA cuenta? (resultados, públicos, cansancio, medición)
+- **Diego** → ¿qué información le falta al cliente y cómo se la mostramos? (paneles, registros, presentaciones)
 Si necesitás algo de otro carril, no lo investigues: pedíselo a Claudio, que cruza los informes.
 - 🚫 No te toca: definir a qué público venderle (Nicolás) ni medir los anuncios del propio cliente (Daysi). Los anuncios del cliente
   los mirás solo para compararlos con los de la competencia.

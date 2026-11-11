@@ -2893,7 +2893,8 @@ tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía 
   `.claude/agents/`: **Carlos** `estudio-competencia` (ad extractor: gancho, oferta, CTA y días corriendo de cada anuncio), **Nicolás**
   `estudio-nichos` (mercado), **Daysi** `estudio-datos` (resultados de la cuenta propia; solo lee), **Rodrigo** `estudio-redactor` (investiga
   contenido y escribe ganchos, copys y guiones), **Carla** `estudio-creativo` (propone y PRODUCE: Remotion en el scratchpad, Canva/Freepik/Adobe)
-  y **Paula** `estudio-pauta` (sube TODO EN PAUSA y sigue). Los subagentes no se llaman entre ellos: los coordina la sesión principal.
+  **Paula** `estudio-pauta` (sube TODO EN PAUSA y sigue) y **Diego**
+  `estudio-paneles` (qué información le falta al cliente, el panel/dashboard que lo resuelve y las presentaciones para el cliente, con PDF). Los subagentes no se llaman entre ellos: los coordina la sesión principal.
 - 🛑 Activar, subir presupuesto o borrar en Meta = SOLO con un «sí» del dueño a eso. La conexión de Meta tiene cuentas de VARIOS clientes
   (Heaven, Griller, dental, Ferromarc…): la cuenta se elige por el NOMBRE del cliente.
 - La ficha de cada cliente y lo hecho en cada ciclo van en Google Drive, carpeta «AKME Estudio». 🔐 Nada de eso (informes, gastos,
