@@ -2884,17 +2884,19 @@ GitHub → Actions → **Generar Panel Heaven (Kommo → GitHub Pages)** → **R
 El botón "Actualizar" del dashboard dispara esa misma corrida por el Worker de Cloudflare (token de GitHub) y espera hasta 12 min mostrando el
 tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía a los 3,5 min sin avisar). `tests/test_actualizar_espera.js`.
 
-## 🎬 Estudio Creativo (11/11; dueño: *«un agente que estudie la competencia, otro los nichos, otro lo creativo, otro que publique y haga seguimiento a la publicidad, y otro que dirija»*)
-- El DIRECTOR es la skill **`/estudio`** (`.claude/skills/estudio/SKILL.md`): habla con el dueño y reparte a seis agentes de `.claude/agents/`:
-  `estudio-competencia` (ad extractor: competidores, precios y anuncio por anuncio gancho, oferta, CTA y días corriendo), `estudio-nichos`
-  (mercado: a quién venderle y cuánto cuesta probar), `estudio-datos` (los resultados de la cuenta propia; solo lee), `estudio-redactor`
-  (investiga contenido y escribe ganchos, copys y guiones), `estudio-creativo` (propone y PRODUCE: videos en Remotion en el scratchpad,
-  diseños en Canva/Freepik/Adobe) y `estudio-pauta` (sube TODO EN PAUSA lo que escribió el redactor y produjo el creativo, y sigue).
-  Los subagentes no se llaman entre ellos: los coordina la sesión principal. Dueño, 11/11: los copys los escribe el redactor, no la pauta.
-- 🛑 Activar, subir presupuesto o borrar en Meta = SOLO con un «sí» del dueño a eso. La conexión de Meta tiene cuentas de OTROS negocios
-  (dental, Griller, Ferromarc, AKME…): la cuenta se elige por el NOMBRE del cliente («Colchones Heaven BO» para Heaven).
-- Sirve para cualquier negocio del dueño: la ficha de cada cliente y lo hecho en cada ciclo van en Google Drive, carpeta «Estudio Creativo».
-  🔐 Nada de eso (informes, gastos, resultados, ids de cuentas) va al repo: es público.
+## 🎬 AKME Estudio — el estudio creativo (11/11; dueño: *«un agente que estudie la competencia, otro los nichos, otro lo creativo, otro que publique y haga seguimiento a la publicidad, y otro que dirija»*)
+- Trabaja bajo la marca **AKME Estudio** (web: https://eduardoxyz22-maker.github.io/AKME-ESTUDIO/, repo público `eduardoxyz22-maker/akme-estudio`).
+  Todo informe o propuesta lleva su identidad (`.claude/skills/claudio/marca-akme.md`: logo, blanco/tinta, lima que solo marca, Archivo);
+  los ANUNCIOS llevan la marca del cliente. ⚠️ La regla «lo que se publica al dueño va con los colores del panel» es del panel de Heaven, no del estudio.
+- El DIRECTOR es **Claudio**, la skill **`/claudio`** (`.claude/skills/claudio/SKILL.md`): el único que dialoga con el dueño. Su equipo, en
+  `.claude/agents/`: **Carlos** `estudio-competencia` (ad extractor: gancho, oferta, CTA y días corriendo de cada anuncio), **Nicolás**
+  `estudio-nichos` (mercado), **Daysi** `estudio-datos` (resultados de la cuenta propia; solo lee), **Rodrigo** `estudio-redactor` (investiga
+  contenido y escribe ganchos, copys y guiones), **Carla** `estudio-creativo` (propone y PRODUCE: Remotion en el scratchpad, Canva/Freepik/Adobe)
+  y **Paula** `estudio-pauta` (sube TODO EN PAUSA y sigue). Los subagentes no se llaman entre ellos: los coordina la sesión principal.
+- 🛑 Activar, subir presupuesto o borrar en Meta = SOLO con un «sí» del dueño a eso. La conexión de Meta tiene cuentas de VARIOS clientes
+  (Heaven, Griller, dental, Ferromarc…): la cuenta se elige por el NOMBRE del cliente.
+- La ficha de cada cliente y lo hecho en cada ciclo van en Google Drive, carpeta «AKME Estudio». 🔐 Nada de eso (informes, gastos,
+  resultados, ids de cuentas) va a este repo: es público.
 
 ## Reglas de oro
 - NO pushear a `main` mientras el workflow del panel corre (el push del bot falla en silencio).
