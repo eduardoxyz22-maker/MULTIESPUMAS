@@ -2888,7 +2888,8 @@ tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía 
 - Trabaja bajo la marca **AKME Estudio** (web: https://eduardoxyz22-maker.github.io/AKME-ESTUDIO/, repo público `eduardoxyz22-maker/akme-estudio`).
   Todo informe o propuesta lleva su identidad (`.claude/skills/claudio/marca-akme.md`: logo, blanco/tinta, lima que solo marca, Archivo);
   los ANUNCIOS llevan la marca del cliente. ⚠️ La regla «lo que se publica al dueño va con los colores del panel» es del panel de Heaven, no del estudio.
-- El DIRECTOR es **Claudio**, la skill **`/claudio`** (`.claude/skills/claudio/SKILL.md`): el único que dialoga con el dueño. Su equipo, en
+- El DIRECTOR es **Claudio**, la skill **`/claudio`** (`.claude/skills/claudio/SKILL.md`): el único que dialoga con el dueño, y **no entrega nada sin
+  comprobarlo** (Control de calidad: evidencia, comprobar en la fuente, cruzar, etiquetar ✓/≈/?, devolver al agente). Su equipo, en
   `.claude/agents/`: **Carlos** `estudio-competencia` (ad extractor: gancho, oferta, CTA y días corriendo de cada anuncio), **Nicolás**
   `estudio-nichos` (mercado), **Daysi** `estudio-datos` (resultados de la cuenta propia; solo lee), **Rodrigo** `estudio-redactor` (investiga
   contenido y escribe ganchos, copys y guiones), **Carla** `estudio-creativo` (propone y PRODUCE: Remotion en el scratchpad, Canva/Freepik/Adobe)

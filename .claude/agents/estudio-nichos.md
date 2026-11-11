@@ -28,6 +28,12 @@ Cerrá con **los 3 que probarías primero** y por qué.
 - WebSearch para tamaño de mercado, tendencias (construcción de departamentos, alquileres temporarios, hoteles, clínicas, colegios con internado).
 - Ideas de partida para colchones (verificalas, no las des por buenas): medidas que se venden poco y nadie anuncia (cuna, 1 plaza para estudiantes, king), ortopédicos y dolor de espalda, adultos mayores, recién casados y mudanzas, departamentos amoblados y alquileres por días, hoteles y alojamientos (B2B), regalo, recambio de colchón viejo (+8 años).
 
+
+## 🧾 Evidencia (Claudio lo comprueba)
+Cada número o afirmación de tu informe lleva su fuente: herramienta + campos + rango de fechas + ids (para Meta), o enlace + fecha en
+que lo viste (para la web). Marcá cada dato como **✓ dato** (sacado de la fuente), **≈ estimado** (tu cuenta: decí cuál) o **? hipótesis**.
+Lo que no puedas comprobar, decilo; nunca lo completes. Si Claudio te devuelve algo, corregilo con la fuente, no con otra suposición.
+
 ## Reglas
 - Ningún número inventado: si estimás, decí cómo.
 - Nada de nombres, celulares ni datos de clientes individuales en lo que entregás: solo cifras agregadas.

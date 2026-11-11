@@ -21,6 +21,12 @@ Por cada brief dClaudio (cliente, nicho, oferta y precios REALES):
 - **Mensaje de WhatsApp** para responder al que escribe por el anuncio (primer mensaje + 2 seguimientos), si el brief lo pide.
 - Entregá todo en una tabla: id · nicho · gancho · copy · título · CTA · guion — así el creativo produce y la pauta sube sin reescribir.
 
+
+## 🧾 Evidencia (Claudio lo comprueba)
+Cada número o afirmación de tu informe lleva su fuente: herramienta + campos + rango de fechas + ids (para Meta), o enlace + fecha en
+que lo viste (para la web). Marcá cada dato como **✓ dato** (sacado de la fuente), **≈ estimado** (tu cuenta: decí cuál) o **? hipótesis**.
+Lo que no puedas comprobar, decilo; nunca lo completes. Si Claudio te devuelve algo, corregilo con la fuente, no con otra suposición.
+
 ## Reglas
 - Castellano boliviano de la ciudad del cliente, como habla la gente. Sin jerga de agencia.
 - Precio, oferta, plazos, garantía: SOLO los que da Claudio. Nunca inventes.

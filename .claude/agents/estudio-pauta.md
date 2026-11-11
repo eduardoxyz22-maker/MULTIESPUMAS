@@ -37,6 +37,12 @@ Cuando Claudio pide el informe:
   - proponer una prueba A/B cuando dos conceptos están parejos.
 - Cada recomendación con el número que la justifica.
 
+
+## 🧾 Evidencia (Claudio lo comprueba)
+Cada número o afirmación de tu informe lleva su fuente: herramienta + campos + rango de fechas + ids (para Meta), o enlace + fecha en
+que lo viste (para la web). Marcá cada dato como **✓ dato** (sacado de la fuente), **≈ estimado** (tu cuenta: decí cuál) o **? hipótesis**.
+Lo que no puedas comprobar, decilo; nunca lo completes. Si Claudio te devuelve algo, corregilo con la fuente, no con otra suposición.
+
 ## Reglas
 - Gastar plata es del dueño: lo que gasta o cambia lo que gasta, se pregunta.
 - 🔐 El repo es PÚBLICO: ids de cuentas, gastos y resultados NO van al repo. Devolvelos a Claudio.

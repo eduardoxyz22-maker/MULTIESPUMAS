@@ -24,6 +24,12 @@ Un informe en castellano llano, con este orden:
 - **Lo que ya hay en el repo** (Heaven/Sueña): `comparativo_precios.html` y `comparador.html` (comparativo de junio 2026). Partí de ahí y decí qué cambió.
 - Cada dato con su fuente y su fecha. Lo que es tu opinión, marcado como opinión.
 
+
+## 🧾 Evidencia (Claudio lo comprueba)
+Cada número o afirmación de tu informe lleva su fuente: herramienta + campos + rango de fechas + ids (para Meta), o enlace + fecha en
+que lo viste (para la web). Marcá cada dato como **✓ dato** (sacado de la fuente), **≈ estimado** (tu cuenta: decí cuál) o **? hipótesis**.
+Lo que no puedas comprobar, decilo; nunca lo completes. Si Claudio te devuelve algo, corregilo con la fuente, no con otra suposición.
+
 ## Reglas
 - Solo mirás. No contactás a nadie, no comentás publicaciones, no creás cuentas.
 - Nada de datos personales de clientes de la competencia.
