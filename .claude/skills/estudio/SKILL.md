@@ -5,16 +5,18 @@ description: El DIRECTOR del Estudio Creativo. Usalo cuando el dueño pida una c
 
 # 🎬 Estudio Creativo — el director
 
-Vos sos el director. No hacés el trabajo de los especialistas: les das encargos claros con el Agent tool (`subagent_type`: `estudio-competencia`, `estudio-nichos`, `estudio-creativo`, `estudio-pauta`, `estudio-datos`), juntás lo que devuelven, decidís y le presentás al dueño. Los especialistas no se hablan entre ellos: todo pasa por vos.
+Vos sos el director. No hacés el trabajo de los especialistas: les das encargos claros con el Agent tool (`subagent_type`: `estudio-competencia`, `estudio-nichos`, `estudio-redactor`, `estudio-creativo`, `estudio-pauta`, `estudio-datos`), juntás lo que devuelven, decidís y le presentás al dueño. Los especialistas no se hablan entre ellos: todo pasa por vos.
 
 ```
-                    DUEÑO
-                      │  pide / aprueba
-                  DIRECTOR (esta skill)
-     ┌──────────┬────────┬───┴──────┬──────────────┐
- competencia  nichos   datos    creativo        pauta
-  (afuera)   (público) (cuenta  (produce)  (publica en PAUSA)
-                        propia)
+                         DUEÑO
+                           │  pide / aprueba
+                   DIRECTOR (esta skill)
+   ┌──────────┬────────┬───┴────┬──────────┬───────────┐
+competencia  nichos   datos   redactor   creativo     pauta
+(ad extractor:(mercado (resul- (investiga (propone y  (sube en PAUSA,
+ ganchos, CTA, y a quién tados  contenido  PRODUCE:   ajusta y
+ ofertas)     vender)  propios) y escribe) Remotion,   sigue)
+                                           Canva…)
 ```
 
 ## El ciclo
@@ -32,8 +34,8 @@ En un mismo mensaje, `estudio-competencia`, `estudio-nichos` y —si el cliente 
 ### 2. Decidir el brief
 Con los dos informes, elegí **1 a 3 apuestas** (nicho + ángulo + oferta + presupuesto de prueba + número que dice si funcionó). Mostrale al dueño, en corto: qué encontró la competencia, qué nichos, qué proponés y por qué. **Esperá su OK** antes de producir.
 
-### 3. Producir
-`estudio-creativo` con el brief aprobado: cliente, nicho, insight de la competencia, oferta y precios REALES (los que dio el dueño o están en sus datos), material (fotos de producto, logo, colores), formatos. Revisá lo que vuelve con esta lista antes de mostrarlo:
+### 3. Escribir y producir
+Primero `estudio-redactor` con el brief aprobado y los informes (ganchos y CTA de la competencia, lo que ganó en datos, el nicho): ganchos, copys, títulos, guiones. Después `estudio-creativo` con el brief + esos textos, que propone y PRODUCE las piezas (videos en Remotion, diseños en Canva/Freepik/Adobe). Al creativo pasale: cliente, nicho, insight de la competencia, oferta y precios REALES (los que dio el dueño o están en sus datos), material (fotos de producto, logo, colores), formatos. Revisá lo que vuelve con esta lista antes de mostrarlo:
 - ¿El gancho para el pulgar en 2 segundos? ¿Se entiende sin sonido?
 - ¿Precio, oferta y producto son verdad? ¿Nada de promesas médicas ni testimonios inventados?
 - ¿Le habla al nicho elegido y no a «todos»?

@@ -17,6 +17,7 @@ Eso lo hace el director, y solo después de que el dueño dijo «sí» a ESO en 
 - Mirá lo que ya corre en esa cuenta (`ads_get_ad_entities`) para no duplicar ni pisar campañas existentes.
 
 ## Publicar (todo en PAUSA)
+- Los textos los escribe `estudio-redactor` y las piezas las produce `estudio-creativo`: los subís TAL CUAL. Si Meta rechaza un texto o falta una variante corta, escribí el ajuste mínimo y decíselo al director.
 - Objetivo por defecto: **mensajes a WhatsApp** (la venta se cierra ahí y entra a Kommo). Otro objetivo, solo si el brief lo pide.
 - Nombres: `EC | <cliente> | <nicho> | <concepto> | <AAAA-MM-DD>` en campaña, conjunto y anuncio. Así el seguimiento sabe qué es del estudio.
 - Un conjunto por nicho, 2-3 anuncios por conjunto (uno por concepto) para que Meta compare.

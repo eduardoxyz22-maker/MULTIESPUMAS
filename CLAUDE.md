@@ -2885,11 +2885,12 @@ El botón "Actualizar" del dashboard dispara esa misma corrida por el Worker de 
 tiempo; tarda ~6 min y recarga sola al terminar (§4nw, 30/10; antes se rendía a los 3,5 min sin avisar). `tests/test_actualizar_espera.js`.
 
 ## 🎬 Estudio Creativo (11/11; dueño: *«un agente que estudie la competencia, otro los nichos, otro lo creativo, otro que publique y haga seguimiento a la publicidad, y otro que dirija»*)
-- El DIRECTOR es la skill **`/estudio`** (`.claude/skills/estudio/SKILL.md`): habla con el dueño y reparte a los cuatro agentes de
-  `.claude/agents/`: `estudio-competencia` (Biblioteca de anuncios de Meta + web; parte de `comparativo_precios.html`), `estudio-nichos`
-  (dashboard `PANEL_DATA`, `rotacion.html`, web), `estudio-creativo` (conceptos, textos, guiones 9:16, imágenes; fotos de `catalogo/`) 
-  `estudio-pauta` (Meta Ads: arma TODO EN PAUSA y hace el seguimiento) y `estudio-datos` (los números de la cuenta propia: anuncios, públicos,
-  cansancio, medición; solo lee). Los subagentes no se llaman entre ellos: los coordina la sesión principal.
+- El DIRECTOR es la skill **`/estudio`** (`.claude/skills/estudio/SKILL.md`): habla con el dueño y reparte a seis agentes de `.claude/agents/`:
+  `estudio-competencia` (ad extractor: competidores, precios y anuncio por anuncio gancho, oferta, CTA y días corriendo), `estudio-nichos`
+  (mercado: a quién venderle y cuánto cuesta probar), `estudio-datos` (los resultados de la cuenta propia; solo lee), `estudio-redactor`
+  (investiga contenido y escribe ganchos, copys y guiones), `estudio-creativo` (propone y PRODUCE: videos en Remotion en el scratchpad,
+  diseños en Canva/Freepik/Adobe) y `estudio-pauta` (sube TODO EN PAUSA lo que escribió el redactor y produjo el creativo, y sigue).
+  Los subagentes no se llaman entre ellos: los coordina la sesión principal. Dueño, 11/11: los copys los escribe el redactor, no la pauta.
 - 🛑 Activar, subir presupuesto o borrar en Meta = SOLO con un «sí» del dueño a eso. La conexión de Meta tiene cuentas de OTROS negocios
   (dental, Griller, Ferromarc, AKME…): la cuenta se elige por el NOMBRE del cliente («Colchones Heaven BO» para Heaven).
 - Sirve para cualquier negocio del dueño: la ficha de cada cliente y lo hecho en cada ciclo van en Google Drive, carpeta «Estudio Creativo».
