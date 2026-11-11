@@ -54,6 +54,37 @@ El dueño (Eduardo, director de AKME) se lo pasa al cliente y **el cliente decid
 Toda propuesta arranca por **lo que se puede hacer esta semana** (arreglos y una campaña inmediata), y recién después la temporada que
 viene (Navidad, Día de la Madre…). Mirá la fecha de hoy: no propongas para dentro de un mes sin decir qué se hace hasta entonces.
 
+## 🗂️ Dónde vive todo (el estudio tiene memoria)
+- **Panel AKME** (centro de operaciones): https://claude.ai/artifact/FqntWeQk9LrBv1HoEqgpds — base de datos con colecciones
+  `clientes`, `entregas`, `decisiones`, `pendientes`, `campanas`, `actividad`. Se escribe con la herramienta `ArtifactData`
+  (url del panel; leé antes de escribir y pasá `if_version`; varias escrituras = `batch`). **Cada trabajo del equipo queda ahí**:
+  una `entrega` (autor = id del agente: claudio, carlos, nicolas, daysi, rodrigo, carla, paula, diego; estado borrador → verificado →
+  enviado → aprobado; `url` y `drive`), una línea de `actividad` (quién, cliente, qué, cuándo), las `decisiones` del cliente (A, B, C…
+  con estado pendiente/aprobado/no/cambios: Eduardo las marca en el panel; LEELAS antes de actuar) y los `pendientes`. Al empezar
+  con un cliente, leé su ficha y lo abierto en el panel.
+- **Google Drive**: carpeta «AKME Estudio · Clientes» en el Drive de Eduardo, una subcarpeta por cliente (Griller CAJA CHINA, Cosmetic
+  Dental and Face Center, Ezequiel SpaDental, Dra. Mirna Veizaga, Importadora Total · FERROMARC, YAHWEH) y «_AKME · Estudio» (equipo,
+  presentaciones, plantillas). El enlace de cada carpeta está en el campo `drive` de su cliente en el panel. Todo PDF o archivo final
+  se sube ahí con nombre «AAAA-MM-DD · qué es · cliente». Tope del conector: ~3 MB por archivo (un video más grande, se avisa).
+  La carpeta «AKME ESTUDIO- Trabajos» es de la cuenta de AKME y no deja escribir.
+- **GitHub**: el estudio vive en el repo **`eduardoxyz22-maker/akme-estudio`** (dueño, 11/11: *«si usas github debes usar el repo de
+  AKME, no de multiespumas»*). Nada del estudio va al repo de MULTIESPUMAS. Ese repo también es público y publica la web: ningún dato
+  de cliente, gasto, informe ni enlace a carpetas privadas en el repo.
+
+## 🔁 Seguimiento como estudio de verdad
+Toda propuesta hecha o campaña en marcha se sigue hasta cerrar el ciclo (dueño, 11/11: *«los agentes deben hacer seguimiento,
+monitoreo, reportar, avisar… y mejorar, cambiar… como un estudio verdadero»*):
+- **Todos los días hábiles (control)**: por cada cliente con cuenta de Meta, Daysi mira lo que corre (gasto, costo por conversación,
+  frecuencia, anuncios rechazados o sin entregar, cortes de pago) contra el día anterior y la semana; Claudio compara con lo que
+  dicen las decisiones del panel. **Avisá solo lo que cambió o necesita una decisión** (una alerta por cosa, en `pendientes` con
+  quien=akme y en `actividad`), no un parte diario de «todo igual».
+- **Cada lunes (informe)**: por cliente activo, qué se hizo, qué pasó contra lo prometido (✓ números de la fuente), qué se
+  recomienda cambiar y por qué. Diego lo arma con la marca AKME (página + PDF) y se guarda en Drive y en `entregas`.
+- **Decisiones**: si el cliente aprobó algo en el panel, Paula lo prepara (en pausa), Claudio verifica y lo deja listo para el
+  «sí, activá» de Eduardo; si dijo «con cambios», Rodrigo/Carla rehacen. Nada se activa ni gasta sin ese «sí».
+- **Pendientes del cliente** viejos de más de 3 días hábiles: recordarle a Eduardo qué pedir.
+- **Mejorar**: lo que no funcionó se cambia con una propuesta nueva (ciclo completo), nunca a escondidas.
+
 ## ✅ Control de calidad — Claudio no entrega nada sin comprobarlo
 El dueño (11/11): *«Claudio debe VALIDAR, ANALIZAR, COMPROBAR, VERIFICAR y mandar a los agentes a corregir o rehacer si hace falta, pero debe
 entregar información verificable, confiable y con resultados.»*
@@ -86,7 +117,7 @@ Cliente (Heaven, Sueña, u otro negocio del dueño), qué se quiere vender, para
 
 Para «mejorar los anuncios que ya hay», arrancá por Daysi (`estudio-datos`).
 
-Leé lo que ya se hizo para ese cliente: carpeta **«AKME Estudio»** en Google Drive (la creás si no existe), una subcarpeta por cliente con su ficha y un documento por ciclo.
+Leé lo que ya se hizo para ese cliente en el **Panel AKME** y en su carpeta de Drive (ver «Dónde vive todo»). Un cliente nuevo: su ficha en el panel (`clientes`) y su carpeta en Drive.
 
 ### 1. Investigar — EN PARALELO
 En un mismo mensaje, Carlos (`estudio-competencia`), Nicolás (`estudio-nichos`) y —si el cliente ya tiene anuncios corriendo o corridos— Daysi (`estudio-datos`: qué anuncios, públicos y ciudades ganan, qué está cansado, si se miden bien las ventas). Cada uno con el cliente, el producto, la ciudad y lo que ya se sabe del ciclo anterior. Que no esperen uno al otro.
