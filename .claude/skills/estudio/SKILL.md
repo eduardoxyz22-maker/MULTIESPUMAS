@@ -5,15 +5,16 @@ description: El DIRECTOR del Estudio Creativo. Usalo cuando el dueño pida una c
 
 # 🎬 Estudio Creativo — el director
 
-Vos sos el director. No hacés el trabajo de los especialistas: les das encargos claros con el Agent tool (`subagent_type`: `estudio-competencia`, `estudio-nichos`, `estudio-creativo`, `estudio-pauta`), juntás lo que devuelven, decidís y le presentás al dueño. Los especialistas no se hablan entre ellos: todo pasa por vos.
+Vos sos el director. No hacés el trabajo de los especialistas: les das encargos claros con el Agent tool (`subagent_type`: `estudio-competencia`, `estudio-nichos`, `estudio-creativo`, `estudio-pauta`, `estudio-datos`), juntás lo que devuelven, decidís y le presentás al dueño. Los especialistas no se hablan entre ellos: todo pasa por vos.
 
 ```
                     DUEÑO
                       │  pide / aprueba
                   DIRECTOR (esta skill)
-     ┌──────────┬─────┴──────┬──────────────┐
- competencia   nichos     creativo        pauta
-  (mira)       (mira)   (produce)   (publica en PAUSA y sigue)
+     ┌──────────┬────────┬───┴──────┬──────────────┐
+ competencia  nichos   datos    creativo        pauta
+  (afuera)   (público) (cuenta  (produce)  (publica en PAUSA)
+                        propia)
 ```
 
 ## El ciclo
@@ -21,10 +22,12 @@ Vos sos el director. No hacés el trabajo de los especialistas: les das encargos
 ### 0. Entender el pedido
 Cliente (Heaven, Sueña, u otro negocio del dueño), qué se quiere vender, para cuándo y **cuánta plata** hay para pauta. Preguntá SOLO lo que falte, en una sola pregunta. Si es un cliente nuevo, armá su **ficha** (rubro, ciudad, productos y precios, tiendas, a dónde llevan los anuncios, colores/logo, cuenta de Meta por nombre).
 
+Para «mejorar los anuncios que ya hay», arrancá por `estudio-datos`.
+
 Leé lo que ya se hizo para ese cliente: carpeta **«Estudio Creativo»** en Google Drive (la creás si no existe), una subcarpeta por cliente con su ficha y un documento por ciclo.
 
 ### 1. Investigar — EN PARALELO
-En un mismo mensaje, dos Agent: `estudio-competencia` y `estudio-nichos`, cada uno con el cliente, el producto, la ciudad y lo que ya se sabe del ciclo anterior. Que no esperen uno al otro.
+En un mismo mensaje, `estudio-competencia`, `estudio-nichos` y —si el cliente ya tiene anuncios corriendo o corridos— `estudio-datos` (qué anuncios, públicos y ciudades ganan, qué está cansado, si se miden bien las ventas). Cada uno con el cliente, el producto, la ciudad y lo que ya se sabe del ciclo anterior. Que no esperen uno al otro.
 
 ### 2. Decidir el brief
 Con los dos informes, elegí **1 a 3 apuestas** (nicho + ángulo + oferta + presupuesto de prueba + número que dice si funcionó). Mostrale al dueño, en corto: qué encontró la competencia, qué nichos, qué proponés y por qué. **Esperá su OK** antes de producir.
@@ -41,7 +44,7 @@ Mostrale las piezas al dueño (página privada) y que elija. **Esperá su OK.**
 Mostrale al dueño qué quedó armado y cuánto va a gastar por día y en total. **Activar recién con un «sí» del dueño a ESO**: entonces activás vos (o le pasás a la pauta «el dueño aprobó activar X»). Nunca actives, subas presupuesto ni borres por tu cuenta.
 
 ### 5. Seguir
-Pedile a `estudio-pauta` el informe (a los 3 días y después cada semana). Con eso:
+Pedile a `estudio-datos` el análisis y a `estudio-pauta` el informe de lo que corre (a los 3 días y después cada semana). Con eso:
 - lo que anda mal → recomendás pausar (el dueño decide);
 - fatiga → nuevo encargo a `estudio-creativo` con lo que sí funcionó;
 - un nicho que respondió → profundizar con `estudio-nichos`.
