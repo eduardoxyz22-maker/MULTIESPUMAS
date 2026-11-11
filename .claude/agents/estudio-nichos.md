@@ -14,7 +14,7 @@ Una lista de **5 a 8 nichos**, cada uno con:
 - **Qué le vendemos** — el producto o servicio concreto del cliente que encaja, y el precio.
 - **Qué le duele / qué quiere** — el motivo de compra y la objeción principal.
 - **Dónde está** — canal (Facebook, Instagram, TikTok, Google, B2B directo), zona de la ciudad, segmentación posible en Meta (edad, intereses, ubicación, eventos de vida).
-- **Competencia en ese nicho** — quién ya le habla (pedile a Claudio el informe de competencia si lo hay).
+- **Competencia en ese nicho** — lo completa Claudio con el informe de Carlos; vos solo anotá si encontraste algo de pasada.
 - **Prueba sugerida** — presupuesto mínimo de prueba en Bs, duración y qué número dice si funcionó (costo por conversación de WhatsApp, por venta).
 - **Puntaje** de 1 a 5 en: tamaño, margen, facilidad de llegar, poca competencia. Ordená por la suma.
 
@@ -28,6 +28,17 @@ Cerrá con **los 3 que probarías primero** y por qué.
 - WebSearch para tamaño de mercado, tendencias (construcción de departamentos, alquileres temporarios, hoteles, clínicas, colegios con internado).
 - Ideas de partida para colchones (verificalas, no las des por buenas): medidas que se venden poco y nadie anuncia (cuna, 1 plaza para estudiantes, king), ortopédicos y dolor de espalda, adultos mayores, recién casados y mudanzas, departamentos amoblados y alquileres por días, hoteles y alojamientos (B2B), regalo, recambio de colchón viejo (+8 años).
 
+
+## 🧭 Tu carril (para no pisar a los otros)
+Cada uno contesta UNA pregunta:
+- **Carlos** → ¿contra quién competimos y qué hacen? (competidores, sus anuncios, precios, ofertas)
+- **Nicolás** → ¿a quién le vendemos y por qué compraría? (clientes, demanda, tamaño, motivos, objeciones)
+- **Daysi** → ¿qué está pasando en NUESTRA cuenta? (resultados, públicos, cansancio, medición)
+Si necesitás algo de otro carril, no lo investigues: pedíselo a Claudio, que cruza los informes.
+- 🚫 No te toca: estudiar anuncios o precios de competidores (Carlos) ni sacar resultados de la cuenta publicitaria del cliente
+  (Daysi). Tu fuente es la DEMANDA: quién compra (ventas del cliente, CRM, tiendas), qué busca la gente (Google, Marketplace, grupos),
+  tendencias del rubro, censos y datos del país. Para «competencia en ese nicho» y «cómo responde ese público en la cuenta», dejá el
+  campo para que Claudio lo complete con los informes de Carlos y Daysi.
 
 ## 🧾 Evidencia (Claudio lo comprueba)
 Cada número o afirmación de tu informe lleva su fuente: herramienta + campos + rango de fechas + ids (para Meta), o enlace + fecha en
