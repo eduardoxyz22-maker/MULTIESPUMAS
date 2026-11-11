@@ -152,7 +152,7 @@ const AVISOS = { v: 1, a: [
   { id: 'av4', k: 'w', pid: 'c6', vend: 'Carola Chavez', cli: 'CLIENTE C6', txt: 'algo', qt: 1762800000000 },                                // quitado: no
   { id: 'av5', k: 'v', pid: 'm1', vend: 'Mauricio Merida', cli: 'CLIENTE M', txt: 'la foto es del 02/11 · la foto es del 03/11' }       // de otro, solo fecha por texto
 ] };
-const PRY = { v: 1, d: { '2026-11-09': { h: '17:10', dt: 7, dr: 17, v: 250000, p: 990000, b: {} }, '2026-11-10': { h: '17:05', dt: 8, dr: 16, v: 287400, p: 1020000, b: {} } } };
+const PRY = { v: 1, d: { '2026-11-09': { h: '17:10', dt: 7, dr: 17, v: 250000, p: 990000, b: {} }, '2026-11-10': { h: '17:05', dt: 8, dr: 16, v: 287400, p: 1020000, b: { suena: [60000, 220000, 'r'], heaven: [227400, 800000, 'c'] } } } };
 const SISTEMA = (id, obs, o) => P(id, '', Object.assign({ oc: '', cliente: 'FILA DEL SISTEMA', fecha: '', turno: '', productos: [], observaciones: obs, ts: TS(HOY, '09:00') }, o || {}));
 const FIX = [
   // Carola: 8 entregas de hoy sin ✅ (7 de mañana, 1 de tarde), una ya ✅, una venta de tienda y un borrador
@@ -326,7 +326,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
         p[3] === 'Juan: 1 prod., Bs 4.500 · Carola: 1 prod., Bs 3.000 · Isabel: 1 prod., Bs 2.000 · Mauricio: 1 prod., Bs 2.000 · Mirian: 1 prod., Bs 1.000 · Maria: 1 prod., Bs 700 · Pedro: 1 prod., Bs 300', p[3]);
     chk('5g {{5}} las entregas de hoy con ✅ (Eduardo también; ni la venta de tienda ni el borrador)', p[4] === '2 de 11 con ✅ · 9 sin marcar', p[4]);
     chk('5h {{6}} Kommo: los leads nuevos de hoy y los sin responder hace más de 1 h (el de las 21:00 todavía no)', p[5] === '31 leads nuevos · 3 sin responder hace más de 1 h', p[5]);
-    chk('5i {{7}} el mes, de la foto de hoy de la proyección', p[6] === 'Bs 287.400 vendidos · proyección Bs 1.020.000 (cálculo de las 17:05)', p[6]);
+    chk('5i {{7}} el mes, de la foto de hoy de la proyección, con lo de cada marca (la más grande primero)', p[6] === 'Bs 287.400 vendidos · proyección Bs 1.020.000 (Heaven Bs 800.000 · Sueña Bs 220.000) (cálculo de las 17:05)', p[6]);
     chk('5j ningún dato con saltos de línea ni de más de 250 letras', p.length === 7 && p.every(t => t.length <= 250 && !/[\r\n\t]/.test(t)), p.map(t => t.length));
     S.limpiar(); poner(HOY + ' 22:30'); S.repaso();
     chk('5k una vez por día (a las 22:30 no se repite)', cd().length === 0, S.salen());
