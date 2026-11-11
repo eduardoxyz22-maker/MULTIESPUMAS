@@ -17357,7 +17357,14 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pl — 🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11; dueño: *«¿algún pedido de Mirian y Andrea pasó de entregado a no entregado?»* → *«salía como entregado y era fecha 13»* → *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; en la rama, versión 2026-11-10-g, espera «publica»)
+### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+- La foto diaria de `__pry_hist__` ya traía la proyección de cada marca (`b:{heaven:[vendido, proyección, c|r], suena:[…]}`, `pryHistEntrada`).
+  `waCdPry_` ahora la dice: «Bs 456.664 vendidos · proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …) (cálculo de las 17:00)», la más grande
+  primero, con los mismos nombres que la pregunta del mes del bot (`waPregMesTxt_`). Una foto sin `b` sale como antes. No se calcula nada nuevo.
+- Solo el dato {{7}} cambia de largo: la plantilla de Meta (`cierre_del_dia_v2`) no cambia. La página solo sube `SCRIPT_VERSION_ESPERADA`.
+- `test_wa_buen_dia_cierre` 5i con las marcas; `test_servidor` l con la versión nueva. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…`.
+
+### §4pl — 🧾 QUIÉN PUSO O SACÓ EL «ENTREGADO» (10/11; dueño: *«¿algún pedido de Mirian y Andrea pasó de entregado a no entregado?»* → *«salía como entregado y era fecha 13»* → *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11 (dueño: «Publica»), versión 2026-11-10-g, `4f830a3`)
 
 **El caso.** El 11-096 (Yohana Moreno García, de Mirian, entrega vie 13/11 AM, en producción en Moreno) salía con el sello «ENTREGADO» en Mis
 pedidos (foto del dueño) y la ficha de Administración lo mostraba sin ✅. La planilla leída a las 15:30 decía NO entregado, último cambio 15:25
