@@ -1760,7 +1760,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer); sin Kommo, no sale (`waBdDomingo_`). 🔒 Bloki no le muestra saldos de clientes a Logística sin la
   contraseña (`blokiPlataNo`). 📅 «Sábado en la tarde» ofrece pasarlo al lunes (o el próximo hábil) a la tarde (`obsRevSabMover`, `OBS_REV_MOVIDO`).
 
-## 🛏️💚 El cierre del día con la proyección de cada marca (§4pm, 11/11; dueño: *«separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+## 🛏️💚 El cierre del día con la proyección de cada marca (§4pm, 11/11; dueño: *«separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a` IMPLEMENTADO 11/11 por el dueño, contesta `2026-11-11-a`; página 2026-11-11-a PUBLICADA `0bd8588`)
 `waCdPry_` dice la proyección de Heaven y de Sueña que ya trae la foto de `__pry_hist__` (`b`), entre paréntesis y la más grande primero, como
 `waPregMesTxt_`. La plantilla no cambia. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…` (8.087 líneas).
 

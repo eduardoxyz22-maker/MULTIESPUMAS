@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a` IMPLEMENTADO 11/11 por el dueño, contesta `2026-11-11-a`; página 2026-11-11-a PUBLICADA `0bd8588`)
 - La foto diaria de `__pry_hist__` ya traía la proyección de cada marca (`b:{heaven:[vendido, proyección, c|r], suena:[…]}`, `pryHistEntrada`).
   `waCdPry_` ahora la dice: «Bs 456.664 vendidos · proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …) (cálculo de las 17:00)», la más grande
   primero, con los mismos nombres que la pregunta del mes del bot (`waPregMesTxt_`). Una foto sin `b` sale como antes. No se calcula nada nuevo.
