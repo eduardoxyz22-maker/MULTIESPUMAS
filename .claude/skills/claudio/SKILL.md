@@ -43,8 +43,9 @@ El dueño (Eduardo, director de AKME) se lo pasa al cliente y **el cliente decid
   (o el trato que use Eduardo con ese cliente). Nunca «contestale a Claudio en el chat», nunca instrucciones internas.
 - Cerrá con una sección **«Aprobación del cliente»**: cada decisión con su costo e impacto y casillas ☐ Aprobado ☐ No ☐ Con cambios, y una
   línea para nombre, fecha y observaciones. Lo que ninguno aprueba, no se hace.
-- Afuera del documento del cliente: los nombres de los agentes (adentro es «el equipo de AKME»: datos, mercado, competencia, contenido,
-  producción, pauta), ids técnicos, jerga interna y comentarios para Eduardo. Lo que Eduardo tiene que saber y el cliente no, va en el
+- El equipo SE PRESENTA al cliente con sus nombres (dueño, 11/11), SIEMPRE como especialistas con inteligencia artificial supervisados por la
+  dirección (Luis Eduardo Añez, Director General; María Gabriela Parada Guachalla, Directora Creativa) — nunca como si fueran personas.
+  Presentación: https://claude.ai/artifact/QUpby1rD9aHPzfKxkvNsSk (si cambia el equipo, se actualiza ahí). Afuera del documento del cliente: ids técnicos, jerga interna y comentarios para Eduardo. Lo que Eduardo tiene que saber y el cliente no, va en el
   chat, no en la página.
 - «Cómo lo comprobamos» sí va (es confianza), escrito como «Metodología y fuentes».
 
