@@ -37,7 +37,13 @@ cargues no olvides responder el email con los datos de para qué día fue cargad
 - Texto formal, en castellano, como escribe el dueño (el cronograma a Tienda Amiga del 10/11):
   «Estimada/o <nombre de quien mandó el pedido>:<br>Por medio del presente, le confirmamos que su pedido <OC N° …> fue recibido y procesado
   en nuestro sistema con el N° <OC del panel>, para entrega el <día de la semana dd/mm/aaaa>, turno de la <mañana/tarde>, en <lugar de entrega>.
-  <lista: cantidad, producto y medida, uno por renglón>. Quedamos atentos a cualquier consulta.<br>Saludos cordiales,<br>Eduardo»
+  <lista: cantidad, producto y medida, uno por renglón>. Quedamos atentos a cualquier consulta.<br>Saludos cordiales,»
+  ✍️ **Con la firma del dueño** (11/11: *«mi firma al enviar correos debe verse así… ya la configuré, pero revisar antes de enviar»*): el
+  reply va con `includeSignature: true` y el texto termina en «Saludos cordiales,» SIN el nombre (la firma ya dice «Eduardo Añez · Jefe de
+  ventas | Multiespumas · Teléfono · Email» con el logo). Antes de mandar, revisar que la firma esté: `create_draft` con `includeSignature: true`
+  (sin destinatarios) → `get_draft` → en el `htmlBody` tiene que estar `gmail_signature` con «Eduardo Añez» y «Jefe de ventas»; borrar ese
+  borrador (`delete_draft`). Si la firma no aparece, NO mandar: dejar la respuesta como borrador en el hilo (`create_draft` con
+  `replyToMessageId`) y decirlo en el resumen.
   Si el script pasó el pedido a otro día (lleno, cerrado, feriado), se dice la fecha NUEVA, sin explicar el panel. Sin precios ni montos.
 - Una sola respuesta por pedido: antes de responder, mirar que en el hilo no haya ya una respuesta nuestra que confirme ese pedido.
 - 📝 **Un «pedido sugerido» que pide precios NO es una OC** (11/11, Maricruz Ventura, maricruz.ventura@tiendaamiga.com.bo: 45 somieres
