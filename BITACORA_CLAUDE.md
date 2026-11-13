@@ -18759,3 +18759,28 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   de meses anteriores —lo que pidió el 11/09, §4ea— se suman tocando la ficha «ATC en el período» («hay N abiertas de meses anteriores · Tocá para sumarlas»;
   otro toque vuelve), por aparato en `me_atc_viejas`. El informe PDF ya era así (§4le). `tests/test_atc_mes.js` (11).
 
+
+### §4px — 🎯📧🏪📍🛍️🏭 LAS MEJORAS 174-185 Y LAS QUE SIGUIERON (13/11; dueño, con la página «Mejoras 174 a 185»: *«174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185 y dame MAS MEJORAS»*; con «Mejoras 186 a 197»: *«190, 193, MAS MEJORAS»*; con «Mejoras 198 a 209»: *«203, 204 (y cuántas entregas de cada tienda… cuántas entregas hizo cada camión o chofer en el mes de cada tienda para ver los totales), 207»*; y después: *«avisás que esté y publicás»*)
+- Se programaron en paralelo, un agente por grupo en su worktree (ramas `mej-a`…`mej-j`), y se juntaron en la rama. Detalle de cada una en CLAUDE.md
+  («Las mejoras 174-185»).
+- **174/175** metas por vendedora en la ventana de Metas y el dashboard que las lee (`metas_del_panel`, no esencial). **177** Black Friday en números
+  (`bfnDatos`). **181** el lunes 08:00 lo vencido de los mayoristas SOLO a Contabilidad (servidor `2026-11-13-b`). **182** el estado de cuenta al correo.
+  **183** el efectivo por retirar por tienda. **185** las ubicaciones que faltan para hoy y el próximo camión.
+- **185, ajuste mío al juntar**: con la planilla real del 13/11 la lista sacaba «Roho» (Tienda 1) y dos pedidos de FABRICA. `ubfEntra` deja afuera Eduardo,
+  ROHO y los internos, la misma regla que el bot (`nxBotManda`). `test_ubic_faltan` +1.
+- **177**: la cuenta de `BF_DIAS` del `<head>` es ahora `window.bfCampana(año)` (el tema no cambió; el dashboard sigue con su propia copia de `BF_DIAS`).
+- **181**: el agente agregó un renglón «🧾 Sin monto anotado» (dato 6) que el dueño no pidió; se le dice. Una OC entregada sin fecha cuenta como vencida (la
+  regla de la ficha «Por cliente»).
+- Propuestas nuevas: «Mejoras 186 a 197» (https://claude.ai/artifact/4CwPyCjqm9bxCiQpxWYMHP) y «Mejoras 198 a 209»
+  (https://claude.ai/artifact/1RAFDbqRaBryhtz5FBNU5e), con números de la planilla del 13/11 (precios bajo la mediana, QR BISA de noviembre, deuda de
+  Copacaba/Multicenter, stock que no rota, 52 de 133 entregas de noviembre sin camión, 56 formas de escribir la zona, 34 celulares con dos nombres).
+- **Después**: 190 (comisión en «Tu día», `ccmCuenta`), 193 (Qué ofertar; ajuste mío: precio ≈ con la mediana de todo lo cobrado por el producto cuando ningún
+  código junta 3 ventas — con la planilla real bajó de 40 a 30 los «sin precio»), 178-180 (ATC y calidad; **pregunta abierta**: si las ventas de Eduardo cuentan en
+  «cada 100 vendidos» — con ellas ORO 7,2 % y TITANIO 7,7 %, sin ellas 9,1 % y 8,8 %), 203/204 (camión en el cierre y entregas por camión/chofer/tienda; probado con la
+  planilla real de noviembre), 207 (Dónde se vende) y el GPS de la 204 en el servidor 13-b (hoja «Historial GPS», `gpsHist`).
+- **Batería** sobre la rama (antes del GPS): 4 rojas — test_anuncio y test_actualizar_espera, que ya fallaban (relojes fijos de octubre), y test_asistente_rev y
+  test_visual_4pj, que solas pasan (17/0 y 51/0: carga de la máquina). En la copia de publicación (main + los cambios, servidor 13-a): test_servidor 414/0, test_wa_bot
+  253/0, test_version_nueva y las nuevas en verde.
+- **Publicado** 13/11 como página 2026-11-13-d, SIN el `.gs` 13-b ni sus pruebas (`test_servidor`, `test_wa_bot`, `test_wa_mayoristas`, `test_gps_historial`) y con
+  `SCRIPT_VERSION_ESPERADA` en 13-a; las columnas del GPS aparecen solas cuando el servidor conteste 13-b (`servidorTiene`). Al implementar el dueño: llevar a `main` el
+  `.gs`, esas pruebas y la ESPERADA en 13-b.

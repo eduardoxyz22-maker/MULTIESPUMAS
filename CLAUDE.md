@@ -843,6 +843,67 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
+## 🎯📧🏪📍🛍️🏭 Las mejoras 174-185, 190, 193, 203, 204 y 207 (§4px, 13/11; dueño: «174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185», «190, 193», «203, 204, 207» y «avisás que esté y publicás»; página PUBLICADA 13/11, versión 2026-11-13-d; el servidor `2026-11-13-b` (181 y el GPS de la 204) lo implementa el dueño: hasta entonces `main` sigue con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 13-a)
+- **👥 174 Las metas de cada vendedora en «🎯 Metas por marca»**: debajo de cada marca, mínima y presupuesto editables (`metasVd*`), lo vendido y la proyección de
+  `proyeccionMes(ym).marcas[].filas` (los de «Por vendedor»: no calcular nada aparte), % y si llega; abajo la suma contra la meta de la marca. Son las MISMAS de
+  `__metas__` → `m[ym].vd` del cierre comercial (`ccmMetas`); sin guardar se muestran las sugeridas y guardar las confirma. La meta de una vendedora = su
+  presupuesto (si es 0, la mínima). Guardar conserva `esc`, las metas por marca, los otros meses y las vendedoras que no están en `MARCAS`. `test_metas_vendedoras` (31).
+- **🎯 175 El dashboard toma la meta en Bs del panel**: `generar.py` → `metas_del_panel(YEAR, MONTH)` lee `__metas__` con el secreto `PANEL_URL` (POST `list`,
+  agregado en `panel.yml`). NO es esencial: si falla queda `VENDOR_CFG` y se publica igual; del registro y del index.html (públicos) solo sale cuántas vendedoras.
+  `metaCierres` sigue en `VENDOR_CFG`. Con `metaFuente:"panel"` el template no deja que lo guardado en el navegador tape esa meta («del panel»). ⚠️ Una lectura nueva
+  del panel en `generar.py` no puede imprimir nada de la lista. `test_generar_integridad` §11-16 (50), `test_panel_meta` §4.
+- **🛍️ 177 Black Friday en números**: ficha `#pry-bf` en Proyección (con la contraseña) desde el primer día de la campaña hasta `BFN_DIAS_DESPUES`=7 después. Los días
+  los da `bfCampana(año)` del `<head>` (la cuenta de `BF_DIAS`). Lo vendido por el día de CARGA con `pryVentas` (equipo; mayoristas aparte; sin ATC/RPT/ROHO) contra los
+  mismos días hábiles justo antes (a esta altura mientras dura). Todo sale de `bfnDatos`. `test_bf_numeros` (53).
+- **🎧📉 178-180 ATC y calidad**: en la pestaña ATC (`#atc-calidad`, `atcqPintar`) y dos hojas del informe PDF (`atciCalidadHojas`, `atciMesesHoja`, `D.cal`). **178** ATC cada
+  100 colchones y somieres vendidos por línea (`atcqTasa`; marca y línea con `atciProdDe`, la MISMA regla para ATC y ventas; ventas de `cliEntra` sin lo que ROHO manda a
+  «TIENDA n»; **las de Eduardo cuentan**, decisión pendiente del dueño), ventana fija de `ATCQ_MESES`=6 meses desde `PRY_PRIMER_MES`, rojo arriba de `ATC_TASA_ALERTA`=8 % con
+  ≥ `ATCQ_MIN_VENDIDOS`=20. **179** el mismo celular (`cliCelClave`): aviso `#atc-otra` en el formulario (no frena), chip «🔁 Nª ATC» (`atcRepChip`, `ATCQ_REP` en
+  `renderAtc`). **180** meses desde la compra (`atcqMeses`) en tramos (`ATCQ_TRAMOS`) por línea y por motivo. ⚠️ Una hoja nueva del informe corre los conteos de
+  `test_atc_informe` (ahora 11 hojas). `test_atc_calidad` (54).
+- **🏭⏳ 181 Lo vencido de los mayoristas, los lunes a Contabilidad** (servidor **`2026-11-13-b`**, lo implementa el dueño): los lunes 08:00 (lunes feriado → primer
+  hábil de la semana) `mayoristas_vencido` (6 datos, UTILITY, sin respaldo) SOLO a `WA_CONTABILIDAD`, nunca a `WA_DUENO`; sin nada vencido ni por vencer en 7 días no
+  sale (`WA_HECHO.mv`). ⚠️ `waMv*` copia la Cobranza de la página (`cbzMayCliente`, `CBZ_PLAZOS`, `CBZ_MAY_ALIAS`, `cbzMayDatos`, `sinMontoAnotado`): **un plazo nuevo va
+  en `CBZ_PLAZOS` Y en `WA_MV_PLAZOS`**. Una OC entregada sin fecha cuenta vencida, como en la ficha. `test_wa_mayoristas` (56) compara página y servidor.
+- **📧 182 El estado de cuenta del mayorista al correo**: Cobranza → Mayoristas → la ficha: «📧 Mandar el estado de cuenta por correo» (`cbzCorreoHtml`): Abrir en
+  Gmail (con `atcCorreoUrl`, baja el Excel), Otro correo, Excel para adjuntar, Copiar. «Para» por cliente (`me_cbz_correo`); el mensaje = el texto de «📋 Copiar»
+  (`cbzCliTexto`, también Copiar agrupa ahora por vencidas/por vencer); con OC tildadas, solo esas (`cbzCliResumen`, `cbzCliExcel(k, ids)`). El panel no manda nada.
+  `test_cobranza_correo` (37).
+- **🏪 183 Efectivo por retirar por tienda**: «👤 Por persona | 🏪 Por tienda» (`me_efe_mano_vista`); por tienda (`efeTiendaDatos`) regroupa `efeManoDatos` (la tienda
+  de quien tiene la plata el día del cobro; choferes aparte; tiendas + choferes = la ficha) y «📋 Copiar la ruta» (`copiarEfectivoRuta`). ⚠️ Una cuenta nueva del
+  efectivo por retirar sale de `efeManoDatos`. `test_efectivo_tienda` (26).
+- **💰 190 Tu comisión en «Tu día»**: con una vendedora elegida y las metas del mes GUARDADAS (`ccmMetas(ym).ok` y ella en `vd`), `misComisionHtml` dice la comisión que
+  lleva (su fila del Cierre comercial: tramo + bono Titanio + ajustes), el tramo siguiente (`ccmTramoSig`, la mínima es escalón) y lo que falta para el presupuesto por día
+  hábil (`pryDiaHabil`, hoy cuenta hasta `MIS_COM_HORA_FIN`=20 h). Sin metas guardadas, sin meta suya, Eduardo, ROHO, internos o «Ver todos»: nada. ⚠️ La cuenta del cierre
+  vive en `ccmCuenta(ym)` (la usan `ccmDatos` y el bloque): un cambio del cierre va ahí. Playwright solo con `MIS_TOP_PRUEBA`. `test_mis_comision` (25).
+- **🏷️ 193 Qué ofertar** (para Black Friday): Stock → «🏷️ Qué ofertar», solo con la contraseña (`ofertaBotonPintar`, chip al final de «Más»). Ventana `#oft-overlay` que
+  SOLO MIRA: libres = `stockHaySalir` − `o.comp`; vendido en `OFERTA_DIAS`=60 con las reglas de la rotación (`ofertaVentas`; mayoristas, RPT e internos aparte); meses =
+  `stockMesesSobra` al ritmo de 60 días; entra (`ofertaEntra`) con ≥ `OFERTA_MESES`=6 meses, sin ventas con ≥2 libres, o discontinuado (🛑 liquidar). Precio = `precioTipico`
+  del código con más ventas y, si ninguno junta 3 ventas, **≈ la mediana de todo lo cobrado por ese producto** (sus códigos de ventas y del catálogo, `ofertaCodsDeK`;
+  ajuste mío al juntar: con la planilla real 40 de 47 salían «sin precio», quedaron 30). Ordena por plata parada; filtros, Copiar y Excel. `test_stock_oferta` (39).
+- **🚚 203 ¿Qué camión lo llevó? y 204 Entregas por camión**: en ✅ Cierre de entregas, cada pedido sin camión (hoy y atrasados) trae un selector (`cierreEntCamHtml`) elegido
+  con la propuesta del GPS (`gpsCamionPropDe`); lo que retira el cliente dice «lo retiró el cliente». Elegir no guarda: va en `plan.cam` (también en `me_cierre_pend`) y
+  `cierreEntAplicar` → `cierreEntCamPoner` lo escribe en el MISMO `guardarDurable` del ✅, con el chofer de ese camión ESE día (`camChoferDelDia`), sin pisar nada; lo
+  tildado sin camión se confirma igual y ofrece «🚚 Elegir el camión» (`camAnotarAbrir`). Herramientas → «🚚 Entregas por camión» (`#ec-overlay`, `ecDatos`,
+  `ecFilasPorCamion`/`ecFilasPorChofer`): las entregas del mes que ya salieron (fecha pasada o ✅; hoy solo con ✅) por camión o chofer y por tienda de quien vendió
+  (`sucursalDeVendedor` con `contaFecha`; aparte Mayoristas, ROHO, RPT, ATC, Internos), con unidades, detalle, Copiar y Excel; solo mira. ⚠️ Una columna nueva por camión
+  (el GPS) sale de `ecFilasPorCamion`. `test_cierre_camion` (19), `test_entregas_camion` (27).
+- **🗺️ 207 Dónde se vende**: Proyección → «🗺️ Dónde se vende» (solo con la contraseña) → `#dsv-ov` (`adm-ov`, `dsv-*`): lo vendido por zona y marca (Todas/Heaven/Sueña) este mes,
+  el pasado o los últimos 3. ⚠️ Sale de `pryVentas` (el equipo de tiendas): zonas + «vendidas en tienda» + «sin zona» = lo vendido de Proyección; mayoristas aparte, ROHO no.
+  Este mes se compara a esta altura (`pryCorteAltura`). Zona = la escrita (`zonaCanonica`) o `zonaCercaDe` con pin. Mapa Leaflet al abrir (sin internet, la lista): un círculo
+  por zona en el promedio de sus pines (`almPunto`), tamaño por Bs, color de la marca que más vende. «📋 Copiar para la publicidad». Solo mira. `test_mapa_ventas` (58).
+- **🛰️📚 204 Cómo le fue a cada camión (GPS)** (servidor **`2026-11-13-b`**, junto con la 181): `gpsRepaso` suma en `GPS_DIA` por placa los km (haversine; sin < 30 m ni
+  saltos > 150 km/h, `gpsHistPaso_`), las horas fuera de PTF/Banzer/Moreno (`fm`, recién después de haber estado en una base), las salidas a repartir (`ns`) y las paradas
+  (`np`/`nc`). A las 21 h (`gpsHistCierre_`, o en el primer repaso del día siguiente) deja una fila por día y camión en la hoja «Historial GPS» (el mismo día reemplaza,
+  `GPS_DIA.h`). `gpsHist` {desde, hasta} la lee sin candado (+ el día en curso, `c:1`). En «🚚 Entregas por camión» → Por camión, con servidor ≥ 13-b, `ecGpsSumar` (desde
+  `ecFilasPorCamion`) agrega días con GPS, salida promedio y la más tarde, horas fuera, km, paradas y entregas por día con GPS (también Copiar y Excel). Los km son en línea
+  recta entre lecturas de un minuto: un poco menos que el odómetro. ⚠️ Un dato nuevo del día va en `GPS_DIA` y en `gpsHistFilas_` + `GPS_HIST_ENC`. `test_gps_historial` (66).
+- **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
+  (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
+  «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada
+  aparte; el enlace corto y el `&wa=1` valen. Afuera (`ubfEntra`): `fichaRetira`, venta de tienda, sistema, borradores, entregados, RPT a sucursal con pin y, como el bot,
+  **Eduardo, ROHO y los internos** (con la planilla real salían «Roho» a la Tienda 1 y dos de FABRICA). Bloki se lo dice a logística (`l-ubic|…`). `test_ubic_faltan` (37).
+
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio

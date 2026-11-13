@@ -551,6 +551,9 @@ html[data-theme="dark"] .dr-sec{font-family:var(--mono)}
 .meta-pre{padding:0 1px 0 8px;color:var(--muted);font-size:.78rem;font-family:var(--num-ff)}
 .meta-input{border:none;background:transparent;color:var(--text);font-family:var(--num-ff);font-weight:700;font-size:.82rem;width:78px;text-align:right;padding:5px 8px 5px 2px;outline:none}
 .meta-input:focus{background:color-mix(in srgb,var(--brand) 10%,transparent)}
+.meta-stepper.meta-del-panel{background:var(--bg);cursor:help}
+.meta-stepper.meta-del-panel .meta-input{display:inline-block}
+.meta-panel-tag{font-size:.66rem;font-weight:700;color:var(--muted);padding:0 8px 0 0;white-space:nowrap}
 .meta-bar{height:11px;background:var(--line2);border-radius:99px;overflow:hidden;position:relative}
 .meta-bar i{display:block;height:100%;border-radius:99px}
 .meta-bar .proy{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
@@ -3257,11 +3260,19 @@ window.KpiDrawer = KpiDrawer;
 // so editing in either place syncs everywhere. Persisted to localStorage.
 const META_KEY = "heaven_metas_monto_v2",
   META_STEP = 5000;
+// 🎯 (13/11, mejora 175) La meta que viene del PANEL de pedidos (`metaFuente:"panel"`: Proyección → 🎯 Metas) manda: lo cambiado antes
+// en este aparato no la tapa (al tocar una sola meta se guardaban TODAS en el navegador) y su control queda fijo: se cambia en el panel.
+function metaDelPanel(name) {
+  return D.team.some(v => v.name === name && v.metaFuente === "panel");
+}
 function readMetas() {
   const base = {};
   D.team.forEach(v => base[v.name] = v.metaMonto);
   try {
-    Object.assign(base, JSON.parse(localStorage.getItem(META_KEY) || "{}"));
+    const guardadas = JSON.parse(localStorage.getItem(META_KEY) || "{}") || {};
+    Object.keys(guardadas).forEach(k => {
+      if (!metaDelPanel(k)) base[k] = guardadas[k];
+    });
   } catch (e) {}
   return base;
 }
@@ -3293,6 +3304,17 @@ function MetaStepper({
   name,
   metas
 }) {
+  if (metaDelPanel(name)) return /*#__PURE__*/React.createElement("span", {
+    className: "meta-stepper meta-del-panel",
+    title: "Esta meta se carga en el panel de pedidos: Proyección → 🎯 Metas",
+    onClick: e => e.stopPropagation()
+  }, /*#__PURE__*/React.createElement("span", {
+    className: "meta-pre"
+  }, "Bs"), /*#__PURE__*/React.createElement("b", {
+    className: "meta-input"
+  }, (metas[name] || 0).toLocaleString("en-US")), /*#__PURE__*/React.createElement("span", {
+    className: "meta-panel-tag"
+  }, "del panel"));
   return /*#__PURE__*/React.createElement("span", {
     className: "meta-stepper",
     onClick: e => e.stopPropagation()
