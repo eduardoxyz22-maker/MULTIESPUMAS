@@ -3758,6 +3758,39 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-mas:hover{background:var(--teal-lt)}
 .ah-vacio{display:flex;align-items:center;gap:12px;padding:16px 14px;border-radius:14px;background:linear-gradient(135deg,#ecfdf3,#f3fbfa);border:1px solid #c9eedb;flex:1}
 .ah-vacio>span{font-size:1.8rem}.ah-vacio b{display:block;color:#15803d;font-size:.95rem}.ah-vacio small{color:#4b6b5b;font-size:.78rem}
+/* 📍 (13/11, mejora 185) Las ubicaciones que faltan para hoy y el próximo camión (`ubfAbrir`), desde «Para hacer» y Bloki. */
+.ubf{display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px}
+.ubf-res{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;background:#FDF0F1;border:1px solid #f3c3c9}
+.ubf-res.k-a{background:#FEF7EC;border-color:#f6d9a8}.ubf-res.k-ok{background:var(--teal-lt);border-color:var(--teal-border)}
+.ubf-n{font-size:.86rem;color:var(--text)}.ubf-n b{font-size:1.7rem;font-weight:900;line-height:1;margin-right:5px;font-variant-numeric:tabular-nums;color:#c0283a}
+.ubf-res.k-a .ubf-n b{color:var(--amber)}.ubf-res.k-ok .ubf-n b{color:var(--teal-dk)}
+.ubf-pills{display:flex;flex-wrap:wrap;gap:5px}
+.ubf-pill{font-size:.72rem;font-weight:700;background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 9px;color:var(--text)}
+.ubf-sec{margin:6px 0 0;font-size:.9rem;font-weight:800;color:#17302f}
+.ubf-snota{margin:0;font-size:.76rem;line-height:1.45;color:var(--muted)}
+.ubf-l{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px}
+.ubf-f{display:flex;align-items:flex-start;gap:10px;padding:10px 10px 10px 12px}
+.ubf-f + .ubf-f{border-top:1px solid var(--line)}
+.ubf-f.ubf-ped{background:#f6fbf8}
+.ubf-i{flex:none;min-width:30px;height:26px;border-radius:999px;display:grid;place-items:center;background:#eef3f3;color:var(--muted);font-size:.74rem;font-weight:800;font-variant-numeric:tabular-nums;padding:0 6px}
+.ubf-t{flex:1;min-width:0}
+.ubf-1{display:flex;flex-wrap:wrap;align-items:center;gap:5px 7px;font-size:.88rem;line-height:1.35}
+.ubf-cli{font-weight:800;color:var(--text);overflow-wrap:anywhere}
+.ubf-dia{font-size:.7rem;font-weight:800;border-radius:6px;padding:1px 7px;background:#eef3f3;color:#24504e;white-space:nowrap}
+.ubf-dia.hoy{background:#fde2e5;color:#9b1c2a}
+.ubf-por{font-size:.7rem;font-weight:700;border-radius:999px;padding:1px 8px;background:#FDF0F1;color:#9b1c2a;white-space:nowrap}
+.ubf-aprox .ubf-por{background:#FEF3E2;color:#7c4b00}
+.ubf-ok{font-size:.7rem;font-weight:800;border-radius:999px;padding:1px 8px;background:#dcfce7;color:#15803d;white-space:nowrap}
+.ubf-2{font-size:.76rem;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.ubf-nocel{color:#7c4b00}
+.ubf-acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ubf-acc .btn{width:auto}.ubf-acc a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.ubf-ya{background:var(--teal-lt);border:1px solid var(--teal-border);color:var(--teal-dk)}
+.ubf-vacio{margin:0;padding:18px;text-align:center;color:#15803d;font-weight:700;font-size:.9rem;border:1px dashed #c9eedb;border-radius:12px;background:#f3fbf6}
+.ubf-nota{margin:0;font-size:.76rem;line-height:1.45;color:var(--muted);background:#f6f8f8;border-radius:10px;padding:8px 11px}
+.ubf-pie{margin:0;align-items:center}.ubf-pie .ubf-sp{flex:1}
+.ubf-volver{width:auto;margin-bottom:10px}
+@media(max-width:560px){ .ubf{padding:12px 12px 14px} .ubf-f{gap:8px;padding:9px 8px} }
 .ah-hoy{border-radius:18px;padding:13px 14px 12px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-width:0;position:relative;overflow:hidden;
   background:radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.14),transparent 55%),linear-gradient(140deg,#00B5AD 0%,#0f766e 52%,#1e3a5f 100%);
   box-shadow:0 14px 30px -18px rgba(15,118,110,.8)}
@@ -26054,6 +26087,8 @@ function admHacerDatos(){
   if(S.conteoViejo) add({ k:'stk-v', sev:'a', ic:'🗓️', n:S.diasConteo||1, t:'El conteo del depósito tiene '+(S.diasConteo||'')+' días', s:'subí el Excel de hoy o contá a mano', b:'📦 Ver stock', fn:'abrirStock()', tag:'conteo viejo', nTxt:(S.diasConteo||'')+' d' });
   // ⚠️ les faltan datos a los del próximo reparto
   add({ k:'rev', sev:'a', ic:'📝', n:R.n||0, t:'Les faltan datos a los de '+nxCuandoTxt(R.dia||prox), s:R.resumen||'', b:'Ver cuáles', fn:'admRevisarVer()', tag:'faltan datos' });
+  // 📍 (13/11, mejora 185) las ubicaciones que faltan para hoy y el próximo camión: pedírselas al cliente por WhatsApp
+  try{ add(ubfHacer()); }catch(e){}
   // ✅ cierre de entregas
   var C=ADM_AV.cierre||{};
   if(C.pend) add({ k:'cie-p', sev:'r', ic:'⏳', n:C.pend, t:'Cierre de entregas sin sincronizar', s:'se aplica solo con la próxima lectura de la planilla', b:'🔄 Intentar', fn:'refrescarEstado()', tag:'cierre sin sincronizar' });
@@ -26088,6 +26123,156 @@ function admSugIr(d){
   admIrA('nx-sug');
 }
 function admRevisarVer(){ REVISAR_OPEN=true; renderRevisar(); admIrA('adm-revisar'); }
+/* ============================================================================
+   📍 (13/11, mejora 185; dueño: «pedir la ubicación de lo de hoy y mañana») LAS UBICACIONES QUE FALTAN PARA HOY Y EL PRÓXIMO CAMIÓN.
+   El bot ya pide la ubicación 2 días antes (13 A) y en el recordatorio de la noche anterior, pero lo cargado a último momento se le
+   escapa (el 13/11 a la mañana, 9 de 53 entregas próximas sin ubicación). En «Para hacer» va el renglón «📍 Faltan N ubicaciones (hoy y
+   <el próximo día con camión>)» y abre la lista (`ubfAbrir`) con «💬 Pedir por WhatsApp» (el chat del cliente con el mensaje ya escrito:
+   el panel NO manda nada solo), «✏️ Pegar ubicación», «📍 Abrir el pedido» y «✓ Ya la pedí».
+   · Sin ubicación = sin enlace, o con uno que no se entiende (`coordsDeLink` y lo que el servidor ya abrió en `MAPA_COORDS`, como el mapa),
+     o que cae fuera de Santa Cruz (`ubicFueraDeSantaCruz`). Un enlace corto (maps.app.goo.gl) vale: el chofer lo abre igual en Maps.
+     La aproximada (`&aprox=1`, ubicada por la dirección escrita) va APARTE como «≈ aproximada»: se puede pedir igual, no es rojo.
+   · Afuera: lo que retira el cliente (`fichaRetira`), ventas de tienda, filas del sistema, borradores de Kommo, entregados y la RPT a una
+     sucursal con pin. Sin celular de WhatsApp (`misWaCliente`, la regla del bot) no hay a quién escribirle: van aparte, «llamá a la vendedora»,
+     y no cuentan en el número rojo.
+   · «✓ Ya la pedí» queda en ESTE aparato (`me_ubic_pedida`, por pedido y día: si lo mueven de día vuelve a contar). No lo saca de la lista
+     hasta que el pedido tenga ubicación, pero ya no cuenta en el número rojo.
+   · Bloki se lo dice a logística (`asisLogistica`). Solo mira y abre WhatsApp: lo único que escribe es la ubicación que se pega a mano.
+   `tests/test_ubic_faltan.js`.
+   ========================================================================== */
+var UBF_LS='me_ubic_pedida', UBF_GUARDA_MS=10*86400000;
+/* Cómo está la ubicación guardada: ok · falta · nose (no se entiende) · lejos (fuera de Santa Cruz) · aprox. */
+function ubfEstado(u){
+  u=String(u||'').trim();
+  if(!u) return { k:'falta', t:'sin ubicación' };
+  var c=null; try{ c=fxMapaCoords(u); }catch(e){}
+  if(c && c.lat!=null && c.lng!=null){
+    var fu=''; try{ fu=ubicFueraDeSantaCruz(c); }catch(e){}
+    if(fu) return { k:'lejos', t:'la ubicación '+fu };
+    var g=MAPA_COORDS[u];
+    if(esUbicAprox(u) || c.aprox || (g && g.aprox)) return { k:'aprox', t:'≈ aproximada: la cuadra, no la puerta' };
+    return { k:'ok' };
+  }
+  if(esLinkCorto(u)) return { k:'ok' };
+  return { k:'nose', t:'el enlace no se entiende' };
+}
+/* Hoy y el próximo día con camión (`proximoDiaEntrega`: saltea domingos y feriados). */
+function ubfDias(){ return [todayStr(), proximoDiaEntrega()]; }
+function ubfEntra(p, dias){
+  if(!p || !p.fecha || dias.indexOf(String(p.fecha))<0) return false;   // primero el día: lo demás se mira solo en lo de hoy y el próximo camión
+  if(esFilaSistema(p) || esBorrador(p) || esVentaTienda(p) || p.entregado || String(p.id||'').indexOf('__')===0) return false;
+  if(fichaRetira(p)) return false;                                         // lo retira el cliente: no va el camión
+  if(esRPT(p.oc)){ var s=sucursalDe(p.cliente); if(s && s.m) return false; }   // la sucursal tiene su pin
+  return true;
+}
+function ubfPedidas(){ var o=nxLS(UBF_LS); return (o && typeof o==='object' && !Array.isArray(o)) ? o : {}; }
+function ubfClave(p){ return String(p.id)+'|'+String(p.fecha||''); }
+function ubfDatos(){
+  var dias=ubfDias(), hoy=dias[0], prox=dias[1], ped=ubfPedidas(), F=[];
+  (STATE||[]).forEach(function(p){
+    if(!ubfEntra(p, dias)) return;
+    var e=ubfEstado(p.maps); if(e.k==='ok') return;
+    F.push({ p:p, id:String(p.id), e:e.k, por:e.t, wa:misWaCliente(p.celular), ped:Number(ped[ubfClave(p)])||0 });
+  });
+  F.sort(function(a, b){ return String(a.p.fecha).localeCompare(String(b.p.fecha)) || (a.p.turno?normTurno(a.p.turno):'ZZ').localeCompare(b.p.turno?normTurno(b.p.turno):'ZZ') ||
+    (Number(a.p.ts)||0)-(Number(b.p.ts)||0); });
+  var falta=F.filter(function(x){ return x.e!=='aprox'; }), aprox=F.filter(function(x){ return x.e==='aprox'; });
+  var conCel=falta.filter(function(x){ return x.wa; }), sinCel=falta.filter(function(x){ return !x.wa; });
+  var pend=function(L){ return L.filter(function(x){ return !x.ped; }); };
+  var hayHoy=diaHabil(hoy) || F.some(function(x){ return x.p.fecha===hoy; });
+  return { hoy:hoy, prox:prox, F:F, conCel:conCel, sinCel:sinCel, aprox:aprox,
+    n:pend(conCel).length, nSinCel:pend(sinCel).length, nAprox:pend(aprox).length, nPed:F.filter(function(x){ return x.ped; }).length,
+    diasTxt:(hayHoy ? 'hoy y ' : '')+(prox===tomorrowStr() ? 'mañana' : nxDiaTxt(prox)) };
+}
+/* El renglón de «Para hacer»: rojo con lo que falta pedir; si solo queda lo sin celular, ámbar; si solo aproximadas o ya pedidas, azul. */
+function ubfHacer(){
+  var D=ubfDatos(); if(!D.F.length) return null;
+  var nom=function(L){ return admNombres(L.map(function(x){ return x.p; })); }, pl=function(n, s, ps){ return n+' '+(n===1?s:ps); };
+  var extra=function(sin){ var e=[];
+    if(D.nPed) e.push(pl(D.nPed, 'ya pedida', 'ya pedidas'));
+    if(sin!=='cel' && D.nSinCel) e.push(pl(D.nSinCel, 'sin celular', 'sin celular'));
+    if(sin!=='aprox' && D.nAprox) e.push(pl(D.nAprox, '≈ aproximada', '≈ aproximadas'));
+    return e.length ? (' · '+e.join(' · ')) : ''; };
+  var o={ k:'ubic', ic:'📍', b:'📍 Ver cuáles', fn:'ubfAbrir()', tag:'ubicaciones' };
+  var pc=function(L){ return L.filter(function(x){ return !x.ped; }); };
+  if(D.n) return Object.assign(o, { sev:'r', n:D.n, t:'Faltan '+pl(D.n, 'ubicación', 'ubicaciones')+' ('+D.diasTxt+')',
+    s:'pedíselas al cliente por WhatsApp: '+nom(pc(D.conCel))+extra() });
+  if(D.nSinCel) return Object.assign(o, { sev:'a', n:D.nSinCel, t:'Sin ubicación ni celular ('+D.diasTxt+')', s:'llamá a la vendedora: '+nom(pc(D.sinCel))+extra('cel'), tag:'ubicaciones sin celular' });
+  if(D.nAprox) return Object.assign(o, { sev:'i', n:D.nAprox, t:'Con ubicación ≈ aproximada ('+D.diasTxt+')', s:'es la cuadra, no la puerta: se puede pedir igual · '+nom(pc(D.aprox))+extra('aprox'), tag:'ubicaciones aproximadas' });
+  return Object.assign(o, { sev:'i', n:D.nPed, t:'Ubicaciones pedidas: falta que el cliente las mande ('+D.diasTxt+')', s:nom(D.F), tag:'ubicaciones pedidas' });
+}
+/* El mensaje para el cliente: cordial, con la marca de su vendedora (`nxMarcaTxt` → `marcaDe`) y el día y turno de SU entrega. */
+function ubfMsg(p){
+  var hoy=todayStr(), f=String(p.fecha||''), nom=nxNombreCorto(p.cliente);
+  var cuando=f===hoy ? 'de hoy' : (f===tomorrowStr() ? ('de mañana ('+nxDiaTxt(f)+')') : ('del '+nxDiaTxt(f)));
+  var tu=p.turno ? (normTurno(p.turno)==='PM' ? ' en la tarde' : ' en la mañana') : '';
+  return 'Hola'+(nom?(' '+nom):'')+', le escribimos de '+nxMarcaTxt(p)+' por '+(esATC(p.oc)?'la visita de nuestro camión':'su entrega')+' '+cuando+tu+'. '+
+    '¿Nos podría mandar su ubicación por WhatsApp (📎 → Ubicación)? Así el chofer llega directo. ¡Gracias!';
+}
+function ubfWaUrl(p){ return nxWaClienteUrl(p.celular, ubfMsg(p)); }
+function ubfAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.ubf')); }
+function ubfRepintar(){ if(ubfAbierta()) ubfAbrir(); try{ admHacerPintar(); }catch(e){} try{ asisRefrescar(); }catch(e){} }
+function ubfMarcar(id, si){
+  var p=findById(id); if(!p) return;
+  var o=ubfPedidas(), k=ubfClave(p), ahora=Date.now();
+  if(si) o[k]=ahora; else delete o[k];
+  Object.keys(o).forEach(function(x){ if(!(ahora-Number(o[x])<UBF_GUARDA_MS)) delete o[x]; });   // lo de hace más de 10 días se va
+  var ok=true; try{ localStorage.setItem(UBF_LS, JSON.stringify(o)); }catch(e){ ok=false; }
+  if(!ok){ toast('No pude anotarlo en este aparato (el navegador no deja guardar).', 'err'); return; }
+  ubfRepintar();
+}
+function ubfPegar(id){ editarUbicacion(id, function(){ ubfAbrir(); }); }
+/* «📍 Abrir el pedido» = la ficha de Administración de siempre, con «← Volver» a esta lista arriba (se agrega a la ficha ya dibujada). */
+function ubfAbrirPedido(id){
+  if(!findById(id)){ toast('Este pedido ya no está en la lista. Actualizá el panel.','err'); return; }
+  showPedidoModal(id);
+  var b=document.querySelector('#modal-box .fl-b');
+  if(b && !b.querySelector('.ubf-volver')) b.insertAdjacentHTML('afterbegin', '<button type="button" class="btn btn-ghost btn-sm ubf-volver" onclick="ubfAbrir()">← Volver a las ubicaciones que faltan</button>');
+}
+function ubfFilaHtml(x, DN){
+  var p=x.p, f=String(p.fecha||''), hoy=todayStr(), dn=(DN||dayNumMap())[p.id], idA=esc(x.id);
+  var dia=f===hoy ? 'HOY' : (f===tomorrowStr() ? 'MAÑANA' : nxDiaTxt(f));
+  var tu=p.turno ? (normTurno(p.turno)==='PM' ? '🌆 tarde' : '🌅 mañana') : 'sin turno';
+  var donde=[String(p.zona||'').trim(), String(p.direccion||'').replace(/\s+/g,' ').trim().slice(0,90)].filter(Boolean).join(' · ');
+  var abajo=['👤 '+esc(String(p.vendedor||'').trim()||'sin vendedora'), ocEtiq(p.oc) ? esc(ocEtiq(p.oc)) : '', '📍 '+(donde ? esc(donde) : '<i>sin zona ni dirección escrita</i>')].filter(Boolean).join(' · ');
+  var cel=String(p.celular||'').trim();
+  var pedTxt='';
+  if(x.ped){ var dd=isoDeTsBolivia(x.ped); pedTxt=(dd===hoy ? '' : (fmtFechaCorta(dd)+' '))+asisHoraTxt(x.ped); }
+  return '<li class="ubf-f ubf-'+x.e+(x.ped?' ubf-ped':'')+'" data-id="'+idA+'">'+
+    '<span class="ubf-i" title="N° del día">'+(dn?('#'+dn):'—')+'</span>'+
+    '<div class="ubf-t">'+
+      '<div class="ubf-1"><span class="ubf-cli">'+esc(String(p.cliente||'').trim()||'(sin cliente)')+'</span>'+
+        '<span class="ubf-dia'+(f===hoy?' hoy':'')+'">'+esc(dia)+' · '+tu+'</span>'+
+        '<span class="ubf-por">'+esc(x.por)+'</span>'+(x.ped?('<span class="ubf-ok">✓ pedida '+esc(pedTxt)+'</span>'):'')+'</div>'+
+      '<div class="ubf-2">'+abajo+'</div>'+
+      (!x.wa ? ('<div class="ubf-2 ubf-nocel">📵 '+(cel ? ('«'+esc(cel)+'» no es un celular de WhatsApp') : 'sin celular')+': llamá a '+esc(String(p.vendedor||'').trim()||'la vendedora')+' para que se la pida.</div>') : '')+
+      '<div class="ubf-acc">'+
+        (x.wa ? ('<a class="btn btn-sm wa-btn ubf-wa" href="'+esc(ubfWaUrl(p))+'" target="_blank" rel="noopener" title="Abre el chat del cliente con el mensaje ya escrito: lo mandás vos">💬 Pedir por WhatsApp</a>') : '')+
+        '<button type="button" class="btn btn-sm btn-ghost" data-id="'+idA+'" onclick="ubfPegar(this.getAttribute(\'data-id\'))" title="Cuando el cliente la mande, pegala acá">✏️ Pegar ubicación</button>'+
+        '<button type="button" class="btn btn-sm btn-ghost" data-id="'+idA+'" onclick="ubfAbrirPedido(this.getAttribute(\'data-id\'))">📍 Abrir el pedido</button>'+
+        (x.ped ? ('<button type="button" class="btn btn-sm btn-ghost ubf-des" data-id="'+idA+'" onclick="ubfMarcar(this.getAttribute(\'data-id\'),0)" title="Vuelve a contar en el número rojo">↩️ No la pedí</button>')
+               : ('<button type="button" class="btn btn-sm ubf-ya" data-id="'+idA+'" onclick="ubfMarcar(this.getAttribute(\'data-id\'),1)" title="Queda anotado en este aparato y deja de contar en el número rojo">✓ Ya la pedí</button>'))+
+      '</div></div></li>';
+}
+function ubfAbrir(){
+  var D=ubfDatos(), DN=dayNumMap();
+  var sec=function(L, tit, nota){ return L.length ? ('<h4 class="ubf-sec">'+tit+' · '+L.length+'</h4>'+(nota?('<p class="ubf-snota">'+nota+'</p>'):'')+'<ol class="ubf-l">'+L.map(function(x){ return ubfFilaHtml(x, DN); }).join('')+'</ol>') : ''; };
+  var k=D.n ? 'k-r' : ((D.nSinCel || D.nAprox) ? 'k-a' : 'k-ok');
+  var pills=[D.nPed ? (D.nPed+' ya pedida'+(D.nPed===1?'':'s')) : '', D.sinCel.length ? (D.sinCel.length+' sin celular') : '', D.aprox.length ? (D.aprox.length+' ≈ aproximada'+(D.aprox.length===1?'':'s')) : '']
+    .filter(Boolean).map(function(t){ return '<span class="ubf-pill">'+esc(t)+'</span>'; }).join('');
+  var h='<div class="modal-h"><h3>📍 Faltan ubicaciones</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b ubf">'+
+      '<div class="ubf-res '+k+'"><div class="ubf-n"><b>'+D.n+'</b>'+(D.n===1?'entrega':'entregas')+' de '+esc(D.diasTxt)+' sin ubicación para pedir'+(D.nPed?' (sin contar las ya pedidas)':'')+'</div>'+
+        (pills?('<div class="ubf-pills">'+pills+'</div>'):'')+'</div>'+
+      (D.F.length ? '' : '<p class="ubf-vacio">✅ Todas las entregas de '+esc(D.diasTxt)+' tienen su ubicación.</p>')+
+      sec(D.conCel, '📍 Sin ubicación', 'Tocá «💬 Pedir por WhatsApp»: se abre el chat del cliente con el mensaje ya escrito (el panel no manda nada solo). Cuando lo mandes, «✓ Ya la pedí». Cuando el cliente la mande, «✏️ Pegar ubicación» (si la manda al número del bot, se guarda sola).')+
+      sec(D.sinCel, '📵 Sin celular: llamá a la vendedora', '')+
+      sec(D.aprox, '≈ Aproximadas', 'Las ubicó el servidor por la dirección escrita: es la cuadra, no la puerta. Se puede pedir igual.')+
+      '<p class="ubf-nota">🤖 El bot ya la pide dos días antes y en el recordatorio de la noche anterior: esta lista es para lo cargado a último momento o el cliente que no contestó. «✓ Ya la pedí» queda anotado en este aparato.</p>'+
+      '<div class="modal-actions ubf-pie"><span class="ubf-sp"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div>'+
+    '</div>';
+  openModal(h);
+}
 /* 🎨 (25/10, §4mg, V5; dueño: «unificar colores… con más vida… el rojo de antes») UN estilo de botón en las tres listas «Para hacer»
    (Mis pedidos, Contabilidad, Administración): el color lo da lo que pide el renglón. ROJO sólido (#CE2939, el de siempre) = hay que
    arreglarlo; ÁMBAR sólido = hay que revisarlo; TURQUESA sólido = lo que se hace seguido; turquesa claro = lo demás. */
@@ -57768,6 +57953,13 @@ function asisLogistica(){
   var rec=[]; [hoy, prox].forEach(function(f, i){ if(i && f===hoy) return; delDia(f).forEach(function(p){ if((p.productos||[]).some(esRecoger) && rec.indexOf(p)<0) rec.push(p); }); });
   if(rec.length) A.push({ k:'l-rec|'+hoy+'|'+rec.map(function(p){ return p.id; }).join(','), sev:'am', ico:'📥', ped:1,
     t:rec.length+' pedido'+(rec.length===1?'':'s')+' con algo para traer de Moreno', x:'De hoy y '+(prox===tomorrowStr()?'mañana':('el '+nxDiaTxt(prox)))+'. Mandá a buscarlo antes de cargar.', lista:asisPedLista(rec) });
+  /* 📍 (13/11, mejora 185) las entregas de hoy y el próximo camión sin ubicación (la MISMA lista de «Para hacer»: `ubfDatos`). Lo ya pedido
+     desde este aparato no cuenta; lo sin celular sí (hay que llamar a la vendedora). */
+  try{ var Ub=ubfDatos(), ubP=Ub.conCel.concat(Ub.sinCel).filter(function(x){ return !x.ped; });
+    if(ubP.length) A.push({ k:'l-ubic|'+hoy+'|'+ubP.map(function(x){ return x.id; }).join(','), sev:'am', ico:'📍', ped:1,
+      t:ubP.length+' entrega'+(ubP.length===1?'':'s')+' de '+Ub.diasTxt+' sin ubicación',
+      x:((Ub.n ? 'Pedíselas al cliente por WhatsApp: el mensaje sale armado. ' : '')+(Ub.nSinCel ? (Ub.nSinCel+' sin celular: llamá a la vendedora.') : '')).trim(),
+      lista:asisPedLista(ubP.map(function(x){ return x.p; })), b:['📍 Pedir las ubicaciones', 'ubfAbrir()'] }); }catch(e){}
   /* 🗓️ (27/10) lo sin revisar o sin pedir que se entrega dentro del plazo de producción (`semanaUrgentes`, la cuenta del botón «Semana») */
   try{ var U=semanaUrgentes();
     if(U.length){ var ps=[]; U.forEach(function(l){ if(ps.indexOf(l.p)<0) ps.push(l.p); });
