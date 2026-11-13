@@ -15,6 +15,9 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
      `tiendaamiga.com.bo OR filename:OC_Marketplace`). Ver «Tienda Amiga» más abajo.
    Leer cada hilo ENTERO (`get_thread`, PLAIN_TEXT): el texto trae datos que el PDF no tiene (quién recibe, fecha, «pendiente de coordinar»).
    ⚠️ Los correos de Flavia Ordoñez (fordonez@) con «OC del reporte de entregas» NO son pedidos nuevos: no se cargan.
+   ⚠️ Una OC de ROHO por colchones que ya están en la tienda en CONSIGNACIÓN y ya se vendieron («ingresaron bajo la modalidad de
+   consignación… ya fueron vendidas… envíen la factura»; descripción «… - CONSIGNACION») NO es una entrega: solo se factura, y eso lo hace el
+   dueño (13/11, OC 260013258: *«roho solo hay que facturarlo ya lo facturé»*). No se carga ni se le pregunta: basta con nombrarla en el resumen.
 2. Por cada PDF de pedido: `get_message` con `messageFormat: "RAW"` → el resultado queda en un archivo JSON →
    `python3 -I extraer_pdf.py <ese_json> <carpeta_nueva_en_el_scratchpad>` → leer los `.txt`.
 3. Armar un JSON con los pedidos (formato en `cargar_pedidos.py`) y correr primero SIN `--guardar` (muestra qué haría y cuáles

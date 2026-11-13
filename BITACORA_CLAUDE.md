@@ -18693,3 +18693,6 @@ no facturado), la música de noviembre solo el 1 y el 2, y §4pr el tema de Blac
 Batería antes de publicar: 4 suites en rojo. `test_onclicks` era real (los ids `ret-nota-nueva`/`-r` se armaban con una variable: ahora van
 escritos enteros, `campo()` del retiro); `test_visual_4pj`, `test_actualizar_espera` y `test_astra_deshacer` dieron bien solas (inestables con la
 máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (los archivos de la rama copiados tal cual sobre `fec3743`).
+- 13/11 (después de publicar): el dueño sobre la OC 260013258 de ROHO (consignación de mayo, Bs 25.040): *«roho solo hay que facturarlo ya lo
+  facturé»*. No se carga. Queda en `herramientas/pedidos_correo/LEEME.md`: una OC de ROHO por consignación ya vendida es solo factura (no se carga
+  ni se pregunta). Sigue pendiente la medida del OP-03-11-26 de Copacaba Potosí.
