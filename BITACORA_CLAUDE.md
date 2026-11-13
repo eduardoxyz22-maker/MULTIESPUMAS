@@ -18678,3 +18678,5 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
   antes, 3 rojas). 390 px sin correrse de costado en las cuatro pestañas. `test_temas_mejoras` 97, `test_bloki` 29.
 - La falla «3f la ventana de Bloki entra en la pantalla» de `test_vidrio_agrandar` salió una vez y en las dos repeticiones no: es de tiempo (300 ms).
 - Página para el dueño (capturas con clientes inventados y el encabezado en video): https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh.
+- **La cinta amarilla se sacó** (dueño, con la captura marcada en rojo: *«Eso que marqué de rojo no me gusta»*): fuera `header::before`, `bf-cinta` y el espacio
+  de arriba en el panel, y la cinta de la caja de la marca en el dashboard. Lo demás queda. No volver a ponerla. `test_temas_mejoras` 96.

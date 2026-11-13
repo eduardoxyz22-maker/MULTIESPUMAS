@@ -120,8 +120,7 @@ function armarDashboard(){
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
   r = await mira('?tema=black-friday');
-  chk('2 · Black Friday (muestra, solo con ?tema): la cinta amarilla que corre, la etiqueta dibujada al lado del nombre y la noche negra', /^url\("data:image\/svg/.test(r.papel) && r.anPapel==='bf-cinta' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(5, 5, 5\)/.test(r.fondo), r);
-  chk('2 · …la cinta no tapa el nombre', r.logoAlto>=20, r.logoAlto);
+  chk('2 · Black Friday (muestra, solo con ?tema): la etiqueta dibujada al lado del nombre y la noche negra, SIN la cinta amarilla de arriba (dueño, 13/11: «no me gusta»)', r.papel==='none' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(5, 5, 5\)/.test(r.fondo), r);
   r = await mira('?tema=espuma');
   chk('2 · Espuma: el brillo que pasa por el nombre (la letra recortada sobre un degradé que se mueve), sin emoji', /text/.test(r.clip) && r.anLogo==='esp-brillo' && (r.logoTxt==='none' || r.logoTxt==='normal'), r);
   r = await mira('?tema=todos-santos', 390);

@@ -844,10 +844,10 @@ Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifac
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
 ## 🛍️ Tema de Black Friday — MUESTRA (§4pr, 13/11; dueño: «ármame la muestra de black friday»; en la rama, espera los días)
-`tema-black-friday`: negro con dorado. Cinta amarilla que corre arriba (`header::before`, `bf-cinta`), etiqueta dorada al lado del nombre, ciudad de noche,
+`tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
 oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
-cinta. ⚠️ **Apagado por fecha** hasta que el dueño elija los días: `BF_DIAS=null` en el `<head>` de `pedidos.html` Y de `panel_template.html` (los dos iguales);
+etiqueta. ⚠️ **Apagado por fecha** hasta que el dueño elija los días: `BF_DIAS=null` en el `<head>` de `pedidos.html` Y de `panel_template.html` (los dos iguales);
 con `[desde, hasta]` en días desde el viernes después del cuarto jueves de noviembre, gana sobre Todos Santos esos días. Mientras, solo con `?tema=black-friday`.
 Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
 
