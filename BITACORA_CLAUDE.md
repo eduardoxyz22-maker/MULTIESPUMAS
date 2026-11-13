@@ -18634,4 +18634,11 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - **Misma tarde, el dueño: *«La 136 sería con la 129? Solo los mayoristas se atrasan en pagar…»*** → la antigüedad de saldos queda SOLO en Mayoristas
   (pestañas Por cliente · Antigüedad · Lo que va a entrar); en Ventas, solo «Lo que va a entrar». Lo que tenía el equipo «con más de 60 días»: 39 de las 46
   ventas son de julio-agosto (los primeros meses del panel), 24 sin ningún pago anotado: casi seguro cobradas y no anotadas. Se le dijo; no se tocó nada.
+- **Revisión de Fable 5.2 con razonamiento alto (dueño: *«que Fable en alto revise los cálculos»*)**: totales iguales a «Falta cobrar», tramos sin corrimiento,
+  y el `metodoPago` de «Pagó las tildadas» idéntico al de `ctaRegistrarPago` en seis casos (adelanto, mixto, flete, REGISTRADO, suelto, centavos). Diez
+  hallazgos, todos arreglados: (1 MEDIA) «Asignar los N» del GPS asignaba también lo que el filtro escondía → `data-ids`; (2 MEDIA) las ventas de Eduardo sin
+  monto anotado se veían «al día» → `'sinm'` (14 en la copia del 12/11, 9 de Multicenter); (3) un guardado colgado trababa el botón → todo en memoria +
+  `Promise.all`; (4) lo tipeado mientras subía el comprobante se perdía; (5) «N clientes» por celular; (6) Luis Franco/Arce y nombres con variantes; (7)
+  efectivo sin chofer; (8) la pregunta contaba OC ya pagadas; (9) venta de tienda y ✅ adelantado; (10) GPS pisaba un chofer a mano y no avisaba lo aproximado.
+  Sus pruebas quedaron en `scratchpad/t/rev*.js`; las nuevas, en `test_cobranza` §9 y `test_gps_camion` §6b.
 

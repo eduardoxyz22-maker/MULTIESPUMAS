@@ -162,6 +162,32 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('«Asignar» desde el cierre: Carry · Omar, un guardado, el cierre sigue abierto y la fila ya no lo propone', r.veh==='Carry' && r.ch==='Omar' && r.saves===1 && r.abierto && r.s5b && !/lo llevó/.test(r.s5b) && /Carry · Omar/.test(r.s5b), r);
   chk('…y tocar «Asignar» no tilda el pedido como entregado', r.tildo, r.tildo);
 
+  console.log('\n── 6b. Revisión de Fable: «Asignar los N» solo lo que se ve; chofer a mano; ubicación aproximada ──');
+  r = await ev(async () => {
+    var P=almUbic('ptf'), D=JSON.parse(JSON.stringify(gpsDiaCargar())); D.t=Number(D.t)+2000;
+    [['s7',0.03],['s8',0.05],['s9',0.07]].forEach(function(a){   // cerca de la ciudad (lejos, almPunto no da pin)
+      STATE.push(Object.assign({}, findById('s3'), { id:a[0], oc:'11-8'+a[0].slice(1), cliente:'CLIENTE '+a[0].toUpperCase(), vehiculo:'', chofer:(a[0]==='s8'?'Giordano':''),
+        maps:'https://www.google.com/maps?q='+(P.lat+0.01)+','+(P.lng+a[1])+(a[0]==='s9'?'&aprox=1':'') }));
+      D.u['6663CCP'].par.push(['14:0'+a[0].slice(1),'14:1'+a[0].slice(1), P.lat+0.01, P.lng+a[1], [a[0]], 0, 10]);
+    });
+    gpsDiaTomar(D);
+    var lista=[findById('s7'), findById('s9')];               // lo que se ve (por ejemplo, con una búsqueda): s7 y s9
+    var h=gpsCamionHtml(lista), div=document.createElement('div'); div.innerHTML=h;
+    var btn=div.querySelector('#gps-cam-todos'), ids=btn ? btn.getAttribute('data-ids') : '';
+    var aprox=/ubicación aproximada/.test(div.innerText);
+    var s0=window.__SAVES.length;
+    await gpsCamionAsignarTodos('', ids);
+    await new Promise(res=>setTimeout(res, 80));
+    var nuevos=window.__SAVES.slice(s0).map(function(x){ return x.id; }).sort();
+    var o8=gpsCamionPropDe(findById('s8'));
+    await gpsCamionAsignar('s8');
+    return { ids:ids, nuevos:nuevos, s8antes:o8 && o8.chofer, s8:findById('s8').vehiculo+'·'+findById('s8').chofer, aprox:aprox };
+  });
+  if(r.__error) console.log('ERROR', r.__error);
+  chk('1. «Asignar los 2» con 2 a la vista asigna esos 2 (s7, s9) y NO s8, que no se mostraba', r.ids==='s7,s9' && r.nuevos.join(',')==='s7,s9', r);
+  chk('10. un chofer puesto a mano (Giordano) se respeta en la propuesta y al asignar', r.s8antes==='Giordano' && r.s8==='Foton nuevo·Giordano', r);
+  chk('10b. la ubicación aproximada se avisa en la propuesta', r.aprox, r.aprox);
+
   console.log('\n── 7. Sin el día del GPS: nada ──');
   r = await ev(() => {
     STATE.push(Object.assign({}, findById('s3'), { id:'s6', oc:'11-897', cliente:'CLIENTE S6' }));

@@ -1135,7 +1135,12 @@ Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo m
   Carlos Arce») y Luis Franco; los demás por nombre sin tildes. Casillas + «💵 Pagó las N tildadas» (`cbzPagoRegistrar`): banco (QR = transferencia), fecha,
   N° y comprobante OBLIGATORIOS como «Registrar pago»; un renglón por OC por su saldo entero con `aplicarCobros`, de a una, revisando el saldo antes (la
   pagada mientras tanto se saltea). Excel y texto del estado de cuenta (`cbzCliExcel`/`cbzCliCopiar`).
-- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (34).
+- 🔎 **Revisión de Fable (13/11, alto)**: totales y escritura de pagos OK; arreglados: «Asignar los N» del GPS asigna solo los `data-ids` que el cartel
+  mostró; venta SIN MONTO de Eduardo = `'sinm'` aparte («⚠️ N OC sin monto anotado», no tildable, «SIN MONTO» en el Excel; 14 en la copia del 12/11, 9 de
+  Multicenter); «Pagó las tildadas» anota todo en memoria y espera con `Promise.all` (un guardado colgado no traba el botón); lo tipeado mientras sube el
+  comprobante se recuerda; «N clientes» de Mayoristas por `cbzMayCliente`; Luis Franco antes que Arce y «MULTI CENTER»/«TIENDAAMIGA»; efectivo con el chofer
+  (`ctaChoferSugerido`); venta de tienda y ✅ adelantado = deuda; GPS respeta un chofer puesto a mano y avisa la ubicación aproximada.
+- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (42), `test_gps_camion` (25).
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».

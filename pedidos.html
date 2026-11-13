@@ -6282,7 +6282,7 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .cbz .cbz-cts{display:flex;gap:6px;flex-wrap:wrap}
 .cbz .cbz-ct{border-left:3px solid;padding:1px 6px;font-size:.74rem;display:grid}.cbz .cbz-ct small{color:var(--muted);font-size:.66rem}
 .cbz .cbz-ct b{font-variant-numeric:tabular-nums}
-.cbz .cbz-cv{font-size:.74rem;color:var(--muted)}
+.cbz .cbz-cv{font-size:.74rem;color:var(--muted)}.cbz .cbz-cv.cbz-sinm{color:#b45309;font-weight:700}.cbz .cbz-t tr.cbz-sinm td{background:#fff8ec}
 .cbz .cbz-selbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}
 .cbz .cbz-pago{margin-top:12px;border:2px solid #11743e;border-radius:12px;padding:12px;background:#f3fbf6;display:grid;gap:8px}
 .cbz .cbz-pago h4{margin:0;font-size:1rem}
@@ -10257,10 +10257,15 @@ function cbzVentas(){
 }
 /* Cada venta con saldo, en su lugar: 'deuda' (ya entregada, con su tramo) o 'viene' (por entregar, con su plazo). */
 function cbzClasificar(p, hoy){
+  /* (13/11, revisión de Fable 2) Una venta SIN MONTO ANOTADO (saldo 0, no pagada, sin cobros: a Eduardo no se le pide precio) no
+     es «al día»: va aparte, como 'sinm', para que se vea y se le ponga el monto. No suma en ningún total. */
+  if(sinMontoAnotado(p) && !noSeCobra(p) && !esVentaTienda(p)){ var f0=fechaSalida(p)||''; return { p:p, saldo:0, que:'sinm', k:'sinm', f:f0, dias:(f0 && f0<=hoy)?Math.max(0, diasEntre(f0, hoy)):0 }; }
   var s=r2(contaFaltaCobrar(p)); if(!(s>0.005)) return null;
   if(entregaAConfirmar(p)) return { p:p, saldo:s, que:'viene', k:'avisa', f:'', dias:0 };
   var fs=fechaSalida(p)||'';
   if(!fs) return { p:p, saldo:s, que:'deuda', k:'sinF', f:'', dias:0 };
+  /* (revisión de Fable 9) una venta de tienda ya se entregó en la tienda; un ✅ adelantado (fecha futura) ya salió: los dos son deuda de hoy */
+  if((esVentaTienda(p) || p.entregado) && fs>=hoy) return { p:p, saldo:s, que:'deuda', k:'d7', f:fs, dias:0 };
   if(fs>hoy || (fs===hoy && !p.entregado)){
     var d=fs===hoy ? 0 : diasEntre(hoy, fs);
     return { p:p, saldo:s, que:'viene', k:(fs===hoy?'hoy':d<=7?'v7':d<=14?'v14':'vmas'), f:fs, dias:d };
@@ -10269,19 +10274,21 @@ function cbzClasificar(p, hoy){
   return { p:p, saldo:s, que:'deuda', k:(e<=7?'d7':e<=30?'d30':e<=60?'d60':'d60m'), f:fs, dias:e };
 }
 function cbzDatos(){
-  var hoy=diaNegocio(), deuda=[], viene=[], cobradoViene=0;
+  var hoy=diaNegocio(), deuda=[], viene=[], sinm=[], cobradoViene=0, mayor=contaAmbito()==='mayor';
   cbzVentas().forEach(function(p){
     var x=cbzClasificar(p, hoy); if(!x) return;
-    if(x.que==='deuda') deuda.push(x); else { viene.push(x); cobradoViene=r2(cobradoViene+contaCobrado(p)); }
+    if(x.que==='sinm') sinm.push(x);
+    else if(x.que==='deuda') deuda.push(x); else { viene.push(x); cobradoViene=r2(cobradoViene+contaCobrado(p)); }
   });
   deuda.sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
   viene.sort(function(a,b){ return a.k==='avisa' ? 1 : b.k==='avisa' ? -1 : (a.f<b.f?-1:a.f>b.f?1:b.saldo-a.saldo); });
   var suma=function(L, k){ var o={ n:0, bs:0 }; L.forEach(function(x){ if(!k || x.k===k){ o.n++; o.bs=r2(o.bs+x.saldo); } }); return o; };
   var T={}; CBZ_TRAMOS.forEach(function(t){ T[t.k]=suma(deuda, t.k); });
   var V={}; CBZ_VIENE.forEach(function(t){ V[t.k]=suma(viene, t.k); });
-  var cli={}; deuda.forEach(function(x){ var k=cliCelClave(x.p.celular)||normNombre(x.p.cliente||''); cli[k]=r2((cli[k]||0)+x.saldo); });
+  /* (revisión de Fable 5) en Mayoristas el cliente es el de la ficha (`cbzMayCliente`), no el celular de cada entrega */
+  var cli={}; deuda.forEach(function(x){ var k=mayor ? cbzMayCliente(x.p) : (cliCelClave(x.p.celular)||normNombre(x.p.cliente||'')); cli[k]=r2((cli[k]||0)+x.saldo); });
   var montos=Object.keys(cli).map(function(k){ return cli[k]; }).sort(function(a,b){ return b-a; });
-  return { hoy:hoy, deuda:deuda, viene:viene, T:T, V:V, totD:suma(deuda), totV:suma(viene), cobradoViene:cobradoViene,
+  return { hoy:hoy, deuda:deuda, viene:viene, sinm:sinm, T:T, V:V, totD:suma(deuda), totV:suma(viene), cobradoViene:cobradoViene,
            nCli:montos.length, top5:r2(montos.slice(0,5).reduce(function(s,x){ return s+x; },0)) };
 }
 function cbzVendSelHtml(){
@@ -10350,6 +10357,7 @@ function cbzAntHtml(D){
   var L=D.deuda.filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), viejo=(D.T.d60m||{});
   var h='<div class="cbz-res"><div><small>Ya entregado y sin cobrar</small><b>'+fmtBs(D.totD.bs)+'</b><span>'+D.totD.n+' venta'+(D.totD.n===1?'':'s')+' · '+D.nCli+' cliente'+(D.nCli===1?'':'s')+'</span></div>'+
     (viejo.n ? '<div class="cbz-mal"><small>Con más de 60 días</small><b>'+fmtBs(viejo.bs)+'</b><span>'+viejo.n+' venta'+(viejo.n===1?'':'s')+': o nadie la está cobrando, o se pagó y no se anotó</span></div>' : '')+
+    ((D.sinm||[]).length ? '<div class="cbz-mal cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'cli\')"><small>⚠️ Sin monto anotado</small><b>'+D.sinm.length+' OC</b><span>no suman acá: no se sabe cuánto deben · ver «Por cliente» →</span></div>' : '')+
     (D.nCli>5 ? '<div><small>Los 5 que más deben</small><b>'+fmtBs(D.top5)+'</b><span>'+(D.totD.bs>0?Math.round(D.top5/D.totD.bs*100):0)+'% de lo que falta</span></div>' : '')+
     (D.totV.n ? '<div class="cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'ent\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}"><small>Todavía por entregar</small><b>'+fmtBs(D.totV.bs)+'</b><span>no es deuda todavía · ver «Lo que va a entrar» →</span></div>' : '')+
     '</div>';
@@ -10416,22 +10424,25 @@ function cbzExcel(que){
    los demás clientes de Eduardo van cada uno con su nombre. */
 function cbzMayCliente(p){
   var n=normNombre(p&&p.cliente||'');
-  if(stockEsMulticenter(p)) return 'Multicenter';
-  if(/\btienda amiga\b/.test(n)) return 'Tienda Amiga';
+  /* (revisión de Fable 6) Luis Franco ANTES que «Juan Carlos Arce» (Arce manda pedidos de los dos); «MULTI CENTER» y «TIENDAAMIGA» también;
+     el nombre de respaldo sin la puntuación del final («karina torrico.»). Copacaba con el MISMO patrón del stock (§4od). */
+  if(stockEsMulticenter(p) || /\bmulti ?center\b/.test(n)) return 'Multicenter';
+  if(/\btienda ?amiga\b/.test(n)) return 'Tienda Amiga';
   if(/\broho\b/.test(n)) return 'ROHO';
-  if(/co(?:pa|ap)caba/.test(n) || /\bjuan carlos arce\b/.test(n)) return 'Copacaba';
   if(/\bluis franco\b/.test(n)) return 'Luis Franco';
-  return sinTildes(String((p&&p.cliente)||'Sin nombre').replace(/\s+/g,' ').trim()).toUpperCase();   // «KARINA TÓRRICO» = «KARINA TORRICO»
+  if(/co(?:pa|ap)caba/.test(n) || /\bjuan carlos arce\b/.test(n)) return 'Copacaba';
+  return sinTildes(String((p&&p.cliente)||'Sin nombre').replace(/\s+/g,' ').trim().replace(/[\s.,;:·\-]+$/,'')).toUpperCase() || 'SIN NOMBRE';   // «KARINA TÓRRICO» = «KARINA TORRICO»
 }
 var CBZ_MAY_FIJOS=['Multicenter','Tienda Amiga','ROHO','Copacaba','Luis Franco'];
 function cbzMayDatos(){
   var hoy=diaNegocio(), M={};
   cbzVentas().forEach(function(p){
-    var k=cbzMayCliente(p), c=M[k]||(M[k]={ k:k, fijo:CBZ_MAY_FIJOS.indexOf(k)>=0, ocs:[], debe:0, n:0, d30:0, d60:0, d60m:0, viene:0, nV:0, ult:'' });
+    var k=cbzMayCliente(p), c=M[k]||(M[k]={ k:k, fijo:CBZ_MAY_FIJOS.indexOf(k)>=0, ocs:[], debe:0, n:0, d30:0, d60:0, d60m:0, viene:0, nV:0, nSin:0, ult:'' });
     var x=cbzClasificar(p, hoy), fs=fechaSalida(p)||'';
     if(fs>c.ult) c.ult=fs;
     c.ocs.push({ p:p, x:x });
     if(!x) return;
+    if(x.que==='sinm'){ c.nSin++; return; }
     if(x.que==='viene'){ c.viene=r2(c.viene+x.saldo); c.nV++; return; }
     c.debe=r2(c.debe+x.saldo); c.n++;
     if(x.dias>60) c.d60m=r2(c.d60m+x.saldo); else if(x.dias>30) c.d60=r2(c.d60+x.saldo); else c.d30=r2(c.d30+x.saldo);
@@ -10439,15 +10450,16 @@ function cbzMayDatos(){
   return Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return (b.fijo-a.fijo) || (b.debe-a.debe) || a.k.localeCompare(b.k,'es'); });
 }
 function cbzCliListaHtml(){
-  var L=cbzMayDatos(), con=L.filter(function(c){ return c.debe>0.005 || c.viene>0.005; }), tot=0;
+  var L=cbzMayDatos(), con=L.filter(function(c){ return c.debe>0.005 || c.viene>0.005 || c.nSin>0; }), tot=0;
   con.forEach(function(c){ tot=r2(tot+c.debe); });
   var ficha=function(c){
     var tr=function(lbl, v, col){ return '<span class="cbz-ct" style="border-color:'+col+'"><small>'+lbl+'</small><b style="color:'+col+'">'+fmtBs(v)+'</b></span>'; };
     return '<button type="button" class="cbz-cli" data-k="'+esc(c.k)+'" onclick="cbzCliAbrir(this.getAttribute(\'data-k\'))">'+
       '<span class="cbz-cn">'+esc(c.k)+'</span>'+
-      '<span class="cbz-cd"><b>'+(c.debe>0.005?fmtBs(c.debe):'✅ Al día')+'</b><small>'+(c.n?(c.n+' OC entregada'+(c.n===1?'':'s')+' sin pago'):'nada entregado sin pago')+'</small></span>'+
+      '<span class="cbz-cd"><b>'+(c.debe>0.005?fmtBs(c.debe):c.nSin?'⚠️ Sin monto':'✅ Al día')+'</b><small>'+(c.n?(c.n+' OC entregada'+(c.n===1?'':'s')+' sin pago'):'nada entregado sin pago')+'</small></span>'+
       (c.debe>0.005 ? '<span class="cbz-cts">'+tr('0-30 d', c.d30, '#64748b')+tr('31-60 d', c.d60, '#b45309')+tr('+60 d', c.d60m, '#b42318')+'</span>' : '')+
-      (c.viene>0.005 ? '<span class="cbz-cv">+ '+fmtBs(c.viene)+' por entregar ('+c.nV+')</span>' : '')+'</button>';
+      (c.viene>0.005 ? '<span class="cbz-cv">+ '+fmtBs(c.viene)+' por entregar ('+c.nV+')</span>' : '')+
+      (c.nSin ? '<span class="cbz-cv cbz-sinm">⚠️ '+c.nSin+' OC sin monto anotado</span>' : '')+'</button>';
   };
   return '<div class="cbz-res"><div><small>Entregado y sin pago anotado</small><b>'+fmtBs(tot)+'</b><span>'+con.filter(function(c){ return c.debe>0.005; }).length+' cliente'+(con.length===1?'':'s')+' de '+esc(mayoristasTxt())+'</span></div></div>'+
     '<p class="cbz-ay">Cada cliente con lo que debe, por los días desde la entrega. 👆 Tocá uno para ver sus OC, marcar las que pagó con una sola transferencia y bajar su estado de cuenta.</p>'+
@@ -10463,19 +10475,21 @@ function cbzCliDetHtml(k){
   var selIds=Object.keys(CBZ.sel).filter(function(id){ return CBZ.sel[id] && conSaldo.some(function(o){ return String(o.p.id)===id; }); });
   var selBs=0; selIds.forEach(function(id){ var o=conSaldo.filter(function(z){ return String(z.p.id)===id; })[0]; if(o) selBs=r2(selBs+o.x.saldo); });
   var fila=function(o){
-    var p=o.p, x=o.x, id=String(p.id), viene=x.que==='viene', col=viene?'var(--muted)':x.dias>60?'var(--red)':x.dias>30?'#b45309':'var(--muted)';
-    return '<tr class="'+(CBZ.sel[id]?'on':'')+'"><td><input type="checkbox" class="cbz-ck" data-id="'+esc(id)+'" aria-label="Pagó '+esc(p.nota||p.oc||'')+'"'+(CBZ.sel[id]?' checked':'')+' onchange="cbzSel(this.getAttribute(\'data-id\'), this.checked)"></td>'+
+    var p=o.p, x=o.x, id=String(p.id), viene=x.que==='viene', sinm=x.que==='sinm', col=viene?'var(--muted)':x.dias>60?'var(--red)':x.dias>30?'#b45309':'var(--muted)';
+    return '<tr class="'+(CBZ.sel[id]?'on':'')+(sinm?' cbz-sinm':'')+'"><td>'+(sinm ? '<span title="Sin monto anotado: abrila y poné el total antes de cobrarla">⚠️</span>' :
+      '<input type="checkbox" class="cbz-ck" data-id="'+esc(id)+'" aria-label="Pagó '+esc(p.nota||p.oc||'')+'"'+(CBZ.sel[id]?' checked':'')+' onchange="cbzSel(this.getAttribute(\'data-id\'), this.checked)">')+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b><br><small>'+esc(ocEtiq(p.oc))+'</small></td>'+
       '<td class="cbz-pr">'+esc(cbzProdsTxt(p))+'</td>'+
       '<td style="color:'+col+';white-space:nowrap">'+(x.k==='avisa'?'avisa':x.f?fmtFechaCorta(x.f):'sin fecha')+(viene?' · por entregar':(x.f?(' · '+x.dias+' d'):''))+'</td>'+
-      '<td class="m">'+fmtBs(ventaTotal(p))+'</td><td class="m"><b>'+fmtBs(x.saldo)+'</b></td>'+
+      '<td class="m">'+(sinm?'—':fmtBs(ventaTotal(p)))+'</td><td class="m">'+(sinm?'<b style="color:#b45309">sin monto</b>':('<b>'+fmtBs(x.saldo)+'</b>'))+'</td>'+
       '<td><button type="button" class="btn btn-ghost btn-sm" style="width:auto;padding:4px 8px" data-id="'+esc(id)+'" onclick="cbzAbrirVenta(this.getAttribute(\'data-id\'))">Abrir</button></td></tr>';
   };
   var h='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:8px" onclick="CBZ.cli=\'\';CBZ.sel={};cbzPintar()">← Todos los clientes</button>'+
     '<div class="cbz-res"><div><small>'+esc(c.k)+' · entregado sin pago</small><b>'+fmtBs(c.debe)+'</b><span>'+c.n+' OC</span></div>'+
       '<div><small>0 a 30 días</small><b>'+fmtBs(c.d30)+'</b></div><div><small>31 a 60 días</small><b style="color:#b45309">'+fmtBs(c.d60)+'</b></div>'+
       '<div class="'+(c.d60m>0.005?'cbz-mal':'')+'"><small>Más de 60 días</small><b>'+fmtBs(c.d60m)+'</b>'+(c.d60m>0.005?'<span>reclamar</span>':'')+'</div>'+
-      (c.viene>0.005?'<div><small>Por entregar</small><b>'+fmtBs(c.viene)+'</b><span>'+c.nV+' OC</span></div>':'')+'</div>';
+      (c.viene>0.005?'<div><small>Por entregar</small><b>'+fmtBs(c.viene)+'</b><span>'+c.nV+' OC</span></div>':'')+
+      (c.nSin?'<div class="cbz-mal"><small>⚠️ Sin monto anotado</small><b>'+c.nSin+' OC</b><span>no se sabe cuánto deben: abrilas y poné el total</span></div>':'')+'</div>';
   if(!conSaldo.length) h+='<div class="empty" style="padding:16px 0">✅ '+esc(c.k)+' no debe nada.</div>';
   else h+='<div class="cbz-selbar"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'todas\')">Tildar todas</button>'+
       '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'d30\')">Las de más de 30 días</button>'+
@@ -10491,7 +10505,7 @@ function cbzSel(id, on){ cbzPagoRecordar(); if(on) CBZ.sel[String(id)]=true; els
 function cbzSelVarias(que){
   cbzPagoRecordar();
   var c=cbzCliDe(CBZ.cli); if(!c) return; CBZ.sel={};
-  if(que!=='nada') c.ocs.forEach(function(o){ if(o.x && (que==='todas' || (o.x.que==='deuda' && o.x.dias>30))) CBZ.sel[String(o.p.id)]=true; });
+  if(que!=='nada') c.ocs.forEach(function(o){ if(o.x && o.x.que!=='sinm' && (que==='todas' || (o.x.que==='deuda' && o.x.dias>30))) CBZ.sel[String(o.p.id)]=true; });
   cbzPintar();
 }
 /* Lo tipeado en el pago no se pierde al tildar otra OC (el cuadro se redibuja). */
@@ -10528,12 +10542,12 @@ function cbzPagoAdjuntar(){
 }
 function cbzPagoSubir(f){
   var ids=Object.keys(CBZ.sel), p=findById(ids[0]); if(!p) return;
-  CBZ.subiendo++; cbzPintar(); toast('Achicando y subiendo el comprobante…','ok');
+  cbzPagoRecordar(); CBZ.subiendo++; cbzPintar(); toast('Achicando y subiendo el comprobante…','ok');
   return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){ return subirFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl); }).then(function(res){
-    CBZ.subiendo--;
+    CBZ.subiendo--; cbzPagoRecordar();   // (revisión de Fable 4) lo tipeado mientras subía no se pierde
     if(!res || !res.ok || !res.fotoId){ cbzPintar(); toast('No se pudo guardar el comprobante'+(res&&res.error?(' ('+res.error+')'):''),'err'); return; }
     CBZ.pago.comps=compsArr(compsArr(CBZ.pago.comps).concat([res.fotoId])); cbzPintar(); toast('Imagen lista ✓','ok');
-  }).catch(function(e){ if(CBZ.subiendo>0) CBZ.subiendo--; cbzPintar(); toast('No se pudo subir el comprobante: '+motivoDeError(e),'err'); });
+  }).catch(function(e){ if(CBZ.subiendo>0) CBZ.subiendo--; cbzPagoRecordar(); cbzPintar(); toast('No se pudo subir el comprobante: '+motivoDeError(e),'err'); });
 }
 /* Registra un pago por OC tildada, de a una y en orden (cada guardado es el de siempre: `aplicarCobros` → `persistPedido`). Antes de
    cada una se vuelve a mirar su saldo: si mientras tanto alguien le registró un pago, se saltea y se dice. */
@@ -10547,26 +10561,37 @@ function cbzPagoRegistrar(){
   if(P.metodo==='QR' && !P.banco){ toast('Elegí a qué banco entró la transferencia','err'); var b=document.getElementById('cbz-banco'); if(b) b.focus(); return; }
   if(!nota){ toast('Poné el N° de recibo o de la transferencia','err'); var n=document.getElementById('cbz-nota'); if(n){ n.classList.add('err'); n.focus(); } return; }
   if(!compsArr(P.comps).length){ toast('📎 Falta la imagen del comprobante: sin ella no hay con qué probar que la plata entró','err',6000); return; }
-  var L=ids.map(findById).filter(Boolean), tot=0; L.forEach(function(p){ tot=r2(tot+Math.max(0, Number(p.saldo)||0)); });
+  /* (revisión de Fable 8) solo las que todavía deben: una tildada que ya pagaron desde su ficha no se cuenta en la pregunta */
+  var L=ids.map(findById).filter(function(p){ return !!p && contaFaltaCobrar(p)>0.005; }), tot=0; L.forEach(function(p){ tot=r2(tot+contaFaltaCobrar(p)); });
+  if(!L.length){ CBZ.sel={}; cbzPintar(); toast('Las OC tildadas ya no deben nada.','ok'); return; }
   if(!confirm('¿Registrar el pago de '+L.length+' OC por '+fmtBs(tot)+'?\n\n'+(P.metodo==='QR'?('Transferencia / QR · '+P.banco):P.metodo)+' · '+fmtFecha(fecha)+' · N° '+nota+'\n\nCada OC queda pagada por su saldo entero.')) return;
-  CBZ.guardando=true; cbzPintar();
-  var ok=0, salt=[], mal=0, i=0;
-  var sig=function(){
-    if(i>=L.length) return Promise.resolve();
-    var p=findById(L[i++].id); if(!p) return sig();
+  /* (revisión de Fable 3) Todas se anotan YA, en memoria (cada `aplicarCobros` deja su copia durable en el aparato antes de mandarla):
+     un guardado que no contesta ya no deja el lote a medias ni el botón trabado. Después se espera a la planilla para decir cuántas
+     entraron y cuántas quedaron en la cola. Antes de cada una se vuelve a mirar su saldo (si alguien la pagó, se saltea). */
+  CBZ.guardando=true;
+  var salt=[], proms=[];
+  L.forEach(function(p0){
+    var p=findById(p0.id); if(!p) return;
     var falta=r2(contaFaltaCobrar(p));
-    if(!(falta>0.005)){ salt.push(p.nota||p.oc||p.cliente); return sig(); }
-    var linea={ metodo:P.metodo, banco:(P.metodo==='QR'?P.banco:''), monto:falta, fecha:fecha, nota:nota, recibio:'', comps:compsArr(P.comps) };
+    if(!(falta>0.005)){ salt.push(p.nota||p.oc||p.cliente); return; }
+    /* (revisión de Fable 7) en efectivo, quién lo tiene: el chofer de ese día si la plata entró el día de la entrega (§4ok-112) */
+    var rc=''; if(P.metodo==='Efectivo'){ try{ var sg=ctaChoferSugerido(p, fecha); rc=sg ? limpiaRecibio(sg.ch) : ''; }catch(e){ rc=''; } }
+    var linea={ metodo:P.metodo, banco:(P.metodo==='QR'?P.banco:''), monto:falta, fecha:fecha, nota:nota, recibio:rc, comps:compsArr(P.comps) };
     var arr=cobrosDe(p).slice(); arr.push(linea);
-    var pr; try{ pr=aplicarCobros(p, arr); }catch(e){ mal++; return sig(); }
-    return Promise.resolve(pr).then(function(r){ if(r===false || (r && r.ok===false)) mal++; else ok++; }, function(){ mal++; }).then(sig);
-  };
-  sig().then(function(){
-    CBZ.guardando=false; CBZ.sel={}; CBZ.pago={ metodo:P.metodo, banco:P.banco, fecha:'', nota:'', comps:[] };
-    try{ renderContaSiActiva(); }catch(e){}
-    cbzPintar();
-    try{ sonidoPanel('caja'); }catch(e){}
-    toast('✅ Pago registrado en '+ok+' OC'+(salt.length?(' · '+salt.length+' ya estaba'+(salt.length===1?'':'n')+' pagada'+(salt.length===1?'':'s')+' (se saltearon)'):'')+(mal?(' · ⚠️ '+mal+' quedaron en cola o no se guardaron: mirá el pie de la página'):''), mal?'err':'ok', 8000);
+    try{ proms.push(Promise.resolve(aplicarCobros(p, arr)).then(function(r){ return !(r===false || (r && r.ok===false)); }, function(){ return false; })); }
+    catch(e){ proms.push(Promise.resolve(false)); }
+  });
+  var n=proms.length;
+  CBZ.guardando=false; CBZ.sel={}; CBZ.pago={ metodo:P.metodo, banco:P.banco, fecha:'', nota:'', comps:[] };
+  try{ renderContaSiActiva(); }catch(e){}
+  cbzPintar();
+  try{ sonidoPanel('caja'); }catch(e){}
+  var saltTxt=salt.length?(' · '+salt.length+' ya estaba'+(salt.length===1?'':'n')+' pagada'+(salt.length===1?'':'s')+' (se saltearon)'):'';
+  toast('💵 Pago anotado en '+n+' OC'+saltTxt+' · guardando en la planilla…','ok', 5000);
+  return Promise.all(proms).then(function(R){
+    var ok=R.filter(Boolean).length, mal=R.length-ok;
+    toast((mal ? '⚠️ ' : '✅ ')+'Pago guardado en la planilla: '+ok+' de '+R.length+' OC'+saltTxt+(mal?(' · '+mal+' quedaron en la cola: se mandan solas al volver la señal (mirá el pie de la página)'):''), mal?'err':'ok', 8000);
+    return R;
   });
 }
 function cbzCliFilas(c){
@@ -10577,7 +10602,7 @@ function cbzCliCopiar(k){
   var L=cbzCliFilas(c).filter(function(o){ return o.x; });
   var txt='🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(diaNegocio())+'\nEntregado y sin pago: *'+fmtBs(c.debe)+'*'+(c.d60m>0.005?(' (más de 60 días: '+fmtBs(c.d60m)+')'):'')+
     (c.viene>0.005?('\nPor entregar: '+fmtBs(c.viene)):'')+'\n\n'+
-    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+' · '+fmtBs(x.saldo); }).join('\n');
+    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }).join('\n');
   copyText(txt);
 }
 function cbzCliExcel(k){
@@ -10589,7 +10614,7 @@ function cbzCliExcel(k){
     ['FECHA DE ENTREGA','SU N° (OC)','N° DEL PANEL','PRODUCTOS','TOTAL (Bs)','PAGADO (Bs)','SALDO (Bs)','DÍAS','ESTADO'].map(function(t){ return {v:t,s:H}; })];
   cbzCliFilas(c).forEach(function(o){
     var p=o.p, x=o.x, fs=fechaSalida(p)||'';
-    var est=!x ? 'PAGADO' : x.que==='viene' ? 'POR ENTREGAR' : 'POR COBRAR';
+    var est=!x ? 'PAGADO' : x.que==='sinm' ? 'SIN MONTO' : x.que==='viene' ? 'POR ENTREGAR' : 'POR COBRAR';
     if(!x && !(ventaTotal(p)>0.005)) return;
     rows.push([fs?fmtFecha(fs):'', p.nota||'', p.oc||'', cbzProdsTxt(p), num(ventaTotal(p)), num(contaCobrado(p)), num(x?x.saldo:0), {v:(x&&x.que==='deuda')?x.dias:0, t:'n'}, est]);
   });
@@ -46861,7 +46886,9 @@ function gpsCamionPropDe(p, deHoy){
   if(!ll || !ll.veh || !VEHICULOS[ll.veh]) return null;
   var hoy=todayStr();
   deHoy=deHoy || STATE.filter(function(q){ return q && q.fecha===hoy; });
-  return { p:p, veh:ll.veh, chofer:choferDeCamion(ll.veh, deHoy), ll:ll };
+  /* (13/11, revisión de Fable 10) un chofer que ya estaba puesto a mano se respeta; ubicación aproximada = se avisa */
+  var pin=null; try{ pin=almPunto(p); }catch(e){ pin=null; }
+  return { p:p, veh:ll.veh, chofer:String(p.chofer||'').trim() || choferDeCamion(ll.veh, deHoy), ll:ll, aprox:!!(pin && pin.aprox) };
 }
 /* Todas las de hoy, en el orden en que el GPS los vio. */
 function gpsCamionPropuestas(){
@@ -46881,11 +46908,11 @@ function gpsCamionHtml(list){
     var p=o.p, N=dn[p.id], id=esc(String(p.id));
     return '<div class="gps-cam-f" data-id="'+id+'"><span><b>'+(N?('N° '+N+' · '):'')+esc(p.cliente||'—')+'</b> · '+esc(ocEtiq(p.oc)||p.oc||'—')+
       ' · 📍 '+esc(o.ll.abierta ? ('está ahí desde las '+gpsHoraTxt(o.ll.t0)) : ('llegó '+gpsHoraTxt(o.ll.t0)))+
-      ' → lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b></span>'+
+      ' → lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b>'+(o.aprox?' <span title="La ubicación es aproximada (por la dirección escrita): confirmalo antes de asignar">· ≈ ubicación aproximada</span>':'')+'</span>'+
       '<button type="button" class="btn btn-sm gps-cam-uno" data-id="'+id+'" onclick="gpsCamionAsignar(this.getAttribute(\'data-id\'))">🚚 Asignar</button></div>';
   }).join('');
   return '<div class="adm-gps-ent gps-cam" id="gps-cam-bar"><span>🛰️ <b>'+n+'</b> pedido'+(n===1?'':'s')+' de hoy sin camión: el GPS vio un camión en su puerta.</span>'+
-    (n>1 ? '<button type="button" class="btn btn-sm" id="gps-cam-todos" onclick="gpsCamionAsignarTodos()">🚚 Asignar los '+n+'</button>' : '')+
+    (n>1 ? '<button type="button" class="btn btn-sm" id="gps-cam-todos" data-ids="'+esc(V.map(function(o){ return String(o.p.id); }).join(','))+'" onclick="gpsCamionAsignarTodos(\'\', this.getAttribute(\'data-ids\'))">🚚 Asignar los '+n+'</button>' : '')+
     '<div class="gps-cam-l">'+filas+'</div>'+
     '<small>Es una propuesta: nada se asigna solo. Revisá y tocá «Asignar». El GPS de días anteriores no queda guardado: solo se puede completar lo de hoy.</small></div>';
 }
@@ -46897,12 +46924,12 @@ function gpsCamionCierreHtml(p){
     '<button type="button" class="btn btn-sm cie-gps-cam-btn" data-id="'+id+'" onclick="event.preventDefault();event.stopPropagation();gpsCamionAsignar(this.getAttribute(\'data-id\'), \'cie\')">🚚 Asignar</button></span>';
 }
 function gpsCamionCierreResumenHtml(H){
-  var n=(H||[]).filter(function(p){ return !!gpsCamionPropDe(p); }).length; if(!n) return '';
+  var Hs=(H||[]).filter(function(p){ return !!gpsCamionPropDe(p); }), n=Hs.length; if(!n) return '';
   return '<span style="flex-basis:100%;font-size:.8rem;color:#1d4ed8">🚚 '+n+' sin camión: el GPS dice cuál lo'+(n===1?'':'s')+' llevó'+
-    (n>1 ? ' <button type="button" class="btn btn-sm" id="cie-gps-cam-todos" style="background:#1d4ed8;color:#fff;margin-left:4px" onclick="gpsCamionAsignarTodos(\'cie\')">🚚 Asignar los '+n+'</button>' : '')+
+    (n>1 ? ' <button type="button" class="btn btn-sm" id="cie-gps-cam-todos" style="background:#1d4ed8;color:#fff;margin-left:4px" data-ids="'+esc(Hs.map(function(p){ return String(p.id); }).join(','))+'" onclick="gpsCamionAsignarTodos(\'cie\', this.getAttribute(\'data-ids\'))">🚚 Asignar los '+n+'</button>' : '')+
     ' (es una propuesta: se asigna recién al tocar «Asignar»).</span>';
 }
-function gpsCamionPoner(o){ o.p.vehiculo=o.veh; o.p.chofer=o.chofer||((VEHICULOS[o.veh]||[])[0])||''; }
+function gpsCamionPoner(o){ o.p.vehiculo=o.veh; if(!String(o.p.chofer||'').trim()) o.p.chofer=o.chofer||((VEHICULOS[o.veh]||[])[0])||''; }
 function gpsCamionRepintarCierre(desde){
   if(desde!=='cie') return;
   var m=document.getElementById('modal'); if(m && m.classList.contains('on') && document.querySelector('#modal-box .cie-ent')) renderCierreEntregas();
@@ -46919,8 +46946,10 @@ function gpsCamionAsignar(id, desde){
   return r;
 }
 /* Todos los de hoy que el GPS propone (los que en este momento siguen sin camión). Un solo repintado y un guardado durable por pedido. */
-function gpsCamionAsignarTodos(desde){
+/* (13/11, revisión de Fable 1) `ids` = los que el cartel MOSTRABA (con un filtro o en el cierre, menos que todos los de hoy): solo esos. */
+function gpsCamionAsignarTodos(desde, ids){
   var V=gpsCamionPropuestas();
+  if(ids!=null){ var Q={}; String(ids).split(',').forEach(function(x){ if(x) Q[x]=1; }); V=V.filter(function(o){ return Q[String(o.p.id)]; }); }
   if(!V.length){ toast('No queda ningún pedido de hoy sin camión que el GPS haya visto.', 'ok'); renderAdmin(); gpsCamionRepintarCierre(desde); return Promise.resolve([]); }
   V.forEach(function(o){ gpsCamionPoner(o); upsert(o.p); });
   saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();   // lo mismo que `persistPedido`, una vez

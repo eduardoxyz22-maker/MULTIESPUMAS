@@ -187,6 +187,42 @@ function PREPARAR(){
   r = await ev(() => { cbzCliAbrir('Copacaba'); cbzCliCopiar('Copacaba'); cbzCliExcel('Copacaba'); return { c:COPIADO, d:DESCARGAS[DESCARGAS.length-1] }; });
   chk('📋 y ⬇️ el estado de cuenta de Copacaba', /Estado de cuenta · Copacaba/.test(r.c) && /Bs 3\.000,00/.test(r.c) && /por entregar/.test(r.c) && /^estado-de-cuenta-copacaba-2026-11-12\.xlsx$/.test(r.d||''), r);
 
+  // ═══ 9. Lo que encontró Fable (13/11) ════════════════════════════════════════════════════════
+  console.log('\n── 9. Revisión de Fable ──');
+  r = await ev(() => {
+    var mk=function(id, cli, fecha, o){ return Object.assign({ id:id, oc:'11-9'+id.slice(-2), nota:'', vendedor:'Eduardo Añez', cliente:cli, celular:'', fecha:fecha, turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1}], acuenta:0, saldo:0, pagado:false, metodoPago:'', entregado:false, ts:1, fotos:[] }, o||{}); };
+    STATE.push(mk('sm01','MULTICENTER','2026-09-01'));                                 // sin monto anotado
+    STATE.push(mk('lf01','LUIS FRANCO (JUAN CARLOS ARCE)','2026-11-01', { saldo:500, productos:[{desc:'X',cant:1,precio:500}] }));
+    STATE.push(mk('mc01','MULTI CENTER','2026-11-02', { saldo:300, productos:[{desc:'X',cant:1,precio:300}] }));
+    STATE.push(mk('ka01','karina torrico.','2026-11-03', { saldo:200, productos:[{desc:'X',cant:1,precio:200}] }));
+    STATE.push(mk('ka02','KARINA TÓRRICO','2026-11-04', { saldo:100, productos:[{desc:'X',cant:1,precio:100}] }));
+    MAYOR(); cbzAbrir();
+    var L=cbzMayDatos(), g=function(k){ return L.filter(function(c){ return c.k===k; })[0]||{}; };
+    var D=cbzDatos();
+    return { mc:[g('Multicenter').nSin, g('Multicenter').debe], lf:g('Luis Franco').debe, ka:g('KARINA TORRICO').debe, kas:L.filter(function(c){ return /KARINA/.test(c.k); }).length,
+             txt:_txt('#cbz'), sinm:(D.sinm||[]).length, nCli:D.nCli };
+  });
+  chk('2. la OC de Multicenter SIN MONTO no queda «al día»: la ficha dice «⚠️ 1 OC sin monto anotado» y no suma', r.mc[0]===1 && /1 OC sin monto anotado/.test(r.txt), r.mc);
+  chk('6. «MULTI CENTER» va a Multicenter (300); «LUIS FRANCO (JUAN CARLOS ARCE)» a Luis Franco; «karina torrico.» y «KARINA TÓRRICO» juntas', r.mc[1]===300 && r.lf===500 && r.ka===300 && r.kas===1, r);
+  chk('5. «N clientes» de la antigüedad en Mayoristas cuenta clientes de la ficha (Multicenter con varios celulares = 1)', r.nCli===4, r.nCli);
+  r = await ev(() => { cbzCliAbrir('Multicenter'); var tr=[].slice.call(document.querySelectorAll('#cbz .cbz-t tbody tr')); var sm=tr.filter(function(t){ return /sin monto/.test(t.innerText); })[0];
+    cbzSelVarias('todas'); return { ck:sm?!!sm.querySelector('input'):null, sel:Object.keys(CBZ.sel) }; });
+  chk('2b. la OC sin monto no se puede tildar como pagada (ni con «Tildar todas»)', r.ck===false && r.sel.indexOf('sm01')<0 && r.sel.indexOf('mc01')>=0, r);
+  r = await ev(() => { document.getElementById('cbz-nota').value='TRF 77'; document.getElementById('cbz-fecha').value='2026-11-10';
+    var b=document.getElementById('cbz-banco'); b.value=b.options[1].value; cbzPagoSubir(new Blob(['x'])); return true; });
+  await page.waitForTimeout(150);
+  r = await ev(() => ({ n:(document.getElementById('cbz-nota')||{}).value, f:(document.getElementById('cbz-fecha')||{}).value, b:(document.getElementById('cbz-banco')||{}).value }));
+  chk('4. lo tipeado mientras sube el comprobante no se pierde (N°, fecha y banco)', r.n==='TRF 77' && r.f==='2026-11-10' && !!r.b, r);
+  r = await ev(() => { var colgado=false; guardarDurable=function(){ colgado=true; return new Promise(function(){}); };   // la planilla no contesta
+    cbzPagoRegistrar(); var p=findById('mc01'); return { guardando:CBZ.guardando, pagado:p.pagado, sel:Object.keys(CBZ.sel).length, colgado:colgado }; });
+  chk('3. con la planilla colgada: el pago queda anotado y el botón NO queda trabado', r.colgado && r.pagado===true && r.guardando===false && r.sel===0, r);
+  r = await ev(() => { var p=findById('v5'); p.entregado=false; var k=cbzClasificar(p, diaNegocio()); var t=Object.assign({}, p, { id:'tt1', fecha:'', ts:new Date('2026-11-12T10:00:00-04:00').getTime(), direccion:'SALIÓ DE TIENDA · Central', zona:'TIENDA' });
+    var e=Object.assign({}, p, { id:'ad1', fecha:'2026-11-20', entregado:true });
+    return { tienda:esVentaTienda(t) ? cbzClasificar(t, diaNegocio()) : 'no-es-tienda', adel:cbzClasificar(e, diaNegocio()) }; });
+  chk('9. un ✅ adelantado con fecha futura es deuda (no «por entregar»)', r.adel && r.adel.que==='deuda' && r.adel.dias===0, r.adel);
+  chk('9b. una venta de tienda de hoy es deuda, no «Hoy sin ✅»', r.tienda==='no-es-tienda' || (r.tienda && r.tienda.que==='deuda'), r.tienda);
+
   // ═══ 8. Celular ════════════════════════════════════════════════════════════════════════════
   console.log('\n── 8. En el celular ──');
   await page.setViewportSize({ width:390, height:844 });
