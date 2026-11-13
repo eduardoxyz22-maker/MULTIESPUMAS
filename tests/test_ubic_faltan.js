@@ -59,7 +59,11 @@ async function cargar(page){
       _ped('u14', hoy,  'AM', L(), { cliente:'PIN BUENO', maps:'https://www.google.com/maps?q=-17.75,-63.17', ts:ts() }),
       _ped('u15', prox, 'AM', L(), { cliente:'LUCIA ARGENTINA', celular:'+54 9 11 2345 6789', vendedor:'Jonathan Monje', maps:'', ts:ts() }),
       _ped('u16', hoy,  'PM', L(), { oc:'ATC 11-003', cliente:'MARIO ATC', celular:'73333333', vendedor:'Carola Chavez', maps:'', ts:ts() }),
-      _ped('u17', hoy,  'AM', L(), { cliente:'MANDO POR WHATSAPP', maps:'https://www.google.com/maps?q=-17.749,-63.18&wa=1', ts:ts() })
+      _ped('u17', hoy,  'AM', L(), { cliente:'MANDO POR WHATSAPP', maps:'https://www.google.com/maps?q=-17.749,-63.18&wa=1', ts:ts() }),
+      // 13/11: como el bot, ni Eduardo (mayoristas a su bodega) ni ROHO (sus tiendas) ni los internos: con la planilla real salían «Roho» y FABRICA
+      _ped('u18', hoy,  'AM', L(), { cliente:'MAYORISTA BODEGA', celular:'74444444', vendedor:'Eduardo Añez', maps:'', ts:ts() }),
+      _ped('u19', prox, 'AM', L(), { cliente:'Roho', celular:'75555555', vendedor:'ROHO', maps:'', direccion:'Tienda 1', ts:ts() }),
+      _ped('u20', hoy,  'PM', L(), { cliente:'PEDIDO INTERNO', celular:'76666666', vendedor:'FABRICA', maps:'', ts:ts() })
     ];
     await _cargar(ps, _stock(function(s){ s.c.u[_K]=20; }));
     document.getElementById('admin-lock').style.display='none'; document.getElementById('admin-content').style.display='block';
@@ -85,6 +89,7 @@ const T=e=>e?e.textContent.replace(/\s+/g,' ').trim():'';
   const todos=r.conCel.concat(r.sinCel, r.aprox);
   chk('2 · afuera: retira, entregado, venta de tienda, RPT a Mia Plaza, borrador de Kommo, otro día, enlace corto, pin bueno y el de WhatsApp',
     ['u06','u07','u08','u09','u11','u12','u13','u14','u17'].every(function(id){ return todos.indexOf(id)<0; }), todos);
+  chk('2 · afuera también Eduardo, ROHO y los internos (como el bot)', ['u18','u19','u20'].every(function(id){ return todos.indexOf(id)<0; }), todos);
   chk('2 · «hoy y mañana» (el viernes, el próximo camión es el sábado)', r.diasTxt==='hoy y mañana', r.diasTxt);
 
   /* 3 · «Para hacer» */

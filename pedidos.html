@@ -26162,6 +26162,9 @@ function ubfEntra(p, dias){
   if(!p || !p.fecha || dias.indexOf(String(p.fecha))<0) return false;   // primero el día: lo demás se mira solo en lo de hoy y el próximo camión
   if(esFilaSistema(p) || esBorrador(p) || esVentaTienda(p) || p.entregado || String(p.id||'').indexOf('__')===0) return false;
   if(fichaRetira(p)) return false;                                         // lo retira el cliente: no va el camión
+  // 13/11: como el bot (`nxBotManda`): ni Eduardo (mayoristas a su bodega) ni ROHO (sus tiendas) ni los internos (`CONTA_INTERNOS`):
+  // con la planilla real salían «Roho» a la Tienda 1 y dos pedidos de FABRICA, y a ellos no se les pide la ubicación por WhatsApp.
+  var vn=normNombre(p.vendedor); if(vn.indexOf('eduardo')>=0 || vn.indexOf('roho')>=0 || cliEsInterno(p.vendedor)) return false;
   if(esRPT(p.oc)){ var s=sucursalDe(p.cliente); if(s && s.m) return false; }   // la sucursal tiene su pin
   return true;
 }
