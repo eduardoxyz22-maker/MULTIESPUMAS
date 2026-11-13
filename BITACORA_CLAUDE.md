@@ -18696,3 +18696,9 @@ máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (l
 - 13/11 (después de publicar): el dueño sobre la OC 260013258 de ROHO (consignación de mayo, Bs 25.040): *«roho solo hay que facturarlo ya lo
   facturé»*. No se carga. Queda en `herramientas/pedidos_correo/LEEME.md`: una OC de ROHO por consignación ya vendida es solo factura (no se carga
   ni se pregunta). Sigue pendiente la medida del OP-03-11-26 de Copacaba Potosí.
+- 13/11: la OC 260013258 de ROHO quedó CARGADA como venta de tienda de Eduardo, **11-150** (dueño: «si hazlo»): cliente «ROHO CONSIGNACION TIENDA
+  1» (Cobranza la junta en ROHO; «CONSIGNACION» la saca de la demanda del stock), nota 260013258, 8 × CH2108 a 936 + 16 × CH2109 a 1.097 =
+  Bs 25.040 a crédito, día de la venta 12/11, factura (sin N°: el dueño no lo pasó). Probado antes en una copia: sin cupo, sin camión, sin bot,
+  no toca PTF/Banzer ni la rotación; suma a Mayoristas de noviembre en Proyección.
+- 13/11, ⏸️ EN ESPERA (dueño: «espera consultaré con gerencia»): plazos de pago en la Cobranza de mayoristas — ROHO 60 días, Tienda Amiga 30,
+  Multicenter 30 (lo dijo él). Nada programado: no tocar hasta que confirme.
