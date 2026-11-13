@@ -15148,7 +15148,8 @@ function retTipoPintar(){
     return '<div class="field" style="margin-bottom:10px"><label class="lb">'+titulo+' <span class="req">*</span> <span class="hint">'+ayuda+'</span></label>'+
       '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+chipsDe(L, fq)+'</div>'+
       '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
-        '<input type="text" id="'+idIn+'" value="'+esc(tmp||'')+'" placeholder="Ej. 732" autocomplete="off" onkeydown="'+fTecla+'(event)" style="flex:1;min-width:180px">'+
+        /* los dos ids van ESCRITOS enteros (no armados con idIn): `test_onclicks` revisa que todo id que busca el código esté en la página */
+        (idIn==='ret-nota-nueva-r' ? '<input type="text" id="ret-nota-nueva-r"' : '<input type="text" id="ret-nota-nueva"')+' value="'+esc(tmp||'')+'" placeholder="Ej. 732" autocomplete="off" onkeydown="'+fTecla+'(event)" style="flex:1;min-width:180px">'+
         '<button type="button" class="btn btn-sm" style="background:var(--teal);color:#fff;width:auto" onclick="'+fAdd+'()">＋ Agregar</button>'+
       '</div></div>';
   };
