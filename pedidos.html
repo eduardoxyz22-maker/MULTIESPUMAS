@@ -5314,6 +5314,46 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .mt-tab td{ padding:7px 8px; border-top:1px solid var(--gray-lt); text-align:right; white-space:nowrap; }
 .mt-tab td small{ display:block; font-size:.7rem; color:var(--muted); }
 .mt-tab tr.mt-cur td{ background:#f8fafc; }
+/* 🏷️ (13/11, mejora 193) «Qué ofertar»: lo que hay y casi no se vende. Su ventana (`#oft-overlay`, `.adm-ov`: la franja de arriba ya
+   la tiene por esa clase). En el celular cada producto es una tarjeta (sin scroll de costado). */
+#oft-body{ flex:1; overflow:auto; padding:14px; }
+.oft{ max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
+.oft-caja{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 14px; font-size:.84rem; line-height:1.5; color:var(--text); }
+.oft-caja b{ color:#854d0e; }
+.oft-aviso{ background:#fff4d6; border:1px solid #f0d264; border-left:4px solid #f0a020; border-radius:10px; padding:10px 14px; font-size:.84rem; color:#7c4b00; }
+.oft-res{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr)); gap:10px; }
+.oft-fi{ background:#fff; border:1px solid var(--gray-md); border-left:5px solid #ca8a04; border-radius:14px; padding:10px 14px; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.oft-fi small{ font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+.oft-fi b{ font-size:1.35rem; font-variant-numeric:tabular-nums; color:#422006; overflow-wrap:anywhere; }
+.oft-fi i{ font-style:normal; font-size:.74rem; color:var(--muted); }
+.oft-ctrl{ display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; }
+.oft-grp{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.oft-grp > span{ font-size:.76rem; color:var(--muted); font-weight:700; }
+.oft-chip{ font:inherit; font-size:.8rem; font-weight:700; border:1px solid var(--gray-md); background:#fff; color:#334155; border-radius:999px; padding:6px 12px; min-height:38px; cursor:pointer; }
+.oft-chip[aria-pressed="true"]{ background:#854d0e; border-color:#854d0e; color:#fff; }
+.oft-acc{ display:flex; gap:8px; flex-wrap:wrap; margin-left:auto; }
+.oft-acc .btn{ width:auto; flex:0 0 auto; min-height:40px; padding:8px 14px; font-size:.84rem; }
+.oft-tw{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; overflow:hidden; }
+.oft-tabla{ width:100%; border-collapse:collapse; font-size:.84rem; font-variant-numeric:tabular-nums; }
+.oft-tabla th{ background:#fef9c3; color:#422006; font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; padding:8px; text-align:right; white-space:nowrap; }
+.oft-tabla th:first-child, .oft-tabla td:first-child{ text-align:left; }
+.oft-tabla td{ padding:8px; border-top:1px solid var(--gray-lt); text-align:right; vertical-align:top; }
+.oft-tabla td small{ display:block; font-size:.72rem; color:var(--muted); }
+.oft-tabla td.oft-plata{ font-weight:800; color:#854d0e; }
+.oft-tabla tfoot td{ font-weight:800; background:#fefce8; }
+.oft-liq{ display:inline-block; margin-top:3px; background:#fee2e2; color:#991b1b; border-radius:999px; padding:1px 8px; font-size:.72rem; font-weight:800; }
+.oft-sp{ color:var(--muted); font-style:italic; }
+.oft-pie{ font-size:.76rem; color:var(--muted); line-height:1.5; margin:0; }
+.oft-vacio{ text-align:center; padding:22px 14px; color:var(--muted); }
+@media (max-width:700px){
+  .oft-tabla thead{ display:none; }
+  .oft-tabla, .oft-tabla tbody, .oft-tabla tfoot, .oft-tabla tr, .oft-tabla td{ display:block; width:100%; }
+  .oft-tabla tr{ border-top:1px solid var(--gray-md); padding:8px 12px; }
+  .oft-tabla td{ border:0; padding:3px 0; display:flex; justify-content:space-between; align-items:baseline; gap:10px; text-align:right; }
+  .oft-tabla td::before{ content:attr(data-l); font-size:.72rem; color:var(--muted); font-weight:700; text-align:left; flex:none; }
+  .oft-tabla td:first-child{ display:block; text-align:left; } .oft-tabla td:first-child::before{ display:none; }
+  .oft-acc{ margin-left:0; }
+}
 /* 🏬 (27/10, §4na) El stock de cada tienda: su ventana (`#tst-overlay`). */
 #tst-body{ flex:1; overflow:auto; padding:14px; }
 .tst{ max-width:1100px; margin:0 auto; display:flex; flex-direction:column; gap:12px; }
@@ -37547,6 +37587,203 @@ function stockSobra(o){
   return libre/pd > STOCK_DIAS_SOBRA;
 }
 function stockMesesSobra(o){ var pd=stockPorDiaTodo(o); return (pd>0) ? (((stockHaySalir(o)||0)+stockEnCaminoSeguro(o)-o.comp)/pd/30) : null; }
+/* 🏷️ (13/11, mejora 193; el dueño, para elegir las ofertas de Black Friday: «Qué poner en oferta: lo que hay y no se vende»)
+   Stock → «🏷️ Qué ofertar», SOLO con la contraseña de Administración. Una ventana que SOLO MIRA: no guarda nada ni cambia precios.
+   · Lo que hay para salir (PTF + Banzer = `stockHaySalir`) menos lo ya vendido sin entregar (`o.comp`) = lo LIBRE, que es lo que se puede
+     ofertar. Todo sale de las filas de `stockData()`: ninguna cuenta de stock aparte.
+   · Lo vendido en `OFERTA_DIAS` (60) días por FECHA DE VENTA (como la ventana de 30 días del plan del mes, §4dv) y con las MISMAS reglas
+     que la rotación: `stockCuenta`, `stockEsDemanda` (sin mayoristas, reposiciones de tienda, internos ni puntuales; la almohada de la RPT
+     sí) y sin `esProdDeTienda`. Lo que no cuenta se dice aparte («fuera»). `stockData` mide 15 y 30 días; 60 no los trae.
+   · «Meses de venta guardados» = la MISMA cuenta de «plata parada» (`stockMesesSobra`: lo que hay + lo que viene − lo vendido, sobre el
+     ritmo), con el ritmo de los 60 días en vez de los 15: con 15 días, lo que se vendió 2 veces en dos meses decía «sin ventas».
+   · Precio = `precioTipico` (la mediana de lo cobrado, con 3 ventas o más) del código del producto que más ventas tiene. Sin precio, al
+     final y sin sumar plata.
+   · Entra: 🛑 lo que ya no se fabrica (`stockDescontinuadoK`) con OFERTA_MIN_U libres o más (liquidar) · sin ninguna venta en 60 días con
+     OFERTA_MIN_U o más · o con OFERTA_MESES meses de venta guardados o más (se cambia en la ventana: OFERTA_MESES_OPC). */
+var OFERTA_DIAS=60;              // la venta que se mira
+var OFERTA_MESES=6;              // «casi no se vende»: hay para 6 meses de venta o más
+var OFERTA_MESES_OPC=[3,6,12];   // lo que se puede elegir en la ventana
+var OFERTA_MIN_U=2;              // sin ventas en 60 días (o ya no se fabrica): desde 2 unidades libres
+var OFERTA_S={ tipo:'todo', meses:OFERTA_MESES }, OFERTA_BASE=null;
+/* Lo vendido en los últimos `dias` días por producto (clave del stock, la misma de `stockData`): unidades y entregas distintas de la
+   demanda, lo que no cuenta, y los códigos con que se vendió alguna vez (para el precio). */
+function ofertaVentas(dias){
+  var hoy=todayStr(), desde=diasAtras((dias||OFERTA_DIAS)-1), V={};
+  var de=function(k){ return V[k] || (V[k]={ u:0, n:0, e:{}, fuera:0, cods:{} }); };
+  STATE.forEach(function(p){
+    if(!stockCuenta(p)) return;
+    var fs=fechaSalida(p), fv=contaFecha(p)||fs, dentro=!!fv && fv>=desde && fv<=hoy;
+    (p.productos||[]).forEach(function(x){
+      if(esProdDeTienda(x)) return;
+      var c=Number(x&&x.cant)||0; if(!(c>0)) return;
+      var k; try{ k=stockInfo(stockMedidaEstandar(x)).k; }catch(e){ return; }
+      if(!k || k==='|') return;
+      var v=de(k), cod=String(x.codigo||'').trim().toUpperCase(); if(cod) v.cods[cod]=1;
+      if(!dentro) return;
+      if(stockEsDemanda(p, k)){ v.u+=c; var ek=stockEntregaClave(p, fs); if(!v.e[ek]){ v.e[ek]=1; v.n++; } }
+      else if(!(stockEsAlmohadaK(k) && esVentaTienda(p))) v.fuera+=c;   // la almohada que vendió la tienda ya contó en su reposición
+    });
+  });
+  return V;
+}
+/* El precio típico del producto: el de su código con más ventas (un producto puede venderse con dos códigos). */
+function ofertaPrecio(o, cods){
+  var idx=precIdx(), mejor={ v:0, n:0, cod:'' };
+  var mira=function(c){ c=String(c||'').trim().toUpperCase(); var a=c && idx[c]; if(!a) return; var v=precioTipico(c); if(v>0 && a.length>mejor.n) mejor={ v:v, n:a.length, cod:c }; };
+  mira(o.cod); Object.keys(cods||{}).forEach(mira);
+  return mejor;
+}
+function ofertaTipo(o){ var t=pryTipoProd({ codigo:o.cod||'', desc:o.desc||'' }); return t==='combo' ? 'colchon' : t; }
+/* Todas las filas con algo libre en PTF o Banzer, sin filtro. Lo arma UNA vez por apertura (`OFERTA_BASE`). */
+function ofertaBase(){
+  var d=stockData(), V=ofertaVentas(OFERTA_DIAS), filas=[];
+  precIdxReset();   // los precios, con la planilla de ahora
+  d.lista.forEach(function(o){
+    var hay=stockHaySalir(o); if(hay==null || !(hay>0)) return;
+    var comp=Math.max(0, Number(o.comp)||0), libre=Math.max(0, hay-comp); if(!(libre>0)) return;
+    var v=V[o.k] || { u:0, n:0, fuera:0, cods:{} };
+    var meses=(v.u>0) ? stockMesesSobra(Object.assign({}, o, { porDiaTodo:v.u/OFERTA_DIAS })) : null;
+    var pr=ofertaPrecio(o, v.cods);
+    filas.push({ k:o.k, desc:o.desc, medida:o.medida||'', cod:o.cod||pr.cod||'', nombre:stockNombre(o), tipo:ofertaTipo(o),
+      ptf:Math.max(0, Number(o.deposito)||0), bz:Number(o.enSale)||0, salePor:o.salePor||{}, hay:hay, comp:comp, libre:libre,
+      v60:v.u, n60:v.n, fuera:v.fuera, meses:meses, camino:stockEnCaminoSeguro(o),
+      precio:pr.v, nPrecio:pr.n, codPrecio:pr.cod, plata:pr.v>0 ? r2(libre*pr.v) : 0, descont:!!o.descont });
+  });
+  return { filas:filas, hoy:d.hoy, contado:d.contado, diasConteo:d.diasConteo };
+}
+function ofertaEntra(f, meses){
+  if(f.descont && f.libre>=OFERTA_MIN_U) return true;          // 🛑 ya no se fabrica: liquidar
+  if(!(f.v60>0)) return f.libre>=OFERTA_MIN_U;                  // ninguna venta en 60 días
+  return f.meses!=null && f.meses>=meses;                       // hay para muchos meses de venta
+}
+function ofertaTipoVale(f, tipo){ return !tipo || tipo==='todo' || f.tipo===tipo; }
+/* Lo que muestra la ventana: las filas que entran, de la que más plata tiene parada a la que menos (sin precio, al final). */
+function ofertaDatos(opt){
+  opt=Object.assign({ tipo:'todo', meses:OFERTA_MESES }, opt||{});
+  var B=opt.base || ofertaBase(), m=Number(opt.meses)||OFERTA_MESES;
+  var filas=B.filas.filter(function(f){ return ofertaEntra(f, m) && ofertaTipoVale(f, opt.tipo); });
+  filas.sort(function(a,b){ var pa=a.precio>0?1:0, pb=b.precio>0?1:0; return (pb-pa) || (b.plata-a.plata) || (b.libre-a.libre) || a.nombre.localeCompare(b.nombre); });
+  var tot={ n:filas.length, u:0, plata:0, sinPrecio:0, uSinPrecio:0, liq:0 };
+  filas.forEach(function(f){ tot.u+=f.libre; tot.plata=r2(tot.plata+f.plata); if(!(f.precio>0)){ tot.sinPrecio++; tot.uSinPrecio+=f.libre; } if(f.descont) tot.liq++; });
+  return { filas:filas, tot:tot, meses:m, tipo:opt.tipo, hoy:B.hoy, contado:B.contado, diasConteo:B.diasConteo };
+}
+function ofertaMesesTxt(f){
+  if(!(f.v60>0)) return 'sin ventas';
+  var m=Number(f.meses)||0;
+  return m>=99 ? 'más de 99' : (m<1 ? 'menos de 1' : String(Math.round(m*10)/10).replace('.', ','));
+}
+function ofertaTipoTxt(t){ return t==='colchon' ? 'colchones' : (t==='somier' ? 'somieres' : 'todo'); }
+function ofertaCriterioTxt(m){ return m+' meses de venta guardados o más, o sin ventas en '+OFERTA_DIAS+' días (desde '+OFERTA_MIN_U+' unidades libres); lo que ya no se fabrica, siempre'; }
+/* ---- la ventana ---- */
+function ofertaVentana(){
+  var ov=document.getElementById('oft-overlay'); if(ov) return ov;
+  ov=document.createElement('div');
+  ov.id='oft-overlay'; ov.className='adm-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','oft-tit');
+  ov.setAttribute('style','display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column');
+  ov.innerHTML='<div class="no-print" style="padding:9px 12px;background:#854d0e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="oft-tit" style="font-size:.95rem">🏷️ Qué ofertar</b><span id="oft-info" style="font-size:.78rem;opacity:.92"></span>'+
+    '<button type="button" class="btn btn-sm" id="oft-cerrar" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cerrarOferta()">✕ Cerrar</button></div><div id="oft-body"></div>';
+  ov.addEventListener('keydown', function(e){ if(e.key==='Escape'){ e.preventDefault(); cerrarOferta(); } });
+  document.body.appendChild(ov);
+  return ov;
+}
+function abrirOferta(){
+  if(!UNLOCKED){ toast('🔒 «Qué ofertar» es solo con la contraseña de Administración.','err'); return; }
+  var ov=ofertaVentana();
+  OFERTA_BASE=null; ov.style.display='flex'; ofertaPintar();
+  var b=document.getElementById('oft-body'); if(b) b.scrollTop=0;
+  try{ document.getElementById('oft-cerrar').focus({ preventScroll:true }); }catch(e){}
+}
+function cerrarOferta(){ var ov=document.getElementById('oft-overlay'); if(ov) ov.style.display='none'; OFERTA_BASE=null; }
+function ofertaFiltro(que, v){ if(que==='tipo') OFERTA_S.tipo=v; else if(que==='meses') OFERTA_S.meses=Number(v)||OFERTA_MESES; ofertaPintar(); }
+function ofertaActual(){ if(!OFERTA_BASE) OFERTA_BASE=ofertaBase(); return ofertaDatos({ tipo:OFERTA_S.tipo, meses:OFERTA_S.meses, base:OFERTA_BASE }); }
+function ofertaPintar(){
+  var el=document.getElementById('oft-body'); if(!el) return;
+  var D=ofertaActual(), T=D.tot, hoy=D.hoy;
+  var info=document.getElementById('oft-info'); if(info) info.textContent='al '+fmtFechaCorta(hoy)+' · venta de los últimos '+OFERTA_DIAS+' días';
+  var chip=function(que, v, txt, on){ return '<button type="button" class="oft-chip" aria-pressed="'+(on?'true':'false')+'" data-q="'+que+'" data-v="'+esc(v)+'" onclick="ofertaFiltro(this.dataset.q,this.dataset.v)">'+txt+'</button>'; };
+  var h='<div class="oft">'+
+    '<div class="oft-caja">Lo que hay para salir (<b>PTF y Banzer</b>) y casi no se vendió en los últimos <b>'+OFERTA_DIAS+' días</b>, de lo que más plata tiene parada a lo que menos. '+
+      '«Meses guardados» = cuánto tardaría en salir lo que hay (más lo que viene de fábrica, menos lo ya vendido) al ritmo de esos '+OFERTA_DIAS+' días. '+
+      'La venta cuenta como la rotación de Stock: sin mayoristas, reposiciones de tienda ni pedidos internos. «Plata parada» = lo libre (lo que hay menos lo vendido sin entregar) × el precio típico (la mediana de lo cobrado).<br>'+
+      '<span style="color:var(--muted)">Solo mira: no cambia ningún precio ni el stock.</span></div>';
+  if(!D.contado) h+='<div class="oft-aviso" id="oft-aviso">⚠️ Todavía no se subió ningún Excel de PTF: lo de PTF no está contado.</div>';
+  else if(D.diasConteo>0) h+='<div class="oft-aviso" id="oft-aviso">⚠️ El Excel de PTF es del <b>'+esc(fmtFechaCorta(D.contado))+'</b>, no de hoy: lo que hay puede haber cambiado.</div>';
+  h+='<div class="oft-res" id="oft-res">'+
+      '<div class="oft-fi"><small>Productos</small><b>'+T.n+'</b>'+(T.liq?('<i>'+T.liq+' ya no se fabrica'+(T.liq===1?'':'n')+'</i>'):'')+'</div>'+
+      '<div class="oft-fi"><small>Unidades libres</small><b>'+stockUnid(T.u)+'</b></div>'+
+      '<div class="oft-fi"><small>Plata parada</small><b>'+esc(fmtBs0(T.plata))+'</b>'+(T.sinPrecio?('<i>'+T.sinPrecio+' sin precio ('+stockUnid(T.uSinPrecio)+' u): no suman</i>'):'')+'</div>'+
+    '</div>'+
+    '<div class="oft-ctrl"><div class="oft-grp" role="group" aria-label="Qué productos"><span>Ver</span>'+
+      chip('tipo','colchon','Colchones', D.tipo==='colchon')+chip('tipo','somier','Somieres', D.tipo==='somier')+chip('tipo','todo','Todo', D.tipo==='todo')+'</div>'+
+      '<div class="oft-grp" role="group" aria-label="Casi no se vende desde"><span>Casi no se vende: hay para</span>'+
+      OFERTA_MESES_OPC.map(function(m){ return chip('meses', m, m+' meses o más', D.meses===m); }).join('')+'</div>'+
+      '<div class="oft-acc"><button type="button" class="btn btn-ghost" id="oft-copiar" onclick="ofertaCopiar()">📋 Copiar la lista</button><button type="button" class="btn btn-primary" id="oft-excel" onclick="ofertaExcel()">⬇️ Excel</button></div></div>';
+  if(!D.filas.length){
+    h+='<div class="oft-caja oft-vacio" id="oft-vacio">✅ Con este filtro no hay nada parado: todo lo que hay se está vendiendo.</div>';
+  } else {
+    h+='<div class="oft-tw"><table class="oft-tabla" id="oft-tabla"><thead><tr><th>Producto</th><th>Hay · PTF / Banzer</th><th>Vendidos en '+OFERTA_DIAS+' d</th><th>Meses guardados</th><th>Precio típico</th><th>Plata parada</th></tr></thead><tbody>'+
+      D.filas.map(function(f){
+        var bzT=Object.keys(f.salePor||{}).map(function(nm){ return stockAlmCorto(nm)+' '+stockUnid(f.salePor[nm]); }).join(' · ');
+        return '<tr class="oft-fila" data-k="'+esc(f.k)+'"><td><b>'+esc(f.desc)+'</b>'+(f.medida?(' · '+esc(f.medida)):'')+(f.cod?('<small>'+esc(f.cod)+'</small>'):'')+
+            (f.descont?'<span class="oft-liq">🛑 ya no se fabrica: liquidar</span>':'')+'</td>'+
+          '<td data-l="Hay · PTF / Banzer"><span><b>'+stockUnid(f.hay)+'</b><small'+(bzT?(' title="'+esc(bzT)+'"'):'')+'>PTF '+stockUnid(f.ptf)+' · Banzer '+stockUnid(f.bz)+'</small>'+
+            (f.comp>0?('<small>'+stockUnid(f.comp)+' ya vendida'+(f.comp===1?'':'s')+': libres '+stockUnid(f.libre)+'</small>'):'')+'</span></td>'+
+          '<td data-l="Vendidos en '+OFERTA_DIAS+' días"><span>'+(f.v60>0?('<b>'+stockUnid(f.v60)+'</b><small>en '+f.n60+' entrega'+(f.n60===1?'':'s')+'</small>'):'<span class="oft-sp">ninguno</span>')+
+            (f.fuera>0?('<small title="Mayoristas, reposiciones de tienda, pedidos internos o puntuales: no son venta para la rotación">+'+stockUnid(f.fuera)+' que no cuentan</small>'):'')+'</span></td>'+
+          '<td data-l="Meses guardados"><span>'+(f.v60>0?('<b>'+esc(ofertaMesesTxt(f))+'</b>'):'<span class="oft-sp">sin ventas</span>')+(f.camino>0?('<small>+'+stockUnid(f.camino)+' en camino</small>'):'')+'</span></td>'+
+          '<td data-l="Precio típico"><span>'+(f.precio>0?('<span title="La mediana de '+f.nPrecio+' ventas ('+esc(f.codPrecio)+')">'+esc(fmtBs0(f.precio))+'</span>'):'<span class="oft-sp">sin precio</span>')+'</span></td>'+
+          '<td data-l="Plata parada" class="oft-plata"><span>'+(f.precio>0?esc(fmtBs0(f.plata)):'—')+'</span></td></tr>';
+      }).join('')+'</tbody>'+
+      '<tfoot><tr><td>Total · '+T.n+' producto'+(T.n===1?'':'s')+'</td><td data-l="Libres"><span>'+stockUnid(T.u)+' libres</span></td><td></td><td></td><td></td><td data-l="Plata parada" class="oft-plata"><span>'+esc(fmtBs0(T.plata))+'</span></td></tr></tfoot></table></div>';
+  }
+  h+='<p class="oft-pie">Entra: '+esc(ofertaCriterioTxt(D.meses))+'. Mostrando: '+esc(ofertaTipoTxt(D.tipo))+'. Lo que no rota y ya se vendió entero no aparece: no hay nada libre.</p></div>';
+  el.innerHTML=h;
+}
+/* 📋 Para mandar a gerencia por WhatsApp. */
+function ofertaTexto(D){
+  D=D||ofertaActual();
+  var T=D.tot, L=['🏷️ *Qué ofertar* · lo que hay y casi no se vende (al '+fmtFechaCorta(D.hoy)+')',
+    T.n+' producto'+(T.n===1?'':'s')+' · '+stockUnid(T.u)+' unidades libres · *'+fmtBs0(T.plata)+' parados*'+(T.sinPrecio?(' ('+T.sinPrecio+' sin precio no suman)'):''),
+    'Criterio: '+ofertaCriterioTxt(D.meses)+(D.tipo!=='todo'?(' · solo '+ofertaTipoTxt(D.tipo)):''), ''];
+  D.filas.forEach(function(f, i){
+    L.push((i+1)+'. '+(f.descont?'🛑 ':'')+f.desc+(f.medida?(' '+f.medida):'')+' — hay '+stockUnid(f.hay)+' (PTF '+stockUnid(f.ptf)+' · Banzer '+stockUnid(f.bz)+')'+
+      (f.comp>0?(', libres '+stockUnid(f.libre)):'')+' · '+(f.v60>0?(stockUnid(f.v60)+' vendido'+(f.v60===1?'':'s')+' en '+OFERTA_DIAS+' d · ≈ '+ofertaMesesTxt(f)+' meses'):('sin ventas en '+OFERTA_DIAS+' d'))+
+      ' · '+(f.precio>0?('precio típico '+fmtBs0(f.precio)+' · *'+fmtBs0(f.plata)+' parados*'):'sin precio')+(f.descont?' · ya no se fabrica: liquidar':''));
+  });
+  if(!D.filas.length) L.push('✅ Con este filtro no hay nada parado.');
+  return L.join('\n');
+}
+function ofertaCopiar(){ copyText(ofertaTexto()); }
+/* ⬇️ El Excel: la plata como número con formato Bs (`{v, t:'n', s:2}`). */
+function ofertaExcel(){
+  var D=ofertaActual(), H=1, BS=2, num=function(v){ return { v:Number(v)||0, t:'n' }; }, bs=function(v){ return { v:r2(v), t:'n', s:BS }; };
+  var rows=[[{ v:'QUÉ OFERTAR · LO QUE HAY Y CASI NO SE VENDE', s:H }], ['Al '+fmtFecha(D.hoy)+' · venta de los últimos '+OFERTA_DIAS+' días · '+ofertaCriterioTxt(D.meses)+(D.tipo!=='todo'?(' · solo '+ofertaTipoTxt(D.tipo)):'')], [],
+    ['PRODUCTO','MEDIDA','CÓDIGO','PTF','BANZER','HAY','YA VENDIDAS','LIBRES','VENDIDOS '+OFERTA_DIAS+' D','ENTREGAS '+OFERTA_DIAS+' D','MESES GUARDADOS','PRECIO TÍPICO (Bs)','PLATA PARADA (Bs)','YA NO SE FABRICA']
+      .map(function(t){ return { v:t, s:H }; })];
+  D.filas.forEach(function(f){
+    rows.push([f.desc, f.medida, f.cod, num(f.ptf), num(f.bz), num(f.hay), num(f.comp), num(f.libre), num(f.v60), num(f.n60),
+      f.v60>0 ? { v:Math.round((Number(f.meses)||0)*10)/10, t:'n' } : 'SIN VENTAS', f.precio>0 ? bs(f.precio) : 'SIN PRECIO', f.precio>0 ? bs(f.plata) : '', f.descont ? 'LIQUIDAR' : '']);
+  });
+  rows.push([], [{ v:'TOTAL', s:H }, '', '', '', '', '', '', num(D.tot.u), '', '', '', '', bs(D.tot.plata), '']);
+  var bytes=buildXlsx([{ name:'Qué ofertar', cols:[{w:36},{w:11},{w:11},{w:7},{w:8},{w:7},{w:9},{w:8},{w:11},{w:11},{w:11},{w:14},{w:15},{w:12}], matrix:rows }]);
+  downloadBlob(bytes, 'que-ofertar-'+D.hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('🏷️ «Qué ofertar» descargado ✓','ok');
+}
+/* El botón en la fila de siempre de la barra de Stock (`.stk-acc`): lo pone la página y se ve solo con la contraseña. En la barra nueva
+   va en «Más» (`stkTopPintar`). */
+function ofertaBotonPintar(){
+  var acc=document.querySelector('#stock-overlay .stk-acc'); if(!acc) return;
+  var b=document.getElementById('stk-oft-btn');
+  if(!b){
+    b=document.createElement('button'); b.type='button'; b.id='stk-oft-btn'; b.className='btn btn-sm';
+    b.style.cssText='background:#fde047;color:#422006;font-weight:800'; b.textContent='🏷️ Qué ofertar';
+    b.title='Lo que hay en PTF y Banzer y casi no se vende (últimos '+OFERTA_DIAS+' días), ordenado por la plata parada: para elegir las ofertas.';
+    b.onclick=function(){ abrirOferta(); };
+    var tst=document.getElementById('stk-tst-btn');
+    if(tst && tst.parentNode===acc) acc.insertBefore(b, tst.nextSibling); else acc.appendChild(b);
+  }
+  b.style.display=UNLOCKED ? '' : 'none';
+}
 /* Qué hay que hacer con este producto. Pocas respuestas, para que se entienda de un
    vistazo — un semáforo con seis colores no lo mira nadie. */
 function stockAvisoDe(o){
@@ -53130,6 +53367,7 @@ function stockCintaGrupos(d){
 function stkTopActivo(){ return !navigator.webdriver || !!window.STK_TOP_PRUEBA; }
 function stkTopPintar(d){
   var el=document.getElementById('stk-top'), ov=document.getElementById('stock-overlay'); if(!el || !ov) return;
+  try{ ofertaBotonPintar(); }catch(e){}   // 🏷️ (13/11, mejora 193) «Qué ofertar» en la fila de siempre, solo con la contraseña
   var on=stkTopActivo(); ov.classList.toggle('s3-on', on); el.hidden=!on;
   if(!on){ el.innerHTML=''; el._h=''; return; }
   var por=stockCintaGrupos(d), c=STOCK.c||{}, viejos=stockCortesViejos(), ultH=stockUltimoHabil(), hoy=todayStr();
@@ -53157,6 +53395,7 @@ function stkTopPintar(d){
       ch('abrirStockHistorial()', '📜 Historial de cortes')+
       ch('abrirTst()', '🏬 Stock de las tiendas')+
       ch('copiarStock()', '📋 Copiar pedido a fábrica')+
+      (UNLOCKED ? ch('abrirOferta()', '🏷️ Qué ofertar') : '')+   // 🏷️ (13/11, mejora 193) solo con la contraseña de Administración
     '</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }

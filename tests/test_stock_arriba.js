@@ -56,8 +56,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       mas:[].map.call(el.querySelectorAll('.s3-ch'), function(b){ return b.textContent; }), q:_vis(document.getElementById('stk-q')), ex:el.querySelector('.s3-ex').textContent, mal:el.querySelector('.s3-ex').classList.contains('s3-mal'),
       rv:el.querySelector('.s3-rv small').textContent, cinta:(function(){ var g=stockCintaGrupos(stockData()); return { ya:g.ya.length, sem:g.sem.length, rev:g.rev.length }; })() }; });
   chk('1b. las 4 fichas grandes', JSON.stringify(r1.grandes)===JSON.stringify(['Subir los Excel del día','Revisión automática','Pedido a producción','Banzer o PTF']), r1.grandes);
-  /* (27/10, §4na) + «🏬 Stock de las tiendas»: 7. */
-  chk('1c. los 7 de «Más» (con «🏬 Stock de las tiendas») y la fila de siempre escondida', r1.mas.length===7 && r1.mas.indexOf('🏬 Stock de las tiendas')>=0 && !r1.acc && r1.top, { mas:r1.mas, acc:r1.acc });
+  /* (27/10, §4na) + «🏬 Stock de las tiendas»: 7. (13/11, mejora 193) + «🏷️ Qué ofertar» al final, solo con la contraseña (acá la hay): 8. */
+  chk('1c. los 7 de «Más» (con «🏬 Stock de las tiendas») + «🏷️ Qué ofertar» con la contraseña, y la fila de siempre escondida', r1.mas.length===8 && r1.mas.indexOf('🏬 Stock de las tiendas')>=0 && r1.mas[7]==='🏷️ Qué ofertar' && !r1.acc && r1.top, { mas:r1.mas, acc:r1.acc });
   chk('5. el buscador sigue a la vista', r1.q, r1.q);
   chk('2a. con el Excel de hoy: «el de hoy · 09:10 ✓», sin rojo', /el de hoy · 09:10 ✓/.test(r1.ex) && !r1.mal, r1.ex);
   const esperado = [r1.cinta.ya?(r1.cinta.ya+' pedir ya'):'', r1.cinta.sem?(r1.cinta.sem+' esta semana'):'', r1.cinta.rev?(r1.cinta.rev+' revisar'):''].filter(Boolean).join(' · ')||'nada urgente';
@@ -68,7 +68,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 
   /* 4 */
   const r4 = await ev(() => {
-    var F=['abrirImportExist','abrirStockRevisar','abrirPap','abrirAlm','abrirStockConteo','abrirStockRecogida','abrirStockEntrada','abrirStockSalida','abrirStockHistorial','copiarStock'], llam=[], orig={};
+    var F=['abrirImportExist','abrirStockRevisar','abrirPap','abrirAlm','abrirStockConteo','abrirStockRecogida','abrirStockEntrada','abrirStockSalida','abrirStockHistorial','copiarStock','abrirOferta'], llam=[], orig={};
     F.forEach(function(f){ orig[f]=window[f]; window[f]=function(){ llam.push(f); }; });
     document.querySelectorAll('#stk-top .s3-t, #stk-top .s3-ch').forEach(function(b){ b.click(); });
     F.forEach(function(f){ window[f]=orig[f]; });
