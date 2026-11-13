@@ -1490,6 +1490,58 @@ html.tema-todos-santos #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fbefff
 html.tema-todos-santos .adm-cam-tit b, html.tema-todos-santos .bot-cab b{ color:#fde7c7; }
 html.tema-todos-santos .adm-cam-tit small, html.tema-todos-santos .adm-volver span, html.tema-todos-santos .bot-cab span{ color:#e6d3f2; }
 html.tema-todos-santos :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#ecdcf7; }
+/* 🛍️ BLACK FRIDAY (muestra del 13/11; dueño: «ármame la muestra de black friday»). Negro con dorado, como las vitrinas de esa semana:
+   la etiqueta al lado del nombre (la cinta amarilla que corría arriba se sacó: al dueño no le gustó, 13/11), la ciudad de noche, etiquetas doradas que caen en el encabezado (`#hdr-fx`,
+   «etiquetas») y el fondo negro con etiquetas apenas visibles; las tarjetas grandes en vidrio oscuro (las mismas reglas que noviembre, en dorado).
+   Solo apariencia: no anuncia descuentos ni toca datos. Los días: `BF_DIAS` del <head> (13/11, el dueño eligió la «C»: del viernes anterior al lunes
+   siguiente; 2026: del 20 al 30/11). Para verlo otro día: `?tema=black-friday`. */
+html.tema-black-friday{ --grad-header:linear-gradient(135deg,#050505,#1c1917,#27272a,#0c0a09,#292524,#050505); --sh-card:0 10px 28px -14px rgba(0,0,0,.7); --sh-soft:0 18px 44px -20px rgba(0,0,0,.75); }
+html.tema-black-friday, html.tema-black-friday body{ background:#0b0b0d; }
+html.tema-black-friday body{ background:transparent; }
+html.tema-black-friday .header{ overflow:hidden; box-shadow:0 2px 0 #facc15, 0 10px 30px rgba(0,0,0,.55); }
+html.tema-black-friday .logo-h::before{ content:''; display:inline-block; width:1.1em; height:1.1em; margin-right:.38em; vertical-align:-.16em;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.5 12.3V4.4c0-1 .8-1.9 1.9-1.9h7.9c.5 0 1 .2 1.3.6l7.9 7.9c.7.7.7 1.9 0 2.7l-7.9 7.9c-.7.7-1.9.7-2.7 0L3.1 13.6c-.4-.3-.6-.8-.6-1.3z' fill='%23facc15' stroke='%23a16207' stroke-width='.8'/%3E%3Ccircle cx='7.6' cy='7.6' r='1.9' fill='%230a0a0a'/%3E%3Cpath d='M10.6 16.4l5.6-5.6' stroke='%230a0a0a' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='11.2' cy='11.5' r='1.25' fill='%230a0a0a'/%3E%3Ccircle cx='15.6' cy='15.9' r='1.25' fill='%230a0a0a'/%3E%3C/svg%3E") center/contain no-repeat; filter:drop-shadow(0 0 6px rgba(250,204,21,.45)); }
+html.tema-black-friday .logo-s{ color:#facc15; }
+html.tema-black-friday .hstat-v{ color:#fde047; text-shadow:0 0 12px rgba(250,204,21,.5); }
+html.tema-black-friday .nav button.active{ background:#18181b; border-color:#facc15; }
+html.tema-black-friday .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(10,10,12,.7) 62%,rgba(10,10,12,0) 74%); }
+html.tema-black-friday .h-lejos{ filter:grayscale(1) brightness(.42); }
+html.tema-black-friday .h-cerca{ filter:grayscale(.75) brightness(.62) sepia(.35); }
+html.tema-black-friday .h-calle{ background:linear-gradient(#facc15,#facc15) top/100% 1.5px no-repeat,
+  repeating-linear-gradient(90deg,rgba(250,204,21,.75) 0 26px,transparent 26px 62px) 0 8px/100% 2.5px no-repeat,linear-gradient(#1c1917,#0c0a09); }
+html.tema-black-friday .h-camion{ z-index:1; }
+html.tema-black-friday body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='440' viewBox='0 0 440 440'%3E%3Cg transform='translate(80 90) rotate(-18) scale(1.25)' opacity='0.22'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(330 60) rotate(14) scale(1.0)' opacity='0.18'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(250 230) rotate(-30) scale(1.15)' opacity='0.2'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(60 330) rotate(22) scale(1.05)' opacity='0.18'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(380 370) rotate(-10) scale(1.2)' opacity='0.22'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(180 400) rotate(8) scale(0.9)' opacity='0.16'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(410 200) rotate(40) scale(0.85)' opacity='0.15'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23ef4444' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23ef4444'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23ef4444' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23ef4444'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23ef4444'/%3E%3C/g%3E%3Cg transform='translate(150 170) rotate(-50) scale(0.8)' opacity='0.14'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23ffffff'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23ffffff' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23ffffff'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23ffffff'/%3E%3C/g%3E%3Cpath d='M200 35 L201.4 38.6 L205 40 L201.4 41.4 L200 45 L198.6 41.4 L195 40 L198.6 38.6 Z' fill='%23fde68a' opacity='0.55'/%3E%3Cpath d='M40 196 L41.12 198.88 L44 200 L41.12 201.12 L40 204 L38.88 201.12 L36 200 L38.88 198.88 Z' fill='%23fde68a' opacity='0.45'/%3E%3Cpath d='M300 314 L301.68 318.32 L306 320 L301.68 321.68 L300 326 L298.32 321.68 L294 320 L298.32 318.32 Z' fill='%23fde68a' opacity='0.5'/%3E%3Cpath d='M420 116 L421.12 118.88 L424 120 L421.12 121.12 L420 124 L418.88 121.12 L416 120 L418.88 118.88 Z' fill='%23fde68a' opacity='0.4'/%3E%3Cpath d='M120 256.5 L120.98 259.02 L123.5 260 L120.98 260.98 L120 263.5 L119.02 260.98 L116.5 260 L119.02 259.02 Z' fill='%23fde68a' opacity='0.45'/%3E%3Cpath d='M260 127 L260.84 129.16 L263 130 L260.84 130.84 L260 133 L259.16 130.84 L257 130 L259.16 129.16 Z' fill='%23fff' opacity='0.35'/%3E%3Cpath d='M20 416 L21.12 418.88 L24 420 L21.12 421.12 L20 424 L18.88 421.12 L16 420 L18.88 418.88 Z' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='30' cy='30' r='1.1' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='140' cy='20' r='1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='270' cy='10' r='1.2' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='390' cy='30' r='1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='100' cy='140' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='350' cy='150' r='1.2' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='220' cy='300' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='20' cy='280' r='1.1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='300' cy='420' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='430' cy='300' r='1.2' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='160' cy='340' r='1' fill='%23fde68a' opacity='0.35'/%3E%3C/svg%3E") 0 0/440px 440px repeat,
+  radial-gradient(1200px 520px at 50% 112%, rgba(250,204,21,.20), rgba(0,0,0,0) 70%),
+  radial-gradient(900px 420px at 0% -10%, rgba(239,68,68,.10), rgba(0,0,0,0) 70%),
+  linear-gradient(180deg,#0b0b0d 0%,#111113 60%,#17150f 100%); }
+html.tema-black-friday body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.7);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.7) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.7) 35%,transparent 100%); }
+html.tema-black-friday .footer{ color:#e7e5e4; }
+html.tema-black-friday .footer a{ color:#facc15; }
+@media(min-width:701px){
+  html.tema-black-friday .nav button[id]:not(.active){ background:rgba(12,12,14,.6); border-color:rgba(250,204,21,.42); color:#fafaf9; }
+  html.tema-black-friday .nav button[id]:not(.active) .ico-b{ background:rgba(255,255,255,.1); }
+  html.tema-black-friday .nav button[id]:not(.active) .ico-b svg{ stroke:#facc15; }
+  html.tema-black-friday .nav button[id]:hover:not(.active){ background:rgba(39,39,42,.85); border-color:#facc15; color:#fff; }
+}
+html.tema-black-friday :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chofer) > .card, html.tema-black-friday #admin-content > .card{
+  background:rgba(10,10,12,.5); border-color:rgba(250,204,21,.28); box-shadow:0 18px 44px -24px rgba(0,0,0,.8); }
+html.tema-black-friday .af-g .af-gt{ color:#fde68a; }
+html.tema-black-friday .af-g > i, html.tema-black-friday #adm-mas > div > span{ color:#d6d3d1 !important; }
+html.tema-black-friday .af-ley span{ color:#e7e5e4; }
+html.tema-black-friday #mis-borradores > div:not(.kx), html.tema-black-friday #view-mis > .card > div:not(.u7) > b{ color:#e7e5e4 !important; }
+html.tema-black-friday .tcol-tip{ color:#d6d3d1; }
+html.tema-black-friday #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fafaf9; } html.tema-black-friday #view-atc :is(.atv-mot, .atc-tipos) .atv-t small{ color:#d6d3d1; }
+html.tema-black-friday .adm-cam-tit b, html.tema-black-friday .bot-cab b{ color:#fde68a; }
+html.tema-black-friday .adm-cam-tit small, html.tema-black-friday .adm-volver span, html.tema-black-friday .bot-cab span{ color:#d6d3d1; }
+html.tema-black-friday :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#e7e5e4; }
+@media(max-width:700px){
+  html.tema-black-friday .nav button.active{ background:none; border:0; color:var(--text); }
+  html.tema-black-friday .nav button.active::after{ background:#facc15; }
+}
+@media(prefers-reduced-motion:reduce){ html.tema-black-friday body::after{ animation:none!important; } }
 /* 🎭 Carnaval (de jueves de comadres al martes de Carnaval: depende de la Pascua de cada año): colores y confeti. */
 html.tema-carnaval{ --grad-header:linear-gradient(135deg,#6d28d9,#db2777,#ea580c,#0d9488,#2563eb,#6d28d9); }
 html.tema-carnaval .header{ overflow:hidden; }
@@ -2337,15 +2389,23 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
   var t = m===9 ? 'halloween' : m===10 ? 'todos-santos' : ((m===11&&dd===31)||(m===0&&dd<=2)) ? 'anio-nuevo' : m===11 ? 'navidad'
         : (antesPascua>=47&&antesPascua<=52) ? 'carnaval' : (m===4&&dd>=20&&dd<=27) ? 'madre' : (m===7&&dd<=7) ? 'patria'
         : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
+  /* 🛍️ BLACK FRIDAY (muestra del 13/11): el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027). Qué días va lo decide el
+     dueño: mientras `BF_DIAS` sea null solo se ve con `?tema=black-friday`. Cuando lo diga, [desde, hasta] en días contados desde ese viernes
+     (ej. [-4, 3] = del lunes de esa semana al lunes siguiente, el «Cyber Monday»). Gana sobre Todos Santos esos días.
+     · 13/11, el dueño eligió la «C»: del viernes de la semana anterior al lunes siguiente (2026: del 20 al 30/11; 2027: del 19 al 29/11),
+       también en el dashboard. ⚠️ El mismo valor en el <head> de panel_template.html. */
+  var BF_DIAS=[-7, 3];
+  if(BF_DIAS && m===10){ var j1=new Date(Date.UTC(y,10,1)).getUTCDay(), bfDia=1+((4-j1+7)%7)+21+1, dBF=dd-bfDia; if(dBF>=BF_DIAS[0] && dBF<=BF_DIAS[1]) t='black-friday'; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
   /* 🪟 (30/10, §4ny) La barra de la ventana del panel instalado (y la caja de los botones de Windows sin barra) toma el color oscuro del
      encabezado del tema. Un tema nuevo va acá también (si no, queda el de Espuma). */
   var BARRA={ halloween:'#1a0b2e', 'todos-santos':'#1e0a35', navidad:'#0b3b2c', 'anio-nuevo':'#0b1d3a', carnaval:'#5b21b6', madre:'#831843',
-    patria:'#7f1d1d', 'santa-cruz':'#064e3b', espuma:'#0f4c5c' };
+    patria:'#7f1d1d', 'santa-cruz':'#064e3b', 'black-friday':'#0a0a0a', espuma:'#0f4c5c' };
   var mtc=document.querySelector('meta[name="theme-color"]'); if(mtc) mtc.setAttribute('content', BARRA[t]||BARRA.espuma);
   /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
-  if(t==='todos-santos'){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
+  /* 🔇 (13/11, dueño: «quitá la música de ingreso, ya pasó el día de los muertos») Solo el 1 y el 2 de noviembre (o viéndolo con ?tema=todos-santos). */
+  if(t==='todos-santos' && (q || (m===10 && dd<=2))){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
 }catch(e){} })();
 </script>
 <script>
@@ -2452,14 +2512,14 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
   var H=document.querySelector('.header'), cv=document.getElementById('hdr-fx');
   if(!H || !cv || !cv.getContext) return;
   var m=/\btema-([a-z-]+)/.exec(document.documentElement.className||''), tema=m?m[1]:'';
-  var EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' }[tema];
+  var EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos', 'black-friday':'etiquetas' }[tema];
   if(!EF){ cv.style.display='none'; return; }
   var cx=cv.getContext('2d'), dpr=Math.min(2, window.devicePixelRatio||1), W=0, Hh=0, P=[], R=[], cuadros=0, t=0, armado=false;
   var quieto=false; try{ quieto=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   var prueba=!!navigator.webdriver && !window.HDR_FX_PRUEBA;
   var azar=function(a,b){ return a+Math.random()*(b-a); }, uno=function(l){ return l[Math.floor(Math.random()*l.length)]; };
   var PAL={ petalos:['#f59e0b','#f97316','#fb923c','#fbbf24','#ea580c'], confeti:['#fde047','#22d3ee','#f472b6','#a3e635','#fb923c','#ffffff','#c084fc'],
-    patria:['#D52B1E','#F9E300','#22a24a'], 'confeti-scz':['#ffffff','#34d399','#ffffff','#10b981'], fuegos:['#fde047','#f472b6','#67e8f9','#ffffff','#a78bfa','#fb923c'] };
+    patria:['#D52B1E','#F9E300','#22a24a'], 'confeti-scz':['#ffffff','#34d399','#ffffff','#10b981'], etiquetas:['#facc15','#fde047','#facc15','#ffffff','#f59e0b','#ef4444'], fuegos:['#fde047','#f472b6','#67e8f9','#ffffff','#a78bfa','#fb923c'] };
   function medir(){
     var w=H.clientWidth, h=H.clientHeight; if(!w || !h) return;
     if(Math.abs(w*dpr-W)<1 && Math.abs(h*dpr-Hh)<1) return;
@@ -2470,16 +2530,17 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
     var s=dpr, p={ x:azar(0,W), a:azar(0,6.28), ph:azar(0,6.28) };
     if(EF==='burbujas'){ p.r=azar(3,9)*s; p.y=arriba?azar(0,Hh):Hh+p.r+azar(0,Hh*.5); p.v=-azar(.15,.45)*s; }
     else if(EF==='corazones'){ p.r=azar(4.5,8)*s; p.y=arriba?azar(0,Hh):-p.r*2; p.v=azar(.25,.6)*s; p.c=uno(['#fff','#fbcfe8','#f9a8d4','#fecdd3']); p.co=Math.random()<.55; p.va=azar(-.02,.02); }
+    else if(EF==='etiquetas'){ p.r=azar(4.5,8.5)*s; p.y=arriba?azar(0,Hh):-p.r*2; p.v=azar(.3,.75)*s; p.va=azar(-.025,.025); p.c=uno(PAL.etiquetas); }
     else { p.r=azar(EF==='petalos'?3.2:3, EF==='petalos'?6:5.5)*s; p.y=arriba?azar(0,Hh):-10*s; p.v=azar(EF==='petalos'?.25:.55, EF==='petalos'?.7:1.3)*s; p.va=azar(-.06,.06);
       p.c=uno(PAL[EF==='patria'?'patria':(EF==='petalos'?'petalos':(EF==='confeti-scz'?'confeti-scz':'confeti'))]); p.w=azar(.5,1.3); }
     return p;
   }
   function armar(){
     P=[]; R=[];
-    var n=cuantos({ burbujas:22, petalos:40, confeti:46, corazones:26, patria:32, 'confeti-scz':34, fuegos:0 }[EF]);
+    var n=cuantos({ burbujas:22, petalos:40, confeti:46, corazones:26, patria:32, 'confeti-scz':34, fuegos:0, etiquetas:22 }[EF]);
     for(var i=0;i<n;i++) P.push(nuevo(true));
     if(EF==='petalos') for(var j=0;j<cuantos(8);j++) R.push({ x:azar(0,W), y:azar(Hh*.5,Hh), v:azar(.2,.5)*dpr, ph:azar(0,6.28) });   // chispas de vela que suben
-    if(EF==='patria' || EF==='fuegos') for(var k=0;k<cuantos(EF==='fuegos'?26:10);k++) R.push({ x:azar(0,W), y:azar(0,Hh*.75), r:azar(.8,1.8)*dpr, ph:azar(0,6.28), est:EF==='patria' });
+    if(EF==='patria' || EF==='fuegos' || EF==='etiquetas') for(var k=0;k<cuantos(EF==='fuegos'?26:(EF==='etiquetas'?16:10));k++) R.push({ x:azar(0,W), y:azar(0,Hh*.75), r:azar(.8,1.8)*dpr, ph:azar(0,6.28), est:EF==='patria' });
   }
   function corazon(x,y,r){ cx.beginPath(); cx.moveTo(x,y+r*.35); cx.bezierCurveTo(x,y-r*.3,x-r,y-r*.3,x-r,y+r*.2); cx.bezierCurveTo(x-r,y+r*.75,x,y+r*1.05,x,y+r*1.35);
     cx.bezierCurveTo(x,y+r*1.05,x+r,y+r*.75,x+r,y+r*.2); cx.bezierCurveTo(x+r,y-r*.3,x,y-r*.3,x,y+r*.35); cx.fill(); }
@@ -2501,7 +2562,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
     R.forEach(function(r){
       if(r.v!=null){ if(mover){ r.y-=r.v; r.x+=Math.sin(t*.05+r.ph)*.3*dpr; } if(r.y<Hh*.2){ r.y=Hh; r.x=azar(0,W); }
         cx.globalAlpha=.5+.4*Math.sin(t*.2+r.ph); cx.fillStyle='#fde68a'; cx.beginPath(); cx.arc(r.x,r.y,1.2*dpr,0,6.283); cx.fill(); }
-      else { cx.globalAlpha=.35+.45*(.5+.5*Math.sin(t*.07+r.ph)); cx.fillStyle=r.est?'#fde047':'#fff';
+      else { cx.globalAlpha=.35+.45*(.5+.5*Math.sin(t*.07+r.ph)); cx.fillStyle=r.est?'#fde047':(EF==='etiquetas'?'#fde68a':'#fff');
         if(r.est) estrella(r.x,r.y,r.r*2.6); else { cx.beginPath(); cx.arc(r.x,r.y,r.r*.7,0,6.283); cx.fill(); } }
     });
     if(EF==='fuegos'){ fuegos(mover); cx.globalAlpha=1; return; }
@@ -2519,6 +2580,10 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.globalAlpha=.88; cx.fillStyle=p.c;
       if(EF==='corazones'){ if(p.co) corazon(0,-p.r*.6,p.r); else { cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); } }
       else if(EF==='petalos'){ cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); }
+      else if(EF==='etiquetas'){   // 🛍️ una etiqueta de precio con su agujerito; las grandes llevan «%»
+        var r=p.r; cx.beginPath(); cx.moveTo(-r*1.25,-r*.62); cx.lineTo(r*.55,-r*.62); cx.lineTo(r*1.2,0); cx.lineTo(r*.55,r*.62); cx.lineTo(-r*1.25,r*.62); cx.closePath(); cx.fill();
+        cx.globalAlpha=.9; cx.fillStyle='#0b0b0d'; cx.beginPath(); cx.arc(r*.55,0,r*.17,0,6.283); cx.fill();
+        if(r>6.5*dpr){ cx.font='900 '+Math.round(r*.95)+'px Arial,sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('%',-r*.4,r*.04); } }
       else { cx.scale(1, Math.cos(p.ph*3)); cx.fillRect(-p.r*.6*p.w, -p.r, p.r*1.2*p.w, p.r*2); }
       cx.restore();
     });
@@ -3353,6 +3418,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <button id="nx-pst-btn" class="btn btn-primary btn-sm" style="width:auto" onclick="nxPstAbrir()">🧾 Pagos sin terminar</button>
           <button id="cx-dup-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cxDupAbrir()">👯 Dos veces</button>
           <button id="cx-deben-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="abrirPorCobrar('ventas')">⏳ Deben</button>
+          <button id="cbz-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cbzAbrir()" title="Lo que va a entrar; en Mayoristas, además, el estado de cuenta de cada cliente y la antigüedad de saldos">📅 Cobranza</button>
         </div>
         <div class="cx-gr cx-gr-cargar"><span class="cx-gr-t">➕ Cargar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
@@ -4190,6 +4256,12 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .adm-gps-ent{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#eefaf3;border:1px solid #bfe6cf;border-left:5px solid #22A06B;color:#14412a;font-size:.86rem}
 .adm-gps-ent .btn{background:#0a6b47;color:#fff;border-color:#0a6b47}
 .adm-gps-ent small{flex-basis:100%;color:#3d6b54;font-size:.76rem}
+/* 🛰️ (13/11, idea 133) el GPS propone el camión que faltó: la misma familia del cartel de arriba, en azul (no es un ✅) */
+.adm-gps-ent.gps-cam{background:#eef5ff;border-color:#c7dcf5;border-left-color:#2563eb;color:#173a63}
+.adm-gps-ent.gps-cam .btn{background:#1d4ed8;border-color:#1d4ed8}.adm-gps-ent.gps-cam small{color:#3b5779}
+.gps-cam-l{flex-basis:100%;display:grid;gap:4px}.gps-cam-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid #d9e6f7}
+.gps-cam-f .btn{padding:3px 10px;font-size:.78rem}
+.cie-gps-cam{color:#1d4ed8;font-size:.82rem}.cie-gps-cam .btn{padding:2px 9px;font-size:.76rem;margin-left:4px;background:#1d4ed8;color:#fff;border-color:#1d4ed8}
 .agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
 .agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
 .agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
@@ -6237,6 +6309,57 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .modal.fl-ficha .fl-prod > .fl-pls{ min-width:96px; }
 /* 6 · La ficha en el celular: cada parte de «Qué hacer» en su renglón, sin la flechita sola. */
 @media (max-width:600px){ .fl-qh-s{ display:none; } .fl-qh > span:not(.fl-qh-k){ flex:1 1 100%; } }
+/* ⏳ (13/11, ideas 136, 143 y 129) La ventana de Cobranza. Colores del panel, tabla que parte renglones, todo entra en 390 px. */
+.cbz .cbz-tabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+.cbz .cbz-tabs>button{border:1px solid var(--gray-lt,#dbe6ee);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:700;color:#0f2333;cursor:pointer}
+.cbz .cbz-tabs>button.on{background:#0f766e;border-color:#0f766e;color:#fff}
+.cbz .cbz-vend{margin-left:auto;font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
+.cbz .cbz-vend select{font:inherit;font-size:.82rem;padding:4px 6px;border-radius:8px;border:1px solid var(--gray-lt,#dbe6ee);max-width:180px}
+.cbz .cbz-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 10px}
+.cbz .cbz-res>div{background:#fff;border:1px solid var(--gray-lt,#dbe6ee);border-radius:10px;padding:8px 10px;min-width:0}
+.cbz .cbz-res small{display:block;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;font-weight:700}
+.cbz .cbz-res b{display:block;font-size:1.08rem;font-variant-numeric:tabular-nums;color:#0f2333}
+.cbz .cbz-res span{display:block;font-size:.74rem;color:var(--muted)}
+.cbz .cbz-res .cbz-mal{border-color:#f5c0c5;background:#fdecea}.cbz .cbz-res .cbz-mal b{color:#b42318}
+.cbz .cbz-res .cbz-ok b{color:#11743e}
+.cbz .cbz-res .cbz-toca{cursor:pointer;border-style:dashed}
+.cbz .cbz-ay{font-size:.78rem;color:var(--muted);margin:0 0 10px;max-width:80ch}
+.cbz .cbz-barras{display:grid;gap:5px;margin:0 0 10px}
+.cbz .cbz-bar{display:grid;grid-template-columns:minmax(110px,170px) minmax(0,1fr) auto auto;gap:10px;align-items:center;border:1px solid transparent;background:none;border-radius:8px;padding:5px 8px;font:inherit;font-size:.84rem;text-align:left;cursor:pointer;color:#0f2333}
+.cbz .cbz-bar:hover:not([disabled]),.cbz .cbz-bar.on{background:#e3f8f6;border-color:#99ddd9}
+.cbz .cbz-bar.vacio{opacity:.5;cursor:default}
+.cbz .cbz-bt{height:12px;border-radius:6px;background:#eef2f6;overflow:hidden}.cbz .cbz-bt i{display:block;height:100%;border-radius:6px}
+.cbz .cbz-bar b{font-variant-numeric:tabular-nums;white-space:nowrap}.cbz .cbz-bar small{color:var(--muted);white-space:nowrap;font-size:.74rem}
+.cbz .cbz-filtro{font-size:.82rem;margin:0 0 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cbz .cbz-tw{max-height:calc(52vh / var(--vz,1));overflow:auto}
+.cbz .cbz-t td,.cbz .cbz-t th{white-space:normal;vertical-align:top}
+.cbz .cbz-t .m{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cbz .cbz-t td small{color:var(--muted);font-size:.84em}
+.cbz .cbz-t tr.cbz-f{cursor:pointer}.cbz .cbz-t tr.cbz-f:hover td{background:#f1fbfa}
+.cbz .cbz-t tr.on td{background:#e3f6ea}
+.cbz .cbz-t .cbz-pr{font-size:.78rem;max-width:320px}
+.cbz .cbz-acc{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cbz .cbz-clis{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.cbz .cbz-cli{display:grid;gap:6px;text-align:left;border:1px solid var(--gray-lt,#dbe6ee);border-radius:12px;background:#fff;padding:10px 12px;font:inherit;color:#0f2333;cursor:pointer;min-width:0}
+.cbz .cbz-cli:hover{border-color:#00b5ad;box-shadow:0 0 0 2px #e3f8f6}
+.cbz .cbz-cn{font-weight:800;font-size:.95rem}
+.cbz .cbz-cd b{font-size:1.15rem;font-variant-numeric:tabular-nums;display:block}.cbz .cbz-cd small{color:var(--muted);font-size:.74rem}
+.cbz .cbz-cts{display:flex;gap:6px;flex-wrap:wrap}
+.cbz .cbz-ct{border-left:3px solid;padding:1px 6px;font-size:.74rem;display:grid}.cbz .cbz-ct small{color:var(--muted);font-size:.66rem}
+.cbz .cbz-ct b{font-variant-numeric:tabular-nums}
+.cbz .cbz-cv{font-size:.74rem;color:var(--muted)}.cbz .cbz-cv.cbz-sinm{color:#b45309;font-weight:700}.cbz .cbz-t tr.cbz-sinm td{background:#fff8ec}
+.cbz .cbz-selbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+.cbz .cbz-pago{margin-top:12px;border:2px solid #11743e;border-radius:12px;padding:12px;background:#f3fbf6;display:grid;gap:8px}
+.cbz .cbz-pago h4{margin:0;font-size:1rem}
+.cbz .cbz-met{display:flex;gap:6px;flex-wrap:wrap}
+.cbz .cbz-met button{border:1px solid #b8e6d0;background:#fff;border-radius:999px;padding:5px 11px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;color:#0f2333}
+.cbz .cbz-met button.on{background:#11743e;border-color:#11743e;color:#fff}
+.cbz .cbz-pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px}
+.cbz .cbz-pg label{display:grid;gap:3px;font-size:.76rem;font-weight:700;color:var(--muted)}
+.cbz .cbz-pg input,.cbz .cbz-pg select{font:inherit;font-size:.86rem;padding:6px 8px;border:1px solid var(--gray-lt,#dbe6ee);border-radius:8px;min-height:36px;color:#0f2333;background:#fff}
+.cbz .cbz-pg input.err{border-color:var(--red)}
+.cbz .cbz-comp{font-size:.82rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+@media (max-width:600px){ .cbz .cbz-bar{grid-template-columns:minmax(0,1fr) auto;row-gap:3px} .cbz .cbz-bt{grid-column:1/-1;grid-row:2} .cbz .cbz-bar small{display:none} .cbz .cbz-vend{margin-left:0} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -7145,7 +7268,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-11-a';   // (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
+var SCRIPT_VERSION_ESPERADA='2026-11-13-a';   // (13/11, 11-13-a) 🪶 las almohadas no cuentan como productos en el cierre del día · (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
 // antes: '2026-11-07-d' (07/11) 🎙️ al que le manda un audio al bot, le recuerda que es un asistente automático; el cierre con productos y el botón
 // antes: '2026-11-07-c' (07/11) 🧾 el retiro que es justo lo último sin recoger se lleva eso (el aviso del efectivo)
 // antes:   // (07/11, 11-07-b) ☀️ el «Buen día» también el domingo para las vendedoras de Mia Plaza y Tienda Banzer (solo el servidor) · (07/11, 11-07-a) ☀️ el «Buen día» a cada vendedora (08:30) y 🌙 el cierre del día al dueño (21:15) por WhatsApp (solo el servidor) · 🧽 la acción `bloki` (Bloki le pregunta a Claude con lo que el panel calculó): esta página la llama solo con esta versión (servidorTiene); lo demás anda igual con la 06-e · (06/11, 11-06-e) 🗓️ el efectivo del día solo de ventas de noviembre (solo el servidor) · (06/11, 11-06-d) 📅 el efectivo de cada día (lo que ingresó y lo acumulado sin recoger) por WhatsApp (solo el servidor) · (06/11, 11-06-c) 🚚 el efectivo de los choferes sin rendir va a Contabilidad, no al dueño (solo el servidor) · (06/11, 11-06-b) 💵 el WhatsApp del efectivo sin retirar al dueño (solo el servidor: la página anda igual con la 06-a) · (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
@@ -10159,6 +10282,411 @@ function copiarPorCobrar(origen){
   if(ant.length) txt+='\n\n🗓️ *De meses anteriores* (ya entregadas, aparte): *'+fmtBs(cuadreSuma(ant))+'* en '+ant.length+' venta'+(ant.length===1?'':'s')+'\n'+ant.map(lin).join('\n');   // §4ok-E7
   copyText(txt);
 }
+/* ============================================================================
+   ⏳ COBRANZA (13/11; ideas 136, 143 y 129 de «Contabilidad en el panel» y «Mejoras 128 a 135»; el dueño: «136, 143, 129, 133»)
+   Una ventana desde Contabilidad («⏳ Cobranza»), con la planilla que se esté mirando (Ventas = el equipo, Mayoristas = Eduardo) y
+   TODO el historial (no el período de la pantalla: la deuda vieja es justo la que el período esconde):
+   · 📅 ANTIGÜEDAD DE SALDOS (136): lo ya entregado que falta cobrar, por los días que pasaron desde la entrega (0-7, 8-30, 31-60, más
+     de 60, sin fecha). Cada tramo se toca y filtra la lista; un cliente abre su venta (para registrar el pago) con «← Volver».
+   · 📈 LO QUE VA A ENTRAR (143): el saldo de lo que todavía no se entregó, por cuándo se entrega (hoy, próximos 7 días, 8 a 14, más
+     adelante y «el cliente avisa cuándo»). Es el flujo de caja hacia adelante.
+   · 🏭 ESTADO DE CUENTA DE CADA MAYORISTA (129, solo en Mayoristas): una ficha por cliente (Multicenter, Tienda Amiga, ROHO, Copacaba,
+     Luis Franco y los demás de Eduardo) con lo que debe por antigüedad; adentro, sus OC con casillas y «💵 Pagó las N tildadas»: un
+     pago por cada OC tildada, por su saldo entero, con el MISMO renglón que «Registrar pago» (método, banco, fecha, N° de recibo y
+     el comprobante, obligatorio como allá) por `aplicarCobros`. Más el estado de cuenta en Excel y para copiar.
+   · Las cuentas son las de siempre: saldo = `contaFaltaCobrar`, fecha = `fechaSalida` (la entrega agendada; la venta de tienda, el día
+     de la venta), «ya entregado» = la fecha ya pasó (la regla de siempre: los choferes no marcan ✅) o hoy con ✅. Nada se calcula aparte.
+   · Solo mira, salvo «Pagó las N tildadas», que registra pagos como lo haría Contabilidad de a uno.
+   ========================================================================== */
+var CBZ={ tab:'', vend:'', tramo:'', cli:'', sel:{}, pago:{ metodo:'QR', banco:'', fecha:'', nota:'', comps:[] }, subiendo:0, guardando:false };
+var CBZ_TRAMOS=[
+  { k:'d7',   lbl:'0 a 7 días',   col:'#64748b' },
+  { k:'d30',  lbl:'8 a 30 días',  col:'#a67c00' },
+  { k:'d60',  lbl:'31 a 60 días', col:'#b45309' },
+  { k:'d60m', lbl:'Más de 60 días', col:'#b42318' },
+  { k:'sinF', lbl:'Sin fecha',    col:'#94a3b8' }
+];
+var CBZ_VIENE=[
+  { k:'hoy',   lbl:'Hoy (sin ✅ todavía)', col:'#0f766e' },
+  { k:'v7',    lbl:'Próximos 7 días',      col:'#00837d' },
+  { k:'v14',   lbl:'De 8 a 14 días',       col:'#1d4ed8' },
+  { k:'vmas',  lbl:'Más adelante',         col:'#64748b' },
+  { k:'avisa', lbl:'El cliente avisa cuándo', col:'#94a3b8' }
+];
+/* Las ventas de la planilla que se está mirando, de todo el historial, con el vendedor elegido en la ventana. */
+function cbzVentas(){
+  var amb=contaAmbito(), v=CBZ.vend;
+  return STATE.filter(function(p){
+    return !!p && !esBorrador(p) && !fueraDeConta(p, amb) && (amb==='mayor' || !v || mismoVendedor(v, p.vendedor));
+  });
+}
+/* Cada venta con saldo, en su lugar: 'deuda' (ya entregada, con su tramo) o 'viene' (por entregar, con su plazo). */
+function cbzClasificar(p, hoy){
+  /* (13/11, revisión de Fable 2) Una venta SIN MONTO ANOTADO (saldo 0, no pagada, sin cobros: a Eduardo no se le pide precio) no
+     es «al día»: va aparte, como 'sinm', para que se vea y se le ponga el monto. No suma en ningún total. */
+  if(sinMontoAnotado(p) && !noSeCobra(p) && !esVentaTienda(p)){ var f0=fechaSalida(p)||''; return { p:p, saldo:0, que:'sinm', k:'sinm', f:f0, dias:(f0 && f0<=hoy)?Math.max(0, diasEntre(f0, hoy)):0 }; }
+  var s=r2(contaFaltaCobrar(p)); if(!(s>0.005)) return null;
+  if(entregaAConfirmar(p)) return { p:p, saldo:s, que:'viene', k:'avisa', f:'', dias:0 };
+  var fs=fechaSalida(p)||'';
+  if(!fs) return { p:p, saldo:s, que:'deuda', k:'sinF', f:'', dias:0 };
+  /* (revisión de Fable 9) una venta de tienda ya se entregó en la tienda; un ✅ adelantado (fecha futura) ya salió: los dos son deuda de hoy */
+  if((esVentaTienda(p) || p.entregado) && fs>=hoy) return { p:p, saldo:s, que:'deuda', k:'d7', f:fs, dias:0 };
+  if(fs>hoy || (fs===hoy && !p.entregado)){
+    var d=fs===hoy ? 0 : diasEntre(hoy, fs);
+    return { p:p, saldo:s, que:'viene', k:(fs===hoy?'hoy':d<=7?'v7':d<=14?'v14':'vmas'), f:fs, dias:d };
+  }
+  var e=Math.max(0, diasEntre(fs, hoy));
+  return { p:p, saldo:s, que:'deuda', k:(e<=7?'d7':e<=30?'d30':e<=60?'d60':'d60m'), f:fs, dias:e };
+}
+function cbzDatos(){
+  var hoy=diaNegocio(), deuda=[], viene=[], sinm=[], cobradoViene=0, mayor=contaAmbito()==='mayor';
+  cbzVentas().forEach(function(p){
+    var x=cbzClasificar(p, hoy); if(!x) return;
+    if(x.que==='sinm') sinm.push(x);
+    else if(x.que==='deuda') deuda.push(x); else { viene.push(x); cobradoViene=r2(cobradoViene+contaCobrado(p)); }
+  });
+  deuda.sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+  viene.sort(function(a,b){ return a.k==='avisa' ? 1 : b.k==='avisa' ? -1 : (a.f<b.f?-1:a.f>b.f?1:b.saldo-a.saldo); });
+  var suma=function(L, k){ var o={ n:0, bs:0 }; L.forEach(function(x){ if(!k || x.k===k){ o.n++; o.bs=r2(o.bs+x.saldo); } }); return o; };
+  var T={}; CBZ_TRAMOS.forEach(function(t){ T[t.k]=suma(deuda, t.k); });
+  var V={}; CBZ_VIENE.forEach(function(t){ V[t.k]=suma(viene, t.k); });
+  /* (revisión de Fable 5) en Mayoristas el cliente es el de la ficha (`cbzMayCliente`), no el celular de cada entrega */
+  var cli={}; deuda.forEach(function(x){ var k=mayor ? cbzMayCliente(x.p) : (cliCelClave(x.p.celular)||normNombre(x.p.cliente||'')); cli[k]=r2((cli[k]||0)+x.saldo); });
+  var montos=Object.keys(cli).map(function(k){ return cli[k]; }).sort(function(a,b){ return b-a; });
+  return { hoy:hoy, deuda:deuda, viene:viene, sinm:sinm, T:T, V:V, totD:suma(deuda), totV:suma(viene), cobradoViene:cobradoViene,
+           nCli:montos.length, top5:r2(montos.slice(0,5).reduce(function(s,x){ return s+x; },0)) };
+}
+function cbzVendSelHtml(){
+  if(contaAmbito()==='mayor') return '';
+  var seen={}, L=[];
+  STATE.forEach(function(p){ if(!p || fueraDeConta(p, 'tienda') || esBorrador(p)) return; var n=nombreCanonico(p.vendedor||''), k=normNombre(n); if(k && !seen[k]){ seen[k]=1; L.push(n); } });
+  L.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  return '<label class="cbz-vend">Vendedor <select id="cbz-vend" onchange="CBZ.vend=this.value;CBZ.tramo=\'\';cbzPintar()"><option value="">Todos</option>'+
+    L.map(function(v){ return '<option'+(mismoVendedor(v, CBZ.vend)?' selected':'')+'>'+esc(v)+'</option>'; }).join('')+'</select></label>';
+}
+function cbzAbrir(tab){
+  var mayor=contaAmbito()==='mayor';
+  /* (13/11, dueño: «¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar») La antigüedad de saldos es SOLO de Mayoristas; en
+     Ventas (el equipo) la ventana muestra lo que va a entrar. */
+  CBZ.tab=tab || (mayor ? 'cli' : 'ent'); if(!mayor && CBZ.tab!=='ent') CBZ.tab='ent';
+  CBZ.tramo=''; CBZ.cli=''; CBZ.sel={};
+  if(!mayor){ var vs=((document.getElementById('cta-vendedor')||{}).value||'').trim(); CBZ.vend=vs; } else CBZ.vend='';
+  POR_COBRAR_VOLVER=null;
+  openModal('<div class="modal-h" style="background:#0f766e"><h3>⏳ Cobranza · '+(mayor?('🏭 '+esc(mayoristasTxt())):'📋 el equipo')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b cbz" id="cbz"></div>', true);
+  cbzPintar();
+}
+function cbzTab(t){ CBZ.tab=t; CBZ.tramo=''; CBZ.cli=''; cbzPintar(); }
+function cbzPintar(){
+  var box=document.getElementById('cbz'); if(!box) return;
+  var mayor=contaAmbito()==='mayor', D=cbzDatos(), sc=box.parentNode ? box.parentNode.scrollTop : 0;
+  var tabs=mayor ? [['cli','🏭 Por cliente'],['ant','📅 Antigüedad de saldos'],['ent','📈 Lo que va a entrar']] : [['ent','📈 Lo que va a entrar']];
+  if(!mayor && CBZ.tab!=='ent') CBZ.tab='ent';
+  var h='<div class="cbz-tabs" role="tablist">'+tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="'+(CBZ.tab===t[0])+'" class="'+(CBZ.tab===t[0]?'on':'')+'" onclick="cbzTab(\''+t[0]+'\')">'+t[1]+'</button>'; }).join('')+
+    cbzVendSelHtml()+'</div>';
+  if(CBZ.tab==='cli') h+=(CBZ.cli ? cbzCliDetHtml(CBZ.cli) : cbzCliListaHtml());
+  else if(CBZ.tab==='ent') h+=cbzVieneHtml(D);
+  else h+=cbzAntHtml(D);
+  box.innerHTML=h;
+  try{ if(box.parentNode && sc) box.parentNode.scrollTop=sc; }catch(e){}
+}
+function cbzBarras(L, tot, defs, onclick){
+  var max=0; defs.forEach(function(t){ max=Math.max(max, (tot[t.k]||{}).bs||0); });
+  return '<div class="cbz-barras">'+defs.map(function(t){
+    var o=tot[t.k]||{ n:0, bs:0 }, w=max>0 ? Math.max(o.bs>0?2:0, Math.round(o.bs/max*100)) : 0, on=CBZ.tramo===t.k;
+    return '<button type="button" class="cbz-bar'+(on?' on':'')+(o.n?'':' vacio')+'" '+(o.n?'':'disabled ')+'onclick="'+onclick+'(\''+t.k+'\')" title="'+(on?'Ver todas':'Ver solo estas')+'">'+
+      '<span class="cbz-bl">'+esc(t.lbl)+'</span><span class="cbz-bt"><i style="width:'+w+'%;background:'+t.col+'"></i></span>'+
+      '<b>'+fmtBs(o.bs)+'</b><small>'+o.n+' venta'+(o.n===1?'':'s')+'</small></button>';
+  }).join('')+'</div>';
+}
+function cbzTramo(k){ CBZ.tramo=(CBZ.tramo===k ? '' : k); cbzPintar(); }
+function cbzFila(x, modo){
+  var p=x.p, ref=[p.nota?('nota '+p.nota):'', ocEtiq(p.oc), p.celular||''].filter(Boolean).join(' · ');
+  var cuando = x.k==='avisa' ? esc(avisaTxt(p)||'el cliente avisa') : !x.f ? 'sin fecha' :
+    (modo==='viene' ? (fmtFechaCorta(x.f)+(x.k==='hoy'?' · hoy':(' · en '+x.dias+' d'))) : (fmtFechaCorta(x.f)+' · '+(x.dias?(x.dias+' d'):'hoy')));
+  var col = modo==='viene' ? 'var(--muted)' : x.dias>60 ? 'var(--red)' : x.dias>30 ? '#b45309' : x.dias>7 ? '#a67c00' : 'var(--muted)';
+  return '<tr class="cbz-f" data-id="'+esc(String(p.id))+'" onclick="cbzAbrirVenta(this.getAttribute(\'data-id\'))" title="Abrir la venta para registrar el pago">'+
+    '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><small>'+esc(ref)+'</small>'):'')+'</td>'+
+    '<td>'+esc(nombreCanonico(p.vendedor||'')||'—')+'</td>'+
+    '<td style="color:'+col+';white-space:nowrap">'+cuando+'</td>'+
+    '<td class="m">'+fmtBs(ventaTotal(p))+'</td>'+
+    '<td class="m">'+fmtBs(contaCobrado(p))+'</td>'+
+    '<td class="m"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
+}
+function cbzTabla(L, modo){
+  if(!L.length) return '<div class="empty" style="padding:16px 0">✅ No hay nada acá.</div>';
+  return '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th>Cliente</th><th>Vendedor</th><th>'+(modo==='viene'?'Se entrega':'Entregado')+'</th>'+
+    '<th class="m">Venta</th><th class="m">Ya cobrado</th><th class="m">Saldo</th></tr></thead><tbody>'+L.map(function(x){ return cbzFila(x, modo); }).join('')+'</tbody></table></div>';
+}
+function cbzAntHtml(D){
+  var L=D.deuda.filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), viejo=(D.T.d60m||{});
+  var h='<div class="cbz-res"><div><small>Ya entregado y sin cobrar</small><b>'+fmtBs(D.totD.bs)+'</b><span>'+D.totD.n+' venta'+(D.totD.n===1?'':'s')+' · '+D.nCli+' cliente'+(D.nCli===1?'':'s')+'</span></div>'+
+    (viejo.n ? '<div class="cbz-mal"><small>Con más de 60 días</small><b>'+fmtBs(viejo.bs)+'</b><span>'+viejo.n+' venta'+(viejo.n===1?'':'s')+': o nadie la está cobrando, o se pagó y no se anotó</span></div>' : '')+
+    ((D.sinm||[]).length ? '<div class="cbz-mal cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'cli\')"><small>⚠️ Sin monto anotado</small><b>'+D.sinm.length+' OC</b><span>no suman acá: no se sabe cuánto deben · ver «Por cliente» →</span></div>' : '')+
+    (D.nCli>5 ? '<div><small>Los 5 que más deben</small><b>'+fmtBs(D.top5)+'</b><span>'+(D.totD.bs>0?Math.round(D.top5/D.totD.bs*100):0)+'% de lo que falta</span></div>' : '')+
+    (D.totV.n ? '<div class="cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'ent\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}"><small>Todavía por entregar</small><b>'+fmtBs(D.totV.bs)+'</b><span>no es deuda todavía · ver «Lo que va a entrar» →</span></div>' : '')+
+    '</div>';
+  h+='<p class="cbz-ay">Desde el día de la entrega agendada (la venta de tienda, desde el día de la venta). Todo el historial, no solo el mes de la pantalla. 👆 Tocá un tramo para ver solo esas; tocá un cliente para abrir su venta y registrar el pago.</p>';
+  h+=cbzBarras(D.deuda, D.T, CBZ_TRAMOS, 'cbzTramo');
+  if(CBZ.tramo){ var t=CBZ_TRAMOS.filter(function(z){ return z.k===CBZ.tramo; })[0]; h+='<div class="cbz-filtro">Solo: <b>'+esc(t?t.lbl:'')+'</b> <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzTramo(\'\')">Ver todas</button></div>'; }
+  h+=cbzTabla(L, 'deuda');
+  h+='<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCopiar(\'ant\')">📋 Copiar</button>'+
+     '<button type="button" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="cbzExcel(\'ant\')">⬇️ Excel</button>'+
+     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
+  return h;
+}
+function cbzVieneHtml(D){
+  var L=D.viene.filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), sem=r2(((D.V.hoy||{}).bs||0)+((D.V.v7||{}).bs||0));
+  var h='<div class="cbz-res"><div><small>Por cobrar al entregar</small><b>'+fmtBs(D.totV.bs)+'</b><span>'+D.totV.n+' venta'+(D.totV.n===1?'':'s')+' sin entregar</span></div>'+
+    '<div class="cbz-ok"><small>Esta semana (hoy y 7 días)</small><b>'+fmtBs(sem)+'</b><span>'+(((D.V.hoy||{}).n||0)+((D.V.v7||{}).n||0))+' entrega'+((((D.V.hoy||{}).n||0)+((D.V.v7||{}).n||0))===1?'':'s')+'</span></div>'+
+    (D.cobradoViene>0.005 ? '<div><small>Ya cobrado de esas ventas</small><b>'+fmtBs(D.cobradoViene)+'</b><span>adelantos: entró, pero el colchón todavía no salió</span></div>' : '')+
+    '</div>';
+  h+='<p class="cbz-ay">El saldo que se cobra al entregar, por el día de entrega agendado. Si una entrega se mueve, se mueve acá. Lo que el cliente todavía no eligió va aparte.</p>';
+  h+=cbzBarras(D.viene, D.V, CBZ_VIENE, 'cbzTramo');
+  if(CBZ.tramo){ var t=CBZ_VIENE.filter(function(z){ return z.k===CBZ.tramo; })[0]; h+='<div class="cbz-filtro">Solo: <b>'+esc(t?t.lbl:'')+'</b> <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzTramo(\'\')">Ver todas</button></div>'; }
+  h+=cbzTabla(L, 'viene');
+  h+='<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCopiar(\'ent\')">📋 Copiar</button>'+
+     '<button type="button" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="cbzExcel(\'ent\')">⬇️ Excel</button>'+
+     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
+  return h;
+}
+function cbzAbrirVenta(id){ POR_COBRAR_VOLVER={ origen:'cbz', id:String(id) }; showContaModal(id); }
+function cbzVolver(){ var t=CBZ.tab, c=CBZ.cli, tr=CBZ.tramo, s=CBZ.sel;
+  openModal('<div class="modal-h" style="background:#0f766e"><h3>⏳ Cobranza · '+(contaAmbito()==='mayor'?('🏭 '+esc(mayoristasTxt())):'📋 el equipo')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b cbz" id="cbz"></div>', true);
+  CBZ.tab=t; CBZ.cli=c; CBZ.tramo=tr; CBZ.sel=s||{}; POR_COBRAR_VOLVER=null; cbzPintar(); }
+function cbzLineaTxt(x){ var p=x.p;
+  return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
+    (x.k==='avisa' ? ' · el cliente avisa' : !x.f ? ' · sin fecha' : (' · '+fmtFechaCorta(x.f)+(x.que==='deuda' ? (' ('+x.dias+' d)') : '')))+(p.vendedor?(' · '+nombreCanonico(p.vendedor)):''); }
+function cbzQuienTxt(){ return contaAmbito()==='mayor' ? mayoristasTxt() : (CBZ.vend || 'todo el equipo'); }
+function cbzCopiar(que){
+  var D=cbzDatos(), L=(que==='ent'?D.viene:D.deuda).filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), defs=que==='ent'?CBZ_VIENE:CBZ_TRAMOS, T=que==='ent'?D.V:D.T;
+  var tit=que==='ent' ? '📈 *Lo que va a entrar*' : '📅 *Antigüedad de saldos*';
+  var txt=tit+' · '+cbzQuienTxt()+' · al '+fmtFechaCorta(D.hoy)+'\n'+
+    defs.filter(function(t){ return (T[t.k]||{}).n; }).map(function(t){ return t.lbl+': *'+fmtBs(T[t.k].bs)+'* ('+T[t.k].n+')'; }).join('\n')+'\n\n'+L.map(cbzLineaTxt).join('\n');
+  copyText(txt);
+}
+function cbzExcel(que){
+  var D=cbzDatos(), viene=que==='ent', L=viene?D.viene:D.deuda, defs=viene?CBZ_VIENE:CBZ_TRAMOS, T=viene?D.V:D.T, H=1, BS=2;
+  var num=function(v){ return { v:r2(v), t:'n', s:BS }; };
+  var res=[[{ v:(viene?'LO QUE VA A ENTRAR':'ANTIGÜEDAD DE SALDOS')+' · '+cbzQuienTxt().toUpperCase()+' · AL '+fmtFecha(D.hoy), s:H }], [],
+    [{v:'TRAMO',s:H},{v:'VENTAS',s:H},{v:'SALDO (Bs)',s:H}]];
+  defs.forEach(function(t){ var o=T[t.k]||{n:0,bs:0}; res.push([t.lbl, {v:o.n,t:'n'}, num(o.bs)]); });
+  var tot=viene?D.totV:D.totD; res.push([{v:'TOTAL',s:H}, {v:tot.n,t:'n'}, num(tot.bs)]);
+  res.push([]); res.push([viene ? 'El saldo que se cobra al entregar, por el día de entrega agendado.' : 'Lo ya entregado y sin cobrar, por los días desde la entrega agendada. Todo el historial.']);
+  var cab=['TRAMO','CLIENTE','CELULAR','VENDEDOR','N° NOTA','N° OC',(viene?'SE ENTREGA':'ENTREGADO'),'DÍAS','VENTA (Bs)','YA COBRADO (Bs)','SALDO (Bs)'];
+  var det=[cab.map(function(t){ return {v:t,s:H}; })], lbl={}; defs.forEach(function(t){ lbl[t.k]=t.lbl; });
+  L.forEach(function(x){ var p=x.p;
+    det.push([lbl[x.k]||'', p.cliente||'', String(p.celular||''), nombreCanonico(p.vendedor||''), p.nota||'', p.oc||'',
+      x.k==='avisa' ? ('avisa · '+(avisaDe(p)?fmtFecha(avisaDe(p)):'')) : (x.f?fmtFecha(x.f):'sin fecha'), {v:x.dias,t:'n'}, num(ventaTotal(p)), num(contaCobrado(p)), num(x.saldo)]); });
+  var bytes=buildXlsx([{ name:'Resumen', cols:[{w:30},{w:12},{w:16}], matrix:res },
+                       { name:'Detalle', cols:[{w:16},{w:28},{w:14},{w:20},{w:12},{w:10},{w:16},{w:7},{w:13},{w:15},{w:13}], matrix:det }]);
+  var tag=sinTildes(cbzQuienTxt().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  downloadBlob(bytes, (viene?'lo-que-va-a-entrar-':'antiguedad-de-saldos-')+tag+'-'+D.hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast((viene?'📈 Lo que va a entrar':'📅 Antigüedad de saldos')+' descargado: '+fmtBs(tot.bs)+' en '+tot.n+' venta'+(tot.n===1?'':'s')+' ✓','ok');
+}
+/* 🏭 (129) EL ESTADO DE CUENTA DE CADA MAYORISTA. El cliente se reconoce por el nombre con las MISMAS reglas que ya usa el panel para
+   los mayoristas (`stockEsMulticenter`, Tienda Amiga, Copacaba —también «Juan Carlos Arce», que manda sus pedidos—, Luis Franco, ROHO);
+   los demás clientes de Eduardo van cada uno con su nombre. */
+function cbzMayCliente(p){
+  var n=normNombre(p&&p.cliente||'');
+  /* (revisión de Fable 6) Luis Franco ANTES que «Juan Carlos Arce» (Arce manda pedidos de los dos); «MULTI CENTER» y «TIENDAAMIGA» también;
+     el nombre de respaldo sin la puntuación del final («karina torrico.»). Copacaba con el MISMO patrón del stock (§4od). */
+  if(stockEsMulticenter(p) || /\bmulti ?center\b/.test(n)) return 'Multicenter';
+  if(/\btienda ?amiga\b/.test(n)) return 'Tienda Amiga';
+  if(/\broho\b/.test(n)) return 'ROHO';
+  if(/\bluis franco\b/.test(n)) return 'Luis Franco';
+  if(/co(?:pa|ap)caba/.test(n) || /\bjuan carlos arce\b/.test(n)) return 'Copacaba';
+  return sinTildes(String((p&&p.cliente)||'Sin nombre').replace(/\s+/g,' ').trim().replace(/[\s.,;:·\-]+$/,'')).toUpperCase() || 'SIN NOMBRE';   // «KARINA TÓRRICO» = «KARINA TORRICO»
+}
+var CBZ_MAY_FIJOS=['Multicenter','Tienda Amiga','ROHO','Copacaba','Luis Franco'];
+function cbzMayDatos(){
+  var hoy=diaNegocio(), M={};
+  cbzVentas().forEach(function(p){
+    var k=cbzMayCliente(p), c=M[k]||(M[k]={ k:k, fijo:CBZ_MAY_FIJOS.indexOf(k)>=0, ocs:[], debe:0, n:0, d30:0, d60:0, d60m:0, viene:0, nV:0, nSin:0, ult:'' });
+    var x=cbzClasificar(p, hoy), fs=fechaSalida(p)||'';
+    if(fs>c.ult) c.ult=fs;
+    c.ocs.push({ p:p, x:x });
+    if(!x) return;
+    if(x.que==='sinm'){ c.nSin++; return; }
+    if(x.que==='viene'){ c.viene=r2(c.viene+x.saldo); c.nV++; return; }
+    c.debe=r2(c.debe+x.saldo); c.n++;
+    if(x.dias>60) c.d60m=r2(c.d60m+x.saldo); else if(x.dias>30) c.d60=r2(c.d60+x.saldo); else c.d30=r2(c.d30+x.saldo);
+  });
+  return Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return (b.fijo-a.fijo) || (b.debe-a.debe) || a.k.localeCompare(b.k,'es'); });
+}
+function cbzCliListaHtml(){
+  var L=cbzMayDatos(), con=L.filter(function(c){ return c.debe>0.005 || c.viene>0.005 || c.nSin>0; }), tot=0;
+  con.forEach(function(c){ tot=r2(tot+c.debe); });
+  var ficha=function(c){
+    var tr=function(lbl, v, col){ return '<span class="cbz-ct" style="border-color:'+col+'"><small>'+lbl+'</small><b style="color:'+col+'">'+fmtBs(v)+'</b></span>'; };
+    return '<button type="button" class="cbz-cli" data-k="'+esc(c.k)+'" onclick="cbzCliAbrir(this.getAttribute(\'data-k\'))">'+
+      '<span class="cbz-cn">'+esc(c.k)+'</span>'+
+      '<span class="cbz-cd"><b>'+(c.debe>0.005?fmtBs(c.debe):c.nSin?'⚠️ Sin monto':'✅ Al día')+'</b><small>'+(c.n?(c.n+' OC entregada'+(c.n===1?'':'s')+' sin pago'):'nada entregado sin pago')+'</small></span>'+
+      (c.debe>0.005 ? '<span class="cbz-cts">'+tr('0-30 d', c.d30, '#64748b')+tr('31-60 d', c.d60, '#b45309')+tr('+60 d', c.d60m, '#b42318')+'</span>' : '')+
+      (c.viene>0.005 ? '<span class="cbz-cv">+ '+fmtBs(c.viene)+' por entregar ('+c.nV+')</span>' : '')+
+      (c.nSin ? '<span class="cbz-cv cbz-sinm">⚠️ '+c.nSin+' OC sin monto anotado</span>' : '')+'</button>';
+  };
+  return '<div class="cbz-res"><div><small>Entregado y sin pago anotado</small><b>'+fmtBs(tot)+'</b><span>'+con.filter(function(c){ return c.debe>0.005; }).length+' cliente'+(con.length===1?'':'s')+' de '+esc(mayoristasTxt())+'</span></div></div>'+
+    '<p class="cbz-ay">Cada cliente con lo que debe, por los días desde la entrega. 👆 Tocá uno para ver sus OC, marcar las que pagó con una sola transferencia y bajar su estado de cuenta.</p>'+
+    (con.length ? '<div class="cbz-clis">'+con.map(ficha).join('')+'</div>' : '<div class="empty" style="padding:16px 0">✅ Ningún mayorista debe nada.</div>')+
+    '<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
+}
+function cbzCliAbrir(k){ CBZ.cli=k; CBZ.sel={}; CBZ.pago={ metodo:'QR', banco:'', fecha:'', nota:'', comps:[] }; cbzPintar(); }
+function cbzCliDe(k){ return cbzMayDatos().filter(function(c){ return c.k===k; })[0]||null; }
+function cbzProdsTxt(p){ return (p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).map(function(x){ return (Number(x.cant)||1)+' '+String(x.desc).trim()+(x.medida?(' '+x.medida):''); }).join(', '); }
+function cbzCliDetHtml(k){
+  var c=cbzCliDe(k); if(!c) return '<div class="empty">Ese cliente ya no tiene ventas.</div>';
+  var hoy=diaNegocio(), conSaldo=c.ocs.filter(function(o){ return o.x; }).sort(function(a,b){ return (b.x.dias-a.x.dias) || String(a.x.f).localeCompare(String(b.x.f)); });
+  var selIds=Object.keys(CBZ.sel).filter(function(id){ return CBZ.sel[id] && conSaldo.some(function(o){ return String(o.p.id)===id; }); });
+  var selBs=0; selIds.forEach(function(id){ var o=conSaldo.filter(function(z){ return String(z.p.id)===id; })[0]; if(o) selBs=r2(selBs+o.x.saldo); });
+  var fila=function(o){
+    var p=o.p, x=o.x, id=String(p.id), viene=x.que==='viene', sinm=x.que==='sinm', col=viene?'var(--muted)':x.dias>60?'var(--red)':x.dias>30?'#b45309':'var(--muted)';
+    return '<tr class="'+(CBZ.sel[id]?'on':'')+(sinm?' cbz-sinm':'')+'"><td>'+(sinm ? '<span title="Sin monto anotado: abrila y poné el total antes de cobrarla">⚠️</span>' :
+      '<input type="checkbox" class="cbz-ck" data-id="'+esc(id)+'" aria-label="Pagó '+esc(p.nota||p.oc||'')+'"'+(CBZ.sel[id]?' checked':'')+' onchange="cbzSel(this.getAttribute(\'data-id\'), this.checked)">')+'</td>'+
+      '<td><b>'+esc(p.nota||'—')+'</b><br><small>'+esc(ocEtiq(p.oc))+'</small></td>'+
+      '<td class="cbz-pr">'+esc(cbzProdsTxt(p))+'</td>'+
+      '<td style="color:'+col+';white-space:nowrap">'+(x.k==='avisa'?'avisa':x.f?fmtFechaCorta(x.f):'sin fecha')+(viene?' · por entregar':(x.f?(' · '+x.dias+' d'):''))+'</td>'+
+      '<td class="m">'+(sinm?'—':fmtBs(ventaTotal(p)))+'</td><td class="m">'+(sinm?'<b style="color:#b45309">sin monto</b>':('<b>'+fmtBs(x.saldo)+'</b>'))+'</td>'+
+      '<td><button type="button" class="btn btn-ghost btn-sm" style="width:auto;padding:4px 8px" data-id="'+esc(id)+'" onclick="cbzAbrirVenta(this.getAttribute(\'data-id\'))">Abrir</button></td></tr>';
+  };
+  var h='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:8px" onclick="CBZ.cli=\'\';CBZ.sel={};cbzPintar()">← Todos los clientes</button>'+
+    '<div class="cbz-res"><div><small>'+esc(c.k)+' · entregado sin pago</small><b>'+fmtBs(c.debe)+'</b><span>'+c.n+' OC</span></div>'+
+      '<div><small>0 a 30 días</small><b>'+fmtBs(c.d30)+'</b></div><div><small>31 a 60 días</small><b style="color:#b45309">'+fmtBs(c.d60)+'</b></div>'+
+      '<div class="'+(c.d60m>0.005?'cbz-mal':'')+'"><small>Más de 60 días</small><b>'+fmtBs(c.d60m)+'</b>'+(c.d60m>0.005?'<span>reclamar</span>':'')+'</div>'+
+      (c.viene>0.005?'<div><small>Por entregar</small><b>'+fmtBs(c.viene)+'</b><span>'+c.nV+' OC</span></div>':'')+
+      (c.nSin?'<div class="cbz-mal"><small>⚠️ Sin monto anotado</small><b>'+c.nSin+' OC</b><span>no se sabe cuánto deben: abrilas y poné el total</span></div>':'')+'</div>';
+  if(!conSaldo.length) h+='<div class="empty" style="padding:16px 0">✅ '+esc(c.k)+' no debe nada.</div>';
+  else h+='<div class="cbz-selbar"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'todas\')">Tildar todas</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'d30\')">Las de más de 30 días</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'nada\')">Ninguna</button></div>'+
+    '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th></th><th>Su N°</th><th>Productos</th><th>Entrega</th><th class="m">Venta</th><th class="m">Saldo</th><th></th></tr></thead><tbody>'+conSaldo.map(fila).join('')+'</tbody></table></div>'+
+    (selIds.length ? cbzPagoHtml(c, selIds, selBs) : '<p class="cbz-ay">Tildá las OC que pagó (por ejemplo, las de una transferencia) y abajo aparece «💵 Pagó las tildadas».</p>');
+  h+='<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" data-k="'+esc(c.k)+'" onclick="cbzCliCopiar(this.getAttribute(\'data-k\'))">📋 Copiar el estado de cuenta</button>'+
+    '<button type="button" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" data-k="'+esc(c.k)+'" onclick="cbzCliExcel(this.getAttribute(\'data-k\'))">⬇️ Estado de cuenta (Excel)</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
+  return h;
+}
+function cbzSel(id, on){ cbzPagoRecordar(); if(on) CBZ.sel[String(id)]=true; else delete CBZ.sel[String(id)]; cbzPintar(); }
+function cbzSelVarias(que){
+  cbzPagoRecordar();
+  var c=cbzCliDe(CBZ.cli); if(!c) return; CBZ.sel={};
+  if(que!=='nada') c.ocs.forEach(function(o){ if(o.x && o.x.que!=='sinm' && (que==='todas' || (o.x.que==='deuda' && o.x.dias>30))) CBZ.sel[String(o.p.id)]=true; });
+  cbzPintar();
+}
+/* Lo tipeado en el pago no se pierde al tildar otra OC (el cuadro se redibuja). */
+function cbzPagoRecordar(){
+  var g=function(id){ var e=document.getElementById(id); return e ? e.value : null; }, P=CBZ.pago;
+  if(g('cbz-fecha')!=null) P.fecha=g('cbz-fecha'); if(g('cbz-nota')!=null) P.nota=g('cbz-nota'); if(g('cbz-banco')!=null) P.banco=g('cbz-banco');
+}
+function cbzPagoHtml(c, ids, bs){
+  var P=CBZ.pago, bancos=bancosDeVendedor(mayoristasTxt().split(' y ')[0]||'');
+  var met=['QR','Efectivo','Tarjeta'].map(function(m){ return '<button type="button" class="'+(P.metodo===m?'on':'')+'" onclick="cbzPagoRecordar();CBZ.pago.metodo=\''+m+'\';cbzPintar()">'+(m==='QR'?'🏦 Transferencia / QR':m==='Efectivo'?'💵 Efectivo':'💳 Tarjeta')+'</button>'; }).join('');
+  var nC=compsArr(P.comps).length;
+  return '<div class="cbz-pago" id="cbz-pago"><h4>💵 Pagó las '+ids.length+' OC tildada'+(ids.length===1?'':'s')+' · '+fmtBs(bs)+'</h4>'+
+    '<p class="cbz-ay">Se registra un pago en cada OC por su saldo entero, como «Registrar pago» de Contabilidad. Si la transferencia no cubre alguna entera, destildala y registrala desde su venta.</p>'+
+    '<div class="cbz-met">'+met+'</div>'+
+    '<div class="cbz-pg">'+
+      (P.metodo==='QR' ? '<label>Banco <select id="cbz-banco"><option value="">Elegí…</option>'+bancos.map(function(b){ return '<option'+(P.banco===b?' selected':'')+'>'+esc(b)+'</option>'; }).join('')+'</select></label>' : '')+
+      '<label>Fecha del pago <input type="date" id="cbz-fecha" max="'+esc(todayStr())+'" value="'+esc(P.fecha||todayStr())+'"></label>'+
+      '<label>N° de recibo o de la transferencia <input type="text" id="cbz-nota" autocomplete="off" value="'+esc(P.nota||'')+'"></label>'+
+    '</div>'+
+    '<div class="cbz-comp">'+(nC ? ('📎 '+nC+' imagen'+(nC===1?'':'es')+' lista'+(nC===1?'':'s')+' ✓ ') : '<b>📎 Falta la imagen del comprobante</b> (obligatoria, como en «Registrar pago») ')+
+      (CBZ.subiendo ? '<span>⏳ Subiendo…</span>' : '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzPagoAdjuntar()">'+(nC?'➕ Otra imagen':'📎 Adjuntar')+'</button>')+'</div>'+
+    '<button type="button" class="btn btn-primary btn-sm" id="cbz-pagar" style="width:auto;background:#11743e"'+(CBZ.guardando?' disabled':'')+' onclick="cbzPagoRegistrar()">'+(CBZ.guardando?'⏳ Guardando…':('✅ Registrar el pago de las '+ids.length+' OC'))+'</button>'+
+  '</div>';
+}
+function cbzPagoAdjuntar(){
+  cbzPagoRecordar();
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  if(compsArr(CBZ.pago.comps).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
+  var inp=document.getElementById('cbz-comp-input');
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='image/*'; inp.id='cbz-comp-input'; inp.style.display='none';
+    inp.onchange=function(ev){ var f=(ev.target.files||[])[0]; try{ ev.target.value=''; }catch(e){} if(f) cbzPagoSubir(f); };
+    document.body.appendChild(inp); }
+  inp.click();
+}
+function cbzPagoSubir(f){
+  var ids=Object.keys(CBZ.sel), p=findById(ids[0]); if(!p) return;
+  cbzPagoRecordar(); CBZ.subiendo++; cbzPintar(); toast('Achicando y subiendo el comprobante…','ok');
+  return fotoCronometro(f, 1280, 0.72).then(function(dataUrl){ return subirFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl); }).then(function(res){
+    CBZ.subiendo--; cbzPagoRecordar();   // (revisión de Fable 4) lo tipeado mientras subía no se pierde
+    if(!res || !res.ok || !res.fotoId){ cbzPintar(); toast('No se pudo guardar el comprobante'+(res&&res.error?(' ('+res.error+')'):''),'err'); return; }
+    CBZ.pago.comps=compsArr(compsArr(CBZ.pago.comps).concat([res.fotoId])); cbzPintar(); toast('Imagen lista ✓','ok');
+  }).catch(function(e){ if(CBZ.subiendo>0) CBZ.subiendo--; cbzPagoRecordar(); cbzPintar(); toast('No se pudo subir el comprobante: '+motivoDeError(e),'err'); });
+}
+/* Registra un pago por OC tildada, de a una y en orden (cada guardado es el de siempre: `aplicarCobros` → `persistPedido`). Antes de
+   cada una se vuelve a mirar su saldo: si mientras tanto alguien le registró un pago, se saltea y se dice. */
+function cbzPagoRegistrar(){
+  if(CBZ.guardando) return;
+  cbzPagoRecordar();
+  var P=CBZ.pago, ids=Object.keys(CBZ.sel).filter(function(id){ return CBZ.sel[id]; });
+  if(!ids.length){ toast('Tildá las OC que pagó','err'); return; }
+  var fecha=P.fecha||todayStr(), nota=limpiaNota(P.nota||'');
+  if(fecha>todayStr()){ toast('La fecha no puede ser a futuro: es el día en que YA entró la plata','err'); return; }
+  if(P.metodo==='QR' && !P.banco){ toast('Elegí a qué banco entró la transferencia','err'); var b=document.getElementById('cbz-banco'); if(b) b.focus(); return; }
+  if(!nota){ toast('Poné el N° de recibo o de la transferencia','err'); var n=document.getElementById('cbz-nota'); if(n){ n.classList.add('err'); n.focus(); } return; }
+  if(!compsArr(P.comps).length){ toast('📎 Falta la imagen del comprobante: sin ella no hay con qué probar que la plata entró','err',6000); return; }
+  /* (revisión de Fable 8) solo las que todavía deben: una tildada que ya pagaron desde su ficha no se cuenta en la pregunta */
+  var L=ids.map(findById).filter(function(p){ return !!p && contaFaltaCobrar(p)>0.005; }), tot=0; L.forEach(function(p){ tot=r2(tot+contaFaltaCobrar(p)); });
+  if(!L.length){ CBZ.sel={}; cbzPintar(); toast('Las OC tildadas ya no deben nada.','ok'); return; }
+  if(!confirm('¿Registrar el pago de '+L.length+' OC por '+fmtBs(tot)+'?\n\n'+(P.metodo==='QR'?('Transferencia / QR · '+P.banco):P.metodo)+' · '+fmtFecha(fecha)+' · N° '+nota+'\n\nCada OC queda pagada por su saldo entero.')) return;
+  /* (revisión de Fable 3) Todas se anotan YA, en memoria (cada `aplicarCobros` deja su copia durable en el aparato antes de mandarla):
+     un guardado que no contesta ya no deja el lote a medias ni el botón trabado. Después se espera a la planilla para decir cuántas
+     entraron y cuántas quedaron en la cola. Antes de cada una se vuelve a mirar su saldo (si alguien la pagó, se saltea). */
+  CBZ.guardando=true;
+  var salt=[], proms=[];
+  L.forEach(function(p0){
+    var p=findById(p0.id); if(!p) return;
+    var falta=r2(contaFaltaCobrar(p));
+    if(!(falta>0.005)){ salt.push(p.nota||p.oc||p.cliente); return; }
+    /* (revisión de Fable 7) en efectivo, quién lo tiene: el chofer de ese día si la plata entró el día de la entrega (§4ok-112) */
+    var rc=''; if(P.metodo==='Efectivo'){ try{ var sg=ctaChoferSugerido(p, fecha); rc=sg ? limpiaRecibio(sg.ch) : ''; }catch(e){ rc=''; } }
+    var linea={ metodo:P.metodo, banco:(P.metodo==='QR'?P.banco:''), monto:falta, fecha:fecha, nota:nota, recibio:rc, comps:compsArr(P.comps) };
+    var arr=cobrosDe(p).slice(); arr.push(linea);
+    try{ proms.push(Promise.resolve(aplicarCobros(p, arr)).then(function(r){ return !(r===false || (r && r.ok===false)); }, function(){ return false; })); }
+    catch(e){ proms.push(Promise.resolve(false)); }
+  });
+  var n=proms.length;
+  CBZ.guardando=false; CBZ.sel={}; CBZ.pago={ metodo:P.metodo, banco:P.banco, fecha:'', nota:'', comps:[] };
+  try{ renderContaSiActiva(); }catch(e){}
+  cbzPintar();
+  try{ sonidoPanel('caja'); }catch(e){}
+  var saltTxt=salt.length?(' · '+salt.length+' ya estaba'+(salt.length===1?'':'n')+' pagada'+(salt.length===1?'':'s')+' (se saltearon)'):'';
+  toast('💵 Pago anotado en '+n+' OC'+saltTxt+' · guardando en la planilla…','ok', 5000);
+  return Promise.all(proms).then(function(R){
+    var ok=R.filter(Boolean).length, mal=R.length-ok;
+    toast((mal ? '⚠️ ' : '✅ ')+'Pago guardado en la planilla: '+ok+' de '+R.length+' OC'+saltTxt+(mal?(' · '+mal+' quedaron en la cola: se mandan solas al volver la señal (mirá el pie de la página)'):''), mal?'err':'ok', 8000);
+    return R;
+  });
+}
+function cbzCliFilas(c){
+  return c.ocs.slice().sort(function(a,b){ var fa=fechaSalida(a.p)||'', fb=fechaSalida(b.p)||''; return fa<fb?-1:fa>fb?1:0; });
+}
+function cbzCliCopiar(k){
+  var c=cbzCliDe(k); if(!c) return;
+  var L=cbzCliFilas(c).filter(function(o){ return o.x; });
+  var txt='🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(diaNegocio())+'\nEntregado y sin pago: *'+fmtBs(c.debe)+'*'+(c.d60m>0.005?(' (más de 60 días: '+fmtBs(c.d60m)+')'):'')+
+    (c.viene>0.005?('\nPor entregar: '+fmtBs(c.viene)):'')+'\n\n'+
+    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }).join('\n');
+  copyText(txt);
+}
+function cbzCliExcel(k){
+  var c=cbzCliDe(k); if(!c) return;
+  var H=1, BS=2, num=function(v){ return { v:r2(v), t:'n', s:BS }; }, hoy=diaNegocio();
+  var rows=[[{ v:'ESTADO DE CUENTA · '+c.k.toUpperCase(), s:H }], ['Al '+fmtFecha(hoy)+' · Multiespumas'], [],
+    [{v:'ENTREGADO Y SIN PAGO',s:H}, num(c.debe), {v:'0 A 30 DÍAS',s:H}, num(c.d30), {v:'31 A 60 DÍAS',s:H}, num(c.d60), {v:'MÁS DE 60 DÍAS',s:H}, num(c.d60m)],
+    [{v:'POR ENTREGAR',s:H}, num(c.viene)], [],
+    ['FECHA DE ENTREGA','SU N° (OC)','N° DEL PANEL','PRODUCTOS','TOTAL (Bs)','PAGADO (Bs)','SALDO (Bs)','DÍAS','ESTADO'].map(function(t){ return {v:t,s:H}; })];
+  cbzCliFilas(c).forEach(function(o){
+    var p=o.p, x=o.x, fs=fechaSalida(p)||'';
+    var est=!x ? 'PAGADO' : x.que==='sinm' ? 'SIN MONTO' : x.que==='viene' ? 'POR ENTREGAR' : 'POR COBRAR';
+    if(!x && !(ventaTotal(p)>0.005)) return;
+    rows.push([fs?fmtFecha(fs):'', p.nota||'', p.oc||'', cbzProdsTxt(p), num(ventaTotal(p)), num(contaCobrado(p)), num(x?x.saldo:0), {v:(x&&x.que==='deuda')?x.dias:0, t:'n'}, est]);
+  });
+  var bytes=buildXlsx([{ name:'Estado de cuenta', cols:[{w:16},{w:14},{w:12},{w:52},{w:13},{w:13},{w:13},{w:7},{w:14}], matrix:rows }]);
+  downloadBlob(bytes, 'estado-de-cuenta-'+sinTildes(c.k.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('🏭 Estado de cuenta de '+c.k+' descargado ✓','ok');
+}
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
    Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
    · Sale de la MISMA lista que «Vendido en el período» (`contaLista`): el mismo corte (ingreso o entrega agendada), el
@@ -10277,7 +10805,7 @@ function cxTopPintar(list, vSel, R){
     '<div class="lb-acc"><button type="button" class="ah-go ah-go-p" onclick="abrirVentaTienda()">🏪 Venta de tienda</button><button type="button" class="ah-go ah-go-p" onclick="abrirRetiros()">💵 Retiro de efectivo</button>'+
       '<button type="button" class="ah-go" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>'+
       '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="exportRecargos()">🚚 Recargos por vendedor</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
-      '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button></div></div>';
+      '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button><button type="button" class="ah-go" id="cbz-btn2" onclick="cbzAbrir()">📅 Cobranza</button></div></div>';
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
   try{ lbMontoEntero(el); }catch(e){}
@@ -14123,7 +14651,7 @@ function renderCuadreDetRetiros(){
     '</div>'+
     (list.length
       ? '<div class="tw tw-tall" style="margin-top:10px"><table><thead><tr><th>Fecha</th><th>Entrega</th><th>Retira</th>'+
-        '<th>N° notas del recibo</th><th>Tipo</th><th style="text-align:right">Monto</th><th>Observación</th></tr></thead><tbody>'+
+        '<th>N° del recibo</th><th>Tipo</th><th style="text-align:right">Monto</th><th>Observación</th></tr></thead><tbody>'+
         list.map(function(r){
           return '<tr onclick="verRetiro('+JSON.stringify(r.id).replace(/"/g,'&quot;')+')" style="cursor:pointer" title="Abrir para ver o corregir">'+
             '<td style="white-space:nowrap">'+esc(fmtFechaCorta(r.fecha))+'</td>'+
@@ -14131,7 +14659,7 @@ function renderCuadreDetRetiros(){
             '<td>'+esc(r.retira||'—')+'</td>'+
             '<td>'+(r.notas.length
                      ? r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' ')
-                     : '<span style="color:var(--amber)">sin notas</span>')+
+                     : '<span style="color:var(--amber)">sin recibo</span>')+
               compsArr(r.fotos).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del recibo" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+
               (compsArr(r.fotos).length?'':' <span title="No se adjuntó la foto del recibo" style="color:var(--amber)">⚠️</span>')+'</td>'+
             '<td style="white-space:nowrap">'+(r.tipo==='Facturado'
@@ -14277,7 +14805,7 @@ function exportCuadre(){
   var rets=retirosDe(cuadrePeriodo(), cuadreVendedor());
   if(rets.length){
     rows.push([]); rows.push([{v:'DETALLE DE LOS RETIROS DE EFECTIVO',s:H}]);
-    rows.push(['FECHA','ENTREGA','RETIRA','N° DE NOTAS','TIPO','MONTO (Bs)','RECIBO','OBSERVACIÓN'].map(function(t){return {v:t,s:H};}));
+    rows.push(['FECHA','ENTREGA','RETIRA','N° DEL RECIBO','TIPO','MONTO (Bs)','FOTO DEL RECIBO','OBSERVACIÓN'].map(function(t){return {v:t,s:H};}));
     rets.forEach(function(r){
       rows.push([r.fecha, r.entrega, r.retira, r.notas.join(', '), r.tipo,
                  {v:r.monto,t:'n',s:fc}, r.fotos.map(fotoVer).join('  |  '), r.obs||'']);
@@ -14437,7 +14965,7 @@ function borrarRetiro(id){
 /* ---- La ventana ---- */
 function retFormVacio(){
   return { id:'', fecha:todayStr(), entrega:'', retira:RETIRA_DEFECTO, monto:'',
-           notas:[], tipo:'Facturado', fotos:[], obs:'' };
+           notas:[], tipo:'Facturado', fotos:[], obs:'', notasR:[], montoF:'', tipoMano:false };
 }
 function abrirRetiros(){
   RET_FORM=retFormVacio();
@@ -14508,7 +15036,8 @@ function retCobrosDatos(R){
   var suma=0; sim.pend.forEach(function(c){ if(set[retTickClave(retTickDe(c))]) suma=r2(suma+r2(c.m-c.cub)); });
   return { sim:sim, tick:tick, set:set, suma:suma, monto:monto>0 ? r2(monto) : 0 };
 }
-function retCobrosPintar(){
+function retCobrosPintar(){ retCobrosPintar0(); try{ retTipoPintar(); }catch(e){} }
+function retCobrosPintar0(){
   var box=document.getElementById('ret-cobros'); if(!box || !RET_FORM) return;
   retLeerForm();
   var D=retCobrosDatos(RET_FORM);
@@ -14523,9 +15052,14 @@ function retCobrosPintar(){
   var filas=D.sim.pend.map(function(c){
     var k=retTickClave(retTickDe(c)), p=c.p, hora=(c.t!=null) ? (' · '+hhmmDeTs(c.t)) : '';
     var otro=(normNombre(p.vendedor)!==normNombre(quien)) ? (' · venta de '+(nombreCanonico(p.vendedor)||p.vendedor||'')) : '';
+    // 🧾/📄 (13/11): de qué es cada venta, para elegir Facturado / No facturado (la anota la vendedora en Contabilidad, docVentaDe).
+    var dv=(typeof docVentaDe==='function') ? docVentaDe(p) : '';
+    var doc=dv==='F' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#0b5e59;background:#e3f6f4;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">🧾 con factura</span>'
+      : dv==='R' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#5b3f99;background:#efe9fb;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">📄 con remisión</span>'
+      : '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:700;color:var(--muted);background:var(--soft,#f1f4f6);border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">sin factura ni remisión anotada</span>';
     return '<label class="ret-cob" style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #d6e9e7;cursor:pointer">'+
       '<input type="checkbox" data-k="'+esc(k)+'"'+(D.set[k]?' checked':'')+' onchange="retTickToggle()" style="width:18px;height:18px;margin-top:2px">'+
-      '<span><b>'+esc(p.cliente||'—')+'</b><br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span></span>'+
+      '<span><b>'+esc(p.cliente||'—')+'</b>'+doc+'<br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span></span>'+
       '<b style="white-space:nowrap">'+fmtBs(r2(c.m-c.cub))+'</b></label>';
   }).join('');
   var dif=r2(D.suma-D.monto), ok=D.monto>0 && Math.abs(dif)<0.005;
@@ -14553,9 +15087,13 @@ function retLeerForm(){
   RET_FORM.retira =((document.getElementById('ret-retira')||{}).value||'').trim();
   RET_FORM.monto  =(document.getElementById('ret-monto')||{}).value||'';
   RET_FORM.obs    =((document.getElementById('ret-obs')||{}).value||'').trim();
+  var _mf=document.getElementById('ret-monto-f'); if(_mf) RET_FORM.montoF=_mf.value||'';
+  var _n1=document.getElementById('ret-nota-nueva'); if(_n1) RET_FORM.notaTmp=_n1.value||'';
+  var _n2=document.getElementById('ret-nota-nueva-r'); if(_n2) RET_FORM.notaTmpR=_n2.value||'';
+  if(!RET_FORM.notasR) RET_FORM.notasR=[];
   return RET_FORM;
 }
-function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; renderRetiros(); }
+function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; RET_FORM.tipoMano=true; retTipoPintar(); }
 function retAgregarNota(){
   retLeerForm();
   var inp=document.getElementById('ret-nota-nueva'); if(!inp) return;
@@ -14563,12 +15101,131 @@ function retAgregarNota(){
   var nuevas=String(inp.value||'').split(/[\s,;]+/).map(limpiaNota).filter(Boolean);
   if(!nuevas.length){ inp.focus(); return; }
   nuevas.forEach(function(n){ if(RET_FORM.notas.indexOf(n)<0) RET_FORM.notas.push(n); });
-  inp.value='';
-  renderRetiros();
+  inp.value=''; RET_FORM.notaTmp='';
+  retTipoPintar();
   var i2=document.getElementById('ret-nota-nueva'); if(i2) i2.focus();
 }
-function retQuitarNota(i){ retLeerForm(); RET_FORM.notas.splice(i,1); renderRetiros(); }
+function retQuitarNota(i){ retLeerForm(); RET_FORM.notas.splice(i,1); retTipoPintar(); }
 function retNotaTecla(ev){ if(ev && (ev.key==='Enter'||ev.key===',')){ ev.preventDefault(); retAgregarNota(); } }
+/* ============================================================================
+   🧾🧾 (13/11, dueño: «¿y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique ahí que se refiere si las ventas
+   es con factura o nota de remisión») ¿DE QUÉ VENTAS ES LA PLATA? Facturado = ventas con FACTURA; No facturado = ventas con NOTA DE REMISIÓN
+   (`docVentaDe`, lo que la vendedora anota en Contabilidad). El panel lo PROPONE con los cobros tildados arriba (mientras nadie tocó los
+   botones): todo con factura → Facturado; todo con remisión → No facturado; de las dos → «Las dos: dos recibos». Con «Las dos» se piden los
+   DOS N° de recibo y cuánto es lo facturado (propuesto: lo tildado con factura), y al guardar se cargan DOS retiros, cada uno con su tipo,
+   su recibo, su monto y sus cobros tildados (lo que no tiene factura ni remisión anotada va con lo no facturado). Las fotos van en los dos.
+   No cambia cómo se guarda un retiro: son dos filas como cualquiera.
+   ========================================================================== */
+function retTipoDocs(R){
+  var D=retCobrosDatos(R), o={ F:{n:0,bs:0,k:[]}, R:{n:0,bs:0,k:[]}, X:{n:0,bs:0,k:[]} };
+  if(!D) return o;
+  D.sim.pend.forEach(function(c){
+    var t=retTickDe(c), key=retTickClave(t); if(!D.set[key]) return;
+    var d=docVentaDe(c.p), g=d==='F' ? o.F : d==='R' ? o.R : o.X;
+    g.n++; g.bs=r2(g.bs+r2(c.m-c.cub)); g.k.push(t);
+  });
+  return o;
+}
+function retTipoPintar(){
+  var box=document.getElementById('ret-tipo-box'); if(!box || !RET_FORM) return;
+  var R=RET_FORM, editando=!!R.id, T=retTipoDocs(R);
+  if(!R.notasR) R.notasR=[];
+  if(!R.tipoMano && (T.F.n || T.R.n)){
+    R.tipo = (T.F.n && T.R.n && !editando) ? 'Ambos' : (T.F.n && !T.R.n) ? 'Facturado' : (!T.F.n && T.R.n) ? 'No facturado' : R.tipo;
+  }
+  if(editando && R.tipo==='Ambos') R.tipo='Facturado';
+  var tipoBtn=function(t, lbl){
+    var on=(R.tipo===t);
+    return '<button type="button" class="btn btn-sm" data-tipo="'+esc(t)+'" style="'+(on?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+
+      '" onclick="retSetTipo('+JSON.stringify(t).replace(/"/g,'&quot;')+')">'+lbl+'</button>';
+  };
+  var chipsDe=function(L, fq){
+    return L.length ? L.map(function(n,i){ return '<span class="badge b-gray" style="font-size:.78rem;padding:5px 9px">🧾 '+esc(n)+
+        ' <a onclick="'+fq+'('+i+')" title="Quitar" style="cursor:pointer;color:var(--red);font-weight:900;margin-left:3px">✕</a></span>'; }).join(' ')
+      : '<span style="color:var(--amber);font-size:.8rem">Todavía no anotaste el N° del recibo</span>';
+  };
+  var campo=function(titulo, ayuda, L, idIn, fAdd, fq, fTecla, tmp){
+    return '<div class="field" style="margin-bottom:10px"><label class="lb">'+titulo+' <span class="req">*</span> <span class="hint">'+ayuda+'</span></label>'+
+      '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+chipsDe(L, fq)+'</div>'+
+      '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
+        /* los dos ids van ESCRITOS enteros (no armados con idIn): `test_onclicks` revisa que todo id que busca el código esté en la página */
+        (idIn==='ret-nota-nueva-r' ? '<input type="text" id="ret-nota-nueva-r"' : '<input type="text" id="ret-nota-nueva"')+' value="'+esc(tmp||'')+'" placeholder="Ej. 732" autocomplete="off" onkeydown="'+fTecla+'(event)" style="flex:1;min-width:180px">'+
+        '<button type="button" class="btn btn-sm" style="background:var(--teal);color:#fff;width:auto" onclick="'+fAdd+'()">＋ Agregar</button>'+
+      '</div></div>';
+  };
+  var lado=function(g, txt){ return g.n ? ('<b>'+g.n+'</b> '+txt+' · '+fmtBs(g.bs)) : ''; };
+  var deTick=[lado(T.F,'con factura'), lado(T.R,'con nota de remisión'), lado(T.X,'sin factura ni remisión anotada')].filter(Boolean).join(' · ');
+  var h='<div class="field" style="margin-bottom:6px"><label class="lb">¿De qué ventas es la plata? <span class="req">*</span></label>'+
+      '<div style="display:flex;gap:7px;flex-wrap:wrap">'+tipoBtn('Facturado','🧾 Facturado')+tipoBtn('No facturado','📄 No facturado')+(editando?'':tipoBtn('Ambos','🧾+📄 Las dos (dos recibos)'))+'</div>'+
+      '<div class="ret-tipo-ay" style="font-size:.78rem;color:var(--muted);margin-top:6px;line-height:1.45">🧾 <b>Facturado</b> = plata de ventas con <b>factura</b> · 📄 <b>No facturado</b> = plata de ventas con <b>nota de remisión</b>. '+
+        'Si entrega plata de las dos, firma <b>dos recibos</b>: elegí «Las dos» y se cargan dos retiros.</div>'+
+      (deTick ? '<div class="ret-tipo-tick" style="font-size:.8rem;margin-top:6px;background:var(--soft,#f5f8f9);border-radius:8px;padding:6px 9px">De lo tildado arriba: '+deTick+(R.tipoMano?'':' <span style="color:var(--muted)">(el tipo se eligió solo con eso)</span>')+'</div>' : '')+
+    '</div>';
+  if(R.tipo==='Ambos'){
+    var tot=parseMonto(R.monto||''), mf=String(R.montoF||'').trim() ? parseMonto(R.montoF) : (T.F.bs||0), mr=r2((tot>0?tot:0)-(mf>0?mf:0));
+    h+=campo('N° del recibo de lo FACTURADO', 'el que firma por la plata de ventas con factura', R.notas, 'ret-nota-nueva', 'retAgregarNota', 'retQuitarNota', 'retNotaTecla', R.notaTmp)+
+       campo('N° del recibo de lo NO FACTURADO', 'el que firma por la plata de ventas con nota de remisión', R.notasR, 'ret-nota-nueva-r', 'retAgregarNotaR', 'retQuitarNotaR', 'retNotaTeclaR', R.notaTmpR)+
+       '<div class="field" style="margin-bottom:10px;max-width:420px"><label class="lb">¿Cuánto es lo facturado? <span class="req">*</span> <span class="hint">el resto es lo no facturado</span></label>'+
+         '<div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="ret-monto-f" value="'+esc(String(R.montoF||'').trim() ? R.montoF : (T.F.bs ? String(r2(T.F.bs)) : ''))+'" placeholder="Ej. 2000" oninput="retLeerForm();retTipoNoFact()"></div>'+
+         '<div id="ret-monto-r" style="font-size:.8rem;margin-top:5px;color:var(--muted)">'+(tot>0 ? ('📄 No facturado: <b>'+fmtBs(mr)+'</b>') : 'Poné arriba el monto total que entrega')+'</div></div>';
+  } else {
+    h+=campo('N° del recibo de entrega', 'el que firma el vendedor al entregar la plata (el de la foto) · las ventas que cubre se tildan arriba', R.notas, 'ret-nota-nueva', 'retAgregarNota', 'retQuitarNota', 'retNotaTecla', R.notaTmp);
+  }
+  box.innerHTML=h;
+}
+function retTipoNoFact(){
+  var R=RET_FORM, el=document.getElementById('ret-monto-r'); if(!el || !R) return;
+  var tot=parseMonto(R.monto||''), mf=parseMonto(R.montoF||'');
+  el.innerHTML= tot>0 ? ('📄 No facturado: <b>'+fmtBs(r2(tot-(mf>0?mf:0)))+'</b>') : 'Poné arriba el monto total que entrega';
+}
+function retAgregarNotaR(){
+  retLeerForm();
+  var inp=document.getElementById('ret-nota-nueva-r'); if(!inp) return;
+  var nuevas=String(inp.value||'').split(/[\s,;]+/).map(limpiaNota).filter(Boolean);
+  if(!nuevas.length){ inp.focus(); return; }
+  nuevas.forEach(function(n){ if(RET_FORM.notasR.indexOf(n)<0) RET_FORM.notasR.push(n); });
+  RET_FORM.notaTmpR=''; retTipoPintar();
+  var i2=document.getElementById('ret-nota-nueva-r'); if(i2) i2.focus();
+}
+function retQuitarNotaR(i){ retLeerForm(); RET_FORM.notasR.splice(i,1); retTipoPintar(); }
+function retNotaTeclaR(ev){ if(ev && (ev.key==='Enter'||ev.key===',')){ ev.preventDefault(); retAgregarNotaR(); } }
+/* Guardar «Las dos»: dos retiros, uno por recibo. */
+function guardarRetiroAmbos(r){
+  var monto=parseMonto(r.monto);
+  var falla=function(id, msg){ var e=document.getElementById(id); if(e){ e.classList.add('err'); e.focus(); e.scrollIntoView({block:'center'}); } toast(msg,'err'); return false; };
+  if(!r.entrega) return falla('ret-entrega','Elegí de qué vendedor es el efectivo que se retira');
+  if(!r.retira)  return falla('ret-retira','Poné quién retira el efectivo');
+  var _errM=montoError(r.monto); if(_errM) return falla('ret-monto', montoAviso('Monto del retiro', r.monto, _errM));
+  if(!(monto>0)) return falla('ret-monto','Poné el monto total retirado');
+  var T=retTipoDocs(r);
+  var mfTxt=String(r.montoF||'').trim() || (T.F.bs ? String(T.F.bs) : '');
+  var _errF=montoError(mfTxt); if(_errF) return falla('ret-monto-f', montoAviso('Lo facturado', mfTxt, _errF));
+  var mf=r2(parseMonto(mfTxt)), mr=r2(monto-mf);
+  if(!(mf>0.005) || !(mr>0.005)) return falla('ret-monto-f','Con «Las dos», lo facturado tiene que ser más que 0 y menos que el total ('+fmtBs(monto)+'). Si es todo de un tipo, elegí Facturado o No facturado.');
+  if(!r.notas.length)  return falla('ret-nota-nueva','Anotá el N° del recibo de lo FACTURADO');
+  if(!r.notasR.length) return falla('ret-nota-nueva-r','Anotá el N° del recibo de lo NO FACTURADO');
+  var comun=r.notas.filter(function(n){ return r.notasR.indexOf(n)>=0; });
+  if(comun.length) return falla('ret-nota-nueva-r','El recibo '+comun.join(', ')+' está en los dos: cada recibo va en uno solo');
+  var tickF=T.F.k.slice(), tickR=T.R.k.concat(T.X.k);
+  var sF=0; tickF.forEach(function(t){ sF=r2(sF+t.m); }); var sR=0; tickR.forEach(function(t){ sR=r2(sR+t.m); });
+  if((Math.abs(sF-mf)>0.005 || Math.abs(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
+     !confirm('💵 Lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+' de lo facturado; lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+' de lo no facturado.\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)')) return false;
+  var base=String(r.obs||'');
+  var mk=function(tipo, m, notas, tick, otro){ return filaDeRetiro({ id:RETIRO_PREF+uid()+'__', fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:m, notas:notas, tipo:tipo,
+      fotos:r.fotos, obs:(base?(base+' · '):'')+'retiro en dos recibos: el otro es el '+otro.join(', '), tick:tick }); };
+  var f1=mk('Facturado', mf, r.notas.slice(), tickF, r.notasR), f2=mk('No facturado', mr, r.notasR.slice(), tickR, r.notas);
+  var g1=persistRetiro(f1), g2=persistRetiro(f2);
+  var retira=r.retira; RET_FORM=retFormVacio(); RET_FORM.retira=retira;
+  renderRetiros(); renderCuadreSiActivo();
+  toast('⏳ Guardando los dos retiros ('+fmtBs(mf)+' facturado + '+fmtBs(mr)+' no facturado)…','ok');
+  Promise.all([g1, g2]).then(function(R2){
+    var ok=R2.filter(function(x){ return x && x.ok; }).length;
+    if(ok===2) toast('Los dos retiros quedaron guardados en la planilla ✓ (recibo '+f1.nota+' facturado · '+f2.nota+' no facturado)','ok',7000);
+    else toast('⚠️ Guardados en la planilla: '+ok+' de 2. Lo que falta quedó en este dispositivo y se manda solo al reconectar.','err',10000);
+    renderRetiros(); renderCuadreSiActivo();
+  });
+  return true;
+}
 
 /* ---- La foto del recibo ---- */
 function retAdjuntarFoto(){
@@ -14609,6 +15266,7 @@ function retQuitarFoto(i){
 /* ---- Guardar el que se está cargando ---- */
 function guardarRetiroForm(){
   var r=retLeerForm();
+  if(r.tipo==='Ambos') return guardarRetiroAmbos(r);   // 🧾🧾 (13/11) dos recibos = dos retiros
   var monto=parseMonto(r.monto);    // 26/09: el campo es de texto: con `type=number` «5.000,50» llegaba como 5,00
   var falla=function(id, msg){
     var e=document.getElementById(id); if(e){ e.classList.add('err'); e.focus(); e.scrollIntoView({block:'center'}); }
@@ -14622,7 +15280,7 @@ function guardarRetiroForm(){
   var _errM=montoError(r.monto);    // (26/09, revisión de Codex) «−500», «Bs -500», «1e3», «.50»: el texto entero
   if(_errM)           return falla('ret-monto', montoAviso('Monto del retiro', r.monto, _errM));
   if(!(monto>0))      return falla('ret-monto','Poné el monto retirado');
-  if(!r.notas.length) return falla('ret-nota-nueva','Anotá al menos un N° de nota — es lo que respalda el retiro');
+  if(!r.notas.length) return falla('ret-nota-nueva','Anotá el N° del recibo de entrega (el que firma el vendedor, el de la foto) — es lo que respalda el retiro');
   var esNuevo=!r.id;
   /* 💵☑️ (07/11) los cobros que entrega: lo tildado (o lo que tildó la regla). Si no da justo con el monto, se pregunta. */
   var _D=retCobrosDatos(r), _tick=_D ? _D.tick.slice() : [];
@@ -14709,7 +15367,7 @@ function editarRetiro(id){
   var r=retiroDe(f);
   // r2 (26/09): con más de dos decimales («1500.125») `parseMonto` lo leía 1.500.125 y `montoError` lo frena
   RET_FORM={ id:r.id, fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:String(r2(r.monto)),
-             notas:r.notas.slice(), tipo:r.tipo, fotos:compsArr(r.fotos), obs:r.obs,
+             notas:r.notas.slice(), tipo:r.tipo, fotos:compsArr(r.fotos), obs:r.obs, notasR:[], montoF:'', tipoMano:true,
              tick:(r.tick||[]).slice(), tickMano:!!(r.tick && r.tick.length),   // 💵☑️ los cobros que se tildaron al cargarlo
              rev:Math.max(Number(f.rev)||0, Number(SAVE_REV[f.id])||0) };   // (30/09, R2-2) el sello con el que se abrió
   renderRetiros();
@@ -14741,7 +15399,7 @@ function renderRetiros(){
         return '<span class="badge b-gray" style="font-size:.78rem;padding:5px 9px">🧾 '+esc(n)+
           ' <a onclick="retQuitarNota('+i+')" title="Quitar" style="cursor:pointer;color:var(--red);font-weight:900;margin-left:3px">✕</a></span>';
       }).join(' ')
-    : '<span style="color:var(--amber);font-size:.8rem">Todavía no anotaste ninguna nota</span>';
+    : '<span style="color:var(--amber);font-size:.8rem">Todavía no anotaste el N° del recibo</span>';
   var fotoBox = compTiraHtml(R.fotos, 'retQuitarFoto', 'retAdjuntarFoto()',
     'Hasta '+COMP_MAX+': la <b>foto del recibo</b> y, si hace falta, el <b>comprobante</b> del depósito.');
 
@@ -14755,16 +15413,7 @@ function renderRetiros(){
         '<div class="field" style="min-width:130px"><label class="lb">Monto <span class="req">*</span></label><div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="ret-monto" value="'+esc(R.monto)+'" placeholder="Ej. 5000" oninput="retCobrosPintar()"></div></div>'+
       '</div>'+
       '<div id="ret-cobros" style="margin-bottom:10px"></div>'+
-      '<div class="field" style="margin-bottom:10px">'+
-        '<label class="lb">N° de notas que cubre este retiro <span class="req">*</span> <span class="hint">podés anotar varias</span></label>'+
-        '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px">'+chips+'</div>'+
-        '<div style="display:flex;gap:7px;flex-wrap:wrap">'+
-          '<input type="text" id="ret-nota-nueva" placeholder="Ej. 732 (o varias: 732, 731, 727)" autocomplete="off" onkeydown="retNotaTecla(event)" style="flex:1;min-width:180px">'+
-          '<button type="button" class="btn btn-sm" style="background:var(--teal);color:#fff;width:auto" onclick="retAgregarNota()">＋ Agregar</button>'+
-        '</div>'+
-      '</div>'+
-      '<div class="field" style="margin-bottom:10px"><label class="lb">¿De qué recibos es? <span class="req">*</span></label>'+
-        '<div style="display:flex;gap:7px;flex-wrap:wrap">'+RET_TIPOS.map(tipoBtn).join('')+'</div></div>'+
+      '<div id="ret-tipo-box"></div>'+
       '<div class="field" style="margin-bottom:10px"><label class="lb">Foto del recibo <span class="hint">hasta '+COMP_MAX+' imágenes</span></label>'+fotoBox+'</div>'+
       '<div class="field" style="margin-bottom:10px"><label class="lb">Observación <span class="hint">(opcional)</span></label>'+
         '<input type="text" id="ret-obs" value="'+esc(R.obs)+'" placeholder="Ej. faltó el recibo 730, lo trae mañana" autocomplete="off"></div>'+
@@ -14789,14 +15438,14 @@ function renderRetiros(){
       '🧾 facturado '+fmtBs(fac)+' · 📄 no facturado '+fmtBs(nof)+')</span></div>'+
     (list.length
       ? '<div class="tw tw-tall"><table class="mini"><thead><tr>'+
-          '<th>Fecha</th><th>Entrega</th><th>Retira</th><th>Notas</th><th>Tipo</th>'+
+          '<th>Fecha</th><th>Entrega</th><th>Retira</th><th>N° recibo</th><th>Tipo</th>'+
           '<th style="text-align:right">Monto</th><th>Recibo</th><th></th></tr></thead><tbody>'+
         list.map(function(r){
           return '<tr>'+
             '<td style="white-space:nowrap">'+esc(fmtFecha(r.fecha))+'</td>'+
             '<td><b>'+esc(r.entrega||'—')+'</b></td>'+
             '<td>'+esc(r.retira||'—')+'</td>'+
-            '<td>'+(r.notas.length?r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' '):'<span style="color:var(--amber)">sin notas</span>')+'</td>'+
+            '<td>'+(r.notas.length?r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' '):'<span style="color:var(--amber)">sin recibo</span>')+'</td>'+
             '<td style="white-space:nowrap">'+(r.tipo==='Facturado'?'<span class="badge b-verif">🧾 Facturado</span>':'<span class="badge b-gray">📄 No facturado</span>')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b>'+(retEnCola(r.id)?'<br><span class="badge b-amber" title="Está guardado solo en este dispositivo: se manda solo al reconectar">⏳ todavía no está en la planilla</span>':'')+'</td>'+
             '<td style="white-space:nowrap">'+(r.fotos.length
@@ -15617,7 +16266,7 @@ function retirosTexto(){
   list.forEach(function(r){
     T.push('• '+fmtFecha(r.fecha)+' · *'+fmtBs(r.monto)+'* · '+(r.tipo==='Facturado'?'🧾 facturado':'📄 no facturado'));
     T.push('   entrega '+(r.entrega||'—')+' → retira '+(r.retira||'—'));
-    T.push('   notas: '+(r.notas.length?r.notas.join(', '):'sin notas')+(r.fotos.length?('  📎 '+r.fotos.length+(r.fotos.length===1?' imagen':' imágenes')):'  ⚠️ sin foto del recibo'));
+    T.push('   recibo: '+(r.notas.length?r.notas.join(', '):'sin N° de recibo')+(r.fotos.length?('  📎 '+r.fotos.length+(r.fotos.length===1?' imagen':' imágenes')):'  ⚠️ sin foto del recibo'));
     if(r.obs) T.push('   📝 '+r.obs);
   });
   T.push('');
@@ -16523,6 +17172,8 @@ function showContaModal(id){
     '<div class="modal-b">'+
       clfVolverHtml(p.id)+(POR_COBRAR_VOLVER ? (POR_COBRAR_VOLVER.origen==='efe'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivo(EFE_VER_QUIEN)">← Volver al efectivo cobrado</button>')
+          : POR_COBRAR_VOLVER.origen==='cbz'
+          ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cbzVolver()">← Volver a la cobranza</button>')
           : POR_COBRAR_VOLVER.origen==='efd'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivoFecha()">← Volver al mayor y saldos</button>')
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
@@ -24819,7 +25470,7 @@ function admFichasPintar(list, dn){
       '<button type="button" onclick="admPasadosVer('+(ADM_PASADOS_VER?'false':'true')+')">'+(ADM_PASADOS_VER?'▴ Plegarlos':'▾ Ver todo')+'</button></div>';
   }
   var vis=grupos.filter(function(g){ return g.ver.length; });
-  var gpsBar=admGpsEntHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve)
+  var gpsBar=admGpsEntHtml(list)+gpsCamionHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve); + idea 133, el camión que faltó
   box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+pasHtml+vis.map(function(g){
     var antesGps=''; if(gpsBar && !gpsPuesto && g.f===hoyF){ antesGps=gpsBar; gpsPuesto=true; }
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
@@ -46065,6 +46716,7 @@ function cierreEntFila(p, atrasado){
     '<span class="badge b-gray">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
     '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
     (atrasado ? '' : cierreEntGpsHtml(p))+
+    (atrasado ? '' : gpsCamionCierreHtml(p))+   // 🛰️ (13/11, idea 133) «· lo llevó <camión>» con su «Asignar»
     (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
@@ -46289,6 +46941,8 @@ function cierreEntGpsResumenHtml(H){
     '<span>🛰️ El GPS vio el camión en la puerta de <b>'+vio.length+'</b> de '+H.length+' pedido'+(H.length===1?'':'s')+' de hoy'+
       (novio?(' · <b style="color:#b45309">'+novio+'</b> con el camión de vuelta sin haberse parado ahí'):'')+(sinpin?(' · '+sinpin+' sin ubicación'):'')+(aprox?(' · '+aprox+' con la ubicación aproximada (no se puede asegurar)'):'')+'.</span>'+
     (falta ? '<button type="button" class="btn btn-sm" id="cie-gps-tildar" style="background:#0a6b47;color:#fff" onclick="cierreEntTildarGps()">📍 Tildar los '+falta+' que vio el GPS</button>' : '')+
+    gpsCamionCierreResumenHtml(H)+   // 🛰️ (13/11, idea 133) los que no tienen camión y el GPS dice cuál los llevó
+
     '<span style="flex-basis:100%;font-size:.78rem;color:var(--muted)">Es una ayuda, no un ✅: el GPS ve dónde se paró el camión, no si el cliente recibió. Lo que se entregó y el GPS no vio (sin ubicación, o estacionó lejos), tildalo igual.</span>'+
   '</div>';
 }
@@ -46334,7 +46988,7 @@ function admGpsEntHtml(list){
 }
 function admGpsEntPintar(list, enFichas){
   var el=document.getElementById('adm-gps-ent'); if(!el) return;
-  var h=enFichas ? '' : admGpsEntHtml(list);
+  var h=enFichas ? '' : (admGpsEntHtml(list)+gpsCamionHtml(list));   // + 🛰️ idea 133 (13/11): el camión que faltó
   el.hidden=!h; if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 function admGpsEntAbrir(){
@@ -46396,6 +47050,100 @@ function admGpsEntConfirmar(){
   }, function(){ CIERRE_ENT_EN_CURSO=false; if(btn){ btn.disabled=false; btn.textContent=admGpsEntBotonTxt(); } return null; });
 }
 /* fin §4ok-106 */
+/* ============================================================================
+   🛰️ EL GPS COMPLETA EL CAMIÓN QUE FALTÓ (13/11, idea 133, dueño: «136, 143, 129, 133»).
+   Un pedido de HOY que salió sin camión asignado (nadie lo eligió en la ficha) pero que el GPS vio en su puerta (`gpsLlegadaDe`: una
+   parada de un camión a ≤ 300 m de su pin) se puede completar con ESE camión. El panel solo PROPONE «lo llevó <camión> · <chofer>»:
+   una persona lo acepta de a uno («Asignar») o todos juntos («Asignar los N»). Nada se asigna solo (la regla de siempre con el GPS,
+   dueño 12/10). El chofer es el de los pedidos de hoy de ese camión (`choferDeCamion`: rotan, §4om); si ninguno lo dice, el primero de
+   la lista. Se guarda con `persistPedido` → `guardarDurable` (el mismo camino de `setVehiculo` y `cvAsignar`).
+   Solo HOY: el día del GPS (GPS_DIA) es el de hoy y no queda guardado; lo de días anteriores no se puede proponer.
+   Afuera: filas del sistema, borradores de Kommo, ventas de tienda y lo que retira el cliente (`fichaRetira`): ahí no hay camión.
+   ========================================================================== */
+function gpsCamionEntra(p){
+  if(!p || p.fecha!==todayStr() || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p) || vehiculoDe(p)) return false;
+  var r=null; try{ r=fichaRetira(p); }catch(e){ r=null; }
+  return !r;
+}
+/* La propuesta para UN pedido: { p, veh, chofer, ll } o null. `deHoy` (opcional) = los pedidos de hoy, para elegir el chofer. */
+function gpsCamionPropDe(p, deHoy){
+  if(!gpsDiaHay() || !gpsCamionEntra(p)) return null;
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  if(!ll || !ll.veh || !VEHICULOS[ll.veh]) return null;
+  var hoy=todayStr();
+  deHoy=deHoy || STATE.filter(function(q){ return q && q.fecha===hoy; });
+  /* (13/11, revisión de Fable 10) un chofer que ya estaba puesto a mano se respeta; ubicación aproximada = se avisa */
+  var pin=null; try{ pin=almPunto(p); }catch(e){ pin=null; }
+  return { p:p, veh:ll.veh, chofer:String(p.chofer||'').trim() || choferDeCamion(ll.veh, deHoy), ll:ll, aprox:!!(pin && pin.aprox) };
+}
+/* Todas las de hoy, en el orden en que el GPS los vio. */
+function gpsCamionPropuestas(){
+  if(!gpsDiaHay()) return [];
+  var hoy=todayStr(), deHoy=STATE.filter(function(q){ return q && q.fecha===hoy; }), out=[];
+  deHoy.forEach(function(p){ var o=gpsCamionPropDe(p, deHoy); if(o) out.push(o); });
+  return out.sort(function(a,b){ return (a.ll.t0||0)-(b.ll.t0||0); });
+}
+function gpsCamionQuienTxt(o){ return o.veh+(o.chofer?(' · '+o.chofer):''); }
+/* El cartel de Administración, al lado del de §4ok-106. `list` = lo que se ve: solo los pedidos que están en la lista. */
+function gpsCamionHtml(list){
+  var V=gpsCamionPropuestas(); if(!V.length) return '';
+  var ids={}; (list||[]).forEach(function(p){ if(p) ids[String(p.id)]=1; });
+  V=V.filter(function(o){ return ids[String(o.p.id)]; }); if(!V.length) return '';
+  var n=V.length, dn=dayNumMap();
+  var filas=V.map(function(o){
+    var p=o.p, N=dn[p.id], id=esc(String(p.id));
+    return '<div class="gps-cam-f" data-id="'+id+'"><span><b>'+(N?('N° '+N+' · '):'')+esc(p.cliente||'—')+'</b> · '+esc(ocEtiq(p.oc)||p.oc||'—')+
+      ' · 📍 '+esc(o.ll.abierta ? ('está ahí desde las '+gpsHoraTxt(o.ll.t0)) : ('llegó '+gpsHoraTxt(o.ll.t0)))+
+      ' → lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b>'+(o.aprox?' <span title="La ubicación es aproximada (por la dirección escrita): confirmalo antes de asignar">· ≈ ubicación aproximada</span>':'')+'</span>'+
+      '<button type="button" class="btn btn-sm gps-cam-uno" data-id="'+id+'" onclick="gpsCamionAsignar(this.getAttribute(\'data-id\'))">🚚 Asignar</button></div>';
+  }).join('');
+  return '<div class="adm-gps-ent gps-cam" id="gps-cam-bar"><span>🛰️ <b>'+n+'</b> pedido'+(n===1?'':'s')+' de hoy sin camión: el GPS vio un camión en su puerta.</span>'+
+    (n>1 ? '<button type="button" class="btn btn-sm" id="gps-cam-todos" data-ids="'+esc(V.map(function(o){ return String(o.p.id); }).join(','))+'" onclick="gpsCamionAsignarTodos(\'\', this.getAttribute(\'data-ids\'))">🚚 Asignar los '+n+'</button>' : '')+
+    '<div class="gps-cam-l">'+filas+'</div>'+
+    '<small>Es una propuesta: nada se asigna solo. Revisá y tocá «Asignar». El GPS de días anteriores no queda guardado: solo se puede completar lo de hoy.</small></div>';
+}
+/* En el cierre de entregas, en la fila del pedido: «· lo llevó <camión> · <chofer>» con su «Asignar». */
+function gpsCamionCierreHtml(p){
+  var o=gpsCamionPropDe(p); if(!o) return '';
+  var id=esc(String(p.id));
+  return '<span class="cie-gps-cam" title="Lo dice el GPS: ese camión se paró en su puerta. Es una propuesta.">· lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b>'+
+    '<button type="button" class="btn btn-sm cie-gps-cam-btn" data-id="'+id+'" onclick="event.preventDefault();event.stopPropagation();gpsCamionAsignar(this.getAttribute(\'data-id\'), \'cie\')">🚚 Asignar</button></span>';
+}
+function gpsCamionCierreResumenHtml(H){
+  var Hs=(H||[]).filter(function(p){ return !!gpsCamionPropDe(p); }), n=Hs.length; if(!n) return '';
+  return '<span style="flex-basis:100%;font-size:.8rem;color:#1d4ed8">🚚 '+n+' sin camión: el GPS dice cuál lo'+(n===1?'':'s')+' llevó'+
+    (n>1 ? ' <button type="button" class="btn btn-sm" id="cie-gps-cam-todos" style="background:#1d4ed8;color:#fff;margin-left:4px" data-ids="'+esc(Hs.map(function(p){ return String(p.id); }).join(','))+'" onclick="gpsCamionAsignarTodos(\'cie\', this.getAttribute(\'data-ids\'))">🚚 Asignar los '+n+'</button>' : '')+
+    ' (es una propuesta: se asigna recién al tocar «Asignar»).</span>';
+}
+function gpsCamionPoner(o){ o.p.vehiculo=o.veh; if(!String(o.p.chofer||'').trim()) o.p.chofer=o.chofer||((VEHICULOS[o.veh]||[])[0])||''; }
+function gpsCamionRepintarCierre(desde){
+  if(desde!=='cie') return;
+  var m=document.getElementById('modal'); if(m && m.classList.contains('on') && document.querySelector('#modal-box .cie-ent')) renderCierreEntregas();
+}
+/* Uno: se vuelve a mirar al tocar (si mientras tanto alguien le puso camión, no se toca). */
+function gpsCamionAsignar(id, desde){
+  var p=findById(String(id)); if(!p) return Promise.resolve(null);
+  var o=gpsCamionPropDe(p);
+  if(!o){ toast(vehiculoDe(p) ? ('Ya tiene camión: '+vehiculoDe(p)+'.') : 'El GPS ya no lo propone.', 'ok'); renderAdmin(); gpsCamionRepintarCierre(desde); return Promise.resolve(null); }
+  gpsCamionPoner(o);
+  var r=persistPedido(p);   // guardarDurable: la cola si no hay señal
+  gpsCamionRepintarCierre(desde);
+  toast('🚚 '+(p.cliente||'Pedido')+' → '+gpsCamionQuienTxt(o)+' (lo vio el GPS).', 'ok');
+  return r;
+}
+/* Todos los de hoy que el GPS propone (los que en este momento siguen sin camión). Un solo repintado y un guardado durable por pedido. */
+/* (13/11, revisión de Fable 1) `ids` = los que el cartel MOSTRABA (con un filtro o en el cierre, menos que todos los de hoy): solo esos. */
+function gpsCamionAsignarTodos(desde, ids){
+  var V=gpsCamionPropuestas();
+  if(ids!=null){ var Q={}; String(ids).split(',').forEach(function(x){ if(x) Q[x]=1; }); V=V.filter(function(o){ return Q[String(o.p.id)]; }); }
+  if(!V.length){ toast('No queda ningún pedido de hoy sin camión que el GPS haya visto.', 'ok'); renderAdmin(); gpsCamionRepintarCierre(desde); return Promise.resolve([]); }
+  V.forEach(function(o){ gpsCamionPoner(o); upsert(o.p); });
+  saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();   // lo mismo que `persistPedido`, una vez
+  gpsCamionRepintarCierre(desde);
+  toast('🚚 Asignados '+V.length+' pedido'+(V.length===1?'':'s')+' con el camión que vio el GPS.', 'ok', 4000);
+  return Promise.all(V.map(function(o){ return guardarDurable(o.p); }));
+}
+/* fin idea 133 */
 /* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
 function cierreEntAvanceHtml(){
   var tot=cierreEntHoy().length+cierreEntAtrasados().length, n=cierreEntTildados().length;
@@ -50449,7 +51197,7 @@ var VIDA=null, VIDA_GEN=0;
 function depVidaLuego(fn, ms){ var g=VIDA && VIDA.gen; return setTimeout(function(){ if(VIDA && VIDA.gen===g && DEP.w3 && DEP.w3.modo==='mis') fn(); }, ms); }
 var VIDA_TEMA_COL={ halloween:['#f97316','#7c3aed','#111827','#facc15'], 'todos-santos':['#ec4899','#f97316','#facc15','#14b8a6','#8b5cf6','#ef4444'],
   navidad:['#dc2626','#16a34a','#facc15','#f8fafc'], 'anio-nuevo':['#facc15','#e5e7eb','#a78bfa','#f8fafc'], carnaval:['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7','#ec4899'],
-  madre:['#ec4899','#f9a8d4','#f8fafc'], patria:['#dc2626','#facc15','#16a34a'], 'santa-cruz':['#16a34a','#f8fafc'], espuma:['#00B5AD','#2B3566','#F7E7A0','#E7B5D5','#DA8B62'] };
+  madre:['#ec4899','#f9a8d4','#f8fafc'], patria:['#dc2626','#facc15','#16a34a'], 'santa-cruz':['#16a34a','#f8fafc'], 'black-friday':['#111111','#facc15','#f8fafc','#ef4444'], espuma:['#00B5AD','#2B3566','#F7E7A0','#E7B5D5','#DA8B62'] };
 /* una persona de la misma forma que las de la ciudad (patio.js `persona`), a la escala de la fábrica: mira hacia +z */
 /* (10/11, dueño: «me dijeron que podías hacerlas más realistas») varias piezas en UNA sola malla, cada una con su color: la pantorrilla con el
    zapato y el antebrazo con la mano se dibujan de una vez (las rodillas y los codos no suman dibujos por cuadro). `partes` = [geometría, color, x, y, z]. */
@@ -53409,7 +54157,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-11-a';
+var PANEL_V='2026-11-13-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -56252,6 +57000,16 @@ function blokiTemaPartes(tema, traje){
     P.mano='<path d="M31 72 V6" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/><circle cx="31" cy="5" r="3.2" fill="#fbbf24" stroke="'+K+'" stroke-width="1.5"/>'+
       '<g class="bk-bandera"><rect x="32" y="7" width="52" height="11" fill="'+cs[0]+'"/><rect x="32" y="18" width="52" height="11" fill="'+cs[1]+'"/><rect x="32" y="29" width="52" height="11" fill="'+cs[2]+'"/>'+
       '<rect x="32" y="7" width="52" height="33" fill="none" stroke="'+K+'" stroke-width="3"/></g>';
+  }else if(tema==='black-friday'){
+    /* 🛍️ (muestra del 13/11) una bolsa de compras negra a sus pies, con su etiqueta dorada; nada en la cabeza ni en la cara (como la
+       calaverita de noviembre: poco y abajo) */
+    P.delante='<g class="bk-bolsa" transform="translate(3 -11) rotate(-6 42 212)"><path d="M33 190 C33 178 51 178 51 190" fill="none" stroke="#facc15" stroke-width="3.5" stroke-linecap="round"/>'+
+      '<path d="M22 190 H62 L59 234 Q59 237 56 237 H28 Q25 237 25 234 Z" fill="#141414" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<path d="M23.5 197 H60.5" stroke="#facc15" stroke-width="3"/>'+
+      '<g transform="translate(47 215) rotate(-14)"><path d="M-11 -7 H5 L11 0 L5 7 H-11 Z" fill="#facc15" stroke="'+K+'" stroke-width="2.2" stroke-linejoin="round"/>'+
+      '<circle cx="5" cy="0" r="1.6" fill="'+K+'"/><path d="M-8 3.5 L-1 -3.5" stroke="'+K+'" stroke-width="1.6" stroke-linecap="round"/>'+
+      '<circle cx="-7.4" cy="-2.4" r="1.4" fill="'+K+'"/><circle cx="-1.6" cy="2.4" r="1.4" fill="'+K+'"/></g>'+
+      '<path d="M51 196 Q56 203 52 209" fill="none" stroke="#facc15" stroke-width="1.4"/></g>';
   }
   return P;
 }

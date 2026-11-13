@@ -59,7 +59,13 @@ function armarDashboard(){
     ['2026-10-27T10:00:00-04:00','halloween','27/10'],
     ['2026-10-31T23:59:00-04:00','halloween','31/10 23:59 (ya 1/11 en UTC)'],
     ['2026-11-01T00:01:00-04:00','todos-santos','1/11 00:01'],
-    ['2026-11-30T23:59:00-04:00','todos-santos','30/11 23:59'],
+    ['2026-11-19T23:59:00-04:00','todos-santos','19/11 23:59 (la víspera de Black Friday)'],
+    ['2026-11-20T00:01:00-04:00','black-friday','20/11 00:01: Black Friday, la «C» del dueño (del viernes anterior al lunes siguiente)'],
+    ['2026-11-27T12:00:00-04:00','black-friday','27/11, el viernes de Black Friday'],
+    ['2026-11-30T23:59:00-04:00','black-friday','30/11 23:59 (el «Cyber Monday»)'],
+    ['2027-11-18T12:00:00-04:00','todos-santos','18/11/2027 (en 2027 Black Friday es el 26)'],
+    ['2027-11-19T12:00:00-04:00','black-friday','19/11/2027'],
+    ['2027-11-29T23:59:00-04:00','black-friday','29/11/2027 23:59'],
     ['2026-12-01T00:01:00-04:00','navidad','1/12'],
     ['2026-12-30T23:59:00-04:00','navidad','30/12 23:59'],
     ['2026-12-31T00:01:00-04:00','anio-nuevo','31/12'],
@@ -88,6 +94,7 @@ function armarDashboard(){
   chk('1 · …y ?tema=todos-santos también', (await temaDe(PEDIDOS, '2026-06-10T10:00:00-04:00', '?tema=todos-santos'))==='todos-santos');
   const dash = armarDashboard();
   chk('1 · el dashboard elige el mismo: 1/11 → Todos Santos', (await temaDe(dash, '2026-11-01T09:00:00-04:00'))==='todos-santos');
+  chk('1 · …el 20/11 → Black Friday (dueño: «C y sí también Dashboard») y el 19/11 sigue Todos Santos', (await temaDe(dash, '2026-11-20T09:00:00-04:00'))==='black-friday' && (await temaDe(dash, '2026-11-19T09:00:00-04:00'))==='todos-santos');
   chk('1 · …31/12 → Año Nuevo y 18/9 → 24 de Septiembre', (await temaDe(dash, '2026-12-31T09:00:00-04:00'))==='anio-nuevo' && (await temaDe(dash, '2027-09-18T09:00:00-04:00'))==='santa-cruz');
 
   // ═══ 2. Lo que se ve ═══
@@ -118,6 +125,8 @@ function armarDashboard(){
   r = await mira('?tema=carnaval'); chk('2 · Carnaval: 🎭 (la pestaña elegida con el color de SU sección, §4nk)', /🎭/.test(r.logoTxt) && r.pestana==='rgb(15, 118, 110)', [r.logoTxt, r.pestana]);
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
+  r = await mira('?tema=black-friday');
+  chk('2 · Black Friday (muestra, solo con ?tema): la etiqueta dibujada al lado del nombre y la noche negra, SIN la cinta amarilla de arriba (dueño, 13/11: «no me gusta»)', r.papel==='none' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(5, 5, 5\)/.test(r.fondo), r);
   r = await mira('?tema=espuma');
   chk('2 · Espuma: el brillo que pasa por el nombre (la letra recortada sobre un degradé que se mueve), sin emoji', /text/.test(r.clip) && r.anLogo==='esp-brillo' && (r.logoTxt==='none' || r.logoTxt==='normal'), r);
   r = await mira('?tema=todos-santos', 390);
@@ -129,7 +138,7 @@ function armarDashboard(){
   console.log('\n── 3. Lo que se mueve: el lienzo del encabezado ──');
   const lienzo = async (q, init, espera) => { const p=await abrir(PEDIDOS, '2026-10-27T10:00:00-04:00', { q:q, init:init, espera:espera||300 });
     const o=await p.evaluate(()=>({ fx:window.hdrFx ? { e:hdrFx.efecto, n:hdrFx.n(), c:hdrFx.cuadros() } : null, vis:getComputedStyle(document.getElementById('hdr-fx')).display })); await cerrar(p); return o; };
-  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' };
+  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos', 'black-friday':'etiquetas' };
   for (const t of Object.keys(EF)) { const o=await lienzo('?tema='+t); chk('3 · '+t+' dibuja '+EF[t]+' (en las pruebas, un solo cuadro quieto)', o.fx && o.fx.e===EF[t] && o.fx.c===1 && o.fx.n>0, o); }
   let o = await lienzo('?tema=todos-santos', ()=>{ window.HDR_FX_PRUEBA=1; }, 900);
   chk('3 · con HDR_FX_PRUEBA se mueve (más de 10 cuadros en 0,9 s)', o.fx && o.fx.c>10, o);
@@ -147,17 +156,19 @@ function armarDashboard(){
     const x=await p.evaluate(()=>window.temaMelodia ? { veces:temaMelodia.veces(), sonando:temaMelodia.sonando() } : null);
     await cerrar(p); return x;
   };
-  let m = await melodia('2026-11-05T10:00:00-04:00', null, 2);
-  chk('4 · en noviembre se carga, y en las pruebas no suena sola (sin TS_MUSICA_PRUEBA)', m && m.veces===0, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 0);
+  let m = await melodia('2026-11-02T10:00:00-04:00', null, 2);
+  chk('4 · el 1-2 de noviembre se carga, y en las pruebas no suena sola (sin TS_MUSICA_PRUEBA)', m && m.veces===0, m);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 0);
   chk('4 · recién abierta NO suena (los navegadores no dejan sin un toque)', m && m.veces===0, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 3);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 3);
   chk('4 · el primer toque la hace sonar UNA vez aunque toque tres', m && m.veces===1 && m.sonando, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; try{ localStorage.setItem('me_asis_mudo','1'); }catch(e){} }, 2);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; try{ localStorage.setItem('me_asis_mudo','1'); }catch(e){} }, 2);
   chk('4 · con el 🔇 de Bloki no suena', m && m.veces===0, m);
   m = await melodia('2026-10-27T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1);
   chk('4 · en octubre no se carga (suena la bruja, no esta)', m===null, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1, dash);
+  m = await melodia('2026-11-13T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1);
+  chk('4 · (13/11, dueño) pasado el 2 de noviembre ya no se carga: solo el 1 y el 2', m===null, m);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1, dash);
   chk('4 · el dashboard también la tiene', m && m.veces===1, m);
   const mel = fs.readFileSync(path.join(RAIZ,'tema-melodia.js'),'utf8');
   chk('4 · es una melodía PROPIA (no la de la película) y dice por qué', /Recuérdame/.test(mel) && /derechos/.test(mel) && /PROPIA/.test(mel), '');

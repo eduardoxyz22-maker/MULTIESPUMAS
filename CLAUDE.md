@@ -843,6 +843,15 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
+## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a)
+`tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
+etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
+oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
+etiqueta. **Los días: `BF_DIAS=[-7, 3]`** (dueño eligió la «C»): del viernes de la semana anterior al lunes siguiente, contados desde el viernes después del
+cuarto jueves de noviembre (2026: del 20 al 30/11; 2027: del 19 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
+`BF_DIAS` en el `<head>` de `pedidos.html` y de `panel_template.html`. Otro día se ve con `?tema=black-friday`.
+Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
+
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:
@@ -902,6 +911,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
 - `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
+- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a): un pedido de HOY sin camión
+  (`vehiculoDe` vacío) que el GPS vio en la puerta (`gpsLlegadaDe`) → el panel PROPONE «lo llevó <camión> · <chofer>» (`gpsCamionPropuestas`/`gpsCamionPropDe`;
+  chofer = `choferDeCamion` con los pedidos de hoy, rotan). Cartel azul `#gps-cam-bar` al lado del de §4ok-106 (tabla y fichas) y «· lo llevó» en la fila del
+  cierre de entregas; una persona toca «🚚 Asignar» (`gpsCamionAsignar`, por `persistPedido` → `guardarDurable`) o «Asignar los N» (`gpsCamionAsignarTodos`).
+  🚫 Nada se asigna solo. Solo con `gpsDiaHay()` y solo HOY (el día del GPS no queda guardado). Afuera: sistema, borradores, venta de tienda, `fichaRetira`.
+  Al tocar se vuelve a mirar: uno que mientras tanto recibió camión no se toca. `tests/test_gps_camion.js` (22).
 
 ## 🏬 Recoger de una tienda (§4kr, 13/10; dueño: *«a veces no hay stock en fábrica y los vendedores piden que recojan de sus tiendas»*; en la rama, `f4e796b`)
 - En las marcas de cada producto, **«🏬 Tienda»** → elegir la sucursal (`SUCURSALES` sin Tiendas Roho, la del vendedor primero). Guarda la
@@ -1116,6 +1131,25 @@ en `.af-pas` («▾ Ver todo», `ADM_PASADOS_VER`; buscando no se pliega). Venta
 fila y el número de cada pestaña en la esquina (≥701); el **Plan de stock parte renglones y entra entero** (antes 1.929 px en 1.386: las columnas
 «Pedir» quedaban afuera) — ⚠️ sus anchos mínimos solo con `min-width:821px` (debajo es en tarjetas); «De dónde sale lo vendido» con las dos
 tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada producto en la misma columna (`.fl-pls` 96 px). `tests/test_estetica_4mp.js`.
+
+## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a)
+Contabilidad → «📅 Cobranza» (`#cbz-btn` en Revisar, `#cbz-btn2` en el libro de arriba) → `cbzAbrir()`: la planilla que se mira (Ventas = el equipo,
+Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo mira, salvo «Pagó las tildadas».
+- 🏭 **La antigüedad es SOLO de Mayoristas** (dueño, 13/11: *«¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar»*): en Ventas la
+  ventana tiene solo «📈 Lo que va a entrar». Lo viejo del equipo (39 de 46 ventas, de julio-agosto) es casi seguro pago no anotado, no deuda.
+- **📅 Antigüedad** (`cbzDatos().deuda`): lo ya entregado con saldo por días desde `fechaSalida` (0-7, 8-30, 31-60, +60, sin fecha). «Ya entregado» = fecha
+  pasada, u hoy con ✅ (regla de siempre). Tramo tocable, cliente → su venta (`POR_COBRAR_VOLVER.origen='cbz'`, «← Volver a la cobranza» = `cbzVolver`).
+- **📈 Lo que va a entrar** (`.viene`): saldo de lo no entregado por plazo (hoy sin ✅, 7, 14, más adelante, `entregaAConfirmar` aparte) + lo ya cobrado de esas.
+- **🏭 Por cliente** (solo Mayoristas, `cbzMayDatos`): `cbzMayCliente` junta Multicenter (`stockEsMulticenter`), Tienda Amiga, ROHO, Copacaba (también «Juan
+  Carlos Arce») y Luis Franco; los demás por nombre sin tildes. Casillas + «💵 Pagó las N tildadas» (`cbzPagoRegistrar`): banco (QR = transferencia), fecha,
+  N° y comprobante OBLIGATORIOS como «Registrar pago»; un renglón por OC por su saldo entero con `aplicarCobros`, de a una, revisando el saldo antes (la
+  pagada mientras tanto se saltea). Excel y texto del estado de cuenta (`cbzCliExcel`/`cbzCliCopiar`).
+- 🔎 **Revisión de Fable (13/11, alto)**: totales y escritura de pagos OK; arreglados: «Asignar los N» del GPS asigna solo los `data-ids` que el cartel
+  mostró; venta SIN MONTO de Eduardo = `'sinm'` aparte («⚠️ N OC sin monto anotado», no tildable, «SIN MONTO» en el Excel; 14 en la copia del 12/11, 9 de
+  Multicenter); «Pagó las tildadas» anota todo en memoria y espera con `Promise.all` (un guardado colgado no traba el botón); lo tipeado mientras sube el
+  comprobante se recuerda; «N clientes» de Mayoristas por `cbzMayCliente`; Luis Franco antes que Arce y «MULTI CENTER»/«TIENDAAMIGA»; efectivo con el chofer
+  (`ctaChoferSugerido`); venta de tienda y ✅ adelantado = deuda; GPS respeta un chofer puesto a mano y avisa la ubicación aproximada.
+- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (42), `test_gps_camion` (25).
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
@@ -1696,6 +1730,17 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
+vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
+talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
+🧾📄 **Dos recibos: lo facturado y lo no facturado** (13/11, dueño: *«¿y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique
+ahí que se refiere si las ventas es con factura o nota remisión»*; PUBLICADO 13/11, versión 2026-11-13-a): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
+facturado = ventas con nota de remisión (`docVentaDe`), cada cobro de la lista dice «🧾 con factura» / «📄 con remisión» / «sin anotar», y mientras nadie
+toque los botones el tipo sale de lo tildado (`retTipoDocs`; `tipoMano`). «🧾+📄 Las dos» (solo en un retiro NUEVO) pide los DOS N° de recibo y cuánto es lo
+facturado (propuesto: lo tildado con factura) y `guardarRetiroAmbos` carga DOS retiros comunes (cada uno con su tipo, recibo, monto y cobros tildados; lo
+sin anotar va con lo no facturado; la foto en los dos). Frena sin un recibo, con el mismo recibo en los dos o con lo facturado en 0 o igual al total.
+`tests/test_retiro_dos_recibos.js` (16). ⚠️ `test_wa_er` §10 guarda el retiro en su propio `page.evaluate`: en la misma llamada a veces se cortaba con
+«Execution context was destroyed» (también con la página de antes; la página no navega).
 **📒💵 «Mayor y saldos» del efectivo** (§4pf, 09/11, Contabilidad por el dueño: *«cuánto efectivo pendiente de retiro tenía Juan Pablo el 2, el 5 y el 8 de
 noviembre…»* → *«En contabilidad se llama Mayor y saldos»* → *«Publica, pero antes que analice Fable»*; revisado por Fable 5.2 y PUBLICADO 10/11, versión 2026-11-09-d, `8ae2aa2`):
 botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`; desde el botón abre de nuevo en hoy y Saldos).
@@ -1760,9 +1805,15 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
   `WA_SUC_DOMINGO` (Mia Plaza, Tienda Banzer); sin Kommo, no sale (`waBdDomingo_`). 🔒 Bloki no le muestra saldos de clientes a Logística sin la
   contraseña (`blokiPlataNo`). 📅 «Sábado en la tarde» ofrece pasarlo al lunes (o el próximo hábil) a la tarde (`obsRevSabMover`, `OBS_REV_MOVIDO`).
 
-## 🛏️💚 El cierre del día con la proyección de cada marca (§4pm, 11/11; dueño: *«separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+## 🛏️💚 El cierre del día con la proyección de cada marca (§4pm, 11/11; dueño: *«separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a` IMPLEMENTADO 11/11 por el dueño, contesta `2026-11-11-a`; página 2026-11-11-a PUBLICADA `0bd8588`)
 `waCdPry_` dice la proyección de Heaven y de Sueña que ya trae la foto de `__pry_hist__` (`b`), entre paréntesis y la más grande primero, como
 `waPregMesTxt_`. La plantilla no cambia. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…` (8.087 líneas).
+
+## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` IMPLEMENTADO 13/11 por el dueño, contesta `2026-11-13-a`, enlace fijo `0f1eefe…`, 8.104 líneas; página 2026-11-13-a PUBLICADA 13/11)
+`waCdEsAlmohada_` (`WA_CD_ALMOHADA`: ALMOHADA, ALMOH, ALM, TRAVESSEIRO, NASA, la familia de `stockEsAlmohadaK`): `waCdProds_` no las suma (el «N productos» del
+cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista APARTE en cursiva, «+ 6 almohadas (no cuentan como productos): …». La plata no
+cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.
+Volver atrás: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
 
 ## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11, versión 2026-11-10-g, `4f830a3`)
 El 11-096 (entrega 13/11) salió ENTREGADO en Mis pedidos y no había forma de saber quién: la planilla no guarda historia del ✅. Ahora cada guardado
@@ -2788,7 +2839,7 @@ para Codex en `RESPUESTA_CLAUDE.md` §34; inspector de solo lectura `herramienta
   1-30/12 Navidad, 31/12-2/1 Año Nuevo, Carnaval = 52 a 47 días antes de la Pascua, Madre 20-27/5, 6 de Agosto 1-7/8, 24 de Septiembre 18-24/9,
   el resto Espuma); `?tema=<nombre>` para verlo. Lo que se mueve va en el lienzo `#hdr-fx` (un cuadro en las pruebas, `HDR_FX_PRUEBA`). Las
   banderas van DIBUJADAS (el emoji 🇧🇴 en Windows sale «BO»). 🎸 `tema-melodia.js`: melodía PROPIA estilo Coco («Recuérdame» tiene derechos), solo
-  en noviembre, primer toque, una vez por apertura; ⚠️ cambiarla = subir el `?v=` del `<head>` en los DOS archivos.
+  el 1 y el 2 de noviembre (dueño, 13/11: «quitá la música, ya pasó el día de los muertos»), primer toque, una vez por apertura; ⚠️ cambiarla = subir el `?v=` del `<head>` en los DOS archivos.
 - **🔇 Un solo silencio**: el de Bloki (`me_asis_mudo`) calla Bloki, el anuncio, `sonidoPanel` (16) y la melodía.
 - **6** `guardarBtnFin` (tilde SOLO con el «sí»; «En cola» nunca ✓) · **8** `.ah-it.ah-r::after` · **1** `palAbrir` (Ctrl+K; lo de Administración solo
   con `UNLOCKED`) · **3** `fichaCostadoAplicar` (≥1200 px en Administración; `openModal`/`closeModal` lo sacan) · **10** `vivoPintar` (solo

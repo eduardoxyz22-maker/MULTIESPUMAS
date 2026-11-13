@@ -451,9 +451,14 @@ const arma = (props, op) => { const S = servidor(Object.assign({}, ON, props || 
       return { r: { entrega: r.entrega, retira: r.retira, monto: r.monto, tipo: r.tipo, tick: r.tick.length, fecha: r.fecha },
                f: { cliente: f.cliente, zona: f.zona, chofer: f.chofer, garantia: f.garantia, direccion: f.direccion, vendedor: f.vendedor, nota: f.nota },
                bot: { cliente: bot.cliente, zona: bot.zona, chofer: bot.chofer, garantia: bot.garantia, direccion: bot.direccion, vendedor: bot.vendedor, nota: bot.nota },
-               notas: r.notas, edit: (function () { try { editarRetiro(bot.id); window._g0 = window._guardados ? window._guardados.length : 0; var ok = guardarRetiroForm(); return { ok: ok !== false, aviso: (document.querySelector('.toast') || {}).textContent || '' }; } catch (e) { return { err: String(e) }; } })(),
+               notas: r.notas,
                luis: luis && { cobrado: luis.cobrado, ret: luis.ret, falta: luis.falta } };
     }, L);
+    /* ✏️ Corregir y guardar, en su propia llamada: guardado en la misma, la llamada a veces se cortaba con «Execution context was destroyed»
+       aunque la página no navegaba (pasaba también con la página de antes; 13/11). */
+    await page.waitForTimeout(150);
+    out.edit = await page.evaluate((L) => { const bot = L.find(p => /^__ret_/.test(p.id)); try { editarRetiro(bot.id); window._g0 = window._guardados ? window._guardados.length : 0; var ok = guardarRetiroForm(); return { ok: ok !== false, aviso: (document.querySelector('.toast') || {}).textContent || '' }; } catch (e) { return { err: String(e) }; } }, L);
+    await page.waitForTimeout(300);
     chk('10a la página lo lee como un retiro: entrega Luis Pierre, retira Contabilidad, Bs 1.860, Facturado, del 06/11, con 2 cobros tildados',
         out.r.entrega === 'Luis Pierre' && out.r.retira === 'Contabilidad' && out.r.monto === 1860 && out.r.tipo === 'Facturado' && out.r.fecha === '2026-11-06' && out.r.tick === 2, out.r);
     chk('10b la fila del bot es la que armaría la página (filaDeRetiro): título, FACTURADO, Contabilidad, los tildes, las notas y «Retiro del…»', JSON.stringify(out.f) === JSON.stringify(out.bot), { pagina: out.f, bot: out.bot });

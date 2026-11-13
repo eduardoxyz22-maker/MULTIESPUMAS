@@ -332,8 +332,13 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     chk('5k una vez por día (a las 22:30 no se repite)', cd().length === 0, S.salen());
     // 🛏️ (07-d) Los productos: la suma de las cantidades de los renglones con producto
     const Bx = S.ctx.waBo_(RELOJ.ms);
-    chk('5k2 los productos de una venta = la suma de las cantidades (2 + 1 = 3; un renglón vacío no cuenta; sin cantidad = 1)',
-        S.ctx.waCdProds_({ productos: [{ desc: 'COLCHON TITANIO', cant: 2 }, { desc: 'ALMOHADA', cant: '1' }, { desc: '', cant: 5 }, { desc: 'SOMIER' }] }) === 4);
+    chk('5k2 los productos de una venta = la suma de las cantidades (2 + 1 = 3, la almohada no; un renglón vacío no cuenta; sin cantidad = 1)',
+        S.ctx.waCdProds_({ productos: [{ desc: 'COLCHON TITANIO', cant: 2 }, { desc: 'ALMOHADA', cant: '1' }, { desc: '', cant: 5 }, { desc: 'SOMIER' }] }) === 3);
+    // 🪶 (2026-11-13-a, dueño 12/11: «no deberían contar las almohadas, inflan los números») ninguna almohada suma, se llame como se llame
+    chk('5a-alm las almohadas no suman productos (ALMOHADA, Almohada fibra, ALM/NASA, TRAVESSEIRO, NASA ALTO); lo demás sí',
+        S.ctx.waCdProds_({ productos: [{ desc: 'ALMOHADA', medida: '50x70', cant: 6 }, { desc: 'Almohada fibra siliconada', cant: 2 }, { desc: 'ALM/NASA', cant: 1 },
+          { desc: 'TRAVESSEIRO GELFLEX NASA ALTO DUOFLEX', cant: 1 }, { desc: 'NASA ALTO FREEZE DUOFLEX', cant: 1 }, { desc: 'HEAVEN TROPICAL', cant: 2 },
+          { desc: 'JUEGO DE SABANAS CASA IN 1.5 PLZ', cant: 2 }, { desc: 'SOMIER TROPICAL', cant: 1 }] }) === 5);
     const muchos = []; for (let i = 0; i < 12; i++) muchos.push({ nombre: 'Vendedor' + String.fromCharCode(65 + i) + ' Apellido', bs: 10000 - i * 500, n: 1, u: i + 1 });
     const q = S.ctx.waCdParams_({ ventas: { n: 12, bs: 1, u: 78 }, marcas: {}, vend: muchos, ent: { total: 0, con: 0 }, por: {} }, Bx, null, null, null, RELOJ.ms)[3];
     const m = q.match(/ · y (\d+) más: (\d+) prod\., (Bs [\d.]+)$/), nVis = q.split(' · ').length - 1;
@@ -416,8 +421,8 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
       productos: [{ desc: 'COLCHON TITANIO LATEX', medida: '160x200', cant: 1, precio: 600, fdoc: 'F', fdocn: '9' + i }, { desc: 'ALMOHADA FIBRA SILICONADA', medida: '50x70', cant: 2, precio: 200, fdoc: 'F', fdocn: '9' + i }] }));
     const D = S.ctx.waCdDetalle_(FIX.concat(M).map(x => S.ctx.rowToRec_(S.ctx.recToRow(x))), HOY), dj = D.join('\n');
     chk('5b13 140 ventas más: el mismo producto se SUMA en una línea por vendedor («35 × TITANIO LATEX 160x200 · 70 × ALMOHADA…», el que más primero) y entra en UN mensaje',
-        D.length === 1 && D[0].length <= 4000 && /\*Carola\* · 106 prod\. · Bs 38\.000\n70 × ALMOHADA FIBRA SILICONADA 50x70 · 35 × TITANIO LATEX 160x200 · 1 × TITANIO 140x190/.test(dj) &&
-        /\*Isabel\* · 106 prod\./.test(dj), { largo: D.map(x => x.length), dj });
+        D.length === 1 && D[0].length <= 4000 && /\*Carola\* · 36 prod\. · Bs 38\.000\n35 × TITANIO LATEX 160x200 · 1 × TITANIO 140x190\n_\+ 70 almohadas \(no cuentan como productos\): 70 × ALMOHADA FIBRA SILICONADA 50x70_/.test(dj) &&
+        /\*Isabel\* · 36 prod\./.test(dj), { largo: D.map(x => x.length), dj });
   });
 
   seccion('5c. (2026-11-07-e) 👔 El jefe en WA_DUENO: todo menos el efectivo', () => {

@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a` IMPLEMENTADO 11/11 por el dueño, contesta `2026-11-11-a`; página 2026-11-11-a PUBLICADA `0bd8588`)
 - La foto diaria de `__pry_hist__` ya traía la proyección de cada marca (`b:{heaven:[vendido, proyección, c|r], suena:[…]}`, `pryHistEntrada`).
   `waCdPry_` ahora la dice: «Bs 456.664 vendidos · proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …) (cálculo de las 17:00)», la más grande
   primero, con los mismos nombres que la pregunta del mes del bot (`waPregMesTxt_`). Una foto sin `b` sale como antes. No se calcula nada nuevo.
@@ -18594,3 +18594,99 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
     cargada) y `test_mispedidos` (1; sola y 6 a la vez, 33/33). `test_estetica_4mo` con 15 a la vez a veces falla 1·1440 (`--hdr-h` 84): lo
     publicado (`main`) falla igual o más (7 de 8 corridas en paralelo; la copia nueva 1 de 6). En `pub_mn` (rama `pub-ni`, `5ae4c4b`): la nueva
     52, temas 92, 3/10/11 29, fichas 13, visual 20, arriba 24, celular 35, estética 4mp 9, cupos 23, reprogramar 26, cierre 26, Halloween 22, Navidad 21.
+
+### §4pn — 🪶 LAS ALMOHADAS NO CUENTAN COMO PRODUCTOS EN EL CIERRE DEL DÍA (12-13/11; dueño, con la captura del cierre del 12/11: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*)
+- En la captura: Isabel «13 prod.» con 6 almohadas, Carola «12 prod.» con 4; el total «30 productos».
+- `.gs` `2026-11-13-a`: `waCdEsAlmohada_` (misma familia que `stockEsAlmohadaK` de la página, sin mayúsculas ni acentos) → `waCdProds_` no las suma; `waCdDetalle_`
+  las pone aparte, en cursiva, «+ N almohadas (no cuentan como productos): …». Los montos (Bs) no cambian. Sábanas/protectores siguen contando.
+- Página: solo `SCRIPT_VERSION_ESPERADA` → 2026-11-13-a (publicar DESPUÉS de que el dueño implemente). `test_wa_buen_dia_cierre` 143/0, `test_wa_13_25_26` 103/0,
+  `test_wa_bot` 253/0, `test_servidor` 414/0. `test_wa_equipo` 6b ya estaba rojo antes (fija la versión 09-a): no es de este cambio.
+- 👥 El mismo día: Eliana Vargas (76359297) a `WA_DUENO` como Alberto, con una función que el dueño corre en un archivo aparte (`agregarElianaUnaVez`) y
+  `probarMensajeAEliana` (le manda el cierre de hoy de prueba). El número NO va al repo.
+
+
+### §4po — 🛰️ EL GPS PROPONE EL CAMIÓN QUE FALTÓ (idea 133, 13/11)
+- Dueño: «136, 143, 129, 133» (aprobó la 133 de la lista de ideas). Problema: pedidos de hoy que salen sin camión asignado y el GPS igual los ve
+  (la parada de un camión a ≤ 300 m del pin, que el servidor 13-b nombra o la página reconoce con la misma regla, `gpsPedidosCerca`).
+- Página sola (`pedidos.html`, el `.gs` no cambia): `gpsCamionEntra` (hoy, sin `vehiculoDe`, sin sistema/borrador/venta de tienda/`fichaRetira`),
+  `gpsCamionPropDe(p)` → { veh = el camión que se paró (`gpsLlegadaDe`), chofer = `choferDeCamion(veh, pedidos de hoy)` (rotan, §4om) },
+  `gpsCamionPropuestas()` (en el orden en que el GPS los vio). Solo con `gpsDiaHay()`: sin el día del GPS no sale nada (Playwright igual que antes).
+- Dónde: cartel azul `#gps-cam-bar` (`gpsCamionHtml(list)`, solo lo que está en la lista) junto al de §4ok-106: en la tabla en `#adm-gps-ent`,
+  con las fichas antes del primer turno de hoy. En el Cierre de entregas: «· lo llevó <camión> · <chofer> 🚚 Asignar» en la fila (`gpsCamionCierreHtml`;
+  el botón no tilda el pedido) y una línea en el resumen del GPS (`gpsCamionCierreResumenHtml`).
+- Aceptar: `gpsCamionAsignar(id)` relee la propuesta (si ya tiene camión, no toca), pone camión + chofer y guarda con `persistPedido` → `guardarDurable`
+  (el camino de `setVehiculo`/`cvAsignar`); `gpsCamionAsignarTodos()` = todos los que siguen sin camión, un repintado y un guardado durable por pedido.
+  🚫 Nada se asigna solo. Lo de días anteriores no se puede proponer: el GPS_DIA es de hoy y no queda guardado (el cartel lo dice).
+- `tests/test_gps_camion.js` 22/0. Siguen bien: `test_gps_pagina` 58, `test_cierre_entregas` 26, `test_adm_fichas` 13, `test_camiones_admin` 40,
+  `test_gps_entregados_adm` 22, `test_choferes_rotan` 12. `PANEL_V`/`panel-version.json` NO se subieron (se suben al publicar).
+
+### §4pp — ⏳ COBRANZA: ANTIGÜEDAD DE SALDOS (136), LO QUE VA A ENTRAR (143) Y EL ESTADO DE CUENTA DE CADA MAYORISTA (129) (13/11; dueño, con las páginas «Contabilidad en el panel» y «Mejoras 128 a 135»: *«136, 143 , 129, 133»*; en la rama, espera «publica»)
+- Una ventana, «📅 Cobranza» en Contabilidad (`cbzAbrir`), con tres pestañas: 📅 Antigüedad de saldos, 📈 Lo que va a entrar y, en Mayoristas, 🏭 Por cliente.
+  Todo el historial de la planilla que se mira (Ventas o Mayoristas), con un vendedor elegible adentro (arranca con el de la pantalla).
+- Con la copia de la planilla del 12/11 (scratchpad, `cbz/ver.js`): el equipo debe Bs 110.469 de lo ya entregado en 46 ventas (44 clientes); más de 60 días
+  Bs 85.780 en 40 ventas (los mismos números de la propuesta del 09/11); por entregar Bs 47.383 (esta semana Bs 21.660), con Bs 32.990 ya cobrados de
+  adelanto. Mayoristas: Multicenter Bs 95.869 en 30 OC (Bs 31.008 de más de 60 días), Copacaba Bs 64.000, ROHO Bs 62.356, Tienda Amiga Bs 30.749.
+- «Pagó las tildadas» registra los pagos como Contabilidad de a uno (mismas obligaciones: banco, N°, comprobante). Decidido por mí: cada OC tildada queda
+  pagada ENTERA (un pago parcial va desde su venta) y una OC que alguien pagó mientras tanto se saltea. El comprobante se sube una vez y va en todas.
+- «Incobrable» (lo que decía la propuesta) NO se hizo: cambiaría «Falta cobrar» en todo el panel. Queda para cuando el dueño diga si un incobrable sale
+  de esos números.
+- `test_conta_4jw` cambió a conciencia (Revisar tiene 4 botones). `tests/test_cobranza.js` (34; sin `cbzAbrir` falla en la primera).
+- **Misma tarde, el dueño: *«La 136 sería con la 129? Solo los mayoristas se atrasan en pagar…»*** → la antigüedad de saldos queda SOLO en Mayoristas
+  (pestañas Por cliente · Antigüedad · Lo que va a entrar); en Ventas, solo «Lo que va a entrar». Lo que tenía el equipo «con más de 60 días»: 39 de las 46
+  ventas son de julio-agosto (los primeros meses del panel), 24 sin ningún pago anotado: casi seguro cobradas y no anotadas. Se le dijo; no se tocó nada.
+- **Revisión de Fable 5.2 con razonamiento alto (dueño: *«que Fable en alto revise los cálculos»*)**: totales iguales a «Falta cobrar», tramos sin corrimiento,
+  y el `metodoPago` de «Pagó las tildadas» idéntico al de `ctaRegistrarPago` en seis casos (adelanto, mixto, flete, REGISTRADO, suelto, centavos). Diez
+  hallazgos, todos arreglados: (1 MEDIA) «Asignar los N» del GPS asignaba también lo que el filtro escondía → `data-ids`; (2 MEDIA) las ventas de Eduardo sin
+  monto anotado se veían «al día» → `'sinm'` (14 en la copia del 12/11, 9 de Multicenter); (3) un guardado colgado trababa el botón → todo en memoria +
+  `Promise.all`; (4) lo tipeado mientras subía el comprobante se perdía; (5) «N clientes» por celular; (6) Luis Franco/Arce y nombres con variantes; (7)
+  efectivo sin chofer; (8) la pregunta contaba OC ya pagadas; (9) venta de tienda y ✅ adelantado; (10) GPS pisaba un chofer a mano y no avisaba lo aproximado.
+  Sus pruebas quedaron en `scratchpad/t/rev*.js`; las nuevas, en `test_cobranza` §9 y `test_gps_camion` §6b.
+
+### §4pq — 🧾 EL RETIRO PIDE EL N° DEL RECIBO DE ENTREGA Y 🔇 LA MÚSICA DE NOVIEMBRE SOLO EL 1 Y EL 2 (13/11; dueño, con una captura del formulario del retiro)
+- *«Ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el vendedor a Eduardo que entregó el dinero… arriba en la lista va
+  tildado qué ventas cubre… no?»* → sí: el campo «N° de notas que cubre este retiro» pasa a «N° del recibo de entrega» (el de la foto; se pueden anotar dos
+  si son dos recibos). Se guarda donde siempre (`nota`), que es lo que ya cruzaba el control del talonario; las ventas que cubre son los cobros tildados.
+  Tablas, texto del Cuadre y Excel dicen «N° del recibo». El bot «Ya lo recibí» (.gs) sigue anotando ahí las notas de venta (es Contabilidad con un chofer, sin
+  recibo firmado): no se tocó.
+- *«Quitá la música de ingreso, ya pasó el día de los muertos… ¿en noviembre viene Thanksgiving?»* → la melodía de Todos Santos se carga solo el 1 y el 2 de
+  noviembre (o con `?tema=todos-santos`), en el panel y en el dashboard. El tema visual de noviembre no se tocó. Thanksgiving no se celebra en Bolivia: se le
+  propuso Black Friday (27/11) en vez, sin hacer nada. `test_temas_mejoras` §4 (94).
+- *«¿Y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique ahí que se refiere si las ventas es con factura o nota remisión»*
+  → en el retiro, «¿De qué ventas es la plata?»:
+  · Explica: 🧾 Facturado = plata de ventas con FACTURA · 📄 No facturado = plata de ventas con NOTA DE REMISIÓN (lo que la vendedora anota en Contabilidad,
+    `docVentaDe`). Cada cobro de la lista lleva su etiqueta («🧾 con factura», «📄 con remisión» o «sin factura ni remisión anotada»).
+  · El tipo se propone solo con lo tildado (`retTipoDocs`) mientras nadie toque los botones (`tipoMano`): todo con factura → Facturado, todo con remisión →
+    No facturado, de las dos → «Las dos». La línea «De lo tildado arriba: 2 con factura · Bs 1.500 · 1 con nota de remisión · Bs 700» lo dice.
+  · «🧾+📄 Las dos (dos recibos)», solo en un retiro nuevo (editando, cada fila es un retiro de un tipo): dos campos de recibo («de lo FACTURADO» y «de lo NO
+    FACTURADO») y «¿Cuánto es lo facturado?» (propuesto = lo tildado con factura; el resto es lo no facturado). `guardarRetiroAmbos` arma DOS retiros con
+    `filaDeRetiro` (ids nuevos, la misma foto, «retiro en dos recibos: el otro es el N»), cada uno con los cobros de su tipo tildados (lo sin anotar va con
+    lo no facturado). Si lo tildado no da justo cada monto, pregunta. Frena: falta un recibo, el mismo recibo en los dos, lo facturado en 0 o = el total.
+  · Nada cambia en cómo se guarda o se lee un retiro: son dos filas como las de siempre, y el Cuadre, el Mayor y el bot las leen igual.
+  · `tests/test_retiro_dos_recibos.js` (16). De paso, `test_wa_er` §10 fallaba a veces con «Execution context was destroyed» (1 de 3 con la página de antes,
+    sin ninguna navegación ni pedido de página): el ✏️ Corregir + Guardar va ahora en su propio `page.evaluate`, 83/83 tres veces.
+
+### §4pr — 🛍️ MUESTRA DEL TEMA DE BLACK FRIDAY (13/11; dueño: «ok ármame la muestra de blackfriday», después de que se le ofreció en vez de Thanksgiving)
+- Tema `black-friday` en el panel y en el dashboard: negro con dorado. Arriba, una cinta amarilla con «BLACK FRIDAY ✦» que corre despacio (la letra va con
+  `textLength`, así mide lo mismo con cualquier fuente), la etiqueta dorada dibujada al lado de MULTIESPUMAS, la ciudad en gris oscuro y la calle con rayas
+  doradas. En `#hdr-fx`, etiquetas de precio que caen (las grandes con «%») y brillitos dorados. Fondo negro con etiquetas apenas visibles y un brillo
+  dorado abajo. Las tarjetas grandes en vidrio oscuro con borde dorado y la letra clara de lo que va directo sobre ellas (copia de las reglas de noviembre).
+  Bloki: una bolsa de compras negra con etiqueta a los pies, en los cinco trajes (ajustada para que entre en su dibujo de 232 de alto). Fábrica 3D: colores
+  del tema en `VIDA_TEMA_COL`. Barra de la ventana instalada: `#0a0a0a`. No dice descuentos ni ofertas.
+- **No se prende solo**: `BF_DIAS=null` en los dos `<head>`. Black Friday = el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027,
+  24/11/2028). Opciones que se le dieron: A solo el 27, B del 23 al 30 (con el Cyber Monday), C del 20 al 30; y si lo quiere también en el dashboard.
+- Contraste medido con `test_vidrio_agrandar` (pasada nueva con `?tema=black-friday`: 13 vistas, con pedidos y sin pedidos, 0 mal; contra la página de
+  antes, 3 rojas). 390 px sin correrse de costado en las cuatro pestañas. `test_temas_mejoras` 97, `test_bloki` 29.
+- La falla «3f la ventana de Bloki entra en la pantalla» de `test_vidrio_agrandar` salió una vez y en las dos repeticiones no: es de tiempo (300 ms).
+- Página para el dueño (capturas con clientes inventados y el encabezado en video): https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh.
+- **La cinta amarilla se sacó** (dueño, con la captura marcada en rojo: *«Eso que marqué de rojo no me gusta»*): fuera `header::before`, `bf-cinta` y el espacio
+  de arriba en el panel, y la cinta de la caja de la marca en el dashboard. Lo demás queda. No volver a ponerla. `test_temas_mejoras` 96.
+- **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
+  dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
+  Black Friday, 2027 corrido un día, y el dashboard igual.
+
+### §4ps — 🚀 PUBLICADO 13/11: SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
+El dueño (13/11): *«listo implementado»* (el `.gs` de las almohadas, enlace fijo `0f1eefe…`, 8.104 líneas). El servidor contesta `2026-11-13-a`
+(verificado con una lectura). Se publicó la página `2026-11-13-a` con TODO lo de la rama desde la 11-a: §4pn (espera la 13-a), §4pp Cobranza
+(136/143/129 + los arreglos de Fable), §4po el GPS propone el camión (133), §4pq el retiro con el N° del recibo y los dos recibos (facturado /
+no facturado), la música de noviembre solo el 1 y el 2, y §4pr el tema de Black Friday del 20 al 30/11 (panel y dashboard). `PANEL_V` y
+`panel-version.json` juntos. Volver atrás del servidor: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
