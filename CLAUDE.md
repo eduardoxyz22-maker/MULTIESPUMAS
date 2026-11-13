@@ -1150,7 +1150,7 @@ Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo m
   comprobante se recuerda; «N clientes» de Mayoristas por `cbzMayCliente`; Luis Franco antes que Arce y «MULTI CENTER»/«TIENDAAMIGA»; efectivo con el chofer
   (`ctaChoferSugerido`); venta de tienda y ✅ adelantado = deuda; GPS respeta un chofer puesto a mano y avisa la ubicación aproximada.
 - ⏳ **El plazo de pago de cada mayorista** (§4pt, 13/11, dueño, consultado con gerencia y corregido: *«Tienda Amiga es 120 días, ROHO y Multicenter 60»*,
-  Copacaba 15, Luis Franco 15; CAMSA, Karina Torrico, Electrocenter y los demás *«al entregar»*; en la rama, espera «publica»): `CBZ_PLAZOS` (por el nombre de
+  Copacaba 15, Luis Franco 15; CAMSA, Karina Torrico, Electrocenter y los demás *«al entregar»*; PUBLICADO 13/11, versión 2026-11-13-b): `CBZ_PLAZOS` (por el nombre de
   `cbzMayCliente`; uno que no está = al entregar, plazo 0). 🏠 Una entrega a domicilio de Multicenter cargada con el nombre de SU cliente va a Multicenter
   (dueño: *«son de Multicenter»*): la nota o «Facturar a» dicen Multicenter, o el nombre está en `CBZ_MAY_ALIAS` (la Sra. Villarreal). En Mayoristas cada deuda
   lleva `plazo`, `vence` (entrega agendada o día de la venta de tienda + plazo) y `venc` (días de atraso; ≤0 = no venció) con `cbzConPlazo`, y la antigüedad va
@@ -1734,7 +1734,7 @@ la ficha del Cuadre y «Le queda en la mano» de la tabla abren `abrirEfectivo(q
 (`efeManoDatos`, de `cuadreEfectivo`), por persona, con día y hace cuántos días, cliente, OC y nota, vendedor, «dónde» (`efeManoDonde`: la tienda de
 quien la recibió o «🚚 en la entrega · zona»; el panel no anota el lugar exacto), lo parcial («de Bs X · Bs Y ya retirado»), el faltante del mes
 anterior, el último retiro y Copiar. «← Volver al efectivo por retirar» (`EFE_VER_SOLO`). Retirado de más abre la lista de siempre.
-`tests/test_efectivo_por_retirar.js` (19).
+`tests/test_efectivo_por_retirar.js` (19). PUBLICADO 13/11, versión 2026-11-13-b.
 **💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, IMPLEMENTADO 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
