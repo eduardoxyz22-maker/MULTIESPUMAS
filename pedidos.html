@@ -46504,7 +46504,7 @@ function cierreEntFila(p, atrasado){
     '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
     (atrasado ? '' : cierreEntGpsHtml(p))+
     (atrasado ? '' : gpsCamionCierreHtml(p))+   // 🛰️ (13/11, idea 133) «· lo llevó <camión>» con su «Asignar»
-    (atrasado ? ('<span class="badge b-amber">para el'+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
+    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
   '</label>'+(atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
