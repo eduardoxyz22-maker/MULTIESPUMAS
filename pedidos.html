@@ -27699,7 +27699,10 @@ function atcLista(sinEstado){
   /* …y las de MESES ANTERIORES QUE SIGUEN ABIERTAS (§4ea, dueño 11/09: *"lógicamente en el mes
      mostrar de meses pasados que no se entregaron"*): una ATC de agosto sin devolver es
      trabajo de septiembre. Las cerradas viejas sí quedan en su mes. */
-  if(mode==='mes' && mes) list=list.filter(function(p){ var e=atcEntro(p).slice(0,7); return e===mes || (e<mes && atcEstado(p)!=='cerrada'); });
+  /* 📅 (13/11, dueño: «filtro ATC por mes para ver los problemas del mes y me muestra ATC desde agosto… ¿no funciona el filtro?») El mes
+     muestra SOLO las que entraron ese mes; las abiertas de meses anteriores se suman tocando la ficha «ATC en el período» (`atcViejasCambiar`,
+     por aparato en `me_atc_viejas`). Así se ven los problemas del mes y, con un toque, el trabajo pendiente de antes (lo de §4ea). */
+  if(mode==='mes' && mes) list=list.filter(function(p){ var e=atcEntro(p).slice(0,7); return e===mes || (atcViejasVer() && e<mes && atcEstado(p)!=='cerrada'); });
   if(mot) list=list.filter(function(p){ return atcMotivo(p)===mot; });
   if(tip) list=list.filter(function(p){ return atcTipoFiltra(p, tip); });
   if(est==='sinmotivo')      list=list.filter(function(p){ return !atcMotivo(p); });
@@ -27718,6 +27721,10 @@ function atcLista(sinEstado){
 /* 📄 (15/10, §4lm) El informe PDF es para gerencia (dueño: «solo debe salir cuando colocan la clave o ingresan como administración
    o logística»): la misma regla que lo de logística de Bloki (`asisVeAdm`: el rol elegido en «¿Quién está usando el panel?», la clave
    o el aparato de Administración). Un vendedor no ve el botón y, si igual llega, `abrirInformeAtc` no abre. */
+function atcViejasVer(){ try{ return localStorage.getItem('me_atc_viejas')==='1'; }catch(e){ return false; } }
+function atcViejasCambiar(){ try{ localStorage.setItem('me_atc_viejas', atcViejasVer()?'0':'1'); }catch(e){} renderAtc(); }
+/* Cuántas ATC de meses anteriores al elegido siguen abiertas (sin los otros filtros: es para ofrecer sumarlas). */
+function atcViejasAbiertas(mes){ return STATE.filter(function(p){ return esATC(p.oc) && atcEntro(p).slice(0,7)<mes && atcEstado(p)!=='cerrada'; }).length; }
 function atcVeInforme(){ try{ return asisVeAdm(); }catch(e){ return !!UNLOCKED; } }
 function atcInformeVisible(){ var w=document.getElementById('atc-informe-wrap'); if(w) w.style.display=atcVeInforme() ? '' : 'none'; }
 function renderAtc(){
@@ -27739,8 +27746,16 @@ function renderAtc(){
   var prom = nDias ? Math.round(sumDias/nDias) : null;
   var mesSel=(segVal('atc-mode')==='mes') ? ((document.getElementById('atc-mes')||{}).value||'') : '';
   var viejas=mesSel ? list.filter(function(p){ return atcEntro(p).slice(0,7)<mesSel; }).length : 0;
+  var viejasHay=mesSel ? atcViejasAbiertas(mesSel) : 0, mesCorto=mesSel ? mesNombre(mesSel).replace(/ de \d{4}$/, '') : '';
   document.getElementById('atc-metrics').innerHTML=
-    mc('var(--teal)','ATC en el período',list.length, viejas?('incluye '+viejas+' de meses anteriores sin cerrar'):'atenciones al cliente')+
+    (!mesSel ? mc('var(--teal)','ATC en el período',list.length,'atenciones al cliente')
+     : atcViejasVer()
+       ? mcToca('var(--teal)','ATC en el período',list.length, viejas?('incluye '+viejas+' de meses anteriores sin cerrar'):('entraron en '+esc(mesCorto)+' (ninguna abierta de antes)'),
+           "atcViejasCambiar()", '👆 Tocá para ver solo las que entraron en '+esc(mesCorto))
+       : (viejasHay
+           ? mcToca('var(--teal)','ATC en el período',list.length,'entraron en '+esc(mesCorto)+' · hay '+viejasHay+' abierta'+(viejasHay===1?'':'s')+' de meses anteriores',
+               "atcViejasCambiar()", '👆 Tocá para sumar las '+viejasHay+' abiertas de antes')
+           : mc('var(--teal)','ATC en el período',list.length,'entraron en '+esc(mesCorto))))+
     mc('var(--red)','🚚 Por recoger',porRec, porRec?'todavía no se fue a buscar':'ninguna pendiente')+
     mc('var(--amber)','🏭 En fábrica',enFab, enFab?'esperando a producción':'ninguna en producción')+
     /* ⚠️ La ficha más accionable: volvieron de fábrica y el cliente NO las tiene. Antes
@@ -54345,7 +54360,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-13-b';
+var PANEL_V='2026-11-13-c';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

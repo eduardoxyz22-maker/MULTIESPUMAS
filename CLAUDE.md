@@ -850,6 +850,8 @@ oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de c
 etiqueta. **Los días: `BF_DIAS=[-14, 3]`** (dueño eligió la «C» = [-7, 3] y el 13/11 al mediodía dijo *«que salga desde ahora»*, PUBLICADO versión 2026-11-13-b): de dos semanas antes del viernes al lunes siguiente, contados desde el viernes después del
 cuarto jueves de noviembre (2026: del 13 al 30/11; 2027: del 12 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
 `BF_DIAS` en el `<head>` de `pedidos.html` y de `panel_template.html`. Otro día se ve con `?tema=black-friday`.
+🌅 **El encabezado sigue la hora** (13/11, dueño: *«el fondo no iba por hora del día, el sol bajando?»*; PUBLICADO versión 2026-11-13-c): en Black Friday el
+`--grad-header` del `.header` cambia con `[data-momento]` de `hdrCieloPintar` (amanecer violeta, día azul, atardecer anaranjado, noche negra); las ventanas siguen negras.
 Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (12/11 sigue Todos Santos), `test_navidad` (10/11), `test_bloki` §7, `test_vidrio_agrandar` §2.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
@@ -975,6 +977,9 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   ⚠️ la dona «De qué marca» usa la MISMA regla (`atciMarcaAtc`). Línea = la primera palabra de una línea de esa marca (`ATCI_LINEAS`; ICE/LATEX
   = TITANIO); «SEMI ORTOPEDICO» a secas en Heaven NO se adivina («Sin línea en el nombre»). Producto = `atciNomBase` (sin medidas, abreviaturas
   enteras). Las marcas llenan la hoja y siguen en otra con «· sigue» (`ATCI_LIN_ALTO`, medido). `tests/test_atc_lineas.js` §1-4.
+- **📅 «Mes» = las ATC que ENTRARON ese mes** (13/11, dueño: *«filtro ATC por mes para ver los problemas del mes y me muestra ATC desde agosto»*; PUBLICADO
+  versión 2026-11-13-c): las abiertas de meses anteriores (§4ea) se suman tocando la ficha «ATC en el período» (`atcViejasCambiar`, por aparato en
+  `me_atc_viejas`, `atcViejasAbiertas`). `tests/test_atc_mes.js` (11).
 - **🧹 La barra de ATC** (§4lm, 15/10; dueño: *«demasiados botones»*): sin «📋 Copiar» ni «🔗 Completar con Trello» (las funciones quedan). «📋 Copiar»
   va en la ficha (`copiarAtcUna`: SOLO su fila, las mismas 17 columnas, `atcCopiaFila`). **«📄 Informe PDF» solo gerencia** (`atcVeInforme` =
   `asisVeAdm`: la clave, Administración o Logística; Contabilidad y vendedores no). `tests/test_atc_lineas.js` §5-6.
