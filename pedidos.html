@@ -2875,6 +2875,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         </div>
       </div>
       <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
+      <div id="atc-otra" class="atc-otra no-print" hidden></div>   <!-- 🔁 (13/11, 179) en una ATC: ese celular ya tuvo otra (solo avisa) -->
       <div id="fx-dup" class="fx-dup no-print" hidden></div>
 
       <div class="field">
@@ -3340,6 +3341,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <div class="metrics" id="atc-metrics" data-min="150"></div>
       <div id="atv-viaje"></div>
       <div id="atc-por-motivo"></div>
+      <!-- 📉🔁⏳ (13/11, mejoras 178-180) Cada 100 vendidos, los que volvieron a reclamar y a cuántos meses de la compra falla: solo miran (`atcqPintar`). -->
+      <div id="atc-calidad"></div>
       <div id="atv-cards" class="atv-cards"></div>
       <div class="tw tw-tall" id="atv-tw"><table id="tbl-atc"></table></div>
       <div id="atc-empty" class="empty" style="display:none">No hay ATC para este filtro.</div>
@@ -5620,6 +5623,47 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 @media (max-width:560px){ .atv-mb{ grid-template-columns:1fr auto; } .atv-mb-b{ grid-column:1 / -1; grid-row:2; }
   .atv-pasos{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; overflow:visible; } .atv-paso{ min-width:0; } .atv-flecha{ display:none; } }
 @media (prefers-reduced-motion:reduce){ .atv-paso, .atv-mb, .atv-mb-b i, .atv-c, .atv-onda, .atv-paso.late::after{ animation:none!important; } }
+/* 📉🔁⏳ ATC y calidad (13/11, mejoras 178-180): cada bloque en su recuadro blanco (así los temas del mes no le cambian la letra) */
+.atq-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:12px; margin:0 0 16px; align-items:start; }
+.atq-caja{ background:#fff; border:1px solid var(--gray-lt); border-radius:14px; padding:12px; min-width:0; color:var(--text); }
+.atq-tw{ overflow-x:auto; }
+.atq-t{ width:100%; border-collapse:collapse; font-size:.8rem; white-space:normal; }
+.atq-t thead th{ position:static; background:#f1f5f9; color:var(--muted); text-align:left; font-size:.64rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:5px 6px; border-bottom:2px solid var(--gray-lt); white-space:nowrap; }
+.atq-t td{ padding:5px 6px; border-bottom:1px solid var(--gray-lt); }
+.atq-t td:first-child{ overflow-wrap:anywhere; }
+.atq-t .n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.atq-t tr.atq-mr td{ background:#f7fbfb; border-top:2px solid var(--gray-lt); }
+.atq-t tr.atq-ln td:first-child{ padding-left:18px; }
+.atq-t tr.sin td:first-child{ color:var(--muted); font-style:italic; }
+.atq-t tr.atq-tot td{ font-weight:800; border-top:2px solid var(--gray-md); }
+.atq-t tr.alerta td{ background:#fef2f2; }
+.atq-tasa{ font-weight:800; } .atq-tasa.alta{ color:#b91c1c; }
+.atq-t6{ font-size:.74rem; }
+.atq-t6 th.n, .atq-t6 td.n{ padding-left:3px; padding-right:3px; }
+.atq-t6 td:first-child{ min-width:108px; overflow-wrap:normal; }
+@media (max-width:480px){ .atq-t6{ font-size:.68rem; } .atq-t6 td:first-child{ min-width:82px; } .atq-t6 th{ letter-spacing:0; padding-left:2px; padding-right:2px; } }
+.atq-c{ font-weight:800; }
+.atq-gris{ color:var(--muted); font-size:.74rem; }
+.atq-nota{ font-size:.72rem; color:var(--muted); margin-top:8px; line-height:1.4; }
+.atq-bs{ display:grid; gap:5px; margin-bottom:10px; }
+.atq-b{ display:grid; grid-template-columns:minmax(96px,150px) 1fr auto; align-items:center; gap:8px; font-size:.76rem; }
+.atq-b-n{ font-weight:700; } .atq-b.sin .atq-b-n{ color:var(--muted); font-weight:600; }
+.atq-b-b{ height:11px; border-radius:999px; background:#eef2f4; overflow:hidden; } .atq-b-b i{ display:block; height:100%; border-radius:999px; }
+.atq-b-v{ color:var(--muted); white-space:nowrap; } .atq-b-v b{ color:var(--text); }
+.atq-seg{ display:flex; gap:6px; margin:0 0 6px; }
+.atq-seg button{ font:inherit; font-size:.74rem; font-weight:700; padding:4px 11px; border-radius:999px; border:1px solid var(--gray-md); background:#fff; color:var(--text); cursor:pointer; min-height:30px; }
+.atq-seg button.on{ background:var(--teal); border-color:var(--teal); color:#fff; }
+.atq-r{ font-size:.8rem; padding:6px 0; border-bottom:1px solid var(--gray-lt); overflow-wrap:anywhere; }
+.atq-r span{ display:inline; }
+.atq-r-b{ font:inherit; font-size:.74rem; border:1px solid var(--gray-md); background:#f7f9fa; border-radius:999px; padding:2px 9px; cursor:pointer; margin:2px 0; }
+.badge.b-rep{ background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
+/* 🔁 (179) el aviso del formulario: ese celular ya tuvo otra ATC */
+.atc-otra{ margin:-4px 0 14px; background:#fff7ed; border:1px solid #fdba74; border-left:5px solid #ea580c; border-radius:10px; padding:9px 12px; font-size:.8rem; color:#431407; }
+.atc-otra-t span{ color:#9a3412; font-size:.74rem; }
+.atc-otra-f{ margin-top:7px; padding-top:7px; border-top:1px dashed #fdba74; display:grid; gap:2px; }
+.atc-otra-c{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.atc-otra-mas{ margin-top:6px; font-size:.74rem; color:#9a3412; }
+@media print{ .atc-otra{ display:none!important; } }
 
 /* 📄 Informe de ATC en PDF (15/10, §4le). Hojas A4 apaisadas de 1123×794 px (= 297×210 mm a 96 ppp), achicadas en pantalla con
    `zoom` (atciEscala). ⚠️ Sin color-mix(), oklch() ni variables raras: html2canvas no los entiende y la hoja sale en blanco. Colores
@@ -5741,6 +5785,23 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .ai-lin tr.p td.ai-lin-n{ padding-left:28px; color:#475569; }
 .ai-lin .ai-lin-c{ display:inline-block; min-width:30px; border-radius:7px; padding:2px 6px; font-weight:800; color:#0f172a; }
 .ai-lin td.t{ font-weight:900; color:#0f172a; }
+/* 📉🔁⏳ calidad (13/11, 178-180): cada 100 vendidos con su barra y el umbral; los meses desde la compra en una matriz */
+.ai-q th, .ai-q td{ padding:3px 6px; }
+.ai-q td{ vertical-align:middle; }
+.ai-q tr.m td{ background:#f8fafc; border-top:2px solid #e2e8f0; font-weight:800; }
+.ai-q tr.tot td{ border-top:2px solid #cbd5e1; font-weight:800; background:#ffffff; }
+.ai-q tr.z td{ color:#64748b; font-size:11.5px; }
+.ai-q tr.alerta td{ background:#fef2f2; }
+.ai-q .alta{ color:#b91c1c; font-weight:900; }
+.ai-q tr.l td.ai-q-nom, .ai-q tr.z td.ai-q-nom{ padding-left:20px; }
+.ai-q-bar{ display:block; position:relative; height:12px; border-radius:999px; background:#eef2f5; overflow:hidden; }
+.ai-q-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:999px; }
+.ai-q-bar b{ position:absolute; top:0; bottom:0; width:2px; background:#b91c1c; }
+.ai-q6 th{ text-align:center; padding-left:2px; padding-right:2px; } .ai-q6 th:first-child{ text-align:left; padding-left:8px; }
+.ai-q6 td{ text-align:center; font-variant-numeric:tabular-nums; } .ai-q6 td:first-child{ text-align:left; }
+.ai-q6 tr.sin td:first-child{ color:#64748b; font-style:italic; }
+.ai-q-c{ display:inline-block; min-width:26px; border-radius:6px; padding:1px 5px; font-weight:800; color:#0f172a; }
+.ai-q-rep{ border-top:1px solid #eef2f5; padding:6px 0 2px; font-size:12.5px; margin-top:6px; }
 .ai-est{ display:inline-block; border-radius:999px; padding:2px 8px; font-size:11px; font-weight:800; white-space:nowrap; color:#fff; }
 .ai-dias{ display:inline-block; min-width:34px; text-align:center; border-radius:999px; padding:2px 7px; font-weight:900; font-size:12px; }
 .ai-dias.ok{ background:#dcfce7; color:#15803d; } .ai-dias.ojo{ background:#fef3c7; color:#b45309; } .ai-dias.mal{ background:#fee2e2; color:#b91c1c; }
@@ -21514,6 +21575,8 @@ function pintarMotivoAtc(limpiar){
      necesita exactamente lo mismo. */
   pintarAntiguedadAtc();
   if(!atc) pintarAtcFalta(null);
+  /* 🔁 (13/11, 179) ¿ese celular ya tuvo otra ATC? Un instante después: al abrir para editar (o al limpiar) el celular se pone DESPUÉS de esto. */
+  setTimeout(function(){ try{ atcRepPintar(); }catch(e){} }, 0);
   /* 📷 (§4lh) Si la persona pasa la ATC a OC, las fotos del producto recién subidas no se guardarían en ningún lado: se
      borran ahora (las que la ATC ya tenía se quedan en el pedido hasta que se guarde). */
   if(!atc && limpiar && compsArr(FORM_ATC_FOTOS).length){
@@ -28648,6 +28711,7 @@ function atcInformeVisible(){ var w=document.getElementById('atc-informe-wrap');
 function renderAtc(){
   atcInformeVisible();
   llenarSelectAtcMotivo('atc-motivo', true);
+  ATCQ_REP=atcRepMapa();   // 🔁 (179) las ATC de cada celular, una vez por dibujo: el chip «2ª ATC» de cada fila y tarjeta
   var list=atcLista();
   /* El embudo completo: dónde está trabada cada una. */
   var porRec=0, enFab=0, listas=0, prog=0, recFab=0, cerradas=0, sinMot=0, sumDias=0, nDias=0;
@@ -28745,6 +28809,7 @@ function renderAtc(){
     return '<tr class="'+(atcEntregada(p)?'':'row-atc')+'" style="cursor:pointer" onclick="verAtc(\''+esc(p.id)+'\')">'+
       '<td><span class="badge b-atc">🎧 '+esc(p.oc||'—')+'</span>'+
         '<br><span style="display:inline-block;margin-top:3px">'+atcTipoBadge(p)+'</span>'+   // 🛡️🔧 (§4lj)
+        (atcRepNro(p)>1 ? '<br><span style="display:inline-block;margin-top:3px">'+atcRepChip(p)+'</span>' : '')+   // 🔁 (179)
         ((mesSel && atcEntro(p).slice(0,7)<mesSel) ? '<br><span class="badge b-amber" title="Entró en un mes anterior y sigue sin cerrar">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>' : '')+'</td>'+
       '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
         (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
@@ -28765,6 +28830,7 @@ function renderAtc(){
   document.getElementById('tbl-atc').style.display=list.length?'table':'none';
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
   try{ atvPintar(list, mesSel); }catch(e){ console.error(e); }
+  try{ atcqPintar(list); }catch(e){ console.error(e); }   // 📉🔁⏳ (178-180)
 }
 /* ==========================================================================
    🎧 ATC CON EL ESTILO NUEVO (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo»). Solo presentación: las cuentas
@@ -28868,12 +28934,248 @@ function atvPintar(list, mesSel){
       '<div class="atv-c-cli"><b>'+esc(p.cliente||'—')+'</b>'+(p.celular?(' <span>📞 '+esc(p.celular)+'</span>'):'')+'</div>'+
       '<div class="atv-c-p">'+esc(prod)+'</div>'+
       '<div class="atv-c-m">'+atcTipoBadge(p)+' '+(m?('<span class="badge b-gray">'+esc(m)+'</span>'):'<span class="badge b-red">⚠️ sin motivo</span>')+
+        (atcRepNro(p)>1 ? ' '+atcRepChip(p) : '')+   // 🔁 (179)
         (atcComodin(p)?' <span class="badge b-blue">🛏️ comodín</span>':'')+(vieja?(' <span class="badge b-amber">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>'):'')+'</div>'+
       '<div class="atv-hitos">'+hito('📝','Entró',atcEntro(p))+hito('🚚','Recojo',atcRecogida(p))+hito('🏭','De fábrica',atcRecogidoFab(p))+hito('✅','Al cliente',atcEntregada(p))+'</div>'+
       '<div class="atv-c-pie"><span>'+esc(p.vendedor||'')+'</span>'+
         (UNLOCKED?('<button type="button" class="rowbtn" onclick="event.stopPropagation();abrirDevolucionAtc(\''+esc(p.id)+'\')" title="Anotar recojo, devolución de fábrica o entrega al cliente">📦 Anotar avance</button>'):'')+'</div>'+
     '</div>';
   }).join('')+'</div>';
+}
+/* ==========================================================================
+   🎧📉 ATC Y CALIDAD (13/11, mejoras 178, 179 y 180; el dueño las eligió del muestrario). Solo miran: no guardan nada.
+   · 178 «📉 Cada 100 vendidos»: cuántas ATC hubo por cada 100 colchones y somieres VENDIDOS de cada línea, en una ventana FIJA de los
+     últimos ATCQ_MESES meses (el de hoy incluido; nunca antes de PRY_PRIMER_MES, el primer mes entero en el panel). Las ATC por cuándo
+     ENTRARON (`atcEntro`) y las ventas por el día de la VENTA (`contaFecha`). Marca y línea = las del informe (`atciProdDe`), la MISMA
+     regla para la ATC y para lo vendido; solo cuentan los renglones de colchón o somier (`pryTipoProd`, con su cantidad: un combo son
+     dos). Las ventas son las de `cliEntra` (sin ATC, RPT, pedidos internos, borradores ni filas del sistema), sin lo que ROHO manda a sus
+     tiendas («TIENDA n»: es mover mercadería, la regla del stock). Una ATC cuenta UNA vez por línea. Es aproximado: una ATC de la
+     ventana puede ser de un colchón vendido antes. NO sigue los filtros de la pestaña (lo dice el bloque).
+   · 179 «🔁 2ª ATC»: el mismo cliente = el mismo celular (`cliCelClave`, la clave de la ficha del cliente). En el formulario avisa con
+     la anterior (sin frenar); en la pestaña, un chip en las que no son la primera de ese cliente; en el informe, cuántos clientes.
+   · 180 «⏳ A cuántos meses de la compra»: los meses desde la fecha de compra hasta que ENTRÓ la ATC, en tramos, por línea y por motivo.
+     En la pestaña con la lista que se ve (`atcLista`, sigue los filtros); en el informe con las del informe (y con la fecha de Trello 📎,
+     como su tabla: `atciCompra`).
+   ========================================================================== */
+var ATC_TASA_ALERTA=8;          // % · una línea con más ATC que esto por cada 100 vendidos va en rojo
+var ATCQ_MESES=6;               // la ventana de «Cada 100 vendidos»: los últimos 6 meses, el de hoy incluido
+var ATCQ_MIN_VENDIDOS=20;       // con menos vendidos la tasa se muestra pero no va en rojo (1 ATC sobre 5 no dice nada)
+var ATCQ_TRAMOS=[ { t:'0 a 3 meses', c:'0-3', max:3 }, { t:'3 a 6 meses', c:'3-6', max:6 }, { t:'6 a 12 meses', c:'6-12', max:12 },
+  { t:'12 a 24 meses', c:'12-24', max:24 }, { t:'Más de 24 meses', c:'+24', max:1e9 }, { t:'Sin fecha de compra', c:'s/f', max:null } ];
+var ATCQ_COLS=['#dc2626','#ea580c','#d97706','#65a30d','#15803d','#94a3b8'];   // lo que falla temprano, en rojo (apunta a fábrica)
+var ATCQ_REP=null, ATCQ_POR='lin';
+/* ---- 178 · cada 100 vendidos ---- */
+function atcqVentana(hoy){
+  hoy=hoy||todayStr();
+  var d=atciMesMas(hoy.slice(0,7), -(ATCQ_MESES-1))+'-01', p0=PRY_PRIMER_MES+'-01';
+  return { desde:(d<p0 ? p0 : d), hasta:hoy, corta:(d<p0) };
+}
+function atcqVentaEntra(p){ return cliEntra(p) && !(esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(normNombre(p.cliente||''))); }
+/* Las líneas de colchón o somier de una ATC, cada una una vez: {'marca|línea': {marca, lin, prod}}. */
+function atcqLineasAtc(p){
+  var mv=marcaDe(p && p.vendedor)||'', out={};
+  ((p && p.productos)||[]).forEach(function(x){ if(!pryTipoProd(x)) return; var o=atciProdDe(x, mv); if(o) out[o.marca+'|'+o.lin]=o; });
+  return out;
+}
+function atcqTasa(hoy){
+  var V=atcqVentana(hoy), B={}, nAtc=0, fuera=0;
+  var bl=function(m){ return B[m]||(B[m]={ atc:0, vend:0, L:{} }); };
+  var li=function(m, l){ var b=bl(m); return b.L[l]||(b.L[l]={ lbl:l, sin:(l===ATCI_SIN_LINEA), atc:0, vend:0 }); };
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p)) return;
+    if(esATC(p.oc)){
+      var e=atcEntro(p); if(!e || e<V.desde || e>V.hasta) return;
+      nAtc++;
+      var ks=atcqLineasAtc(p), ms={}, alguna=false;
+      for(var k in ks){ alguna=true; li(ks[k].marca, ks[k].lin).atc++; ms[ks[k].marca]=1; }
+      for(var m in ms) bl(m).atc++;
+      if(!alguna) fuera++;
+      return;
+    }
+    if(!atcqVentaEntra(p)) return;
+    var f=contaFecha(p); if(!f || f<V.desde || f>V.hasta) return;
+    var mv=marcaDe(p.vendedor)||'';
+    (p.productos||[]).forEach(function(x){
+      var t=pryTipoProd(x), n=Number(x && x.cant)||0; if(!t || !(n>0)) return;
+      var o=atciProdDe(x, mv); if(!o) return;
+      var u=n*(t==='combo' ? 2 : 1);
+      li(o.marca, o.lin).vend+=u; bl(o.marca).vend+=u;
+    });
+  });
+  var tasa=function(o){ o.tasa=o.vend ? Math.round(o.atc/o.vend*1000)/10 : null; o.pocos=(o.vend<ATCQ_MIN_VENDIDOS); o.alerta=(!o.pocos && o.tasa!=null && o.tasa>ATC_TASA_ALERTA); return o; };
+  var tot={ atc:0, vend:0 };
+  var marcas=ATCI_MARCAS.map(function(g){
+    var b=B[g.k]; if(!b || (!b.atc && !b.vend)) return null;
+    tot.atc+=b.atc; tot.vend+=b.vend;
+    var L=Object.keys(b.L).map(function(k){ return tasa(b.L[k]); })
+      .sort(function(a, c){ return (a.sin-c.sin) || (c.atc-a.atc) || (c.vend-a.vend) || (a.lbl<c.lbl ? -1 : 1); });
+    return tasa({ k:g.k, lbl:g.lbl, ico:g.ico, col:g.col, txt:g.txt, atc:b.atc, vend:b.vend, lineas:L });
+  }).filter(Boolean);
+  var alertas=[]; marcas.forEach(function(m){ m.lineas.forEach(function(l){ if(l.alerta) alertas.push({ marca:m.lbl, lin:l.lbl, tasa:l.tasa }); }); });
+  return { desde:V.desde, hasta:V.hasta, corta:V.corta, marcas:marcas, tot:tasa(tot), nAtc:nAtc, fuera:fuera, alertas:alertas };
+}
+function atcqTasaTxt(t){ return t==null ? '—' : (atciNum(t)+' %'); }
+/* Las filas de la tabla (pestaña e informe): cada marca, sus líneas CON alguna ATC y, en una sola fila, las que no tuvieron ninguna (con sus
+   nombres y lo vendido: también dice algo, y sin juntarlas la tabla pasaba de 25 renglones). Al final, «Todas». */
+function atcqFilasTasa(T){
+  var F=[];
+  T.marcas.forEach(function(m){
+    F.push({ t:'m', o:m });
+    /* una marca sin ATC (ROHO, hoy) o con una sola línea «sin línea» (Sin marca): su fila ya lo dice todo */
+    if(!m.atc || (m.lineas.length===1 && m.lineas[0].sin)) return;
+    m.lineas.forEach(function(l){ if(l.atc) F.push({ t:'l', o:l }); });
+    var cero=m.lineas.filter(function(l){ return !l.atc; });
+    if(cero.length){
+      var v=cero.reduce(function(s, l){ return s+l.vend; }, 0);
+      F.push({ t:'z', o:{ lbl:'Sin ATC: '+cero.map(function(l){ return l.sin ? 'sin línea en el nombre' : l.lbl; }).join(', '), atc:0, vend:v, tasa:(v ? 0 : null), pocos:(v<ATCQ_MIN_VENDIDOS), alerta:false } });
+    }
+  });
+  F.push({ t:'tot', o:T.tot });
+  return F;
+}
+function atcqVentanaTxt(T){ return 'del '+fmtFecha(T.desde)+' al '+fmtFecha(T.hasta); }
+/* ---- 179 · el mismo cliente con otra ATC ---- */
+function atcRepClave(p){ return cliCelClave(p && p.celular); }
+function atcRepOrden(a, b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y ? -1 : 1; return ((Number(a.ts)||0)-(Number(b.ts)||0)) || (String(a.id)<String(b.id) ? -1 : 1); }
+/* Las ATC de cada celular, de la primera a la última: {clave: [p, p…]}. */
+function atcRepMapa(){
+  var M={};
+  (STATE||[]).forEach(function(p){ if(!p || !esATC(p.oc) || esFilaSistema(p)) return; var k=atcRepClave(p); if(k) (M[k]||(M[k]=[])).push(p); });
+  for(var k in M) M[k].sort(atcRepOrden);
+  return M;
+}
+/* Qué número de ATC es para ese cliente (1 = la primera; 0 = sin celular). */
+function atcRepNro(p, M){
+  var k=atcRepClave(p); if(!k) return 0;
+  var L=(M||ATCQ_REP||atcRepMapa())[k]||[];
+  for(var i=0;i<L.length;i++) if(String(L[i].id)===String(p.id)) return i+1;
+  return 0;
+}
+function atcRepChip(p, M){
+  var n=atcRepNro(p, M); if(n<2) return '';
+  return '<span class="badge b-rep" title="El mismo cliente (mismo celular) ya tuvo '+(n-1)+' ATC antes">🔁 '+n+'ª ATC</span>';
+}
+/* Los clientes de una lista que tienen MÁS de una ATC (contando las de antes y las de después): [{cli, L:[todas sus ATC]}]. */
+function atcRepClientes(list, M){
+  M=M||atcRepMapa(); var vis={}, out=[];
+  (list||[]).forEach(function(p){ var k=atcRepClave(p); if(!k || vis[k]) return; vis[k]=1; var L=M[k]||[]; if(L.length>1) out.push({ k:k, cli:(L[L.length-1].cliente||p.cliente||'—'), L:L }); });
+  return out.sort(function(a, b){ return (b.L.length-a.L.length) || (atcEntro(b.L[b.L.length-1])<atcEntro(a.L[a.L.length-1]) ? -1 : 1); });
+}
+/* En el formulario de una ATC: si ese celular ya tuvo otra, se avisa con lo que pasó. Solo avisa: no frena el guardado. */
+function atcRepPintar(){
+  var box=document.getElementById('atc-otra'); if(!box) return;
+  var k=(docTipoSel()==='ATC') ? cliCelClave((document.getElementById('f-celular')||{}).value) : '';
+  var L=k ? (STATE||[]).filter(function(p){ return p && esATC(p.oc) && !esFilaSistema(p) && String(p.id)!==String(EDIT_ID||'') && atcRepClave(p)===k; }).sort(atcRepOrden).reverse() : [];
+  if(!L.length){ box.hidden=true; box.innerHTML=''; box._h=''; return; }
+  var ver=L.slice(0, 3);
+  var h='<div class="atc-otra-t">🔁 <b>Este cliente ya tuvo '+(L.length===1 ? 'otra ATC' : (L.length+' ATC'))+'</b> (mismo celular). '+
+      '<span>No frena: es para que sepas que vuelve a reclamar. Si es el mismo problema, contalo en el detalle.</span></div>'+
+    ver.map(function(p){
+      var e=atcEstadoLbl(atcEstado(p)), hizo=atcQueSeHizo(p);
+      return '<div class="atc-otra-f"><div class="atc-otra-c"><b>🎧 '+esc(p.oc||'ATC')+'</b> · entró el '+esc(fmtFecha(atcEntro(p)))+
+          ' · <span class="badge '+e.cls+'">'+esc(e.lbl)+'</span>'+
+          ' <button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(String(p.id))+'" onclick="verAtc(this.getAttribute(\'data-id\'))">🔍 Ver</button></div>'+
+        '<div>Motivo: <b>'+esc(atcMotivo(p)||'sin anotar')+'</b> · Producto: '+esc(atciProdTxt(p))+'</div>'+
+        '<div>Qué se hizo: '+(hizo ? esc(hizo) : '<i>todavía no se anotó</i>')+'</div></div>';
+    }).join('')+
+    (L.length>ver.length ? '<div class="atc-otra-mas">y '+(L.length-ver.length)+' más en la pestaña ATC.</div>' : '');
+  box.hidden=false;
+  if(box._h!==h){ box.innerHTML=h; box._h=h; }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var fc=document.getElementById('f-celular'); if(fc){ fc.addEventListener('input', atcRepPintar); fc.addEventListener('change', atcRepPintar); }
+  var fd=document.getElementById('f-doc-tipo'); if(fd) fd.addEventListener('click', function(){ setTimeout(atcRepPintar, 0); });
+});
+/* ---- 180 · a cuántos meses de la compra ---- */
+/* Meses enteros entre la compra y la ATC (como se cuentan los cumpleaños); null si falta una fecha o la compra es posterior. */
+function atcqMeses(compra, entro){
+  var a=String(compra||'').match(/^(\d{4})-(\d{2})-(\d{2})$/), b=String(entro||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(!a || !b || String(compra)>String(entro).slice(0,10)) return null;
+  var m=(+b[1]-+a[1])*12+(+b[2]-+a[2]); if(+b[3]<+a[3]) m--;
+  return m<0 ? null : m;
+}
+function atcqTramo(m){
+  if(m==null) return ATCQ_TRAMOS.length-1;
+  for(var i=0;i<ATCQ_TRAMOS.length-1;i++) if(m<ATCQ_TRAMOS[i].max) return i;
+  return ATCQ_TRAMOS.length-2;
+}
+/* Por tramo, por línea (marca + línea, como el informe) y por motivo. `M` = el mapa de Trello del informe (sin él, solo la fecha guardada). */
+function atcqEdades(list, M){
+  var cero=function(){ return ATCQ_TRAMOS.map(function(){ return 0; }); };
+  var tot=cero(), L={}, Mo={}, meses=[], tre=0, sinProd=0;
+  var ico={}; ATCI_MARCAS.forEach(function(g){ ico[g.k]=g.ico; });
+  (list||[]).forEach(function(p){
+    var c=atciCompra(p, M), m=c ? atcqMeses(c.f, atcEntro(p)) : null, t=atcqTramo(m);
+    tot[t]++;
+    if(m!=null){ meses.push(m); if(c.tre) tre++; }
+    var mot=atciMotivoDe(p), o=Mo[mot]||(Mo[mot]={ lbl:mot, sin:(mot===ATCI_SIN_MOTIVO), n:0, t:cero() }); o.n++; o.t[t]++;
+    var ps=atciProdsAtc(p), vis={};
+    if(!ps.length) sinProd++;
+    ps.forEach(function(x){
+      var k=x.marca+'|'+x.lin; if(vis[k]) return; vis[k]=1;
+      var l=L[k]||(L[k]={ lbl:(ico[x.marca]||ico[''])+' '+(x.lin===ATCI_SIN_LINEA ? 'Sin línea' : x.lin), sin:(x.lin===ATCI_SIN_LINEA), n:0, t:cero() }); l.n++; l.t[t]++;
+    });
+  });
+  var porN=function(a, b){ return (a.sin-b.sin) || (b.n-a.n) || (a.lbl<b.lbl ? -1 : 1); };
+  return { n:(list||[]).length, tot:tot, con:meses.length, tre:tre, sinProd:sinProd, med:atciMediana(meses), temprano:tot[0]+tot[1],
+    lineas:Object.keys(L).map(function(k){ return L[k]; }).sort(porN), motivos:Object.keys(Mo).map(function(k){ return Mo[k]; }).sort(porN) };
+}
+/* ---- en la pestaña ---- */
+function atcqPor(v){ ATCQ_POR=(v==='mot') ? 'mot' : 'lin'; try{ atcqPintar(atcLista()); }catch(e){ console.error(e); } }
+function atcqTasaHtml(T){
+  var fila=function(o, cls, nom){
+    var tc=o.tasa==null ? '<span class="atq-gris">sin ventas</span>' : ('<b class="atq-tasa'+(o.alerta ? ' alta' : '')+'">'+esc(atcqTasaTxt(o.tasa))+'</b>'+(o.pocos && o.atc ? ' <small class="atq-gris">pocos vendidos</small>' : ''));
+    return '<tr class="'+cls+(o.alerta ? ' alerta' : '')+'"><td>'+nom+'</td><td class="n">'+o.atc+'</td><td class="n">'+o.vend+'</td><td class="n">'+tc+'</td></tr>';
+  };
+  var cuerpo=atcqFilasTasa(T).map(function(f){
+    var o=f.o;
+    if(f.t==='m') return fila(o, 'atq-mr', '<b style="color:'+o.txt+'">'+o.ico+' '+esc(o.lbl)+'</b>');
+    if(f.t==='tot') return fila(o, 'atq-tot', 'Todas');
+    return fila(o, 'atq-ln'+((f.t==='z' || o.sin) ? ' sin' : ''), esc(o.lbl));
+  }).join('');
+  return '<div class="atq-caja" id="atq-tasa"><div class="atv-t">📉 Cada 100 vendidos <small>ATC por cada 100 colchones y somieres vendidos de la línea · '+
+      'últimos '+ATCQ_MESES+' meses ('+esc(atcqVentanaTxt(T))+'), todas las ATC: no sigue los filtros de arriba</small></div>'+
+    (T.marcas.length
+      ? ('<div class="atq-tw"><table class="atq-t"><thead><tr><th>Línea</th><th class="n">ATC</th><th class="n">Vendidos</th><th class="n">Cada 100</th></tr></thead><tbody>'+cuerpo+'</tbody></table></div>')
+      : '<div class="atq-gris">Todavía no hay ventas ni ATC en la ventana.</div>')+
+    '<div class="atq-nota">Aproximado: algunas ATC son de colchones vendidos antes de la ventana. En rojo, más de '+ATC_TASA_ALERTA+' cada 100 (con al menos '+ATCQ_MIN_VENDIDOS+' vendidos). '+
+      'Una ATC cuenta una vez por línea; los vendidos son colchones y somieres (un combo, dos)'+
+      (T.fuera ? '; '+T.fuera+' ATC de la ventana no son de un colchón o somier (almohadas, patas…) y no entran' : '')+'.</div></div>';
+}
+function atcqEdadesHtml(E){
+  var max=0; E.tot.forEach(function(n){ if(n>max) max=n; });
+  var barras=ATCQ_TRAMOS.map(function(o, i){
+    var n=E.tot[i], w=(max && n) ? Math.max(4, Math.round(n/max*100)) : 0;
+    return '<div class="atq-b'+(i===ATCQ_TRAMOS.length-1 ? ' sin' : '')+'"><span class="atq-b-n">'+esc(o.t)+'</span><span class="atq-b-b"><i style="width:'+w+'%;background:'+ATCQ_COLS[i]+'"></i></span>'+
+      '<span class="atq-b-v"><b>'+n+'</b>'+(E.n ? ' ('+atciPc(n, E.n)+'%)' : '')+'</span></div>';
+  }).join('');
+  var filas=(ATCQ_POR==='mot') ? E.motivos : E.lineas;
+  var tabla=filas.length ? ('<div class="atq-tw"><table class="atq-t atq-t6"><thead><tr><th>'+(ATCQ_POR==='mot' ? 'Motivo' : 'Línea')+'</th>'+
+      ATCQ_TRAMOS.map(function(o){ return '<th class="n">'+esc(o.c)+'</th>'; }).join('')+'<th class="n">Total</th></tr></thead><tbody>'+
+      filas.map(function(f){ return '<tr'+(f.sin ? ' class="sin"' : '')+'><td>'+esc(f.lbl)+'</td>'+f.t.map(function(n, i){ return '<td class="n">'+(n ? '<span class="atq-c" style="color:'+ATCQ_COLS[i]+'">'+n+'</span>' : '<span class="atq-gris">·</span>')+'</td>'; }).join('')+
+        '<td class="n"><b>'+f.n+'</b></td></tr>'; }).join('')+'</tbody></table></div>') : '';
+  return '<div class="atq-caja" id="atq-edad"><div class="atv-t">⏳ A cuántos meses de la compra falla <small>'+E.n+' ATC de la lista · '+E.con+' con fecha de compra'+
+      (E.med!=null ? ' · la mitad, antes de los '+atciNum(E.med)+' meses' : '')+'</small></div>'+
+    (E.n ? ('<div class="atq-bs">'+barras+'</div>'+
+      '<div class="atq-seg" role="group" aria-label="Ver por"><button type="button" class="'+(ATCQ_POR==='lin' ? 'on' : '')+'" onclick="atcqPor(\'lin\')">Por línea</button>'+
+        '<button type="button" class="'+(ATCQ_POR==='mot' ? 'on' : '')+'" onclick="atcqPor(\'mot\')">Por motivo</button></div>'+tabla+
+      '<div class="atq-nota">Meses desde la fecha de compra hasta que entró la ATC. Lo que falla en los primeros meses apunta a fábrica; lo de años, al uso. Sigue los filtros de arriba.</div>')
+      : '<div class="atq-gris">No hay ATC para este filtro.</div>')+'</div>';
+}
+function atcqRepHtml(list){
+  var C=atcRepClientes(list, ATCQ_REP); if(!C.length) return '';
+  var ver=C.slice(0, 6);
+  return '<div class="atq-caja" id="atq-rep"><div class="atv-t">🔁 Volvieron a reclamar <small>'+C.length+' cliente'+(C.length===1 ? '' : 's')+' de la lista con más de una ATC (mismo celular)</small></div>'+
+    ver.map(function(c){
+      return '<div class="atq-r"><b>'+esc(c.cli)+'</b> <span>'+c.L.map(function(p){
+        return '<button type="button" class="atq-r-b" data-id="'+esc(String(p.id))+'" onclick="verAtc(this.getAttribute(\'data-id\'))" title="Ver la ATC">'+esc(p.oc||'ATC')+' · '+esc(fmtFechaCorta(atcEntro(p)))+' · '+esc(atcMotivo(p)||'sin motivo')+'</button>';
+      }).join(' → ')+'</span></div>';
+    }).join('')+(C.length>ver.length ? '<div class="atq-nota">y '+(C.length-ver.length)+' más.</div>' : '')+'</div>';
+}
+function atcqPintar(list){
+  var box=document.getElementById('atc-calidad'); if(!box) return;
+  if(!ATCQ_REP) ATCQ_REP=atcRepMapa();
+  box.innerHTML='<div class="atq-grid">'+atcqTasaHtml(atcqTasa())+atcqEdadesHtml(atcqEdades(list||[]))+atcqRepHtml(list||[])+'</div>';
 }
 /* ==========================================================================
    📄 INFORME DE ATC EN PDF (§4le, 15/10, dueño: «en la pestaña de ATC del panel quiero un botón que genere un informe en PDF y ese
@@ -28990,20 +29292,26 @@ function atciLineaDe(marca, s){
   L.forEach(function(r){ var i=s.search(r[0]); if(i>=0 && i<at){ at=i; best=r[1]; } });
   return best;
 }
+/* Marca, línea y nombre de UN renglón (`mv` = la marca de quien lo cargó, para cuando el nombre no la dice); null sin nombre.
+   (13/11, 178) La usa también «📉 Cada 100 vendidos» para los renglones de las VENTAS: la misma regla para las ATC y lo vendido. */
+function atciProdDe(x, mv){
+  var cod=String((x && x.codigo)||'').trim().toUpperCase(), c=cod && CODIGOS[cod], orig=c ? c.d : String((x && x.desc)||'');
+  if(!String(orig).trim()) return null;
+  var s=atciNomBase(orig);
+  var marca=stockMarcaDeNombre(orig) || (/PEDIC\b|\bFLEX\b|\bROHO\b/.test(s) ? 'roho' : '') || (/\bTITANIO\b|\bICE\b|\bLATEX\b|\bVISCOLASTICO\b|\bBI RELAX\b/.test(s) ? 'heaven' : '') || (mv||'');
+  var lin=atciLineaDe(marca, s)||ATCI_SIN_LINEA;
+  var vist={}, prod=s.replace(ATCI_RELLENO, ' ').split(/\s+/).filter(function(w){ if(!w || vist[w]) return false; vist[w]=1; return true; }).join(' ');
+  prod=prod||s||stockNorm(orig);
+  return { marca:marca, lin:lin, prod:prod };
+}
 /* Los productos de una ATC con su marca, línea y nombre (dos renglones del mismo producto, una vez). */
 function atciProdsAtc(p){
   var mv=marcaDe(p && p.vendedor)||'', vis={}, out=[];
   ((p && p.productos)||[]).forEach(function(x){
-    var cod=String((x && x.codigo)||'').trim().toUpperCase(), c=cod && CODIGOS[cod], orig=c ? c.d : String((x && x.desc)||'');
-    if(!String(orig).trim()) return;
-    var s=atciNomBase(orig);
-    var marca=stockMarcaDeNombre(orig) || (/PEDIC\b|\bFLEX\b|\bROHO\b/.test(s) ? 'roho' : '') || (/\bTITANIO\b|\bICE\b|\bLATEX\b|\bVISCOLASTICO\b|\bBI RELAX\b/.test(s) ? 'heaven' : '') || mv;
-    var lin=atciLineaDe(marca, s)||ATCI_SIN_LINEA;
-    var vist={}, prod=s.replace(ATCI_RELLENO, ' ').split(/\s+/).filter(function(w){ if(!w || vist[w]) return false; vist[w]=1; return true; }).join(' ');
-    prod=prod||s||stockNorm(orig);
-    var k=marca+'|'+lin+'|'+prod;
+    var o=atciProdDe(x, mv); if(!o) return;
+    var k=o.marca+'|'+o.lin+'|'+o.prod;
     if(vis[k]) return; vis[k]=1;
-    out.push({ marca:marca, lin:lin, prod:prod });
+    out.push(o);
   });
   return out;
 }
@@ -29162,7 +29470,10 @@ function atciDatos(mes, tipo){
     n:n, nAnt:delAnt.length, del:del, antes:antes, est:est, cerr:cerr, abiertas:abiertas, sinMot:sinMot, comodin:comodin, comodinAb:comodinAb,
     prom:prom, promAnt:promAnt, med:atciMediana(diasC), max:(diasC.length ? Math.max.apply(null, diasC) : null), mas15:mas15,
     mot:mot, motTop:motTop, prod:prod, dichos:dichos, vend:vend, marcas:marcas, lin:lin, edades:edades, sinEdad:sinEdad, edTre:edTre, trelloM:trelloM,
-    tRec:tRec, tFab:tFab, tVue:tVue, distC:distC, distA:distA, tend:tend, I:I
+    tRec:tRec, tFab:tFab, tVue:tVue, distC:distC, distA:distA, tend:tend, I:I,
+    /* 📉🔁⏳ (13/11, 178-180) la tasa mira su ventana fija (no el mes del informe); los que volvieron a reclamar y los meses desde la
+       compra, con las ATC del informe */
+    cal:{ tasa:atcqTasa(hoy), rep:atcRepClientes(del, atcRepMapa()), edad:atcqEdades(del, trelloM) }
   };
 }
 /* ---- las piezas de las hojas ---- */
@@ -29390,6 +29701,83 @@ function atciLineasHojas(D){
       H.html+nota);
   });
 }
+/* 📉🔁 (13/11, 178 y 179) «Cada 100 vendidos»: la tabla de `atcqFilasTasa` (la misma de la pestaña) con una barra que marca el umbral, y al
+   lado los clientes que volvieron a reclamar. Lo que no entra en la primera hoja sigue en otra, la tabla a lo ancho. Los altos son de la
+   hoja impresa: una fila = 1, la de «Sin ATC» (dos renglones) = 1,5. */
+var ATCQ_PDF_FILAS={ primera:18, otras:19 };
+function atciCalidadHojas(D){
+  var C=D.cal||{}, T=C.tasa, R=C.rep||[]; if(!T) return [];
+  var F=atcqFilasTasa(T), maxT=ATC_TASA_ALERTA*1.5;
+  F.forEach(function(f){ if(f.o.tasa!=null && f.o.tasa>maxT) maxT=f.o.tasa; });
+  var umbral=Math.round(ATC_TASA_ALERTA/maxT*1000)/10;
+  var fila=function(f, ancho){
+    var o=f.o, w=(o.tasa!=null && maxT) ? Math.max(o.tasa ? 2 : 0, Math.round(o.tasa/maxT*100)) : 0;
+    var nom=(f.t==='m') ? '<div class="ai-c1"><b style="color:'+o.txt+'">'+o.ico+' '+esc(o.lbl)+'</b></div>'
+      : (f.t==='tot' ? '<div class="ai-c1"><b>Todas</b></div>' : (f.t==='z' ? '<div class="ai-c2">'+esc(ancho ? o.lbl : atciCorta(o.lbl, 56))+'</div>' : '<div class="ai-c1">'+esc(o.lbl)+'</div>'));
+    var tc=(o.tasa==null) ? '<span style="color:#94a3b8">sin ventas</span>' : ('<b'+(o.alerta ? ' class="alta"' : '')+'>'+esc(atcqTasaTxt(o.tasa))+'</b>');
+    return '<tr class="'+f.t+(o.alerta ? ' alerta' : '')+'"><td class="ai-q-nom">'+nom+'</td><td class="n">'+o.atc+'</td><td class="n">'+o.vend+'</td><td class="n">'+tc+'</td>'+
+      '<td><span class="ai-q-bar"><i style="width:'+w+'%;background:'+(o.alerta ? '#dc2626' : (f.t==='m' || f.t==='tot' ? '#0f766e' : '#00B5AD'))+'"></i><b style="left:'+umbral+'%"></b></span></td></tr>';
+  };
+  var tabla=function(L, ancho){
+    return '<table class="ai-tabla ai-q"><colgroup><col style="width:'+(ancho ? 330 : 210)+'px"><col style="width:44px"><col style="width:72px"><col style="width:'+(ancho ? 96 : 74)+'px"><col></colgroup>'+
+      '<thead><tr><th>Línea</th><th class="n">ATC</th><th class="n">Vendidos</th><th class="n">Cada 100</th><th>Raya roja = '+ATC_TASA_ALERTA+' %</th></tr></thead><tbody>'+L.map(function(f){ return fila(f, ancho); }).join('')+'</tbody></table>';
+  };
+  /* las filas, en hojas */
+  var trozos=[], cur=[], usado=0, cap=ATCQ_PDF_FILAS.primera;
+  F.forEach(function(f){ var h=(f.t==='z') ? 1.5 : 1; if(cur.length && usado+h>cap){ trozos.push(cur); cur=[]; usado=0; cap=ATCQ_PDF_FILAS.otras; } cur.push(f); usado+=h; });
+  if(cur.length) trozos.push(cur);
+  if(!trozos.length) trozos.push([]);
+  var ventana='Últimos '+ATCQ_MESES+' meses, '+esc(atcqVentanaTxt(T))+(T.corta ? ' (desde que el panel tiene un mes entero de ventas)' : '');
+  var izq='<div class="ai-caja"><h3>📉 ATC cada 100 vendidos <small>'+T.tot.atc+' ATC · '+T.tot.vend+' vendidos</small></h3>'+
+    (T.marcas.length ? tabla(trozos[0], false) : '<div class="ai-nota">Todavía no hay ventas ni ATC en la ventana.</div>')+
+    (trozos.length>1 ? '<div class="ai-nota">Siguen más líneas en la hoja siguiente.</div>' : '')+'</div>';
+  var mesTxt=D.todas ? 'de todas las ATC' : ('de las '+D.n+' ATC de '+esc(MESES_ES[+D.mes.slice(5,7)-1]));
+  var rep='<div class="ai-caja"><h3>🔁 Volvieron a reclamar</h3>'+
+    '<div style="display:flex;align-items:baseline;gap:12px"><b style="font-size:42px;line-height:1;font-weight:900;color:'+(R.length ? '#c2410c' : '#15803d')+'">'+R.length+'</b>'+
+      '<span style="font-size:14px;color:#334155;font-weight:700">cliente'+(R.length===1 ? '' : 's')+' con más de una ATC</span></div>'+
+    '<div class="ai-nota" style="margin-top:6px">'+mesTxt+', contando las de antes y las de después (el mismo celular).</div>'+
+    R.slice(0, 4).map(function(c){
+      return '<div class="ai-q-rep"><div class="ai-c1"><b>'+esc(atciCorta(c.cli, 34))+'</b> · '+c.L.length+' ATC</div><div class="ai-c2" style="color:#64748b">'+
+        c.L.map(function(p){ return esc(p.oc||'ATC')+' ('+esc(fmtFechaCorta(atcEntro(p)))+', '+esc(atcMotivo(p)||'sin motivo')+')'; }).join(' → ')+'</div></div>';
+    }).join('')+(R.length>4 ? '<div class="ai-nota" style="margin-top:4px">Y '+(R.length-4)+' más.</div>' : '')+'</div>';
+  var lee='<div class="ai-caja" style="margin-top:14px"><h3>📏 Cómo se lee</h3><div style="font-size:12px;color:#334155;line-height:1.4">'+
+    'ATC por cada 100 colchones y somieres vendidos de la línea, en la ventana de arriba (no cambia con el mes del informe). '+
+    'En rojo, más de <b>'+ATC_TASA_ALERTA+'</b> (con al menos '+ATCQ_MIN_VENDIDOS+' vendidos). <b>Aproximado</b>: algunas ATC son de colchones vendidos antes.'+
+    (T.fuera ? ' '+T.fuera+' ATC no son de un colchón o somier y no entran.' : '')+'</div></div>';
+  var hojas=[atciHoja('Calidad', '¿Cuántas ATC cada 100 vendidos?', ventana+'.', '<div class="ai-g2" style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px">'+izq+'<div>'+rep+lee+'</div></div>')];
+  for(var h=1;h<trozos.length;h++)
+    hojas.push(atciHoja('Calidad', 'Cada 100 vendidos <span style="color:#94a3b8;font-weight:700;font-size:20px">('+(h+1)+' de '+trozos.length+')</span>', '',
+      '<div class="ai-caja">'+tabla(trozos[h], true)+'</div>'));
+  return hojas;
+}
+/* ⏳ (13/11, 180) A cuántos meses de la compra: los tramos en barras, por motivo y por línea (las ATC del informe). */
+var ATCQ_PDF_LINEAS=13;
+function atciMesesHoja(D){
+  var E=D.cal && D.cal.edad; if(!E || !E.n) return '';
+  var celda=function(n, i, max){ if(!n) return '<td><span style="color:#cbd5e1">·</span></td>'; var a=max ? (0.14+0.5*n/max) : 0.14; return '<td><span class="ai-q-c" style="background:'+atciTinte(ATCQ_COLS[i], a)+'">'+n+'</span></td>'; };
+  var matriz=function(titulo, L){
+    var max=0; L.forEach(function(f){ f.t.forEach(function(n){ if(n>max) max=n; }); });
+    return '<table class="ai-tabla ai-q ai-q6"><colgroup><col style="width:150px">'+ATCQ_TRAMOS.map(function(){ return '<col>'; }).join('')+'<col style="width:52px"></colgroup>'+
+      '<thead><tr><th>'+titulo+'</th>'+ATCQ_TRAMOS.map(function(o, i){ return '<th style="color:'+ATCQ_COLS[i]+'">'+esc(o.c)+'</th>'; }).join('')+'<th>Total</th></tr></thead><tbody>'+
+      L.map(function(f){ return '<tr'+(f.sin ? ' class="sin"' : '')+'><td class="ai-q-nom"><div class="ai-c1">'+esc(f.lbl===ATCI_SIN_MOTIVO ? 'Sin motivo' : f.lbl)+'</div></td>'+
+        f.t.map(function(n, i){ return celda(n, i, max); }).join('')+'<td><b>'+f.n+'</b></td></tr>'; }).join('')+'</tbody></table>';
+  };
+  var L=E.lineas.slice(0, ATCQ_PDF_LINEAS), resto=E.lineas.slice(ATCQ_PDF_LINEAS);
+  if(resto.length){
+    var o={ lbl:'Otras '+resto.length+' líneas', sin:true, n:0, t:ATCQ_TRAMOS.map(function(){ return 0; }) };
+    resto.forEach(function(f){ o.n+=f.n; f.t.forEach(function(n, i){ o.t[i]+=n; }); });
+    L.push(o);
+  }
+  var barras=atciBarras(ATCQ_TRAMOS.map(function(t, i){ return { lbl:t.t, n:E.tot[i], col:ATCQ_COLS[i] }; }), E.n, null, '150px 1fr 76px');
+  var izq='<div class="ai-caja"><h3>⏳ Cuántos meses después de la compra <small>'+E.n+' ATC · '+E.con+' con fecha de compra'+(E.tre ? ' · 📎 '+E.tre+' según Trello' : '')+'</small></h3>'+barras+
+    '<h3 style="margin-top:16px">💬 Por motivo</h3>'+matriz('Motivo', E.motivos)+'</div>';
+  var der='<div class="ai-caja"><h3>🧩 Por línea</h3>'+matriz('Línea', L)+
+    '<div class="ai-nota">Meses enteros desde la fecha de compra hasta que entró la ATC. Lo que falla en los primeros meses apunta a fábrica; lo de años, al uso. '+
+      (E.con ? '<b>'+E.temprano+' de '+E.con+'</b> con fecha fallaron en los primeros 6 meses'+(E.med!=null ? '; la mitad, antes de los '+atciNum(E.med)+' meses' : '')+'.' : '')+
+      (E.sinProd ? ' '+E.sinProd+' ATC sin producto anotado no entran en «por línea».' : '')+'</div></div>';
+  return atciHoja('Calidad', '¿A cuántos meses de la compra falla?', 'Ayuda a decidir garantía o contra costo y a ver si un problema es de fábrica (falla temprano) o de uso.',
+    '<div class="ai-g2b" style="grid-template-columns:minmax(0,1fr) minmax(0,1fr)">'+izq+der+'</div>');
+}
 function atciDonde(D){
   var pasos='<div class="ai-pasos">'+ATV_PASOS.map(function(o){
     var n=D.est[o.k]||0;
@@ -29491,6 +29879,7 @@ function atciHojas(D){
   var H=[atciPortada(D)];
   if(D.n){
     H.push(atciResumen(D), atciMotivos(D), atciProductos(D)); H=H.concat(atciProductosResto(D), atciLineasHojas(D));
+    H=H.concat(atciCalidadHojas(D)); var _mh=atciMesesHoja(D); if(_mh) H.push(_mh);   // 📉🔁⏳ (13/11, 178-180)
     H.push(atciDonde(D)); H=H.concat(atciAbiertasResto(D));
     H.push(atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D));
   }
@@ -31008,6 +31397,7 @@ function verAtc(id){
         '<span class="badge '+est.cls+'" style="font-size:.75rem">'+esc(est.lbl)+'</span>'+
         (d!=null?('<span style="font-size:.8rem;color:var(--muted)"><b>'+d+'</b> día'+(d===1?'':'s')+(atcEntregada(p)?' en total':' desde que entró')+'</span>'):'')+
         (atcComodin(p)?'<span class="badge b-blue b-comodin" title="Hay que traerlo de vuelta al entregarle el suyo">🛏️ con comodín</span>':'')+
+        atcRepChip(p, atcRepMapa())+   // 🔁 (179) la 2ª, 3ª… ATC del mismo celular
       '</div>'+
 
       /* Los datos, en rejilla: ocupan un tercio de lo que ocupaban apilados. */
