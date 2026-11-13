@@ -77,6 +77,77 @@ def vendor_cfg(name):
             return v
     return None
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  🎯 (13/11, mejora 175) LA META EN Bs DE CADA VENDEDORA SALE DEL PANEL DE PEDIDOS
+#  El dueño quiere cargar las metas en UN solo lugar: el panel (Proyección → 🎯 Metas, o el Cierre comercial). Viven en la fila
+#  del sistema `__metas__` de la planilla, columna «observaciones»: `{"v":1, "m":{"2026-11":{"heaven":…, "vd":{"Nombre":[mínima,
+#  presupuesto]}, "esc":…}}}`. Para el mes que se arma, la meta en Bs de cada vendedora = su PRESUPUESTO (si es 0, la mínima), con el
+#  nombre emparejado sin tildes ni mayúsculas (como `vendor_cfg`). La meta de CIERRES sigue en VENDOR_CFG.
+#  · NO es esencial: sin PANEL_URL, con la lectura caída o sin metas por vendedora para ese mes, queda VENDOR_CFG como antes y el
+#    panel se publica igual (nada va a `_FALLAS`).
+#  · La lectura (`list`) trae la planilla entera, con datos de clientes, y el registro de Actions y el index.html son PÚBLICOS:
+#    de la respuesta solo se usa la fila `__metas__` y solo se imprime CUÁNTAS vendedoras tienen meta. Nunca la dirección del panel.
+# ─────────────────────────────────────────────────────────────────────────────
+PANEL_URL = (os.environ.get("PANEL_URL", "") or "").strip()
+META_FILA = "__metas__"
+
+def _panel_leer_lista():
+    """La lectura del panel como la hace el navegador (POST `{"action":"list"}` en texto plano). Dos intentos: Google a veces
+    pierde el redirect (404) o contesta con la lectura del GET (que también trae `pedidos`, y sirve igual). Devuelve la lista
+    de filas o lanza una excepción SIN la dirección adentro."""
+    cuerpo = json.dumps({"action": "list", "quien": "", "dispositivo": "dashboard-github", "cola": 0, "colaIds": []}).encode("utf-8")
+    ult = "sin respuesta"
+    for intento in range(2):
+        sep = "&" if "?" in PANEL_URL else "?"
+        req = _rq.Request(PANEL_URL + sep + "_=" + str(int(time.time() * 1000)), data=cuerpo, method="POST",
+                          headers={"Content-Type": "text/plain;charset=utf-8"})
+        try:
+            with _rq.urlopen(req, timeout=60) as r:   # (Google lento a ratos: 59 s el 29/09) dos intentos = 2 min como mucho
+                res = json.loads(r.read().decode("utf-8"))
+            if isinstance(res, dict) and isinstance(res.get("pedidos"), list):
+                return res["pedidos"]
+            ult = "respuesta sin la lista" + (f" ({str(res.get('error'))[:30]})" if isinstance(res, dict) and res.get("error") else "")
+        except _er.HTTPError as e:
+            ult = f"HTTP {e.code}"
+        except Exception as e:
+            ult = type(e).__name__
+        if intento == 0:
+            time.sleep(4)
+    raise RuntimeError(ult)
+
+def metas_del_panel(year, month):
+    """{nombre normalizado: Bs} con la meta de cada vendedora para ese mes, y una línea para el registro (sin datos de nadie).
+    {} = usar VENDOR_CFG."""
+    ym = f"{year}-{month:02d}"
+    if not PANEL_URL:
+        return {}, "sin PANEL_URL: quedan las de VENDOR_CFG"
+    try:
+        filas = _panel_leer_lista()
+    except Exception as e:
+        return {}, f"no se pudo leer el panel ({str(e)[:60]}): quedan las de VENDOR_CFG"
+    fila = next((p for p in filas if isinstance(p, dict) and str(p.get("id")) == META_FILA), None)
+    if not fila:
+        return {}, "el panel no tiene metas cargadas: quedan las de VENDOR_CFG"
+    try:
+        o = json.loads(fila.get("observaciones") or "{}") or {}
+        e = ((o.get("m") or {}) if isinstance(o, dict) else {}).get(ym) or {}
+        vd = e.get("vd") if isinstance(e, dict) else None
+    except Exception:
+        return {}, "la fila de metas del panel no se entiende: quedan las de VENDOR_CFG"
+    out = {}
+    for nombre, a in (vd.items() if isinstance(vd, dict) else []):
+        try:
+            mi = float((a or [0, 0])[0] or 0)
+            pr = float((a or [0, 0])[1] or 0) if len(a or []) > 1 else 0.0
+        except (TypeError, ValueError, IndexError):
+            continue
+        bs = pr if pr > 0 else mi
+        if bs > 0:
+            out[_norm_vend(nombre)] = int(round(bs))
+    if not out:
+        return {}, f"el panel no tiene metas por vendedora para {MESES[month].lower()} {year}: quedan las de VENDOR_CFG"
+    return out, f"{len(out)} vendedora(s) con meta para {MESES[month].lower()} {year} (el presupuesto; si no tiene, la mínima)"
+
 DEFAULT_COLORS = ["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
 
 SUC_COLORS = {"Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D98300"}
@@ -588,7 +659,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None, metas_panel=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, suc_prev, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -695,6 +766,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         prw = [ (round(_median(d["wrl"][k])) if d["wrl"][k] else None) for k in range(5) ]
         weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w, "prw": prw}
         weekly_prev = {"c": pv["wc"], "m": pv["wm"]}
+        _meta_panel = (metas_panel or {}).get(_norm_vend(name))   # 🎯 (175) la meta en Bs cargada en el panel, si la hay
         team.append({
             "ini": cfg.get("ini") or "".join([p[0] for p in name.split()[:2]]).upper(),
             "name": name,
@@ -715,7 +787,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             # (25/10, CRM-03) a la que solo trabajó el mes anterior no se le inventa una meta: si está en VENDOR_CFG (sigue en
             # el equipo) lleva la suya; si no, 0 (no infla la meta del equipo).
             "metaCierres": cfg.get("metaCierres", 0 if name in _solo_prev else max(8, d["cierres"] + 5)),
-            "metaMonto": cfg.get("metaMonto", 0 if name in _solo_prev else max(20000, d["value"])),
+            # 🎯 (13/11, mejora 175) la meta en Bs: la del PANEL de pedidos si la tiene para este mes; si no, la de siempre.
+            "metaMonto": _meta_panel if _meta_panel else cfg.get("metaMonto", 0 if name in _solo_prev else max(20000, d["value"])),
             "v": v_tone,
             "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
                      "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"],
@@ -728,6 +801,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             team[-1]["nuevo"] = True
         if name in _solo_prev:
             team[-1]["soloPrev"] = True
+        if _meta_panel:
+            team[-1]["metaFuente"] = "panel"   # el dashboard no deja que lo guardado en el navegador la tape
 
     # ── globales ──
     G_leads   = sum(t["leads"] for t in team)
@@ -1830,8 +1905,17 @@ def main():
             print("   → 401 = el token de Kommo no sirve (vencido o cambiado): renovar el secreto KOMMO_TOKEN.", file=sys.stderr)
         sys.exit(1)
 
+    # 🎯 (13/11, mejora 175) las metas en Bs de las vendedoras, del panel de pedidos. NO es esencial: si falla, VENDOR_CFG.
+    print("  🎯 metas del panel de pedidos…")
+    try:
+        metas_panel, _mp_txt = metas_del_panel(YEAR, MONTH)
+    except Exception as _mpe:      # nada de acá puede frenar la publicación
+        metas_panel, _mp_txt = {}, f"error al leer las metas del panel ({type(_mpe).__name__}): quedan las de VENDOR_CFG"
+    print("     → " + _mp_txt)
+    _DIAG.append("metas_panel=" + _mp_txt)
+
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map, metas_panel=metas_panel)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)

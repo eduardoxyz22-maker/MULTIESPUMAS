@@ -69,6 +69,18 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   const proy0 = await abrir('proyeccion', { 'Ana Prueba': 0 });
   chk('3. CRM-06: con la meta de Ana puesta en 0, la Proyección no vuelve a la de fábrica (400.000) y dice que no hay meta', !/400[.,]000/.test(proy0) && /No hay meta cargada/.test(proy0), (proy0.match(/La proyecci[oó]n base[^\n]*/) || [''])[0] || proy0.slice(0, 200));
 
+  /* 4. (13/11, mejora 175) La meta que viene del PANEL de pedidos (`metaFuente:'panel'`) manda: lo guardado antes en el navegador
+     (al tocar una meta se guardaban TODAS) no la tapa, y su control queda fijo con «del panel». Las otras siguen editables. */
+  ana.metaFuente = 'panel';
+  fs.writeFileSync(tmp, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D) + ';'));
+  const proyP = await abrir('proyeccion', { 'Ana Prueba': 0, 'Beto Prueba': 12345 });
+  chk('4a. con la meta de Ana del panel (400.000) y un 0 guardado en el navegador, la meta del equipo es 400.000 + 12.345 de Beto = 412.345', /de la meta \(Bs 412[.,]345\)/.test(proyP) && !/No hay meta cargada/.test(proyP), (proyP.match(/La proyecci[oó]n base[^\n]*/) || [''])[0] || proyP.slice(0, 200));
+  let delPanel = '';
+  for (const v of (D.nav || []).map(n => n.id)) { const t = await abrir(v, { 'Ana Prueba': 0 }); if (/\bdel panel\b/.test(t)) { delPanel = v; break; } }
+  chk('4b. su control dice «del panel» (no se edita en el dashboard)', !!delPanel, delPanel || 'ninguna vista');
+  chk('4c. lo guardado en el navegador para otra vendedora sin meta del panel (Beto 12.345) sigue valiendo', /12[.,]345/.test(proyP), '');
+  chk('4d. sin errores de JavaScript con la meta del panel', !errores.length, errores[0]);
+
   await browser.close();
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   process.exit(FAIL ? 1 : 0);

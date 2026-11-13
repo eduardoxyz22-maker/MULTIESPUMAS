@@ -44,6 +44,8 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           PANEL_WORKER_URL: ${{ secrets.PANEL_WORKER_URL }}
+          # 🎯 (13/11, mejora 175) de ahí salen las metas en Bs de cada vendedora (las del panel de pedidos); sin él, las de VENDOR_CFG
+          PANEL_URL: ${{ secrets.PANEL_URL }}
         run: |
           # IA horneada PAUSADA temporalmente para acelerar el ciclo de cambios.
           # Restaurar con: python generar.py --bake-ai
