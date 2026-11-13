@@ -3128,6 +3128,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
             <button class="btn btn-sm at-t" style="--c:#7c3aed" title="Pedidos sin pin o con pin dudoso" data-d="pedidos sin pin o con pin dudoso" onclick="abrirRevUbic()">📍 Revisar ubicaciones</button>
             <button class="btn btn-sm at-t" style="--c:#22A06B" title="Marcar lo que ya salió" data-d="marcar lo que ya salió" onclick="abrirEntregas()">🚚 Entregado</button>
             <button class="btn btn-sm at-t" style="--c:#0a6b47" data-d="a las 16:30, confirmar el día" onclick="abrirCierreEntregas()" title="Desde las 16:30: la lista de los pedidos de hoy, sin nada tildado. Tildá uno por uno lo que salió y confirmá; lo que no salió, 📅 reprogramar.">✅ Cierre de entregas</button>
+            <button class="btn btn-sm at-t" id="ec-btn" style="--c:#1d4ed8" data-d="el mes, por camión, chofer y tienda" onclick="abrirEntregasCamion()" title="Cuántas entregas hizo cada camión (o cada chofer) en el mes, de cada tienda, con los totales. Las que no tienen camión anotado se pueden anotar ahí mismo.">🚚 Entregas por camión</button>
             <button class="btn btn-sm at-t" style="--c:#8a1c24" title="No se agenda más ese día" data-d="no se agenda más ese día" onclick="abrirCierreDias()" id="btn-cerrar-dia">🔒 Cerrar día</button>
           </div></section>
           <section class="at-g" style="--g:#128C7E"><h5><span>📤</span> Mensajes y partes</h5><div class="at-b">
@@ -6386,6 +6387,66 @@ html.con-pasos{ scroll-padding-bottom:84px; }
   <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="renderBuscar()">🔎 Buscar</button>
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<!-- 🚚 (13/11, idea 204) Entregas por camión: cuántas entregas hizo cada camión o chofer en el mes, de cada tienda (`abrirEntregasCamion`). -->
+<div id="ec-overlay" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="ec-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1d4ed8;color:#fff;display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap"><b id="ec-tit" style="font-size:.95rem">🚚 Entregas por camión</b><span id="ec-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="ec-copiar" style="margin-left:auto;background:#fff;color:#1d4ed8;font-weight:700" onclick="ecCopiar()">📋 Copiar</button><button class="btn btn-sm" id="ec-bajar" style="background:#fff;color:#1d4ed8;font-weight:700" onclick="ecBajar()">⬇️ Excel</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="ecCerrar()">✕ Cerrar</button></div>
+<div class="no-print ec-ctl">
+  <div class="ec-mes"><button type="button" id="ec-ant" onclick="ecMes(-1)" aria-label="Mes anterior">‹</button><b id="ec-mes-txt"></b><button type="button" id="ec-sig" onclick="ecMes(1)" aria-label="Mes siguiente">›</button></div>
+  <div class="ec-seg" id="ec-vista"><button type="button" data-v="camion" onclick="ecVista('camion')">🚚 Por camión</button><button type="button" data-v="chofer" onclick="ecVista('chofer')">🧑‍✈️ Por chofer</button></div>
+</div>
+<div id="ec-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<style>
+/* 🚚 Entregas por camión (idea 204): clases propias `ec-*`, tema claro con los colores del panel. */
+#ec-body{ color:var(--text,#17324d); }
+.ec-ctl{ display:flex; gap:10px 16px; flex-wrap:wrap; align-items:center; padding:10px 14px; background:#fff; border-bottom:1px solid var(--gray-md,#dce3e6); }
+.ec-mes{ display:flex; align-items:center; gap:6px; }
+.ec-mes button{ width:38px; height:38px; border-radius:10px; border:1px solid var(--gray-md,#dce3e6); background:#fff; color:#1d4ed8; font-size:1.15rem; font-weight:800; cursor:pointer; }
+.ec-mes button:disabled{ opacity:.35; cursor:default; }
+.ec-mes b{ min-width:150px; text-align:center; }
+.ec-mes b::first-letter{ text-transform:uppercase; }
+.ec-seg{ display:inline-flex; border:1px solid #1d4ed8; border-radius:999px; overflow:hidden; }
+.ec-seg button{ border:0; background:#fff; color:#1d4ed8; font:inherit; font-size:.82rem; font-weight:700; padding:8px 14px; cursor:pointer; min-height:38px; }
+.ec-seg button.on{ background:#1d4ed8; color:#fff; }
+.ec-wrap{ max-width:1300px; margin:0 auto; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.ec-res{ display:flex; flex-wrap:wrap; gap:6px 16px; align-items:baseline; background:#fff; border:1px solid var(--gray-md,#dce3e6); border-left:5px solid #1d4ed8; border-radius:12px; padding:10px 14px; font-size:.88rem; }
+.ec-res b{ font-size:1.1rem; color:#1d4ed8; }
+.ec-ojo{ color:#9a3412; font-weight:700; }
+.ec-nota{ margin:0; font-size:.8rem; color:var(--muted,#64748b); }
+.ec-vacio{ padding:22px; text-align:center; color:var(--muted,#64748b); background:#fff; border-radius:12px; border:1px dashed var(--gray-md,#dce3e6); }
+.ec-tabla{ overflow-x:auto; max-width:100%; min-width:0; background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:12px; }
+.ec-tabla table{ border-collapse:collapse; width:100%; font-size:.84rem; }
+.ec-tabla th, .ec-tabla td{ padding:6px 8px; border-bottom:1px solid #eef2f4; text-align:center; white-space:nowrap; }
+.ec-tabla thead th{ background:#eff6ff; color:#1e3a8a; font-size:.76rem; white-space:normal; min-width:72px; }
+.ec-tabla th[scope="row"], .ec-tabla thead th:first-child{ text-align:left; position:sticky; left:0; background:#fff; z-index:1; min-width:120px; }
+.ec-tabla thead th:first-child{ background:#eff6ff; }
+.ec-tabla .ec-tt{ background:#f8fafc; font-weight:800; }
+.ec-tabla tfoot th, .ec-tabla tfoot td{ background:#f1f5f9; border-top:2px solid #cbd5e1; }
+.ec-tabla tr.ec-sin th[scope="row"]{ color:#9a3412; }
+.ec-tabla tr.ec-cero th[scope="row"]{ color:var(--muted,#64748b); font-weight:600; }
+.ec-0{ color:#cbd5e1; }
+.ec-c{ border:0; background:transparent; font:inherit; cursor:pointer; padding:3px 6px; border-radius:8px; min-width:40px; min-height:36px; color:inherit; }
+.ec-c:hover, .ec-c:focus-visible{ background:#dbeafe; }
+.ec-c b{ display:block; font-size:.95rem; }
+.ec-c small{ display:block; font-size:.68rem; color:var(--muted,#64748b); font-weight:600; }
+.ec-anotar{ display:block; margin-top:4px; background:#fff7ed; color:#9a3412; border:1px solid #fdba74; font-size:.72rem; padding:3px 8px; }
+.ec-ret{ text-align:left; font:inherit; font-size:.82rem; background:#fff; border:1px dashed var(--gray-md,#dce3e6); border-radius:10px; padding:8px 12px; cursor:pointer; color:var(--text,#17324d); }
+.ec-det{ background:#fff; border:1px solid #bfdbfe; border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:6px; }
+.ec-det-h{ display:flex; gap:6px 12px; flex-wrap:wrap; align-items:center; }
+.ec-det-h span{ color:var(--muted,#64748b); font-size:.82rem; }
+.ec-det-h button{ margin-left:auto; width:auto; }
+.ec-det-f{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; text-align:left; font:inherit; font-size:.82rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:7px 10px; cursor:pointer; color:inherit; min-width:0; overflow-wrap:anywhere; }
+.ec-det-f:hover{ border-color:#1d4ed8; }
+.ec-det-f span, .ec-det-f small{ color:var(--muted,#64748b); }
+/* la lista para anotar el camión (ideas 203 y 204) */
+.cam-an-l{ display:flex; flex-direction:column; gap:8px; }
+.cam-an-f{ display:flex; gap:6px 12px; flex-wrap:wrap; align-items:center; justify-content:space-between; padding:8px 10px; border:1px solid #e2e8f0; border-radius:10px; background:#fff; }
+.cam-an-p{ display:flex; flex-direction:column; min-width:0; overflow-wrap:anywhere; }
+.cam-an-p small{ color:var(--muted,#64748b); }
+.cam-an-s{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.cam-an-s select{ width:auto; max-width:100%; min-height:36px; }
+.cam-an-ya{ font-weight:700; color:#1d4ed8; }
+.cam-an-gps{ color:#1d4ed8; }
+@media (max-width:560px){ .ec-mes b{ min-width:120px; } .ec-tabla th[scope="row"], .ec-tabla thead th:first-child{ min-width:96px; } }
+</style>
 <!-- 📇 (14/10) Clientes para Excel: nombre, celular y valor de la compra, por mes o todo, de los vendedores que se elijan (`abrirClientes`). -->
 <div id="cli-overlay" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0e7490;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📇 Clientes para Excel</b><span id="cli-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="cli-bajar" style="margin-left:auto;background:#fff;color:#0e7490;font-weight:700" onclick="cliBajar()">⬇ Bajar Excel</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="cliCerrar()">✕ Cerrar</button></div>
 <div class="no-print cli-ctl">
@@ -48503,7 +48564,7 @@ function renderCierreEntAviso(){
     ' <button class="rv-toggle" style="margin-left:8px" onclick="abrirCierreEntregas()">hacer el cierre</button>';
 }
 function abrirCierreEntregas(){
-  CIERRE_ENT_SEL={}; CIERRE_ENT_DIA={}; CIERRE_ENT_RP={ id:'', f:'', t:'' }; CIERRE_ENT_RP_HECHOS=[];
+  CIERRE_ENT_SEL={}; CIERRE_ENT_DIA={}; CIERRE_ENT_RP={ id:'', f:'', t:'' }; CIERRE_ENT_RP_HECHOS=[]; CIERRE_ENT_CAM={};
   /* (12/10, dueño: «quita el entregado automático… pedidos que se marcan entregado y no se entregan… mejor solo la alerta de Eduardo a
      logística y el LOG manual») NADA viene tildado: logística tilda uno por uno lo que de verdad salió. Antes los de hoy venían tildados. */
   MODAL_KIND='admin';
@@ -48523,8 +48584,79 @@ function cierreEntFila(p, atrasado){
     (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
-  '</label>'+(atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
+  '</label>'+cierreEntCamHtml(p)+   // 🚚 (13/11, idea 203) «¿Qué camión lo llevó?», también afuera del <label>
+  (atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
 }
+/* ============================================================================
+   🚚 ¿QUÉ CAMIÓN LO LLEVÓ? (13/11, idea 203). El dueño, con la planilla real: de 133 entregas de noviembre ya pasadas, 52 no tenían
+   camión anotado. En el cierre, cada pedido (de hoy y atrasado) SIN camión (`vehiculoDe` vacío) trae un selector con los camiones de
+   `VEHICULOS`, ya elegido con la propuesta del GPS cuando la hay (`gpsCamionPropDe`: la MISMA de «· lo llevó <camión>»); si no, vacío.
+   Lo que retira el cliente (`fichaRetira`) dice «lo retiró el cliente» y no pide camión.
+   · Elegir NO guarda: el camión viaja en el plan (`plan.cam`) y se escribe al CONFIRMAR, en el mismo guardado durable del ✅
+     (`cierreEntAplicar` → `guardarDurable`), solo en lo tildado que se marca. El chofer = el de los pedidos de ese día de ese camión
+     (`choferDeCamion`: rotan, §4om). Nunca pisa un camión o un chofer ya puestos: si al releer alguien ya lo puso, gana la planilla.
+   · No frena el cierre: lo tildado sin camión se confirma igual y el resultado dice «N entregas quedaron sin camión anotado» con
+     «🚚 Elegir el camión» (`camAnotarAbrir`, la misma lista que usa «🚚 Entregas por camión», idea 204).
+   · Sin señal, el plan pendiente (`me_cierre_pend`) lleva los camiones y se aplican con él. Nada se marca ✅ solo (dueño, 12/10).
+   ========================================================================== */
+var CIERRE_ENT_CAM={};   // id → camión elegido en el selector ('' = lo dejó vacío a propósito); mientras la ventana está abierta
+function cierreEntRetira(p){ var r=null; try{ r=fichaRetira(p); }catch(e){ r=null; } return r; }
+/* ¿Hay que preguntarle el camión? Sin camión y no lo retira el cliente. */
+function cierreEntCamPide(p){ return !!p && !vehiculoDe(p) && !cierreEntRetira(p); }
+function cierreEntCamGps(p){ var o=null; try{ o=gpsCamionPropDe(p); }catch(e){ o=null; } return o; }
+function cierreEntCamElegido(p){
+  var id=String(p.id);
+  if(Object.prototype.hasOwnProperty.call(CIERRE_ENT_CAM, id)) return CIERRE_ENT_CAM[id];
+  var o=cierreEntCamGps(p); return o ? o.veh : '';
+}
+function camOpcionesHtml(sel, vacio){
+  return '<option value="">'+esc(vacio||'— elegí el camión —')+'</option>'+Object.keys(VEHICULOS).map(function(v){ return '<option value="'+esc(v)+'"'+(sel===v?' selected':'')+'>'+esc(v)+'</option>'; }).join('');
+}
+/* El chofer del camión ESE día: el de sus pedidos de ese día (rotan); si ninguno lo dice, el primero de la lista. */
+function camChoferDelDia(veh, f){
+  return choferDeCamion(veh, (STATE||[]).filter(function(q){ return q && q.fecha===f; })) || ((VEHICULOS[veh]||[])[0]||'');
+}
+function cierreEntCamHtml(p){
+  if(!p || vehiculoDe(p)) return '';
+  var id=String(p.id), r=cierreEntRetira(p);
+  if(r) return '<div class="cie-cam ret" data-id="'+esc(id)+'" style="margin:0 0 6px 26px;font-size:.8rem;color:var(--muted)">🏬 Lo retiró el cliente en '+esc(r.donde)+': no lleva camión.</div>';
+  var v=cierreEntCamElegido(p), o=cierreEntCamGps(p);
+  return '<div class="cie-cam" data-id="'+esc(id)+'" style="display:flex;gap:6px 8px;align-items:center;flex-wrap:wrap;margin:0 0 6px 26px;font-size:.82rem">'+
+    '<label for="cie-cam-'+esc(id)+'" style="font-weight:700;color:#1d4ed8">🚚 ¿Qué camión lo llevó?</label>'+
+    '<select id="cie-cam-'+esc(id)+'" class="cie-cam-sel" data-id="'+esc(id)+'" style="width:auto;min-width:170px;max-width:100%;min-height:36px" onchange="cierreEntCamElegir(this.getAttribute(\'data-id\'), this.value)">'+camOpcionesHtml(v)+'</select>'+
+    (o && v===o.veh ? '<span class="cie-cam-gps" style="color:#1d4ed8">🛰️ lo dice el GPS</span>' : '')+
+    '<small style="color:var(--muted)">'+(v ? ('se guarda al confirmar, con el chofer que iba en ese camión ese día') : 'si salió, elegí cuál lo llevó (se guarda al confirmar)')+'</small></div>';
+}
+function cierreEntCamElegir(id, v){
+  id=String(id); CIERRE_ENT_CAM[id]=VEHICULOS[v] ? v : '';
+  var p=findById(id), el=document.querySelector('#modal-box .cie-cam[data-id="'+CSS.escape(id)+'"]');
+  if(p && el) el.outerHTML=cierreEntCamHtml(p);
+}
+/* Pone el camión elegido (y el chofer de ese camión ese día, si no tenía) en UN pedido ya releído. No pisa nada. */
+function cierreEntCamPoner(p, veh){
+  if(!p || !veh || !VEHICULOS[veh] || vehiculoDe(p)) return false;
+  p.vehiculo=veh;
+  if(!String(p.chofer||'').trim()) p.chofer=camChoferDelDia(veh, p.fecha);
+  return true;
+}
+/* Los camiones del plan: solo lo tildado que sigue sin camión y no lo retira el cliente. */
+function cierreEntCamPlan(ids){
+  var cam={};
+  (ids||[]).forEach(function(id){ var p=findById(id); if(!cierreEntCamPide(p)) return; var v=cierreEntCamElegido(p); if(v && VEHICULOS[v]) cam[String(id)]=v; });
+  return cam;
+}
+/* En el resultado del cierre: «N entregas quedaron sin camión anotado» + «🚚 Elegir el camión». */
+function cierreEntSinCamHtml(r){
+  var L=((r&&r.sinCam)||[]).filter(function(p){ return cierreEntCamPide(p); }), n=L.length;
+  var puestos=(r&&r.conCam)||0;
+  if(!n && !puestos) return '';
+  return '<div class="cie-sincam" style="font-size:.84rem;margin:0 0 10px;padding:8px 10px;border-radius:10px;background:'+(n?'#fff7ed':'#eff6ff')+';border:1px solid '+(n?'#fdba74':'#bfdbfe')+'">'+
+    (puestos ? ('<div>🚚 Se anotó el camión de <b>'+puestos+'</b> entrega'+(puestos===1?'':'s')+' (con el chofer que iba en ese camión ese día).</div>') : '')+
+    (n ? ('<div style="color:#9a3412">🚚 <b>'+n+'</b> entrega'+(n===1?'':'s')+' quedaron sin camión anotado: '+L.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||''); }).join(', ')+'.</div>'+
+      '<button type="button" class="btn btn-sm" id="cie-sincam-btn" style="margin-top:6px;background:#1d4ed8;color:#fff" data-ids="'+esc(L.map(function(p){ return String(p.id); }).join(','))+'" onclick="camAnotarAbrir(this.getAttribute(\'data-ids\').split(\',\'), \'cie\')">🚚 Elegir el camión</button>') : '')+
+  '</div>';
+}
+/* fin idea 203 (la lista para anotar el camión después, `camAnotarAbrir`, va con «Entregas por camión») */
 /* 📅 (18/10, §4ls Cie-C5) ¿QUÉ DÍA SE ENTREGÓ UN ATRASADO? Lo elige la persona: «el día que tenía» o «hoy» (u otro día), y cada botón dice
    qué hace en el stock. Antes el campo arrancaba en HOY y el plan usaba hoy si nadie lo tocaba: un cierre hecho a la mañana siguiente
    dejaba lo de la tarde de ayer «entregado hoy» — se restaba del Excel de hoy, que ya no lo tenía (OC 10-187: Banzer 4 en vez de 5 y
@@ -48839,7 +48971,7 @@ function admGpsEntConfirmar(){
   return relectura.then(function(leyo){
     if(!leyo){
       var prev=cierreEntPendiente();
-      if(prev){ prev.ids.forEach(function(id){ if(plan.ids.indexOf(id)<0){ plan.ids.push(id); plan.antes[id]=(prev.antes||{})[id]; plan.dias[id]=(prev.dias||{})[id]; } }); }
+      if(prev){ prev.ids.forEach(function(id){ if(plan.ids.indexOf(id)<0){ plan.ids.push(id); plan.antes[id]=(prev.antes||{})[id]; plan.dias[id]=(prev.dias||{})[id]; if(prev.cam && prev.cam[id]){ plan.cam=plan.cam||{}; plan.cam[id]=prev.cam[id]; } } }); }   // 🚚 (idea 203) con sus camiones
       cierreEntPendienteGuardar(plan); CIERRE_ENT_EN_CURSO=false;
       renderCierreEntPendiente(plan); renderCierreEntAviso();
       return { pendiente:true, leyo:false, hechos:0, saltados:0 };
@@ -48990,12 +49122,12 @@ function cierreEntPlan(quien){
   var hoy=CIERRE_ENT_HOY||todayStr(), ids=cierreEntTildados(), antes={}, dias={};
   ids.forEach(function(id){ var p=findById(id); if(p) antes[id]={ fecha:p.fecha, hoy:p.fecha===hoy }; });
   ids.forEach(function(id){ var a=antes[id]||{}; dias[id]= a.hoy ? hoy : (CIERRE_ENT_DIA[id]||''); });   // 📅 (§4ls Cie-C5) un atrasado sin día elegido no tiene día
-  return { ids:ids, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now() };
+  return { ids:ids, antes:antes, dias:dias, quien:String(quien||''), hoy:hoy, ts:Date.now(), cam:cierreEntCamPlan(ids) };   // 🚚 (idea 203)
 }
 /* Aplica un plan sobre el STATE recién leído: saltea lo borrado, lo reprogramado y lo que otro equipo ya marcó. Espera los
    guardados y dice cuántos entraron, cuántos quedaron en la cola y cuántos rechazó el servidor (Codex H3/H6). */
 function cierreEntAplicar(plan){
-  var ts=Date.now(), hechos=[], saltados=[];
+  var ts=Date.now(), hechos=[], saltados=[], conCam=0;
   (plan.ids||[]).forEach(function(id){
     var p=findById(id), a=(plan.antes||{})[id]||{};
     if(!p){ saltados.push({ id:id, por:'ya no está en la planilla: lo borraron' }); return; }
@@ -49003,14 +49135,16 @@ function cierreEntAplicar(plan){
     if(a.fecha && p.fecha!==a.fecha){ saltados.push({ p:p, por:'lo reprogramaron para el '+fmtFecha(p.fecha) }); return; }
     if(!cierreEntEntra(p)){ saltados.push({ p:p, por:'ya no es una entrega del camión' }); return; }
     cierreEntMarcar(p, plan.quien, (plan.dias||{})[id]||plan.hoy, ts); hechos.push(p);
+    if(cierreEntCamPoner(p, (plan.cam||{})[String(id)])) conCam++;   // 🚚 (idea 203) el camión elegido, en el MISMO guardado del ✅
   });
+  var sinCam=hechos.filter(function(p){ return cierreEntCamPide(p); });
   hechos.forEach(function(p){ upsert(p); });
   saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
   var guardados=hechos.map(function(p){ return guardarDurable(p); });
   return Promise.all(guardados).then(function(rs){
     var ok=0, cola=0, rech=0;
     rs.forEach(function(r){ if(r && r.ok) ok++; else if(r && RECHAZOS_FIRMES[r.error]) rech++; else cola++; });
-    return { hechos:hechos, saltados:saltados, ok:ok, cola:cola, rechazados:rech, respuestas:rs };
+    return { hechos:hechos, saltados:saltados, ok:ok, cola:cola, rechazados:rech, respuestas:rs, conCam:conCam, sinCam:sinCam };
   });
 }
 function confirmarCierreEntregas(){
@@ -49053,7 +49187,8 @@ function cierreEntSincronizar(){
     CIERRE_ENT_ULT={ t:Date.now(), hechos:r.hechos.length, saltados:r.saltados.map(function(x){ return (x.p ? (ocEtiq(x.p.oc)||x.p.cliente||'') : String(x.id))+': '+x.por; }), cola:r.cola, rech:r.rechazados };
     toast('✅ Cierre de entregas sincronizado: '+r.hechos.length+' confirmada'+(r.hechos.length===1?'':'s')+
       (r.saltados.length?(' · '+r.saltados.length+' salteada'+(r.saltados.length===1?'':'s')+' (cambiaron desde otro equipo)'):'')+
-      (r.cola?(' · '+r.cola+' en cola'):'')+(r.rechazados?(' · '+r.rechazados+' rechazada'+(r.rechazados===1?'':'s')):''),'ok',10000);
+      (r.cola?(' · '+r.cola+' en cola'):'')+(r.rechazados?(' · '+r.rechazados+' rechazada'+(r.rechazados===1?'':'s')):'')+
+      ((r.sinCam||[]).length?(' · 🚚 '+r.sinCam.length+' sin camión anotado («🚚 Entregas por camión» los lista)'):''),'ok',10000);
     renderCierreEntAviso();
     return r;
   }, function(){ CIERRE_ENT_EN_CURSO=false; return null; });
@@ -49081,7 +49216,8 @@ function renderCierreEntResultado(r){
     '<div style="font-size:.95rem;font-weight:700;margin-bottom:6px">'+hechos.length+' entrega'+(hechos.length===1?'':'s')+' confirmada'+(hechos.length===1?'':'s')+(total?(' · guardado en la planilla: '+(r.ok||0)+' de '+total):'')+'</div>'+
     (r.cola ? ('<div style="font-size:.84rem;color:#7c4b00;margin-bottom:6px">⏳ <b>'+r.cola+'</b> no llegó a la planilla todavía: queda en la cola de este dispositivo y se reintenta solo. Hasta que entre, los otros equipos no lo ven confirmado.</div>') : '')+
     (r.rechazados ? ('<div style="font-size:.84rem;color:#8a1c24;margin-bottom:6px">⚠️ <b>'+r.rechazados+'</b> rechazado'+(r.rechazados===1?'':'s')+' por el servidor: otra persona cambió ese pedido mientras tanto. Abrilo y volvé a marcarlo.</div>') : '')+
-    (hechos.length ? ('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||''); }).join('<br>')+'</div>') : '')+
+    (hechos.length ? ('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||'')+(vehiculoDe(p)?(' · 🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')):''); }).join('<br>')+'</div>') : '')+
+    cierreEntSinCamHtml(r)+   // 🚚 (idea 203) lo tildado que quedó sin camión: se dice y se puede elegir abajo
     (saltados.length ? ('<div style="font-weight:700;font-size:.9rem;margin:8px 0 4px">No se marcaron · '+saltados.length+'</div>'+
       '<div style="font-size:.84rem">'+saltados.map(function(x){ return (x.p ? (esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'')) : esc(String(x.id)))+': <b>'+esc(x.por)+'</b>'; }).join('<br>')+'</div>') : '')+
     rptFaltaCierreHtml(hechos)+   // 🏪 (30/10, propuesta 83) las RPT confirmadas que iban con ✗ o 🏭 sin llegar
@@ -49092,6 +49228,288 @@ function renderCierreEntResultado(r){
     '</div></div>';
   openModal(html, true);
 }
+/* ============================================================================
+   🚚 ANOTAR EL CAMIÓN (Y EL CHOFER) DESPUÉS (13/11, ideas 203 y 204). Una lista con los pedidos que se le pasan (los que el cierre
+   confirmó sin camión, o la fila «Sin camión/chofer anotado» de «🚚 Entregas por camión»): cada uno con su selector de camión (ya
+   elegido con la propuesta del GPS si es de hoy) y, opcional, el chofer (vacío = el que iba en ese camión ese día, `camChoferDelDia`).
+   «Guardar» pone SOLO lo que falta (nunca pisa un camión o un chofer ya puestos: se vuelve a mirar al tocar) y guarda cada pedido por
+   el camino durable de siempre (`guardarDurable`, como «Asignar los N» del GPS). Lo que retira el cliente no aparece.
+   ========================================================================== */
+var CAM_ANOTAR={ ids:[], desde:'', cam:{}, ch:{} };
+function camAnotarPendientes(){
+  return (CAM_ANOTAR.ids||[]).map(function(id){ return findById(String(id)); })
+    .filter(function(p){ return !!p && !cierreEntRetira(p) && (!vehiculoDe(p) || !String(p.chofer||'').trim()); });
+}
+function camAnotarAbrir(ids, desde){
+  CAM_ANOTAR={ ids:(ids||[]).map(String).filter(Boolean), desde:desde||'', cam:{}, ch:{} };
+  camAnotarPendientes().forEach(function(p){ if(!vehiculoDe(p)){ var o=cierreEntCamGps(p); if(o) CAM_ANOTAR.cam[String(p.id)]=o.veh; } });
+  return camAnotarRender();
+}
+function camAnotarElegir(id, que, v){ (que==='ch' ? CAM_ANOTAR.ch : CAM_ANOTAR.cam)[String(id)]=String(v||''); camAnotarBoton(); }
+function camAnotarCuantos(){
+  return camAnotarPendientes().filter(function(p){ var id=String(p.id); return !vehiculoDe(p) ? !!VEHICULOS[CAM_ANOTAR.cam[id]] : !!CAM_ANOTAR.ch[id]; }).length;
+}
+function camAnotarBoton(){ var b=document.getElementById('cam-an-guardar'), n=camAnotarCuantos(); if(b){ b.disabled=!n; b.textContent=n ? ('💾 Guardar '+n) : 'Elegí al menos uno'; } }
+function camAnotarRender(){
+  var L=camAnotarPendientes(), dn=dayNumMap(), hoy=todayStr();
+  if(!L.length){ toast('✅ No queda ninguno sin camión anotado.', 'ok'); closeModal(); camAnotarVolver(); return false; }
+  L.sort(function(a,b){ return String(a.fecha).localeCompare(String(b.fecha)) || ((dn[a.id]||0)-(dn[b.id]||0)); });
+  var chs=allChoferes();
+  var filas=L.map(function(p){
+    var id=String(p.id), veh=vehiculoDe(p), v=CAM_ANOTAR.cam[id]||'', c=CAM_ANOTAR.ch[id]||'', o=!veh ? cierreEntCamGps(p) : null, N=dn[p.id];
+    var chOpts='<option value="">'+(veh ? '— elegí el chofer —' : 'chofer: el que iba en ese camión ese día')+'</option>'+
+      chs.map(function(x){ return '<option value="'+esc(x)+'"'+(c===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('');
+    return '<div class="cam-an-f" data-id="'+esc(id)+'">'+
+      '<div class="cam-an-p"><b>'+(N?('N° '+N+' · '):'')+esc(p.cliente||'(sin cliente)')+'</b>'+
+        '<small>'+esc([(p.fecha===hoy?'hoy ':'')+fmtFechaCorta(p.fecha), ocEtiq(p.oc), p.vendedor, p.zona].filter(Boolean).join(' · '))+'</small></div>'+
+      '<div class="cam-an-s">'+
+        (veh ? ('<span class="cam-an-ya">🚚 '+esc(veh)+'</span>')
+             : ('<select class="cam-an-cam" data-id="'+esc(id)+'" aria-label="Camión" onchange="camAnotarElegir(this.getAttribute(\'data-id\'),\'cam\',this.value)">'+camOpcionesHtml(v)+'</select>'))+
+        '<select class="cam-an-ch" data-id="'+esc(id)+'" aria-label="Chofer" onchange="camAnotarElegir(this.getAttribute(\'data-id\'),\'ch\',this.value)">'+chOpts+'</select>'+
+        (o && v===o.veh ? '<small class="cam-an-gps">🛰️ lo dice el GPS</small>' : '')+
+      '</div></div>';
+  }).join('');
+  var soloCh=L.every(function(p){ return !!vehiculoDe(p); });   // la fila «Sin chofer anotado»: el camión ya está, falta quién manejó
+  openModal('<div class="modal-h" style="background:#1d4ed8"><h3>'+(soloCh ? '🧑‍✈️ ¿Quién manejó?' : '🚚 ¿Qué camión lo llevó?')+' · '+L.length+' entrega'+(L.length===1?'':'s')+'</h3><button class="modal-x" onclick="closeModal();camAnotarVolver()">✕</button></div>'+
+    '<div class="modal-b cam-an">'+
+      '<p style="font-size:.84rem;color:var(--muted);margin:0 0 10px">Elegí el camión de cada una. El chofer, si no lo elegís, es el que iba en ese camión ese día (los choferes rotan). '+
+        'Se guarda solo lo que falta: un camión o un chofer que ya estaba puesto no se toca.</p>'+
+      '<div class="cam-an-l">'+filas+'</div>'+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-ghost btn-sm" style="flex:1" onclick="closeModal();camAnotarVolver()">Cancelar</button>'+
+        '<button class="btn btn-primary btn-sm" id="cam-an-guardar" style="flex:1;background:#1d4ed8" onclick="camAnotarGuardar()">💾 Guardar</button>'+
+      '</div></div>', true);
+  camAnotarBoton();
+  return true;
+}
+function camAnotarVolver(){ if(CAM_ANOTAR.desde==='ec'){ var ov=document.getElementById('ec-overlay'); if(ov && ov.style.display!=='none') ecRender(); } }
+function camAnotarGuardar(){
+  var hechos=[];
+  camAnotarPendientes().forEach(function(p){
+    var id=String(p.id), v=CAM_ANOTAR.cam[id]||'', c=CAM_ANOTAR.ch[id]||'', tiene=!!String(p.chofer||'').trim();
+    if(!vehiculoDe(p)){
+      if(!VEHICULOS[v]) return;
+      p.vehiculo=v; if(!tiene) p.chofer=c || camChoferDelDia(v, p.fecha);
+    } else if(!tiene && c){ p.chofer=c; }
+    else return;
+    upsert(p); hechos.push(p);
+  });
+  if(!hechos.length){ toast('No elegiste ningún camión ni chofer.', 'err'); return Promise.resolve([]); }
+  saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();   // lo mismo que `persistPedido`, una vez
+  closeModal(); camAnotarVolver();
+  toast('🚚 Anotado lo que faltaba (camión o chofer) en '+hechos.length+' entrega'+(hechos.length===1?'':'s')+'.', 'ok', 4000);
+  return Promise.all(hechos.map(function(p){ return guardarDurable(p); }));
+}
+/* ============================================================================
+   🚚 ENTREGAS POR CAMIÓN, POR CHOFER Y POR TIENDA (13/11, idea 204). El dueño: «cuántas entregas de cada tienda, eso debemos
+   contabilizar en el mes: cuántas entregas hizo cada camión o chofer en el mes de cada tienda, para ver los totales».
+   · ENTREGA = un pedido con fecha en el mes que YA SALIÓ: con ✅, o con la fecha pasada sin ✅ (la regla de siempre, §4co: lo que no
+     salió se reprograma); el de HOY solo con ✅; uno de un día que todavía no llegó, solo con ✅ y su día real (`eF`: el ✅ adelantado,
+     §4lr). Afuera: ventas de tienda, filas del sistema y retiros, borradores de Kommo, lo que «avisa cuándo» (no tiene fecha) y lo que
+     retira el cliente (`fichaRetira`: no lleva camión; se cuenta aparte, en una línea).
+   · Cada celda cuenta ENTREGAS (paradas = pedidos) y abajo, en chico, las unidades (colchones y somieres, `pryUnidadesDe`).
+   · COLUMNA = la tienda de quien vendió, el día que se cargó (`sucursalDeVendedor(vendedor, contaFecha(p))`: lo de octubre con las
+     tiendas de entonces, §4oo); aparte, las de Eduardo (mayoristas), ROHO, las RPT, las ATC y los internos (`CONTA_INTERNOS`).
+   · FILA = el camión (`vehiculoDe`) o el chofer (`p.chofer`); lo que no lo tiene va en «Sin camión/chofer anotado» con su botón para
+     anotarlo (`camAnotarAbrir`). Los camiones y choferes de la lista salen siempre (con 0 también); los de antes, solo si hicieron algo.
+   · Solo mira. `ecDatos(ym)` arma todo una vez; `ecFilasPorCamion(D)` / `ecFilasPorChofer(D)` son las filas (para sumar después otras
+     columnas por camión, como lo que diga el GPS).
+   ========================================================================== */
+var EC={ ym:'', vista:'', sel:null, D:null, F:null };
+var EC_COLS_FIJAS=[ { k:'sin', t:'Sin tienda' }, { k:'may', t:'Mayoristas (Eduardo)' }, { k:'roho', t:'ROHO' }, { k:'rpt', t:'Reposición a tiendas (RPT)' }, { k:'atc', t:'ATC' }, { k:'int', t:'Internos' } ];
+function ecVistaLeer(){ try{ return localStorage.getItem('me_ec_vista')==='chofer' ? 'chofer' : 'camion'; }catch(e){ return 'camion'; } }
+function ecVistaGuardar(v){ try{ localStorage.setItem('me_ec_vista', v); }catch(e){} }
+function ecEntra(p){ return !!p && !!p.fecha && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p) && String(p.id||'').indexOf('__')!==0; }
+/* ¿Ya salió? Fecha pasada (con o sin ✅), hoy con ✅, un día por venir solo con ✅ y su día real anotado. */
+function ecSalio(p, hoy){
+  if(!p || !p.fecha) return false;
+  if(p.fecha<hoy) return true;
+  if(!p.entregado) return false;
+  return p.fecha===hoy || !stockEntregadoFuturo(p);
+}
+function ecColumna(p){
+  if(esRPT(p.oc)) return 'rpt';
+  if(esATC(p.oc)) return 'atc';
+  if(cliEsInterno(p.vendedor)) return 'int';
+  if(esRoho(p.vendedor)) return 'roho';
+  if(mismoVendedor(p.vendedor, 'Eduardo Añez') || stockEsEduardo(p)) return 'may';
+  var s=sucursalDeVendedor(p.vendedor, contaFecha(p));
+  return s ? ('t:'+s) : 'sin';
+}
+function ecMesSumar(ym, d){
+  var y=Number(ym.slice(0,4)), m=Number(ym.slice(5,7))-1+d;
+  y+=Math.floor(m/12); m=((m%12)+12)%12;
+  return y+'-'+('0'+(m+1)).slice(-2);
+}
+function ecCelda(){ return { n:0, u:0, ids:[] }; }
+function ecSumar(c, e){ c.n++; c.u+=e.u; c.ids.push(e.id); }
+function ecDatos(ym){
+  var hoy=todayStr(), dn=dayNumMap(), ents=[], ret=[], byId={};
+  (STATE||[]).forEach(function(p){
+    if(!ecEntra(p) || p.fecha.slice(0,7)!==ym || !ecSalio(p, hoy)) return;
+    var e={ p:p, id:String(p.id), f:p.fecha, n:dn[p.id]||0, col:ecColumna(p), u:pryUnidadesDe(p).u||0, veh:vehiculoDe(p),
+            ch:String(p.chofer||'').replace(/\s+/g,' ').trim(), ok:!!p.entregado };
+    var r=cierreEntRetira(p);
+    byId[e.id]=e;
+    if(r){ e.donde=r.donde; ret.push(e); return; }
+    ents.push(e);
+  });
+  var orden=function(a,b){ return a.f.localeCompare(b.f) || (a.n-b.n); };
+  ents.sort(orden); ret.sort(orden);
+  /* las columnas: las tiendas con entregas (en el orden de SUCURSALES) y después las fijas que tengan algo */
+  var hay={}, colTot={}, tot=ecCelda();
+  ents.forEach(function(e){ hay[e.col]=1; ecSumar(colTot[e.col]||(colTot[e.col]=ecCelda()), e); ecSumar(tot, e); });
+  var ordS=SUCURSALES.map(function(s){ return 't:'+s.n; });
+  var tiendas=Object.keys(hay).filter(function(k){ return k.indexOf('t:')===0; }).sort(function(a,b){
+    var ia=ordS.indexOf(a), ib=ordS.indexOf(b); if(ia<0) ia=999; if(ib<0) ib=999; return (ia-ib) || a.localeCompare(b, 'es'); });
+  var cols=tiendas.map(function(k){ return { k:k, t:k.slice(2) }; }).concat(EC_COLS_FIJAS.filter(function(c){ return hay[c.k]; }));
+  return { ym:ym, hoy:hoy, ents:ents, ret:ret, byId:byId, cols:cols, colTot:colTot, tot:tot };
+}
+/* Agrupa las entregas en filas: `claveDe(e)` → el nombre (vacío = la fila «sin…»). `lista` = los de siempre (salen con 0 también). */
+function ecAgrupar(D, claveDe, lista, sinTxt){
+  var G={}, extra=[], sin=null;
+  var nueva=function(t, esSin){ return { t:t, sin:!!esSin, c:{}, tot:ecCelda() }; };
+  (lista||[]).forEach(function(t){ var k=normNombre(t); if(k && !G[k]) G[k]=nueva(t); });
+  D.ents.forEach(function(e){
+    var t=claveDe(e), k=normNombre(t||''), f;
+    if(!k) f=sin||(sin=nueva(sinTxt, true));
+    else { f=G[k]; if(!f){ f=G[k]=nueva(t); extra.push(k); } }
+    ecSumar(f.c[e.col]||(f.c[e.col]=ecCelda()), e); ecSumar(f.tot, e);
+  });
+  var filas=(lista||[]).map(function(t){ return G[normNombre(t)]; }).filter(function(f, i, a){ return f && a.indexOf(f)===i; });
+  extra.sort(function(a,b){ return G[a].t.localeCompare(G[b].t, 'es'); }).forEach(function(k){ filas.push(G[k]); });
+  if(sin) filas.push(sin);
+  return filas;
+}
+function ecFilasPorCamion(D){ return ecAgrupar(D, function(e){ return e.veh; }, Object.keys(VEHICULOS), 'Sin camión anotado'); }
+function ecFilasPorChofer(D){ return ecAgrupar(D, function(e){ return e.ch; }, allChoferes(), 'Sin chofer anotado'); }
+function abrirEntregasCamion(){
+  if(!EC.ym) EC.ym=todayStr().slice(0,7);
+  if(!EC.vista) EC.vista=ecVistaLeer();
+  EC.sel=null;
+  var ov=document.getElementById('ec-overlay'); if(!ov) return;
+  ov.style.display='flex';
+  ecRender();
+}
+function ecCerrar(){ var ov=document.getElementById('ec-overlay'); if(ov) ov.style.display='none'; EC.sel=null; }
+function ecMes(d){ var hoyYm=todayStr().slice(0,7), n=ecMesSumar(EC.ym||hoyYm, d); if(n>hoyYm) return; EC.ym=n; EC.sel=null; ecRender(); }
+function ecVista(v){ EC.vista=(v==='chofer') ? 'chofer' : 'camion'; ecVistaGuardar(EC.vista); EC.sel=null; ecRender(); }
+function ecU(u){ return u+' u.'; }
+function ecCeldaHtml(c, r, i){
+  if(!c || !c.n) return '<td class="ec-0">·</td>';
+  return '<td><button type="button" class="ec-c" data-r="'+r+'" data-c="'+i+'" onclick="ecVer(+this.getAttribute(\'data-r\'), +this.getAttribute(\'data-c\'))" title="Ver esas entregas">'+
+    '<b>'+c.n+'</b><small>'+esc(ecU(c.u))+'</small></button></td>';
+}
+function ecRender(){
+  var hoyYm=todayStr().slice(0,7);
+  if(!EC.ym) EC.ym=hoyYm;
+  if(!EC.vista) EC.vista=ecVistaLeer();
+  var D=ecDatos(EC.ym), F=(EC.vista==='chofer') ? ecFilasPorChofer(D) : ecFilasPorCamion(D);
+  EC.D=D; EC.F=F;
+  [].forEach.call(document.querySelectorAll('#ec-vista button'), function(b){ var on=b.getAttribute('data-v')===EC.vista; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on?'true':'false'); });
+  var mt=document.getElementById('ec-mes-txt'); if(mt) mt.textContent=mesNombre(EC.ym);
+  var sg=document.getElementById('ec-sig'); if(sg) sg.disabled=(EC.ym>=hoyYm);
+  var info=document.getElementById('ec-info');
+  if(info) info.textContent=(EC.ym===hoyYm) ? ('hasta hoy, '+fmtFechaCorta(D.hoy)) : (EC.ym<hoyYm ? 'mes terminado' : '');
+  var body=document.getElementById('ec-body'); if(!body) return;
+  var quien=(EC.vista==='chofer') ? 'Chofer' : 'Camión';
+  var sinF=F.filter(function(f){ return f.sin; })[0];
+  var res='<div class="ec-res"><span><b>'+D.tot.n+'</b> entrega'+(D.tot.n===1?'':'s')+'</span><span><b>'+D.tot.u+'</b> unidades (colchones y somieres)</span>'+
+    (sinF ? ('<span class="ec-ojo">'+sinF.tot.n+' '+(EC.vista==='chofer'?'sin chofer':'sin camión')+' anotado</span>') : '')+
+    (D.ret.length ? ('<span>'+D.ret.length+' los retiró el cliente</span>') : '')+'</div>';
+  var nota='<p class="ec-nota">Cuenta los pedidos de '+esc(mesNombre(D.ym))+' que <b>ya salieron</b>: con ✅, o con la fecha pasada sin ✅ (lo que no salió se reprograma). '+
+    'Los de hoy, solo con ✅. La tienda es la de quien vendió. Cada número son entregas (paradas); abajo, en chico, las unidades. Tocá un número para ver cuáles son.</p>';
+  if(!D.tot.n && !D.ret.length){
+    body.innerHTML='<div class="ec-wrap">'+res+nota+'<div class="ec-vacio">No hay entregas de '+esc(mesNombre(D.ym))+' que ya hayan salido.</div></div>';
+    return;
+  }
+  var th='<tr><th>'+quien+'</th>'+D.cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'<th class="ec-tt">TOTAL</th></tr>';
+  var tb=F.map(function(f, ri){
+    var nom='<th scope="row">'+esc(f.t)+(f.sin && f.tot.n ? ('<button type="button" class="btn btn-sm ec-anotar" data-ids="'+esc(f.tot.ids.join(','))+'" onclick="ecAnotar(this.getAttribute(\'data-ids\'))">✏️ Anotar '+(EC.vista==='chofer'?'el chofer':'el camión')+'</button>') : '')+'</th>';
+    return '<tr class="'+(f.sin?'ec-sin':'')+(f.tot.n?'':' ec-cero')+'">'+nom+D.cols.map(function(c, ci){ return ecCeldaHtml(f.c[c.k], ri, ci); }).join('')+ecCeldaHtml(f.tot, ri, -1).replace('<td>', '<td class="ec-tt">')+'</tr>';
+  }).join('');
+  var tf='<tr class="ec-tot"><th scope="row">TOTAL</th>'+D.cols.map(function(c, ci){ return ecCeldaHtml(D.colTot[c.k], -1, ci); }).join('')+ecCeldaHtml(D.tot, -1, -1).replace('<td>', '<td class="ec-tt">')+'</tr>';
+  body.innerHTML='<div class="ec-wrap">'+res+nota+
+    '<div class="ec-tabla" role="region" aria-label="Entregas por '+quien.toLowerCase()+' y tienda" tabindex="0"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody><tfoot>'+tf+'</tfoot></table></div>'+
+    (D.ret.length ? ('<button type="button" class="ec-ret" onclick="ecVerRet()">🏬 <b>'+D.ret.length+'</b> los retiró el cliente: no llevan camión y no cuentan en la tabla. Ver cuáles</button>') : '')+
+    '<div id="ec-det"></div></div>';
+  ecDetPintar();
+}
+function ecAnotar(ids){ camAnotarAbrir(String(ids||'').split(',').filter(Boolean), 'ec'); }
+function ecVer(r, c){
+  var s=EC.sel; if(s && !s.ret && s.r===r && s.c===c){ EC.sel=null; ecDetPintar(); return; }
+  EC.sel={ r:r, c:c }; ecDetPintar(true);
+}
+function ecVerRet(){ EC.sel=(EC.sel && EC.sel.ret) ? null : { ret:true }; ecDetPintar(true); }
+/* Lo que muestra el detalle: { tit, ents } (las entregas de esa celda, o las que retiró el cliente). */
+function ecDetDatos(){
+  var s=EC.sel, D=EC.D, F=EC.F||[]; if(!s || !D) return null;
+  if(s.ret) return { tit:'Los retiró el cliente', ents:D.ret };
+  var f=s.r>=0 ? F[s.r] : null, col=s.c>=0 ? D.cols[s.c] : null;
+  var cel=f ? (col ? f.c[col.k] : f.tot) : (col ? D.colTot[col.k] : D.tot);
+  return { tit:(f ? f.t : 'Todos los '+(EC.vista==='chofer'?'choferes':'camiones'))+' · '+(col ? col.t : 'todas las tiendas'),
+    ents:((cel&&cel.ids)||[]).map(function(id){ return D.byId[id]; }).filter(Boolean) };
+}
+function ecDetPintar(llevar){
+  var el=document.getElementById('ec-det'); if(!el) return;
+  var X=ecDetDatos(); if(!X){ el.innerHTML=''; return; }
+  var u=X.ents.reduce(function(a,e){ return a+e.u; }, 0);
+  el.innerHTML='<div class="ec-det"><div class="ec-det-h"><b>'+esc(X.tit)+'</b><span>'+X.ents.length+' entrega'+(X.ents.length===1?'':'s')+' · '+esc(ecU(u))+'</span>'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="EC.sel=null;ecDetPintar()">✕ Cerrar la lista</button></div>'+
+    X.ents.map(function(e){
+      var p=e.p;
+      return '<button type="button" class="ec-det-f" data-id="'+esc(e.id)+'" onclick="showPedidoModal(this.getAttribute(\'data-id\'))">'+
+        '<b>'+(e.n?('N° '+e.n+' · '):'')+esc(fmtFechaCorta(e.f))+' · '+esc(p.cliente||'(sin cliente)')+'</b>'+
+        '<span>'+esc([ocEtiq(p.oc), p.vendedor, p.zona, e.donde ? ('lo retiró en '+e.donde) : ('🚚 '+(e.veh||'sin camión')+(e.ch?(' · '+e.ch):''))].filter(Boolean).join(' · '))+'</span>'+
+        '<small>'+(e.ok ? '✅ marcado entregado' : 'fecha pasada, sin ✅')+(e.u ? (' · '+esc(ecU(e.u))) : '')+'</small></button>';
+    }).join('')+'</div>';
+  if(llevar){ try{ el.scrollIntoView({ block:'nearest' }); }catch(e){} }
+}
+/* 📋 El texto para WhatsApp, con las dos tablas. */
+function ecTexto(D){
+  D=D||EC.D||ecDatos(EC.ym||todayStr().slice(0,7));
+  var hoyYm=todayStr().slice(0,7);
+  var bloque=function(tit, F){
+    return '*'+tit+'*\n'+F.filter(function(f){ return f.tot.n; }).map(function(f){
+      var det=D.cols.filter(function(c){ return f.c[c.k] && f.c[c.k].n; }).map(function(c){ return c.t+' '+f.c[c.k].n; }).join(' · ');
+      return '• '+f.t+': *'+f.tot.n+'* ('+ecU(f.tot.u)+')'+(det?('\n   '+det):'');
+    }).join('\n');
+  };
+  var t='🚚 *Entregas de '+mesNombre(D.ym)+'*'+(D.ym===hoyYm?(' (hasta el '+fmtFechaCorta(D.hoy)+')'):'')+'\n'+
+    'Cuenta lo que ya salió: con ✅ o con la fecha pasada sin ✅.\n\n'+
+    bloque('Por camión', ecFilasPorCamion(D))+'\n\n'+bloque('Por chofer', ecFilasPorChofer(D))+'\n\n'+
+    '*Por tienda*\n'+D.cols.map(function(c){ return '• '+c.t+': '+D.colTot[c.k].n; }).join('\n')+'\n\n'+
+    '*Total: '+D.tot.n+' entrega'+(D.tot.n===1?'':'s')+' · '+ecU(D.tot.u)+'*'+
+    (D.ret.length ? ('\n'+D.ret.length+' los retiró el cliente (no cuentan).') : '');
+  return t;
+}
+function ecCopiar(){ copyText(ecTexto()); }
+/* ⬇️ El Excel: «Por camión» y «Por chofer» (entregas y, debajo, unidades), y «Entregas» con el detalle. Números como número. */
+function ecHoja(D, F, quien, nombre){
+  var cab=function(t){ return [{ v:t, s:1 }].concat(D.cols.map(function(c){ return { v:c.t.toUpperCase(), s:1 }; }), [{ v:'TOTAL', s:1 }]); };
+  var num=function(v){ return { v:Number(v)||0, t:'n' }; };
+  var bloque=function(k, tit){
+    var rows=[[{ v:tit, s:XS_NOTA }], cab(quien)];
+    F.forEach(function(f){ rows.push([f.t].concat(D.cols.map(function(c){ return num(f.c[c.k] ? f.c[c.k][k] : 0); }), [num(f.tot[k])])); });
+    rows.push([{ v:'TOTAL', s:XS_TOT }].concat(D.cols.map(function(c){ return num(D.colTot[c.k][k]); }), [num(D.tot[k])]));
+    return rows;
+  };
+  var m=[[{ v:'Entregas de '+mesNombre(D.ym)+' por '+quien.toLowerCase()+' y tienda', s:XS_NOTA }]].concat([[]], bloque('n', 'ENTREGAS (pedidos que ya salieron)'), [[]], bloque('u', 'UNIDADES (colchones y somieres)'));
+  return { name:nombre, cols:[{ w:26 }].concat(D.cols.map(function(){ return { w:16 }; }), [{ w:10 }]), matrix:m };
+}
+function ecBajar(){
+  var D=EC.D||ecDatos(EC.ym||todayStr().slice(0,7));
+  if(!D.tot.n && !D.ret.length){ toast('No hay entregas de '+mesNombre(D.ym)+' para bajar.', 'err'); return; }
+  var colTxt={}; D.cols.forEach(function(c){ colTxt[c.k]=c.t; });
+  var det=[['N° DEL DÍA','DÍA','OC','CLIENTE','VENDEDOR','TIENDA','CAMIÓN','CHOFER','ZONA','UNIDADES','✅'].map(function(h){ return { v:h, s:1 }; })];
+  D.ents.forEach(function(e){ var p=e.p; det.push([{ v:e.n||0, t:'n' }, fmtFecha(e.f), ocEtiq(p.oc), p.cliente||'', p.vendedor||'', colTxt[e.col]||'', e.veh||'SIN CAMIÓN', e.ch||'', p.zona||'', { v:e.u, t:'n' }, e.ok ? 'marcado' : 'fecha pasada, sin ✅']); });
+  D.ret.forEach(function(e){ var p=e.p; det.push([{ v:e.n||0, t:'n' }, fmtFecha(e.f), ocEtiq(p.oc), p.cliente||'', p.vendedor||'', '', 'LO RETIRÓ EL CLIENTE (no cuenta)', '', p.zona||'', { v:e.u, t:'n' }, e.ok ? 'marcado' : 'fecha pasada, sin ✅']); });
+  var bytes=buildXlsx([ecHoja(D, ecFilasPorCamion(D), 'Camión', 'Por camión'), ecHoja(D, ecFilasPorChofer(D), 'Chofer', 'Por chofer'),
+    { name:'Entregas', cols:[{w:10},{w:12},{w:16},{w:30},{w:22},{w:18},{w:24},{w:16},{w:16},{w:10},{w:18}], matrix:det }]);
+  downloadBlob(bytes, 'entregas-por-camion-'+D.ym+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('⬇️ Excel descargado — '+D.tot.n+' entrega'+(D.tot.n===1?'':'s')+' de '+mesNombre(D.ym), 'ok');
+}
+/* fin idea 204 */
 /* ---- Revisión producto por producto (logística): ✔ hay / ✗ no hay ----
    El estado vive en cada producto (x.chk) y viaja dentro del JSON de productos,
    así que se guarda en la planilla sin columnas nuevas. */
