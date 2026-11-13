@@ -10314,10 +10314,11 @@ var CBZ_VIENE=[
   { k:'avisa', lbl:'El cliente avisa cuándo', col:'#94a3b8' }
 ];
 /* ⏳ (13/11, dueño, consultado con gerencia) EL PLAZO DE PAGO DE CADA MAYORISTA, en días corridos desde la entrega agendada (la venta de
-   tienda, desde el día de la venta): *«ROHO 120 días · Tienda Amiga 60 · Multicenter 60 · Copacaba 15 · Luis Franco 15»*. En Mayoristas la
+   tienda, desde el día de la venta): *«Tienda Amiga 120 días · ROHO 60 · Multicenter 60 · Copacaba 15 · Luis Franco 15»* (primero dijo ROHO 120 y
+   Tienda Amiga 60: *«me confundí, Tienda Amiga es 120 días, ROHO y Multicenter 60»*). CAMSA, Karina Torrico, Electrocenter y los demás: al entregar. En Mayoristas la
    antigüedad va por el VENCIMIENTO: lo que todavía no venció no es atraso. Un cliente que no está acá paga al entregar (plazo 0: vence el día
    de la entrega). El nombre es el de `cbzMayCliente`; un plazo nuevo va acá y nada más. En Ventas (el equipo) no cambia nada. */
-var CBZ_PLAZOS={ 'ROHO':120, 'Tienda Amiga':60, 'Multicenter':60, 'Copacaba':15, 'Luis Franco':15 };
+var CBZ_PLAZOS={ 'Tienda Amiga':120, 'ROHO':60, 'Multicenter':60, 'Copacaba':15, 'Luis Franco':15 };
 var CBZ_TRAMOS_MAY=[
   { k:'pv',   lbl:'Por vencer',                   col:'#0f766e' },
   { k:'v30',  lbl:'Vencido hace 1 a 30 días',     col:'#a67c00' },
@@ -10539,8 +10540,14 @@ function cbzMayCliente(p){
   if(/\broho\b/.test(n)) return 'ROHO';
   if(/\bluis franco\b/.test(n)) return 'Luis Franco';
   if(/co(?:pa|ap)caba/.test(n) || /\bjuan carlos arce\b/.test(n)) return 'Copacaba';
-  return sinTildes(String((p&&p.cliente)||'Sin nombre').replace(/\s+/g,' ').trim().replace(/[\s.,;:·\-]+$/,'')).toUpperCase() || 'SIN NOMBRE';   // «KARINA TÓRRICO» = «KARINA TORRICO»
+  /* 🏠 (13/11, dueño: «son de Multicenter») una entrega a domicilio de Multicenter cargada con el nombre de SU cliente: la nota o «Facturar a»
+     dicen Multicenter («pedido de multicenter es…»), o el nombre está en `CBZ_MAY_ALIAS` (la Sra. Villarreal: la nota no lo dice). */
+  if(/\bmulti ?center\b/.test(sinTildes(String(((p&&p.observaciones)||'')+' '+((p&&p.facturarA)||''))).toLowerCase())) return 'Multicenter';
+  var k=sinTildes(String((p&&p.cliente)||'Sin nombre').replace(/\s+/g,' ').trim().replace(/[\s.,;:·\-]+$/,'')).toUpperCase() || 'SIN NOMBRE';   // «KARINA TÓRRICO» = «KARINA TORRICO»
+  return Object.prototype.hasOwnProperty.call(CBZ_MAY_ALIAS, k) ? CBZ_MAY_ALIAS[k] : k;
 }
+/* Clientes de un mayorista cargados con su propio nombre (el nombre como lo deja `cbzMayCliente`: sin tildes, en mayúsculas). */
+var CBZ_MAY_ALIAS={ 'VILLAREAL':'Multicenter', 'SENORA VILLAREAL':'Multicenter' };
 var CBZ_MAY_FIJOS=['Multicenter','Tienda Amiga','ROHO','Copacaba','Luis Franco'];
 function cbzMayDatos(){
   var hoy=diaNegocio(), M={};

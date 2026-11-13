@@ -18719,5 +18719,11 @@ máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (l
   Luis Franco: todo por vencer (Tienda Amiga vence lo primero el 14/11).
 - `tests/test_cobranza.js` → 50 (§5b y §6-7 cambiaron A CONCIENCIA: iban por días desde la entrega; §10 nueva: ROHO 120 = por vencer, CAMSA al
   entregar, Ventas sin cambios).
-- Para preguntarle al dueño: el plazo de CAMSA, Karina Torrico, Villarreal y Electrocenter (hoy «al entregar»); la observación de la 11-150 dice «Plazo de
-  pago de ROHO: 60 días» (ahora es 120).
+- Preguntado al dueño y contestado (13/11): (1) CAMSA, Karina Torrico, Electrocenter → *«al entregar»* (plazo 0, como ya estaba); (2) «VILLAREAL» y
+  «SEÑORA VILLAREAL» → *«son de Multicenter»* (entregas a domicilio de Multicenter con el nombre del cliente final; 09-332 dice «mandar por correo factura a
+  viviana», 10-034 lleva su OC 32458): `cbzMayCliente` las manda a Multicenter por `CBZ_MAY_ALIAS` y, en general, por «multicenter» en la nota o «Facturar a»
+  (la 09-163 «pedido de multicenter es…», ya pagada); (3) *«me confundí, Tienda Amiga es 120 días, ROHO y Multicenter 60»* → `CBZ_PLAZOS` corregido. La nota
+  de la 11-150 («Plazo de pago de ROHO: 60 días») queda bien como está.
+- Con la copia del 13/11 y los plazos corregidos: vencido **Bs 136.195 (13 OC)** — Copacaba 53.050 (5, la más atrasada 69 d), Multicenter 31.008 (5, 32 d),
+  CAMSA 30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662 (24 d) — y por vencer Bs 176.421 (59). Multicenter debe 99.324 en 32 OC (con las dos
+  de Villarreal, por vencer). ROHO 62.356 y Tienda Amiga 30.749, todo por vencer. `test_cobranza` → 52.

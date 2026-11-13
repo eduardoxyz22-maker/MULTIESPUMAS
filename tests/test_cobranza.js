@@ -13,8 +13,9 @@
    7. «Pagó las N tildadas»: pide banco, N° y comprobante; registra un pago por OC por su saldo entero (aplicarCobros), con el mismo
       comprobante, y la OC ya pagada se saltea.
    8. Excel de la antigüedad y del estado de cuenta; en el celular (390 px) no corre la página de costado.
-   10. (13/11, dueño, consultado con gerencia) El PLAZO DE PAGO de cada mayorista: ROHO 120, Tienda Amiga 60, Multicenter 60, Copacaba
-       15, Luis Franco 15; los demás, al entregar. En Mayoristas la antigüedad va por el VENCIMIENTO (por vencer / vencido 1-30 / 31-60 /
+   10. (13/11, dueño, consultado con gerencia) El PLAZO DE PAGO de cada mayorista: Tienda Amiga 120, ROHO 60, Multicenter 60, Copacaba
+       15, Luis Franco 15; los demás (CAMSA, Electrocenter…), al entregar. Una entrega a domicilio de Multicenter con el nombre de su cliente
+       (la nota dice Multicenter, o la Sra. Villarreal) es de Multicenter. En Mayoristas la antigüedad va por el VENCIMIENTO (por vencer / vencido 1-30 / 31-60 /
        +60) y la ficha, el estado de cuenta y los Excel dicen cuándo vence cada OC. Las expectativas de 5b y 6-7 cambiaron A CONCIENCIA
        (antes eran días desde la entrega).
 
@@ -237,23 +238,33 @@ function PREPARAR(){
   chk('9b. una venta de tienda de hoy es deuda, no «Hoy sin ✅»', r.tienda==='no-es-tienda' || (r.tienda && r.tienda.que==='deuda'), r.tienda);
 
   // ═══ 10. Los plazos de cada mayorista ═════════════════════════════════════════════════════════
-  console.log('\n── 10. Los plazos (ROHO 120, Tienda Amiga 60, Multicenter 60, Copacaba 15, Luis Franco 15) ──');
+  console.log('\n── 10. Los plazos (Tienda Amiga 120, ROHO 60, Multicenter 60, Copacaba 15, Luis Franco 15) ──');
   r = await ev(() => {
     var pl=function(cli, vend){ return cbzPlazoDe({ cliente:cli, vendedor:vend||'Eduardo Añez' }); };
     return { roho:pl('ROHO CONSIGNACION TIENDA 1'), ta:pl('TIENDA AMIGA ER S.A.'), mc:pl('MULTICENTER'), cp:pl('JUAN CARLOS ARCE'), lf:pl('LUIS FRANCO'), otro:pl('CAMSA') };
   });
-  chk('cada mayorista con su plazo; uno que no está, al entregar (0)', r.roho===120 && r.ta===60 && r.mc===60 && r.cp===15 && r.lf===15 && r.otro===0, r);
+  chk('cada mayorista con su plazo; uno que no está, al entregar (0)', r.roho===60 && r.ta===120 && r.mc===60 && r.cp===15 && r.lf===15 && r.otro===0, r);
+  r = await ev(() => ({
+    vi:cbzMayCliente({ cliente:'VILLAREAL', vendedor:'Eduardo Añez' }), sv:cbzMayCliente({ cliente:'SEÑORA VILLAREAL', vendedor:'Eduardo Añez' }),
+    obs:cbzMayCliente({ cliente:'FLOR DELI', observaciones:'La entrega debe realizarse en planta baja. pedido de multicenter es...', vendedor:'Eduardo Añez' }),
+    otro:cbzMayCliente({ cliente:'FLOR DELI', observaciones:'planta baja', vendedor:'Eduardo Añez' }),
+    ta:cbzMayCliente({ cliente:'TIENDA AMIGA ER S.A.', observaciones:'como el de multicenter', vendedor:'Eduardo Añez' }) }));
+  chk('🏠 Villarreal y «Señora Villarreal» son de Multicenter; la nota «pedido de multicenter» también; sin eso, su propio nombre; Tienda Amiga sigue Tienda Amiga',
+      r.vi==='Multicenter' && r.sv==='Multicenter' && r.obs==='Multicenter' && r.otro==='FLOR DELI' && r.ta==='Tienda Amiga', r);
   r = await ev(() => {
-    STATE.push({ id:'rh01', oc:'11-150', nota:'', vendedor:'Eduardo Añez', cliente:'ROHO CONSIGNACION', celular:'', fecha:'2026-08-01', turno:'AM',
+    STATE.push({ id:'rh01', oc:'11-150', nota:'', vendedor:'Eduardo Añez', cliente:'ROHO CONSIGNACION', celular:'', fecha:'2026-10-01', turno:'AM',
       productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:900}], acuenta:0, saldo:900, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
     STATE.push({ id:'cm01', oc:'11-151', nota:'', vendedor:'Eduardo Añez', cliente:'CAMSA', celular:'', fecha:'2026-11-05', turno:'AM',
       productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:400}], acuenta:0, saldo:400, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
+    STATE.push({ id:'ta01', oc:'11-152', nota:'', vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA ER S.A.', celular:'', fecha:'2026-08-01', turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:700}], acuenta:0, saldo:700, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
     MAYOR(); cbzAbrir('ant');
     var D=cbzDatos(), g=function(id){ return D.deuda.filter(function(x){ return x.p.id===id; })[0]||{}; };
-    var rh=g('rh01'), cm=g('cm01');
-    return { rh:[rh.plazo, rh.vence, rh.venc, rh.k], cm:[cm.plazo, cm.vence, cm.venc, cm.k] };
+    var rh=g('rh01'), cm=g('cm01'), ta=g('ta01');
+    return { rh:[rh.plazo, rh.vence, rh.venc, rh.k], cm:[cm.plazo, cm.vence, cm.venc, cm.k], ta:[ta.plazo, ta.vence, ta.venc, ta.k] };
   });
-  chk('⚠️ ROHO entregado el 01/08 a 120 días vence el 29/11: todavía NO está vencido (por vencer)', r.rh[0]===120 && r.rh[1]==='2026-11-29' && r.rh[2]===-17 && r.rh[3]==='pv', r.rh);
+  chk('⚠️ Tienda Amiga entregado el 01/08 a 120 días vence el 29/11: todavía NO está vencido (por vencer)', r.ta[0]===120 && r.ta[1]==='2026-11-29' && r.ta[2]===-17 && r.ta[3]==='pv', r.ta);
+  chk('ROHO entregado el 01/10 a 60 días vence el 30/11: por vencer', r.rh[0]===60 && r.rh[1]==='2026-11-30' && r.rh[2]===-18 && r.rh[3]==='pv', r.rh);
   chk('CAMSA (sin plazo) vence el día de la entrega: 05/11 = vencido hace 7 d', r.cm[0]===0 && r.cm[1]==='2026-11-05' && r.cm[2]===7 && r.cm[3]==='v30', r.cm);
   r = await ev(() => { VENTAS(); var D=cbzDatos(); var x=D.deuda.filter(function(x){ return x.p.id==='v2'; })[0]||{}; return { k:x.k, vence:x.vence, tramos:Object.keys(D.T) }; });
   chk('en Ventas (el equipo) nada cambia: tramos por días desde la entrega, sin vencimiento', r.k==='d60m' && !r.vence && r.tramos.join()==='d7,d30,d60,d60m,sinF', r);
