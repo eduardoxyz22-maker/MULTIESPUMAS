@@ -843,14 +843,14 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
-## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a)
+## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
 oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
-etiqueta. **Los días: `BF_DIAS=[-7, 3]`** (dueño eligió la «C»): del viernes de la semana anterior al lunes siguiente, contados desde el viernes después del
-cuarto jueves de noviembre (2026: del 20 al 30/11; 2027: del 19 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
+etiqueta. **Los días: `BF_DIAS=[-14, 3]`** (dueño eligió la «C» = [-7, 3] y el 13/11 al mediodía dijo *«que salga desde ahora»*, PUBLICADO versión 2026-11-13-b): de dos semanas antes del viernes al lunes siguiente, contados desde el viernes después del
+cuarto jueves de noviembre (2026: del 13 al 30/11; 2027: del 12 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
 `BF_DIAS` en el `<head>` de `pedidos.html` y de `panel_template.html`. Otro día se ve con `?tema=black-friday`.
-Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
+Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (12/11 sigue Todos Santos), `test_navidad` (10/11), `test_bloki` §7, `test_vidrio_agrandar` §2.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
@@ -911,7 +911,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
 - `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
-- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a): un pedido de HOY sin camión
+- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`): un pedido de HOY sin camión
   (`vehiculoDe` vacío) que el GPS vio en la puerta (`gpsLlegadaDe`) → el panel PROPONE «lo llevó <camión> · <chofer>» (`gpsCamionPropuestas`/`gpsCamionPropDe`;
   chofer = `choferDeCamion` con los pedidos de hoy, rotan). Cartel azul `#gps-cam-bar` al lado del de §4ok-106 (tabla y fichas) y «· lo llevó» en la fila del
   cierre de entregas; una persona toca «🚚 Asignar» (`gpsCamionAsignar`, por `persistPedido` → `guardarDurable`) o «Asignar los N» (`gpsCamionAsignarTodos`).
@@ -1132,7 +1132,7 @@ fila y el número de cada pestaña en la esquina (≥701); el **Plan de stock pa
 «Pedir» quedaban afuera) — ⚠️ sus anchos mínimos solo con `min-width:821px` (debajo es en tarjetas); «De dónde sale lo vendido» con las dos
 tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada producto en la misma columna (`.fl-pls` 96 px). `tests/test_estetica_4mp.js`.
 
-## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a)
+## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 Contabilidad → «📅 Cobranza» (`#cbz-btn` en Revisar, `#cbz-btn2` en el libro de arriba) → `cbzAbrir()`: la planilla que se mira (Ventas = el equipo,
 Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo mira, salvo «Pagó las tildadas».
 - 🏭 **La antigüedad es SOLO de Mayoristas** (dueño, 13/11: *«¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar»*): en Ventas la
@@ -1149,7 +1149,15 @@ Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo m
   Multicenter); «Pagó las tildadas» anota todo en memoria y espera con `Promise.all` (un guardado colgado no traba el botón); lo tipeado mientras sube el
   comprobante se recuerda; «N clientes» de Mayoristas por `cbzMayCliente`; Luis Franco antes que Arce y «MULTI CENTER»/«TIENDAAMIGA»; efectivo con el chofer
   (`ctaChoferSugerido`); venta de tienda y ✅ adelantado = deuda; GPS respeta un chofer puesto a mano y avisa la ubicación aproximada.
-- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (42), `test_gps_camion` (25).
+- ⏳ **El plazo de pago de cada mayorista** (§4pt, 13/11, dueño, consultado con gerencia y corregido: *«Tienda Amiga es 120 días, ROHO y Multicenter 60»*,
+  Copacaba 15, Luis Franco 15; CAMSA, Karina Torrico, Electrocenter y los demás *«al entregar»*; PUBLICADO 13/11, versión 2026-11-13-b): `CBZ_PLAZOS` (por el nombre de
+  `cbzMayCliente`; uno que no está = al entregar, plazo 0). 🏠 Una entrega a domicilio de Multicenter cargada con el nombre de SU cliente va a Multicenter
+  (dueño: *«son de Multicenter»*): la nota o «Facturar a» dicen Multicenter, o el nombre está en `CBZ_MAY_ALIAS` (la Sra. Villarreal). En Mayoristas cada deuda
+  lleva `plazo`, `vence` (entrega agendada o día de la venta de tienda + plazo) y `venc` (días de atraso; ≤0 = no venció) con `cbzConPlazo`, y la antigüedad va
+  por el VENCIMIENTO (`CBZ_TRAMOS_MAY`: por vencer / vencido 1-30 / 31-60 / +60 / sin fecha; `cbzTramos()`). Arriba «Vencido (pasó su plazo)» y «Por vencer»;
+  cada fila «a N días · vencida hace N d»; la ficha de cada cliente con «Paga a N días», Vencido / Por vencer / próximo vencimiento, «Las vencidas»; copia y
+  Excel con PLAZO / VENCE / DÍAS VENCIDA al FINAL. En Ventas (el equipo) nada cambia. Un plazo nuevo va en `CBZ_PLAZOS` y nada más.
+- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (52), `test_gps_camion` (25).
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
@@ -1721,6 +1729,12 @@ que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira segu
 desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
+👆 **«Efectivo por retirar» se toca** (13/11, dueño: *«al dar clic ahí no pasa nada… ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cliente?»*):
+la ficha del Cuadre y «Le queda en la mano» de la tabla abren `abrirEfectivo(q, 'mano')` → `abrirEfectivoMano` (`#efe-mano`): SOLO lo sin recoger
+(`efeManoDatos`, de `cuadreEfectivo`), por persona, con día y hace cuántos días, cliente, OC y nota, vendedor, «dónde» (`efeManoDonde`: la tienda de
+quien la recibió o «🚚 en la entrega · zona»; el panel no anota el lugar exacto), lo parcial («de Bs X · Bs Y ya retirado»), el faltante del mes
+anterior, el último retiro y Copiar. «← Volver al efectivo por retirar» (`EFE_VER_SOLO`). Retirado de más abre la lista de siempre.
+`tests/test_efectivo_por_retirar.js` (19). PUBLICADO 13/11, versión 2026-11-13-b.
 **💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, IMPLEMENTADO 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
@@ -1734,7 +1748,7 @@ un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara pág
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
 🧾📄 **Dos recibos: lo facturado y lo no facturado** (13/11, dueño: *«¿y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique
-ahí que se refiere si las ventas es con factura o nota remisión»*; PUBLICADO 13/11, versión 2026-11-13-a): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
+ahí que se refiere si las ventas es con factura o nota remisión»*; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
 facturado = ventas con nota de remisión (`docVentaDe`), cada cobro de la lista dice «🧾 con factura» / «📄 con remisión» / «sin anotar», y mientras nadie
 toque los botones el tipo sale de lo tildado (`retTipoDocs`; `tipoMano`). «🧾+📄 Las dos» (solo en un retiro NUEVO) pide los DOS N° de recibo y cuánto es lo
 facturado (propuesto: lo tildado con factura) y `guardarRetiroAmbos` carga DOS retiros comunes (cada uno con su tipo, recibo, monto y cobros tildados; lo
@@ -1809,7 +1823,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 `waCdPry_` dice la proyección de Heaven y de Sueña que ya trae la foto de `__pry_hist__` (`b`), entre paréntesis y la más grande primero, como
 `waPregMesTxt_`. La plantilla no cambia. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…` (8.087 líneas).
 
-## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` IMPLEMENTADO 13/11 por el dueño, contesta `2026-11-13-a`, enlace fijo `0f1eefe…`, 8.104 líneas; página 2026-11-13-a PUBLICADA 13/11)
+## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` IMPLEMENTADO 13/11 por el dueño, contesta `2026-11-13-a`, enlace fijo `0f1eefe…`, 8.104 líneas; página 2026-11-13-a PUBLICADA 13/11, `828251f`)
 `waCdEsAlmohada_` (`WA_CD_ALMOHADA`: ALMOHADA, ALMOH, ALM, TRAVESSEIRO, NASA, la familia de `stockEsAlmohadaK`): `waCdProds_` no las suma (el «N productos» del
 cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista APARTE en cursiva, «+ 6 almohadas (no cuentan como productos): …». La plata no
 cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.

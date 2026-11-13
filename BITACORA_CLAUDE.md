@@ -18683,10 +18683,68 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
   dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
   Black Friday, 2027 corrido un día, y el dashboard igual.
+- **§4pr-b — Desde HOY** (13/11 al mediodía; se le explicó que salía el 20 y dijo *«que salga desde ahora»*): `BF_DIAS=[-14, 3]` en los dos `<head>` =
+  dos semanas antes del viernes hasta el lunes siguiente (2026: del 13 al 30/11; 2027: del 12 al 29/11). Página `2026-11-13-b` (`PANEL_V` y
+  `panel-version.json` juntos), publicada SOLA desde `main` (los plazos de Cobranza de la rama siguen esperando su «publica»). Pruebas cambiadas a
+  conciencia: `test_temas_mejoras` (12/11 Todos Santos, 13/11 00:01 Black Friday; 2027: 11/11 y 12/11; «noviembre del año que viene» pasa al 08/11/2027)
+  y `test_navidad` (el «noviembre = Todos Santos» pasa del 15/11 al 10/11).
 
-### §4ps — 🚀 PUBLICADO 13/11: SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
+### §4ps — 🚀 PUBLICADO 13/11 (`828251f`): SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
 El dueño (13/11): *«listo implementado»* (el `.gs` de las almohadas, enlace fijo `0f1eefe…`, 8.104 líneas). El servidor contesta `2026-11-13-a`
 (verificado con una lectura). Se publicó la página `2026-11-13-a` con TODO lo de la rama desde la 11-a: §4pn (espera la 13-a), §4pp Cobranza
 (136/143/129 + los arreglos de Fable), §4po el GPS propone el camión (133), §4pq el retiro con el N° del recibo y los dos recibos (facturado /
 no facturado), la música de noviembre solo el 1 y el 2, y §4pr el tema de Black Friday del 20 al 30/11 (panel y dashboard). `PANEL_V` y
 `panel-version.json` juntos. Volver atrás del servidor: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
+Batería antes de publicar: 4 suites en rojo. `test_onclicks` era real (los ids `ret-nota-nueva`/`-r` se armaban con una variable: ahora van
+escritos enteros, `campo()` del retiro); `test_visual_4pj`, `test_actualizar_espera` y `test_astra_deshacer` dieron bien solas (inestables con la
+máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (los archivos de la rama copiados tal cual sobre `fec3743`).
+- 13/11 (después de publicar): el dueño sobre la OC 260013258 de ROHO (consignación de mayo, Bs 25.040): *«roho solo hay que facturarlo ya lo
+  facturé»*. No se carga. Queda en `herramientas/pedidos_correo/LEEME.md`: una OC de ROHO por consignación ya vendida es solo factura (no se carga
+  ni se pregunta). Sigue pendiente la medida del OP-03-11-26 de Copacaba Potosí.
+- 13/11: la OC 260013258 de ROHO quedó CARGADA como venta de tienda de Eduardo, **11-150** (dueño: «si hazlo»): cliente «ROHO CONSIGNACION TIENDA
+  1» (Cobranza la junta en ROHO; «CONSIGNACION» la saca de la demanda del stock), nota 260013258, 8 × CH2108 a 936 + 16 × CH2109 a 1.097 =
+  Bs 25.040 a crédito, día de la venta 12/11, factura (sin N°: el dueño no lo pasó). Probado antes en una copia: sin cupo, sin camión, sin bot,
+  no toca PTF/Banzer ni la rotación; suma a Mayoristas de noviembre en Proyección.
+- 13/11, ⏸️ EN ESPERA (dueño: «espera consultaré con gerencia»): plazos de pago en la Cobranza de mayoristas — ROHO 60 días, Tienda Amiga 30,
+  Multicenter 30 (lo dijo él). Nada programado: no tocar hasta que confirme. → Confirmados con otros números el mismo día: §4pt.
+
+### §4pt — ⏳ EL PLAZO DE PAGO DE CADA MAYORISTA EN COBRANZA (13/11; dueño, después de consultar con gerencia: *«ROHO 120 DIAS · TIENDA AMIGA 60 dias · MULTICENTER 60 dias · copacaba 15 dias · luis franco 15 dias»*; PUBLICADO 13/11 con la página 2026-11-13-b, §4pv)
+- `CBZ_PLAZOS` por el nombre de la ficha (`cbzMayCliente`); un cliente que no está paga al entregar (plazo 0: vence el día de la entrega).
+  Plazo en días CORRIDOS desde la entrega agendada (la venta de tienda, desde el día de la venta: `fechaSalida` → `contaFecha`).
+- Solo Mayoristas (`contaAmbito()==='mayor'`): `cbzConPlazo` le pone a cada deuda `plazo`, `vence` y `venc` (= `diasEntre(vence, hoy)`; un ✅
+  adelantado vence desde SU fecha) y el tramo del vencimiento (`CBZ_TRAMOS_MAY`: pv / v30 / v60 / v60m / sinF). En Ventas sigue d7/d30/d60/d60m.
+- Antigüedad: «Vencido (pasó su plazo)», «Por vencer», «Vencido hace más de 60 días»; de la más atrasada a la que vence más lejos; cada fila
+  «a N días · vencida hace N d / vence en N d». Copiar y Excel con PLAZO / VENCE / DÍAS VENCIDA al FINAL del detalle (las de antes no se mueven).
+- Por cliente: «⏳ Paga a N días», Vencido / Por vencer y el próximo vencimiento en la ficha; en el detalle cada OC con «vence dd/mm», «Las vencidas»
+  (reemplaza «Las de más de 30 días»: tilda lo vencido y lo sin fecha) y el estado de cuenta (copia y Excel) con el plazo, VENCIDO / POR VENCER y
+  las columnas VENCE y DÍAS VENCIDA al final. `cbzMayDatos` deja `plazo, venc, nVenc, v60m, maxVenc, pv, nPv, prox` (ya no d30/d60/d60m).
+- Con la copia de la planilla del 13/11 a la mañana (sin la 11-150): Bs 312.616 entregado sin pago en 72 OC → **vencido Bs 139.649 (15 OC)** y por
+  vencer Bs 172.967 (57). Vencido: Copacaba 53.050 (5 OC, la más atrasada 69 d), Multicenter 31.008 (5 OC, 32 d) y los que no tienen plazo: CAMSA
+  30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662, «VILLAREAL» 1.813 y «SEÑORA VILLAREAL» 1.641,50 (dos fichas). ROHO, Tienda Amiga y
+  Luis Franco: todo por vencer (Tienda Amiga vence lo primero el 14/11).
+- `tests/test_cobranza.js` → 50 (§5b y §6-7 cambiaron A CONCIENCIA: iban por días desde la entrega; §10 nueva: ROHO 120 = por vencer, CAMSA al
+  entregar, Ventas sin cambios).
+- Preguntado al dueño y contestado (13/11): (1) CAMSA, Karina Torrico, Electrocenter → *«al entregar»* (plazo 0, como ya estaba); (2) «VILLAREAL» y
+  «SEÑORA VILLAREAL» → *«son de Multicenter»* (entregas a domicilio de Multicenter con el nombre del cliente final; 09-332 dice «mandar por correo factura a
+  viviana», 10-034 lleva su OC 32458): `cbzMayCliente` las manda a Multicenter por `CBZ_MAY_ALIAS` y, en general, por «multicenter» en la nota o «Facturar a»
+  (la 09-163 «pedido de multicenter es…», ya pagada); (3) *«me confundí, Tienda Amiga es 120 días, ROHO y Multicenter 60»* → `CBZ_PLAZOS` corregido. La nota
+  de la 11-150 («Plazo de pago de ROHO: 60 días») queda bien como está.
+- Con la copia del 13/11 y los plazos corregidos: vencido **Bs 136.195 (13 OC)** — Copacaba 53.050 (5, la más atrasada 69 d), Multicenter 31.008 (5, 32 d),
+  CAMSA 30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662 (24 d) — y por vencer Bs 176.421 (59). Multicenter debe 99.324 en 32 OC (con las dos
+  de Villarreal, por vencer). ROHO 62.356 y Tienda Amiga 30.749, todo por vencer. `test_cobranza` → 52.
+
+### §4pu — 💵👆 «EFECTIVO POR RETIRAR» SE TOCA (13/11; dueño, con la ficha del Cuadre marcada en rojo: *«al dar clic ahí no pasa nada, ¿cómo veo o qué
+debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cliente?»*)
+- La ficha «Efectivo por retirar» del Cuadre (y «Le queda en la mano» de la tabla) abren `abrirEfectivo(q, 'mano')` → `abrirEfectivoMano`: SOLO lo que sigue
+  sin recoger, por persona (vendedor/a o chofer), con día y hace cuántos días, cliente, OC y nota, vendedor (con «Todos»), dónde (`efeManoDonde`: la tienda de
+  quien la recibió, o «🚚 en la entrega · zona»; el panel no anota el lugar exacto del cobro), lo parcial («Bs 400 de Bs 1.000 · Bs 600 ya retirado»), el
+  faltante del mes anterior, los retiros que no tapan nada, el más viejo y el último retiro. Con una vendedora elegida, lo de sus ventas que tiene un chofer va
+  aparte («🚚 + Bs X lo tiene el chofer»). Copiar, «👁 Ver todo lo cobrado y los retiros» y «💵 Registrar retiro». Tocar un cliente abre su venta y «← Volver
+  al efectivo por retirar» (`EFE_VER_SOLO`). Retirado de más abre la lista de siempre. La cuenta es la de la ficha (`cuadreEfectivo` → `efePareo`).
+- `tests/test_efectivo_por_retirar.js` (19). `test_efe_pareo`, `test_efe_regla`, `test_efectivo_fecha`, `test_chofer_efectivo`, `test_cuadre_alta`,
+  `test_rev2_cuadre`, `test_por_cobrar` siguen bien.
+
+### §4pv — 🚀 PUBLICADO 13/11: PÁGINA 2026-11-13-b (dueño: «si publica todo»)
+- Black Friday desde hoy (§4pr-b, `BF_DIAS=[-14, 3]`: del 13 al 30/11, panel y dashboard), los plazos de pago de cada mayorista en Cobranza (§4pt) y
+  «Efectivo por retirar» que se toca (§4pu). `PANEL_V` y `panel-version.json` juntos. El servidor no cambió (sigue 2026-11-13-a).
+- `herramientas/pedidos_correo/` sigue solo en la rama (como siempre: no se publica).

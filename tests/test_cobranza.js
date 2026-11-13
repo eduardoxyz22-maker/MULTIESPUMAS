@@ -13,6 +13,11 @@
    7. «Pagó las N tildadas»: pide banco, N° y comprobante; registra un pago por OC por su saldo entero (aplicarCobros), con el mismo
       comprobante, y la OC ya pagada se saltea.
    8. Excel de la antigüedad y del estado de cuenta; en el celular (390 px) no corre la página de costado.
+   10. (13/11, dueño, consultado con gerencia) El PLAZO DE PAGO de cada mayorista: Tienda Amiga 120, ROHO 60, Multicenter 60, Copacaba
+       15, Luis Franco 15; los demás (CAMSA, Electrocenter…), al entregar. Una entrega a domicilio de Multicenter con el nombre de su cliente
+       (la nota dice Multicenter, o la Sra. Villarreal) es de Multicenter. En Mayoristas la antigüedad va por el VENCIMIENTO (por vencer / vencido 1-30 / 31-60 /
+       +60) y la ficha, el estado de cuenta y los Excel dicen cuándo vence cada OC. Las expectativas de 5b y 6-7 cambiaron A CONCIENCIA
+       (antes eran días desde la entrega).
 
    Datos SINTÉTICOS (el repo es público). Reloj clavado en el jueves 12/11/2026 a las 15:00 de Bolivia.
    Se corre:  node tests/test_cobranza.js   (desde la raíz del repo)
@@ -63,9 +68,9 @@ function PREPARAR(){
       V('CLIENTE MANANA',   '2026-11-13', 2500,  500),                       // v8 · por entregar en 1 día
       V('CLIENTE LEJOS',    '2026-11-30', 4000, 1000),                       // v9 · por entregar en 18 días
       V('MIA PLAZA',        '2026-08-03', 9000,    0, { oc:'RPT 08-001' }),  // v10 · RPT: no se cobra
-      V('MULTICENTER',      '2026-08-10', 2000,    0, { vend:'Eduardo Añez', nota:'30791', oc:'08-050' }),   // v11 · 94 días
-      V('Multicenter SRL',  '2026-10-25', 1500,    0, { vend:'Eduardo Añez', nota:'33100', oc:'10-300' }),   // v12 · 18 días
-      V('JOSE CARLOS COPACABA','2026-09-20', 3000, 0, { vend:'Eduardo Añez', oc:'09-200' }),                 // v13 · 53 días
+      V('MULTICENTER',      '2026-08-10', 2000,    0, { vend:'Eduardo Añez', nota:'30791', oc:'08-050' }),   // v11 · 94 días · a 60: venció el 09/10, hace 34
+      V('Multicenter SRL',  '2026-10-25', 1500,    0, { vend:'Eduardo Añez', nota:'33100', oc:'10-300' }),   // v12 · 18 días · a 60: vence el 24/12
+      V('JOSE CARLOS COPACABA','2026-09-20', 3000, 0, { vend:'Eduardo Añez', oc:'09-200' }),                 // v13 · 53 días · a 15: venció el 05/10, hace 38
       V('JUAN CARLOS ARCE', '2026-11-20', 1200,    0, { vend:'Eduardo Añez', oc:'11-100' }),                 // v14 · por entregar
       V('ROHO',             '2026-08-05',  999,    0, { vend:'ROHO' })                                      // v15 · ROHO no es de ninguna planilla
     ];
@@ -145,24 +150,32 @@ function PREPARAR(){
   // ═══ 5b. Antigüedad de saldos, en Mayoristas ══════════════════════════════════════════════════
   console.log('\n── 5b. Antigüedad de saldos (Mayoristas) ──');
   r = await ev(() => { MAYOR(); cbzAbrir('ant'); var D=cbzDatos(); return { tab:CBZ.tab, T:D.T, tot:D.totD, viene:D.totV, filas:_filas(), txt:_txt('#cbz') }; });
-  chk('en Mayoristas está la antigüedad: Bs 6.500,00 en 3 OC (0-30 = 1.500, 31-60 = 3.000, +60 = 2.000); lo del equipo no',
-      r.tab==='ant' && r.tot.n===3 && r.tot.bs===6500 && r.T.d30.bs===1500 && r.T.d60.bs===3000 && r.T.d60m.bs===2000 && !/CLIENTE/.test(r.filas.join('|')) && /Bs 6\.500,00/.test(r.txt), r);
-  chk('…de la más vieja a la más nueva, y la de JUAN CARLOS ARCE (por entregar) no es deuda', /^MULTICENTER/.test(r.filas[0]||'') && !/JUAN CARLOS ARCE/.test(r.filas.join('|')) && r.viene.bs===1200, r.filas);
-  r = await ev(() => { cbzTramo('d60'); var f=_filas(); cbzExcel('ant'); return { f:f, d:DESCARGAS[DESCARGAS.length-1] }; });
-  chk('tocar «31 a 60 días» deja solo la de Copacaba; ⬇️ Excel', r.f.length===1 && /JOSE CARLOS COPACABA/.test(r.f[0]) && /^antiguedad-de-saldos-eduardo-anez-2026-11-12\.xlsx$/.test(r.d||''), r);
+  chk('⏳ en Mayoristas la antigüedad va por el VENCIMIENTO: Bs 6.500,00 en 3 OC (por vencer 1.500 · vencido 1-30 = 0 · 31-60 = 5.000 · +60 = 0); lo del equipo no',
+      r.tab==='ant' && r.tot.n===3 && r.tot.bs===6500 && r.T.pv.bs===1500 && r.T.v30.bs===0 && r.T.v60.bs===5000 && r.T.v60m.bs===0 && !/CLIENTE/.test(r.filas.join('|')) && /Bs 6\.500,00/.test(r.txt), r);
+  chk('…de la más atrasada (Copacaba, vencida hace 38 d) a la que vence más lejos; la de JUAN CARLOS ARCE (por entregar) no es deuda',
+      /^JOSE CARLOS COPACABA/.test(r.filas[0]||'') && /^MULTICENTER/.test(r.filas[1]||'') && /^Multicenter SRL/.test(r.filas[2]||'') && !/JUAN CARLOS ARCE/.test(r.filas.join('|')) && r.viene.bs===1200, r.filas);
+  chk('…cada fila dice su plazo y cuándo vence', /a 15 días · vencida hace 38 d/.test(r.filas[0]||'') && /a 60 días · vencida hace 34 d/.test(r.filas[1]||'') && /a 60 días · vence en 42 d/.test(r.filas[2]||''), r.filas);
+  chk('…y arriba: «Vencido (pasó su plazo)» Bs 5.000,00 y «Por vencer» Bs 1.500,00', /Vencido \(pasó su plazo\) Bs 5\.000,00/i.test(r.txt) && /Por vencer Bs 1\.500,00/i.test(r.txt), r.txt.slice(0,400));
+  r = await ev(() => { cbzTramo('v60'); var f=_filas(); cbzExcel('ant'); cbzCopiar('ant'); return { f:f, d:DESCARGAS[DESCARGAS.length-1], c:COPIADO }; });
+  chk('tocar «Vencido hace 31 a 60 días» deja Copacaba (38 d) y Multicenter de agosto (34 d); ⬇️ Excel y 📋 con el vencimiento', r.f.length===2 && /JOSE CARLOS COPACABA/.test(r.f[0]) && /^MULTICENTER/.test(r.f[1]) && /^antiguedad-de-saldos-eduardo-anez-2026-11-12\.xlsx$/.test(r.d||'') &&
+      /a 15 días, vence 05\/10: vencida hace 38 d/.test(r.c), r);
 
   // ═══ 6-7. Mayoristas ═══════════════════════════════════════════════════════════════════════
   console.log('\n── 6-7. Mayoristas: estado de cuenta y «Pagó las tildadas» ──');
-  r = await ev(() => { MAYOR(); cbzAbrir(); var L=cbzMayDatos(); return { tab:CBZ.tab, L:L.map(function(c){ return [c.k, c.debe, c.n, c.d30, c.d60, c.d60m, c.viene]; }), txt:_txt('#cbz') }; });
+  r = await ev(() => { MAYOR(); cbzAbrir(); var L=cbzMayDatos(); return { tab:CBZ.tab, L:L.map(function(c){ return [c.k, c.debe, c.n, c.venc, c.pv, c.v60m, c.viene, c.plazo, c.prox]; }), txt:_txt('#cbz') }; });
   chk('en Mayoristas abre «🏭 Por cliente»', r.tab==='cli' && /Por cliente/.test(r.txt), r.tab);
   var mc=(r.L||[]).filter(x=>x[0]==='Multicenter')[0]||[], cp=(r.L||[]).filter(x=>x[0]==='Copacaba')[0]||[];
-  chk('⚠️ Multicenter junta «MULTICENTER» y «Multicenter SRL»: debe Bs 3.500 (1.500 de 0-30 y 2.000 de más de 60)', mc[1]===3500 && mc[2]===2 && mc[3]===1500 && mc[5]===2000, mc);
-  chk('⚠️ Copacaba junta «JOSE CARLOS COPACABA» y «JUAN CARLOS ARCE»: debe 3.000 (31-60) y 1.200 por entregar', cp[1]===3000 && cp[4]===3000 && cp[6]===1200, cp);
+  chk('⚠️ Multicenter junta «MULTICENTER» y «Multicenter SRL»: debe Bs 3.500 (a 60 días: 2.000 vencido y 1.500 por vencer, la próxima el 24/12)', mc[1]===3500 && mc[2]===2 && mc[3]===2000 && mc[4]===1500 && mc[5]===0 && mc[7]===60 && mc[8]==='2026-12-24', mc);
+  chk('⚠️ Copacaba junta «JOSE CARLOS COPACABA» y «JUAN CARLOS ARCE»: a 15 días, 3.000 vencido y 1.200 por entregar', cp[1]===3000 && cp[3]===3000 && cp[4]===0 && cp[6]===1200 && cp[7]===15, cp);
+  chk('las fichas dicen el plazo de cada uno', /Multicenter[^]*Paga a 60 días/.test(r.txt) && /Copacaba[^]*Paga a 15 días/.test(r.txt), r.txt.slice(0,600));
   chk('las ventas del equipo no aparecen en Mayoristas', !(r.L||[]).some(x=>/CLIENTE/.test(x[0])), r.L);
   r = await ev(() => { cbzCliAbrir('Multicenter'); return { filas:_filas(), txt:_txt('#cbz') }; });
   chk('la ficha de Multicenter lista sus 2 OC con «Su N°» (30791 y 33100)', r.filas.length===2 && /30791/.test(r.filas.join('|')) && /33100/.test(r.filas.join('|')), r.filas);
-  r = await ev(() => { cbzSelVarias('d30'); return { sel:Object.keys(CBZ.sel), pago:!!document.getElementById('cbz-pago'), txt:_txt('#cbz-pago') }; });
-  chk('«Las de más de 30 días» tilda solo la de agosto, y aparece «💵 Pagó las 1 OC… Bs 2.000,00»', r.sel.join()==='v11' && r.pago && /Bs 2\.000,00/.test(r.txt), r);
+  r = await ev(() => ({ filas:_filas(), txt:_txt('#cbz') }));
+  chk('…la ficha dice «Vencido» 2.000 y «Por vencer» 1.500, y cada OC cuándo vence', /Vencido Bs 2\.000,00/i.test(r.txt) && /Por vencer Bs 1\.500,00/i.test(r.txt) &&
+      r.filas.some(f=>/30791/.test(f) && /vence 09\/10 · vencida hace 34 d/.test(f)) && r.filas.some(f=>/33100/.test(f) && /vence 24\/12 · vence en 42 d/.test(f)), r);
+  r = await ev(() => { cbzSelVarias('venc'); return { sel:Object.keys(CBZ.sel), pago:!!document.getElementById('cbz-pago'), txt:_txt('#cbz-pago') }; });
+  chk('«Las vencidas» tilda solo la de agosto, y aparece «💵 Pagó las 1 OC… Bs 2.000,00»', r.sel.join()==='v11' && r.pago && /Bs 2\.000,00/.test(r.txt), r);
   r = await ev(() => { cbzSelVarias('todas'); return _txt('#cbz-pago'); });
   chk('«Tildar todas» = 2 OC · Bs 3.500,00', /2 OC tildadas · Bs 3\.500,00/.test(r), r);
   r = await ev(() => { GUARDADOS=[]; cbzPagoRegistrar(); return { g:GUARDADOS.length, sel:Object.keys(CBZ.sel).length }; });
@@ -185,7 +198,8 @@ function PREPARAR(){
   r = await ev(() => { var L=cbzMayDatos(); var m=L.filter(function(c){ return c.k==='Multicenter'; })[0]; return { debe:m?m.debe:null, txt:_txt('#cbz') }; });
   chk('Multicenter ya no debe nada', r.debe===0 && /no debe nada|Al día/.test(r.txt), r.debe);
   r = await ev(() => { cbzCliAbrir('Copacaba'); cbzCliCopiar('Copacaba'); cbzCliExcel('Copacaba'); return { c:COPIADO, d:DESCARGAS[DESCARGAS.length-1] }; });
-  chk('📋 y ⬇️ el estado de cuenta de Copacaba', /Estado de cuenta · Copacaba/.test(r.c) && /Bs 3\.000,00/.test(r.c) && /por entregar/.test(r.c) && /^estado-de-cuenta-copacaba-2026-11-12\.xlsx$/.test(r.d||''), r);
+  chk('📋 y ⬇️ el estado de cuenta de Copacaba, con su plazo y lo vencido', /Estado de cuenta · Copacaba/.test(r.c) && /plazo de pago: a 15 días/.test(r.c) && /Vencido: \*Bs 3\.000,00\*/.test(r.c) &&
+      /vence 05\/10 \(vencida hace 38 d\)/.test(r.c) && /por entregar/.test(r.c) && /^estado-de-cuenta-copacaba-2026-11-12\.xlsx$/.test(r.d||''), r);
 
   // ═══ 9. Lo que encontró Fable (13/11) ════════════════════════════════════════════════════════
   console.log('\n── 9. Revisión de Fable ──');
@@ -222,6 +236,38 @@ function PREPARAR(){
     return { tienda:esVentaTienda(t) ? cbzClasificar(t, diaNegocio()) : 'no-es-tienda', adel:cbzClasificar(e, diaNegocio()) }; });
   chk('9. un ✅ adelantado con fecha futura es deuda (no «por entregar»)', r.adel && r.adel.que==='deuda' && r.adel.dias===0, r.adel);
   chk('9b. una venta de tienda de hoy es deuda, no «Hoy sin ✅»', r.tienda==='no-es-tienda' || (r.tienda && r.tienda.que==='deuda'), r.tienda);
+
+  // ═══ 10. Los plazos de cada mayorista ═════════════════════════════════════════════════════════
+  console.log('\n── 10. Los plazos (Tienda Amiga 120, ROHO 60, Multicenter 60, Copacaba 15, Luis Franco 15) ──');
+  r = await ev(() => {
+    var pl=function(cli, vend){ return cbzPlazoDe({ cliente:cli, vendedor:vend||'Eduardo Añez' }); };
+    return { roho:pl('ROHO CONSIGNACION TIENDA 1'), ta:pl('TIENDA AMIGA ER S.A.'), mc:pl('MULTICENTER'), cp:pl('JUAN CARLOS ARCE'), lf:pl('LUIS FRANCO'), otro:pl('CAMSA') };
+  });
+  chk('cada mayorista con su plazo; uno que no está, al entregar (0)', r.roho===60 && r.ta===120 && r.mc===60 && r.cp===15 && r.lf===15 && r.otro===0, r);
+  r = await ev(() => ({
+    vi:cbzMayCliente({ cliente:'VILLAREAL', vendedor:'Eduardo Añez' }), sv:cbzMayCliente({ cliente:'SEÑORA VILLAREAL', vendedor:'Eduardo Añez' }),
+    obs:cbzMayCliente({ cliente:'FLOR DELI', observaciones:'La entrega debe realizarse en planta baja. pedido de multicenter es...', vendedor:'Eduardo Añez' }),
+    otro:cbzMayCliente({ cliente:'FLOR DELI', observaciones:'planta baja', vendedor:'Eduardo Añez' }),
+    ta:cbzMayCliente({ cliente:'TIENDA AMIGA ER S.A.', observaciones:'como el de multicenter', vendedor:'Eduardo Añez' }) }));
+  chk('🏠 Villarreal y «Señora Villarreal» son de Multicenter; la nota «pedido de multicenter» también; sin eso, su propio nombre; Tienda Amiga sigue Tienda Amiga',
+      r.vi==='Multicenter' && r.sv==='Multicenter' && r.obs==='Multicenter' && r.otro==='FLOR DELI' && r.ta==='Tienda Amiga', r);
+  r = await ev(() => {
+    STATE.push({ id:'rh01', oc:'11-150', nota:'', vendedor:'Eduardo Añez', cliente:'ROHO CONSIGNACION', celular:'', fecha:'2026-10-01', turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:900}], acuenta:0, saldo:900, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
+    STATE.push({ id:'cm01', oc:'11-151', nota:'', vendedor:'Eduardo Añez', cliente:'CAMSA', celular:'', fecha:'2026-11-05', turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:400}], acuenta:0, saldo:400, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
+    STATE.push({ id:'ta01', oc:'11-152', nota:'', vendedor:'Eduardo Añez', cliente:'TIENDA AMIGA ER S.A.', celular:'', fecha:'2026-08-01', turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1,precio:700}], acuenta:0, saldo:700, pagado:false, metodoPago:'', entregado:true, ts:1, fotos:[] });
+    MAYOR(); cbzAbrir('ant');
+    var D=cbzDatos(), g=function(id){ return D.deuda.filter(function(x){ return x.p.id===id; })[0]||{}; };
+    var rh=g('rh01'), cm=g('cm01'), ta=g('ta01');
+    return { rh:[rh.plazo, rh.vence, rh.venc, rh.k], cm:[cm.plazo, cm.vence, cm.venc, cm.k], ta:[ta.plazo, ta.vence, ta.venc, ta.k] };
+  });
+  chk('⚠️ Tienda Amiga entregado el 01/08 a 120 días vence el 29/11: todavía NO está vencido (por vencer)', r.ta[0]===120 && r.ta[1]==='2026-11-29' && r.ta[2]===-17 && r.ta[3]==='pv', r.ta);
+  chk('ROHO entregado el 01/10 a 60 días vence el 30/11: por vencer', r.rh[0]===60 && r.rh[1]==='2026-11-30' && r.rh[2]===-18 && r.rh[3]==='pv', r.rh);
+  chk('CAMSA (sin plazo) vence el día de la entrega: 05/11 = vencido hace 7 d', r.cm[0]===0 && r.cm[1]==='2026-11-05' && r.cm[2]===7 && r.cm[3]==='v30', r.cm);
+  r = await ev(() => { VENTAS(); var D=cbzDatos(); var x=D.deuda.filter(function(x){ return x.p.id==='v2'; })[0]||{}; return { k:x.k, vence:x.vence, tramos:Object.keys(D.T) }; });
+  chk('en Ventas (el equipo) nada cambia: tramos por días desde la entrega, sin vencimiento', r.k==='d60m' && !r.vence && r.tramos.join()==='d7,d30,d60,d60m,sinF', r);
 
   // ═══ 8. Celular ════════════════════════════════════════════════════════════════════════════
   console.log('\n── 8. En el celular ──');
