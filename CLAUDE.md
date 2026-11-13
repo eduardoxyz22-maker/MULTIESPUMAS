@@ -843,7 +843,7 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
-## 🎯📧🏪📍🛍️🏭 Las mejoras 174-185 (§4px, 13/11; dueño: «174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185»; en la rama, espera «publica»)
+## 🎯📧🏪📍🛍️🏭 Las mejoras 174-185, 190, 193, 203, 204 y 207 (§4px, 13/11; dueño: «174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185», «190, 193», «203, 204, 207» y «avisás que esté y publicás»; página PUBLICADA 13/11, versión 2026-11-13-d; el servidor `2026-11-13-b` (181 y el GPS de la 204) lo implementa el dueño: hasta entonces `main` sigue con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 13-a)
 - **👥 174 Las metas de cada vendedora en «🎯 Metas por marca»**: debajo de cada marca, mínima y presupuesto editables (`metasVd*`), lo vendido y la proyección de
   `proyeccionMes(ym).marcas[].filas` (los de «Por vendedor»: no calcular nada aparte), % y si llega; abajo la suma contra la meta de la marca. Son las MISMAS de
   `__metas__` → `m[ym].vd` del cierre comercial (`ccmMetas`); sin guardar se muestran las sugeridas y guardar las confirma. La meta de una vendedora = su
@@ -892,6 +892,12 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   el pasado o los últimos 3. ⚠️ Sale de `pryVentas` (el equipo de tiendas): zonas + «vendidas en tienda» + «sin zona» = lo vendido de Proyección; mayoristas aparte, ROHO no.
   Este mes se compara a esta altura (`pryCorteAltura`). Zona = la escrita (`zonaCanonica`) o `zonaCercaDe` con pin. Mapa Leaflet al abrir (sin internet, la lista): un círculo
   por zona en el promedio de sus pines (`almPunto`), tamaño por Bs, color de la marca que más vende. «📋 Copiar para la publicidad». Solo mira. `test_mapa_ventas` (58).
+- **🛰️📚 204 Cómo le fue a cada camión (GPS)** (servidor **`2026-11-13-b`**, junto con la 181): `gpsRepaso` suma en `GPS_DIA` por placa los km (haversine; sin < 30 m ni
+  saltos > 150 km/h, `gpsHistPaso_`), las horas fuera de PTF/Banzer/Moreno (`fm`, recién después de haber estado en una base), las salidas a repartir (`ns`) y las paradas
+  (`np`/`nc`). A las 21 h (`gpsHistCierre_`, o en el primer repaso del día siguiente) deja una fila por día y camión en la hoja «Historial GPS» (el mismo día reemplaza,
+  `GPS_DIA.h`). `gpsHist` {desde, hasta} la lee sin candado (+ el día en curso, `c:1`). En «🚚 Entregas por camión» → Por camión, con servidor ≥ 13-b, `ecGpsSumar` (desde
+  `ecFilasPorCamion`) agrega días con GPS, salida promedio y la más tarde, horas fuera, km, paradas y entregas por día con GPS (también Copiar y Excel). Los km son en línea
+  recta entre lecturas de un minuto: un poco menos que el odómetro. ⚠️ Un dato nuevo del día va en `GPS_DIA` y en `gpsHistFilas_` + `GPS_HIST_ENC`. `test_gps_historial` (66).
 - **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
   (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
   «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada

@@ -18774,3 +18774,13 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - Propuestas nuevas: «Mejoras 186 a 197» (https://claude.ai/artifact/4CwPyCjqm9bxCiQpxWYMHP) y «Mejoras 198 a 209»
   (https://claude.ai/artifact/1RAFDbqRaBryhtz5FBNU5e), con números de la planilla del 13/11 (precios bajo la mediana, QR BISA de noviembre, deuda de
   Copacaba/Multicenter, stock que no rota, 52 de 133 entregas de noviembre sin camión, 56 formas de escribir la zona, 34 celulares con dos nombres).
+- **Después**: 190 (comisión en «Tu día», `ccmCuenta`), 193 (Qué ofertar; ajuste mío: precio ≈ con la mediana de todo lo cobrado por el producto cuando ningún
+  código junta 3 ventas — con la planilla real bajó de 40 a 30 los «sin precio»), 178-180 (ATC y calidad; **pregunta abierta**: si las ventas de Eduardo cuentan en
+  «cada 100 vendidos» — con ellas ORO 7,2 % y TITANIO 7,7 %, sin ellas 9,1 % y 8,8 %), 203/204 (camión en el cierre y entregas por camión/chofer/tienda; probado con la
+  planilla real de noviembre), 207 (Dónde se vende) y el GPS de la 204 en el servidor 13-b (hoja «Historial GPS», `gpsHist`).
+- **Batería** sobre la rama (antes del GPS): 4 rojas — test_anuncio y test_actualizar_espera, que ya fallaban (relojes fijos de octubre), y test_asistente_rev y
+  test_visual_4pj, que solas pasan (17/0 y 51/0: carga de la máquina). En la copia de publicación (main + los cambios, servidor 13-a): test_servidor 414/0, test_wa_bot
+  253/0, test_version_nueva y las nuevas en verde.
+- **Publicado** 13/11 como página 2026-11-13-d, SIN el `.gs` 13-b ni sus pruebas (`test_servidor`, `test_wa_bot`, `test_wa_mayoristas`, `test_gps_historial`) y con
+  `SCRIPT_VERSION_ESPERADA` en 13-a; las columnas del GPS aparecen solas cuando el servidor conteste 13-b (`servidorTiene`). Al implementar el dueño: llevar a `main` el
+  `.gs`, esas pruebas y la ESPERADA en 13-b.
