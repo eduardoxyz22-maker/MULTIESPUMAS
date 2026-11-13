@@ -870,6 +870,11 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   lleva (su fila del Cierre comercial: tramo + bono Titanio + ajustes), el tramo siguiente (`ccmTramoSig`, la mínima es escalón) y lo que falta para el presupuesto por día
   hábil (`pryDiaHabil`, hoy cuenta hasta `MIS_COM_HORA_FIN`=20 h). Sin metas guardadas, sin meta suya, Eduardo, ROHO, internos o «Ver todos»: nada. ⚠️ La cuenta del cierre
   vive en `ccmCuenta(ym)` (la usan `ccmDatos` y el bloque): un cambio del cierre va ahí. Playwright solo con `MIS_TOP_PRUEBA`. `test_mis_comision` (25).
+- **🏷️ 193 Qué ofertar** (para Black Friday): Stock → «🏷️ Qué ofertar», solo con la contraseña (`ofertaBotonPintar`, chip al final de «Más»). Ventana `#oft-overlay` que
+  SOLO MIRA: libres = `stockHaySalir` − `o.comp`; vendido en `OFERTA_DIAS`=60 con las reglas de la rotación (`ofertaVentas`; mayoristas, RPT e internos aparte); meses =
+  `stockMesesSobra` al ritmo de 60 días; entra (`ofertaEntra`) con ≥ `OFERTA_MESES`=6 meses, sin ventas con ≥2 libres, o discontinuado (🛑 liquidar). Precio = `precioTipico`
+  del código con más ventas y, si ninguno junta 3 ventas, **≈ la mediana de todo lo cobrado por ese producto** (sus códigos de ventas y del catálogo, `ofertaCodsDeK`;
+  ajuste mío al juntar: con la planilla real 40 de 47 salían «sin precio», quedaron 30). Ordena por plata parada; filtros, Copiar y Excel. `test_stock_oferta` (39).
 - **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
   (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
   «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada

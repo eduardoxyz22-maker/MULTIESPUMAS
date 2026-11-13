@@ -38588,7 +38588,23 @@ function ofertaPrecio(o, cods){
   var idx=precIdx(), mejor={ v:0, n:0, cod:'' };
   var mira=function(c){ c=String(c||'').trim().toUpperCase(); var a=c && idx[c]; if(!a) return; var v=precioTipico(c); if(v>0 && a.length>mejor.n) mejor={ v:v, n:a.length, cod:c }; };
   mira(o.cod); Object.keys(cods||{}).forEach(mira);
-  return mejor;
+  if(mejor.v>0) return mejor;
+  /* 13/11 (con la planilla real: 40 de 47 «sin precio»): lo que casi no se vende casi nunca junta 3 ventas del MISMO código, que es lo
+     que pide `precioTipico`. Entonces, la mediana de TODO lo cobrado por ese producto (sus códigos de las ventas y del catálogo), aunque
+     sean 1 o 2 ventas, marcada como aproximada. */
+  var todos=[], vistos={};
+  [o.cod].concat(Object.keys(cods||{})).forEach(function(c){ c=String(c||'').trim().toUpperCase(); if(!c || vistos[c]) return; vistos[c]=1; (idx[c]||[]).forEach(function(v){ if(v>0) todos.push(v); }); });
+  if(!todos.length) return mejor;
+  var b=todos.slice().sort(function(x,y){ return x-y; }), m=Math.floor(b.length/2);
+  return { v:(b.length%2 ? b[m] : r2((b[m-1]+b[m])/2)), n:b.length, cod:'', aprox:true };
+}
+/* Los códigos del catálogo de cada producto del stock (por su clave), para buscarle precio aunque la venta no traiga código. */
+var OFERTA_COD_K=null;
+function ofertaCodsDeK(){
+  if(OFERTA_COD_K) return OFERTA_COD_K;
+  var m={};
+  Object.keys(CODIGOS||{}).forEach(function(c){ var e=CODIGOS[c]; try{ var k=stockInfo(stockMedidaEstandar({ codigo:c, desc:e.d, medida:e.m, cant:1 })).k; if(k && k!=='|') (m[k]||(m[k]={}))[c]=1; }catch(_){ } });
+  OFERTA_COD_K=m; return m;
 }
 function ofertaTipo(o){ var t=pryTipoProd({ codigo:o.cod||'', desc:o.desc||'' }); return t==='combo' ? 'colchon' : t; }
 /* Todas las filas con algo libre en PTF o Banzer, sin filtro. Lo arma UNA vez por apertura (`OFERTA_BASE`). */
@@ -38600,11 +38616,11 @@ function ofertaBase(){
     var comp=Math.max(0, Number(o.comp)||0), libre=Math.max(0, hay-comp); if(!(libre>0)) return;
     var v=V[o.k] || { u:0, n:0, fuera:0, cods:{} };
     var meses=(v.u>0) ? stockMesesSobra(Object.assign({}, o, { porDiaTodo:v.u/OFERTA_DIAS })) : null;
-    var pr=ofertaPrecio(o, v.cods);
+    var pr=ofertaPrecio(o, Object.assign({}, ofertaCodsDeK()[o.k]||{}, v.cods));
     filas.push({ k:o.k, desc:o.desc, medida:o.medida||'', cod:o.cod||pr.cod||'', nombre:stockNombre(o), tipo:ofertaTipo(o),
       ptf:Math.max(0, Number(o.deposito)||0), bz:Number(o.enSale)||0, salePor:o.salePor||{}, hay:hay, comp:comp, libre:libre,
       v60:v.u, n60:v.n, fuera:v.fuera, meses:meses, camino:stockEnCaminoSeguro(o),
-      precio:pr.v, nPrecio:pr.n, codPrecio:pr.cod, plata:pr.v>0 ? r2(libre*pr.v) : 0, descont:!!o.descont });
+      precio:pr.v, nPrecio:pr.n, codPrecio:pr.cod, precioAprox:!!pr.aprox, plata:pr.v>0 ? r2(libre*pr.v) : 0, descont:!!o.descont });
   });
   return { filas:filas, hoy:d.hoy, contado:d.contado, diasConteo:d.diasConteo };
 }
@@ -38688,7 +38704,7 @@ function ofertaPintar(){
           '<td data-l="Vendidos en '+OFERTA_DIAS+' días"><span>'+(f.v60>0?('<b>'+stockUnid(f.v60)+'</b><small>en '+f.n60+' entrega'+(f.n60===1?'':'s')+'</small>'):'<span class="oft-sp">ninguno</span>')+
             (f.fuera>0?('<small title="Mayoristas, reposiciones de tienda, pedidos internos o puntuales: no son venta para la rotación">+'+stockUnid(f.fuera)+' que no cuentan</small>'):'')+'</span></td>'+
           '<td data-l="Meses guardados"><span>'+(f.v60>0?('<b>'+esc(ofertaMesesTxt(f))+'</b>'):'<span class="oft-sp">sin ventas</span>')+(f.camino>0?('<small>+'+stockUnid(f.camino)+' en camino</small>'):'')+'</span></td>'+
-          '<td data-l="Precio típico"><span>'+(f.precio>0?('<span title="La mediana de '+f.nPrecio+' ventas ('+esc(f.codPrecio)+')">'+esc(fmtBs0(f.precio))+'</span>'):'<span class="oft-sp">sin precio</span>')+'</span></td>'+
+          '<td data-l="Precio típico"><span>'+(f.precio>0?(f.precioAprox ? ('<span title="Aproximado: la mediana de '+f.nPrecio+' venta'+(f.nPrecio===1?'':'s')+' de este producto (pocas para un precio típico)">≈ '+esc(fmtBs0(f.precio))+'</span>') : ('<span title="La mediana de '+f.nPrecio+' ventas ('+esc(f.codPrecio)+')">'+esc(fmtBs0(f.precio))+'</span>')):'<span class="oft-sp">sin precio</span>')+'</span></td>'+
           '<td data-l="Plata parada" class="oft-plata"><span>'+(f.precio>0?esc(fmtBs0(f.plata)):'—')+'</span></td></tr>';
       }).join('')+'</tbody>'+
       '<tfoot><tr><td>Total · '+T.n+' producto'+(T.n===1?'':'s')+'</td><td data-l="Libres"><span>'+stockUnid(T.u)+' libres</span></td><td></td><td></td><td></td><td data-l="Plata parada" class="oft-plata"><span>'+esc(fmtBs0(T.plata))+'</span></td></tr></tfoot></table></div>';
