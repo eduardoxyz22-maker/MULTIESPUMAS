@@ -2393,8 +2393,10 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
      dueño: mientras `BF_DIAS` sea null solo se ve con `?tema=black-friday`. Cuando lo diga, [desde, hasta] en días contados desde ese viernes
      (ej. [-4, 3] = del lunes de esa semana al lunes siguiente, el «Cyber Monday»). Gana sobre Todos Santos esos días.
      · 13/11, el dueño eligió la «C»: del viernes de la semana anterior al lunes siguiente (2026: del 20 al 30/11; 2027: del 19 al 29/11),
-       también en el dashboard. ⚠️ El mismo valor en el <head> de panel_template.html. */
-  var BF_DIAS=[-7, 3];
+       también en el dashboard. ⚠️ El mismo valor en el <head> de panel_template.html.
+     · 13/11 al mediodía, el dueño: «que salga desde ahora» → [-14, 3]: dos semanas antes del viernes hasta el lunes siguiente (2026: del 13 al
+       30/11; 2027: del 12 al 29/11). */
+  var BF_DIAS=[-14, 3];
   if(BF_DIAS && m===10){ var j1=new Date(Date.UTC(y,10,1)).getUTCDay(), bfDia=1+((4-j1+7)%7)+21+1, dBF=dd-bfDia; if(dBF>=BF_DIAS[0] && dBF<=BF_DIAS[1]) t='black-friday'; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
@@ -54334,7 +54336,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-13-a';
+var PANEL_V='2026-11-13-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

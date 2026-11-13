@@ -82,7 +82,7 @@ function armarDashboard(){
   chk('2 · el 1/1 a las 00:00 de Bolivia se apaga solo', !r.nav, r.nav);
   r = await pedidos('2026-10-20T10:00:00-04:00');
   chk('2 · en octubre sigue Halloween, sin Navidad', r.hw && !r.nav && !/🎄/.test(r.arbol), r);
-  r = await pedidos('2026-11-15T10:00:00-04:00');
+  r = await pedidos('2026-11-10T10:00:00-04:00');
   chk('2 · en noviembre, ninguno de los dos: es Todos Santos (§4ni), sin la estrella', !r.hw && !r.nav && r.ts && r.estrella==='none', r);
 
   console.log('\n── 3. Bloki con gorro de Papá Noel ──');
@@ -98,7 +98,7 @@ function armarDashboard(){
     await q.screenshot({ path:path.join(CAP,'navidad-bloki.png') }); await q.close();
   }
   await page.close();
-  page = await abrir(PEDIDOS, '2026-11-15T10:00:00-04:00');
+  page = await abrir(PEDIDOS, '2026-11-10T10:00:00-04:00');
   b = await page.evaluate(() => { BLOKI_SRC={}; return blokiSvg('bloki'); });
   /* (31/10) desde que Bloki se viste según el tema del mes, en noviembre lleva su calaverita a los pies (el dueño eligió la «B», sin flores) */
   chk('3 · en noviembre, sin gorro de Papá Noel: con su calaverita a los pies y su chispa (Todos Santos «B»)', !/bk-gorro/.test(b) && /class="bk-calaverita"/.test(b) && /class="bk-chispa"/.test(b), '');
@@ -116,7 +116,7 @@ function armarDashboard(){
   chk('4 · prendido en el dashboard: caja de pino con 🎄 y guirnalda; el ítem elegido en verde', d.on && /11, 59, 44/.test(d.fondo) && /🎄/.test(d.arbol) && /^url\("data:image\/svg/.test(d.luz) && /21, 128, 61/.test(d.activo), d);
   if(CAP) await page.screenshot({ path:path.join(CAP,'navidad-dashboard.png'), clip:{ x:0, y:0, width:1300, height:420 }, animations:'disabled' });
   await page.close();
-  page = await abrir(dash, '2026-11-15T10:00:00-04:00');
+  page = await abrir(dash, '2026-11-10T10:00:00-04:00');
   d = await page.evaluate(() => document.documentElement.classList.contains('tema-navidad'));
   chk('4 · en noviembre el dashboard sin Navidad', !d, d);
   await page.close();

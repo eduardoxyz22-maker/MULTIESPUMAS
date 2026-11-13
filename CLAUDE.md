@@ -847,10 +847,10 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
 oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
-etiqueta. **Los días: `BF_DIAS=[-7, 3]`** (dueño eligió la «C»): del viernes de la semana anterior al lunes siguiente, contados desde el viernes después del
-cuarto jueves de noviembre (2026: del 20 al 30/11; 2027: del 19 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
+etiqueta. **Los días: `BF_DIAS=[-14, 3]`** (dueño eligió la «C» = [-7, 3] y el 13/11 al mediodía dijo *«que salga desde ahora»*, PUBLICADO versión 2026-11-13-b): de dos semanas antes del viernes al lunes siguiente, contados desde el viernes después del
+cuarto jueves de noviembre (2026: del 13 al 30/11; 2027: del 12 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
 `BF_DIAS` en el `<head>` de `pedidos.html` y de `panel_template.html`. Otro día se ve con `?tema=black-friday`.
-Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
+Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (12/11 sigue Todos Santos), `test_navidad` (10/11), `test_bloki` §7, `test_vidrio_agrandar` §2.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de

@@ -59,12 +59,14 @@ function armarDashboard(){
     ['2026-10-27T10:00:00-04:00','halloween','27/10'],
     ['2026-10-31T23:59:00-04:00','halloween','31/10 23:59 (ya 1/11 en UTC)'],
     ['2026-11-01T00:01:00-04:00','todos-santos','1/11 00:01'],
-    ['2026-11-19T23:59:00-04:00','todos-santos','19/11 23:59 (la víspera de Black Friday)'],
-    ['2026-11-20T00:01:00-04:00','black-friday','20/11 00:01: Black Friday, la «C» del dueño (del viernes anterior al lunes siguiente)'],
+    ['2026-11-12T23:59:00-04:00','todos-santos','12/11 23:59 (la víspera de Black Friday)'],
+    ['2026-11-13T00:01:00-04:00','black-friday','13/11 00:01: Black Friday (dueño, 13/11: «que salga desde ahora»: dos semanas antes del viernes)'],
+    ['2026-11-19T12:00:00-04:00','black-friday','19/11'],
+    ['2026-11-20T00:01:00-04:00','black-friday','20/11 00:01'],
     ['2026-11-27T12:00:00-04:00','black-friday','27/11, el viernes de Black Friday'],
     ['2026-11-30T23:59:00-04:00','black-friday','30/11 23:59 (el «Cyber Monday»)'],
-    ['2027-11-18T12:00:00-04:00','todos-santos','18/11/2027 (en 2027 Black Friday es el 26)'],
-    ['2027-11-19T12:00:00-04:00','black-friday','19/11/2027'],
+    ['2027-11-11T12:00:00-04:00','todos-santos','11/11/2027 (en 2027 Black Friday es el 26)'],
+    ['2027-11-12T00:01:00-04:00','black-friday','12/11/2027'],
     ['2027-11-29T23:59:00-04:00','black-friday','29/11/2027 23:59'],
     ['2026-12-01T00:01:00-04:00','navidad','1/12'],
     ['2026-12-30T23:59:00-04:00','navidad','30/12 23:59'],
@@ -87,14 +89,14 @@ function armarDashboard(){
     ['2027-09-18T00:01:00-04:00','santa-cruz','18/9'],
     ['2027-09-24T23:59:00-04:00','santa-cruz','24/9 23:59'],
     ['2027-09-25T00:01:00-04:00','espuma','25/9'],
-    ['2027-11-15T12:00:00-04:00','todos-santos','noviembre del año que viene']
+    ['2027-11-08T12:00:00-04:00','todos-santos','noviembre del año que viene']
   ];
   for (const [cuando, esp, l] of CASOS) chk('1 · '+l+' → '+esp, (await temaDe(PEDIDOS, cuando))===esp, cuando);
   chk('1 · ?tema=carnaval lo muestra cualquier día', (await temaDe(PEDIDOS, '2026-10-27T10:00:00-04:00', '?tema=carnaval'))==='carnaval');
   chk('1 · …y ?tema=todos-santos también', (await temaDe(PEDIDOS, '2026-06-10T10:00:00-04:00', '?tema=todos-santos'))==='todos-santos');
   const dash = armarDashboard();
   chk('1 · el dashboard elige el mismo: 1/11 → Todos Santos', (await temaDe(dash, '2026-11-01T09:00:00-04:00'))==='todos-santos');
-  chk('1 · …el 20/11 → Black Friday (dueño: «C y sí también Dashboard») y el 19/11 sigue Todos Santos', (await temaDe(dash, '2026-11-20T09:00:00-04:00'))==='black-friday' && (await temaDe(dash, '2026-11-19T09:00:00-04:00'))==='todos-santos');
+  chk('1 · …el 13/11 → Black Friday (dueño: «C y sí también Dashboard», «que salga desde ahora») y el 12/11 sigue Todos Santos', (await temaDe(dash, '2026-11-13T09:00:00-04:00'))==='black-friday' && (await temaDe(dash, '2026-11-12T09:00:00-04:00'))==='todos-santos');
   chk('1 · …31/12 → Año Nuevo y 18/9 → 24 de Septiembre', (await temaDe(dash, '2026-12-31T09:00:00-04:00'))==='anio-nuevo' && (await temaDe(dash, '2027-09-18T09:00:00-04:00'))==='santa-cruz');
 
   // ═══ 2. Lo que se ve ═══

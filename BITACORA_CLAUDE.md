@@ -18683,6 +18683,11 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
   dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
   Black Friday, 2027 corrido un día, y el dashboard igual.
+- **§4pr-b — Desde HOY** (13/11 al mediodía; se le explicó que salía el 20 y dijo *«que salga desde ahora»*): `BF_DIAS=[-14, 3]` en los dos `<head>` =
+  dos semanas antes del viernes hasta el lunes siguiente (2026: del 13 al 30/11; 2027: del 12 al 29/11). Página `2026-11-13-b` (`PANEL_V` y
+  `panel-version.json` juntos), publicada SOLA desde `main` (los plazos de Cobranza de la rama siguen esperando su «publica»). Pruebas cambiadas a
+  conciencia: `test_temas_mejoras` (12/11 Todos Santos, 13/11 00:01 Black Friday; 2027: 11/11 y 12/11; «noviembre del año que viene» pasa al 08/11/2027)
+  y `test_navidad` (el «noviembre = Todos Santos» pasa del 15/11 al 10/11).
 
 ### §4ps — 🚀 PUBLICADO 13/11 (`828251f`): SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
 El dueño (13/11): *«listo implementado»* (el `.gs` de las almohadas, enlace fijo `0f1eefe…`, 8.104 líneas). El servidor contesta `2026-11-13-a`
