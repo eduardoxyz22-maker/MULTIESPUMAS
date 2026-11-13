@@ -1490,6 +1490,61 @@ html.tema-todos-santos #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fbefff
 html.tema-todos-santos .adm-cam-tit b, html.tema-todos-santos .bot-cab b{ color:#fde7c7; }
 html.tema-todos-santos .adm-cam-tit small, html.tema-todos-santos .adm-volver span, html.tema-todos-santos .bot-cab span{ color:#e6d3f2; }
 html.tema-todos-santos :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#ecdcf7; }
+/* 🛍️ BLACK FRIDAY (muestra del 13/11; dueño: «ármame la muestra de black friday»). Negro con dorado, como las vitrinas de esa semana:
+   la cinta amarilla que corre arriba, la etiqueta al lado del nombre, la ciudad de noche, etiquetas doradas que caen en el encabezado (`#hdr-fx`,
+   «etiquetas») y el fondo negro con etiquetas apenas visibles; las tarjetas grandes en vidrio oscuro (las mismas reglas que noviembre, en dorado).
+   Solo apariencia: no anuncia descuentos ni toca datos. Por ahora SOLO con `?tema=black-friday`: los días los decide el dueño (`BF_DIAS` del <head>). */
+html.tema-black-friday{ --grad-header:linear-gradient(135deg,#050505,#1c1917,#27272a,#0c0a09,#292524,#050505); --sh-card:0 10px 28px -14px rgba(0,0,0,.7); --sh-soft:0 18px 44px -20px rgba(0,0,0,.75); }
+html.tema-black-friday, html.tema-black-friday body{ background:#0b0b0d; }
+html.tema-black-friday body{ background:transparent; }
+html.tema-black-friday .header{ overflow:hidden; box-shadow:0 2px 0 #facc15, 0 10px 30px rgba(0,0,0,.55); }
+html.tema-black-friday .header::before{ content:''; position:absolute; left:0; right:0; top:0; height:22px; pointer-events:none; z-index:2;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='22' viewBox='0 0 180 22'%3E%3Crect width='180' height='22' fill='%23facc15'/%3E%3Crect y='0' width='180' height='1.5' fill='%23000' opacity='.35'/%3E%3Crect y='20.5' width='180' height='1.5' fill='%23000' opacity='.35'/%3E%3Ctext x='14' y='15.6' font-family='Arial,Helvetica,sans-serif' font-size='12.5' font-weight='900' letter-spacing='1' fill='%230a0a0a' textLength='118' lengthAdjust='spacingAndGlyphs'%3EBLACK FRIDAY%3C/text%3E%3Cpath d='M157 5.5 L159.2 9.4 L163.5 11 L159.2 12.6 L157 16.5 L154.8 12.6 L150.5 11 L154.8 9.4 Z' fill='%230a0a0a'/%3E%3C/svg%3E") repeat-x 0 0/180px 22px; animation:bf-cinta 9s linear infinite; box-shadow:0 2px 8px rgba(0,0,0,.45); }
+@keyframes bf-cinta{ to{ background-position:-180px 0; } }
+html.tema-black-friday .header-in{ padding-top:22px; }
+html.tema-black-friday .logo-h::before{ content:''; display:inline-block; width:1.1em; height:1.1em; margin-right:.38em; vertical-align:-.16em;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M2.5 12.3V4.4c0-1 .8-1.9 1.9-1.9h7.9c.5 0 1 .2 1.3.6l7.9 7.9c.7.7.7 1.9 0 2.7l-7.9 7.9c-.7.7-1.9.7-2.7 0L3.1 13.6c-.4-.3-.6-.8-.6-1.3z' fill='%23facc15' stroke='%23a16207' stroke-width='.8'/%3E%3Ccircle cx='7.6' cy='7.6' r='1.9' fill='%230a0a0a'/%3E%3Cpath d='M10.6 16.4l5.6-5.6' stroke='%230a0a0a' stroke-width='1.5' stroke-linecap='round'/%3E%3Ccircle cx='11.2' cy='11.5' r='1.25' fill='%230a0a0a'/%3E%3Ccircle cx='15.6' cy='15.9' r='1.25' fill='%230a0a0a'/%3E%3C/svg%3E") center/contain no-repeat; filter:drop-shadow(0 0 6px rgba(250,204,21,.45)); }
+html.tema-black-friday .logo-s{ color:#facc15; }
+html.tema-black-friday .hstat-v{ color:#fde047; text-shadow:0 0 12px rgba(250,204,21,.5); }
+html.tema-black-friday .nav button.active{ background:#18181b; border-color:#facc15; }
+html.tema-black-friday .h-an{ border-radius:50%; background:radial-gradient(circle,rgba(10,10,12,.7) 62%,rgba(10,10,12,0) 74%); }
+html.tema-black-friday .h-lejos{ filter:grayscale(1) brightness(.42); }
+html.tema-black-friday .h-cerca{ filter:grayscale(.75) brightness(.62) sepia(.35); }
+html.tema-black-friday .h-calle{ background:linear-gradient(#facc15,#facc15) top/100% 1.5px no-repeat,
+  repeating-linear-gradient(90deg,rgba(250,204,21,.75) 0 26px,transparent 26px 62px) 0 8px/100% 2.5px no-repeat,linear-gradient(#1c1917,#0c0a09); }
+html.tema-black-friday .h-camion{ z-index:1; }
+html.tema-black-friday body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='440' viewBox='0 0 440 440'%3E%3Cg transform='translate(80 90) rotate(-18) scale(1.25)' opacity='0.22'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(330 60) rotate(14) scale(1.0)' opacity='0.18'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(250 230) rotate(-30) scale(1.15)' opacity='0.2'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(60 330) rotate(22) scale(1.05)' opacity='0.18'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(380 370) rotate(-10) scale(1.2)' opacity='0.22'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(180 400) rotate(8) scale(0.9)' opacity='0.16'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23facc15' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23facc15'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23facc15' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23facc15'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23facc15'/%3E%3C/g%3E%3Cg transform='translate(410 200) rotate(40) scale(0.85)' opacity='0.15'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23ef4444' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23ef4444'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23ef4444' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23ef4444'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23ef4444'/%3E%3C/g%3E%3Cg transform='translate(150 170) rotate(-50) scale(0.8)' opacity='0.14'%3E%3Cpath d='M-14 -8 H8 L16 0 L8 8 H-14 Z' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='0' r='2' fill='%23ffffff'/%3E%3Cpath d='M-9 4 L-1 -4' stroke='%23ffffff' stroke-width='1.3' stroke-linecap='round'/%3E%3Ccircle cx='-8.4' cy='-2.6' r='1.4' fill='%23ffffff'/%3E%3Ccircle cx='-1.6' cy='2.6' r='1.4' fill='%23ffffff'/%3E%3C/g%3E%3Cpath d='M200 35 L201.4 38.6 L205 40 L201.4 41.4 L200 45 L198.6 41.4 L195 40 L198.6 38.6 Z' fill='%23fde68a' opacity='0.55'/%3E%3Cpath d='M40 196 L41.12 198.88 L44 200 L41.12 201.12 L40 204 L38.88 201.12 L36 200 L38.88 198.88 Z' fill='%23fde68a' opacity='0.45'/%3E%3Cpath d='M300 314 L301.68 318.32 L306 320 L301.68 321.68 L300 326 L298.32 321.68 L294 320 L298.32 318.32 Z' fill='%23fde68a' opacity='0.5'/%3E%3Cpath d='M420 116 L421.12 118.88 L424 120 L421.12 121.12 L420 124 L418.88 121.12 L416 120 L418.88 118.88 Z' fill='%23fde68a' opacity='0.4'/%3E%3Cpath d='M120 256.5 L120.98 259.02 L123.5 260 L120.98 260.98 L120 263.5 L119.02 260.98 L116.5 260 L119.02 259.02 Z' fill='%23fde68a' opacity='0.45'/%3E%3Cpath d='M260 127 L260.84 129.16 L263 130 L260.84 130.84 L260 133 L259.16 130.84 L257 130 L259.16 129.16 Z' fill='%23fff' opacity='0.35'/%3E%3Cpath d='M20 416 L21.12 418.88 L24 420 L21.12 421.12 L20 424 L18.88 421.12 L16 420 L18.88 418.88 Z' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='30' cy='30' r='1.1' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='140' cy='20' r='1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='270' cy='10' r='1.2' fill='%23fde68a' opacity='0.5'/%3E%3Ccircle cx='390' cy='30' r='1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='100' cy='140' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='350' cy='150' r='1.2' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='220' cy='300' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='20' cy='280' r='1.1' fill='%23fde68a' opacity='0.4'/%3E%3Ccircle cx='300' cy='420' r='1' fill='%23fde68a' opacity='0.35'/%3E%3Ccircle cx='430' cy='300' r='1.2' fill='%23fde68a' opacity='0.45'/%3E%3Ccircle cx='160' cy='340' r='1' fill='%23fde68a' opacity='0.35'/%3E%3C/svg%3E") 0 0/440px 440px repeat,
+  radial-gradient(1200px 520px at 50% 112%, rgba(250,204,21,.20), rgba(0,0,0,0) 70%),
+  radial-gradient(900px 420px at 0% -10%, rgba(239,68,68,.10), rgba(0,0,0,0) 70%),
+  linear-gradient(180deg,#0b0b0d 0%,#111113 60%,#17150f 100%); }
+html.tema-black-friday body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.7);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.7) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.7) 35%,transparent 100%); }
+html.tema-black-friday .footer{ color:#e7e5e4; }
+html.tema-black-friday .footer a{ color:#facc15; }
+@media(min-width:701px){
+  html.tema-black-friday .nav button[id]:not(.active){ background:rgba(12,12,14,.6); border-color:rgba(250,204,21,.42); color:#fafaf9; }
+  html.tema-black-friday .nav button[id]:not(.active) .ico-b{ background:rgba(255,255,255,.1); }
+  html.tema-black-friday .nav button[id]:not(.active) .ico-b svg{ stroke:#facc15; }
+  html.tema-black-friday .nav button[id]:hover:not(.active){ background:rgba(39,39,42,.85); border-color:#facc15; color:#fff; }
+}
+html.tema-black-friday :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chofer) > .card, html.tema-black-friday #admin-content > .card{
+  background:rgba(10,10,12,.5); border-color:rgba(250,204,21,.28); box-shadow:0 18px 44px -24px rgba(0,0,0,.8); }
+html.tema-black-friday .af-g .af-gt{ color:#fde68a; }
+html.tema-black-friday .af-g > i, html.tema-black-friday #adm-mas > div > span{ color:#d6d3d1 !important; }
+html.tema-black-friday .af-ley span{ color:#e7e5e4; }
+html.tema-black-friday #mis-borradores > div:not(.kx), html.tema-black-friday #view-mis > .card > div:not(.u7) > b{ color:#e7e5e4 !important; }
+html.tema-black-friday .tcol-tip{ color:#d6d3d1; }
+html.tema-black-friday #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fafaf9; } html.tema-black-friday #view-atc :is(.atv-mot, .atc-tipos) .atv-t small{ color:#d6d3d1; }
+html.tema-black-friday .adm-cam-tit b, html.tema-black-friday .bot-cab b{ color:#fde68a; }
+html.tema-black-friday .adm-cam-tit small, html.tema-black-friday .adm-volver span, html.tema-black-friday .bot-cab span{ color:#d6d3d1; }
+html.tema-black-friday :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#e7e5e4; }
+@media(max-width:700px){
+  html.tema-black-friday .nav button.active{ background:none; border:0; color:var(--text); }
+  html.tema-black-friday .nav button.active::after{ background:#facc15; }
+}
+@media(prefers-reduced-motion:reduce){ html.tema-black-friday .header::before, html.tema-black-friday body::after{ animation:none!important; } }
 /* 🎭 Carnaval (de jueves de comadres al martes de Carnaval: depende de la Pascua de cada año): colores y confeti. */
 html.tema-carnaval{ --grad-header:linear-gradient(135deg,#6d28d9,#db2777,#ea580c,#0d9488,#2563eb,#6d28d9); }
 html.tema-carnaval .header{ overflow:hidden; }
@@ -2337,12 +2392,17 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
   var t = m===9 ? 'halloween' : m===10 ? 'todos-santos' : ((m===11&&dd===31)||(m===0&&dd<=2)) ? 'anio-nuevo' : m===11 ? 'navidad'
         : (antesPascua>=47&&antesPascua<=52) ? 'carnaval' : (m===4&&dd>=20&&dd<=27) ? 'madre' : (m===7&&dd<=7) ? 'patria'
         : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
+  /* 🛍️ BLACK FRIDAY (muestra del 13/11): el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027). Qué días va lo decide el
+     dueño: mientras `BF_DIAS` sea null solo se ve con `?tema=black-friday`. Cuando lo diga, [desde, hasta] en días contados desde ese viernes
+     (ej. [-4, 3] = del lunes de esa semana al lunes siguiente, el «Cyber Monday»). Gana sobre Todos Santos esos días. */
+  var BF_DIAS=null;
+  if(BF_DIAS && m===10){ var j1=new Date(Date.UTC(y,10,1)).getUTCDay(), bfDia=1+((4-j1+7)%7)+21+1, dBF=dd-bfDia; if(dBF>=BF_DIAS[0] && dBF<=BF_DIAS[1]) t='black-friday'; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
   /* 🪟 (30/10, §4ny) La barra de la ventana del panel instalado (y la caja de los botones de Windows sin barra) toma el color oscuro del
      encabezado del tema. Un tema nuevo va acá también (si no, queda el de Espuma). */
   var BARRA={ halloween:'#1a0b2e', 'todos-santos':'#1e0a35', navidad:'#0b3b2c', 'anio-nuevo':'#0b1d3a', carnaval:'#5b21b6', madre:'#831843',
-    patria:'#7f1d1d', 'santa-cruz':'#064e3b', espuma:'#0f4c5c' };
+    patria:'#7f1d1d', 'santa-cruz':'#064e3b', 'black-friday':'#0a0a0a', espuma:'#0f4c5c' };
   var mtc=document.querySelector('meta[name="theme-color"]'); if(mtc) mtc.setAttribute('content', BARRA[t]||BARRA.espuma);
   /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
   /* 🔇 (13/11, dueño: «quitá la música de ingreso, ya pasó el día de los muertos») Solo el 1 y el 2 de noviembre (o viéndolo con ?tema=todos-santos). */
@@ -2453,14 +2513,14 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
   var H=document.querySelector('.header'), cv=document.getElementById('hdr-fx');
   if(!H || !cv || !cv.getContext) return;
   var m=/\btema-([a-z-]+)/.exec(document.documentElement.className||''), tema=m?m[1]:'';
-  var EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' }[tema];
+  var EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos', 'black-friday':'etiquetas' }[tema];
   if(!EF){ cv.style.display='none'; return; }
   var cx=cv.getContext('2d'), dpr=Math.min(2, window.devicePixelRatio||1), W=0, Hh=0, P=[], R=[], cuadros=0, t=0, armado=false;
   var quieto=false; try{ quieto=window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
   var prueba=!!navigator.webdriver && !window.HDR_FX_PRUEBA;
   var azar=function(a,b){ return a+Math.random()*(b-a); }, uno=function(l){ return l[Math.floor(Math.random()*l.length)]; };
   var PAL={ petalos:['#f59e0b','#f97316','#fb923c','#fbbf24','#ea580c'], confeti:['#fde047','#22d3ee','#f472b6','#a3e635','#fb923c','#ffffff','#c084fc'],
-    patria:['#D52B1E','#F9E300','#22a24a'], 'confeti-scz':['#ffffff','#34d399','#ffffff','#10b981'], fuegos:['#fde047','#f472b6','#67e8f9','#ffffff','#a78bfa','#fb923c'] };
+    patria:['#D52B1E','#F9E300','#22a24a'], 'confeti-scz':['#ffffff','#34d399','#ffffff','#10b981'], etiquetas:['#facc15','#fde047','#facc15','#ffffff','#f59e0b','#ef4444'], fuegos:['#fde047','#f472b6','#67e8f9','#ffffff','#a78bfa','#fb923c'] };
   function medir(){
     var w=H.clientWidth, h=H.clientHeight; if(!w || !h) return;
     if(Math.abs(w*dpr-W)<1 && Math.abs(h*dpr-Hh)<1) return;
@@ -2471,16 +2531,17 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
     var s=dpr, p={ x:azar(0,W), a:azar(0,6.28), ph:azar(0,6.28) };
     if(EF==='burbujas'){ p.r=azar(3,9)*s; p.y=arriba?azar(0,Hh):Hh+p.r+azar(0,Hh*.5); p.v=-azar(.15,.45)*s; }
     else if(EF==='corazones'){ p.r=azar(4.5,8)*s; p.y=arriba?azar(0,Hh):-p.r*2; p.v=azar(.25,.6)*s; p.c=uno(['#fff','#fbcfe8','#f9a8d4','#fecdd3']); p.co=Math.random()<.55; p.va=azar(-.02,.02); }
+    else if(EF==='etiquetas'){ p.r=azar(4.5,8.5)*s; p.y=arriba?azar(0,Hh):-p.r*2; p.v=azar(.3,.75)*s; p.va=azar(-.025,.025); p.c=uno(PAL.etiquetas); }
     else { p.r=azar(EF==='petalos'?3.2:3, EF==='petalos'?6:5.5)*s; p.y=arriba?azar(0,Hh):-10*s; p.v=azar(EF==='petalos'?.25:.55, EF==='petalos'?.7:1.3)*s; p.va=azar(-.06,.06);
       p.c=uno(PAL[EF==='patria'?'patria':(EF==='petalos'?'petalos':(EF==='confeti-scz'?'confeti-scz':'confeti'))]); p.w=azar(.5,1.3); }
     return p;
   }
   function armar(){
     P=[]; R=[];
-    var n=cuantos({ burbujas:22, petalos:40, confeti:46, corazones:26, patria:32, 'confeti-scz':34, fuegos:0 }[EF]);
+    var n=cuantos({ burbujas:22, petalos:40, confeti:46, corazones:26, patria:32, 'confeti-scz':34, fuegos:0, etiquetas:22 }[EF]);
     for(var i=0;i<n;i++) P.push(nuevo(true));
     if(EF==='petalos') for(var j=0;j<cuantos(8);j++) R.push({ x:azar(0,W), y:azar(Hh*.5,Hh), v:azar(.2,.5)*dpr, ph:azar(0,6.28) });   // chispas de vela que suben
-    if(EF==='patria' || EF==='fuegos') for(var k=0;k<cuantos(EF==='fuegos'?26:10);k++) R.push({ x:azar(0,W), y:azar(0,Hh*.75), r:azar(.8,1.8)*dpr, ph:azar(0,6.28), est:EF==='patria' });
+    if(EF==='patria' || EF==='fuegos' || EF==='etiquetas') for(var k=0;k<cuantos(EF==='fuegos'?26:(EF==='etiquetas'?16:10));k++) R.push({ x:azar(0,W), y:azar(0,Hh*.75), r:azar(.8,1.8)*dpr, ph:azar(0,6.28), est:EF==='patria' });
   }
   function corazon(x,y,r){ cx.beginPath(); cx.moveTo(x,y+r*.35); cx.bezierCurveTo(x,y-r*.3,x-r,y-r*.3,x-r,y+r*.2); cx.bezierCurveTo(x-r,y+r*.75,x,y+r*1.05,x,y+r*1.35);
     cx.bezierCurveTo(x,y+r*1.05,x+r,y+r*.75,x+r,y+r*.2); cx.bezierCurveTo(x+r,y-r*.3,x,y-r*.3,x,y+r*.35); cx.fill(); }
@@ -2502,7 +2563,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
     R.forEach(function(r){
       if(r.v!=null){ if(mover){ r.y-=r.v; r.x+=Math.sin(t*.05+r.ph)*.3*dpr; } if(r.y<Hh*.2){ r.y=Hh; r.x=azar(0,W); }
         cx.globalAlpha=.5+.4*Math.sin(t*.2+r.ph); cx.fillStyle='#fde68a'; cx.beginPath(); cx.arc(r.x,r.y,1.2*dpr,0,6.283); cx.fill(); }
-      else { cx.globalAlpha=.35+.45*(.5+.5*Math.sin(t*.07+r.ph)); cx.fillStyle=r.est?'#fde047':'#fff';
+      else { cx.globalAlpha=.35+.45*(.5+.5*Math.sin(t*.07+r.ph)); cx.fillStyle=r.est?'#fde047':(EF==='etiquetas'?'#fde68a':'#fff');
         if(r.est) estrella(r.x,r.y,r.r*2.6); else { cx.beginPath(); cx.arc(r.x,r.y,r.r*.7,0,6.283); cx.fill(); } }
     });
     if(EF==='fuegos'){ fuegos(mover); cx.globalAlpha=1; return; }
@@ -2520,6 +2581,10 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       cx.save(); cx.translate(p.x,p.y); cx.rotate(p.a); cx.globalAlpha=.88; cx.fillStyle=p.c;
       if(EF==='corazones'){ if(p.co) corazon(0,-p.r*.6,p.r); else { cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); } }
       else if(EF==='petalos'){ cx.beginPath(); cx.ellipse(0,0,p.r,p.r*.55,0,0,6.283); cx.fill(); }
+      else if(EF==='etiquetas'){   // 🛍️ una etiqueta de precio con su agujerito; las grandes llevan «%»
+        var r=p.r; cx.beginPath(); cx.moveTo(-r*1.25,-r*.62); cx.lineTo(r*.55,-r*.62); cx.lineTo(r*1.2,0); cx.lineTo(r*.55,r*.62); cx.lineTo(-r*1.25,r*.62); cx.closePath(); cx.fill();
+        cx.globalAlpha=.9; cx.fillStyle='#0b0b0d'; cx.beginPath(); cx.arc(r*.55,0,r*.17,0,6.283); cx.fill();
+        if(r>6.5*dpr){ cx.font='900 '+Math.round(r*.95)+'px Arial,sans-serif'; cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('%',-r*.4,r*.04); } }
       else { cx.scale(1, Math.cos(p.ph*3)); cx.fillRect(-p.r*.6*p.w, -p.r, p.r*1.2*p.w, p.r*2); }
       cx.restore();
     });
@@ -51132,7 +51197,7 @@ var VIDA=null, VIDA_GEN=0;
 function depVidaLuego(fn, ms){ var g=VIDA && VIDA.gen; return setTimeout(function(){ if(VIDA && VIDA.gen===g && DEP.w3 && DEP.w3.modo==='mis') fn(); }, ms); }
 var VIDA_TEMA_COL={ halloween:['#f97316','#7c3aed','#111827','#facc15'], 'todos-santos':['#ec4899','#f97316','#facc15','#14b8a6','#8b5cf6','#ef4444'],
   navidad:['#dc2626','#16a34a','#facc15','#f8fafc'], 'anio-nuevo':['#facc15','#e5e7eb','#a78bfa','#f8fafc'], carnaval:['#ef4444','#f59e0b','#22c55e','#3b82f6','#a855f7','#ec4899'],
-  madre:['#ec4899','#f9a8d4','#f8fafc'], patria:['#dc2626','#facc15','#16a34a'], 'santa-cruz':['#16a34a','#f8fafc'], espuma:['#00B5AD','#2B3566','#F7E7A0','#E7B5D5','#DA8B62'] };
+  madre:['#ec4899','#f9a8d4','#f8fafc'], patria:['#dc2626','#facc15','#16a34a'], 'santa-cruz':['#16a34a','#f8fafc'], 'black-friday':['#111111','#facc15','#f8fafc','#ef4444'], espuma:['#00B5AD','#2B3566','#F7E7A0','#E7B5D5','#DA8B62'] };
 /* una persona de la misma forma que las de la ciudad (patio.js `persona`), a la escala de la fábrica: mira hacia +z */
 /* (10/11, dueño: «me dijeron que podías hacerlas más realistas») varias piezas en UNA sola malla, cada una con su color: la pantorrilla con el
    zapato y el antebrazo con la mano se dibujan de una vez (las rodillas y los codos no suman dibujos por cuadro). `partes` = [geometría, color, x, y, z]. */
@@ -56935,6 +57000,16 @@ function blokiTemaPartes(tema, traje){
     P.mano='<path d="M31 72 V6" stroke="#78350f" stroke-width="3.5" stroke-linecap="round"/><circle cx="31" cy="5" r="3.2" fill="#fbbf24" stroke="'+K+'" stroke-width="1.5"/>'+
       '<g class="bk-bandera"><rect x="32" y="7" width="52" height="11" fill="'+cs[0]+'"/><rect x="32" y="18" width="52" height="11" fill="'+cs[1]+'"/><rect x="32" y="29" width="52" height="11" fill="'+cs[2]+'"/>'+
       '<rect x="32" y="7" width="52" height="33" fill="none" stroke="'+K+'" stroke-width="3"/></g>';
+  }else if(tema==='black-friday'){
+    /* 🛍️ (muestra del 13/11) una bolsa de compras negra a sus pies, con su etiqueta dorada; nada en la cabeza ni en la cara (como la
+       calaverita de noviembre: poco y abajo) */
+    P.delante='<g class="bk-bolsa" transform="translate(3 -11) rotate(-6 42 212)"><path d="M33 190 C33 178 51 178 51 190" fill="none" stroke="#facc15" stroke-width="3.5" stroke-linecap="round"/>'+
+      '<path d="M22 190 H62 L59 234 Q59 237 56 237 H28 Q25 237 25 234 Z" fill="#141414" stroke="'+K+'" stroke-width="3.5" stroke-linejoin="round"/>'+
+      '<path d="M23.5 197 H60.5" stroke="#facc15" stroke-width="3"/>'+
+      '<g transform="translate(47 215) rotate(-14)"><path d="M-11 -7 H5 L11 0 L5 7 H-11 Z" fill="#facc15" stroke="'+K+'" stroke-width="2.2" stroke-linejoin="round"/>'+
+      '<circle cx="5" cy="0" r="1.6" fill="'+K+'"/><path d="M-8 3.5 L-1 -3.5" stroke="'+K+'" stroke-width="1.6" stroke-linecap="round"/>'+
+      '<circle cx="-7.4" cy="-2.4" r="1.4" fill="'+K+'"/><circle cx="-1.6" cy="2.4" r="1.4" fill="'+K+'"/></g>'+
+      '<path d="M51 196 Q56 203 52 209" fill="none" stroke="#facc15" stroke-width="1.4"/></g>';
   }
   return P;
 }

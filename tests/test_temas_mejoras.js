@@ -60,6 +60,7 @@ function armarDashboard(){
     ['2026-10-31T23:59:00-04:00','halloween','31/10 23:59 (ya 1/11 en UTC)'],
     ['2026-11-01T00:01:00-04:00','todos-santos','1/11 00:01'],
     ['2026-11-30T23:59:00-04:00','todos-santos','30/11 23:59'],
+    ['2026-11-27T12:00:00-04:00','todos-santos','27/11 Black Friday: apagado hasta que el dueño diga los días (BF_DIAS)'],
     ['2026-12-01T00:01:00-04:00','navidad','1/12'],
     ['2026-12-30T23:59:00-04:00','navidad','30/12 23:59'],
     ['2026-12-31T00:01:00-04:00','anio-nuevo','31/12'],
@@ -118,6 +119,9 @@ function armarDashboard(){
   r = await mira('?tema=carnaval'); chk('2 · Carnaval: 🎭 (la pestaña elegida con el color de SU sección, §4nk)', /🎭/.test(r.logoTxt) && r.pestana==='rgb(15, 118, 110)', [r.logoTxt, r.pestana]);
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
+  r = await mira('?tema=black-friday');
+  chk('2 · Black Friday (muestra, solo con ?tema): la cinta amarilla que corre, la etiqueta dibujada al lado del nombre y la noche negra', /^url\("data:image\/svg/.test(r.papel) && r.anPapel==='bf-cinta' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(5, 5, 5\)/.test(r.fondo), r);
+  chk('2 · …la cinta no tapa el nombre', r.logoAlto>=20, r.logoAlto);
   r = await mira('?tema=espuma');
   chk('2 · Espuma: el brillo que pasa por el nombre (la letra recortada sobre un degradé que se mueve), sin emoji', /text/.test(r.clip) && r.anLogo==='esp-brillo' && (r.logoTxt==='none' || r.logoTxt==='normal'), r);
   r = await mira('?tema=todos-santos', 390);
@@ -129,7 +133,7 @@ function armarDashboard(){
   console.log('\n── 3. Lo que se mueve: el lienzo del encabezado ──');
   const lienzo = async (q, init, espera) => { const p=await abrir(PEDIDOS, '2026-10-27T10:00:00-04:00', { q:q, init:init, espera:espera||300 });
     const o=await p.evaluate(()=>({ fx:window.hdrFx ? { e:hdrFx.efecto, n:hdrFx.n(), c:hdrFx.cuadros() } : null, vis:getComputedStyle(document.getElementById('hdr-fx')).display })); await cerrar(p); return o; };
-  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' };
+  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos', 'black-friday':'etiquetas' };
   for (const t of Object.keys(EF)) { const o=await lienzo('?tema='+t); chk('3 · '+t+' dibuja '+EF[t]+' (en las pruebas, un solo cuadro quieto)', o.fx && o.fx.e===EF[t] && o.fx.c===1 && o.fx.n>0, o); }
   let o = await lienzo('?tema=todos-santos', ()=>{ window.HDR_FX_PRUEBA=1; }, 900);
   chk('3 · con HDR_FX_PRUEBA se mueve (más de 10 cuadros en 0,9 s)', o.fx && o.fx.c>10, o);

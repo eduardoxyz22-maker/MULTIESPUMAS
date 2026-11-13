@@ -843,6 +843,14 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
+## 🛍️ Tema de Black Friday — MUESTRA (§4pr, 13/11; dueño: «ármame la muestra de black friday»; en la rama, espera los días)
+`tema-black-friday`: negro con dorado. Cinta amarilla que corre arriba (`header::before`, `bf-cinta`), etiqueta dorada al lado del nombre, ciudad de noche,
+etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
+oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
+cinta. ⚠️ **Apagado por fecha** hasta que el dueño elija los días: `BF_DIAS=null` en el `<head>` de `pedidos.html` Y de `panel_template.html` (los dos iguales);
+con `[desde, hasta]` en días desde el viernes después del cuarto jueves de noviembre, gana sobre Todos Santos esos días. Mientras, solo con `?tema=black-friday`.
+Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
+
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)
 - Clase `tema-halloween` en `<html>` SOLO en octubre con la fecha de Bolivia (script de una línea en el `<head>` de
   `pedidos.html` y de `panel_template.html`); se apaga sola el 1/11 (Todos Santos) y vuelve cada octubre. Solo CSS:

@@ -18664,3 +18664,17 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
   · Nada cambia en cómo se guarda o se lee un retiro: son dos filas como las de siempre, y el Cuadre, el Mayor y el bot las leen igual.
   · `tests/test_retiro_dos_recibos.js` (16). De paso, `test_wa_er` §10 fallaba a veces con «Execution context was destroyed» (1 de 3 con la página de antes,
     sin ninguna navegación ni pedido de página): el ✏️ Corregir + Guardar va ahora en su propio `page.evaluate`, 83/83 tres veces.
+
+### §4pr — 🛍️ MUESTRA DEL TEMA DE BLACK FRIDAY (13/11; dueño: «ok ármame la muestra de blackfriday», después de que se le ofreció en vez de Thanksgiving)
+- Tema `black-friday` en el panel y en el dashboard: negro con dorado. Arriba, una cinta amarilla con «BLACK FRIDAY ✦» que corre despacio (la letra va con
+  `textLength`, así mide lo mismo con cualquier fuente), la etiqueta dorada dibujada al lado de MULTIESPUMAS, la ciudad en gris oscuro y la calle con rayas
+  doradas. En `#hdr-fx`, etiquetas de precio que caen (las grandes con «%») y brillitos dorados. Fondo negro con etiquetas apenas visibles y un brillo
+  dorado abajo. Las tarjetas grandes en vidrio oscuro con borde dorado y la letra clara de lo que va directo sobre ellas (copia de las reglas de noviembre).
+  Bloki: una bolsa de compras negra con etiqueta a los pies, en los cinco trajes (ajustada para que entre en su dibujo de 232 de alto). Fábrica 3D: colores
+  del tema en `VIDA_TEMA_COL`. Barra de la ventana instalada: `#0a0a0a`. No dice descuentos ni ofertas.
+- **No se prende solo**: `BF_DIAS=null` en los dos `<head>`. Black Friday = el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027,
+  24/11/2028). Opciones que se le dieron: A solo el 27, B del 23 al 30 (con el Cyber Monday), C del 20 al 30; y si lo quiere también en el dashboard.
+- Contraste medido con `test_vidrio_agrandar` (pasada nueva con `?tema=black-friday`: 13 vistas, con pedidos y sin pedidos, 0 mal; contra la página de
+  antes, 3 rojas). 390 px sin correrse de costado en las cuatro pestañas. `test_temas_mejoras` 97, `test_bloki` 29.
+- La falla «3f la ventana de Bloki entra en la pantalla» de `test_vidrio_agrandar` salió una vez y en las dos repeticiones no: es de tiempo (300 ms).
+- Página para el dueño (capturas con clientes inventados y el encabezado en video): https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh.
