@@ -18651,4 +18651,16 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - *«Quitá la música de ingreso, ya pasó el día de los muertos… ¿en noviembre viene Thanksgiving?»* → la melodía de Todos Santos se carga solo el 1 y el 2 de
   noviembre (o con `?tema=todos-santos`), en el panel y en el dashboard. El tema visual de noviembre no se tocó. Thanksgiving no se celebra en Bolivia: se le
   propuso Black Friday (27/11) en vez, sin hacer nada. `test_temas_mejoras` §4 (94).
-
+- *«¿Y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique ahí que se refiere si las ventas es con factura o nota remisión»*
+  → en el retiro, «¿De qué ventas es la plata?»:
+  · Explica: 🧾 Facturado = plata de ventas con FACTURA · 📄 No facturado = plata de ventas con NOTA DE REMISIÓN (lo que la vendedora anota en Contabilidad,
+    `docVentaDe`). Cada cobro de la lista lleva su etiqueta («🧾 con factura», «📄 con remisión» o «sin factura ni remisión anotada»).
+  · El tipo se propone solo con lo tildado (`retTipoDocs`) mientras nadie toque los botones (`tipoMano`): todo con factura → Facturado, todo con remisión →
+    No facturado, de las dos → «Las dos». La línea «De lo tildado arriba: 2 con factura · Bs 1.500 · 1 con nota de remisión · Bs 700» lo dice.
+  · «🧾+📄 Las dos (dos recibos)», solo en un retiro nuevo (editando, cada fila es un retiro de un tipo): dos campos de recibo («de lo FACTURADO» y «de lo NO
+    FACTURADO») y «¿Cuánto es lo facturado?» (propuesto = lo tildado con factura; el resto es lo no facturado). `guardarRetiroAmbos` arma DOS retiros con
+    `filaDeRetiro` (ids nuevos, la misma foto, «retiro en dos recibos: el otro es el N»), cada uno con los cobros de su tipo tildados (lo sin anotar va con
+    lo no facturado). Si lo tildado no da justo cada monto, pregunta. Frena: falta un recibo, el mismo recibo en los dos, lo facturado en 0 o = el total.
+  · Nada cambia en cómo se guarda o se lee un retiro: son dos filas como las de siempre, y el Cuadre, el Mayor y el bot las leen igual.
+  · `tests/test_retiro_dos_recibos.js` (16). De paso, `test_wa_er` §10 fallaba a veces con «Execution context was destroyed» (1 de 3 con la página de antes,
+    sin ninguna navegación ni pedido de página): el ✏️ Corregir + Guardar va ahora en su propio `page.evaluate`, 83/83 tres veces.

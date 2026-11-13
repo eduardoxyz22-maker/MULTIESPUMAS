@@ -1724,6 +1724,14 @@ un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara pág
 **🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
+🧾📄 **Dos recibos: lo facturado y lo no facturado** (13/11, dueño: *«¿y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique
+ahí que se refiere si las ventas es con factura o nota remisión»*; en la rama): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
+facturado = ventas con nota de remisión (`docVentaDe`), cada cobro de la lista dice «🧾 con factura» / «📄 con remisión» / «sin anotar», y mientras nadie
+toque los botones el tipo sale de lo tildado (`retTipoDocs`; `tipoMano`). «🧾+📄 Las dos» (solo en un retiro NUEVO) pide los DOS N° de recibo y cuánto es lo
+facturado (propuesto: lo tildado con factura) y `guardarRetiroAmbos` carga DOS retiros comunes (cada uno con su tipo, recibo, monto y cobros tildados; lo
+sin anotar va con lo no facturado; la foto en los dos). Frena sin un recibo, con el mismo recibo en los dos o con lo facturado en 0 o igual al total.
+`tests/test_retiro_dos_recibos.js` (16). ⚠️ `test_wa_er` §10 guarda el retiro en su propio `page.evaluate`: en la misma llamada a veces se cortaba con
+«Execution context was destroyed» (también con la página de antes; la página no navega).
 **📒💵 «Mayor y saldos» del efectivo** (§4pf, 09/11, Contabilidad por el dueño: *«cuánto efectivo pendiente de retiro tenía Juan Pablo el 2, el 5 y el 8 de
 noviembre…»* → *«En contabilidad se llama Mayor y saldos»* → *«Publica, pero antes que analice Fable»*; revisado por Fable 5.2 y PUBLICADO 10/11, versión 2026-11-09-d, `8ae2aa2`):
 botón en la caja del efectivo del Cuadre (`abrirEfectivoFecha`; desde el botón abre de nuevo en hoy y Saldos).
