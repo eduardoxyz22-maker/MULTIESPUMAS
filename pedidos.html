@@ -3383,6 +3383,10 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <div class="field">
             <button class="btn btn-sm imes-btn" id="pry-informe-btn" onclick="imesAbrir()">📄 Informe del mes</button>
           </div>
+          <!-- 🗺️ (13/11, mejora 207) Dónde se vende: lo vendido por zona y por marca, en un mapa y una lista, para la publicidad. `dsvAbrir`. -->
+          <div class="field">
+            <button class="btn btn-sm dsv-btn" id="pry-donde-btn" onclick="dsvAbrir()">🗺️ Dónde se vende</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
@@ -6520,6 +6524,62 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 <div id="imes-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="imes-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print imes-bar"><b id="imes-tit" style="font-size:.95rem">📄 Informe del mes</b><input type="month" id="imes-mes" onchange="imesPintar()" aria-label="Mes del informe"><span id="imes-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="imes-pdf" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:800" onclick="imesPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="imesImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="imesCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="imes-estado">El mes por la <b>entrega agendada</b>, como la Proyección; la plata y las ATC, como están <b>hoy</b>.</div>
 <div id="imes-body"><div id="imes-hojas"></div></div></div>
+<!-- 🗺️ (13/11, mejora 207) Dónde se vende: lo vendido por zona y por marca (la cuenta de Proyección), en el mapa y en una lista, para
+     decidir a qué zonas apuntar la publicidad. Contabilidad → Proyección, solo con la contraseña. Solo mira. `dsvAbrir`. -->
+<div id="dsv-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="dsv-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print dsv-bar"><b id="dsv-tit" style="font-size:.95rem">🗺️ Dónde se vende</b><div class="dsv-seg" id="dsv-per" role="group" aria-label="Período"><button type="button" data-v="mes" onclick="dsvElegirPer('mes')">Este mes</button><button type="button" data-v="ant" onclick="dsvElegirPer('ant')">El mes pasado</button><button type="button" data-v="3m" onclick="dsvElegirPer('3m')">Últimos 3 meses</button></div><div class="dsv-seg" id="dsv-marca" role="group" aria-label="Marca"><button type="button" data-v="" onclick="dsvElegirMarca('')">Todas</button><button type="button" data-v="heaven" onclick="dsvElegirMarca('heaven')">💚 Heaven</button><button type="button" data-v="suena" onclick="dsvElegirMarca('suena')">🛏️ Sueña</button></div><button class="btn btn-sm" id="dsv-copiar" style="margin-left:auto;background:#fff;color:#0e7490;font-weight:800" onclick="dsvCopiar()">📋 Copiar para la publicidad</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="dsvCerrar()">✕ Cerrar</button></div>
+<div id="dsv-body" style="flex:1;overflow:auto;padding:14px"><div class="dsv-wrap" id="dsv-wrap"><div id="dsv-res"></div><div class="dsv-grid"><div class="dsv-mapa-box"><div id="dsv-mapa" role="img" aria-label="Mapa de lo vendido por zona"></div><div class="dsv-mapa-nota" id="dsv-mapa-nota"></div></div><div id="dsv-lista"></div></div><div id="dsv-pie"></div></div></div></div>
+<style>
+/* 🗺️ Dónde se vende (mejora 207): clases propias `dsv-*`, tema claro con los colores del panel. */
+.dsv-btn{ background:#ecfeff; color:#0e7490; border:1px solid #0e7490; font-weight:800; }
+#dsv-body{ color:var(--text,#17324d); }
+.dsv-bar{ padding:9px 12px; background:#0e7490; color:#fff; display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; }
+.dsv-seg{ display:flex; flex-wrap:wrap; gap:2px; background:rgba(255,255,255,.18); border-radius:999px; padding:2px; max-width:100%; }
+.dsv-seg button{ border:none; background:transparent; color:#fff; padding:5px 11px; border-radius:999px; font:inherit; font-size:12px; font-weight:700; cursor:pointer; min-height:30px; }
+.dsv-seg button.on{ background:#fff; color:#0e7490; }
+.dsv-wrap{ max-width:1400px; margin:0 auto; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.dsv-res{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; }
+.dsv-f{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-left:5px solid var(--c,#0e7490); border-radius:12px; padding:10px 14px; min-width:0; }
+.dsv-f small{ display:block; font-size:.68rem; font-weight:800; color:var(--muted,#64748b); text-transform:uppercase; letter-spacing:.05em; }
+.dsv-f b{ display:block; font-size:1.22rem; color:#0f2a3d; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.dsv-f span{ display:block; font-size:.76rem; color:var(--muted,#64748b); }
+.dsv-f b.dsv-up, .dsv-dif.dsv-up{ color:#15803d; } .dsv-f b.dsv-dn, .dsv-dif.dsv-dn{ color:#b91c1c; }
+.dsv-nota{ font-size:.78rem; color:var(--muted,#64748b); line-height:1.5; }
+.dsv-grid{ display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,440px); gap:14px; align-items:start; }
+.dsv-mapa-box{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:14px; overflow:hidden; min-width:0; }
+#dsv-mapa{ width:100%; height:calc(66vh / var(--vz,1)); min-height:340px; background:#e8eef0; }
+.dsv-mapa-nota{ font-size:.76rem; color:var(--muted,#64748b); padding:7px 12px; line-height:1.5; display:flex; flex-wrap:wrap; gap:4px 12px; align-items:center; }
+.dsv-mapa-nota i{ display:inline-block; width:11px; height:11px; border-radius:50%; vertical-align:-1px; margin-right:4px; border:1px solid rgba(0,0,0,.25); }
+.dsv-sinmapa #dsv-mapa{ display:none; }
+.dsv-sinmapa .dsv-grid{ grid-template-columns:minmax(0,1fr); }
+#dsv-lista{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:14px; padding:6px; max-height:calc(calc(66vh / var(--vz,1)) + 36px); overflow:auto; min-width:0; }
+.dsv-lt{ font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#0e7490; padding:8px 10px 4px; }
+.dsv-z{ padding:9px 10px; border-radius:10px; cursor:pointer; border:1px solid transparent; }
+.dsv-z:hover{ background:#f3f9fa; }
+.dsv-z.on{ background:#ecfeff; border-color:#0e7490; }
+.dsv-z1{ display:flex; align-items:baseline; gap:8px; }
+.dsv-pos{ flex:0 0 auto; min-width:22px; font-size:.72rem; font-weight:800; color:#0e7490; }
+.dsv-nom{ flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
+.dsv-bs{ flex:0 0 auto; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.dsv-z2{ display:flex; justify-content:space-between; gap:4px 8px; flex-wrap:wrap; font-size:.74rem; color:var(--muted,#64748b); margin-top:2px; }
+.dsv-dif{ font-weight:800; white-space:nowrap; }
+.dsv-barra{ display:flex; height:7px; border-radius:99px; overflow:hidden; background:#eef2f4; margin-top:6px; }
+.dsv-barra i{ display:block; height:100%; }
+.dsv-fuera .dsv-z{ border:1px dashed #cbd5e1; margin-top:4px; }
+.dsv-fuera .dsv-z.on{ border-style:solid; border-color:#0e7490; }
+.dsv-ventas{ margin-top:8px; border-top:1px dashed #cbd5e1; padding-top:6px; display:flex; flex-direction:column; gap:2px; cursor:default; }
+.dsv-v{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:6px; border-radius:8px; cursor:pointer; font-size:.8rem; }
+.dsv-v:hover{ background:#fff; }
+.dsv-v > div{ min-width:0; overflow-wrap:anywhere; }
+.dsv-v small{ display:block; color:var(--muted,#64748b); font-size:.7rem; }
+.dsv-vm{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+.dsv-cero{ font-size:.76rem; color:var(--muted,#64748b); padding:8px 10px; line-height:1.5; }
+.dsv-pie{ font-size:.8rem; line-height:1.6; background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:12px; padding:10px 14px; }
+.dsv-pie p{ margin:0 0 4px; }
+.dsv-vacio{ background:#fff; border:1px dashed #cbd5e1; border-radius:12px; padding:18px; text-align:center; color:var(--muted,#64748b); }
+.leaflet-tooltip.dsv-tip{ font-weight:800; font-size:11px; padding:2px 6px; }
+@media (max-width:999px){ .dsv-grid{ grid-template-columns:minmax(0,1fr); } #dsv-mapa{ height:calc(44vh / var(--vz,1)); min-height:260px; } #dsv-lista{ max-height:none; overflow:visible; } }
+@media (max-width:560px){ #dsv-body{ padding:10px !important; } .dsv-bar{ gap:6px 8px; } .dsv-seg button{ padding:5px 9px; font-size:11.5px; } .dsv-res{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .dsv-f{ padding:8px 10px; } .dsv-f b{ font-size:1.02rem; } .dsv-f:last-child:nth-child(odd){ grid-column:1/-1; } }
+</style>
 <!-- 🔗 (15/10, §4lf) Completar las ATC con lo que dice Trello: propone, se revisa y se guarda solo lo tildado. -->
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -13896,6 +13956,365 @@ function pryErrores(pruebas){
   });
   Object.keys(out).forEach(function(k){ var o=out[k]; if(o.n){ o.r/=o.n; o.c/=o.n; } });
   return out;
+}
+/* ============================================================================
+   🗺️ DÓNDE SE VENDE (13/11, mejora 207; dueño: «mapa por barrio para la publicidad»). Contabilidad → Proyección → «🗺️ Dónde se vende»
+   (solo con la contraseña, como la Proyección): lo vendido por ZONA y por marca, en un mapa y una lista, para decidir a qué zonas apuntar
+   la publicidad de Facebook e Instagram. SOLO MIRA: no guarda nada.
+   · Lo vendido es LA MISMA cuenta de la Proyección (`pryVentas`): el equipo de tiendas (`amb:'tienda'`, sin ATC, RPT ni ROHO), cada venta
+     con su total y en el mes de su entrega agendada (`x.ym`). La suma de todas las filas (zonas + «vendidas en tienda» + «sin zona») da lo
+     «vendido» de la Proyección para el mismo período y marca (`tests/test_mapa_ventas.js` lo compara). Los mayoristas (Eduardo) van APARTE,
+     como en la Proyección: una línea abajo, fuera del mapa y del total; ROHO no entra (sus pedidos no traen precio).
+   · Período: «Este mes» (por defecto), «El mes pasado» o «Últimos 3 meses» (este y los dos de antes). Se compara con el período anterior:
+     el mes en curso contra el otro mes A ESTA ALTURA (`pryCorteAltura`: los mismos días hábiles a la misma hora, como «📊 A esta altura»);
+     un mes cerrado, entero. Sin comparación si el período anterior cae antes de `PRY_PRIMER_MES` (el panel no tiene esas ventas).
+   · La zona: la escrita, agrupada sin mayúsculas ni tildes y con la escritura que más se usa (`zonaCanonica`). Sin zona escrita y con pin,
+     la de los pedidos de al lado o hacia dónde queda de la plaza (`zonaCercaDe`, la de «Zona sola»), y se dice. La venta de tienda
+     (`esVentaTienda`: zona «TIENDA», sin pin) va en su fila aparte, fuera del mapa; sin zona ni pin, «Sin zona», solo en la lista.
+   · El mapa: UN círculo por zona (se lee mejor que cien puntos para elegir barrios), en el promedio de los pines de sus ventas (`almPunto`:
+     el enlace o lo que el servidor ya abrió; los aproximados cuentan); sin pines en el período, el promedio de los pedidos de esa zona
+     (`dsvCentros`); sin ninguno, solo en la lista. Tamaño = lo vendido; color = la marca que más vende ahí. Al elegir una zona, sus ventas
+     con pin se ven como puntitos. Leaflet se baja al abrir (`ensureLeafletCallado`); sin internet queda la lista sola.
+   ========================================================================== */
+var DSV={ per:'mes', marca:'', sel:'', D:null, mapa:null, capa:null, sinMapa:false, pidio:0, zc:null, cen:null };
+var DSV_TOP=5, DSV_BAJA=-0.10, DSV_MAPA_ESPERA=9000, DSV_COL_SIN='#94a3b8';
+function dsvAbierto(){ var ov=document.getElementById('dsv-ov'); return !!(ov && ov.style.display!=='none'); }
+function dsvAbrir(){
+  if(!UNLOCKED){ toast('🔒 «Dónde se vende» es con la contraseña de Administración (como la Proyección).','err',6000); return false; }
+  var ov=document.getElementById('dsv-ov'); if(!ov) return false;
+  DSV.sel=''; DSV.zc=null; DSV.cen=null; if(!window.L){ DSV.sinMapa=false; DSV.pidio=0; }   // al abrir, todo de cero (la planilla pudo cambiar)
+  ov.style.display='flex';
+  dsvPintar(true);
+  return true;
+}
+function dsvCerrar(){ var ov=document.getElementById('dsv-ov'); if(ov) ov.style.display='none'; DSV.sel=''; }
+function dsvElegirPer(k){ DSV.per=(k==='ant' || k==='3m') ? k : 'mes'; DSV.sel=''; dsvPintar(true); }
+function dsvElegirMarca(k){ DSV.marca=(k==='heaven' || k==='suena') ? k : ''; DSV.sel=''; dsvPintar(true); }
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Escape' || !dsvAbierto()) return;
+  var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return;   // primero se cierra la venta abierta encima
+  dsvCerrar();
+});
+/* Los meses del período y los del anterior. `corte` = el mes del período anterior que se compara A ESTA ALTURA (el que va con el mes en curso). */
+function dsvPeriodo(per, hoy){
+  hoy=hoy||diaNegocio();
+  var cur=hoy.slice(0,7), mm=function(n){ return metasMesMas(cur, n); }, min=pryMinBo(Date.now()), hora=pryDiaHabil(hoy) ? pryHoraTxt(min) : '';
+  var P;
+  if(per==='ant') P={ k:'ant', meses:[mm(-1)], prev:[mm(-2)], corte:null, lbl:mesNombre(mm(-1)),
+                      prevCorto:pryMesCorto(mm(-2)), prevTxt:mesNombre(mm(-2))+' entero' };
+  else if(per==='3m'){
+    var C3=pryCorteAltura(hoy, mm(-3), min);
+    P={ k:'3m', meses:[mm(-2), mm(-1), cur], prev:[mm(-5), mm(-4), mm(-3)], corte:{ ym:mm(-3), C:C3 }, lbl:mesNombre(mm(-2))+' a '+mesNombre(cur),
+        prevCorto:pryMesCorto(mm(-5))+' a '+pryMesCorto(mm(-3)),
+        prevTxt:mesNombre(mm(-5))+' a '+mesNombre(mm(-3))+' ('+pryMesCorto(mm(-3))+(C3.entero ? ' entero' : pryCorteTxt(C3, hora))+', contra '+pryMesCorto(cur)+' que está en curso)' };
+  }
+  else{
+    var C1=pryCorteAltura(hoy, mm(-1), min);
+    P={ k:'mes', meses:[cur], prev:[mm(-1)], corte:{ ym:mm(-1), C:C1 }, lbl:mesNombre(cur), prevCorto:pryMesCorto(mm(-1)),
+        prevTxt:mesNombre(mm(-1))+(C1.entero ? ' entero (a esta altura ya había cerrado)' : (' a esta altura:'+pryCorteTxt(C1, hora))) };
+  }
+  P.hoy=hoy;
+  P.cmpOk=P.prev.every(function(m){ return m>=PRY_PRIMER_MES; });
+  P.sinCmp='el panel tiene las ventas desde '+mesNombre(PRY_PRIMER_MES)+' (se empezó a usar a fines de julio)';
+  return P;
+}
+/* ¿La venta `x` del período anterior entra en la comparación? El mes que va con el mes en curso, solo lo cargado hasta esta altura. */
+function dsvEnCorte(x, P){
+  var c=P.corte; if(!c || x.ym!==c.ym || !c.C || c.C.entero || !c.C.lim) return true;
+  return pryCargadaAl(x, c.C.lim, c.C.min);
+}
+/* La zona de un pedido: { t:'zona'|'tienda'|'sin', k, z, pt, por }. `por` = la puso el panel ('vecinos' | 'plaza'), no estaba escrita. */
+function dsvZonaDe(p){
+  if(!DSV.zc || DSV.zc.gen!==STATE_GEN || DSV.zc.st!==STATE) DSV.zc={ gen:STATE_GEN, st:STATE, m:{} };   // se rehace con cada lectura con cambios
+  var key=String(p.id)+'|'+String(p.zona||'')+'|'+String(p.maps||'')+'|'+String(p.direccion||'').slice(0,40), ya=DSV.zc.m[key];
+  if(ya) return ya;
+  var r;
+  if(esVentaTienda(p)) r={ t:'tienda' };
+  else{
+    var z=String(p.zona||'').replace(/\s+/g,' ').trim(), k=normNombre(z), pt=null;
+    try{ pt=almPunto(p); }catch(e){}
+    if(k) r={ t:'zona', k:k, z:z, pt:pt, por:'' };
+    else if(pt){
+      var R=null; try{ R=zonaCercaDe(pt, p.id); }catch(e){}
+      r=(R && R.zona) ? { t:'zona', k:normNombre(R.zona), z:R.zona, pt:pt, por:R.por||'pin' } : { t:'sin', pt:pt, lejos:true };
+    }
+    else r={ t:'sin', pt:null };
+  }
+  DSV.zc.m[key]=r;
+  return r;
+}
+/* El centro conocido de cada zona: el promedio de los pines de TODOS los pedidos de esa zona (para una zona que en el período no tiene pines). */
+function dsvCentros(){
+  if(DSV.cen && DSV.cen.gen===STATE_GEN && DSV.cen.st===STATE) return DSV.cen.m;
+  var m={};
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esRPT(p.oc) || esVentaTienda(p)) return;
+    var k=normNombre(String(p.zona||'').replace(/\s+/g,' ').trim()); if(!k) return;
+    var pt=null; try{ pt=almPunto(p); }catch(e){} if(!pt) return;
+    var o=m[k]||(m[k]={ lat:0, lng:0, n:0 }); o.lat+=pt.lat; o.lng+=pt.lng; o.n++;
+  });
+  DSV.cen={ gen:STATE_GEN, st:STATE, m:m };
+  return m;
+}
+/* Todo lo de la pantalla para un período y una marca ('' = todas). */
+function dsvDatos(per, marca){
+  var hoy=diaNegocio(), P=dsvPeriodo(per, hoy), V=pryVentas(), porId={}, canon={};
+  (STATE||[]).forEach(function(p){ if(p && p.id!=null) porId[String(p.id)]=p; });
+  var nueva=function(t, k, nom){ return { t:t, k:k, nom:nom, bs:0, n:0, nm:0, u:0, g:{}, ventas:[], pts:[], panel:0, aprox:0, prev:{ bs:0, n:0 }, c:null, cOtro:false }; };
+  var Z={}, tienda=nueva('tienda', '', '🏪 Vendidas en tienda (sin domicilio)'), sin=nueva('sin', '', '❓ Sin zona ni ubicación');
+  var may={ bs:0, n:0 }, roho=0, PT={ bs:0, n:0 };
+  var fila=function(zi){
+    if(zi.t==='tienda') return tienda;
+    if(zi.t==='sin') return sin;
+    return Z[zi.k] || (Z[zi.k]=nueva('zona', zi.k, canon[zi.k] || (canon[zi.k]=zonaCanonica(zi.z))));
+  };
+  V.forEach(function(x){
+    var act=P.meses.indexOf(x.ym)>=0, ant=P.cmpOk && P.prev.indexOf(x.ym)>=0 && dsvEnCorte(x, P);
+    if(!act && !ant) return;
+    if(x.amb==='mayor'){ if(act && !marca){ may.bs=r2(may.bs+x.bs); may.n++; } return; }
+    if(x.amb==='roho'){ if(act && !marca) roho++; return; }
+    if(x.amb!=='tienda' || (marca && x.g!==marca)) return;
+    var p=porId[String(x.id)]; if(!p) return;
+    var zi=dsvZonaDe(p), f=fila(zi);
+    if(act){
+      f.bs=r2(f.bs+x.bs); f.n++; if(x.bs>0.009) f.nm++; f.u+=x.u; f.g[x.g]=r2((f.g[x.g]||0)+x.bs);
+      f.ventas.push({ x:x, p:p, pt:zi.pt||null, por:zi.por||'' });
+      if(zi.pt){ f.pts.push(zi.pt); if(zi.pt.aprox) f.aprox++; }
+      if(zi.por) f.panel++;
+    }
+    if(ant){ f.prev.bs=r2(f.prev.bs+x.bs); f.prev.n++; PT.bs=r2(PT.bs+x.bs); PT.n++; }
+  });
+  var cen=dsvCentros(), todas=Object.keys(Z).map(function(k){ return Z[k]; });
+  todas.forEach(function(z){
+    if(z.pts.length){ var la=0, ln=0; z.pts.forEach(function(q){ la+=q.lat; ln+=q.lng; }); z.c={ lat:la/z.pts.length, lng:ln/z.pts.length }; }
+    else if(cen[z.k] && cen[z.k].n){ z.c={ lat:cen[z.k].lat/cen[z.k].n, lng:cen[z.k].lng/cen[z.k].n }; z.cOtro=true; }
+  });
+  [tienda, sin].concat(todas).forEach(function(z){
+    var gk='', gv=-1; Object.keys(z.g).forEach(function(g){ if(z.g[g]>gv){ gv=z.g[g]; gk=g; } }); z.dom=gk;
+    z.dif = (P.cmpOk && z.prev.bs>0.009) ? (z.bs/z.prev.bs-1) : null;
+    z.ventas.sort(function(a,b){ return (a.x.f<b.x.f ? 1 : (a.x.f>b.x.f ? -1 : 0)) || (b.x.bs-a.x.bs); });
+  });
+  var orden=function(a,b){ return (b.bs-a.bs) || (b.n-a.n) || a.nom.localeCompare(b.nom,'es'); };
+  var zonas=todas.filter(function(z){ return z.n>0; }).sort(orden);
+  var cero=todas.filter(function(z){ return !z.n && z.prev.bs>0.009; }).sort(function(a,b){ return b.prev.bs-a.prev.bs; });
+  var T={ bs:0, n:0, nm:0, u:0 }; [tienda, sin].concat(zonas).forEach(function(z){ T.bs=r2(T.bs+z.bs); T.n+=z.n; T.nm+=z.nm; T.u+=z.u; });
+  var dom={ bs:0, n:0 }; zonas.forEach(function(z){ dom.bs=r2(dom.bs+z.bs); dom.n+=z.n; });
+  var panel=0, aprox=0; zonas.forEach(function(z){ panel+=z.panel; aprox+=z.aprox; });
+  return { P:P, per:P.k, marca:marca||'', hoy:hoy, zonas:zonas, cero:cero, tienda:tienda, sin:sin, T:T, PT:PT, dom:dom, may:may, roho:roho, panel:panel, aprox:aprox,
+           dif:(P.cmpOk && PT.bs>0.009) ? (T.bs/PT.bs-1) : null };
+}
+/* «−15 %» / «+8 %» / «igual» (redondeado). */
+function dsvPctTxt(d){ if(d==null) return ''; var p=Math.round(d*100); return p===0 ? 'igual' : ((p>0 ? '+' : '−')+Math.abs(p)+' %'); }
+function dsvPctHtml(d){ if(d==null) return ''; var p=Math.round(d*100); return '<span class="dsv-dif '+(p>0 ? 'dsv-up' : (p<0 ? 'dsv-dn' : ''))+'">'+dsvPctTxt(d)+'</span>'; }
+/* Las zonas que bajaron contra el período anterior: −10 % o más (también las que no vendieron nada ahora), las que más perdieron primero. */
+function dsvBajaron(D, n){
+  if(!D.P.cmpOk) return [];
+  return D.zonas.concat(D.cero).filter(function(z){ return z.prev.bs>0.009 && z.bs<z.prev.bs*(1+DSV_BAJA); })
+    .sort(function(a,b){ return ((b.prev.bs-b.bs)-(a.prev.bs-a.bs)) || a.nom.localeCompare(b.nom,'es'); }).slice(0, n||DSV_TOP);
+}
+function dsvColor(g){ for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===g) return MARCAS[i].col; return DSV_COL_SIN; }
+function dsvBorde(g){ for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===g) return MARCAS[i].txt||MARCAS[i].col; return '#475569'; }
+function dsvPintar(encuadrar){
+  if(!dsvAbierto()) return;
+  if(!UNLOCKED){ dsvCerrar(); return; }
+  var D=null;
+  try{ D=DSV.D=dsvDatos(DSV.per, DSV.marca); }
+  catch(e){ var r0=document.getElementById('dsv-res'); if(r0) r0.innerHTML='<div class="ccm-av ccm-av-r">No se pudo armar «Dónde se vende»: '+esc((e && e.message)||e)+'</div>'; return; }
+  [['dsv-per', DSV.per], ['dsv-marca', DSV.marca]].forEach(function(s){
+    [].forEach.call(document.querySelectorAll('#'+s[0]+' button'), function(b){ var on=(b.getAttribute('data-v')||'')===s[1]; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  });
+  if(DSV.sel && !dsvFila(DSV.sel)) DSV.sel='';
+  var P=D.P, ml=DSV.marca ? MARCAS.filter(function(g){ return g.k===DSV.marca; })[0] : null, quien=ml ? (ml.ico+' '+ml.lbl) : 'todas las marcas';
+  var h='';
+  if(!D.T.n){
+    h='<div class="dsv-vacio">No hay ventas'+(ml ? (' de '+esc(ml.lbl)) : '')+' con entrega en '+esc(P.lbl)+'.</div>';
+  } else {
+    var pDom = D.T.bs>0.009 ? Math.round(D.dom.bs/D.T.bs*100) : 0;
+    h='<div class="dsv-res">'+
+      '<div class="dsv-f" style="--c:'+(ml ? ml.col : '#0e7490')+'"><small>Vendido · '+esc(quien)+'</small><b>'+fmtBs0(D.T.bs)+'</b><span>'+D.T.n+' venta'+(D.T.n===1?'':'s')+' · lo mismo que la Proyección</span></div>'+
+      '<div class="dsv-f" style="--c:#0e7490"><small>A domicilio, con zona</small><b>'+fmtBs0(D.dom.bs)+'</b><span>'+pDom+'% · en '+D.zonas.length+' zona'+(D.zonas.length===1?'':'s')+'</span></div>'+
+      '<div class="dsv-f" style="--c:#7c3aed"><small>Contra '+esc(P.prevCorto)+'</small>'+
+        (D.dif!=null ? ('<b class="'+(Math.round(D.dif*100)>0 ? 'dsv-up' : (Math.round(D.dif*100)<0 ? 'dsv-dn' : ''))+'">'+dsvPctTxt(D.dif)+'</b><span>'+fmtBs0(D.PT.bs)+' entonces</span>')
+                       : ('<b>—</b><span>'+(P.cmpOk ? 'no hubo ventas para comparar' : 'sin datos de antes')+'</span>'))+'</div>'+
+      '</div>';
+  }
+  h+='<div class="dsv-nota">📅 <b>'+esc(P.lbl)+'</b>: lo vendido con entrega agendada en '+(P.meses.length>1 ? 'esos meses' : 'el mes')+', como la Proyección (equipo de tiendas'+(ml ? (', solo '+esc(ml.lbl)) : '')+'). '+
+     (P.cmpOk ? ('Se compara con '+esc(P.prevTxt)+'.') : ('Sin comparación: '+esc(P.sinCmp)+'.'))+'</div>';
+  document.getElementById('dsv-res').innerHTML=h;
+  dsvListaPintar();
+  dsvPiePintar();
+  dsvMapa(D, encuadrar);
+}
+function dsvFila(k){
+  var D=DSV.D; if(!D) return null;
+  if(k==='~tienda') return D.tienda.n ? D.tienda : null;
+  if(k==='~sin') return D.sin.n ? D.sin : null;
+  for(var i=0;i<D.zonas.length;i++) if(D.zonas[i].k===k) return D.zonas[i];
+  return null;
+}
+function dsvClave(z){ return z.t==='tienda' ? '~tienda' : (z.t==='sin' ? '~sin' : z.k); }
+function dsvFilaHtml(z, i, D){
+  var k=dsvClave(z), on=(DSV.sel===k), tot=D.T.bs;
+  var pc = tot>0.009 ? Math.round(z.bs/tot*100) : 0, tk = z.nm ? fmtBs0(z.bs/z.nm) : '—';
+  var gs=MARCAS.map(function(g){ return { k:g.k, col:g.col, lbl:g.lbl, v:z.g[g.k]||0 }; }).concat([{ k:'sin', col:DSV_COL_SIN, lbl:'sin marca', v:z.g.sin||0 }]).filter(function(o){ return o.v>0.009; });
+  var barra='<div class="dsv-barra" role="img" aria-label="'+esc(gs.length ? gs.map(function(o){ return o.lbl+' '+(z.bs>0.009 ? Math.round(o.v/z.bs*100) : 0)+' por ciento'; }).join(', ') : 'sin monto')+'">'+
+    gs.map(function(o){ return '<i style="width:'+(z.bs>0.009 ? (o.v/z.bs*100).toFixed(2) : 0)+'%;background:'+o.col+'" title="'+esc(o.lbl+' '+fmtBs0(o.v))+'"></i>'; }).join('')+'</div>';
+  var notas=[];
+  if(z.t==='zona' && !z.c) notas.push('sin pin: no está en el mapa');
+  if(z.panel) notas.push('📍 '+z.panel+' sin zona escrita (la puso el panel por el pin)');
+  if(z.aprox) notas.push('≈ '+z.aprox+' ubicada'+(z.aprox===1?'':'s')+' por la dirección');
+  var h='<div class="dsv-z'+(on ? ' on' : '')+'" data-k="'+esc(k)+'" role="button" tabindex="0" aria-expanded="'+on+'" onclick="dsvElegir(this.getAttribute(\'data-k\'))">'+
+    '<div class="dsv-z1">'+(i!=null ? '<span class="dsv-pos">'+(i+1)+'</span>' : '')+'<b class="dsv-nom">'+esc(z.nom)+'</b><span class="dsv-bs">'+fmtBs0(z.bs)+'</span></div>'+
+    '<div class="dsv-z2"><span>'+z.n+' venta'+(z.n===1?'':'s')+' · '+pc+'% del total · ticket '+tk+'</span>'+(z.dif!=null ? ('<span>'+dsvPctHtml(z.dif)+' vs '+esc(D.P.prevCorto)+'</span>') : (D.P.cmpOk && z.t==='zona' ? '<span>nueva: nada antes</span>' : ''))+'</div>'+
+    barra+(notas.length ? '<div class="dsv-z2"><span>'+esc(notas.join(' · '))+'</span></div>' : '');
+  if(on){
+    h+='<div class="dsv-ventas" onclick="event.stopPropagation()">'+z.ventas.map(function(o){
+      var x=o.x, p=o.p;
+      var sub=[x.v, ((esVentaTienda(p) || !p.fecha) ? 'vendida el ' : 'entrega ')+fmtFechaCorta(x.f)];
+      if(o.pt && o.pt.aprox) sub.push('≈ por la dirección');
+      if(o.por) sub.push('📍 zona puesta por el pin');
+      return '<div class="dsv-v" role="button" tabindex="0" data-id="'+esc(String(p.id))+'" onclick="dsvVerVenta(this.getAttribute(\'data-id\'))">'+
+        '<div><b>'+clfNombre(p, p.cliente||'—', 'conta')+'</b><small>'+esc(sub.join(' · '))+'</small></div>'+
+        '<b class="dsv-vm">'+(x.bs>0.009 ? fmtBs0(x.bs) : 'sin monto')+'</b></div>';
+    }).join('')+'</div>';
+  }
+  return h+'</div>';
+}
+function dsvListaPintar(){
+  var el=document.getElementById('dsv-lista'), D=DSV.D; if(!el || !D) return;
+  if(!D.T.n && !D.cero.length){ el.innerHTML='<div class="dsv-cero">Sin ventas en el período.</div>'; return; }
+  var h='';
+  if(D.zonas.length) h+='<div class="dsv-lt">Zonas, de la que más vende a la que menos</div>'+D.zonas.map(function(z, i){ return dsvFilaHtml(z, i, D); }).join('');
+  if(D.tienda.n || D.sin.n){
+    h+='<div class="dsv-fuera"><div class="dsv-lt">Fuera del mapa</div>'+(D.tienda.n ? dsvFilaHtml(D.tienda, null, D) : '')+(D.sin.n ? dsvFilaHtml(D.sin, null, D) : '')+'</div>';
+  }
+  if(D.cero.length) h+='<div class="dsv-cero">📉 Sin ventas ahora (en '+esc(D.P.prevCorto)+' sí): '+esc(D.cero.slice(0, 12).map(function(z){ return z.nom+' '+fmtBs0(z.prev.bs); }).join(' · '))+(D.cero.length>12 ? (' y '+(D.cero.length-12)+' más') : '')+'.</div>';
+  el.innerHTML=h;
+}
+function dsvPiePintar(){
+  var el=document.getElementById('dsv-pie'), D=DSV.D; if(!el || !D) return;
+  var L=[];
+  if(D.may.n) L.push('🏭 <b>Mayoristas ('+esc(mayoristasTxt())+')</b>: '+fmtBs0(D.may.bs)+' en '+D.may.n+' venta'+(D.may.n===1?'':'s')+'. Van aparte, como en la Proyección: no entran en el mapa ni en el total (son compras de empresas, no de la publicidad).');
+  if(D.roho) L.push('🛏️ <b>ROHO</b> no entra: sus pedidos no traen precio.');
+  if(D.panel) L.push('📍 '+D.panel+' venta'+(D.panel===1?'':'s')+' sin zona escrita: el panel les puso la de los pedidos de al lado o hacia dónde queda de la plaza (como «Zona sola» del formulario).');
+  if(D.aprox) L.push('≈ '+D.aprox+' con la ubicación aproximada (por la dirección escrita): cuentan igual.');
+  L.push('❓ <b>Cómo se cuenta</b>: lo VENDIDO (el total de cada venta), no lo cobrado, en el mes de su entrega agendada: la suma de todas las filas es lo vendido de la Proyección. '+
+         'Las zonas se juntan sin mayúsculas ni tildes («Norte», «norte» y «NORTE» son una). El círculo va en el promedio de los pines de sus ventas, del tamaño de lo vendido y del color de la marca que más vende ahí. '+
+         'Para la publicidad conviene mirar las zonas con más ventas y las que bajaron.');
+  el.innerHTML='<div class="dsv-pie">'+L.map(function(t){ return '<p>'+t+'</p>'; }).join('')+'</div>';
+}
+function dsvElegir(k, desdeMapa){
+  DSV.sel = (DSV.sel===k && !desdeMapa) ? '' : String(k||'');
+  dsvListaPintar();
+  if(DSV.D) dsvMapa(DSV.D, false);
+  if(DSV.sel){
+    var el=document.querySelector('#dsv-lista .dsv-z[data-k="'+(window.CSS && CSS.escape ? CSS.escape(DSV.sel) : DSV.sel.replace(/"/g,'\\"'))+'"]');
+    if(el && desdeMapa && el.scrollIntoView){ try{ el.scrollIntoView({ block:'nearest' }); }catch(e){} }
+  }
+}
+function dsvVerVenta(id){
+  var p=null;
+  (STATE||[]).forEach(function(q){ if(q && String(q.id)===String(id)) p=q; });
+  if(p) showContaModal(p.id);
+}
+/* ---- El mapa ---- */
+function dsvMapaNota(estado){
+  var box=document.getElementById('dsv-wrap'), nota=document.getElementById('dsv-mapa-nota'), D=DSV.D;
+  if(box) box.classList.toggle('dsv-sinmapa', estado==='sin');
+  if(!nota) return;
+  if(estado==='cargando'){ nota.innerHTML='⏳ Cargando el mapa…'; return; }
+  if(estado==='sin'){ nota.innerHTML='🗺️ El mapa no cargó (¿sin internet?): está todo en la lista.'; return; }
+  var conC=D ? D.zonas.filter(function(z){ return z.c; }).length : 0, sinC=D ? D.zonas.length-conC : 0;
+  var ley=MARCAS.filter(function(g){ return !DSV.marca || g.k===DSV.marca; }).map(function(g){ return '<span><i style="background:'+g.col+'"></i>'+esc(g.lbl)+'</span>'; }).join('');
+  nota.innerHTML=ley+'<span>El color es la marca que más vende en la zona; el tamaño, lo vendido. Tocá un círculo o una zona de la lista para ver sus ventas.'+
+    (sinC ? (' '+sinC+' zona'+(sinC===1?'':'s')+' sin ningún pin: solo en la lista.') : '')+'</span>';
+}
+function dsvMapa(D, encuadrar){
+  var el=document.getElementById('dsv-mapa'); if(!el || !D) return;
+  if(!window.L){
+    if(DSV.sinMapa){ dsvMapaNota('sin'); return; }
+    dsvMapaNota('cargando');
+    if(!DSV.pidio){
+      DSV.pidio=Date.now();
+      ensureLeafletCallado(function(){ DSV.pidio=0; if(dsvAbierto() && DSV.D) dsvMapa(DSV.D, true); });
+      setTimeout(function(){ if(!window.L){ DSV.sinMapa=true; DSV.pidio=0; if(dsvAbierto()) dsvMapaNota('sin'); } }, DSV_MAPA_ESPERA);
+    }
+    return;
+  }
+  dsvMapaNota('');
+  try{
+    if(!DSV.mapa){
+      DSV.mapa=L.map(el, { preferCanvas:true, zoomSnap:0.25, zoomDelta:0.5, scrollWheelZoom:false });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© OpenStreetMap' }).addTo(DSV.mapa);
+      DSV.capa=L.layerGroup().addTo(DSV.mapa);
+    }
+    DSV.capa.clearLayers();
+    var Z=D.zonas.filter(function(z){ return z.c; }), max=0, pts=[];
+    Z.forEach(function(z){ if(z.bs>max) max=z.bs; });
+    /* Lo más chico abajo y lo elegido arriba de todo: así ningún círculo grande tapa a uno chico. */
+    var orden=Z.slice().sort(function(a,b){ return (a.k===DSV.sel) - (b.k===DSV.sel) || b.bs-a.bs; });
+    /* Con el nombre a la vista: las primeras zonas (3 en el celular, donde no entran más) y la elegida. Esas, en una línea; al pasar por
+       encima de cualquiera (o la elegida), lo vendido, las ventas y contra el período anterior. */
+    var chico=(window.innerWidth||1000)<700, top=Z.slice(0, chico ? 3 : DSV_TOP).map(function(z){ return z.k; });
+    orden.forEach(function(z){
+      var on=(z.k===DSV.sel), fijo=(on || top.indexOf(z.k)>=0), r=(chico ? 6 : 8)+(chico ? 18 : 24)*Math.sqrt(max>0.009 ? z.bs/max : 0);
+      var m=L.circleMarker([z.c.lat, z.c.lng], { radius:r, color:on ? '#0f172a' : dsvBorde(z.dom), weight:on ? 4 : 1.5, fillColor:dsvColor(z.dom), fillOpacity:on ? 0.8 : 0.5 });
+      var largo='<b>'+esc(z.nom)+'</b><br>'+fmtBs0(z.bs)+' · '+z.n+' venta'+(z.n===1?'':'s')+(z.dif!=null ? (' · '+dsvPctTxt(z.dif)+' vs '+esc(D.P.prevCorto)) : '');
+      m.bindTooltip((fijo && !on) ? ('<b>'+esc(z.nom)+'</b>'+(chico ? '' : (' · '+fmtBs0(z.bs)))) : largo, { permanent:fijo, direction:'top', className:'dsv-tip' });
+      if(m.on) m.on('click', function(){ dsvElegir(z.k, true); });
+      m.addTo(DSV.capa);
+      pts.push([z.c.lat, z.c.lng]);
+    });
+    /* La zona elegida: cada venta con pin, como un puntito (hueco si es aproximada). */
+    var S=DSV.sel ? dsvFila(DSV.sel) : null;
+    if(S) S.ventas.forEach(function(o){
+      if(!o.pt) return;
+      L.circleMarker([o.pt.lat, o.pt.lng], { radius:4, color:'#0f172a', weight:1, fillColor:dsvColor(o.x.g), fillOpacity:o.pt.aprox ? 0.15 : 0.95 })
+        .bindTooltip(esc((o.p.cliente||'—')+' · '+(o.x.bs>0.009 ? fmtBs0(o.x.bs) : 'sin monto')), { direction:'top', className:'dsv-tip' }).addTo(DSV.capa);
+    });
+    var mp=DSV.mapa;
+    setTimeout(function(){
+      if(!mp || mp!==DSV.mapa) return;
+      try{ mp.invalidateSize(); }catch(e){}
+      if(encuadrar){
+        if(pts.length>1) mp.fitBounds(pts, { paddingTopLeft:[30,54], paddingBottomRight:[30,24], maxZoom:13 });   // arriba, lugar para los nombres
+        else if(pts.length===1) mp.setView(pts[0], 13);
+        else mp.setView([ZONA_PLAZA.lat, ZONA_PLAZA.lng], 12);
+      } else if(S && S.c && mp.panTo) mp.panTo([S.c.lat, S.c.lng]);
+    }, 120);
+  }catch(e){ console.error(e); dsvMapaNota('sin'); }
+}
+/* ---- 📋 Copiar para la publicidad ---- */
+function dsvDifCopia(z, P){
+  if(!P.cmpOk) return '';
+  if(!(z.prev.bs>0.009)) return z.bs>0.009 ? (' (nueva: nada en '+P.prevCorto+')') : '';
+  var p=Math.round((z.bs/z.prev.bs-1)*100);
+  return p===0 ? (' (igual que '+P.prevCorto+')') : (' ('+dsvPctTxt(z.bs/z.prev.bs-1)+' vs '+P.prevCorto+')');
+}
+function dsvTexto(per, marca){
+  per=per||DSV.per; marca=(marca==null ? DSV.marca : marca);
+  var base=dsvDatos(per, marca), P=base.P, nV=function(n){ return n+' venta'+(n===1?'':'s'); };
+  var gs=MARCAS.filter(function(g){ return !marca || g.k===marca; }).map(function(g){ return { g:g, D:(marca ? base : dsvDatos(per, g.k)) }; })
+           .sort(function(a,b){ return b.D.T.bs-a.D.T.bs; });
+  var t='🗺️ DÓNDE SE VENDE — '+P.lbl+'\nLo vendido por el equipo de tiendas, en Bs y por la entrega agendada (como la Proyección).\n'+
+        (P.cmpOk ? ('Comparado con '+P.prevTxt+'.') : ('Sin comparación: '+P.sinCmp+'.'))+'\n';
+  gs.forEach(function(o){
+    var D=o.D, g=o.g, top=D.zonas.slice(0, DSV_TOP), baj=dsvBajaron(D);
+    t+='\n'+g.ico+' '+g.lbl.toUpperCase()+' · '+fmtBs0(D.T.bs)+' en '+nV(D.T.n)+'\n';
+    if(!top.length) t+='Sin ventas a domicilio con zona.\n';
+    else t+=(top.length===1 ? 'La zona que más vende' : ('Las '+top.length+' zonas que más venden'))+':\n'+top.map(function(z, i){ return (i+1)+'. '+z.nom+': '+fmtBs0(z.bs)+' · '+nV(z.n)+dsvDifCopia(z, P); }).join('\n')+'\n';
+    if(baj.length) t+='Bajaron:\n'+baj.map(function(z){ return '• '+z.nom+': '+fmtBs0(z.bs)+dsvDifCopia(z, P); }).join('\n')+'\n';
+  });
+  var fuera=[];
+  if(base.tienda.n) fuera.push('🏪 En tienda (sin domicilio): '+fmtBs0(base.tienda.bs));
+  if(base.sin.n) fuera.push('❓ Sin zona ni ubicación: '+fmtBs0(base.sin.bs));
+  if(fuera.length) t+='\n'+fuera.join(' · ')+'\n';
+  return t.trim();
+}
+function dsvCopiar(){
+  var t=''; try{ t=dsvTexto(); }catch(e){ toast('No se pudo armar el texto: '+((e && e.message)||e),'err',6000); return ''; }
+  copyText(t);
+  return t;
 }
 /* ============================================================================
    📊 (29/09, §4gv) A ESTA ALTURA — cómo va el mes contra otro mes, al mismo día, en plata y en unidades.
