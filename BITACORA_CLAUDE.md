@@ -18748,3 +18748,14 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - Black Friday desde hoy (§4pr-b, `BF_DIAS=[-14, 3]`: del 13 al 30/11, panel y dashboard), los plazos de pago de cada mayorista en Cobranza (§4pt) y
   «Efectivo por retirar» que se toca (§4pu). `PANEL_V` y `panel-version.json` juntos. El servidor no cambió (sigue 2026-11-13-a).
 - `herramientas/pedidos_correo/` sigue solo en la rama (como siempre: no se publica).
+
+### §4pw — 🌅 BLACK FRIDAY SEGÚN LA HORA + 📅 EL MES DE ATC = LO QUE ENTRÓ ESE MES (13/11; dueño: «si publica»; PUBLICADO, página 2026-11-13-c)
+- **El cielo** (dueño, con la captura de las 16:15: *«el fondo no iba por hora del día, el sol bajando y etc.?»*): el cielo por la hora (§4pj) andaba, pero es
+  un velo transparente y sobre el negro de Black Friday no se veía (solo el sol). Ahora en Black Friday el `--grad-header` del `.header` cambia con
+  `[data-momento]`: amanecer violeta, día azul, atardecer anaranjado, noche negra; la ciudad se aclara de día. Las ventanas (`.modal-h`, `.fh`, `.pap-cab`)
+  siguen negras (el `--grad-header` de `html` no cambia). `test_temas_mejoras` §2 (los cuatro momentos).
+- **ATC por mes** (dueño, con la captura de noviembre: 44 = 10 de noviembre + 34 abiertas de agosto-octubre: *«filtro ATC por mes para ver los "problemas" del
+  mes y me muestra ATC desde agosto… ¿no funciona el filtro?»*): el mes muestra SOLO lo que entró ese mes (fichas, el viaje, los motivos, la tabla). Las abiertas
+  de meses anteriores —lo que pidió el 11/09, §4ea— se suman tocando la ficha «ATC en el período» («hay N abiertas de meses anteriores · Tocá para sumarlas»;
+  otro toque vuelve), por aparato en `me_atc_viejas`. El informe PDF ya era así (§4le). `tests/test_atc_mes.js` (11).
+
