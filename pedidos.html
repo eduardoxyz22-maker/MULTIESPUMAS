@@ -1094,6 +1094,22 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .efe-mano{color:var(--red);font-weight:800;white-space:nowrap}
 .efe-par{color:#b45309;font-weight:800;white-space:nowrap}
 .efe-fila:hover td{background:var(--gray-lt,#f4f6f8)}
+/* 🏪 (13/11, idea 183) «Efectivo por retirar» por tienda (`efeTiendaHtml`) */
+.efe-vista{margin-bottom:8px}
+.efe-tnd-res{background:var(--gray-lt,#f4f6f8);border-radius:10px;padding:8px 12px;margin:10px 0 4px;font-size:.86rem;line-height:1.5}
+.efe-tnds{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px;margin-top:10px}
+.efe-tnd{border:1px solid var(--gray-md);border-left:4px solid var(--amber);border-radius:12px;background:#fff;padding:10px 12px;display:grid;gap:4px;min-width:0}
+.efe-tnd-sin{border-left-color:var(--gray-md)}
+.efe-tnd-ch{border-left-color:#155e75}
+.efe-tnd-h{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.efe-tnd-h b{font-size:.95rem}
+.efe-tnd-m{font-weight:800;color:var(--red);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:1.05rem}
+.efe-tnd-s{font-size:.78rem;color:var(--muted)}
+.efe-tnd-ant{font-size:.78rem;color:var(--red);font-weight:700}
+.efe-tnd-q{list-style:none;margin:2px 0 0;padding:0;display:grid;gap:2px;font-size:.82rem}
+.efe-tnd-q span{color:var(--muted);font-size:.9em}
+.efe-tnd-det summary{cursor:pointer;font-size:.78rem;font-weight:700;color:var(--teal-dk,#00837d);margin-top:2px}
+.efe-tnd-t{font-size:.86rem;font-weight:800;margin:14px 0 0}
 /* 📒 (09/11) «Mayor y saldos» del efectivo (`abrirEfectivoFecha`). */
 .efd-ctl{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .efd-ctl input[type=date]{width:auto;flex:0 0 auto;max-width:190px;min-height:38px;padding:4px 8px;border:1px solid var(--gray-md);border-radius:8px;font:inherit;margin:0}
@@ -6370,6 +6386,16 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .cbz .cbz-pg input,.cbz .cbz-pg select{font:inherit;font-size:.86rem;padding:6px 8px;border:1px solid var(--gray-lt,#dbe6ee);border-radius:8px;min-height:36px;color:#0f2333;background:#fff}
 .cbz .cbz-pg input.err{border-color:var(--red)}
 .cbz .cbz-comp{font-size:.82rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+/* 📧 (13/11, idea 182) el estado de cuenta al correo, en la ficha de cada mayorista (`cbzCorreoHtml`) */
+.cbz .cbz-correo{margin-top:12px;border:1px solid var(--teal-border,#99ddd9);border-radius:12px;padding:12px;background:var(--teal-lt,#e6f7f6);display:grid;gap:8px;min-width:0}
+.cbz .cbz-correo h4{margin:0;font-size:1rem;color:#065f5b}
+.cbz .cbz-correo .cbz-ay{margin:0}
+.cbz .cbz-cl{display:grid;gap:3px;font-size:.76rem;font-weight:700;color:#065f5b;min-width:0}
+.cbz .cbz-cl input{font:inherit;font-size:.86rem;padding:6px 8px;border:1px solid var(--gray-lt,#dbe6ee);border-radius:8px;min-height:36px;color:#0f2333;background:#fff;width:100%;box-sizing:border-box}
+.cbz .cbz-cl textarea{min-height:200px;background:#fff;font-weight:400}
+.cbz .cbz-cbtn{display:flex;gap:6px;flex-wrap:wrap}
+.cbz .cbz-cdet summary{cursor:pointer;font-size:.8rem;font-weight:700;color:#065f5b}
+.cbz .cbz-cdet[open]{display:grid;gap:8px}
 @media (max-width:600px){ .cbz .cbz-bar{grid-template-columns:minmax(0,1fr) auto;row-gap:3px} .cbz .cbz-bt{grid-column:1/-1;grid-row:2} .cbz .cbz-bar small{display:none} .cbz .cbz-vend{margin-left:0} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -10630,6 +10656,7 @@ function cbzCliDetHtml(k){
       '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'nada\')">Ninguna</button></div>'+
     '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th></th><th>Su N°</th><th>Productos</th><th>Entrega</th><th class="m">Venta</th><th class="m">Saldo</th><th></th></tr></thead><tbody>'+conSaldo.map(fila).join('')+'</tbody></table></div>'+
     (selIds.length ? cbzPagoHtml(c, selIds, selBs) : '<p class="cbz-ay">Tildá las OC que pagó (por ejemplo, las de una transferencia) y abajo aparece «💵 Pagó las tildadas».</p>');
+  if(conSaldo.length) h+=cbzCorreoHtml(c, selIds);   // 📧 (13/11, idea 182) el estado de cuenta al correo, al lado de Copiar y Excel
   h+='<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" data-k="'+esc(c.k)+'" onclick="cbzCliCopiar(this.getAttribute(\'data-k\'))">📋 Copiar el estado de cuenta</button>'+
     '<button type="button" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" data-k="'+esc(c.k)+'" onclick="cbzCliExcel(this.getAttribute(\'data-k\'))">⬇️ Estado de cuenta (Excel)</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
@@ -10731,33 +10758,174 @@ function cbzPagoRegistrar(){
 function cbzCliFilas(c){
   return c.ocs.slice().sort(function(a,b){ var fa=fechaSalida(a.p)||'', fb=fechaSalida(b.p)||''; return fa<fb?-1:fa>fb?1:0; });
 }
+/* El estado de cuenta de un cliente: de TODAS sus OC con saldo, o solo de las tildadas (`ids`, 182). Mismas reglas que `cbzMayDatos`
+   (deuda vencida = sin fecha o pasó su plazo), así que sin `ids` da exactamente lo de su ficha. */
+function cbzCliResumen(c, ids){
+  var sel=null; if(ids && ids.length){ sel={}; ids.forEach(function(id){ sel[String(id)]=1; }); }
+  var R={ debe:0, n:0, venc:0, nVenc:0, pv:0, nPv:0, viene:0, nV:0, nSin:0, v60m:0, solo:!!sel, ids:sel };
+  R.L=c.ocs.filter(function(o){ return o.x && (!sel || sel[String(o.p.id)]); });
+  R.L.forEach(function(o){ var x=o.x;
+    if(x.que==='sinm'){ R.nSin++; return; }
+    if(x.que==='viene'){ R.viene=r2(R.viene+x.saldo); R.nV++; return; }
+    R.debe=r2(R.debe+x.saldo); R.n++;
+    if(!x.vence || x.venc>0){ R.venc=r2(R.venc+x.saldo); R.nVenc++; if(x.venc>60) R.v60m=r2(R.v60m+x.saldo); }
+    else { R.pv=r2(R.pv+x.saldo); R.nPv++; }
+  });
+  return R;
+}
+/* 📧 (182) Lo vencido ARRIBA: vencidas (la más atrasada primero), por vencer (la que vence antes primero), por entregar y sin monto. */
+function cbzCliGrupos(R){
+  var vencida=function(x){ return x.que==='deuda' && (!x.vence || x.venc>0); }, cmpF=function(a,b){ return String(a.x.f).localeCompare(String(b.x.f)); };
+  return [
+    { k:'venc', tit:'Vencidas (pasó el plazo de pago)', L:R.L.filter(function(o){ return vencida(o.x); }).sort(function(a,b){
+        if(!a.x.f!==!b.x.f) return a.x.f ? -1 : 1;                                      // sin fecha, al final de las vencidas
+        return ((b.x.venc!=null?b.x.venc:b.x.dias)-(a.x.venc!=null?a.x.venc:a.x.dias)) || cmpF(a,b); }) },
+    { k:'pv', tit:'Por vencer', L:R.L.filter(function(o){ return o.x.que==='deuda' && !vencida(o.x); }).sort(function(a,b){ return String(a.x.vence).localeCompare(String(b.x.vence)) || cmpF(a,b); }) },
+    { k:'viene', tit:'Por entregar', L:R.L.filter(function(o){ return o.x.que==='viene'; }).sort(function(a,b){ return ((a.x.k==='avisa')-(b.x.k==='avisa')) || cmpF(a,b); }) },
+    { k:'sinm', tit:'Sin monto anotado', L:R.L.filter(function(o){ return o.x.que==='sinm'; }).sort(cmpF) }
+  ];
+}
+function cbzCliLinea(o){ var p=o.p, x=o.x;
+  return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+
+    (x.vence?(' · vence '+fmtFechaCorta(x.vence)+(x.venc>0?(' (vencida hace '+x.venc+' d)'):'')):'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }
+/* El texto del estado de cuenta. `modo`='wa' (📋 Copiar, con *negritas* de WhatsApp) o 'mail' (📧 el correo: el MISMO contenido, sin
+   asteriscos, con saludo y «Adjuntamos el detalle en Excel»). `corto` = el correo sin la lista de OC (solo si no entra en el enlace). */
+function cbzCliTexto(c, ids, modo, corto){
+  var R=cbzCliResumen(c, ids), mail=modo==='mail', hoy=diaNegocio();
+  var lista=cbzCliGrupos(R).filter(function(g){ return g.L.length; }).map(function(g){
+    return (mail ? g.tit.toUpperCase() : ('*'+g.tit+'*'))+'\n'+g.L.map(cbzCliLinea).join('\n'); }).join('\n\n');
+  if(!mail) return '🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(hoy)+' · plazo de pago: '+cbzPlazoTxt(c.plazo)+
+    (R.solo?(' · '+R.L.length+' OC elegida'+(R.L.length===1?'':'s')):'')+
+    '\nEntregado y sin pago: *'+fmtBs(R.debe)+'*'+'\nVencido: *'+fmtBs(R.venc)+'*'+(R.pv>0.005?(' · Por vencer: '+fmtBs(R.pv)):'')+
+    (R.viene>0.005?('\nPor entregar: '+fmtBs(R.viene)):'')+(lista?('\n\n'+lista):'');
+  var nom=cbzCliExcelNombre(c, ids), oc=function(n){ return ' ('+n+' OC)'; };
+  var L=['Buen día:', '', 'Les enviamos el estado de cuenta de '+c.k+' con MultiEspumas al '+fmtFecha(hoy)+(R.solo?(', de '+R.L.length+' OC'):'')+'.',
+    'Plazo de pago: '+(c.plazo>0?(c.plazo+' días desde la entrega'):'al entregar')+'.', '',
+    'Entregado y sin pago: '+fmtBs(R.debe)+oc(R.n), 'Vencido: '+fmtBs(R.venc)+(R.nVenc?oc(R.nVenc):'')];
+  if(R.pv>0.005) L.push('Por vencer: '+fmtBs(R.pv)+oc(R.nPv));
+  if(R.viene>0.005) L.push('Por entregar: '+fmtBs(R.viene)+oc(R.nV));
+  if(R.nSin) L.push('Sin monto anotado: '+R.nSin+' OC');
+  if(lista && !corto) L.push('', lista);
+  L.push('', corto ? ('El detalle de cada OC va en el Excel adjunto ('+nom+').') : ('Adjuntamos el detalle en Excel ('+nom+').'),
+    '', 'Quedamos atentos a cualquier consulta.', '', 'Saludos,', 'MultiEspumas');
+  return L.join('\n');
+}
 function cbzCliCopiar(k){
   var c=cbzCliDe(k); if(!c) return;
-  var L=cbzCliFilas(c).filter(function(o){ return o.x; });
-  var txt='🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(diaNegocio())+' · plazo de pago: '+cbzPlazoTxt(c.plazo)+
-    '\nEntregado y sin pago: *'+fmtBs(c.debe)+'*'+'\nVencido: *'+fmtBs(c.venc)+'*'+(c.pv>0.005?(' · Por vencer: '+fmtBs(c.pv)):'')+
-    (c.viene>0.005?('\nPor entregar: '+fmtBs(c.viene)):'')+'\n\n'+
-    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+
-      (x.vence?(' · vence '+fmtFechaCorta(x.vence)+(x.venc>0?(' (vencida hace '+x.venc+' d)'):'')):'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }).join('\n');
-  copyText(txt);
+  copyText(cbzCliTexto(c, null, 'wa'));
 }
-function cbzCliExcel(k){
-  var c=cbzCliDe(k); if(!c) return;
+function cbzCliExcelNombre(c, ids){
+  var n=(ids && ids.length) ? cbzCliResumen(c, ids).L.length : 0;
+  return 'estado-de-cuenta-'+sinTildes(c.k.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+(n?('-'+n+'-oc'):'')+'-'+diaNegocio()+'.xlsx';
+}
+/* `ids` (182) = solo esas OC; `callado` = sin el aviso (lo da el correo). Devuelve el nombre del archivo. */
+function cbzCliExcel(k, ids, callado){
+  var c=cbzCliDe(k); if(!c) return '';
+  var R=cbzCliResumen(c, ids), sel=R.ids;
   var H=1, BS=2, num=function(v){ return { v:r2(v), t:'n', s:BS }; }, hoy=diaNegocio();
-  var rows=[[{ v:'ESTADO DE CUENTA · '+c.k.toUpperCase(), s:H }], ['Al '+fmtFecha(hoy)+' · Multiespumas · plazo de pago: '+cbzPlazoTxt(c.plazo)], [],
-    [{v:'ENTREGADO Y SIN PAGO',s:H}, num(c.debe), {v:'VENCIDO',s:H}, num(c.venc), {v:'POR VENCER',s:H}, num(c.pv), {v:'VENCIDO HACE MÁS DE 60 DÍAS',s:H}, num(c.v60m)],
-    [{v:'POR ENTREGAR',s:H}, num(c.viene)], [],
+  var rows=[[{ v:'ESTADO DE CUENTA · '+c.k.toUpperCase()+(sel?(' · '+R.L.length+' OC'):''), s:H }], ['Al '+fmtFecha(hoy)+' · Multiespumas · plazo de pago: '+cbzPlazoTxt(c.plazo)], [],
+    [{v:'ENTREGADO Y SIN PAGO',s:H}, num(R.debe), {v:'VENCIDO',s:H}, num(R.venc), {v:'POR VENCER',s:H}, num(R.pv), {v:'VENCIDO HACE MÁS DE 60 DÍAS',s:H}, num(R.v60m)],
+    [{v:'POR ENTREGAR',s:H}, num(R.viene)], [],
     ['FECHA DE ENTREGA','SU N° (OC)','N° DEL PANEL','PRODUCTOS','TOTAL (Bs)','PAGADO (Bs)','SALDO (Bs)','DÍAS','ESTADO','VENCE','DÍAS VENCIDA'].map(function(t){ return {v:t,s:H}; })];   // ⏳ (13/11) las dos últimas, al final
   cbzCliFilas(c).forEach(function(o){
     var p=o.p, x=o.x, fs=fechaSalida(p)||'';
+    if(sel && !sel[String(p.id)]) return;
     var est=!x ? 'PAGADO' : x.que==='sinm' ? 'SIN MONTO' : x.que==='viene' ? 'POR ENTREGAR' : (x.vence && x.venc<=0) ? 'POR VENCER' : 'VENCIDO';
     if(!x && !(ventaTotal(p)>0.005)) return;
     rows.push([fs?fmtFecha(fs):'', p.nota||'', p.oc||'', cbzProdsTxt(p), num(ventaTotal(p)), num(contaCobrado(p)), num(x?x.saldo:0), {v:(x&&x.que==='deuda')?x.dias:0, t:'n'}, est,
       (x&&x.vence)?fmtFecha(x.vence):'', {v:(x&&x.vence&&x.venc>0)?x.venc:0, t:'n'}]);
   });
   var bytes=buildXlsx([{ name:'Estado de cuenta', cols:[{w:16},{w:14},{w:12},{w:52},{w:13},{w:13},{w:13},{w:7},{w:14},{w:14},{w:13}], matrix:rows }]);
-  downloadBlob(bytes, 'estado-de-cuenta-'+sinTildes(c.k.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('🏭 Estado de cuenta de '+c.k+' descargado ✓','ok');
+  var nom=cbzCliExcelNombre(c, ids);
+  downloadBlob(bytes, nom, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  if(!callado) toast('🏭 Estado de cuenta de '+c.k+' descargado ✓','ok');
+  return nom;
+}
+/* ============================================================================
+   📧 EL ESTADO DE CUENTA AL CORREO EN UN TOQUE (13/11, idea 182 de Contabilidad; como «📧 Correo de la ATC», §4li).
+   En la ficha de cada mayorista (Cobranza → Mayoristas → el cliente): «📧 Abrir en Gmail» arma el correo y baja el Excel para adjuntar.
+   · Para: el último que se usó para ESE cliente en este aparato (`me_cbz_correo`, {cliente: correo}); vacío la primera vez.
+   · Asunto: «Estado de cuenta <cliente> — MultiEspumas — al dd/mm/aaaa».
+   · Mensaje: el MISMO estado de cuenta de «📋 Copiar» (`cbzCliTexto`), con lo vencido arriba y sin los asteriscos de WhatsApp, y el renglón
+     «Adjuntamos el detalle en Excel». Se puede retocar antes de abrir el correo.
+   · Con OC tildadas se ofrece mandar solo esas (texto Y Excel). El panel NO manda nada: el navegador no puede adjuntar el Excel solo.
+   · Un mensaje muy largo no entra en el enlace de Gmail (o del programa de correo): se abre con el resumen y el mensaje entero queda copiado.
+   ========================================================================== */
+var CBZ_CORREO_LS='me_cbz_correo', CBZ_CORREO_URL_MAX=7500, CBZ_CORREO_MAILTO_MAX=1900;
+function cbzCorreoParaDe(k){ try{ var m=JSON.parse(localStorage.getItem(CBZ_CORREO_LS)||'{}')||{}; return String(m[k]||''); }catch(e){ return ''; } }
+function cbzCorreoParaGuardar(k, v){
+  try{ var m=JSON.parse(localStorage.getItem(CBZ_CORREO_LS)||'{}')||{}; v=String(v||'').trim(); if(v) m[k]=v; else delete m[k]; localStorage.setItem(CBZ_CORREO_LS, JSON.stringify(m)); }catch(e){}
+}
+/* Lo que la persona tocó en el bloque del correo (sobrevive al redibujo de la ficha al tildar). Un cliente nuevo arranca de cero. */
+function cbzCorreoEstado(k){
+  if(!CBZ.correo || CBZ.correo.k!==k) CBZ.correo={ k:k, para:null, alc:'todas', asunto:null, texto:null, firma:'', abierto:false };
+  return CBZ.correo;
+}
+function cbzCorreoAsunto(c){ return 'Estado de cuenta '+c.k+' — MultiEspumas — al '+fmtFecha(diaNegocio()); }
+/* Las OC tildadas que siguen en la ficha (con saldo), o null = todas. */
+function cbzCorreoIds(c){
+  var C=cbzCorreoEstado(c.k); if(C.alc!=='sel') return null;
+  var ids=Object.keys(CBZ.sel||{}).filter(function(id){ return CBZ.sel[id] && c.ocs.some(function(o){ return o.x && String(o.p.id)===id; }); });
+  return ids.length ? ids : null;
+}
+function cbzCorreoHtml(c, selIds){
+  var C=cbzCorreoEstado(c.k), hay=!!(selIds && selIds.length);
+  if(!hay && C.alc==='sel') C.alc='todas';
+  var ids=cbzCorreoIds(c), firma=C.alc+'|'+(ids||[]).join(',');
+  if(firma!==C.firma){ C.firma=firma; C.asunto=null; C.texto=null; }   // cambió qué se manda: el texto vuelve a armarse
+  var para=C.para!=null ? C.para : cbzCorreoParaDe(c.k), nTodas=c.ocs.filter(function(o){ return o.x; }).length;
+  var alc=function(v, txt){ return '<button type="button" role="radio" aria-checked="'+(C.alc===v)+'" class="'+(C.alc===v?'on':'')+'" onclick="cbzCorreoAlc(\''+v+'\')">'+txt+'</button>'; };
+  return '<div class="cbz-correo" id="cbz-correo" data-k="'+esc(c.k)+'">'+
+    '<h4>📧 Mandar el estado de cuenta por correo</h4>'+
+    '<p class="cbz-ay">«Abrir en Gmail» arma el correo con el estado de cuenta y baja el Excel (<b>'+esc(cbzCliExcelNombre(c, ids))+'</b>): adjuntalo con 📎 y mandalo vos. El panel no manda nada solo.</p>'+
+    (hay ? '<div class="cbz-met" role="radiogroup" aria-label="Qué OC van en el correo">'+alc('todas', 'Todas sus OC con saldo ('+nTodas+')')+alc('sel', 'Solo las '+selIds.length+' tildada'+(selIds.length===1?'':'s'))+'</div>' : '')+
+    '<label class="cbz-cl">Para <input type="text" inputmode="email" id="cbz-correo-para" value="'+esc(para)+'" placeholder="El correo de '+esc(c.k)+' (queda guardado en este aparato)" autocomplete="email" autocapitalize="off" spellcheck="false" '+
+      'oninput="if(CBZ.correo) CBZ.correo.para=this.value" onchange="cbzCorreoParaGuardar(document.getElementById(\'cbz-correo\').getAttribute(\'data-k\'), this.value)"></label>'+
+    '<div class="cbz-cbtn">'+
+      '<button type="button" class="btn btn-sm" id="cbz-correo-gmail" style="width:auto;background:#c5221f;color:#fff;font-weight:800" onclick="cbzCorreoAbrir(\'gmail\')">📧 Abrir en Gmail</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCorreoAbrir(\'mailto\')">✉️ Otro correo</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCorreoExcel()">⬇️ Excel para adjuntar</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCorreoCopiar()">📋 Copiar el mensaje</button>'+
+    '</div>'+
+    '<details class="cbz-cdet"'+(C.abierto?' open':'')+' ontoggle="if(CBZ.correo) CBZ.correo.abierto=this.open"><summary>Ver o retocar el asunto y el mensaje</summary>'+
+      '<label class="cbz-cl">Asunto <input type="text" id="cbz-correo-asunto" value="'+esc(C.asunto!=null?C.asunto:cbzCorreoAsunto(c))+'" oninput="if(CBZ.correo) CBZ.correo.asunto=this.value"></label>'+
+      '<label class="cbz-cl">Mensaje <textarea class="wa-text" id="cbz-correo-texto" oninput="if(CBZ.correo) CBZ.correo.texto=this.value">'+esc(C.texto!=null?C.texto:cbzCliTexto(c, ids, 'mail'))+'</textarea></label>'+
+    '</details></div>';
+}
+function cbzCorreoAlc(v){ cbzPagoRecordar(); var c=cbzCliDe(CBZ.cli); if(!c) return; cbzCorreoEstado(c.k).alc=(v==='sel'?'sel':'todas'); cbzPintar(); }
+/* Lo que dice el bloque (lo retocado manda; si no se ve, lo armado). */
+function cbzCorreoVals(c, ids){
+  var C=cbzCorreoEstado(c.k), g=function(id){ var e=document.getElementById(id); return e ? String(e.value||'') : null; };
+  var para=g('cbz-correo-para'), asunto=g('cbz-correo-asunto'), texto=g('cbz-correo-texto');
+  return { para:String(para!=null ? para : (C.para!=null ? C.para : cbzCorreoParaDe(c.k))).trim(),
+           asunto:asunto!=null ? asunto : (C.asunto!=null ? C.asunto : cbzCorreoAsunto(c)),
+           texto:texto!=null ? texto : (C.texto!=null ? C.texto : cbzCliTexto(c, ids, 'mail')) };
+}
+function cbzCorreoCopiar(){ var c=cbzCliDe(CBZ.cli); if(!c) return; copyText(cbzCorreoVals(c, cbzCorreoIds(c)).texto); }
+function cbzCorreoExcel(){ var c=cbzCliDe(CBZ.cli); if(!c) return; return cbzCliExcel(c.k, cbzCorreoIds(c)); }
+/* El enlace del correo (`atcCorreoUrl`, el mismo de la ATC). Si no entra, el resumen sin la lista de OC (`largo`). */
+function cbzCorreoArmar(c, modo){
+  var gmail=modo==='gmail', ids=cbzCorreoIds(c), v=cbzCorreoVals(c, ids), largo=false;
+  var url=atcCorreoUrl(gmail?'gmail':'mailto', v);
+  if(url.length>(gmail?CBZ_CORREO_URL_MAX:CBZ_CORREO_MAILTO_MAX)){
+    largo=true;
+    url=atcCorreoUrl(gmail?'gmail':'mailto', { para:v.para, asunto:v.asunto, texto:cbzCliTexto(c, ids, 'mail', true) });
+  }
+  return { v:v, ids:ids, url:url, largo:largo };
+}
+/* 📧 Abrir el correo (Gmail o el programa de correo) Y bajar el Excel para adjuntar, en un toque. */
+function cbzCorreoAbrir(modo){
+  var c=cbzCliDe(CBZ.cli); if(!c) return;
+  var gmail=modo==='gmail', A=cbzCorreoArmar(c, modo), v=A.v, ids=A.ids, url=A.url, largo=A.largo;
+  if(v.para) cbzCorreoParaGuardar(c.k, v.para);
+  if(largo) copyText(v.texto);   // no entró en el enlace: el mensaje entero queda copiado para pegarlo
+  var nom='';
+  if(gmail){ window.open(url, '_blank'); nom=cbzCliExcel(c.k, ids, true); }
+  else { nom=cbzCliExcel(c.k, ids, true); window.location.href=url; }
+  var msg='📧 '+(gmail?'Se abrió Gmail':'Se abrió tu correo')+' con el estado de cuenta y se bajó el Excel ('+nom+'): adjuntalo con 📎 y mandalo vos.'+
+    (largo?' El mensaje era muy largo para el enlace: va el resumen y el mensaje ENTERO quedó copiado (pegalo con Ctrl+V).':'')+(v.para?'':' ⚠️ Falta el «Para»: escribilo en el correo.');
+  setTimeout(function(){ toast(msg, v.para?'ok':'err', 9000); }, largo?350:0);
+  return { url:url, excel:nom, largo:largo };
 }
 /* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
    Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
@@ -15975,6 +16143,25 @@ function abrirEfectivoMano(q){
   if(typeof POR_COBRAR_VOLVER!=='undefined') POR_COBRAR_VOLVER=null;
   var D=efeManoDatos(q);
   if(!D){ EFE_VER_SOLO=''; return abrirEfectivo(q); }
+  var T=D.T, alcance = q ? esc(q) : (D.vSel ? ('ventas de '+esc(D.vSel)) : 'todo el equipo');
+  openModal('<div class="modal-h" style="background:var(--amber)"><h3>💵 Efectivo por retirar · '+alcance+' · '+fmtBs(T.mano)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="efe-mano">'+efeManoCuerpo(D, efeManoVistaPref())+'</div>', true);
+}
+/* 🏪 (13/11, idea 183) «Por persona | Por tienda»: la MISMA cuenta (`efeManoDatos`), agrupada distinto. Recordado por aparato. */
+var EFE_MANO_VISTA_LS='me_efe_mano_vista', EFE_MANO_VISTA='';
+function efeManoVistaPref(){
+  var v=''; try{ v=localStorage.getItem(EFE_MANO_VISTA_LS)||''; }catch(e){}
+  v=v||EFE_MANO_VISTA; return v==='tienda' ? 'tienda' : 'persona';
+}
+function efeManoVista(v){
+  v = v==='tienda' ? 'tienda' : 'persona'; EFE_MANO_VISTA=v;
+  try{ localStorage.setItem(EFE_MANO_VISTA_LS, v); }catch(e){}
+  var box=document.getElementById('efe-mano'), D=box ? efeManoDatos(EFE_VER_QUIEN) : null; if(!box || !D) return;
+  var sc=box.scrollTop; box.innerHTML=efeManoCuerpo(D, v); try{ box.scrollTop=sc; }catch(e){}
+}
+/* Lo de adentro de la ventana, en la vista elegida. */
+function efeManoCuerpo(D, vista){
+  var tienda = vista==='tienda';
   var verVend=!D.vSel;
   var fila=function(it, chofer){
     var p=it.p||{}, d=diasEntre(it.f, D.hoy);
@@ -16004,23 +16191,117 @@ function abrirEfectivoMano(q){
       (x.sobra>0.005 ? ('<div style="font-size:.78rem;color:var(--red);margin-top:6px">⚠️ '+fmtBs(x.sobra)+' de retiros que no tapan ningún cobro anotado: falta cargar ese cobro o el retiro está de más.</div>') : '')+
       '</div>';
   };
-  var T=D.T, alcance = q ? esc(q) : (D.vSel ? ('ventas de '+esc(D.vSel)) : 'todo el equipo');
-  var html='<div class="modal-h" style="background:var(--amber)"><h3>💵 Efectivo por retirar · '+alcance+' · '+fmtBs(T.mano)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b" id="efe-mano">'+
+  var T=D.T, vis=function(v, txt){ return '<button type="button" role="tab" aria-selected="'+(vista===v)+'" class="'+(vista===v?'on':'')+'" onclick="efeManoVista(\''+v+'\')">'+txt+'</button>'; };
+  return '<div class="efd-tabs efe-vista" role="tablist" aria-label="Cómo ver el efectivo por retirar">'+vis('persona', '👤 Por persona')+vis('tienda', '🏪 Por tienda')+'</div>'+
       '<div style="font-size:.86rem;margin-bottom:6px">'+esc(D.mesTxt)+' · <b>'+fmtBs(T.mano)+'</b> sigue en la mano'+
         (T.ant>0.005?(' · ⚠️ + <b>'+fmtBs(T.ant)+'</b> faltante del mes anterior'):'')+
         (T.aparte>0.005?(' · 🚚 + <b>'+fmtBs(T.aparte)+'</b> lo tiene el chofer'):'')+'</div>'+
-      '<div style="font-size:.76rem;color:var(--muted)">👆 Tocá un cliente para abrir su venta. «Dónde» = la tienda de quien recibió la plata; si la recibió un chofer, en la entrega (el panel no anota el lugar exacto).</div>'+
-      (D.P.length ? '<div style="max-height:calc(64vh / var(--vz,1));overflow:auto">'+D.P.map(bloque).join('')+'</div>'
-                  : '<div class="empty" style="padding:18px 0">✅ No queda efectivo sin recoger en '+esc(D.mesTxt)+'.</div>')+
+      (tienda
+        ? '<div style="font-size:.76rem;color:var(--muted)">🏪 Para organizar el recojo: cada tienda con lo que hay sin recoger, de quién y desde cuándo (la tienda de quien tiene la plata, el día del cobro). Lo de los choferes va aparte.</div>'
+        : '<div style="font-size:.76rem;color:var(--muted)">👆 Tocá un cliente para abrir su venta. «Dónde» = la tienda de quien recibió la plata; si la recibió un chofer, en la entrega (el panel no anota el lugar exacto).</div>')+
+      (!D.P.length ? '<div class="empty" style="padding:18px 0">✅ No queda efectivo sin recoger en '+esc(D.mesTxt)+'.</div>'
+        : tienda ? '<div style="max-height:calc(64vh / var(--vz,1));overflow:auto">'+efeTiendaHtml(D, fila, cab)+'</div>'
+        : '<div style="max-height:calc(64vh / var(--vz,1));overflow:auto">'+D.P.map(bloque).join('')+'</div>')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
-        (D.P.length?'<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarEfectivoMano(EFE_VER_QUIEN)">📋 Copiar la lista</button>':'')+
+        (D.P.length ? (tienda ? '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarEfectivoRuta(EFE_VER_QUIEN)">📋 Copiar la ruta</button>'
+                              : '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="copiarEfectivoMano(EFE_VER_QUIEN)">📋 Copiar la lista</button>') : '')+
         '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="abrirEfectivo(EFE_VER_QUIEN)">👁 Ver todo lo cobrado y los retiros</button>'+
         '<button type="button" class="btn btn-sm" style="background:#155e75;color:#fff;width:auto" onclick="closeModal();abrirRetiros()">💵 Registrar retiro</button>'+
         '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
-      '</div>'+
-    '</div>';
-  openModal(html, true);
+      '</div>';
+}
+/* 🏪 (13/11, idea 183) EFECTIVO POR TIENDA, para organizar el recojo. Regroupa lo de `efeManoDatos` (NO calcula aparte): cada cobro sin
+   recoger de una vendedora va a la tienda de quien tiene la plata EL DÍA DEL COBRO (`sucursalDeVendedor(nombre, fecha)`; si no la tiene,
+   la del vendedor de la venta; si ninguna, «Sin tienda asignada»). Lo de los choferes va aparte («🚚 con los choferes»). Las tiendas + los
+   choferes dan `D.T.mano` (= la vista por persona = la ficha «Efectivo por retirar»); el faltante del mes anterior y lo del chofer de las
+   ventas de una vendedora elegida (`aparte`) van aparte, como en la vista por persona. */
+function efeTiendaDe(x, it){
+  if(x.chofer) return '';
+  var p=it.p||{};
+  return sucursalDeVendedor(x.nombre, it.f) || sucursalDeVendedor(p.vendedor, it.f) || '';
+}
+function efeTiendaDatos(D){
+  var G={}, orden=[], ch=[], T={ mano:0, ant:0, aparte:0, tiendas:0, choferes:0, nT:0 };
+  var dias=function(f){ return f ? Math.max(0, diasEntre(f, D.hoy)) : 0; };
+  D.P.forEach(function(x){
+    if(!(x.its.length || x.ant.length)) return;          // solo «retirado de más»: no hay nada que recoger
+    if(x.chofer){
+      ch.push({ nombre:x.nombre, mano:x.tot, ant:x.totAnt, antMes:x.antMes||'', viejo:x.viejo, dias:dias(x.viejo), n:x.its.length+x.ant.length, aparte:x.aparte, its:x.ant.concat(x.its) });
+      if(x.aparte) T.aparte=r2(T.aparte+x.tot+x.totAnt); else { T.choferes=r2(T.choferes+x.tot); T.ant=r2(T.ant+x.totAnt); }
+      return;
+    }
+    var meter=function(it, esAnt){
+      var t=efeTiendaDe(x, it);
+      if(!G[t]){ G[t]={ tienda:t, mano:0, ant:0, antMes:'', n:0, viejo:'', quien:{}, qs:[], its:[] }; orden.push(t); }
+      var g=G[t], q=g.quien[x.nombre];
+      if(esAnt && x.antMes) g.antMes=x.antMes;
+      if(!q){ q=g.quien[x.nombre]={ nombre:x.nombre, mano:0, ant:0, n:0, viejo:'' }; g.qs.push(q); }
+      if(esAnt){ g.ant=r2(g.ant+it.fa); q.ant=r2(q.ant+it.fa); T.ant=r2(T.ant+it.fa); }
+      else { g.mano=r2(g.mano+it.fa); q.mano=r2(q.mano+it.fa); T.tiendas=r2(T.tiendas+it.fa); }
+      g.n++; q.n++; g.its.push({ it:it, nombre:x.nombre });
+      if(!g.viejo || it.f<g.viejo) g.viejo=it.f;
+      if(!q.viejo || it.f<q.viejo) q.viejo=it.f;
+    };
+    x.ant.forEach(function(it){ meter(it, true); });
+    x.its.forEach(function(it){ meter(it, false); });
+  });
+  var L=orden.map(function(t){ var g=G[t];
+    g.dias=dias(g.viejo); g.qs.forEach(function(q){ q.dias=dias(q.viejo); });
+    g.qs.sort(function(a,b){ return (b.mano+b.ant)-(a.mano+a.ant) || a.nombre.localeCompare(b.nombre,'es'); });
+    g.its.sort(function(a,b){ return a.it.f<b.it.f?-1:a.it.f>b.it.f?1:0; });
+    return g; });
+  L.sort(function(a,b){ return (!a.tienda)-(!b.tienda) || (b.mano+b.ant)-(a.mano+a.ant) || a.tienda.localeCompare(b.tienda,'es'); });
+  ch.sort(function(a,b){ return (a.aparte?1:0)-(b.aparte?1:0) || (b.mano+b.ant)-(a.mano+a.ant) || a.nombre.localeCompare(b.nombre,'es'); });
+  T.nT=L.filter(function(g){ return g.tienda; }).length;
+  T.mano=r2(T.tiendas+T.choferes);
+  return { L:L, ch:ch, T:T };
+}
+function efeDesdeTxt(f, d){ return f ? ('desde el '+fmtFechaCorta(f)+(d>0?(' (hace '+d+' día'+(d===1?'':'s')+')'):' (hoy)')) : ''; }
+function efeAntTxt(x){ return x.ant>0.005 ? ('incluye '+fmtBs(x.ant)+' faltante de '+(x.antMes ? mesNombre(x.antMes).replace(/ de \d{4}$/, '') : 'el mes anterior')) : ''; }
+/* Cada tarjeta dice TODO lo que hay que recoger ahí (lo del período + el faltante del mes anterior, como el renglón de cada persona). */
+function efeTiendaHtml(D, fila, cab){
+  var S=efeTiendaDatos(D), T=S.T;
+  var det=function(its, chofer){
+    return '<details class="efe-tnd-det"><summary>Ver los '+its.length+' cobro'+(its.length===1?'':'s')+'</summary><div class="tw"><table class="mini">'+cab+'<tbody>'+
+      its.map(function(z){ return fila(z.it||z, chofer); }).join('')+'</tbody></table></div></details>';
+  };
+  var card=function(g){
+    return '<div class="efe-tnd'+(g.tienda?'':' efe-tnd-sin')+'" data-tienda="'+esc(g.tienda)+'">'+
+      '<div class="efe-tnd-h"><b>'+(g.tienda?('🏪 '+esc(g.tienda)):'❓ Sin tienda asignada')+'</b><span class="efe-tnd-m">'+fmtBs(r2(g.mano+g.ant))+'</span></div>'+
+      '<div class="efe-tnd-s">'+g.n+' cobro'+(g.n===1?'':'s')+' sin recoger · el más viejo '+esc(efeDesdeTxt(g.viejo, g.dias))+'</div>'+
+      (g.ant>0.005?('<div class="efe-tnd-ant">⚠️ '+esc(efeAntTxt(g))+'</div>'):'')+
+      '<ul class="efe-tnd-q">'+g.qs.map(function(q){ return '<li>👤 <b>'+esc(q.nombre)+'</b> · '+fmtBs(r2(q.mano+q.ant))+' <span>'+esc(efeDesdeTxt(q.viejo, q.dias))+'</span></li>'; }).join('')+'</ul>'+
+      det(g.its, false)+'</div>';
+  };
+  var chCard=function(x){
+    return '<div class="efe-tnd efe-tnd-ch" data-chofer="'+esc(x.nombre)+'">'+
+      '<div class="efe-tnd-h"><b>🚚 '+esc(x.nombre)+'</b><span class="efe-tnd-m">'+fmtBs(r2(x.mano+x.ant))+'</span></div>'+
+      '<div class="efe-tnd-s">'+x.n+' cobro'+(x.n===1?'':'s')+' en la entrega · el más viejo '+esc(efeDesdeTxt(x.viejo, x.dias))+'</div>'+
+      (x.ant>0.005?('<div class="efe-tnd-ant">⚠️ '+esc(efeAntTxt(x))+'</div>'):'')+
+      (x.aparte?('<div class="efe-tnd-s" style="color:#7c4b00">de ventas de '+esc(D.vSel)+' · lo rinde a Contabilidad (aparte del total)</div>'):'')+
+      det(x.its, true)+'</div>';
+  };
+  return '<div class="efe-tnd-res">🏪 En las tiendas: <b>'+fmtBs(T.tiendas)+'</b>'+(S.ch.some(function(x){ return !x.aparte; })?(' · 🚚 con los choferes: <b>'+fmtBs(T.choferes)+'</b>'):'')+
+      ' · en total <b>'+fmtBs(T.mano)+'</b>'+(T.ant>0.005?(' · ⚠️ + '+fmtBs(T.ant)+' faltante del mes anterior (ya sumado en cada tarjeta)'):'')+(T.aparte>0.005?(' · 🚚 + '+fmtBs(T.aparte)+' lo tiene el chofer'):'')+'</div>'+
+    (S.L.length ? '<div class="efe-tnds">'+S.L.map(card).join('')+'</div>' : '')+
+    (S.ch.length ? ('<div class="efe-tnd-t">🚚 Con los choferes</div><div class="efe-tnds">'+S.ch.map(chCard).join('')+'</div>') : '');
+}
+/* 📋 El texto para quien sale a recoger: una línea por tienda (cuánto, de quién y desde cuándo) y los choferes aparte. */
+function copiarEfectivoRuta(q){
+  var D=efeManoDatos(String(q||'')); if(!D) return copiarEfectivo(q);
+  var S=efeTiendaDatos(D), T=S.T, desde=function(f){ return f ? ('desde el '+fmtFechaCorta(f)) : ''; };
+  var L=['Recojo de efectivo — '+fmtFecha(D.hoy)+(q?(' · '+q):(D.vSel?(' · ventas de '+D.vSel):''))];
+  S.L.forEach(function(g){
+    var quien=g.qs.length===1 ? (g.qs[0].nombre+(g.qs[0].viejo?(', '+desde(g.qs[0].viejo)):''))
+      : g.qs.map(function(z){ return z.nombre+' '+fmtBs(r2(z.mano+z.ant))+(z.viejo?(', '+desde(z.viejo)):''); }).join(' · ');
+    L.push((g.tienda?('🏪 '+g.tienda):'❓ Sin tienda asignada')+': '+fmtBs(r2(g.mano+g.ant))+' ('+quien+(g.ant>0.005?('; '+efeAntTxt(g)):'')+')');
+  });
+  if(S.ch.length){
+    L.push('🚚 Con los choferes:');
+    S.ch.forEach(function(x){ L.push('• '+x.nombre+': '+fmtBs(r2(x.mano+x.ant))+(x.viejo?(' ('+desde(x.viejo)+(x.ant>0.005?('; '+efeAntTxt(x)):'')+')'):'')+(x.aparte?(' — de ventas de '+D.vSel+', lo rinde a Contabilidad'):'')); });
+  }
+  L.push('Total: '+fmtBs(r2(T.mano+T.ant))+(T.ant>0.005?(' ('+fmtBs(T.mano)+' de '+D.mesTxt+' + '+fmtBs(T.ant)+' faltante del mes anterior)'):'')+(T.aparte>0.005?(' · 🚚 + '+fmtBs(T.aparte)+' lo tiene el chofer'):''));
+  copyText(L.join('\n'));
 }
 function copiarEfectivoMano(q){
   var D=efeManoDatos(String(q||'')); if(!D) return copiarEfectivo(q);
