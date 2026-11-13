@@ -6449,6 +6449,14 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 .cam-an-s select{ width:auto; max-width:100%; min-height:36px; }
 .cam-an-ya{ font-weight:700; color:#1d4ed8; }
 .cam-an-gps{ color:#1d4ed8; }
+/* 🛰️ (mejora 204) lo del GPS, al final de cada camión */
+.ec-tabla .ec-g{ background:#f0f9ff; }
+.ec-tabla thead th.ec-g{ background:#e0f2fe; color:#075985; }
+.ec-tabla tfoot .ec-g{ background:#e0f2fe; }
+.ec-tabla .ec-g1{ border-left:2px solid #7dd3fc; }
+.ec-g b{ display:block; font-size:.9rem; }
+.ec-g small{ display:block; font-size:.68rem; color:var(--muted,#64748b); font-weight:600; }
+.ec-gps-nota{ color:#075985; }
 @media (max-width:560px){ .ec-mes b{ min-width:120px; } .ec-tabla th[scope="row"], .ec-tabla thead th:first-child{ min-width:96px; } }
 </style>
 <!-- 📇 (14/10) Clientes para Excel: nombre, celular y valor de la compra, por mes o todo, de los vendedores que se elijan (`abrirClientes`). -->
@@ -7657,7 +7665,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-13-b';   // (13/11, 11-13-b) 🏭⏳ lo vencido de los mayoristas, los lunes a las 08:00 a Contabilidad (solo el servidor) · (13/11, 11-13-a) 🪶 las almohadas no cuentan como productos en el cierre del día · (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
+var SCRIPT_VERSION_ESPERADA='2026-11-13-b';   // (13/11, 11-13-b) 🛰️📚 «🚚 Entregas por camión» pide `gpsHist` (cómo le fue a cada camión según el GPS: la hoja «Historial GPS») solo con esta versión · 🏭⏳ lo vencido de los mayoristas, los lunes a las 08:00 a Contabilidad (solo el servidor) · (13/11, 11-13-a) 🪶 las almohadas no cuentan como productos en el cierre del día · (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
 // antes: '2026-11-07-d' (07/11) 🎙️ al que le manda un audio al bot, le recuerda que es un asistente automático; el cierre con productos y el botón
 // antes: '2026-11-07-c' (07/11) 🧾 el retiro que es justo lo último sin recoger se lleva eso (el aviso del efectivo)
 // antes:   // (07/11, 11-07-b) ☀️ el «Buen día» también el domingo para las vendedoras de Mia Plaza y Tienda Banzer (solo el servidor) · (07/11, 11-07-a) ☀️ el «Buen día» a cada vendedora (08:30) y 🌙 el cierre del día al dueño (21:15) por WhatsApp (solo el servidor) · 🧽 la acción `bloki` (Bloki le pregunta a Claude con lo que el panel calculó): esta página la llama solo con esta versión (servidorTiene); lo demás anda igual con la 06-e · (06/11, 11-06-e) 🗓️ el efectivo del día solo de ventas de noviembre (solo el servidor) · (06/11, 11-06-d) 📅 el efectivo de cada día (lo que ingresó y lo acumulado sin recoger) por WhatsApp (solo el servidor) · (06/11, 11-06-c) 🚚 el efectivo de los choferes sin rendir va a Contabilidad, no al dueño (solo el servidor) · (06/11, 11-06-b) 💵 el WhatsApp del efectivo sin retirar al dueño (solo el servidor: la página anda igual con la 06-a) · (06/11, 11-06-a) 🧹 los ARMAZONES fuera del WhatsApp de las 08:45 (§4ok-104c); lo demás anda igual con la 05-a · (05/11, 11-05-a) 🗓️ el plan del jueves (§4ok): la página llama a «kommoCierre» (91) y muestra «📍 Usar esta ubicación» (108) solo con esta versión; lo demás anda igual con la 02-a · (02/11, 11-02-a) 👥 Andrea Orias y Fabián Godoy en el bot (solo el servidor: la página anda igual con la 30-a) · (30/10, 30-a) 📦 «el cliente avisa cuándo»: la página manda `av` y el servidor no deja que una página sin F5 le ponga un día inventado a una venta sin día; Claude le dice al cliente que avisa cuándo (la casilla anda igual con la 29-b: sin fecha ya no ocupaba cupo ni el bot le escribía) · (29/10, 29-b) 📸 el repaso de Kommo lee la planilla una vez por repaso y el aviso de Meta solo las últimas filas de «Bot WhatsApp» (solo el servidor) · (29/10) 📥✅ avisos a logística del Excel y del cierre + 💾 el respaldo diario (solo el servidor: la página no cambia nada con esta versión) · (27/10, §4ne) 🏭 «pedir hoy» por WhatsApp a Ernesto y Alba (solo el bot: la página no cambia nada con esta versión) · (26/10, §4mt) 🧾 Claude lee la nota de venta (cuánto en efectivo, QR, tarjeta) · (26/10, §4mq) la carpeta de comprobantes en paralelo y 🤖 Claude leyendo las fotos de los comprobantes · (25/10, §4mg C2) los comprobantes del mes en una carpeta para el contador (`compsCarpeta`) · (15/10, §4ln) los enlaces de ubicación de Waze, el Plus Code en «maps?q=» y los lugares con nombre (q=) · (14/10, §4lc-b) Claude contesta al vuelo (~15 s) · (14/10, §4lc) Claude le contesta al cliente que le escribe al bot: qué quiere, un resumen y lo que le contestó, en cada tarjeta (`ia`/`cat`/`res`/`resp`) · (14/10, §4lb) un pedido de la tarde que salió cargado a la mañana: `adelanto` → el bot le manda al cliente «cargado y en camino» · (13/10) quieto en la puerta de PTF/Banzer/Moreno sin pedido cerca no es parada ni vuelve «salió» un traslado · (13/10, §4kp) el día de los camiones en la lectura (`gpsDia`: paradas cerca de los pedidos, Moreno = recoger, el registro) y el recorrido aparte (`gpsRuta`) · (13/10, §4ko) el GPS de los camiones en la lectura (`gps`) · (12/10) recordatorio 17:00 AM y 19:00 PM · // (12/10, §4kl) plantillas v2 · (12/10, §4kk) lo que contesta el cliente, al panel (waRespuestas) · (12/10) «sin camión» con nombres enteros · (12/10, §4ki) el bot escucha a Meta (entregado / leído / falló) · (11/10, §4jt) el bot de WhatsApp (waAlGuardar_ / waRepaso) · (09/10, §4in) la hoja «Historial stock» (histStock / histStockLeer) · (06/10, §4hs) el stock solo lo guarda una página al día (`sf`): una sin F5 recibe `actualizar` · (02/10, §4hj) el libro de reservas de stock: el que guarda segundo se entera (`reserva` → `saldo`) · (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
@@ -49782,7 +49790,7 @@ function ecDatos(ym){
   var tiendas=Object.keys(hay).filter(function(k){ return k.indexOf('t:')===0; }).sort(function(a,b){
     var ia=ordS.indexOf(a), ib=ordS.indexOf(b); if(ia<0) ia=999; if(ib<0) ib=999; return (ia-ib) || a.localeCompare(b, 'es'); });
   var cols=tiendas.map(function(k){ return { k:k, t:k.slice(2) }; }).concat(EC_COLS_FIJAS.filter(function(c){ return hay[c.k]; }));
-  return { ym:ym, hoy:hoy, ents:ents, ret:ret, byId:byId, cols:cols, colTot:colTot, tot:tot };
+  return { ym:ym, hoy:hoy, ents:ents, ret:ret, byId:byId, cols:cols, colTot:colTot, tot:tot, gps:ecGpsEstado(ym) };
 }
 /* Agrupa las entregas en filas: `claveDe(e)` → el nombre (vacío = la fila «sin…»). `lista` = los de siempre (salen con 0 también). */
 function ecAgrupar(D, claveDe, lista, sinTxt){
@@ -49800,19 +49808,116 @@ function ecAgrupar(D, claveDe, lista, sinTxt){
   if(sin) filas.push(sin);
   return filas;
 }
-function ecFilasPorCamion(D){ return ecAgrupar(D, function(e){ return e.veh; }, Object.keys(VEHICULOS), 'Sin camión anotado'); }
+function ecFilasPorCamion(D){ return ecGpsSumar(D, ecAgrupar(D, function(e){ return e.veh; }, Object.keys(VEHICULOS), 'Sin camión anotado')); }   // 🛰️ (mejora 204) + `f.gps`
 function ecFilasPorChofer(D){ return ecAgrupar(D, function(e){ return e.ch; }, allChoferes(), 'Sin chofer anotado'); }
+/* ============================================================================
+   🛰️ CÓMO LE FUE A CADA CAMIÓN SEGÚN EL GPS (13/11, mejora 204, servidor 2026-11-13-b). El dueño: un informe por camión con lo que manda
+   el GPS: a qué hora salió, horas fuera, paradas y kilómetros. El servidor guarda una fila por día y camión en la hoja «Historial GPS»
+   (al cerrar el horario, 21 h) y la da con `gpsHist` {desde, hasta}, más el día en curso (`c:1`) si todavía no está en la hoja.
+   · Se pide UNA vez por mes que se mira cada vez que se abre la ventana (`EC_GPS`, se olvida al abrir), solo en «Por camión» y solo con
+     un servidor ≥ EC_GPS_DESDE (con uno anterior `gpsHist` caería en el guardado: no se pide). Mientras llega, la tabla sale sin eso.
+   · `ecGpsSumar(D, F)` (desde `ecFilasPorCamion`, una sola cuenta) le pone a cada fila de camión `f.gps`, por su placa (VEHICULO_PLACA):
+       – días con GPS = días en que el GPS lo vio SALIR (una salida a repartir o más de 1 km); un día que quedó en la base no cuenta;
+       – sale = el promedio de la primera salida de esos días (y la más tarde, con su día);
+       – horas fuera, km y paradas (y cuántas cerca de un pedido) = la suma del mes;
+       – entregas por día con GPS = las entregas de esa fila (las de la tabla) en esos días ÷ esos días.
+     Columnas AL FINAL (después de TOTAL), también en «📋 Copiar» (una línea por camión) y en el Excel («Por camión», al final del bloque
+     de entregas). Sin servidor nuevo, sin datos o cargando: no hay columnas y una línea chica lo dice. Solo mira.
+   ========================================================================== */
+var EC_GPS_DESDE='2026-11-13-b', EC_GPS_TOPE=20000;
+var EC_GPS={};   // { 'AAAA-MM': { est:'cargando'|'ok'|'error', filas:[{ f, cam, p, s, v, hf, n, par, pc, km, c }] } }
+function ecGpsEstado(ym){
+  if(!servidorTiene(EC_GPS_DESDE)) return { est:'viejo', filas:[] };
+  return EC_GPS[ym] || { est:'nada', filas:[] };
+}
+function ecGpsAsegurar(){
+  if(EC.vista!=='camion' || !EC.ym || !servidorTiene(EC_GPS_DESDE) || EC_GPS[EC.ym]) return;
+  var ym=EC.ym, G=EC_GPS;
+  G[ym]={ est:'cargando', filas:[] };
+  var fin=function(j){
+    G[ym]=(j && j.ok && Array.isArray(j.filas)) ? { est:'ok', filas:j.filas } : { est:'error', filas:[] };
+    var ov=document.getElementById('ec-overlay');
+    if(G===EC_GPS && ov && ov.style.display!=='none' && EC.ym===ym && EC.vista==='camion') ecRender();
+  };
+  var pr; try{ pr=apiPost({ action:'gpsHist', desde:ym+'-01', hasta:ym+'-31' }); }catch(e){ pr=Promise.reject(e); }
+  conTope(pr, EC_GPS_TOPE).then(fin, function(){ fin(null); });
+}
+function ecGpsSalio(r){ return (Number(r.n)||0)>0 || (Number(r.km)||0)>=1; }
+function ecHoraMin(h){ var m=String(h||'').match(/^(\d{1,2}):(\d{2})$/); return m ? (Number(m[1])*60+Number(m[2])) : null; }
+function ecMinHora(mi){ mi=Math.round(Number(mi)||0); return ('0'+Math.floor(mi/60)).slice(-2)+':'+('0'+(mi%60)).slice(-2); }
+function ecHorasTxt(h){ return (Math.round((Number(h)||0)*10)/10).toLocaleString('es-BO', { maximumFractionDigits:1 })+' h'; }
+function ecKmTxt(k){ return Math.round(Number(k)||0).toLocaleString('es-BO')+' km'; }
+function ecPorDiaTxt(x){ return (x==null) ? '' : (Math.round(Number(x)*10)/10).toLocaleString('es-BO', { minimumFractionDigits:1, maximumFractionDigits:1 }); }
+/* Le pone a cada fila de camión lo del GPS del mes (`f.gps`) y deja `D.gpsOk` (hay datos de algún camión de la lista), `D.gpsTot` y
+   `D.gpsHoy` (entra el día de hoy, todavía en curso). Devuelve las mismas filas. */
+function ecGpsSumar(D, F){
+  var G=D && D.gps; if(D){ D.gpsOk=false; D.gpsTot=null; D.gpsHoy=false; }
+  if(!G || G.est!=='ok' || !(G.filas||[]).length) return F;
+  var porPl={}; G.filas.forEach(function(r){ var pl=gpsPlaca(r && r.p); if(pl) (porPl[pl]||(porPl[pl]=[])).push(r); });
+  var tot={ hf:0, km:0, par:0, pc:0 }, alguno=false;
+  F.forEach(function(f){
+    if(f.sin) return;
+    var pl=gpsPlaca(VEHICULO_PLACA[f.t]||''); if(!pl) return;
+    var R=porPl[pl]||[], dias={}, nd=0, sm=0, sn=0, g={ filas:R.length, dias:0, prom:'', tarde:'', tardeF:'', hf:0, km:0, par:0, pc:0, ent:0, porDia:null, hoy:false };
+    R.forEach(function(r){
+      g.hf+=Number(r.hf)||0; g.km+=Number(r.km)||0; g.par+=Number(r.par)||0; g.pc+=Number(r.pc)||0; if(r.c) g.hoy=true;
+      if(!ecGpsSalio(r)) return;
+      if(!dias[r.f]){ dias[r.f]=1; nd++; }
+      var mi=ecHoraMin(r.s); if(mi==null) return;
+      sm+=mi; sn++; if(!g.tarde || r.s>g.tarde){ g.tarde=String(r.s); g.tardeF=String(r.f); }
+    });
+    g.dias=nd; g.prom=sn ? ecMinHora(sm/sn) : '';
+    g.ent=(f.tot.ids||[]).filter(function(id){ var e=D.byId[id]; return !!e && !!dias[e.f]; }).length;
+    g.porDia=nd ? g.ent/nd : null;
+    g.hf=Math.round(g.hf*100)/100; g.km=Math.round(g.km*10)/10;
+    f.gps=g; if(R.length) alguno=true;
+    tot.hf+=g.hf; tot.km+=g.km; tot.par+=g.par; tot.pc+=g.pc;
+    if(g.hoy) D.gpsHoy=true;
+  });
+  tot.hf=Math.round(tot.hf*100)/100; tot.km=Math.round(tot.km*10)/10;
+  D.gpsOk=alguno; D.gpsTot=alguno ? tot : null;
+  if(!alguno) F.forEach(function(f){ delete f.gps; });
+  return F;
+}
+var EC_GPS_COLS=['🛰️ Días con GPS', 'Sale (promedio)', 'Horas fuera', 'Km', 'Paradas', 'Entregas por día con GPS'];
+function ecGpsCeldasHtml(g, tot){
+  var td=function(b, sm, uno){ return '<td class="ec-g'+(uno?' ec-g1':'')+'">'+((b==null || b==='') ? '<span class="ec-0">·</span>' : ('<b>'+esc(String(b))+'</b>'+(sm?('<small>'+esc(sm)+'</small>'):'')))+'</td>'; };
+  if(tot) return td('', '', 1)+td('')+td(ecHorasTxt(tot.hf))+td(ecKmTxt(tot.km))+td(String(tot.par), tot.pc+' en un pedido')+td('');
+  if(!g || !g.filas) return td('', '', 1)+td('')+td('')+td('')+td('')+td('');   // sin GPS ese mes (o la fila «sin camión»)
+  return td(String(g.dias), '', 1)+td(g.prom, (g.tarde && g.dias>1) ? ('la más tarde '+g.tarde+(g.tardeF?(' ('+fmtFechaCorta(g.tardeF)+')'):'')) : '')+
+    td(ecHorasTxt(g.hf))+td(ecKmTxt(g.km))+td(String(g.par), g.pc+' en un pedido')+
+    td(ecPorDiaTxt(g.porDia), g.dias ? (g.ent+' en '+g.dias+' día'+(g.dias===1?'':'s')) : '');
+}
+/* La línea chica de arriba de la tabla (solo «Por camión»). */
+function ecGpsLineaHtml(D){
+  if(EC.vista!=='camion') return '';
+  var G=(D && D.gps) || {}, t;
+  if(G.est==='viejo') t='🛰️ Lo del GPS aparece desde que se instale el servidor nuevo.';
+  else if(G.est==='error') t='🛰️ No pude leer lo del GPS ahora: se vuelve a pedir al abrir de nuevo esta ventana.';
+  else if(G.est!=='ok') t='🛰️ Leyendo lo del GPS…';
+  else if(!D.gpsOk) t='🛰️ Sin datos del GPS en este mes.';
+  else t='🛰️ Al final de cada camión, lo del GPS en el mes: los días que salió (una salida a repartir o más de 1 km), a qué hora salió en promedio (y la más tarde), '+
+    'las horas fuera de PTF, Banzer y Moreno, los km (en línea recta entre lecturas de un minuto: un poco menos que el odómetro), las paradas (y cuántas cerca de un pedido) '+
+    'y sus entregas en esos días, por día.'+(D.gpsHoy ? ' Incluye hoy, hasta ahora.' : '');
+  return '<p class="ec-nota ec-gps-nota" id="ec-gps-nota" data-est="'+esc(G.est||'')+'">'+esc(t)+'</p>';
+}
+/* Para «📋 Copiar»: una línea por camión. */
+function ecGpsTxt(g){
+  return '🛰️ GPS: '+g.dias+' día'+(g.dias===1?'':'s')+(g.prom?(' · sale '+g.prom+((g.tarde && g.dias>1)?(' (la más tarde '+g.tarde+')'):'')):'')+' · '+ecHorasTxt(g.hf)+' fuera · '+ecKmTxt(g.km)+
+    ' · '+g.par+' parada'+(g.par===1?'':'s')+' ('+g.pc+' en un pedido)'+(g.porDia!=null?(' · '+ecPorDiaTxt(g.porDia)+' entregas por día'):'');
+}
 function abrirEntregasCamion(){
   if(!EC.ym) EC.ym=todayStr().slice(0,7);
   if(!EC.vista) EC.vista=ecVistaLeer();
   EC.sel=null;
   var ov=document.getElementById('ec-overlay'); if(!ov) return;
   ov.style.display='flex';
+  EC_GPS={}; ecGpsAsegurar();   // 🛰️ (mejora 204) lo del GPS, una vez por mes en cada apertura
   ecRender();
 }
 function ecCerrar(){ var ov=document.getElementById('ec-overlay'); if(ov) ov.style.display='none'; EC.sel=null; }
-function ecMes(d){ var hoyYm=todayStr().slice(0,7), n=ecMesSumar(EC.ym||hoyYm, d); if(n>hoyYm) return; EC.ym=n; EC.sel=null; ecRender(); }
-function ecVista(v){ EC.vista=(v==='chofer') ? 'chofer' : 'camion'; ecVistaGuardar(EC.vista); EC.sel=null; ecRender(); }
+function ecMes(d){ var hoyYm=todayStr().slice(0,7), n=ecMesSumar(EC.ym||hoyYm, d); if(n>hoyYm) return; EC.ym=n; EC.sel=null; ecGpsAsegurar(); ecRender(); }
+function ecVista(v){ EC.vista=(v==='chofer') ? 'chofer' : 'camion'; ecVistaGuardar(EC.vista); EC.sel=null; ecGpsAsegurar(); ecRender(); }
 function ecU(u){ return u+' u.'; }
 function ecCeldaHtml(c, r, i){
   if(!c || !c.n) return '<td class="ec-0">·</td>';
@@ -49838,17 +49943,21 @@ function ecRender(){
     (D.ret.length ? ('<span>'+D.ret.length+' los retiró el cliente</span>') : '')+'</div>';
   var nota='<p class="ec-nota">Cuenta los pedidos de '+esc(mesNombre(D.ym))+' que <b>ya salieron</b>: con ✅, o con la fecha pasada sin ✅ (lo que no salió se reprograma). '+
     'Los de hoy, solo con ✅. La tienda es la de quien vendió. Cada número son entregas (paradas); abajo, en chico, las unidades. Tocá un número para ver cuáles son.</p>';
-  if(!D.tot.n && !D.ret.length){
-    body.innerHTML='<div class="ec-wrap">'+res+nota+'<div class="ec-vacio">No hay entregas de '+esc(mesNombre(D.ym))+' que ya hayan salido.</div></div>';
+  var gpsL=ecGpsLineaHtml(D), conG=(EC.vista==='camion' && D.gpsOk);   // 🛰️ (mejora 204)
+  if(!D.tot.n && !D.ret.length && !conG){
+    body.innerHTML='<div class="ec-wrap">'+res+nota+gpsL+'<div class="ec-vacio">No hay entregas de '+esc(mesNombre(D.ym))+' que ya hayan salido.</div></div>';
     return;
   }
-  var th='<tr><th>'+quien+'</th>'+D.cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'<th class="ec-tt">TOTAL</th></tr>';
+  var th='<tr><th>'+quien+'</th>'+D.cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'<th class="ec-tt">TOTAL</th>'+
+    (conG ? EC_GPS_COLS.map(function(t, i){ return '<th class="ec-g'+(i?'':' ec-g1')+'">'+esc(t)+'</th>'; }).join('') : '')+'</tr>';
   var tb=F.map(function(f, ri){
     var nom='<th scope="row">'+esc(f.t)+(f.sin && f.tot.n ? ('<button type="button" class="btn btn-sm ec-anotar" data-ids="'+esc(f.tot.ids.join(','))+'" onclick="ecAnotar(this.getAttribute(\'data-ids\'))">✏️ Anotar '+(EC.vista==='chofer'?'el chofer':'el camión')+'</button>') : '')+'</th>';
-    return '<tr class="'+(f.sin?'ec-sin':'')+(f.tot.n?'':' ec-cero')+'">'+nom+D.cols.map(function(c, ci){ return ecCeldaHtml(f.c[c.k], ri, ci); }).join('')+ecCeldaHtml(f.tot, ri, -1).replace('<td>', '<td class="ec-tt">')+'</tr>';
+    return '<tr class="'+(f.sin?'ec-sin':'')+(f.tot.n?'':' ec-cero')+'">'+nom+D.cols.map(function(c, ci){ return ecCeldaHtml(f.c[c.k], ri, ci); }).join('')+ecCeldaHtml(f.tot, ri, -1).replace('<td>', '<td class="ec-tt">')+
+      (conG ? ecGpsCeldasHtml(f.gps) : '')+'</tr>';
   }).join('');
-  var tf='<tr class="ec-tot"><th scope="row">TOTAL</th>'+D.cols.map(function(c, ci){ return ecCeldaHtml(D.colTot[c.k], -1, ci); }).join('')+ecCeldaHtml(D.tot, -1, -1).replace('<td>', '<td class="ec-tt">')+'</tr>';
-  body.innerHTML='<div class="ec-wrap">'+res+nota+
+  var tf='<tr class="ec-tot"><th scope="row">TOTAL</th>'+D.cols.map(function(c, ci){ return ecCeldaHtml(D.colTot[c.k], -1, ci); }).join('')+ecCeldaHtml(D.tot, -1, -1).replace('<td>', '<td class="ec-tt">')+
+    (conG ? ecGpsCeldasHtml(null, D.gpsTot) : '')+'</tr>';
+  body.innerHTML='<div class="ec-wrap">'+res+nota+gpsL+
     '<div class="ec-tabla" role="region" aria-label="Entregas por '+quien.toLowerCase()+' y tienda" tabindex="0"><table><thead>'+th+'</thead><tbody>'+tb+'</tbody><tfoot>'+tf+'</tfoot></table></div>'+
     (D.ret.length ? ('<button type="button" class="ec-ret" onclick="ecVerRet()">🏬 <b>'+D.ret.length+'</b> los retiró el cliente: no llevan camión y no cuentan en la tabla. Ver cuáles</button>') : '')+
     '<div id="ec-det"></div></div>';
@@ -49889,9 +49998,10 @@ function ecTexto(D){
   D=D||EC.D||ecDatos(EC.ym||todayStr().slice(0,7));
   var hoyYm=todayStr().slice(0,7);
   var bloque=function(tit, F){
-    return '*'+tit+'*\n'+F.filter(function(f){ return f.tot.n; }).map(function(f){
+    var conG=function(f){ return !!f.gps && (f.gps.dias>0 || f.gps.km>=1); };   // 🛰️ (mejora 204) lo del GPS de cada camión
+    return '*'+tit+'*\n'+F.filter(function(f){ return f.tot.n || conG(f); }).map(function(f){
       var det=D.cols.filter(function(c){ return f.c[c.k] && f.c[c.k].n; }).map(function(c){ return c.t+' '+f.c[c.k].n; }).join(' · ');
-      return '• '+f.t+': *'+f.tot.n+'* ('+ecU(f.tot.u)+')'+(det?('\n   '+det):'');
+      return '• '+f.t+': *'+f.tot.n+'* ('+ecU(f.tot.u)+')'+(det?('\n   '+det):'')+(conG(f)?('\n   '+ecGpsTxt(f.gps)):'');
     }).join('\n');
   };
   var t='🚚 *Entregas de '+mesNombre(D.ym)+'*'+(D.ym===hoyYm?(' (hasta el '+fmtFechaCorta(D.hoy)+')'):'')+'\n'+
@@ -49904,17 +50014,26 @@ function ecTexto(D){
 }
 function ecCopiar(){ copyText(ecTexto()); }
 /* ⬇️ El Excel: «Por camión» y «Por chofer» (entregas y, debajo, unidades), y «Entregas» con el detalle. Números como número. */
+var EC_GPS_XLS=['DÍAS CON GPS', 'SALE (PROMEDIO)', 'SALE (LA MÁS TARDE)', 'HORAS FUERA', 'KM', 'PARADAS', 'PARADAS EN UN PEDIDO', 'ENTREGAS POR DÍA CON GPS'];
 function ecHoja(D, F, quien, nombre){
-  var cab=function(t){ return [{ v:t, s:1 }].concat(D.cols.map(function(c){ return { v:c.t.toUpperCase(), s:1 }; }), [{ v:'TOTAL', s:1 }]); };
+  var conG=(quien==='Camión' && !!D.gpsOk);   // 🛰️ (mejora 204) lo del GPS al final del bloque de entregas, solo por camión
+  var cab=function(t, g){ return [{ v:t, s:1 }].concat(D.cols.map(function(c){ return { v:c.t.toUpperCase(), s:1 }; }), [{ v:'TOTAL', s:1 }], g ? EC_GPS_XLS.map(function(h){ return { v:h, s:1 }; }) : []); };
   var num=function(v){ return { v:Number(v)||0, t:'n' }; };
+  var gpsDe=function(g){
+    if(!g || !g.filas) return EC_GPS_XLS.map(function(){ return ''; });
+    return [num(g.dias), g.prom||'', g.tarde ? (g.tarde+(g.tardeF?(' ('+fmtFechaCorta(g.tardeF)+')'):'')) : '', num(Math.round(g.hf*10)/10), num(Math.round(g.km)), num(g.par), num(g.pc),
+      g.porDia==null ? '' : num(Math.round(g.porDia*10)/10)];
+  };
   var bloque=function(k, tit){
-    var rows=[[{ v:tit, s:XS_NOTA }], cab(quien)];
-    F.forEach(function(f){ rows.push([f.t].concat(D.cols.map(function(c){ return num(f.c[c.k] ? f.c[c.k][k] : 0); }), [num(f.tot[k])])); });
-    rows.push([{ v:'TOTAL', s:XS_TOT }].concat(D.cols.map(function(c){ return num(D.colTot[c.k][k]); }), [num(D.tot[k])]));
+    var g=(conG && k==='n'), rows=[[{ v:tit, s:XS_NOTA }], cab(quien, g)];
+    F.forEach(function(f){ rows.push([f.t].concat(D.cols.map(function(c){ return num(f.c[c.k] ? f.c[c.k][k] : 0); }), [num(f.tot[k])], g ? gpsDe(f.gps) : [])); });
+    var T=D.gpsTot||{};
+    rows.push([{ v:'TOTAL', s:XS_TOT }].concat(D.cols.map(function(c){ return num(D.colTot[c.k][k]); }), [num(D.tot[k])],
+      g ? ['', '', '', num(Math.round((T.hf||0)*10)/10), num(Math.round(T.km||0)), num(T.par), num(T.pc), ''] : []));
     return rows;
   };
   var m=[[{ v:'Entregas de '+mesNombre(D.ym)+' por '+quien.toLowerCase()+' y tienda', s:XS_NOTA }]].concat([[]], bloque('n', 'ENTREGAS (pedidos que ya salieron)'), [[]], bloque('u', 'UNIDADES (colchones y somieres)'));
-  return { name:nombre, cols:[{ w:26 }].concat(D.cols.map(function(){ return { w:16 }; }), [{ w:10 }]), matrix:m };
+  return { name:nombre, cols:[{ w:26 }].concat(D.cols.map(function(){ return { w:16 }; }), [{ w:10 }], conG ? EC_GPS_XLS.map(function(){ return { w:14 }; }) : []), matrix:m };
 }
 function ecBajar(){
   var D=EC.D||ecDatos(EC.ym||todayStr().slice(0,7));
