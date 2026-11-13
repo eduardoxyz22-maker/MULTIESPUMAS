@@ -866,6 +866,10 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
 - **🏪 183 Efectivo por retirar por tienda**: «👤 Por persona | 🏪 Por tienda» (`me_efe_mano_vista`); por tienda (`efeTiendaDatos`) regroupa `efeManoDatos` (la tienda
   de quien tiene la plata el día del cobro; choferes aparte; tiendas + choferes = la ficha) y «📋 Copiar la ruta» (`copiarEfectivoRuta`). ⚠️ Una cuenta nueva del
   efectivo por retirar sale de `efeManoDatos`. `test_efectivo_tienda` (26).
+- **💰 190 Tu comisión en «Tu día»**: con una vendedora elegida y las metas del mes GUARDADAS (`ccmMetas(ym).ok` y ella en `vd`), `misComisionHtml` dice la comisión que
+  lleva (su fila del Cierre comercial: tramo + bono Titanio + ajustes), el tramo siguiente (`ccmTramoSig`, la mínima es escalón) y lo que falta para el presupuesto por día
+  hábil (`pryDiaHabil`, hoy cuenta hasta `MIS_COM_HORA_FIN`=20 h). Sin metas guardadas, sin meta suya, Eduardo, ROHO, internos o «Ver todos»: nada. ⚠️ La cuenta del cierre
+  vive en `ccmCuenta(ym)` (la usan `ccmDatos` y el bloque): un cambio del cierre va ahí. Playwright solo con `MIS_TOP_PRUEBA`. `test_mis_comision` (25).
 - **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
   (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
   «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada
