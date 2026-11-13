@@ -1729,6 +1729,12 @@ que tapa (`efePareo` = `waEfeCuentas_` del `.gs` 07-f: mismo monto → tira segu
 desempate). «Le queda en la mano» = lo cobrado en el período que nadie retiró; ↩️ lo retirado que era de antes, 📅 lo retirado después, ⚠️ lo que
 no tapa nada. Fichas, texto, Excel (dos columnas al final) y «Tu día» salen de `cuadreEfectivo`. 👁 El monto cobrado y la ficha «Efectivo (caja)»
 abren `abrirEfectivo` (clientes, «¿Se retiró?», qué tapó cada retiro). ⚠️ Si cambia la regla, cambia en los dos lados (`tests/test_efe_pareo.js`).
+👆 **«Efectivo por retirar» se toca** (13/11, dueño: *«al dar clic ahí no pasa nada… ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cliente?»*):
+la ficha del Cuadre y «Le queda en la mano» de la tabla abren `abrirEfectivo(q, 'mano')` → `abrirEfectivoMano` (`#efe-mano`): SOLO lo sin recoger
+(`efeManoDatos`, de `cuadreEfectivo`), por persona, con día y hace cuántos días, cliente, OC y nota, vendedor, «dónde» (`efeManoDonde`: la tienda de
+quien la recibió o «🚚 en la entrega · zona»; el panel no anota el lugar exacto), lo parcial («de Bs X · Bs Y ya retirado»), el faltante del mes
+anterior, el último retiro y Copiar. «← Volver al efectivo por retirar» (`EFE_VER_SOLO`). Retirado de más abre la lista de siempre.
+`tests/test_efectivo_por_retirar.js` (19).
 **💵🔒 La regla del efectivo** (§4ox, 07-08/11, dueño: *«Sí, armá la regla del efectivo así»*; PUBLICADO 08/11, versión 2026-11-08-a, `529c21a`; va también en el `.gs` 07-f, IMPLEMENTADO 09/11): 🔒 `EFE_CERRADO`
 (31/10) = lo cobrado hasta ahí sin retiro no se le pide a nadie («🔒 cerrado»; siempre por `efeCerrado(f)`, que exige el mes terminado); cuenta la fecha del COBRO, no la de la venta. Un retiro se lleva solo
 cobros de su mes y del anterior que YA habían entrado (de días antes o, ese día, de una venta cargada antes de la hora del retiro; un retiro con la
