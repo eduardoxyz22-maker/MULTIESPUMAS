@@ -18642,3 +18642,13 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
   efectivo sin chofer; (8) la pregunta contaba OC ya pagadas; (9) venta de tienda y ✅ adelantado; (10) GPS pisaba un chofer a mano y no avisaba lo aproximado.
   Sus pruebas quedaron en `scratchpad/t/rev*.js`; las nuevas, en `test_cobranza` §9 y `test_gps_camion` §6b.
 
+### §4pq — 🧾 EL RETIRO PIDE EL N° DEL RECIBO DE ENTREGA Y 🔇 LA MÚSICA DE NOVIEMBRE SOLO EL 1 Y EL 2 (13/11; dueño, con una captura del formulario del retiro)
+- *«Ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el vendedor a Eduardo que entregó el dinero… arriba en la lista va
+  tildado qué ventas cubre… no?»* → sí: el campo «N° de notas que cubre este retiro» pasa a «N° del recibo de entrega» (el de la foto; se pueden anotar dos
+  si son dos recibos). Se guarda donde siempre (`nota`), que es lo que ya cruzaba el control del talonario; las ventas que cubre son los cobros tildados.
+  Tablas, texto del Cuadre y Excel dicen «N° del recibo». El bot «Ya lo recibí» (.gs) sigue anotando ahí las notas de venta (es Contabilidad con un chofer, sin
+  recibo firmado): no se tocó.
+- *«Quitá la música de ingreso, ya pasó el día de los muertos… ¿en noviembre viene Thanksgiving?»* → la melodía de Todos Santos se carga solo el 1 y el 2 de
+  noviembre (o con `?tema=todos-santos`), en el panel y en el dashboard. El tema visual de noviembre no se tocó. Thanksgiving no se celebra en Bolivia: se le
+  propuso Black Friday (27/11) en vez, sin hacer nada. `test_temas_mejoras` §4 (94).
+

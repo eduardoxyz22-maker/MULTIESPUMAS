@@ -1409,7 +1409,8 @@ html.tema-anio-nuevo .rail .ni.active::before{ background:#fde68a; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
   /* 🎸 En noviembre, la melodía (archivo aparte: lo usan el panel y el dashboard). */
-  if(t==='todos-santos'){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
+  /* 🔇 (13/11, dueño: «quitá la música de ingreso, ya pasó el día de los muertos») Solo el 1 y el 2 de noviembre (o viéndolo con ?tema=todos-santos). */
+  if(t==='todos-santos' && (q || (m===10 && dd<=2))){ var s=document.createElement('script'); s.src='tema-melodia.js?v=1'; s.async=true; document.head.appendChild(s); }
 }catch(e){} })();
 </script>
 <script>
