@@ -18759,3 +18759,18 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   de meses anteriores —lo que pidió el 11/09, §4ea— se suman tocando la ficha «ATC en el período» («hay N abiertas de meses anteriores · Tocá para sumarlas»;
   otro toque vuelve), por aparato en `me_atc_viejas`. El informe PDF ya era así (§4le). `tests/test_atc_mes.js` (11).
 
+
+### §4px — 🎯📧🏪📍🛍️🏭 LAS MEJORAS 174-185 Y LAS QUE SIGUIERON (13/11; dueño, con la página «Mejoras 174 a 185»: *«174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185 y dame MAS MEJORAS»*; con «Mejoras 186 a 197»: *«190, 193, MAS MEJORAS»*; con «Mejoras 198 a 209»: *«203, 204 (y cuántas entregas de cada tienda… cuántas entregas hizo cada camión o chofer en el mes de cada tienda para ver los totales), 207»*; y después: *«avisás que esté y publicás»*)
+- Se programaron en paralelo, un agente por grupo en su worktree (ramas `mej-a`…`mej-j`), y se juntaron en la rama. Detalle de cada una en CLAUDE.md
+  («Las mejoras 174-185»).
+- **174/175** metas por vendedora en la ventana de Metas y el dashboard que las lee (`metas_del_panel`, no esencial). **177** Black Friday en números
+  (`bfnDatos`). **181** el lunes 08:00 lo vencido de los mayoristas SOLO a Contabilidad (servidor `2026-11-13-b`). **182** el estado de cuenta al correo.
+  **183** el efectivo por retirar por tienda. **185** las ubicaciones que faltan para hoy y el próximo camión.
+- **185, ajuste mío al juntar**: con la planilla real del 13/11 la lista sacaba «Roho» (Tienda 1) y dos pedidos de FABRICA. `ubfEntra` deja afuera Eduardo,
+  ROHO y los internos, la misma regla que el bot (`nxBotManda`). `test_ubic_faltan` +1.
+- **177**: la cuenta de `BF_DIAS` del `<head>` es ahora `window.bfCampana(año)` (el tema no cambió; el dashboard sigue con su propia copia de `BF_DIAS`).
+- **181**: el agente agregó un renglón «🧾 Sin monto anotado» (dato 6) que el dueño no pidió; se le dice. Una OC entregada sin fecha cuenta como vencida (la
+  regla de la ficha «Por cliente»).
+- Propuestas nuevas: «Mejoras 186 a 197» (https://claude.ai/artifact/4CwPyCjqm9bxCiQpxWYMHP) y «Mejoras 198 a 209»
+  (https://claude.ai/artifact/1RAFDbqRaBryhtz5FBNU5e), con números de la planilla del 13/11 (precios bajo la mediana, QR BISA de noviembre, deuda de
+  Copacaba/Multicenter, stock que no rota, 52 de 133 entregas de noviembre sin camión, 56 formas de escribir la zona, 34 celulares con dos nombres).
