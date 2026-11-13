@@ -4191,6 +4191,12 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .adm-gps-ent{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:#eefaf3;border:1px solid #bfe6cf;border-left:5px solid #22A06B;color:#14412a;font-size:.86rem}
 .adm-gps-ent .btn{background:#0a6b47;color:#fff;border-color:#0a6b47}
 .adm-gps-ent small{flex-basis:100%;color:#3d6b54;font-size:.76rem}
+/* 🛰️ (13/11, idea 133) el GPS propone el camión que faltó: la misma familia del cartel de arriba, en azul (no es un ✅) */
+.adm-gps-ent.gps-cam{background:#eef5ff;border-color:#c7dcf5;border-left-color:#2563eb;color:#173a63}
+.adm-gps-ent.gps-cam .btn{background:#1d4ed8;border-color:#1d4ed8}.adm-gps-ent.gps-cam small{color:#3b5779}
+.gps-cam-l{flex-basis:100%;display:grid;gap:4px}.gps-cam-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid #d9e6f7}
+.gps-cam-f .btn{padding:3px 10px;font-size:.78rem}
+.cie-gps-cam{color:#1d4ed8;font-size:.82rem}.cie-gps-cam .btn{padding:2px 9px;font-size:.76rem;margin-left:4px;background:#1d4ed8;color:#fff;border-color:#1d4ed8}
 .agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
 .agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
 .agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
@@ -25251,7 +25257,7 @@ function admFichasPintar(list, dn){
       '<button type="button" onclick="admPasadosVer('+(ADM_PASADOS_VER?'false':'true')+')">'+(ADM_PASADOS_VER?'▴ Plegarlos':'▾ Ver todo')+'</button></div>';
   }
   var vis=grupos.filter(function(g){ return g.ver.length; });
-  var gpsBar=admGpsEntHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve)
+  var gpsBar=admGpsEntHtml(list)+gpsCamionHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve); + idea 133, el camión que faltó
   box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+pasHtml+vis.map(function(g){
     var antesGps=''; if(gpsBar && !gpsPuesto && g.f===hoyF){ antesGps=gpsBar; gpsPuesto=true; }
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
@@ -46497,7 +46503,8 @@ function cierreEntFila(p, atrasado){
     '<span class="badge b-gray">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
     '<span style="color:var(--muted)">'+esc(vehiculoDe(p)||'sin camión')+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>'+
     (atrasado ? '' : cierreEntGpsHtml(p))+
-    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
+    (atrasado ? '' : gpsCamionCierreHtml(p))+   // 🛰️ (13/11, idea 133) «· lo llevó <camión>» con su «Asignar»
+    (atrasado ? ('<span class="badge b-amber">para el'+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
     '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" style="margin-left:auto" data-id="'+esc(String(p.id))+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: pasalo a otro día sin salir del cierre">📅 No salió · reprogramar</button>'+
     '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
   '</label>'+(atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);   // 📅 (13/10) afuera del <label>: tocar el recuadro no tilda el pedido
@@ -46721,6 +46728,8 @@ function cierreEntGpsResumenHtml(H){
     '<span>🛰️ El GPS vio el camión en la puerta de <b>'+vio.length+'</b> de '+H.length+' pedido'+(H.length===1?'':'s')+' de hoy'+
       (novio?(' · <b style="color:#b45309">'+novio+'</b> con el camión de vuelta sin haberse parado ahí'):'')+(sinpin?(' · '+sinpin+' sin ubicación'):'')+(aprox?(' · '+aprox+' con la ubicación aproximada (no se puede asegurar)'):'')+'.</span>'+
     (falta ? '<button type="button" class="btn btn-sm" id="cie-gps-tildar" style="background:#0a6b47;color:#fff" onclick="cierreEntTildarGps()">📍 Tildar los '+falta+' que vio el GPS</button>' : '')+
+    gpsCamionCierreResumenHtml(H)+   // 🛰️ (13/11, idea 133) los que no tienen camión y el GPS dice cuál los llevó
+
     '<span style="flex-basis:100%;font-size:.78rem;color:var(--muted)">Es una ayuda, no un ✅: el GPS ve dónde se paró el camión, no si el cliente recibió. Lo que se entregó y el GPS no vio (sin ubicación, o estacionó lejos), tildalo igual.</span>'+
   '</div>';
 }
@@ -46766,7 +46775,7 @@ function admGpsEntHtml(list){
 }
 function admGpsEntPintar(list, enFichas){
   var el=document.getElementById('adm-gps-ent'); if(!el) return;
-  var h=enFichas ? '' : admGpsEntHtml(list);
+  var h=enFichas ? '' : (admGpsEntHtml(list)+gpsCamionHtml(list));   // + 🛰️ idea 133 (13/11): el camión que faltó
   el.hidden=!h; if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 function admGpsEntAbrir(){
@@ -46828,6 +46837,96 @@ function admGpsEntConfirmar(){
   }, function(){ CIERRE_ENT_EN_CURSO=false; if(btn){ btn.disabled=false; btn.textContent=admGpsEntBotonTxt(); } return null; });
 }
 /* fin §4ok-106 */
+/* ============================================================================
+   🛰️ EL GPS COMPLETA EL CAMIÓN QUE FALTÓ (13/11, idea 133, dueño: «136, 143, 129, 133»).
+   Un pedido de HOY que salió sin camión asignado (nadie lo eligió en la ficha) pero que el GPS vio en su puerta (`gpsLlegadaDe`: una
+   parada de un camión a ≤ 300 m de su pin) se puede completar con ESE camión. El panel solo PROPONE «lo llevó <camión> · <chofer>»:
+   una persona lo acepta de a uno («Asignar») o todos juntos («Asignar los N»). Nada se asigna solo (la regla de siempre con el GPS,
+   dueño 12/10). El chofer es el de los pedidos de hoy de ese camión (`choferDeCamion`: rotan, §4om); si ninguno lo dice, el primero de
+   la lista. Se guarda con `persistPedido` → `guardarDurable` (el mismo camino de `setVehiculo` y `cvAsignar`).
+   Solo HOY: el día del GPS (GPS_DIA) es el de hoy y no queda guardado; lo de días anteriores no se puede proponer.
+   Afuera: filas del sistema, borradores de Kommo, ventas de tienda y lo que retira el cliente (`fichaRetira`): ahí no hay camión.
+   ========================================================================== */
+function gpsCamionEntra(p){
+  if(!p || p.fecha!==todayStr() || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p) || vehiculoDe(p)) return false;
+  var r=null; try{ r=fichaRetira(p); }catch(e){ r=null; }
+  return !r;
+}
+/* La propuesta para UN pedido: { p, veh, chofer, ll } o null. `deHoy` (opcional) = los pedidos de hoy, para elegir el chofer. */
+function gpsCamionPropDe(p, deHoy){
+  if(!gpsDiaHay() || !gpsCamionEntra(p)) return null;
+  var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){ ll=null; }
+  if(!ll || !ll.veh || !VEHICULOS[ll.veh]) return null;
+  var hoy=todayStr();
+  deHoy=deHoy || STATE.filter(function(q){ return q && q.fecha===hoy; });
+  return { p:p, veh:ll.veh, chofer:choferDeCamion(ll.veh, deHoy), ll:ll };
+}
+/* Todas las de hoy, en el orden en que el GPS los vio. */
+function gpsCamionPropuestas(){
+  if(!gpsDiaHay()) return [];
+  var hoy=todayStr(), deHoy=STATE.filter(function(q){ return q && q.fecha===hoy; }), out=[];
+  deHoy.forEach(function(p){ var o=gpsCamionPropDe(p, deHoy); if(o) out.push(o); });
+  return out.sort(function(a,b){ return (a.ll.t0||0)-(b.ll.t0||0); });
+}
+function gpsCamionQuienTxt(o){ return o.veh+(o.chofer?(' · '+o.chofer):''); }
+/* El cartel de Administración, al lado del de §4ok-106. `list` = lo que se ve: solo los pedidos que están en la lista. */
+function gpsCamionHtml(list){
+  var V=gpsCamionPropuestas(); if(!V.length) return '';
+  var ids={}; (list||[]).forEach(function(p){ if(p) ids[String(p.id)]=1; });
+  V=V.filter(function(o){ return ids[String(o.p.id)]; }); if(!V.length) return '';
+  var n=V.length, dn=dayNumMap();
+  var filas=V.map(function(o){
+    var p=o.p, N=dn[p.id], id=esc(String(p.id));
+    return '<div class="gps-cam-f" data-id="'+id+'"><span><b>'+(N?('N° '+N+' · '):'')+esc(p.cliente||'—')+'</b> · '+esc(ocEtiq(p.oc)||p.oc||'—')+
+      ' · 📍 '+esc(o.ll.abierta ? ('está ahí desde las '+gpsHoraTxt(o.ll.t0)) : ('llegó '+gpsHoraTxt(o.ll.t0)))+
+      ' → lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b></span>'+
+      '<button type="button" class="btn btn-sm gps-cam-uno" data-id="'+id+'" onclick="gpsCamionAsignar(this.getAttribute(\'data-id\'))">🚚 Asignar</button></div>';
+  }).join('');
+  return '<div class="adm-gps-ent gps-cam" id="gps-cam-bar"><span>🛰️ <b>'+n+'</b> pedido'+(n===1?'':'s')+' de hoy sin camión: el GPS vio un camión en su puerta.</span>'+
+    (n>1 ? '<button type="button" class="btn btn-sm" id="gps-cam-todos" onclick="gpsCamionAsignarTodos()">🚚 Asignar los '+n+'</button>' : '')+
+    '<div class="gps-cam-l">'+filas+'</div>'+
+    '<small>Es una propuesta: nada se asigna solo. Revisá y tocá «Asignar». El GPS de días anteriores no queda guardado: solo se puede completar lo de hoy.</small></div>';
+}
+/* En el cierre de entregas, en la fila del pedido: «· lo llevó <camión> · <chofer>» con su «Asignar». */
+function gpsCamionCierreHtml(p){
+  var o=gpsCamionPropDe(p); if(!o) return '';
+  var id=esc(String(p.id));
+  return '<span class="cie-gps-cam" title="Lo dice el GPS: ese camión se paró en su puerta. Es una propuesta.">· lo llevó <b>'+esc(gpsCamionQuienTxt(o))+'</b>'+
+    '<button type="button" class="btn btn-sm cie-gps-cam-btn" data-id="'+id+'" onclick="event.preventDefault();event.stopPropagation();gpsCamionAsignar(this.getAttribute(\'data-id\'), \'cie\')">🚚 Asignar</button></span>';
+}
+function gpsCamionCierreResumenHtml(H){
+  var n=(H||[]).filter(function(p){ return !!gpsCamionPropDe(p); }).length; if(!n) return '';
+  return '<span style="flex-basis:100%;font-size:.8rem;color:#1d4ed8">🚚 '+n+' sin camión: el GPS dice cuál lo'+(n===1?'':'s')+' llevó'+
+    (n>1 ? ' <button type="button" class="btn btn-sm" id="cie-gps-cam-todos" style="background:#1d4ed8;color:#fff;margin-left:4px" onclick="gpsCamionAsignarTodos(\'cie\')">🚚 Asignar los '+n+'</button>' : '')+
+    ' (es una propuesta: se asigna recién al tocar «Asignar»).</span>';
+}
+function gpsCamionPoner(o){ o.p.vehiculo=o.veh; o.p.chofer=o.chofer||((VEHICULOS[o.veh]||[])[0])||''; }
+function gpsCamionRepintarCierre(desde){
+  if(desde!=='cie') return;
+  var m=document.getElementById('modal'); if(m && m.classList.contains('on') && document.querySelector('#modal-box .cie-ent')) renderCierreEntregas();
+}
+/* Uno: se vuelve a mirar al tocar (si mientras tanto alguien le puso camión, no se toca). */
+function gpsCamionAsignar(id, desde){
+  var p=findById(String(id)); if(!p) return Promise.resolve(null);
+  var o=gpsCamionPropDe(p);
+  if(!o){ toast(vehiculoDe(p) ? ('Ya tiene camión: '+vehiculoDe(p)+'.') : 'El GPS ya no lo propone.', 'ok'); renderAdmin(); gpsCamionRepintarCierre(desde); return Promise.resolve(null); }
+  gpsCamionPoner(o);
+  var r=persistPedido(p);   // guardarDurable: la cola si no hay señal
+  gpsCamionRepintarCierre(desde);
+  toast('🚚 '+(p.cliente||'Pedido')+' → '+gpsCamionQuienTxt(o)+' (lo vio el GPS).', 'ok');
+  return r;
+}
+/* Todos los de hoy que el GPS propone (los que en este momento siguen sin camión). Un solo repintado y un guardado durable por pedido. */
+function gpsCamionAsignarTodos(desde){
+  var V=gpsCamionPropuestas();
+  if(!V.length){ toast('No queda ningún pedido de hoy sin camión que el GPS haya visto.', 'ok'); renderAdmin(); gpsCamionRepintarCierre(desde); return Promise.resolve([]); }
+  V.forEach(function(o){ gpsCamionPoner(o); upsert(o.p); });
+  saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();   // lo mismo que `persistPedido`, una vez
+  gpsCamionRepintarCierre(desde);
+  toast('🚚 Asignados '+V.length+' pedido'+(V.length===1?'':'s')+' con el camión que vio el GPS.', 'ok', 4000);
+  return Promise.all(V.map(function(o){ return guardarDurable(o.p); }));
+}
+/* fin idea 133 */
 /* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
 function cierreEntAvanceHtml(){
   var tot=cierreEntHoy().length+cierreEntAtrasados().length, n=cierreEntTildados().length;

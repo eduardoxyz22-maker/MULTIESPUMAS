@@ -902,6 +902,12 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
 - `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
+- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; en la rama `idea-133`): un pedido de HOY sin camión
+  (`vehiculoDe` vacío) que el GPS vio en la puerta (`gpsLlegadaDe`) → el panel PROPONE «lo llevó <camión> · <chofer>» (`gpsCamionPropuestas`/`gpsCamionPropDe`;
+  chofer = `choferDeCamion` con los pedidos de hoy, rotan). Cartel azul `#gps-cam-bar` al lado del de §4ok-106 (tabla y fichas) y «· lo llevó» en la fila del
+  cierre de entregas; una persona toca «🚚 Asignar» (`gpsCamionAsignar`, por `persistPedido` → `guardarDurable`) o «Asignar los N» (`gpsCamionAsignarTodos`).
+  🚫 Nada se asigna solo. Solo con `gpsDiaHay()` y solo HOY (el día del GPS no queda guardado). Afuera: sistema, borradores, venta de tienda, `fichaRetira`.
+  Al tocar se vuelve a mirar: uno que mientras tanto recibió camión no se toca. `tests/test_gps_camion.js` (22).
 
 ## 🏬 Recoger de una tienda (§4kr, 13/10; dueño: *«a veces no hay stock en fábrica y los vendedores piden que recojan de sus tiendas»*; en la rama, `f4e796b`)
 - En las marcas de cada producto, **«🏬 Tienda»** → elegir la sucursal (`SUCURSALES` sin Tiendas Roho, la del vendedor primero). Guarda la

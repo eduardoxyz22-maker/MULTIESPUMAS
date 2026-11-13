@@ -18604,6 +18604,22 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - 👥 El mismo día: Eliana Vargas (76359297) a `WA_DUENO` como Alberto, con una función que el dueño corre en un archivo aparte (`agregarElianaUnaVez`) y
   `probarMensajeAEliana` (le manda el cierre de hoy de prueba). El número NO va al repo.
 
+
+### §4po — 🛰️ EL GPS PROPONE EL CAMIÓN QUE FALTÓ (idea 133, 13/11)
+- Dueño: «136, 143, 129, 133» (aprobó la 133 de la lista de ideas). Problema: pedidos de hoy que salen sin camión asignado y el GPS igual los ve
+  (la parada de un camión a ≤ 300 m del pin, que el servidor 13-b nombra o la página reconoce con la misma regla, `gpsPedidosCerca`).
+- Página sola (`pedidos.html`, el `.gs` no cambia): `gpsCamionEntra` (hoy, sin `vehiculoDe`, sin sistema/borrador/venta de tienda/`fichaRetira`),
+  `gpsCamionPropDe(p)` → { veh = el camión que se paró (`gpsLlegadaDe`), chofer = `choferDeCamion(veh, pedidos de hoy)` (rotan, §4om) },
+  `gpsCamionPropuestas()` (en el orden en que el GPS los vio). Solo con `gpsDiaHay()`: sin el día del GPS no sale nada (Playwright igual que antes).
+- Dónde: cartel azul `#gps-cam-bar` (`gpsCamionHtml(list)`, solo lo que está en la lista) junto al de §4ok-106: en la tabla en `#adm-gps-ent`,
+  con las fichas antes del primer turno de hoy. En el Cierre de entregas: «· lo llevó <camión> · <chofer> 🚚 Asignar» en la fila (`gpsCamionCierreHtml`;
+  el botón no tilda el pedido) y una línea en el resumen del GPS (`gpsCamionCierreResumenHtml`).
+- Aceptar: `gpsCamionAsignar(id)` relee la propuesta (si ya tiene camión, no toca), pone camión + chofer y guarda con `persistPedido` → `guardarDurable`
+  (el camino de `setVehiculo`/`cvAsignar`); `gpsCamionAsignarTodos()` = todos los que siguen sin camión, un repintado y un guardado durable por pedido.
+  🚫 Nada se asigna solo. Lo de días anteriores no se puede proponer: el GPS_DIA es de hoy y no queda guardado (el cartel lo dice).
+- `tests/test_gps_camion.js` 22/0. Siguen bien: `test_gps_pagina` 58, `test_cierre_entregas` 26, `test_adm_fichas` 13, `test_camiones_admin` 40,
+  `test_gps_entregados_adm` 22, `test_choferes_rotan` 12. `PANEL_V`/`panel-version.json` NO se subieron (se suben al publicar).
+
 ### §4pp — ⏳ COBRANZA: ANTIGÜEDAD DE SALDOS (136), LO QUE VA A ENTRAR (143) Y EL ESTADO DE CUENTA DE CADA MAYORISTA (129) (13/11; dueño, con las páginas «Contabilidad en el panel» y «Mejoras 128 a 135»: *«136, 143 , 129, 133»*; en la rama, espera «publica»)
 - Una ventana, «📅 Cobranza» en Contabilidad (`cbzAbrir`), con tres pestañas: 📅 Antigüedad de saldos, 📈 Lo que va a entrar y, en Mayoristas, 🏭 Por cliente.
   Todo el historial de la planilla que se mira (Ventas o Mayoristas), con un vendedor elegible adentro (arranca con el de la pantalla).
