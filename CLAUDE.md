@@ -1149,7 +1149,13 @@ Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo m
   Multicenter); «Pagó las tildadas» anota todo en memoria y espera con `Promise.all` (un guardado colgado no traba el botón); lo tipeado mientras sube el
   comprobante se recuerda; «N clientes» de Mayoristas por `cbzMayCliente`; Luis Franco antes que Arce y «MULTI CENTER»/«TIENDAAMIGA»; efectivo con el chofer
   (`ctaChoferSugerido`); venta de tienda y ✅ adelantado = deuda; GPS respeta un chofer puesto a mano y avisa la ubicación aproximada.
-- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (42), `test_gps_camion` (25).
+- ⏳ **El plazo de pago de cada mayorista** (§4pt, 13/11, dueño, consultado con gerencia: *«ROHO 120 días, Tienda Amiga 60, Multicenter 60, Copacaba 15, Luis
+  Franco 15»*; en la rama, espera «publica»): `CBZ_PLAZOS` (por el nombre de `cbzMayCliente`; uno que no está = al entregar, plazo 0). En Mayoristas cada deuda
+  lleva `plazo`, `vence` (entrega agendada o día de la venta de tienda + plazo) y `venc` (días de atraso; ≤0 = no venció) con `cbzConPlazo`, y la antigüedad va
+  por el VENCIMIENTO (`CBZ_TRAMOS_MAY`: por vencer / vencido 1-30 / 31-60 / +60 / sin fecha; `cbzTramos()`). Arriba «Vencido (pasó su plazo)» y «Por vencer»;
+  cada fila «a N días · vencida hace N d»; la ficha de cada cliente con «Paga a N días», Vencido / Por vencer / próximo vencimiento, «Las vencidas»; copia y
+  Excel con PLAZO / VENCE / DÍAS VENCIDA al FINAL. En Ventas (el equipo) nada cambia. Un plazo nuevo va en `CBZ_PLAZOS` y nada más.
+- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (50), `test_gps_camion` (25).
 
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».

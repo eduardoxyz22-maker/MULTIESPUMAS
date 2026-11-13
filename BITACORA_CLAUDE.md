@@ -18701,4 +18701,23 @@ máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (l
   Bs 25.040 a crédito, día de la venta 12/11, factura (sin N°: el dueño no lo pasó). Probado antes en una copia: sin cupo, sin camión, sin bot,
   no toca PTF/Banzer ni la rotación; suma a Mayoristas de noviembre en Proyección.
 - 13/11, ⏸️ EN ESPERA (dueño: «espera consultaré con gerencia»): plazos de pago en la Cobranza de mayoristas — ROHO 60 días, Tienda Amiga 30,
-  Multicenter 30 (lo dijo él). Nada programado: no tocar hasta que confirme.
+  Multicenter 30 (lo dijo él). Nada programado: no tocar hasta que confirme. → Confirmados con otros números el mismo día: §4pt.
+
+### §4pt — ⏳ EL PLAZO DE PAGO DE CADA MAYORISTA EN COBRANZA (13/11; dueño, después de consultar con gerencia: *«ROHO 120 DIAS · TIENDA AMIGA 60 dias · MULTICENTER 60 dias · copacaba 15 dias · luis franco 15 dias»*; en la rama, espera «publica»)
+- `CBZ_PLAZOS` por el nombre de la ficha (`cbzMayCliente`); un cliente que no está paga al entregar (plazo 0: vence el día de la entrega).
+  Plazo en días CORRIDOS desde la entrega agendada (la venta de tienda, desde el día de la venta: `fechaSalida` → `contaFecha`).
+- Solo Mayoristas (`contaAmbito()==='mayor'`): `cbzConPlazo` le pone a cada deuda `plazo`, `vence` y `venc` (= `diasEntre(vence, hoy)`; un ✅
+  adelantado vence desde SU fecha) y el tramo del vencimiento (`CBZ_TRAMOS_MAY`: pv / v30 / v60 / v60m / sinF). En Ventas sigue d7/d30/d60/d60m.
+- Antigüedad: «Vencido (pasó su plazo)», «Por vencer», «Vencido hace más de 60 días»; de la más atrasada a la que vence más lejos; cada fila
+  «a N días · vencida hace N d / vence en N d». Copiar y Excel con PLAZO / VENCE / DÍAS VENCIDA al FINAL del detalle (las de antes no se mueven).
+- Por cliente: «⏳ Paga a N días», Vencido / Por vencer y el próximo vencimiento en la ficha; en el detalle cada OC con «vence dd/mm», «Las vencidas»
+  (reemplaza «Las de más de 30 días»: tilda lo vencido y lo sin fecha) y el estado de cuenta (copia y Excel) con el plazo, VENCIDO / POR VENCER y
+  las columnas VENCE y DÍAS VENCIDA al final. `cbzMayDatos` deja `plazo, venc, nVenc, v60m, maxVenc, pv, nPv, prox` (ya no d30/d60/d60m).
+- Con la copia de la planilla del 13/11 a la mañana (sin la 11-150): Bs 312.616 entregado sin pago en 72 OC → **vencido Bs 139.649 (15 OC)** y por
+  vencer Bs 172.967 (57). Vencido: Copacaba 53.050 (5 OC, la más atrasada 69 d), Multicenter 31.008 (5 OC, 32 d) y los que no tienen plazo: CAMSA
+  30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662, «VILLAREAL» 1.813 y «SEÑORA VILLAREAL» 1.641,50 (dos fichas). ROHO, Tienda Amiga y
+  Luis Franco: todo por vencer (Tienda Amiga vence lo primero el 14/11).
+- `tests/test_cobranza.js` → 50 (§5b y §6-7 cambiaron A CONCIENCIA: iban por días desde la entrega; §10 nueva: ROHO 120 = por vencer, CAMSA al
+  entregar, Ventas sin cambios).
+- Para preguntarle al dueño: el plazo de CAMSA, Karina Torrico, Villarreal y Electrocenter (hoy «al entregar»); la observación de la 11-150 dice «Plazo de
+  pago de ROHO: 60 días» (ahora es 120).

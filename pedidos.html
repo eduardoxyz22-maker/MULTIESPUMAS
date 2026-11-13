@@ -10313,6 +10313,28 @@ var CBZ_VIENE=[
   { k:'vmas',  lbl:'Más adelante',         col:'#64748b' },
   { k:'avisa', lbl:'El cliente avisa cuándo', col:'#94a3b8' }
 ];
+/* ⏳ (13/11, dueño, consultado con gerencia) EL PLAZO DE PAGO DE CADA MAYORISTA, en días corridos desde la entrega agendada (la venta de
+   tienda, desde el día de la venta): *«ROHO 120 días · Tienda Amiga 60 · Multicenter 60 · Copacaba 15 · Luis Franco 15»*. En Mayoristas la
+   antigüedad va por el VENCIMIENTO: lo que todavía no venció no es atraso. Un cliente que no está acá paga al entregar (plazo 0: vence el día
+   de la entrega). El nombre es el de `cbzMayCliente`; un plazo nuevo va acá y nada más. En Ventas (el equipo) no cambia nada. */
+var CBZ_PLAZOS={ 'ROHO':120, 'Tienda Amiga':60, 'Multicenter':60, 'Copacaba':15, 'Luis Franco':15 };
+var CBZ_TRAMOS_MAY=[
+  { k:'pv',   lbl:'Por vencer',                   col:'#0f766e' },
+  { k:'v30',  lbl:'Vencido hace 1 a 30 días',     col:'#a67c00' },
+  { k:'v60',  lbl:'Vencido hace 31 a 60 días',    col:'#b45309' },
+  { k:'v60m', lbl:'Vencido hace más de 60 días',  col:'#b42318' },
+  { k:'sinF', lbl:'Sin fecha',                    col:'#94a3b8' }
+];
+function cbzPlazoDe(p){ var k=cbzMayCliente(p); return Object.prototype.hasOwnProperty.call(CBZ_PLAZOS, k) ? CBZ_PLAZOS[k] : 0; }
+function cbzTramos(){ return contaAmbito()==='mayor' ? CBZ_TRAMOS_MAY : CBZ_TRAMOS; }
+function cbzPlazoTxt(n){ return n>0 ? ('a '+n+' días') : 'al entregar'; }
+function cbzPlazosTxt(){ return Object.keys(CBZ_PLAZOS).map(function(k){ return k+' '+CBZ_PLAZOS[k]+' días'; }).join(' · '); }
+/* Cómo se dice el vencimiento de una deuda (`x.venc` = días de atraso; 0 o menos = todavía no venció). */
+function cbzVenceTxt(x){
+  if(!x || x.que!=='deuda' || !x.vence) return '';
+  return x.venc>0 ? ('vencida hace '+x.venc+' d') : x.venc===0 ? 'vence hoy' : ('vence en '+(-x.venc)+' d');
+}
+function cbzVenceCol(x){ return !x || !(x.venc>0) ? 'var(--muted)' : x.venc>60 ? 'var(--red)' : x.venc>30 ? '#b45309' : '#a67c00'; }
 /* Las ventas de la planilla que se está mirando, de todo el historial, con el vendedor elegido en la ventana. */
 function cbzVentas(){
   var amb=contaAmbito(), v=CBZ.vend;
@@ -10330,13 +10352,21 @@ function cbzClasificar(p, hoy){
   var fs=fechaSalida(p)||'';
   if(!fs) return { p:p, saldo:s, que:'deuda', k:'sinF', f:'', dias:0 };
   /* (revisión de Fable 9) una venta de tienda ya se entregó en la tienda; un ✅ adelantado (fecha futura) ya salió: los dos son deuda de hoy */
-  if((esVentaTienda(p) || p.entregado) && fs>=hoy) return { p:p, saldo:s, que:'deuda', k:'d7', f:fs, dias:0 };
+  if((esVentaTienda(p) || p.entregado) && fs>=hoy) return cbzConPlazo({ p:p, saldo:s, que:'deuda', k:'d7', f:fs, dias:0 });
   if(fs>hoy || (fs===hoy && !p.entregado)){
     var d=fs===hoy ? 0 : diasEntre(hoy, fs);
     return { p:p, saldo:s, que:'viene', k:(fs===hoy?'hoy':d<=7?'v7':d<=14?'v14':'vmas'), f:fs, dias:d };
   }
   var e=Math.max(0, diasEntre(fs, hoy));
-  return { p:p, saldo:s, que:'deuda', k:(e<=7?'d7':e<=30?'d30':e<=60?'d60':'d60m'), f:fs, dias:e };
+  return cbzConPlazo({ p:p, saldo:s, que:'deuda', k:(e<=7?'d7':e<=30?'d30':e<=60?'d60':'d60m'), f:fs, dias:e });
+}
+/* ⏳ (13/11) En Mayoristas cada deuda lleva su plazo (`CBZ_PLAZOS`), cuándo vence y cuántos días de atraso tiene (`venc`; 0 o menos = no
+   venció), y el tramo pasa a ser el del vencimiento (`CBZ_TRAMOS_MAY`). En Ventas queda como estaba: días desde la entrega. */
+function cbzConPlazo(x){
+  if(contaAmbito()!=='mayor') return x;
+  x.plazo=cbzPlazoDe(x.p); x.vence=isoMasDiasSimple(x.f, x.plazo); x.venc=diasEntre(x.vence, diaNegocio());   // ✅ adelantado: vence desde SU fecha
+  x.k=x.venc<=0 ? 'pv' : x.venc<=30 ? 'v30' : x.venc<=60 ? 'v60' : 'v60m';
+  return x;
 }
 function cbzDatos(){
   var hoy=diaNegocio(), deuda=[], viene=[], sinm=[], cobradoViene=0, mayor=contaAmbito()==='mayor';
@@ -10345,15 +10375,17 @@ function cbzDatos(){
     if(x.que==='sinm') sinm.push(x);
     else if(x.que==='deuda') deuda.push(x); else { viene.push(x); cobradoViene=r2(cobradoViene+contaCobrado(p)); }
   });
-  deuda.sort(function(a,b){ return (b.dias-a.dias) || (b.saldo-a.saldo); });
+  /* en Mayoristas, del más atrasado al que vence más lejos (el plazo de cada uno manda); en Ventas, de la más vieja a la más nueva */
+  deuda.sort(function(a,b){ return mayor ? (((b.venc!=null?b.venc:b.dias)-(a.venc!=null?a.venc:a.dias)) || (b.saldo-a.saldo)) : ((b.dias-a.dias) || (b.saldo-a.saldo)); });
   viene.sort(function(a,b){ return a.k==='avisa' ? 1 : b.k==='avisa' ? -1 : (a.f<b.f?-1:a.f>b.f?1:b.saldo-a.saldo); });
   var suma=function(L, k){ var o={ n:0, bs:0 }; L.forEach(function(x){ if(!k || x.k===k){ o.n++; o.bs=r2(o.bs+x.saldo); } }); return o; };
-  var T={}; CBZ_TRAMOS.forEach(function(t){ T[t.k]=suma(deuda, t.k); });
+  var T={}; cbzTramos().forEach(function(t){ T[t.k]=suma(deuda, t.k); });
+  var venc={ n:0, bs:0 }; deuda.forEach(function(x){ if(x.venc>0){ venc.n++; venc.bs=r2(venc.bs+x.saldo); } });
   var V={}; CBZ_VIENE.forEach(function(t){ V[t.k]=suma(viene, t.k); });
   /* (revisión de Fable 5) en Mayoristas el cliente es el de la ficha (`cbzMayCliente`), no el celular de cada entrega */
   var cli={}; deuda.forEach(function(x){ var k=mayor ? cbzMayCliente(x.p) : (cliCelClave(x.p.celular)||normNombre(x.p.cliente||'')); cli[k]=r2((cli[k]||0)+x.saldo); });
   var montos=Object.keys(cli).map(function(k){ return cli[k]; }).sort(function(a,b){ return b-a; });
-  return { hoy:hoy, deuda:deuda, viene:viene, sinm:sinm, T:T, V:V, totD:suma(deuda), totV:suma(viene), cobradoViene:cobradoViene,
+  return { hoy:hoy, deuda:deuda, viene:viene, sinm:sinm, T:T, V:V, totD:suma(deuda), totV:suma(viene), cobradoViene:cobradoViene, venc:venc,
            nCli:montos.length, top5:r2(montos.slice(0,5).reduce(function(s,x){ return s+x; },0)) };
 }
 function cbzVendSelHtml(){
@@ -10403,8 +10435,10 @@ function cbzTramo(k){ CBZ.tramo=(CBZ.tramo===k ? '' : k); cbzPintar(); }
 function cbzFila(x, modo){
   var p=x.p, ref=[p.nota?('nota '+p.nota):'', ocEtiq(p.oc), p.celular||''].filter(Boolean).join(' · ');
   var cuando = x.k==='avisa' ? esc(avisaTxt(p)||'el cliente avisa') : !x.f ? 'sin fecha' :
-    (modo==='viene' ? (fmtFechaCorta(x.f)+(x.k==='hoy'?' · hoy':(' · en '+x.dias+' d'))) : (fmtFechaCorta(x.f)+' · '+(x.dias?(x.dias+' d'):'hoy')));
-  var col = modo==='viene' ? 'var(--muted)' : x.dias>60 ? 'var(--red)' : x.dias>30 ? '#b45309' : x.dias>7 ? '#a67c00' : 'var(--muted)';
+    (modo==='viene' ? (fmtFechaCorta(x.f)+(x.k==='hoy'?' · hoy':(' · en '+x.dias+' d'))) :
+     x.vence ? (fmtFechaCorta(x.f)+'<br><small>'+esc(cbzPlazoTxt(x.plazo))+' · '+esc(cbzVenceTxt(x))+'</small>') :   // ⏳ (13/11) Mayoristas: con su plazo
+     (fmtFechaCorta(x.f)+' · '+(x.dias?(x.dias+' d'):'hoy')));
+  var col = modo==='viene' ? 'var(--muted)' : x.vence ? cbzVenceCol(x) : x.dias>60 ? 'var(--red)' : x.dias>30 ? '#b45309' : x.dias>7 ? '#a67c00' : 'var(--muted)';
   return '<tr class="cbz-f" data-id="'+esc(String(p.id))+'" onclick="cbzAbrirVenta(this.getAttribute(\'data-id\'))" title="Abrir la venta para registrar el pago">'+
     '<td><b>'+esc(p.cliente||'—')+'</b>'+(ref?('<br><small>'+esc(ref)+'</small>'):'')+'</td>'+
     '<td>'+esc(nombreCanonico(p.vendedor||'')||'—')+'</td>'+
@@ -10415,20 +10449,25 @@ function cbzFila(x, modo){
 }
 function cbzTabla(L, modo){
   if(!L.length) return '<div class="empty" style="padding:16px 0">✅ No hay nada acá.</div>';
-  return '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th>Cliente</th><th>Vendedor</th><th>'+(modo==='viene'?'Se entrega':'Entregado')+'</th>'+
+  return '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th>Cliente</th><th>Vendedor</th><th>'+(modo==='viene'?'Se entrega':(contaAmbito()==='mayor'?'Entregado · vence':'Entregado'))+'</th>'+
     '<th class="m">Venta</th><th class="m">Ya cobrado</th><th class="m">Saldo</th></tr></thead><tbody>'+L.map(function(x){ return cbzFila(x, modo); }).join('')+'</tbody></table></div>';
 }
 function cbzAntHtml(D){
-  var L=D.deuda.filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), viejo=(D.T.d60m||{});
+  var mayor=contaAmbito()==='mayor', defs=cbzTramos();
+  var L=D.deuda.filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), viejo=(D.T[mayor?'v60m':'d60m']||{}), pv=(D.T.pv||{ n:0, bs:0 });
   var h='<div class="cbz-res"><div><small>Ya entregado y sin cobrar</small><b>'+fmtBs(D.totD.bs)+'</b><span>'+D.totD.n+' venta'+(D.totD.n===1?'':'s')+' · '+D.nCli+' cliente'+(D.nCli===1?'':'s')+'</span></div>'+
-    (viejo.n ? '<div class="cbz-mal"><small>Con más de 60 días</small><b>'+fmtBs(viejo.bs)+'</b><span>'+viejo.n+' venta'+(viejo.n===1?'':'s')+': o nadie la está cobrando, o se pagó y no se anotó</span></div>' : '')+
+    /* ⏳ (13/11) con los plazos: lo vencido es lo que hay que reclamar; lo que no venció todavía no es atraso */
+    (mayor ? '<div class="'+(D.venc.n?'cbz-mal':'cbz-ok')+'"><small>Vencido (pasó su plazo)</small><b>'+fmtBs(D.venc.bs)+'</b><span>'+(D.venc.n ? (D.venc.n+' venta'+(D.venc.n===1?'':'s')+' para reclamar') : 'nada vencido')+'</span></div>'+
+             '<div class="cbz-ok"><small>Por vencer</small><b>'+fmtBs(pv.bs)+'</b><span>'+pv.n+' venta'+(pv.n===1?'':'s')+' dentro de su plazo</span></div>' : '')+
+    (viejo.n ? '<div class="cbz-mal"><small>'+(mayor?'Vencido hace más de 60 días':'Con más de 60 días')+'</small><b>'+fmtBs(viejo.bs)+'</b><span>'+viejo.n+' venta'+(viejo.n===1?'':'s')+': o nadie la está cobrando, o se pagó y no se anotó</span></div>' : '')+
     ((D.sinm||[]).length ? '<div class="cbz-mal cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'cli\')"><small>⚠️ Sin monto anotado</small><b>'+D.sinm.length+' OC</b><span>no suman acá: no se sabe cuánto deben · ver «Por cliente» →</span></div>' : '')+
     (D.nCli>5 ? '<div><small>Los 5 que más deben</small><b>'+fmtBs(D.top5)+'</b><span>'+(D.totD.bs>0?Math.round(D.top5/D.totD.bs*100):0)+'% de lo que falta</span></div>' : '')+
     (D.totV.n ? '<div class="cbz-toca" role="button" tabindex="0" onclick="cbzTab(\'ent\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click();}"><small>Todavía por entregar</small><b>'+fmtBs(D.totV.bs)+'</b><span>no es deuda todavía · ver «Lo que va a entrar» →</span></div>' : '')+
     '</div>';
-  h+='<p class="cbz-ay">Desde el día de la entrega agendada (la venta de tienda, desde el día de la venta). Todo el historial, no solo el mes de la pantalla. 👆 Tocá un tramo para ver solo esas; tocá un cliente para abrir su venta y registrar el pago.</p>';
-  h+=cbzBarras(D.deuda, D.T, CBZ_TRAMOS, 'cbzTramo');
-  if(CBZ.tramo){ var t=CBZ_TRAMOS.filter(function(z){ return z.k===CBZ.tramo; })[0]; h+='<div class="cbz-filtro">Solo: <b>'+esc(t?t.lbl:'')+'</b> <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzTramo(\'\')">Ver todas</button></div>'; }
+  h+='<p class="cbz-ay">'+(mayor ? ('Por el VENCIMIENTO: cada mayorista con su plazo desde la entrega agendada ('+cbzPlazosTxt()+'; los demás, al entregar). ') : 'Desde el día de la entrega agendada (la venta de tienda, desde el día de la venta). ')+
+    'Todo el historial, no solo el mes de la pantalla. 👆 Tocá un tramo para ver solo esas; tocá un cliente para abrir su venta y registrar el pago.</p>';
+  h+=cbzBarras(D.deuda, D.T, defs, 'cbzTramo');
+  if(CBZ.tramo){ var t=defs.filter(function(z){ return z.k===CBZ.tramo; })[0]; h+='<div class="cbz-filtro">Solo: <b>'+esc(t?t.lbl:'')+'</b> <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzTramo(\'\')">Ver todas</button></div>'; }
   h+=cbzTabla(L, 'deuda');
   h+='<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzCopiar(\'ant\')">📋 Copiar</button>'+
      '<button type="button" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="cbzExcel(\'ant\')">⬇️ Excel</button>'+
@@ -10456,30 +10495,34 @@ function cbzVolver(){ var t=CBZ.tab, c=CBZ.cli, tr=CBZ.tramo, s=CBZ.sel;
   CBZ.tab=t; CBZ.cli=c; CBZ.tramo=tr; CBZ.sel=s||{}; POR_COBRAR_VOLVER=null; cbzPintar(); }
 function cbzLineaTxt(x){ var p=x.p;
   return '• '+(p.cliente||'—')+(p.nota?(' · nota '+p.nota):'')+' · '+fmtBs(x.saldo)+
-    (x.k==='avisa' ? ' · el cliente avisa' : !x.f ? ' · sin fecha' : (' · '+fmtFechaCorta(x.f)+(x.que==='deuda' ? (' ('+x.dias+' d)') : '')))+(p.vendedor?(' · '+nombreCanonico(p.vendedor)):''); }
+    (x.k==='avisa' ? ' · el cliente avisa' : !x.f ? ' · sin fecha' : (' · '+fmtFechaCorta(x.f)+(x.que==='deuda' ? (x.vence ? (' ('+cbzPlazoTxt(x.plazo)+', vence '+fmtFechaCorta(x.vence)+': '+cbzVenceTxt(x)+')') : (' ('+x.dias+' d)')) : '')))+(p.vendedor?(' · '+nombreCanonico(p.vendedor)):''); }
 function cbzQuienTxt(){ return contaAmbito()==='mayor' ? mayoristasTxt() : (CBZ.vend || 'todo el equipo'); }
 function cbzCopiar(que){
-  var D=cbzDatos(), L=(que==='ent'?D.viene:D.deuda).filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), defs=que==='ent'?CBZ_VIENE:CBZ_TRAMOS, T=que==='ent'?D.V:D.T;
+  var D=cbzDatos(), L=(que==='ent'?D.viene:D.deuda).filter(function(x){ return !CBZ.tramo || x.k===CBZ.tramo; }), defs=que==='ent'?CBZ_VIENE:cbzTramos(), T=que==='ent'?D.V:D.T;
   var tit=que==='ent' ? '📈 *Lo que va a entrar*' : '📅 *Antigüedad de saldos*';
   var txt=tit+' · '+cbzQuienTxt()+' · al '+fmtFechaCorta(D.hoy)+'\n'+
     defs.filter(function(t){ return (T[t.k]||{}).n; }).map(function(t){ return t.lbl+': *'+fmtBs(T[t.k].bs)+'* ('+T[t.k].n+')'; }).join('\n')+'\n\n'+L.map(cbzLineaTxt).join('\n');
   copyText(txt);
 }
 function cbzExcel(que){
-  var D=cbzDatos(), viene=que==='ent', L=viene?D.viene:D.deuda, defs=viene?CBZ_VIENE:CBZ_TRAMOS, T=viene?D.V:D.T, H=1, BS=2;
+  var D=cbzDatos(), viene=que==='ent', L=viene?D.viene:D.deuda, defs=viene?CBZ_VIENE:cbzTramos(), T=viene?D.V:D.T, H=1, BS=2, may=!viene && contaAmbito()==='mayor';
   var num=function(v){ return { v:r2(v), t:'n', s:BS }; };
   var res=[[{ v:(viene?'LO QUE VA A ENTRAR':'ANTIGÜEDAD DE SALDOS')+' · '+cbzQuienTxt().toUpperCase()+' · AL '+fmtFecha(D.hoy), s:H }], [],
     [{v:'TRAMO',s:H},{v:'VENTAS',s:H},{v:'SALDO (Bs)',s:H}]];
   defs.forEach(function(t){ var o=T[t.k]||{n:0,bs:0}; res.push([t.lbl, {v:o.n,t:'n'}, num(o.bs)]); });
   var tot=viene?D.totV:D.totD; res.push([{v:'TOTAL',s:H}, {v:tot.n,t:'n'}, num(tot.bs)]);
-  res.push([]); res.push([viene ? 'El saldo que se cobra al entregar, por el día de entrega agendado.' : 'Lo ya entregado y sin cobrar, por los días desde la entrega agendada. Todo el historial.']);
+  res.push([]); res.push([viene ? 'El saldo que se cobra al entregar, por el día de entrega agendado.' :
+    may ? ('Lo ya entregado y sin cobrar, por el VENCIMIENTO: la entrega agendada + el plazo de cada mayorista ('+cbzPlazosTxt()+'; los demás, al entregar). Todo el historial.') :
+    'Lo ya entregado y sin cobrar, por los días desde la entrega agendada. Todo el historial.']);
   var cab=['TRAMO','CLIENTE','CELULAR','VENDEDOR','N° NOTA','N° OC',(viene?'SE ENTREGA':'ENTREGADO'),'DÍAS','VENTA (Bs)','YA COBRADO (Bs)','SALDO (Bs)'];
+  if(may) cab=cab.concat(['PLAZO (días)','VENCE','DÍAS VENCIDA']);   // ⏳ (13/11) al FINAL: las columnas de antes no se mueven
   var det=[cab.map(function(t){ return {v:t,s:H}; })], lbl={}; defs.forEach(function(t){ lbl[t.k]=t.lbl; });
   L.forEach(function(x){ var p=x.p;
     det.push([lbl[x.k]||'', p.cliente||'', String(p.celular||''), nombreCanonico(p.vendedor||''), p.nota||'', p.oc||'',
-      x.k==='avisa' ? ('avisa · '+(avisaDe(p)?fmtFecha(avisaDe(p)):'')) : (x.f?fmtFecha(x.f):'sin fecha'), {v:x.dias,t:'n'}, num(ventaTotal(p)), num(contaCobrado(p)), num(x.saldo)]); });
+      x.k==='avisa' ? ('avisa · '+(avisaDe(p)?fmtFecha(avisaDe(p)):'')) : (x.f?fmtFecha(x.f):'sin fecha'), {v:x.dias,t:'n'}, num(ventaTotal(p)), num(contaCobrado(p)), num(x.saldo)]);
+    if(may){ var fl=det[det.length-1]; if(x.vence){ fl.push({v:x.plazo,t:'n'}, fmtFecha(x.vence), {v:Math.max(0,x.venc),t:'n'}); } else fl.push('', '', ''); } });
   var bytes=buildXlsx([{ name:'Resumen', cols:[{w:30},{w:12},{w:16}], matrix:res },
-                       { name:'Detalle', cols:[{w:16},{w:28},{w:14},{w:20},{w:12},{w:10},{w:16},{w:7},{w:13},{w:15},{w:13}], matrix:det }]);
+                       { name:'Detalle', cols:[{w:16},{w:28},{w:14},{w:20},{w:12},{w:10},{w:16},{w:7},{w:13},{w:15},{w:13}].concat(may?[{w:12},{w:12},{w:13}]:[]), matrix:det }]);
   var tag=sinTildes(cbzQuienTxt().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   downloadBlob(bytes, (viene?'lo-que-va-a-entrar-':'antiguedad-de-saldos-')+tag+'-'+D.hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast((viene?'📈 Lo que va a entrar':'📅 Antigüedad de saldos')+' descargado: '+fmtBs(tot.bs)+' en '+tot.n+' venta'+(tot.n===1?'':'s')+' ✓','ok');
@@ -10502,7 +10545,7 @@ var CBZ_MAY_FIJOS=['Multicenter','Tienda Amiga','ROHO','Copacaba','Luis Franco']
 function cbzMayDatos(){
   var hoy=diaNegocio(), M={};
   cbzVentas().forEach(function(p){
-    var k=cbzMayCliente(p), c=M[k]||(M[k]={ k:k, fijo:CBZ_MAY_FIJOS.indexOf(k)>=0, ocs:[], debe:0, n:0, d30:0, d60:0, d60m:0, viene:0, nV:0, nSin:0, ult:'' });
+    var k=cbzMayCliente(p), c=M[k]||(M[k]={ k:k, fijo:CBZ_MAY_FIJOS.indexOf(k)>=0, plazo:cbzPlazoDe(p), ocs:[], debe:0, n:0, venc:0, nVenc:0, v60m:0, maxVenc:0, pv:0, nPv:0, prox:'', viene:0, nV:0, nSin:0, ult:'' });
     var x=cbzClasificar(p, hoy), fs=fechaSalida(p)||'';
     if(fs>c.ult) c.ult=fs;
     c.ocs.push({ p:p, x:x });
@@ -10510,7 +10553,9 @@ function cbzMayDatos(){
     if(x.que==='sinm'){ c.nSin++; return; }
     if(x.que==='viene'){ c.viene=r2(c.viene+x.saldo); c.nV++; return; }
     c.debe=r2(c.debe+x.saldo); c.n++;
-    if(x.dias>60) c.d60m=r2(c.d60m+x.saldo); else if(x.dias>30) c.d60=r2(c.d60+x.saldo); else c.d30=r2(c.d30+x.saldo);
+    /* ⏳ (13/11) por el VENCIMIENTO de cada OC (su plazo, `cbzConPlazo`); sin fecha de entrega no se sabe: va con lo vencido */
+    if(!x.vence || x.venc>0){ c.venc=r2(c.venc+x.saldo); c.nVenc++; if(x.venc>60) c.v60m=r2(c.v60m+x.saldo); if(x.venc>c.maxVenc) c.maxVenc=x.venc; }
+    else { c.pv=r2(c.pv+x.saldo); c.nPv++; if(!c.prox || x.vence<c.prox) c.prox=x.vence; }
   });
   return Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return (b.fijo-a.fijo) || (b.debe-a.debe) || a.k.localeCompare(b.k,'es'); });
 }
@@ -10522,12 +10567,17 @@ function cbzCliListaHtml(){
     return '<button type="button" class="cbz-cli" data-k="'+esc(c.k)+'" onclick="cbzCliAbrir(this.getAttribute(\'data-k\'))">'+
       '<span class="cbz-cn">'+esc(c.k)+'</span>'+
       '<span class="cbz-cd"><b>'+(c.debe>0.005?fmtBs(c.debe):c.nSin?'⚠️ Sin monto':'✅ Al día')+'</b><small>'+(c.n?(c.n+' OC entregada'+(c.n===1?'':'s')+' sin pago'):'nada entregado sin pago')+'</small></span>'+
-      (c.debe>0.005 ? '<span class="cbz-cts">'+tr('0-30 d', c.d30, '#64748b')+tr('31-60 d', c.d60, '#b45309')+tr('+60 d', c.d60m, '#b42318')+'</span>' : '')+
+      '<span class="cbz-cv">⏳ Paga '+esc(cbzPlazoTxt(c.plazo))+'</span>'+
+      (c.debe>0.005 ? '<span class="cbz-cts">'+tr('Vencido', c.venc, c.venc>0.005?(c.v60m>0.005?'#b42318':'#b45309'):'#64748b')+tr('Por vencer', c.pv, '#0f766e')+'</span>'+
+        (c.v60m>0.005 ? '<span class="cbz-cv cbz-sinm">Vencido hace más de 60 días: '+fmtBs(c.v60m)+'</span>' : '')+
+        (c.prox && c.pv>0.005 ? '<span class="cbz-cv">Próximo vencimiento: '+fmtFechaCorta(c.prox)+'</span>' : '') : '')+
       (c.viene>0.005 ? '<span class="cbz-cv">+ '+fmtBs(c.viene)+' por entregar ('+c.nV+')</span>' : '')+
       (c.nSin ? '<span class="cbz-cv cbz-sinm">⚠️ '+c.nSin+' OC sin monto anotado</span>' : '')+'</button>';
   };
-  return '<div class="cbz-res"><div><small>Entregado y sin pago anotado</small><b>'+fmtBs(tot)+'</b><span>'+con.filter(function(c){ return c.debe>0.005; }).length+' cliente'+(con.length===1?'':'s')+' de '+esc(mayoristasTxt())+'</span></div></div>'+
-    '<p class="cbz-ay">Cada cliente con lo que debe, por los días desde la entrega. 👆 Tocá uno para ver sus OC, marcar las que pagó con una sola transferencia y bajar su estado de cuenta.</p>'+
+  var vT=0, pT=0; con.forEach(function(c){ vT=r2(vT+c.venc); pT=r2(pT+c.pv); });
+  return '<div class="cbz-res"><div><small>Entregado y sin pago anotado</small><b>'+fmtBs(tot)+'</b><span>'+con.filter(function(c){ return c.debe>0.005; }).length+' cliente'+(con.length===1?'':'s')+' de '+esc(mayoristasTxt())+'</span></div>'+
+      '<div class="'+(vT>0.005?'cbz-mal':'cbz-ok')+'"><small>Vencido (para reclamar)</small><b>'+fmtBs(vT)+'</b></div><div class="cbz-ok"><small>Por vencer</small><b>'+fmtBs(pT)+'</b></div></div>'+
+    '<p class="cbz-ay">Cada cliente con lo que debe y su plazo de pago ('+esc(cbzPlazosTxt())+'; los demás, al entregar): <b>vencido</b> = pasó su plazo. 👆 Tocá uno para ver sus OC, marcar las que pagó con una sola transferencia y bajar su estado de cuenta.</p>'+
     (con.length ? '<div class="cbz-clis">'+con.map(ficha).join('')+'</div>' : '<div class="empty" style="padding:16px 0">✅ Ningún mayorista debe nada.</div>')+
     '<div class="cbz-acc"><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button></div>';
 }
@@ -10536,28 +10586,29 @@ function cbzCliDe(k){ return cbzMayDatos().filter(function(c){ return c.k===k; }
 function cbzProdsTxt(p){ return (p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).map(function(x){ return (Number(x.cant)||1)+' '+String(x.desc).trim()+(x.medida?(' '+x.medida):''); }).join(', '); }
 function cbzCliDetHtml(k){
   var c=cbzCliDe(k); if(!c) return '<div class="empty">Ese cliente ya no tiene ventas.</div>';
-  var hoy=diaNegocio(), conSaldo=c.ocs.filter(function(o){ return o.x; }).sort(function(a,b){ return (b.x.dias-a.x.dias) || String(a.x.f).localeCompare(String(b.x.f)); });
+  var hoy=diaNegocio(), vv=function(x){ return x.venc!=null ? x.venc : x.dias; }, conSaldo=c.ocs.filter(function(o){ return o.x; }).sort(function(a,b){ return (vv(b.x)-vv(a.x)) || String(a.x.f).localeCompare(String(b.x.f)); });
   var selIds=Object.keys(CBZ.sel).filter(function(id){ return CBZ.sel[id] && conSaldo.some(function(o){ return String(o.p.id)===id; }); });
   var selBs=0; selIds.forEach(function(id){ var o=conSaldo.filter(function(z){ return String(z.p.id)===id; })[0]; if(o) selBs=r2(selBs+o.x.saldo); });
   var fila=function(o){
-    var p=o.p, x=o.x, id=String(p.id), viene=x.que==='viene', sinm=x.que==='sinm', col=viene?'var(--muted)':x.dias>60?'var(--red)':x.dias>30?'#b45309':'var(--muted)';
+    var p=o.p, x=o.x, id=String(p.id), viene=x.que==='viene', sinm=x.que==='sinm', col=viene?'var(--muted)':x.vence?cbzVenceCol(x):x.dias>60?'var(--red)':x.dias>30?'#b45309':'var(--muted)';
     return '<tr class="'+(CBZ.sel[id]?'on':'')+(sinm?' cbz-sinm':'')+'"><td>'+(sinm ? '<span title="Sin monto anotado: abrila y poné el total antes de cobrarla">⚠️</span>' :
       '<input type="checkbox" class="cbz-ck" data-id="'+esc(id)+'" aria-label="Pagó '+esc(p.nota||p.oc||'')+'"'+(CBZ.sel[id]?' checked':'')+' onchange="cbzSel(this.getAttribute(\'data-id\'), this.checked)">')+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b><br><small>'+esc(ocEtiq(p.oc))+'</small></td>'+
       '<td class="cbz-pr">'+esc(cbzProdsTxt(p))+'</td>'+
-      '<td style="color:'+col+';white-space:nowrap">'+(x.k==='avisa'?'avisa':x.f?fmtFechaCorta(x.f):'sin fecha')+(viene?' · por entregar':(x.f?(' · '+x.dias+' d'):''))+'</td>'+
+      '<td style="color:'+col+';white-space:nowrap">'+(x.k==='avisa'?'avisa':x.f?fmtFechaCorta(x.f):'sin fecha')+(viene?' · por entregar':(x.f?(' · '+x.dias+' d'):''))+
+        (x.vence ? ('<br><small>vence '+fmtFechaCorta(x.vence)+' · <b>'+esc(cbzVenceTxt(x))+'</b></small>') : '')+'</td>'+
       '<td class="m">'+(sinm?'—':fmtBs(ventaTotal(p)))+'</td><td class="m">'+(sinm?'<b style="color:#b45309">sin monto</b>':('<b>'+fmtBs(x.saldo)+'</b>'))+'</td>'+
       '<td><button type="button" class="btn btn-ghost btn-sm" style="width:auto;padding:4px 8px" data-id="'+esc(id)+'" onclick="cbzAbrirVenta(this.getAttribute(\'data-id\'))">Abrir</button></td></tr>';
   };
   var h='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:8px" onclick="CBZ.cli=\'\';CBZ.sel={};cbzPintar()">← Todos los clientes</button>'+
-    '<div class="cbz-res"><div><small>'+esc(c.k)+' · entregado sin pago</small><b>'+fmtBs(c.debe)+'</b><span>'+c.n+' OC</span></div>'+
-      '<div><small>0 a 30 días</small><b>'+fmtBs(c.d30)+'</b></div><div><small>31 a 60 días</small><b style="color:#b45309">'+fmtBs(c.d60)+'</b></div>'+
-      '<div class="'+(c.d60m>0.005?'cbz-mal':'')+'"><small>Más de 60 días</small><b>'+fmtBs(c.d60m)+'</b>'+(c.d60m>0.005?'<span>reclamar</span>':'')+'</div>'+
+    '<div class="cbz-res"><div><small>'+esc(c.k)+' · entregado sin pago</small><b>'+fmtBs(c.debe)+'</b><span>'+c.n+' OC · paga '+esc(cbzPlazoTxt(c.plazo))+'</span></div>'+
+      '<div class="'+(c.venc>0.005?'cbz-mal':'cbz-ok')+'"><small>Vencido</small><b>'+fmtBs(c.venc)+'</b><span>'+(c.nVenc ? (c.nVenc+' OC · reclamar'+(c.maxVenc>0?(' · la más atrasada, '+c.maxVenc+' d'):'')) : 'nada vencido')+'</span></div>'+
+      '<div class="cbz-ok"><small>Por vencer</small><b>'+fmtBs(c.pv)+'</b><span>'+(c.nPv ? (c.nPv+' OC'+(c.prox?(' · la próxima vence el '+fmtFechaCorta(c.prox)):'')) : 'nada')+'</span></div>'+
       (c.viene>0.005?'<div><small>Por entregar</small><b>'+fmtBs(c.viene)+'</b><span>'+c.nV+' OC</span></div>':'')+
       (c.nSin?'<div class="cbz-mal"><small>⚠️ Sin monto anotado</small><b>'+c.nSin+' OC</b><span>no se sabe cuánto deben: abrilas y poné el total</span></div>':'')+'</div>';
   if(!conSaldo.length) h+='<div class="empty" style="padding:16px 0">✅ '+esc(c.k)+' no debe nada.</div>';
   else h+='<div class="cbz-selbar"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'todas\')">Tildar todas</button>'+
-      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'d30\')">Las de más de 30 días</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'venc\')">Las vencidas</button>'+
       '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="cbzSelVarias(\'nada\')">Ninguna</button></div>'+
     '<div class="tw cbz-tw"><table class="mini cbz-t"><thead><tr><th></th><th>Su N°</th><th>Productos</th><th>Entrega</th><th class="m">Venta</th><th class="m">Saldo</th><th></th></tr></thead><tbody>'+conSaldo.map(fila).join('')+'</tbody></table></div>'+
     (selIds.length ? cbzPagoHtml(c, selIds, selBs) : '<p class="cbz-ay">Tildá las OC que pagó (por ejemplo, las de una transferencia) y abajo aparece «💵 Pagó las tildadas».</p>');
@@ -10570,7 +10621,7 @@ function cbzSel(id, on){ cbzPagoRecordar(); if(on) CBZ.sel[String(id)]=true; els
 function cbzSelVarias(que){
   cbzPagoRecordar();
   var c=cbzCliDe(CBZ.cli); if(!c) return; CBZ.sel={};
-  if(que!=='nada') c.ocs.forEach(function(o){ if(o.x && o.x.que!=='sinm' && (que==='todas' || (o.x.que==='deuda' && o.x.dias>30))) CBZ.sel[String(o.p.id)]=true; });
+  if(que!=='nada') c.ocs.forEach(function(o){ if(o.x && o.x.que!=='sinm' && (que==='todas' || (o.x.que==='deuda' && (!o.x.vence || o.x.venc>0)))) CBZ.sel[String(o.p.id)]=true; });
   cbzPintar();
 }
 /* Lo tipeado en el pago no se pierde al tildar otra OC (el cuadro se redibuja). */
@@ -10665,25 +10716,28 @@ function cbzCliFilas(c){
 function cbzCliCopiar(k){
   var c=cbzCliDe(k); if(!c) return;
   var L=cbzCliFilas(c).filter(function(o){ return o.x; });
-  var txt='🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(diaNegocio())+'\nEntregado y sin pago: *'+fmtBs(c.debe)+'*'+(c.d60m>0.005?(' (más de 60 días: '+fmtBs(c.d60m)+')'):'')+
+  var txt='🏭 *Estado de cuenta · '+c.k+'* · al '+fmtFechaCorta(diaNegocio())+' · plazo de pago: '+cbzPlazoTxt(c.plazo)+
+    '\nEntregado y sin pago: *'+fmtBs(c.debe)+'*'+'\nVencido: *'+fmtBs(c.venc)+'*'+(c.pv>0.005?(' · Por vencer: '+fmtBs(c.pv)):'')+
     (c.viene>0.005?('\nPor entregar: '+fmtBs(c.viene)):'')+'\n\n'+
-    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }).join('\n');
+    L.map(function(o){ var p=o.p, x=o.x; return '• '+(p.nota?('N° '+p.nota):ocEtiq(p.oc))+' · '+(x.f?fmtFechaCorta(x.f):'sin fecha')+(x.que==='viene'?' (por entregar)':'')+
+      (x.vence?(' · vence '+fmtFechaCorta(x.vence)+(x.venc>0?(' (vencida hace '+x.venc+' d)'):'')):'')+' · '+(x.que==='sinm'?'sin monto anotado':fmtBs(x.saldo)); }).join('\n');
   copyText(txt);
 }
 function cbzCliExcel(k){
   var c=cbzCliDe(k); if(!c) return;
   var H=1, BS=2, num=function(v){ return { v:r2(v), t:'n', s:BS }; }, hoy=diaNegocio();
-  var rows=[[{ v:'ESTADO DE CUENTA · '+c.k.toUpperCase(), s:H }], ['Al '+fmtFecha(hoy)+' · Multiespumas'], [],
-    [{v:'ENTREGADO Y SIN PAGO',s:H}, num(c.debe), {v:'0 A 30 DÍAS',s:H}, num(c.d30), {v:'31 A 60 DÍAS',s:H}, num(c.d60), {v:'MÁS DE 60 DÍAS',s:H}, num(c.d60m)],
+  var rows=[[{ v:'ESTADO DE CUENTA · '+c.k.toUpperCase(), s:H }], ['Al '+fmtFecha(hoy)+' · Multiespumas · plazo de pago: '+cbzPlazoTxt(c.plazo)], [],
+    [{v:'ENTREGADO Y SIN PAGO',s:H}, num(c.debe), {v:'VENCIDO',s:H}, num(c.venc), {v:'POR VENCER',s:H}, num(c.pv), {v:'VENCIDO HACE MÁS DE 60 DÍAS',s:H}, num(c.v60m)],
     [{v:'POR ENTREGAR',s:H}, num(c.viene)], [],
-    ['FECHA DE ENTREGA','SU N° (OC)','N° DEL PANEL','PRODUCTOS','TOTAL (Bs)','PAGADO (Bs)','SALDO (Bs)','DÍAS','ESTADO'].map(function(t){ return {v:t,s:H}; })];
+    ['FECHA DE ENTREGA','SU N° (OC)','N° DEL PANEL','PRODUCTOS','TOTAL (Bs)','PAGADO (Bs)','SALDO (Bs)','DÍAS','ESTADO','VENCE','DÍAS VENCIDA'].map(function(t){ return {v:t,s:H}; })];   // ⏳ (13/11) las dos últimas, al final
   cbzCliFilas(c).forEach(function(o){
     var p=o.p, x=o.x, fs=fechaSalida(p)||'';
-    var est=!x ? 'PAGADO' : x.que==='sinm' ? 'SIN MONTO' : x.que==='viene' ? 'POR ENTREGAR' : 'POR COBRAR';
+    var est=!x ? 'PAGADO' : x.que==='sinm' ? 'SIN MONTO' : x.que==='viene' ? 'POR ENTREGAR' : (x.vence && x.venc<=0) ? 'POR VENCER' : 'VENCIDO';
     if(!x && !(ventaTotal(p)>0.005)) return;
-    rows.push([fs?fmtFecha(fs):'', p.nota||'', p.oc||'', cbzProdsTxt(p), num(ventaTotal(p)), num(contaCobrado(p)), num(x?x.saldo:0), {v:(x&&x.que==='deuda')?x.dias:0, t:'n'}, est]);
+    rows.push([fs?fmtFecha(fs):'', p.nota||'', p.oc||'', cbzProdsTxt(p), num(ventaTotal(p)), num(contaCobrado(p)), num(x?x.saldo:0), {v:(x&&x.que==='deuda')?x.dias:0, t:'n'}, est,
+      (x&&x.vence)?fmtFecha(x.vence):'', {v:(x&&x.vence&&x.venc>0)?x.venc:0, t:'n'}]);
   });
-  var bytes=buildXlsx([{ name:'Estado de cuenta', cols:[{w:16},{w:14},{w:12},{w:52},{w:13},{w:13},{w:13},{w:7},{w:14}], matrix:rows }]);
+  var bytes=buildXlsx([{ name:'Estado de cuenta', cols:[{w:16},{w:14},{w:12},{w:52},{w:13},{w:13},{w:13},{w:7},{w:14},{w:14},{w:13}], matrix:rows }]);
   downloadBlob(bytes, 'estado-de-cuenta-'+sinTildes(c.k.toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+hoy+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('🏭 Estado de cuenta de '+c.k+' descargado ✓','ok');
 }
