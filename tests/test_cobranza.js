@@ -3,8 +3,8 @@
 
    Lo que esta prueba cuida (falla contra lo de antes, que no tiene `cbzAbrir`):
    1. «📅 Cobranza» está en Contabilidad y abre la ventana con TODO el historial del equipo, no solo el mes de la pantalla.
-   2. Antigüedad: lo ya entregado con saldo va en su tramo por los días desde la entrega agendada (0-7, 8-30, 31-60, más de 60); lo
-      pagado, lo de otra planilla (Eduardo, ROHO) y la RPT no cuentan; lo de hoy sin ✅ y lo de mañana NO es deuda.
+   2. En Ventas (el equipo) solo «Lo que va a entrar»: la antigüedad de saldos es de Mayoristas (dueño, 13/11: «solo los mayoristas se
+      atrasan en pagar»). Por dentro, la deuda va en su tramo por los días desde la entrega; lo de hoy sin ✅ y lo de mañana NO es deuda.
    3. Tocar un tramo filtra la lista; un cliente abre su venta con «← Volver a la cobranza», y volver la muestra otra vez.
    4. Lo que va a entrar: el saldo de lo que todavía no se entregó por plazo (hoy, 7 días, 14, más adelante, el cliente avisa).
    5. El vendedor de la ventana filtra.
@@ -102,50 +102,54 @@ function PREPARAR(){
   chk('el panel tiene la ventana de Cobranza (cbzAbrir)', hay===true, hay);
   if(hay!==true){ console.log(`\n${PASS} bien · ${FAIL} mal`); await browser.close(); process.exit(1); }
 
-  // ═══ 1-2. Antigüedad ═════════════════════════════════════════════════════════════════════════
-  console.log('\n── 1-2. Antigüedad de saldos, el equipo ──');
+  // ═══ 1-2. El equipo: solo «Lo que va a entrar» (13/11, dueño: «solo los mayoristas se atrasan en pagar») ═══════════════════
+  console.log('\n── 1-2. El equipo ──');
   let r = await ev(() => { VENTAS(); return { btn:!!document.getElementById('cbz-btn') }; });
   chk('«📅 Cobranza» está en Contabilidad → Revisar', r.btn, r);
   await page.click('#cbz-btn', { force:true }).catch(()=>ev(() => cbzAbrir()));
   await page.waitForTimeout(150);
-  r = await ev(() => { var D=cbzDatos(); return { T:D.T, tot:D.totD, txt:_txt('#cbz'), filas:_filas() }; });
-  chk('ya entregado y sin cobrar: Bs 7.900,00 en 5 ventas (todo el historial: agosto también, aunque la pantalla esté en noviembre)',
-      r.tot.n===5 && r.tot.bs===7900 && /Bs 7\.900,00/.test(r.txt), r.tot);
-  chk('⚠️ por tramos: 0-7 = 800+600 (ayer y hoy con ✅), 8-30 = 1.000, 31-60 = 1.500, más de 60 = 4.000',
-      r.T.d7.bs===1400 && r.T.d7.n===2 && r.T.d30.bs===1000 && r.T.d60.bs===1500 && r.T.d60m.bs===4000 && r.T.d60m.n===1, r.T);
-  chk('…la pagada, la RPT, lo de Eduardo y lo de ROHO no están', !/CLIENTE PAGADO|MIA PLAZA|MULTICENTER|ROHO/.test(r.filas.join('|')), r.filas);
-  chk('⚠️ hoy sin ✅, mañana y lejos NO son deuda (van a «Lo que va a entrar»)', !/CLIENTE HOY nota|CLIENTE MANANA|CLIENTE LEJOS/.test(r.filas.join('|')), r.filas);
-  chk('de la más vieja a la más nueva: CLIENTE VIEJO primero (103 días)', /^CLIENTE VIEJO/.test(r.filas[0]||'') && /103 d/.test(r.filas[0]||''), r.filas[0]);
-  chk('el cartel rojo de «Con más de 60 días» dice Bs 4.000,00', /Con más de 60 días Bs 4\.000,00/i.test(r.txt), r.txt.slice(0,300));
-
-  // ═══ 3. Filtrar y abrir ════════════════════════════════════════════════════════════════════
-  console.log('\n── 3. Tocar un tramo y un cliente ──');
-  r = await ev(() => { cbzTramo('d60'); return _filas(); });
-  chk('tocar «31 a 60 días» deja solo CLIENTE OCTUBRE', r.length===1 && /^CLIENTE OCTUBRE/.test(r[0]), r);
-  await page.click('#cbz .cbz-t tbody tr >> nth=0');
-  await page.waitForTimeout(150);
-  r = await ev(() => ({ txt:_txt('#modal-box'), volver:!!document.getElementById('pc-volver'), vtxt:_txt('#pc-volver') }));
-  chk('⚠️ tocar el cliente abre SU venta con «← Volver a la cobranza»', /CLIENTE OCTUBRE/.test(r.txt) && r.volver && /Volver a la cobranza/.test(r.vtxt), r.vtxt);
-  await page.click('#pc-volver');
-  await page.waitForTimeout(150);
-  r = await ev(() => ({ filas:_filas(), tab:CBZ.tab, tramo:CBZ.tramo }));
-  chk('volver muestra la cobranza como estaba (el mismo tramo)', r.tab==='ant' && r.tramo==='d60' && r.filas.length===1, r);
+  r = await ev(() => ({ tab:CBZ.tab, tabs:[].slice.call(document.querySelectorAll('#cbz .cbz-tabs>button')).map(function(b){ return b.innerText.trim(); }) }));
+  chk('⚠️ en Ventas abre «Lo que va a entrar» y NO tiene antigüedad de saldos (es de Mayoristas)', r.tab==='ent' && r.tabs.length===1 && /Lo que va a entrar/.test(r.tabs[0]), r);
+  r = await ev(() => { cbzTab('ant'); return CBZ.tab; });
+  chk('…ni pidiéndola a mano', r==='ent', r);
+  r = await ev(() => { var D=cbzDatos(); return { T:D.T, tot:D.totD }; });
+  chk('(la cuenta de la deuda por tramos sigue andando por dentro: 0-7 = 1.400, 8-30 = 1.000, 31-60 = 1.500, +60 = 4.000)',
+      r.tot.n===5 && r.tot.bs===7900 && r.T.d7.bs===1400 && r.T.d30.bs===1000 && r.T.d60.bs===1500 && r.T.d60m.bs===4000, r);
 
   // ═══ 4. Lo que va a entrar ═════════════════════════════════════════════════════════════════
   console.log('\n── 4. Lo que va a entrar ──');
   r = await ev(() => { cbzTab('ent'); var D=cbzDatos(); return { V:D.V, tot:D.totV, cob:D.cobradoViene, filas:_filas(), txt:_txt('#cbz') }; });
   chk('por cobrar al entregar: Bs 5.700,00 en 3 ventas (hoy 700 · mañana 2.000 · lejos 3.000)', r.tot.bs===5700 && r.tot.n===3 && r.V.hoy.bs===700 && r.V.v7.bs===2000 && r.V.vmas.bs===3000, r);
   chk('…y lo ya cobrado de esas ventas (adelantos): Bs 1.500,00', r.cob===1500 && /Bs 1\.500,00/.test(r.txt), r.cob);
-  chk('en orden de entrega: hoy, mañana, lejos', /^CLIENTE HOY/.test(r.filas[0]||'') && /^CLIENTE MANANA/.test(r.filas[1]||'') && /^CLIENTE LEJOS/.test(r.filas[2]||''), r.filas);
+  chk('en orden de entrega: hoy, mañana, lejos; lo pagado, la RPT, lo de Eduardo y ROHO no están', /^CLIENTE HOY/.test(r.filas[0]||'') && /^CLIENTE MANANA/.test(r.filas[1]||'') && /^CLIENTE LEJOS/.test(r.filas[2]||'') && !/PAGADO|MIA PLAZA|MULTICENTER|ROHO/.test(r.filas.join('|')), r.filas);
   r = await ev(() => { var p=findById('v9'); p.fecha=''; p.productos[0].avisa='2026-11-20'; cbzPintar(); var D=cbzDatos(); var o={ av:D.V.avisa, vmas:D.V.vmas }; p.fecha='2026-11-30'; delete p.productos[0].avisa; return o; });
   chk('una venta que «el cliente avisa cuándo» va aparte', r.av.n===1 && r.av.bs===3000 && r.vmas.n===0, r);
+  r = await ev(() => { cbzTramo('vmas'); return _filas(); });
+  chk('tocar «Más adelante» deja solo CLIENTE LEJOS', r.length===1 && /^CLIENTE LEJOS/.test(r[0]), r);
+  await page.click('#cbz .cbz-t tbody tr >> nth=0');
+  await page.waitForTimeout(150);
+  r = await ev(() => ({ txt:_txt('#modal-box'), volver:!!document.getElementById('pc-volver'), vtxt:_txt('#pc-volver') }));
+  chk('⚠️ tocar el cliente abre SU venta con «← Volver a la cobranza»', /CLIENTE LEJOS/.test(r.txt) && r.volver && /Volver a la cobranza/.test(r.vtxt), r.vtxt);
+  await page.click('#pc-volver');
+  await page.waitForTimeout(150);
+  r = await ev(() => ({ filas:_filas(), tab:CBZ.tab, tramo:CBZ.tramo }));
+  chk('volver muestra la cobranza como estaba (el mismo plazo)', r.tab==='ent' && r.tramo==='vmas' && r.filas.length===1, r);
 
   // ═══ 5. Vendedor ═══════════════════════════════════════════════════════════════════════════
   console.log('\n── 5. El vendedor de la ventana ──');
-  r = await ev(() => { cbzTab('ant'); var s=document.getElementById('cbz-vend'); s.value='Maria Flores'; s.dispatchEvent(new Event('change')); var D=cbzDatos(); return { tot:D.totD, filas:_filas() }; });
-  chk('con Maria Flores elegida, solo lo suyo (Bs 1.000,00)', r.tot.n===1 && r.tot.bs===1000 && /^CLIENTE NOVIEMBRE/.test(r.filas[0]||''), r);
-  r = await ev(() => { cbzCopiar('ant'); cbzExcel('ant'); return { c:COPIADO, d:DESCARGAS.slice() }; });
-  chk('📋 Copiar y ⬇️ Excel de la antigüedad', /Antigüedad de saldos/.test(r.c) && /CLIENTE NOVIEMBRE/.test(r.c) && /^antiguedad-de-saldos-maria-flores-2026-11-12\.xlsx$/.test(r.d[r.d.length-1]||''), r);
+  r = await ev(() => { cbzTramo(''); var s=document.getElementById('cbz-vend'); s.value='Maria Flores'; s.dispatchEvent(new Event('change')); var D=cbzDatos(); return { tot:D.totV, filas:_filas() }; });
+  chk('con Maria Flores elegida, solo lo suyo (no tiene nada por entregar)', r.tot.n===0 && !r.filas.length, r);
+  r = await ev(() => { var s=document.getElementById('cbz-vend'); s.value=''; s.dispatchEvent(new Event('change')); cbzCopiar('ent'); cbzExcel('ent'); return { c:COPIADO, d:DESCARGAS.slice() }; });
+  chk('📋 Copiar y ⬇️ Excel de lo que va a entrar', /Lo que va a entrar/.test(r.c) && /CLIENTE MANANA/.test(r.c) && /^lo-que-va-a-entrar-todo-el-equipo-2026-11-12\.xlsx$/.test(r.d[r.d.length-1]||''), r);
+
+  // ═══ 5b. Antigüedad de saldos, en Mayoristas ══════════════════════════════════════════════════
+  console.log('\n── 5b. Antigüedad de saldos (Mayoristas) ──');
+  r = await ev(() => { MAYOR(); cbzAbrir('ant'); var D=cbzDatos(); return { tab:CBZ.tab, T:D.T, tot:D.totD, viene:D.totV, filas:_filas(), txt:_txt('#cbz') }; });
+  chk('en Mayoristas está la antigüedad: Bs 6.500,00 en 3 OC (0-30 = 1.500, 31-60 = 3.000, +60 = 2.000); lo del equipo no',
+      r.tab==='ant' && r.tot.n===3 && r.tot.bs===6500 && r.T.d30.bs===1500 && r.T.d60.bs===3000 && r.T.d60m.bs===2000 && !/CLIENTE/.test(r.filas.join('|')) && /Bs 6\.500,00/.test(r.txt), r);
+  chk('…de la más vieja a la más nueva, y la de JUAN CARLOS ARCE (por entregar) no es deuda', /^MULTICENTER/.test(r.filas[0]||'') && !/JUAN CARLOS ARCE/.test(r.filas.join('|')) && r.viene.bs===1200, r.filas);
+  r = await ev(() => { cbzTramo('d60'); var f=_filas(); cbzExcel('ant'); return { f:f, d:DESCARGAS[DESCARGAS.length-1] }; });
+  chk('tocar «31 a 60 días» deja solo la de Copacaba; ⬇️ Excel', r.f.length===1 && /JOSE CARLOS COPACABA/.test(r.f[0]) && /^antiguedad-de-saldos-eduardo-anez-2026-11-12\.xlsx$/.test(r.d||''), r);
 
   // ═══ 6-7. Mayoristas ═══════════════════════════════════════════════════════════════════════
   console.log('\n── 6-7. Mayoristas: estado de cuenta y «Pagó las tildadas» ──');

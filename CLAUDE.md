@@ -1126,6 +1126,8 @@ tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada produc
 ## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; en la rama, espera «publica»)
 Contabilidad → «📅 Cobranza» (`#cbz-btn` en Revisar, `#cbz-btn2` en el libro de arriba) → `cbzAbrir()`: la planilla que se mira (Ventas = el equipo,
 Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo mira, salvo «Pagó las tildadas».
+- 🏭 **La antigüedad es SOLO de Mayoristas** (dueño, 13/11: *«¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar»*): en Ventas la
+  ventana tiene solo «📈 Lo que va a entrar». Lo viejo del equipo (39 de 46 ventas, de julio-agosto) es casi seguro pago no anotado, no deuda.
 - **📅 Antigüedad** (`cbzDatos().deuda`): lo ya entregado con saldo por días desde `fechaSalida` (0-7, 8-30, 31-60, +60, sin fecha). «Ya entregado» = fecha
   pasada, u hoy con ✅ (regla de siempre). Tramo tocable, cliente → su venta (`POR_COBRAR_VOLVER.origen='cbz'`, «← Volver a la cobranza» = `cbzVolver`).
 - **📈 Lo que va a entrar** (`.viene`): saldo de lo no entregado por plazo (hoy sin ✅, 7, 14, más adelante, `entregaAConfirmar` aparte) + lo ya cobrado de esas.

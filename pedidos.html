@@ -3353,7 +3353,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <button id="nx-pst-btn" class="btn btn-primary btn-sm" style="width:auto" onclick="nxPstAbrir()">🧾 Pagos sin terminar</button>
           <button id="cx-dup-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cxDupAbrir()">👯 Dos veces</button>
           <button id="cx-deben-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="abrirPorCobrar('ventas')">⏳ Deben</button>
-          <button id="cbz-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cbzAbrir()" title="Antigüedad de saldos, lo que va a entrar y, en Mayoristas, el estado de cuenta de cada cliente">📅 Cobranza</button>
+          <button id="cbz-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cbzAbrir()" title="Lo que va a entrar; en Mayoristas, además, el estado de cuenta de cada cliente y la antigüedad de saldos">📅 Cobranza</button>
         </div>
         <div class="cx-gr cx-gr-cargar"><span class="cx-gr-t">➕ Cargar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
@@ -10294,7 +10294,9 @@ function cbzVendSelHtml(){
 }
 function cbzAbrir(tab){
   var mayor=contaAmbito()==='mayor';
-  CBZ.tab=tab || (mayor ? 'cli' : 'ant'); if(CBZ.tab==='cli' && !mayor) CBZ.tab='ant';
+  /* (13/11, dueño: «¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar») La antigüedad de saldos es SOLO de Mayoristas; en
+     Ventas (el equipo) la ventana muestra lo que va a entrar. */
+  CBZ.tab=tab || (mayor ? 'cli' : 'ent'); if(!mayor && CBZ.tab!=='ent') CBZ.tab='ent';
   CBZ.tramo=''; CBZ.cli=''; CBZ.sel={};
   if(!mayor){ var vs=((document.getElementById('cta-vendedor')||{}).value||'').trim(); CBZ.vend=vs; } else CBZ.vend='';
   POR_COBRAR_VOLVER=null;
@@ -10306,8 +10308,8 @@ function cbzTab(t){ CBZ.tab=t; CBZ.tramo=''; CBZ.cli=''; cbzPintar(); }
 function cbzPintar(){
   var box=document.getElementById('cbz'); if(!box) return;
   var mayor=contaAmbito()==='mayor', D=cbzDatos(), sc=box.parentNode ? box.parentNode.scrollTop : 0;
-  var tabs=[['ant','📅 Antigüedad de saldos'],['ent','📈 Lo que va a entrar']];
-  if(mayor) tabs.unshift(['cli','🏭 Por cliente']);
+  var tabs=mayor ? [['cli','🏭 Por cliente'],['ant','📅 Antigüedad de saldos'],['ent','📈 Lo que va a entrar']] : [['ent','📈 Lo que va a entrar']];
+  if(!mayor && CBZ.tab!=='ent') CBZ.tab='ent';
   var h='<div class="cbz-tabs" role="tablist">'+tabs.map(function(t){ return '<button type="button" role="tab" aria-selected="'+(CBZ.tab===t[0])+'" class="'+(CBZ.tab===t[0]?'on':'')+'" onclick="cbzTab(\''+t[0]+'\')">'+t[1]+'</button>'; }).join('')+
     cbzVendSelHtml()+'</div>';
   if(CBZ.tab==='cli') h+=(CBZ.cli ? cbzCliDetHtml(CBZ.cli) : cbzCliListaHtml());

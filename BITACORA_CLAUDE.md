@@ -18631,4 +18631,7 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - «Incobrable» (lo que decía la propuesta) NO se hizo: cambiaría «Falta cobrar» en todo el panel. Queda para cuando el dueño diga si un incobrable sale
   de esos números.
 - `test_conta_4jw` cambió a conciencia (Revisar tiene 4 botones). `tests/test_cobranza.js` (34; sin `cbzAbrir` falla en la primera).
+- **Misma tarde, el dueño: *«La 136 sería con la 129? Solo los mayoristas se atrasan en pagar…»*** → la antigüedad de saldos queda SOLO en Mayoristas
+  (pestañas Por cliente · Antigüedad · Lo que va a entrar); en Ventas, solo «Lo que va a entrar». Lo que tenía el equipo «con más de 60 días»: 39 de las 46
+  ventas son de julio-agosto (los primeros meses del panel), 24 sin ningún pago anotado: casi seguro cobradas y no anotadas. Se le dijo; no se tocó nada.
 
