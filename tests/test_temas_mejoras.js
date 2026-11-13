@@ -128,7 +128,12 @@ function armarDashboard(){
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
   r = await mira('?tema=black-friday');
-  chk('2 · Black Friday (muestra, solo con ?tema): la etiqueta dibujada al lado del nombre y la noche negra, SIN la cinta amarilla de arriba (dueño, 13/11: «no me gusta»)', r.papel==='none' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(5, 5, 5\)/.test(r.fondo), r);
+  chk('2 · Black Friday (muestra, solo con ?tema): la etiqueta dibujada al lado del nombre, SIN la cinta amarilla de arriba (dueño, 13/11: «no me gusta»); a las 10:00 el cielo de día (azul)', r.papel==='none' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(15, 31, 61\)/.test(r.fondo), r);
+  /* 🌅 (13/11, dueño: «el fondo no iba por hora del día, el sol bajando y etc.?») en Black Friday el encabezado cambia según la hora; la noche, negra */
+  { const fondoA = async (h) => { const p=await abrir(PEDIDOS, '2026-11-20T'+h+':00-04:00', { q:'' }); const x=await p.evaluate(()=>{ var H=document.querySelector('.header'); return { m:H.getAttribute('data-momento'), f:getComputedStyle(H).backgroundImage.slice(0,60) }; }); await cerrar(p); return x; };
+    const am=await fondoA('06:40'), di=await fondoA('12:00'), at=await fondoA('17:50'), no=await fondoA('21:30');
+    chk('2 · Black Friday según la hora: amanecer violeta, día azul, atardecer anaranjado y la noche negra', am.m==='amanecer' && /rgb\(30, 27, 75\)/.test(am.f) && di.m==='dia' && /rgb\(30, 58, 138\)/.test(di.f) &&
+      at.m==='atardecer' && /rgb\(67, 20, 7\)/.test(at.f) && no.m==='noche' && /rgb\(5, 5, 5\)/.test(no.f), [am, di, at, no]); }
   r = await mira('?tema=espuma');
   chk('2 · Espuma: el brillo que pasa por el nombre (la letra recortada sobre un degradé que se mueve), sin emoji', /text/.test(r.clip) && r.anLogo==='esp-brillo' && (r.logoTxt==='none' || r.logoTxt==='normal'), r);
   r = await mira('?tema=todos-santos', 390);
