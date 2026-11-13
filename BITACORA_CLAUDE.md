@@ -18683,3 +18683,10 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
   dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
   Black Friday, 2027 corrido un día, y el dashboard igual.
+
+### §4ps — 🚀 PUBLICADO 13/11: SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
+El dueño (13/11): *«listo implementado»* (el `.gs` de las almohadas, enlace fijo `0f1eefe…`, 8.104 líneas). El servidor contesta `2026-11-13-a`
+(verificado con una lectura). Se publicó la página `2026-11-13-a` con TODO lo de la rama desde la 11-a: §4pn (espera la 13-a), §4pp Cobranza
+(136/143/129 + los arreglos de Fable), §4po el GPS propone el camión (133), §4pq el retiro con el N° del recibo y los dos recibos (facturado /
+no facturado), la música de noviembre solo el 1 y el 2, y §4pr el tema de Black Friday del 20 al 30/11 (panel y dashboard). `PANEL_V` y
+`panel-version.json` juntos. Volver atrás del servidor: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.

@@ -843,7 +843,7 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
-## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; en la rama, espera «publica»)
+## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
 oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
@@ -911,7 +911,7 @@ La plataforma del GPS (service24gps, documentación en docs.redgps.com): `gettok
   clase dentro de `#pt-ov` que se llame como una de la página hereda sus reglas (`.toast` lo estiraba de arriba hasta abajo).
 - `tests/test_gps.js` (99, el `.gs` real con una plataforma de mentira), `tests/test_gps_pagina.js` (58). Bitácora §4ko, §4kp, §4kq.
 - **🙈 Ocultar en Mis pedidos y Administración** (13/10): `misPlegar(k)` (`me_mis_plegado`) para las ventas de Kommo y las respuestas al bot. `tests/test_ocultar.js`.
-- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; en la rama `idea-133`): un pedido de HOY sin camión
+- **🚚 El GPS completa el camión que faltó** (§4po, 13/11, idea 133; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a): un pedido de HOY sin camión
   (`vehiculoDe` vacío) que el GPS vio en la puerta (`gpsLlegadaDe`) → el panel PROPONE «lo llevó <camión> · <chofer>» (`gpsCamionPropuestas`/`gpsCamionPropDe`;
   chofer = `choferDeCamion` con los pedidos de hoy, rotan). Cartel azul `#gps-cam-bar` al lado del de §4ok-106 (tabla y fichas) y «· lo llevó» en la fila del
   cierre de entregas; una persona toca «🚚 Asignar» (`gpsCamionAsignar`, por `persistPedido` → `guardarDurable`) o «Asignar los N» (`gpsCamionAsignarTodos`).
@@ -1132,7 +1132,7 @@ fila y el número de cada pestaña en la esquina (≥701); el **Plan de stock pa
 «Pedir» quedaban afuera) — ⚠️ sus anchos mínimos solo con `min-width:821px` (debajo es en tarjetas); «De dónde sale lo vendido» con las dos
 tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada producto en la misma columna (`.fl-pls` 96 px). `tests/test_estetica_4mp.js`.
 
-## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; en la rama, espera «publica»)
+## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; PUBLICADO 13/11, versión 2026-11-13-a)
 Contabilidad → «📅 Cobranza» (`#cbz-btn` en Revisar, `#cbz-btn2` en el libro de arriba) → `cbzAbrir()`: la planilla que se mira (Ventas = el equipo,
 Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo mira, salvo «Pagó las tildadas».
 - 🏭 **La antigüedad es SOLO de Mayoristas** (dueño, 13/11: *«¿la 136 sería con la 129? Solo los mayoristas se atrasan en pagar»*): en Ventas la
@@ -1734,7 +1734,7 @@ un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara pág
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
 🧾📄 **Dos recibos: lo facturado y lo no facturado** (13/11, dueño: *«¿y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique
-ahí que se refiere si las ventas es con factura o nota remisión»*; en la rama): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
+ahí que se refiere si las ventas es con factura o nota remisión»*; PUBLICADO 13/11, versión 2026-11-13-a): «¿De qué ventas es la plata?» explica Facturado = ventas con factura y No
 facturado = ventas con nota de remisión (`docVentaDe`), cada cobro de la lista dice «🧾 con factura» / «📄 con remisión» / «sin anotar», y mientras nadie
 toque los botones el tipo sale de lo tildado (`retTipoDocs`; `tipoMano`). «🧾+📄 Las dos» (solo en un retiro NUEVO) pide los DOS N° de recibo y cuánto es lo
 facturado (propuesto: lo tildado con factura) y `guardarRetiroAmbos` carga DOS retiros comunes (cada uno con su tipo, recibo, monto y cobros tildados; lo
@@ -1809,7 +1809,7 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 `waCdPry_` dice la proyección de Heaven y de Sueña que ya trae la foto de `__pry_hist__` (`b`), entre paréntesis y la más grande primero, como
 `waPregMesTxt_`. La plantilla no cambia. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…` (8.087 líneas).
 
-## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` lo implementa el dueño)
+## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` IMPLEMENTADO 13/11 por el dueño, contesta `2026-11-13-a`, enlace fijo `0f1eefe…`, 8.104 líneas; página 2026-11-13-a PUBLICADA 13/11)
 `waCdEsAlmohada_` (`WA_CD_ALMOHADA`: ALMOHADA, ALMOH, ALM, TRAVESSEIRO, NASA, la familia de `stockEsAlmohadaK`): `waCdProds_` no las suma (el «N productos» del
 cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista APARTE en cursiva, «+ 6 almohadas (no cuentan como productos): …». La plata no
 cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.
