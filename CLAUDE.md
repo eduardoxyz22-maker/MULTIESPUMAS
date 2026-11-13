@@ -1764,6 +1764,12 @@ Cristhian-Diego · Fotón insumo Miguel Melgar… Es rotativo sí»*; PUBLICADO 
 `waCdPry_` dice la proyección de Heaven y de Sueña que ya trae la foto de `__pry_hist__` (`b`), entre paréntesis y la más grande primero, como
 `waPregMesTxt_`. La plantilla no cambia. Volver atrás: ✏️ a la versión anotada Y pegar la 09-a de `fba6325…` (8.087 líneas).
 
+## 🪶 Las almohadas no cuentan como productos en el cierre del día (§4pn, 12-13/11; dueño, con el cierre en la mano: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*; servidor `2026-11-13-a` lo implementa el dueño)
+`waCdEsAlmohada_` (`WA_CD_ALMOHADA`: ALMOHADA, ALMOH, ALM, TRAVESSEIRO, NASA, la familia de `stockEsAlmohadaK`): `waCdProds_` no las suma (el «N productos» del
+cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista APARTE en cursiva, «+ 6 almohadas (no cuentan como productos): …». La plata no
+cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.
+Volver atrás: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
+
 ## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11, versión 2026-11-10-g, `4f830a3`)
 El 11-096 (entrega 13/11) salió ENTREGADO en Mis pedidos y no había forma de saber quién: la planilla no guarda historia del ✅. Ahora cada guardado
 que cambia `entregado` deja `eH` en cada producto (últimas 8: puesto/sacado, cuándo, quién = `quienEdita()`, aparato `entAparato`, desde dónde

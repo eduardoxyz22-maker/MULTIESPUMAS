@@ -18594,3 +18594,13 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
     cargada) y `test_mispedidos` (1; sola y 6 a la vez, 33/33). `test_estetica_4mo` con 15 a la vez a veces falla 1·1440 (`--hdr-h` 84): lo
     publicado (`main`) falla igual o más (7 de 8 corridas en paralelo; la copia nueva 1 de 6). En `pub_mn` (rama `pub-ni`, `5ae4c4b`): la nueva
     52, temas 92, 3/10/11 29, fichas 13, visual 20, arriba 24, celular 35, estética 4mp 9, cupos 23, reprogramar 26, cierre 26, Halloween 22, Navidad 21.
+
+### §4pn — 🪶 LAS ALMOHADAS NO CUENTAN COMO PRODUCTOS EN EL CIERRE DEL DÍA (12-13/11; dueño, con la captura del cierre del 12/11: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*)
+- En la captura: Isabel «13 prod.» con 6 almohadas, Carola «12 prod.» con 4; el total «30 productos».
+- `.gs` `2026-11-13-a`: `waCdEsAlmohada_` (misma familia que `stockEsAlmohadaK` de la página, sin mayúsculas ni acentos) → `waCdProds_` no las suma; `waCdDetalle_`
+  las pone aparte, en cursiva, «+ N almohadas (no cuentan como productos): …». Los montos (Bs) no cambian. Sábanas/protectores siguen contando.
+- Página: solo `SCRIPT_VERSION_ESPERADA` → 2026-11-13-a (publicar DESPUÉS de que el dueño implemente). `test_wa_buen_dia_cierre` 143/0, `test_wa_13_25_26` 103/0,
+  `test_wa_bot` 253/0, `test_servidor` 414/0. `test_wa_equipo` 6b ya estaba rojo antes (fija la versión 09-a): no es de este cambio.
+- 👥 El mismo día: Eliana Vargas (76359297) a `WA_DUENO` como Alberto, con una función que el dueño corre en un archivo aparte (`agregarElianaUnaVez`) y
+  `probarMensajeAEliana` (le manda el cierre de hoy de prueba). El número NO va al repo.
+
