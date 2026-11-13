@@ -881,6 +881,13 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   `stockMesesSobra` al ritmo de 60 días; entra (`ofertaEntra`) con ≥ `OFERTA_MESES`=6 meses, sin ventas con ≥2 libres, o discontinuado (🛑 liquidar). Precio = `precioTipico`
   del código con más ventas y, si ninguno junta 3 ventas, **≈ la mediana de todo lo cobrado por ese producto** (sus códigos de ventas y del catálogo, `ofertaCodsDeK`;
   ajuste mío al juntar: con la planilla real 40 de 47 salían «sin precio», quedaron 30). Ordena por plata parada; filtros, Copiar y Excel. `test_stock_oferta` (39).
+- **🚚 203 ¿Qué camión lo llevó? y 204 Entregas por camión**: en ✅ Cierre de entregas, cada pedido sin camión (hoy y atrasados) trae un selector (`cierreEntCamHtml`) elegido
+  con la propuesta del GPS (`gpsCamionPropDe`); lo que retira el cliente dice «lo retiró el cliente». Elegir no guarda: va en `plan.cam` (también en `me_cierre_pend`) y
+  `cierreEntAplicar` → `cierreEntCamPoner` lo escribe en el MISMO `guardarDurable` del ✅, con el chofer de ese camión ESE día (`camChoferDelDia`), sin pisar nada; lo
+  tildado sin camión se confirma igual y ofrece «🚚 Elegir el camión» (`camAnotarAbrir`). Herramientas → «🚚 Entregas por camión» (`#ec-overlay`, `ecDatos`,
+  `ecFilasPorCamion`/`ecFilasPorChofer`): las entregas del mes que ya salieron (fecha pasada o ✅; hoy solo con ✅) por camión o chofer y por tienda de quien vendió
+  (`sucursalDeVendedor` con `contaFecha`; aparte Mayoristas, ROHO, RPT, ATC, Internos), con unidades, detalle, Copiar y Excel; solo mira. ⚠️ Una columna nueva por camión
+  (el GPS) sale de `ecFilasPorCamion`. `test_cierre_camion` (19), `test_entregas_camion` (27).
 - **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
   (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
   «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada
