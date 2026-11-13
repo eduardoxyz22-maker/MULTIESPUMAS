@@ -1117,6 +1117,18 @@ fila y el número de cada pestaña en la esquina (≥701); el **Plan de stock pa
 «Pedir» quedaban afuera) — ⚠️ sus anchos mínimos solo con `min-width:821px` (debajo es en tarjetas); «De dónde sale lo vendido» con las dos
 tablas alineadas (`table-layout:fixed`); la ficha con los botones de cada producto en la misma columna (`.fl-pls` 96 px). `tests/test_estetica_4mp.js`.
 
+## ⏳ Cobranza: antigüedad de saldos (136), lo que va a entrar (143) y el estado de cuenta de cada mayorista (129) (§4pp, 13/11; dueño: «136, 143, 129, 133»; en la rama, espera «publica»)
+Contabilidad → «📅 Cobranza» (`#cbz-btn` en Revisar, `#cbz-btn2` en el libro de arriba) → `cbzAbrir()`: la planilla que se mira (Ventas = el equipo,
+Mayoristas = Eduardo) y TODO el historial, no el período de la pantalla. Solo mira, salvo «Pagó las tildadas».
+- **📅 Antigüedad** (`cbzDatos().deuda`): lo ya entregado con saldo por días desde `fechaSalida` (0-7, 8-30, 31-60, +60, sin fecha). «Ya entregado» = fecha
+  pasada, u hoy con ✅ (regla de siempre). Tramo tocable, cliente → su venta (`POR_COBRAR_VOLVER.origen='cbz'`, «← Volver a la cobranza» = `cbzVolver`).
+- **📈 Lo que va a entrar** (`.viene`): saldo de lo no entregado por plazo (hoy sin ✅, 7, 14, más adelante, `entregaAConfirmar` aparte) + lo ya cobrado de esas.
+- **🏭 Por cliente** (solo Mayoristas, `cbzMayDatos`): `cbzMayCliente` junta Multicenter (`stockEsMulticenter`), Tienda Amiga, ROHO, Copacaba (también «Juan
+  Carlos Arce») y Luis Franco; los demás por nombre sin tildes. Casillas + «💵 Pagó las N tildadas» (`cbzPagoRegistrar`): banco (QR = transferencia), fecha,
+  N° y comprobante OBLIGATORIOS como «Registrar pago»; un renglón por OC por su saldo entero con `aplicarCobros`, de a una, revisando el saldo antes (la
+  pagada mientras tanto se saltea). Excel y texto del estado de cuenta (`cbzCliExcel`/`cbzCliCopiar`).
+- ⚠️ Saldo = `contaFaltaCobrar`; nada se calcula aparte. Un cliente mayorista nuevo con varios nombres va en `cbzMayCliente`. `tests/test_cobranza.js` (34).
+
 ## 🔎 Lo que quedaba del informe de Codex/Astra del 25/10 (§4mk, PUBLICADO 25/10, `fd0d889`)
 El dueño: Grupo 1 *«Sí, todo»*, el efectivo *«igual que el Cuadre del mes»*, el almacén vacío *«saltarlo con un aviso»*, Comprobantes con «N° de pago».
 - **Precios**: `mismoContenido` compara el renglón ENTERO (`prodHuellaComparar`): un reintento viejo ya no pisa una corrección de precios.

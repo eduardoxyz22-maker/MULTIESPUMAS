@@ -18604,3 +18604,15 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - 👥 El mismo día: Eliana Vargas (76359297) a `WA_DUENO` como Alberto, con una función que el dueño corre en un archivo aparte (`agregarElianaUnaVez`) y
   `probarMensajeAEliana` (le manda el cierre de hoy de prueba). El número NO va al repo.
 
+### §4pp — ⏳ COBRANZA: ANTIGÜEDAD DE SALDOS (136), LO QUE VA A ENTRAR (143) Y EL ESTADO DE CUENTA DE CADA MAYORISTA (129) (13/11; dueño, con las páginas «Contabilidad en el panel» y «Mejoras 128 a 135»: *«136, 143 , 129, 133»*; en la rama, espera «publica»)
+- Una ventana, «📅 Cobranza» en Contabilidad (`cbzAbrir`), con tres pestañas: 📅 Antigüedad de saldos, 📈 Lo que va a entrar y, en Mayoristas, 🏭 Por cliente.
+  Todo el historial de la planilla que se mira (Ventas o Mayoristas), con un vendedor elegible adentro (arranca con el de la pantalla).
+- Con la copia de la planilla del 12/11 (scratchpad, `cbz/ver.js`): el equipo debe Bs 110.469 de lo ya entregado en 46 ventas (44 clientes); más de 60 días
+  Bs 85.780 en 40 ventas (los mismos números de la propuesta del 09/11); por entregar Bs 47.383 (esta semana Bs 21.660), con Bs 32.990 ya cobrados de
+  adelanto. Mayoristas: Multicenter Bs 95.869 en 30 OC (Bs 31.008 de más de 60 días), Copacaba Bs 64.000, ROHO Bs 62.356, Tienda Amiga Bs 30.749.
+- «Pagó las tildadas» registra los pagos como Contabilidad de a uno (mismas obligaciones: banco, N°, comprobante). Decidido por mí: cada OC tildada queda
+  pagada ENTERA (un pago parcial va desde su venta) y una OC que alguien pagó mientras tanto se saltea. El comprobante se sube una vez y va en todas.
+- «Incobrable» (lo que decía la propuesta) NO se hizo: cambiaría «Falta cobrar» en todo el panel. Queda para cuando el dueño diga si un incobrable sale
+  de esos números.
+- `test_conta_4jw` cambió a conciencia (Revisar tiene 4 botones). `tests/test_cobranza.js` (34; sin `cbzAbrir` falla en la primera).
+
