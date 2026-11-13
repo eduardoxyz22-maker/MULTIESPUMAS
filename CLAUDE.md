@@ -855,6 +855,12 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
 - **🛍️ 177 Black Friday en números**: ficha `#pry-bf` en Proyección (con la contraseña) desde el primer día de la campaña hasta `BFN_DIAS_DESPUES`=7 después. Los días
   los da `bfCampana(año)` del `<head>` (la cuenta de `BF_DIAS`). Lo vendido por el día de CARGA con `pryVentas` (equipo; mayoristas aparte; sin ATC/RPT/ROHO) contra los
   mismos días hábiles justo antes (a esta altura mientras dura). Todo sale de `bfnDatos`. `test_bf_numeros` (53).
+- **🎧📉 178-180 ATC y calidad**: en la pestaña ATC (`#atc-calidad`, `atcqPintar`) y dos hojas del informe PDF (`atciCalidadHojas`, `atciMesesHoja`, `D.cal`). **178** ATC cada
+  100 colchones y somieres vendidos por línea (`atcqTasa`; marca y línea con `atciProdDe`, la MISMA regla para ATC y ventas; ventas de `cliEntra` sin lo que ROHO manda a
+  «TIENDA n»; **las de Eduardo cuentan**, decisión pendiente del dueño), ventana fija de `ATCQ_MESES`=6 meses desde `PRY_PRIMER_MES`, rojo arriba de `ATC_TASA_ALERTA`=8 % con
+  ≥ `ATCQ_MIN_VENDIDOS`=20. **179** el mismo celular (`cliCelClave`): aviso `#atc-otra` en el formulario (no frena), chip «🔁 Nª ATC» (`atcRepChip`, `ATCQ_REP` en
+  `renderAtc`). **180** meses desde la compra (`atcqMeses`) en tramos (`ATCQ_TRAMOS`) por línea y por motivo. ⚠️ Una hoja nueva del informe corre los conteos de
+  `test_atc_informe` (ahora 11 hojas). `test_atc_calidad` (54).
 - **🏭⏳ 181 Lo vencido de los mayoristas, los lunes a Contabilidad** (servidor **`2026-11-13-b`**, lo implementa el dueño): los lunes 08:00 (lunes feriado → primer
   hábil de la semana) `mayoristas_vencido` (6 datos, UTILITY, sin respaldo) SOLO a `WA_CONTABILIDAD`, nunca a `WA_DUENO`; sin nada vencido ni por vencer en 7 días no
   sale (`WA_HECHO.mv`). ⚠️ `waMv*` copia la Cobranza de la página (`cbzMayCliente`, `CBZ_PLAZOS`, `CBZ_MAY_ALIAS`, `cbzMayDatos`, `sinMontoAnotado`): **un plazo nuevo va
