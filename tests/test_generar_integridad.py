@@ -72,9 +72,18 @@ SIN_CONTRATO = False
 
 NOMBRE_ANA = "Ana Prueba - Central"   # el caso 9 la cambia por «Ána Prúeba» (con tildes), como pasó con Carola en Kommo
 
-def fabricar_urlopen(fallar=None):
-    """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None."""
+PANEL_PEDIDOS = []   # (175) lo que el generador le pidió al panel de pedidos (el Apps Script de mentira)
+ULTIMO_HTML = ""     # el index.html de la última corrida
+
+def fabricar_urlopen(fallar=None, panel=None):
+    """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None.
+    panel(req) → lo que contesta el panel de pedidos (un dict = JSON, bytes = tal cual, una excepción = se lanza); sin `panel`, 404."""
     def urlopen(req, timeout=None):
+        if "script.google.com" in req.full_url:
+            PANEL_PEDIDOS.append({"url": req.full_url, "metodo": req.get_method(), "cuerpo": (req.data or b"").decode("utf-8")})
+            r = panel(req) if panel else urllib.error.HTTPError(req.full_url, 404, "no existe", {}, io.BytesIO(b""))
+            if isinstance(r, Exception): raise r
+            return RespCruda(r) if isinstance(r, bytes) else Resp(r)
         u = urllib.parse.urlparse(req.full_url)
         path = u.path.replace("/api/v4", "")
         q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
@@ -122,13 +131,17 @@ class Resp:
     def __enter__(self): return self
     def __exit__(self, *a): return False
 
-def correr(fallar=None):
+class RespCruda(Resp):
+    def __init__(self, crudo): self.status = 200; self._b = crudo
+
+def correr(fallar=None, panel=None):
     """Corre main() con el Kommo de mentira. Devuelve (salida_con_error, PANEL_DATA o None, texto impreso)."""
     tmp = tempfile.mkdtemp(prefix="gen_integridad_")
     G.HERE = tmp
     G._DIAG.clear()
     if hasattr(G, "_FALLAS"): G._FALLAS.clear()
-    G._rq.urlopen = fabricar_urlopen(fallar)
+    del PANEL_PEDIDOS[:]
+    G._rq.urlopen = fabricar_urlopen(fallar, panel)
     G.time.sleep = lambda s: None
     out = io.StringIO(); err = io.StringIO(); salio = None
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -138,8 +151,10 @@ def correr(fallar=None):
             salio = e.code
     pd = None
     p = os.path.join(tmp, "index.html")
+    global ULTIMO_HTML
+    ULTIMO_HTML = ""
     if os.path.exists(p):
-        h = open(p, encoding="utf-8").read()
+        h = ULTIMO_HTML = open(p, encoding="utf-8").read()
         m = re.search(r"window\.PANEL_DATA = (\{.*?\});\n", h, re.S) or re.search(r"window\.PANEL_DATA = (\{.*\});", h)
         pd = json.loads(m.group(1)) if m else None
     return salio, pd, out.getvalue() + err.getvalue(), os.listdir(tmp)
@@ -254,6 +269,91 @@ if hasattr(G, "SUC_DE_USUARIO"):
     chk("10i. …y Banzer igual (10:30 adentro, 16:30 fuera); el lunes sigue 8:30 a 20:30 y Mia Plaza el lunes 9 a 21",
         fuera("Carola Chávez", 10, 30, 15) is False and fuera("Carola Chávez", 16, 30, 15) is True and fuera("Carola Chávez", 20, 20) is False and fuera("Jonathan Monje", 20, 30) is False)
     G.SUC_DE_USUARIO.clear(); G.SUC_DE_USUARIO.update(_antes)
+
+# ── 11-15 · (13/11, mejora 175) la meta en Bs de cada vendedora sale del panel de pedidos ───────────
+# El dueño quiere cargarlas en un solo lugar (el panel: Proyección → 🎯 Metas). La fila `__metas__` del panel: `m[ym].vd =
+# {nombre:[mínima, presupuesto]}`; la meta = el presupuesto (si es 0, la mínima). No es esencial: sin panel, VENDOR_CFG.
+YM = f"{G.YEAR}-{G.MONTH:02d}"
+URL_PANEL = "https://script.google.com/macros/s/PRUEBA_DE_MENTIRA/exec"
+SECRETOS = ("CLIENTE SECRETO", "70011223", "Calle Inventada 123", "PRUEBA_DE_MENTIRA")
+def panel_con(m, extra_ok=True):
+    """El Apps Script de mentira: contesta la lista con la fila de metas y una venta de un cliente (que no puede salir a ningún lado)."""
+    def contesta(req):
+        filas = [{"id": "v1", "cliente": "CLIENTE SECRETO", "celular": "70011223", "direccion": "Calle Inventada 123", "vendedor": "Ana Prueba"}]
+        if m is not None:
+            filas.append({"id": "__metas__", "cliente": "🎯 METAS", "observaciones": json.dumps({"v": 1, "m": m})})
+        return {"ok": True, "version": "2026-11-13-a", "pedidos": filas}
+    return contesta
+_cfg_antes = G.VENDOR_CFG.get("Ana Prueba")
+G.VENDOR_CFG["Ana Prueba"] = dict(ini="AP", color="#123456", suc="Central", metaCierres=35, metaMonto=135000)
+G.PANEL_URL = URL_PANEL
+
+# 11 · metas del panel presentes → se usan
+M11 = {YM: {"heaven": 400000, "vd": {"Ana Prueba": [120000, 150000], "Beto Prueba": [70000, 0], "Mauricio Merida": [75000, 120000]}, "esc": {"heaven": {"t": [], "bono": 1}}},
+       "2020-01": {"vd": {"Ana Prueba": [1, 2]}}}
+salio, pd, txt, archivos = correr(panel=panel_con(M11))
+if pd:
+    team = {t["name"]: t for t in pd["team"]}
+    ana, beto = team.get("Ana Prueba", {}), team.get("Beto Prueba", {})
+    chk("11a. con metas del panel para el mes, la meta en Bs de Ana es su PRESUPUESTO del panel (150.000), no la de VENDOR_CFG (135.000)",
+        ana.get("metaMonto") == 150000 and ana.get("metaFuente") == "panel", {k: ana.get(k) for k in ("metaMonto", "metaFuente", "metaCierres")})
+    chk("11b. la meta de CIERRES sigue saliendo de VENDOR_CFG (35)", ana.get("metaCierres") == 35, ana.get("metaCierres"))
+    chk("11c. Beto sin presupuesto (0) lleva su MÍNIMA (70.000), aunque solo haya trabajado el mes anterior", beto.get("metaMonto") == 70000 and beto.get("metaFuente") == "panel", {k: beto.get(k) for k in ("metaMonto", "metaFuente", "soloPrev")})
+    chk("11d. la meta del equipo en Bs es la suma de las del equipo: 150.000 + 70.000 = 220.000 (Mauricio no está en Kommo: no suma)",
+        sum(t.get("metaMonto", 0) for t in pd["team"]) == 220000, [(t["name"], t.get("metaMonto")) for t in pd["team"]])
+    chk("11e. una sola lectura al panel: POST de «list», con `_=` para que no salga de una caché", len(PANEL_PEDIDOS) == 1 and PANEL_PEDIDOS[0]["metodo"] == "POST" and
+        json.loads(PANEL_PEDIDOS[0]["cuerpo"]).get("action") == "list" and "?_=" in PANEL_PEDIDOS[0]["url"], PANEL_PEDIDOS[:1])
+    fuga = [s for s in SECRETOS if s in txt or s in ULTIMO_HTML]
+    chk("11f. ni el registro ni el index.html (los dos PÚBLICOS) dicen nada del cliente de la lista ni la dirección del panel", not fuga, fuga)
+    chk("11g. el registro dice cuántas vendedoras tienen meta del panel", re.search(r"3 vendedora\(s\) con meta", txt) is not None, [l for l in txt.split("\n") if "meta" in l.lower()][:4])
+else:
+    chk("11. (el panel con las metas del panel no se escribió)", False, txt[-400:])
+
+# 12 · el nombre con tilde empareja (el panel con tilde y mayúsculas, Kommo sin; y al revés)
+M12 = {YM: {"vd": {"ÁNA PRUÉBA": [0, 99000]}}}
+salio, pd, txt, archivos = correr(panel=panel_con(M12))
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("12a. «ÁNA PRUÉBA» en el panel empareja con «Ana Prueba» de Kommo: 99.000", ana.get("metaMonto") == 99000 and ana.get("metaFuente") == "panel", ana.get("metaMonto"))
+NOMBRE_ANA = "Ána Prúeba - Central"
+salio, pd, txt, archivos = correr(panel=panel_con({YM: {"vd": {"Ana Prueba": [80000, 98000]}}}))
+NOMBRE_ANA = "Ana Prueba - Central"
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ána Prúeba", {})
+chk("12b. y «Ána Prúeba» de Kommo con «Ana Prueba» del panel: 98.000", ana.get("metaMonto") == 98000, ana.get("metaMonto"))
+
+# 13 · la lectura del panel se cae → VENDOR_CFG y el panel se publica igual
+for nombre, resp in (("un 500", urllib.error.HTTPError(URL_PANEL, 500, "x", {}, io.BytesIO(b""))),
+                     ("una página de Google en vez del JSON", b"<!DOCTYPE html><html><body>Error CLIENTE SECRETO</body></html>"),
+                     ("un «clave» del servidor", {"ok": False, "error": "clave"}),
+                     ("sin red", urllib.error.URLError("sin red"))):
+    salio, pd, txt, archivos = correr(panel=(lambda req, r=resp: r))
+    ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+    chk(f"13. con {nombre} del panel: se publica igual, con la meta de VENDOR_CFG (135.000) y sin marca de panel, tras dos intentos",
+        pd is not None and salio in (None, 0) and ana.get("metaMonto") == 135000 and not ana.get("metaFuente") and len(PANEL_PEDIDOS) == 2 and not G._FALLAS,
+        (salio, ana.get("metaMonto"), len(PANEL_PEDIDOS), txt[-200:]))
+chk("13b. …y el diagnóstico lo dice sin la dirección ni lo que contestó", "no se pudo leer el panel" in txt and not [s for s in SECRETOS if s in txt or s in ULTIMO_HTML], [l for l in txt.split("\n") if "panel" in l][:3])
+
+# 14 · el mes no tiene metas por vendedora (o no hay fila de metas) → VENDOR_CFG
+for nombre, m in (("solo la meta de la marca", {YM: {"heaven": 500000}}), ("las de otro mes", {"2020-01": {"vd": {"Ana Prueba": [1, 5]}}}), ("sin fila de metas", None)):
+    salio, pd, txt, archivos = correr(panel=panel_con(m))
+    ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+    chk(f"14. {nombre}: queda la de VENDOR_CFG (135.000)", pd is not None and ana.get("metaMonto") == 135000 and not ana.get("metaFuente"), (ana.get("metaMonto"), txt[-160:]))
+
+# 15 · sin PANEL_URL no se le pregunta nada al panel
+G.PANEL_URL = ""
+salio, pd, txt, archivos = correr(panel=panel_con(M11))
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("15. sin el secreto PANEL_URL: ninguna lectura al panel y la meta de VENDOR_CFG", not PANEL_PEDIDOS and ana.get("metaMonto") == 135000 and "sin PANEL_URL" in txt, (len(PANEL_PEDIDOS), ana.get("metaMonto")))
+
+# 16 · `--month M --year YYYY` (un mes cerrado): las metas de ESE mes
+G.PANEL_URL = URL_PANEL
+G._rq.urlopen = fabricar_urlopen(None, panel_con({"2026-10": {"vd": {"Ana Prueba": [100000, 130000]}}, "2026-11": {"vd": {"Ana Prueba": [100000, 160000]}}}))
+_mdp = getattr(G, "metas_del_panel", lambda y, m: ({}, ""))
+mo, _t1 = _mdp(2026, 10)
+mn, _t2 = _mdp(2026, 11)
+chk("16. al regenerar octubre toma las de octubre (130.000) y noviembre las suyas (160.000)", mo.get("ana prueba") == 130000 and mn.get("ana prueba") == 160000 and "octubre 2026" in _t1, (mo, mn, _t1))
+G.PANEL_URL = ""
+if _cfg_antes is None: del G.VENDOR_CFG["Ana Prueba"]
+else: G.VENDOR_CFG["Ana Prueba"] = _cfg_antes
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())
