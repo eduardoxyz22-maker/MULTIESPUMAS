@@ -888,6 +888,10 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   `ecFilasPorCamion`/`ecFilasPorChofer`): las entregas del mes que ya salieron (fecha pasada o ✅; hoy solo con ✅) por camión o chofer y por tienda de quien vendió
   (`sucursalDeVendedor` con `contaFecha`; aparte Mayoristas, ROHO, RPT, ATC, Internos), con unidades, detalle, Copiar y Excel; solo mira. ⚠️ Una columna nueva por camión
   (el GPS) sale de `ecFilasPorCamion`. `test_cierre_camion` (19), `test_entregas_camion` (27).
+- **🗺️ 207 Dónde se vende**: Proyección → «🗺️ Dónde se vende» (solo con la contraseña) → `#dsv-ov` (`adm-ov`, `dsv-*`): lo vendido por zona y marca (Todas/Heaven/Sueña) este mes,
+  el pasado o los últimos 3. ⚠️ Sale de `pryVentas` (el equipo de tiendas): zonas + «vendidas en tienda» + «sin zona» = lo vendido de Proyección; mayoristas aparte, ROHO no.
+  Este mes se compara a esta altura (`pryCorteAltura`). Zona = la escrita (`zonaCanonica`) o `zonaCercaDe` con pin. Mapa Leaflet al abrir (sin internet, la lista): un círculo
+  por zona en el promedio de sus pines (`almPunto`), tamaño por Bs, color de la marca que más vende. «📋 Copiar para la publicidad». Solo mira. `test_mapa_ventas` (58).
 - **📍 185 Las ubicaciones que faltan para hoy y el próximo camión**: «Para hacer» de Administración → «📍 Faltan N ubicaciones» (`ubfHacer` → `ubfDatos`) y la lista
   (`ubfAbrir`): «💬 Pedir por WhatsApp» (`ubfMsg`, enlace de `misWaCliente`; el panel no manda nada), «✏️ Pegar ubicación», «📍 Abrir el pedido» (con «← Volver») y
   «✓ Ya la pedí» por aparato (`me_ubic_pedida`, por pedido y día). Sin ubicación = sin enlace, enlace ilegible (`fxMapaCoords`) o pin fuera de Santa Cruz; la aproximada
