@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-13-b';   // ⬅️ 🏭⏳ (11-13-b, dueño 13/11, mejora 181) a Contabilidad SOLA (WA_CONTABILIDAD; al dueño no), los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo VENCIDO de los mayoristas —el total, cuántas OC y, por cliente, lo vencido, cuántas OC y los días de atraso de la más atrasada— y lo que vence en los próximos 7 días, con la cuenta de Contabilidad → 🏭 Mayoristas → 📅 Cobranza y el plazo de cada uno (mayoristas_vencido; waMvDatos_)   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-13-b';   // ⬅️ 🛰️📚 (11-13-b, dueño 13/11, mejora 204) cómo le fue a cada camión: el GPS suma cada día los kilómetros y las horas fuera de PTF, Banzer y Moreno, y al cerrar el horario (21 h) deja una fila por día y camión en la hoja «Historial GPS» (primera salida, última vuelta, horas fuera, salidas, paradas, km); el panel la lee con `gpsHist` (gpsHist*) · 🏭⏳ (11-13-b, dueño 13/11, mejora 181) a Contabilidad SOLA (WA_CONTABILIDAD; al dueño no), los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo VENCIDO de los mayoristas —el total, cuántas OC y, por cliente, lo vencido, cuántas OC y los días de atraso de la más atrasada— y lo que vence en los próximos 7 días, con la cuenta de Contabilidad → 🏭 Mayoristas → 📅 Cobranza y el plazo de cada uno (mayoristas_vencido; waMvDatos_)   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -265,6 +265,7 @@ function probarAntesDeImplementar() {
     waUbDias_: typeof waUbDias_, waUbToca_: typeof waUbToca_, waVbDatos_: typeof waVbDatos_, waVbDetalle_: typeof waVbDetalle_,
     waPregQue_: typeof waPregQue_, waPregResponder_: typeof waPregResponder_, waPregClaude_: typeof waPregClaude_, probarPreguntasDelDueno: typeof probarPreguntasDelDueno,   // (2026-11-07-f)
     waMvDatos_: typeof waMvDatos_, waMvParams_: typeof waMvParams_, waMvToca_: typeof waMvToca_, probarBotH_: typeof probarBotH_,   // (2026-11-13-b)
+    gpsHistPaso_: typeof gpsHistPaso_, gpsHistGuardar_: typeof gpsHistGuardar_, gpsHistCierre_: typeof gpsHistCierre_, gpsHistLeer_: typeof gpsHistLeer_,   // (2026-11-13-b, mejora 204)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -554,6 +555,21 @@ function probarAntesDeImplementar() {
          mandaría hoy con la planilla leída en el paso 2 (solo cantidades y montos: ningún nombre de cliente acá). Solo lee; no frena. */
   try { probarBotH_(bien, ojo, vals); } catch (e) { ojo('No pude mirar lo vencido de los mayoristas (2026-11-13-b): ' + motivo(e)); }
 
+  /* 20. 🛰️📚 (2026-11-13-b, mejora 204) La hoja «Historial GPS» (cómo le fue a cada camión, un día por fila): si está y cuántas filas
+         tiene. Solo lee (ni clientes ni posiciones: fechas y cantidades); si no está, se arma sola al cerrar el primer día con GPS. */
+  try {
+    var shG = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(GPS_HIST_HOJA);
+    if (!shG) bien('La hoja «' + GPS_HIST_HOJA + '» todavía no existe: se arma sola a las 21 h del primer día con el GPS andando' +
+                   (gpsConfig_().ok ? '.' : ' (el GPS todavía no está configurado).'));
+    else {
+      var vG = shG.getDataRange().getValues(), fsG = [], dG = {};
+      for (var ig = 1; ig < vG.length; ig++) { var fg = histFecha_(vG[ig][0]); if (fg) { fsG.push(fg); dG[fg] = 1; } }
+      fsG.sort();
+      bien('La hoja «' + GPS_HIST_HOJA + '» tiene ' + fsG.length + ' fila(s) de ' + Object.keys(dG).length + ' día(s)' +
+           (fsG.length ? (', del ' + fsG[0] + ' al ' + fsG[fsG.length - 1]) : '') + '.');
+    }
+  } catch (e) { ojo('No pude mirar la hoja «Historial GPS» (2026-11-13-b): ' + motivo(e)); }
+
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
   lineas.push(veredicto);
@@ -582,6 +598,9 @@ function probarAntesDeImplementar() {
  * · (2026-10-13-c) LA PUERTA DE LOS DEPÓSITOS: quieto a menos de GPS_SALIDA_M de PTF, Banzer o Moreno y sin pedido de hoy cerca =
  *   esperando para entrar (o en la calle de atrás), no una parada: no se anota ni cuenta. Y de Moreno, los 45 min corren solo LEJOS
  *   de las bases (una parada EN UN PEDIDO cuenta siempre): de Moreno a PTF con espera en la puerta no es «salió».
+ * · (2026-11-13-b, mejora 204) CÓMO LE FUE A CADA CAMIÓN: además, cada día, los KILÓMETROS y las HORAS FUERA de las bases (en GPS_DIA,
+ *   unos números por placa) y, al cerrar el horario (21 h) o en el primer repaso del día siguiente, una fila por día y camión en la hoja
+ *   «Historial GPS». El panel la lee con `gpsHist`. Ver «EL HISTORIAL DEL GPS» más abajo. Nada de lo de antes cambia.
  * · ▶️ Desde el editor: `probarGps` (pide y muestra lo que devuelve la plataforma, sin guardar posiciones) y `estadoGps`.
  * ========================================================================== */
 var GPS_API = 'https://api.service24gps.com/api/v1/';
@@ -753,7 +772,13 @@ function gpsSalidas_(U, ahora, memo) {
   memo = memo || {};
   var deps = gpsDepositos_();   // una sola lectura de la propiedad por vuelta (cuenta para la cuota diaria de Propiedades)
   try { st = JSON.parse(prop_('GPS_DIA') || 'null'); } catch (e) { st = null; }
+  /* 📚 (2026-11-13-b, mejora 204) Un día que terminó y no quedó en la hoja «Historial GPS» a las 21 h (el disparador no corrió): va
+     ahora, antes de empezar el día nuevo. `h` = ya está en la hoja. */
+  if (st && st.f && st.f !== hoy && st.u && !st.h) {
+    try { memo.hist = gpsHistGuardar_(st); } catch (e) { memo.histError = String((e && e.message) || e).slice(0, 80); }
+  }
   if (!st || st.f !== hoy || !st.u) st = { f: hoy, u: {} };
+  delete st.h;   // el día sigue: lo de ahora en adelante también tiene que llegar a la hoja
   try { PA = JSON.parse(prop_('GPS_PAR') || 'null'); } catch (e) { PA = null; }
   if (!PA || PA.f !== hoy || !PA.u) PA = { f: hoy, u: {} };
   U.forEach(function (x) {
@@ -761,6 +786,7 @@ function gpsSalidas_(U, ahora, memo) {
     var cd = gpsCerca_(x.la, x.lo, deps), cb = gpsBase_(x.la, x.lo, deps);
     var dentro = !!cb && cb.m <= cb.radio, lejos = !cb || cb.m >= Math.max(GPS_SALIDA_M, cb.radio + 300);
     var t = (x.r && x.r <= ahora) ? x.r : ahora;
+    gpsHistPaso_(s, x, t, dentro);   // 📏 (2026-11-13-b) los km y el tiempo fuera de las bases
     var cerrarParada = function () { if (s.qi != null && s.qi >= 0 && par[s.qi]) par[s.qi][5] = 0; s.qi = -1; };
     if (dentro) {
       cerrarParada(); s.q = null; s.qb = 0;
@@ -770,7 +796,7 @@ function gpsSalidas_(U, ahora, memo) {
         if (s.cu && s.ts != null && s.ts >= 0 && s.ev && s.ev[s.ts]) {
           if (cb.id === 'moreno' && !s.tm) marca = 'rec';                           // fue a buscar a Moreno
           else if (cb.id !== 'moreno' && s.xd && s.xd !== cb.id && !s.tp) marca = 'tra';   // de un depósito al otro, sin pararse
-          if (marca) { s.ev[s.ts][3] = marca; s.v = s.vp || ''; gpsSalidasDeEv_(s); }
+          if (marca) { s.ev[s.ts][3] = marca; s.v = s.vp || ''; gpsSalidasDeEv_(s); s.ns = Math.max(0, (Number(s.ns) || 0) - 1); }   // (2026-11-13-b) no fue a repartir: no es una salida
         }
         gpsEvAnotar_(s, [gpsHora_(ahora), 'lle', cb.id, s.x ? (s.xd || '') : '']);
         if (s.cu && !marca && cb.id !== 'moreno') s.v = gpsHora_(ahora);           // volvió de un viaje que contó
@@ -795,6 +821,7 @@ function gpsSalidas_(U, ahora, memo) {
               else {
                 par.push([gpsHora_(s.q[0]), gpsHora_(fin), s.q[1], s.q[2], pp[0], 1, pp[1]]);
                 s.qi = par.length - 1; s.tp = (Number(s.tp) || 0) + 1; if (pp[0].length) s.tm = (Number(s.tm) || 0) + 1;
+                s.np = (Number(s.np) || 0) + 1; if (pp[0].length) s.nc = (Number(s.nc) || 0) + 1;   // (2026-11-13-b) las del día, para el historial
               }
             }
           } else if (gpsHora_(fin) > par[s.qi][1]) par[s.qi][1] = gpsHora_(fin);   // el reporte se durmió: no vuelve atrás
@@ -806,7 +833,7 @@ function gpsSalidas_(U, ahora, memo) {
         /* (2026-10-13-c) de Moreno: una parada en un pedido cuenta siempre; si no, recién LEJOS de las bases (de Moreno a PTF, la
            espera en la puerta de PTF no lo vuelve «salió» por los 45 min) */
         if (deMor ? ((Number(s.tm) || 0) > 0 || (lejos && ((Number(s.tp) || 0) > 0 || fuera >= GPS_FUERA_MORENO_MIN * 60000))) : (lejos && fuera >= GPS_FUERA_MIN * 60000)) {
-          s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.vp = s.v || ''; s.v = '';
+          s.cu = 1; s.n = (Number(s.n) || 0) + 1; s.ns = (Number(s.ns) || 0) + 1; s.vp = s.v || ''; s.v = '';
           s.ts = gpsEvAnotar_(s, [gpsHora_(s.x), 'sal', s.xd || '', '']);
           gpsSalidasDeEv_(s);
         }
@@ -890,7 +917,12 @@ function gpsGuardarRes_(res) { try { PropertiesService.getScriptProperties().set
 function gpsRepaso() {
   var t0 = Date.now(), B = waBo_(t0), cfg = gpsConfig_();
   if (!cfg.ok) return { ok: false, error: 'sin configurar' };            // sin las tres propiedades no escribe nada
-  if (B.hora < GPS_HORA_DESDE || B.hora >= GPS_HORA_HASTA || waDow_(B.hoy) === 0 || feriadoGs_(B.hoy)) return { ok: false, error: 'fuera de horario' };
+  if (B.hora < GPS_HORA_DESDE || B.hora >= GPS_HORA_HASTA || waDow_(B.hoy) === 0 || feriadoGs_(B.hoy)) {
+    /* 📚 (2026-11-13-b, mejora 204) Cerró el horario: el día a la hoja «Historial GPS», una vez (sin pedirle nada a la plataforma). */
+    var fh = { ok: false, error: 'fuera de horario' };
+    if (B.hora >= GPS_HORA_HASTA) { try { var nh = gpsHistCierre_(); if (nh) fh.hist = nh; } catch (e) {} }
+    return fh;
+  }
   if (t0 - (Number(prop_('GPS_ULT_MS')) || 0) < GPS_MIN_MS) return { ok: false, error: 'muy seguido' };
   var res = { ts: new Date(t0).toISOString(), n: 0, error: '' };
   var tok = gpsTokenLeer_();
@@ -910,6 +942,8 @@ function gpsRepaso() {
   var dia = gpsSalidas_(U, t0, memo);
   try { gpsRutaAnotar_(U, t0); } catch (e) {}                          // (2026-10-13-b) el recorrido del día, para todos
   if (memo.peds) res.leyo = memo.peds.length;                           // se leyó la planilla para nombrar una parada
+  if (memo.hist) res.hist = memo.hist;                                  // (2026-11-13-b) el día anterior quedó en «Historial GPS»
+  if (memo.histError) res.error = 'historial: ' + memo.histError;
   var c = getCache_();
   if (c) { try { c.put('gps_pos', JSON.stringify({ t: t0, u: U }), GPS_CACHE_SEG); c.put('gps_dia', JSON.stringify(dia), GPS_RUTA_SEG); } catch (e) { res.error = 'caché: ' + String((e && e.message) || e).slice(0, 80); } }
   res.ok = true; res.n = U.length; res.placas = U.map(function (x) { return x.pl || x.id; }).slice(0, 20).join(', ');
@@ -968,6 +1002,132 @@ function estadoGps() {
             depositos: gpsDepositos_(), moreno: GPS_MORENO };
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
+}
+/* ============================================================================
+ * 📚 EL HISTORIAL DEL GPS: CÓMO LE FUE A CADA CAMIÓN (2026-11-13-b, mejora 204). El dueño (13/11): un informe por camión con lo que
+ * manda el GPS: a qué hora salió, horas fuera, paradas y kilómetros. Hasta acá el GPS guardaba SOLO el día en curso (GPS_DIA).
+ * · KILÓMETROS (`gpsHistPaso_`, en cada lectura de `gpsRepaso`): la distancia en línea recta (haversine) entre una posición y la
+ *   anterior del mismo camión, sumada en el día (`km`, en metros, dentro de GPS_DIA: un número por placa). No suma:
+ *     – lo que se movió menos de GPS_KM_MIN_M (30 m): es el GPS que «baila» con el camión quieto. El punto de referencia NO se mueve,
+ *       así que un camión que avanza despacio igual suma cuando pasa los 30 m;
+ *     – un salto IMPOSIBLE: más de GPS_KM_MAX_KMH (150 km/h) entre esa lectura y la anterior. Esa posición no se toma; si llegan
+ *       GPS_KM_SALTOS (3) seguidas así, el camión de verdad está ahí (la de antes era la mala) y se sigue desde la nueva, sin sumar.
+ *   Es en línea recta entre lecturas de un minuto: en la ciudad da un poco menos que el odómetro.
+ * · HORAS FUERA DE LAS BASES (`fm`, en milisegundos): el tiempo entre una lectura y la siguiente cuenta si en la anterior el camión
+ *   estaba FUERA de PTF, Banzer y Moreno (de `gpsBase_`) y ese día ya había estado en alguna (como «salió»: si el GPS lo ve primero en la
+ *   calle, no se sabe desde cuándo). Si en el medio volvió a una base, como mucho GPS_HIST_HUECO_MIN (30 min) de ese hueco.
+ * · SALIDAS (`ns`) = las de «salió» que fueron a repartir (sin las de ir a recoger a Moreno ni los traslados); PARADAS (`np`) = las que
+ *   anota GPS_PAR (sin la puerta de los depósitos, 2026-10-13-c) y `nc` = las que tuvieron un pedido del día cerca. Se cuentan aparte
+ *   porque GPS_PAR se poda (tope de 24 y de 9 KB): el número del día no se pierde.
+ * · LA HOJA «Historial GPS»: una fila por día y camión (fecha, camión, placa, primera salida, última vuelta, horas fuera, salidas, paradas,
+ *   paradas en un pedido, km, actualizado). Se escribe al cerrar el horario (la primera vuelta de `gpsRepaso` desde las 21 h, sin pedirle
+ *   nada a la plataforma) o, si esa no corrió, en el primer repaso del día siguiente, antes de empezar el día nuevo. GPS_DIA queda con
+ *   `h` = ya está en la hoja. Volver a escribir el mismo día REEMPLAZA su fila (fecha + placa): no se duplica. Lo de más de
+ *   GPS_HIST_DIAS (2 años) se borra solo. Las cuatro primeras columnas y las horas van como TEXTO (si no, Google las vuelve fechas).
+ * · `gpsHist` {desde, hasta} (AAAA-MM-DD): las filas de esos días, sin candado (solo lee), más el día en curso desde GPS_DIA (`c:1`)
+ *   si todavía no está en la hoja. La página lo pide en «🚚 Entregas por camión», una vez por mes que se mira.
+ * · Sin GPS_APIKEY / GPS_USUARIO / GPS_CLAVE no corre nada de esto (`gpsRepaso` sale antes). No cambia nada de lo que ya hacía el GPS
+ *   (salió / volvió, paradas, Moreno = recoger, el recorrido).
+ * ========================================================================== */
+var GPS_HIST_HOJA = 'Historial GPS';
+var GPS_HIST_ENC = ['fecha', 'camión', 'placa', 'primera salida', 'última vuelta', 'horas fuera', 'salidas', 'paradas', 'paradas en un pedido', 'km', 'actualizado'];
+var GPS_HIST_DIAS = 730;                   // dos años; lo más viejo se borra solo al escribir
+var GPS_KM_MIN_M = 30, GPS_KM_MAX_KMH = 150, GPS_KM_SALTOS = 3, GPS_HIST_HUECO_MIN = 30;
+/** 📏 Una lectura: suma los km y el tiempo fuera de las bases del camión `s` (su lugar en GPS_DIA). `t` = la hora del reporte. */
+function gpsHistPaso_(s, x, t, dentro) {
+  var ant = Number(s.ht) || 0;
+  if (ant && t <= ant) return;                                          // el mismo reporte (o uno más viejo): no hay nada nuevo
+  if (ant && s.hf) s.fm = (Number(s.fm) || 0) + (dentro ? Math.min(t - ant, GPS_HIST_HUECO_MIN * 60000) : t - ant);
+  if (dentro) s.kb = 1;
+  s.ht = t; s.hf = (!dentro && s.kb) ? 1 : 0;
+  var R = s.kr;
+  if (!ant || !R || R.length < 2) { s.kr = [x.la, x.lo]; s.kj = 0; return; }   // la primera del día: solo el punto de partida
+  var m = gpsDistM_(Number(R[0]), Number(R[1]), x.la, x.lo);
+  if (m < GPS_KM_MIN_M) return;                                         // el GPS «baila»: la referencia se queda donde está
+  if (m / ((t - ant) / 1000) * 3.6 > GPS_KM_MAX_KMH) {                  // un salto imposible: no se toma…
+    s.kj = (Number(s.kj) || 0) + 1;
+    if (s.kj >= GPS_KM_SALTOS) { s.kr = [x.la, x.lo]; s.kj = 0; }      // …salvo que siga ahí: se sigue desde ahí, sin sumar
+    return;
+  }
+  s.km = Math.round((Number(s.km) || 0) + m); s.kr = [x.la, x.lo]; s.kj = 0;
+}
+/** El día de GPS_DIA en filas para la hoja (y para `gpsHist`): una por placa. */
+function gpsHistFilas_(st) {
+  if (!st || !st.f || !st.u) return [];
+  return Object.keys(st.u).sort().map(function (p) {
+    var s = st.u[p] || {};
+    return { f: String(st.f), cam: GPS_PLACAS[p] || '', p: p, s: String(s.s || ''), v: String(s.v || ''),
+             hf: Math.round((Number(s.fm) || 0) / 36000) / 100, n: Number(s.ns) || 0, par: Number(s.np) || 0, pc: Number(s.nc) || 0,
+             km: Math.round((Number(s.km) || 0) / 100) / 10 };
+  });
+}
+function gpsHistHoja_(crear) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(GPS_HIST_HOJA);
+  if (!sh && crear) {
+    sh = ss.insertSheet(GPS_HIST_HOJA);
+    sh.getRange('A:E').setNumberFormat('@');   // fecha, camión, placa y las dos horas como TEXTO: si no, Google las vuelve fechas
+    sh.getRange('K:K').setNumberFormat('@');
+    sh.getRange(1, 1, 1, GPS_HIST_ENC.length).setValues([GPS_HIST_ENC]);
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+function gpsHistHora_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, 'America/La_Paz', 'HH:mm');
+  var m = String(v == null ? '' : v).trim().match(/^(\d{1,2}):(\d{2})/);
+  return m ? (('0' + m[1]).slice(-2) + ':' + m[2]) : '';
+}
+function gpsHistDeFila_(r) {
+  var f = histFecha_(r[0]), p = gpsPlaca_(r[2]);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(f) || !p) return null;
+  return { f: f, cam: String(r[1] || ''), p: p, s: gpsHistHora_(r[3]), v: gpsHistHora_(r[4]), hf: Number(r[5]) || 0, n: Number(r[6]) || 0,
+           par: Number(r[7]) || 0, pc: Number(r[8]) || 0, km: Number(r[9]) || 0, t: (r[10] instanceof Date) ? r[10].toISOString() : String(r[10] || '') };
+}
+/** Escribe (o reemplaza) las filas del día de `st` en «Historial GPS». Devuelve cuántas. */
+function gpsHistGuardar_(st) {
+  var F = gpsHistFilas_(st); if (!F.length) return 0;
+  var sh = gpsHistHoja_(true), vals = sh.getDataRange().getValues(), donde = {}, i;
+  for (i = 1; i < vals.length; i++) { var k = histFecha_(vals[i][0]) + '|' + gpsPlaca_(vals[i][2]); (donde[k] || (donde[k] = [])).push(i + 1); }
+  var ahora = new Date().toISOString();
+  F.forEach(function (r) {
+    var row = [r.f, r.cam, r.p, r.s, r.v, r.hf, r.n, r.par, r.pc, r.km, ahora], k2 = r.f + '|' + r.p;
+    if (donde[k2]) donde[k2].forEach(function (fila) { sh.getRange(fila, 1, 1, row.length).setValues([row]); });   // el mismo día: se reemplaza
+    else sh.appendRow(row);
+  });
+  /* Lo de más de GPS_HIST_DIAS se va (de abajo para arriba, para no correr los números de fila; lo agregado recién queda abajo de todo). */
+  var corte = new Date(Date.now() - 4 * 3600000 - GPS_HIST_DIAS * 86400000).toISOString().slice(0, 10);
+  for (i = vals.length - 1; i >= 1; i--) { var fi = histFecha_(vals[i][0]); if (fi && fi < corte) sh.deleteRow(i + 1); }
+  return F.length;
+}
+/** Al cerrar el horario: el día de GPS_DIA a la hoja, si todavía no está (una lectura de la propiedad por vuelta, después una vez). */
+function gpsHistCierre_() {
+  var st = waJsonProp_('GPS_DIA', null);
+  if (!st || !st.f || !st.u || st.h) return 0;
+  var n = gpsHistGuardar_(st);
+  st.h = 1;
+  try { PropertiesService.getScriptProperties().setProperty('GPS_DIA', JSON.stringify(st)); } catch (e) {}
+  return n;
+}
+/** 📖 `gpsHist` {desde, hasta}: las filas de la hoja de esos días (la última escrita de cada día y placa) y el día en curso de GPS_DIA si
+    todavía no está en la hoja (`c:1`). Sin candado: solo lee. Nunca dice nada de clientes. */
+function gpsHistLeer_(body) {
+  var desde = String((body && body.desde) || ''), hasta = String((body && body.hasta) || '9999'), por = {}, k, sh = gpsHistHoja_(false);
+  if (sh) {
+    var vals = sh.getDataRange().getValues();
+    for (var i = 1; i < vals.length; i++) {
+      var r = gpsHistDeFila_(vals[i]); if (!r || r.f < desde || r.f > hasta) continue;
+      k = r.f + '|' + r.p;
+      if (!por[k] || r.t >= por[k].t) por[k] = r;
+    }
+  }
+  var st = waJsonProp_('GPS_DIA', null), hoy = waBo_(Date.now()).hoy;
+  if (st && st.f && st.u && st.f >= desde && st.f <= hasta) gpsHistFilas_(st).forEach(function (r) {
+    k = r.f + '|' + r.p; if (por[k]) return;
+    if (st.f === hoy) r.c = 1;
+    por[k] = r;
+  });
+  var filas = Object.keys(por).sort().map(function (k2) { var r = por[k2]; delete r.t; return r; });
+  return jsonOut({ ok: true, version: SCRIPT_VERSION, gps: gpsConfig_().ok ? 1 : 0, filas: filas });
 }
 
 /* ============================================================================
@@ -1458,6 +1618,8 @@ function doPostCuerpo_(e) {
   if (action === 'histStockLeer') return histLeer_(body);
   // 🛰️ (2026-10-13-b) El recorrido de los camiones de hoy (caché `gps_ruta`). Sin candado y sin la planilla: solo la caché.
   if (action === 'gpsRuta') return jsonOut({ ok:true, version:SCRIPT_VERSION, ahora:Date.now(), ruta: gpsRutaLeer_() });
+  // 📚 (2026-11-13-b, mejora 204) Cómo le fue a cada camión, día por día (hoja «Historial GPS»). Sin candado: solo lee.
+  if (action === 'gpsHist') return gpsHistLeer_(body);
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
