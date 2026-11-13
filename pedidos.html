@@ -4095,6 +4095,15 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .mis-eq-pie{font-size:.76rem;color:#6b8584;margin:4px 2px 0}
 .td-cupo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 18px 0;padding:9px 12px;background:#f3f8f8;border-radius:12px;font-size:.85rem;color:#355352}
 .td-cupo span{background:#fff;border:1px solid #e1ebea;border-radius:999px;padding:2px 10px;font-weight:700}
+/* 💰 (13/11, mejora 190) «Tu comisión» de «Tu día», debajo de las filas (solo con las metas del mes guardadas) */
+.td-com{margin:8px 18px 0;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#effaf4,#fff);border:1px solid #cdeedd;color:#244a3a;min-width:0;overflow-wrap:anywhere}
+.td-com-cab{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-weight:800;font-size:.86rem;color:#13302e}
+.td-com-cab b{font-size:1.15rem;font-weight:900;color:#0f766e;font-variant-numeric:tabular-nums;white-space:nowrap}
+.td-com-sub{font-size:.74rem;color:#5d7473;margin:1px 0 4px}
+.td-com-l{font-size:.8rem;line-height:1.35;padding:4px 0 2px;border-top:1px dashed #d4ebe0}
+.td-com-l b{font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap}
+.td-com-l.td-com-ok b{color:#15803d}
+.td-com-pie{font-size:.7rem;color:#7b8b8a;margin-top:3px}
 .td-acc{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 14px}
 .t2-det{border:1px solid #fde3b8;background:#fffcf6;border-radius:16px;padding:12px 16px;margin:0 0 14px}
 .t2-cab{font-weight:900;color:#9a4a07;margin-bottom:6px}
@@ -11975,6 +11984,18 @@ function ccmPctDe(em, bs, min, pres){
   return best ? { pct:best.pct, desde:best.monto, t:best.t } : { pct:0, desde:0, t:null };
 }
 function ccmTramoTxt(t){ return t ? ('desde el '+String(Number(t[1])||0).replace('.', ',')+'% '+(t[0]==='pres' ? 'del presupuesto' : 'de la mínima')) : 'no llegó a la mínima'; }
+/* 📈 (13/11, mejora 190) El TRAMO SIGUIENTE con la misma regla (`ccmPctDe`): de los montos donde empieza algún tramo (y la mínima, que
+   con 0 debajo también es un escalón), el más chico por encima de lo vendido donde el % sube. Devuelve desde cuánto (`desde`), cuánto falta
+   (`falta`), el % y el tramo; `null` si ya está en el más alto (o la escala no tiene tramos). */
+function ccmTramoSig(em, bs, min, pres){
+  var act=ccmPctDe(em, bs, min, pres).pct, M=[];
+  var poner=function(m){ if(m>bs+0.005 && M.indexOf(m)<0) M.push(m); };
+  if(min>0) poner(r2(min));
+  ((em && em.t)||[]).forEach(function(t){ var base = t[0]==='pres' ? pres : min; if(base>0) poner(r2(base*(Number(t[1])||0)/100)); });
+  M.sort(function(a,b){ return a-b; });
+  for(var i=0;i<M.length;i++){ var q=ccmPctDe(em, M[i], min, pres); if(q.pct>act+1e-9) return { desde:M[i], falta:r2(M[i]-bs), pct:q.pct, t:q.t }; }
+  return null;
+}
 
 /* ---- Titanio ---- */
 function ccmEsTitanio(x){
@@ -12115,7 +12136,9 @@ function ccmRevisar(ym, ventas, D, T, filas){
   return R;
 }
 /* ---- TODO el mes en una cuenta ---- */
-function ccmDatos(ym){
+/* 💰 (13/11, mejora 190) LA CUENTA del cierre, sin «Para revisar» ni los totales por marca: la usan el cierre (`ccmDatos`) y «💰 Tu comisión»
+   de Mis pedidos (`misComisionDatos`). Una sola verdad: lo que cambie acá cambia en los dos. */
+function ccmCuenta(ym){
   var hoy=diaNegocio(), ini=ym+'-01', fin=pryFinDeMes(ym);
   var cal = hoy<ini ? 'futuro' : (hoy>fin ? 'paso' : 'curso');
   var D=ccmLeer(), C=D.m[ym]||{}, cerrado=!!C.c;
@@ -12150,12 +12173,16 @@ function ccmDatos(ym){
     ajustes=Object.keys(C.aj||{}).map(function(id){ var a=C.aj[id], r=vt[a[0]]||{}; return { id:id, v:r.v||'', dbs:Number(a[1])||0, dti:Number(a[2])||0, O:String(a[3]||'') }; });
     despues=ccmAjustes(D, ym, T, pg);
   }
+  return { ym:ym, hoy:hoy, cal:cal, D:D, C:C, cerrado:cerrado, T:T, pg:pg, mt:mt, es:es, ventas:ventas, ajustes:ajustes, despues:despues, filas:filas };
+}
+function ccmDatos(ym){
+  var K=ccmCuenta(ym), filas=K.filas, ventas=K.ventas;
   var marcas=MARCAS.map(function(g){ var rs=filas.filter(function(r){ return r.g===g.k && ccmFilaVe(r); }); return { g:g, filas:rs, tot:ccmSuma(rs) }; });
   var sin=filas.filter(function(r){ return r.g==='sin' && ccmFilaVe(r); });
   var tot=ccmSuma(filas.filter(ccmFilaVe));
-  var rev=cerrado ? { n:0, ti:[], kommo:[], antes:[], movidas:[], sinMonto:[], sinMetas:[], sinMarca:[] } : ccmRevisar(ym, ventas, D, T, filas);
-  return { ym:ym, hoy:hoy, cal:cal, D:D, C:C, cerrado:cerrado, mt:mt, es:es, ventas:ventas, ajustes:ajustes, despues:despues,
-           destino:ccmDestino(D, ym), filas:filas, marcas:marcas, sin:sin, tot:tot, rev:rev,
+  var rev=K.cerrado ? { n:0, ti:[], kommo:[], antes:[], movidas:[], sinMonto:[], sinMetas:[], sinMarca:[] } : ccmRevisar(ym, ventas, K.D, K.T, filas);
+  return { ym:ym, hoy:K.hoy, cal:K.cal, D:K.D, C:K.C, cerrado:K.cerrado, mt:K.mt, es:K.es, ventas:ventas, ajustes:K.ajustes, despues:K.despues,
+           destino:ccmDestino(K.D, ym), filas:filas, marcas:marcas, sin:sin, tot:tot, rev:rev,
            fuera:ventas.filter(function(x){ return x.est!=='cuenta' && x.est!=='ajuste'; }) };
 }
 
@@ -31713,6 +31740,84 @@ function misMesLineaHtml(mine, R, pct){
     '</svg><i class="td-punto" style="left:'+(ux/W*100).toFixed(1)+'%;top:'+uy+'px"></i>'+
     (p!=null ? ('<div class="td-alt">'+(p>=0?'▲ ':'▼ ')+Math.abs(p)+'% '+(p>=0?'más':'menos')+' que '+esc(mesNombre(R.ant).replace(/ de \d{4}$/,''))+' a esta altura</div>') : '');
 }
+/* 💰 (13/11, mejora 190; dueño: «Comisión en vivo y meta del día en Tu mes») TU COMISIÓN EN «TU DÍA», debajo de sus filas. Con una vendedora
+   elegida (no Eduardo, ROHO ni los internos: `contaExcluido`; nunca en «👑 Ver todos») y SOLO si el mes tiene sus metas GUARDADAS
+   (`ccmMetas(ym).ok` y ella en `vd`): con las sugeridas, o sin meta suya, no sale nada (ni «sin meta»).
+   · 💰 La comisión que lleva = su fila del «🏁 Cierre comercial del mes» con la MISMA cuenta (`ccmCuenta`): comisión del tramo + bono
+     Titanio + ajustes de meses cerrados (`to`). Con el mes ya cerrado, lo congelado.
+   · 📈 Cuánto le falta para el tramo siguiente (`ccmTramoSig`, la regla de `ccmPctDe`) y cuánto sería ahí (el mismo bono y ajustes); si ya
+     está en el más alto, lo dice.
+   · 🎯 Cuánto le falta para su presupuesto (sin presupuesto, para su mínima) y cuánto es por día hábil que queda (redondeado para arriba);
+     si llegó, «✅ Llegaste» y lo que lleva de más.
+   · Lo vendido es el de «👤 Por vendedor» de Proyección (`pryVentas`: entrega agendada en el mes, también la venta de tienda), por eso puede
+     ser más que «Vendido para <mes>» de arriba, que no cuenta la venta de tienda. Lo que el cierre no cuenta (ya pagada en otro cierre o
+     sacada) tampoco cuenta acá, y se dice.
+   · 📅 DÍAS HÁBILES QUE QUEDAN = los de la proyección (`pryDiaHabil`: lunes a sábado, sin feriados) de mañana a fin de mes, MÁS HOY si hoy es
+     hábil y todavía no son las 20:00 de Bolivia (`MIS_COM_HORA_FIN`, cuando cierra Central): hasta esa hora hoy todavía se vende.
+   Solo mira, no guarda nada. `tests/test_mis_comision.js`. */
+var MIS_COM_HORA_FIN=20;
+/* La cuenta del mes se hace UNA vez por cambio de la planilla (`renderMis` corre con cada tecla del nombre y cada minuto; con 2.500 pedidos
+   son ~25 ms): se vuelve a hacer con otro `STATE`, otro `STATE_GEN` (todo cambio termina en `saveMirror`, §4oa) u otro día. */
+var MIS_COM_MEMO=null;
+function misComisionCuenta(ym){
+  var M=MIS_COM_MEMO, dia=diaNegocio(), n=(STATE||[]).length;
+  if(M && M.st===STATE && M.gen===STATE_GEN && M.n===n && M.ym===ym && M.dia===dia) return M.K;
+  var K=ccmCuenta(ym); MIS_COM_MEMO={ st:STATE, gen:STATE_GEN, n:n, ym:ym, dia:dia, K:K };
+  return K;
+}
+function misComisionDatos(v, ym){
+  if(!v || contaExcluido(v) || esVendedorLite(v)) return null;
+  ym=ym||diaNegocio().slice(0,7);
+  var mt=ccmMetas(ym); if(!mt.ok) return null;
+  var mm=ccmMetaDe(mt.vd, v), mi=mm[0], pr=mm[1]; if(!(mi>0 || pr>0)) return null;
+  var K=misComisionCuenta(ym), k=normNombre(v), r=null;
+  K.filas.forEach(function(f){ if(!r && normNombre(f.v)===k) r=f; });
+  if(!r || r.g==='sin') return null;
+  var em=K.es.esc[r.g]; if(!em) return null;
+  var o={ ym:ym, v:r.v, g:r.g, cerrado:K.cerrado, escOk:!!K.es.ok, n:r.n, bs:r.bs, mi:mi, pr:pr, pc:r.pc, tramo:r.tramo, co:r.co, bo:r.bo,
+          aj:r2((r.ajCom||0)+(r.ajBono||0)), to:r.to, fuera:0, nFuera:0 };
+  K.ventas.forEach(function(x){ if(normNombre(x.v)===k && x.est!=='cuenta' && x.est!=='ajuste'){ o.fuera=r2(o.fuera+(Number(x.bs)||0)); o.nFuera++; } });
+  if(K.cerrado) return o;
+  var extra=r2(o.bo+o.aj), sg=ccmTramoSig(em, r.bs, mi, pr);
+  o.sig = sg ? { desde:sg.desde, falta:sg.falta, pct:sg.pct, t:sg.t, to:r2(r2(sg.desde*sg.pct/100)+extra) } : null;
+  o.ultimo = !sg && !!(em.t||[]).length && o.pc>0;
+  o.metaQue = pr>0 ? 'pres' : 'min'; o.meta = pr>0 ? pr : mi;
+  o.llego = r.bs >= o.meta-0.005; o.falta = o.llego ? 0 : r2(o.meta-r.bs); o.deMas = o.llego ? r2(r.bs-o.meta) : 0;
+  var hoy=K.hoy, ini=ym+'-01', fin=pryFinDeMes(ym), hb=horaBolivia(), hh=hb.getHours()+hb.getMinutes()/60;
+  if(hoy<ini){ o.conHoy=false; o.dias=pryHabiles(ini, fin); }
+  else if(hoy>fin){ o.conHoy=false; o.dias=0; }
+  else{ o.conHoy=pryDiaHabil(hoy) && hh<MIS_COM_HORA_FIN; o.dias=pryHabiles(stockSumarDias(hoy, 1), fin)+(o.conHoy ? 1 : 0); }
+  o.porDia = (!o.llego && o.dias>0) ? Math.ceil(o.falta/o.dias-1e-9) : 0;
+  return o;
+}
+function misComisionHtml(v){
+  var o=null; try{ o=misComisionDatos(v); }catch(e){ o=null; }
+  if(!o) return '';
+  /* «Bs 30.000» y «2,75 %» no se parten en dos renglones (en el celular quedaba «2,75» arriba y «%» abajo) */
+  var B=function(n){ return fmtBs0(n).replace(' ', '\u00a0'); }, P=function(n){ return ccmPcTxt(n).replace(' ', '\u00a0'); };
+  var mes=esc(mesNombre(o.ym).replace(/ de \d{4}$/,'')), arriba=function(n){ return B(Math.ceil((Number(n)||0)-1e-9)); };
+  var sub = o.pc>0 ? (P(o.pc)+' sobre '+B(o.bs)+' vendidos')
+          : ((o.mi>0 && o.bs<o.mi-0.005) ? ('todavía no llegaste a tu mínima: con '+B(o.bs)+' vendidos la comisión es 0') : ('con '+B(o.bs)+' vendidos todavía no hay tramo'));
+  if(o.bo>0.005) sub+=' · bono Titanio '+B(o.bo);
+  if(Math.abs(o.aj)>0.005) sub+=' · ajustes de meses cerrados '+B(o.aj);
+  if(!o.escOk) sub+=' · la escala todavía no está confirmada';
+  var h='<div class="td-com" id="mis-com" data-to="'+o.to+'"><div class="td-com-cab"><span>💰 Tu comisión de '+mes+(o.cerrado ? '' : ', hasta hoy')+'</span><b>'+B(o.to)+'</b></div>'+
+    '<div class="td-com-sub">'+esc(sub)+'</div>';
+  if(o.cerrado) return h+'<div class="td-com-l">🔒 '+esc(ccmCap(mes))+' ya está cerrado: tu comisión quedó así. Lo que cambie después va como ajuste al mes siguiente.</div></div>';
+  if(o.sig){
+    var d=o.sig.desde, q = Math.abs(d-o.mi)<0.01 ? 'tu mínima' : (Math.abs(d-o.pr)<0.01 ? 'tu presupuesto'
+          : ('el '+String(Number(o.sig.t && o.sig.t[1])||0).replace('.', ',')+'\u00a0% de tu '+((o.sig.t && o.sig.t[0]==='pres') ? 'presupuesto' : 'mínima')));
+    h+='<div class="td-com-l" data-k="sig">📈 Te faltan <b>'+arriba(o.sig.falta)+'</b> para '+q+' ('+B(d)+') y pasar al <b>'+esc(P(o.sig.pct))+'</b>: tu comisión sería <b>'+B(o.sig.to)+'</b>.</div>';
+  }else if(o.ultimo) h+='<div class="td-com-l td-com-ok" data-k="sig">🏆 Ya estás en el tramo más alto (<b>'+esc(P(o.pc))+'</b>): todo lo que sumes va al '+esc(P(o.pc))+'.</div>';
+  var mq = o.metaQue==='pres' ? 'tu presupuesto' : 'tu mínima';
+  if(o.llego) h+='<div class="td-com-l td-com-ok" data-k="meta">✅ Llegaste a '+mq+' ('+B(o.meta)+')'+(o.deMas>=0.5 ? (' · llevás <b>'+B(o.deMas)+'</b> de más') : '')+'.</div>';
+  else h+='<div class="td-com-l" data-k="meta">🎯 Para '+mq+' ('+B(o.meta)+') te faltan <b>'+arriba(o.falta)+'</b>'+
+    (o.dias>0 ? (': <b>'+B(o.porDia)+' por día</b> · '+(o.dias===1 ? 'queda 1 día hábil' : ('quedan '+o.dias+' días hábiles'))+(o.conHoy ? ', con hoy' : ', desde mañana'))
+              : (' · ya no quedan días hábiles en '+mes))+'.</div>';
+  h+='<div class="td-com-pie">Como el 🏁 cierre comercial: lo vendido con entrega en '+mes+', también la venta de tienda'+
+    (o.nFuera ? ('; sin '+(o.nFuera===1 ? '1 venta que no entra' : (o.nFuera+' ventas que no entran'))+' en este cierre ('+B(o.fuera)+(o.nFuera===1 ? ', ya pagada antes)' : ', ya pagadas antes)')) : '')+'.</div>';
+  return h+'</div>';
+}
 function misTopPintar(v, mine){
   var el=document.getElementById('mis-top'); if(!el) return;
   var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
@@ -31748,6 +31853,7 @@ function misTopPintar(v, mine){
       '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
       (esVendedorLite(v) ? '' : misTiendaFila(misTiendaDatos(mine), false))+   // 🏪 (§4nn) sus ventas de tienda del mes
     '</div>'+
+    misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
