@@ -843,12 +843,13 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
-## 🛍️ Tema de Black Friday — MUESTRA (§4pr, 13/11; dueño: «ármame la muestra de black friday»; en la rama, espera los días)
+## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; en la rama, espera «publica»)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
 oscuro con borde dorado (las mismas reglas que noviembre). Bloki: una bolsa de compras negra a los pies (`bk-bolsa`). Dashboard: la caja de la marca negra con la
-etiqueta. ⚠️ **Apagado por fecha** hasta que el dueño elija los días: `BF_DIAS=null` en el `<head>` de `pedidos.html` Y de `panel_template.html` (los dos iguales);
-con `[desde, hasta]` en días desde el viernes después del cuarto jueves de noviembre, gana sobre Todos Santos esos días. Mientras, solo con `?tema=black-friday`.
+etiqueta. **Los días: `BF_DIAS=[-7, 3]`** (dueño eligió la «C»): del viernes de la semana anterior al lunes siguiente, contados desde el viernes después del
+cuarto jueves de noviembre (2026: del 20 al 30/11; 2027: del 19 al 29/11); esos días gana sobre Todos Santos, en el panel Y en el dashboard. ⚠️ El mismo
+`BF_DIAS` en el `<head>` de `pedidos.html` y de `panel_template.html`. Otro día se ve con `?tema=black-friday`.
 Muestra: https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh. Pruebas: `test_temas_mejoras` (27/11 sigue Todos Santos), `test_bloki` §7, `test_vidrio_agrandar` §2.
 
 ## 🎃 Tema de Halloween (§4hm, 03/10, dueño: «la 1 y sí también al dashboard»; PUBLICADO 03/10 11:06, `093862f`)

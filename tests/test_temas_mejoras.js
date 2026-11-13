@@ -59,8 +59,13 @@ function armarDashboard(){
     ['2026-10-27T10:00:00-04:00','halloween','27/10'],
     ['2026-10-31T23:59:00-04:00','halloween','31/10 23:59 (ya 1/11 en UTC)'],
     ['2026-11-01T00:01:00-04:00','todos-santos','1/11 00:01'],
-    ['2026-11-30T23:59:00-04:00','todos-santos','30/11 23:59'],
-    ['2026-11-27T12:00:00-04:00','todos-santos','27/11 Black Friday: apagado hasta que el dueño diga los días (BF_DIAS)'],
+    ['2026-11-19T23:59:00-04:00','todos-santos','19/11 23:59 (la víspera de Black Friday)'],
+    ['2026-11-20T00:01:00-04:00','black-friday','20/11 00:01: Black Friday, la «C» del dueño (del viernes anterior al lunes siguiente)'],
+    ['2026-11-27T12:00:00-04:00','black-friday','27/11, el viernes de Black Friday'],
+    ['2026-11-30T23:59:00-04:00','black-friday','30/11 23:59 (el «Cyber Monday»)'],
+    ['2027-11-18T12:00:00-04:00','todos-santos','18/11/2027 (en 2027 Black Friday es el 26)'],
+    ['2027-11-19T12:00:00-04:00','black-friday','19/11/2027'],
+    ['2027-11-29T23:59:00-04:00','black-friday','29/11/2027 23:59'],
     ['2026-12-01T00:01:00-04:00','navidad','1/12'],
     ['2026-12-30T23:59:00-04:00','navidad','30/12 23:59'],
     ['2026-12-31T00:01:00-04:00','anio-nuevo','31/12'],
@@ -89,6 +94,7 @@ function armarDashboard(){
   chk('1 · …y ?tema=todos-santos también', (await temaDe(PEDIDOS, '2026-06-10T10:00:00-04:00', '?tema=todos-santos'))==='todos-santos');
   const dash = armarDashboard();
   chk('1 · el dashboard elige el mismo: 1/11 → Todos Santos', (await temaDe(dash, '2026-11-01T09:00:00-04:00'))==='todos-santos');
+  chk('1 · …el 20/11 → Black Friday (dueño: «C y sí también Dashboard») y el 19/11 sigue Todos Santos', (await temaDe(dash, '2026-11-20T09:00:00-04:00'))==='black-friday' && (await temaDe(dash, '2026-11-19T09:00:00-04:00'))==='todos-santos');
   chk('1 · …31/12 → Año Nuevo y 18/9 → 24 de Septiembre', (await temaDe(dash, '2026-12-31T09:00:00-04:00'))==='anio-nuevo' && (await temaDe(dash, '2027-09-18T09:00:00-04:00'))==='santa-cruz');
 
   // ═══ 2. Lo que se ve ═══

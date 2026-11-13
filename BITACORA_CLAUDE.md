@@ -18680,3 +18680,6 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
 - Página para el dueño (capturas con clientes inventados y el encabezado en video): https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh.
 - **La cinta amarilla se sacó** (dueño, con la captura marcada en rojo: *«Eso que marqué de rojo no me gusta»*): fuera `header::before`, `bf-cinta` y el espacio
   de arriba en el panel, y la cinta de la caja de la marca en el dashboard. Lo demás queda. No volver a ponerla. `test_temas_mejoras` 96.
+- **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
+  dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
+  Black Friday, 2027 corrido un día, y el dashboard igual.

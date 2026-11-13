@@ -1413,8 +1413,9 @@ html.tema-black-friday .rail .ni.active::before{ background:#facc15; box-shadow:
   var t = m===9 ? 'halloween' : m===10 ? 'todos-santos' : ((m===11&&dd===31)||(m===0&&dd<=2)) ? 'anio-nuevo' : m===11 ? 'navidad'
         : (antesPascua>=47&&antesPascua<=52) ? 'carnaval' : (m===4&&dd>=20&&dd<=27) ? 'madre' : (m===7&&dd<=7) ? 'patria'
         : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
-  /* 🛍️ BLACK FRIDAY (muestra del 13/11): la MISMA regla que pedidos.html; mientras `BF_DIAS` sea null, solo con `?tema=black-friday`. */
-  var BF_DIAS=null;
+  /* 🛍️ BLACK FRIDAY: la MISMA regla que pedidos.html (13/11, el dueño eligió la «C» y también en el dashboard: del viernes de la semana
+     anterior al lunes siguiente; 2026: del 20 al 30/11). ⚠️ El mismo valor en el <head> de pedidos.html. */
+  var BF_DIAS=[-7, 3];
   if(BF_DIAS && m===10){ var j1=new Date(Date.UTC(y,10,1)).getUTCDay(), bfDia=1+((4-j1+7)%7)+21+1, dBF=dd-bfDia; if(dBF>=BF_DIAS[0] && dBF<=BF_DIAS[1]) t='black-friday'; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);

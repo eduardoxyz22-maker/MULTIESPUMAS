@@ -1493,7 +1493,8 @@ html.tema-todos-santos :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #
 /* 🛍️ BLACK FRIDAY (muestra del 13/11; dueño: «ármame la muestra de black friday»). Negro con dorado, como las vitrinas de esa semana:
    la etiqueta al lado del nombre (la cinta amarilla que corría arriba se sacó: al dueño no le gustó, 13/11), la ciudad de noche, etiquetas doradas que caen en el encabezado (`#hdr-fx`,
    «etiquetas») y el fondo negro con etiquetas apenas visibles; las tarjetas grandes en vidrio oscuro (las mismas reglas que noviembre, en dorado).
-   Solo apariencia: no anuncia descuentos ni toca datos. Por ahora SOLO con `?tema=black-friday`: los días los decide el dueño (`BF_DIAS` del <head>). */
+   Solo apariencia: no anuncia descuentos ni toca datos. Los días: `BF_DIAS` del <head> (13/11, el dueño eligió la «C»: del viernes anterior al lunes
+   siguiente; 2026: del 20 al 30/11). Para verlo otro día: `?tema=black-friday`. */
 html.tema-black-friday{ --grad-header:linear-gradient(135deg,#050505,#1c1917,#27272a,#0c0a09,#292524,#050505); --sh-card:0 10px 28px -14px rgba(0,0,0,.7); --sh-soft:0 18px 44px -20px rgba(0,0,0,.75); }
 html.tema-black-friday, html.tema-black-friday body{ background:#0b0b0d; }
 html.tema-black-friday body{ background:transparent; }
@@ -2390,8 +2391,10 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
         : (m===8&&dd>=18&&dd<=24) ? 'santa-cruz' : 'espuma';
   /* 🛍️ BLACK FRIDAY (muestra del 13/11): el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027). Qué días va lo decide el
      dueño: mientras `BF_DIAS` sea null solo se ve con `?tema=black-friday`. Cuando lo diga, [desde, hasta] en días contados desde ese viernes
-     (ej. [-4, 3] = del lunes de esa semana al lunes siguiente, el «Cyber Monday»). Gana sobre Todos Santos esos días. */
-  var BF_DIAS=null;
+     (ej. [-4, 3] = del lunes de esa semana al lunes siguiente, el «Cyber Monday»). Gana sobre Todos Santos esos días.
+     · 13/11, el dueño eligió la «C»: del viernes de la semana anterior al lunes siguiente (2026: del 20 al 30/11; 2027: del 19 al 29/11),
+       también en el dashboard. ⚠️ El mismo valor en el <head> de panel_template.html. */
+  var BF_DIAS=[-7, 3];
   if(BF_DIAS && m===10){ var j1=new Date(Date.UTC(y,10,1)).getUTCDay(), bfDia=1+((4-j1+7)%7)+21+1, dBF=dd-bfDia; if(dBF>=BF_DIAS[0] && dBF<=BF_DIAS[1]) t='black-friday'; }
   var q=/[?&]tema=([a-z-]+)/.exec(location.search||''); if(q) t=q[1];
   document.documentElement.classList.add('tema-'+t);
