@@ -438,7 +438,8 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9,
                      pedir_ubicacion: 6, vendedoras_bajan: 5,
                      pedido_correo_tr4: 6,
-                     efectivo_del_dia_boton: 5 };   // 💵✅ (2026-11-07-f) a Contabilidad, con «Ya lo recibí»   // 📥 (2026-11-07-f) al dueño, el pedido que cargó la revisión de correos (subirlo al TR4)   // 📍📉 (2026-11-07-f) la ubicación 2 días antes y «cómo va cada vendedor» de los lunes
+                     efectivo_del_dia_boton: 5,
+                     mayoristas_vencido: 6 };   // 🏭⏳ (2026-11-13-b, mejora 181) a Contabilidad, los lunes: lo vencido de los mayoristas   // 💵✅ (2026-11-07-f) a Contabilidad, con «Ya lo recibí»   // 📥 (2026-11-07-f) al dueño, el pedido que cargó la revisión de correos (subirlo al TR4)   // 📍📉 (2026-11-07-f) la ubicación 2 días antes y «cómo va cada vendedor» de los lunes
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };

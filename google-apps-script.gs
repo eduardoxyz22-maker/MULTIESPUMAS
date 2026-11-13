@@ -200,7 +200,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-13-a';   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-13-b';   // ⬅️ 🏭⏳ (11-13-b, dueño 13/11, mejora 181) a Contabilidad SOLA (WA_CONTABILIDAD; al dueño no), los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo VENCIDO de los mayoristas —el total, cuántas OC y, por cliente, lo vencido, cuántas OC y los días de atraso de la más atrasada— y lo que vence en los próximos 7 días, con la cuenta de Contabilidad → 🏭 Mayoristas → 📅 Cobranza y el plazo de cada uno (mayoristas_vencido; waMvDatos_)   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -230,7 +230,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-11-13-a';
+  var ESTA_VERSION = '2026-11-13-b';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -264,6 +264,7 @@ function probarAntesDeImplementar() {
     iaSoloMedios_: typeof iaSoloMedios_, iaMedioTxt_: typeof iaMedioTxt_, waCdDetalle_: typeof waCdDetalle_, waCdPide_: typeof waCdPide_, waCdResponder_: typeof waCdResponder_,   // (2026-11-07-d)
     waUbDias_: typeof waUbDias_, waUbToca_: typeof waUbToca_, waVbDatos_: typeof waVbDatos_, waVbDetalle_: typeof waVbDetalle_,
     waPregQue_: typeof waPregQue_, waPregResponder_: typeof waPregResponder_, waPregClaude_: typeof waPregClaude_, probarPreguntasDelDueno: typeof probarPreguntasDelDueno,   // (2026-11-07-f)
+    waMvDatos_: typeof waMvDatos_, waMvParams_: typeof waMvParams_, waMvToca_: typeof waMvToca_, probarBotH_: typeof probarBotH_,   // (2026-11-13-b)
     borradorDeLead_: typeof borradorDeLead_
   };
   var faltan = [], n;
@@ -548,6 +549,10 @@ function probarAntesDeImplementar() {
   /* 18. 📍📉💬 (2026-11-07-f) La ubicación 2 días antes, «cómo va cada vendedor» de los lunes y las preguntas del dueño por WhatsApp: a quién
          van y si Claude puede contestar. Solo lee; informa, no frena. */
   try { probarBotG_(bien, ojo); } catch (e) { ojo('No pude mirar la ubicación de 2 días antes, «cómo va cada vendedor» ni las preguntas del dueño (2026-11-07-f): ' + motivo(e)); }
+
+  /* 19. 🏭⏳ (2026-11-13-b, mejora 181) Lo vencido de los mayoristas, los lunes a Contabilidad: que la plantilla esté, a quién va y qué
+         mandaría hoy con la planilla leída en el paso 2 (solo cantidades y montos: ningún nombre de cliente acá). Solo lee; no frena. */
+  try { probarBotH_(bien, ojo, vals); } catch (e) { ojo('No pude mirar lo vencido de los mayoristas (2026-11-13-b): ' + motivo(e)); }
 
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
@@ -3201,7 +3206,10 @@ var WA_TIPOS = {
   vb:  { plantilla:'vendedoras_bajan', txt:'Dueño: vendedores abajo de su mes pasado' },
   /* 📥 (2026-11-07-f, dueño, 08/11) A él solo (el primero de WA_DUENO), por cada pedido que cargó la revisión de correos (Multicenter,
      Copacaba, ROHO): los datos del pedido y que lo suba al TR4. Sin respaldo: mientras Meta no la apruebe, no sale (queda anotado). */
-  tr4: { plantilla:'pedido_correo_tr4', txt:'Dueño: pedido del correo (subirlo al TR4)' }
+  tr4: { plantilla:'pedido_correo_tr4', txt:'Dueño: pedido del correo (subirlo al TR4)' },
+  /* 🏭⏳ (2026-11-13-b, mejora 181) SOLO a Contabilidad (WA_CONTABILIDAD; nunca al dueño), los lunes a las 08:00 (o el primer día hábil de
+     la semana): lo vencido de los mayoristas y lo que vence en 7 días (`waMvDatos_`). Sin respaldo: mientras Meta no la apruebe, no sale. */
+  mv:  { plantilla:'mayoristas_vencido', txt:'Contabilidad: lo vencido de los mayoristas' }
 };
 /* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
 var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
@@ -5286,6 +5294,205 @@ function probarBotG_(bien, ojo) {
 }
 
 /* ============================================================================
+ * 🏭⏳ (2026-11-13-b, mejora 181) LO VENCIDO DE LOS MAYORISTAS, LOS LUNES A CONTABILIDAD. El dueño (13/11): cada lunes a las 08:00 de
+ * Bolivia (si el lunes es feriado, el primer día hábil de esa semana), un WhatsApp del bot SOLO a Contabilidad (Eliana: la propiedad
+ * WA_CONTABILIDAD, la misma del efectivo de los choferes; NUNCA a WA_DUENO) con lo VENCIDO de los mayoristas: el total, cuántas OC y, por
+ * cliente, lo vencido, cuántas OC y la más atrasada en días; abajo, lo que vence en los próximos WA_MV_PROX_DIAS (7) días
+ * (`mayoristas_vencido`, 6 datos). Si no hay nada vencido ni por vencer en esos 7 días, no sale. Una vez por semana (WA_HECHO.mv).
+ *   · La cuenta es la de la página, Contabilidad → 🏭 Mayoristas → 📅 Cobranza → «Por cliente» (`cbzMayDatos`):
+ *       – las ventas de Eduardo (CONTA_MAYORISTAS) de TODO el historial, sin ATC, RPT, filas del sistema ni borradores de Kommo
+ *         (`cbzVentas` con `fueraDeConta(p,'mayor')`);
+ *       – el saldo = `contaFaltaCobrar` (pagada = 0); ya entregado = la entrega agendada ya pasó, u hoy con ✅ (la venta de tienda y un ✅
+ *         adelantado, desde su fecha); lo que todavía no se entregó no es deuda (va en «Lo que va a entrar» del panel, no acá);
+ *       – vence = la entrega agendada (`fechaSalida`; la venta de tienda, el día de la venta) + el plazo del cliente (`CBZ_PLAZOS`, por el
+ *         nombre de `cbzMayCliente`, con `CBZ_MAY_ALIAS` y Multicenter por la nota o «Facturar a»; uno que no está paga al entregar: plazo 0);
+ *       – vencido = ya pasó ese día (`venc` > 0). Una OC entregada SIN FECHA cuenta como vencida, como en la ficha de cada cliente (no se
+ *         sabe cuándo vence): el mensaje lo dice;
+ *       – lo «sin monto anotado» (`sinMontoAnotado`: a Eduardo no se le pide precio) va APARTE, en su renglón: no suma en ningún total.
+ *   · «Por vencer en 7 días» = entregado, dentro de su plazo, que vence de hoy (`venc` 0, «vence hoy») a 7 días.
+ *   · Con la planilla de ESE momento (`waArmar_`): un pago anotado entre la cola y el envío ya no aparece. Sin plantilla de respaldo:
+ *     mientras Meta no la apruebe, no sale (queda anotado en la hoja). Solo avisa: no toca ningún pedido.
+ *   ⚠️ Copia la regla de la página (`cbzMayCliente`, `CBZ_PLAZOS`, `CBZ_MAY_ALIAS`, `cbzClasificar`, `cbzConPlazo`, `cbzMayDatos`,
+ *      `sinMontoAnotado`, `esMayorista`/`CONTA_MAYORISTAS`): tests/test_wa_mayoristas.js compara las dos con los mismos datos. Si cambia
+ *      allá, cambia acá (un plazo nuevo va en `CBZ_PLAZOS` Y en WA_MV_PLAZOS).
+ * ========================================================================== */
+var WA_HORA_MV = 8;                        // lunes 08:00 de Bolivia (o el primer día hábil de la semana)
+var WA_MV_PROX_DIAS = 7;                   // «vence en los próximos 7 días»: de hoy a 7 días (⚠️ el texto de la plantilla dice «7 días»)
+var WA_MV_MAYORISTAS = ['Eduardo Añez'];   // = CONTA_MAYORISTAS de la página
+var WA_MV_PLAZOS = { 'Tienda Amiga':120, 'ROHO':60, 'Multicenter':60, 'Copacaba':15, 'Luis Franco':15 };   // = CBZ_PLAZOS (días corridos)
+var WA_MV_ALIAS = { 'VILLAREAL':'Multicenter', 'SENORA VILLAREAL':'Multicenter' };                         // = CBZ_MAY_ALIAS
+var WA_MV_DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+/* Las letras con acento (Latin-1 y Latin Extended-A, en minúscula) y su letra sin acento, de a pares: lo que `normalize('NFD')` + sacar
+   los acentos le hace a cada una en la página. Las que no se descomponen (ø, æ, ß, ı…) quedan como están, igual que allá. */
+var WA_MV_LETRAS_TXT = 'àaáaâaãaäaåaçcèeéeêeëeìiíiîiïiñnòoóoôoõoöoùuúuûuüuýyÿyāaăaąaćcĉcċcčcďdēeĕeėeęeěeĝgğgġgģgĥhĩiīiĭiįiĵjķkĺlļlľlńnņnňnōoŏoőoŕrŗrřrśsŝsşsšsţtťtũuūuŭuůuűuųuŵwŷyźzżzžz', WA_MV_LETRAS = null;
+/** `sinTildes` de la página, sin `normalize` (el motor viejo de Apps Script no lo tiene): minúsculas, sin acentos (ñ → n). */
+function waMvSinTildes_(t) {
+  if (!WA_MV_LETRAS) { WA_MV_LETRAS = {}; for (var i = 0; i + 1 < WA_MV_LETRAS_TXT.length; i += 2) WA_MV_LETRAS[WA_MV_LETRAS_TXT.charAt(i)] = WA_MV_LETRAS_TXT.charAt(i + 1); }
+  return String(t == null ? '' : t).toLowerCase().replace(/[\u00e0-\u017f]/g, function (ch) { return WA_MV_LETRAS[ch] || ch; })
+    .replace(/[\u0300-\u036f]/g, '').trim();
+}
+/** `normNombre` de la página: además, sin espacios de más. */
+function waMvNom_(t) { return waMvSinTildes_(String(t == null ? '' : t).replace(/\s+/g, ' ').trim()); }
+/** `esMayorista` de la página: la venta es de Eduardo (CONTA_MAYORISTAS). */
+function waMvEsMayorista_(p) {
+  var v = waMvNom_(p && p.vendedor);
+  for (var i = 0; i < WA_MV_MAYORISTAS.length; i++) if (waMvNom_(WA_MV_MAYORISTAS[i]) === v) return true;
+  return false;
+}
+/** Una venta de la planilla de Mayoristas (`cbzVentas` de la página con Contabilidad en Mayoristas): de Eduardo, no ATC ni RPT, no una
+    fila del sistema (empiezan con «__», los retiros incluidos) ni un borrador de Kommo. */
+function waMvEsVenta_(p) {
+  if (!p || /^(ATC|RPT)\b/i.test(String(p.oc || '').trim())) return false;
+  if (String(p.id || '').indexOf('__') === 0) return false;
+  if (waMvNom_(p.estado) === waMvNom_(BORRADOR_EST)) return false;
+  return waMvEsMayorista_(p);
+}
+/** `cbzMayCliente` de la página: el cliente de la ficha («Multicenter», «Tienda Amiga», «ROHO», «Luis Franco», «Copacaba» o el nombre sin
+    tildes en mayúsculas). Luis Franco ANTES que «Juan Carlos Arce» (Arce manda pedidos de los dos). */
+function waMvCliente_(p) {
+  var n = waMvNom_((p && p.cliente) || '');
+  if (/\bmulti ?center\b/.test(n)) return 'Multicenter';   // también `stockEsMulticenter` («MULTICENTER» entero)
+  if (/\btienda ?amiga\b/.test(n)) return 'Tienda Amiga';
+  if (/\broho\b/.test(n)) return 'ROHO';
+  if (/\bluis franco\b/.test(n)) return 'Luis Franco';
+  if (/co(?:pa|ap)caba/.test(n) || /\bjuan carlos arce\b/.test(n)) return 'Copacaba';
+  /* 🏠 una entrega a domicilio de Multicenter cargada con el nombre de SU cliente: la nota o «Facturar a» dicen Multicenter */
+  if (/\bmulti ?center\b/.test(waMvSinTildes_(String(((p && p.observaciones) || '') + ' ' + ((p && p.facturarA) || ''))))) return 'Multicenter';
+  var k = waMvSinTildes_(String((p && p.cliente) || 'Sin nombre').replace(/\s+/g, ' ').trim().replace(/[\s.,;:·\-]+$/, '')).toUpperCase() || 'SIN NOMBRE';
+  return WA_MV_ALIAS.hasOwnProperty(k) ? WA_MV_ALIAS[k] : k;
+}
+/** `cbzPlazoDe` de la página: los días de plazo de pago del cliente (0 = al entregar). */
+function waMvPlazoDe_(p) { var k = waMvCliente_(p); return WA_MV_PLAZOS.hasOwnProperty(k) ? WA_MV_PLAZOS[k] : 0; }
+/** `esVentaTienda` de la página. */
+function waMvTienda_(p) { return !!p && (waMvNom_(p.direccion).indexOf('salio de tienda') === 0 || waMvNom_(p.zona) === 'tienda'); }
+/** `fechaSalida` de la página: la entrega agendada; sin ella, el día de Bolivia en que se cargó (`contaFecha`). */
+function waMvFechaSalida_(p) {
+  if (p && p.fecha) return String(p.fecha);
+  var t = Number(p && p.ts) || 0; if (!t) return String((p && p.fecha) || '');
+  var d = new Date(t - 4 * 3600000); if (isNaN(d.getTime())) return '';
+  var m = d.getUTCMonth() + 1, dd = d.getUTCDate();
+  return d.getUTCFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (dd < 10 ? '0' : '') + dd;
+}
+/** `sinMontoAnotado` de la página: sin pagar, sin saldo, sin adelanto y sin ningún cobro anotado (nadie anotó cuánto era). */
+function waMvSinMonto_(p) {
+  if (!p || p.pagado) return false;
+  if ((Number(p.saldo) || 0) > 0.005 || (Number(p.acuenta) || 0) > 0.005) return false;
+  var t = 0; waEfeCobros_(p.metodoPago).forEach(function (c) { if (!c.ant && !c.env) t += Number(c.monto) || 0; });
+  return waR2_(t) <= 0.005;
+}
+/** `diasEntre` de la página: de `a` a `b`, en días (0 si falta una o no es una fecha). */
+function waMvDias_(a, b) {
+  if (!a || !b) return 0;
+  var x = Date.parse(String(a) + 'T12:00:00Z'), y = Date.parse(String(b) + 'T12:00:00Z');
+  return (isNaN(x) || isNaN(y)) ? 0 : Math.round((y - x) / 86400000);
+}
+/** `isoMasDiasSimple` de la página. Con una fecha que no se entiende devuelve la misma (la página da «NaN-NaN-NaN»: las dos no son vacías
+    y dan 0 días con `diasEntre`, así que la OC cae en el mismo lugar). */
+function waMvMasDias_(f, n) { var t = Date.parse(String(f) + 'T12:00:00Z'); return isNaN(t) ? String(f) : new Date(t + n * 86400000).toISOString().slice(0, 10); }
+/** `cbzConPlazo` de la página (en Mayoristas): el plazo, cuándo vence y los días de atraso (`venc`; 0 o menos = no venció). */
+function waMvConPlazo_(x, hoy) { x.plazo = waMvPlazoDe_(x.p); x.vence = waMvMasDias_(x.f, x.plazo); x.venc = waMvDias_(x.vence, hoy); return x; }
+/** `cbzClasificar` de la página con Contabilidad en Mayoristas: 'sinm' (sin monto anotado), 'viene' (por entregar o «el cliente avisa
+    cuándo») o 'deuda' (ya entregada: con `vence`/`venc`; sin fecha de entrega, sin `vence`). null = no debe nada. */
+function waMvClasificar_(p, hoy) {
+  var fs = waMvFechaSalida_(p);
+  if (waMvSinMonto_(p) && !waMvTienda_(p)) return { p:p, saldo:0, que:'sinm', f:fs || '' };
+  var s = waR2_(p.pagado ? 0 : Math.max(0, Number(p.saldo) || 0));
+  if (!(s > 0.005)) return null;
+  if (entregaAConfirmar_(p)) return { p:p, saldo:s, que:'viene', f:'' };
+  if (!fs) return { p:p, saldo:s, que:'deuda', f:'' };
+  if ((waMvTienda_(p) || p.entregado) && fs >= hoy) return waMvConPlazo_({ p:p, saldo:s, que:'deuda', f:fs }, hoy);   // ✅ adelantado o venta de tienda
+  if (fs > hoy || (fs === hoy && !p.entregado)) return { p:p, saldo:s, que:'viene', f:fs };
+  return waMvConPlazo_({ p:p, saldo:s, que:'deuda', f:fs }, hoy);
+}
+/** Lo de cada mayorista (`cbzMayDatos` de la página) y los totales del mensaje. `cli` = un renglón por cliente con algo (como la ficha:
+    `venc`/`nVenc`/`maxVenc` vencido —con las sin fecha—, `pv`/`nPv`/`prox` por vencer, `nSin`, `viene`/`nV`) + `sinF` y `pv7`/`nPv7`/`prox7`
+    (lo que vence en los próximos 7 días). `vencidos` (el que más debe primero), `porVencer` (el que vence antes primero), `sinMonto`. */
+function waMvDatos_(lista, hoy) {
+  var M = {}, orden = [];
+  (lista || []).forEach(function (p) {
+    if (!waMvEsVenta_(p)) return;
+    var x = waMvClasificar_(p, hoy); if (!x) return;
+    var k = waMvCliente_(p), c = M[k];
+    if (!c) { c = M[k] = { k:k, plazo:waMvPlazoDe_(p), venc:0, nVenc:0, maxVenc:0, sinF:0, pv:0, nPv:0, prox:'', pv7:0, nPv7:0, prox7:'', nSin:0, viene:0, nV:0 }; orden.push(k); }
+    if (x.que === 'sinm') { c.nSin++; return; }
+    if (x.que === 'viene') { c.viene = waR2_(c.viene + x.saldo); c.nV++; return; }
+    if (!x.vence || x.venc > 0) {
+      c.venc = waR2_(c.venc + x.saldo); c.nVenc++;
+      if (!x.vence) c.sinF++; else if (x.venc > c.maxVenc) c.maxVenc = x.venc;
+    } else {
+      c.pv = waR2_(c.pv + x.saldo); c.nPv++; if (!c.prox || x.vence < c.prox) c.prox = x.vence;
+      if (-x.venc <= WA_MV_PROX_DIAS) { c.pv7 = waR2_(c.pv7 + x.saldo); c.nPv7++; if (!c.prox7 || x.vence < c.prox7) c.prox7 = x.vence; }
+    }
+  });
+  var cli = orden.map(function (k) { return M[k]; }), D = { hoy:hoy, cli:cli, venc:{ n:0, bs:0 }, pv7:{ n:0, bs:0 }, sinm:0, maxVenc:0 };
+  cli.forEach(function (c) {
+    D.venc.n += c.nVenc; D.venc.bs = waR2_(D.venc.bs + c.venc); D.pv7.n += c.nPv7; D.pv7.bs = waR2_(D.pv7.bs + c.pv7); D.sinm += c.nSin;
+    if (c.maxVenc > D.maxVenc) D.maxVenc = c.maxVenc;
+  });
+  var porNom = function (a, b) { return a.k < b.k ? -1 : a.k > b.k ? 1 : 0; };
+  D.vencidos = cli.filter(function (c) { return c.nVenc > 0; }).sort(function (a, b) { return (b.venc - a.venc) || (b.maxVenc - a.maxVenc) || porNom(a, b); });
+  D.porVencer = cli.filter(function (c) { return c.nPv7 > 0; }).sort(function (a, b) { return (a.prox7 < b.prox7 ? -1 : a.prox7 > b.prox7 ? 1 : 0) || (b.pv7 - a.pv7) || porNom(a, b); });
+  D.sinMonto = cli.filter(function (c) { return c.nSin > 0; }).sort(function (a, b) { return (b.nSin - a.nSin) || porNom(a, b); });
+  return D;
+}
+/** Los 6 datos de `mayoristas_vencido`: el día; lo vencido (total, OC, clientes); por cliente (OC y días de atraso de la más atrasada);
+    lo que vence en 7 días; por cliente (OC y cuándo vence la primera); lo sin monto anotado (aparte, no suma). */
+function waMvParams_(D, B) {
+  var oc = function (n) { return n + ' OC'; }, cl = function (n) { return n === 1 ? '1 cliente' : n + ' clientes'; };
+  var dia = function (f) { return f === B.hoy ? 'hoy' : (WA_MV_DIAS_CORTOS[waDow_(f)] || '') + ' ' + waDm_(f); };
+  var ven = D.vencidos.map(function (c) {
+    var det = c.sinF === c.nVenc ? (c.nVenc === 1 ? 'sin fecha de entrega' : 'todas sin fecha de entrega') : (c.maxVenc + ' d' + (c.sinF ? '; ' + c.sinF + ' sin fecha' : ''));
+    return waParam_(c.k + ' ' + waBs_(c.venc) + ' (' + oc(c.nVenc) + ', ' + det + ')');
+  });
+  var pv = D.porVencer.map(function (c) { return waParam_(c.k + ' ' + waBs_(c.pv7) + ' (' + oc(c.nPv7) + ', ' + dia(c.prox7) + ')'); });
+  var sm = D.sinMonto.map(function (c) { return waParam_(c.k + ' ' + c.nSin); });
+  return [waDiaTxt_(B.hoy),
+          D.venc.n ? waBs_(D.venc.bs) + ' en ' + oc(D.venc.n) + ' de ' + cl(D.vencidos.length) : 'nada vencido ✅',
+          ven.length ? waListaCabe_(ven, ' · ') : 'ninguno',
+          D.pv7.n ? waBs_(D.pv7.bs) + ' en ' + oc(D.pv7.n) + ' de ' + cl(D.porVencer.length) : 'nada',
+          pv.length ? waListaCabe_(pv, ' · ') : 'ninguno',
+          D.sinm ? oc(D.sinm) + ': ' + waListaCabe_(sm, ' · ') : 'ninguna'];
+}
+/** ¿Hoy toca? El primer día hábil de la semana: el lunes; si el lunes es feriado, el martes (y así). Nunca el domingo. */
+function waMvToca_(hoy) {
+  var dow = waDow_(hoy);
+  if (!dow || !waPhHabil_(hoy)) return false;
+  for (var d = waMasDias_(hoy, 1 - dow); d < hoy; d = waMasDias_(d, 1)) if (waPhHabil_(d)) return false;
+  return true;
+}
+/** El próximo día en que sale (hoy, si todavía no salió y no pasó la ventana). */
+function waMvProximo_(hoy, hora, hecho) {
+  if (waMvToca_(hoy) && hora < WA_HORA_MV + WA_VENTANA_H && hecho !== hoy) return hoy;
+  var d = waMasDias_(hoy, 1);
+  for (var i = 0; i < 14 && !waMvToca_(d); i++) d = waMasDias_(d, 1);
+  return d;
+}
+/** 19. de probarAntesDeImplementar: que la plantilla esté, a quién va y qué mandaría hoy (SOLO cantidades y montos: ningún nombre de
+    cliente en el registro). Solo lee; informa, no frena. */
+function probarBotH_(bien, ojo, vals) {
+  if (typeof waMvDatos_ !== 'function' || !WA_TIPOS.mv) { ojo('Este código no tiene lo vencido de los mayoristas (2026-11-13-b): ¿es un pegado viejo?'); return; }
+  var c = waConfig_(), prende = waActivo_() && c.ok ? '' : ' (sale con el bot de WhatsApp prendido: WA_ACTIVO, WA_TOKEN y WA_PHONE_ID)';
+  var pl = WA_PLANTILLAS.filter(function (x) { return x.n === WA_TIPOS.mv.plantilla; })[0];
+  if (!pl) ojo('🏭 La plantilla ' + WA_TIPOS.mv.plantilla + ' no está en WA_PLANTILLAS: crearPlantillasWhatsApp no la va a crear.');
+  else bien('🏭 La plantilla ' + pl.n + ' (lo vencido de los mayoristas, ' + pl.e.length + ' datos) está en el código: si todavía no está en Meta, ejecutá «crearPlantillasWhatsApp» (las que ya existen quedan como estaban); «verPlantillasWhatsApp» dice si ya la aprobaron.');
+  var B = waBo_(Date.now()), prox = waMvProximo_(B.hoy, B.hora, waJsonProp_('WA_HECHO', {}).mv);
+  /* Sin WA_CONTABILIDAD: con el bot prendido es un ⚠️ (Eliana no lo va a recibir); con el bot apagado, solo se informa (como lo demás del bot). */
+  if (!c.conta.length) (prende ? bien : ojo)('🏭 Lo vencido de los mayoristas (los lunes a las 08:00) no le llega a nadie: falta la propiedad WA_CONTABILIDAD (Contabilidad:591…). Al dueño no va.' +
+                           (c.malCo.length ? ' En WA_CONTABILIDAD hay número(s) que no entiendo: ' + c.malCo.join(', ') + '.' : '') + prende);
+  else bien('🏭 Lo vencido de los mayoristas va los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana) SOLO a: ' +
+            c.conta.map(function (x) { return x.nombre; }).join(', ') + ' (WA_CONTABILIDAD; al dueño no). El próximo: ' + waDiaTxt_(prox) + prende + '.');
+  if (!vals) return;
+  var lista = [];
+  for (var i = 1; i < vals.length; i++) if (vals[i][0]) { try { lista.push(rowToRec_(vals[i])); } catch (e) {} }
+  var D = waMvDatos_(lista, B.hoy);
+  bien('🏭 Con la planilla de ahora diría (solo cantidades): vencido ' +
+       (D.venc.n ? waBs_(D.venc.bs) + ' en ' + D.venc.n + ' OC de ' + D.vencidos.length + ' cliente(s)' + (D.maxVenc > 0 ? ', la más atrasada hace ' + D.maxVenc + ' días' : '') : 'nada') +
+       ' · vence en los próximos ' + WA_MV_PROX_DIAS + ' días: ' + (D.pv7.n ? waBs_(D.pv7.bs) + ' en ' + D.pv7.n + ' OC de ' + D.porVencer.length + ' cliente(s)' : 'nada') +
+       ' · sin monto anotado (aparte): ' + (D.sinm ? D.sinm + ' OC' : 'ninguna') +
+       (D.venc.n || D.pv7.n ? '.' : ' → así no saldría (nada vencido ni por vencer).'));
+}
+
+/* ============================================================================
  * 💵✅ (2026-11-07-f) «YA LO RECIBÍ»: CONTABILIDAD ANOTA POR WHATSAPP LA PLATA QUE LE ENTREGA UN CHOFER. El dueño (08/11), con la propuesta:
  *    «Si así está bien / No, sólo para contabilidad / Sí, es el [número] al que le avisa que tienen los choferes» (el de WA_CONTABILIDAD).
  *   · El resumen del efectivo de los choferes (`efectivo_del_dia_boton`, 9:00 y 18:00) trae el botón «Ya lo recibí». Al tocarlo (o al
@@ -5660,7 +5867,7 @@ function waArmar_(m, recs, cfg, B) {
     out.para = String(p.cliente || 'cliente'); out.numero = waCel_(p.celular);
   } else {
     /* 🏭 (2026-10-27-a) «pedir hoy» va a los de WA_PEDIR_HOY; 📥✅ (2026-10-29-a) el Excel y el cierre, a los de WA_AVISOS (o WA_PEDIR_HOY). */
-    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv' || m.k === 'ef' || m.k === 'cd' || m.k === 'vb' || m.k === 'tr4', co = m.k === 'efc', bd = m.k === 'bd';   // 📉 §4ok-102 · 💵 (2026-11-06-b) al dueño · 🚚 (06-c) a Contabilidad · ☀️🌙 (2026-11-07-a) a la vendedora / al dueño
+    var av = m.k === 'ex' || m.k === 'ci', du = m.k === 'al' || m.k === 'alv' || m.k === 'ef' || m.k === 'cd' || m.k === 'vb' || m.k === 'tr4', co = m.k === 'efc' || m.k === 'mv', bd = m.k === 'bd';   // 📉 §4ok-102 · 💵 (2026-11-06-b) al dueño · 🚚 (06-c) a Contabilidad · ☀️🌙 (2026-11-07-a) a la vendedora / al dueño · 🏭⏳ (2026-11-13-b) lo vencido de los mayoristas, a Contabilidad
     var aQuien = bd ? waBdEquipo_() : (co ? cfg.conta : (m.k === 'rf' ? cfg.reclamo : (m.k === 'ph' ? cfg.pedirHoy : (av ? cfg.avisosLog : ((m.k === 'ef' || m.k === 'tr4') ? cfg.duenoEfe : (du ? cfg.dueno : cfg.logistica))))));   // 🏭 §4ok-105 · 👔 (07-e) el efectivo, solo al primero
     var L = null; for (var i = 0; i < aQuien.length; i++) if (aQuien[i].nombre === m.a) L = aQuien[i];
     if (!L) return { saltar:'«' + m.a + '» ya no está en ' + (bd ? 'WA_VENDEDORAS (o ya no es del equipo)' : (co ? 'WA_CONTABILIDAD' : (m.k === 'ph' ? 'WA_PEDIR_HOY' : (av ? (cfg.avisos.length ? 'WA_AVISOS' : 'WA_PEDIR_HOY') : (du || m.k === 'rf' ? 'WA_DUENO' : 'WA_LOGISTICA'))))), anotar:true };
@@ -5750,6 +5957,14 @@ function waArmar_(m, recs, cfg, B) {
     if (!VB.vend.some(function (o) { return o.baja; })) return { saltar:'nadie va más de ' + Math.round(WA_VB_UMBRAL * 100) + ' % abajo de su mes pasado', anotar:false };
     out.params = waVbParams_(VB);
     out.botones = ['vb|' + msV];
+  } else if (m.k === 'mv') {
+    /* 🏭⏳ (2026-11-13-b, mejora 181) Con la planilla de AHORA y lo de HOY: un pago anotado entre la cola y el envío ya no aparece; un
+       reintento de otro día ya no dice la verdad. Sin nada vencido ni que venza en 7 días, no sale. */
+    if (m.dia !== B.hoy) return { saltar:'era del ' + waDiaTxt_(m.dia), anotar:true };
+    var lisM = []; for (var idm in recs) lisM.push(recs[idm]);
+    var DM = waMvDatos_(lisM, B.hoy);
+    if (!DM.venc.n && !DM.pv7.n) return { saltar:'ningún mayorista tiene nada vencido ni que venza en los próximos ' + WA_MV_PROX_DIAS + ' días', anotar:false };
+    out.params = waMvParams_(DM, B);
   } else if (m.k === 'al' || m.k === 'alv') {
     /* 📉 §4ok-102 Lo que contó el vigía en ESE momento (un reintento de minutos después dice lo mismo). */
     var ld = m.ld || {}; if (!ld.t) return { saltar:'sin datos del vigía', anotar:true };
@@ -5915,6 +6130,12 @@ function waRepasoBot_() {
       cfg.dueno.forEach(function (L) { msgs.push({ k:'vb', a:L.nombre, dia:B.hoy, n:0, ms:t0 }); });
       hecho.vb = B.hoy; cambio = true;
     }
+    /* 🏭⏳ (2026-11-13-b, mejora 181) Lunes 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo vencido de los mayoristas,
+       SOLO a Contabilidad (WA_CONTABILIDAD; al dueño no). Sin nada vencido ni que venza en 7 días, `waArmar_` no lo manda. Una vez (`mv`). */
+    if (cfg.conta.length && B.hora >= WA_HORA_MV && B.hora < WA_HORA_MV + WA_VENTANA_H && hecho.mv !== B.hoy && waMvToca_(B.hoy)) {
+      cfg.conta.forEach(function (L) { msgs.push({ k:'mv', a:L.nombre, dia:B.hoy, n:0 }); });
+      hecho.mv = B.hoy; cambio = true;
+    }
     /* 📥✅ (2026-10-29-a) A las 10:00 el Excel del día; a las 19:00 (sábado 13:30) el cierre de entregas. Si ya está, `waArmar_` no lo manda. */
     var ciH = waCierreHora_(B.hoy);
     if (cfg.avisosLog.length && B.hora >= WA_HORA_EXCEL && B.hora < WA_HORA_EXCEL + WA_VENTANA_H && hecho.ex !== B.hoy && waPhHabil_(B.hoy)) {
@@ -6037,6 +6258,7 @@ function estadoBotWhatsApp() {
   try { s.buenDia = waBdEquipo_().map(function (V) { return V.nombre; }); s.bloki = blokiUsoHoy_(); s.blokiTope = blokiTope_(); } catch (e) {}   // ☀️🧽 (2026-11-07-a)
   try { s.ubicacionPedida = Object.keys(waUbLeer_()).length; s.preguntasDueno = waPregUso_(); s.preguntasTope = waPregTope_(); } catch (e) {}   // 📍💬 (2026-11-07-f)
   try { s.contabilidad = c.conta.map(function (L) { return L.nombre; }); s.yaLoRecibiEsperando = Object.keys(waErEstLeer_()).length; } catch (e) {}   // 💵✅ (2026-11-07-f)
+  try { var bM = waBo_(Date.now()); s.mayoristasVencido = { a:c.conta.map(function (L) { return L.nombre; }), proximo:waMvProximo_(bM.hoy, bM.hora, (s.hecho || {}).mv), ultimo:(s.hecho || {}).mv || '' }; } catch (e) {}   // 🏭⏳ (2026-11-13-b)
   if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
   return s;
 }
@@ -7069,7 +7291,12 @@ var WA_PLANTILLAS = [
   /* 📥 (2026-11-07-f, dueño, 08/11) Al dueño solo: el pedido que cargó la revisión de correos, para que lo suba al TR4 (`waTr4Params_`). */
   { n:'pedido_correo_tr4',
     t:'🤖 📥 *Cargué en el panel un pedido que llegó por correo*\n\n🧾 *N° del panel:* {{1}}\n👤 *Cliente:* {{2}}\n🔢 *Su número de pedido:* {{3}}\n🛏️ *Productos:* {{4}}\n💵 *Total:* {{5}}\n🚚 *Entrega:* {{6}}\n\n⚠️ *Recordá subirlo al TR4.*',
-    e:['OC 11-061 · N° 7 del día', 'MULTICENTER', '33278', '1 × CH1220 COLCHON TITANIO ICE 140x190 a Bs 4.275', 'Bs 4.275', 'lunes 09/11 por la tarde'] }
+    e:['OC 11-061 · N° 7 del día', 'MULTICENTER', '33278', '1 × CH1220 COLCHON TITANIO ICE 140x190 a Bs 4.275', 'Bs 4.275', 'lunes 09/11 por la tarde'] },
+  /* 🏭⏳ (2026-11-13-b, mejora 181) A Contabilidad, los lunes a las 08:00. Mismos datos y orden que `waMvParams_`. */
+  { n:'mayoristas_vencido',
+    t:'🤖 🏭 *Mayoristas: lo vencido* ({{1}})\n\n⚠️ Vencido (pasó su plazo de pago): *{{2}}*\n📋 Por cliente (OC y días de atraso de la más atrasada): {{3}}\n\n⏳ Vence en los próximos 7 días: *{{4}}*\n📋 Por cliente (OC y cuándo vence la primera): {{5}}\n\n🧾 Sin monto anotado (no suman arriba): {{6}}\n\n👉 El estado de cuenta de cada cliente: Contabilidad → 🏭 Mayoristas → 📅 Cobranza.',
+    e:['lunes 16/11', 'Bs 26.200 en 7 OC de 4 clientes', 'Tienda Amiga Bs 12.000 (1 OC, 34 d) · Copacaba Bs 5.000 (2 OC, 31 d) · ROHO Bs 5.000 (1 OC, 16 d) · Multicenter Bs 4.200 (3 OC, 38 d; 1 sin fecha)',
+       'Bs 6.200 en 4 OC de 3 clientes', 'Multicenter Bs 1.300 (2 OC, hoy) · Electrocenter Bs 900 (1 OC, mié 18/11) · Tienda Amiga Bs 4.000 (1 OC, dom 22/11)', '2 OC: Multicenter 1 · CAMSA 1'] }
     /* (2026-11-07-d) Desde la 07-d {{2}} suma «· 17 productos» y {{4}} trae a TODOS: «Mirian: 4 prod., Bs 12.300 · Isabel: 3 prod., Bs 9.800 · …».
        La plantilla de Meta no cambia (solo cambian los datos). */
 ];
