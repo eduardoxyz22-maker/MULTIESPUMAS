@@ -91,7 +91,8 @@ TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
 - ⚠️ **El PDF trae DOS precios encimados en el mismo casillero** (ej. `510.00` y `679.99`; `630.00` y `840.00`): el de venta al público y el
   que nos pagan (el 75 %). **Vale el MENOR**, como en todos los cargados antes (510, 630, 654, 1.170…). `total_impreso` = ese mismo.
 - El código viene como `PN20309-<código>`. Si lo que sigue es un código nuestro (`CH1473`, `CH1803`, `COLT44` = `COLT0044`) se usa ese. Los
-  `COLT00N` cortos son de ELLOS, no nuestros: `COLT002` = `COLT0029` COLCHON ORTOPEDICO SUEÑA 105x190 · `COLT003` = `COLT0037` COLCHON
+  `COLT00N` cortos son de ELLOS, no nuestros: `COLT001` = `COLT0028` COLCHON ORTOPEDICO SUEÑA 140x190 (14/11, OC 260600247) ·
+  `COLT002` = `COLT0029` COLCHON ORTOPEDICO SUEÑA 105x190 · `COLT003` = `COLT0037` COLCHON
   SEMIORTOP. 105x190 · `COLT006` = `COLT0069` COLCHON SEMIORTOP. 180x190. Uno que no esté en esta lista: por el NOMBRE y la medida contra
   `CODIGOS` («Ortopédico» = COLCHON ORTOPEDICO SUEÑA, «Semiortopédico» = COLCHON SEMIORTOP.), se anota en observaciones y se agrega acá.
 - `observaciones`: `A CRÉDITO — DEBE Bs X. OC Tienda Amiga N del dd/mm/aaaa (Marketplace NNNNN; pedido de venta de origen N). <producto como
