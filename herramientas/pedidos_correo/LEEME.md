@@ -50,7 +50,7 @@ cargues no olvides responder el email con los datos de para qué día fue cargad
   Si el script pasó el pedido a otro día (lleno, cerrado, feriado), se dice la fecha NUEVA, sin explicar el panel. Sin precios ni montos.
 - 👥 **En la respuesta a Tienda Amiga (Denisse) van con copia Ernesto y David Alba** (14/11, dueño: *«Si Ernesto no está en los correos que envía
   Denisse debes añadirlo en la respuesta. Ernesto y David Alba»*): `cc` = las copias que ya tenía el último mensaje (sin e.anez@) +
-  `ernesto.flores@colchonesheaven.com` + `logistica@colchonesheaven.com` (David Alba; dueño: *«David Alba es el correo de logística»*:
+  `ernesto.flores@colchonesheaven.com` + `logistica@colchonesheaven.com` (David Alba; dueño: *«David Alba es el correo de logística»* y *«Dalba no corresponde»*:
   el gmail dalba973@ NO), sin repetir. ⚠️ El `cc` de `reply` REEMPLAZA las copias de siempre: por eso se pasan todas.
 - Una sola respuesta por pedido: antes de responder, mirar que en el hilo no haya ya una respuesta nuestra que confirme ese pedido.
 - 📝 **Un «pedido sugerido» que pide precios NO es una OC** (11/11, Maricruz Ventura, maricruz.ventura@tiendaamiga.com.bo: 45 somieres
