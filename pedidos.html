@@ -64289,7 +64289,9 @@ function apartoTic(){
   if(apartoSeg()<=0){   // se venció en el servidor (nadie trabajó en el formulario): si la persona vuelve, se aparta de nuevo
     APARTO=null; APARTO_GEN++; apartoPintar(); if((Date.now()-APARTO_ACT)<APARTO_RENUEVA_MS) apartoMirar(); return;
   }
-  if(!APARTO_PIDE && Date.now()-APARTO.ren>=APARTO_RENUEVA_MS && APARTO_ACT>APARTO.ren) apartoPedir({ f:APARTO.f, t:APARTO.t, k:APARTO.k }, APARTO.id);
+  /* Cada ~4 min, o antes si el servidor da menos tiempo (al 60 % de lo que dio), y solo si la persona hizo algo desde la última vez. */
+  var ciclo=Math.min(APARTO_RENUEVA_MS, Math.max(30000, (APARTO.fin-APARTO.ren)*0.6));
+  if(!APARTO_PIDE && Date.now()-APARTO.ren>=ciclo && APARTO_ACT>APARTO.ren) apartoPedir({ f:APARTO.f, t:APARTO.t, k:APARTO.k }, APARTO.id);
   apartoPintar();
 }
 /* Lo que se hace en el formulario cuenta como «sigue trabajando»; elegir día o turno, como «eligió». */
