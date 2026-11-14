@@ -133,7 +133,7 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
   /* Hojas que crea un script aparte (25/09: «Respaldo entregados», de herramientas/): con el
      tope de filas de una hoja nueva bien bajo y convirtiendo fechas, que es el peor caso. */
   const otras = {};
-  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1, 'Historial stock':1, 'IA comprobantes':1 };   // (26/10, §4mq) «IA comprobantes»: lo que leyó Claude de cada foto   // (09/10, §4in) «Historial stock»: la columna A va como texto (`@`), sin convertir fechas   // (30/09, §4he) «Borrados»: la anota doDelete
+  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1, 'Historial stock':1, 'IA comprobantes':1, 'Mall':1 };   // (14/11, 2026-11-14-b) «Mall»: los toques del mostrador   // (26/10, §4mq) «IA comprobantes»: lo que leyó Claude de cada foto   // (09/10, §4in) «Historial stock»: la columna A va como texto (`@`), sin convertir fechas   // (30/09, §4he) «Borrados»: la anota doDelete
   const cont = { flush: 0 };
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
@@ -1697,8 +1697,8 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-11-14-a',
-      vG==='2026-11-14-a' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
+  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-11-14-b',
+      vG==='2026-11-14-b' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
