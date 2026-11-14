@@ -18829,3 +18829,32 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   arranca el que tuvo menos), 254 (Contabilidad → «🏬 Caja por tienda»: ventas, cobros, efectivo = quedó + cobrado − retirado contra lo contado, QR contra el
   extracto, lo que falta, 🔒 cerrar, Excel de 4 hojas, PDF con firmas) y 256 (meta de hoy = lo que falta del presupuesto ÷ días hábiles que quedan). Ideas
   nuevas 258-281 por grupo; recomendadas 253 + 252 + 251 + 254 + 256, y 258 y 266. Nada programado.
+
+### §4pz — 🏬 LA TIENDA DEL MALL HECHA (14/11; dueño: *«251 sí como cotización… 252 me gusta (solo mall), 253 ok, 254 ok, 256 ok, 264 como sería, 266 ok, 267 ok, 271 ok, 273 ok, 274 ok mostrame como sería, 276-281 ok»*, *«253 pero son 2 en un turno y otros 2 en otro turno»*, *«254 sería solo para tienda ventura sur»*, *«264 sí pero lo revisaremos y diseñaremos el formato y debe llevar un QR también»*, *«274 armalo pero que aún no funcione… debemos probar»*)
+- Hecho con 8 agentes en worktrees y juntado en la rama (sin publicar). Página para revisar con capturas inventadas: «Mall listo para revisar».
+  Detalle de 251/264/274: https://claude.ai/artifact/JAzjpfSs9MmECjetFv2ZyZ. La tienda del mall en detalle: https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc.
+- **Servidor `2026-11-14-b`** (sobre la 14-a): hoja «Mall» (`mallToque` idempotente por id, afuera del candado de doPost; `mallLeer` con hoy desde la caché),
+  `__cupos_extra__` (el portero suma, tope 20, no abre turnos cerrados) y `__caja_tienda__` en `SISTEMA_JUNTA_OPCIONAL`, `apartarCupo`/`soltarCupo` + `apartados`
+  en `list` + `aparto` en el save, `venta_grande` (≥ `VENTA_GRANDE_BS`, 8.000 de entrada; 0 apaga; solo al primero de WA_DUENO, con el repaso del bot), hoja
+  «Cotizaciones» (`cotGuardar`/`cotMarcar`/`cotLeer`, «COT MM-NNN»; una llamada con la misma `llamada.t` no se repite), Kommo de la cotización APAGADO salvo
+  `KOMMO_COT=1`, y el bot de las 48 h APAGADO salvo `COT_BOT=prueba` (solo WA_PRUEBA) o `1` (plantillas `cotizacion_seguimiento` con 3 botones `cs|<id>|…`,
+  `vendedora_llamar_cliente`, `cotizacion_sin_llamar` a las 2 h). `tests/test_servidor_mall.js` (82), `tests/test_servidor_cot.js` (85).
+- **252/253/273** (`mall*`, la barra `#mall-barra` arriba de las pestañas): solo con servidor ≥ 14-b (`mallPuede`), en el aparato marcado
+  «🏬 Esta compu es la del mall» (`me_mall_aparato`) o con un vendedor de `MALL_TIENDA='Ventura Mall'`. Cola durable `me_mall_cola`. Funciones puras que usan
+  otros: `mallEstado`, `mallResumenDia` (porHora [{h,at,co}], porVend {v:{at,co,…}}), `mallParejo`. «Es mío» va aparte de la rueda. Turno por la hora del
+  «Llegué» (`MALL_CAMBIO_TURNO='15:00'`). Una venta nueva cuenta sola (`mallVentaHecha`); una cotización, como «anotó» (`mallCotHecha`).
+  `tests/test_mall_rueda.js` (67). ⚠️ Hoy NINGÚN vendedor es de Ventura Mall en `VENDEDOR_SUCURSAL`: faltan los nombres de los 4.
+- **254/256**: `cajaAbrir`/`cajaResumenDia`/`metaDiaTienda`/`metaDiaDatos`; `CAJA_TIENDAS=['Ventura Mall']`; la suma de las cajas = el Cuadre de la tienda
+  (`test_caja_tienda` §8). `cajaMallNorm` lee la forma de `mallResumenDia`. `tests/test_caja_tienda.js` (47), `tests/test_meta_dia.js` (32).
+- **266/267**: `cupx*` (abrir cupos con la contraseña, `limTurno` = base + extra), `cupPron*` (el aviso), `aparto*` (el lugar apartado, solo con 14-b;
+  `sendBeacon` al cerrar). `tests/test_cupos_mall.js` (58).
+- **271**: modo práctica (`practica*`, script al principio del `<head>`): por pestaña, frena toda escritura en `apiPost` y en fetch/XHR/beacon salvo
+  `PRACTICA_LECTURAS` (con `mallLeer`/`cotLeer`), capa aparte de localStorage, sin WhatsApp/correo. ⚠️ Una acción NUEVA de solo lectura va en
+  `PRACTICA_LECTURAS`; una de escritura queda frenada sola. `tests/test_modo_practica.js` (54).
+- **251/274**: el 4° tipo «🧾 Cotización» (`cot*`, `docTipoSel()==='COT'`), cola `me_cot_cola`, imagen en canvas, «Para hacer» y el tablero en Proyección;
+  la venta que compró lleva `cot:<id>` en los productos (`heredarMarcas`). `tests/test_cotizar.js` (53).
+- **264**: el certificado (`cert*`) SOLO con la contraseña o `?cert=1` (`CERT_PARA_TODOS=false`), `CERT_ANOS` todo en null («a definir», etiqueta BORRADOR),
+  QR de `qrcode-generator` 1.4.4 por jsDelivr y cdnjs de respaldo (desde la sesión no se pudo abrir ninguno: probarlo en un aparato), `CERT_QR_MODO='datos'`.
+  La compra en la ATC (`atcCompra*`) prendida para todos. `tests/test_certificado.js` (58).
+- **276-281**: «🏬 El mall» y «📡 El mall en vivo» en Proyección (`mallAn*`, `mviv*`), con la contraseña; atajo `#envivo` en el manifest y en
+  `escritorio.js` (`?v=20261114a`). `tests/test_mall_analisis.js` (60).
