@@ -904,7 +904,7 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   aparte; el enlace corto y el `&wa=1` valen. Afuera (`ubfEntra`): `fichaRetira`, venta de tienda, sistema, borradores, entregados, RPT a sucursal con pin y, como el bot,
   **Eduardo, ROHO y los internos** (con la planilla real salían «Roho» a la Tienda 1 y dos de FABRICA). Bloki se lo dice a logística (`l-ubic|…`). `test_ubic_faltan` (37).
 
-## 🛏️🕓🧾📅⚡ Las mejoras 211, 212, 216, 217 y 218 (§4py, 14/11; dueño: «211,212,216,217,218»; en la rama, espera «publica»; 216 y 217 piden el servidor `2026-11-14-a`, que lleva también la 13-b: IMPLEMENTADO 14/11 por el dueño, probar ✅, contesta `2026-11-14-a`, enlace fijo `f22f45b…`, 8.941 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…`, 8.104 líneas. `main` sigue con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 13-a hasta publicar la página)
+## 🛏️🕓🧾📅⚡ Las mejoras 211, 212, 216, 217 y 218 (§4py, 14/11; dueño: «211,212,216,217,218» y «si publica»; PUBLICADO 14/11, versión 2026-11-14-a; 216 y 217 piden el servidor `2026-11-14-a`, que lleva también la 13-b: IMPLEMENTADO 14/11 por el dueño, probar ✅, contesta `2026-11-14-a`, enlace fijo `f22f45b…`, 8.941 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…`, 8.104 líneas. `main` con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 14-a desde esta publicación)
 - **🛏️ 211 El dibujito de cada producto** (`prodIcoTipo` → colchón/somier/combo/almohada/respaldar/textil/otro; `prodIcoHtml`, memo `PICO_MEMO`): en la ficha
   y las fichas de Administración, la Lista de carga (`cargaAgrupar` guarda una línea de muestra en `px`), Mis pedidos y `#fx-der`. Colchón/somier/combo salen de
   `pryTipoProd` (el código manda); lo demás por la primera palabra (`PICO_ALM`, `PROD_MUEBLE`+`PICO_RESP`, `PROD_TIENDA`+`PICO_TELA`). ⚠️ Solo dibujo: el SVG no lleva
@@ -3005,7 +3005,7 @@ individual por producto»*): el producto sale del NOMBRE + las plazas (1 = 90x19
 el código (CODIGOS, el `cod` de los Excel en `__stock__`, los pedidos anteriores); si no coinciden, gana el nombre y se anota. El total = Σ cantidad ×
 precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06/11 su «CH301» era el CH1301.
 🤖 **AUTOMÁTICO desde el 06/11** (dueño: *«3 veces al día, cárgalos directo como hoy»*): tarea programada `trig_01AjxEcAPLdbizzLLhix9aTT`, lunes a
-sábado 6:47, 8:47, 11:47, 15:47 y 17:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
+sábado 6:47, 8:47, 11:47, 15:47, 17:47, 19:47 y 21:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*; 14/11: *«Sí, agrega las de 19:47 y 21:47»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
 🛒 **Tienda Amiga** (09/11; dueño: *«cuando lleguen a mi correo mensajes de Denisse… con pedidos recuerda cárgalos»*): la rutina busca también

@@ -18811,3 +18811,6 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   publicada (13-d) la 181 (lunes 08:00 a Contabilidad, falta que Meta apruebe `mayoristas_vencido` con `crearPlantillasWhatsApp`) y el GPS de la 204
   (la hoja «Historial GPS» se llena a las 21 h). `main` sigue con el `.gs` y ESPERADA en 13-a (la página publicada dice en gris «el servidor ya está en
   14-a»): se pasan con la página de 211-218. Volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…` (8.104 líneas).
+- **PUBLICADO 14/11** (dueño: *«si publica»*): la página `2026-11-14-a` con 211, 212, 216 (solo con la contraseña), 217 y 218 (sin «🕐 Horario…»), el `.gs`
+  14-a y `SCRIPT_VERSION_ESPERADA` 14-a en `main` (por `cherry-pick` de los commits del cambio; las pruebas del servidor 13-b —`test_gps_historial`,
+  `test_wa_mayoristas`— entran con él). `FH_DESDE`='2026-11-14' = el día de publicar.
