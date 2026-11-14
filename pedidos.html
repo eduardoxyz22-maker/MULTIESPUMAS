@@ -2451,7 +2451,169 @@ html.sa-top .adm-ov,html.sa-top #stock-overlay,html.sa-top #alm-overlay,html.sa-
 html.sa-top [style*="position:fixed"][style*="inset:0"],html.sa-top [style*="position: fixed"][style*="inset: 0"],html.sa-top .modal-overlay,html.sa-top #obs-conf,html.sa-top .pal-ov,html.sa-top #salud-overlay,
 html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quien,html.sa-top .pm-overlay,html.sa-top #pt-ov{border-top:var(--sa-t,0px) solid var(--wco-bg,#0f4c5c)!important}
 @media(prefers-reduced-motion:reduce){.ver-nueva{animation:none}}
+/* 🧪 MODO PRÁCTICA (271, 14/11; dueño: «modo práctica para los nuevos» del mall). Solo con `html.practica` (lo pone el script de abajo):
+   la franja de arriba, el velo a rayas sobre el encabezado (encima del color del tema, sin tocarlo) y la marca 🧪 de lo cargado de práctica.
+   ⚠️ El aviso de WhatsApp/correo es una tarjeta, no una ventana a pantalla completa (si no, va en las listas de `html.wco`/`html.sa-top`). */
+.pr-franja,.pr-velo{display:none}
+html.practica .pr-velo{display:block;position:absolute;left:0;right:0;top:0;height:100%;z-index:0;pointer-events:none;
+  background:repeating-linear-gradient(-45deg,rgba(251,191,36,.30) 0 16px,rgba(251,191,36,0) 16px 32px);box-shadow:inset 0 0 0 4px #f59e0b}
+html.practica .pr-franja{display:flex;position:relative;z-index:3;align-items:center;gap:6px 10px;flex-wrap:wrap;padding:6px 14px;
+  background:repeating-linear-gradient(-45deg,#fcd34d 0 14px,#fbbf24 14px 28px);color:#2b1700;border-bottom:2px solid #b45309;font-size:.84rem;line-height:1.25}
+.pr-f-t{flex:1 1 260px;min-width:0;background:rgba(255,251,235,.94);border-radius:8px;padding:5px 10px;font-weight:600}
+.pr-f-t b{font-weight:800;letter-spacing:.02em}
+.pr-franja button{font:inherit;font-size:.8rem;font-weight:800;border-radius:999px;padding:6px 12px;cursor:pointer;border:1.5px solid #92400e;background:#fffbeb;color:#5b2c00;min-height:34px}
+.pr-franja button:hover{background:#fff}
+.pr-franja .pr-f-salir{background:#7c2d12;color:#fff;border-color:#7c2d12}
+.pr-franja .pr-f-salir:hover{background:#9a3412}
+.pr-f-ej i{font-style:normal;background:#f59e0b;color:#2b1700;border-radius:999px;padding:0 6px;margin-left:3px}
+.pr-f-tip{flex:1 1 100%;background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:5px 10px;font-size:.8rem;font-weight:500;color:#3d2600}
+.pr-f-tip[hidden]{display:none}
+.pr-f-tip b{font-weight:800}
+.pr-f-tip button{min-height:26px;padding:2px 9px;font-size:.74rem;margin-left:6px}
+html.practica .logo-s{font-size:0}
+html.practica .logo-s::after{content:'🧪 PRÁCTICA';font-size:.58rem;color:#fde68a;letter-spacing:.14em;font-weight:800}
+.pr-chip{display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:0 4px;margin-right:4px;font-size:.82em;line-height:1.35;font-weight:700;color:#7c2d12;vertical-align:baseline}
+.pr-aviso{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--hdr-h,0px) + 14px);z-index:10060;width:min(560px,calc(100vw - 24px));
+  max-height:calc(100vh - 40px);overflow:auto;background:#fffbeb;border:2px solid #f59e0b;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:14px 16px;color:#2b1700;font-size:.88rem;line-height:1.4}
+.pr-aviso[hidden]{display:none}
+.pr-aviso h4{margin:0 0 6px;font-size:1rem}
+.pr-aviso pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;max-height:240px;overflow:auto;font:inherit;font-size:.82rem;margin:8px 0}
+.pr-aviso .pr-av-acc{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pr-aviso button{font:inherit;font-weight:800;font-size:.84rem;border-radius:10px;padding:8px 14px;cursor:pointer;border:1.5px solid #92400e;background:#fff;color:#5b2c00;min-height:40px}
+.pr-aviso button.si{background:#92400e;color:#fff}
+.pr-res{background:#fffbeb;border:2px solid #f59e0b;border-radius:12px;padding:10px 13px;margin:0 0 12px;color:#2b1700;font-size:.85rem;line-height:1.45}
+.pr-res>b{display:block;font-size:.95rem;margin-bottom:4px}
+.pr-res ul{margin:4px 0 6px 18px;padding:0}
+.pr-res li{margin:2px 0}
+.pr-res button{font:inherit;font-weight:800;font-size:.8rem;border-radius:999px;padding:5px 12px;cursor:pointer;border:1.5px solid #92400e;background:#fff;color:#5b2c00}
+.pr-ej{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--gray-md);border-radius:12px;padding:10px 12px;margin:0 0 8px;background:#fff}
+.pr-ej.hecho{border-color:#86efac;background:#f0fdf4}
+.pr-ej>i{font-style:normal;font-size:1.3rem;line-height:1}
+.pr-ej>div{flex:1;min-width:0}
+.pr-ej b{display:block;font-size:.92rem}
+.pr-ej small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px;line-height:1.4}
+.pr-ej button{font:inherit;font-weight:700;font-size:.8rem;border-radius:999px;padding:6px 12px;cursor:pointer;border:1px solid var(--teal-border);background:var(--teal-lt);color:var(--teal-dk);white-space:nowrap;align-self:center}
+.pr-ej-barra{height:10px;border-radius:999px;background:#fde68a;overflow:hidden;margin:4px 0 12px}
+.pr-ej-barra i{display:block;height:100%;background:#16a34a;border-radius:999px}
+.quien-pr{margin-top:10px;display:flex}
+.quien-pr button{flex:1;font:inherit;font-weight:700;font-size:.86rem;border-radius:12px;padding:10px 12px;cursor:pointer;border:1.5px dashed #d97706;background:#fffbeb;color:#7c2d12;min-height:44px}
+.quien-pr button:hover{background:#fef3c7}
+.pr-asis{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1.5px dashed #d97706;background:#fffbeb;border-radius:10px;padding:7px 10px;margin:0 0 8px;font-size:.8rem;color:#7c2d12}
+.pr-asis button{font:inherit;font-weight:700;font-size:.78rem;border-radius:999px;padding:5px 11px;cursor:pointer;border:1px solid #d97706;background:#fff;color:#7c2d12}
+@media(max-width:700px){ html.practica .pr-franja{padding:5px 8px;font-size:.76rem;flex-wrap:wrap} .pr-f-t{flex:1 1 0;padding:4px 8px} .pr-f-lb{display:none}
+  .pr-franja button{padding:5px 10px;min-height:34px} .pr-f-tip{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.75rem;padding:4px 8px} }
+@media print{ .pr-franja,.pr-velo,.pr-aviso{display:none!important} }
+/* El panel instalado sin barra (`html.wco`): la franja queda arriba de todo, así que «Salir» no puede quedar debajo de ─ ▢ ✕ de Windows */
+html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-right:calc(14px + var(--wco-r,0px) + 12px);min-height:var(--wco-h,0px)}
 </style>
+<script>
+/* 🧪 MODO PRÁCTICA (271, 14/11; el dueño abre una tienda en el mall con 4 vendedores nuevos y aprobó «modo práctica para los
+   nuevos»): LO QUE CORRE ANTES QUE TODO. Se prende POR PESTAÑA (`sessionStorage` `me_practica`, para que no quede prendido para
+   siempre en una compu compartida) desde «¿Quién está usando el panel?», el menú de Bloki o la dirección con `?practica=1`.
+   Prendido, esta pestaña:
+   · NO ESCRIBE NADA DE VERDAD EN EL APARATO: `localStorage` y `sessionStorage` se leen como siempre (la clave del equipo, el nombre,
+     la copia de la planilla…), pero lo que se escribe va a una CAPA APARTE (memoria + `sessionStorage` `me_practica_ls`/`me_practica_ss`)
+     que se tira al salir. La cola de lo que espera mandarse (`ME_PENDING_V1` y los otros «pendientes») arranca VACÍA: nada de la práctica
+     puede quedar en la cola de verdad y salir después, cuando se apague; y lo de verdad que esperaba en la cola se queda quieto, sin tocar.
+   · NO DEJA SALIR NINGUNA ESCRITURA A LA RED: un `fetch` (o XHR, o `sendBeacon`) que no sea GET y no sea una lectura pura
+     (`PRACTICA_LECTURAS`) se frena acá. Es la SEGUNDA guarda: la primera es `apiPost`, que contesta de mentira sin salir.
+   · no abre WhatsApp, el correo ni el teléfono: el panel lo cambia por un aviso (`practicaUrlFrena`, con `window.open` y los enlaces).
+   Apagado no instala NADA: el panel anda exactamente igual que siempre. */
+(function(){
+  var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
+  /* Las lecturas puras que pueden ir a la planilla de verdad (todo lo demás, también lo que no tiene `action` —para el servidor es «save»—, NO) */
+  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1 };
+  window.PRACTICA=false;
+  if(!SP) return;
+  var G=SP.getItem, S=SP.setItem, R=SP.removeItem;
+  try{ LS=window.localStorage; }catch(e){}
+  try{ SS=window.sessionStorage; }catch(e){}
+  try{
+    var porUrl=/[?&]practica=1(?:&|$)/.test(location.search||'');
+    if(porUrl && SS) S.call(SS, K, '1');
+    on=porUrl || (!!SS && G.call(SS, K)==='1');
+  }catch(e){ on=false; }
+  if(!on) return;
+  window.PRACTICA=true;
+  try{ document.documentElement.classList.add('practica'); }catch(e){}
+  /* ── la capa aparte ── */
+  var OVK={ l:'me_practica_ls', s:'me_practica_ss' }, OV={ l:{}, s:{} }, cortado=false, T=0;
+  try{ OV.l=JSON.parse(G.call(SS, OVK.l)||'{}')||{}; }catch(e){ OV.l={}; }
+  try{ OV.s=JSON.parse(G.call(SS, OVK.s)||'{}')||{}; }catch(e){ OV.s={}; }
+  /* Lo que espera mandarse arranca vacío: lo de verdad no se toca y lo de práctica nunca entra ahí */
+  ['ME_PENDING_V1','me_borrar_pend','me_cierre_pend','me_forzar_cola','me_tst_pase_pend'].forEach(function(k){ if(!Object.prototype.hasOwnProperty.call(OV.l, k)) OV.l[k]=null; });
+  var cual=function(st){ return (LS && st===LS) ? 'l' : ((SS && st===SS) ? 's' : ''); };
+  var propia=function(k){ return String(k).indexOf(K)===0; };
+  var tiene=function(o, k){ return Object.prototype.hasOwnProperty.call(o, k); };
+  var guardar=function(){
+    clearTimeout(T); T=0; if(cortado || !SS) return;
+    ['l','s'].forEach(function(x){
+      var o={}; for(var k in OV[x]){ if(!tiene(OV[x], k)) continue; var v=OV[x][k]; if(v==null || v.length<120000) o[k]=v; }   // lo muy pesado (la copia de la planilla) vive en memoria
+      try{ S.call(SS, OVK[x], JSON.stringify(o)); }catch(e){}
+    });
+  };
+  var luego=function(){ if(!T && !cortado) T=setTimeout(guardar, 250); };
+  SP.getItem=function(k){ var x=cual(this); k=String(k); if(!x || propia(k)) return G.call(this, k); return tiene(OV[x], k) ? OV[x][k] : G.call(this, k); };
+  SP.setItem=function(k, v){ var x=cual(this); k=String(k); if(!x || propia(k)) return S.call(this, k, v); OV[x][k]=String(v); luego(); };
+  SP.removeItem=function(k){ var x=cual(this); k=String(k); if(!x || propia(k)) return R.call(this, k); OV[x][k]=null; luego(); };
+  try{ addEventListener('pagehide', guardar); }catch(e){}
+  var frenados=[];
+  var frenar=function(que){ frenados.push(String(que)); try{ console.warn('🧪 Modo práctica: se frenó un envío a la red ('+que+')'); }catch(e){} };
+  var accion=function(b){ try{ var o=JSON.parse(String(b)); return (o && o.action) ? String(o.action) : 'save'; }catch(e){ return '?'; } };
+  /* Para el panel (salir) y las pruebas: leer lo de VERDAD del aparato, y lo que se frenó */
+  window.PRACTICA_CAPA={
+    real:function(k, ses){ try{ return G.call(ses ? SS : LS, String(k)); }catch(e){ return null; } },
+    frenados:function(){ return frenados.slice(); },
+    /* Al salir: se borra lo de práctica de la pestaña y la capa deja de guardarse; mientras la página se recarga, la capa sigue tapando
+       (la cola de verdad no aparece justo antes de irse). */
+    salir:function(){ cortado=true; clearTimeout(T); try{ [K, OVK.l, OVK.s, 'me_practica_datos', 'me_practica_fotos'].forEach(function(k){ R.call(SS, k); }); }catch(e){} }
+  };
+  /* ── la red: solo lecturas ── */
+  var F=window.fetch;
+  if(F) window.fetch=function(input, init){
+    try{
+      var m=String((init && init.method) || (input && typeof input==='object' && input.method) || 'GET').toUpperCase();
+      if(m!=='GET' && m!=='HEAD'){
+        var act=accion(init && init.body);
+        if(!window.PRACTICA_LECTURAS[act]){ frenar(act); return Promise.reject(new Error('practica')); }
+      }
+    }catch(e){ frenar('?'); return Promise.reject(new Error('practica')); }
+    return F.apply(this, arguments);
+  };
+  try{ if(navigator.sendBeacon) navigator.sendBeacon=function(){ frenar('beacon'); return false; }; }catch(e){}
+  try{
+    var XP=XMLHttpRequest.prototype, XO=XP.open, XS=XP.send;
+    XP.open=function(m){ this.__prM=String(m||'GET').toUpperCase(); return XO.apply(this, arguments); };
+    XP.send=function(b){ if(this.__prM && this.__prM!=='GET' && this.__prM!=='HEAD' && !window.PRACTICA_LECTURAS[accion(b)]){ frenar('xhr'); throw new Error('practica'); } return XS.apply(this, arguments); };
+  }catch(e){}
+  /* ── WhatsApp, el correo y el teléfono: el panel pone el aviso (`practicaUrlFrena`); sin él, igual no se abre ── */
+  window.practicaUrlAfuera=function(u){ return /(^|\/\/)(wa\.me|api\.whatsapp\.com|web\.whatsapp\.com|mail\.google\.com|outlook\.)|^\s*(whatsapp|mailto|tel|sms):/i.test(String(u||'')); };
+  var WO=window.open;
+  window.open=function(u){
+    if(window.practicaUrlAfuera(u)){ try{ if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else alert('🧪 Modo práctica: no se abre WhatsApp ni el correo.'); }catch(e){} return null; }
+    return WO.apply(this, arguments);
+  };
+  /* Los ENLACES a WhatsApp/correo/teléfono se reemplazan: el `href` de verdad pasa a `data-pr-href` y el enlace queda en «#» (así ni
+     «abrir en otra pestaña» con el botón derecho llega al cliente); tocarlo muestra el aviso. */
+  var urlDe=function(a){ return a.getAttribute('data-pr-href') || a.getAttribute('href'); };
+  var tapar=function(a){ var h=a.getAttribute('href'); if(h && h!=='#' && window.practicaUrlAfuera(h)){ a.setAttribute('data-pr-href', h); a.setAttribute('href', '#'); a.removeAttribute('target'); } };
+  var taparEn=function(n){ if(!n || n.nodeType!==1) return; if(n.tagName==='A') tapar(n); if(n.querySelectorAll){ var L=n.querySelectorAll('a[href]'); for(var i=0;i<L.length;i++) tapar(L[i]); } };
+  var tocar=function(e){
+    var a=e.target && e.target.closest ? e.target.closest('a[href]') : null;
+    if(!a || !window.practicaUrlAfuera(urlDe(a))) return;
+    e.preventDefault(); e.stopPropagation();
+    try{ if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(urlDe(a)); }catch(x){}
+  };
+  document.addEventListener('click', tocar, true);
+  document.addEventListener('auxclick', tocar, true);
+  document.addEventListener('DOMContentLoaded', function(){
+    taparEn(document.body);
+    try{ new MutationObserver(function(M){ for(var i=0;i<M.length;i++){ if(M[i].type==='attributes') tapar(M[i].target); else for(var j=0;j<M[i].addedNodes.length;j++) taparEn(M[i].addedNodes[j]); } })
+      .observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['href'] }); }catch(e){}
+  });
+  try{ document.title='🧪 Práctica — '+document.title; }catch(e){}
+})();
+</script>
 <script>
 /* 🎃 TEMA DE HALLOWEEN (dueño, 03/10/2026: «la 1 y sí también al dashboard»). Solo apariencia: no toca datos, plata, cupos
    ni el servidor. Se prende SOLO en octubre, con la fecha de Bolivia (UTC−4 fijo), y se apaga sola el 1/11, antes de Todos
@@ -2558,6 +2720,14 @@ html.sa-top .dep-modal,html.sa-top .anu-grito,html.sa-top .anu,html.sa-top .quie
 <div class="header">
   <span id="h-cielo" class="h-cielo no-print" aria-hidden="true"></span>
   <canvas id="hdr-fx" class="hdr-fx no-print" aria-hidden="true"></canvas>
+  <!-- 🧪 (271) Solo con el modo práctica (`html.practica`): el velo a rayas y la franja de arriba. Apagado no se ven ni ocupan lugar. -->
+  <span class="pr-velo no-print" aria-hidden="true"></span>
+  <div id="pr-franja" class="pr-franja no-print" role="status">
+    <span class="pr-f-t">🧪 <b>MODO PRÁCTICA</b> — nada de esto se guarda de verdad</span>
+    <button type="button" class="pr-f-ej" id="pr-ej-btn" onclick="practicaEjercicios()" title="Las 5 tareas para practicar">📋 <span class="pr-f-lb">Ejercicios</span> <i id="pr-ej-n">0/5</i></button>
+    <button type="button" class="pr-f-salir" onclick="practicaSalir()" title="Borrar todo lo de práctica y volver al panel de verdad">Salir</button>
+    <span class="pr-f-tip" id="pr-tip" hidden></span>
+  </div>
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1 id="hdr-dia">Registro de Pedidos</h1><p id="stat-hoy-l">Cupos mañana</p></div>
@@ -7373,6 +7543,7 @@ function loadMirror(){
   try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
   STATE_RECORTADO=Array.isArray(STATE) && STATE.length>0;
   if(!Array.isArray(STATE))STATE=[];
+  if(window.PRACTICA) STATE=practicaSuperponer(STATE);   // 🧪 (271) la copia del aparato es la de VERDAD: lo de práctica, encima (también sin señal)
   STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
   loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror(); loadBorrMirror();
   sisCargarPestana();   // §4fz-b: el stock, el arqueo y la versión del servidor sobre la que trabaja ESTA pestaña
@@ -8042,6 +8213,10 @@ var LS_ADMIN_KEY='ME_CLAVE_ADMIN_V1';
 var ADMIN_KEY_LOCAL=''; try{ ADMIN_KEY_LOCAL=localStorage.getItem(LS_ADMIN_KEY)||''; }catch(e){}
 var SERVER_ADMIN_AUTH='';    // '' no sé · 'abierto' (sin ADMIN_KEY) · 'clave'
 function apiPost(payload){
+  /* 🧪 (271) EN EL MODO PRÁCTICA, TODO LO QUE NO SEA UNA LECTURA PURA SE CONTESTA ACÁ, DE MENTIRA, SIN SALIR A LA RED (`practicaResponder`):
+     guardar, borrar, fotos, ubicar, Kommo, Claude, la carpeta de Drive… y cualquier acción nueva que se agregue (la lista es de lo que
+     SÍ sale: `PRACTICA_LECTURAS`). Si algo se escapara de acá, el `fetch` de la práctica igual lo frena (script del <head>). */
+  if(window.PRACTICA && !practicaEsLectura(payload)) return practicaResponder(payload);
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
   /* 🫀 Quién guarda y cuánto tiene sin enviar (§4el): el servidor lo anota para que
      Administración vea desde SU pantalla qué dispositivo tiene una cola trabada y de quién es. */
@@ -8050,6 +8225,12 @@ function apiPost(payload){
     payload.quien = (payload.action==='bloki' && payload.quien) ? String(payload.quien) : (getVendedorMem()||'');
     payload.dispositivo = dispositivoId();
     if(payload.action==='list'){ var _pq=getPending(); payload.cola=_pq.length; payload.colaIds=_pq.slice(0,5).map(function(x){ return String(x.id||''); }); }
+    /* 🧪 (271) En práctica, Administración ve «🧪 <nombre>» y la cola de VERDAD de este aparato (la de práctica no existe para nadie más) */
+    if(window.PRACTICA && payload.action==='list'){
+      payload.quien='🧪 '+String(payload.quien||'');
+      var _rq=[]; try{ _rq=JSON.parse(window.PRACTICA_CAPA.real(LS_PEND)||'[]')||[]; }catch(e){ _rq=[]; }
+      payload.cola=_rq.length; payload.colaIds=_rq.slice(0,5).map(function(x){ return String((x && x.id)||''); });
+    }
   } catch(e){}
   /* ⚠️ `credentials:'omit'` (§4do). El 09/09 a la noche el panel daba 404 en el navegador
      del dueño mientras, a la MISMA hora, el mismo Apps Script contestaba bien a la consulta
@@ -8256,6 +8437,9 @@ function apiList(opts){
         return apiList({entera:true});
       }
     } else lista=listaTomarEntera(j);
+    /* 🧪 (271) En práctica, la planilla de verdad + lo cargado de práctica encima (`practicaSuperponer`): para el resto del panel es como si
+       el servidor lo tuviera. La copia de lo cambiado (`LISTA_BASE`) sigue siendo la de VERDAD. */
+    if(window.PRACTICA){ lista=practicaSuperponer(lista); if(practicaCambioDesdeLista()) igual=false; }
     j.pedidos=lista;
     if(!igual) LISTA_CAMBIO_N++;   // ⚡ (§4oa) otra lectura (el Excel del cierre, la cola de reescritas…) pudo traer lo cambiado sin pasarlo a STATE
     try{
@@ -8942,6 +9126,7 @@ function showViewAhora(v){
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
   try{ if(ASIS.montado){ asisCerrar(); blokiPoner(); setTimeout(function(){ asisRefrescar(); }, 400); } }catch(e){}   // 🧑‍💼 §4jx: los avisos de la pestaña nueva · 🧽 el traje de la pestaña
   if(_nav){ try{ navDeslizar(_nav, v); icoAnimar(document.querySelector('.nav button.active')); }catch(e){} }   // 🧭🎨 (§4ni, 5 y 9)
+  try{ if(window.PRACTICA) practicaVista(v); }catch(e){}   // 🧪 (271) Bloki explica la pestaña
 }
 function initConnUI(){
   renderConnEstado();
@@ -9156,7 +9341,8 @@ function renderConnEstadoBase(){
     return;
   }
   f.className='conn on'; a.className='conn'+((SERVER_AUTH==='abierto' || (SERVER_AUTH==='clave' && SERVER_ADMIN_AUTH==='abierto')) ? '' : ' conn-solo')+' on';   // (§4mo) sin avisos: una pastilla
-  ft.innerHTML='Conectado al equipo — tu pedido se guarda en la planilla compartida.';
+  ft.innerHTML=window.PRACTICA ? '🧪 <b>Modo práctica</b>: ves la planilla de verdad, pero lo que cargues NO se guarda en ella ni le llega a nadie.'
+                               : 'Conectado al equipo — tu pedido se guarda en la planilla compartida.';
   at.innerHTML='Conectado a Google Sheets. Todos los pedidos del equipo aparecen acá.'+
     (SERVER_AUTH==='abierto'
       ? '<br><span style="color:var(--red)">🚨 <b>El servidor acepta pedidos SIN clave:</b> cualquiera con la dirección del script puede leer y borrar la planilla.</span> '+
@@ -11807,7 +11993,7 @@ function cbzCorreoAbrir(modo){
   if(largo) copyText(v.texto);   // no entró en el enlace: el mensaje entero queda copiado para pegarlo
   var nom='';
   if(gmail){ window.open(url, '_blank'); nom=cbzCliExcel(c.k, ids, true); }
-  else { nom=cbzCliExcel(c.k, ids, true); window.location.href=url; }
+  else { nom=cbzCliExcel(c.k, ids, true); if(!(window.PRACTICA && practicaUrlFrena(url))) window.location.href=url; }   // 🧪 (271) en práctica, el aviso
   var msg='📧 '+(gmail?'Se abrió Gmail':'Se abrió tu correo')+' con el estado de cuenta y se bajó el Excel ('+nom+'): adjuntalo con 📎 y mandalo vos.'+
     (largo?' El mensaje era muy largo para el enlace: va el resumen y el mensaje ENTERO quedó copiado (pegalo con Ctrl+V).':'')+(v.para?'':' ⚠️ Falta el «Para»: escribilo en el correo.');
   setTimeout(function(){ toast(msg, v.para?'ok':'err', 9000); }, largo?350:0);
@@ -23250,6 +23436,7 @@ function confirmEdicionModal(rec, cambios){
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="closeModal()">✓ Listo</button>'+
     '</div>');
+  try{ if(window.PRACTICA) practicaVestirGuardado(rec, true); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
 }
 
 function deletePedido(id){
@@ -24510,7 +24697,7 @@ function fxGuardado(rec){
     e.innerHTML='<div class="fondo"></div><div class="vineta"></div><div class="piso"></div>'+rayas+
       '<div class="cam" id="fx-cam"><img src="carga-viva/camion-recorte.png?v=1" alt=""><div class="faro" style="left:9%;top:83%"></div><div class="faro" style="left:21%;top:89%"></div></div>'+
       '<div class="cuenta" id="fx-cuenta">Cargando el camión…</div>'+
-      '<div class="sello" id="fx-sello"><b>✅ ¡'+(rpt?'Reposición guardada':'Pedido guardado')+'!</b><div class="oc">'+esc(ocEtiq(rec.oc)||'')+(rec.cliente?(' · '+esc(rec.cliente)):'')+'</div>'+
+      '<div class="sello" id="fx-sello"><b>✅ ¡'+(rpt?'Reposición guardada':'Pedido guardado')+(window.PRACTICA?' (de práctica)':'')+'!</b><div class="oc">'+esc(ocEtiq(rec.oc)||'')+(rec.cliente?(' · '+esc(rec.cliente)):'')+'</div>'+
         '<div class="cu">Sale el '+esc(dia)+(turnoDe(rec)?(' · turno '+esc(turnoDe(rec))):'')+'</div>'+
         (mes ? ('<div class="mes"><div class="l">📈 VENDIDO EN '+esc(mes.mesNom.toUpperCase())+' · '+esc(String(rec.vendedor||'').toUpperCase())+'</div><div class="bar"><i id="fx-mes-bar" style="width:'+pctAntes+'%"></i></div>'+
           '<div class="v"><b id="fx-mes-n">'+fmtBs0(mesAntes)+'</b><span class="mas">+ '+fmtBs0(ventaTotal(rec))+' con este pedido</span></div></div>') : '')+
@@ -25535,6 +25722,11 @@ var _toastT=null;
    más que los 2,8 s de siempre, porque la persona puede haber salido a otra pestaña. */
 function toast(msg,kind,ms){
   var el=document.getElementById('toast');
+  /* 🧪 (271) En práctica, lo que «se guardó» se guardó de mentira: el aviso lo dice */
+  if(window.PRACTICA && kind==='ok' && typeof msg==='string' && msg.indexOf('🧪')<0){
+    var _pm=msg.replace('Pedido enviado al equipo ✓', 'Pedido de práctica guardado ✓ (no se mandó)');
+    msg='🧪 '+_pm+((_pm===msg && /✓/.test(msg)) ? ' · de práctica' : '');
+  }
   el.textContent=msg; el.className='toast show'+(kind?(' '+kind):'');
   /* (27/09, revisión en el celular) Sin tiempo propio, el aviso duraba 2,8 s sea cual sea su largo: «Subiste la imagen pero
      no anotaste ningún pago…» (234 letras) se iba antes de terminar de leerlo. Ahora dura lo que lleva leerlo (≈ 50 ms por
@@ -25897,6 +26089,7 @@ function kcEsVenta(p){
 /* Después de guardar (la fila ya está en la planilla). `prev` = la venta antes de editarla (null si es nueva). */
 function kcTrasGuardar(rec, prev){
   if(KC.apagado || !CONNECTED || !kcServidorOk() || kcEnPrueba() || !kcEsVenta(rec)) return null;
+  if(window.PRACTICA) return null;   // 🧪 (271) en práctica Kommo no se toca (y `apiPost` igual no lo dejaría salir)
   if(prev && Math.abs(ventaTotal(prev)-ventaTotal(rec))<0.005) return null;   // editada sin cambiar el total: Kommo no se toca
   return kcPedir(rec.id, {});
 }
@@ -30021,7 +30214,7 @@ function renderAtc(){
       '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
         (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
       '<td style="white-space:nowrap;font-size:.8rem">'+esc(fmtFecha(atcEntro(p)))+'</td>'+
-      '<td><b>'+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
+      '<td><b>'+(window.PRACTICA ? practicaMarca(p) : '')+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
       '<td style="font-size:.78rem">'+esc(prod)+'</td>'+
       '<td>'+badgeMot+'</td>'+
       fch(atcRecogida(p), false)+
@@ -32281,6 +32474,7 @@ function quienAbrir(cambiar){
       return '<button type="button" class="quien-b'+(v===ult?' on':'')+'" style="--c:'+QUIEN_COL[i%QUIEN_COL.length]+';animation-delay:'+Math.min(i,10)*40+'ms" data-v="'+esc(v)+'" onclick="quienElegir(this.getAttribute(\'data-v\'))"><i>'+esc(quienIni(v))+'</i><span>'+esc(v)+'</span></button>';
     }).join('')+'</div>'+
     '<div class="quien-otros"><button type="button" onclick="quienElegir(\'\', \'logistica\')">🚚 Soy de logística</button><button type="button" onclick="quienElegir(\'\', \'conta\')">🧾 Contabilidad</button><button type="button" onclick="quienElegir(\'\', \'admin\')">🔒 Administración</button></div>'+
+    practicaQuienHtml()+   // 🧪 (271) «Soy nuevo/a: quiero practicar»
   '</div>';
   box.hidden=false;
 }
@@ -32324,6 +32518,368 @@ function quienElegir(v, rol){
 }
 function quienAlEntrar(){ if(!quienActivo() || quienSesion()) return; quienAbrir(false); }
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntrar, 900); });
+/* ==========================================================================
+   🧪 MODO PRÁCTICA PARA LOS NUEVOS (271, 14/11; el dueño abre una tienda en el mall con 4 vendedores nuevos y la aprobó: «que puedan
+   cargar ventas, cobros, cotizaciones, ATC, RPT, reprogramar… de mentira, sin tocar la planilla ni que le llegue nada al cliente, y que
+   Bloki les explique cada paso»).
+   Se prende POR PESTAÑA (`sessionStorage` `me_practica`): «🧪 Soy nuevo/a» en «¿Quién está usando el panel?», el menú de Bloki
+   («💬 Preguntame») o la dirección con `?practica=1`. Prender y salir recargan la página: así nada de lo que hay en memoria cruza de un
+   lado al otro. Lo de abajo del <head> (que corre antes que todo) aísla el aparato y la red; acá:
+   · `apiPost` contesta de mentira todo lo que no es una lectura (`practicaResponder`): un guardado vuelve con su sello nuevo y su N°
+     como si el servidor lo hubiera escrito, y queda en la CAPA DE PRÁCTICA (`PR`, `sessionStorage` `me_practica_datos`);
+   · cada lectura de la planilla de verdad (`apiList`) trae lo de práctica ENCIMA (`practicaSuperponer`): lo nuevo se agrega, lo cambiado
+     reemplaza a lo de verdad y lo borrado no aparece. Para el resto del panel es como si el servidor lo tuviera (cupos, stock, listas);
+   · lo cargado o tocado en práctica lleva «🧪» en las listas (`practicaMarca`: el nombre del cliente con `clfNombre` y la tabla de ATC);
+   · las fotos no se suben: viven en este aparato (`practicaFotoUrl`); WhatsApp, el correo y el teléfono no se abren: sale un aviso con lo
+     que se hubiera mandado (`practicaUrlFrena`);
+   · Bloki explica cada paso (`practicaDecir`: en su globo y en la franja de arriba) y al guardar dice qué hubiera pasado de verdad
+     (`practicaVestirGuardado`); «📋 Ejercicios» son 5 tareas que se tildan solas (`practicaEjMirar`).
+   Al salir (`practicaSalir`) se borra todo y la página vuelve a leer la planilla. En Playwright no prende sola: la prueba usa `?practica=1`
+   o `practicaEntrar()`. `tests/test_modo_practica.js`.
+   ========================================================================== */
+var PR_LS='me_practica_datos', PR_FOTOS_LS='me_practica_fotos';
+var PR=null;                  // { filas:{id:fila}, borrados:{id:1}, ej:{clave:cuándo}, n }
+var PR_VISTO={};              // id → la fila de VERDAD como vino en la última lectura (para saber qué cambió una práctica)
+var PR_VER=0, PR_VER_LISTA=0; // cada guardado o borrado de práctica sube PR_VER; la lectura que ya lo trae lo anota
+var PR_FOTOS=null;            // id → { d: dataUrl, u: dirección para mostrarla }
+var PR_DIJO={};               // los pasos que Bloki ya explicó (los del formulario vuelven a decirse en cada pedido nuevo)
+var PR_RESP_MS=90;            // lo que «tarda el servidor» de mentira (así el panel pasa por los mismos estados que de verdad)
+function practicaDatos(){
+  if(PR) return PR;
+  PR={ filas:{}, borrados:{}, ej:{}, n:0 };
+  try{ var o=JSON.parse(sessionStorage.getItem(PR_LS)||'null');
+    if(o && typeof o==='object'){ PR.filas=o.filas||{}; PR.borrados=o.borrados||{}; PR.ej=o.ej||{}; PR.n=Number(o.n)||0; } }catch(e){}
+  return PR;
+}
+function practicaGuardarDatos(){
+  var P=practicaDatos(); PR_VER++;
+  if(window.PRACTICA_SALIENDO) return;   // saliendo: no se vuelve a escribir lo que se acaba de borrar
+  try{ sessionStorage.setItem(PR_LS, JSON.stringify({ filas:P.filas, borrados:P.borrados, ej:P.ej, n:P.n })); }catch(e){}
+}
+function practicaCopia(o){ return o==null ? o : JSON.parse(JSON.stringify(o)); }
+function practicaEs(p){ return !!(window.PRACTICA && p && p.id!=null && practicaDatos().filas[String(p.id)]); }
+function practicaMarca(p){ return practicaEs(p) ? '<span class="pr-chip" title="Cargado o cambiado en el modo práctica: no está en la planilla">🧪</span>' : ''; }
+function practicaEsLectura(payload){ var a=String((payload && payload.action) || 'save'); return !!(window.PRACTICA_LECTURAS && window.PRACTICA_LECTURAS[a]); }
+/* Lo que contesta «el servidor» en práctica. Nada sale a la red. */
+var PR_SIN_IA={ bloki:1, leerNota:1, iaComprobantes:1, compsCarpeta:1, kommoCierre:1 };   // lo que gasta crédito o escribe afuera: un «no» claro
+var PR_CONTADOR={};
+function practicaResponder(payload){
+  var act=String((payload && payload.action) || 'save'), r;
+  if(window.PRACTICA_SALIENDO) return Promise.reject(new Error('practica'));   // saliendo: nada más (ni de mentira)
+  try{
+    if(act==='save') r=practicaGuardar(payload);
+    else if(act==='delete') r=practicaBorrar(payload);
+    else if(act==='foto') r=practicaFoto(payload);
+    else if(act==='geocode') r={ ok:true, geo:(payload.links||[]).map(function(l){ return { link:l, lat:null, lng:null }; }) };   // el servidor guardaría lo ubicado: en práctica, nada
+    else if(PR_SIN_IA[act]) r={ ok:false, error:'practica' };
+    else r={ ok:true, practica:1, ahora:Date.now() };   // borrarFoto, histStock, waRespAtendida, rdMarcar… y cualquier acción nueva
+  }catch(e){ r={ ok:false, error:'practica' }; }
+  PR_CONTADOR[act]=(PR_CONTADOR[act]||0)+1;
+  var copia=practicaCopia(r);
+  return new Promise(function(res){ setTimeout(function(){ res(copia); }, PR_RESP_MS); });
+}
+function practicaGuardar(pl){
+  var rec=pl && pl.pedido; if(!rec || rec.id==null || rec.id==='') return { ok:false, error:'no id' };
+  var P=practicaDatos(), id=String(rec.id), prev=P.filas[id] ? practicaCopia(P.filas[id]) : (PR_VISTO[id] || null);
+  var eco=practicaCopia(rec);
+  ['_base','_dev','_t','_altaPendiente','_cambios'].forEach(function(k){ delete eco[k]; });
+  eco.rev=Math.max((prev ? (Number(prev.rev)||0) : 0)+1, Date.now());   // como el servidor (§4fz)
+  P.filas[id]=eco; delete P.borrados[id];
+  practicaGuardarDatos();
+  setTimeout(function(){ try{ practicaTrasGuardarFila(eco, prev); }catch(e){} }, 0);
+  return { ok:true, pedido:practicaCopia(eco), mode:(prev ? 'update' : 'add'), ahora:Date.now(), practica:1 };
+}
+function practicaBorrar(pl){
+  var P=practicaDatos(), id=String((pl && pl.id)||''); if(!id) return { ok:false, error:'sin id' };
+  var era=P.filas[id] || PR_VISTO[id] || null;
+  delete P.filas[id]; P.borrados[id]=1;
+  practicaGuardarDatos();
+  setTimeout(function(){ if(era && String(id).indexOf('__')!==0) practicaDecir('borrado', true); }, 0);
+  return { ok:true, ahora:Date.now(), practica:1 };
+}
+/* La planilla de verdad + la capa de práctica (`apiList`). Objetos NUEVOS: quien recibe la lista la toca. */
+function practicaSuperponer(lista){
+  var P=practicaDatos(), hay={}, out=[];
+  PR_VISTO={};
+  (lista||[]).forEach(function(p){
+    if(!p || p.id==null){ out.push(p); return; }
+    var id=String(p.id);
+    PR_VISTO[id]=Object.assign({}, p);
+    if(P.borrados[id]) return;
+    if(P.filas[id]){ out.push(practicaCopia(P.filas[id])); hay[id]=1; return; }
+    out.push(p);
+  });
+  Object.keys(P.filas).forEach(function(id){ if(!hay[id]) out.push(practicaCopia(P.filas[id])); });
+  return out;
+}
+function practicaCambioDesdeLista(){ var c=(PR_VER!==PR_VER_LISTA); PR_VER_LISTA=PR_VER; return c; }
+/* ── Fotos: quedan en este aparato ── */
+function practicaFotosCargar(){
+  if(PR_FOTOS) return PR_FOTOS;
+  PR_FOTOS={};
+  try{ var o=JSON.parse(sessionStorage.getItem(PR_FOTOS_LS)||'{}')||{}; Object.keys(o).forEach(function(k){ PR_FOTOS[k]={ d:String(o[k]||'') }; }); }catch(e){}
+  return PR_FOTOS;
+}
+function practicaFoto(pl){
+  var P=practicaDatos(), F=practicaFotosCargar(), d=String((pl && pl.dataUrl)||'');
+  if(!/^data:image\//.test(d)) return { ok:false, error:'formato' };
+  var id='pr-'+Date.now().toString(36)+'-'+(++P.n);
+  F[id]={ d:d }; practicaGuardarDatos();
+  if(!window.PRACTICA_SALIENDO) try{ var o={}; Object.keys(F).forEach(function(k){ o[k]=F[k].d; }); sessionStorage.setItem(PR_FOTOS_LS, JSON.stringify(o)); }catch(e){}   // si no entra, vive en memoria hasta recargar
+  setTimeout(function(){ practicaDecir('comprobante'); }, 0);
+  return { ok:true, fotoId:id, practica:1 };
+}
+var PR_FOTO_VACIA='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="140" viewBox="0 0 200 140"><rect width="200" height="140" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="3"/><text x="100" y="64" font-size="30" text-anchor="middle">🧪</text><text x="100" y="98" font-size="13" text-anchor="middle" fill="#7c2d12" font-family="sans-serif">foto de práctica</text></svg>');
+function practicaFotoUrl(fid){
+  fid=String(fid==null?'':fid); if(fid.indexOf('pr-')!==0) return '';
+  var f=practicaFotosCargar()[fid]; if(!f || !f.d) return PR_FOTO_VACIA;
+  if(!f.u){
+    f.u=f.d;
+    try{ var m=/^data:([^;,]+);base64,(.*)$/.exec(f.d), bin=atob(m[2]), u8=new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+      f.u=URL.createObjectURL(new Blob([u8], { type:m[1] })); }catch(e){ f.u=f.d; }   // con la dirección «blob:» la foto también se abre en otra pestaña
+  }
+  return f.u;
+}
+/* ── WhatsApp, el correo y el teléfono: el aviso con lo que se hubiera mandado ── */
+function practicaUrlFrena(u){
+  if(!window.PRACTICA || !(window.practicaUrlAfuera && window.practicaUrlAfuera(u))) return false;
+  u=String(u||'');
+  var que='WhatsApp', a='', txt='', m;
+  var dec=function(s){ try{ return decodeURIComponent(String(s||'').replace(/\+/g,' ')); }catch(e){ return String(s||''); } };
+  var par=function(k){ var r=new RegExp('[?&]'+k+'=([^&#]*)').exec(u); return r ? dec(r[1]) : ''; };
+  if(/wa\.me|whatsapp/i.test(u)){ m=/wa\.me\/(\d+)/.exec(u) || /[?&]phone=(\d+)/.exec(u); a=m ? m[1] : ''; txt=par('text'); }
+  else if(/^\s*mailto:/i.test(u)){ que='el correo'; a=dec(u.replace(/^\s*mailto:/i,'').split('?')[0]); txt=[par('subject'), par('body')].filter(Boolean).join('\n\n'); }
+  else if(/mail\.google|outlook\./i.test(u)){ que='el correo'; a=par('to'); txt=[par('su')||par('subject'), par('body')].filter(Boolean).join('\n\n'); }
+  else { que='el teléfono'; a=dec(u.replace(/^\s*(tel|sms):/i,'')); }
+  var tapado=function(n){ n=String(n||'').replace(/\s+/g,''); return n.length>6 ? (n.slice(0, n.length-6).replace(/\d/g,'•')+n.slice(-6, -2).replace(/\d/g,'•')+n.slice(-2)) : n; };
+  var quien = que==='WhatsApp' ? (a ? ('al número <b>'+esc(tapado(a))+'</b>') : 'para que elijas a quién mandárselo')
+            : que==='el correo' ? (a ? ('a <b>'+esc(a)+'</b>') : '') : (a ? ('a <b>'+esc(tapado(a))+'</b>') : '');
+  var box=document.getElementById('pr-aviso');
+  if(!box){ box=document.createElement('div'); box.id='pr-aviso'; box.className='pr-aviso no-print'; box.setAttribute('role','alertdialog'); box.setAttribute('aria-labelledby','pr-aviso-t'); document.body.appendChild(box); }
+  window.__prAvisoTxt=txt;
+  box.innerHTML='<h4 id="pr-aviso-t">🧪 En la práctica no se abre '+que+'</h4>'+
+    '<p>De verdad, acá se abría '+que+' '+quien+(txt ? ' con este mensaje listo para mandar:' : '.')+'</p>'+
+    (txt ? ('<pre>'+esc(txt)+'</pre>') : '')+
+    '<p style="margin:6px 0 10px"><b>Al cliente no le llegó nada.</b> Cuando atiendas de verdad, este botón '+(que==='el teléfono' ? 'llama.' : 'abre '+que+' y vos tocás «Enviar».')+'</p>'+
+    '<div class="pr-av-acc">'+(txt ? '<button type="button" onclick="copyText(window.__prAvisoTxt||\'\')">📋 Copiar el mensaje</button>' : '')+
+      '<button type="button" class="si" onclick="practicaAvisoCerrar()">Entendido</button></div>';
+  box.hidden=false;
+  try{ box.querySelector('button.si').focus({ preventScroll:true }); }catch(e){}
+  practicaDecir('whatsapp');
+  return true;
+}
+function practicaAvisoCerrar(){ var b=document.getElementById('pr-aviso'); if(b) b.hidden=true; }
+/* ── Bloki explica cada paso: en su globo (si está a la vista) y en la franja de arriba ── */
+var PR_PASOS={
+  hola:{ ico:'🧪', t:'¡Estás practicando!', x:'Cargá lo que quieras: nada va a la planilla y al cliente no le llega nada. Tocá «📋 Ejercicios» arriba para ver 5 tareas.' },
+  form:{ ico:'📝', t:'Un pedido nuevo', x:'Elegí tu nombre (Vendedor), después el cliente y su celular, y los productos con su código. Te voy diciendo qué mirar en cada paso.', vid:'pedido' },
+  editar:{ ico:'✏️', t:'Estás corrigiendo un pedido', x:'Cambiá lo que haga falta y tocá «Guardar cambios». En práctica, la planilla no cambia.' },
+  tienda:{ ico:'🏪', t:'Venta de tienda', x:'Es la que se lleva el cliente del local: no lleva día, turno ni dirección y no ocupa lugar en el camión. Va «SÍ, pagado», cómo pagó y la foto del comprobante.', vid:'tienda' },
+  celular:{ ico:'📱', t:'El celular del cliente', x:'Con el celular el bot le confirma el pedido por WhatsApp (de verdad; en práctica no le llega nada). Si ya compró antes, el panel completa sus datos.' },
+  producto:{ ico:'🛏️', t:'Elegiste un producto', x:'Mirá el cuadrito de abajo del producto: ✅ hay, 📥 se trae de Moreno, 🏭 hay que fabricar. Ahí dice desde qué día se puede entregar. No olvides el precio.' },
+  fecha:{ ico:'📅', t:'El día de entrega', x:'Arriba del formulario ves cuántos lugares le quedan al camión a la mañana y a la tarde. Si el turno está lleno, el panel no te deja.' },
+  turno:{ ico:'🌅', t:'Mañana o tarde', x:'🌅 AM sale a la mañana y 🌆 PM a la tarde. Cada turno tiene sus propios lugares: mover un pedido de la mañana no libera la tarde.' },
+  cobro:{ ico:'💵', t:'El cobro', x:'«A cuenta» es lo que el cliente ya pagó (el adelanto) y «Saldo por cobrar» lo que falta. Después elegí con qué pagó.' },
+  pagado:{ ico:'✅', t:'Venta pagada', x:'«SÍ, pagado» = el cliente pagó todo. Elegí con qué pagó, cuánto entró y subí la foto del comprobante.' },
+  metodo:{ ico:'💳', t:'Con qué pagó', x:'En efectivo hay que decir quién recibió la plata. En QR o tarjeta, la foto del comprobante.' },
+  qr:{ ico:'📱', t:'Pago con QR', x:'Elegí el BANCO donde entró y subí la foto del comprobante: Contabilidad la compara con el banco.' },
+  comprobante:{ ico:'📎', t:'La foto del comprobante', x:'En práctica la foto queda solo en este aparato: no se sube a Drive.' },
+  atc:{ ico:'🎧', t:'Una ATC', x:'Motivo, detalle (10 letras o más), fecha de compra, garantía o contra costo y qué se le recoge son obligatorios. Al guardar se arma el correo (en práctica no se manda).', vid:'atc' },
+  rpt:{ ico:'🏪', t:'Una reposición (RPT)', x:'Elegí la sucursal y los productos. El Excel del formato se baja igual, pero a logística no le llega nada.', vid:'rpt' },
+  oc:{ ico:'📄', t:'Una venta (OC)', x:'El N° de OC se pone solo. Seguí con el cliente y los productos.' },
+  v_mis:{ ico:'📋', t:'Mis pedidos', x:'Tus ventas, con lo de práctica marcado 🧪. Tocá una para ver la ficha, 📅 reprogramar o pasar el mensaje.' },
+  v_conta:{ ico:'🧾', t:'Contabilidad', x:'Tocá una venta para ver su ficha. Con «Registrar pago» anotás un cobro: cómo pagó, cuánto, el banco y la foto. En práctica no llega nada a la planilla.', vid:'pago' },
+  v_admin:{ ico:'🚚', t:'Administración', x:'Acá logística ve los pedidos por día y turno. Abrí uno y probá «📅 Reprogramar».' },
+  v_atc:{ ico:'🎧', t:'ATC', x:'Las atenciones al cliente: dónde está cada una y qué falta. Lo de práctica lleva 🧪.' },
+  whatsapp:{ ico:'📲', t:'WhatsApp no se abre', x:'En práctica te muestro el mensaje que se hubiera mandado, pero no se abre WhatsApp: al cliente no le llega nada.' },
+  borrado:{ ico:'🗑', t:'Borrado de práctica', x:'Lo sacaste de tu vista; en la planilla de verdad sigue todo como estaba.' }
+};
+var PR_PASOS_FORM=['form','editar','tienda','celular','producto','fecha','turno','cobro','pagado','metodo','qr','comprobante','atc','rpt','oc'];
+var PR_TIP_T=0;
+function practicaDecir(k, forzar, a){
+  if(!window.PRACTICA) return;
+  var ya=!!PR_DIJO[k];
+  if(ya && !forzar) return;
+  PR_DIJO[k]=1;
+  var propio=!!a;
+  a=a||PR_PASOS[k]; if(!a) return;
+  var tip=document.getElementById('pr-tip');
+  if(tip){
+    tip.innerHTML='<b>🧽 Bloki:</b> '+esc((a.ico ? a.ico+' ' : '')+a.t)+' — '+esc(a.x)+
+      ((a.vid && typeof VIDEOS!=='undefined' && VIDEOS[a.vid]) ? ' <button type="button" onclick="verVideo(\''+a.vid+'\')">▶️ Ver el video</button>' : '')+
+      ' <button type="button" aria-label="Cerrar el consejo" onclick="practicaTipCerrar()">✕</button>';
+    tip.hidden=false; tip.setAttribute('data-paso', k);
+    /* En el celular la franja ocupa lugar: el consejo se va solo (queda en el globo de Bloki y vuelve con el paso siguiente) */
+    clearTimeout(PR_TIP_T);
+    try{ if(window.matchMedia && matchMedia('(max-width:700px)').matches) PR_TIP_T=setTimeout(practicaTipCerrar, 14000); }catch(e){}
+  }
+  /* el globo de Bloki, la primera vez que dice cada paso (y siempre lo que cuenta qué pasó al guardar) */
+  try{ if((!ya || propio) && typeof ASIS!=='undefined' && ASIS.montado && !ASIS.abierto) asisGlobo({ ico:a.ico||'🧪', t:a.t, x:a.x, ms:a.ms||10000 }, true, true); }catch(e){}
+  try{ hdrMedir(); }catch(e){}
+}
+function practicaTipCerrar(){ var t=document.getElementById('pr-tip'); if(t) t.hidden=true; try{ hdrMedir(); }catch(e){} }
+function practicaVista(v){
+  if(v==='form'){
+    PR_PASOS_FORM.forEach(function(k){ delete PR_DIJO[k]; });
+    setTimeout(function(){ practicaDecir((typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA) ? 'tienda' : (EDIT_ID ? 'editar' : 'form')); }, 80);
+  } else if(PR_PASOS['v_'+v]) practicaDecir('v_'+v, true);   // la franja dice siempre la pestaña en la que estás
+}
+/* Después de cada guardado de práctica: los ejercicios y, si no fue el formulario (que tiene su ventana), qué hubiera pasado. */
+function practicaTrasGuardarFila(eco, prev){
+  if(!eco || String(eco.id).indexOf('__')===0 || esFilaSistema(eco)) return;
+  practicaEjMirar(eco, prev);
+  if(!prev) return;
+  var cambioDia = !!eco.fecha && (String(prev.fecha||'')!==String(eco.fecha||'') || normTurno(prev.turno)!==normTurno(eco.turno));
+  var cobro = !esATC(eco.oc) && !esRPT(eco.oc) && totalCobrado(eco)>totalCobrado(prev)+0.005;
+  if(cambioDia) practicaDecir('g-repro', true, { ico:'📅', t:'Reprogramado (de práctica)', x:'Ahora va el '+fmtFecha(eco.fecha)+' '+normTurno(eco.turno)+'. De verdad, el bot le avisaría al cliente el día nuevo y logística lo vería en Administración. En práctica no le llegó nada a nadie.' });
+  else if(cobro) practicaDecir('g-cobro', true, { ico:'💵', t:'Pago anotado (de práctica)', x:'De verdad, el pago quedaría en Contabilidad con su foto para revisar contra el banco. En práctica, la planilla no cambió.' });
+  else if(!!prev.entregado!==!!eco.entregado) practicaDecir('g-entregado', true, { ico:'✅', t:(eco.entregado ? 'Marcado entregado' : 'Sin la marca de entregado')+' (de práctica)', x:'De verdad, la marca la ve todo el equipo. En práctica, solo vos.' });
+}
+/* ── 📋 Los ejercicios ── */
+var PR_EJ=[
+  { k:'venta_qr', t:'💳 Cargá una venta con adelanto en QR', c:'Nuevo pedido → cliente y celular → producto con su precio → «A cuenta» con el adelanto → «¿Con qué pagó?» 📱 QR → el banco → la foto del comprobante → Guardar.', ir:'form' },
+  { k:'tienda', t:'🏪 Registrá una venta de tienda', c:'🧾 Contabilidad → «🏪 Venta de tienda» → cliente, productos con su precio → «SÍ, pagado», cómo pagó y la foto → «Registrar venta de tienda».', ir:'tienda' },
+  { k:'cobro', t:'💵 Cobrá el saldo de una venta', c:'🧾 Contabilidad → tocá una venta con saldo (puede ser la de práctica) → «Registrar pago» → cómo pagó, cuánto y la foto → Guardar.', ir:'conta' },
+  { k:'atc', t:'🎧 Cargá una ATC', c:'Nuevo pedido → 🎧 ATC → motivo, detalle, fecha de compra, garantía o contra costo y qué se le recoge → Guardar.', ir:'form' },
+  { k:'repro', t:'📅 Reprogramá un pedido', c:'📋 Mis pedidos (o Administración) → abrí un pedido → «📅 Reprogramar» → el día y el turno nuevos.', ir:'mis' }
+];
+function practicaEjHechos(){ var P=practicaDatos(); return PR_EJ.filter(function(e){ return !!P.ej[e.k]; }).length; }
+function practicaEjPintar(){ var n=document.getElementById('pr-ej-n'); if(n) n.textContent=practicaEjHechos()+'/'+PR_EJ.length; }
+function practicaEjMirar(eco, prev){
+  var P=practicaDatos(), oc=eco.oc, nuevo=!prev, hechos=[], venta=!esATC(oc) && !esRPT(oc);
+  try{
+    var tienda=esVentaTienda(eco);
+    if(nuevo && esATC(oc)) hechos.push('atc');
+    if(nuevo && venta && tienda) hechos.push('tienda');
+    if(nuevo && venta && !tienda && (Number(eco.acuenta)||0)>0.005 && /\bQR\b/i.test(String(eco.metodoPago||''))) hechos.push('venta_qr');
+    if(!nuevo && venta && totalCobrado(eco)>totalCobrado(prev)+0.005) hechos.push('cobro');
+    if(!nuevo && eco.fecha && (String(prev.fecha||'')!==String(eco.fecha||'') || normTurno(prev.turno)!==normTurno(eco.turno))) hechos.push('repro');
+  }catch(e){}
+  var nuevos=hechos.filter(function(k){ return !P.ej[k]; });
+  if(!nuevos.length) return;
+  nuevos.forEach(function(k){ P.ej[k]=Date.now(); });
+  practicaGuardarDatos(); practicaEjPintar();
+  var e=PR_EJ.filter(function(x){ return x.k===nuevos[0]; })[0], n=practicaEjHechos();
+  try{ toast('🎉 Ejercicio cumplido: '+e.t.replace(/^\S+\s/,'')+' ('+n+' de '+PR_EJ.length+')', 'ok', 6000); }catch(x){}
+  try{ blokiGesto('festeja', 2200); }catch(x){}
+}
+function practicaEjercicios(){
+  if(!window.PRACTICA){ practicaEntrar(); return; }
+  var P=practicaDatos(), n=practicaEjHechos();
+  openModal('<div class="modal-h"><h3>📋 Ejercicios de práctica</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><p style="font-size:.85rem;margin:0 0 4px">Hacé estos '+PR_EJ.length+' en el modo práctica: se tildan solos cuando quedan bien guardados. '+
+      'Nada va a la planilla y al cliente no le llega nada.</p>'+
+      '<div class="pr-ej-barra" role="img" aria-label="'+n+' de '+PR_EJ.length+' hechos"><i style="width:'+Math.round(100*n/PR_EJ.length)+'%"></i></div>'+
+      PR_EJ.map(function(e){ var ok=!!P.ej[e.k];
+        return '<div class="pr-ej'+(ok?' hecho':'')+'" data-ej="'+e.k+'"><i>'+(ok?'✅':'⬜')+'</i><div><b>'+esc(e.t)+'</b><small>'+esc(e.c)+'</small></div>'+
+          (ok ? '' : '<button type="button" onclick="practicaIr(\''+e.ir+'\')">Empezar</button>')+'</div>'; }).join('')+
+      (n===PR_EJ.length ? '<p style="font-weight:800;color:#15803d;margin:8px 0 0">🎉 ¡Hiciste los '+PR_EJ.length+'! Ya podés salir de la práctica y atender de verdad.</p>' : '')+
+      '<div class="modal-actions" style="margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '<button class="btn btn-sm" style="background:#7c2d12;color:#fff" onclick="closeModal();practicaSalir()">Salir de la práctica</button></div></div>');
+}
+function practicaIr(a){
+  try{ closeModal(); }catch(e){}
+  if(a==='tienda'){ try{ abrirVentaTienda(); }catch(e){} return; }
+  if(a==='form'){ try{ tabNuevoPedido(); }catch(e){ showView('form'); } return; }
+  showView(a);
+}
+/* ── Lo que se ve al guardar: el título dice «de práctica» y arriba, qué hubiera pasado de verdad ── */
+function practicaResumenHtml(rec, edicion){
+  var L=[], atc=esATC(rec.oc), rpt=esRPT(rec.oc), tienda=false; try{ tienda=esVentaTienda(rec); }catch(e){}
+  L.push('No se guardó en la planilla: lo ves solo en esta pestaña, marcado con 🧪, hasta que salgas de la práctica.');
+  if(edicion) L.push('🤖 Si cambió el día o el turno, de verdad el bot le habría avisado al cliente y logística lo vería en Administración. En práctica no le llegó nada a nadie.');
+  else if(atc) L.push('🎧 De verdad, la ATC quedaría para logística (recoger el producto) y la verían en la pestaña ATC. El correo de abajo se arma igual, pero en práctica no se manda.');
+  else if(rpt) L.push('🏪 De verdad, logística la vería en «🏪 Reposiciones» para agendarla. En práctica no le llegó nada.');
+  else if(tienda) L.push('🏪 De verdad, quedaría en Contabilidad como venta de tienda (no ocupa lugar en el camión).');
+  else {
+    if(rec.fecha) L.push('🚚 De verdad, logística lo vería en Administración para el '+fmtFecha(rec.fecha)+' ('+normTurno(rec.turno)+') y ocuparía un lugar del camión.');
+    var bot=false; try{ bot=nxBotManda(rec); }catch(e){}
+    L.push(bot ? '🤖 El bot le habría mandado al cliente la confirmación del pedido por WhatsApp. En práctica NO le llegó nada.'
+               : '🤖 Al cliente no le llegó nada (en práctica el bot no manda; de verdad, le confirma el pedido por WhatsApp si tiene celular y día).');
+    var kc=false; try{ kc=kcEsVenta(rec); }catch(e){}
+    if(kc) L.push('📇 En Kommo, el cliente habría pasado a «Compradores». En práctica, Kommo no se tocó.');
+  }
+  var ac=Number(rec.acuenta)||0;
+  if(!edicion && ac>0.005) L.push('💵 El adelanto de '+fmtBs(ac)+(/\bQR\b/i.test(String(rec.metodoPago||'')) ? ' por QR' : '')+' quedaría para que Contabilidad lo revise con la foto del comprobante.');
+  L.push('📲 Los botones de WhatsApp de esta ventana, en práctica, solo te muestran el mensaje.');
+  return '<div class="pr-res" id="pr-res"><b>🧪 Esto fue de práctica</b><ul>'+L.map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('')+'</ul>'+
+    '<button type="button" onclick="practicaEjercicios()">📋 Ejercicios ('+practicaEjHechos()+'/'+PR_EJ.length+')</button></div>';
+}
+function practicaVestirGuardado(rec, edicion){
+  var box=document.getElementById('modal-box'); if(!box || !rec) return;
+  var h=box.querySelector('.modal-h h3'), atc=esATC(rec.oc), rpt=esRPT(rec.oc);
+  if(h) h.textContent = edicion ? '🧪 Cambios de práctica guardados (no se guardó de verdad)'
+    : (atc ? '✅ ATC de práctica guardada (no se guardó de verdad)' : rpt ? '✅ Reposición de práctica guardada (no se guardó de verdad)' : '✅ Pedido de práctica guardado (no se guardó de verdad)');
+  var b=box.querySelector('.modal-b'); if(b && !b.querySelector('.pr-res')) b.insertAdjacentHTML('afterbegin', practicaResumenHtml(rec, edicion));
+}
+/* ── Prender y salir ── */
+function practicaEntrar(){
+  if(window.PRACTICA){ practicaEjercicios(); return; }
+  if(!confirm('🧪 ¿Prender el MODO PRÁCTICA en esta pestaña?\n\n'+
+    '• Podés cargar ventas, cobros, ATC, reposiciones, reprogramar… de mentira: NADA va a la planilla y al cliente NO le llega nada (ni el bot, ni Kommo, ni WhatsApp).\n'+
+    '• Ves el stock, los cupos y los clientes de verdad.\n'+
+    '• Bloki te explica cada paso.\n'+
+    '• Al salir se borra todo lo que cargaste.\n\n'+
+    'El panel se vuelve a abrir: si tenés algo a medio cargar, guardalo antes.')) return;
+  try{ sessionStorage.setItem('me_practica', '1'); }catch(e){ toast('Este navegador no deja prender el modo práctica en esta pestaña.', 'err', 6000); return; }
+  location.reload();
+}
+function practicaSalir(){
+  if(!window.PRACTICA) return;
+  var P=practicaDatos(), n=Object.keys(P.filas).filter(function(id){ return id.indexOf('__')!==0; }).length;
+  if(!confirm('🧪 ¿Salir del modo práctica?\n\nSe borra todo lo que cargaste de práctica'+(n ? (' ('+n+' pedido'+(n===1?'':'s')+')') : '')+
+    ' y el panel vuelve a leer la planilla de verdad.')) return;
+  window.PRACTICA_SALIENDO=true;
+  try{ window.PRACTICA_CAPA.salir(); }catch(e){}
+  try{ var F=practicaFotosCargar(); Object.keys(F).forEach(function(k){ if(F[k].u && /^blob:/.test(F[k].u)) URL.revokeObjectURL(F[k].u); }); }catch(e){}
+  var q=(location.search||'').replace(/([?&])practica=1(&|$)/, function(m, a, b){ return b ? a : ''; }).replace(/[?&]$/, '');
+  var dest=location.pathname+q;
+  if(dest===location.pathname+(location.search||'') && !location.hash) location.reload(); else location.replace(dest);
+}
+function practicaQuienHtml(){
+  return window.PRACTICA
+    ? '<div class="quien-pr"><button type="button" onclick="quienCerrar();practicaEjercicios()">🧪 Estás en modo práctica · 📋 Ejercicios</button></div>'
+    : '<div class="quien-pr"><button type="button" onclick="quienCerrar();practicaEntrar()">🧪 Soy nuevo/a: quiero practicar sin guardar nada</button></div>';
+}
+function practicaAsisHtml(){
+  return window.PRACTICA
+    ? '<div class="pr-asis">🧪 <b>Estás en modo práctica</b>: nada se guarda de verdad. <button type="button" onclick="asisCerrar();practicaEjercicios()">📋 Ejercicios ('+practicaEjHechos()+'/'+PR_EJ.length+')</button><button type="button" onclick="asisCerrar();practicaSalir()">Salir</button></div>'
+    : '<div class="pr-asis">🧪 ¿Sos nuevo/a? <button type="button" onclick="asisCerrar();practicaEntrar()">Modo práctica: aprendé sin guardar nada</button></div>';
+}
+/* Al abrir la página en práctica: los ejercicios, lo que Bloki mira del formulario y lo de VERDAD que espera en la cola (no sale hasta salir). */
+function practicaMontar(){
+  if(!window.PRACTICA) return;
+  practicaEjPintar();
+  document.addEventListener('click', function(e){
+    if(!window.PRACTICA) return;
+    var b=e.target && e.target.closest ? e.target.closest('#view-form .seg button') : null; if(!b || !b.parentNode) return;
+    var seg=b.parentNode.id, val=b.getAttribute('data-val');
+    if(seg==='f-doc-tipo') practicaDecir(val==='ATC' ? 'atc' : (val==='RPT' ? 'rpt' : 'oc'));
+    else if(seg==='f-turno') practicaDecir('turno');
+    else if(seg==='f-pagado') practicaDecir(val==='SI' ? 'pagado' : 'cobro');
+    else if(seg==='f-metodo' || seg==='f-metodo2') practicaDecir(val==='QR' ? 'qr' : 'metodo');
+  }, true);
+  var mirar=function(e){
+    if(!window.PRACTICA) return;
+    var t=e.target; if(!t || !t.id && !t.classList) return;
+    if(t.id==='f-fecha') practicaDecir('fecha');
+    else if(t.id==='f-acuenta') practicaDecir('cobro');
+    else if(t.id==='f-celular') practicaDecir('celular');
+    else if(t.id==='comp-input' || t.id==='fcomp-input' || t.id==='ret-foto-input') practicaDecir('comprobante');
+    else if(t.classList && (t.classList.contains('prod-desc') || t.classList.contains('prod-codigo'))) practicaDecir('producto');
+  };
+  document.addEventListener('change', mirar, true);
+  document.addEventListener('input', mirar, true);
+  var cola=[]; try{ cola=JSON.parse(window.PRACTICA_CAPA.real(LS_PEND)||'[]')||[]; }catch(e){ cola=[]; }
+  setTimeout(function(){
+    if(cola.length) practicaDecir('cola', true, { ico:'⏳', t:'Hay '+cola.length+' guardado'+(cola.length===1?'':'s')+' de VERDAD esperando', x:'Se quedan quietos mientras practicás y se mandan solos cuando salgas de la práctica.' });
+    else practicaDecir('hola');
+  }, 1200);
+  try{ hdrMedir(); }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', function(){ try{ practicaMontar(); }catch(e){} });
+
 /* Las casillas de «qué se le recoge», dibujadas desde ATC_PIEZAS para no repetir la lista. */
 function pintarPiezasAtc(){
   var box=document.getElementById('f-atc-piezas'); if(!box) return;
@@ -33627,9 +34183,10 @@ function fotosDe(p){ return Array.isArray(p.fotos)?p.fotos:[]; }
    `lh3.googleusercontent.com/d/<id>` sirve el archivo compartido "con cualquiera que
    tenga el link" SIN pedir sesión, así que va primero. El otro queda de respaldo, y si
    los dos fallan se muestra un link para abrirla en vez de un ícono roto. */
-function fotoThumb(fid, w){ return 'https://lh3.googleusercontent.com/d/'+encodeURIComponent(fid)+'=w'+(w||400); }
-function fotoThumbAlt(fid, w){ return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w'+(w||400); }
-function fotoVer(fid){ return 'https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/view'; }
+/* 🧪 (271) Una foto subida en el modo práctica no fue a Drive: vive en este aparato (`practicaFotoUrl`). */
+function fotoThumb(fid, w){ if(window.PRACTICA && practicaFotoUrl(fid)) return practicaFotoUrl(fid); return 'https://lh3.googleusercontent.com/d/'+encodeURIComponent(fid)+'=w'+(w||400); }
+function fotoThumbAlt(fid, w){ if(window.PRACTICA && practicaFotoUrl(fid)) return practicaFotoUrl(fid); return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w'+(w||400); }
+function fotoVer(fid){ if(window.PRACTICA && practicaFotoUrl(fid)) return practicaFotoUrl(fid); return 'https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/view'; }
 /* Los IDs de Drive son [A-Za-z0-9_-]: se limpian antes de meterlos en un atributo. */
 function fidLimpio(fid){ return String(fid==null?'':fid).replace(/[^\w-]/g,''); }
 /* Primer fallo → se prueba la otra dirección. Segundo fallo → un link legible, para que
@@ -35969,7 +36526,7 @@ function clfNota(n){ var t=limpiaNota(n); return (t && !/^0+$/.test(t)) ? t : ''
 function clfNom(p){ return normNombre(String(p&&p.cliente||'').trim()); }
 /* El nombre tocable. Si no corresponde, el MISMO texto de siempre (las pruebas y la tabla lo leen así). */
 function clfNombre(p, txt, origen){
-  var t=esc(txt==null ? String((p&&p.cliente)||'') : txt);
+  var t=(window.PRACTICA ? practicaMarca(p) : '')+esc(txt==null ? String((p&&p.cliente)||'') : txt);   // 🧪 (271) lo cargado o tocado en práctica
   if(!clfActivo() || !clfEntra(p) || !String(p.cliente||'').trim()) return t;
   var fn="clfAbrir('"+String(p.id).replace(/'/g,"\\'")+"','"+(origen||'admin')+"')";
   return '<span class="clf-lk" role="button" tabindex="0" title="Ver la ficha del cliente: compras, pagos, saldo, ATC y notas" '+
@@ -37300,7 +37857,7 @@ function atcCorreoAbrir(modo){
   var v=atcCorreoVals();
   if(!v.para) toast('Ojo: falta el «Para». Escribí el correo de destino (o ponelo en tu correo antes de mandar).','err',6000);
   if(modo==='gmail') window.open(atcCorreoUrl('gmail', v), '_blank');
-  else window.location.href=atcCorreoUrl('mailto', v);
+  else { var _mu=atcCorreoUrl('mailto', v); if(!(window.PRACTICA && practicaUrlFrena(_mu))) window.location.href=_mu; }   // 🧪 (271) en práctica, el aviso
 }
 /* Desde la ficha de la ATC: el mismo correo, para mandarlo (o reenviarlo) después. */
 function atcCorreoVer(id){
@@ -48798,6 +49355,7 @@ function showWhatsappModal(rec, volverA, reenvio){
       (reenvio ? '' : nxClienteBloque(rec, 'nuevo'))+   // 💬 (§4js, P3) y el mensaje para el CLIENTE, listo para su WhatsApp
     '</div>';
   openModal(html);
+  try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
 }
 /* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
    (Mis pedidos, Lista de carga y Administración ya lo tenían). Se notó con las ventas de
@@ -59935,6 +60493,7 @@ function notaLeerFallaTxt(err, res){
   var tope=(res && Number(res.tope)) || 80, det=(res && res.detalle) ? String(res.detalle).slice(0, 140) : '';
   return err==='tope' ? ('Ya se leyeron las '+tope+' notas de hoy (el tope del día): esta cargala a mano.')
        : err==='ia_apagada' ? 'La lectura de notas está apagada en el servidor por ahora: cargá la venta a mano.'
+       : err==='practica' ? '🧪 En el modo práctica no se lee la nota con Claude (gasta crédito de verdad): practicá cargándola a mano.'
        : err==='sin_clave' ? 'Al servidor le falta la clave de Claude: avisale a Eduardo. Mientras, cargá la venta a mano.'
        : err==='no_se_lee' ? ('No pude leer la nota en esa foto'+(det?(' ('+det+')'):'')+'. Sacá otra: de frente, con buena luz y la nota entera.')
        : err==='grande' ? 'La foto es muy pesada: sacala de nuevo o elegí otra.'
@@ -62527,7 +63086,8 @@ function asisPanelPintar(){
     var qv=ASIS.q||'', idx=asisBuscar(qv);
     /* 💬 (07/11, idea 118) «Preguntame algo…»: mientras se escribe, la ayuda de siempre se filtra; con Enter o «Preguntar», Bloki contesta
        arriba (`blokiPreguntar`) con los números del panel, o con Claude (con la contraseña), o abre la ayuda. */
-    cuerpo='<form class="bkp-f" onsubmit="event.preventDefault();blokiPreguntar()">'+
+    cuerpo=practicaAsisHtml()+   // 🧪 (271) prender/apagar el modo práctica y los ejercicios
+      '<form class="bkp-f" onsubmit="event.preventDefault();blokiPreguntar()">'+
         '<input type="search" id="asis-q" class="asis-q" placeholder="Preguntame algo…" aria-label="Preguntale algo a Bloki" autocomplete="off" enterkeyhint="send" value="'+esc(qv)+'" oninput="ASIS.q=this.value;asisAyudaLista()">'+
         '<button type="submit" class="asis-b si bkp-ir">Preguntar</button></form>'+
       blokiChatHtml()+
@@ -63912,6 +64472,7 @@ function blokiClaudeFalla(item, err, res){
   var tope=(res && Number(res.tope)) || 30;
   var msg = err==='tope' ? ('Ya se usaron las '+tope+' preguntas de hoy a Claude: mañana se puede de nuevo.')
           : err==='ia_apagada' ? 'La IA está apagada en el servidor por ahora.'
+          : err==='practica' ? '🧪 En el modo práctica no le pregunto a Claude (gasta crédito de verdad). Probá con las preguntas del panel, o salí de la práctica.'
           : err==='sin_clave' ? 'Al servidor le falta la clave de Claude: avisale a Eduardo.'
           : err==='muy_largo' ? ('La pregunta es muy larga (más de '+BLOKI_PREG_MAX+' letras): acortala un poco y probá de nuevo.')
           : err==='vacia' ? 'No me llegó la pregunta: escribila de nuevo.'
