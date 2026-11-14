@@ -115,7 +115,7 @@ seccion('1. mallToque / mallLeer', () => {
   let r = S.post({ action: 'mallToque', toques: [a, b, c] });
   chk('1a. tres toques nuevos → n:3, dup:0', r.ok && r.n === 3 && r.dup === 0 && r.mal === 0, r);
   const M = S.mall();
-  chk('1b. la hoja «Mall» nace con sus encabezados', M && M[0].join('|') === 'id|ts|dia|hora|tienda|vendedor|tipo|resultado|motivo|ref|aparato', M && M[0]);
+  chk('1b. la hoja «Mall» nace con sus encabezados (la medida, al final)', M && M[0].join('|') === 'id|ts|dia|hora|tienda|vendedor|tipo|resultado|motivo|ref|aparato|medida', M && M[0]);
   chk('1c. cada toque es una fila, con el día y la hora de Bolivia', M.length === 4 && M[1][2] === HOY && M[1][3] === '11:00' && M[2][7] === 'compró' && M[2][9] === 'COT 11-001', M.slice(1, 3));
   chk('1d. lo que empieza con «=» va con «\'» adelante (no es una fórmula)', M[3][5] === "'=Fabián", M[3][5]);
   chk('1e. escribir usó el candado PROPIO (del documento), nunca el de doPost', S.candado.doc >= 1 && S.candado.script === 0, S.candado);
@@ -134,9 +134,9 @@ seccion('1. mallToque / mallLeer', () => {
   chk('1k. textos recortados a 80', (() => { const t = TQ({ m: 'x'.repeat(200) }); S.post({ action: 'mallToque', toques: [t] }); const f = S.mall()[S.mall().length - 1]; return f[8].length === 80; })());
   /* mallLeer de hoy: de la caché */
   r = S.post({ action: 'mallLeer', desde: HOY, hasta: HOY });
-  const n0 = r.toques.length;
-  chk('1l. mallLeer de hoy trae todo lo de hoy, en orden de hora, con {id, ts, dia, hora, tienda, v, k, r, m, ref, ap}', r.ok && n0 === 7 && r.toques.every(t => t.dia === HOY) &&
-      ['id','ts','dia','hora','tienda','v','k','r','m','ref','ap'].every(k => k in r.toques[0]) && r.toques[2].v === '=Fabián', r.toques.slice(0, 2));
+  let n0 = r.toques.length;
+  chk('1l. mallLeer de hoy trae todo lo de hoy, en orden de hora, con {id, ts, dia, hora, tienda, v, k, r, m, ref, ap, medida}', r.ok && n0 === 7 && r.toques.every(t => t.dia === HOY) &&
+      ['id','ts','dia','hora','tienda','v','k','r','m','ref','ap','medida'].every(k => k in r.toques[0]) && r.toques[2].v === '=Fabián', r.toques.slice(0, 2));
   const antes = S.lecturas.Mall || 0;
   r = S.post({ action: 'mallLeer', desde: HOY });
   chk('1m. la segunda lectura de hoy sale de la caché: ni una lectura de la hoja', r.toques.length === n0 && (S.lecturas.Mall || 0) === antes, { antes, despues: S.lecturas.Mall });
@@ -150,6 +150,21 @@ seccion('1. mallToque / mallLeer', () => {
   S.cache.mall_hoy = JSON.stringify({ d: HOY, v: 'vieja', n: 1 }); S.cache.mall_hoy_0 = '[]';
   r = S.post({ action: 'mallLeer', desde: HOY, hasta: HOY });
   chk('1o. una caché armada con una versión vieja no vale: se lee la hoja', r.toques.length === n0 + 1, r.toques.length);
+  /* la medida que no había */
+  const md = TQ({ k: 'fin', r: 'no compró', m: 'no había la medida', medida: '140x190' }), md2 = TQ({ k: 'fin', m: 'no había la medida', medida: '  160 x 200 especial de más  ' });
+  S.post({ action: 'mallToque', toques: [md, md2] });
+  const fm = S.mall().find(f => f[0] === md.id), fm2 = S.mall().find(f => f[0] === md2.id);
+  r = S.post({ action: 'mallLeer', desde: HOY, hasta: HOY });
+  const lm = r.toques.find(t => t.id === md.id), lm2 = r.toques.find(t => t.id === md2.id);
+  chk('1o2. `medida` va en la última columna y vuelve en mallLeer (de la caché y de la hoja); a lo sumo 15 letras; sin medida, vacía',
+      fm && fm[11] === '140x190' && fm2[11] === '160 x 200 espec' && lm && lm.medida === '140x190' && lm2.medida === '160 x 200 espec' && r.toques.find(t => t.id === a.id).medida === '' &&
+      S.ctx.mallDeFila_(fm).medida === '140x190', [fm && fm[11], fm2 && fm2[11], lm && lm.medida]);
+  n0 += 2;
+  /* una hoja «Mall» de antes de la medida: se le pone el encabezado */
+  const Vj = servidor({});
+  Vj.hojas.Mall = (function () { const h = Vj.ctx.SpreadsheetApp.getActiveSpreadsheet().insertSheet('Mall'); h._datos.push(['id','ts','dia','hora','tienda','vendedor','tipo','resultado','motivo','ref','aparato']); return h; })();
+  Vj.post({ action: 'mallToque', toques: [TQ({ medida: '90x190' })] });
+  chk('1o3. una hoja armada antes de la columna «medida» recibe el encabezado y la medida', Vj.mall()[0][11] === 'medida' && Vj.mall()[1][11] === '90x190', Vj.mall());
   /* tienda */
   S.post({ action: 'mallToque', toques: [TQ({ tienda: 'Mia Plaza', k: 'llegue' })] });
   r = S.post({ action: 'mallLeer', desde: HOY, hasta: HOY, tienda: 'ventura mall' });

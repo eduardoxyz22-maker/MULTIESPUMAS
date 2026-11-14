@@ -7889,10 +7889,11 @@ function probarNota_(bien, ojo) {
  * 🔐 Todo pide la clave del equipo (como cualquier acción de doPost). Nada de esto toca la fila de un pedido.
  * ========================================================================== */
 var MALL_HOJA = 'Mall';
-var MALL_ENC = ['id', 'ts', 'dia', 'hora', 'tienda', 'vendedor', 'tipo', 'resultado', 'motivo', 'ref', 'aparato'];
+var MALL_ENC = ['id', 'ts', 'dia', 'hora', 'tienda', 'vendedor', 'tipo', 'resultado', 'motivo', 'ref', 'aparato', 'medida'];   // `medida` (al final): la que no había («140x190»), cuando el motivo es «no había la medida»
 var MALL_TIPOS = { llegue:1, mefui:1, pausa:1, volvi:1, atiendo:1, esmio:1, fin:1, miro:1 };
 var MALL_POR_VEZ = 50;            // toques por pedido como mucho
 var MALL_TXT = 80;                // letras por texto (el id también)
+var MALL_MEDIDA_TXT = 15;         // la medida que no había: un texto corto («140x190», «160x200»)
 var MALL_TS_DIAS = 2;             // un toque con la hora corrida más de 2 días (para atrás o para adelante) no entra
 var MALL_LEER_DIAS = 62;          // `mallLeer`: hasta 62 días por pedido
 var MALL_DUP_FILAS = 6000;        // para ver si un toque ya entró, las últimas filas de la hoja (los últimos 2 días entran de sobra)
@@ -7909,9 +7910,12 @@ function mallHoja_(crear) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(MALL_HOJA);
   if (!sh && crear) {
     sh = ss.insertSheet(MALL_HOJA);
-    try { sh.getRange('A:A').setNumberFormat('@'); sh.getRange('C:K').setNumberFormat('@'); } catch (e) {}   // el día y la hora como TEXTO: si no, Google los vuelve fechas
+    try { sh.getRange('A:A').setNumberFormat('@'); sh.getRange('C:L').setNumberFormat('@'); } catch (e) {}   // el día, la hora y la medida como TEXTO: si no, Google los convierte
     sh.getRange(1, 1, 1, MALL_ENC.length).setValues([MALL_ENC]);
     try { sh.setFrozenRows(1); } catch (e2) {}
+  } else if (sh && crear) {
+    /* Una hoja armada antes de la columna «medida» (la última): se le pone el encabezado; las filas viejas quedan sin medida. */
+    try { var c12 = sh.getRange(1, MALL_ENC.length).getValue(); if (String(c12 || '') === '') { sh.getRange(1, MALL_ENC.length).setValue(MALL_ENC[MALL_ENC.length - 1]); try { sh.getRange('L:L').setNumberFormat('@'); } catch (e3) {} } } catch (e4) {}
   }
   return sh;
 }
@@ -7933,16 +7937,16 @@ function mallValidar_(x, ahora) {
   ts = Math.round(ts);
   var b = waBo_(ts);
   return { t:{ id:id, ts:ts, dia:b.hoy, hora:b.txt.slice(6), tienda:mallTxt_(x.tienda), v:mallTxt_(x.v), k:k, r:mallTxt_(x.r), m:mallTxt_(x.m),
-               ref:mallTxt_(x.ref), ap:mallTxt_(x.ap) } };
+               ref:mallTxt_(x.ref), ap:mallTxt_(x.ap), medida:mallTxt_(x.medida).slice(0, MALL_MEDIDA_TXT) } };
 }
-function mallFila_(t) { return [mallCelda_(t.id), t.ts, t.dia, t.hora, mallCelda_(t.tienda), mallCelda_(t.v), t.k, mallCelda_(t.r), mallCelda_(t.m), mallCelda_(t.ref), mallCelda_(t.ap)]; }
+function mallFila_(t) { return [mallCelda_(t.id), t.ts, t.dia, t.hora, mallCelda_(t.tienda), mallCelda_(t.v), t.k, mallCelda_(t.r), mallCelda_(t.m), mallCelda_(t.ref), mallCelda_(t.ap), mallCelda_(t.medida || '')]; }
 /** Una fila de la hoja → el toque (el día y la hora salen de `ts`, que manda). null si no es un toque. */
 function mallDeFila_(r) {
   var id = mallDeCelda_(r[0]).trim(), ts = Number(r[1]) || 0;
   if (!id || !(ts > 0)) return null;
   var b = waBo_(ts);
   return { id:id, ts:ts, dia:b.hoy, hora:b.txt.slice(6), tienda:mallDeCelda_(r[4]), v:mallDeCelda_(r[5]), k:String(r[6] || ''), r:mallDeCelda_(r[7]),
-           m:mallDeCelda_(r[8]), ref:mallDeCelda_(r[9]), ap:mallDeCelda_(r[10]) };
+           m:mallDeCelda_(r[8]), ref:mallDeCelda_(r[9]), ap:mallDeCelda_(r[10]), medida:mallDeCelda_(r[11]) };
 }
 /** Las últimas `n` filas (sin el encabezado). */
 function mallCola_(sh, n) {
@@ -7993,7 +7997,7 @@ function mallPodar_(sh, hoy) {
   if (k > 0) sh.deleteRows(2, k);
   return k;
 }
-/** 🏬 `mallToque` {toques:[{id, ts, tienda, v, k, r, m, ref, ap}]} (hasta MALL_POR_VEZ): cada toque nuevo, una fila de la hoja «Mall».
+/** 🏬 `mallToque` {toques:[{id, ts, tienda, v, k, r, m, ref, ap, medida?}]} (hasta MALL_POR_VEZ; `medida` = la que no había, hasta 15 letras): cada toque nuevo, una fila de la hoja «Mall».
     Sin repetir: un reintento con el mismo `id` no agrega nada (los ids de los últimos días, de la caché y de las últimas filas de la hoja).
     → {ok:true, n:<agregados>, dup:<repetidos>, mal:<rechazados>, malos:[{id, motivo}]}. Un toque rechazado (tipo desconocido, sin id, hora
     corrida más de 2 días) no va a entrar nunca: la página lo puede sacar de su cola. {ok:false, error:'ocupado'} = reintentar. */
@@ -8051,7 +8055,7 @@ function mallToque_(body) {
   } finally { try { if (L) L.releaseLock(); } catch (e6) {} }
 }
 /** 🏬 `mallLeer` {desde, hasta, tienda?} (AAAA-MM-DD, hasta MALL_LEER_DIAS días) → {ok:true, desde, hasta, hoy, toques:[{id, ts, dia, hora,
-    tienda, v, k, r, m, ref, ap}]} en orden de hora. Sin candado (solo lee). Si lo pedido es solo HOY, sale de la caché (la pantalla del
+    tienda, v, k, r, m, ref, ap, medida}]} en orden de hora. Sin candado (solo lee). Si lo pedido es solo HOY, sale de la caché (la pantalla del
     mostrador lee cada pocos segundos); con días de antes, de la hoja. `tienda` filtra sin tildes ni mayúsculas. */
 function mallLeer_(body) {
   body = body || {};
@@ -8738,7 +8742,7 @@ function cotBotonTocado_(sh, de, m, q, cfg) {
     else if (q.res === 'compre') { x.bot = 'compre'; x.estado = 'dice_compro'; }
     else { x.bot = 'no'; x.estado = 'no'; x.motivo = 'no, gracias (bot)'; }
   }, true);
-  if (!c) motivo = motivo || 'la cotización ya no está';
+  if (!c) motivo = motivo || 'no se pudo anotar (la cotización ya no está o la hoja estaba ocupada)';
   var txtRes = { llamar:'📞 Que me llamen', compre:'✅ Ya compré', no:'🙅 No, gracias' }[q.res];
   sh.appendRow([waHookHora_(m.timestamp), '', c ? c.num : '', '🧾 Cotización: tocó un botón', nom, de, '', motivo ? '⚠️ no se anotó' : '🧾 ' + q.res, w,
                 txtRes + (motivo ? ' — ' + motivo : ''), '', (Number(m.timestamp) * 1000) || ahora, motivo ? '— ' + motivo : '— lo anotó el bot en la cotización']);
