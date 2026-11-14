@@ -3291,6 +3291,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
   <div id="view-bot" class="view">
     <div class="card">
       <div class="bot-cab"><b>🤖 Bot de WhatsApp</b><span>Lo que contestaron los clientes al bot y lo que Claude ya atendió solo. «✓ Ya lo atendí» lo saca para todos.</span></div>
+      <div id="rd-bot"></div>   <!-- 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» / «No, dejarlo» -->
       <div id="wa-resp-adm"></div>   <!-- 💬 (12/10, §4kk) lo que contestaron los clientes al bot · (24/10) vive en esta pestaña -->
       <div id="bot-vacio" class="empty" hidden>✅ No hay respuestas de clientes esperando.</div>
     </div>
@@ -6819,6 +6820,23 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .nota-leer .nl-rueda{width:18px;height:18px;border-radius:50%;border:3px solid var(--teal-border);border-top-color:var(--teal);animation:nl-gira .9s linear infinite;flex:none}
 @keyframes nl-gira{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.nota-leer .nl-rueda{animation:none}}
+/* 📅 (14/11, mejora 217) los clientes que pidieron otro día por el bot (`rdCardHtml`): pestaña Bot, «Para hacer» y la ficha */
+.rd-caja{background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;margin:0 0 10px;color:#0f2333}
+.rd-tit{font-weight:800;color:#1e3a8a;font-size:.95rem}
+.rd-sub{font-size:.78rem;color:#475569;margin-top:2px}
+.rd-c{background:#fff;border:1px solid #bfdbfe;border-left:4px solid #2563eb;border-radius:10px;padding:8px 10px;margin-top:8px;color:#0f2333;min-width:0}
+.rd-c.rd-c-viejo{border-left-color:#94a3b8;opacity:.85}
+.rd-t{font-size:.9rem;line-height:1.35}
+.rd-s{font-size:.76rem;color:#64748b;margin-top:2px;overflow-wrap:anywhere}
+.rd-ok,.rd-av,.rd-viejo{font-size:.78rem;margin-top:6px;border-radius:8px;padding:5px 8px}
+.rd-ok{background:#ecfdf5;color:#065f46}
+.rd-av{background:var(--amber-lt,#fff7e6);color:#8a5a00;border:1px solid var(--amber-border,#f5d58a)}
+.rd-viejo{background:#f1f5f9;color:#475569}
+.rd-b{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rd-b .rd-mover{background:#2563eb;color:#fff;border-color:#2563eb;font-weight:800}
+.rd-ficha{margin:8px 0}
+.rd-ficha .rd-c{margin-top:0}
+.rd-vacio{margin:6px 0 12px}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -27343,6 +27361,8 @@ function admHacerDatos(){
   add({ k:'rev', sev:'a', ic:'📝', n:R.n||0, t:'Les faltan datos a los de '+nxCuandoTxt(R.dia||prox), s:R.resumen||'', b:'Ver cuáles', fn:'admRevisarVer()', tag:'faltan datos' });
   // 📍 (13/11, mejora 185) las ubicaciones que faltan para hoy y el próximo camión: pedírselas al cliente por WhatsApp
   try{ add(ubfHacer()); }catch(e){}
+  // 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» con un toque
+  try{ add(rdHacer()); }catch(e){}
   // ✅ cierre de entregas
   var C=ADM_AV.cierre||{};
   if(C.pend) add({ k:'cie-p', sev:'r', ic:'⏳', n:C.pend, t:'Cierre de entregas sin sincronizar', s:'se aplica solo con la próxima lectura de la planilla', b:'🔄 Intentar', fn:'refrescarEstado()', tag:'cierre sin sincronizar' });
@@ -49041,7 +49061,7 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+clfVolverHtml(p.id)+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      top+modHtml+fichaQueHacer(p, N, ret)+
+      top+modHtml+rdFichaHtml(p)+fichaQueHacer(p, N, ret)+   // 📅 (14/11, mejora 217) el cliente pidió otro día por el bot
       /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
       '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
@@ -57575,7 +57595,7 @@ function waRespTraer(forzar){
   if(!forzar && Date.now()-WA_RESP_T<WA_RESP_MS) return;
   WA_RESP_PIDIENDO=true; WA_RESP_T=Date.now();
   return apiPost({action:'waRespuestas'}).then(function(j){   // devuelve la promesa: los avisos de Windows esperan a que llegue (§4ns-c)
-    if(j && j.ok && Array.isArray(j.resp)){ WA_RESP=j.resp; waRespPintar(); try{ asisRefrescar(); }catch(e){} }
+    if(j && j.ok && Array.isArray(j.resp)){ WA_RESP=j.resp; try{ rdTomar(j); }catch(e){} waRespPintar(); try{ asisRefrescar(); }catch(e){} }   // 📅 (14/11, mejora 217) `rd`
   }).catch(function(){}).then(function(){ WA_RESP_PIDIENDO=false; });
 }
 function waRespPed(r){ return (r && r.id) ? findById(r.id) : null; }
@@ -57682,7 +57702,7 @@ function botVe(){
 function botTabPintar(){
   var t=document.getElementById('tab-bot'); if(!t) return;
   var ve=botVe(); t.hidden=!ve;
-  try{ nxBadge('tab-bot', ve ? waRespPend().length : 0, 'nx-tb-rojo', 'Respuestas de clientes sin atender'); }catch(e){}
+  try{ nxBadge('tab-bot', ve ? waRespPend().length+rdPendientes() : 0, 'nx-tb-rojo', 'Respuestas de clientes sin atender'); }catch(e){}   // 📅 (14/11) + los que pidieron otro día
   if(!ve && document.getElementById('view-bot').classList.contains('active')) showView('admin');
 }
 function waRespPintar(){
@@ -57692,6 +57712,7 @@ function waRespPintar(){
     m.innerHTML = todos ? waRespHtml(waRespPend(), 'todos', 'wa-mis', waRespIaHechas('')) : (v ? waRespHtml(waRespDeVend(v.trim()), '', 'wa-mis', waRespIaHechas(v.trim())) : ''); }
   if(a) a.innerHTML = botVe() ? waRespHtml(waRespPend(), '', 'wa-adm', waRespIaHechas('')) : '';
   var bv=document.getElementById('bot-vacio'); if(bv) bv.hidden=!!(a && a.innerHTML);
+  try{ rdBotPintar(); }catch(e){}   // 📅 (14/11, mejora 217) los clientes que pidieron otro día
 }
 function waRespAtender(w){
   var r=null; WA_RESP.forEach(function(x){ if(x.w===w) r=x; }); if(!r) return;
@@ -57701,6 +57722,176 @@ function waRespAtender(w){
     if(res && res.ok){ r.at=res.at||r.at; waRespPintar(); }
     else { r.at=''; waRespPintar(); toast('No se pudo marcar como atendido: '+((res&&res.error)||'probá de nuevo'), 'err'); }
   }).catch(function(){ r.at=''; waRespPintar(); toast('Sin conexión: no se marcó como atendido. Probá de nuevo.', 'err'); });
+}
+/* ============================================================================
+   📅 (14/11, mejora 217; dueño, con la muestra: «El cliente elige el día nuevo por el bot… Lo que elige le llega a logística con un botón
+   «Mover»: logística confirma con un toque y el bot le avisa al cliente. Nada se mueve solo.») LOS CLIENTES QUE PIDIERON OTRO DÍA.
+   El servidor (2026-11-14-a) le ofrece al cliente que «no va a estar» hasta tres días con lugar como botones y, cuando toca uno, lo anota y
+   lo manda en `waRespuestas` (`rd`: {k, id, oc, cli, f, t, de, ts, num}). Acá se ve en la pestaña Bot (`#rd-bot`), en «📋 Para hacer» de
+   Administración (`rdHacer`) y en la ficha del pedido (`rdFichaHtml`):
+   · «📅 Mover» = el 📅 Reprogramar de siempre (`reproAplicar`: N° del día nuevo, la ATC que sigue su devolución, `forzar` con los avisos
+     confirmados y la clave): con los avisos de `reproAvisos` (turno lleno, día cerrado, feriado) y del stock (`reproStockConfirmar`) pregunta
+     antes; sin avisos, un toque. Guardado el cambio, el bot le avisa el día nuevo al cliente como en cualquier cambio de día.
+   · «No, dejarlo» lo saca de la lista (el bot no le dice nada al cliente: se avisa a mano). «Quitar» = ya no hace falta (lo movieron a
+     otro día, se entregó, lo borraron o el día ya pasó: `rdEstado`).
+   · Lo del servidor se pide SOLO con `servidorTiene(RD_SERVIDOR)`. En Playwright no se muestra salvo `window.RD_PRUEBA`.
+   `tests/test_wa_otro_dia_pagina.js`.
+   ========================================================================== */
+var RD_SERVIDOR='2026-11-14-a', RD_PEDIDOS=[], RD_HECHOS={};
+function rdActivo(){ try{ return !(navigator.webdriver && !window.RD_PRUEBA); }catch(e){ return true; } }
+function rdServidorOk(){ return servidorTiene(RD_SERVIDOR); }
+function rdTomar(j){
+  RD_PEDIDOS = (rdServidorOk() && j && Array.isArray(j.rd)) ? j.rd.filter(function(r){ return r && r.k && r.id && /^\d{4}-\d{2}-\d{2}$/.test(String(r.f||'')); }) : [];
+  try{ rdPintarTodo(); }catch(e){}
+}
+function rdLista(){ return (RD_PEDIDOS||[]).filter(function(r){ return !RD_HECHOS[r.k]; }); }
+function rdBuscar(k){ return rdLista().filter(function(r){ return r.k===k; })[0]||null; }
+function rdDePedido(id){ return rdLista().filter(function(r){ return String(r.id)===String(id); })[0]||null; }
+function rdCuandoTxt(f, t){ return nxDiaTxt(f)+(t==='PM' ? ' · 🌆 tarde' : ' · 🌅 mañana'); }
+function rdHoraTxt(ms){ var n=Number(ms)||0; if(!n) return ''; var d=new Date(n-4*3600000).toISOString(); return d.slice(8,10)+'/'+d.slice(5,7)+' '+d.slice(11,16); }
+/* ¿Todavía hace falta moverlo? {k:'ok'|'ya'|'movido'|'entregado'|'borrado'|'paso', t, p}. */
+function rdEstado(r){
+  var p=findById(r.id);
+  if(!p) return { k:'borrado', t:'el pedido ya no está en la planilla' };
+  if(p.entregado) return { k:'entregado', t:'ya figura entregado', p:p };
+  var ahora=String(p.fecha||'')+'|'+normTurno(p.turno);
+  if(ahora===r.f+'|'+r.t) return { k:'ya', t:'ya está para ese día', p:p };
+  if(r.de && ahora!==r.de) return { k:'movido', t:'lo movieron '+(p.fecha ? ('al '+rdCuandoTxt(p.fecha, normTurno(p.turno))) : 'a «sin día»')+' después de que lo pidió', p:p };
+  if(r.f<=todayStr()) return { k:'paso', t:'el día que pidió ya llegó', p:p };
+  return { k:'ok', p:p };
+}
+function rdPendientes(){ return rdActivo() ? rdLista().filter(function(r){ return rdEstado(r).k==='ok'; }).length : 0; }
+function rdCardHtml(r, donde){
+  var e=rdEstado(r), p=e.p, kA=esc(r.k), ok=e.k==='ok';
+  var quien=(p && p.cliente) || r.cli || 'el cliente';
+  var datos=[ocEtiq((p && p.oc) || r.oc), p ? String(p.vendedor||'').trim() : '', p && p.fecha ? ('ahora: '+rdCuandoTxt(p.fecha, normTurno(p.turno))) : '',
+             r.ts ? ('lo pidió por el bot el '+rdHoraTxt(r.ts)) : ''].filter(Boolean).join(' · ');
+  var cupo='';
+  if(ok){
+    var av=reproAvisos(p, r.f, r.t);
+    if(av.length) cupo='<div class="rd-av">'+av.map(function(a){ return '⚠️ '+esc(a); }).join('<br>')+'<br><b>Se puede mover igual: te pregunta antes.</b></div>';
+    else { var lim=limTurno(r.f, r.t), us=cuposUsadosTurno(r.f, r.t); cupo='<div class="rd-ok">✅ En ese turno quedan <b>'+Math.max(0, lim-us)+'</b> de '+lim+'.</div>'; }
+  } else cupo='<div class="rd-viejo">ℹ️ Ya no hace falta moverlo: '+esc(e.t)+'.</div>';
+  var wa=r.num ? ('https://wa.me/'+String(r.num).replace(/[^0-9]/g,'')) : '';
+  return '<div class="rd-c'+(ok?'':' rd-c-viejo')+'" data-k="'+kA+'">'+
+    '<div class="rd-t">📅 '+(donde==='ficha' ? 'El cliente pidió pasar su entrega al ' : ('<b>'+esc(quien)+'</b> pidió pasar su entrega al '))+'<b>'+esc(rdCuandoTxt(r.f, r.t))+'</b></div>'+
+    (datos ? '<div class="rd-s">'+esc(datos)+'</div>' : '')+cupo+
+    '<div class="rd-b">'+
+      (ok ? ('<button type="button" class="btn btn-sm rd-mover" data-k="'+kA+'" onclick="rdMover(this.getAttribute(\'data-k\'))">📅 Mover</button>'+
+             '<button type="button" class="btn btn-ghost btn-sm rd-no" data-k="'+kA+'" onclick="rdNo(this.getAttribute(\'data-k\'))">No, dejarlo</button>')
+          : ('<button type="button" class="btn btn-ghost btn-sm rd-quitar" data-k="'+kA+'" onclick="rdQuitar(this.getAttribute(\'data-k\'))">Quitar</button>'))+
+      (p && donde!=='ficha' ? ('<button type="button" class="btn btn-ghost btn-sm" data-id="'+esc(p.id)+'" onclick="showPedidoModal(this.getAttribute(\'data-id\'))">📋 Abrir el pedido</button>') : '')+
+      (wa ? ('<a class="btn btn-ghost btn-sm" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 Escribirle</a>') : '')+
+    '</div></div>';
+}
+function rdListaHtml(L){
+  var n=L.filter(function(r){ return rdEstado(r).k==='ok'; }).length;
+  return '<div class="rd-caja"><div class="rd-tit">📅 '+(n ? (n+' cliente'+(n===1?'':'s')+' pidi'+(n===1?'ó':'eron')+' otro día por el bot') : 'Pedidos de otro día que ya no hace falta mover')+'</div>'+
+    '<div class="rd-sub">Eligieron uno de los días con lugar que les ofreció el bot. «📅 Mover» lo pasa a ese día y el bot le avisa el día nuevo; «No, dejarlo» lo deja como está (el bot no le dice nada: avisale vos). Nada se mueve solo.</div>'+
+    L.map(function(r){ return rdCardHtml(r, 'lista'); }).join('')+'</div>';
+}
+function rdBotPintar(){
+  var el=document.getElementById('rd-bot'); if(!el) return;
+  var L=(rdActivo() && botVe()) ? rdLista() : [], h=L.length ? rdListaHtml(L) : '';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  var bv=document.getElementById('bot-vacio'), a=document.getElementById('wa-resp-adm');
+  if(bv) bv.hidden=!!((a && a.innerHTML) || h);
+}
+/* La ficha del pedido (`showPedidoModal`): arriba, debajo de quién y cuándo. */
+function rdFichaHtml(p){
+  if(!p || !rdActivo()) return '';
+  var r=rdDePedido(p.id); if(!r) return '';
+  return '<div class="rd-ficha" data-id="'+esc(p.id)+'">'+rdCardHtml(r, 'ficha')+'</div>';
+}
+/* «📋 Para hacer» de Administración (`admHacerDatos`). */
+function rdHacer(){
+  if(!rdActivo()) return null;
+  var L=rdLista(); if(!L.length) return null;
+  var ok=L.filter(function(r){ return rdEstado(r).k==='ok'; });
+  if(!ok.length) return { k:'rd', sev:'i', ic:'📅', n:L.length, t:'Pedidos de otro día por el bot que ya no hace falta mover', s:'quitalos de la lista', b:'Ver', fn:'rdAbrir()', tag:'otro día (bot)' };
+  var nom=ok.slice(0,3).map(function(r){ var p=findById(r.id); return String((p && p.cliente) || r.cli || '—').trim().split(/\s+/).slice(0,2).join(' ')+' → '+nxDiaTxt(r.f)+(r.t==='PM'?' tarde':' mañana'); }).join(', ')+(ok.length>3?(' y '+(ok.length-3)+' más'):'');
+  return { k:'rd', sev:'r', ic:'📅', n:ok.length, t:(ok.length===1 ? 'Un cliente pidió' : 'Clientes que pidieron')+' otro día por el bot', s:nom+' · tocá «Mover» si se puede', b:'📅 Ver y mover', fn:'rdAbrir()', tag:'otro día (bot)' };
+}
+function rdAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.rd-modal')); }
+function rdAbrir(){
+  var L=rdLista();
+  openModal('<div class="modal-h"><h3>📅 Pidieron otro día por el bot</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b rd-modal">'+(L.length ? rdListaHtml(L) : '<p class="rd-vacio">✅ No queda ningún cliente esperando que le muevan el día.</p>')+
+    '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div></div>');
+}
+function rdFichaAbiertaDe(id){
+  var mo=document.getElementById('modal'), b=document.getElementById('modal-box');
+  return !!(mo && mo.classList.contains('on') && b && b.classList.contains('fl-ficha') && b.querySelector('.rd-ficha[data-id="'+String(id).replace(/"/g,'')+'"]'));
+}
+function rdPintarTodo(){
+  try{ rdBotPintar(); }catch(e){}
+  try{ botTabPintar(); }catch(e){}
+  try{ admHacerPintar(); }catch(e){}
+}
+/* Después de tocar algo: lo que se ve abierto se rearma (la ficha se saca su recuadro; «Mover» la vuelve a abrir con el día nuevo). */
+function rdDespues(id, reabrirFicha){
+  rdPintarTodo();
+  try{
+    if(rdAbierta()) rdAbrir();
+    else if(rdFichaAbiertaDe(id)){
+      if(reabrirFicha) showPedidoModal(id);
+      else { var f=document.querySelector('#modal-box .rd-ficha'); if(f) f.remove(); }
+    }
+  }catch(e){}
+}
+function rdMarcar(k, est){
+  var r=(RD_PEDIDOS||[]).filter(function(x){ return x.k===k; })[0];
+  RD_HECHOS[k]=1;
+  if(!rdServidorOk()) return Promise.resolve(null);
+  var quien=(asisVendedor() || quienRol() || 'panel');
+  var sacar=function(){ RD_PEDIDOS=(RD_PEDIDOS||[]).filter(function(x){ return x.k!==k; }); delete RD_HECHOS[k]; rdPintarTodo(); };
+  return apiPost({ action:'rdMarcar', k:k, est:est, quien:quien }).then(function(res){
+    if(res && (res.ok || res.error==='no está')){ sacar(); return res; }
+    delete RD_HECHOS[k]; rdPintarTodo();
+    toast('No se pudo anotar en el servidor ('+((res && res.error) || 'sin respuesta')+'): '+(est==='hecho' ? 'el pedido SÍ se movió, pero ' : '')+'vuelve a aparecer en la lista.', 'err', 7000);
+    return res;
+  }, function(){
+    delete RD_HECHOS[k]; rdPintarTodo();
+    toast('Sin conexión: '+(est==='hecho' ? 'el pedido SÍ se movió, pero ' : '')+'el pedido del cliente sigue en la lista. Probá de nuevo.', 'err', 7000);
+    return null;
+  });
+}
+function rdMover(k){
+  var r=rdBuscar(k); if(!r) return;
+  var e=rdEstado(r);
+  if(e.k!=='ok'){ toast('Ya no hace falta moverlo: '+e.t+'.', 'err'); rdDespues(r.id); return; }
+  if(!rdServidorOk()){ toast('El servidor todavía no tiene esto: movelo con 📅 Reprogramar.', 'err'); return; }
+  var p=e.p, f=r.f, t=r.t, avisos=reproAvisos(p, f, t);
+  if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Mover igual al '+fmtFecha(f)+' · '+t+'?')) return;
+  if(!reproStockConfirmar(p, f, t)) return;              // 📦 solo si es antes del día que tenía (§4ls CR-1)
+  if(avisos.length && !asegurarClaveAdmin()) return;     // 🛡️ forzar pide la clave (§4cg)
+  var antes=fmtFecha(p.fecha)+' · '+normTurno(p.turno), cli=p.cliente||'el cliente', pr;
+  RD_HECHOS[k]=1; rdPintarTodo();
+  try{ pr=reproAplicar(p, f, t, avisos.length>0); }
+  catch(err){ delete RD_HECHOS[k]; rdPintarTodo(); toast('No se pudo mover: '+String((err && err.message) || err), 'err'); return; }
+  toast('📅 '+cli+': '+antes+' → '+fmtFecha(f)+' · '+t+' ✓ · el bot le avisa el día nuevo', 'ok', 6000);
+  rdDespues(r.id, true);
+  return Promise.resolve(pr).then(function(res){
+    if(res && res.ok===false && !res.local && RECHAZOS_FIRMES[res.error]){
+      delete RD_HECHOS[k]; rdPintarTodo();
+      toast('⚠️ La planilla no aceptó el cambio ('+(res.motivo || res.error)+'): el pedido de '+cli+' NO se movió.', 'err', 9000);
+      return res;
+    }
+    return rdMarcar(k, 'hecho');
+  });
+}
+function rdNo(k){
+  var r=rdBuscar(k); if(!r) return;
+  var pr=rdMarcar(k, 'no');
+  toast('Quedó como estaba. El bot no le dice nada al cliente: avisale que ese día no se pudo (💬 Escribirle).', 'ok', 7000);
+  rdDespues(r.id);
+  return pr;
+}
+function rdQuitar(k){
+  var r=rdBuscar(k); if(!r) return;
+  var pr=rdMarcar(k, 'quitar');
+  rdDespues(r.id);
+  return pr;
 }
 function nxClienteBloque(p, tipo){
   if(!nxClienteVale(p)) return '';

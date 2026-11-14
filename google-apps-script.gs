@@ -1619,8 +1619,9 @@ function doPostCuerpo_(e) {
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
   if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
   // 💬 (2026-10-12-c) Lo que contestaron los clientes al bot (hoja «Bot WhatsApp»). Sin candado: no toca «Pedidos».
-  if (action === 'waRespuestas') return jsonOut({ ok:true, version:SCRIPT_VERSION, resp: waRespuestasLeer_() });
+  if (action === 'waRespuestas') return jsonOut({ ok:true, version:SCRIPT_VERSION, resp: waRespuestasLeer_(), rd: rdLeer_() });   // 📅 (2026-11-14-a, mejora 217) `rd`: los clientes que eligieron otro día
   if (action === 'waRespAtendida') return waRespAtendida_(body);
+  if (action === 'rdMarcar') return jsonOut(rdMarcar_(body));   // 📅 (2026-11-14-a, mejora 217) «Mover» / «No, dejarlo» / «Quitar» (su propio candado corto)
   // 📚 (2026-10-09-a) El historial del stock: leer va sin candado; guardar, adentro (dos equipos pueden mandar el mismo día).
   if (action === 'histStockLeer') return histLeer_(body);
   // 🛰️ (2026-10-13-b) El recorrido de los camiones de hoy (caché `gps_ruta`). Sin candado y sin la planilla: solo la caché.
@@ -6536,6 +6537,9 @@ function waHookAnotar_(est, resp) {
   var cfgIa = null, hayIa = false, numsIa = [];
   resp.forEach(function (m) {
     var w = String(m.id || ''); if (!w || fila[w]) return;   // Meta lo mandó dos veces
+    /* 📅 (2026-11-14-a, mejora 217) El cliente tocó uno de los días que le ofreció el bot: se anota para logística (nada se mueve solo). */
+    var rdQ = rdBoton_(m);
+    if (rdQ) { try { cfgIa = cfgIa || waConfig_(); rdElegido_(sh, String(m.from || ''), m, rdQ, cfgIa); } catch (er) {} fila[w] = sh.getLastRow(); return; }
     /* 💵✅ (2026-11-07-f, dueño 08/11) Contabilidad contesta «Ya lo recibí» (o el número de prueba, cuando lo que escribe es de esto): el bot
        carga el retiro del chofer. Contabilidad no es un cliente: lo demás que escriba recibe la ayuda de esto, no la respuesta automática. */
     var erQ = '';
@@ -6738,7 +6742,8 @@ var IA_CATS = ['hora', 'saldo', 'cambio', 'no_esta', 'direccion', 'confirma', 'r
 var IA_RESUELVE = ['hora', 'saldo', 'confirma'];   // si no es urgente, queda atendido por Claude
 var IA_ESQUEMA = { type:'object', additionalProperties:false,
   properties:{ categoria:{ type:'string', enum:IA_CATS }, urgente:{ type:'boolean' }, resumen:{ type:'string' },
-               contestar:{ type:'boolean' }, respuesta:{ type:'string' } },
+               contestar:{ type:'boolean' }, respuesta:{ type:'string' },
+               otro_dia:{ type:'boolean' } },   // 📅 (2026-11-14-a, mejora 217) opcional: si falta, vale false (ver rdParaOfrecer_)
   required:['categoria', 'urgente', 'resumen', 'contestar', 'respuesta'] };
 
 function iaClave_() { return prop_('ANTHROPIC_API_KEY'); }
@@ -7006,7 +7011,8 @@ function iaSistema_(marca) {
     '- categoria: hora (cuándo o a qué hora llega), saldo (cuánto o cómo paga), cambio (quiere otro día u horario, o anular), no_esta (no va a estar o no puede recibir), direccion (cambia o explica la dirección, o manda la ubicación), confirma (confirma, agradece, ok), reclamo (queja, atraso, producto con problema), otro.',
     '- urgente: true si una persona tiene que hacer algo HOY: no va a estar, quiere cambiar una entrega de hoy o mañana, cambia la dirección de una entrega de hoy o mañana, reclama porque hoy no llegó, o está muy enojado. Si no, false.',
     '- resumen: una línea para la vendedora, sin el nombre del cliente, con lo que pide y para cuándo (ej.: «Pregunta a qué hora llega hoy», «No va a estar el jueves; pide el viernes por la tarde»).',
-    '- contestar y respuesta: el texto que le llega al cliente (vacío si contestar = false). No lo firmes: la firma «🤖 Asistente automático» se agrega sola arriba. Decir en el texto que sos un asistente automático hace falta solo en el caso de la regla 9.'
+    '- contestar y respuesta: el texto que le llega al cliente (vacío si contestar = false). No lo firmes: la firma «🤖 Asistente automático» se agrega sola arriba. Decir en el texto que sos un asistente automático hace falta solo en el caso de la regla 9.',
+    '- otro_dia: true si el cliente no va a estar el día de su entrega o pide recibirla otro día; si no, false.'   // 📅 (2026-11-14-a, mejora 217)
   ].join('\n');
 }
 /** Arma lo que ve Claude. `hoja` null (probarAsistente): sin lo hablado ni los avisos. Devuelve {system, user, enlaces, marca}. */
@@ -7043,7 +7049,7 @@ function iaContexto_(g, ped, hoja, B) {
 }
 /* Por si esta cuenta no acepta algo de la consulta completa (400): la misma pregunta, lo más simple posible, pidiendo el JSON. */
 var IA_PIDE_JSON = '\n\nContestá SOLO con un objeto JSON, sin nada antes ni después, con estas claves: categoria (una de: ' + IA_CATS.join(', ') +
-                   '), urgente (true/false), resumen (texto), contestar (true/false), respuesta (texto).';
+                   '), urgente (true/false), resumen (texto), contestar (true/false), respuesta (texto) y otro_dia (true/false).';
 function iaCuerpo_(system, user, simple) {
   var b = { model:prop_('IA_MODELO') || IA_MODELO_DEF, max_tokens:IA_MAX_TOKENS, system:system, messages:[{ role:'user', content:simple ? user + IA_PIDE_JSON : user }] };
   if (!simple) {
@@ -7089,7 +7095,8 @@ function iaInterpretar_(r) {
   if (a >= 0 && z > a) { try { j = JSON.parse(txt.slice(a, z + 1)); } catch (e) {} }
   if (!j || typeof j !== 'object') return { detalle:o.stop_reason === 'max_tokens' ? 'la respuesta de Claude quedó cortada' : 'Claude no devolvió el JSON esperado', uso:uso };
   var res = { categoria:IA_CATS.indexOf(String(j.categoria)) >= 0 ? String(j.categoria) : 'otro', urgente:j.urgente === true,
-              resumen:String(j.resumen || '').replace(/\s+/g, ' ').trim().slice(0, 200), contestar:j.contestar !== false, respuesta:String(j.respuesta || '').trim() };
+              resumen:String(j.resumen || '').replace(/\s+/g, ' ').trim().slice(0, 200), contestar:j.contestar !== false, respuesta:String(j.respuesta || '').trim(),
+              otroDia:j.otro_dia === true };   // 📅 (2026-11-14-a, mejora 217)
   return { ok:true, o:res, uso:uso, modelo:String(o.model || '') };
 }
 /* Lo que sale al cliente: sin enlaces que no sean los de su vendedor/a, sin la firma (se agrega acá) y sin pasarse de largo. */
@@ -7157,7 +7164,10 @@ function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
   else if ((u.por[g.de] || 0) >= iaNum_('IA_MAX_NUMERO', IA_MAX_NUMERO_DEF)) motivo = 'este número ya llegó al tope de respuestas de Claude por hoy (' + u.por[g.de] + ')';
   if (motivo) return iaRespaldo_(sh, g, ped, motivo, res);
   /* 2. Claude */
-  var ctx = iaContexto_(g, ped, hoja, B), tc = Date.now(), r = iaLlamar_(ctx.system, ctx.user);
+  var ctx = iaContexto_(g, ped, hoja, B), rdOps = [];
+  /* 📅 (2026-11-14-a, mejora 217) Los días con lugar que se le ofrecerían con botones si no va a estar (Claude los ve para no prometer otro). */
+  try { rdOps = rdParaOfrecer_(ped, g, recs, B); if (rdOps.length) ctx.user = rdPista_(ctx.user, rdOps); } catch (eRd) { rdOps = []; }
+  var tc = Date.now(), r = iaLlamar_(ctx.system, ctx.user);
   if (r.aviso) res.aviso = r.aviso;
   iaUsoAnotar_(r.uso || r.ok ? g.de : '', r, false, (Date.now() - tc) / 1000);
   if (r.reintentar) {
@@ -7173,15 +7183,20 @@ function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
   if (med && (med.audio || med.video) && !iaDiceBot_(txt)) { txt = iaLimpiarRespuesta_(iaMedioTxt_(g, ped, med), ctx.enlaces); o.contestar = true; }
   if (o.contestar && !txt) return iaRespaldo_(sh, g, ped, 'la respuesta de Claude quedó vacía', res);
   iaHechoAnotar_(g);
+  /* 📅 (2026-11-14-a, mejora 217) No va a estar o pide otro día: la respuesta va con los botones de los días con lugar. */
+  var rdSi = rdOps.length > 0 && (o.otroDia === true || o.categoria === 'no_esta');
+  if (rdSi && !txt) txt = RD_SIN_TEXTO;
   if (txt) {
     var cuerpo = '🤖 _Asistente automático · ' + ctx.marca + '_\n\n' + txt, msg = { messaging_product:'whatsapp', to:g.de, type:'text', text:{ body:cuerpo, preview_url:false } };
-    envio = waPost_(cfg, msg);
-    if (!envio.ok && envio.reintentar) {   // Meta pasajero: una vez más enseguida (Claude ya cobró: no se le vuelve a preguntar)
+    if (rdSi) envio = rdMandar_(cfg, g.de, cuerpo, rdOps);
+    else envio = waPost_(cfg, msg);
+    if (!rdSi && !envio.ok && envio.reintentar) {   // Meta pasajero: una vez más enseguida (Claude ya cobró: no se le vuelve a preguntar)
       try { if (typeof Utilities !== 'undefined' && Utilities.sleep) Utilities.sleep(2000); } catch (e) {}
       envio = waPost_(cfg, msg);
     }
+    if (envio.botones) { try { rdOfreceAnotar_(ped.p, g.de, rdOps, B); } catch (eRo) {} cuerpo = envio.txt || cuerpo; }
     /* Lo que se le mandó va en la P: la J («Meta dice») la pisa el «enviado / entregado / leído» de Meta. */
-    sh.appendRow([B.txt, ped.id || '', ped.oc || '', '🤖 Respuesta IA', ult.nom || '', g.de, '(texto)', envio.ok ? '✅ enviado' : '❌ error',
+    sh.appendRow([B.txt, ped.id || '', ped.oc || '', '🤖 Respuesta IA', ult.nom || '', g.de, envio.botones ? '(botones)' : '(texto)', envio.ok ? '✅ enviado' : '❌ error',
                   envio.ok ? (envio.id || '') : envio.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
     if (envio.ok) { res.contestados++; var uu = iaUsoHoy_(); uu.r++; try { PropertiesService.getScriptProperties().setProperty('IA_USO', JSON.stringify(uu)); } catch (e) {} }
     else res.error = 'no se pudo mandar la respuesta de Claude: ' + String(envio.detalle || '').slice(0, 120);
@@ -7221,6 +7236,257 @@ function iaAvisarLogistica_(cfg, p, resumen, B) {
     filas.push([B.txt, String(p.id || ''), String(p.oc || ''), 'IA → Logística', (cfg.prueba ? '(prueba) ' : '') + L.nombre, num, pl, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]);
   });
   waAnotar_(filas);   // de a una con appendRow (desde 2026-10-14-b): no pisa lo que el webhook anota mientras tanto
+  return n;
+}
+/* ============================================================================
+ * 📅 (2026-11-14-a, mejora 217) EL CLIENTE ELIGE EL DÍA NUEVO POR EL BOT. El dueño, con la muestra («no voy a estar el viernes 😕» →
+ * «No hay problema. ¿Qué día le queda mejor?» con los botones «Lun 17 · mañana», «Lun 17 · tarde», «Mar 18 · mañana»): *«Lo que elige le
+ * llega a logística con un botón «Mover»: logística confirma con un toque y el bot le avisa al cliente. Nada se mueve solo.»*
+ *   1. Claude lee el mensaje (`iaContestarGrupo_`). Si el cliente no va a estar (`no_esta`) o pide otro día (`otro_dia`, opcional en el
+ *      esquema) y el pedido es una entrega por venir de un cliente de verdad (`rdNoVa_` = lo de `waNoCliente_` + lo que retira el cliente),
+ *      la respuesta de Claude le llega con hasta RD_OPCIONES botones (`rdOpciones_`): los próximos días hábiles DESPUÉS del que tenía (no
+ *      antes: el producto puede no estar todavía, `RD_ANTES_DEL_DIA`), el mismo turno primero, solo los que tienen lugar AHORA con las
+ *      reglas del portero (`porteroFecha_`: domingo, feriado y día cerrado no; sábado solo la mañana con 15; 12 a la mañana y 13 a la tarde).
+ *      Una vez por pedido y por día (`RD_OFRECE`). Es un mensaje interactivo de Meta: sin plantilla, porque el cliente acaba de escribir.
+ *      Claude ve esos días en su consulta (`rdPista_`) para no prometer otro ni mandarlo a la vendedora por eso.
+ *   2. El cliente toca un día (`rd|<pedido>|<AAAA-MM-DD>|<AM|PM>`, `rdElegido_`): queda el pedido de cambio en RD_PEND (uno por pedido: si
+ *      después elige otro, reemplaza al de antes), una fila «📅 Pidió otro día» en «Bot WhatsApp», al cliente «Listo ✅ Le pedimos a
+ *      logística…» y a logística la plantilla del cambio de entrega de siempre (`logistica_cambio_v2` → `logistica_cambio`): ninguna nueva.
+ *   3. El panel los recibe con `waRespuestas` (`rd`) y logística toca «Mover» (el 📅 Reprogramar de siempre: cupos, feriados y `forzar` con
+ *      la clave) o «No, dejarlo»; `rdMarcar` lo saca. Al moverlo, el cambio de día de siempre (`waAlGuardar_`) le avisa al cliente.
+ * 🚫 Nada de acá toca la fila del pedido ni la planilla «Pedidos»: solo la lee. Lo guardado va en Propiedades (una aguanta 9 KB: topes).
+ * ========================================================================== */
+var RD_OPCIONES = 3;            // botones (Meta deja 3 como mucho en un mensaje de botones)
+var RD_DIAS_MAX = 21;           // hasta cuántos días adelante se buscan días con lugar
+var RD_OFRECE_HORAS = 72;       // un botón vale hasta acá (después: «ese día ya no se puede elegir desde acá»)
+var RD_GUARDA_DIAS = 14;        // un pedido de cambio que nadie resolvió se olvida a los 14 días (el panel lo muestra «viejo» antes)
+var RD_TOPE = 30, RD_PROP_TOPE = 8500, RD_OFRECE_TOPE = 50;
+var RD_ANTES_DEL_DIA = false;   // ¿se ofrecen días ANTES del que tenía? No: un pedido agendado lejos suele esperar a la fábrica
+var RD_PREGUNTA = '📅 ¿Qué día te queda mejor? Elegí uno de estos días con lugar y se lo pedimos a logística.';
+var RD_SIN_TEXTO = 'No hay problema 😊';
+var RD_DOW = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+/** Por qué a este pedido NO se le ofrecen días ('' = sí se le ofrecen). */
+function rdNoVa_(p, hoy) {
+  var no = waNoCliente_(p, hoy); if (no) return no.m;
+  if (waRetira_(p)) return 'lo retira el cliente';
+  return '';
+}
+function rdCerrados_(recs) {
+  var out = {};
+  (recs || []).forEach(function (q) {
+    if (q && String(q.id) === '__dias_cerrados__') String(q.observaciones || '').split(/[^0-9-]+/).forEach(function (d) { if (/^\d{4}-\d{2}-\d{2}$/.test(d)) out[d] = 1; });
+  });
+  return out;
+}
+/* Los lugares de un turno, como el portero (`porteroFecha_`) y `limTurno` de la página. */
+function rdLimite_(f, t) {
+  var dow = waDow_(f);
+  if (dow === 0 || feriadoGs_(f)) return 0;
+  if (dow === 6) return t === 'AM' ? 15 : 0;
+  return t === 'PM' ? CUPOS_PM : CUPOS_AM;
+}
+/* Lo ocupado por día y turno: toda fila con esa fecha (entregadas incluidas), como el portero. */
+function rdUsados_(recs, sinId) {
+  var out = {};
+  (recs || []).forEach(function (q) {
+    if (!q || !q.fecha || String(q.id) === sinId) return;
+    var k = String(q.fecha) + '|' + turnoNorm_(q.turno); out[k] = (out[k] || 0) + 1;
+  });
+  return out;
+}
+function rdBotonTxt_(f, t) { return RD_DOW[waDow_(f)] + ' ' + String(f).slice(8, 10) + ' · ' + (t === 'PM' ? 'tarde' : 'mañana'); }   // «Lun 17 · mañana» (Meta: 20 letras como mucho)
+function rdCuandoTxt_(f, t) { return waDiaTxt_(f) + ' ' + WA_RANGO[t === 'PM' ? 'PM' : 'AM'][0]; }                                 // «lunes 17/11 por la mañana»
+function rdDe_(p) { return String((p && p.fecha) || '') + '|' + turnoNorm_(p && p.turno); }
+/** Hasta RD_OPCIONES {f, t, title, id}: los próximos días hábiles después de hoy (y del día que tenía), el mismo turno primero. */
+function rdOpciones_(p, recs, hoy) {
+  var out = [], cer = rdCerrados_(recs), us = rdUsados_(recs, String(p.id)), t0 = turnoNorm_(p.turno), ts = [t0, t0 === 'PM' ? 'AM' : 'PM'];
+  var d = waMasDias_(hoy, 1);
+  if (!RD_ANTES_DEL_DIA && p.fecha && String(p.fecha) >= d) d = waMasDias_(String(p.fecha), 1);
+  for (var i = 0; i < RD_DIAS_MAX && out.length < RD_OPCIONES; i++, d = waMasDias_(d, 1)) {
+    if (d === String(p.fecha) || cer[d]) continue;
+    for (var j = 0; j < ts.length && out.length < RD_OPCIONES; j++) {
+      var t = ts[j], lim = rdLimite_(d, t);
+      if (lim > 0 && (us[d + '|' + t] || 0) < lim) out.push({ f:d, t:t, title:rdBotonTxt_(d, t), id:'rd|' + String(p.id) + '|' + d + '|' + t });
+    }
+  }
+  return out;
+}
+/* Corre `fn` con el candado de doPost si se consigue en 10 s; si no, igual (perder lo que eligió el cliente es peor que pisarse una
+   anotación). Es corto: solo lee y escribe una propiedad. */
+function rdConCandado_(fn) {
+  var lock = null;
+  try { lock = LockService.getScriptLock(); lock.waitLock(10000); } catch (e) { lock = null; }
+  try { return fn(); } finally { if (lock) { try { lock.releaseLock(); } catch (e2) {} } }
+}
+/* Los días que se le ofrecieron a cada pedido: {pedido: {d: día, c: celular, o: ['AAAA-MM-DD|AM', …], de: 'fecha|turno' de entonces, ts}}. */
+function rdOfreceLeer_() {
+  var o = waJsonProp_('RD_OFRECE', {}); if (!o || typeof o !== 'object' || Array.isArray(o)) o = {};
+  var lim = Date.now() - RD_OFRECE_HORAS * 3600000;
+  for (var k in o) if (!(o[k] && Number(o[k].ts) > lim)) delete o[k];
+  return o;
+}
+function rdOfreceAnotar_(p, de, ops, B) {
+  if (!p) return;
+  rdConCandado_(function () {
+    var o = rdOfreceLeer_();
+    o[String(p.id)] = { d:B.hoy, c:de, o:ops.map(function (x) { return x.f + '|' + x.t; }), de:rdDe_(p), ts:Date.now() };
+    var ks = Object.keys(o);
+    if (ks.length > RD_OFRECE_TOPE) { ks.sort(function (a, b) { return o[a].ts - o[b].ts; }); ks.slice(0, ks.length - RD_OFRECE_TOPE).forEach(function (k) { delete o[k]; }); }
+    try { PropertiesService.getScriptProperties().setProperty('RD_OFRECE', JSON.stringify(o)); } catch (e) {}
+  });
+}
+/** Los días para ofrecerle a ESTE cliente por ESTE pedido, o [] (no corresponde, ya se le ofrecieron hoy, o no hay lugar). */
+function rdParaOfrecer_(ped, g, recs, B) {
+  var p = ped && ped.p; if (!p || !recs || !g) return [];
+  if (rdNoVa_(p, B.hoy) || waCel_(p.celular) !== g.de) return [];
+  var ya = rdOfreceLeer_()[String(p.id)]; if (ya && ya.d === B.hoy) return [];
+  return rdOpciones_(p, recs, B.hoy);
+}
+/* Lo que Claude sabe de los botones: va antes de <mensaje_cliente> (lo del cliente sigue siendo lo último y entre sus etiquetas). */
+function rdPista_(user, ops) {
+  var L = 'Días que hoy tienen lugar en el camión: ' + ops.map(function (x) { return rdCuandoTxt_(x.f, x.t); }).join(', ') + '. ' +
+          'Si el cliente no va a estar el día de su entrega o pide recibirla otro día, el sistema le muestra esos días como botones debajo de tu respuesta: ' +
+          'no le prometas ningún día ni le digas que su vendedor/a se lo confirma; decile que elija abajo el día que le quede mejor y que logística se lo confirma por acá, y poné otro_dia = true. ' +
+          'Si pregunta otra cosa, no menciones los botones.';
+  var i = user.lastIndexOf('\n<mensaje_cliente>');
+  return i >= 0 ? user.slice(0, i) + '\n\n' + L + '\n' + user.slice(i) : user + '\n\n' + L;
+}
+/** Manda la respuesta con los botones. Si todo entra en un mensaje (1.024 letras), uno solo; si no, el texto y después la pregunta con
+    los botones. Si Meta no toma los botones, la respuesta como texto (sin los días). {ok, id, detalle, botones, txt}. */
+function rdMandar_(cfg, de, cuerpo, ops) {
+  var post = function (body) {
+    var r = waPost_(cfg, body);
+    if (!r.ok && r.reintentar) { try { if (typeof Utilities !== 'undefined' && Utilities.sleep) Utilities.sleep(2000); } catch (e) {} r = waPost_(cfg, body); }
+    return r;
+  };
+  var texto = function (t) { return post({ messaging_product:'whatsapp', to:de, type:'text', text:{ body:iaCorte_(t, 4000), preview_url:false } }); };
+  var botones = function (t) {
+    return post({ messaging_product:'whatsapp', to:de, type:'interactive', interactive:{ type:'button', body:{ text:iaCorte_(iaUnicode_(t), 1024) },
+                  action:{ buttons:ops.map(function (x) { return { type:'reply', reply:{ id:x.id, title:x.title } }; }) } } });
+  };
+  var junto = cuerpo + '\n\n' + RD_PREGUNTA, r;
+  if (junto.length <= 1024) {
+    r = botones(junto);
+    if (r.ok) { r.botones = true; r.txt = junto; return r; }
+    var t1 = texto(cuerpo); t1.txt = cuerpo; t1.sinBotones = r.detalle || ''; return t1;
+  }
+  r = texto(cuerpo); r.txt = cuerpo;
+  if (!r.ok) return r;
+  var b = botones(RD_PREGUNTA);
+  if (b.ok) { r.botones = true; r.txt = cuerpo + '\n\n' + RD_PREGUNTA; } else r.sinBotones = b.detalle || '';
+  return r;
+}
+/* Los pedidos de cambio: [{k, id, oc, cli, f, t, de, ts, num, est ('' pendiente | 'hecho' | 'no' | 'quitar' | 'otro'), por, at}]. */
+function rdPendLeer_() {
+  var a = waJsonProp_('RD_PEND', []); if (!Array.isArray(a)) a = [];
+  var ahora = Date.now(), limHecho = ahora - 7 * 86400000, limPend = ahora - RD_GUARDA_DIAS * 86400000;
+  return a.filter(function (x) { return x && x.k && x.id && (x.est ? Number(x.at || x.ts) > limHecho : Number(x.ts) > limPend); });
+}
+function rdPendGuardar_(a) {
+  a = a.slice();
+  /* Tope: primero se van los ya resueltos más viejos, después los pendientes más viejos. */
+  while (a.length && (a.length > RD_TOPE || JSON.stringify(a).length > RD_PROP_TOPE)) {
+    var iv = -1;
+    for (var i = 0; i < a.length; i++) if (a[i].est && (iv < 0 || Number(a[i].at || a[i].ts) < Number(a[iv].at || a[iv].ts))) iv = i;
+    if (iv < 0) for (var j = 0; j < a.length; j++) if (iv < 0 || Number(a[j].ts) < Number(a[iv].ts)) iv = j;
+    a.splice(iv, 1);
+  }
+  try { PropertiesService.getScriptProperties().setProperty('RD_PEND', JSON.stringify(a)); } catch (e) {}
+}
+/** Para el panel (va en `waRespuestas`): los pendientes, del más viejo al más nuevo. */
+function rdLeer_() {
+  try {
+    return rdPendLeer_().filter(function (x) { return !x.est; }).sort(function (a, b) { return a.ts - b.ts; }).map(function (x) {
+      return { k:x.k, id:x.id, oc:x.oc || '', cli:x.cli || '', f:x.f, t:x.t, de:x.de || '', ts:x.ts, num:x.num || '' };
+    });
+  } catch (e) { return []; }
+}
+/** El panel resolvió uno: «Mover» (hecho), «No, dejarlo» (no) o «Quitar» (ya no hacía falta). */
+function rdMarcar_(body) {
+  body = body || {};
+  var k = String(body.k || ''), est = String(body.est || '');
+  if (!k || ['hecho', 'no', 'quitar'].indexOf(est) < 0) return { ok:false, error:'no id', version:SCRIPT_VERSION };
+  var quien = String(body.quien || 'alguien').replace(/\s+/g, ' ').trim().slice(0, 40) || 'alguien';
+  var out = rdConCandado_(function () {
+    var a = rdPendLeer_(), x = null;
+    a.forEach(function (y) { if (y.k === k) x = y; });
+    if (!x) return { ok:false, error:'no está', version:SCRIPT_VERSION };
+    if (x.est) return { ok:true, k:k, est:x.est, ya:true, version:SCRIPT_VERSION };   // otro aparato ya lo resolvió
+    x.est = est; x.por = quien; x.at = Date.now();
+    rdPendGuardar_(a);
+    return { ok:true, k:k, est:est, x:x, version:SCRIPT_VERSION };
+  });
+  if (out.ok && out.x) {
+    var x = out.x, que = est === 'hecho' ? '📅 Otro día: lo movieron' : (est === 'no' ? '📅 Otro día: quedó como estaba' : '📅 Otro día: lo quitaron');
+    try { waAnotar_([[waBo_(Date.now()).txt, x.id, x.oc || '', que, quien, x.num || '', '', '', '', 'pidió el ' + rdCuandoTxt_(x.f, x.t)]]); } catch (e) {}
+    delete out.x;
+  }
+  return out;
+}
+/** ¿El mensaje es el toque de uno de los días? {id, f, t, title} o null. */
+function rdBoton_(m) {
+  if (!m || String(m.type) !== 'interactive') return null;
+  var b = (m.interactive || {}).button_reply || {}, mm = String(b.id || '').match(/^rd\|(.+)\|(\d{4}-\d{2}-\d{2})\|(AM|PM)$/);
+  return mm ? { id:mm[1], f:mm[2], t:mm[3], title:String(b.title || '') } : null;
+}
+/** El cliente tocó un día: se anota (si vale), se le contesta y se le avisa a logística. Nada toca el pedido. */
+function rdElegido_(sh, de, m, q, cfg) {
+  var ahora = Date.now(), B = waBo_(ahora), ms = (Number(m.timestamp) * 1000) || ahora, w = String(m.id || ''), nom = String(m._nom || '');
+  var recs = null, p = null;
+  try { recs = readAll(); } catch (e) { recs = null; }
+  if (recs) recs.some(function (x) { if (String(x.id) === q.id) { p = x; return true; } return false; });
+  var prueba = !!(cfg && cfg.prueba && cfg.prueba === de);
+  var of = rdOfreceLeer_()[q.id], quiere = rdCuandoTxt_(q.f, q.t), motivo = '', no = '';
+  if (!recs) motivo = 'no se pudo leer la planilla';
+  else if (!p) motivo = 'el pedido ya no está';
+  else if (!prueba && waCel_(p.celular) !== de) motivo = 'el pedido es de otro número';
+  else if (!of || (of.c !== de && !prueba) || (of.o || []).indexOf(q.f + '|' + q.t) < 0) motivo = 'ese día no se le ofreció (o el botón ya venció)';
+  else if ((no = rdNoVa_(p, B.hoy))) motivo = no;
+  else if (rdDe_(p) === q.f + '|' + q.t) motivo = 'ya';
+  else if (of.de && rdDe_(p) !== of.de) motivo = 'el pedido cambió de día después de ofrecerle los botones';
+  else if (q.f <= B.hoy) motivo = 'ese día ya pasó';
+  var nuevo = false, dup = false;
+  if (!motivo) {
+    rdConCandado_(function () {
+      var a = rdPendLeer_(), ya = null;
+      a.forEach(function (x) { if (!x.est && x.id === q.id) ya = x; });
+      if (ya && ya.f === q.f && ya.t === q.t) { dup = true; return; }   // tocó dos veces el mismo día
+      if (ya) { ya.est = 'otro'; ya.at = ahora; ya.por = 'el cliente eligió otro día'; }
+      a.push({ k:q.id + '@' + ahora.toString(36), id:q.id, oc:String(p.oc || ''), cli:iaCorte_(String(p.cliente || '').replace(/\s+/g, ' ').trim(), 40), f:q.f, t:q.t,
+               de:rdDe_(p), ts:ahora, num:de });
+      rdPendGuardar_(a); nuevo = true;
+    });
+  }
+  var tenia = p && p.fecha ? rdCuandoTxt_(p.fecha, turnoNorm_(p.turno)) : '';
+  var est = motivo && motivo !== 'ya' ? '⚠️ no se anotó' : (dup ? '📅 repetido' : (motivo === 'ya' ? '📅 ya estaba' : '📅 eligió'));
+  var col = motivo === 'ya' ? '— ya estaba para ese día' : (motivo ? '— no se anotó: ' + motivo : (dup ? '— ya se lo había pedido a logística' : '— eligió por los botones: falta que logística lo mueva en el panel'));
+  sh.appendRow([waHookHora_(m.timestamp), q.id, p ? String(p.oc || '') : '', '📅 Pidió otro día', nom, de, '', est, w,
+                'Pidió otro día: ' + quiere + (tenia ? ' (tenía: ' + tenia + ')' : ''), '', ms, col]);
+  if (!waActivo_() || !cfg || !cfg.ok) return;
+  var txt;
+  if (nuevo || dup) txt = (dup ? 'Ya se lo pedimos a logística: pasar' : 'Listo ✅ Le pedimos a logística pasar') + ' tu entrega al *' + quiere + '*. Te confirmamos por acá 😊';
+  else if (motivo === 'ya') txt = 'Tu entrega ya está para el *' + quiere + '* 😊';
+  else if (motivo === 'no se pudo leer la planilla') txt = 'Perdón, no pude anotarlo en este momento 🙏 Tocá de nuevo el día en un ratito.';
+  else txt = 'Ese día ya no se puede elegir desde acá 🙏 ' + (p ? 'Escribile a ' + waContactoVend_(p.vendedor) + ' y lo vemos.' : 'Escribile a tu vendedor/a por el WhatsApp de siempre.');
+  var cuerpo = '🤖 _Asistente automático · ' + (p ? waMarca_(p.vendedor) : 'Multiespumas') + '_\n\n' + txt;
+  var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:cuerpo, preview_url:false } });
+  sh.appendRow([B.txt, q.id, p ? String(p.oc || '') : '', '📅 Otro día → cliente', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle,
+                '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
+  if (nuevo) rdAvisarLogistica_(cfg, p, q, B);
+}
+/** A cada uno de logística, con la plantilla del cambio de entrega de siempre (la v2; si Meta no la tiene, la de antes). */
+function rdAvisarLogistica_(cfg, p, q, B) {
+  if (!cfg.logistica || !cfg.logistica.length) return 0;
+  var T = WA_TIPOS.lc, filas = [], n = 0;
+  var params = [waOc_(p.oc), String(p.cliente || '').trim(),
+                'el cliente pidió por el bot pasarla del ' + waCuandoTxt_(p) + ' al ' + rdCuandoTxt_(q.f, q.t) + ': si se puede, tocá «Mover» en el panel (pestaña Bot o la ficha del pedido)'].map(waParam_);
+  cfg.logistica.forEach(function (L) {
+    var num = cfg.prueba || L.cel, pl = T.plantilla, r = waEnviar_(cfg, num, pl, params);
+    if (!r.ok && T.vieja && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0) { pl = T.vieja; r = waEnviar_(cfg, num, pl, params.slice(0, T.nv)); }
+    if (r.ok) n++;
+    filas.push([B.txt, String(p.id || ''), String(p.oc || ''), '📅 Otro día → Logística', (cfg.prueba ? '(prueba) ' : '') + L.nombre, num, pl, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]);
+  });
+  waAnotar_(filas);
   return n;
 }
 /** ▶️ Correr desde el editor: UNA consulta de prueba a Claude con un pedido inventado. No le manda nada a nadie por WhatsApp.
