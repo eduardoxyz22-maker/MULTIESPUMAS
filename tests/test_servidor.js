@@ -133,7 +133,7 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
   /* Hojas que crea un script aparte (25/09: «Respaldo entregados», de herramientas/): con el
      tope de filas de una hoja nueva bien bajo y convirtiendo fechas, que es el peor caso. */
   const otras = {};
-  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1, 'Historial stock':1, 'IA comprobantes':1, 'Mall':1 };   // (14/11, 2026-11-14-b) «Mall»: los toques del mostrador   // (26/10, §4mq) «IA comprobantes»: lo que leyó Claude de cada foto   // (09/10, §4in) «Historial stock»: la columna A va como texto (`@`), sin convertir fechas   // (30/09, §4he) «Borrados»: la anota doDelete
+  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1, 'Historial stock':1, 'IA comprobantes':1, 'Mall':1, 'Cotizaciones':1 };   // (14/11, 2026-11-14-b) «Mall»: los toques del mostrador   // (26/10, §4mq) «IA comprobantes»: lo que leyó Claude de cada foto   // (09/10, §4in) «Historial stock»: la columna A va como texto (`@`), sin convertir fechas   // (30/09, §4he) «Borrados»: la anota doDelete
   const cont = { flush: 0 };
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
