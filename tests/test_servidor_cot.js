@@ -5,10 +5,13 @@
      2. `cotMarcar` (estado, motivo, pedido, prox, la llamada con t y quien) y `cotLeer` (rango, vendedor, abiertas, tope 120 días).
      3. Kommo, APAGADO salvo KOMMO_COT = 1: apagado no llama a nada; prendido pone al día o crea el lead en «Cotizacion enviada» (canal «Visita
         tienda», etiqueta «Mall», la vendedora, una nota), todo afuera del candado; si falla, la cotización queda y se anota el error.
-     4. El bot a las 48 h (COT_BOT): '0'/vacío nada, 'prueba' solo WA_PRUEBA, '1' todos; de lunes a sábado de 10 a 19 sin feriados; una sola
+     4. El bot a las 48 h (COT_BOT): '0'/vacío nada, 'prueba' solo COT_PRUEBA, '1' todos; de lunes a sábado de 10 a 19 sin feriados; una sola
         vez; no a quien ya compró, ni al equipo, ni a Eduardo; si Meta no tiene la plantilla, se devuelve la marca.
      5. Los tres botones (llamar → la vendedora; a las 2 horas sin llamada, el dueño; compré; no), y un toque repetido no contesta de nuevo.
      6. Claude ve la cotización si el cliente escribe y no tiene pedido.
+     8. La revisión del 14/11: COT_PRUEBA (no WA_PRUEBA), solo de 48 a 96 h y sin vencer (las demás `no_va`), otro error de Meta = `error`,
+        el aviso de las 2 h solo abierta y en horario de tienda («te va a llamar el lunes»), Claude solo con COT_BOT, nada en «Rechazos» y
+        las fechas que no existen.
    Datos SINTÉTICOS (el repo es público). Reloj de Bolivia. Google, Meta, Kommo y Claude de mentira.
    Se corre:  node tests/test_servidor_cot.js   (desde la raíz del repo; GS=<otro .gs> para probar contra otra versión) */
 const fs = require('fs'), vm = require('vm'), path = require('path');
@@ -326,26 +329,30 @@ seccion('4. El bot a las 48 horas (COT_BOT)', () => {
   chk('4g. en «Bot WhatsApp» con el N° de la cotización', S.hoja().some(f => f[2] === c.num && f[3] === 'Cliente: seguimiento de la cotización (48 h)' && /enviado/.test(f[7])), S.hoja().map(f => f[2] + ' ' + f[3]));
   pasan(30); S.ctx.waRepaso(); poner('2026-11-19 11:00'); S.ctx.waRepaso();
   chk('4h. nunca un segundo mensaje', cs(S).length === 1);
-  /* horario */
-  ({ S, c } = armarBot({ COT_BOT: '1' }));
+  /* horario (cambiadas a conciencia el 14/11: desde la revisión solo se le escribe entre las 48 y las 96 horas, así que cada caso arma una
+     cotización que cae adentro de esa ventana) */
+  ({ S, c } = armarBot({ COT_BOT: '1' }, {}, '2026-11-16 18:00'));
   poner('2026-11-18 19:00'); S.ctx.waRepaso();
   const tarde = cs(S).length;
+  poner('2026-11-19 10:00'); S.ctx.waRepaso();
+  chk('4i. a las 19:00 no (aunque ya pasaron 48 h); al otro día a las 10:00 sí', tarde === 0 && cs(S).length === 1);
+  ({ S, c } = armarBot({ COT_BOT: '1' }, {}, '2026-11-20 12:00'));
   poner('2026-11-22 12:00'); S.ctx.waRepaso();   // domingo
-  chk('4i. a las 19:00 no, el domingo no', tarde === 0 && cs(S).length === 0);
+  const domingo = cs(S).length;
   poner('2026-11-23 10:00'); S.ctx.waRepaso();
-  chk('4j. el lunes a las 10:00 sí', cs(S).length === 1);
+  chk('4j. el domingo no; el lunes a las 10:00 sí', domingo === 0 && cs(S).length === 1);
   ({ S, c } = armarBot({ COT_BOT: '1' }, {}, '2026-12-22 11:00'));
   poner('2026-12-25 11:00'); S.ctx.waRepaso();
   chk('4k. un feriado (25/12) no', cs(S).length === 0);
   poner('2026-12-26 11:00'); S.ctx.waRepaso();
   chk('4l. …el sábado siguiente sí', cs(S).length === 1);
-  /* prueba */
-  ({ S, c } = armarBot({ COT_BOT: 'prueba', WA_PRUEBA: '59170000099' }));
+  /* prueba (cambiadas a conciencia el 14/11: el modo prueba usa COT_PRUEBA, no WA_PRUEBA, que desvía TODO el bot) */
+  ({ S, c } = armarBot({ COT_BOT: 'prueba', COT_PRUEBA: '59170000099' }));
   poner('2026-11-18 10:05'); S.ctx.waRepaso();
-  chk('4m. COT_BOT = prueba: a un cliente que no está en WA_PRUEBA, nada', cs(S).length === 0 && S.cot(c.id).bot === '');
-  ({ S, c } = armarBot({ COT_BOT: 'prueba', WA_PRUEBA: '59170000031' }));
+  chk('4m. COT_BOT = prueba: a un cliente que no está en COT_PRUEBA, nada', cs(S).length === 0 && S.cot(c.id).bot === '');
+  ({ S, c } = armarBot({ COT_BOT: 'prueba', COT_PRUEBA: '70000077, 7000-0031' }));
   poner('2026-11-18 10:05'); S.ctx.waRepaso();
-  chk('4n. COT_BOT = prueba: al celular que está en WA_PRUEBA, sí', cs(S).length === 1 && cs(S)[0].to === CLI);
+  chk('4n. COT_BOT = prueba: al celular que está en COT_PRUEBA (lista con comas), sí', cs(S).length === 1 && cs(S)[0].to === CLI);
   /* ya compró */
   ({ S, c } = armarBot({ COT_BOT: '1' }));
   poner('2026-11-17 15:00'); S.cargar([PED({ celular: '7000-0031', ts: RELOJ.ms })]);
@@ -481,6 +488,108 @@ seccion('7. Plantillas y probarAntesDeImplementar', () => {
   chk('7d. probarAntesDeImplementar dice la hoja, Kommo y el seguimiento (apagado), sin ❌ por esto',
       pr.lineas.some(l => /hoja «Cotizaciones» tiene 1 cotización/.test(l)) && pr.lineas.some(l => /Kommo para las cotizaciones: apagado/.test(l)) && pr.lineas.some(l => /48 h: apagado/.test(l)) &&
       !pr.lineas.some(l => /^❌/.test(l) && /Cotizaci|Faltan funciones/.test(l)), pr.lineas.filter(l => /Cotizaci|cotizaci|Faltan/.test(l)));
+});
+
+/* ══ 8. La revisión del 14/11 (antes de que el dueño lo implemente) ══ */
+const csIntentos = (S) => S.meta.llamadas.filter(x => x.body && x.body.template && x.body.template.name === 'cotizacion_seguimiento').length;
+const rechC = (S) => (S.hojas.Rechazos ? S.hojas.Rechazos._datos.slice(1) : []);
+seccion('8. Revisión del 14/11: COT_PRUEBA, las viejas, los errores de Meta, el aviso de las 2 h, Claude, «Rechazos» y las fechas', () => {
+  /* (1) COT_PRUEBA: el modo prueba no desvía nada más */
+  let { S, c } = armarBot({ COT_BOT: 'prueba', COT_PRUEBA: '70000031' });
+  const otra = S.post({ action: 'cotGuardar', cot: COT({ celular: '70000066' }) }).cot;
+  poner('2026-11-18 10:00');
+  S.post({ action: 'save', pedido: PED({ celular: '70000055', vendedor: 'Carola Chavez' }) });
+  pasan(5); S.ctx.waRepaso();
+  const conf = S.salen().filter(x => /^confirmacion_pedido/.test(x.pl));
+  chk('8a. COT_BOT = prueba con COT_PRUEBA (sin WA_PRUEBA): el seguimiento sale SOLO al celular de COT_PRUEBA', cs(S).length === 1 && cs(S)[0].to === CLI && S.cot(otra.id).bot === '', cs(S).map(x => x.to));
+  chk('8b. …y la confirmación de un pedido de todos los días le llega a SU cliente (nada se desvía)', conf.length === 1 && conf[0].to === '59170000055', conf.map(x => x.to));
+  ({ S, c } = armarBot({ COT_BOT: 'prueba', WA_PRUEBA: '59170000031' }));
+  poner('2026-11-18 10:05'); S.ctx.waRepaso();
+  chk('8c. WA_PRUEBA ya no habilita el seguimiento: COT_BOT = prueba sin COT_PRUEBA no le escribe a nadie', cs(S).length === 0 && S.cot(c.id).bot === '', cs(S));
+  const lp = S.ctx.probarAntesDeImplementar().lineas;
+  chk('8d. probarAntesDeImplementar lo dice: «en PRUEBA: solo a los 0 celular(es) de COT_PRUEBA» y ⚠️ COT_PRUEBA vacía',
+      lp.some(l => /en PRUEBA: solo a los 0 celular\(es\) de COT_PRUEBA/.test(l)) && lp.some(l => /^⚠️/.test(l) && /COT_PRUEBA está vacía/.test(l)), lp.filter(l => /COT_/.test(l)));
+  /* (2) al prender COT_BOT = 1, nada a las viejas ni a las vencidas */
+  ({ S, c } = armarBot({}, {}, '2026-10-05 10:00'));
+  poner('2026-11-16 09:00');
+  const venceAyer = S.post({ action: 'cotGuardar', cot: COT({ vence: '2026-11-17' }) }).cot;
+  poner('2026-11-14 12:00');
+  const vieja100 = S.post({ action: 'cotGuardar', cot: COT({ vence: '2026-11-30' }) }).cot;   // a las 10:05 del 18/11 tiene 94 h; el 19 a las 10:05, 118 h
+  poner('2026-11-16 10:00');
+  const buena = S.post({ action: 'cotGuardar', cot: COT() }).cot;
+  S.P.COT_BOT = '1';
+  poner('2026-11-18 10:05'); S.ctx.waRepaso();
+  chk('8e. COT_BOT = 1 recién prendido: la de hace 40 días (vencida) y la que venció ayer quedan «no_va», sin mensaje', S.cot(c.id).bot === 'no_va' && S.cot(venceAyer.id).bot === 'no_va' &&
+      !cs(S).some(x => x.p[3] === 'lunes 05/10'), [S.cot(c.id).bot, S.cot(venceAyer.id).bot]);
+  chk('8f. …la de 48 h sale y la de 94 h (todavía vale) también', S.cot(buena.id).bot === 'enviado' && S.cot(vieja100.id).bot === 'enviado' && cs(S).length === 2, cs(S).map(x => x.p[3]));
+  ({ S, c } = armarBot({}, {}, '2026-11-14 12:00'));
+  S.P.COT_BOT = '1';
+  poner('2026-11-19 10:05'); S.ctx.waRepaso();
+  chk('8g. una de más de 96 h (que todavía vale): «no_va», sin mensaje', S.cot(c.id).bot === 'no_va' && cs(S).length === 0, S.cot(c.id).bot);
+  poner('2026-11-19 11:05'); S.ctx.waRepaso();
+  chk('8h. …y no se vuelve a mirar', S.cot(c.id).bot === 'no_va' && cs(S).length === 0);
+  /* (3) Meta contesta otro error */
+  ({ S, c } = armarBot({ COT_BOT: '1' }));
+  S.meta.responder = (b) => (b.template && b.template.name === 'cotizacion_seguimiento') ? { code: 400, body: { error: { code: 131049, message: 'This message was not delivered to maintain healthy ecosystem engagement' } } } : null;
+  poner('2026-11-18 10:05'); S.ctx.waRepaso();
+  let cc = S.cot(c.id);
+  chk('8i. un error de Meta que no es «falta la plantilla» (131049): bot = error, con lo que dijo Meta en botErr', cc.bot === 'error' && /131049/.test(cc.botErr) && csIntentos(S) === 1, [cc.bot, cc.botErr]);
+  S.meta.responder = null; poner('2026-11-19 10:05'); S.ctx.waRepaso(); poner('2026-11-20 10:05'); S.ctx.waRepaso();
+  chk('8j. …no se reintenta a ciegas (ni al otro día)', S.cot(c.id).bot === 'error' && csIntentos(S) === 1);
+  ({ S, c } = armarBot({ COT_BOT: '1' }));
+  S.meta.responder = (b) => (b.template && b.template.name === 'cotizacion_seguimiento') ? { code: 500, body: { error: { code: 2, message: 'Service temporarily unavailable' } } } : null;
+  poner('2026-11-18 10:05');
+  for (let i = 0; i < 4; i++) { S.ctx.waRepaso(); pasan(6); }
+  cc = S.cot(c.id);
+  chk('8k. un error pasajero se reintenta (WA_REINT_MAX veces) y recién después queda «error»', cc.bot === 'error' && csIntentos(S) === S.ctx.WA_REINT_MAX && /HTTP 500/.test(cc.botErr), [cc.bot, csIntentos(S)]);
+  /* (6) el aviso de las 2 horas: solo abierta, y en horario de tienda */
+  ({ S, c } = armarBot({ COT_BOT: '1' }));
+  poner('2026-11-18 10:05'); S.ctx.waRepaso();
+  poner('2026-11-18 11:00'); hook(S, CLI, boton(c.id, 'llamar'));
+  poner('2026-11-18 11:30'); S.post({ action: 'cotMarcar', id: c.id, estado: 'compro', pedido: '11-200' });
+  poner('2026-11-18 13:10'); S.ctx.waRepaso();
+  const armado = S.ctx.cotArmar_({ k: 'csl', a: 'Eduardo', cot: c.id }, S.ctx.waConfig_(), S.ctx.waBo_(RELOJ.ms));
+  chk('8l. pidió que lo llamen y la vendedora la marcó «compró» (sin anotar llamada): el dueño NO recibe «sin llamar»', S.salen('cotizacion_sin_llamar').length === 0 && !!armado.saltar, armado.saltar);
+  ({ S, c } = armarBot({ COT_BOT: '1' }, {}, '2026-11-18 10:00'));
+  poner('2026-11-20 18:30'); S.ctx.waRepaso();
+  poner('2026-11-21 20:30'); hook(S, CLI, boton(c.id, 'llamar'));   // sábado a la noche
+  chk('8m. «Que me llamen» el sábado a las 20:30: «te va a llamar el lunes temprano» (no «mañana»: el domingo no se trabaja)', /te va a llamar el lunes temprano/.test(S.textos(CLI).slice(-1)[0] || ''), S.textos(CLI).slice(-1));
+  poner('2026-11-22 10:00'); S.ctx.waRepaso(); const dom = S.salen('cotizacion_sin_llamar').length;
+  poner('2026-11-23 10:59'); S.ctx.waRepaso(); const l1059 = S.salen('cotizacion_sin_llamar').length;
+  poner('2026-11-23 11:01'); S.ctx.waRepaso();
+  chk('8n. …las 2 horas corren en horario de tienda: ni el domingo ni el lunes 10:59; sí el lunes a las 11:01', dom === 0 && l1059 === 0 && S.salen('cotizacion_sin_llamar').length === 1, [dom, l1059, S.salen('cotizacion_sin_llamar').length]);
+  ({ S, c } = armarBot({ COT_BOT: '1' }));
+  poner('2026-11-18 10:05'); S.ctx.waRepaso();
+  poner('2026-11-18 19:30'); hook(S, CLI, boton(c.id, 'llamar'));   // miércoles 19:30
+  const txt1930 = S.textos(CLI).slice(-1)[0] || '';
+  poner('2026-11-19 10:29'); S.ctx.waRepaso(); const a1029 = S.salen('cotizacion_sin_llamar').length;
+  poner('2026-11-19 10:31'); S.ctx.waRepaso();
+  chk('8o. un miércoles a las 19:30: «mañana temprano», y el aviso sale el jueves a las 10:30 (media hora el miércoles + 1 h 30 el jueves)', /mañana temprano/.test(txt1930) && a1029 === 0 && S.salen('cotizacion_sin_llamar').length === 1, [txt1930.slice(-40), a1029]);
+  chk('8p. cotTiendaMas_: lunes 23/11 09:00 + 2 h = 11:00; un feriado (25/12) salta al día hábil siguiente', typeof S.ctx.cotTiendaMas_ === 'function' && S.ctx.cotTiendaMas_(Date.parse('2026-11-21T20:30:00-04:00'), 7200000) === Date.parse('2026-11-23T11:00:00-04:00') &&
+      S.ctx.cotTiendaMas_(Date.parse('2026-12-24T19:00:00-04:00'), 7200000) === Date.parse('2026-12-26T10:00:00-04:00'));
+  /* (11) Claude solo ve la cotización con COT_BOT prendido (y en prueba, solo los de COT_PRUEBA) */
+  const IA0 = { IA_ACTIVA: '1', ANTHROPIC_API_KEY: 'sk-de-mentira' };
+  const claudeDice = { code: 200, body: { id: 'msg_1', type: 'message', role: 'assistant', model: 'claude-opus-5-5', stop_reason: 'end_turn',
+    content: [{ type: 'text', text: JSON.stringify({ categoria: 'otro', urgente: false, resumen: 'Pregunta', contestar: true, respuesta: 'Hola 😊', otro_dia: false }) }], usage: { input_tokens: 900, output_tokens: 40 } } };
+  const veClaude = (extra) => {
+    const r = armarBot(Object.assign({}, IA0, extra || {})); r.S.claude.responder = () => claudeDice;
+    poner('2026-11-17 10:30'); hook(r.S, CLI, { type: 'text', text: { body: '¿hasta cuándo vale el precio?' } });
+    RELOJ.ms += 25000; r.S.ctx.iaRepaso(0, true);
+    const u = r.S.claude.llamadas.length ? JSON.stringify(r.S.claude.llamadas[r.S.claude.llamadas.length - 1].body.messages[0].content) : '';
+    return { n: r.S.claude.llamadas.length, cot: /<cotizacion>/.test(u) };
+  };
+  const v0 = veClaude({}), v1 = veClaude({ COT_BOT: 'prueba', COT_PRUEBA: '70000099' }), v2 = veClaude({ COT_BOT: 'prueba', COT_PRUEBA: '70000031' }), v3 = veClaude({ COT_BOT: '1' });
+  chk('8q. con COT_BOT apagado Claude contesta igual pero NO ve la cotización; en prueba, solo el de COT_PRUEBA; prendido, sí', v0.n >= 1 && !v0.cot && v1.n >= 1 && !v1.cot && v2.cot && v3.cot, [v0, v1, v2, v3]);
+  /* (5) «Rechazos» */
+  poner('2026-11-16 10:00');
+  const R = servidor({});
+  const c1 = R.post({ action: 'cotGuardar', cot: COT() }).cot;
+  const e1 = R.post({ action: 'cotGuardar', cot: Object.assign(COT(), { id: c1.id, rev: 123 }) }), e2 = R.post({ action: 'cotMarcar', id: c1.id, estado: 'raro' }), e3 = R.post({ action: 'cotLeer', desde: 'x' });
+  chk('8r. un `conflicto` de cotGuardar, un estado raro de cotMarcar y fechas malas de cotLeer: nada en «Rechazos»', e1.error === 'conflicto' && e2.error === 'estado' && e3.error === 'fechas' && rechC(R).length === 0, rechC(R).map(x => x.slice(1, 3)));
+  /* (10) fechas que no existen */
+  chk('8s. cotLeer con «2026-13-01» o «2026-02-30»: `fechas` (antes salteaba el tope de 120 días)', R.post({ action: 'cotLeer', desde: '2026-13-01', hasta: '2026-13-30' }).error === 'fechas' &&
+      R.post({ action: 'cotLeer', desde: '2025-01-01', hasta: '2026-13-01' }).error === 'fechas' && R.post({ action: 'cotLeer', desde: '2026-02-30', hasta: '2026-03-02' }).error === 'fechas' &&
+      R.post({ action: 'cotLeer', desde: '2026-11-01', hasta: '2026-11-30' }).ok);
 });
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

@@ -8,6 +8,9 @@
      4. La venta grande: el alta de una venta del equipo desde VENTA_GRANDE_BS (8.000) le llega UNA vez al PRIMERO de WA_DUENO (`venta_grande`),
         con quién, la tienda, el monto y los productos. Sin Eduardo, ROHO, internos, ATC, RPT ni borradores.
      5. La versión.
+     6. La revisión del 14/11: el apartado propio no frena a su aparato (`aparato` en el guardado), uno por aparato y turno, tope de 3 por
+        día y turno, vida de 30 minutos, nada de esto en «Rechazos», «8,000» = 8.000 (y ⚠️ menos de 500), __cupos_extra__ con la clave de
+        Administración y las fechas que no existen.
    Datos SINTÉTICOS (el repo es público). Reloj de Bolivia. Google, Meta y Kommo de mentira.
    Se corre:  node tests/test_servidor_mall.js   (desde la raíz del repo; GS=<otro .gs> para probar contra otra versión) */
 const fs = require('fs'), vm = require('vm'), path = require('path');
@@ -284,11 +287,16 @@ seccion('3. apartarCupo / soltarCupo / el portero', () => {
   W.cargar([PED({ id: '__dias_cerrados__', fecha: '', observaciones: '🔒 ' + JUE })]);
   chk('3o. un día cerrado no se aparta', W.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM' }).error === 'dia_cerrado');
   chk('3p. el domingo no hay lugar para apartar', W.post({ action: 'apartarCupo', fecha: DOM, turno: 'AM' }).error === 'cupos_llenos');
-  /* un aparato no aparta de más */
+  /* un aparato no aparta de más (revisión del 14/11, cambiada a conciencia: en el MISMO día y turno un aparato tiene UNO; el tope de 3 por
+     aparato rige entre días y turnos distintos) */
   const X = servidor({});
   const ids = [1, 2, 3, 4].map(() => X.post({ action: 'apartarCupo', fecha: JUE, turno: 'PM', aparato: 'pc-loco' }).id);
   const LX = X.post({ action: 'list' }).apartados[JUE + '|PM'];
-  chk('3q. un aparato con 4 apartados: queda con 3 (se suelta el más viejo)', LX.length === 3 && LX.every(x => x.id !== ids[0]), LX.map(x => x.id));
+  chk('3q. un aparato que aparta 4 veces el mismo día y turno: queda con UNO, el último (cada nuevo suelta el suyo de antes)', LX.length === 1 && LX[0].id === ids[3], LX.map(x => x.id));
+  const X2 = servidor({});
+  const ids2 = [[JUE, 'AM'], [JUE, 'PM'], ['2026-11-20', 'AM'], ['2026-11-20', 'PM']].map(d => X2.post({ action: 'apartarCupo', fecha: d[0], turno: d[1], aparato: 'pc-loco' }).id);
+  const LX2 = X2.post({ action: 'list' }).apartados, todosX2 = [].concat(...Object.values(LX2));
+  chk('3q2. un aparato con 4 apartados en días y turnos distintos: queda con 3 (se suelta el más viejo)', todosX2.length === 3 && todosX2.every(x => x.id !== ids2[0]), todosX2.map(x => x.id));
   /* candado ocupado */
   X.candado.scriptOcupado = true;
   chk('3r. con el candado ocupado: ocupado (la venta se guarda igual después)', X.post({ action: 'apartarCupo', fecha: JUE, turno: 'PM', aparato: 'pc-1' }).error === 'ocupado' &&
@@ -424,6 +432,85 @@ seccion('5. La versión', () => {
       !pr.lineas.some(l => /^❌/.test(l) && /Mall|venta grande|Faltan funciones/.test(l)), pr.lineas.filter(l => /Mall|Cupos de más|venta grande|Faltan/.test(l)));
   const sinComentarios = SRC.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
   chk('5c. el .gs sigue siendo ES5 (sin let/const/=>/` en el código)', !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));
+});
+
+/* ══ 6. La revisión del 14/11 (antes de que el dueño lo implemente) ══ */
+const rech = (S) => (S.hojas.Rechazos ? S.hojas.Rechazos._datos.slice(1) : []);
+seccion('6. Revisión del 14/11: el apartado propio, el tope, la vida, «Rechazos», la venta grande, los cupos de más y las fechas', () => {
+  /* (4) el apartado propio no frena a su vendedora aunque el guardado llegue sin `aparto` */
+  poner(HOY + ' 11:00');
+  let S = servidor({});
+  S.cargar(Array.from({ length: 11 }, () => PED({ fecha: JUE, turno: 'AM' })));
+  const a = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', quien: 'Fabián Godoy', aparato: 'Windows · ab12' });
+  pasan(2);
+  let r = S.post({ action: 'save', pedido: PED({ fecha: JUE, turno: 'AM', vendedor: 'Carola Chavez' }), aparato: 'Windows · zz99' });
+  chk('6a. el guardado de OTRO aparato (sin `aparto`) sigue chocando con el apartado', r.ok === false && r.error === 'cupos_llenos' && r.apartados === 1, r);
+  r = S.post({ action: 'save', pedido: PED({ fecha: JUE, turno: 'AM', vendedor: 'Fabián Godoy' }) });
+  chk('6b. sin `aparto` NI `aparato` (la página de antes): como hasta ahora, choca (la página tiene que mandar `aparato`)', r.ok === false && r.error === 'cupos_llenos', r);
+  r = S.post({ action: 'save', pedido: PED({ fecha: JUE, turno: 'AM', vendedor: 'Fabián Godoy' }), aparato: 'Windows · ab12' });
+  chk('6c. el guardado de SU aparato llega sin `aparto` (la cola, un reintento): su propio lugar apartado no lo frena', r.ok && r.pedido.nroDia === 12, r.error || r);
+  let L = S.post({ action: 'list' });
+  chk('6d. …y ese apartado se soltó (el lugar ya lo ocupa el pedido)', !(L.apartados || {})[JUE + '|AM'], L.apartados);
+  /* (4) apartar de nuevo desde el mismo aparato suelta el suyo de ese día y turno */
+  S = servidor({});
+  S.cargar(Array.from({ length: 11 }, () => PED({ fecha: JUE, turno: 'AM' })));
+  const b1 = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', quien: 'Fabián Godoy', aparato: 'pc-mall' });
+  const b2 = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', quien: 'Fabián Godoy', aparato: 'pc-mall' });
+  L = S.post({ action: 'list' }).apartados[JUE + '|AM'] || [];
+  chk('6e. el mismo aparato aparta OTRA vez el último lugar (sin id): no choca con el suyo, queda uno solo (el nuevo)', b1.ok && b2.ok && b2.id !== b1.id && L.length === 1 && L[0].id === b2.id, [b1.error, b2.error, L.map(x => x.id)]);
+  /* (7) tope de 3 apartados por día y turno */
+  S = servidor({});
+  const t4 = ['ap0', 'ap1', 'ap2', 'ap3'].map(x => S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', quien: 'x', aparato: x }));
+  chk('6f. un turno vacío: 3 apartados entran, el 4° recibe `apartados_tope` (la página guarda igual)', t4.slice(0, 3).every(x => x.ok) && t4[3].ok === false && t4[3].error === 'apartados_tope' && t4[3].tope === 3 && t4[3].apartados === 3, t4.map(x => x.error || x.ok));
+  const t5 = ['', ''].map(() => S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM' }));
+  chk('6g. sin aparato ni quién tampoco pasan el tope', t5.every(x => x.error === 'apartados_tope'), t5.map(x => x.error));
+  r = S.post({ action: 'save', pedido: PED({ fecha: JUE, turno: 'AM' }) });
+  chk('6h. con 3 apartados en un turno de 12, un guardado normal entra (antes 12 «aparatos» lo llenaban)', r.ok, r.error);
+  chk('6i. renovar uno de los 3 sigue andando (no cuenta contra el tope)', S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', id: t4[0].id }).ok);
+  /* (7) la vida de un id: 30 minutos desde el primero */
+  poner(HOY + ' 11:00');
+  S = servidor({});
+  const v0 = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'PM', quien: 'Fabián', aparato: 'pc-1' });
+  let ultimo = v0;
+  [9, 18, 27].forEach(m => { poner(HOY + ' 11:' + String(m).padStart(2, '0')); ultimo = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'PM', id: v0.id }); });
+  chk('6j. renovando cada 9 minutos: a los 27 el `hasta` ya no pasa de los 30 minutos desde que se apartó', ultimo.ok && ultimo.id === v0.id && ultimo.hasta === v0.hasta - 600000 + 30 * 60000 && ultimo.vida === ultimo.hasta, [ultimo.hasta - v0.hasta, ultimo.vida]);
+  poner(HOY + ' 11:31');
+  L = S.post({ action: 'list' }).apartados;
+  const v2 = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'PM', id: v0.id });
+  chk('6k. a los 31 minutos ese id ya no está (se venció); pedirlo de nuevo es OTRO apartado, con otro id', !L[JUE + '|PM'] && v2.ok && v2.id !== v0.id && v2.renovado === false, [L, v2.id]);
+  /* (5) «Rechazos»: apartar y soltar no son guardados de pedidos */
+  S = servidor({});
+  S.cargar(Array.from({ length: 12 }, () => PED({ fecha: JUE, turno: 'AM' })));
+  const e1 = S.post({ action: 'apartarCupo', fecha: JUE, turno: 'AM', quien: 'Fabián', aparato: 'pc' }), e2 = S.post({ action: 'apartarCupo', fecha: '2026-12-25', turno: 'AM' });
+  S.post({ action: 'soltarCupo' });
+  S.post({ action: 'mallToque', toques: [{ id: '' }] }); S.post({ action: 'mallLeer', desde: 'x' });
+  chk('6l. apartarCupo lleno / feriado, soltarCupo sin id, mallToque y mallLeer con error: nada en «Rechazos»', e1.error === 'cupos_llenos' && e2.error === 'feriado' && rech(S).length === 0 && !S.P.RECHAZOS_N, rech(S).map(x => x.slice(1, 3)));
+  r = S.post({ action: 'save', pedido: PED({ fecha: JUE, turno: 'AM' }) });
+  chk('6m. …un guardado de un pedido con el turno lleno SÍ va a «Rechazos» (como siempre)', r.error === 'cupos_llenos' && rech(S).length === 1 && rech(S)[0][1] === 'save' && rech(S)[0][2] === 'cupos_llenos', rech(S).map(x => x.slice(1, 3)));
+  /* (9) __cupos_extra__ con las claves puestas */
+  const K = servidor({ PANEL_KEY: 'k', ADMIN_KEY: 'adm' });
+  K.cargar(Array.from({ length: 12 }, () => PED({ fecha: JUE, turno: 'AM' })));
+  const fx = (o) => PED(Object.assign({ id: '__cupos_extra__', fecha: '', oc: '', vendedor: '', cliente: '', productos: [], celular: '', turno: '', observaciones: JSON.stringify({ v: 1, d: { [JUE + '|AM']: 20 } }) }, o || {}));
+  const x0 = K.post({ action: 'save', key: 'k', juntar: 1, pedido: fx() }), x1 = K.post({ action: 'save', key: 'k', juntar: 1, adminKey: 'mal', pedido: fx() });
+  const y0 = K.post({ action: 'save', key: 'k', pedido: PED({ fecha: JUE, turno: 'AM' }) });
+  chk('6n. con PANEL_KEY + ADMIN_KEY: __cupos_extra__ sin la clave de Administración (o con otra) → `admin`, y el turno sigue lleno', x0.ok === false && x0.error === 'admin' && x1.error === 'admin' &&
+      !K.sh._datos.some(f => f[0] === '__cupos_extra__') && y0.error === 'cupos_llenos', [x0, x1.error, y0.error]);
+  const x2 = K.post({ action: 'save', key: 'k', juntar: 1, adminKey: 'adm', pedido: fx() }), y1 = K.post({ action: 'save', key: 'k', pedido: PED({ fecha: JUE, turno: 'AM' }) });
+  chk('6o. …con la clave de Administración se guarda y abre los lugares', x2.ok && y1.ok, [x2.error, y1.error]);
+  const K2 = servidor({});
+  chk('6p. sin claves configuradas (hoy) nada cambia: se guarda sin `adminKey`', K2.post({ action: 'save', juntar: 1, pedido: fx() }).ok);
+  /* (10) fechas mal formadas */
+  const M = servidor({});
+  chk('6q. mallLeer con «2026-13-01», «2026-02-30» o hasta mal: `fechas` (antes salteaban el tope de días)', M.post({ action: 'mallLeer', desde: '2026-13-01', hasta: '2026-13-05' }).error === 'fechas' &&
+      M.post({ action: 'mallLeer', desde: '2026-02-30', hasta: '2026-03-01' }).error === 'fechas' && M.post({ action: 'mallLeer', desde: '2026-01-01', hasta: '2026-13-01' }).error === 'fechas' &&
+      M.post({ action: 'mallLeer', desde: '2026-11-01', hasta: '2026-11-18' }).ok);
+  /* (8) VENTA_GRANDE_BS */
+  const um = (v) => { M.P.VENTA_GRANDE_BS = v; return M.ctx.vgUmbral_(); };
+  chk('6r. VENTA_GRANDE_BS «8,000» = 8.000 (antes 8); «1,500» = 1.500; «8.000», «8000,50», «Bs 8.000» como antes', um('8,000') === 8000 && um('1,500') === 1500 && um('12,000.50') === 12000.5 &&
+      um('8.000') === 8000 && um('8000,50') === 8000.5 && um('Bs 8.000') === 8000 && um('0') === 0 && um('') === 8000, [um('8,000'), um('1,500'), um('8000,50')]);
+  const ojoVg = (v) => { const T = servidor(Object.assign({}, ON, { VENTA_GRANDE_BS: v })); return T.ctx.probarAntesDeImplementar().lineas.filter(l => /VENTA_GRANDE_BS/.test(l) && /^⚠️/.test(l)); };
+  chk('6s. probarAntesDeImplementar avisa ⚠️ si el umbral queda menor que 500 («80», «1,5»), no con 0 (apagado) ni con «8,000»', ojoVg('80').length === 1 && ojoVg('1,5').length === 1 && ojoVg('0').length === 0 &&
+      ojoVg('8,000').length === 0 && ojoVg('500').length === 0, [ojoVg('80'), ojoVg('1,5')]);
 });
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
