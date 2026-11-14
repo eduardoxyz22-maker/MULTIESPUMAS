@@ -18799,3 +18799,6 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   avisa al cliente, logística puede recibir dos avisos (el urgente de Claude y el del día elegido), sin Claude no hay botones. 218: prender un botón por lo
   escrito a mano y tocarlo borra ese pedazo. 212: lo que manda el bot no está en la historia (haría falta el servidor); `FH_DESDE` = el día de publicar.
 - Propuestas nuevas: «Mejoras 222 a 233» (https://claude.ai/artifact/JvSwRpgf1S9hW2cGHqC1GF), con números de las 137 ventas del equipo de noviembre.
+- **Respuestas del dueño (14/11)** a las dudas de la 217: *«1. Cómo está, 2. Como está, 3. Como está»* — solo días después del que tenía, «No, dejarlo» no
+  le avisa al cliente y el bot habla de tú. Y la 216: *«lo de llenar con la foto de la nota que solo aparezca al poner la contraseña, de momento la probaré yo»*
+  → `notaLeerVe` pide `UNLOCKED` (y `tryUnlock` repinta la barra); `test_leer_nota_pagina` b2.

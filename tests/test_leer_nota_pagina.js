@@ -72,7 +72,9 @@ const NOTA = {
   await ev(() => { window.NOTA_PRUEBA = 1; SERVER_VER = '2026-11-13-b'; resetForm(); });
   chk('b. con el servidor de antes (2026-11-13-b) no aparece', !(await ve()));
   await ev(() => { SERVER_VER = '2026-11-14-a'; renderCupoForm(); });
-  chk('c. con el servidor 2026-11-14-a, en un 📄 OC nuevo, aparece arriba de «Datos del pedido»', await ve());
+  chk('b2. 🔒 sin la contraseña de Administración no aparece (dueño, 14/11: «solo al poner la contraseña, de momento la probaré yo»)', !(await ve()));
+  await ev(() => { UNLOCKED = true; renderCupoForm(); });
+  chk('c. con el servidor 2026-11-14-a y la contraseña, en un 📄 OC nuevo, aparece arriba de «Datos del pedido»', await ve());
   r = await ev(() => { var w = document.getElementById('nota-leer'), s = [].slice.call(document.querySelectorAll('#view-form .sec')).filter(function (x) { return /Datos del pedido/.test(x.textContent); })[0];
     var f = document.getElementById('nota-leer-file');
     return { despues: !!(s && (s.compareDocumentPosition(w) & Node.DOCUMENT_POSITION_FOLLOWING)), antesNota: !!(w.compareDocumentPosition(document.getElementById('f-nota')) & Node.DOCUMENT_POSITION_FOLLOWING),

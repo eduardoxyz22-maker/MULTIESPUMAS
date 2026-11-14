@@ -922,8 +922,9 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   montos, observaciones y dudas. La página (`#nota-leer` bajo «📦 Datos del pedido», `notaLeer*`) llena SOLO lo vacío, los productos con el código de la nota si
   coincide o `prodCodigoAuto`, y muestra «Revisá lo que leí»; con productos ya cargados ofrece «Usar estos productos»; la fecha de entrega solo con «Usar ese día».
   🚫 Nunca guarda. Tope `NOTA_TOPE_DIA` (80; `NOTA_DIA` cuenta, devuelve lo que Claude no contestó); `IA_NOTA=0` lo apaga; no anota nada en hojas ni registros.
-  Solo con servidor ≥ `NOTA_SERVIDOR` (14-a); Playwright con `NOTA_PRUEBA`. ~USD 0,02-0,05 por nota. `tests/test_leer_nota.js` (49, el `.gs` real),
-  `tests/test_leer_nota_pagina.js` (44).
+  Solo con servidor ≥ `NOTA_SERVIDOR` (14-a) y, POR AHORA, con la contraseña (`UNLOCKED`; dueño 14/11: «solo al poner la contraseña, de momento la probaré yo»: para
+  abrirlo a las vendedoras, sacar `UNLOCKED &&` de `notaLeerVe`); Playwright con `NOTA_PRUEBA`. ~USD 0,02-0,05 por nota. `tests/test_leer_nota.js` (49, el `.gs` real),
+  `tests/test_leer_nota_pagina.js` (45).
 - **📅 217 El cliente elige el día nuevo por el bot**: si Claude dice `no_esta` u `otro_dia`, la respuesta sale con hasta 3 botones (`rd|<pedido>|<día>|<AM|PM>`,
   `rdOpciones_`: días hábiles con lugar AHORA con las reglas del portero, el mismo turno primero, solo DESPUÉS del día que tenía, `RD_ANTES_DEL_DIA=false`; una vez por
   pedido y día, `RD_OFRECE`). Tocar uno (`rdElegido_`, primero en `waHookAnotar_`) valida y guarda el pedido de cambio en `RD_PEND`, le contesta al cliente y avisa a
