@@ -2516,8 +2516,8 @@ html.practica .pr-franja{display:flex;position:relative;z-index:3;align-items:ce
 html.practica .logo-s{font-size:0}
 html.practica .logo-s::after{content:'🧪 PRÁCTICA';font-size:.58rem;color:#fde68a;letter-spacing:.14em;font-weight:800}
 .pr-chip{display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:0 4px;margin-right:4px;font-size:.82em;line-height:1.35;font-weight:700;color:#7c2d12;vertical-align:baseline}
-.pr-aviso{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--hdr-h,0px) + 14px);z-index:10060;width:min(560px,calc(100vw - 24px));
-  max-height:calc(100vh - 40px);overflow:auto;background:#fffbeb;border:2px solid #f59e0b;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:14px 16px;color:#2b1700;font-size:.88rem;line-height:1.4}
+.pr-aviso{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--hdr-h,0px) + 14px);z-index:10060;width:min(560px,calc(calc(100vw / var(--vz,1)) - 24px));
+  max-height:calc(calc(100vh / var(--vz,1)) - 40px);overflow:auto;background:#fffbeb;border:2px solid #f59e0b;border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:14px 16px;color:#2b1700;font-size:.88rem;line-height:1.4}
 .pr-aviso[hidden]{display:none}
 .pr-aviso h4{margin:0 0 6px;font-size:1rem}
 .pr-aviso pre{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:8px 10px;max-height:240px;overflow:auto;font:inherit;font-size:.82rem;margin:8px 0}
@@ -63536,7 +63536,7 @@ function cajaPintar(){
     h+='<div class="cjt-sub">'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'🏦 ')))+esc(f.forma)+' · '+f.n+' · '+B(f.monto)+'</div>'+
       '<div class="tw"><table class="mini cjt-t"><thead><tr><th>Hora</th><th>Cliente</th><th>OC</th><th>Vendedor</th><th class="n">Monto</th><th>N° recibo</th>'+(f.efectivo?'<th>Lo recibió</th>':'')+'<th>Foto</th></tr></thead><tbody>'+
       L.map(function(c){ var p=c.p;
-        return '<tr class="'+(!c.comps.length || (c.efe && !c.enCaja && !c.chofer)?'cjt-tr-mal':'')+'" onclick="cajaAbrirVenta('+idj(p.id)+')" title="Abrir la venta">'+
+        return '<tr class="'+(!c.comps.length || (c.efe && !c.enCaja && !c.chofer)?'cjt-tr-mal':'')+'" data-id="'+esc(p.id)+'" onclick="cajaAbrirVenta(this.dataset.id)" title="Abrir la venta">'+
           '<td>'+esc(c.h||'—')+'</td><td>'+esc(p.cliente||'—')+(c.deHoy?'':' <small class="cjt-gris">· saldo de una venta del '+esc(fmtFechaCorta(contaFecha(p)))+'</small>')+(c.anticipo?' <small class="cjt-gris">· adelanto</small>':'')+(c.envio?' <small class="cjt-gris">· 🚚 flete</small>':'')+'</td>'+
           '<td class="cjt-oc">'+esc(ocEtiq(p.oc)||'—')+'</td><td>'+esc(nombreCanonico(p.vendedor)||'—')+'</td><td class="n"><b>'+B(c.monto)+'</b></td>'+
           '<td>'+(c.nota?esc(c.nota):'<span class="cjt-gris">—</span>')+'</td>'+
@@ -63588,7 +63588,7 @@ function cajaPintar(){
   var F=D.F;
   h+='<div class="cjt-sec '+(F.n?'cjt-falta':'')+'"><h4>5 · Lo que falta</h4>';
   if(!F.n) h+='<div class="cjt-vacio cjt-ok">✓ Todos los pagos tienen su comprobante, todas las ventas su factura o remisión, y el efectivo está en la caja.</div>';
-  var item=function(p, t2){ return '<li><span>'+t2+'</span><button type="button" class="btn btn-sm cjt-ir" onclick="cajaAbrirVenta('+idj(p.id)+')">Abrir</button></li>'; };
+  var item=function(p, t2){ return '<li><span>'+t2+'</span><button type="button" class="btn btn-sm cjt-ir" data-id="'+esc(p.id)+'" onclick="cajaAbrirVenta(this.dataset.id)">Abrir</button></li>'; };
   if(F.sinComp.length) h+='<div class="cjt-sub cjt-mal">📎 '+F.sinComp.length+' pago'+(F.sinComp.length===1?'':'s')+' sin comprobante</div><ul class="cjt-ul">'+
     F.sinComp.map(function(c){ return item(c.p, esc(c.p.cliente||'—')+' · '+esc(c.forma)+' '+B(c.monto)+(c.nota?(' · recibo '+esc(c.nota)):'')); }).join('')+'</ul>';
   if(F.sinDoc.length) h+='<div class="cjt-sub cjt-mal">🧾 '+F.sinDoc.length+' venta'+(F.sinDoc.length===1?'':'s')+' sin N° de factura o remisión</div><ul class="cjt-ul">'+
