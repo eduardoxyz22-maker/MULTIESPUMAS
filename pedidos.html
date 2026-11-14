@@ -25340,6 +25340,7 @@ function tryUnlock(){
     UNLOCKED=true;
     mostrarBotonesTodos();
     try{ botTabPintar(); }catch(e){}   // 🤖 (24/10) la clave habilita la pestaña Bot
+    try{ notaLeerPintar(); }catch(e){}   // 🧾 (14/11, mejora 216) «Leer la nota» aparece solo con la clave, por ahora
     document.getElementById('admin-lock').style.display='none';
     document.getElementById('admin-content').style.display='block';
     document.getElementById('admin-pass').value='';
@@ -59459,8 +59460,10 @@ var NOTA_SERVIDOR='2026-11-14-a', NOTA_TOPE_MS=60000, NOTA_FOTO_PX=1600, NOTA_FO
 var NOTA_LEER={ gen:0, vuelo:false, prods:null, usados:false, ultimo:null };
 function notaLeerBs(n){ n=r2(Number(n)||0); return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); }   // «Bs 4.100» (con centavos solo si los tiene)
 function notaLeerActivo(){ return !navigator.webdriver || !!window.NOTA_PRUEBA; }
+/* 🔒 (14/11, dueño: «lo de llenar con la foto de la nota que solo aparezca al poner la contraseña, de momento la probaré yo»):
+   por ahora solo con la contraseña de Administración (UNLOCKED). Para abrirlo a las vendedoras, sacar `UNLOCKED &&`. */
 function notaLeerVe(){
-  return notaLeerActivo() && servidorTiene(NOTA_SERVIDOR) && docTipoSel()==='OC' && !VENTA_TIENDA && !EDIT_ID;
+  return UNLOCKED && notaLeerActivo() && servidorTiene(NOTA_SERVIDOR) && docTipoSel()==='OC' && !VENTA_TIENDA && !EDIT_ID;
 }
 /* Muestra o esconde el botón (desde `renderCupoForm`, `pintarDocTipo` y `pintarModoTienda`). Escondido, lo que había en la caja se va. */
 function notaLeerPintar(){
