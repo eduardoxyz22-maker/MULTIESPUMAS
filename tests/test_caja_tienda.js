@@ -18,6 +18,10 @@
       saldo de «Mayor y saldos» al último día y las ventas de Contabilidad).
    9. La meta de la tienda (256) = la suma de sus vendedores; el contador de la gente (`mallResumenDia`) sale solo si existe.
    10. En el celular (390 px) la ventana no ensancha la página.
+   11. (revisión del 14/11) Anotar lo contado no rearma la ventana: Tab lleva al campo siguiente, el guardado que vuelve repinta sin sacarle
+       el foco ni lo tecleado, y el primer clic en «🔒 Cerrar la caja» cierra (también con el ratón apretado un rato sobre el borde del botón);
+       con el servidor de antes de la 14-b no se guarda nada (campos apagados con un aviso; lo de la cola espera); los dos interruptores del
+       aparato del mall se avisan; el efectivo de una venta de OTRA tienda que tiene alguien de la tienda se lista aparte, sin cambiar totales.
    Se corre:  node tests/test_caja_tienda.js   (PEDIDOS=… para correrla contra otra versión; SALIDA=<carpeta> deja capturas) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path');
@@ -333,6 +337,115 @@ function PREPARAR(){
     return { t:t, vuelve:!!document.getElementById('cjt-cuerpo') };
   }); r=D0(r, {});
   chk('9d · una venta se abre en su ficha de Contabilidad con «← Volver a la caja de Ventura Sur», que vuelve', /Volver a la caja de Ventura Sur/.test(r.t) && r.vuelve===true, r);
+
+  /* 11 · la revisión del 14/11: el teclado y el clic, el servidor de antes, el aparato y el efectivo de ventas de otra tienda */
+  console.log('── 11. La revisión del 14/11 ──');
+  /* 11a-b · el jueves 12 (abierto): teclear lo contado, Tab al campo siguiente, el guardado que vuelve, y el clic de verdad en «Cerrar» */
+  await ev(async () => { closeModal(); await _esperar(50); window._saves=[]; cajaAbrir('2026-11-12', 'Ventura Mall'); await _esperar(80); });
+  await page.click('#cjt-arq-am'); await page.keyboard.type('0'); await page.keyboard.press('Tab'); await page.waitForTimeout(60);
+  r = await ev(() => { var pm=document.getElementById('cjt-arq-pm'); if(pm) pm._antes=1; return { foco:(document.activeElement||{}).id||'', anot:_txt('#cjt-anot-am'), dif:_txt('#cjt-dif-am') }; }); r=D0(r, {});
+  await page.keyboard.type('30');
+  await page.waitForTimeout(1300);   // el guardado del «0» vuelve del servidor y la ventana se repinta
+  let r2 = await ev(() => { var pm=document.getElementById('cjt-arq-pm'), ae=document.activeElement;
+    return { otro:!!pm && !pm._antes, foco:(ae||{}).id||'', v:pm && pm.value, s:pm && pm.selectionStart, saves:_saves.filter(function(s){ return s.rec.id==='__caja_tienda__'; }).length }; }); r2=D0(r2, {});
+  chk('11a · Tab desde «contado al cambio de turno» lleva a «contado al cerrar» (no se pierde el foco) y la diferencia de la mañana ya dice «✓ cuadra» con su «anotado»',
+    r.foco==='cjt-arq-pm' && /✓ cuadra/.test(r.dif) && /^anotado/.test(r.anot), r);
+  chk('11a2 · el guardado vuelve y repinta la ventana (otro campo) con el cursor y lo que se estaba tecleando en su lugar («30», al final)',
+    r2.otro===true && r2.saves>=1 && r2.foco==='cjt-arq-pm' && r2.v==='30' && r2.s===2, r2);
+  await page.keyboard.type('00');
+  let clicOk=true; try{ await page.click('#cjt-cerrar', { timeout:3000 }); }catch(e){ clicOk=String(e.message).slice(0,120); }
+  await page.waitForTimeout(300);
+  r = await ev(() => { var D=cajaDatos('2026-11-12', 'Ventura Mall'); return { cerrada:D.cerrada, am:D.A.am, pm:D.A.pm, dif:D.A.difCierre }; }); r=D0(r, {});
+  chk('11b · el primer clic en «🔒 Cerrar la caja» con lo contado recién tecleado cierra (y guarda 0 a la mañana y 3.000 al cerrar, que cuadran)',
+    clicOk===true && r.cerrada===true && r.am===0 && r.pm===3000 && r.dif===0, [clicOk, r]);
+  /* 11c · el miércoles 11 (abierto): el ratón apretado un rato sobre el borde de arriba del botón, como una persona */
+  await page.waitForTimeout(1200);   // que vuelva el guardado del cierre de arriba (repinta la ventana)
+  await ev(async () => { cajaAbrir('2026-11-11', 'Ventura Mall'); await _esperar(80); });
+  await page.click('#cjt-arq-pm'); await page.keyboard.type('0');
+  await page.locator('#cjt-cerrar').scrollIntoViewIfNeeded();
+  const bb = await page.locator('#cjt-cerrar').boundingBox();
+  await page.mouse.move(bb.x+bb.width/2, bb.y+3); await page.mouse.down(); await page.waitForTimeout(250); await page.mouse.up(); await page.waitForTimeout(300);
+  r = await ev(() => { var D=cajaDatos('2026-11-11', 'Ventura Mall'); return { cerrada:D.cerrada, pm:D.A.pm, anot:_txt('#cjt-cuerpo') }; }); r=D0(r, {});
+  chk('11c · apretado 250 ms sobre el borde de arriba del botón: el «anotado» que aparece no corre el botón entre apretar y soltar, y la caja se cierra',
+    r.cerrada===true && r.pm===0, { cerrada:r.cerrada, pm:r.pm });
+
+  /* 11d-e · con el servidor de antes de la 14-b: se ve, pero no se guarda nada (tampoco lo que quedó en la cola) */
+  await page.waitForTimeout(1200);   // que salga el guardado del cierre de 11c (con el servidor de antes ya no saldría: quedaría en la cola)
+  r = await ev(async () => {
+    window._saves=[]; SERVER_VER='2026-11-14-a';
+    cajaAbrir('2026-11-10', 'Ventura Mall'); await _esperar(80);
+    var dis=function(sel){ var L=[].slice.call(document.querySelectorAll(sel)); return L.length>0 && L.every(function(i){ return i.disabled; }); };
+    var o={ aviso:_txt('#cjt-srv'), campos:dis('#cjt-arq-am, #cjt-arq-pm'), qr:dis('#cjt-cuerpo .cjt-tilde input'), cerrar:dis('#cjt-cerrar'), excel:/Excel/.test(_txt('#cjt-cuerpo .cjt-acc')) };
+    o.arq=cajaArqueoPoner('2026-11-10', 'Ventura Mall', 'pm', '5');
+    var D=cajaDatos('2026-11-10', 'Ventura Mall'), c=D.QR[0] && D.QR[0].L[0];
+    if(c) cajaQrTildar('2026-11-10', 'Ventura Mall', c.cid, true);
+    cajaCerrar('2026-11-10', 'Ventura Mall');
+    await _esperar(1100);
+    var D2=cajaDatos('2026-11-10', 'Ventura Mall'), sv=function(){ return _saves.filter(function(s){ return s.rec.id==='__caja_tienda__'; }).length; };
+    o.saves=sv(); o.pm=D2.A.pm; o.tild=D2.nQrT; o.cerrada=D2.cerrada; o.cola0=getPending().filter(function(p){ return p.id==='__caja_tienda__'; }).length;
+    /* lo anotado sin conexión (todavía no se sabía qué servidor era) queda en la cola: no sale hacia uno de antes, sí hacia la 14-b */
+    SERVER_VER='';
+    CAJA_CAMBIOS[cajaK(cajaDk('2026-11-10', 'Ventura Mall'), 'pm', [7, Date.now(), 'Prueba'])]=true; CAJA_VER++;
+    reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS);
+    SERVER_VER='2026-11-14-a'; await flushPending();
+    o.saves2=sv(); o.cola=getPending().filter(function(p){ return p.id==='__caja_tienda__'; }).length;
+    SERVER_VER='2026-11-14-b'; await flushPending();
+    o.saves3=sv(); o.cola3=getPending().filter(function(p){ return p.id==='__caja_tienda__'; }).length; o.pm3=cajaDatos('2026-11-10', 'Ventura Mall').A.pm;
+    o.ver=(function(){ var x=window._srv && JSON.parse(window._srv.observaciones).d['2026-11-10|Ventura Mall']; return x && x.pm ? x.pm.c : null; })();
+    SERVER_VER='';
+    return o;
+  }); r=D0(r, {});
+  chk('11d · servidor 2026-11-14-a: la caja lo dice arriba, y lo contado, los tildes y «Cerrar» quedan apagados (el Excel sigue)',
+    /necesita el servidor 2026-11-14-b/.test(r.aviso) && r.campos===true && r.qr===true && r.cerrar===true && r.excel===true, r);
+  chk('11d2 · …y aunque se llame igual, no anota ni manda nada: ni lo contado, ni el tilde del QR, ni el cierre (nada en la cola)',
+    r.arq===false && r.saves===0 && r.pm==null && r.tild===0 && r.cerrada===false && r.cola0===0, r);
+  chk('11e · lo que quedó en la cola sin conexión no sale hacia el servidor de antes (sigue esperando); con la 14-b sale con sello y la cola se vacía',
+    r.saves2===0 && r.cola===1 && r.saves3===1 && r.cola3===0 && r.pm3===7 && r.ver===7, r);
+
+  /* 11f · los dos interruptores del aparato del mall (`me_mall_aparato`) se avisan */
+  r = await ev(async () => {
+    try{ localStorage.removeItem('me_mall_aparato'); }catch(e){}
+    closeModal(); await _esperar(30); mallAparatoBtn(); cajaBotonesPintar();
+    var btn=function(){ var b=document.getElementById('mall-ap-btn'); return b ? b.textContent+'|'+b.getAttribute('aria-pressed') : ''; }, caja=function(){ return (document.getElementById('cjt-btns')||{}).textContent||''; };
+    var o={ b0:btn(), c0:caja() };
+    cajaAparatoPoner(true); o.b1=btn(); o.c1=caja();
+    cajaAparatoPoner(false); o.b2=btn(); o.c2=caja();
+    mallAparatoCambiar(); o.c3=caja();
+    cajaAbrir('2026-11-14', 'Ventura Mall'); await _esperar(50);
+    var cb=function(){ var i=document.querySelector('#cjt-cuerpo .cjt-aparato input'); return i ? i.checked : null; };
+    o.k3=cb(); mallAparatoCambiar(); o.k4=cb(); o.c4=caja(); mallAparatoCambiar(); o.k5=cb();
+    try{ localStorage.removeItem('me_mall_aparato'); }catch(e){}
+    closeModal(); await _esperar(30);
+    return o;
+  }); r=D0(r, {});
+  chk('11f · la casilla de la caja («Este aparato es la compu de Ventura Sur») cambia ahora el botón de Herramientas «🏬 Esta compu es la del mall»',
+    /^🏬 Esta compu es la del mall\|false$/.test(r.b0) && /^🏬 ✓ Esta compu es la del mall\|true$/.test(r.b1) && /^🏬 Esta compu es la del mall\|false$/.test(r.b2), r);
+  chk('11f2 · y el botón de Herramientas cambia el de la caja («Caja de hoy») y la casilla de la ventana abierta',
+    /Caja de Ventura Sur/.test(r.c0) && /Caja de hoy/.test(r.c1) && /Caja de Ventura Sur/.test(r.c2) && /Caja de hoy/.test(r.c3) && r.k3===true && r.k4===false && /Caja de Ventura Sur/.test(r.c4) && r.k5===true, r);
+
+  /* 11g · el efectivo que recibió alguien del mall por una venta de OTRA tienda (Andrea cargó una venta de tienda que «salió» de Central y
+     cobró ella: la venta y el cobro son de Central, la plata está en su mano): aparte en la sección del efectivo, sin cambiar ningún total */
+  r = await ev(async () => {
+    var x=JSON.parse(JSON.stringify(window._BASE.filter(function(p){ return p.id==='o1'; })[0]));
+    x.id='x1'; x.oc='11-399'; x.cliente='CLIENTE AJENO'; x.vendedor='Andrea Orias'; x.productos[0].precio=800; x.ts=new Date('2026-11-14T12:00:00-04:00').getTime();
+    x.metodoPago=textoCobros([{ metodo:'Efectivo', monto:800, fecha:'2026-11-14', nota:'6100', comps:['IMG6100'] }]);
+    window._BASE.push(x); await _cargar();
+    var D=cajaDatos('2026-11-14', 'Ventura Mall');
+    cajaAbrir('2026-11-14', 'Ventura Mall'); await _esperar(60);
+    var o={ aj:(D.E.ajenos||[]).map(function(z){ return z.p.cliente+'|'+z.tiendaTxt+'|'+z.quien+'|'+z.monto+'|'+z.h; }), ajeno:D.E.ajeno, cob:D.E.cob, debe:D.E.debe, totCob:D.totCob, nCob:D.cobros.length,
+      enCobros:D.cobros.some(function(c){ return c.p.id==='x1'; }), tit:_txt('#cjt-ajenos-t'), fila:_txt('#cjt-ajenos tbody tr'), falta:D.F.n };
+    window._hojas=null; cajaExcel('2026-11-14', 'Ventura Mall');
+    o.xls=((window._hojas||[])[2]||{ matrix:[] }).matrix.map(function(rw){ return (rw||[]).map(function(c){ return (c && typeof c==='object') ? c.v : c; }).join('|'); }).filter(function(t){ return /OTRA TIENDA|CLIENTE AJENO/.test(t); });
+    await cajaPdf('2026-11-14', 'Ventura Mall'); o.pdf=window._pdf && window._pdf.txt;
+    var mys=0; mysSaldos('2026-11-14').filas.forEach(function(f){ if(f.nombre==='Andrea Orias') mys=f.saldo; }); o.mysA=mys;
+    o.debeA=(D.E.filas.filter(function(f){ return f.nombre==='Andrea Orias'; })[0]||{}).debe;
+    return o;
+  }); r=D0(r, { aj:[], xls:[] });
+  chk('11g · el efectivo de una venta de tienda de Central que cobró Andrea (Bs 800, 12:00): en «De ventas de otra tienda», con el cliente y de qué tienda es la venta',
+    r.aj.join()==='CLIENTE AJENO|Central|Andrea Orias|800|12:00' && r.ajeno===800 && /De ventas de otra tienda · 1 · Bs 800,00/.test(r.tit) && /CLIENTE AJENO/.test(r.fila) && /Central/.test(r.fila) && /Andrea Orias/.test(r.fila), r);
+  chk('11g2 · ningún total cambia de regla: los cobros siguen siendo los 4 de la tienda (Bs 5.200) y el efectivo cobrado y lo que debe haber lo incluyen (5.500 y 4.500, = «Mayor y saldos»)',
+    r.enCobros===false && r.nCob===4 && r.totCob===5200 && r.cob===5500 && r.debe===4500 && r.debeA===r.mysA && r.mysA===1000 && r.falta===2, r);
+  chk('11g3 · el Excel (hoja Efectivo) y el PDF lo dicen', r.xls.length===2 && /DE VENTAS DE OTRA TIENDA/.test(r.xls[0]) && /^Efectivo\|12:00\|CLIENTE AJENO\|11-399\|Central\|Andrea Orias\|800$/.test(r.xls[1]) && /de ventas de otra tienda: 1/.test(r.pdf||''), [r.xls, (r.pdf||'').match(/Cobrado hoy[\s\S]{0,120}/)]);
 
   if(SALIDA){ await page.setViewportSize({ width:1280, height:3000 }); await ev(async () => { cajaAbrir('2026-11-14', 'Ventura Mall'); await _esperar(120); }); await page.screenshot({ path:path.join(SALIDA, 'mall_caja_1280.png'), fullPage:false }); await page.setViewportSize({ width:1280, height:900 }); }
 

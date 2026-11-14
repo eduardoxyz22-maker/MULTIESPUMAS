@@ -10,7 +10,8 @@
    4. La barra del mostrador: solo en la compu del mall o con un vendedor del mall (y nunca en Playwright sin MALL_PRUEBA); a quién le
       toca, los botones, «Solo miró» con el motivo y la medida, el conteo de hoy; con un servidor viejo dice que falta y no anota nada.
    5. La cola durable: el toque queda en el aparato ANTES de mandarse; sin red no se pierde y se ve igual; un reintento no duplica (aunque
-      se haya perdido la respuesta); la confirmación saca SOLO lo mandado.
+      se haya perdido la respuesta); la confirmación saca SOLO lo mandado; si el servidor confirma pero la cola no se puede reescribir, no
+      se vuelve a mandar en bucle (se reintenta con pausa y lo confirmado sale sin mandarse otra vez).
    6. El toque automático: una venta NUEVA de un vendedor del mall (o desde la compu del mall) manda sola `fin` + `compro` + `ref` y cierra
       su atención; una edición, otro vendedor fuera del mall o una ATC, no.
    7. «Tu día» de un vendedor del mall: «Hoy atendiste N · compraron M (x %) · tu tienda: y %».
@@ -250,6 +251,26 @@ function PREPARAR(){
     await mallEnviar(); o.fin=_cola(); o.srv=_srvL().slice(-2); return o; });
   chk('5d · uno por vez, y la confirmación saca SOLO lo mandado: el toque que entró mientras viajaba el primero sigue en la cola hasta su confirmación',
     r.antes.join()==='fin:Beto:anoto,miro:Ana:precio' && r.enVuelo===1 && r.despues.join()==='miro:Ana:precio' && r.enVuelo2===1 && r.fin.length===0 && r.srv.join()==='fin:Beto:anoto,miro:Ana:precio', r);
+  /* 5e · (revisión del 14/11) el servidor confirma pero la cola NO se puede reescribir (el aparato sin lugar): antes volvía a mandar la misma
+     tanda sin pausa, para siempre (acá se corta a los 40 envíos para que la prueba termine contra la página de antes). El toque es de OTRA
+     tienda y de madrugada: no toca la rueda de las pruebas de abajo. */
+  r = await ev(async () => {
+    var real=lsPoner, ap=apiPost, falla=true, n=0, o={};
+    lsPoner=function(k, v, c){ if(falla && k==='me_mall_cola') return false; return real(k, v, c); };
+    apiPost=function(pl){ if(pl.action==='mallToque'){ n++; if(n>40) falla=false; } return ap(pl); };
+    if(MALL.reint){ clearTimeout(MALL.reint); MALL.reint=0; }
+    var t={ id:'mPRUEBA5e', ts:_ts('05:00'), tienda:'Tienda De Prueba 5e', v:'Ana Prueba', k:'llegue', r:'', m:'', ref:'', ap:'PRUEBA' };
+    localStorage.setItem('me_mall_cola', JSON.stringify([t]));
+    await mallEnviar(); await _esperar(150);
+    o.n=n; o.cola=mallCola().length; o.pend=(typeof mallColaPend==='function') ? mallColaPend().length : null; o.srv=!!_srv.toques['mPRUEBA5e']; o.reint=!!MALL.reint;
+    mallBarraPintar(true); o.b=_barra().txt;
+    /* el aparato vuelve a tener lugar: la limpieza saca lo confirmado SIN volver a mandarlo */
+    falla=false; lsPoner=real; if(MALL.reint){ clearTimeout(MALL.reint); MALL.reint=0; }
+    await mallEnviar(); o.n2=n; o.cola2=mallCola().length;
+    apiPost=ap; MALL.intentos=0; return o; });
+  chk('5e · confirmado pero la cola no se puede reescribir: se manda UNA vez (no en bucle) y se reintenta con pausa; la barra no lo cuenta como «espera»',
+    r.n===1 && r.srv===true && r.cola===1 && r.pend===0 && r.reint===true && !/toque espera/.test(r.b), r);
+  chk('5f · cuando el aparato vuelve a tener lugar, lo ya confirmado sale de la cola sin mandarse otra vez', r.n2===1 && r.cola2===0, r);
 
   /* ============ 6 · EL TOQUE AUTOMÁTICO AL GUARDAR UNA VENTA ============ */
   const llenar = (o) => ev((o) => {

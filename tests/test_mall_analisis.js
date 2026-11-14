@@ -8,9 +8,10 @@
    3. 279 Vendedores por hora: personas atendidas por hora (rueda + es mío) y vendedores presentes (de «Llegué» a «Me fui» sin las pausas),
       en promedio por día con datos; picos, horas tranquilas y la mejor hora de cambio de turno; el filtro de días.
    4. 280 Qué exhibir: lo más vendido del mall contra el stock de la tienda (con y sin conteo) y lo que pidieron y no había.
-   5. La ventana: solo con la contraseña, cuatro pestañas, la semana con ‹ ›, lee del servidor; en 390 px no se sale de la pantalla.
+   5. La ventana: solo con la contraseña, cuatro pestañas, la semana con ‹ ›, lee del servidor; en 390 px no se sale de la pantalla; la
+      medida (texto libre) de una cotización sale como texto.
    6. 281 En vivo: quién atiende y desde cuándo, la gente y lo vendido de hoy, la última venta; la meta y la caja SOLO si existen sus
-      funciones (dobles); se actualiza sola; sin red se queda con lo último y dice de qué hora; `#envivo` / `?envivo=1` la abren con la contraseña.
+      funciones (dobles; «lo que falta» de la caja como lista o como número, que es lo que da `cajaResumenDia`); se actualiza sola; sin red se queda con lo último y dice de qué hora; `#envivo` / `?envivo=1` la abren con la contraseña.
    Se corre:  HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 node tests/test_mall_analisis.js
    (CAPTURAS=<carpeta> deja las capturas de cada pestaña y del en vivo, en 1280 y 390 px) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -267,6 +268,16 @@ function PREPARAR(){
   r = await ev(async () => { SERVER_VER='2026-11-14-a'; MALL.leido={}; MALL.dias={}; MALLAN.cots={}; MALLAN.cotDias={}; var l0=_srv.lecturas; mallAnTab('persona'); await _esperar(200);
     var o={ txt:_txt('#mallan-wrap'), lect:_srv.lecturas-l0 }; SERVER_VER='2026-11-14-b'; return o; });
   chk('5k · con el servidor de antes: no lee los toques, lo dice, y lo vendido por tienda se ve igual', r.lect===0 && /necesita el servidor nuevo/.test(r.txt) && /Bs 22\.400/.test(r.txt), r.txt.slice(0,300));
+  /* 5l · (revisión del 14/11) la medida de una cotización es texto libre: en la ficha «📐 No había la medida» sale como texto, nunca como HTML */
+  r = await ev(async () => {
+    var mal='<img/src="x"/onerror="window._xss=1">';   // sin espacios: la medida se normaliza (minúsculas y sin espacios) y así sigue siendo una etiqueta
+    _srv.cots.push({ id:'cxss', ts:_ts('15:00', '2026-11-13'), vendedor:'Caro Prueba', tienda:'Ventura Mall', productos:[{ desc:'MEMORY FLEX', medida:mal, cant:1 }], medida:mal, total:0, estado:'no', motivo:'medida' });
+    MALLAN.cotDias={}; mallAnTab('porque'); await _esperar(400);
+    var f=[].filter.call(document.querySelectorAll('#mallan-wrap .mallan-f'), function(x){ return /No había la medida/.test(x.textContent); })[0];
+    var o={ img:!!document.querySelector('#mallan-wrap img'), xss:!!window._xss, sub:f ? ((f.querySelector('span')||{}).textContent||'') : '', leida:!!MALLAN.cots['cxss'] };
+    _srv.cots=_srv.cots.filter(function(c){ return c.id!=='cxss'; }); delete MALLAN.cots['cxss']; MALLAN.cotDias={}; mallAnPintar();
+    return o; }); r=r||{};
+  chk('5l · una medida con «<img …>» en una cotización: la ficha la muestra como texto (sin elemento ni código que corra)', r.leida===true && r.img===false && r.xss===false && /<img/.test(r.sub) && /onerror/.test(r.sub), r);
   /* Un conteo de la tienda de mentira (para «Qué exhibir» con stock en las capturas) */
   const conConteo = () => ev(() => { window._tstAntes=[tstHayConteo, tstCalcular]; var K=function(d, m){ return mallAnProdClave({ desc:d, medida:m }); };
     tstHayConteo=function(){ return true; };
@@ -309,11 +320,17 @@ function PREPARAR(){
     window.metaDiaTienda=function(t, d){ return t==='Ventura Mall' && d==='2026-11-14' ? { meta:20000, minima:15000, lleva:10700, porVend:{} } : null; };
     window.cajaResumenDia=function(t, d){ return { ventas:10700, cobrado:8000, efectivoCobrado:3000, retirado:0, quedoAyer:500, debeHaber:3500, contadoAm:500, contadoPm:null, dif:0, cerrada:false, faltan:['el conteo de la tarde'] }; };
     await mvivTic(); o.meta=_txt('#mviv-meta'); o.caja=_txt('#mviv-caja');
+    /* (14/11) la de verdad (`cajaResumenDe`) da `faltan` como un NÚMERO (cuántas cosas en rojo): también se dice */
+    window.cajaResumenDia=function(t, d){ return { ventas:10700, cobrado:8000, efectivoCobrado:3000, retirado:0, quedoAyer:500, debeHaber:3500, contadoAm:500, contadoPm:null, dif:0, cerrada:false, faltan:2 }; };
+    MVIV.x={}; mvivPintar(); o.cajaN=_txt('#mviv-caja');
+    window.cajaResumenDia=function(t, d){ return { ventas:10700, cobrado:8000, efectivoCobrado:3000, retirado:0, quedoAyer:500, debeHaber:3500, contadoAm:500, contadoPm:null, dif:0, cerrada:false, faltan:['el conteo de la tarde'] }; };
+    MVIV.x={}; mvivPintar();
     _srv.red='cae'; await mvivTic(); o.err=_txt('#mviv-est'); o.siguePers=_txt('#mviv-pers'); o.sigueBs=_txt('#mviv-bs'); _srv.red='ok';
     return o; });
   chk('6f · se actualiza sola (el reloj de 15 s, acá acortado): leyó del servidor; Caro terminó (anotó) y atendió a otro que solo miró: 5 atendidos, Caro libre', r.lect>=2 && r.pers==='5' && /Libre|Le toca/.test(r.caro), r);
   chk('6g · con `metaDiaTienda`: la meta de hoy, 54 %, faltan Bs 9.300', /Meta de hoy Bs 20\.000 · mínima Bs 15\.000 54 %/.test(r.meta) && /faltan Bs 9\.300/.test(r.meta), r.meta);
   chk('6h · con `cajaResumenDia`: debería haber Bs 3.500 en efectivo (500 de ayer + 3.000 cobrado), y lo que falta', /Bs 3\.500 debería haber en efectivo/.test(r.caja) && /Quedó de ayer Bs 500/.test(r.caja) && /Efectivo cobrado hoy Bs 3\.000/.test(r.caja) && /Falta: el conteo de la tarde/.test(r.caja), r.caja);
+  chk('6h2 · con la caja de verdad, que da cuántas cosas faltan (un número): «Falta: 2 cosas en rojo»', /Falta: 2 cosas en rojo/.test(r.cajaN||''), r.cajaN);
   chk('6i · sin red: se queda con lo último y dice de qué hora es', /No contestó la planilla: lo de las 18:30/.test(r.err) && /reintenta solo/.test(r.err) && r.siguePers==='5' && r.sigueBs==='Bs 10.700', r);
   if(CAPTURAS){ await ev(async () => { await mvivTic(); await _esperar(200); }); await page.screenshot({ path:path.join(CAPTURAS, 'mall_analisis_envivo_1280.png') }); }
   r = await ev(async () => { mvivCerrar(); await _esperar(50); var t=MVIV.timer; window.metaDiaTienda=window._mvivMetaReal; window.cajaResumenDia=window._mvivCajaReal; return { vis:document.getElementById('mviv-ov').style.display, t:t }; });

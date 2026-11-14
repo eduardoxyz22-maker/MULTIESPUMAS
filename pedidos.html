@@ -30472,6 +30472,8 @@ function mandarReescritaDeCola(rec){
     return R.claves(srv);
   }, function(){ return null; }).then(function(base){
     if(!base) return { ok:false, error:'sin_lectura' };
+    /* (14/11) una fila que pide un servidor nuevo (`puede`, opcional: la caja de la tienda) sigue en la cola mientras conteste uno anterior */
+    if(R.puede && !R.puede()) return { ok:false, error:'servidor_viejo' };
     var cam=reescritaCambios(id, R.cambios());
     if(!Object.keys(cam).length) return { ok:true };          // ya estaba todo en la planilla
     var fila=reescritaConSello(R.armar(reescritaAplicar(base, cam)));
@@ -63275,14 +63277,26 @@ var CAJA_NOMBRE={ 'Ventura Mall':'Ventura Sur' };
 var CAJA_CAMBIO_TURNO='15:00';
 var CAJA_DIAS=62;
 var CAJA_LS_APARATO='me_mall_aparato';
+/* (14/11, revisión) El servidor que guarda `__caja_tienda__` CON SELLO (`SISTEMA_JUNTA_OPCIONAL`). Con uno anterior, dos aparatos que guardan
+   a la vez se pisan (gana el último): la caja se ve igual, pero lo contado, los tildes y el cierre no se guardan (`cajaServidorViejo`). */
+var CAJA_SERVIDOR='2026-11-14-b';
 var CAJA_CAMBIOS={}, CAJA_VER=0, CAJA_MEMO={ k:null, s:null }, _cajaT=null, CAJA_CLAVE_OK=false;
 var CAJA={ dia:'', t:'', ult:null, ocupado:false };
 function cajaNombre(t){ return CAJA_NOMBRE[t]||String(t||''); }
+/* Como `cupxServidorViejo`: «viejo» = se sabe que es anterior. Sin conexión todavía (no se sabe) se anota y se manda cuando conteste uno que
+   sí: el envío lo vuelve a mirar después de leer la planilla (`cajaGuardar`, y `puede` en REESCRITAS para lo que sale de la cola). */
+function cajaServidorViejo(){ return !!SERVER_VER && !servidorTiene(CAJA_SERVIDOR); }
+function cajaServidorTxt(){ return '⏳ Para guardar lo contado, los tildes del extracto y el cierre, la caja necesita el servidor '+CAJA_SERVIDOR+' (este es el '+(SERVER_VER||'?')+'): mientras tanto se ve, pero no se guarda nada.'; }
+function cajaServidorFrena(){ if(!cajaServidorViejo()) return false; toast(cajaServidorTxt(), 'err', 9000); return true; }
 function cajaAparato(){ try{ return localStorage.getItem(CAJA_LS_APARATO)==='1'; }catch(e){ return false; } }
 function cajaAparatoPoner(on){
-  try{ if(on) localStorage.setItem(CAJA_LS_APARATO, '1'); else localStorage.removeItem(CAJA_LS_APARATO); }catch(e){}
+  try{ if(on) localStorage.setItem(CAJA_LS_APARATO, '1'); else localStorage.removeItem(CAJA_LS_APARATO); }
+  catch(e){ toast('⚠️ Esta compu no deja guardar la marca: probá recargar la página.', 'err'); try{ cajaRepintar(); }catch(x){} return; }
   toast(on ? ('🏬 Listo: este aparato es el de '+cajaNombre(CAJA.t||CAJA_TIENDAS[0])+'. La caja sale como «Caja de hoy».') : 'Este aparato ya no es el de la tienda.', 'ok');
   try{ cajaBotonesPintar(); }catch(e){}
+  /* (14/11, revisión) la MISMA marca que «🏬 Esta compu es la del mall» de Herramientas (`me_mall_aparato`): el botón y la barra del mostrador
+     se enteran ahora, no al recargar */
+  try{ if(typeof mallAparatoBtn==='function') mallAparatoBtn(); if(typeof mallBarraPintar==='function') mallBarraPintar(true); }catch(e){}
 }
 /* La tienda con caja de ESTE aparato o de quien lo usa: el aparato del mall (la primera de la lista) o el vendedor elegido ('' = ninguna). */
 function cajaTiendaDeAca(){
@@ -63398,7 +63412,8 @@ REESCRITAS[CAJA_ID]={
   cambios:function(){ return CAJA_CAMBIOS; },
   claves:function(fila){ return cajaClavesDeFila(fila); },
   armar:function(s){ CAJA_VER++; return cajaFilaDe(s); },
-  listo:function(fila){ if(fila && String(fila.id)===CAJA_ID){ cajaPonerEnState(fila); cajaPodarPerdidos(fila); } cajaRepintar(); }
+  listo:function(fila){ if(fila && String(fila.id)===CAJA_ID){ cajaPonerEnState(fila); cajaPodarPerdidos(fila); } cajaRepintar(); },
+  puede:function(){ return !cajaServidorViejo(); }   // lo que quedó en la cola sin conexión no sale hacia un servidor anterior a CAJA_SERVIDOR
 };
 /* Como `talGuardar`: la intención entra a la cola al tocar; con un respiro relee la planilla y manda con sello y `juntar`. */
 function cajaGuardar(){
@@ -63409,6 +63424,8 @@ function cajaGuardar(){
   _cajaT=setTimeout(function(){
     var listo=function(){ delete REESCRITA_ESPERA[CAJA_ID]; };
     var mandar=function(){
+      /* la lectura de recién dice qué servidor contesta: a uno anterior a CAJA_SERVIDOR no se le manda (queda en la cola de este aparato) */
+      if(cajaServidorViejo()){ listo(); reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS); cajaRepintar(); return; }
       var cam=reescritaCambios(CAJA_ID, CAJA_CAMBIOS), fila=reescritaConSello(cajaFilaArmar());
       apiSave(fila, { juntar:true }).then(function(res){
         listo();
@@ -63440,22 +63457,57 @@ function cajaBloqueado(dia, t){
   toast('🔒 La caja del '+fmtFecha(dia)+' está cerrada: para cambiarla hace falta la contraseña de Administración.','err',7000);
   cajaPintar(); return true;
 }
-/* Anota lo contado (`turno` 'am' = al cambio de turno, 'pm' = al cerrar). Vacío lo borra. Devuelve false si no se pudo. */
+/* Anota lo contado (`turno` 'am' = al cambio de turno, 'pm' = al cerrar). Vacío lo borra. Devuelve false si no se pudo.
+   ⚠️ (14/11, revisión) Lo llama el `change` del campo, que salta EN MEDIO del Tab o del clic en «🔒 Cerrar la caja» (al apretar el botón, el
+   campo pierde el foco). Rearmar la ventana ahí sacaba de la página el campo que iba a recibir el foco (lo tecleado después no entraba en
+   ningún lado) y el botón entre el «apretar» y el «soltar» (el clic no cerraba). Lo mismo que el arqueo del Cuadre (`setCuadreArqueo`): se
+   guarda ya y se cambian EN SU LUGAR solo los textos que dependen de lo contado (`cajaArqueoTextos`); nada se reemplaza. */
 function cajaArqueoPoner(dia, t, turno, txt, callado){
+  if(cajaServidorFrena()) return false;
   if(cajaBloqueado(dia, t)) return false;
   txt=String(txt==null?'':txt).trim();
   var err=txt ? montoError(txt) : '';
-  if(err){ toast(montoAviso('Lo contado', txt, err),'err',8000); var el=document.getElementById('cjt-arq-'+turno); if(el) el.classList.add('err'); return false; }
+  var el=document.getElementById('cjt-arq-'+turno);
+  if(err){ toast(montoAviso('Lo contado', txt, err),'err',8000); if(el) el.classList.add('err'); return false; }
+  if(el) el.classList.remove('err');
   var dk=cajaDk(dia, t), S=cajaSet(), nuevo=txt ? r2(parseMonto(txt)) : null, ya=cajaDiaGuardado(dia, t)[turno];
   if(ya && nuevo!=null && Math.abs(Number(ya.c)-nuevo)<0.005) return true;   // lo mismo que ya estaba
   if(!ya && nuevo==null) return true;
   Object.keys(S).forEach(function(k){ var x=cajaLeerClave(k); if(x && x.dk===dk && x.campo===turno) CAJA_CAMBIOS[k]=false; });
   if(nuevo!=null) CAJA_CAMBIOS[cajaK(dk, turno, [nuevo, Date.now(), quienEdita()||''])]=true;
   CAJA_VER++; cajaGuardar();
-  if(!callado) cajaPintar();
+  if(!callado) cajaTextosLuego(dia, t);
   return true;
 }
+/* Los textos se cambian DESPUÉS del clic: el «anotado por…» que aparece o una diferencia más larga corren el botón hacia abajo, y si eso pasa
+   entre el «apretar» y el «soltar», el «soltar» cae afuera y el clic no llega (con el dedo, el «apretar» y el «soltar» del ratón salen
+   juntos al levantar: alcanza con un instante después). Con un botón apretado, se espera a que se suelte. */
+var CAJA_APRIETA=false, CAJA_TEXTOS_DE=null, CAJA_TEXTOS_T=0, CAJA_TEXTOS_TOPE=0;
+document.addEventListener('pointerdown', function(){ CAJA_APRIETA=true; }, true);
+['pointerup','pointercancel'].forEach(function(n){ document.addEventListener(n, function(){ CAJA_APRIETA=false; if(CAJA_TEXTOS_DE) cajaTextosLuego(); }, true); });
+function cajaTextosLuego(dia, t){
+  if(dia) CAJA_TEXTOS_DE={ dia:dia, t:t };
+  var ya=function(){ clearTimeout(CAJA_TEXTOS_T); clearTimeout(CAJA_TEXTOS_TOPE); CAJA_TEXTOS_T=CAJA_TEXTOS_TOPE=0; var x=CAJA_TEXTOS_DE; CAJA_TEXTOS_DE=null; if(x) cajaArqueoTextos(x.dia, x.t); };
+  if(CAJA_APRIETA){ if(!CAJA_TEXTOS_TOPE) CAJA_TEXTOS_TOPE=setTimeout(ya, 1500); return; }   // por si el «soltar» no llega (se soltó fuera de la ventana)
+  clearTimeout(CAJA_TEXTOS_T); CAJA_TEXTOS_T=setTimeout(ya, 0);
+}
+/* Los textos de la ventana que cambian con lo contado: «tenía que haber / cuadra / falta», «anotado por … a las …» y el número de arriba
+   («Debe haber en la caja»). En su lugar, sin tocar los campos ni los botones. false si la ventana no está en ese día. */
+function cajaArqueoTextos(dia, t){
+  var box=document.getElementById('cjt-cuerpo');
+  if(!box || CAJA.dia!==dia || CAJA.t!==t) return false;
+  var D; try{ D=cajaDatos(dia, t, true); }catch(e){ return false; }
+  var A=D.A, RS=cajaResumenDe(D), pon=function(id, html){ var e=document.getElementById(id); if(e && e.innerHTML!==html) e.innerHTML=html; };
+  pon('cjt-dif-am', cajaDifHtml(A.difAm, 'turno mañana'));
+  pon('cjt-dif-pm', cajaDifHtml(A.difPm, A.am!=null?'turno tarde':'el día'));
+  pon('cjt-k-efe-s', esc(cajaKpiEfeTxt(RS)));
+  ['am','pm'].forEach(function(tu){ var e=document.getElementById('cjt-anot-'+tu); if(!e) return; var x=cajaAnotTxt(A, tu); if(e.textContent!==x) e.textContent=x; e.hidden=!x; });
+  return true;
+}
+function cajaKpiEfeTxt(RS){ return RS.dif==null ? 'todavía sin contar al cerrar' : (Math.abs(RS.dif)<0.005 ? '✓ contado y cuadra' : ((RS.dif<0?'falta ':'sobra ')+fmtBs(Math.abs(RS.dif)))); }
+function cajaAnotTxt(A, tu){ var c=A[tu], por=A[tu+'Por'], ts=A[tu+'T']; return c!=null ? ('anotado'+(por?(' por '+por):'')+(ts?(' a las '+cajaHoraDe(ts)):'')) : ''; }
 function cajaQrTildar(dia, t, id, on){
+  if(cajaServidorFrena()){ cajaPintar(); return; }
   if(cajaBloqueado(dia, t)) return;
   CAJA_CAMBIOS[cajaK(cajaDk(dia, t), 'qr', id)]=!!on;
   CAJA_VER++; cajaGuardar(); cajaPintar();
@@ -63543,7 +63595,11 @@ function cajaDatos(dia, t, ligero){
   });
   var formas=cuadrePorForma(cobros), totCob=0; cobros.forEach(function(c){ totCob=r2(totCob+c.monto); });
   /* 3 · el efectivo: la cuenta de cada persona de la tienda (la de «Mayor y saldos») */
-  var E={ filas:[], ayer:0, cob:0, cobAm:0, cobPm:0, cobSinHora:0, ret:0, retAm:0, retPm:0, otros:0, debe:0, rets:[] };
+  var E={ filas:[], ayer:0, cob:0, cobAm:0, cobPm:0, cobSinHora:0, ret:0, retAm:0, retPm:0, otros:0, debe:0, rets:[], ajenos:[], ajeno:0 };
+  /* (14/11, revisión) Los cobros de arriba son los de las ventas DE LA TIENDA; el efectivo, el que tiene en la mano la gente de la tienda. Un
+     efectivo que recibió alguien de acá por una venta de OTRA tienda está en «Efectivo cobrado hoy» y en «Debe haber» (lo tiene esa persona),
+     pero no en «2 · Cobros del día»: se lista aparte (`E.ajenos`), con el cliente y de qué tienda es la venta. Ningún total cambia. */
+  var enCobros={}; cobros.forEach(function(c){ enCobros[String(c.p.id)+'|'+c.ix]=1; });
   gente.forEach(function(g){
     var M=mysMovs(g.k, dia), o={ k:g.k, nombre:g.nombre, ayer:mysSaldoAl(M, ayer), cob:0, cobAm:0, cobPm:0, cobSinHora:0, ret:0, retAm:0, retPm:0, otros:0, debe:0 };
     M.forEach(function(m){
@@ -63552,6 +63608,11 @@ function cajaDatos(dia, t, ligero){
         var hh=(m.c && m.c.t!=null) ? hhmmDeTs(m.c.t) : '';
         o.cob=r2(o.cob+m.debe);
         if(hh && hh<CAJA_CAMBIO_TURNO) o.cobAm=r2(o.cobAm+m.debe); else { o.cobPm=r2(o.cobPm+m.debe); if(!hh) o.cobSinHora=r2(o.cobSinHora+m.debe); }
+        if(m.c && m.c.p && !enCobros[String(m.c.id)+'|'+m.c.ix]){
+          var tv=cajaTiendaCobro(m.c.p, { fecha:m.c.f });
+          E.ajenos.push({ p:m.c.p, monto:m.debe, h:hh, quien:g.nombre, tienda:tv, tiendaTxt:tv ? cajaNombre(tv) : 'sin tienda', deHoy:contaFecha(m.c.p)===dia });
+          E.ajeno=r2(E.ajeno+m.debe);
+        }
       }else if(m.tipo==='ret'){
         var hr=(m.x && isFinite(m.x.t)) ? hhmmDeTs(m.x.t) : '';
         o.ret=r2(o.ret+m.haber);
@@ -63565,6 +63626,7 @@ function cajaDatos(dia, t, ligero){
     ['ayer','cob','cobAm','cobPm','cobSinHora','ret','retAm','retPm','otros','debe'].forEach(function(z){ E[z]=r2(E[z]+o[z]); });
   });
   E.rets.sort(function(a,b){ return (a.h||'99')<(b.h||'99') ? -1 : 1; });
+  E.ajenos.sort(function(a,b){ return (a.h||'99')<(b.h||'99') ? -1 : ((a.h||'99')>(b.h||'99') ? 1 : String(a.p.cliente||'').localeCompare(String(b.p.cliente||''), 'es')); });
   E.espAm=r2(E.ayer+E.otros+E.cobAm-E.retAm);                 // lo que tenía que haber al cambio de turno
   var G=cajaDiaGuardado(dia, t), A={ am:(G.am ? Number(G.am.c) : null), pm:(G.pm ? Number(G.pm.c) : null), amPor:(G.am && G.am.por)||'', pmPor:(G.pm && G.pm.por)||'',
     amT:(G.am && G.am.t)||0, pmT:(G.pm && G.pm.t)||0 };
@@ -63638,8 +63700,16 @@ function cajaPintar(){
   var sc=document.getElementById('modal-box'), top=sc ? sc.scrollTop : 0;
   var D; try{ D=cajaDatos(CAJA.dia, CAJA.t); }catch(e){ box.innerHTML='<div class="cjt-av cjt-av-r">No se pudo armar la caja: '+esc((e && e.message)||e)+'</div>'; return; }
   CAJA.ult=D;
-  var RS=cajaResumenDe(D);
-  var B=fmtBs, hoy=D.hoy, puede=cajaPuedeTocar(D.dia, D.t), dis=puede ? '' : ' disabled', idj=function(s){ return JSON.stringify(String(s)).replace(/"/g,'&quot;'); };
+  /* (14/11, revisión) Un repintado (lo confirma el servidor, cambia la planilla) con el cursor en un campo de la ventana —lo contado, la
+     contraseña, el día— le devuelve el foco, lo tecleado y el cursor a ese campo (como `renderCuadre` con `_focoArq`): si no, lo que se
+     estaba escribiendo se borraba a mitad de camino. */
+  var _ae=document.activeElement, foco=null;
+  if(_ae && _ae.id && /^cjt-(arq-am|arq-pm|pass|dia)$/.test(_ae.id) && box.contains(_ae)){
+    foco={ id:_ae.id, v:_ae.value, s:null, e:null };
+    try{ foco.s=_ae.selectionStart; foco.e=_ae.selectionEnd; }catch(x){}
+  }
+  var RS=cajaResumenDe(D), srvViejo=cajaServidorViejo();
+  var B=fmtBs, hoy=D.hoy, puede=cajaPuedeTocar(D.dia, D.t), dis=(puede && !srvViejo) ? '' : ' disabled', idj=function(s){ return JSON.stringify(String(s)).replace(/"/g,'&quot;'); };
   var tj=idj(D.t), dj=idj(D.dia);
   var h='<div class="cjt-ctl">'+
       '<button type="button" class="btn btn-ghost btn-sm" onclick="cajaMover(-1)" aria-label="Día anterior">◀</button>'+
@@ -63653,9 +63723,10 @@ function cajaPintar(){
   h+='<div class="cjt-kpis">'+
       '<div><small>Ventas del día</small><b>'+B(RS.ventas)+'</b><span>'+RS.nVentas+' venta'+(RS.nVentas===1?'':'s')+' · 🌅 '+D.V.am.length+' · 🌆 '+D.V.pm.length+'</span></div>'+
       '<div><small>Cobrado hoy</small><b>'+B(RS.cobrado)+'</b><span>'+RS.nCobros+' cobro'+(RS.nCobros===1?'':'s')+(D.formas.length?(' · '+esc(D.formas.map(function(f){ return f.forma; }).join(', '))):'')+'</span></div>'+
-      '<div class="cjt-k-efe"><small>Debe haber en la caja</small><b>'+B(RS.debeHaber)+'</b><span>'+(RS.dif==null?'todavía sin contar al cerrar':(Math.abs(RS.dif)<0.005?'✓ contado y cuadra':((RS.dif<0?'falta ':'sobra ')+B(Math.abs(RS.dif)))))+'</span></div>'+
+      '<div class="cjt-k-efe"><small>Debe haber en la caja</small><b>'+B(RS.debeHaber)+'</b><span id="cjt-k-efe-s">'+esc(cajaKpiEfeTxt(RS))+'</span></div>'+
       '<div class="'+(RS.faltan?'cjt-k-mal':'cjt-k-ok')+'"><small>Lo que falta</small><b>'+(RS.faltan?RS.faltan:'✓')+'</b><span>'+(RS.faltan?'en rojo, abajo':'nada pendiente')+'</span></div>'+
     '</div>';
+  if(srvViejo) h+='<div class="cjt-av cjt-av-r" id="cjt-srv" role="status">'+esc(cajaServidorTxt())+'</div>';
   if(!D.gente.length) h+='<div class="cjt-av">Todavía ningún vendedor del panel está en '+esc(D.nombre)+' ese día (la tienda de cada uno sale de su sucursal en Kommo). Las ventas de tienda con «'+esc(D.t)+'» igual salen acá.</div>';
   /* 🎯 la meta del día de la tienda (256) */
   if(D.MT){
@@ -63729,16 +63800,25 @@ function cajaPintar(){
     if(E.filas.length>1) h+='<div class="tw"><table class="mini cjt-t"><thead><tr><th>Cuenta de</th><th class="n">Quedó de ayer</th><th class="n">Cobró hoy</th><th class="n">Retirado hoy</th><th class="n">Debe haber</th></tr></thead><tbody>'+
       E.filas.map(function(o){ return '<tr><td>'+esc(o.nombre)+'</td><td class="n">'+B(o.ayer)+'</td><td class="n">'+B(o.cob)+'</td><td class="n">'+B(o.ret)+'</td><td class="n"><b>'+B(o.debe)+'</b></td></tr>'; }).join('')+'</tbody></table></div>';
     if(E.cobSinHora>0.005) h+='<div class="cjt-nota">⏱️ '+B(E.cobSinHora)+' son cobros de saldos de ventas de otros días: el panel no guarda a qué hora entraron, se cuentan en la tarde.</div>';
+    if(E.ajenos.length){
+      h+='<div class="cjt-sub" id="cjt-ajenos-t">💵 De ventas de otra tienda · '+E.ajenos.length+' · '+B(E.ajeno)+'</div>'+
+        '<div class="cjt-nota">Efectivo que recibió alguien de '+esc(D.nombre)+' por una venta de otra tienda: está en «Efectivo cobrado hoy» y en lo que debe haber (lo tiene esa persona), pero no en «2 · Cobros del día», que son los de las ventas de la tienda.</div>'+
+        '<div class="tw"><table class="mini cjt-t" id="cjt-ajenos"><thead><tr><th>Hora</th><th>Cliente</th><th>OC</th><th>La venta es de</th><th>Vendedor</th><th>Lo recibió</th><th class="n">Monto</th></tr></thead><tbody>'+
+        E.ajenos.map(function(z){ var p=z.p;
+          return '<tr data-id="'+esc(p.id)+'" onclick="cajaAbrirVenta(this.dataset.id)" title="Abrir la venta"><td>'+esc(z.h||'—')+'</td><td>'+esc(p.cliente||'—')+(z.deHoy?'':' <small class="cjt-gris">· saldo de una venta del '+esc(fmtFechaCorta(contaFecha(p)))+'</small>')+'</td>'+
+            '<td class="cjt-oc">'+esc(ocEtiq(p.oc)||'—')+'</td><td>'+esc(z.tiendaTxt)+'</td><td>'+esc(nombreCanonico(p.vendedor)||p.vendedor||'—')+'</td><td>'+esc(z.quien)+'</td><td class="n"><b>'+B(z.monto)+'</b></td></tr>';
+        }).join('')+'</tbody></table></div>';
+    }
   }else h+='<div class="cjt-vacio">Sin efectivo en la caja este día.</div>';
   h+='<div class="cjt-arq">'+
       '<div class="cjt-arq-f"><label for="cjt-arq-am">🌅 Contado al cambio de turno <small>(opcional, a las '+CAJA_CAMBIO_TURNO+')</small></label>'+
         '<div class="cjt-arq-in"><input type="text" inputmode="decimal" autocomplete="off" id="cjt-arq-am" value="'+(A.am!=null?esc(String(A.am)):'')+'" placeholder="Bs contados"'+dis+' onchange="cajaArqueoPoner('+dj+','+tj+',\'am\',this.value)">'+
-        '<span>tenía que haber <b>'+B(E.espAm)+'</b></span><span>'+cajaDifHtml(A.difAm, 'turno mañana')+'</span></div>'+
-        (A.am!=null?('<small class="cjt-gris">anotado'+(A.amPor?(' por '+esc(A.amPor)):'')+(A.amT?(' a las '+esc(cajaHoraDe(A.amT))):'')+'</small>'):'')+'</div>'+
+        '<span>tenía que haber <b>'+B(E.espAm)+'</b></span><span id="cjt-dif-am">'+cajaDifHtml(A.difAm, 'turno mañana')+'</span></div>'+
+        '<small class="cjt-gris" id="cjt-anot-am"'+(A.am!=null?'':' hidden')+'>'+esc(cajaAnotTxt(A, 'am'))+'</small></div>'+
       '<div class="cjt-arq-f"><label for="cjt-arq-pm">🌆 Contado al cerrar</label>'+
         '<div class="cjt-arq-in"><input type="text" inputmode="decimal" autocomplete="off" id="cjt-arq-pm" value="'+(A.pm!=null?esc(String(A.pm)):'')+'" placeholder="Bs contados"'+dis+' onchange="cajaArqueoPoner('+dj+','+tj+',\'pm\',this.value)">'+
-        '<span>tiene que haber <b>'+B(E.debe)+'</b></span><span>'+cajaDifHtml(A.difPm, A.am!=null?'turno tarde':'el día')+'</span></div>'+
-        (A.pm!=null?('<small class="cjt-gris">anotado'+(A.pmPor?(' por '+esc(A.pmPor)):'')+(A.pmT?(' a las '+esc(cajaHoraDe(A.pmT))):'')+'</small>'):'')+'</div>'+
+        '<span>tiene que haber <b>'+B(E.debe)+'</b></span><span id="cjt-dif-pm">'+cajaDifHtml(A.difPm, A.am!=null?'turno tarde':'el día')+'</span></div>'+
+        '<small class="cjt-gris" id="cjt-anot-pm"'+(A.pm!=null?'':' hidden')+'>'+esc(cajaAnotTxt(A, 'pm'))+'</small></div>'+
     '</div>'+
     '<div class="cjt-nota">Es la misma cuenta de «📒 Mayor y saldos»: lo que debe haber es el saldo de las cuentas de la gente de la tienda al cierre del día.</div></div>';
   /* 4 · QR contra el banco */
@@ -63776,17 +63856,26 @@ function cajaPintar(){
       '<button type="button" class="btn btn-sm" onclick="cajaClaveProbar(document.getElementById(\'cjt-pass\').value)">Usar</button></div>';
   }
   h+='<div class="cjt-acc">'+
-      (D.cerrada ? (cajaClavePuede() ? '<button type="button" class="btn btn-sm btn-ghost" onclick="cajaReabrir('+dj+','+tj+')">🔓 Reabrir la caja</button>' : '')
-                 : '<button type="button" class="btn btn-primary" id="cjt-cerrar" onclick="cajaCerrar('+dj+','+tj+')">🔒 Cerrar la caja '+(D.dia===hoy?'de hoy':('del '+esc(fmtFechaCorta(D.dia))))+'</button>')+
+      (D.cerrada ? (cajaClavePuede() ? '<button type="button" class="btn btn-sm btn-ghost" id="cjt-reabrir" onclick="cajaReabrir('+dj+','+tj+')"'+(srvViejo?' disabled':'')+'>🔓 Reabrir la caja</button>' : '')
+                 : '<button type="button" class="btn btn-primary" id="cjt-cerrar" onclick="cajaCerrar('+dj+','+tj+')"'+(srvViejo?' disabled':'')+'>🔒 Cerrar la caja '+(D.dia===hoy?'de hoy':('del '+esc(fmtFechaCorta(D.dia))))+'</button>')+
       '<button type="button" class="btn btn-sm" onclick="cajaExcel('+dj+','+tj+')">⬇️ Excel (4 hojas)</button>'+
       '<button type="button" class="btn btn-sm" id="cjt-pdf" onclick="cajaPdf('+dj+','+tj+')">📄 PDF con firmas</button>'+
     '</div><div id="cjt-estado" class="cjt-nota"></div>'+
     '<label class="cjt-aparato"><input type="checkbox"'+(cajaAparato()?' checked':'')+' onchange="cajaAparatoPoner(this.checked)"> Este aparato es la compu de '+esc(D.nombre)+' <small>(la caja sale como «Caja de hoy»)</small></label>'+
   '</div>';
   box.innerHTML=h;
+  if(foco){
+    var ni=document.getElementById(foco.id);
+    if(ni && !ni.disabled){
+      if(ni.value!==foco.v) ni.value=foco.v;
+      try{ ni.focus({ preventScroll:true }); }catch(x){ try{ ni.focus(); }catch(y){} }
+      try{ if(foco.s!=null) ni.setSelectionRange(foco.s, foco.e); }catch(x){}
+    }
+  }
   if(sc && top) sc.scrollTop=top;
 }
 function cajaCerrar(dia, t){
+  if(cajaServidorFrena()) return;
   var L=[['am','cjt-arq-am'],['pm','cjt-arq-pm']], ok=true;
   L.forEach(function(z){ var el=document.getElementById(z[1]); if(el && ok) ok=cajaArqueoPoner(dia, t, z[0], el.value, true); });
   if(!ok) return;
@@ -63803,6 +63892,7 @@ function cajaCerrar(dia, t){
   toast('🔒 Caja del '+fmtFecha(dia)+' cerrada. Bajó el Excel; el PDF para firmar sale con «📄 PDF con firmas».','ok',8000);
 }
 function cajaReabrir(dia, t){
+  if(cajaServidorFrena()) return;
   if(!cajaClavePuede()){ toast('🔑 Reabrir una caja cerrada pide la contraseña de Administración.','err'); return; }
   if(!confirm('¿Reabrir la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?')) return;
   var dk=cajaDk(dia, t), S=cajaSet();
@@ -63851,6 +63941,10 @@ function cajaExcelHojas(D){
     ef.push([]); ef.push(hd(['RETIRO','HORA','ENTREGA','RETIRA','N° RECIBO','MONTO (Bs)']));
     E.rets.forEach(function(z){ ef.push(['Retiro', z.h||'', z.r.entrega||'', z.r.retira||'', z.r.notas.join(', '), bs(z.r.monto)]); });
   }
+  if(E.ajenos.length){   // (14/11) el efectivo de ventas de otra tienda: ya está en lo cobrado hoy, no en la hoja «Cobros»
+    ef.push([]); ef.push(hd(['DE VENTAS DE OTRA TIENDA (ya en lo cobrado hoy)','HORA','CLIENTE','OC','LA VENTA ES DE','LO RECIBIÓ','MONTO (Bs)']));
+    E.ajenos.forEach(function(z){ ef.push(['Efectivo', z.h||'', z.p.cliente||'', z.p.oc||'', z.tiendaTxt, z.quien, bs(z.monto)]); });
+  }
   if(D.MT){
     ef.push([]); ef.push(hd(['META DEL DÍA (256)','META DE HOY (Bs)','MÍNIMA DE HOY (Bs)','LLEVA HOY (Bs)']));
     Object.keys(D.MT.porVend).forEach(function(v){ var m=D.MT.porVend[v]; ef.push([v, bs(m.meta), bs(m.minima), bs(m.lleva)]); });
@@ -63861,7 +63955,7 @@ function cajaExcelHojas(D){
   return [
     { name:'Ventas', cols:[{w:9},{w:7},{w:11},{w:20},{w:26},{w:14},{w:14},{w:13},{w:22},{w:12},{w:10},{w:18}], matrix:ventas },
     { name:'Cobros', cols:[{w:11},{w:7},{w:16},{w:13},{w:11},{w:13},{w:26},{w:11},{w:18},{w:11},{w:13},{w:18},{w:11},{w:16},{w:40},{w:26}], matrix:cobros },
-    { name:'Efectivo', cols:[{w:44},{w:22},{w:18},{w:18},{w:18},{w:14}], matrix:ef },
+    { name:'Efectivo', cols:[{w:44},{w:22},{w:18},{w:18},{w:18},{w:18},{w:14}], matrix:ef },
     { name:'QR por banco', cols:[{w:18},{w:14},{w:7},{w:26},{w:11},{w:11},{w:13},{w:16},{w:14}], matrix:qr }
   ];
 }
@@ -63892,7 +63986,7 @@ function cajaHojasHtml(D){
         '<tr class="cjp-tot"><td>Total</td><td class="n">'+D.cobros.length+'</td><td class="n">'+B(D.totCob)+'</td></tr></tbody></table></div>'+
       '<div class="ai-caja"><h3>Efectivo de la caja</h3><div class="cjp-cuenta">'+
         '<span>Quedó de ayer</span><b>'+B(E.ayer)+'</b>'+(Math.abs(E.otros)>0.005?('<span>'+(E.otros<0?'− Cierre de un mes':'+ Saldo de antes')+'</span><b>'+B(Math.abs(E.otros))+'</b>'):'')+
-        '<span>+ Cobrado hoy</span><b>'+B(E.cob)+'</b><span>− Retirado hoy</span><b>'+B(E.ret)+'</b>'+
+        '<span>+ Cobrado hoy</span><b>'+B(E.cob)+'</b>'+(E.ajeno>0.005?('<span>&nbsp;&nbsp;(de eso, de ventas de otra tienda: '+E.ajenos.length+')</span><b>'+B(E.ajeno)+'</b>'):'')+'<span>− Retirado hoy</span><b>'+B(E.ret)+'</b>'+
         '<span class="cjp-t">= Debe haber</span><b class="cjp-t">'+B(E.debe)+'</b>'+
         '<span>Contado al cambio de turno</span><b>'+(A.am==null?'—':B(A.am))+'</b><span>Diferencia turno mañana</span><b>'+(A.difAm==null?'—':B(A.difAm))+'</b>'+
         '<span>Contado al cerrar</span><b>'+(A.pm==null?'—':B(A.pm))+'</b><span>Diferencia '+(A.am!=null?'turno tarde':'del día')+'</span><b>'+(A.difPm==null?'—':B(A.difPm))+'</b>'+
@@ -67556,6 +67650,9 @@ function mallAparatoCambiar(){
   try{ if(si) localStorage.setItem(MALL_AP_LS, '1'); else localStorage.removeItem(MALL_AP_LS); }
   catch(e){ toast('⚠️ Esta compu no deja guardar la marca: probá recargar la página.', 'err'); return; }
   mallAparatoBtn(); mallBarraPintar(true);
+  /* (14/11, revisión) la MISMA marca que la casilla de la caja («Este aparato es la compu de…», `cajaAparatoPoner`): el botón de la caja
+     («🏬 Caja de hoy») y la casilla, si la ventana está abierta, se enteran ahora */
+  try{ if(typeof cajaBotonesPintar==='function') cajaBotonesPintar(); if(typeof cajaRepintar==='function') cajaRepintar(); }catch(e){}
   toast(si ? '🏬 Esta compu quedó como la del mall: arriba de todo aparece la barra del mostrador.' : 'Esta compu ya no es la del mall: la barra del mostrador se va (si no hay un vendedor del mall elegido).', 'ok', 6000);
 }
 function mallAparatoBtn(){
@@ -67592,21 +67689,36 @@ function mallFaltaTxt(){
   return SERVER_VER ? ('⏳ La rueda del mall necesita el servidor nuevo ('+MALL_SERVIDOR+'): mientras tanto no se anota nada.')
                     : '⏳ Todavía no hubo conexión con la planilla: la rueda se anota cuando el servidor conteste.';
 }
-/* Manda lo que espera en la cola (de a 60), de a una tanda por vez. La confirmación saca SOLO lo mandado; un error lo deja y reintenta. */
+/* ¿Este toque de la cola ya lo confirmó el servidor? (recién mandado, `MALL.mandados`, o ya vino en una lectura, `MALL.dias`) */
+function mallYaConfirmado(t){
+  if(!t || !t.id) return true;
+  if(MALL.mandados[t.id]) return true;
+  return (MALL.dias[mallDiaDe(t)]||[]).some(function(x){ return x && x.id===t.id; });
+}
+/* Lo que de verdad espera: la cola sin lo ya confirmado (si la cola no se pudo reescribir después de un envío bueno, ahí sigue). */
+function mallColaPend(){ return mallCola().filter(function(t){ return !mallYaConfirmado(t); }); }
+/* Manda lo que espera en la cola (de a 60), de a una tanda por vez. La confirmación saca SOLO lo mandado; un error lo deja y reintenta.
+   ⚠️ (14/11, revisión) Si el servidor confirma pero la cola NO se puede reescribir (el aparato sin lugar), no se encadena otro envío: antes
+   volvía a mandar la misma tanda sin pausa, para siempre. Lo confirmado no se vuelve a mandar (`mallYaConfirmado`) y la limpieza de la cola
+   se reintenta con la espera de siempre (`mallReintentar`). */
 function mallEnviar(){
   if(MALL.enviando || !mallPuede() || !CONNECTED) return Promise.resolve(false);
   var a=mallCola(); if(!a.length) return Promise.resolve(true);
-  var lote=a.slice(0, 60), ids={}; lote.forEach(function(t){ ids[t.id]=1; });
+  var pend=a.filter(function(t){ return !mallYaConfirmado(t); });
+  if(pend.length<a.length && !mallColaPoner(pend)) mallReintentar();   // sacar lo ya confirmado; si no se puede, se vuelve a probar con pausa
+  if(!pend.length) return Promise.resolve(true);
+  var lote=pend.slice(0, 60), ids={}; lote.forEach(function(t){ ids[t.id]=1; });
   MALL.enviando=true;
   return conTopeDuro(apiPost({ action:'mallToque', toques:JSON.parse(JSON.stringify(lote)) }), 20000, 'tardo_mall').then(function(j){
     MALL.enviando=false;
     if(!(j && j.ok)){ MALL.ultErr=String((j && j.error) || 'no'); mallReintentar(); mallBarraPintar(); return false; }
     var ahora=Date.now();
     lote.forEach(function(t){ MALL.mandados[t.id]={ t:t, en:ahora }; });
-    mallColaPoner(mallCola().filter(function(t){ return !ids[t.id]; }));
+    var achico=mallColaPoner(mallCola().filter(function(t){ return !ids[t.id]; }));
     MALL.ultErr=''; MALL.intentos=0; MALL.gen++;
     mallBarraPintar();
-    return mallCola().length ? mallEnviar() : true;
+    if(!achico){ mallReintentar(); return true; }
+    return mallColaPend().length ? mallEnviar() : true;
   }, function(e){
     MALL.enviando=false; MALL.ultErr=String((e && e.message) || e || 'red'); mallReintentar(); mallBarraPintar(); return false;
   });
@@ -67862,7 +67974,7 @@ function mallOtrosLista(llegan, E){
 function mallPct(co, at){ return at>0 ? Math.round(100*co/at) : null; }
 function mallBarraHtml(){
   var hoy=diaNegocio(), E=mallEstado(mallToquesParaEstado(), Date.now()), R=mallResumenDia(hoy, MALL_TIENDA), puede=mallPuede();
-  var dis=puede ? '' : ' disabled', cola=mallCola().length;
+  var dis=puede ? '' : ' disabled', cola=mallColaPend().length;   // lo ya confirmado que quedó en la cola (no se pudo reescribir) no «espera»
   MALL.vs=E.fila.map(function(f){ return f.v; });
   MALL.llegan=mallLleganLista(E, R);
   var otros=mallOtrosLista(MALL.llegan, E);
@@ -68603,7 +68715,7 @@ function mallAnPorQueHtml(S){
   h+='<div class="mallan-fs">'+
     mallAnFicha('#0e7490', 'Se fueron sin comprar', String(T.total), mallAnDifTxt(T.total, b.total, '')+(T.cot ? (' · '+T.mall+' del mostrador y '+T.cot+' cotizaciones') : ''))+
     mallAnFicha('#b45309', '💲 Por el precio', mallAnPcTxt(T.m.precio, T.conMot), T.m.precio+' de '+T.conMot+' que dijeron por qué')+
-    mallAnFicha('#0e7490', '📐 No había la medida', String(T.m.medida), mallAnTop(T.medidas).slice(0,3).map(function(x){ return x.k+' ('+x.n+')'; }).join(' · ') || 'sin medidas anotadas')+
+    mallAnFicha('#0e7490', '📐 No había la medida', String(T.m.medida), mallAnTop(T.medidas).slice(0,3).map(function(x){ return esc(x.k)+' ('+x.n+')'; }).join(' · ') || 'sin medidas anotadas')+   // la medida de una cotización es texto libre
     mallAnFicha('#15803d', '📝 Dejaron su celular', String(T.anotaron), 'para volver a llamarlos')+'</div>';
   /* motivos: barras de la semana y la anterior */
   var mx=1; MALLAN_MOT.forEach(function(M){ mx=Math.max(mx, T.m[M.k], b.m[M.k]); });
@@ -68907,7 +69019,8 @@ function mvivPintar(){
       (C.retirado!=null ? '<li><span>− Retirado</span><b>'+fmtBs0(C.retirado)+'</b></li>' : '')+
       (C.contadoPm!=null || C.contadoAm!=null ? '<li><span>Contado '+(C.contadoPm!=null ? 'a la tarde' : 'a la mañana')+'</span><b>'+fmtBs0(C.contadoPm!=null ? C.contadoPm : C.contadoAm)+'</b></li>' : '')+
       (C.dif!=null && Math.abs(Number(C.dif)||0)>0.005 ? '<li class="mviv-dif"><span>Diferencia</span><b>'+fmtBs0(C.dif)+'</b></li>' : '')+'</ul>'+
-      (C.cerrada ? '<small>🔒 Caja cerrada</small>' : (Array.isArray(C.faltan) && C.faltan.length ? '<small>Falta: '+esc(C.faltan.join(', '))+'</small>' : ''))+'</section>';
+      (C.cerrada ? '<small>🔒 Caja cerrada</small>' : (Array.isArray(C.faltan) && C.faltan.length ? '<small>Falta: '+esc(C.faltan.join(', '))+'</small>'
+        : (Number(C.faltan)>0 ? '<small>Falta: '+Number(C.faltan)+(Number(C.faltan)===1 ? ' cosa' : ' cosas')+' en rojo en «Lo que falta» de la caja</small>' : '')))+'</section>';   // `cajaResumenDia` da cuántas (un número)
   }
   /* la gente por hora */
   var mx=1; D.horas.forEach(function(x){ mx=Math.max(mx, x.n); });
