@@ -2694,6 +2694,11 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
 })();
 </script>
 
+<!-- 🏬🎡 (14/11, mejoras 252 y 253) La barra del mostrador de la tienda del mall, arriba de todo (arriba de las pestañas, así no separa la
+     pestaña de su tarjeta): solo en la compu del mall o con un vendedor del mall elegido (`mallBarraVe`). La rueda, a quién le toca,
+     «Solo miró» con su motivo y lo de hoy. -->
+<div id="mall-barra" class="no-print" hidden></div>
+
 <!-- 🎨 (§4ni, 9) Cada pestaña con su ícono de color; la del Bot sigue con 🤖 (dueño: «me gusta el icono actual del robot de colores»). -->
 <div class="nav">
   <button id="tab-form" class="active" onclick="tabNuevoPedido()"><span class="t-ic"><span class="ico-b" style="--c1:#2dd4bf;--c2:#0f766e" aria-hidden="true"><svg viewBox="0 0 24 24"><g class="mas"><path d="M12 5v14M5 12h14"/></g></svg></span></span><span class="t-lb">Nuevo pedido</span><span class="t-cr">Nuevo</span></button>
@@ -3172,6 +3177,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
             <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveEquipo()" title="La clave que el servidor exige para leer y guardar pedidos (PANEL_KEY). Se ingresa una vez por dispositivo.">🔐 Clave del equipo</button>
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración.">🛡️ Clave de administración</button>
+            <button class="btn btn-ghost btn-sm" id="mall-ap-btn" aria-pressed="false" onclick="mallAparatoCambiar()" title="La compu del mostrador de la tienda del mall: arriba de todo aparece la barra de la rueda (quién atiende, a quién le toca, «Solo miró»). Se marca una vez en esa compu.">🏬 Esta compu es la del mall</button>
           </div></section>
         </div>
           <!-- 📡 Quién lee la planilla por GET (§4dv) y ⚠️ Guardados rechazados y colas sin enviar (§4el). -->
@@ -6853,6 +6859,96 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .phx-i.phx-g .phx-x{ color:#6b7884; font-style:italic; }
 .phx-n{ margin-top:4px; color:var(--muted); font-size:.74rem; }
 @media (max-width:520px){ .phx-i{ grid-template-columns:minmax(0,1fr); gap:0; } }
+</style>
+<style>
+/* 🏬🎡 (14/11, mejoras 252 y 253) La barra del mostrador de la tienda del mall, arriba de todo (`mallBarraHtml`), y lo suyo en «Tu día»
+   (252: `.td-mall`; 273: `.td-reco`). Colores del panel; fondo propio (blanco), así se lee igual con cualquier tema del mes. */
+#mall-barra{max-width:var(--wrap);margin:14px auto 0;padding:0 22px;transition:max-width .2s var(--ease)}
+#mall-barra[hidden]{display:none!important}
+@media (max-width:700px){ #mall-barra{margin-top:10px} }
+@media (max-width:560px){ #mall-barra{padding:0 8px} }
+.mall-b{background:#fff;border:1px solid #cfe9e6;border-radius:18px;box-shadow:0 1px 2px rgba(0,60,60,.04),0 12px 28px -20px rgba(0,60,60,.45);padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-width:0;color:#13302e}
+.mall-cab{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.mall-tit{display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 220px}
+.mall-ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:1.2rem;background:linear-gradient(135deg,#00B5AD,#0f766e);color:#fff;flex:none}
+.mall-tit b{display:block;font-size:.98rem;font-weight:900;line-height:1.2}
+.mall-tit small{display:block;font-size:.76rem;color:#5d7473;font-weight:700}
+.mall-cont{display:flex;gap:6px;flex-wrap:wrap}
+.mall-cont span{display:inline-flex;align-items:baseline;gap:4px;border-radius:999px;padding:4px 11px;font-size:.78rem;font-weight:700;border:1px solid;white-space:nowrap}
+.mall-cont b{font-size:1rem;font-weight:900;font-variant-numeric:tabular-nums}
+.mall-c-co{background:#E6F9F0;border-color:#b8e6d0;color:#15803d}
+.mall-c-an{background:#eef4ff;border-color:#c9d8fb;color:#2457c5}
+.mall-c-mi{background:#FEF3E2;border-color:#FCD34D;color:#B45309}
+.mall-c-em{background:#fff8e1;border-color:#f5d98a;color:#8a5a00}
+.mall-toca{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;border-radius:14px;padding:10px 14px;background:linear-gradient(135deg,#00B5AD,#0d8f88);color:#fff;font-weight:800;font-size:1.02rem}
+.mall-toca b{font-size:1.22rem;font-weight:900}
+.mall-toca small{font-weight:600;opacity:.92;font-size:.78rem;margin-left:auto}
+.mall-toca.mall-t-ocup{background:linear-gradient(135deg,#F7A928,#E07B06);color:#2b1700}
+.mall-toca.mall-t-nadie{background:#f3f8f8;color:#355352;border:1px dashed #99DDD9;font-size:.88rem}
+.mall-fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:10px}
+.mall-v{border:1px solid #e1ebea;border-radius:14px;padding:10px 12px;background:#fbfdfd;display:flex;flex-direction:column;gap:7px;min-width:0}
+.mall-v.mall-e-atiende{background:linear-gradient(90deg,#eef4ff,#fff);border-color:#c9d8fb}
+.mall-v.mall-e-esmio{background:linear-gradient(90deg,#fff8e1,#fff);border-color:#f5d98a}
+.mall-v.mall-e-pausa{background:#F5F6F7;border-color:#E2E2E2}
+.mall-v.mall-le{border-color:#00B5AD;box-shadow:0 0 0 2px rgba(0,181,173,.22)}
+.mall-v-cab{display:flex;align-items:center;gap:8px;min-width:0}
+.mall-pos{width:24px;height:24px;border-radius:50%;background:#E6F7F6;color:#007a74;font-weight:900;font-size:.78rem;display:grid;place-items:center;flex:none}
+.mall-v-cab>b{font-weight:900;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mall-est{margin-left:auto;font-size:.74rem;font-weight:800;border-radius:999px;padding:2px 9px;background:#E6F9F0;color:#15803d;white-space:nowrap}
+.mall-le .mall-est{background:#00B5AD;color:#fff}
+.mall-e-atiende .mall-est{background:#dbe7ff;color:#2457c5}
+.mall-e-esmio .mall-est{background:#fdecb5;color:#8a5a00}
+.mall-e-pausa .mall-est{background:#E2E2E2;color:#555}
+.mall-reloj{font-variant-numeric:tabular-nums;font-weight:900;margin-left:2px}
+.mall-v-sub{font-size:.74rem;color:#6b8584;font-weight:600}
+.mall-v-acc{display:flex;gap:6px;flex-wrap:wrap}
+.mall-bt{border:1px solid #99DDD9;background:#E6F7F6;color:#007a74;font:inherit;font-weight:800;font-size:.78rem;border-radius:10px;padding:7px 11px;min-height:38px;cursor:pointer;white-space:nowrap;transition:background .15s,box-shadow .15s}
+.mall-bt:hover:not(:disabled){border-color:#00B5AD;box-shadow:0 4px 12px -8px #00B5AD}
+.mall-bt-p{background:linear-gradient(135deg,#00B5AD,#0d8f88);border-color:transparent;color:#fff}
+.mall-bt-a{background:#FEF3E2;border-color:#FCD34D;color:#8a4b00}
+.mall-bt-e{background:#fff8e1;border-color:#f5d98a;color:#8a5a00}
+.mall-bt-g{background:#fff;border-color:#E2E2E2;color:#555}
+.mall-bt:disabled{opacity:.5;cursor:default}
+.mall-bt:focus-visible{outline:2px solid #0f766e;outline-offset:2px}
+.mall-mot{border-top:1px dashed #d4ebe0;padding-top:7px;display:flex;flex-direction:column;gap:6px}
+.mall-mot-t{font-size:.78rem;font-weight:800;color:#355352}
+.mall-mot-t small{font-weight:600;color:#6b8584}
+.mall-llega{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:.8rem;color:#355352;font-weight:700}
+.mall-llega .mall-otro{font:inherit;font-size:.8rem;font-weight:700;border:1px solid #E2E2E2;border-radius:10px;padding:7px 9px;min-height:38px;background:#fff;color:#555;width:auto;max-width:100%;flex:0 1 auto}
+.mall-aviso{border-radius:12px;padding:8px 12px;font-size:.8rem;background:#FEF3E2;border:1px solid #FCD34D;color:#7c4b00;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mall-ant{font-size:.8rem;color:#355352;background:#f3f8f8;border-radius:12px;padding:7px 12px;cursor:pointer}
+.mall-ant span{color:#007a74;font-weight:800;margin-left:4px}
+.mall-ok{color:#15803d}.mall-mal{color:#B45309}
+@media (max-width:600px){ .mall-b{padding:10px} .mall-toca{font-size:.92rem} .mall-toca small{margin-left:0;flex-basis:100%} .mall-bt{flex:1 1 auto} }
+/* ¿Fue parejo? */
+.mpj-int{font-size:.84rem;color:#355352;margin:0 0 10px}
+.mpj-dia{margin:0 0 14px}
+.mpj-dia h4{font-size:.95rem;margin:0 0 8px;color:#13302e}
+.mpj-t{border:1px solid #e1ebea;border-radius:14px;padding:10px 12px;margin:0 0 8px;background:#fbfdfd}
+.mpj-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mpj-cab small{color:#6b8584;font-weight:600;margin-left:auto}
+.mpj-pill{border-radius:999px;padding:2px 10px;font-size:.76rem;font-weight:800}
+.mpj-ok{background:#E6F9F0;color:#15803d}.mpj-mal{background:#FEF3E2;color:#B45309}.mpj-gris{background:#F5F6F7;color:#6B6B6B}
+.mpj-porque{font-size:.84rem;margin:6px 0;color:#2D2D2D}
+.mpj-tb{width:100%;border-collapse:collapse;font-size:.82rem}
+.mpj-tb th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#6b8584;padding:4px 6px;border-bottom:1px solid #e1ebea;background:transparent;position:static}
+.mpj-tb td{padding:5px 6px;border-bottom:1px solid #edf3f2;font-variant-numeric:tabular-nums}
+.mpj-tb small{color:#6b8584}
+.mpj-t{overflow-x:auto}
+@media (max-width:480px){ .mpj-tb{font-size:.76rem} .mpj-tb th,.mpj-tb td{padding:4px 3px} .mpj-tb th{font-size:.6rem;letter-spacing:0} .mpj-tb small{display:block} .mpj-cab small{margin-left:0;flex-basis:100%} }
+/* «Tu día»: el mostrador (252) y el reconocimiento (273) */
+.td-mall{grid-column:1/-1;grid-template-columns:34px minmax(0,1fr) auto;background:linear-gradient(90deg,#e6f7f6,#fff);border:1px solid #c6e9e6;border-radius:12px;padding:9px 12px;margin:6px 0 0;border-bottom:1px solid #c6e9e6!important}
+.td-mall .td-i{grid-row:1;background:#d3f1ee}.td-mall .td-t{grid-row:1}
+.td-mall b{grid-column:3;grid-row:1;color:#0f766e;font-size:1.15rem}
+.td-mall .td-t small{display:block;font-size:.74rem;text-transform:none;letter-spacing:0;font-weight:600;color:#355352}
+.td-reco{margin:8px 18px 0;padding:8px 12px;border-radius:12px;background:linear-gradient(90deg,#fff8e1,#fff);border:1px solid #f5d98a;color:#4a3a10;min-width:0;overflow-wrap:anywhere}
+.td-reco-l{font-size:.82rem;line-height:1.4;padding:3px 0}
+.td-reco-l+.td-reco-l{border-top:1px dashed #f0dfa6}
+.td-reco-l span{font-weight:800;color:#6b5310}
+.td-reco-l b{color:#13302e;font-weight:900}
+.td-reco-l em{font-style:normal;color:#0f766e;font-weight:900}
+.td-reco-l small{color:#6b5310;font-weight:700;white-space:nowrap}
+.td-reco-n{color:#6b6b6b}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -21961,6 +22057,7 @@ function submitPedido(){
      el aviso de la cola lo muestra) y se explica sin ✓ verde (§4eo). */
   function afterEnCola(wasEdit, motivo){
     var _desde=EDIT_DESDE;
+    if(!wasEdit) try{ mallVentaHecha(rec); }catch(eM){}   // 🏬 (14/11, 252) en el mall, «compró» se anota solo: la venta existe aunque espere en la cola
     /* 📥 El borrador de Kommo completado ya es un pedido, aunque espere en la cola: sale de la
        bandeja como en `after()` (25/09). Si quedaba, decía «le falta la entrega» de una venta ya
        completada, y «Descartar» se la llevaba entera. */
@@ -21980,6 +22077,7 @@ function submitPedido(){
   }
   function after(wasEdit){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
+    if(!wasEdit) try{ mallVentaHecha(rec); }catch(eM){}   // 🏬 (14/11, 252) en el mall, «compró» se anota solo (cierra la atención de ese vendedor)
     try{ asisAlGuardar(rec, _tienda); }catch(eA){}   // (12/10) Eduardo: lo que faltó, recién con el pedido YA guardado
     try{ if(typeof kcTrasGuardar==='function') kcTrasGuardar(rec, prev); }catch(eK){}   // 📥 §4ok-91 la venta cierra su lead en Kommo (lo decide el servidor)
     /* 📥 Si era un borrador de Kommo, ya es un pedido: sale de la bandeja (§4ca).
@@ -34115,7 +34213,9 @@ function misTopPintar(v, mine){
              (E.deMas ? (' · <em>'+fmtBs0(E.deMas)+' eran de lo cobrado el mes pasado</em>') : (E.tot ? '' : ' · todo rendido'))))+
       '</small></span><b>'+fmtBs0(E.tot)+'</b></div>'+
       (esVendedorLite(v) ? '' : misTiendaFila(misTiendaDatos(mine), false))+   // 🏪 (§4nn) sus ventas de tienda del mes
+      mallTuDiaHtml(v)+                                // 🎡 (14/11, 252) en el mall: a cuántos atendió hoy y cuántos compraron
     '</div>'+
+    misRecoHtml(v)+                                    // 🏆 (14/11, 273) el vendedor del día y la mejor conversión
     misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
@@ -34127,6 +34227,7 @@ function misTopPintar(v, mine){
       '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
 }
 var MIS_HACER_MAS=false;
 /* 🏪 (27/10, §4nn; dueño: *«podríamos poner una dona de sus ventas de tienda para que lleven su control»* y, al ver la muestra, *«ok y
@@ -63268,6 +63369,652 @@ document.addEventListener('focusin', function(e){
 document.addEventListener('focusout', function(){ setTimeout(function(){
   var a=document.activeElement; if(!a || !/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) document.body.classList.remove('asis-escribe'); }, 120); });
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(asisMontar, 1200); });
+
+/* ============================================================================
+   🏬🎡 LA TIENDA DEL MALL: EL MOSTRADOR, LA RUEDA Y EL RECONOCIMIENTO DEL DÍA (14/11, mejoras 252, 253 y 273)
+   El dueño abre la tienda del mall (en el panel `'Ventura Mall'`; él le dice «Ventura Sur») con 4 vendedores: 2 a la mañana y 2 a la
+   tarde, con mucha gente entrando. Aprobó, con la página de las especificaciones:
+   · 252 «👀 Solo miró» + motivos: una BARRA DEL MOSTRADOR arriba de todo (solo en el aparato del mall o con un vendedor del mall) que
+     cuenta lo de hoy (compraron · anotados · solo miró). «Compró» NO se toca: al guardar una VENTA NUEVA (OC) de un vendedor del mall o
+     desde el aparato del mall, la página manda sola un toque `fin` con `r:'compro'` y `ref` = el id del pedido. Cada toque guarda SOLO
+     hora, tienda, vendedor y motivo: ningún dato del cliente. En «Tu día» de un vendedor del mall: «Hoy atendiste N · compraron M (x %) ·
+     tu tienda: y %».
+   · 253 LA RUEDA de a dos por turno (reglas del dueño):
+       – «Llegué» entra a la fila: arranca primero el que llegó primero, salvo que AYER en su turno haya tenido menos clientes (se mira
+         solo si los dos trabajaron ese turno el día anterior con datos).
+       – Le toca al primero libre de la fila. «Atiendo» lo deja atendiendo con reloj y lo pasa al FINAL de la fila: el otro pasa a ser el
+         siguiente. Al terminar elige cómo terminó (compró se cierra solo al guardar la venta; 📝 anotó; 👀 solo miró + motivo).
+       – Si los dos atienden, nadie «le toca»: el próximo cliente lo toma el primero que se libera, y el siguiente es para el que no
+         atendió (sale solo de la misma regla: el que atiende pasa al final).
+       – «💛 Es mío» (un cliente que vuelve por alguien) se atiende FUERA de la rueda: no mueve la fila y se cuenta aparte (no es cliente
+         de la rueda).
+       – «☕ Pausa» / «✅ Volví»: mientras uno está en pausa el otro atiende a todos; al volver, el próximo es para el que volvió (pasa
+         al frente).
+       – Cambio de turno: «👋 Me fui» / «🙋 Llegué». Un cliente a medio atender lo termina el que lo empezó (con «Me fui» atendiendo,
+         sale de la fila recién al terminar).
+       – Se reparte parejo la OPORTUNIDAD (clientes), no la plata. «🔄 ¿Fue parejo?»: los dos del MISMO turno (nunca mañana contra
+         tarde); diferencia ≤ 1 = «✅ Parejo», si no dice por qué (pausa larga) y que mañana arranca primero el que tuvo menos.
+   · 273 EL RECONOCIMIENTO DEL DÍA en «Tu día» de TODOS los vendedores: «🏆 Vendedor del día» = el que más vendió hoy (lo CARGADO hoy, las
+     ventas de `pryVentas` como Proyección; sin Eduardo, ROHO ni internos) y, con datos del mall, «🎯 Mejor conversión» (≥ 5 clientes de
+     la rueda). Durante el día «va ganando…»; desde las 20:30 «del día»; a la mañana (hasta las 12:00) también el de ayer. La plata de
+     otro vendedor solo con la contraseña (`UNLOCKED`): al resto, el nombre.
+   EL SERVIDOR (`2026-11-14-b`, lo hace otro trabajo en paralelo; la página lo llama SOLO con `servidorTiene(MALL_SERVIDOR)`):
+     `mallToque {toques:[{id, ts, tienda, v, k, r, m, ref, ap}]}` → `{ok, n, dup}` (idempotente por `id`) y
+     `mallLeer {desde, hasta, tienda?}` → `{ok, toques:[{id, ts, dia, hora, tienda, v, k, r, m, ref, ap}]}` (hoy sale de su caché).
+   LA COLA ES DURABLE (como el resto del panel, §4hh): el toque se guarda en el aparato (`me_mall_cola`) ANTES de mandarse y se verifica;
+   sin lugar no se manda y se avisa. Se reintenta solo; un error de red no lo pierde; la confirmación saca SOLO lo mandado (por `id`).
+   Lo recién mandado sigue a la vista (`MALL.mandados`) hasta que la lectura del servidor lo traiga: la rueda no parpadea.
+   ⚠️ Las funciones PURAS (`mallEstado`, `mallResumenDia` con sus toques, `mallParejo`) las usan otros trabajos: no cambiar sus nombres
+   ni la forma de lo que devuelven (se puede AGREGAR campos). Todo SOLO MIRA el panel: ninguna escribe pedidos.
+   En Playwright, apagado salvo `window.MALL_PRUEBA` (la barra, el toque automático, «Tu día» del mall) y `window.RECO_PRUEBA` (el
+   reconocimiento). `tests/test_mall_rueda.js`. */
+var MALL_TIENDA='Ventura Mall';
+var MALL_CAMBIO_TURNO='15:00';            // antes = mañana; desde = tarde (por la hora del «Llegué»)
+var MALL_SERVIDOR='2026-11-14-b';
+var MALL_AP_LS='me_mall_aparato', MALL_COLA_LS='me_mall_cola';
+var MALL_LEER_MS=10000;                   // con la barra a la vista, la lectura de hoy
+var MALL_RECO_LEER_MS=5*60000;            // en «Tu día» de los demás, para la mejor conversión
+var MALL_RECO_MIN=5;                      // 🎯 mejor conversión: con 5 clientes de la rueda como mínimo
+var MALL_RECO_DIA='20:30', MALL_RECO_AYER_HASTA='12:00';
+var MALL_PAUSA_LARGA=20;                  // minutos: una pausa así explica una diferencia en «¿Fue parejo?»
+var MALL_MOTIVOS=[{ k:'precio', t:'💲 Precio' }, { k:'medida', t:'📐 Medida' }, { k:'demora', t:'⏳ Demora' }, { k:'paseaba', t:'🚶 Paseaba' }, { k:'vuelve', t:'🔁 Vuelve' }];
+var MALL_MEDIDAS=['80x190','90x190','100x190','105x190','140x190','160x200','180x200','200x200'];
+var MALL={ dias:{}, leido:{}, leyendo:{}, mandados:{}, enviando:false, reint:0, intentos:0, ultErr:'', timer:0, tic:0, vigia:0, ui:{}, vs:[], llegan:[],
+           prevDia:'', recoT:0, gen:0 };
+function mallActivo(){ return !navigator.webdriver || !!window.MALL_PRUEBA; }
+function recoActivo(){ return !navigator.webdriver || !!window.RECO_PRUEBA; }
+function mallPuede(){ return servidorTiene(MALL_SERVIDOR); }
+function mallMin(hhmm){ var m=String(hhmm||'').match(/^(\d{1,2}):(\d{2})/); return m ? (+m[1])*60+(+m[2]) : 0; }
+function mallTurnoDeMin(min){ return (Number(min)||0)<mallMin(MALL_CAMBIO_TURNO) ? 'am' : 'pm'; }
+function mallTurnoTxt(T){ return T==='pm' ? '🌆 Tarde' : '🌅 Mañana'; }
+function mallDiaDe(t){ return (t && t.dia) ? String(t.dia).slice(0,10) : isoDeTsBolivia(Number(t && t.ts)||0); }
+function mallEsDeTienda(t, tienda){ return !!t && (!t.tienda || normNombre(t.tienda)===normNombre(tienda||MALL_TIENDA)); }
+/* ¿Es del mall? Un vendedor, por su tienda de hoy; un aparato, si alguien lo marcó en Administración → Herramientas. */
+function mallEsVendedor(v, dia){ return !!v && sucursalDeVendedor(v, dia||diaNegocio())===MALL_TIENDA; }
+function mallAparato(){ try{ return localStorage.getItem(MALL_AP_LS)==='1'; }catch(e){ return false; } }
+function mallAparatoCambiar(){
+  var si=!mallAparato();
+  try{ if(si) localStorage.setItem(MALL_AP_LS, '1'); else localStorage.removeItem(MALL_AP_LS); }
+  catch(e){ toast('⚠️ Esta compu no deja guardar la marca: probá recargar la página.', 'err'); return; }
+  mallAparatoBtn(); mallBarraPintar(true);
+  toast(si ? '🏬 Esta compu quedó como la del mall: arriba de todo aparece la barra del mostrador.' : 'Esta compu ya no es la del mall: la barra del mostrador se va (si no hay un vendedor del mall elegido).', 'ok', 6000);
+}
+function mallAparatoBtn(){
+  var b=document.getElementById('mall-ap-btn'); if(!b) return;
+  var si=mallAparato(); b.textContent=si ? '🏬 ✓ Esta compu es la del mall' : '🏬 Esta compu es la del mall'; b.setAttribute('aria-pressed', si ? 'true' : 'false');
+}
+function mallBarraVe(){ return mallActivo() && (mallAparato() || mallEsVendedor(getVendedorMem())); }
+
+/* ---------- La cola durable de toques ---------- */
+function mallCola(){ try{ var a=JSON.parse(localStorage.getItem(MALL_COLA_LS)||'[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+function mallColaPoner(a){
+  var txt=JSON.stringify(a||[]);
+  if(!lsPoner(MALL_COLA_LS, txt)) return false;
+  try{ return localStorage.getItem(MALL_COLA_LS)===txt; }catch(e){ return false; }
+}
+function mallToqueNuevo(k, v, x){
+  var ts=Date.now(); x=x||{};
+  var t={ id:'m'+ts+Math.random().toString(36).slice(2,8), ts:ts, tienda:MALL_TIENDA, v:nombreCanonico(v), k:k, r:x.r||'', m:x.m||'', ref:x.ref!=null ? String(x.ref) : '', ap:dispositivoId() };
+  if(x.medida) t.medida=String(x.medida);
+  return t;
+}
+/* Un toque: se guarda en la cola del aparato (y se verifica) ANTES de mandarse. Devuelve el toque, o null si no se pudo guardar. */
+function mallTocar(k, v, x){
+  if(!v) return null;
+  if(!mallPuede()){ toast(mallFaltaTxt(), 'err', 8000); return null; }
+  var t=mallToqueNuevo(k, v, x), a=mallCola(); a.push(t);
+  if(!mallColaPoner(a)){ toast('⚠️ Esta compu no tiene lugar para guardar el toque: NO se anotó. Recargá la página y tocá de nuevo.', 'err', 9000); return null; }
+  MALL.gen++;
+  mallBarraPintar(true);
+  mallEnviar();
+  return t;
+}
+function mallFaltaTxt(){
+  return SERVER_VER ? ('⏳ La rueda del mall necesita el servidor nuevo ('+MALL_SERVIDOR+'): mientras tanto no se anota nada.')
+                    : '⏳ Todavía no hubo conexión con la planilla: la rueda se anota cuando el servidor conteste.';
+}
+/* Manda lo que espera en la cola (de a 60), de a una tanda por vez. La confirmación saca SOLO lo mandado; un error lo deja y reintenta. */
+function mallEnviar(){
+  if(MALL.enviando || !mallPuede() || !CONNECTED) return Promise.resolve(false);
+  var a=mallCola(); if(!a.length) return Promise.resolve(true);
+  var lote=a.slice(0, 60), ids={}; lote.forEach(function(t){ ids[t.id]=1; });
+  MALL.enviando=true;
+  return conTopeDuro(apiPost({ action:'mallToque', toques:JSON.parse(JSON.stringify(lote)) }), 20000, 'tardo_mall').then(function(j){
+    MALL.enviando=false;
+    if(!(j && j.ok)){ MALL.ultErr=String((j && j.error) || 'no'); mallReintentar(); mallBarraPintar(); return false; }
+    var ahora=Date.now();
+    lote.forEach(function(t){ MALL.mandados[t.id]={ t:t, en:ahora }; });
+    mallColaPoner(mallCola().filter(function(t){ return !ids[t.id]; }));
+    MALL.ultErr=''; MALL.intentos=0; MALL.gen++;
+    mallBarraPintar();
+    return mallCola().length ? mallEnviar() : true;
+  }, function(e){
+    MALL.enviando=false; MALL.ultErr=String((e && e.message) || e || 'red'); mallReintentar(); mallBarraPintar(); return false;
+  });
+}
+function mallReintentar(){
+  if(MALL.reint) return;
+  var esp=[3000, 10000, 30000, 60000][Math.min(3, MALL.intentos++)];
+  MALL.reint=setTimeout(function(){ MALL.reint=0; if(mallCola().length) mallEnviar(); }, esp);
+}
+/* ---------- Lo leído del servidor ---------- */
+function mallGuardarLeidos(desde, hasta, toques){
+  var d=desde, n=0;
+  while(d && d<=hasta && n++<70){ MALL.dias[d]=[]; MALL.leido[d]=Date.now(); d=stockSumarDias(d, 1); }
+  var vis={};
+  (toques||[]).forEach(function(t){
+    if(!t || !t.id || vis[t.id]) return; vis[t.id]=1;
+    var x=Object.assign({}, t); x.ts=Number(x.ts)||0; x.dia=mallDiaDe(x);
+    if(x.dia>=desde && x.dia<=hasta){ (MALL.dias[x.dia]=MALL.dias[x.dia]||[]).push(x); }
+  });
+  var ahora=Date.now();
+  Object.keys(MALL.mandados).forEach(function(id){ var o=MALL.mandados[id]; if(vis[id] || ahora-o.en>5*60000) delete MALL.mandados[id]; });
+  MALL.gen++;
+}
+/* Lee del servidor los toques de `desde` a `hasta` (tope 62 días). Una sola lectura por rango a la vez. */
+function mallLeerRango(desde, hasta){
+  if(!mallPuede() || !CONNECTED) return Promise.resolve(false);
+  var key=desde+'|'+hasta; if(MALL.leyendo[key]) return MALL.leyendo[key];
+  var p=conTopeDuro(apiPost({ action:'mallLeer', desde:desde, hasta:hasta, tienda:MALL_TIENDA }), 15000, 'tardo_mall').then(function(j){
+    delete MALL.leyendo[key];
+    if(j && j.ok && Array.isArray(j.toques)){ mallGuardarLeidos(desde, hasta, j.toques); return true; }
+    return false;
+  }, function(){ delete MALL.leyendo[key]; return false; });
+  MALL.leyendo[key]=p; return p;
+}
+/* Los toques de un día: lo leído del servidor + lo que espera en la cola + lo recién mandado. Si falla la lectura, lo de la cola. */
+function mallLeerDia(dia){
+  dia=dia||diaNegocio();
+  return mallLeerRango(dia, dia).then(function(){ return mallToquesDe(dia); });
+}
+/* Los 7 días anteriores, una vez por día y por aparato: para el orden de arranque («ayer tuvo menos») y «¿Fue parejo?» de ayer. */
+function mallLeerPrev(forzar){
+  var hoy=diaNegocio(); if(!forzar && MALL.prevDia===hoy) return Promise.resolve(true);
+  return mallLeerRango(stockSumarDias(hoy, -7), stockSumarDias(hoy, -1)).then(function(ok){ if(ok) MALL.prevDia=hoy; return ok; });
+}
+function mallToquesDe(dia){
+  var vis={}, out=[];
+  var meter=function(t){ if(!t || !t.id || vis[t.id] || mallDiaDe(t)!==dia) return; vis[t.id]=1; out.push(t); };
+  (MALL.dias[dia]||[]).forEach(meter);
+  mallCola().forEach(meter);
+  Object.keys(MALL.mandados).forEach(function(id){ meter(MALL.mandados[id].t); });
+  return out;
+}
+/* El último día anterior a `dia` (hasta 7 atrás) con algún toque del mall, en lo que hay en memoria. */
+function mallDiaAnterior(dia, toques){
+  var best='', lim=stockSumarDias(dia, -7);
+  var mirar=function(d){ if(d<dia && d>=lim && d>best) best=d; };
+  if(toques) toques.forEach(function(t){ if(mallEsDeTienda(t)) mirar(mallDiaDe(t)); });
+  else Object.keys(MALL.dias).forEach(function(d){ if((MALL.dias[d]||[]).some(function(t){ return mallEsDeTienda(t); })) mirar(d); });
+  return best;
+}
+
+/* ---------- LA RUEDA: el motor (puro) ----------
+   Recorre los toques de UN día en orden y devuelve cómo quedó cada vendedor (`V`), la fila (en orden) y cada atención (`at`).
+   `prev` = el resumen del día anterior (para el orden de arranque); `ahora` = hasta cuándo cuenta una pausa abierta. */
+function mallProcesar(toques, dia, prev, ahora){
+  var L=(toques||[]).filter(function(t){ return t && t.v && t.k && mallDiaDe(t)===dia; }).slice().sort(function(a,b){
+    return (Number(a.ts)||0)-(Number(b.ts)||0) || String(a.id||'').localeCompare(String(b.id||'')); });
+  var V={}, fila=[], at=[], arranco={ am:false, pm:false };
+  var prevAt={ am:{}, pm:{} };
+  if(prev && prev.porTurno) ['am','pm'].forEach(function(T){ var pv=(prev.porTurno[T]||{}).porVend||{}; Object.keys(pv).forEach(function(v){ prevAt[T][normNombre(v)]=Number(pv[v].at)||0; }); });
+  var de=function(v){ var k=normNombre(v); return V[k]||(V[k]={ v:nombreCanonico(v), k:k, aqui:false, estado:'fuera', desde:0, turno:'', turno0:'', llego:0, seVa:false,
+                                                             abierta:null, pausaDesde:0, pausaMin:0, n:0, nEsmio:0, ult:0, turnos:{} }); };
+  var sacar=function(o){ fila=fila.filter(function(k){ return k!==o.k; }); };
+  var alFinal=function(o){ sacar(o); fila.push(o.k); };
+  var alFrente=function(o){ sacar(o); fila.unshift(o.k); };
+  /* Antes del primer cliente del turno, el orden de los del turno: el que tuvo menos clientes AYER en ese turno (si todos trabajaron
+     ese turno el día anterior con datos), si no el que llegó primero. Los de otro turno no se mueven de su lugar. */
+  var ordenarArranque=function(T){
+    if(arranco[T]) return;
+    var pos=[], mem=[];
+    fila.forEach(function(k, i){ if(V[k].turno===T){ pos.push(i); mem.push(V[k]); } });
+    if(mem.length<2) return;
+    var todos=mem.every(function(o){ return prevAt[T][o.k]!=null; });
+    mem.sort(function(a,b){ if(todos && prevAt[T][a.k]!==prevAt[T][b.k]) return prevAt[T][a.k]-prevAt[T][b.k]; return a.llego-b.llego; });
+    pos.forEach(function(i, j){ fila[i]=mem[j].k; });
+  };
+  var llega=function(o, t){
+    if(o.aqui) return;
+    var ts=Number(t.ts)||0;
+    o.aqui=true; o.estado='libre'; o.desde=ts; o.seVa=false; o.llego=ts; o.turno=mallTurnoDeMin(pryMinBo(ts)); if(!o.turno0) o.turno0=o.turno; o.turnos[o.turno]=true;
+    fila.push(o.k); ordenarArranque(o.turno);
+  };
+  var cerrarPausa=function(o, ts){ if(o.estado==='pausa' && o.pausaDesde){ o.pausaMin+=Math.max(0, ts-o.pausaDesde)/60000; o.pausaDesde=0; } };
+  var turnoDe=function(o, t){ return o.turno || mallTurnoDeMin(pryMinBo(Number(t.ts)||0)); };
+  var atencion=function(o, t, tipo){
+    var ts=Number(t.ts)||0, a={ v:o.v, k:o.k, tipo:tipo, ts:ts, h:Math.floor(pryMinBo(ts)/60), turno:turnoDe(o, t), r:'', m:'', medida:'', ref:'', fin:0, id:t.id||'' };
+    at.push(a); if(tipo==='esmio') o.nEsmio++; else o.n++;
+    if(!o.turno0) o.turno0=a.turno;
+    return a;
+  };
+  var cerrar=function(o, a, t, r){
+    a.r=r||'sin'; a.m=String(t.m||''); a.medida=String(t.medida||''); a.ref=String(t.ref||''); a.fin=Number(t.ts)||0;
+  };
+  L.forEach(function(t){
+    var o=de(t.v), ts=Number(t.ts)||0, k=String(t.k);
+    o.ult=ts;
+    if(k==='llegue'){ llega(o, t); return; }
+    if(k==='mefui'){
+      if(!o.aqui) return;
+      if(o.abierta){ o.seVa=true; return; }                 // un cliente a medio atender lo termina el que lo empezó
+      cerrarPausa(o, ts); o.aqui=false; o.estado='fuera'; o.desde=ts; sacar(o); return;
+    }
+    if(k==='pausa'){
+      if(!o.aqui) llega(o, t);
+      if(o.abierta || o.estado==='pausa') return;
+      o.estado='pausa'; o.desde=ts; o.pausaDesde=ts; return;
+    }
+    if(k==='volvi'){
+      if(!o.aqui){ llega(o, t); return; }
+      if(o.estado!=='pausa') return;
+      cerrarPausa(o, ts); o.estado='libre'; o.desde=ts; alFrente(o); return;   // al volver, el próximo es para él
+    }
+    if(k==='atiendo' || k==='esmio'){
+      if(!o.aqui) llega(o, t);
+      if(o.abierta) return;                                 // dos toques seguidos: vale el primero
+      cerrarPausa(o, ts);
+      var tipo=(k==='esmio') ? 'esmio' : 'rueda';
+      o.abierta=atencion(o, t, tipo); o.estado=(tipo==='esmio') ? 'esmio' : 'atiende'; o.desde=ts;
+      if(tipo==='rueda'){ alFinal(o); arranco[o.turno]=true; }
+      return;
+    }
+    if(k==='fin' || k==='miro'){
+      var r=(k==='miro') ? 'miro' : String(t.r||'');
+      if(o.abierta){
+        cerrar(o, o.abierta, t, r); o.abierta=null; o.estado='libre'; o.desde=ts;
+        if(o.seVa){ o.aqui=false; o.estado='fuera'; sacar(o); }
+        return;
+      }
+      /* Sin una atención abierta = una atención entera en un toque (no tocó «Atiendo»). Es cliente de la rueda y lo pasa al final.
+         Una venta de alguien que no está en la rueda (no tocó «Llegué») cuenta igual, pero no lo mete en la fila. */
+      if(!o.aqui && !(k==='fin' && r==='compro')) llega(o, t);
+      if(o.aqui){ cerrarPausa(o, ts); if(o.estado==='pausa'){ o.estado='libre'; o.desde=ts; } }
+      var a=atencion(o, t, 'rueda'); cerrar(o, a, t, r);
+      if(o.aqui){ alFinal(o); arranco[o.turno]=true; }
+    }
+  });
+  var fin=Number(ahora)||0;
+  if(!fin) L.forEach(function(t){ fin=Math.max(fin, Number(t.ts)||0); });
+  Object.keys(V).forEach(function(k){ var o=V[k]; if(o.estado==='pausa' && o.pausaDesde && fin>o.pausaDesde) o.pausaMin+=(fin-o.pausaDesde)/60000; });
+  return { V:V, fila:fila.map(function(k){ return V[k]; }), at:at, arranco:arranco };
+}
+/* 🎡 LA RUEDA DE AHORA (pura). `toques` = los de hoy (y, si están, los del día anterior: deciden quién arranca). `ahora` en ms.
+   → `{turno:'am'|'pm', fila:[{v, estado:'libre'|'atiende'|'esmio'|'pausa', desde, turno, n, esmio, seVa}], leToca:v|null, dia, ocupados}`. */
+function mallEstado(toques, ahora){
+  ahora=Number(ahora)||Date.now();
+  var hoy=isoDeTsBolivia(ahora), min=pryMinBo(ahora);
+  var T=(toques||[]).filter(function(t){ return mallEsDeTienda(t); });
+  var dp=mallDiaAnterior(hoy, T), prev=dp ? mallResumenDia(dp, MALL_TIENDA, T) : null;
+  var P=mallProcesar(T, hoy, prev, ahora);
+  var fila=P.fila.map(function(o){ return { v:o.v, estado:o.estado, desde:o.desde, turno:o.turno, n:o.n, esmio:o.nEsmio, seVa:o.seVa }; });
+  var le=null; for(var i=0;i<fila.length;i++){ if(fila[i].estado==='libre'){ le=fila[i].v; break; } }
+  return { turno:mallTurnoDeMin(min), fila:fila, leToca:le, dia:hoy, ayer:dp||'',
+           ocupados:!le && fila.some(function(f){ return f.estado==='atiende' || f.estado==='esmio'; }) };
+}
+function mallRVacio(){ return { atendidos:0, compraron:0, anotaron:0, miraron:0, abiertos:0, esmio:0, esmioCompro:0, motivos:{}, medidas:{}, porVend:{} }; }
+function mallPVVacio(T){ return { at:0, co:0, anoto:0, miro:0, abiertos:0, esmio:0, esmioCo:0, motivos:{}, turno:T||'', pausaMin:0, rueda:false }; }
+/* 📊 EL RESUMEN DE UN DÍA (puro si se le pasan los toques; si no, usa los que ya leyó la página).
+   → `{atendidos, compraron, miraron, porHora:[{h, at, co}], porVend:{<v>:{at, co, miro, esmio, motivos, turno}}, porTurno:{am, pm}}` y además
+   `anotaron`, `abiertos` (atendiendo ahora), `esmio`, `esmioCompro`, `motivos`, `medidas`. Los clientes son los de la RUEDA: «Es mío» va aparte. */
+function mallResumenDia(dia, tienda, toques){
+  dia=dia||diaNegocio(); tienda=tienda||MALL_TIENDA;
+  var T=(toques ? toques : mallToquesDe(dia)).filter(function(t){ return mallEsDeTienda(t, tienda) && mallDiaDe(t)===dia; });
+  var hoy=diaNegocio(), P=mallProcesar(T, dia, null, dia===hoy ? Date.now() : 0);
+  var R=mallRVacio(); R.dia=dia; R.tienda=tienda; R.porTurno={ am:mallRVacio(), pm:mallRVacio() };
+  var H={};
+  /* Todo el que estuvo en la rueda aparece, aunque no haya atendido a nadie (si no, «¿Fue parejo?» no lo vería). */
+  /* `rueda`: tocó «Llegué» (en ese turno). Una venta cargada en la compu del mall por alguien que no estaba en la rueda cuenta para la
+     tienda, pero no entra en «¿Fue parejo?». */
+  Object.keys(P.V).forEach(function(k){
+    var o=P.V[k], T0=o.turno0 || o.turno; if(!o.llego && !o.n && !o.nEsmio) return;
+    R.porVend[o.v]=mallPVVacio(T0); R.porVend[o.v].pausaMin=Math.round(o.pausaMin); R.porVend[o.v].rueda=!!o.llego;
+    ['am','pm'].forEach(function(T){ if(o.turnos[T] || (T===T0 && !o.llego)){ var x=R.porTurno[T].porVend[o.v]=mallPVVacio(T); x.pausaMin=Math.round(o.pausaMin); x.rueda=!!o.turnos[T]; } });
+  });
+  var sumar=function(X, a){
+    var pv=X.porVend[a.v]||(X.porVend[a.v]=mallPVVacio(a.turno));
+    if(a.tipo==='esmio'){ X.esmio++; pv.esmio++; if(a.r==='compro'){ X.esmioCompro++; pv.esmioCo++; } return; }
+    X.atendidos++; pv.at++;
+    if(a.r==='compro'){ X.compraron++; pv.co++; }
+    else if(a.r==='anoto'){ X.anotaron++; pv.anoto++; }
+    else if(a.r==='miro'){ X.miraron++; pv.miro++; if(a.m){ X.motivos[a.m]=(X.motivos[a.m]||0)+1; pv.motivos[a.m]=(pv.motivos[a.m]||0)+1; }
+                           if(a.m==='medida' && a.medida) X.medidas[a.medida]=(X.medidas[a.medida]||0)+1; }
+    else if(!a.r){ X.abiertos++; pv.abiertos++; }
+  };
+  P.at.forEach(function(a){
+    sumar(R, a); sumar(R.porTurno[a.turno==='pm' ? 'pm' : 'am'], a);
+    if(a.tipo!=='esmio'){ var x=H[a.h]||(H[a.h]={ h:a.h, at:0, co:0 }); x.at++; if(a.r==='compro') x.co++; }
+  });
+  R.porHora=Object.keys(H).map(function(h){ return H[h]; }).sort(function(a,b){ return a.h-b.h; });
+  return R;
+}
+/* ⚖️ ¿FUE PAREJO? (pura) Por turno, los del MISMO turno que estuvieron en la rueda (`rueda`: tocaron «Llegué»): diferencia de clientes ≤ 1 = parejo.
+   → `{am:{ok, dif, filas:[{v, at, co, esmio, pausaMin}], porque, arranca}, pm:{…}}` (`solo:true` si no hay con quién comparar). */
+function mallParejo(R){
+  var out={}, pzTxt=function(m){ m=Math.round(m); return m>=60 ? (Math.floor(m/60)+' h '+(m%60 ? (m%60)+' min' : '')).trim() : (m+' min'); };
+  ['am','pm'].forEach(function(T){
+    var pt=(R && R.porTurno && R.porTurno[T]) || null, pv=pt ? pt.porVend : {};
+    var filas=Object.keys(pv).filter(function(v){ return pv[v].rueda!==false; }).map(function(v){ var p=pv[v]; return { v:v, at:p.at||0, co:p.co||0, esmio:p.esmio||0, pausaMin:p.pausaMin||0 }; });
+    filas.sort(function(a,b){ return b.at-a.at || a.v.localeCompare(b.v, 'es'); });
+    if(filas.length<2){
+      out[T]={ ok:true, dif:0, filas:filas, solo:true, arranca:null,
+               porque:filas.length ? ('Estuvo solo '+filas[0].v+' en la rueda: no hay con quién comparar.') : 'Nadie estuvo en la rueda en este turno.' };
+      return;
+    }
+    var mx=filas[0], mn=filas[filas.length-1], dif=mx.at-mn.at, ok=dif<=1, porque;
+    if(ok) porque='✅ Parejo: '+filas.map(function(f){ return f.v+' '+f.at; }).join(' y ')+(dif ? ' (1 de diferencia es parejo).' : '.');
+    else{
+      porque=mx.v+' atendió '+mx.at+' y '+mn.v+' '+mn.at+': '+dif+' de diferencia.';
+      if(mn.pausaMin>=MALL_PAUSA_LARGA && mn.pausaMin>mx.pausaMin+5) porque+=' '+mn.v+' estuvo '+pzTxt(mn.pausaMin)+' en pausa: mientras tanto '+mx.v+' atendió a todos.';
+      else porque+=' No hubo una pausa larga: fue cómo entraron los clientes.';
+      porque+=' Mañana arranca primero '+mn.v+'.';
+    }
+    out[T]={ ok:ok, dif:dif, filas:filas, porque:porque, arranca:ok ? null : mn.v };
+  });
+  return out;
+}
+
+/* ---------- La barra del mostrador ---------- */
+function mallToquesParaEstado(){
+  var hoy=diaNegocio(), dp=mallDiaAnterior(hoy), T=mallToquesDe(hoy);
+  return dp ? T.concat(mallToquesDe(dp)) : T;
+}
+/* Quiénes pueden tocar «Llegué»: los vendedores de la tienda de hoy y los que ya tocaron algo hoy (sin los que están en la fila). */
+function mallLleganLista(E, R){
+  var aqui={}, out=[], vis={};
+  E.fila.forEach(function(f){ aqui[normNombre(f.v)]=1; });
+  var meter=function(v){ var k=normNombre(v); if(!k || aqui[k] || vis[k] || contaExcluido(v)) return; vis[k]=1; out.push(nombreCanonico(v)); };
+  VENDEDORES.forEach(function(v){ if(mallEsVendedor(v)) meter(v); });
+  Object.keys((R && R.porVend) || {}).forEach(meter);
+  return out;
+}
+function mallOtrosLista(llegan, E){
+  var no={}; llegan.forEach(function(v){ no[normNombre(v)]=1; }); E.fila.forEach(function(f){ no[normNombre(f.v)]=1; });
+  return VENDEDORES.filter(function(v){ return !no[normNombre(v)] && !contaExcluido(v) && !esVendedorLite(v); });
+}
+function mallPct(co, at){ return at>0 ? Math.round(100*co/at) : null; }
+function mallBarraHtml(){
+  var hoy=diaNegocio(), E=mallEstado(mallToquesParaEstado(), Date.now()), R=mallResumenDia(hoy, MALL_TIENDA), puede=mallPuede();
+  var dis=puede ? '' : ' disabled', cola=mallCola().length;
+  MALL.vs=E.fila.map(function(f){ return f.v; });
+  MALL.llegan=mallLleganLista(E, R);
+  var otros=mallOtrosLista(MALL.llegan, E);
+  var nom=function(v){ return esc(String(v||'').split(' ')[0]); };
+  var h='<div class="mall-b" data-turno="'+E.turno+'">'+
+    '<div class="mall-cab"><div class="mall-tit"><span class="mall-ico" aria-hidden="true">🏬</span><div><b>Mostrador · '+esc(MALL_TIENDA)+'</b>'+
+      '<small>'+mallTurnoTxt(E.turno)+' · hoy '+esc(fmtFechaCorta(hoy))+'</small></div></div>'+
+      '<div class="mall-cont" aria-label="Lo de hoy en la tienda">'+
+        '<span class="mall-c-co" title="Clientes de la rueda que compraron"><b>'+R.compraron+'</b> '+(R.compraron===1 ? 'compró' : 'compraron')+'</span>'+
+        '<span class="mall-c-an" title="Dejaron sus datos para volver a llamarlos"><b>'+R.anotaron+'</b> '+(R.anotaron===1 ? 'anotado' : 'anotados')+'</span>'+
+        '<span class="mall-c-mi" title="Se fueron sin comprar"><b>'+R.miraron+'</b> solo miró</span>'+
+        (R.esmio ? '<span class="mall-c-em" title="Clientes que volvieron por alguien: van aparte de la rueda"><b>'+R.esmio+'</b> es mío</span>' : '')+
+      '</div>'+
+      '<button type="button" class="mall-bt mall-bt-g" onclick="mallParejoAbrir()">🔄 ¿Fue parejo?</button></div>';
+  if(!puede) h+='<div class="mall-aviso" role="status">'+esc(mallFaltaTxt())+'</div>';
+  if(cola) h+='<div class="mall-aviso mall-aviso-c" role="status">📤 '+(cola===1 ? '1 toque espera' : (cola+' toques esperan'))+' para mandarse a la planilla'+
+    (MALL.ultErr ? ' (sin conexión)' : '')+': se guardó en esta compu y se manda solo. <button type="button" class="mall-bt mall-bt-g" onclick="mallEnviar()">Reintentar</button></div>';
+  /* A quién le toca */
+  if(E.leToca) h+='<div class="mall-toca" role="status">👉 Le toca a <b>'+esc(E.leToca)+'</b><small>el próximo cliente que entre</small></div>';
+  else if(E.ocupados) h+='<div class="mall-toca mall-t-ocup" role="status">⏳ Están todos atendiendo<small>el próximo cliente lo toma el primero que se libere</small></div>';
+  else if(E.fila.length) h+='<div class="mall-toca mall-t-ocup" role="status">☕ Nadie libre<small>el que vuelva de la pausa atiende al próximo</small></div>';
+  else h+='<div class="mall-toca mall-t-nadie" role="status">🙋 Nadie en la rueda: cada uno toca «Llegué» con su nombre al llegar.</div>';
+  /* La fila */
+  if(E.fila.length){
+    h+='<div class="mall-fila">'+E.fila.map(function(f, i){
+      var le=(f.v===E.leToca), op=(MALL.ui.v===f.v) ? MALL.ui.que : '';
+      var est = f.estado==='atiende' ? ('🗣️ Atendiendo <b class="mall-reloj" data-desde="'+f.desde+'"></b>')
+              : f.estado==='esmio' ? ('💛 Es mío <b class="mall-reloj" data-desde="'+f.desde+'"></b>')
+              : f.estado==='pausa' ? ('☕ En pausa <b class="mall-reloj" data-desde="'+f.desde+'"></b>')
+              : (le ? '👉 Le toca' : '🟢 Libre');
+      var sub=(f.n===1 ? '1 cliente' : (f.n+' clientes'))+' hoy'+(f.esmio ? (' · '+f.esmio+' es mío') : '')+(f.turno ? (' · '+mallTurnoTxt(f.turno).toLowerCase()) : '')+(f.seVa ? ' · se va al terminar' : '');
+      var b='';
+      if(f.estado==='libre'){
+        b='<button type="button" class="mall-bt'+(le ? ' mall-bt-p' : '')+'" onclick="mallAccion(\'atiendo\','+i+')"'+dis+'>🙋 Atiendo</button>'+
+          '<button type="button" class="mall-bt mall-bt-e" onclick="mallAccion(\'esmio\','+i+')"'+dis+' title="Un cliente que vuelve por vos: se atiende fuera de la rueda y no perdés el lugar">💛 Es mío</button>'+
+          '<button type="button" class="mall-bt mall-bt-a" onclick="mallAccion(\'miroAbrir\','+i+')"'+dis+' title="Atendiste a alguien que se fue sin comprar">👀 Solo miró</button>'+
+          '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'pausa\','+i+')"'+dis+'>☕ Pausa</button>'+
+          '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'mefui\','+i+')"'+dis+'>👋 Me fui</button>';
+      }else if(f.estado==='atiende' || f.estado==='esmio'){
+        b='<button type="button" class="mall-bt mall-bt-p" onclick="mallAccion(\'venta\','+i+')" title="Si compró: cargá la venta con tu nombre y se cierra sola">🧾 Compró: cargar la venta</button>'+
+          '<button type="button" class="mall-bt" onclick="mallAccion(\'anoto\','+i+')"'+dis+' title="Dejó sus datos para volver a llamarlo">📝 Anotó</button>'+
+          '<button type="button" class="mall-bt mall-bt-a" onclick="mallAccion(\'miroAbrir\','+i+')"'+dis+'>👀 Solo miró</button>'+
+          (f.seVa ? '' : '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'mefui\','+i+')"'+dis+'>👋 Me fui</button>');
+      }else if(f.estado==='pausa'){
+        b='<button type="button" class="mall-bt mall-bt-p" onclick="mallAccion(\'volvi\','+i+')"'+dis+'>✅ Volví</button>'+
+          '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'mefui\','+i+')"'+dis+'>👋 Me fui</button>';
+      }
+      var mot='';
+      if(op==='miro' || op==='medida'){
+        mot='<div class="mall-mot"><div class="mall-mot-t">👀 ¿Por qué no compró?</div><div class="mall-v-acc">'+
+          MALL_MOTIVOS.map(function(M){ return '<button type="button" class="mall-bt'+((op==='medida' && M.k==='medida') ? ' mall-bt-p' : '')+'" onclick="mallAccion(\''+(M.k==='medida' ? 'medidaAbrir' : 'miro')+'\','+i+',\''+M.k+'\')"'+dis+'>'+M.t+'</button>'; }).join('')+
+          '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'cerrar\','+i+')">Cancelar</button></div>'+
+          (op==='medida' ? ('<div class="mall-mot-t">📐 ¿Qué medida buscaba? <small>(si no la dijo, «Sin decir»)</small></div><div class="mall-v-acc">'+
+            MALL_MEDIDAS.map(function(md){ return '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'miro\','+i+',\'medida\',\''+md+'\')"'+dis+'>'+md+'</button>'; }).join('')+
+            '<button type="button" class="mall-bt mall-bt-g" onclick="mallAccion(\'miro\','+i+',\'medida\',\'\')"'+dis+'>Sin decir</button></div>') : '')+
+          '</div>';
+      }
+      return '<div class="mall-v mall-e-'+f.estado+(le ? ' mall-le' : '')+'" data-v="'+esc(f.v)+'"><div class="mall-v-cab"><span class="mall-pos" title="Su lugar en la rueda">'+(i+1)+'</span><b>'+esc(f.v)+'</b>'+
+        '<span class="mall-est">'+est+'</span></div><div class="mall-v-sub">'+esc(sub)+'</div><div class="mall-v-acc">'+b+'</div>'+mot+'</div>';
+    }).join('')+'</div>';
+  }
+  /* Quién llega */
+  if(MALL.llegan.length || otros.length){
+    h+='<div class="mall-llega"><span>🙋 ¿Quién llegó?</span>'+MALL.llegan.map(function(v, i){
+      return '<button type="button" class="mall-bt" onclick="mallLlegue('+i+')"'+dis+'>Llegué: '+nom(v)+'</button>'; }).join('')+
+      (otros.length ? ('<select class="mall-otro" aria-label="Otro vendedor llegó" onchange="mallLlegueOtro(this)"'+dis+'><option value="">Otro…</option>'+
+        otros.map(function(v){ return '<option value="'+esc(v)+'">'+esc(v)+'</option>'; }).join('')+'</select>') : '')+'</div>';
+  }
+  /* El turno de la mañana, ya terminado (a la tarde) */
+  if(E.turno==='pm' && R.porTurno.am.atendidos){
+    var PJ=mallParejo(R).am;
+    if(!PJ.solo) h+='<div class="mall-ant" role="button" tabindex="0" onclick="mallParejoAbrir()">🌅 La mañana: '+(PJ.ok ? '<b class="mall-ok">✅ Pareja</b>' : '<b class="mall-mal">⚠️ No fue pareja</b>')+' · '+
+      esc(PJ.filas.map(function(f){ return f.v.split(' ')[0]+' '+f.at; }).join(' y '))+' <span>Ver ›</span></div>';
+  }
+  return h+'</div>';
+}
+function mallBarraPintar(forzar){
+  var el=document.getElementById('mall-barra'); if(!el) return;
+  if(!mallBarraVe()){
+    if(!el.hidden){ el.hidden=true; el.innerHTML=''; el._h=''; }
+    mallPollParar(); return;
+  }
+  el.hidden=false; mallPollArrancar();
+  /* Con el desplegable «Otro…» abierto no se redibuja (se cerraría en la mano); el próximo toque o la próxima lectura lo hacen. */
+  var ae=document.activeElement; if(!forzar && ae && el.contains(ae) && ae.tagName==='SELECT') return;
+  var h; try{ h=mallBarraHtml(); }catch(e){ console.error(e); return; }
+  if(forzar || el._h!==h){ el.innerHTML=h; el._h=h; }
+  mallRelojes();
+}
+function mallRelojes(){
+  var ahora=Date.now();
+  [].forEach.call(document.querySelectorAll('#mall-barra .mall-reloj[data-desde]'), function(b){
+    var s=Math.max(0, Math.floor((ahora-Number(b.getAttribute('data-desde')))/1000)), m=Math.floor(s/60), hh=Math.floor(m/60);
+    var t=hh ? (hh+':'+('0'+(m%60)).slice(-2)+':'+('0'+(s%60)).slice(-2)) : (m+':'+('0'+(s%60)).slice(-2));
+    if(b.textContent!==t) b.textContent=t;
+  });
+}
+function mallPollArrancar(){
+  if(!MALL.tic) MALL.tic=setInterval(mallRelojes, 1000);
+  if(MALL.timer) return;
+  MALL.timer=setInterval(mallPollTic, MALL_LEER_MS);
+  mallPollTic();
+}
+function mallPollParar(){ if(MALL.timer){ clearInterval(MALL.timer); MALL.timer=0; } if(MALL.tic){ clearInterval(MALL.tic); MALL.tic=0; } }
+/* Cada 10 s con la barra a la vista: manda lo que espera y lee lo de hoy (sin trabar nada: una lectura por vez, con tope). */
+function mallPollTic(){
+  if(document.hidden || !mallPuede()) return;
+  mallEnviar();
+  mallLeerPrev();
+  mallLeerDia(diaNegocio()).then(function(){ mallBarraPintar(); });
+}
+/* Cada 5 s (solo fuera de Playwright o con MALL_PRUEBA): ¿hay que mostrar o esconder la barra? (cambió el vendedor elegido, se marcó la compu) */
+function mallArrancar(){
+  mallAparatoBtn();
+  if(!mallActivo()) return;
+  mallBarraPintar();
+  /* …y lo que espera en la cola sale aunque la barra no esté a la vista (otra persona eligió su nombre en esta compu), sin saltarse la
+     espera entre reintentos (`MALL.reint`). */
+  if(!MALL.vigia) MALL.vigia=setInterval(function(){ mallBarraPintar(); if(!MALL.reint && !MALL.enviando && !document.hidden && mallCola().length) mallEnviar(); }, 5000);
+  if(mallCola().length) mallEnviar();
+}
+/* Los botones de la barra (por la posición en la fila, `MALL.vs`, para no meter nombres en el onclick). */
+function mallAccion(que, i, m, medida){
+  var v=MALL.vs[i]; if(!v) return;
+  if(que==='miroAbrir'){ MALL.ui={ v:v, que:'miro' }; mallBarraPintar(true); return; }
+  if(que==='medidaAbrir'){ MALL.ui={ v:v, que:'medida' }; mallBarraPintar(true); return; }
+  if(que==='cerrar'){ MALL.ui={}; mallBarraPintar(true); return; }
+  if(que==='venta'){ mallCargarVenta(v); return; }
+  var E=mallEstado(mallToquesParaEstado(), Date.now()), f=E.fila.filter(function(x){ return x.v===v; })[0], abierta=!!f && (f.estado==='atiende' || f.estado==='esmio');
+  MALL.ui={};
+  if(que==='miro'){ mallTocar(abierta ? 'fin' : 'miro', v, { r:abierta ? 'miro' : '', m:m||'', medida:medida||'' }); return; }
+  if(que==='anoto'){ mallTocar('fin', v, { r:'anoto' }); return; }
+  if(que==='mefui'){
+    if(!confirm('👋 ¿'+v+' se va?\n\nSale de la rueda'+(abierta ? ' cuando termine con el cliente que está atendiendo' : '')+'. Si vuelve, toca «Llegué» y entra al final.')) return;
+    var T=f ? f.turno : '';
+    if(!mallTocar('mefui', v)) return;
+    /* ¿Terminó el turno? (no queda nadie de ese turno en la rueda): «¿Fue parejo?» */
+    var E2=mallEstado(mallToquesParaEstado(), Date.now());
+    if(T && !abierta && !E2.fila.some(function(x){ return x.turno===T; })) setTimeout(function(){ mallParejoAbrir(); }, 300);
+    return;
+  }
+  if(que==='atiendo' || que==='esmio' || que==='pausa' || que==='volvi'){ mallTocar(que, v); return; }
+}
+function mallLlegue(i){ var v=MALL.llegan[i]; if(v) mallTocar('llegue', v); }
+function mallLlegueOtro(sel){ var v=sel && sel.value; if(v) mallTocar('llegue', v); }
+/* «🧾 Compró»: al Nuevo pedido con el vendedor puesto (si el formulario está vacío). Al guardar la venta se manda solo el `fin` compró. */
+function mallCargarVenta(v){
+  tabNuevoPedido();
+  if(EDIT_ID) return;
+  var fv=document.getElementById('f-vendedor'), fc=document.getElementById('f-cliente');
+  if(fv && (!fv.value.trim() || !(fc && fc.value.trim()))){
+    fv.value=v; try{ fv.dispatchEvent(new Event('input', { bubbles:true })); }catch(e){}
+  }
+  window.scrollTo(0, 0);
+}
+/* 252 · Compró NO se toca: al guardar una VENTA NUEVA (OC, también la de tienda) de un vendedor del mall o desde la compu del mall, se
+   manda solo el `fin` con `r:'compro'` y `ref` = el id del pedido (cierra la atención abierta de ese vendedor, si había). Lo llama
+   `submitPedido` (en `after` y en `afterEnCola`: la venta existe aunque espere en la cola). Sin Eduardo, ROHO ni internos; sin ATC, RPT
+   ni borradores de Kommo (completar uno es una edición). */
+function mallVentaHecha(rec){
+  try{
+    if(!rec || !mallActivo() || !mallPuede()) return null;
+    if(esATC(rec.oc) || esRPT(rec.oc) || esFilaSistema(rec) || esBorrador(rec)) return null;
+    var v=nombreCanonico(rec.vendedor||''); if(!v || contaExcluido(v)) return null;
+    if(!(mallAparato() || mallEsVendedor(v))) return null;
+    return mallTocar('fin', v, { r:'compro', ref:rec.id });
+  }catch(e){ return null; }
+}
+
+/* ---------- «🔄 ¿Fue parejo?»: hoy y el día anterior con datos ---------- */
+function mallParejoAbrir(){
+  mallParejoPintar();
+  if(mallPuede()) Promise.all([mallLeerDia(diaNegocio()), mallLeerPrev(true)]).then(function(){ if(mallParejoAbierto()) mallParejoPintar(); });
+}
+function mallParejoAbierto(){ var ov=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(ov && ov.classList.contains('on') && b && b.querySelector('.mpj')); }
+function mallParejoDiaHtml(dia){
+  var hoy=diaNegocio(), R=mallResumenDia(dia, MALL_TIENDA), PJ=mallParejo(R);
+  var tit = dia===hoy ? 'Hoy' : (dia===stockSumarDias(hoy, -1) ? 'Ayer' : ('El '+(DIAS_SEM[dowDe(dia)]||'')));
+  var h='<section class="mpj-dia"><h4>'+esc(tit)+' · '+esc(fmtFechaCorta(dia))+'</h4>';
+  ['am','pm'].forEach(function(T){
+    var p=PJ[T], pt=R.porTurno[T];
+    h+='<div class="mpj-t"><div class="mpj-cab"><b>'+mallTurnoTxt(T)+'</b>'+
+      (p.solo ? '<span class="mpj-pill mpj-gris">Sin comparar</span>' : (p.ok ? '<span class="mpj-pill mpj-ok">✅ Parejo</span>' : '<span class="mpj-pill mpj-mal">⚠️ No fue parejo</span>'))+
+      '<small>'+pt.atendidos+(pt.atendidos===1 ? ' cliente' : ' clientes')+' de la rueda · '+pt.compraron+(pt.compraron===1 ? ' compró' : ' compraron')+'</small></div>'+
+      '<p class="mpj-porque">'+esc(p.porque)+'</p>';
+    if(p.filas.length) h+='<table class="mpj-tb"><thead><tr><th>Vendedor</th><th>Clientes</th><th>Compraron</th><th>Es mío</th><th>Pausa</th></tr></thead><tbody>'+
+      p.filas.map(function(f){ return '<tr><td>'+esc(f.v)+'</td><td><b>'+f.at+'</b></td><td>'+f.co+(f.at ? (' <small>('+mallPct(f.co, f.at)+' %)</small>') : '')+'</td><td>'+f.esmio+'</td><td>'+(f.pausaMin ? (f.pausaMin+' min') : '—')+'</td></tr>'; }).join('')+
+      '</tbody></table>';
+    h+='</div>';
+  });
+  return h+'</section>';
+}
+function mallParejoPintar(){
+  var hoy=diaNegocio(), ant=mallDiaAnterior(hoy);
+  var h='<div class="modal-h"><h3>🔄 ¿Fue parejo? · '+esc(MALL_TIENDA)+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b mpj"><p class="mpj-int">Se compara a los del <b>mismo turno</b> (nunca la mañana contra la tarde) por los <b>clientes de la rueda</b>: se reparte parejo la oportunidad, no la plata. «Es mío» va aparte. Hasta 1 cliente de diferencia es parejo.</p>'+
+    mallParejoDiaHtml(hoy)+(ant ? mallParejoDiaHtml(ant) : '<p class="mpj-int">Del día anterior todavía no hay datos.</p>')+'</div>';
+  openModal(h, true);
+}
+
+/* ---------- 252 · «Tu día» de un vendedor del mall ---------- */
+function mallTuDiaHtml(v){
+  if(!mallActivo() || !mallEsVendedor(v)) return '';
+  var R=mallResumenDia(diaNegocio(), MALL_TIENDA), p=null, k=normNombre(v);
+  Object.keys(R.porVend).forEach(function(x){ if(normNombre(x)===k) p=R.porVend[x]; });
+  var at=p ? p.at : 0, co=p ? p.co : 0, pc=mallPct(co, at), pt=mallPct(R.compraron, R.atendidos);
+  var txt='Hoy atendiste '+at+' · compraron '+co+(pc!=null ? (' ('+pc+' %)') : '')+' · tu tienda: '+(pt!=null ? (pt+' %') : '—')+(p && p.esmio ? (' · '+p.esmio+' «es mío» aparte') : '');
+  return '<div class="td-f td-mall" id="mis-mall" title="Los clientes de la rueda del mostrador: «Es mío» va aparte"><span class="td-i">🎡</span><span class="td-t">En el mostrador<small>'+esc(txt)+'</small></span>'+
+    '<b>'+(pc!=null ? (pc+' %') : '—')+'</b></div>';
+}
+
+/* ---------- 273 · EL RECONOCIMIENTO DEL DÍA ---------- */
+var RECO_MEMO=null;
+/* Lo vendido por día de carga y vendedor, de hoy y los 7 días anteriores (las ventas de `pryVentas`, el equipo: sin Eduardo, ROHO ni internos). */
+function recoVentasPorDia(hoy){
+  var M=RECO_MEMO; if(M && M.gen===STATE_GEN && M.st===STATE && M.hoy===hoy) return M.D;
+  var desde=stockSumarDias(hoy, -7), D={};
+  pryVentas().forEach(function(x){
+    if(x.amb!=='tienda' || contaExcluido(x.v) || x.reg<desde || x.reg>hoy) return;
+    var d=D[x.reg]||(D[x.reg]={}), k=normNombre(x.v), o=d[k]||(d[k]={ v:x.v, bs:0, n:0 });
+    o.bs=r2(o.bs+(Number(x.bs)||0)); o.n++;
+  });
+  RECO_MEMO={ gen:STATE_GEN, st:STATE, hoy:hoy, D:D };
+  return D;
+}
+function recoGanador(d){
+  if(!d) return null;
+  var L=Object.keys(d).map(function(k){ return d[k]; }).filter(function(o){ return o.bs>0.005; });
+  L.sort(function(a,b){ return b.bs-a.bs || b.n-a.n || a.v.localeCompare(b.v, 'es'); });
+  return L[0] || null;
+}
+function recoConversion(dia){
+  var T=mallToquesDe(dia); if(!T.length) return null;
+  var R=mallResumenDia(dia, MALL_TIENDA, T), best=null;
+  Object.keys(R.porVend).forEach(function(v){
+    var p=R.porVend[v]; if(p.at<MALL_RECO_MIN || contaExcluido(v)) return;
+    var pc=p.co/p.at;
+    if(!best || pc>best.pc+1e-9 || (Math.abs(pc-best.pc)<1e-9 && (p.co>best.co || (p.co===best.co && v.localeCompare(best.v, 'es')<0)))) best={ v:v, at:p.at, co:p.co, pc:pc };
+  });
+  return best;
+}
+/* → `{hoy, fin, manana, vend:{v, bs, n}|null, conv:{v, at, co, pc}|null, ayer:{dia, vend, conv}|null}` */
+function recoDatos(){
+  var hoy=diaNegocio(), min=pryMinBo(Date.now()), D=recoVentasPorDia(hoy);
+  var o={ hoy:hoy, fin:min>=mallMin(MALL_RECO_DIA), manana:min<mallMin(MALL_RECO_AYER_HASTA), vend:recoGanador(D[hoy]), conv:recoConversion(hoy), ayer:null };
+  if(o.manana){
+    for(var i=1;i<=7;i++){ var d=stockSumarDias(hoy, -i), g=recoGanador(D[d]); if(g){ o.ayer={ dia:d, vend:g, conv:recoConversion(d) }; break; } }
+  }
+  return o;
+}
+/* Lee lo del mall para la mejor conversión, como mucho cada 5 min (lo llama «Tu día»). */
+function mallRecoLeer(){
+  if(!recoActivo() || !mallPuede() || Date.now()-MALL.recoT<MALL_RECO_LEER_MS) return;
+  MALL.recoT=Date.now();
+  var g=MALL.gen;
+  Promise.all([mallLeerDia(diaNegocio()), mallLeerPrev()]).then(function(){
+    if(MALL.gen===g) return;
+    var el=document.getElementById('mis-top'); if(el && !el.hidden){ try{ renderMis(); }catch(e){} }
+  });
+}
+function misRecoHtml(v){
+  if(!recoActivo()) return '';
+  var o; try{ o=recoDatos(); }catch(e){ return ''; }
+  var yo=function(w){ return !!w && mismoVendedor(w, v); };
+  var nom=function(w){ return esc(w)+(yo(w) ? ' <em>¡sos vos!</em>' : ''); };
+  var plata=function(g){ return (UNLOCKED || yo(g.v)) ? (' <small>· '+fmtBs0(g.bs)+'</small>') : ''; };
+  var conv=function(c){ return (UNLOCKED || yo(c.v)) ? (' <small>· '+c.co+' de '+c.at+' ('+Math.round(c.pc*100)+' %)</small>') : ''; };
+  var L=[];
+  if(o.manana && o.ayer){
+    var cu=(o.ayer.dia===stockSumarDias(o.hoy, -1)) ? 'Ayer' : ('El '+(DIAS_SEM[dowDe(o.ayer.dia)]||''));
+    L.push('<div class="td-reco-l" data-k="ayer">🌙 <span>'+esc(cu)+':</span> 🏆 vendedor del día <b>'+nom(o.ayer.vend.v)+'</b>'+plata(o.ayer.vend)+
+      (o.ayer.conv ? (' · 🎯 mejor conversión <b>'+nom(o.ayer.conv.v)+'</b>'+conv(o.ayer.conv)) : '')+'</div>');
+  }
+  if(o.vend) L.push('<div class="td-reco-l" data-k="vend">🏆 <span>Vendedor del día'+(o.fin ? ':' : ' · va ganando')+'</span> <b>'+nom(o.vend.v)+'</b>'+plata(o.vend)+'</div>');
+  else if(!(o.manana && o.ayer)) L.push('<div class="td-reco-l td-reco-n" data-k="vend">🏆 <span>Vendedor del día:</span> todavía nadie cargó una venta hoy.</div>');
+  if(o.conv) L.push('<div class="td-reco-l" data-k="conv">🎯 <span>Mejor conversión'+(o.fin ? ':' : ' · va ganando')+'</span> <b>'+nom(o.conv.v)+'</b>'+conv(o.conv)+'</div>');
+  return '<div class="td-reco" id="mis-reco">'+L.join('')+'</div>';
+}
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(mallArrancar, 700); });
 
 var NX_RELOJ=0;
 function nxRelojArrancar(){ if(NX_RELOJ) return; NX_RELOJ=setInterval(function(){ nxBadges(); }, 60000); }
