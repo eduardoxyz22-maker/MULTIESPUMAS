@@ -18802,3 +18802,7 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - **Respuestas del dueño (14/11)** a las dudas de la 217: *«1. Cómo está, 2. Como está, 3. Como está»* — solo días después del que tenía, «No, dejarlo» no
   le avisa al cliente y el bot habla de tú. Y la 216: *«lo de llenar con la foto de la nota que solo aparezca al poner la contraseña, de momento la probaré yo»*
   → `notaLeerVe` pide `UNLOCKED` (y `tryUnlock` repinta la barra); `test_leer_nota_pagina` b2.
+- **218 sin «🕐 Horario…»** (dueño, 14/11: *«En observaciones botón hora no me convence ya que no tenemos horas específicas»*): quedan cinco botones. Se sacó
+  la entrada de `FRQ`, su lectura en `frqSpans` (la palabra «HORARIO» sigue cortando la frase del edificio) y la etiqueta «🕐 Horario: …» que la 218 le había
+  sumado a `fichaObsChips`; la hora escrita a mano la sigue leyendo `fichaNota` como antes de la 218. `test_frases_rapidas` 57/0 (1a-1b, 4, 5f, 6f-6g, 11).
+- Propuestas nuevas: «Mejoras 234 a 245» (https://claude.ai/artifact/ScavVWoAWbvumoE6xNHTxj), con los números de noviembre.

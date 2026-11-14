@@ -1,10 +1,10 @@
 /* ⚡ 218 · FRASES RÁPIDAS EN LAS OBSERVACIONES (14/11; el dueño aprobó la 218: «Botones arriba del campo de observaciones con lo que
    más se escribe. Un toque y queda escrito igual siempre, así la ficha de logística lo marca como etiqueta sin errores de tipeo. Se
    puede seguir escribiendo a mano»).
-   Cuida: los seis botones arriba del campo; poner (al final, con «. ») y sacar (solo el pedazo, con su separador); que dispara el
+   Cuida: los cinco botones arriba del campo (sin «Horario…»: dueño, 14/11); poner (al final, con «. ») y sacar (solo el pedazo, con su separador); que dispara el
    `input` del campo; que se prende con la frase fija Y con lo que se escribe a mano («por favor llamar una hora antes», «avisar antes de
-   ir», «pagará al momento de la entrega», «colocar doble bolsa», «3er piso», «de 11 a 12»), y no con «no llamar antes»/«sin doble
-   bolsa»; los dos «llamar» se reemplazan; «Edificio · piso…» deja elegido el «…» y «Horario…» el cursor al final; la revisión de las
+   ir», «pagará al momento de la entrega», «colocar doble bolsa», «3er piso»), y no con «no llamar antes»/«sin doble
+   bolsa»; los dos «llamar» se reemplazan; «Edificio · piso…» deja elegido el «…»; la revisión de las
    observaciones (`obsRevisar`) no avisa por las frases fijas; el pedido guardado lleva el texto y la ficha de logística muestra las
    etiquetas; OC, RPT y ATC sí, venta de tienda no; con el teclado; en el celular (390 px) los botones bajan de renglón.
    Datos inventados (el repo es público).
@@ -64,8 +64,8 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       visible: box.offsetParent !== null, grupo: box.getAttribute('role') === 'group' && !!box.getAttribute('aria-label'),
       apagados: bs.every(function (b) { return b.getAttribute('aria-pressed') === 'false'; }) };
   });
-  chk('1a · seis botones de verdad (`type="button"`) en un grupo con nombre', B.n === 6 && B.tipos && B.grupo, B);
-  chk('1b · los textos de la muestra', JSON.stringify(B.textos) === JSON.stringify(['📞Llamar 1 h antes', '📞Media hora antes', '🏢Edificio · piso…', '💵Paga al recibir', '🛍️Doble bolsa', '🕐Horario…']), B.textos);
+  chk('1a · cinco botones de verdad (`type="button"`) en un grupo con nombre', B.n === 5 && B.tipos && B.grupo, B);
+  chk('1b · los textos de la muestra', JSON.stringify(B.textos) === JSON.stringify(['📞Llamar 1 h antes', '📞Media hora antes', '🏢Edificio · piso…', '💵Paga al recibir', '🛍️Doble bolsa']), B.textos);
   chk('1c · arriba del campo de observaciones, en la misma caja, a la vista y apagados con el campo vacío', B.arriba && B.mismaCaja && B.visible && B.apagados, B);
 
   // ============ 2. poner y sacar ============
@@ -111,8 +111,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   const V = await ev(() => {
     var C = [['POR FAVOR LLAMAR UNA HORA ANTES', 'l1'], ['llamar al cliente 1 hora antes de llegar', 'l1'], ['avisar antes de ir', 'l1'], ['LLAMAR MEDIA HORA ANTES', 'l30'],
       ['llamar 30 min antes', 'l30'], ['PAGARÁ AL MOMENTO DE LA ENTREGA', 'paga'], ['pago contra entrega', 'paga'], ['el saldo paga al recibir', 'paga'],
-      ['colocar doble bolsa', 'bolsa'], ['LLEVAR CON 2 BOLSAS', 'bolsa'], ['vive en el 3er piso', 'edif'], ['Edificio Sol dpto 4B', 'edif'], ['piso 7, sin ascensor', 'edif'],
-      ['entregar de 11 a 12', 'hora'], ['HORARIO DE ENTREGA 12:00', 'hora'], ['después de las 15', 'hora']];
+      ['colocar doble bolsa', 'bolsa'], ['LLEVAR CON 2 BOLSAS', 'bolsa'], ['vive en el 3er piso', 'edif'], ['Edificio Sol dpto 4B', 'edif'], ['piso 7, sin ascensor', 'edif']];
     return C.map(function (c) { var S = frqSpans(c[0]); return { t: c[0], quiere: c[1], ok: !!S[c[1]], canon: S[c[1]] ? S[c[1]].canon : null }; });
   });
   const vMal = V.filter(x => !x.ok);
@@ -120,9 +119,9 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('4b · lo escrito a mano no es la frase fija (`canon` falso) salvo la de verdad', V.filter(x => x.t === 'LLAMAR MEDIA HORA ANTES')[0].canon === true && V.filter(x => x.t === 'avisar antes de ir')[0].canon === false, V);
   const NO = await ev(() => {
     var C = ['NO LLAMAR ANTES', 'sin doble bolsa', 'NO COBRAR AL ENTREGAR', 'llamar antes de las 12', 'avisar antes del medio dia', 'una bolsa', 'casa de 2 pisos'];
-    return C.map(function (c) { var S = frqSpans(c), on = Object.keys(S).filter(function (k) { return k !== 'grupo' && k !== 'hora'; }); return { t: c, on: on }; });
+    return C.map(function (c) { var S = frqSpans(c), on = Object.keys(S).filter(function (k) { return k !== 'grupo'; }); return { t: c, on: on }; });
   });
-  chk('4c · «no llamar antes», «sin doble bolsa», «no cobrar al entregar», «antes de las 12» no prenden (salvo el horario)', NO.every(x => x.on.length === 0), NO);
+  chk('4c · «no llamar antes», «sin doble bolsa», «no cobrar al entregar», «antes de las 12» no prenden', NO.every(x => x.on.length === 0), NO);
   await poner('POR FAVOR LLAMAR UNA HORA ANTES, LO RECIBE EL SR. INVENTADO 70000001'); s = await estado();
   chk('4d · lo escrito a mano prende el botón en el formulario', s.on.join() === 'l1', s);
   const tit = await ev(() => document.querySelector('#frq .frq-b[data-frq="l1"]').title);
@@ -130,7 +129,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   await tocar('l1'); s = await estado();
   chk('4f · tocarlo saca SOLO ese pedazo («lo recibe…» queda)', s.v === 'LO RECIBE EL SR. INVENTADO 70000001' && s.on.length === 0, s);
 
-  // ============ 5. los abiertos: «Edificio · piso…» y «Horario…» ============
+  // ============ 5. el abierto: «Edificio · piso…» ============
   await poner('CASA AZUL'); await tocar('edif');
   const E = await ev(() => { var el = document.getElementById('f-obs'); return { v: el.value, foco: document.activeElement === el, sel: el.value.slice(el.selectionStart, el.selectionEnd) }; });
   chk('5a · «Edificio · piso…» escribe «EDIFICIO …, PISO », pasa al campo y deja elegido el «…»', E.v === 'CASA AZUL. EDIFICIO …, PISO ' && E.foco && E.sel === '…', E);
@@ -145,14 +144,10 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('5d · sacar el edificio saca toda su frase y deja el «llamar»', s.v === 'CASA AZUL. LLAMAR 1 HORA ANTES' && s.on.join() === 'l1', s);
   await poner('EDIFICIO SOL, PISO 3 LLAMAR 1 HORA ANTES'); await tocar('edif'); s = await estado();
   chk('5e · sin punto en el medio, el edificio termina donde empieza la otra frase', s.v === 'LLAMAR 1 HORA ANTES', s);
-  await poner(''); await tocar('hora');
-  const H = await ev(() => { var el = document.getElementById('f-obs'); return { v: el.value, foco: document.activeElement === el, cur: el.selectionStart, fin: el.selectionEnd, n: el.value.length }; });
-  chk('5f · «Horario…» escribe «HORARIO: » y deja el cursor al final', H.v === 'HORARIO: ' && H.foco && H.cur === H.n && H.fin === H.n, H);
-  await page.keyboard.type('DE 9 A 11');
-  s = await estado();
-  chk('5g · se completa a mano y queda prendido', s.v === 'HORARIO: DE 9 A 11' && s.on.join() === 'hora', s);
-  await tocar('paga'); await tocar('hora'); s = await estado();
-  chk('5h · sacar el horario saca «HORARIO: DE 9 A 11» y deja lo demás', s.v === 'PAGA AL RECIBIR', s);
+  // 🚫 (14/11, dueño) sin botón de horario: una hora escrita a mano no prende ningún botón
+  await poner('HORARIO: DE 9 A 11. entregar de 11 a 12, después de las 15'); s = await estado();
+  s.hayHora = await ev(() => !!document.querySelector('#frq .frq-b[data-frq="hora"]') || typeof frqDe('hora') === 'object' && frqDe('hora') !== null);
+  chk('5f · sin botón «Horario…»: una hora escrita a mano no prende nada y no se toca', s.on.length === 0 && s.v === 'HORARIO: DE 9 A 11. entregar de 11 a 12, después de las 15' && s.hayHora === false, s);
   await poner(''); await ev(() => { document.getElementById('f-obs').blur(); });
   await page.click('#frq .frq-b[data-frq="l1"]');
   const F = await ev(() => document.activeElement && document.activeElement.getAttribute('data-frq'));
@@ -175,8 +170,8 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('6c · «PAGA AL RECIBIR» → «💵 Cobra al entregar» (la lectura del cobro de siempre)', T.paga.indexOf('💵 Cobra al entregar') >= 0, T.paga);
   chk('6d · «PONER DOBLE BOLSA» → «🛍️ Doble bolsa»', T.bolsa.indexOf('🛍️ Doble bolsa') >= 0, T.bolsa);
   chk('6e · «EDIFICIO …, PISO» sin completar → «🏢 Es un edificio»; completo → «🪜 Subir al piso 5»', T.edif.indexOf('🏢 Es un edificio') >= 0 && T.edifLleno.indexOf('🪜 Subir al piso 5') >= 0, { a: T.edif, b: T.edifLleno });
-  chk('6f · «HORARIO:» sin nada no inventa etiqueta; con la hora, la etiqueta de la hora', T.hora.length === 0 && T.horaLlena.indexOf('🕐 Entre las 9 y las 11') >= 0 && T.horaTarde.indexOf('🕐 Después de las 15') >= 0, { a: T.hora, b: T.horaLlena, c: T.horaTarde });
-  chk('6g · «HORARIO: cuando pueda el cliente» (no es una hora) sale tal cual', T.horaTexto.indexOf('🕐 Horario: cuando pueda el cliente') >= 0, T.horaTexto);
+  chk('6f · la hora escrita a mano la sigue leyendo la ficha de logística, como antes de la 218', T.horaLlena.indexOf('🕐 Entre las 9 y las 11') >= 0 && T.horaTarde.indexOf('🕐 Después de las 15') >= 0, { b: T.horaLlena, c: T.horaTarde });
+  chk('6g · «HORARIO: cuando pueda el cliente» (no es una hora) no inventa etiqueta', !T.horaTexto.some(x => /^🕐/.test(x)), T.horaTexto);
   chk('6h · todas juntas: cinco etiquetas, una por frase', T.todo.length === 5 && ['📞 Llamar 1 h antes', '🪜 Subir al piso 5', '💵 Cobra al entregar', '🛍️ Doble bolsa', '🕐 Entre las 9 y las 11'].every(x => T.todo.indexOf(x) >= 0), T.todo);
 
   // ============ 7. la revisión de las observaciones no avisa por las frases fijas ============
@@ -254,14 +249,14 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('10c · y vuelven al salir de la venta de tienda', TIPOS.despues === true, TIPOS);
 
   // ============ 11. con el teclado ============
-  await ev(() => { closeModal(); showView('form'); resetForm(); document.getElementById('f-obs').value = ''; frqPintar(); document.querySelector('#frq .frq-b[data-frq="bolsa"]').focus(); });
+  await ev(() => { closeModal(); showView('form'); resetForm(); document.getElementById('f-obs').value = ''; frqPintar(); document.querySelector('#frq .frq-b[data-frq="paga"]').focus(); });
   await page.keyboard.press('Enter'); s = await estado();
-  chk('11a · Enter sobre el botón escribe la frase', s.v === 'PONER DOBLE BOLSA' && s.on.join() === 'bolsa', s);
+  chk('11a · Enter sobre el botón escribe la frase', s.v === 'PAGA AL RECIBIR' && s.on.join() === 'paga', s);
   await page.keyboard.press('Space'); s = await estado();
   chk('11b · Espacio sobre el botón prendido la saca', s.v === '' && s.on.length === 0, s);
   await page.keyboard.press('Tab');
   const tab = await ev(() => document.activeElement && document.activeElement.getAttribute('data-frq'));
-  chk('11c · Tab pasa al botón siguiente', tab === 'hora', tab);
+  chk('11c · Tab pasa al botón siguiente', tab === 'bolsa', tab);
 
   // ============ 12. en el celular (390 px) bajan de renglón y no se salen ============
   await page.setViewportSize({ width: 390, height: 844 });
