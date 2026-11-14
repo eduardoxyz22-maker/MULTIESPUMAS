@@ -3540,6 +3540,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <button id="cx-dup-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cxDupAbrir()">👯 Dos veces</button>
           <button id="cx-deben-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="abrirPorCobrar('ventas')">⏳ Deben</button>
           <button id="cbz-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cbzAbrir()" title="Lo que va a entrar; en Mayoristas, además, el estado de cuenta de cada cliente y la antigüedad de saldos">📅 Cobranza</button>
+          <span id="cjt-btns" class="cjt-btns" hidden></span><!-- 🏬 (14/11, mejora 254) la caja de Ventura Sur (`cajaBotonesPintar`) -->
         </div>
         <div class="cx-gr cx-gr-cargar"><span class="cx-gr-t">➕ Cargar</span>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
@@ -4248,6 +4249,23 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .td-com-l.td-com-ok b{color:#15803d}
 .td-com-pie{font-size:.7rem;color:#7b8b8a;margin-top:3px}
 .td-acc{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 14px}
+/* 🎯 (14/11, mejora 256) La meta de hoy en «Tu día»: el turquesa del encabezado y la barra amarilla de la muestra del dueño */
+.mdd{margin:8px 18px 0;padding:10px 13px;border-radius:12px;background:linear-gradient(120deg,#00837d,#00B5AD 60%,#14b8a6);color:#fff;min-width:0;overflow-wrap:anywhere}
+.mdd-cab{font-size:.88rem;font-weight:700;line-height:1.3}
+.mdd-cab b{font-size:1.08rem;font-weight:900;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mdd-bar{height:8px;border-radius:9px;background:rgba(255,255,255,.3);margin-top:7px;overflow:hidden}
+.mdd-bar i{display:block;height:100%;background:#fde68a;border-radius:9px;transition:width .4s}
+.mdd small{display:block;margin-top:5px;font-size:.78rem;opacity:.95;line-height:1.35}
+.mdd small b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.mdd .mdd-otro{opacity:.85;font-size:.72rem}
+.mdd-como{margin-top:6px;font-size:.78rem}
+.mdd-como summary{cursor:pointer;font-weight:700;color:#e0fffb;width:max-content;max-width:100%}
+.mdd-como[open] summary{margin-bottom:6px}
+.mdd-cuenta{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 12px;background:#fff;color:#13302e;border-radius:10px;padding:8px 11px;margin-top:6px;font-size:.8rem}
+.mdd-cuenta b{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mdd-cuenta .mdd-t{border-top:1px solid #d7e4e6;padding-top:4px;margin-top:1px;font-weight:800}
+.mdd-nota{margin:7px 0 0;font-size:.72rem;line-height:1.4;opacity:.92}
+@media (prefers-reduced-motion:reduce){ .mdd-bar i{transition:none} }
 .t2-det{border:1px solid #fde3b8;background:#fffcf6;border-radius:16px;padding:12px 16px;margin:0 0 14px}
 .t2-cab{font-weight:900;color:#9a4a07;margin-bottom:6px}
 .t2-f{display:flex;gap:12px;align-items:center;padding:6px 0;border-bottom:1px solid #f8ecd6;font-size:.88rem;cursor:pointer}
@@ -5951,6 +5969,111 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
   body.printing-imes #imes-body{ overflow:visible !important; padding:0 !important; }
   body.printing-imes #imes-hojas{ zoom:1 !important; }
   body.printing-imes .ai-pag{ margin:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+/* 🏬 (14/11, mejora 254) La caja de Ventura Sur: la ventana (`cjt-*`) y sus hojas del PDF (`cjp-*`, sobre las del informe: `.ai-pag`). ⚠️ En las
+   hojas, las reglas de §4le: sin color-mix(), oklch() ni sombras; tablas con `table-layout:fixed`. */
+.cjt-btns[hidden]{ display:none !important; }
+.cjt-btns{ display:contents; }
+.modal-h.cjt-h{ background:linear-gradient(120deg,#00837d,#00B5AD); }
+#cjt{ display:flex; flex-direction:column; gap:12px; }
+.cjt-ctl{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.cjt-ctl input[type=date]{ width:auto; min-width:0; max-width:170px; }
+.cjt-ctl .btn{ width:auto; }
+.cjt-dia{ font-size:.95rem; color:#0f2a33; margin-left:4px; }
+.cjt-est{ margin-left:auto; border-radius:999px; padding:3px 11px; font-size:.78rem; font-weight:800; background:#e3f7f6; color:#00625e; border:1px solid #9fe0dc; }
+.cjt-est-c{ background:#f1f5f9; color:#334155; border-color:#cbd5e1; }
+.cjt-kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:10px; }
+.cjt-kpis > div{ border:1px solid #d7e4e6; border-left:5px solid #00B5AD; border-radius:12px; padding:9px 12px; background:#fff; min-width:0; }
+.cjt-kpis small{ display:block; font-size:.7rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#5b7079; }
+.cjt-kpis b{ display:block; font-size:1.3rem; font-weight:900; color:#0f2a33; font-variant-numeric:tabular-nums; line-height:1.2; }
+.cjt-kpis span{ display:block; font-size:.74rem; color:#5b7079; overflow-wrap:anywhere; }
+.cjt-kpis .cjt-k-efe{ border-left-color:#f59e0b; background:#fffaf0; }
+.cjt-kpis .cjt-k-mal{ border-left-color:#dc2626; background:#fff6f5; } .cjt-kpis .cjt-k-mal b{ color:#b42318; }
+.cjt-kpis .cjt-k-ok{ border-left-color:#16a34a; } .cjt-kpis .cjt-k-ok b{ color:#15803d; }
+.cjt-sec{ border:1px solid #d7e4e6; border-radius:14px; padding:11px 13px; background:#fff; min-width:0; }
+.cjt-sec h4{ margin:0 0 7px; font-size:.9rem; font-weight:850; color:#00625e; }
+.cjt-sec h4 small{ font-weight:600; color:#5b7079; font-size:.76rem; margin-left:4px; }
+.cjt-sec.cjt-falta{ border-color:#f5c2bd; background:#fffafa; } .cjt-sec.cjt-falta h4{ color:#b42318; }
+.cjt-sub{ font-size:.8rem; font-weight:800; color:#0f2a33; margin:8px 0 4px; }
+.cjt-t{ width:100%; }
+.cjt-t td.n, .cjt-t th.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cjt-t tbody tr[onclick]{ cursor:pointer; }
+.cjt-t tbody tr[onclick]:hover td{ background:#f3fbfa; }
+.cjt-t .cjt-oc{ white-space:nowrap; font-weight:700; color:#00625e; }
+.cjt-t tr.cjt-tr-mal td{ background:#fff6f5; }
+.cjt-t tr.cjt-tr-ok td{ background:#f3fbf6; }
+.cjt-t a{ text-decoration:none; }
+.cjt-pill{ display:inline-block; border-radius:999px; padding:1px 8px; font-weight:800; font-size:.68rem; white-space:nowrap; }
+.cjt-pill-r{ background:#fdecea; color:#b42318; }
+.cjt-ok{ color:#15803d; } .cjt-mal{ color:#b42318; } .cjt-ama{ color:#b45309; } .cjt-gris{ color:#7a8b90; }
+.cjt-vacio{ font-size:.82rem; color:#5b7079; padding:4px 0; }
+.cjt-nota{ font-size:.74rem; color:#5b7079; margin-top:6px; line-height:1.4; }
+.cjt-av{ background:#fff4e0; border:1px solid #fcd9a0; border-radius:10px; padding:8px 11px; font-size:.82rem; color:#5a3300; }
+.cjt-av-r{ background:#fdecea; border-color:#f5c2bd; color:#b42318; }
+.cjt-cuenta{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 14px; font-size:.86rem; background:#fbfdfd; border:1px solid #e1ebea; border-radius:10px; padding:9px 12px; max-width:560px; }
+.cjt-cuenta b{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cjt-cuenta small{ color:#5b7079; }
+.cjt-cuenta .cjt-t2{ border-top:1px solid #cfe3e4; padding-top:5px; margin-top:2px; font-weight:900; color:#0f2a33; }
+.cjt-arq{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr)); gap:10px; margin-top:10px; }
+.cjt-arq-f{ background:#fffaf0; border:1px solid #fde3b8; border-radius:10px; padding:8px 11px; min-width:0; }
+.cjt-arq-f label{ display:block; font-size:.8rem; font-weight:800; color:#5a3300; margin-bottom:5px; }
+.cjt-arq-f label small{ font-weight:600; color:#7c5a2b; }
+.cjt-arq-in{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; font-size:.8rem; }
+.cjt-arq-in input{ width:130px; max-width:100%; font-variant-numeric:tabular-nums; }
+.cjt-arq-in input.err{ border-color:#dc2626; background:#fff6f5; }
+.cjt-tilde{ display:inline-flex; align-items:center; gap:5px; cursor:pointer; white-space:nowrap; font-size:.76rem; }
+.cjt-tilde input{ width:18px; height:18px; margin:0; }
+.cjt-ul{ list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+.cjt-ul li{ display:flex; align-items:center; gap:8px; justify-content:space-between; background:#fff; border:1px solid #f5c2bd; border-radius:8px; padding:5px 9px; font-size:.8rem; color:#7f1d1d; min-width:0; }
+.cjt-ul li span{ min-width:0; overflow-wrap:anywhere; }
+.cjt-ul .cjt-ir{ width:auto; flex:none; }
+.cjt-meta-cab{ font-size:.86rem; color:#0f2a33; }
+.cjt-meta-cab b{ font-variant-numeric:tabular-nums; }
+.cjt-meta .cjt-meta-bar{ background:#e3f1f0; }
+.cjt-meta .cjt-meta-bar i{ background:#00B5AD; }
+.cjt-hbar{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:3px; align-items:end; height:90px; padding-bottom:16px; position:relative; }
+.cjt-hbar div{ position:relative; display:flex; flex-direction:column; justify-content:flex-end; height:100%; min-width:0; }
+.cjt-hbar i{ display:block; background:#cfe3e4; border-radius:3px 3px 0 0; }
+.cjt-hbar i.c{ background:#00B5AD; border-radius:0; margin-top:-1px; }
+.cjt-hbar span{ position:absolute; bottom:-15px; left:-3px; right:-3px; text-align:center; font-size:.6rem; color:#5b7079; }
+.cjt-ley{ display:flex; gap:12px; font-size:.7rem; color:#5b7079; margin-bottom:6px; }
+.cjt-ley i{ display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; background:#cfe3e4; }
+.cjt-ley i.c{ background:#00B5AD; }
+.cjt-cerr{ background:#f1f5f9; border:1px solid #cbd5e1; border-radius:10px; padding:8px 11px; font-size:.84rem; color:#334155; margin-bottom:8px; }
+.cjt-clave{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:.82rem; margin-bottom:8px; }
+.cjt-clave input{ max-width:240px; }
+.cjt-clave .btn{ width:auto; }
+.cjt-acc{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.cjt-acc .btn{ width:auto; }
+.cjt-aparato{ display:flex; align-items:center; gap:7px; font-size:.78rem; color:#5b7079; margin-top:10px; cursor:pointer; }
+.cjt-aparato input{ width:16px; height:16px; margin:0; }
+@media (max-width:600px){
+  .cjt-est{ margin-left:0; }
+  .cjt-kpis b{ font-size:1.12rem; }
+  .cjt-sec{ padding:9px 10px; }
+}
+/* las hojas del PDF */
+.cjp .ai-franja{ background:#00B5AD; }
+.cjp .ai-kick{ color:#0f766e; }
+.cjp .ai-tabla .oc{ color:#0f766e; }
+.cjp .ai-kpi b{ font-size:32px; }
+.cjp-g2{ display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:16px; }
+.cjp-cuenta{ display:grid; grid-template-columns:1fr auto; gap:4px 16px; font-size:13.5px; }
+.cjp-cuenta b{ text-align:right; font-variant-numeric:tabular-nums; }
+.cjp-cuenta .cjp-t{ border-top:1px solid #e2e8f0; padding-top:4px; font-weight:900; color:#0f172a; }
+.cjp .cjp-tot td{ font-weight:800; border-top:2px solid #e2e8f0; background:#f8fafc; }
+.cjp-falta{ margin-top:14px; border-radius:12px; padding:9px 14px; font-size:13.5px; background:#fdecea; color:#b42318; font-weight:700; }
+.cjp-falta.cjp-ok{ background:#ecfdf3; color:#15803d; }
+.cjp-mal{ color:#b42318; }
+.cjp-firmas{ display:grid; grid-template-columns:1fr 1fr; gap:80px; padding:0 40px; margin-top:74px; }
+.cjp-firmas div{ text-align:center; font-size:13px; color:#475569; font-weight:700; }
+.cjp-firmas i{ display:block; border-top:1.5px solid #64748b; margin-bottom:6px; }
+.cjp-firmas span{ display:block; min-height:16px; margin-top:3px; font-size:12px; font-weight:600; color:#94a3b8; }
+#cjt-imp{ display:none; }
+@media print{
+  body.printing-caja > *{ display:none !important; }
+  body.printing-caja #cjt-imp{ display:block !important; }
+  body.printing-caja .ai-pag{ margin:0 !important; box-shadow:none !important; break-after:page; page-break-after:always; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 
 @media (prefers-reduced-motion:reduce){ .asis *, .asis-foco{ animation:none!important; } }
@@ -11807,7 +11930,8 @@ function cxTopPintar(list, vSel, R){
     '<div class="lb-acc"><button type="button" class="ah-go ah-go-p" onclick="abrirVentaTienda()">🏪 Venta de tienda</button><button type="button" class="ah-go ah-go-p" onclick="abrirRetiros()">💵 Retiro de efectivo</button>'+
       '<button type="button" class="ah-go" onclick="nxCierreAbrir()">🗂️ Cierre del mes</button>'+
       '<button type="button" class="ah-go" onclick="exportConta()">⬇️ Excel</button><button type="button" class="ah-go" onclick="exportRecargos()">🚚 Recargos por vendedor</button><button type="button" class="ah-go" onclick="abrirProductosMes()">📦 Productos del mes</button>'+
-      '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button><button type="button" class="ah-go" id="cbz-btn2" onclick="cbzAbrir()">📅 Cobranza</button></div></div>';
+      '<button type="button" class="ah-go" onclick="compsAbrir()">📁 Comprobantes</button><button type="button" class="ah-go" id="cbz-btn2" onclick="cbzAbrir()">📅 Cobranza</button>'+
+      cajaBotonesHtml('ah-go')+'</div></div>';   // 🏬 (14/11, mejora 254)
   var h=izq+der;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
   try{ lbMontoEntero(el); }catch(e){}
@@ -11871,6 +11995,7 @@ function trozosMirar(){
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   try{ nxPstBoton(); }catch(e){}   // 🧾 (§4js, C2) cuántos pagos sin terminar
+  try{ cajaBotonesPintar(); }catch(e){}   // 🏬 (14/11, mejora 254) «Caja de Ventura Sur»
   var list=contaLista();
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0, nCarg=0, _TS=talSet();
   list.forEach(function(p){
@@ -19116,6 +19241,8 @@ function showContaModal(id){
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cbzVolver()">← Volver a la cobranza</button>')
           : POR_COBRAR_VOLVER.origen==='efd'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivoFecha()">← Volver al mayor y saldos</button>')
+          : POR_COBRAR_VOLVER.origen==='caja'
+          ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cajaVolver()">← Volver a la caja de '+esc(cajaNombre(CAJA.t))+'</button>')   // 🏬 (254)
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
@@ -25608,8 +25735,9 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
+var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
@@ -34179,6 +34307,202 @@ function misComisionHtml(v){
     (o.nFuera ? ('; sin '+(o.nFuera===1 ? '1 venta que no entra' : (o.nFuera+' ventas que no entran'))+' en este cierre ('+B(o.fuera)+(o.nFuera===1 ? ', ya pagada antes)' : ', ya pagadas antes)')) : '')+'.</div>';
   return h+'</div>';
 }
+/* 🎯 (14/11, mejora 256; el dueño la aprobó con la muestra https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc) LA META DEL DÍA. Para TODOS los
+   vendedores con las metas del mes GUARDADAS (no solo los del mall):
+   · Meta de hoy = (presupuesto del mes − lo vendido hasta ayer) × el peso de hoy ÷ la suma de los pesos de los días hábiles que quedan, contando
+     hoy. Con todos los pesos en 1 es «lo que falta ÷ los días que quedan». Lo mismo para la mínima.
+   · Lo vendido es la MISMA base que «💰 Tu comisión» y el 🏁 cierre comercial (`misComisionCuenta` → `ccmCuenta`: las ventas con entrega en el
+     mes que cuentan en ese cierre). «Hasta ayer» = las cargadas antes de hoy (`reg`); «vendido hoy» = las cargadas hoy. Así la meta del día y la
+     comisión nunca dicen cosas distintas: hasta ayer + hoy = lo vendido de la comisión. Lo cargado hoy que se entrega OTRO mes se dice aparte
+     (cuenta en ese mes).
+   · El PESO de cada día de la semana: la venta por día de ese día (lunes, martes…) ÷ la venta de un día promedio, de los meses CERRADOS desde
+     `PRY_PRIMER_MES` (`pryVentas`, por el día en que se CARGÓ), con las ventas de las tiendas de la misma clase (las que abren el domingo y las
+     que no). Suavizado hacia 1 con pocos días (`META_DIA_SUAVE`) y entre `META_DIA_PESO_MIN` y `META_DIA_PESO_MAX`; con pocos datos, parejo.
+   · Días hábiles: los de la proyección (`pryDiaHabil`: lunes a sábado sin feriados) y además el DOMINGO solo para los vendedores de una tienda
+     de `TIENDAS_DOMINGO` (la tienda de ese día: `sucursalDeVendedor(v, día)`).
+   · Dónde se ve: en «☀️ Tu día» (`metaDiaHtml`, con «¿cómo se calcula?»), en la caja de la tienda (254: la suma de sus vendedores) y Bloki desde
+     las `META_DIA_HORA_AVISO` si va por debajo de la mitad (`metaDiaAviso`). Sin metas guardadas, sin meta suya, Eduardo, ROHO, internos o
+     «👑 Ver todos»: nada. Solo mira: no guarda nada. En Playwright, en «Tu día» y en Bloki solo con `META_DIA_PRUEBA`. */
+var TIENDAS_DOMINGO=['Mia Plaza','Tienda Banzer','Ventura Mall'];
+var META_DIA_PESO_MIN=0.5, META_DIA_PESO_MAX=2, META_DIA_SUAVE=4, META_DIA_MIN_VENTAS=30, META_DIA_MIN_DIAS=20, META_DIA_HORA_AVISO=17;
+var META_DIA_MEMO={};
+var META_DIA_DOW=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function metaDiaVe(){ return !(navigator.webdriver && !window.META_DIA_PRUEBA); }
+function metaDiaAbreDomingo(v, f){ return TIENDAS_DOMINGO.indexOf(sucursalDeVendedor(v, f))>=0; }
+/* ¿Cuenta como día hábil para una tienda que abre (`dom`) o no el domingo? */
+function metaDiaHabil(f, dom){
+  if(!f) return false;
+  if(pryDiaHabil(f)) return true;
+  return !!dom && diaDomingo(f) && !(typeof FERIADOS!=='undefined' && FERIADOS[f]) && !FERIADOS_PASADOS[f];
+}
+/* Los 7 pesos (0 = domingo) para la clase de tienda `dom`, con los meses cerrados ANTES de `ym`: `{ w:[7], raw, pareja, nv, nd, desde, hasta }`. */
+function metaDiaPesos(dom, ym){
+  var key=(dom?'d':'s')+'|'+ym, M=META_DIA_MEMO[key], n=(STATE||[]).length;
+  if(M && M.st===STATE && M.gen===STATE_GEN && M.n===n) return M.W;
+  var ini=PRY_PRIMER_MES+'-01', fin=stockSumarDias(ym+'-01', -1);
+  var S=[0,0,0,0,0,0,0], N=[0,0,0,0,0,0,0], nv=0, nd=0, i, f;
+  if(fin>=ini){
+    pryVentas().forEach(function(x){
+      if(x.amb!=='tienda' || !x.reg || x.reg<ini || x.reg>fin) return;
+      if(metaDiaAbreDomingo(x.v, x.reg)!==!!dom || !metaDiaHabil(x.reg, dom)) return;
+      S[dowDe(x.reg)]+=Number(x.bs)||0; nv++;
+    });
+    for(f=ini, i=0; f<=fin && i<800; f=stockSumarDias(f,1), i++) if(metaDiaHabil(f, dom)){ N[dowDe(f)]++; nd++; }
+  }
+  var tot=0; S.forEach(function(s){ tot+=s; });
+  var A=nd>0 ? tot/nd : 0, pareja=(nv<META_DIA_MIN_VENTAS || nd<META_DIA_MIN_DIAS || !(A>0));
+  var w=[1,1,1,1,1,1,1], raw=[1,1,1,1,1,1,1];
+  if(!pareja) for(i=0;i<7;i++){
+    if(!N[i]) continue;
+    raw[i]=(S[i]/N[i])/A;
+    var s=N[i]/(N[i]+META_DIA_SUAVE);                                    // pocos días de ese tipo → cerca de 1
+    w[i]=Math.round(Math.max(META_DIA_PESO_MIN, Math.min(META_DIA_PESO_MAX, 1+(raw[i]-1)*s))*100)/100;
+  }
+  var W={ w:w, raw:raw, pareja:pareja, nv:nv, nd:nd, desde:ini, hasta:fin };
+  META_DIA_MEMO[key]={ st:STATE, gen:STATE_GEN, n:n, W:W };
+  return W;
+}
+/* La meta de `v` para el día `dia` (por defecto hoy, en Bolivia). null = no se muestra (ver arriba). */
+function metaDiaDatos(v, dia){
+  if(!v || contaExcluido(v) || esVendedorLite(v)) return null;
+  dia=dia||diaNegocio(); var ym=dia.slice(0,7);
+  var mt=ccmMetas(ym); if(!mt.ok) return null;
+  var mm=ccmMetaDe(mt.vd, v), mi=mm[0], pr=mm[1]; if(!(mi>0 || pr>0)) return null;
+  var K=misComisionCuenta(ym), k=normNombre(v), antes=0, hoy=0, nHoy=0, otro=0, nOtro=0, otroYm='';
+  (K.ventas||[]).forEach(function(x){
+    if(normNombre(x.v)!==k || x.est!=='cuenta') return;
+    var b=Number(x.bs)||0;
+    if(x.reg<dia) antes=r2(antes+b); else if(x.reg===dia){ hoy=r2(hoy+b); nHoy++; }
+  });
+  ((K.T && K.T.lista)||[]).forEach(function(x){ if(normNombre(x.v)===k && x.reg===dia && x.ym!==ym){ otro=r2(otro+(Number(x.bs)||0)); nOtro++; if(!otroYm || x.ym<otroYm) otroYm=x.ym; } });
+  var tienda=sucursalDeVendedor(v, dia), dom=TIENDAS_DOMINGO.indexOf(tienda)>=0, fin=pryFinDeMes(ym);
+  var W=metaDiaPesos(dom, ym), dias=[], suma=0;
+  for(var f=dia, i=0; f<=fin && i<40; f=stockSumarDias(f,1), i++) if(metaDiaHabil(f, dom)){ var w=W.w[dowDe(f)]; dias.push({ f:f, w:w }); suma+=w; }
+  suma=Math.round(suma*100)/100;
+  var hoyHabil=metaDiaHabil(dia, dom), peso=hoyHabil ? W.w[dowDe(dia)] : 0;
+  var una=function(meta){
+    if(!(meta>0)) return null;
+    var falta=Math.max(0, r2(meta-antes));
+    var md=(falta>0.005 && peso>0 && suma>0) ? Math.ceil(falta*peso/suma-1e-9) : 0;
+    var par=(falta>0.005 && dias.length) ? Math.ceil(falta/dias.length-1e-9) : 0;
+    return { meta:meta, falta:falta, dia:md, parejo:par, queda:Math.max(0, r2(md-hoy)), llego:falta<=0.005, cubrio:md>0 && hoy>=md-0.005 };
+  };
+  var o={ v:nombreCanonico(v)||v, dia:dia, ym:ym, tienda:tienda, dom:dom, mi:mi, pr:pr, antes:antes, hoy:hoy, nHoy:nHoy, otro:otro, nOtro:nOtro, otroYm:otroYm,
+          hoyHabil:hoyHabil, peso:peso, suma:suma, dias:dias, W:W, cerrado:!!K.cerrado, pres:una(pr), min:una(mi) };
+  o.rel = (peso>0 && suma>0 && dias.length) ? Math.round(peso*dias.length/suma*100)/100 : 0;   // el peso de hoy contra el promedio de los días que quedan
+  o.prin = o.pres || o.min;                                                                      // la que se muestra grande: el presupuesto, si tiene
+  o.prinQue = o.pres ? 'pres' : 'min';
+  return o;
+}
+function metaDiaPesoTxt(n){ return (Math.round((Number(n)||0)*100)/100).toLocaleString('es-BO',{ minimumFractionDigits:2, maximumFractionDigits:2 }); }
+function metaDiaMesTxt(ym){ return mesNombre(ym).replace(/ de \d{4}$/,''); }
+/* La barra de «Tu día». */
+function metaDiaHtml(v){
+  if(!metaDiaVe()) return '';
+  var D=null; try{ D=metaDiaDatos(v); }catch(e){ D=null; }
+  if(!D || D.cerrado) return '';
+  var B=function(n){ return fmtBs0(n).replace(' ', ' '); }, P=D.prin, nom=D.prinQue==='pres' ? 'el presupuesto' : 'la mínima';
+  var dow=META_DIA_DOW[dowDe(D.dia)], mes=metaDiaMesTxt(D.ym);
+  var h='<div class="mdd" id="mis-meta" data-meta="'+(P ? P.dia : 0)+'" data-hoy="'+D.hoy+'">';
+  if(!D.hoyHabil){
+    h+='<div class="mdd-cab">🎯 Hoy ('+esc(dow)+') no es día hábil en tu tienda</div>'+
+       '<small>Lo que vendas igual suma al mes'+(D.hoy>0.005 ? (': hoy llevás <b>'+B(D.hoy)+'</b>') : '')+'. '+
+       (P && !P.llego ? ('Para '+nom+' faltan <b>'+B(P.falta)+'</b> en '+D.dias.length+' día'+(D.dias.length===1?'':'s')+' hábil'+(D.dias.length===1?'':'es')+'.') : '')+'</small>';
+  }else if(P && P.llego){
+    h+='<div class="mdd-cab">🎯 Ya llegaste a '+(D.prinQue==='pres' ? 'tu presupuesto' : 'tu mínima')+' de '+esc(mes)+' ('+B(P.meta)+')</div>'+
+       '<small>Hoy llevás <b>'+B(D.hoy)+'</b>: todo lo que sumes va a la comisión.</small>';
+  }else{
+    var pct=P.dia>0 ? Math.max(0, Math.min(1, D.hoy/P.dia)) : 0;
+    var linea=function(o, q){
+      if(!o) return '';
+      if(o.llego) return 'para '+q+' ya llegaste ✓';
+      if(o.cubrio) return 'para '+q+' hoy ya está ✓';
+      return 'para '+q+' faltan <b>'+B(o.queda)+'</b>';
+    };
+    var l2=[linea(D.pres, 'el presupuesto'), linea(D.min, 'la mínima')].filter(Boolean).join(' · ');
+    h+='<div class="mdd-cab">🎯 Hoy: llevás <b>'+B(D.hoy)+'</b> de <b>'+B(P.dia)+'</b></div>'+
+       '<div class="mdd-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+Math.round(pct*100)+'" aria-label="Lo vendido hoy contra la meta del día"><i style="width:'+Math.round(pct*100)+'%"></i></div>'+
+       '<small>'+ccmCap(l2)+'</small>';
+  }
+  if(D.otro>0.005) h+='<small class="mdd-otro">+ '+B(D.otro)+' cargado hoy que se entrega en '+esc(metaDiaMesTxt(D.otroYm))+': cuenta para ese mes.</small>';
+  h+='<details class="mdd-como"><summary>¿cómo se calcula?</summary>'+metaDiaCuentaHtml(D)+'</details>';
+  return h+'</div>';
+}
+/* La cuenta paso a paso (la de la muestra del dueño): presupuesto − vendido hasta ayer = lo que falta; ÷ los días que quedan; × el peso de hoy. */
+function metaDiaCuentaHtml(D){
+  var B=function(n){ return fmtBs0(n).replace(' ', ' '); }, mes=metaDiaMesTxt(D.ym), dow=META_DIA_DOW[dowDe(D.dia)];
+  var fila=function(t, v, cls){ return '<span'+(cls?' class="'+cls+'"':'')+'>'+t+'</span><b'+(cls?' class="'+cls+'"':'')+'>'+v+'</b>'; };
+  var bloque=function(o, q){
+    if(!o) return '';
+    var h='<div class="mdd-cuenta">'+fila(ccmCap(q)+' de '+esc(mes), B(o.meta))+fila('− Vendido hasta ayer', B(D.antes))+
+      fila('= Falta para fin de mes', B(o.falta), 'mdd-t');
+    if(o.llego) return h+fila('Ya llegaste', '✓', 'mdd-t')+'</div>';
+    if(!D.hoyHabil) return h+fila('Hoy no es día hábil en tu tienda', '—')+'</div>';
+    h+=fila('÷ Días hábiles que quedan (con hoy)', String(D.dias.length))+fila('= Parejo por día', B(o.parejo));
+    if(!D.W.pareja) h+=fila('× Peso de hoy ('+esc(dow)+')', metaDiaPesoTxt(D.rel));
+    return h+fila('= Meta de hoy', B(o.dia), 'mdd-t')+'</div>';
+  };
+  var h=bloque(D.pres, 'presupuesto')+bloque(D.min, 'mínima');
+  h+='<p class="mdd-nota">Lo vendido es lo mismo que «💰 Tu comisión»: las ventas que se entregan en '+esc(mes)+' (también la venta de tienda). «Hasta ayer» son las que cargaste antes de hoy; «llevás» son las que cargaste hoy.';
+  if(D.W.pareja) h+=' Todos los días pesan lo mismo: todavía hay pocos meses cerrados para saber qué día se vende más.';
+  else h+=' Cada día pesa según lo que se vende ese día de la semana en las tiendas '+(D.dom?'que abren el domingo':'que no abren el domingo')+' (del '+esc(fmtFecha(D.W.desde))+' al '+esc(fmtFecha(D.W.hasta))+'): un '+esc(dow)+' vende '+metaDiaPesoTxt(D.peso)+' veces lo de un día promedio, y los '+D.dias.length+' días que quedan pesan '+metaDiaPesoTxt(D.suma)+' en total (parejos serían '+D.dias.length+').';
+  if(D.dom) h+=' Tu tienda abre el domingo: el domingo cuenta como día hábil.';
+  return h+'</p>';
+}
+/* 🧽 Bloki, desde las `META_DIA_HORA_AVISO`, si lo vendido hoy no llega a la mitad de la meta del día. Una vez por día (la clave lleva el día). */
+function metaDiaAviso(v){
+  if(!metaDiaVe() || !v) return null;
+  if(horaBolivia().getHours()<META_DIA_HORA_AVISO) return null;
+  var D=metaDiaDatos(v); if(!D || D.cerrado || !D.hoyHabil) return null;
+  var P=(D.pres && D.pres.dia>0) ? D.pres : ((D.min && D.min.dia>0) ? D.min : null); if(!P) return null;
+  if(D.hoy >= P.dia/2-0.005) return null;
+  var falta=Math.ceil(r2(P.dia-D.hoy)-1e-9), pista='';
+  try{ pista=metaDiaHoraFuerte(v, D.dia); }catch(e){ pista=''; }
+  return { k:'mdd|'+D.dia+'|'+normNombre(v), sev:'am', ico:'🎯', t:'Te faltan '+fmtBs0(falta)+' para el día',
+    x:'Llevás '+fmtBs0(D.hoy)+' de '+fmtBs0(P.dia)+' ('+(P===D.pres ? 'la meta de hoy para tu presupuesto' : 'la meta de hoy para tu mínima')+').'+(pista?(' '+pista):''),
+    b:['Ver la meta', "asisIr('#mis-meta')"] };
+}
+/* 🏬 LA META DEL DÍA DE UNA TIENDA = la suma de la de su gente ese día (`cajaGente`: los vendedores cuya tienda ese día es esa, sin choferes,
+   Eduardo, ROHO ni internos), cada una con `metaDiaDatos`. PURA: no pinta ni guarda nada. La usan la caja (254) y «el mall en vivo» (281).
+   `meta` = la de hoy para el presupuesto (o la mínima, si no tiene presupuesto), `minima` = la de hoy para la mínima, `lleva` = lo cargado hoy
+   que cuenta en el mes. null si nadie de la tienda tiene metas guardadas. */
+function metaDiaTienda(tienda, dia){
+  dia=dia||diaNegocio();
+  var out={ meta:0, minima:0, lleva:0, porVend:{} }, n=0;
+  cajaGente(dia, tienda).forEach(function(g){
+    var m=null; try{ m=metaDiaDatos(g.nombre, dia); }catch(e){ m=null; }
+    if(!m || !m.prin) return;
+    var me=m.prin.dia, mi=m.min ? m.min.dia : 0;
+    out.porVend[m.v]={ meta:me, minima:mi, lleva:m.hoy, llego:!!m.prin.llego };
+    out.meta+=me; out.minima+=mi; out.lleva=r2(out.lleva+m.hoy); n++;
+  });
+  return n ? out : null;
+}
+/* «A las 18 h entra más gente»: con el contador de la tienda (`mallResumenDia`, si existe) la hora con más gente los mismos días de la semana
+   de las 4 semanas anteriores; si no, la hora en que más ventas se cargaron en su tienda en los últimos 56 días. Solo horas que todavía no
+   pasaron, y con al menos 3 casos. '' si no hay con qué decirlo. */
+function metaDiaHoraFuerte(v, dia){
+  var h0=horaBolivia().getHours(), tienda=sucursalDeVendedor(v, dia), C={}, gente=false, i;
+  if(typeof mallResumenDia==='function' && tienda){
+    for(i=1;i<=4;i++){
+      var R=null; try{ R=cajaMallNorm(mallResumenDia(stockSumarDias(dia, -7*i), tienda)); }catch(e){ R=null; }
+      if(R && R.horas.length){ gente=true; R.horas.forEach(function(x){ C[x.h]=(C[x.h]||0)+(Number(x.n)||0); }); }
+    }
+  }
+  if(!gente){
+    var desde=stockSumarDias(dia, -56), k=normNombre(v);
+    (STATE||[]).forEach(function(p){
+      if(!p || fueraDeConta(p) || !Number(p.ts)) return;
+      var f=contaFecha(p); if(f<desde || f>=dia) return;
+      if(tienda ? talTiendaDe(p)!==tienda : normNombre(p.vendedor)!==k) return;
+      var h=+hhmmDeTs(p.ts).slice(0,2); C[h]=(C[h]||0)+1;
+    });
+  }
+  var mejor=-1, n=0;
+  Object.keys(C).forEach(function(h){ h=+h; if(h>h0 && h<=22 && (C[h]>n || (C[h]===n && h<mejor))){ mejor=h; n=C[h]; } });
+  if(mejor<0 || n<3) return '';
+  return 'A las '+mejor+' h '+(gente ? 'entra más gente.' : ('es cuando más se vende en '+(tienda ? (cajaNombre(tienda)) : 'tus ventas')+'.'));
+}
 function misTopPintar(v, mine){
   var el=document.getElementById('mis-top'); if(!el) return;
   var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
@@ -34217,10 +34541,11 @@ function misTopPintar(v, mine){
     '</div>'+
     misRecoHtml(v)+                                    // 🏆 (14/11, 273) el vendedor del día y la mejor conversión
     misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
+    metaDiaHtml(v)+                                    // 🎯 (14/11, mejora 256) la meta de hoy
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
-      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button></div></div>';
+      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+'</div></div>';   // 🏬 (254) «Caja de hoy» en el aparato del mall
   var det=(MIS_EF_ABIERTO && (E.nuevos.length || E.retiros.length)) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo de '+esc(mesN(E.mes))+' · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
       E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+(c.envio?' · 🚚 flete':'')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
       E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
@@ -60362,6 +60687,724 @@ function talPintar(){
   box.innerHTML=html;
 }
 
+/* ============================================================================
+   🏬 LA CAJA DE VENTURA SUR, PARA CONTABILIDAD (14/11, mejora 254; el dueño la aprobó con la muestra
+   https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc: *«254 más detalles para mostrarle a contabilidad»*, *«la caja es solo para Ventura Sur»*).
+   El día de UNA tienda en una sola hoja: lo vendido, lo cobrado, lo que tiene que haber en la caja contra lo contado, el QR contra el extracto
+   del banco y lo que falta. SOLO las tiendas de `CAJA_TIENDAS` (hoy Ventura Mall, que el dueño llama «Ventura Sur», `CAJA_NOMBRE`).
+   · Dónde: Contabilidad → «🏬 Caja de Ventura Sur» (en el grupo 🔎 Revisar y en el libro de arriba), con el día para elegir. En el aparato del
+     mall (`me_mall_aparato`=1, se tilda adentro de la caja) o con un vendedor de esa tienda elegido sale como «🏬 Caja de hoy», también en
+     «☀️ Tu día». En Playwright los botones salen solo con `CAJA_PRUEBA` (la caja se abre igual con `cajaAbrir`).
+   · ⚠️ NINGÚN número se calcula aparte (una sola verdad):
+     – las ventas = las de Contabilidad por el día de INGRESO (`contaFecha`, `fueraDeConta`) de esa tienda: la venta de tienda por su sucursal y lo
+       demás por la tienda de quien vendió ese día (`talTiendaDe` → `sucursalDeVendedor`, §4oo); 🌅/🌆 por la hora de carga (`CAJA_CAMBIO_TURNO`);
+     – los cobros = los del Cuadre de ese día (`cuadrePagos` con `{modo:'dia'}`): los de la venta de tienda de la tienda y los de las ventas de su
+       gente (la tienda del vendedor EL DÍA DEL COBRO), de las ventas de hoy y de saldos viejos (`cajaTiendaCobro`);
+     – el efectivo = la regla del efectivo (`efePareo`) por la cuenta de cada persona de la tienda, como «📒 Mayor y saldos» (`mysMovs`): lo que
+       quedó de ayer (`mysSaldoAl` del día anterior) + lo cobrado hoy − lo retirado hoy = lo que debe haber (= su saldo al cierre del día);
+     – la meta de la tienda (256) = la suma de la de sus vendedores (`metaDiaDatos`).
+     Por eso la suma de las cajas de todos los días de un mes da lo mismo que el Cuadre del mes de esa tienda (`tests/test_caja_tienda.js`).
+   · El arqueo: «contado al cambio de turno» (opcional) y «contado al cerrar». Diferencia de la mañana = lo contado al cambio − lo que tenía que
+     haber a esa hora (lo de ayer + lo cobrado − lo retirado antes de las 15:00); la de la tarde = la del cierre menos la de la mañana. ⚠️ Un cobro
+     no guarda la hora: se sabe solo si es de una venta cargada ese mismo día (su hora de carga); los demás (saldos de ventas viejas) cuentan en
+     la tarde, y la pantalla lo dice.
+   · «🔒 Cerrar la caja»: guarda lo contado y la marca; después, cambiar el arqueo o los tildes de ese día pide la contraseña de Administración.
+     Al cerrar baja el Excel de 4 hojas (Ventas, Cobros, Efectivo, QR por banco); el PDF con las firmas («Entregó · vendedor del turno tarde» /
+     «Recibió · Contabilidad») sale con su botón (la misma foto a PDF de los informes: `hojasAPdf`).
+   · Se guarda en la fila del sistema `__caja_tienda__` (`CAJA_ID`, en `esFilaSistema`) con el JSON `{v:1, d:{"AAAA-MM-DD|Ventura Mall":
+     {am:{c,t,por}, pm:{c,t,por}, qr:{<id del cobro>:1}, cerr:{t,por}}}}`, los últimos `CAJA_DIAS` días. La reescriben varios aparatos, así que va
+     como `__talonario__` (REESCRITAS: relee, aplica solo lo tocado acá, sello y `juntar`; sin señal, a la cola con sus cambios). Para eso cada
+     dato es una CLAVE (`día|tienda`, campo, valor); un arqueo que cambia saca la clave vieja y pone la nueva, y si dos aparatos lo cambian a la vez
+     gana el más nuevo (`t`). Lo que perdió así sale de lo pendiente (`cajaPodarPerdidos`): si no, se volvía a mandar para siempre.
+   · Si existe `mallResumenDia(dia, tienda)` (el contador de la gente atendida, otra mejora), muestra las personas por hora y cuántas compraron,
+     por vendedor (`cajaMallNorm` acepta varias formas); si no existe, esa parte no sale.
+   ========================================================================== */
+var CAJA_TIENDAS=['Ventura Mall'];
+var CAJA_NOMBRE={ 'Ventura Mall':'Ventura Sur' };
+var CAJA_CAMBIO_TURNO='15:00';
+var CAJA_DIAS=62;
+var CAJA_LS_APARATO='me_mall_aparato';
+var CAJA_CAMBIOS={}, CAJA_VER=0, CAJA_MEMO={ k:null, s:null }, _cajaT=null, CAJA_CLAVE_OK=false;
+var CAJA={ dia:'', t:'', ult:null, ocupado:false };
+function cajaNombre(t){ return CAJA_NOMBRE[t]||String(t||''); }
+function cajaAparato(){ try{ return localStorage.getItem(CAJA_LS_APARATO)==='1'; }catch(e){ return false; } }
+function cajaAparatoPoner(on){
+  try{ if(on) localStorage.setItem(CAJA_LS_APARATO, '1'); else localStorage.removeItem(CAJA_LS_APARATO); }catch(e){}
+  toast(on ? ('🏬 Listo: este aparato es el de '+cajaNombre(CAJA.t||CAJA_TIENDAS[0])+'. La caja sale como «Caja de hoy».') : 'Este aparato ya no es el de la tienda.', 'ok');
+  try{ cajaBotonesPintar(); }catch(e){}
+}
+/* La tienda con caja de ESTE aparato o de quien lo usa: el aparato del mall (la primera de la lista) o el vendedor elegido ('' = ninguna). */
+function cajaTiendaDeAca(){
+  if(cajaAparato()) return CAJA_TIENDAS[0]||'';
+  var v=''; try{ v=getVendedorMem()||''; }catch(e){}
+  var t=v ? sucursalDeVendedor(v, diaNegocio()) : '';
+  return CAJA_TIENDAS.indexOf(t)>=0 ? t : '';
+}
+function cajaBotonesVe(){ return !(navigator.webdriver && !window.CAJA_PRUEBA); }
+/* Un botón por tienda con caja; la de este aparato dice «Caja de hoy». `soloAca` («Tu día»): solo la de este aparato o de quien lo usa. */
+function cajaBotonesHtml(cls, soloAca){
+  if(!cajaBotonesVe()) return '';
+  var aca=cajaTiendaDeAca();
+  return CAJA_TIENDAS.filter(function(t){ return !soloAca || t===aca; }).map(function(t){
+    var tj=JSON.stringify(t).replace(/"/g,'&quot;');
+    return '<button type="button" class="'+cls+' cjt-abre" data-tienda="'+esc(t)+'" onclick="cajaAbrir(null, '+tj+')" title="El día de la tienda en una hoja: ventas, cobros, el efectivo que tiene que haber, el QR contra el banco y lo que falta">🏬 '+
+      (t===aca ? 'Caja de hoy' : ('Caja de '+esc(cajaNombre(t))))+'</button>';
+  }).join('');
+}
+function cajaBotonesPintar(){
+  var b=document.getElementById('cjt-btns'); if(!b) return;
+  var h=cajaBotonesHtml('btn btn-sm cx-rev');
+  if(b._h!==h){ b.innerHTML=h; b._h=h; }
+  b.hidden=!h;
+}
+
+/* ---- lo guardado: una clave por dato ---- */
+function cajaDk(dia, t){ return dia+'|'+t; }
+function cajaK(dk, campo, val){ return dk+'\t'+campo+'\t'+(campo==='qr' ? String(val) : JSON.stringify(val)); }
+function cajaLeerClave(k){
+  var a=String(k||'').split('\t'); if(a.length<3 || !/^\d{4}-\d{2}-\d{2}\|/.test(a[0])) return null;
+  var o={ k:String(k), dk:a[0], dia:a[0].slice(0,10), t0:a[0].slice(11), campo:a[1] }, raw=a.slice(2).join('\t');
+  if(o.campo==='qr'){ if(!raw) return null; o.id=raw; return o; }
+  var v; try{ v=JSON.parse(raw); }catch(e){ return null; }
+  if(!Array.isArray(v)) return null;
+  if(o.campo==='am' || o.campo==='pm'){ o.c=r2(Number(v[0])||0); o.t=Number(v[1])||0; o.por=String(v[2]||''); return o; }
+  if(o.campo==='cerr'){ o.t=Number(v[0])||0; o.por=String(v[1]||''); return o; }
+  return null;
+}
+function cajaClavesDeFila(fila){
+  var o; try{ o=JSON.parse((fila && fila.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  var d=(o && o.d && typeof o.d==='object') ? o.d : {}, out=[];
+  Object.keys(d).forEach(function(dk){
+    var e=d[dk]||{}; if(!/^\d{4}-\d{2}-\d{2}\|/.test(dk)) return;
+    ['am','pm'].forEach(function(tu){ var a=e[tu]; if(a && a.c!=null && isFinite(Number(a.c))) out.push(cajaK(dk, tu, [r2(Number(a.c)), Number(a.t)||0, String(a.por||'')])); });
+    if(e.cerr && typeof e.cerr==='object') out.push(cajaK(dk, 'cerr', [Number(e.cerr.t)||0, String(e.cerr.por||'')]));
+    Object.keys((e.qr && typeof e.qr==='object') ? e.qr : {}).forEach(function(id){ if(e.qr[id]) out.push(cajaK(dk, 'qr', id)); });
+  });
+  return out;
+}
+/* Las claves → el JSON de la fila: de cada arqueo y cierre, el más nuevo; sin lo de más de `CAJA_DIAS` días. */
+function cajaObjDe(s){
+  var lim=stockSumarDias(diaNegocio(), -CAJA_DIAS), d={}, mejor={};
+  Object.keys(s||{}).sort().forEach(function(k){
+    var x=cajaLeerClave(k); if(!x || x.dia<lim) return;
+    if(x.campo==='qr'){ var e=d[x.dk]||(d[x.dk]={}); (e.qr=e.qr||{})[x.id]=1; return; }
+    var pk=x.dk+'\t'+x.campo, m=mejor[pk];
+    if(m && (m.t>x.t || (m.t===x.t && m.k>=x.k))) return;
+    mejor[pk]=x;
+  });
+  Object.keys(mejor).sort().forEach(function(pk){
+    var x=mejor[pk], e=d[x.dk]||(d[x.dk]={});
+    if(x.campo==='cerr') e.cerr={ t:x.t, por:x.por }; else e[x.campo]={ c:x.c, t:x.t, por:x.por };
+  });
+  var o={}; Object.keys(d).sort().forEach(function(dk){ o[dk]=d[dk]; });
+  return { v:1, d:o };
+}
+function cajaFilaGuardada(){ return (STATE||[]).filter(function(p){ return p && String(p.id)===CAJA_ID; })[0]||null; }
+function cajaSet(){
+  var f=cajaFilaGuardada(), k=(f ? (String(f.rev||'')+'|'+String(f.observaciones||'')) : '')+'#'+CAJA_VER;
+  if(CAJA_MEMO.k===k && CAJA_MEMO.s) return CAJA_MEMO.s;
+  var s=reescritaAplicar(cajaClavesDeFila(f), reescritaCambios(CAJA_ID, CAJA_CAMBIOS));
+  CAJA_MEMO={ k:k, s:s, o:null }; return s;
+}
+function cajaObj(){ var s=cajaSet(); if(!CAJA_MEMO.o) CAJA_MEMO.o=cajaObjDe(s); return CAJA_MEMO.o; }
+function cajaDiaGuardado(dia, t){ return cajaObj().d[cajaDk(dia, t)]||{}; }
+function cajaCerrada(dia, t){ return !!cajaDiaGuardado(dia, t).cerr; }
+function cajaFilaDe(s){ return filaSistema(CAJA_ID, '🏬 CAJA DE LAS TIENDAS (no tocar: la lee el panel)', JSON.stringify(cajaObjDe(s))); }
+function cajaFilaArmar(){ return cajaFilaDe(cajaSet()); }
+function cajaPonerEnState(f){
+  if(!f) return;
+  var c=JSON.parse(JSON.stringify(f)); delete c._cambios;
+  var i=-1; for(var k=0;k<STATE.length;k++) if(STATE[k] && String(STATE[k].id)===CAJA_ID){ i=k; break; }
+  if(i>=0) STATE[i]=c; else STATE.push(c);
+  CAJA_VER++; try{ saveMirror(); }catch(e){}
+}
+/* Un arqueo o un cierre de acá que perdió contra uno más nuevo de otro aparato (o un día que ya se podó) no se vuelve a mandar. */
+function cajaPodarPerdidos(fila){
+  var o; try{ o=JSON.parse((fila && fila.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  var d=(o && o.d) || {}, lim=stockSumarDias(diaNegocio(), -CAJA_DIAS);
+  var perdio=function(k, v){
+    if(!v) return false;
+    var x=cajaLeerClave(k); if(!x) return true;
+    if(x.dia<lim) return true;
+    if(x.campo==='qr') return false;
+    var w=(d[x.dk]||{})[x.campo]; if(!w) return false;
+    var wk = x.campo==='cerr' ? cajaK(x.dk, 'cerr', [Number(w.t)||0, String(w.por||'')]) : cajaK(x.dk, x.campo, [r2(Number(w.c)||0), Number(w.t)||0, String(w.por||'')]);
+    return wk!==k && (Number(w.t)||0)>=x.t;
+  };
+  var toca=false;
+  Object.keys(CAJA_CAMBIOS).forEach(function(k){ if(perdio(k, CAJA_CAMBIOS[k])){ delete CAJA_CAMBIOS[k]; toca=true; } });
+  var a=getPending(), tq=false;
+  a=a.filter(function(p){
+    if(!p || String(p.id)!==CAJA_ID || !p._cambios) return true;
+    Object.keys(p._cambios).forEach(function(k){ if(perdio(k, p._cambios[k])){ delete p._cambios[k]; tq=true; } });
+    if(!Object.keys(p._cambios).length){ tq=true; return false; }
+    return true;
+  });
+  if(tq){ setPending(a); try{ updateFooter(); }catch(e){} }
+  if(toca || tq) CAJA_VER++;
+}
+REESCRITAS[CAJA_ID]={
+  cambios:function(){ return CAJA_CAMBIOS; },
+  claves:function(fila){ return cajaClavesDeFila(fila); },
+  armar:function(s){ CAJA_VER++; return cajaFilaDe(s); },
+  listo:function(fila){ if(fila && String(fila.id)===CAJA_ID){ cajaPonerEnState(fila); cajaPodarPerdidos(fila); } cajaRepintar(); }
+};
+/* Como `talGuardar`: la intención entra a la cola al tocar; con un respiro relee la planilla y manda con sello y `juntar`. */
+function cajaGuardar(){
+  reescritaColaAlDia(CAJA_ID, CAJA_CAMBIOS);
+  try{ reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS); }catch(e){}
+  REESCRITA_ESPERA[CAJA_ID]=1;
+  clearTimeout(_cajaT);
+  _cajaT=setTimeout(function(){
+    var listo=function(){ delete REESCRITA_ESPERA[CAJA_ID]; };
+    var mandar=function(){
+      var cam=reescritaCambios(CAJA_ID, CAJA_CAMBIOS), fila=reescritaConSello(cajaFilaArmar());
+      apiSave(fila, { juntar:true }).then(function(res){
+        listo();
+        if(res && res.ok){ var g=(res.pedido && String(res.pedido.id)===CAJA_ID) ? res.pedido : fila; cajaPonerEnState(g); reescritaConfirmada(CAJA_ID, cam, g); cajaPodarPerdidos(g); cajaRepintar(); }
+        else reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS);
+      }, function(){ listo(); reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS); });
+    };
+    if(CONNECTED){
+      conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+        if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+        var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CAJA_ID) srv=p; });
+        reescritaRevAnotar(srv); if(srv) cajaPonerEnState(srv);
+      }, function(){}).then(mandar, mandar);
+    }
+    else { listo(); reescritaEncolar(cajaFilaArmar(), CAJA_CAMBIOS); }
+  }, 700);
+}
+function cajaRepintar(){ try{ if(modalMuestra('cjt')) cajaPintar(); }catch(e){} }
+function cajaClavePuede(){ return !!UNLOCKED || CAJA_CLAVE_OK; }
+function cajaClaveProbar(pass){
+  var stored=DEFAULT_HASH; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){}
+  if(sha256(String(pass||''))===stored){ CAJA_CLAVE_OK=true; cajaPintar(); toast('Listo: ya podés cambiar lo de un día cerrado.','ok'); }
+  else toast('Esa no es la contraseña de Administración.','err');
+}
+/* ¿Se puede tocar el arqueo y los tildes de ese día? Abierto, sí; cerrado, solo con la contraseña. */
+function cajaPuedeTocar(dia, t){ return !cajaCerrada(dia, t) || cajaClavePuede(); }
+function cajaBloqueado(dia, t){
+  if(cajaPuedeTocar(dia, t)) return false;
+  toast('🔒 La caja del '+fmtFecha(dia)+' está cerrada: para cambiarla hace falta la contraseña de Administración.','err',7000);
+  cajaPintar(); return true;
+}
+/* Anota lo contado (`turno` 'am' = al cambio de turno, 'pm' = al cerrar). Vacío lo borra. Devuelve false si no se pudo. */
+function cajaArqueoPoner(dia, t, turno, txt, callado){
+  if(cajaBloqueado(dia, t)) return false;
+  txt=String(txt==null?'':txt).trim();
+  var err=txt ? montoError(txt) : '';
+  if(err){ toast(montoAviso('Lo contado', txt, err),'err',8000); var el=document.getElementById('cjt-arq-'+turno); if(el) el.classList.add('err'); return false; }
+  var dk=cajaDk(dia, t), S=cajaSet(), nuevo=txt ? r2(parseMonto(txt)) : null, ya=cajaDiaGuardado(dia, t)[turno];
+  if(ya && nuevo!=null && Math.abs(Number(ya.c)-nuevo)<0.005) return true;   // lo mismo que ya estaba
+  if(!ya && nuevo==null) return true;
+  Object.keys(S).forEach(function(k){ var x=cajaLeerClave(k); if(x && x.dk===dk && x.campo===turno) CAJA_CAMBIOS[k]=false; });
+  if(nuevo!=null) CAJA_CAMBIOS[cajaK(dk, turno, [nuevo, Date.now(), quienEdita()||''])]=true;
+  CAJA_VER++; cajaGuardar();
+  if(!callado) cajaPintar();
+  return true;
+}
+function cajaQrTildar(dia, t, id, on){
+  if(cajaBloqueado(dia, t)) return;
+  CAJA_CAMBIOS[cajaK(cajaDk(dia, t), 'qr', id)]=!!on;
+  CAJA_VER++; cajaGuardar(); cajaPintar();
+}
+
+/* ---- las cuentas ---- */
+function cajaTiendaVenta(p){ return talTiendaDe(p); }
+/* El cobro es de la tienda si es de una venta de tienda de esa tienda, o de una venta de alguien que ese día estaba en la tienda. */
+function cajaTiendaCobro(p, c){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p && p.vendedor, (c && c.fecha) || contaFecha(p)) || ''; }
+function cajaHoraTs(ts){ return Number(ts) ? hhmmDeTs(ts) : ''; }
+function cajaTurnoDe(h){ return (h && h<CAJA_CAMBIO_TURNO) ? 'am' : 'pm'; }
+/* La gente de la tienda ese día (sin choferes, Eduardo, ROHO ni internos): la lista de vendedores y los que aparecen en ventas y retiros. */
+function cajaGente(dia, t){
+  var CH=choferesConocidosSet(), vis={}, out=[];
+  var meter=function(v){
+    var n=nombreCanonico(v)||String(v||'').trim(), k=normNombre(n);
+    if(!k || vis[k]) return; vis[k]=1;
+    if(CH[k] || contaExcluido(n)) return;
+    if(sucursalDeVendedor(n, dia)===t) out.push({ k:k, nombre:n });
+  };
+  VENDEDORES.forEach(meter);
+  (STATE||[]).forEach(function(p){ if(p && !esFilaSistema(p)) meter(p.vendedor); });
+  try{ retirosTodos().forEach(function(r){ meter(r.entrega); }); }catch(e){}
+  return out.sort(function(a,b){ return a.nombre.localeCompare(b.nombre,'es'); });
+}
+/* El id de un cobro para la tilde del extracto: la venta, el día, el monto, la forma y el recibo (y cuál, si hay dos iguales). */
+function cajaCobroIds(L){
+  var vistos={};
+  L.forEach(function(c){
+    var base=String(c.p.id)+'|'+c.fecha+'|'+r2(c.monto)+'|'+cuadreForma(c)+'|'+(c.nota||'');
+    vistos[base]=(vistos[base]||0)+1;
+    c.cid=base+(vistos[base]>1 ? ('#'+vistos[base]) : '');
+  });
+  return L;
+}
+/* Lo que devuelve el contador de la gente (`mallResumenDia`), en una forma: `{ horas:[{h, n, c}], vend:[{v, n, c}] }`. Acepta listas o
+   mapas, con nombres en castellano (atendidas/personas/gente, compraron/compras) o cortos (n, c). null si no trae nada de eso. */
+function cajaMallNorm(R){
+  if(!R || typeof R!=='object') return null;
+  var num=function(o, ks){ for(var i=0;i<ks.length;i++){ var v=o[ks[i]]; if(v!=null && isFinite(Number(v))) return Number(v); } return null; };
+  var NS=['n','atendidas','atendidos','personas','gente','total','visitas'], CS=['c','compraron','compras','ventas','compro'];
+  var lista=function(x, clave){
+    if(!x) return [];
+    if(Array.isArray(x)) return x.map(function(o){ return (o && typeof o==='object') ? o : null; }).filter(Boolean);
+    if(typeof x==='object') return Object.keys(x).map(function(k){ var o=x[k]; if(o==null) return null; if(typeof o!=='object') o={ n:o }; var y={}; for(var z in o) y[z]=o[z]; if(y[clave]==null) y[clave]=k; return y; }).filter(Boolean);
+    return [];
+  };
+  var H=lista(R.horas||R.porHora||R.hora||R.h, 'h').map(function(o){
+    var h=o.h!=null ? o.h : (o.hora!=null ? o.hora : null); h=parseInt(String(h).slice(0,2), 10);
+    var n=num(o, NS); if(!isFinite(h) || n==null) return null;
+    return { h:h, n:n, c:num(o, CS)||0 };
+  }).filter(Boolean).sort(function(a,b){ return a.h-b.h; });
+  var V=lista(R.vendedores||R.porVendedor||R.vend||R.v, 'v').map(function(o){
+    var v=String(o.v||o.vendedor||o.nombre||'').trim(), n=num(o, NS); if(!v || n==null) return null;
+    return { v:nombreCanonico(v)||v, n:n, c:num(o, CS)||0 };
+  }).filter(Boolean).sort(function(a,b){ return b.n-a.n || a.v.localeCompare(b.v,'es'); });
+  if(!H.length && !V.length) return null;
+  return { horas:H, vend:V };
+}
+/* TODO el día de la tienda `t`. */
+function cajaDatos(dia, t, ligero){
+  var ayer=stockSumarDias(dia, -1), CH=choferesConocidosSet();
+  /* 1 · las ventas del día */
+  var ventas=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || fueraDeConta(p) || esBorrador(p) || contaFecha(p)!==dia || cajaTiendaVenta(p)!==t) return;
+    var h=cajaHoraTs(p.ts), pags=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0.005 && (!c.fecha || c.fecha<=dia); });
+    var cta=0, med={}; pags.forEach(function(c){ cta=r2(cta+(Number(c.monto)||0)); med[cuadreForma(c)]=1; });
+    var tot=ventaTotal(p), sal=(p.pagado && cta<0.005) ? 0 : Math.max(0, r2(tot-cta));
+    ventas.push({ p:p, h:h, turno:cajaTurnoDe(h), total:tot, cuenta:cta, saldo:sal, medios:Object.keys(med), pagadaSinMonto:!!(p.pagado && cta<0.005),
+                  doc:docVentaDe(p), docN:docNumDe(p), docFalta:docVentaFalta(p) });
+  });
+  ventas.sort(function(a,b){ return (a.h||'99')<(b.h||'99') ? -1 : ((a.h||'99')>(b.h||'99') ? 1 : 0); });
+  var V={ n:ventas.length, total:0, cuenta:0, saldo:0, am:[], pm:[] };
+  ventas.forEach(function(x){ V.total=r2(V.total+x.total); V.cuenta=r2(V.cuenta+x.cuenta); V.saldo=r2(V.saldo+x.saldo); V[x.turno].push(x); });
+  /* 2 · los cobros del día (los del Cuadre) */
+  var gente=cajaGente(dia, t), enG={}; gente.forEach(function(g){ enG[g.k]=g; });
+  var cobros=cajaCobroIds(cuadrePagos({ modo:'dia', val:dia }, '').filter(function(c){ return cajaTiendaCobro(c.p, c)===t; }));
+  cobros.forEach(function(c){
+    c.h = isoDeTsBolivia(c.p.ts)===c.fecha ? hhmmDeTs(c.p.ts) : '';
+    c.forma=cuadreForma(c);
+    c.deHoy = contaFecha(c.p)===dia;
+    c.efe = c.metodo==='Efectivo';
+    if(c.efe){ c.quien=pagoRecibio(c, c.p); c.qk=normNombre(c.quien); c.chofer=!!CH[c.qk]; c.enCaja=!!enG[c.qk]; }
+  });
+  var formas=cuadrePorForma(cobros), totCob=0; cobros.forEach(function(c){ totCob=r2(totCob+c.monto); });
+  /* 3 · el efectivo: la cuenta de cada persona de la tienda (la de «Mayor y saldos») */
+  var E={ filas:[], ayer:0, cob:0, cobAm:0, cobPm:0, cobSinHora:0, ret:0, retAm:0, retPm:0, otros:0, debe:0, rets:[] };
+  gente.forEach(function(g){
+    var M=mysMovs(g.k, dia), o={ k:g.k, nombre:g.nombre, ayer:mysSaldoAl(M, ayer), cob:0, cobAm:0, cobPm:0, cobSinHora:0, ret:0, retAm:0, retPm:0, otros:0, debe:0 };
+    M.forEach(function(m){
+      if(m.f!==dia) return;
+      if(m.tipo==='cob'){
+        var hh=(m.c && m.c.t!=null) ? hhmmDeTs(m.c.t) : '';
+        o.cob=r2(o.cob+m.debe);
+        if(hh && hh<CAJA_CAMBIO_TURNO) o.cobAm=r2(o.cobAm+m.debe); else { o.cobPm=r2(o.cobPm+m.debe); if(!hh) o.cobSinHora=r2(o.cobSinHora+m.debe); }
+      }else if(m.tipo==='ret'){
+        var hr=(m.x && isFinite(m.x.t)) ? hhmmDeTs(m.x.t) : '';
+        o.ret=r2(o.ret+m.haber);
+        if(hr && hr<CAJA_CAMBIO_TURNO) o.retAm=r2(o.retAm+m.haber); else o.retPm=r2(o.retPm+m.haber);
+        E.rets.push({ x:m.x, r:m.x.r, h:hr, quien:g.nombre });
+      }else o.otros=r2(o.otros+m.debe-m.haber);   // 🔒 el cierre de un mes (en su día de gracia) o el saldo de antes de octubre
+    });
+    o.debe=mysSaldoAl(M, dia);
+    if(Math.abs(o.ayer)<0.005 && o.cob<0.005 && o.ret<0.005 && Math.abs(o.otros)<0.005 && Math.abs(o.debe)<0.005) return;
+    E.filas.push(o);
+    ['ayer','cob','cobAm','cobPm','cobSinHora','ret','retAm','retPm','otros','debe'].forEach(function(z){ E[z]=r2(E[z]+o[z]); });
+  });
+  E.rets.sort(function(a,b){ return (a.h||'99')<(b.h||'99') ? -1 : 1; });
+  E.espAm=r2(E.ayer+E.otros+E.cobAm-E.retAm);                 // lo que tenía que haber al cambio de turno
+  var G=cajaDiaGuardado(dia, t), A={ am:(G.am ? Number(G.am.c) : null), pm:(G.pm ? Number(G.pm.c) : null), amPor:(G.am && G.am.por)||'', pmPor:(G.pm && G.pm.por)||'',
+    amT:(G.am && G.am.t)||0, pmT:(G.pm && G.pm.t)||0 };
+  A.difAm = A.am!=null ? r2(A.am-E.espAm) : null;
+  A.difCierre = A.pm!=null ? r2(A.pm-E.debe) : null;
+  A.difPm = A.difCierre!=null ? (A.difAm!=null ? r2(A.difCierre-A.difAm) : A.difCierre) : null;
+  /* 4 · QR y transferencias contra el banco, por cuenta */
+  var qrT=(G.qr||{}), bancos={}, ordenB=[];
+  cobros.forEach(function(c){
+    if(c.metodo!=='QR' && c.metodo!=='Transferencia') return;
+    var b=c.banco||'Sin banco anotado';
+    if(!bancos[b]){ bancos[b]={ banco:b, L:[], monto:0, tild:0, nTild:0 }; ordenB.push(b); }
+    c.enExtracto=!!qrT[c.cid];
+    bancos[b].L.push(c); bancos[b].monto=r2(bancos[b].monto+c.monto);
+    if(c.enExtracto){ bancos[b].tild=r2(bancos[b].tild+c.monto); bancos[b].nTild++; }
+  });
+  ordenB.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  var QR=ordenB.map(function(b){ return bancos[b]; }), nQr=0, nQrT=0; QR.forEach(function(b){ nQr+=b.L.length; nQrT+=b.nTild; });
+  /* 5 · lo que falta */
+  var F={ sinComp:cobros.filter(function(c){ return !c.comps.length; }), sinDoc:ventas.filter(function(x){ return x.docFalta; }),
+          efeFuera:cobros.filter(function(c){ return c.efe && !c.enCaja && !c.chofer; }),
+          efeChofer:cobros.filter(function(c){ return c.efe && c.chofer; }) };
+  F.n=F.sinComp.length+F.sinDoc.length+F.efeFuera.length;
+  /* 6 · la meta del día de la tienda (256: `metaDiaTienda`) y el contador de la gente. `ligero` (`cajaResumenDia`): sin estas dos. */
+  var MT=null, mall=null;
+  if(!ligero){
+    try{ MT=metaDiaTienda(t, dia); }catch(e){ MT=null; }
+    if(typeof mallResumenDia==='function'){ try{ mall=cajaMallNorm(mallResumenDia(dia, t)); }catch(e){ mall=null; } }
+  }
+  return { dia:dia, t:t, nombre:cajaNombre(t), hoy:diaNegocio(), ventas:ventas, V:V, cobros:cobros, formas:formas, totCob:totCob, gente:gente, E:E, A:A,
+           QR:QR, nQr:nQr, nQrT:nQrT, F:F, MT:MT, mall:mall, cerr:G.cerr||null, cerrada:!!G.cerr };
+}
+
+/* 📊 (14/11) EL RESUMEN DEL DÍA DE LA CAJA, para leerlo de afuera sin repetir la cuenta (lo usa «el mall en vivo», 281, y los números de arriba
+   de la caja). PURO: no pinta ni guarda nada. `faltan` = cuántas cosas hay en rojo en «Lo que falta»; `dif` = lo contado al cerrar − lo que
+   tiene que haber (null sin contar). */
+function cajaResumenDe(D){
+  return { ventas:D.V.total, nVentas:D.V.n, cobrado:D.totCob, nCobros:D.cobros.length, efectivoCobrado:D.E.cob, retirado:D.E.ret, quedoAyer:D.E.ayer, debeHaber:D.E.debe,
+           contadoAm:D.A.am, contadoPm:D.A.pm, dif:D.A.difCierre, difAm:D.A.difAm, difPm:D.A.difPm, cerrada:!!D.cerrada, faltan:D.F.n };
+}
+function cajaResumenDia(tienda, dia){ return cajaResumenDe(cajaDatos(dia||diaNegocio(), tienda, true)); }
+
+/* ---- la ventana ---- */
+function cajaAbrir(dia, t){
+  t=t||cajaTiendaDeAca()||CAJA_TIENDAS[0];
+  if(CAJA_TIENDAS.indexOf(t)<0){ toast('Esa tienda no tiene caja en el panel.','err'); return; }
+  var hoy=diaNegocio();
+  CAJA.t=t; CAJA.dia=(dia && /^\d{4}-\d{2}-\d{2}$/.test(dia) && dia<=hoy) ? dia : hoy;
+  if(typeof POR_COBRAR_VOLVER!=='undefined') POR_COBRAR_VOLVER=null;
+  openModal('<div class="modal-h cjt-h"><h3>🏬 Caja de '+esc(cajaNombre(t))+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="cjt"><div id="cjt-cuerpo"></div></div>', true);
+  cajaPintar();
+}
+function cajaMover(n){ if(!CAJA.t) return; var d=stockSumarDias(CAJA.dia, n), hoy=diaNegocio(); if(d>hoy) d=hoy; CAJA.dia=d; cajaPintar(); }
+function cajaElegirDia(v){ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v||''))) return; var hoy=diaNegocio(); CAJA.dia=v>hoy?hoy:v; cajaPintar(); }
+function cajaAbrirVenta(id){ POR_COBRAR_VOLVER={ origen:'caja', id:String(id) }; showContaModal(id); }
+function cajaVolver(){ cajaAbrir(CAJA.dia, CAJA.t); }
+function cajaDiaTxt(f){ return META_DIA_DOW[dowDe(f)]+' '+fmtFecha(f); }
+function cajaHoraDe(ts){ return ts ? hhmmDeTs(ts) : ''; }
+function cajaDifHtml(d, q){
+  if(d==null) return '<span class="cjt-gris">—</span>';
+  if(Math.abs(d)<0.005) return '<b class="cjt-ok">✓ cuadra</b>';
+  return '<b class="'+(d<0?'cjt-mal':'cjt-ama')+'">'+(d<0?'falta ':'sobra ')+fmtBs(Math.abs(d))+'</b>'+(q?(' <small>· '+esc(q)+'</small>'):'');
+}
+function cajaFotosHtml(L){
+  L=L||[]; if(!L.length) return '<span class="cjt-mal">sin foto</span>';
+  return L.map(function(fid,k){ return '<a href="'+esc(fotoVer(fid))+'" target="_blank" rel="noopener" title="Ver la imagen '+(k+1)+'">📎</a>'; }).join(' ');
+}
+function cajaPintar(){
+  var box=document.getElementById('cjt-cuerpo'); if(!box || !CAJA.t) return;
+  var sc=document.getElementById('modal-box'), top=sc ? sc.scrollTop : 0;
+  var D; try{ D=cajaDatos(CAJA.dia, CAJA.t); }catch(e){ box.innerHTML='<div class="cjt-av cjt-av-r">No se pudo armar la caja: '+esc((e && e.message)||e)+'</div>'; return; }
+  CAJA.ult=D;
+  var RS=cajaResumenDe(D);
+  var B=fmtBs, hoy=D.hoy, puede=cajaPuedeTocar(D.dia, D.t), dis=puede ? '' : ' disabled', idj=function(s){ return JSON.stringify(String(s)).replace(/"/g,'&quot;'); };
+  var tj=idj(D.t), dj=idj(D.dia);
+  var h='<div class="cjt-ctl">'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="cajaMover(-1)" aria-label="Día anterior">◀</button>'+
+      '<input type="date" id="cjt-dia" value="'+esc(D.dia)+'" max="'+esc(hoy)+'" onchange="cajaElegirDia(this.value)" aria-label="Día de la caja">'+
+      '<button type="button" class="btn btn-ghost btn-sm" onclick="cajaMover(1)"'+(D.dia>=hoy?' disabled':'')+' aria-label="Día siguiente">▶</button>'+
+      '<b class="cjt-dia">'+esc(ccmCap(cajaDiaTxt(D.dia)))+(D.dia===hoy?' · hoy':'')+'</b>'+
+      (D.cerrada ? ('<span class="cjt-est cjt-est-c">🔒 Cerrada '+(D.cerr.t?('a las '+esc(cajaHoraDe(D.cerr.t))+(isoDeTsBolivia(D.cerr.t)!==D.dia?(' del '+esc(fmtFechaCorta(isoDeTsBolivia(D.cerr.t)))):'')):'')+(D.cerr.por?(' · '+esc(D.cerr.por)):'')+'</span>')
+                 : '<span class="cjt-est">🔓 Abierta</span>')+
+    '</div>';
+  /* los números de arriba */
+  h+='<div class="cjt-kpis">'+
+      '<div><small>Ventas del día</small><b>'+B(RS.ventas)+'</b><span>'+RS.nVentas+' venta'+(RS.nVentas===1?'':'s')+' · 🌅 '+D.V.am.length+' · 🌆 '+D.V.pm.length+'</span></div>'+
+      '<div><small>Cobrado hoy</small><b>'+B(RS.cobrado)+'</b><span>'+RS.nCobros+' cobro'+(RS.nCobros===1?'':'s')+(D.formas.length?(' · '+esc(D.formas.map(function(f){ return f.forma; }).join(', '))):'')+'</span></div>'+
+      '<div class="cjt-k-efe"><small>Debe haber en la caja</small><b>'+B(RS.debeHaber)+'</b><span>'+(RS.dif==null?'todavía sin contar al cerrar':(Math.abs(RS.dif)<0.005?'✓ contado y cuadra':((RS.dif<0?'falta ':'sobra ')+B(Math.abs(RS.dif)))))+'</span></div>'+
+      '<div class="'+(RS.faltan?'cjt-k-mal':'cjt-k-ok')+'"><small>Lo que falta</small><b>'+(RS.faltan?RS.faltan:'✓')+'</b><span>'+(RS.faltan?'en rojo, abajo':'nada pendiente')+'</span></div>'+
+    '</div>';
+  if(!D.gente.length) h+='<div class="cjt-av">Todavía ningún vendedor del panel está en '+esc(D.nombre)+' ese día (la tienda de cada uno sale de su sucursal en Kommo). Las ventas de tienda con «'+esc(D.t)+'» igual salen acá.</div>';
+  /* 🎯 la meta del día de la tienda (256) */
+  if(D.MT){
+    var pct=D.MT.meta>0 ? Math.max(0, Math.min(1, D.MT.lleva/D.MT.meta)) : 0;
+    h+='<div class="cjt-sec cjt-meta"><h4>🎯 La meta de hoy de la tienda</h4>'+
+      '<div class="cjt-meta-cab">Llevan <b>'+fmtBs0(D.MT.lleva)+'</b> de <b>'+fmtBs0(D.MT.meta)+'</b>'+(D.MT.minima?(' · mínima del día '+fmtBs0(D.MT.minima)):'')+'</div>'+
+      '<div class="mdd-bar cjt-meta-bar"><i style="width:'+Math.round(pct*100)+'%"></i></div>'+
+      '<div class="tw"><table class="mini cjt-t"><thead><tr><th>Vendedor</th><th class="n">Meta de hoy</th><th class="n">Mínima de hoy</th><th class="n">Lleva hoy</th><th class="n">%</th></tr></thead><tbody>'+
+      Object.keys(D.MT.porVend).map(function(v){ var m=D.MT.porVend[v];
+        return '<tr><td>'+esc(v)+(m.llego?' <small class="cjt-ok">ya llegó al presupuesto</small>':'')+'</td><td class="n">'+fmtBs0(m.meta)+'</td><td class="n">'+fmtBs0(m.minima)+'</td><td class="n"><b>'+fmtBs0(m.lleva)+'</b></td><td class="n">'+(m.meta>0?Math.round(m.lleva/m.meta*100)+' %':'—')+'</td></tr>'; }).join('')+
+      '</tbody></table></div><div class="cjt-nota">La meta de cada uno es la de «☀️ Tu día»: lo que le falta del presupuesto del mes repartido entre los días hábiles que quedan. «Lleva hoy» = lo que cargó hoy y se entrega este mes.</div></div>';
+  }
+  /* 👥 el contador de la gente (si existe) */
+  if(D.mall){
+    var mx=0; D.mall.horas.forEach(function(x){ mx=Math.max(mx, x.n); });
+    h+='<div class="cjt-sec"><h4>👥 La gente que se atendió</h4>'+
+      (D.mall.horas.length ? ('<div class="cjt-hbar">'+D.mall.horas.map(function(x){ return '<div title="'+x.h+' h · '+x.n+' atendidas · '+x.c+' compraron"><i style="height:'+(mx?Math.round(x.n/mx*100):0)+'%"></i><i class="c" style="height:'+(mx?Math.round(x.c/mx*100):0)+'%"></i><span>'+x.h+'</span></div>'; }).join('')+'</div>'+
+        '<div class="cjt-ley"><span><i></i>atendidas</span><span><i class="c"></i>compraron</span></div>') : '')+
+      (D.mall.vend.length ? ('<div class="tw"><table class="mini cjt-t"><thead><tr><th>Vendedor</th><th class="n">Atendió</th><th class="n">Compraron</th><th class="n">%</th></tr></thead><tbody>'+
+        D.mall.vend.map(function(x){ return '<tr><td>'+esc(x.v)+'</td><td class="n">'+x.n+'</td><td class="n">'+x.c+'</td><td class="n">'+(x.n?Math.round(x.c/x.n*100)+' %':'—')+'</td></tr>'; }).join('')+'</tbody></table></div>') : '')+
+      '</div>';
+  }
+  /* 1 · ventas */
+  var filaV=function(x){
+    var p=x.p, pj=idj(p.id);
+    return '<tr class="'+(x.docFalta?'cjt-tr-mal':'')+'" onclick="cajaAbrirVenta('+pj+')" title="Abrir la venta">'+
+      '<td class="cjt-oc">'+esc(ocEtiq(p.oc)||'—')+'</td><td>'+esc(x.h||'—')+'</td><td>'+esc(nombreCanonico(p.vendedor)||p.vendedor||'—')+'</td>'+
+      '<td>'+esc(p.cliente||'—')+(esVentaTienda(p)?' <small class="cjt-gris">· tienda</small>':'')+'</td>'+
+      '<td class="n"><b>'+B(x.total)+'</b></td><td class="n">'+(x.pagadaSinMonto?'<small class="cjt-ama">pagada sin monto</small>':B(x.cuenta))+'</td>'+
+      '<td class="n">'+(x.saldo>0.005?('<b class="cjt-mal">'+B(x.saldo)+'</b>'):'—')+'</td>'+
+      '<td>'+esc(x.medios.join(' + ')||'sin pago')+'</td>'+
+      '<td>'+(x.docFalta ? '<span class="cjt-pill cjt-pill-r">falta '+(x.doc?('N° de '+(x.doc==='F'?'factura':'remisión')):'fact./rem.')+'</span>' : (x.doc?((x.doc==='F'?'🧾 F ':'📄 R ')+esc(x.docN||'s/n°')):'—'))+'</td></tr>';
+  };
+  var tablaV=function(L, tit){
+    if(!L.length) return '';
+    var tt=0; L.forEach(function(x){ tt=r2(tt+x.total); });
+    return '<div class="cjt-sub">'+tit+' · '+L.length+' · '+B(tt)+'</div><div class="tw"><table class="mini cjt-t"><thead><tr><th>OC</th><th>Hora</th><th>Vendedor</th><th>Cliente</th><th class="n">Total</th><th class="n">A cuenta</th><th class="n">Saldo</th><th>Pago</th><th>Fact./Rem.</th></tr></thead><tbody>'+
+      L.map(filaV).join('')+'</tbody></table></div>';
+  };
+  h+='<div class="cjt-sec"><h4>1 · Ventas del día <small>'+D.V.n+' · '+B(D.V.total)+' · a cuenta '+B(D.V.cuenta)+(D.V.saldo>0.005?(' · saldo '+B(D.V.saldo)):'')+'</small></h4>'+
+    (D.V.n ? (tablaV(D.V.am, '🌅 Mañana (antes de las '+CAJA_CAMBIO_TURNO+')')+tablaV(D.V.pm, '🌆 Tarde (desde las '+CAJA_CAMBIO_TURNO+')')) : '<div class="cjt-vacio">Sin ventas cargadas este día.</div>')+
+    '<div class="cjt-nota">Las de Contabilidad por la fecha de ingreso. «A cuenta» = lo que se cobró de esa venta hasta este día.</div></div>';
+  /* 2 · cobros */
+  h+='<div class="cjt-sec"><h4>2 · Cobros del día <small>'+D.cobros.length+' · '+B(D.totCob)+'</small></h4>';
+  if(!D.cobros.length) h+='<div class="cjt-vacio">Sin cobros este día.</div>';
+  D.formas.forEach(function(f){
+    var L=D.cobros.filter(function(c){ return c.forma===f.forma; });
+    h+='<div class="cjt-sub">'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'🏦 ')))+esc(f.forma)+' · '+f.n+' · '+B(f.monto)+'</div>'+
+      '<div class="tw"><table class="mini cjt-t"><thead><tr><th>Hora</th><th>Cliente</th><th>OC</th><th>Vendedor</th><th class="n">Monto</th><th>N° recibo</th>'+(f.efectivo?'<th>Lo recibió</th>':'')+'<th>Foto</th></tr></thead><tbody>'+
+      L.map(function(c){ var p=c.p;
+        return '<tr class="'+(!c.comps.length || (c.efe && !c.enCaja && !c.chofer)?'cjt-tr-mal':'')+'" onclick="cajaAbrirVenta('+idj(p.id)+')" title="Abrir la venta">'+
+          '<td>'+esc(c.h||'—')+'</td><td>'+esc(p.cliente||'—')+(c.deHoy?'':' <small class="cjt-gris">· saldo de una venta del '+esc(fmtFechaCorta(contaFecha(p)))+'</small>')+(c.anticipo?' <small class="cjt-gris">· adelanto</small>':'')+(c.envio?' <small class="cjt-gris">· 🚚 flete</small>':'')+'</td>'+
+          '<td class="cjt-oc">'+esc(ocEtiq(p.oc)||'—')+'</td><td>'+esc(nombreCanonico(p.vendedor)||'—')+'</td><td class="n"><b>'+B(c.monto)+'</b></td>'+
+          '<td>'+(c.nota?esc(c.nota):'<span class="cjt-gris">—</span>')+'</td>'+
+          (f.efectivo?('<td>'+esc(c.quien||'—')+(c.chofer?' <small class="cjt-ama">🚚 chofer: no está en esta caja</small>':(c.enCaja?'':' <small class="cjt-mal">no es de esta caja</small>'))+'</td>'):'')+
+          '<td onclick="event.stopPropagation()">'+cajaFotosHtml(c.comps)+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  });
+  h+='</div>';
+  /* 3 · efectivo */
+  var E=D.E, A=D.A;
+  h+='<div class="cjt-sec"><h4>3 · Efectivo de la caja</h4>';
+  if(E.filas.length){
+    h+='<div class="cjt-cuenta">'+
+      '<span>💵 Quedó de ayer en la caja</span><b>'+B(E.ayer)+'</b>'+
+      (Math.abs(E.otros)>0.005?('<span>'+(E.otros<0?'− 🔒 Cierre de un mes (se dio por retirado)':'+ Saldo de antes')+'</span><b>'+B(Math.abs(E.otros))+'</b>'):'')+
+      '<span>+ Efectivo cobrado hoy'+(E.cob>0.005?(' <small>(🌅 '+B(E.cobAm)+' · 🌆 '+B(E.cobPm)+')</small>'):'')+'</span><b>'+B(E.cob)+'</b>'+
+      '<span>− Retirado hoy'+(E.rets.length?(' <small>('+E.rets.map(function(z){ return (z.h?z.h+' ':'')+(z.r.notas.length?('recibo '+z.r.notas.join(', ')):'sin recibo'); }).map(esc).join(' · ')+')</small>'):'')+'</span><b>'+B(E.ret)+'</b>'+
+      '<span class="cjt-t2">= Debe haber en la caja</span><b class="cjt-t2">'+B(E.debe)+'</b>'+
+    '</div>';
+    if(E.filas.length>1) h+='<div class="tw"><table class="mini cjt-t"><thead><tr><th>Cuenta de</th><th class="n">Quedó de ayer</th><th class="n">Cobró hoy</th><th class="n">Retirado hoy</th><th class="n">Debe haber</th></tr></thead><tbody>'+
+      E.filas.map(function(o){ return '<tr><td>'+esc(o.nombre)+'</td><td class="n">'+B(o.ayer)+'</td><td class="n">'+B(o.cob)+'</td><td class="n">'+B(o.ret)+'</td><td class="n"><b>'+B(o.debe)+'</b></td></tr>'; }).join('')+'</tbody></table></div>';
+    if(E.cobSinHora>0.005) h+='<div class="cjt-nota">⏱️ '+B(E.cobSinHora)+' son cobros de saldos de ventas de otros días: el panel no guarda a qué hora entraron, se cuentan en la tarde.</div>';
+  }else h+='<div class="cjt-vacio">Sin efectivo en la caja este día.</div>';
+  h+='<div class="cjt-arq">'+
+      '<div class="cjt-arq-f"><label for="cjt-arq-am">🌅 Contado al cambio de turno <small>(opcional, a las '+CAJA_CAMBIO_TURNO+')</small></label>'+
+        '<div class="cjt-arq-in"><input type="text" inputmode="decimal" autocomplete="off" id="cjt-arq-am" value="'+(A.am!=null?esc(String(A.am)):'')+'" placeholder="Bs contados"'+dis+' onchange="cajaArqueoPoner('+dj+','+tj+',\'am\',this.value)">'+
+        '<span>tenía que haber <b>'+B(E.espAm)+'</b></span><span>'+cajaDifHtml(A.difAm, 'turno mañana')+'</span></div>'+
+        (A.am!=null?('<small class="cjt-gris">anotado'+(A.amPor?(' por '+esc(A.amPor)):'')+(A.amT?(' a las '+esc(cajaHoraDe(A.amT))):'')+'</small>'):'')+'</div>'+
+      '<div class="cjt-arq-f"><label for="cjt-arq-pm">🌆 Contado al cerrar</label>'+
+        '<div class="cjt-arq-in"><input type="text" inputmode="decimal" autocomplete="off" id="cjt-arq-pm" value="'+(A.pm!=null?esc(String(A.pm)):'')+'" placeholder="Bs contados"'+dis+' onchange="cajaArqueoPoner('+dj+','+tj+',\'pm\',this.value)">'+
+        '<span>tiene que haber <b>'+B(E.debe)+'</b></span><span>'+cajaDifHtml(A.difPm, A.am!=null?'turno tarde':'el día')+'</span></div>'+
+        (A.pm!=null?('<small class="cjt-gris">anotado'+(A.pmPor?(' por '+esc(A.pmPor)):'')+(A.pmT?(' a las '+esc(cajaHoraDe(A.pmT))):'')+'</small>'):'')+'</div>'+
+    '</div>'+
+    '<div class="cjt-nota">Es la misma cuenta de «📒 Mayor y saldos»: lo que debe haber es el saldo de las cuentas de la gente de la tienda al cierre del día.</div></div>';
+  /* 4 · QR contra el banco */
+  h+='<div class="cjt-sec"><h4>4 · QR y transferencias contra el banco <small>'+D.nQrT+' de '+D.nQr+' tildados</small></h4>';
+  if(!D.QR.length) h+='<div class="cjt-vacio">Sin cobros por QR ni transferencias este día.</div>';
+  D.QR.forEach(function(b){
+    h+='<div class="cjt-sub">🏦 '+esc(b.banco)+' · '+b.L.length+' · '+B(b.monto)+(b.nTild?(' · ✓ '+B(b.tild)+' en el extracto'):'')+'</div>'+
+      '<div class="tw"><table class="mini cjt-t"><thead><tr><th>✓ Extracto</th><th>Hora</th><th>Cliente</th><th>OC</th><th>N° recibo</th><th class="n">Monto</th><th>Comprobante</th></tr></thead><tbody>'+
+      b.L.map(function(c){ var cj=idj(c.cid);
+        return '<tr class="'+(c.enExtracto?'cjt-tr-ok':'')+'"><td><label class="cjt-tilde"><input type="checkbox"'+(c.enExtracto?' checked':'')+dis+' onchange="cajaQrTildar('+dj+','+tj+','+cj+',this.checked)"> <span>'+(c.enExtracto?'está':'¿está?')+'</span></label></td>'+
+          '<td>'+esc(c.h||'—')+'</td><td>'+esc(c.p.cliente||'—')+(c.metodo==='Transferencia'?' <small class="cjt-gris">· transferencia</small>':'')+'</td><td class="cjt-oc">'+esc(ocEtiq(c.p.oc)||'—')+'</td>'+
+          '<td>'+(c.nota?esc(c.nota):'—')+'</td><td class="n"><b>'+B(c.monto)+'</b></td><td>'+cajaFotosHtml(c.comps)+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  });
+  h+='</div>';
+  /* 5 · lo que falta */
+  var F=D.F;
+  h+='<div class="cjt-sec '+(F.n?'cjt-falta':'')+'"><h4>5 · Lo que falta</h4>';
+  if(!F.n) h+='<div class="cjt-vacio cjt-ok">✓ Todos los pagos tienen su comprobante, todas las ventas su factura o remisión, y el efectivo está en la caja.</div>';
+  var item=function(p, t2){ return '<li><span>'+t2+'</span><button type="button" class="btn btn-sm cjt-ir" onclick="cajaAbrirVenta('+idj(p.id)+')">Abrir</button></li>'; };
+  if(F.sinComp.length) h+='<div class="cjt-sub cjt-mal">📎 '+F.sinComp.length+' pago'+(F.sinComp.length===1?'':'s')+' sin comprobante</div><ul class="cjt-ul">'+
+    F.sinComp.map(function(c){ return item(c.p, esc(c.p.cliente||'—')+' · '+esc(c.forma)+' '+B(c.monto)+(c.nota?(' · recibo '+esc(c.nota)):'')); }).join('')+'</ul>';
+  if(F.sinDoc.length) h+='<div class="cjt-sub cjt-mal">🧾 '+F.sinDoc.length+' venta'+(F.sinDoc.length===1?'':'s')+' sin N° de factura o remisión</div><ul class="cjt-ul">'+
+    F.sinDoc.map(function(x){ return item(x.p, esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'—')+' · '+esc(nombreCanonico(x.p.vendedor)||'')+' · '+B(x.total)); }).join('')+'</ul>';
+  if(F.efeFuera.length) h+='<div class="cjt-sub cjt-mal">💵 '+F.efeFuera.length+' cobro'+(F.efeFuera.length===1?'':'s')+' en efectivo sin «quién lo recibió» en esta caja</div><ul class="cjt-ul">'+
+    F.efeFuera.map(function(c){ return item(c.p, esc(c.p.cliente||'—')+' · '+B(c.monto)+' · figura en la mano de '+esc(c.quien||'nadie')+', que no es de '+esc(D.nombre)+': corregí quién lo recibió en «✏️ Corregir este pago»'); }).join('')+'</ul>';
+  if(F.efeChofer.length) h+='<div class="cjt-nota">🚚 '+F.efeChofer.map(function(c){ return esc(c.quien)+' cobró '+B(c.monto)+' de '+esc(c.p.cliente||'—'); }).join(' · ')+': lo tiene el chofer (lo rinde a Contabilidad), no está en esta caja.</div>';
+  h+='</div>';
+  /* 6 · cerrar, Excel y PDF */
+  h+='<div class="cjt-sec cjt-cierre">';
+  if(D.cerrada){
+    h+='<div class="cjt-cerr">🔒 <b>Caja cerrada</b>'+(D.cerr.t?(' el '+esc(fmtFecha(isoDeTsBolivia(D.cerr.t)))+' a las '+esc(cajaHoraDe(D.cerr.t))):'')+(D.cerr.por?(' por '+esc(D.cerr.por)):'')+
+      '. Lo contado y los tildes de este día quedan así'+(cajaClavePuede()?'; con la contraseña los podés cambiar.':': cambiarlos pide la contraseña.')+'</div>';
+    if(!cajaClavePuede()) h+='<div class="cjt-clave">🔑 <input type="password" id="cjt-pass" class="msel" placeholder="Contraseña de Administración" onkeydown="if(event.key===\'Enter\')cajaClaveProbar(this.value)"> '+
+      '<button type="button" class="btn btn-sm" onclick="cajaClaveProbar(document.getElementById(\'cjt-pass\').value)">Usar</button></div>';
+  }
+  h+='<div class="cjt-acc">'+
+      (D.cerrada ? (cajaClavePuede() ? '<button type="button" class="btn btn-sm btn-ghost" onclick="cajaReabrir('+dj+','+tj+')">🔓 Reabrir la caja</button>' : '')
+                 : '<button type="button" class="btn btn-primary" id="cjt-cerrar" onclick="cajaCerrar('+dj+','+tj+')">🔒 Cerrar la caja '+(D.dia===hoy?'de hoy':('del '+esc(fmtFechaCorta(D.dia))))+'</button>')+
+      '<button type="button" class="btn btn-sm" onclick="cajaExcel('+dj+','+tj+')">⬇️ Excel (4 hojas)</button>'+
+      '<button type="button" class="btn btn-sm" id="cjt-pdf" onclick="cajaPdf('+dj+','+tj+')">📄 PDF con firmas</button>'+
+    '</div><div id="cjt-estado" class="cjt-nota"></div>'+
+    '<label class="cjt-aparato"><input type="checkbox"'+(cajaAparato()?' checked':'')+' onchange="cajaAparatoPoner(this.checked)"> Este aparato es la compu de '+esc(D.nombre)+' <small>(la caja sale como «Caja de hoy»)</small></label>'+
+  '</div>';
+  box.innerHTML=h;
+  if(sc && top) sc.scrollTop=top;
+}
+function cajaCerrar(dia, t){
+  var L=[['am','cjt-arq-am'],['pm','cjt-arq-pm']], ok=true;
+  L.forEach(function(z){ var el=document.getElementById(z[1]); if(el && ok) ok=cajaArqueoPoner(dia, t, z[0], el.value, true); });
+  if(!ok) return;
+  var D=cajaDatos(dia, t);
+  if(D.cerrada){ cajaPintar(); return; }
+  if(D.A.pm==null && D.E.filas.length){ toast('Antes de cerrar, anotá lo contado al cerrar (el efectivo que hay en la caja).','err',7000); var e=document.getElementById('cjt-arq-pm'); if(e){ e.classList.add('err'); try{ e.focus(); }catch(x){} } return; }
+  var av=[];
+  if(D.F.n) av.push(D.F.n+' cosa'+(D.F.n===1?'':'s')+' en rojo en «Lo que falta»');
+  if(D.A.difCierre!=null && Math.abs(D.A.difCierre)>0.005) av.push((D.A.difCierre<0?'faltan ':'sobran ')+fmtBs(Math.abs(D.A.difCierre))+' en la caja');
+  if(!confirm('¿Cerrar la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?'+(av.length?('\n\nOjo: '+av.join(' y ')+'.'):'')+'\n\nDespués, cambiar lo contado o los tildes de ese día pide la contraseña de Administración.')) return;
+  CAJA_CAMBIOS[cajaK(cajaDk(dia, t), 'cerr', [Date.now(), quienEdita()||''])]=true;
+  CAJA_VER++; cajaGuardar(); cajaPintar();
+  cajaExcel(dia, t);
+  toast('🔒 Caja del '+fmtFecha(dia)+' cerrada. Bajó el Excel; el PDF para firmar sale con «📄 PDF con firmas».','ok',8000);
+}
+function cajaReabrir(dia, t){
+  if(!cajaClavePuede()){ toast('🔑 Reabrir una caja cerrada pide la contraseña de Administración.','err'); return; }
+  if(!confirm('¿Reabrir la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?')) return;
+  var dk=cajaDk(dia, t), S=cajaSet();
+  Object.keys(S).forEach(function(k){ var x=cajaLeerClave(k); if(x && x.dk===dk && x.campo==='cerr') CAJA_CAMBIOS[k]=false; });
+  CAJA_VER++; cajaGuardar(); cajaPintar();
+  toast('🔓 Caja del '+fmtFecha(dia)+' abierta otra vez.','ok');
+}
+
+/* ---- el Excel de 4 hojas ---- */
+function cajaArchivo(dia, t, ext){ return 'caja-'+cajaNombre(t).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+dia+'.'+ext; }
+function cajaExcelHojas(D){
+  var H=1, M=2, hd=function(L){ return L.map(function(x){ return { v:x, s:H }; }); }, bs=function(n){ return { v:r2(Number(n)||0), t:'n', s:M }; };
+  var foto=function(L){ L=L||[]; return L.length ? { v:'Ver foto'+(L.length>1?(' (1 de '+L.length+')'):''), link:fotoVer(L[0]), s:XS_LINK } : 'SIN FOTO'; };
+  var ventas=[hd(['TURNO','HORA','OC','VENDEDOR','CLIENTE','TOTAL (Bs)','A CUENTA (Bs)','SALDO (Bs)','MEDIO DE PAGO','FACT. / REM.','N°','FALTA'])];
+  D.ventas.forEach(function(x){ var p=x.p;
+    ventas.push([x.turno==='am'?'Mañana':'Tarde', x.h||'', p.oc||'', nombreCanonico(p.vendedor)||p.vendedor||'', p.cliente||'', bs(x.total), bs(x.cuenta), bs(x.saldo),
+      x.medios.join(' + ')||'sin pago', x.doc==='F'?'Factura':(x.doc==='R'?'Remisión':''), x.docN||'', x.docFalta?'FALTA FACT./REM.':'']);
+  });
+  var cobros=[hd(['FECHA','HORA','FORMA DE PAGO','MÉTODO','BANCO','MONTO (Bs)','CLIENTE','OC','VENDEDOR','N° RECIBO','DE LA VENTA DEL','LO RECIBIÓ','EN ESTA CAJA','COMPROBANTE','TODAS LAS FOTOS','FALTA'])];
+  D.cobros.forEach(function(c){ var p=c.p, fl=[];
+    if(!c.comps.length) fl.push('SIN COMPROBANTE'); if(c.efe && !c.enCaja && !c.chofer) fl.push('EFECTIVO FUERA DE LA CAJA');
+    cobros.push([c.fecha, c.h||'', c.forma, c.metodo||'', c.banco||'', bs(c.monto), p.cliente||'', p.oc||'', nombreCanonico(p.vendedor)||'', c.nota||'', contaFecha(p),
+      c.efe?(c.quien||''):'', c.efe?(c.enCaja?'SÍ':(c.chofer?'NO (chofer)':'NO')):'', foto(c.comps), c.comps.map(fotoVer).join('  |  '), fl.join(' · ')]);
+  });
+  var E=D.E, A=D.A, ef=[];
+  ef.push([{ v:'CAJA DE '+D.nombre.toUpperCase()+' · '+ccmCap(cajaDiaTxt(D.dia)).toUpperCase(), s:H }]);
+  ef.push(['Estado', D.cerrada ? ('Cerrada'+(D.cerr.t?(' el '+fmtFecha(isoDeTsBolivia(D.cerr.t))+' a las '+cajaHoraDe(D.cerr.t)):'')+(D.cerr.por?(' por '+D.cerr.por):'')) : 'Abierta']);
+  ef.push(['Ventas del día', bs(D.V.total)]); ef.push(['Cobrado en el día (todas las formas)', bs(D.totCob)]);
+  D.formas.forEach(function(f){ ef.push(['   '+f.forma+' ('+f.n+')', bs(f.monto)]); });
+  ef.push([]);
+  ef.push(hd(['EFECTIVO','MONTO (Bs)']));
+  ef.push(['Quedó de ayer en la caja', bs(E.ayer)]);
+  if(Math.abs(E.otros)>0.005) ef.push([E.otros<0?'Cierre de un mes (se dio por retirado)':'Saldo de antes', bs(E.otros)]);
+  ef.push(['+ Efectivo cobrado hoy (mañana)', bs(E.cobAm)]); ef.push(['+ Efectivo cobrado hoy (tarde y sin hora)', bs(E.cobPm)]);
+  ef.push(['− Retirado hoy', bs(E.ret)]); ef.push(['= DEBE HABER EN LA CAJA', bs(E.debe)]);
+  ef.push([]);
+  ef.push(hd(['ARQUEO','TENÍA QUE HABER (Bs)','CONTADO (Bs)','DIFERENCIA (Bs)','QUIÉN CONTÓ']));
+  ef.push(['Al cambio de turno ('+CAJA_CAMBIO_TURNO+')', bs(E.espAm), A.am==null?'':bs(A.am), A.difAm==null?'':bs(A.difAm), A.amPor||'']);
+  ef.push(['Al cerrar', bs(E.debe), A.pm==null?'':bs(A.pm), A.difCierre==null?'':bs(A.difCierre), A.pmPor||'']);
+  if(A.difPm!=null) ef.push([A.am!=null?'Diferencia del turno tarde':'Diferencia del día', '', '', bs(A.difPm), '']);
+  if(E.filas.length){
+    ef.push([]); ef.push(hd(['CUENTA DE','QUEDÓ DE AYER (Bs)','COBRÓ HOY (Bs)','RETIRADO HOY (Bs)','DEBE HABER (Bs)']));
+    E.filas.forEach(function(o){ ef.push([o.nombre, bs(o.ayer), bs(o.cob), bs(o.ret), bs(o.debe)]); });
+  }
+  if(E.rets.length){
+    ef.push([]); ef.push(hd(['RETIRO','HORA','ENTREGA','RETIRA','N° RECIBO','MONTO (Bs)']));
+    E.rets.forEach(function(z){ ef.push(['Retiro', z.h||'', z.r.entrega||'', z.r.retira||'', z.r.notas.join(', '), bs(z.r.monto)]); });
+  }
+  if(D.MT){
+    ef.push([]); ef.push(hd(['META DEL DÍA (256)','META DE HOY (Bs)','MÍNIMA DE HOY (Bs)','LLEVA HOY (Bs)']));
+    Object.keys(D.MT.porVend).forEach(function(v){ var m=D.MT.porVend[v]; ef.push([v, bs(m.meta), bs(m.minima), bs(m.lleva)]); });
+    ef.push(['TIENDA', bs(D.MT.meta), bs(D.MT.minima), bs(D.MT.lleva)]);
+  }
+  var qr=[hd(['CUENTA','MEDIO','HORA','CLIENTE','OC','N° RECIBO','MONTO (Bs)','COMPROBANTE','EN EL EXTRACTO'])];
+  D.QR.forEach(function(b){ b.L.forEach(function(c){ qr.push([b.banco, c.metodo, c.h||'', c.p.cliente||'', c.p.oc||'', c.nota||'', bs(c.monto), foto(c.comps), c.enExtracto?'SÍ':'']); }); });
+  return [
+    { name:'Ventas', cols:[{w:9},{w:7},{w:11},{w:20},{w:26},{w:14},{w:14},{w:13},{w:22},{w:12},{w:10},{w:18}], matrix:ventas },
+    { name:'Cobros', cols:[{w:11},{w:7},{w:16},{w:13},{w:11},{w:13},{w:26},{w:11},{w:18},{w:11},{w:13},{w:18},{w:11},{w:16},{w:40},{w:26}], matrix:cobros },
+    { name:'Efectivo', cols:[{w:44},{w:22},{w:18},{w:18},{w:18},{w:14}], matrix:ef },
+    { name:'QR por banco', cols:[{w:18},{w:14},{w:7},{w:26},{w:11},{w:11},{w:13},{w:16},{w:14}], matrix:qr }
+  ];
+}
+function cajaExcel(dia, t){
+  var D=cajaDatos(dia||CAJA.dia, t||CAJA.t), nombre=cajaArchivo(D.dia, D.t, 'xlsx');
+  downloadBlob(buildXlsx(cajaExcelHojas(D)), nombre, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('⬇️ '+nombre+': Ventas, Cobros, Efectivo y QR por banco ✓','ok');
+  return nombre;
+}
+
+/* ---- el PDF con firmas (las hojas A4 apaisadas de los informes: `.ai-pag`, `hojasAPdf`) ---- */
+var CAJA_PDF_FILAS=15;
+function cajaPagHtml(D, tit, sub, cuerpo, n, tot){
+  return '<section class="ai-pag cjp"><div class="ai-franja"></div><div class="ai-cab"><div class="ai-kick">Caja de '+esc(D.nombre)+' · '+esc(ccmCap(cajaDiaTxt(D.dia)))+'</div><h2>'+tit+'</h2>'+(sub?('<p>'+sub+'</p>'):'')+'</div>'+
+    '<div class="ai-cuerpo">'+cuerpo+'</div><div class="ai-pie"><span><b>MultiESPUMAS</b> · Panel de pedidos</span><span>Hoja '+n+' de '+tot+'</span></div></section>';
+}
+function cajaHojasHtml(D){
+  var B=fmtBs, E=D.E, A=D.A, hojas=[];
+  var trozos=function(L){ var out=[]; for(var i=0;i<L.length;i+=CAJA_PDF_FILAS) out.push(L.slice(i, i+CAJA_PDF_FILAS)); return out.length?out:[[]]; };
+  /* 1 · el resumen, con las firmas */
+  var fl=[]; if(D.F.sinComp.length) fl.push(D.F.sinComp.length+' pago'+(D.F.sinComp.length===1?'':'s')+' sin comprobante'); if(D.F.sinDoc.length) fl.push(D.F.sinDoc.length+' venta'+(D.F.sinDoc.length===1?'':'s')+' sin N° de factura o remisión'); if(D.F.efeFuera.length) fl.push(D.F.efeFuera.length+' cobro'+(D.F.efeFuera.length===1?'':'s')+' en efectivo fuera de la caja');
+  var tarde=[]; D.V.pm.forEach(function(x){ var n=nombreCanonico(x.p.vendedor); if(n && tarde.indexOf(n)<0) tarde.push(n); });
+  var c1='<div class="ai-kpis"><div class="ai-kpi"><small>Ventas del día</small><b>'+fmtBs0(D.V.total)+'</b><span>'+D.V.n+' venta'+(D.V.n===1?'':'s')+' · a cuenta '+fmtBs0(D.V.cuenta)+'</span></div>'+
+      '<div class="ai-kpi"><small>Cobrado hoy</small><b>'+fmtBs0(D.totCob)+'</b><span>'+D.cobros.length+' cobro'+(D.cobros.length===1?'':'s')+'</span></div>'+
+      '<div class="ai-kpi"><small>Debe haber en la caja</small><b>'+fmtBs0(E.debe)+'</b><span>'+(A.pm==null?'sin contar':('contado '+fmtBs0(A.pm)))+'</span></div></div>'+
+    '<div class="cjp-g2"><div class="ai-caja"><h3>Cobros por forma de pago</h3><table class="ai-tabla"><colgroup><col><col style="width:60px"><col style="width:130px"></colgroup><thead><tr><th>Forma</th><th class="n">Pagos</th><th class="n">Monto</th></tr></thead><tbody>'+
+        (D.formas.length ? D.formas.map(function(f){ return '<tr><td>'+esc(f.forma)+'</td><td class="n">'+f.n+'</td><td class="n">'+B(f.monto)+'</td></tr>'; }).join('') : '<tr><td colspan="3">Sin cobros.</td></tr>')+
+        '<tr class="cjp-tot"><td>Total</td><td class="n">'+D.cobros.length+'</td><td class="n">'+B(D.totCob)+'</td></tr></tbody></table></div>'+
+      '<div class="ai-caja"><h3>Efectivo de la caja</h3><div class="cjp-cuenta">'+
+        '<span>Quedó de ayer</span><b>'+B(E.ayer)+'</b>'+(Math.abs(E.otros)>0.005?('<span>'+(E.otros<0?'− Cierre de un mes':'+ Saldo de antes')+'</span><b>'+B(Math.abs(E.otros))+'</b>'):'')+
+        '<span>+ Cobrado hoy</span><b>'+B(E.cob)+'</b><span>− Retirado hoy</span><b>'+B(E.ret)+'</b>'+
+        '<span class="cjp-t">= Debe haber</span><b class="cjp-t">'+B(E.debe)+'</b>'+
+        '<span>Contado al cambio de turno</span><b>'+(A.am==null?'—':B(A.am))+'</b><span>Diferencia turno mañana</span><b>'+(A.difAm==null?'—':B(A.difAm))+'</b>'+
+        '<span>Contado al cerrar</span><b>'+(A.pm==null?'—':B(A.pm))+'</b><span>Diferencia '+(A.am!=null?'turno tarde':'del día')+'</span><b>'+(A.difPm==null?'—':B(A.difPm))+'</b>'+
+      '</div></div></div>'+
+    '<div class="cjp-falta'+(fl.length?'':' cjp-ok')+'">'+(fl.length?('⚠️ Falta: '+esc(fl.join(' · '))):'✓ Nada pendiente: comprobantes, facturas o remisiones y efectivo en orden.')+
+      (D.cerrada?(' · 🔒 Cerrada'+(D.cerr.t?(' a las '+esc(cajaHoraDe(D.cerr.t))):'')+(D.cerr.por?(' por '+esc(D.cerr.por)):'')):' · 🔓 Sin cerrar')+'</div>'+
+    '<div class="cjp-firmas"><div><i></i>Entregó · vendedor del turno tarde<span>'+esc(tarde.join(' · '))+'</span></div><div><i></i>Recibió · Contabilidad<span></span></div></div>';
+  hojas.push({ t:'Cierre de la caja', s:esc(D.V.n+' venta'+(D.V.n===1?'':'s')+' · '+D.cobros.length+' cobro'+(D.cobros.length===1?'':'s')+' · '+D.nQrT+' de '+D.nQr+' QR tildados contra el extracto'), c:c1 });
+  /* 2 · las ventas */
+  if(D.ventas.length) trozos(D.ventas).forEach(function(L, i, all){
+    hojas.push({ t:'Ventas del día'+(all.length>1?(' ('+(i+1)+' de '+all.length+')'):''), s:'Total '+B(D.V.total)+' · a cuenta '+B(D.V.cuenta)+' · saldo '+B(D.V.saldo),
+      c:'<table class="ai-tabla"><colgroup><col style="width:66px"><col style="width:52px"><col style="width:96px"><col style="width:150px"><col><col style="width:104px"><col style="width:104px"><col style="width:96px"><col style="width:120px"><col style="width:96px"></colgroup>'+
+        '<thead><tr><th>Turno</th><th>Hora</th><th>OC</th><th>Vendedor</th><th>Cliente</th><th class="n">Total</th><th class="n">A cuenta</th><th class="n">Saldo</th><th>Pago</th><th>Fact./Rem.</th></tr></thead><tbody>'+
+        L.map(function(x){ var p=x.p; return '<tr><td>'+(x.turno==='am'?'Mañana':'Tarde')+'</td><td>'+esc(x.h||'—')+'</td><td class="oc">'+esc(p.oc||'—')+'</td><td>'+esc(nombreCanonico(p.vendedor)||'')+'</td><td>'+esc(p.cliente||'—')+'</td>'+
+          '<td class="n">'+B(x.total)+'</td><td class="n">'+B(x.cuenta)+'</td><td class="n">'+(x.saldo>0.005?B(x.saldo):'—')+'</td><td>'+esc(x.medios.join(' + ')||'sin pago')+'</td><td>'+(x.docFalta?'<b class="cjp-mal">FALTA</b>':(x.doc?((x.doc==='F'?'F ':'R ')+esc(x.docN||'')):'—'))+'</td></tr>'; }).join('')+
+        '</tbody></table>' });
+  });
+  /* 3 · los cobros */
+  if(D.cobros.length) trozos(D.cobros).forEach(function(L, i, all){
+    hojas.push({ t:'Cobros del día'+(all.length>1?(' ('+(i+1)+' de '+all.length+')'):''), s:'Total '+B(D.totCob),
+      c:'<table class="ai-tabla"><colgroup><col style="width:52px"><col style="width:120px"><col><col style="width:96px"><col style="width:140px"><col style="width:104px"><col style="width:86px"><col style="width:150px"></colgroup>'+
+        '<thead><tr><th>Hora</th><th>Forma</th><th>Cliente</th><th>OC</th><th>Vendedor</th><th class="n">Monto</th><th>Recibo</th><th>Lo recibió / foto</th></tr></thead><tbody>'+
+        L.map(function(c){ return '<tr><td>'+esc(c.h||'—')+'</td><td>'+esc(c.forma)+'</td><td>'+esc(c.p.cliente||'—')+(c.deHoy?'':' <small>(saldo)</small>')+'</td><td class="oc">'+esc(c.p.oc||'—')+'</td><td>'+esc(nombreCanonico(c.p.vendedor)||'')+'</td>'+
+          '<td class="n">'+B(c.monto)+'</td><td>'+esc(c.nota||'—')+'</td><td>'+(c.efe?esc(c.quien||''):'')+(c.comps.length?(c.efe?' · ':'')+'con foto':'<b class="cjp-mal">'+(c.efe?' · ':'')+'sin foto</b>')+'</td></tr>'; }).join('')+
+        '</tbody></table>' });
+  });
+  /* 4 · QR por banco */
+  if(D.nQr){
+    var filas=[]; D.QR.forEach(function(b){ b.L.forEach(function(c){ filas.push({ b:b.banco, c:c }); }); });
+    trozos(filas).forEach(function(L, i, all){
+      hojas.push({ t:'QR y transferencias por banco'+(all.length>1?(' ('+(i+1)+' de '+all.length+')'):''), s:D.nQrT+' de '+D.nQr+' tildados como «está en el extracto»',
+        c:'<table class="ai-tabla"><colgroup><col style="width:140px"><col style="width:52px"><col><col style="width:96px"><col style="width:90px"><col style="width:110px"><col style="width:120px"></colgroup>'+
+          '<thead><tr><th>Cuenta</th><th>Hora</th><th>Cliente</th><th>OC</th><th>Recibo</th><th class="n">Monto</th><th>En el extracto</th></tr></thead><tbody>'+
+          L.map(function(z){ var c=z.c; return '<tr><td>'+esc(z.b)+'</td><td>'+esc(c.h||'—')+'</td><td>'+esc(c.p.cliente||'—')+'</td><td class="oc">'+esc(c.p.oc||'—')+'</td><td>'+esc(c.nota||'—')+'</td><td class="n">'+B(c.monto)+'</td><td>'+(c.enExtracto?'✓ sí':'☐')+'</td></tr>'; }).join('')+
+          '</tbody></table>' });
+    });
+  }
+  return hojas.map(function(x, i){ return cajaPagHtml(D, x.t, x.s, x.c, i+1, hojas.length); }).join('');
+}
+function cajaEstado(t){ var e=document.getElementById('cjt-estado'); if(e) e.innerHTML=t||''; }
+function cajaPdf(dia, t){
+  if(CAJA.ocupado) return;
+  var D=cajaDatos(dia||CAJA.dia, t||CAJA.t), nombre=cajaArchivo(D.dia, D.t, 'pdf'), box=document.createElement('div');
+  box.innerHTML=cajaHojasHtml(D);
+  var btn=document.getElementById('cjt-pdf'); CAJA.ocupado=true; if(btn) btn.disabled=true;
+  cajaEstado('⏳ Preparando el PDF…');
+  return hojasAPdf(box, nombre, 'Caja de '+D.nombre+' · '+fmtFecha(D.dia), function(x){ cajaEstado(x); }).then(function(n){
+    cajaEstado('✅ Listo: se bajó <b>'+esc(nombre)+'</b> ('+n+' hoja'+(n===1?'':'s')+').');
+    toast('📄 PDF listo: '+nombre, 'ok');
+  }).catch(function(e){
+    cajaEstado(hojasPdfErrorTxt(e));
+    if(hojasPdfSinLibs(e)) cajaImprimir(box.innerHTML);
+  }).then(function(){ CAJA.ocupado=false; var b2=document.getElementById('cjt-pdf'); if(b2) b2.disabled=false; });
+}
+/* Sin internet (sin las librerías del PDF): la ventana de imprimir con las mismas hojas, apaisadas. */
+function cajaImprimir(html){
+  var c=document.getElementById('cjt-imp'); if(!c){ c=document.createElement('div'); c.id='cjt-imp'; document.body.appendChild(c); }
+  c.innerHTML=html;
+  atciPaginaCss(true); document.body.classList.add('printing-caja');
+  window.print();
+  setTimeout(function(){ document.body.classList.remove('printing-caja'); atciPaginaCss(false); c.innerHTML=''; }, 600);
+}
+
 /* ---------------------------------------------------------------- C2 · PAGOS SIN TERMINAR
    Los pagos de los últimos `NX_PST_DIAS` días a los que les falta algo: el N° de recibo, la foto del comprobante (QR o tarjeta),
    el banco (QR) o el método; y las ventas marcadas PAGADA sin monto. «Completar» abre la ficha de la venta. El número sale en el
@@ -61028,6 +62071,7 @@ function asisAvisos(){
         t:asisCuando(D.dia)+' se entrega'+(D.n===1?'':'n')+' '+D.n+' pedido'+(D.n===1?'':'s')+' tuyo'+(D.n===1?'':'s'),
         x:'Te falta avisar a '+D.faltan+' cliente'+(D.faltan===1?'':'s')+' a qué hora pasa el camión.', b:['Ver cuáles', "asisIr('#nx-m1', nxM1Toggle)"] });
     }catch(e){}
+    try{ var MD=metaDiaAviso(v); if(MD) A.push(MD); }catch(e){}   // 🎯 (14/11, mejora 256) desde las 17 h, si va por debajo de la mitad de la meta de hoy
     var deben=(STATE||[]).filter(function(p){
       if(!p || esFilaSistema(p) || esBorrador(p) || !mismoVendedor(p.vendedor, v) || fueraDeConta(p) || entregaAConfirmar(p)) return false;   // 📦 (propuesta 76) sin día no «se entregó»
       var f=fechaSalida(p); return !!f && diasEntre(f, hoy)>=7 && contaFaltaCobrar(p)>0.005;
