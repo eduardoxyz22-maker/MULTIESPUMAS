@@ -8525,7 +8525,8 @@ function apiPost(payload){
      Administración vea desde SU pantalla qué dispositivo tiene una cola trabada y de quién es. */
   try {
     /* 💬 (07/11, idea 118) La pregunta a Claude lleva su propio `quien` («Administración», «Logística»…): no se pisa. */
-    payload.quien = (payload.action==='bloki' && payload.quien) ? String(payload.quien) : (getVendedorMem()||'');
+    /* ⏳ (14/11, 267) …y el lugar apartado también (`apartarCupo` dice quién lo apartó: la vendedora, o Logística / Administración). */
+    payload.quien = ((payload.action==='bloki' || payload.action==='apartarCupo') && payload.quien) ? String(payload.quien) : (getVendedorMem()||'');
     payload.dispositivo = dispositivoId();
     if(payload.action==='list'){ var _pq=getPending(); payload.cola=_pq.length; payload.colaIds=_pq.slice(0,5).map(function(x){ return String(x.id||''); }); }
     /* 🧪 (271) En práctica, Administración ve «🧪 <nombre>» y la cola de VERDAD de este aparato (la de práctica no existe para nadie más) */
@@ -8709,6 +8710,8 @@ function listaAbrir(j){
     if(o.auth==null && j.auth) o.auth=j.auth;
     if(o.adminAuth==null && j.adminAuth) o.adminAuth=j.adminAuth;
     if(o.wa==null && j.wa!=null) o.wa=j.wa;
+    if(o.apartados==null && j.apartados!=null) o.apartados=j.apartados;   // ⏳ (14/11, 267) adentro o afuera de lo comprimido: valen los dos
+    if(o.ahora==null && j.ahora!=null) o.ahora=j.ahora;
     return o;
   });
 }
@@ -64115,7 +64118,7 @@ function cupPronAdmPintar(){
     var nom=x.t==='PM' ? '🌆 tarde' : '🌅 mañana';
     return '<div class="cpr-f'+(x.lleno?' cpr-lleno':'')+'"><div class="cpr-d"><b>'+esc(cupDiaCorto(x.f))+'</b> · '+nom+(x.extra?(' <span class="cupx-tag">(+'+x.extra+' abierto'+(x.extra===1?'':'s')+')</span>'):'')+'</div>'+
       '<div class="cpr-n">'+(x.lleno ? ('<b>Lleno</b>: '+x.hay+' de '+x.lim) : ('<b>'+x.hay+'</b> de '+x.lim+' · suelen entrar <b>'+x.suele+'</b> más → ~'+x.proy))+
-        (x.lleno ? '' : ' <small>(faltan '+x.k+' día'+(x.k===1?'':'s')+' hábil'+(x.k===1?'':'es')+')</small>')+'</div>'+
+        (x.lleno ? '' : ' <small>('+(x.k===1 ? 'falta 1 día hábil' : ('faltan '+x.k+' días hábiles'))+')</small>')+'</div>'+
       '<div class="cpr-acc"><button type="button" class="rv-toggle" onclick="verCuposTurno(\''+esc(x.f)+'\',\''+x.t+'\')">👀 Ver</button>'+cupxBotonHtml(x.f, x.t, 'rv-toggle cpr-abrir')+'</div></div>';
   }).join('');
   el.className='revisar cpr';
@@ -64218,7 +64221,9 @@ function apartoPedir(q, id){
 }
 function apartoLlenoAvisar(q, renueva){
   var lim=limTurno(q.f, q.t);
-  toast((renueva ? '⌛ Tu lugar apartado se venció y ' : '')+'Turno '+q.t+' lleno para el '+fmtFecha(q.f)+' — '+(renueva ? 'otra venta tomó el último lugar' : ('otra venta tomó el último lugar ('+lim+' de '+lim+')'))+'. '+(diaSabado(q.f) ? 'Elegí otra fecha.' : 'Probá el otro turno u otra fecha.'),'err',9000);
+  var otro=diaSabado(q.f) ? 'Elegí otra fecha.' : 'Probá el otro turno u otra fecha.';
+  toast(renueva ? ('⌛ Tu lugar apartado se venció y mientras tanto el turno '+q.t+' del '+fmtFecha(q.f)+' se llenó: otra venta tomó el último lugar. '+otro)
+                : ('Turno '+q.t+' lleno para el '+fmtFecha(q.f)+' — otra venta tomó el último lugar ('+lim+' de '+lim+'). '+otro),'err',9000);
   var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); }, 1600); }
   try{ refrescarEstado(); }catch(e){}   // la planilla de ahora: el cartel de cupos pasa a decir «lleno»
 }

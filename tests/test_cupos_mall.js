@@ -356,6 +356,7 @@ function PREPARAR(){
     rows.push(P({ id:'existente', fecha:LUN, turno:'AM', cliente:'PEDIDO VIEJO' }));
     await CARGAR(rows);
     var o={ sv:SERVER_VER };
+    try{ setVendedorMem('Isabel Robledo'); }catch(e){}
     showView('form'); resetForm(); await esperar(600);
     o.alAbrir=LLAMADAS('apartarCupo').length;
     var fe=document.getElementById('f-fecha'); fe.value=VIE; fe.dispatchEvent(new Event('input',{bubbles:true})); fe.dispatchEvent(new Event('change',{bubbles:true}));
@@ -381,7 +382,7 @@ function PREPARAR(){
     return o;
   });
   chk('5a · con el servidor 2026-11-14-b, abrir el formulario NO aparta nada (no hay quien esté cargando)', r.sv==='2026-11-14-b' && r.alAbrir===0, r);
-  chk('5b · elegir día y turno aparta: `apartarCupo` con la fecha, el turno, el aparato y quién', r.ap1.length===1 && r.ap1[0].f==='2026-11-20' && r.ap1[0].t==='AM' && r.ap1[0].ap===r.yo && !r.ap1[0].id, r.ap1);
+  chk('5b · elegir día y turno aparta: `apartarCupo` con la fecha, el turno, el aparato y quién', r.ap1.length===1 && r.ap1[0].f==='2026-11-20' && r.ap1[0].t==='AM' && r.ap1[0].ap===r.yo && r.ap1[0].q==='Isabel Robledo' && !r.ap1[0].id, r.ap1);
   chk('5c · se ve «⏳ Lugar apartado: viernes 20/11 AM para vos · m:ss»', /Lugar apartado: viernes 20\/11 AM para vos · \d{1,2}:\d\d/.test(r.linea), r.linea);
   chk('5d · cambiar de turno suelta el de la mañana y aparta la tarde', r.cambio.indexOf('soltarCupo:'+r.id1)>=0 && r.cambio.some(function(x){ return /^apartarCupo:PM$/.test(x); }) && r.srvAM===0 && r.srvPM===1 && r.id2 && r.id2!==r.id1 && /viernes 20\/11 PM/.test(r.linea2), r);
   chk('5e · pasados 4 minutos con actividad se renueva con su id', r.renueva.length===1 && r.renueva[0]===r.id2, r.renueva);
@@ -451,6 +452,14 @@ function PREPARAR(){
     SRV.calls=[]; var fe=document.getElementById('f-fecha'); fe.dispatchEvent(new Event('change',{bubbles:true})); document.querySelector('#f-turno button[data-val="AM"]').click(); await esperar(700);
     o.apartaLleno=LLAMADAS('apartarCupo').length;
     SRV.ap={};
+    /* la lectura comprimida: `apartados` puede venir adentro o afuera de lo comprimido */
+    try{
+      var cuerpo=JSON.stringify({ ok:true, zc:Z_CHECK, pedidos:[] });
+      var gz=await new Response(new Blob([cuerpo]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+      var u=new Uint8Array(gz), bin=''; for(var i2=0;i2<u.length;i2++) bin+=String.fromCharCode(u[i2]);
+      var abierto=await listaAbrir({ ok:true, z:'gzip64', d:btoa(bin), apartados:{ '2026-11-20|AM':[{ id:'z1', aparato:'x', hasta:1 }] }, ahora:123 });
+      o.z=!!(abierto.apartados && abierto.apartados['2026-11-20|AM']) && abierto.ahora===123;
+    }catch(eZ){ o.z='error: '+eZ.message; }
     return o;
   });
   chk('6a · lo apartado por otra venta ocupa lugar (11 pedidos + 1 = 12); el de este aparato y el vencido no', r.pedidos===11 && r.otros===1 && r.usados===12, r);
@@ -458,6 +467,7 @@ function PREPARAR(){
   chk('6c · «Ver los pedidos del turno»: 12 de 12 ocupados y «1 lugar apartado por otra venta», con 11 pedidos en la lista', /12de 12 cupos ocupados/.test(r.ver) && /1 lugar apartado por otra venta/.test(r.ver), r.ver.slice(0,260));
   chk('6d · el encabezado nuevo: «Ver los 11 pedidos» (los pedidos, no lo apartado) y «⏳ 1 apartado por otra venta»', /Ver los 11 pedidos/.test(r.fh) && /⏳ 1 apartado por otra venta/.test(r.fh), r.fh.slice(0,300));
   chk('6e · con el turno lleno no se aparta nada (el cartel ya dice lleno)', r.apartaLleno===0, r);
+  chk('6f · la lectura comprimida no pierde `apartados` si el servidor los manda afuera de lo comprimido', r.z===true, r.z);
 
   r = await ev(async()=>{
     var o={};
