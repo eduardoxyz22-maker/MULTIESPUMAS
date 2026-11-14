@@ -6757,6 +6757,18 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .cbz .cbz-cdet summary{cursor:pointer;font-size:.8rem;font-weight:700;color:#065f5b}
 .cbz .cbz-cdet[open]{display:grid;gap:8px}
 @media (max-width:600px){ .cbz .cbz-bar{grid-template-columns:minmax(0,1fr) auto;row-gap:3px} .cbz .cbz-bt{grid-column:1/-1;grid-row:2} .cbz .cbz-bar small{display:none} .cbz .cbz-vend{margin-left:0} }
+/* 🛏️ (14/11, idea 211) el dibujito de qué es cada producto (`prodIcoHtml`): colchón, somier, combo, almohada, respaldar, tela u otro.
+   Solo dibujo (sin letras): no cambia el texto de ninguna vista. */
+.pico{display:inline-block;flex:none;width:24px;height:17px;vertical-align:-4px;margin-right:5px;overflow:visible}
+.af-pl .pico{width:22px;height:15px;margin:0;align-self:center}
+.fl-prod > .pico{width:28px;height:20px;margin:0;align-self:center;order:0}
+/* En la ficha de Administración los renglones se parten en dos líneas cuando no entran (`flex-wrap`): el nombre cede el lugar del dibujo
+   (28 px + 8 de separación) y así se parten EXACTAMENTE donde se partían antes (si no, «🏭 PTF» bajaba a otra línea y la ficha crecía). */
+.modal.fl-ficha .fl-prod > .pico{order:0}
+.modal.fl-ficha .fl-prod > .pico + .fl-pn{flex-basis:194px}
+#carga-overlay label > .pico,[data-carga-lugar] label > .pico{margin:0;align-self:center}
+.fx-pr .pico{width:20px;height:14px;vertical-align:-3px;margin-right:4px}
+@media print{ .pico{width:18px;height:13px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -13414,6 +13426,47 @@ function pryUnidadesDe(p){
   });
   o.u=o.c+o.s;
   return o;
+}
+/* 🛏️ (14/11, idea 211; dueño: «un dibujito chico según qué es… se reconoce de un vistazo qué se carga, sin leer el nombre entero»)
+   Qué es un renglón para su dibujito: 'colchon' | 'somier' | 'combo' | 'almohada' | 'respaldar' | 'textil' | 'otro' ('' sin nombre).
+   UNA sola regla y la de siempre: colchón, somier y combo los dice `pryTipoProd` (el código del catálogo manda sobre lo escrito; el colchón
+   por descarte); lo demás, la PRIMERA palabra que dice qué es (como `pryPedazoTipo`): la familia de las almohadas (la de `stockEsAlmohadaK`:
+   ALMOHADA/ALM/TRAVESSEIRO/NASA), el mueble (`PROD_MUEBLE`: RESPALDAR/CABECERA) y lo de tela (`PROD_TIENDA`: protectores, sábanas,
+   mantas… + forros y fundas). «PROTECTOR DE ALMOHADA» es tela; «ALMOHADA CON FUNDA», almohada. SOLO MIRA: no cambia ninguna cuenta. */
+var PICO_ALM=/\b(ALMOHADAS?|ALMOHADON(?:ES)?|ALMOHADILLAS?|ALMOADAS?|ALM|TRAVESSEIROS?|NASA|COJIN(?:ES)?)\b/,
+    PICO_RESP=/\b(RESPALDOS?|ESPALDAR(?:ES)?|PIECERAS?)\b/,
+    PICO_TELA=/\b(PR{1,2}OTETOR(?:ES)?|FORROS?|FUNDAS?|TOPPERS?|PLUMON(?:ES)?|DUVETS?|ACOLCHADOS?|COBERTOR(?:ES)?|COLCHAS?|CUBREPIES?|NORDICOS?)\b/;
+function prodIcoTipo(x){
+  if(!x) return '';
+  var cod=String(x.codigo||'').trim().toUpperCase(), d=(cod && CODIGOS[cod]) ? CODIGOS[cod].d : String(x.desc||'');
+  if(!String(d).trim()) return '';
+  /* Lo de tienda / empaque / lo que no es stock (`esTextoDeTienda`: protectores, sábanas, BOLSAS, armazones…) no pasa por el colchón «por
+     descarte» de `pryTipoProd` («BOLSA PARA COLCHON» le daba colchón): va directo a las familias de abajo (tela u otro). */
+  var t=''; if(!esTextoDeTienda(d)){ try{ t=pryTipoProd(x); }catch(e){ t=''; } }
+  if(t) return t;
+  var s=prodAlias(stockNorm(d)), m=null;
+  [['almohada',PICO_ALM],['respaldar',PROD_MUEBLE],['respaldar',PICO_RESP],['textil',PROD_TIENDA],['textil',PICO_TELA]].forEach(function(a){
+    var r=a[1].exec(s); if(r && (!m || r.index<m.i)) m={ t:a[0], i:r.index };
+  });
+  return m ? m.t : 'otro';
+}
+/* Los dibujos (46×32, los colores de la muestra que vio el dueño). ⚠️ Sin <text> ni <title> adentro: muchas pruebas y copias leen el
+   texto de estas vistas, y el dibujo no tiene que sumar ni una letra. */
+var PICO_SVG={
+  colchon:'<rect x="3" y="11" width="40" height="13" rx="4" fill="#e3f7f6" stroke="#00A09A" stroke-width="2"/><path d="M5 17h36" stroke="#00B5AD" stroke-width="2" stroke-dasharray="3 3"/>',
+  somier:'<rect x="3" y="8" width="40" height="11" rx="3" fill="#fff4e0" stroke="#b45309" stroke-width="2"/><rect x="6" y="19" width="4" height="7" fill="#b45309"/><rect x="36" y="19" width="4" height="7" fill="#b45309"/>',
+  combo:'<rect x="3" y="15" width="40" height="9" rx="3" fill="#fff4e0" stroke="#b45309" stroke-width="2"/><rect x="6" y="24" width="4" height="6" fill="#b45309"/><rect x="36" y="24" width="4" height="6" fill="#b45309"/>'+
+        '<rect x="3" y="3" width="40" height="11" rx="4" fill="#e3f7f6" stroke="#00A09A" stroke-width="2"/><path d="M5 8.5h36" stroke="#00B5AD" stroke-width="2" stroke-dasharray="3 3"/>',
+  almohada:'<path d="M8 10q15-6 30 0q4 6 0 12q-15 6-30 0q-4-6 0-12z" fill="#f1ebfd" stroke="#6d28d9" stroke-width="2"/>',
+  respaldar:'<rect x="6" y="3" width="34" height="22" rx="3" fill="#e7f6ec" stroke="#15803d" stroke-width="2"/><path d="M12 9h22M12 15h22" stroke="#15803d" stroke-width="2"/>',
+  textil:'<rect x="5" y="17" width="36" height="9" rx="3" fill="#dbe4f0" stroke="#5b6b82" stroke-width="2"/><rect x="5" y="6" width="36" height="9" rx="3" fill="#eef3f9" stroke="#5b6b82" stroke-width="2"/>'+
+         '<path d="M31 6v9M31 17v9" stroke="#5b6b82" stroke-width="1.5" stroke-dasharray="2 2"/>',
+  otro:'<path d="M13 10l10-5 10 5v13l-10 5-10-5z" fill="#fbf3e4" stroke="#8a6d3b" stroke-width="2" stroke-linejoin="round"/><path d="M13 10l10 5 10-5M23 15v13" fill="none" stroke="#8a6d3b" stroke-width="2" stroke-linejoin="round"/>'
+};
+var PICO_MEMO={};
+function prodIcoHtml(x){
+  var t=prodIcoTipo(x); if(!t || !PICO_SVG[t]) return '';
+  return PICO_MEMO[t] || (PICO_MEMO[t]='<svg class="pico pico-'+t+'" data-pico="'+t+'" viewBox="0 0 46 32" width="24" height="17" aria-hidden="true" focusable="false">'+PICO_SVG[t]+'</svg>');
 }
 /* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
    cargó, el monto y las unidades. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
@@ -23705,7 +23758,8 @@ function fxDerPintar(){
     var d=String((c.querySelector('.prod-desc')||{}).value||'').trim(); if(!d) return;
     var ms=c.querySelector('.prod-medida'), mo=c.querySelector('.prod-medida-otro'), med=ms?(ms.value==='Otros'?String((mo||{}).value||'').trim():String(ms.value||'')):'';
     var q=parseInt((c.querySelector('.prod-cant')||{}).value,10)||0, pr=montoForm(c.querySelector('.prod-precio')), box=c.querySelector('.prod-saldo'), vv=box&&!box.hidden?box._v:null;
-    tot+=pr*q; prods.push({ d:d, m:med, q:q, sub:pr*q, ico:vv?FX_SALDO_ICO[vv.tipo]:null });
+    var co=String((c.querySelector('.prod-codigo')||{}).value||'').trim();   // 🛏️ (idea 211) el código manda en el dibujito
+    tot+=pr*q; prods.push({ d:d, c:co, m:med, q:q, sub:pr*q, ico:vv?FX_SALDO_ICO[vv.tipo]:null });
   });
   var acu=montoForm('f-acuenta'), sal=montoForm('f-saldo'), pagado=segVal('f-pagado')==='SI';
   var ini=(v||'?').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase();
@@ -23717,7 +23771,7 @@ function fxDerPintar(){
       '<div class="fx-fila"><span class="i">📍</span><span>'+(zona?esc(zona):'<span class="vacio">sin zona</span>')+'</span></div>';
   if(cel) h+='<div class="fx-fila"><span class="i">📞</span><span>'+esc(cel)+'</span></div>';
   h+='<div class="fx-prs">'+(prods.length ? prods.map(function(p){
-      return '<div class="fx-pr"><span>'+(p.ico?p.ico[0]:'🛏️')+'</span><div><b>'+(p.q>1?(p.q+'× '):'')+esc(p.d)+'</b>'+(p.m?(' · '+esc(p.m)):'')+
+      return '<div class="fx-pr"><span>'+(p.ico?p.ico[0]:'🛏️')+'</span><div>'+prodIcoHtml({ codigo:p.c, desc:p.d })+'<b>'+(p.q>1?(p.q+'× '):'')+esc(p.d)+'</b>'+(p.m?(' · '+esc(p.m)):'')+
         (p.ico?('<div class="st" style="color:'+p.ico[1]+'">'+esc(p.ico[2])+'</div>'):'')+'</div><span class="m">'+(p.sub>0?fmtBs0(p.sub):'')+'</span></div>';
     }).join('') : '<div class="fx-fila"><span class="i">🛏️</span><span class="vacio">todavía sin productos</span></div>')+'</div>';
   if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
@@ -26868,7 +26922,7 @@ function admFichaHtml(p, dn){
   var MAX=4, filas=carga.slice(0, MAX).map(function(x){
     var tag=prodLugarTag(x) || ' <span class="lug lug-sr">sin revisar</span>';
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
-    return '<div class="af-pl"><span class="af-c">'+esc(String(x.cant||0))+'</span><span class="af-nm">'+esc(x.desc||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
+    return '<div class="af-pl"><span class="af-c">'+esc(String(x.cant||0))+'</span>'+prodIcoHtml(x)+'<span class="af-nm">'+esc(x.desc||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
   }).join('')+(carga.length>MAX?('<div class="af-mas">+'+(carga.length-MAX)+' producto'+(carga.length-MAX===1?'':'s')+' más</div>'):'')+
     '';   // (24/10, dueño) lo de tienda NO va en la ficha rápida (se confundía con «recoger de tienda»): se ve al abrirla
   var chips=[]; try{ chips=fichaObsChips(p).filter(function(c){ return c.k!=='cobra'; }); }catch(e){}   // (24/10, dueño) lo de cobrar no va en la ficha rápida
@@ -28603,10 +28657,11 @@ function cargaAgrupar(list){
   var byV={}, order=[];
   list.forEach(function(p){
     var k=vehiculoDe(p)||'Sin vehículo';
-    if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},prodProd:{},prodAlm:{},sale:{},saleOrden:[],bultos:0,choferes:{}}; order.push(k); }
+    if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},prodProd:{},prodAlm:{},sale:{},saleOrden:[],bultos:0,choferes:{},px:{}}; order.push(k); }
     byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
     (p.productos||[]).forEach(function(x){
       var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0, V=byV[k];
+      if(!V.px[kk]) V.px[kk]=x;   // 🛏️ (idea 211) un renglón de muestra por producto, para su dibujito (`prodIcoHtml`)
       V.bultos+=c;
       /* 🚚 (26/09) Lo que sale de BANZER va a su propio bloque («🏪 Cargar en Banzer»), con su tilde;
          acá, en «🏭 Cargar en fábrica», queda el resto (lo de acá y lo que se trae de Moreno). */
@@ -28638,7 +28693,7 @@ function cargaSeccionesHtml(o, fecha, k, t){
     (pk.length ? pk.map(function(kk){
       // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
       var ck=cargaChkKey(fecha,k,kk,'',t), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]), nSR=cargaSinRespDe(o, kk);
-      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+cargaSinRespHtml(nSR)+'</label>'; }).join('')
+      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+cargaSinRespHtml(nSR)+'</label>'; }).join('')
       /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
          «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
       : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
@@ -28647,7 +28702,7 @@ function cargaSeccionesHtml(o, fecha, k, t){
     html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
       sk.map(function(kk){
         var ck=cargaChkKey(fecha,k,kk,n,t), nSR=(o.prod[kk]!=null)?0:cargaSinRespDe(o, kk);   // ⚠️ (§4ls V-REV-8) si no se dijo arriba
-        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> <span>'+esc(kk)+'</span>'+cargaSinRespHtml(nSR)+'</label>';
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span>'+esc(kk)+'</span>'+cargaSinRespHtml(nSR)+'</label>';
       }).join('')+'</div>';
   });
   return html;
@@ -33954,7 +34009,7 @@ function misCardHtml(p, n, todos, verNota){
     if(x.chk!=='no' && prodSaleTxt(x)) t=t+' <span style="color:#0369a1;font-weight:700">'+esc(prodSaleTxt(x).trim())+'</span>';   // (26/09) Banzer
     // (26/09) `if` y no `else if`, como la ficha: un «NO HAY» ya pedido a fábrica no decía el 🏭
     if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
-    return t;
+    return prodIcoHtml(x)+t;   // 🛏️ (idea 211) el dibujito de qué es
   }).join('<br>');
   var falta=Number(p.saldo)||0, cob=cobrosVisibles(p), _res=(!cob.length && p.pagado) ? cobrosResumen(p) : '';
   /* (26/09) Lo mismo que dice la ficha (`showMisModal`): `p.metodoPago` crudo mostraba el historial
@@ -34143,7 +34198,7 @@ function showMisModal(id){
     else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 se recoge de '+esc(recogerCorto(x))+'</span>';
     if(x.chk!=='no' && prodSaleTxt(x)) t=t+' <span style="color:#0369a1;font-weight:700">'+esc(prodSaleTxt(x).trim())+'</span>';   // (26/09) Banzer
     if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
-    return prodChkIcon(x)+t;
+    return prodChkIcon(x)+prodIcoHtml(x)+t;   // 🛏️ (idea 211) el dibujito de qué es
   }).join('<br>');
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
            :noSeCobra(p)?'<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT
@@ -48095,7 +48150,7 @@ function fichaProdsHtml(p, N, S){
     var cam=C.nuevo[k] ? '<span class="fl-cam">🆕 NUEVO</span>' : (C.cant[k] ? ('<span class="fl-cam">🔢 antes '+esc(C.cant[k].de)+', ahora '+esc(C.cant[k].a)+'</span>') : '');
     var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
-    return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div><div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
+    return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div>'+prodIcoHtml(x)+'<div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
       (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que '+esc((N.noLlevarPor&&N.noLlevarPor[ix])||'ya se entregó')+'</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x, p))+'</div>'+
       (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+
       (S && !no && S.por[ix] ? fichaHayHtml(p, S.por[ix]) : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
