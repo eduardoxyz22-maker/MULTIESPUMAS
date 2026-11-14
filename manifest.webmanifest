@@ -20,6 +20,7 @@
     { "name": "Nuevo pedido", "url": "pedidos.html#ir=form", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
     { "name": "Mis pedidos", "url": "pedidos.html#ir=mis", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
     { "name": "Contabilidad", "url": "pedidos.html#ir=conta", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
-    { "name": "Administración", "url": "pedidos.html#ir=admin", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] }
+    { "name": "Administración", "url": "pedidos.html#ir=admin", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] },
+    { "name": "Mall en vivo", "url": "pedidos.html#envivo", "icons": [{ "src": "iconos/hojas-96.png", "sizes": "96x96", "type": "image/png" }] }
   ]
 }

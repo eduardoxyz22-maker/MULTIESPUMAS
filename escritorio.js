@@ -513,7 +513,13 @@ if('serviceWorker' in navigator) try{
 try{ if(navigator.permissions && navigator.permissions.query) navigator.permissions.query({ name:'notifications' }).then(function(st){ st.onchange=permMirar; }, function(){}); }catch(e){}
 esperarDestino(destinoDeHash());
 var irAlAbrir=irDesdeHash();
-try{ if('launchQueue' in window && window.launchQueue.setConsumer) window.launchQueue.setConsumer(function(p){ irVista(irDeUrl(p && p.targetURL)); }); }catch(e){}
+/* 📡 (14/11, mejora 281) El atajo «Mall en vivo» (`pedidos.html#envivo`): con el panel ya abierto, la pantalla del mall en vivo (la abre el
+   panel, `mvivDesdeUrl`; con el panel cerrado la abre él mismo al leer la dirección). */
+try{ if('launchQueue' in window && window.launchQueue.setConsumer) window.launchQueue.setConsumer(function(p){
+  var u=p && p.targetURL;
+  if(typeof window.mvivDesdeUrl==='function' && window.mvivDesdeUrl(u)) return;
+  irVista(irDeUrl(u));
+}); }catch(e){}
 /* 🪟 (§4ny) Instalado, la barra de tareas dice «MultiEspumas - Pedidos» (Chrome pone el nombre de la app adelante del título). */
 try{ if(instalado()) document.title='Pedidos'; }catch(e){}
 function empezar(){ ESC.t0=Date.now(); ESC.perm=permiso(); bannerPintar(); arrancar(); if(irAlAbrir) setTimeout(function(){ irVista(irAlAbrir); }, 0); }

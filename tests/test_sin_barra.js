@@ -47,8 +47,9 @@ function pngTam(f) { const d = fs.readFileSync(f); return [d.readUInt32BE(16), d
   chk('1c los íconos son los de las hojas, existen y miden lo que dicen', ics.length === 3 && ics.every(i => /hojas-/.test(i.src)) && bien, ics.map(i => i.src));
   chk('1d hay uno «maskable» (Android lo recorta en círculo)', ics.some(i => i.purpose === 'maskable'));
   const sc = man.shortcuts || [];
-  chk('1e los 4 atajos: Nuevo pedido, Mis pedidos, Contabilidad, Administración', sc.map(s => s.name).join('|') === 'Nuevo pedido|Mis pedidos|Contabilidad|Administración', sc.map(s => s.name));
-  chk('1f cada atajo va al panel (#ir=…) y su ícono existe', sc.every(s => /^pedidos\.html#ir=(form|mis|conta|admin)$/.test(s.url) && (s.icons || []).every(i => fs.existsSync(path.join(RAIZ, i.src)))), sc.map(s => s.url));
+  // (14/11, mejora 281) + «Mall en vivo» (`#envivo`: la pantalla del mall en vivo, con la contraseña)
+  chk('1e los 5 atajos: Nuevo pedido, Mis pedidos, Contabilidad, Administración, Mall en vivo', sc.map(s => s.name).join('|') === 'Nuevo pedido|Mis pedidos|Contabilidad|Administración|Mall en vivo', sc.map(s => s.name));
+  chk('1f cada atajo va al panel (#ir=… o #envivo) y su ícono existe', sc.every(s => /^pedidos\.html#(ir=(form|mis|conta|admin)|envivo)$/.test(s.url) && (s.icons || []).every(i => fs.existsSync(path.join(RAIZ, i.src)))), sc.map(s => s.url));
   chk('1g con el panel abierto, el atajo usa esa ventana (focus-existing)', man.launch_handler && [].concat(man.launch_handler.client_mode)[0] === 'focus-existing', man.launch_handler);
   const html = fs.readFileSync(PEDIDOS, 'utf8'), escr = fs.readFileSync(path.join(RAIZ, 'escritorio.js'), 'utf8');
   chk('1h la página trae el ícono de la pestaña y el del iPhone (de las hojas)', /rel="apple-touch-icon" href="iconos\/hojas-180\.png"/.test(html) && /rel="icon"[^>]*hojas/.test(html) && fs.existsSync(path.join(RAIZ, 'iconos/hojas-180.png')) && fs.existsSync(path.join(RAIZ, 'iconos/hojas.svg')));

@@ -3682,6 +3682,14 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <div class="field" id="pry-cot-w" hidden>
             <button class="btn btn-sm cot-tab-btn" id="pry-cot-btn" onclick="cotTabAbrir()">🧾 Cotizaciones</button>
           </div>
+          <!-- 🏬 (14/11, mejoras 276, 278, 279 y 280) El mall con números: por qué no compraron, por persona atendida, cuántos vendedores a cada hora y qué exhibir. `mallAnAbrir`. -->
+          <div class="field">
+            <button class="btn btn-sm mallan-btn" id="pry-mall-btn" onclick="mallAnAbrir()">🏬 El mall</button>
+          </div>
+          <!-- 📡 (14/11, mejora 281) El mall en vivo, pensado para el celular del dueño (también con `?envivo=1` / `#envivo`). `mvivAbrir`. -->
+          <div class="field">
+            <button class="btn btn-sm mviv-btn" id="pry-envivo-btn" onclick="mvivAbrir()">📡 El mall en vivo</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
@@ -7006,6 +7014,120 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 @media (max-width:999px){ .dsv-grid{ grid-template-columns:minmax(0,1fr); } #dsv-mapa{ height:calc(44vh / var(--vz,1)); min-height:260px; } #dsv-lista{ max-height:none; overflow:visible; } }
 @media (max-width:560px){ #dsv-body{ padding:10px !important; } .dsv-bar{ gap:6px 8px; } .dsv-seg button{ padding:5px 9px; font-size:11.5px; } .dsv-res{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .dsv-f{ padding:8px 10px; } .dsv-f b{ font-size:1.02rem; } .dsv-f:last-child:nth-child(odd){ grid-column:1/-1; } }
 </style>
+<!-- 🏬 (14/11, mejoras 276, 278, 279 y 280) El mall con números: una ventana con cuatro pestañas sobre la semana elegida. Solo mira. -->
+<div id="mallan-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="mallan-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print mallan-bar"><b id="mallan-tit" style="font-size:.95rem">🏬 El mall · Ventura Mall</b><div class="mallan-sem" role="group" aria-label="Semana"><button type="button" onclick="mallAnSemanaMover(-1)" aria-label="Semana anterior">‹</button><span id="mallan-sem-txt"></span><button type="button" id="mallan-sem-sig" onclick="mallAnSemanaMover(1)" aria-label="Semana siguiente">›</button></div><span id="mallan-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="mallan-copiar" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:800" onclick="mallAnCopiar()" title="Copia lo de esta pestaña, para mandarlo por WhatsApp">📋 Copiar</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="mallAnCerrar()">✕ Cerrar</button></div>
+<div class="mallan-tabs no-print" id="mallan-tabs" role="tablist" aria-label="Qué querés ver"><button type="button" role="tab" data-tab="porque" onclick="mallAnTab('porque')">🤔 Por qué no compraron</button><button type="button" role="tab" data-tab="persona" onclick="mallAnTab('persona')">👥 Por persona atendida</button><button type="button" role="tab" data-tab="horas" onclick="mallAnTab('horas')">🕐 Vendedores por hora</button><button type="button" role="tab" data-tab="exhibir" onclick="mallAnTab('exhibir')">🛏️ Qué exhibir</button></div>
+<div id="mallan-body" style="flex:1;overflow:auto;padding:14px"><div class="mallan-wrap" id="mallan-wrap" role="tabpanel"></div></div></div>
+<!-- 📡 (14/11, mejora 281) El mall en vivo: quién atiende, la gente y lo vendido de hoy, la meta y la caja. Se actualiza sola cada 15 s. Solo mira. -->
+<div id="mviv-ov" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="mviv-tit" style="display:none;position:fixed;inset:0;z-index:3050;background:#f4f6f7;flex-direction:column"><div class="no-print mviv-bar"><b id="mviv-tit" style="font-size:.95rem">📡 El mall en vivo</b><span id="mviv-est" class="mviv-est" role="status" aria-live="polite"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:800" onclick="if(UNLOCKED)mvivTic()" aria-label="Actualizar ahora" title="Actualizar ahora">🔄</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="mvivCerrar()">✕ Cerrar</button></div>
+<div id="mviv-body" style="flex:1;overflow:auto;padding:12px"><div class="mviv-wrap" id="mviv-wrap"></div></div></div>
+<style>
+/* 🏬 El mall con números (276-280) y 📡 en vivo (281): clases propias `mallan-*` / `mviv-*`, tema claro con los colores del panel. */
+.mallan-btn{ background:#f0fdfa; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
+.mviv-btn{ background:#ecfdf5; color:#047857; border:1px solid #047857; font-weight:800; }
+#mallan-body, #mviv-body{ color:var(--text,#17324d); }
+.mallan-bar, .mviv-bar{ padding:9px 12px; background:#0f766e; color:#fff; display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; }
+.mallan-sem{ display:flex; align-items:center; gap:4px; background:rgba(255,255,255,.18); border-radius:999px; padding:2px; max-width:100%; }
+.mallan-sem button{ border:none; background:#fff; color:#0f766e; width:30px; height:30px; border-radius:50%; font:inherit; font-weight:900; font-size:16px; cursor:pointer; line-height:1; flex:0 0 auto; }
+.mallan-sem button:disabled{ opacity:.35; cursor:default; }
+.mallan-sem span{ font-size:12px; font-weight:800; padding:0 6px; white-space:nowrap; }
+.mallan-tabs{ display:flex; gap:6px; padding:8px 12px; background:#fff; border-bottom:1px solid var(--gray-md,#dce3e6); overflow-x:auto; flex:0 0 auto; }
+.mallan-tabs button{ flex:0 0 auto; border:1px solid #cfe3e1; background:#fff; color:#1f2d2d; border-radius:999px; padding:7px 14px; font:inherit; font-size:.82rem; font-weight:800; cursor:pointer; min-height:36px; white-space:nowrap; }
+.mallan-tabs button.on{ background:#00A09A; border-color:#00A09A; color:#fff; }
+.mallan-wrap{ max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.mallan-int{ font-size:.8rem; color:var(--muted,#64748b); line-height:1.55; }
+.mallan-aviso{ background:#fff7e6; border:1px solid #f5d08a; color:#7c4b00; border-radius:10px; padding:8px 12px; font-size:.82rem; }
+.mallan-vacio{ background:#fff; border:1px dashed #cbd5e1; border-radius:12px; padding:16px; text-align:center; color:var(--muted,#64748b); font-size:.84rem; }
+.mallan-fs{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+.mallan-f{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-left:5px solid var(--c,#0f766e); border-radius:12px; padding:10px 14px; min-width:0; }
+.mallan-f small{ display:block; font-size:.68rem; font-weight:800; color:var(--muted,#64748b); text-transform:uppercase; letter-spacing:.05em; }
+.mallan-f b{ display:block; font-size:1.3rem; color:#0f2a3d; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.mallan-f span{ display:block; font-size:.76rem; color:var(--muted,#64748b); line-height:1.4; }
+.mallan-rev{ background:linear-gradient(135deg,#ecfdf5,#f0fdfa); border:1px solid #99ddd9; border-radius:14px; padding:12px 16px; }
+.mallan-rev h4, .mallan-box h4{ margin:0 0 8px; font-size:.9rem; color:#0f4c5c; }
+.mallan-box h4 small{ font-weight:600; color:var(--muted,#64748b); font-size:.74rem; }
+.mallan-rev ol{ margin:0; padding-left:20px; display:flex; flex-direction:column; gap:6px; font-size:.88rem; line-height:1.45; color:#17324d; }
+.mallan-box{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:14px; padding:12px 14px; min-width:0; }
+.mallan-mot{ display:grid; grid-template-columns:minmax(120px,210px) minmax(0,1fr) auto; gap:7px 10px; align-items:center; font-size:.82rem; }
+.mallan-mr{ display:contents; }
+.mallan-ml{ font-weight:700; overflow-wrap:anywhere; }
+.mallan-mb{ position:relative; height:16px; background:#f1f5f7; border-radius:5px; overflow:hidden; }
+.mallan-mb i{ position:absolute; left:0; top:0; height:9px; border-radius:0 4px 4px 0; }
+.mallan-mb i.mallan-mbp{ top:11px; height:4px; background:#b6c2cc; }
+.mallan-mn{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+.mallan-mn small{ color:var(--muted,#64748b); }
+.mallan-tw{ overflow-x:auto; max-width:100%; }
+.mallan-tb{ width:100%; border-collapse:collapse; font-size:.8rem; }
+.mallan-tb th{ background:#f0f7f7; color:#0f4c5c; text-align:left; font-size:.74rem; padding:6px 8px; border-bottom:1px solid #dce3e6; white-space:nowrap; text-transform:none; letter-spacing:0; }
+.mallan-tb th.n{ text-align:right; }
+.mallan-tb td{ padding:6px 8px; border-bottom:1px solid #eef2f4; vertical-align:top; }
+.mallan-tb td.n{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mallan-tb td small{ color:var(--muted,#64748b); }
+.mallan-sc{ display:inline-block; font-size:.72rem; font-weight:700; color:#64748b; background:#f1f5f9; border:1px dashed #cbd5e1; border-radius:999px; padding:1px 9px; }
+.mallan-pie{ font-size:.74rem; color:var(--muted,#64748b); margin:6px 0 0; line-height:1.5; }
+.mallan-ctl{ display:flex; gap:8px; flex-wrap:wrap; }
+.mallan-seg{ display:flex; flex-wrap:wrap; gap:2px; background:#e6f2f1; border-radius:999px; padding:2px; max-width:100%; }
+.mallan-seg button{ border:none; background:transparent; color:#0f4c5c; padding:6px 12px; border-radius:999px; font:inherit; font-size:12px; font-weight:800; cursor:pointer; min-height:32px; }
+.mallan-seg button.on{ background:#0f766e; color:#fff; }
+.mallan-svg{ width:100%; height:auto; display:block; }
+.mallan-svg .mallan-ax{ font-size:11px; fill:#64748b; }
+.mallan-svg .mallan-bar{ fill:#00A09A; }
+.mallan-svg .mallan-g:hover .mallan-bar{ fill:#00877f; }
+.mallan-ley{ display:flex; flex-wrap:wrap; gap:6px 16px; font-size:.76rem; color:var(--muted,#64748b); margin:4px 0 8px; }
+.mallan-ley i{ display:inline-block; vertical-align:-1px; margin-right:6px; }
+.mallan-ley-b{ width:11px; height:11px; background:#00A09A; border-radius:3px; }
+.mallan-ley-l{ width:18px; height:3px; background:#1e3a5f; border-radius:2px; vertical-align:3px!important; }
+.mallan-exh{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.mallan-col ul{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.mallan-col li{ font-size:.82rem; line-height:1.4; padding:7px 9px; border-radius:9px; background:#f8fafb; border-left:4px solid #cbd5e1; overflow-wrap:anywhere; }
+.mallan-col li span{ display:block; color:var(--muted,#64748b); font-size:.76rem; }
+.mallan-col li.mallan-ex{ border-left-color:#00A09A; } .mallan-col li.mallan-pe{ border-left-color:#d97706; } .mallan-col li.mallan-sa{ border-left-color:#94a3b8; }
+.mallan-col li.mallan-nada{ background:transparent; border-left-color:transparent; color:var(--muted,#64748b); padding-left:0; }
+#mallan-ex-si h4{ color:#0f766e; } #mallan-ex-pedir h4{ color:#b45309; } #mallan-ex-sacar h4{ color:#475569; }
+@media (max-width:900px){ .mallan-exh{ grid-template-columns:minmax(0,1fr); } }
+@media (max-width:560px){ #mallan-body{ padding:10px !important; } .mallan-fs{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .mallan-f{ padding:8px 10px; } .mallan-f b{ font-size:1.05rem; }
+  .mallan-mot{ grid-template-columns:minmax(0,1fr) auto; grid-auto-flow:row dense; gap:3px 8px; } .mallan-ml{ grid-column:1; } .mallan-mn{ grid-column:2; } .mallan-mb{ grid-column:1 / -1; margin-bottom:5px; }
+  .mallan-sem span{ white-space:normal; } }
+/* 📡 en vivo: una columna en el celular, dos en la compu */
+.mviv-est{ font-size:.78rem; font-weight:700; opacity:.95; }
+.mviv-est.mviv-est-mal{ background:#fff7e6; color:#7c4b00; border-radius:999px; padding:2px 10px; opacity:1; }
+.mviv-wrap{ max-width:1100px; margin:0 auto; min-width:0; }
+.mviv-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.mviv-c{ background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:16px; padding:12px 14px; min-width:0; }
+.mviv-c h4{ margin:0 0 8px; font-size:.86rem; color:#0f4c5c; }
+.mviv-toca{ background:#e6f7f6; border:1px solid #99ddd9; color:#0f4c5c; border-radius:10px; padding:7px 10px; font-size:.9rem; margin-bottom:8px; }
+.mviv-fila{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+.mviv-v{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 8px; align-items:center; padding:8px 10px; border-radius:10px; background:#f8fafb; border-left:4px solid #94a3b8; }
+.mviv-v small{ grid-column:1 / -1; color:var(--muted,#64748b); font-size:.74rem; }
+.mviv-v.mviv-e-atiende{ border-left-color:#00A09A; } .mviv-v.mviv-e-esmio{ border-left-color:#d97706; } .mviv-v.mviv-e-pausa{ border-left-color:#7c3aed; } .mviv-v.mviv-le{ border-left-color:#15803d; background:#f0fdf4; }
+.mviv-chip{ font-size:.74rem; font-weight:800; background:#fff; border:1px solid #dce3e6; border-radius:999px; padding:2px 9px; white-space:nowrap; }
+.mviv-3{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; text-align:center; }
+.mviv-3 b{ display:block; font-size:1.7rem; color:#0f2a3d; font-variant-numeric:tabular-nums; line-height:1.15; }
+.mviv-3 small{ color:var(--muted,#64748b); font-size:.74rem; }
+.mviv-conv{ display:flex; align-items:center; gap:8px; margin-top:10px; font-size:.8rem; }
+.mviv-conv b{ font-size:1.05rem; color:#15803d; }
+.mviv-pbar{ flex:1 1 auto; height:10px; background:#eef2f4; border-radius:99px; overflow:hidden; display:block; }
+.mviv-pbar i{ display:block; height:100%; background:#15803d; border-radius:99px; }
+.mviv-pbar-m i{ background:#0f766e; }
+.mviv-big{ font-size:1.8rem; font-weight:900; color:#0f2a3d; font-variant-numeric:tabular-nums; line-height:1.15; }
+.mviv-c > small, .mviv-sub{ display:block; color:var(--muted,#64748b); font-size:.76rem; margin-top:2px; }
+.mviv-meta{ margin-top:10px; border-top:1px dashed #cbd5e1; padding-top:8px; }
+.mviv-meta-t{ display:flex; justify-content:space-between; gap:8px; font-size:.8rem; margin-bottom:5px; flex-wrap:wrap; }
+.mviv-meta small{ display:block; color:var(--muted,#64748b); font-size:.74rem; margin-top:3px; }
+.mviv-ult{ margin-top:10px; font-size:.8rem; background:#f8fafb; border-radius:9px; padding:7px 9px; overflow-wrap:anywhere; }
+.mviv-cl{ list-style:none; margin:8px 0 4px; padding:0; font-size:.8rem; }
+.mviv-cl li{ display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px solid #f1f5f7; }
+.mviv-cl li.mviv-dif b{ color:#b91c1c; }
+.mviv-hb{ display:flex; align-items:flex-end; gap:4px; height:120px; }
+.mviv-hc{ flex:1 1 0; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px; }
+.mviv-hc i{ display:block; width:100%; max-width:30px; background:#00A09A; border-radius:4px 4px 0 0; }
+.mviv-hc b{ font-size:.7rem; color:#0f2a3d; } .mviv-hc small{ font-size:.66rem; color:var(--muted,#64748b); }
+.mviv-nada{ color:var(--muted,#64748b); font-size:.82rem; margin:4px 0 0; }
+.mviv-lock{ max-width:340px; margin:40px auto; background:#fff; border:1px solid var(--gray-md,#dce3e6); border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:10px; text-align:center; }
+.mviv-lock input{ padding:10px 12px; border:1px solid #cbd5e1; border-radius:10px; font:inherit; font-size:1rem; }
+.mviv-lock small{ color:#b91c1c; }
+@media (max-width:700px){ .mviv-grid{ grid-template-columns:minmax(0,1fr); } #mviv-body{ padding:10px !important; } .mviv-bar{ gap:6px 8px; } }
+</style>
 <!-- 🔗 (15/10, §4lf) Completar las ATC con lo que dice Trello: propone, se revisa y se guarda solo lo tildado. -->
 <div id="atct-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0079bf;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔗 Completar las ATC con Trello</b><span id="atct-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atct-guardar" style="margin-left:auto;background:#fff;color:#0079bf;font-weight:800" onclick="atctGuardar()">💾 Guardar lo tildado</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atctCerrar()">✕ Cerrar</button></div>
 <div id="atct-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -7379,7 +7501,7 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
-<script src="escritorio.js?v=20261030b" defer></script>
+<script src="escritorio.js?v=20261114a" defer></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -66777,7 +66899,11 @@ function mallProcesar(toques, dia, prev, ahora){
   var prevAt={ am:{}, pm:{} };
   if(prev && prev.porTurno) ['am','pm'].forEach(function(T){ var pv=(prev.porTurno[T]||{}).porVend||{}; Object.keys(pv).forEach(function(v){ prevAt[T][normNombre(v)]=Number(pv[v].at)||0; }); });
   var de=function(v){ var k=normNombre(v); return V[k]||(V[k]={ v:nombreCanonico(v), k:k, aqui:false, estado:'fuera', desde:0, turno:'', turno0:'', llego:0, seVa:false,
-                                                             abierta:null, pausaDesde:0, pausaMin:0, n:0, nEsmio:0, ult:0, turnos:{} }); };
+                                                             abierta:null, pausaDesde:0, pausaMin:0, n:0, nEsmio:0, ult:0, turnos:{}, tramos:[], inT:0 }); };
+  /* 🕐 (14/11, mejora 279) `tramos` = cuándo estuvo de verdad en el mostrador ([desde, hasta] en ms, sin las pausas): de «Llegué» a «Me fui»
+     (o hasta que terminó su cliente), cortado por cada «Pausa» / «Volví». Lo usa «Cuántos vendedores poner a cada hora» (`mallPresenciaDia`). */
+  var presAbrir=function(o, ts){ if(!o.inT) o.inT=ts; };
+  var presCerrar=function(o, ts){ if(o.inT){ if(ts>o.inT) o.tramos.push([o.inT, ts]); o.inT=0; } };
   var sacar=function(o){ fila=fila.filter(function(k){ return k!==o.k; }); };
   var alFinal=function(o){ sacar(o); fila.push(o.k); };
   var alFrente=function(o){ sacar(o); fila.unshift(o.k); };
@@ -66796,9 +66922,10 @@ function mallProcesar(toques, dia, prev, ahora){
     if(o.aqui) return;
     var ts=Number(t.ts)||0;
     o.aqui=true; o.estado='libre'; o.desde=ts; o.seVa=false; o.llego=ts; o.turno=mallTurnoDeMin(pryMinBo(ts)); if(!o.turno0) o.turno0=o.turno; o.turnos[o.turno]=true;
+    presAbrir(o, ts);
     fila.push(o.k); ordenarArranque(o.turno);
   };
-  var cerrarPausa=function(o, ts){ if(o.estado==='pausa' && o.pausaDesde){ o.pausaMin+=Math.max(0, ts-o.pausaDesde)/60000; o.pausaDesde=0; } };
+  var cerrarPausa=function(o, ts){ if(o.estado==='pausa' && o.pausaDesde){ o.pausaMin+=Math.max(0, ts-o.pausaDesde)/60000; o.pausaDesde=0; presAbrir(o, ts); } };
   var turnoDe=function(o, t){ return o.turno || mallTurnoDeMin(pryMinBo(Number(t.ts)||0)); };
   var atencion=function(o, t, tipo){
     var ts=Number(t.ts)||0, a={ v:o.v, k:o.k, tipo:tipo, ts:ts, h:Math.floor(pryMinBo(ts)/60), turno:turnoDe(o, t), r:'', m:'', medida:'', ref:'', fin:0, id:t.id||'' };
@@ -66816,12 +66943,12 @@ function mallProcesar(toques, dia, prev, ahora){
     if(k==='mefui'){
       if(!o.aqui) return;
       if(o.abierta){ o.seVa=true; return; }                 // un cliente a medio atender lo termina el que lo empezó
-      cerrarPausa(o, ts); o.aqui=false; o.estado='fuera'; o.desde=ts; sacar(o); return;
+      cerrarPausa(o, ts); presCerrar(o, ts); o.aqui=false; o.estado='fuera'; o.desde=ts; sacar(o); return;
     }
     if(k==='pausa'){
       if(!o.aqui) llega(o, t);
       if(o.abierta || o.estado==='pausa') return;
-      o.estado='pausa'; o.desde=ts; o.pausaDesde=ts; return;
+      o.estado='pausa'; o.desde=ts; o.pausaDesde=ts; presCerrar(o, ts); return;
     }
     if(k==='volvi'){
       if(!o.aqui){ llega(o, t); return; }
@@ -66841,7 +66968,7 @@ function mallProcesar(toques, dia, prev, ahora){
       var r=(k==='miro') ? 'miro' : String(t.r||'');
       if(o.abierta){
         cerrar(o, o.abierta, t, r); o.abierta=null; o.estado='libre'; o.desde=ts;
-        if(o.seVa){ o.aqui=false; o.estado='fuera'; sacar(o); }
+        if(o.seVa){ presCerrar(o, ts); o.aqui=false; o.estado='fuera'; sacar(o); }
         return;
       }
       /* Sin una atención abierta = una atención entera en un toque (no tocó «Atiendo»). Es cliente de la rueda y lo pasa al final.
@@ -66854,7 +66981,7 @@ function mallProcesar(toques, dia, prev, ahora){
   });
   var fin=Number(ahora)||0;
   if(!fin) L.forEach(function(t){ fin=Math.max(fin, Number(t.ts)||0); });
-  Object.keys(V).forEach(function(k){ var o=V[k]; if(o.estado==='pausa' && o.pausaDesde && fin>o.pausaDesde) o.pausaMin+=(fin-o.pausaDesde)/60000; });
+  Object.keys(V).forEach(function(k){ var o=V[k]; if(o.estado==='pausa' && o.pausaDesde && fin>o.pausaDesde) o.pausaMin+=(fin-o.pausaDesde)/60000; presCerrar(o, Math.max(fin, o.inT)); });
   return { V:V, fila:fila.map(function(k){ return V[k]; }), at:at, arranco:arranco };
 }
 /* 🎡 LA RUEDA DE AHORA (pura). `toques` = los de hoy (y, si están, los del día anterior: deciden quién arranca). `ahora` en ms.
@@ -66874,13 +67001,14 @@ function mallRVacio(){ return { atendidos:0, compraron:0, anotaron:0, miraron:0,
 function mallPVVacio(T){ return { at:0, co:0, anoto:0, miro:0, abiertos:0, esmio:0, esmioCo:0, motivos:{}, turno:T||'', pausaMin:0, rueda:false }; }
 /* 📊 EL RESUMEN DE UN DÍA (puro si se le pasan los toques; si no, usa los que ya leyó la página).
    → `{atendidos, compraron, miraron, porHora:[{h, at, co}], porVend:{<v>:{at, co, miro, esmio, motivos, turno}}, porTurno:{am, pm}}` y además
-   `anotaron`, `abiertos` (atendiendo ahora), `esmio`, `esmioCompro`, `motivos`, `medidas`. Los clientes son los de la RUEDA: «Es mío» va aparte. */
+   `anotaron`, `abiertos` (atendiendo ahora), `esmio`, `esmioCompro`, `motivos`, `medidas` y `esmioHora` ({<hora>: n}, 279). Los clientes son los de
+   la RUEDA: «Es mío» va aparte. */
 function mallResumenDia(dia, tienda, toques){
   dia=dia||diaNegocio(); tienda=tienda||MALL_TIENDA;
   var T=(toques ? toques : mallToquesDe(dia)).filter(function(t){ return mallEsDeTienda(t, tienda) && mallDiaDe(t)===dia; });
   var hoy=diaNegocio(), P=mallProcesar(T, dia, null, dia===hoy ? Date.now() : 0);
   var R=mallRVacio(); R.dia=dia; R.tienda=tienda; R.porTurno={ am:mallRVacio(), pm:mallRVacio() };
-  var H={};
+  var H={}, EH={};
   /* Todo el que estuvo en la rueda aparece, aunque no haya atendido a nadie (si no, «¿Fue parejo?» no lo vería). */
   /* `rueda`: tocó «Llegué» (en ese turno). Una venta cargada en la compu del mall por alguien que no estaba en la rueda cuenta para la
      tienda, pero no entra en «¿Fue parejo?». */
@@ -66902,8 +67030,10 @@ function mallResumenDia(dia, tienda, toques){
   P.at.forEach(function(a){
     sumar(R, a); sumar(R.porTurno[a.turno==='pm' ? 'pm' : 'am'], a);
     if(a.tipo!=='esmio'){ var x=H[a.h]||(H[a.h]={ h:a.h, at:0, co:0 }); x.at++; if(a.r==='compro') x.co++; }
+    else EH[a.h]=(EH[a.h]||0)+1;
   });
   R.porHora=Object.keys(H).map(function(h){ return H[h]; }).sort(function(a,b){ return a.h-b.h; });
+  R.esmioHora=EH;   // 🕐 (14/11, 279) los «es mío» por hora, aparte (`porHora` son los clientes de la rueda)
   return R;
 }
 /* ⚖️ ¿FUE PAREJO? (pura) Por turno, los del MISMO turno que estuvieron en la rueda (`rueda`: tocaron «Llegué»): diferencia de clientes ≤ 1 = parejo.
@@ -67243,6 +67373,774 @@ function misRecoHtml(v){
   return '<div class="td-reco" id="mis-reco">'+L.join('')+'</div>';
 }
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(mallArrancar, 700); });
+/* ============================================================================
+   🏬 EL MALL CON NÚMEROS (14/11, mejoras 276, 278, 279, 280 y 281; el dueño las aprobó con la tienda del mall). TODO SOLO MIRA: nada guarda.
+   Proyección → «🏬 El mall» (solo con la contraseña) abre UNA ventana con cuatro pestañas, sobre la SEMANA elegida (lunes a domingo):
+   · 276 🤔 ¿POR QUÉ NO COMPRARON? Los «👀 Solo miró» del mostrador con su motivo (`mallResumenDia` → `motivos`, `medidas`, `porVend`) y,
+     si el servidor las tiene, las cotizaciones «no le interesa» (`cotLeer`, estado 'no' con su motivo: precio | medida | demora | compró
+     en otro lado | otro). Por tienda y por vendedor, la semana contra la anterior, y hasta 3 líneas de «lo que conviene revisar» armadas
+     con reglas simples (`mallPorQueRevisar`: el precio con el producto que más se cotizó y no se cerró por precio, la medida que pidieron y
+     no había, la demora, los que vuelven, los que no dicen por qué, el vendedor que pierde más por precio que el resto…).
+   · 278 👥 POR PERSONA ATENDIDA. Lo vendido = las ventas de Proyección (`pryVentas`, el equipo de tiendas) con la tienda de quien vendió
+     (`st`) y el día en que se CARGÓ (`reg`), como «🏆 Vendedor del día». Solo el mall cuenta gente: las otras tiendas salen con lo vendido
+     y «sin conteo» (nunca un número inventado). Día por día, la semana, semana por semana (4) y el MES: el mes va por la entrega, como
+     Proyección → «🏬 Por tienda» (`x.ym`), y da el MISMO número (`tests/test_mall_analisis.js` lo compara con `cxPryTiendas`).
+   · 279 🕐 CUÁNTOS VENDEDORES PONER A CADA HORA. Las últimas 2, 3 o 4 semanas (todos los días, lunes a viernes o el fin de semana): por hora,
+     las personas atendidas en promedio (barras) y los vendedores presentes en promedio (línea; sale de «Llegué» / «Me fui» / «Pausa» /
+     «Volví» con el MISMO motor de la rueda, `mallProcesar` → `tramos`, `mallPresenciaDia`), y recomendaciones por reglas (`mallHorasRecom`):
+     las horas que entra mucha más gente que el promedio (que se crucen los turnos), las tranquilas (con 1 alcanza), las que cada vendedor
+     atiende más de 2 por hora, y la mejor hora para el cambio de turno (la más tranquila de 12 a 18).
+   · 280 🛏️ QUÉ PONER EN EXHIBICIÓN. Lo que más se vende en el mall por modelo y medida (los colchones, somieres y combos de las ventas de sus
+     vendedores: `pryVentas` + `pryTipoProd`, con la clave del stock), contra el stock de la tienda (`tstCalcular`, si hay un conteo cargado
+     de Ventura Mall) y lo que piden y no hay (motivo «medida» con su medida, y cotizaciones «no le interesa: medida»): «Exhibir», «Pedir a
+     la tienda» y «Sacar».
+   · 281 📡 EL MALL EN VIVO (ventana aparte, `#mviv-ov`; también con `?envivo=1` o `#envivo` en la dirección y el atajo «Mall en vivo» del
+     panel instalado): quién atiende ahora y desde cuándo (`mallEstado`), la gente de hoy, lo vendido hoy en la tienda, la meta del día
+     (`metaDiaTienda`, si existe), el efectivo que debería haber en la caja (`cajaResumenDia`, si existe), la última venta y la gente por
+     hora. Se actualiza sola cada 15 s mientras está abierta y a la vista; si falla la red, se queda con lo último y dice de qué hora es.
+   · «PERSONAS ATENDIDAS» = los clientes de la rueda + los «💛 es mío» (a los dos los atendió alguien); «compraron», igual. En la barra del
+     mostrador y en «Tu día» el % es solo de la rueda (sirve para repartir parejo); acá se mira la tienda entera, y la pantalla lo dice.
+   Las cotizaciones (`cotLeer`), la meta del día (`metaDiaTienda`) y la caja (`cajaResumenDia`) las hacen otros trabajos: se usan SOLO si
+   existen; si no, esa parte no se muestra. En Playwright, el atajo de la dirección solo con `window.MVIV_PRUEBA` (los botones andan siempre).
+   `tests/test_mall_analisis.js`.
+   ========================================================================== */
+var MALLAN={ tab:'porque', lunes:'', semanas:4, tipo:'todos', exhDias:30, cots:{}, cotDias:{}, leyendo:0, err:'', ultLect:0 };
+var MALLAN_TABS=[{ k:'porque', t:'🤔 Por qué no compraron' }, { k:'persona', t:'👥 Por persona atendida' }, { k:'horas', t:'🕐 Vendedores por hora' }, { k:'exhibir', t:'🛏️ Qué exhibir' }];
+var MALLAN_MOT=[{ k:'precio', t:'💲 Precio', s:'💲 Precio', c:'#b45309' }, { k:'medida', t:'📐 No había la medida', s:'📐 Medida', c:'#0e7490' }, { k:'demora', t:'⏳ La demora de la entrega', s:'⏳ Demora', c:'#7c3aed' },
+                { k:'paseaba', t:'🚶 Solo paseaba', s:'🚶 Paseaba', c:'#64748b' }, { k:'vuelve', t:'🔁 Dijo que vuelve', s:'🔁 Vuelve', c:'#15803d' }, { k:'otrolado', t:'🏪 Compró en otro lado', s:'🏪 Otro lado', c:'#b91c1c' },
+                { k:'otro', t:'❔ Otro motivo', s:'❔ Otro', c:'#94a3b8' }, { k:'sin', t:'✍️ Sin decir por qué', s:'✍️ Sin decir', c:'#cbd5e1' }];
+var MALLAN_PQ_MIN=3, MALLAN_PQ_PRECIO=0.30, MALLAN_PQ_DEMORA=0.20, MALLAN_PQ_SIN=0.30, MALLAN_PQ_VEND_MIN=5, MALLAN_PQ_VEND_DIF=0.25, MALLAN_PQ_MEDIDA=2;
+var MALLAN_PICO=1.6, MALLAN_BAJO=0.5, MALLAN_CARGA_ALTA=2, MALLAN_CAMBIO_DESDE=12, MALLAN_CAMBIO_HASTA=18, MALLAN_POCOS_DIAS=5, MALLAN_DOS_TURNOS=2.5;
+var MALLAN_EXH_TOP=8, MALLAN_EXH_MIN=2, MALLAN_SEMANAS_ATRAS=4;
+
+/* ---------- utilidades ---------- */
+function mallAnLunes(dia){ var w=dowDe(dia); return w<0 ? dia : stockSumarDias(dia, -((w+6)%7)); }
+function mallAnDias(desde, hasta){ var o=[], d=desde, n=0; while(d && hasta && d<=hasta && n++<400){ o.push(d); d=stockSumarDias(d, 1); } return o; }
+function mallAnDiaTxt(d){ var s=(DIAS_SEM[dowDe(d)]||'').slice(0,3); return (s ? s.charAt(0).toUpperCase()+s.slice(1)+' ' : '')+fmtFechaCorta(d); }
+function mallAnSemTxt(a, b){ return 'del '+fmtFechaCorta(a)+' al '+fmtFechaCorta(b); }
+function mallAnN(n){ return stockNum(Number(n)||0, 1); }
+function mallAnPc(n, d){ return d>0 ? Math.round(100*n/d) : null; }
+function mallAnPcTxt(n, d){ var p=mallAnPc(n, d); return p==null ? '—' : (p+' %'); }
+function mallAnPorPers(bs, pers){ return pers>0 ? bs/pers : null; }
+/* Los toques de un día: los que ya leyó la página (`mallToquesDe`) o, en las pruebas, los que se le pasan (`opts.toques`). */
+function mallAnToquesFn(opts){
+  var A=opts && opts.toques; if(!A) return mallToquesDe;
+  var P={}; A.forEach(function(t){ if(!t) return; var d=mallDiaDe(t); (P[d]=P[d]||[]).push(t); });
+  return function(d){ return P[d]||[]; };
+}
+function mallAnVe(){ return !!UNLOCKED; }
+
+/* ---------- las cotizaciones (otro trabajo; se usan solo con el servidor nuevo) ---------- */
+function mallAnCotPuede(){ return servidorTiene(MALL_SERVIDOR); }
+function mallAnCotDia(c){ return (c && c.dia) ? String(c.dia).slice(0,10) : isoDeTsBolivia(Number(c && c.ts)||0); }
+function mallAnCotNo(c){ return !!c && normNombre(c.estado)==='no'; }
+function mallAnMotivo(m){
+  var s=normNombre(m); if(!s) return 'sin';
+  if(/precio|caro/.test(s)) return 'precio';
+  if(/medida/.test(s)) return 'medida';
+  if(/demora|tarda|plazo|entrega/.test(s)) return 'demora';
+  if(/otro lado|otra tienda|competencia|compro/.test(s)) return 'otrolado';
+  if(/pasea/.test(s)) return 'paseaba';
+  if(/vuelve|volver/.test(s)) return 'vuelve';
+  return 'otro';
+}
+function mallAnCotProds(c){
+  var p=c && c.productos;
+  if(typeof p==='string'){ try{ p=JSON.parse(p); }catch(e){ p=[{ desc:p }]; } }
+  if(!Array.isArray(p)) return [];
+  return p.map(function(x){ return (typeof x==='string') ? { desc:x } : (x||{}); }).filter(function(x){ return String(x.desc||x.codigo||'').trim(); });
+}
+function mallAnNom(k){ var pa=String(k||'').split('|'), m=pa[1]||''; if(/^\d+(?:[.,]\d+)?X\d+(?:[.,]\d+)?$/i.test(m)) m=m.toLowerCase(); return (pa[0]||String(k||''))+(m ? (' · '+m) : ''); }
+function mallAnProdClave(x){ try{ var k=stockClave(x); if(k && k!=='|') return k; }catch(e){} return String(x.desc||'').trim().toUpperCase()+'|'+String(x.medida||'').trim(); }
+function mallAnCotTienda(c){ return String((c && c.tienda) || sucursalDeVendedor(c && c.vendedor, mallAnCotDia(c)) || ''); }
+function mallAnCotsMem(){ return Object.keys(MALLAN.cots).map(function(id){ return MALLAN.cots[id]; }); }
+function mallAnCotsDe(desde, hasta, opts){
+  var L=(opts && opts.cots) ? opts.cots : mallAnCotsMem();
+  return L.filter(function(c){ var d=mallAnCotDia(c); return c && d>=desde && d<=hasta; });
+}
+function mallAnCotLeer(desde, hasta){
+  if(!mallAnCotPuede() || !CONNECTED) return Promise.resolve(false);
+  return conTopeDuro(apiPost({ action:'cotLeer', desde:desde, hasta:hasta }), 15000, 'tardo_cot').then(function(j){
+    if(!(j && j.ok && Array.isArray(j.cots))) return false;
+    Object.keys(MALLAN.cots).forEach(function(id){ var d=mallAnCotDia(MALLAN.cots[id]); if(d>=desde && d<=hasta) delete MALLAN.cots[id]; });
+    j.cots.forEach(function(c, i){ if(!c) return; MALLAN.cots[String(c.id || ('c'+(c.ts||0)+'|'+(c.vendedor||'')+'|'+i))]=c; });
+    mallAnDias(desde, hasta).forEach(function(d){ MALLAN.cotDias[d]=1; });
+    return true;
+  }, function(){ return false; });
+}
+
+/* ---------- 276 · ¿POR QUÉ NO COMPRARON? (puras) ---------- */
+function mallPqVacio(){ var o={ total:0, conMot:0, mall:0, cot:0, m:{}, medidas:{}, precioProd:{}, anotaron:0, pers:0 }; MALLAN_MOT.forEach(function(M){ o.m[M.k]=0; }); return o; }
+function mallPqSumar(o, k, n, fuente){
+  n=Number(n)||0; if(!(n>0)) return;
+  if(o.m[k]==null) k='otro';
+  o.m[k]+=n; o.total+=n; if(k!=='sin') o.conMot+=n; if(fuente) o[fuente]+=n;
+}
+/* → `{desde, hasta, tot, porTienda:{<tienda>:…}, porVend:{<clave>:{v, tienda, …}}, hayCot}`; cada uno `{total, conMot, mall, cot, m:{<motivo>:n},
+   medidas:{<medida>:n}, precioProd:{<producto>:n}, anotaron, pers}`. `opts.toques` / `opts.cots` = lo de una prueba. */
+function mallPorQueDatos(desde, hasta, opts){
+  opts=opts||{};
+  var toq=mallAnToquesFn(opts), D={ desde:desde, hasta:hasta, tot:mallPqVacio(), porTienda:{}, porVend:{}, hayCot:!!(opts.cots || mallAnCotPuede()) };
+  var ti=function(t){ var k=t||'Sin tienda'; return D.porTienda[k]||(D.porTienda[k]=mallPqVacio()); };
+  var ve=function(v, t){ var k=normNombre(v); var o=D.porVend[k]; if(!o){ o=D.porVend[k]=mallPqVacio(); o.v=nombreCanonico(v); o.tienda=t||''; } if(!o.tienda && t) o.tienda=t; return o; };
+  var med=function(L, md, n){ var c=saldoMedidaCanon(md)||String(md||'').trim(); if(!c) return; L.forEach(function(o){ o.medidas[c]=(o.medidas[c]||0)+n; }); };
+  mallAnDias(desde, hasta).forEach(function(d){
+    var T=toq(d); if(!T.length) return;
+    var R=mallResumenDia(d, MALL_TIENDA, T), TT=ti(MALL_TIENDA), sum=0;
+    [D.tot, TT].forEach(function(o){ o.anotaron+=R.anotaron; o.pers+=R.atendidos+R.esmio; });
+    Object.keys(R.motivos).forEach(function(k){ sum+=R.motivos[k]; mallPqSumar(D.tot, k, R.motivos[k], 'mall'); mallPqSumar(TT, k, R.motivos[k], 'mall'); });
+    mallPqSumar(D.tot, 'sin', R.miraron-sum, 'mall'); mallPqSumar(TT, 'sin', R.miraron-sum, 'mall');
+    Object.keys(R.medidas).forEach(function(md){ med([D.tot, TT], md, R.medidas[md]); });
+    Object.keys(R.porVend).forEach(function(v){
+      var p=R.porVend[v], o=ve(v, MALL_TIENDA), s=0;
+      o.anotaron+=p.anoto||0; o.pers+=(p.at||0)+(p.esmio||0);
+      Object.keys(p.motivos||{}).forEach(function(k){ s+=p.motivos[k]; mallPqSumar(o, k, p.motivos[k], 'mall'); });
+      mallPqSumar(o, 'sin', (p.miro||0)-s, 'mall');
+    });
+  });
+  mallAnCotsDe(desde, hasta, opts).forEach(function(c){
+    if(!mallAnCotNo(c)) return;
+    var k=mallAnMotivo(c.motivo), t=mallAnCotTienda(c), L=[D.tot, ti(t)], prods=mallAnCotProds(c);
+    if(c.vendedor) L.push(ve(c.vendedor, t));
+    L.forEach(function(o){ mallPqSumar(o, k, 1, 'cot'); });
+    if(k==='precio') prods.forEach(function(x){ var n=mallAnNom(mallAnProdClave(x)); [D.tot, ti(t)].forEach(function(o){ o.precioProd[n]=(o.precioProd[n]||0)+1; }); });
+    if(k==='medida'){ var md=c.medida || (prods.filter(function(x){ return x.medida; })[0]||{}).medida; if(md) med([D.tot, ti(t)], md, 1); }
+  });
+  return D;
+}
+function mallAnTop(o){ return Object.keys(o||{}).map(function(k){ return { k:k, n:o[k] }; }).filter(function(x){ return x.n>0; }).sort(function(a,b){ return b.n-a.n || a.k.localeCompare(b.k, 'es'); }); }
+/* «Lo que conviene revisar»: hasta 3 líneas, por reglas simples, de la más importante a la menos. `A` = la semana, `B` = la anterior. */
+function mallPorQueRevisar(A, B){
+  var T=A.tot, b=B ? B.tot : null, cm=T.conMot, L=[];
+  var pc=function(n, d){ return d>0 ? Math.round(100*n/d) : 0; };
+  if(!T.total) return [{ k:'nada', txt:'Esta semana nadie anotó un «👀 Solo miró» ni una cotización que no se cerró: cuando los vendedores los anoten, acá aparece qué conviene revisar.', peso:0 }];
+  var n=T.m.precio, p=pc(n, cm);
+  if(n>=MALLAN_PQ_MIN && n/cm>=MALLAN_PQ_PRECIO){
+    var pr=mallAnTop(T.precioProd)[0], tx='El '+p+' % se fue por el precio ('+n+' de '+cm+' que dijeron por qué)';
+    if(b && b.conMot>=MALLAN_PQ_MIN){ var pb=pc(b.m.precio, b.conMot); if(Math.abs(p-pb)>=10) tx+='; la semana anterior, el '+pb+' %'; }
+    tx+=pr ? (': revisá el precio del '+pr.k+' ('+(pr.n===1 ? '1 cotización no se cerró' : (pr.n+' cotizaciones no se cerraron'))+' por el precio).')
+           : ': revisá los precios de lo que está en exhibición y las promociones.';
+    L.push({ k:'precio', txt:'💲 '+tx, peso:50+p });
+  }
+  var md=mallAnTop(T.medidas).filter(function(x){ return x.n>=MALLAN_PQ_MEDIDA; });
+  if(md.length){
+    L.push({ k:'medida', txt:'📐 '+md[0].n+' pidieron '+md[0].k+' y no había'+(md[1] ? (' (y '+md[1].n+' pidieron '+md[1].k+')') : '')+': mirá «🛏️ Qué exhibir» → «Pedir a la tienda».', peso:60+5*md[0].n });
+  }else if(T.m.medida>=MALLAN_PQ_MIN){
+    L.push({ k:'medida', txt:'📐 '+T.m.medida+' se fueron porque no había su medida, sin decir cuál: que la anoten al tocar «📐 Medida».', peso:40+T.m.medida });
+  }
+  n=T.m.demora; p=pc(n, cm);
+  if(n>=MALLAN_PQ_MIN && n/cm>=MALLAN_PQ_DEMORA) L.push({ k:'demora', txt:'⏳ El '+p+' % se fue por la demora de la entrega ('+n+' de '+cm+'): ofrecé lo que hay para entregar ya y revisá los plazos de fábrica.', peso:45+p });
+  if(T.m.otrolado>=2) L.push({ k:'otrolado', txt:'🏪 '+T.m.otrolado+' compraron en otro lado: preguntá dónde y a qué precio, para comparar.', peso:38+T.m.otrolado });
+  if(T.m.vuelve>=MALLAN_PQ_MIN) L.push({ k:'vuelve', txt:'🔁 '+T.m.vuelve+' dijeron que vuelven: que dejen su celular (📝 Anotó) para poder llamarlos.', peso:35+T.m.vuelve });
+  /* un vendedor que pierde por precio bastante más que el resto del equipo */
+  var peor=null;
+  Object.keys(A.porVend).forEach(function(k){
+    var o=A.porVend[k]; if(o.conMot<MALLAN_PQ_VEND_MIN) return;
+    var rc=cm-o.conMot; if(rc<MALLAN_PQ_MIN) return;
+    var pv=o.m.precio/o.conMot, pr=(T.m.precio-o.m.precio)/rc;
+    if(pv-pr>=MALLAN_PQ_VEND_DIF && (!peor || pv-pr>peor.d)) peor={ v:o.v, pv:pv, pr:pr, d:pv-pr };
+  });
+  if(peor) L.push({ k:'vendedor', txt:'💬 Con '+peor.v+' se fue por el precio el '+Math.round(peor.pv*100)+' % (con el resto del equipo, el '+Math.round(peor.pr*100)+' %): acompañalo en el cierre de la venta.', peso:42 });
+  if(T.total>=5 && T.m.sin/T.total>=MALLAN_PQ_SIN) L.push({ k:'sin', txt:'✍️ '+T.m.sin+' de '+T.total+' no dicen por qué: pediles a los vendedores que elijan el motivo (si no, esto no sirve).', peso:30+T.m.sin });
+  if(cm>=5 && T.m.paseaba/cm>=0.5) L.push({ k:'paseaba', txt:'🚶 El '+pc(T.m.paseaba, cm)+' % solo paseaba: es gente de paso del mall, no es una venta perdida.', peso:12 });
+  if(!L.length) L.push({ k:'parejo', txt:'✅ Esta semana no se destaca ningún motivo: están repartidos.', peso:1 });
+  L.sort(function(a,b){ return b.peso-a.peso; });
+  return L.slice(0, 3);
+}
+
+/* ---------- 278 · POR PERSONA ATENDIDA (puras) ---------- */
+/* → `{desde, hasta, dias, tiendas:[{st, nom, bs, n, porDia:{d:bs}, conteo}], mall:{pers, co, rueda, ruedaCo, esmio, bs, n, diasConDatos,
+   porDia:{d:{pers, co, hay}}}, vend:[{v, st, bs, n, pers|null, co|null}]}`. Lo vendido: el día en que se cargó (`reg`). */
+function mallPersonaDatos(desde, hasta, opts){
+  opts=opts||{};
+  var toq=mallAnToquesFn(opts), V=opts.V||pryVentas(), dias=mallAnDias(desde, hasta), T={}, VE={};
+  var mall={ pers:0, co:0, rueda:0, ruedaCo:0, esmio:0, bs:0, n:0, diasConDatos:0, porDia:{} };
+  var ti=function(st){ var k=st||''; return T[k]||(T[k]={ st:k, nom:k||'Sin tienda', bs:0, n:0, porDia:{}, conteo:k===MALL_TIENDA }); };
+  var ve=function(v){ var k=normNombre(v); return VE[k]||(VE[k]={ v:nombreCanonico(v), st:'', bs:0, n:0, pers:null, co:null }); };
+  ti(MALL_TIENDA);
+  V.forEach(function(x){
+    if(x.amb!=='tienda' || !x.reg || x.reg<desde || x.reg>hasta) return;
+    var t=ti(x.st); t.bs=r2(t.bs+x.bs); t.n++; t.porDia[x.reg]=r2((t.porDia[x.reg]||0)+x.bs);
+    var o=ve(x.v); o.bs=r2(o.bs+x.bs); o.n++; if(!o.st) o.st=x.st||'';
+  });
+  dias.forEach(function(d){
+    var Tq=toq(d), R=Tq.length ? mallResumenDia(d, MALL_TIENDA, Tq) : null;
+    var x=mall.porDia[d]={ pers:0, co:0, hay:false };
+    if(!R) return;
+    x.pers=R.atendidos+R.esmio; x.co=R.compraron+R.esmioCompro; x.hay=x.pers>0 || Tq.some(function(t){ return t.k==='llegue'; });
+    if(x.hay) mall.diasConDatos++;
+    mall.pers+=x.pers; mall.co+=x.co; mall.rueda+=R.atendidos; mall.ruedaCo+=R.compraron; mall.esmio+=R.esmio;
+    Object.keys(R.porVend).forEach(function(v){
+      var p=R.porVend[v], o=ve(v); o.pers=(o.pers||0)+(p.at||0)+(p.esmio||0); o.co=(o.co||0)+(p.co||0)+(p.esmioCo||0); if(!o.st) o.st=MALL_TIENDA;
+    });
+  });
+  var M=T[MALL_TIENDA]; mall.bs=M.bs; mall.n=M.n;
+  var tiendas=Object.keys(T).map(function(k){ return T[k]; }).sort(function(a,b){ return (b.st===MALL_TIENDA)-(a.st===MALL_TIENDA) || b.bs-a.bs || a.nom.localeCompare(b.nom, 'es'); });
+  var vend=Object.keys(VE).map(function(k){ return VE[k]; }).filter(function(o){ return o.bs>0.005 || o.pers; })
+    .sort(function(a,b){ return (b.pers!=null)-(a.pers!=null) || b.bs-a.bs || a.v.localeCompare(b.v, 'es'); });
+  return { desde:desde, hasta:hasta, dias:dias, tiendas:tiendas, mall:mall, vend:vend };
+}
+/* El MES por la entrega (`x.ym`), como Proyección → «🏬 Por tienda»: el mismo número; la gente, la del mall en los días del mes hasta hoy. */
+function mallPersonaMes(ym, opts){
+  opts=opts||{};
+  var V=opts.V||pryVentas(), toq=mallAnToquesFn(opts), hoy=opts.hoy||diaNegocio(), T={};
+  V.forEach(function(x){
+    if(x.amb!=='tienda' || x.ym!==ym) return;
+    var k=x.st||'', t=T[k]||(T[k]={ st:k, nom:k||'Sin tienda', bs:0, n:0, conteo:k===MALL_TIENDA }); t.bs=r2(t.bs+x.bs); t.n++;
+  });
+  if(!T[MALL_TIENDA]) T[MALL_TIENDA]={ st:MALL_TIENDA, nom:MALL_TIENDA, bs:0, n:0, conteo:true };
+  var fin=pryFinDeMes(ym), hasta=fin<hoy ? fin : hoy, pers=0, co=0;
+  mallAnDias(ym+'-01', hasta).forEach(function(d){ var Tq=toq(d); if(!Tq.length) return; var R=mallResumenDia(d, MALL_TIENDA, Tq); pers+=R.atendidos+R.esmio; co+=R.compraron+R.esmioCompro; });
+  return { ym:ym, hasta:hasta, pers:pers, co:co, tiendas:Object.keys(T).map(function(k){ return T[k]; }).sort(function(a,b){ return (b.st===MALL_TIENDA)-(a.st===MALL_TIENDA) || b.bs-a.bs || a.nom.localeCompare(b.nom, 'es'); }) };
+}
+
+/* ---------- 279 · CUÁNTOS VENDEDORES A CADA HORA (puras) ---------- */
+/* Los minutos de vendedor presentes en cada hora de un día (sin las pausas): `{<hora>: minutos}`, con el MISMO motor de la rueda. */
+function mallPresenciaDia(dia, toques, ahora){
+  var T=(toques||[]).filter(function(t){ return mallEsDeTienda(t) && mallDiaDe(t)===dia; });
+  if(ahora==null) ahora=(dia===diaNegocio()) ? Date.now() : 0;
+  var P=mallProcesar(T, dia, null, ahora), H={}, base=new Date(dia+'T00:00:00-04:00').getTime();
+  Object.keys(P.V).forEach(function(k){
+    (P.V[k].tramos||[]).forEach(function(tr){
+      for(var h=0; h<24; h++){
+        var a=base+h*3600000, b=a+3600000, x=Math.max(a, tr[0]), y=Math.min(b, tr[1]);
+        if(y>x) H[h]=(H[h]||0)+(y-x)/60000;
+      }
+    });
+  });
+  return H;
+}
+/* → `{desde, hasta, tipo, nDias, dias, horas:[{h, at, pres, carga}], prom, recom:[{k, txt}]}`: `at` = personas atendidas por hora (rueda + es mío),
+   `pres` = vendedores presentes, los dos en PROMEDIO por día con datos. `opts.tipo` = 'todos' | 'semana' (lunes a viernes) | 'finde'. */
+function mallHorasDatos(desde, hasta, opts){
+  opts=opts||{};
+  var toq=mallAnToquesFn(opts), tipo=opts.tipo||'todos', hoy=diaNegocio(), AT={}, PR={}, nD=0, dias=[];
+  mallAnDias(desde, hasta).forEach(function(d){
+    var w=dowDe(d);
+    if(tipo==='semana' && (w===0 || w===6)) return;
+    if(tipo==='finde' && w!==0 && w!==6) return;
+    var T=toq(d).filter(function(t){ return mallEsDeTienda(t); }); if(!T.length) return;
+    nD++; dias.push(d);
+    var R=mallResumenDia(d, MALL_TIENDA, T);
+    R.porHora.forEach(function(x){ AT[x.h]=(AT[x.h]||0)+x.at; });
+    Object.keys(R.esmioHora||{}).forEach(function(h){ AT[+h]=(AT[+h]||0)+R.esmioHora[h]; });
+    var H=mallPresenciaDia(d, T, d===hoy ? Date.now() : 0);
+    Object.keys(H).forEach(function(h){ PR[+h]=(PR[+h]||0)+H[h]; });
+  });
+  var hs=[]; Object.keys(AT).concat(Object.keys(PR)).forEach(function(h){ h=+h; if(((AT[h]||0)>0 || (PR[h]||0)/Math.max(1, nD)>=1) && hs.indexOf(h)<0) hs.push(h); });
+  var horas=[];
+  if(hs.length){
+    var h0=Math.min.apply(null, hs), h1=Math.max.apply(null, hs);
+    for(var h=h0; h<=h1; h++){ var at=(AT[h]||0)/nD, pr=(PR[h]||0)/60/nD; horas.push({ h:h, at:at, pres:pr, carga:pr>=0.25 ? at/pr : null }); }
+  }
+  var ab=horas.filter(function(x){ return x.pres>=0.25 || x.at>0; }), prom=ab.length ? ab.reduce(function(s,x){ return s+x.at; }, 0)/ab.length : 0;
+  var D={ desde:desde, hasta:hasta, tipo:tipo, nDias:nD, dias:dias, horas:horas, prom:prom };
+  D.recom=mallHorasRecom(D);
+  return D;
+}
+function mallAnHorasTxt(h0, h1){ return 'De '+h0+' a '+h1+' h'; }
+function mallAnVeces(r){
+  if(r<1.75) return 'un '+Math.round((r-1)*100)+' % más de gente';
+  if(r<2.25) return 'el doble de gente';
+  if(r<2.75) return 'más del doble de gente';
+  if(r<3.5) return 'el triple de gente';
+  return Math.round(r)+' veces más gente';
+}
+/* Las recomendaciones (reglas simples): picos (que se crucen los turnos), horas tranquilas (con 1 alcanza), carga alta y el cambio de turno. */
+function mallHorasRecom(D){
+  var L=[], H=D.horas, M=D.prom;
+  if(!D.nDias) return [{ k:'nada', txt:'Todavía no hay días con toques del mostrador en estas semanas: cuando los vendedores toquen «Llegué», «Atiendo» y «Me fui», acá sale cuántos poner a cada hora.' }];
+  if(D.nDias<MALLAN_POCOS_DIAS) L.push({ k:'pocos', txt:'ℹ️ Con '+D.nDias+(D.nDias===1 ? ' día' : ' días')+' de datos todavía es poco: mirá de nuevo en una semana.' });
+  if(!(M>0)){ L.push({ k:'nada', txt:'En estas semanas todavía no se atendió a nadie.' }); return L; }
+  var tramos=function(pred){ var out=[], cur=null; H.forEach(function(x){ if(!pred(x)){ cur=null; return; } if(cur){ cur.h1=x.h+1; cur.L.push(x); } else { cur={ h0:x.h, h1:x.h+1, L:[x] }; out.push(cur); } }); return out; };
+  var prom=function(T, k){ return T.L.reduce(function(s,x){ return s+(x[k]||0); }, 0)/T.L.length; };
+  var picos=tramos(function(x){ return x.at>=MALLAN_PICO*M && x.at>=1; });
+  var hc=mallMin(MALL_CAMBIO_TURNO)/60;
+  picos.forEach(function(T){
+    var a=prom(T,'at'), p=prom(T,'pres');
+    /* a la mañana (termina antes del cambio de turno): que alguien de la tarde entre antes; a la tarde: que alguien de la mañana se quede */
+    var que = T.h1<=hc ? 'conviene que alguien de la tarde entre antes (o sumar un vendedor a esa hora).'
+            : (T.h0>=hc ? 'conviene que se crucen los dos turnos (que alguien de la mañana se quede).' : 'conviene que se crucen los dos turnos.');
+    L.push({ k:'pico', h0:T.h0, h1:T.h1, txt:'📈 '+mallAnHorasTxt(T.h0, T.h1)+' entra '+mallAnVeces(a/M)+' ('+mallAnN(a)+' personas por hora contra '+mallAnN(M)+' de promedio)'+
+      (p<MALLAN_DOS_TURNOS ? (' y hay '+mallAnN(p)+' vendedores: '+que) : (' y ya hay '+mallAnN(p)+' vendedores: está cubierto.')) });
+  });
+  var enPico=function(h){ return picos.some(function(T){ return h>=T.h0 && h<T.h1; }); };
+  tramos(function(x){ return x.carga!=null && x.carga>MALLAN_CARGA_ALTA && x.at>=1 && !enPico(x.h); }).forEach(function(T){
+    L.push({ k:'carga', h0:T.h0, h1:T.h1, txt:'⚠️ '+mallAnHorasTxt(T.h0, T.h1)+' cada vendedor atiende '+mallAnN(prom(T,'carga'))+' personas por hora: ahí se pierden clientes, conviene sumar uno.' });
+  });
+  tramos(function(x){ return x.at<=MALLAN_BAJO*M && x.pres>=1.5; }).forEach(function(T){
+    var a=prom(T,'at');
+    L.push({ k:'bajo', h0:T.h0, h1:T.h1, txt:'😴 '+mallAnHorasTxt(T.h0, T.h1)+(a<0.05 ? ' casi no entra gente' : (' entra poca gente ('+mallAnN(a)+' personas por hora)'))+' y hay '+mallAnN(prom(T,'pres'))+' vendedores: con 1 alcanza.' });
+  });
+  var cand=H.filter(function(x){ return x.h>=MALLAN_CAMBIO_DESDE && x.h<MALLAN_CAMBIO_HASTA && (x.pres>=0.25 || x.at>0); });
+  if(cand.length>=2){
+    cand.sort(function(a,b){ return a.at-b.at || Math.abs(a.h-hc)-Math.abs(b.h-hc) || a.h-b.h; });
+    var mj=cand[0], hh=('0'+mj.h).slice(-2)+':00', cuanto=mj.at<0.05 ? 'casi no entra gente' : (mallAnN(mj.at)+' personas por hora');
+    L.push({ k:'cambio', h:mj.h, txt:(hh===MALL_CAMBIO_TURNO
+      ? ('🔄 El cambio de turno de las '+MALL_CAMBIO_TURNO+' está bien: es la hora más tranquila entre las '+MALLAN_CAMBIO_DESDE+' y las '+MALLAN_CAMBIO_HASTA+' ('+cuanto+').')
+      : ('🔄 La mejor hora para el cambio de turno: las '+hh+' (es la más tranquila entre las '+MALLAN_CAMBIO_DESDE+' y las '+MALLAN_CAMBIO_HASTA+': '+cuanto+'). Hoy el cambio es a las '+MALL_CAMBIO_TURNO+'.')) });
+  }
+  if(L.length===(D.nDias<MALLAN_POCOS_DIAS ? 1 : 0)) L.push({ k:'parejo', txt:'✅ La gente entra pareja durante el día: no hay horas para mover vendedores.' });
+  return L;
+}
+
+/* ---------- 280 · QUÉ PONER EN EXHIBICIÓN (pura con `opts`) ---------- */
+function mallAnMedidaDeClave(k){ var m=String(k||'').split('|')[1]||''; return normMedida(saldoMedidaCanon(m)||m); }
+/* → `{desde, hasta, dias, conStock, conteo, top:[fila], exhibir:[{f|medida, por}], pedir:[{f|medida, n, por}], sacar:[fila], medidas}`; cada fila
+   `{k, nom, tipo, u, ventas, tiene|null, libre|null, pidieron}`. Lo vendido: colchones, somieres y combos de las ventas de los vendedores del
+   mall (`pryVentas` con `st` = la tienda, día de carga en la ventana). El stock: `tstCalcular` (si Ventura Mall tiene un conteo). */
+function mallExhibirDatos(hasta, dias, opts){
+  opts=opts||{}; dias=dias||MALLAN.exhDias;
+  var desde=stockSumarDias(hasta, -(dias-1)), toq=mallAnToquesFn(opts), V=opts.V||pryVentas(), ids={}, P={};
+  V.forEach(function(x){ if(x.amb==='tienda' && x.st===MALL_TIENDA && x.reg>=desde && x.reg<=hasta) ids[x.id]=1; });
+  var fila=function(k){ return P[k]||(P[k]={ k:k, nom:mallAnNom(k), tipo:'', u:0, ventas:0, tiene:null, libre:null, pidieron:0 }); };
+  (opts.pedidos||STATE||[]).forEach(function(p){
+    if(!p || !ids[p.id]) return; var vis={};
+    (p.productos||[]).forEach(function(x){
+      var t=pryTipoProd(x), n=Number(x && x.cant)||0; if(!t || !(n>0)) return;
+      var k=mallAnProdClave(x), f=fila(k); f.tipo=f.tipo||t; f.u+=n; if(!vis[k]){ vis[k]=1; f.ventas++; }
+    });
+  });
+  var conStock=false, conteo=null;
+  try{
+    var TS=opts.tst || ((typeof tstCalcular==='function' && typeof tstHayConteo==='function' && tstHayConteo()) ? tstCalcular() : null), t=TS && TS[MALL_TIENDA];
+    if(t && t.base){
+      conStock=true; conteo={ f:t.base.f };
+      (t.filas||[]).forEach(function(r){ var pa=String(r.k).split('|'), tp=pryTipoProd({ desc:pa[0], medida:pa[1]||'' }); if(!tp) return; var f=fila(r.k); f.tipo=f.tipo||tp; f.tiene=r.tiene; f.libre=r.libre; });
+    }
+  }catch(e){}
+  var med={};
+  mallAnDias(desde, hasta).forEach(function(d){ var T=toq(d); if(!T.length) return; var R=mallResumenDia(d, MALL_TIENDA, T); Object.keys(R.medidas).forEach(function(m){ var c=normMedida(saldoMedidaCanon(m)||m); med[c]=(med[c]||0)+R.medidas[m]; }); });
+  mallAnCotsDe(desde, hasta, opts).forEach(function(c){
+    if(!mallAnCotNo(c) || mallAnMotivo(c.motivo)!=='medida' || normNombre(mallAnCotTienda(c))!==normNombre(MALL_TIENDA)) return;
+    var prods=mallAnCotProds(c), vis={};
+    prods.forEach(function(x){ var k=mallAnProdClave(x), f=fila(k); if(!f.tipo) f.tipo=pryTipoProd(x)||''; f.pidieron++; var c2=mallAnMedidaDeClave(k) || normMedida(saldoMedidaCanon(x.medida)||x.medida||''); if(c2 && !vis[c2]){ vis[c2]=1; med[c2]=(med[c2]||0)+1; } });
+    if(!prods.length && c.medida){ var c3=normMedida(saldoMedidaCanon(c.medida)||c.medida); med[c3]=(med[c3]||0)+1; }
+  });
+  var L=Object.keys(P).map(function(k){ return P[k]; }).filter(function(f){ return f.tipo; });
+  if(conStock) L.forEach(function(f){ if(f.tiene==null){ f.tiene=0; f.libre=0; } });
+  var top=L.filter(function(f){ return f.u>0; }).sort(function(a,b){ return b.u-a.u || b.ventas-a.ventas || a.nom.localeCompare(b.nom, 'es'); });
+  var exhibir=[], pedir=[], sacar=[];
+  top.forEach(function(f, i){
+    if(conStock && f.tiene<=0){ pedir.push({ f:f, por:'vende' }); return; }
+    if(i<MALLAN_EXH_TOP && (f.u>=MALLAN_EXH_MIN || i<3)) exhibir.push({ f:f, por:'vende' });
+  });
+  L.filter(function(f){ return f.pidieron>0 && !f.u && !(conStock && f.tiene>0); }).forEach(function(f){ pedir.push({ f:f, por:'pidieron' }); });
+  mallAnTop(med).forEach(function(x){
+    var hay=conStock ? L.some(function(f){ return f.tiene>0 && mallAnMedidaDeClave(f.k)===x.k; }) : null;
+    if(hay) exhibir.push({ medida:x.k, n:x.n, por:'avista' });
+    else pedir.push({ medida:x.k, n:x.n, por:'medida', sinConteo:!conStock });
+  });
+  if(conStock) sacar=L.filter(function(f){ return f.tiene>0 && !f.u && !f.pidieron; }).sort(function(a,b){ return b.tiene-a.tiene || a.nom.localeCompare(b.nom, 'es'); });
+  return { desde:desde, hasta:hasta, dias:dias, conStock:conStock, conteo:conteo, top:top, exhibir:exhibir, pedir:pedir, sacar:sacar, medidas:med };
+}
+
+/* ---------- la ventana ---------- */
+function mallAnAbierta(){ var ov=document.getElementById('mallan-ov'); return !!(ov && ov.style.display!=='none'); }
+function mallAnAbrir(tab){
+  if(!mallAnVe()){ toast('🔒 «El mall» es con la contraseña de Administración (como la Proyección).', 'err', 6000); return false; }
+  var ov=document.getElementById('mallan-ov'); if(!ov) return false;
+  if(tab && MALLAN_TABS.some(function(T){ return T.k===tab; })) MALLAN.tab=tab;
+  MALLAN.lunes=mallAnLunes(diaNegocio());   // cada vez que se abre, la semana de hoy
+  ov.style.display='flex';
+  mallAnPintar();
+  mallAnLeer();
+  return true;
+}
+function mallAnCerrar(){ var ov=document.getElementById('mallan-ov'); if(ov) ov.style.display='none'; }
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Escape' || !mallAnAbierta() || mvivAbierto()) return;   // con el en vivo encima, Esc cierra primero ese
+  var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return;
+  mallAnCerrar();
+});
+function mallAnTab(k){ if(!MALLAN_TABS.some(function(T){ return T.k===k; })) return; MALLAN.tab=k; mallAnPintar(); mallAnLeer(); var b=document.getElementById('mallan-body'); if(b) b.scrollTop=0; }
+function mallAnSemanaMover(n){
+  var hoyL=mallAnLunes(diaNegocio()), nl=stockSumarDias(MALLAN.lunes||hoyL, 7*n);
+  if(nl>hoyL) nl=hoyL;
+  MALLAN.lunes=nl; mallAnPintar(); mallAnLeer();
+}
+function mallAnSemanas(n){ MALLAN.semanas=[2,3,4].indexOf(+n)>=0 ? +n : 4; mallAnPintar(); mallAnLeer(); }
+function mallAnTipo(t){ MALLAN.tipo=(t==='semana' || t==='finde') ? t : 'todos'; mallAnPintar(); }
+function mallAnExhDias(n){ MALLAN.exhDias=(+n===60) ? 60 : 30; mallAnPintar(); mallAnLeer(); }
+/* La semana elegida (lunes a domingo; la de hoy corta en hoy) y lo que cada pestaña necesita leer. */
+function mallAnSemana(){
+  var hoy=diaNegocio(), l=MALLAN.lunes||mallAnLunes(hoy), d=stockSumarDias(l, 6);
+  return { desde:l, hasta:d<hoy ? d : hoy, hastaSem:d, actual:l===mallAnLunes(hoy) };
+}
+function mallAnRango(){
+  var S=mallAnSemana(), hoy=diaNegocio(), a=S.desde, b=S.hasta;
+  var meter=function(x){ if(x && x<a) a=x; };
+  if(MALLAN.tab==='porque') meter(stockSumarDias(S.desde, -7));
+  if(MALLAN.tab==='persona'){ meter(stockSumarDias(S.desde, -7*(MALLAN_SEMANAS_ATRAS-1))); meter(S.hasta.slice(0,7)+'-01'); }
+  if(MALLAN.tab==='horas') meter(stockSumarDias(S.hasta, -(7*MALLAN.semanas-1)));
+  if(MALLAN.tab==='exhibir') meter(stockSumarDias(S.hasta, -(MALLAN.exhDias-1)));
+  if(b>hoy) b=hoy;
+  return { desde:a, hasta:b };
+}
+/* Lee del servidor lo que falte (los toques y las cotizaciones de esos días); hoy, siempre. Sin servidor nuevo, lo que hay en el aparato. */
+function mallAnLeer(){
+  if(!mallPuede() || !CONNECTED){ mallAnPintar(); return Promise.resolve(false); }
+  var Rg=mallAnRango(), hoy=diaNegocio(), falta=mallAnDias(Rg.desde, Rg.hasta).filter(function(d){ return d===hoy || !MALL.leido[d]; });
+  var faltaC=mallAnCotPuede() ? mallAnDias(Rg.desde, Rg.hasta).filter(function(d){ return d===hoy || !MALLAN.cotDias[d]; }) : [];
+  if(!falta.length && !faltaC.length) return Promise.resolve(true);
+  MALLAN.leyendo++; mallAnPintar();
+  var ps=[];
+  if(falta.length) ps.push(mallLeerRango(falta[0], falta[falta.length-1]));
+  if(faltaC.length) ps.push(mallAnCotLeer(faltaC[0], faltaC[faltaC.length-1]));
+  return Promise.all(ps).then(function(r){
+    MALLAN.leyendo=Math.max(0, MALLAN.leyendo-1);
+    var ok=r.every(function(x){ return x!==false; });
+    MALLAN.err=ok ? '' : 'No se pudo leer todo de la planilla: se muestra lo que ya estaba en este aparato.';
+    if(ok) MALLAN.ultLect=Date.now();
+    if(mallAnAbierta()) mallAnPintar();
+    return ok;
+  }, function(){ MALLAN.leyendo=Math.max(0, MALLAN.leyendo-1); MALLAN.err='No se pudo leer la planilla.'; if(mallAnAbierta()) mallAnPintar(); return false; });
+}
+function mallAnPintar(){
+  var w=document.getElementById('mallan-wrap'); if(!w) return;
+  var S=mallAnSemana(), st=document.getElementById('mallan-sem-txt'), sig=document.getElementById('mallan-sem-sig'), info=document.getElementById('mallan-info');
+  if(st) st.textContent='Semana '+mallAnSemTxt(S.desde, S.hastaSem)+(S.actual ? ' (esta)' : '');
+  if(sig) sig.disabled=S.actual;
+  if(info) info.textContent=MALLAN.leyendo ? '⏳ Leyendo…' : '';
+  [].forEach.call(document.querySelectorAll('#mallan-tabs [data-tab]'), function(b){ var on=b.getAttribute('data-tab')===MALLAN.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  var h='';
+  if(!mallPuede()) h+='<div class="mallan-aviso" role="status">'+esc(mallFaltaTxt())+' Lo que usa ventas (lo vendido por tienda) sí se ve.</div>';
+  if(MALLAN.err) h+='<div class="mallan-aviso" role="status">⚠️ '+esc(MALLAN.err)+'</div>';
+  try{
+    h+= MALLAN.tab==='persona' ? mallAnPersonaHtml(S) : MALLAN.tab==='horas' ? mallAnHorasHtml(S) : MALLAN.tab==='exhibir' ? mallAnExhibirHtml(S) : mallAnPorQueHtml(S);
+  }catch(e){ console.error(e); h+='<div class="mallan-vacio">No se pudo armar esta pestaña: '+esc(e && e.message)+'</div>'; }
+  w.innerHTML=h;
+}
+function mallAnFicha(c, lbl, val, sub){ return '<div class="mallan-f" style="--c:'+c+'"><small>'+lbl+'</small><b>'+val+'</b>'+(sub ? '<span>'+sub+'</span>' : '')+'</div>'; }
+function mallAnDifTxt(a, b, suf){ if(b==null || a==null) return ''; var d=a-b; if(Math.abs(d)<0.5) return 'igual que la semana anterior'; return (d>0 ? '▲ ' : '▼ ')+Math.abs(Math.round(d))+(suf||'')+(d>0 ? ' más' : ' menos')+' que la semana anterior'; }
+
+/* 276 · la pestaña */
+function mallAnPorQueHtml(S){
+  var A=mallPorQueDatos(S.desde, S.hasta), B=mallPorQueDatos(stockSumarDias(S.desde, -7), stockSumarDias(S.desde, -1)), T=A.tot, b=B.tot;
+  var rev=mallPorQueRevisar(A, B);
+  var h='<div class="mallan-int">Los que se fueron sin comprar: los <b>«👀 Solo miró»</b> del mostrador del mall'+(A.hayCot ? ' y las <b>cotizaciones que no se cerraron</b> («no le interesa»)' : '')+
+    ', con el motivo que anotó el vendedor. La semana elegida contra la anterior. Los «📝 Anotó» (dejaron su celular) no entran: todavía pueden comprar.</div>';
+  h+='<section class="mallan-rev"><h4>🧭 Lo que conviene revisar</h4><ol>'+rev.map(function(x){ return '<li data-k="'+esc(x.k)+'">'+esc(x.txt)+'</li>'; }).join('')+'</ol></section>';
+  h+='<div class="mallan-fs">'+
+    mallAnFicha('#0e7490', 'Se fueron sin comprar', String(T.total), mallAnDifTxt(T.total, b.total, '')+(T.cot ? (' · '+T.mall+' del mostrador y '+T.cot+' cotizaciones') : ''))+
+    mallAnFicha('#b45309', '💲 Por el precio', mallAnPcTxt(T.m.precio, T.conMot), T.m.precio+' de '+T.conMot+' que dijeron por qué')+
+    mallAnFicha('#0e7490', '📐 No había la medida', String(T.m.medida), mallAnTop(T.medidas).slice(0,3).map(function(x){ return x.k+' ('+x.n+')'; }).join(' · ') || 'sin medidas anotadas')+
+    mallAnFicha('#15803d', '📝 Dejaron su celular', String(T.anotaron), 'para volver a llamarlos')+'</div>';
+  /* motivos: barras de la semana y la anterior */
+  var mx=1; MALLAN_MOT.forEach(function(M){ mx=Math.max(mx, T.m[M.k], b.m[M.k]); });
+  h+='<section class="mallan-box"><h4>Por qué no compraron · semana '+esc(mallAnSemTxt(S.desde, S.hasta))+' <small>(la semana anterior, en gris)</small></h4><div class="mallan-mot">';
+  MALLAN_MOT.forEach(function(M){
+    var n=T.m[M.k], nb=b.m[M.k]; if(!n && !nb) return;
+    var base=M.k==='sin' ? T.total : T.conMot;
+    h+='<div class="mallan-mr" data-k="'+M.k+'"><span class="mallan-ml">'+M.t+'</span><span class="mallan-mb"><i style="width:'+Math.round(100*n/mx)+'%;background:'+M.c+'"></i><i class="mallan-mbp" style="width:'+Math.round(100*nb/mx)+'%"></i></span>'+
+      '<span class="mallan-mn"><b>'+n+'</b>'+(M.k!=='sin' && base ? (' · '+mallAnPcTxt(n, base)) : '')+' <small>(antes '+nb+')</small></span></div>';
+  });
+  if(!T.total && !b.total) h+='<div class="mallan-vacio">Sin datos en estas dos semanas.</div>';
+  h+='</div></section>';
+  /* por tienda y por vendedor */
+  var cols=MALLAN_MOT.filter(function(M){ return T.m[M.k]; });
+  var fila=function(nom, o, sub){ return '<tr><td><b>'+esc(nom)+'</b>'+(sub ? '<br><small>'+esc(sub)+'</small>' : '')+'</td><td class="n"><b>'+o.total+'</b></td>'+cols.map(function(M){ return '<td class="n">'+(o.m[M.k]||'·')+'</td>'; }).join('')+'</tr>'; };
+  if(cols.length){
+    var ts=Object.keys(A.porTienda).sort(function(x,y){ return A.porTienda[y].total-A.porTienda[x].total || x.localeCompare(y, 'es'); });
+    h+='<section class="mallan-box"><h4>Por tienda</h4><div class="mallan-tw"><table class="mallan-tb"><thead><tr><th>Tienda</th><th class="n">Total</th>'+cols.map(function(M){ return '<th class="n">'+M.s+'</th>'; }).join('')+'</tr></thead><tbody>'+
+      ts.map(function(t){ return fila(t, A.porTienda[t], t===MALL_TIENDA ? 'mostrador'+(A.porTienda[t].cot ? ' + cotizaciones' : '') : 'cotizaciones'); }).join('')+'</tbody></table></div></section>';
+    var vs=Object.keys(A.porVend).filter(function(k){ return A.porVend[k].total; }).sort(function(x,y){ return A.porVend[y].total-A.porVend[x].total || A.porVend[x].v.localeCompare(A.porVend[y].v, 'es'); });
+    if(vs.length) h+='<section class="mallan-box"><h4>Por vendedor</h4><div class="mallan-tw"><table class="mallan-tb"><thead><tr><th>Vendedor</th><th class="n">Total</th>'+cols.map(function(M){ return '<th class="n">'+M.s+'</th>'; }).join('')+'</tr></thead><tbody>'+
+      vs.map(function(k){ var o=A.porVend[k]; return fila(o.v, o, o.tienda+(o.pers ? (' · atendió '+o.pers) : '')); }).join('')+'</tbody></table></div></section>';
+  }
+  if(!A.hayCot) h+='<p class="mallan-pie">Las cotizaciones «no le interesa» se suman cuando el servidor las tenga ('+esc(MALL_SERVIDOR)+').</p>';
+  return h;
+}
+/* 278 · la pestaña */
+function mallAnPersonaHtml(S){
+  var V=pryVentas(), D=mallPersonaDatos(S.desde, S.hasta, { V:V }), P=mallPersonaDatos(stockSumarDias(S.desde, -7), stockSumarDias(S.desde, -1), { V:V }), m=D.mall, mp=P.mall;
+  var bp=mallAnPorPers(m.bs, m.pers), bpp=mallAnPorPers(mp.bs, mp.pers);
+  var sc='<span class="mallan-sc" title="Solo el mall cuenta la gente que entra">sin conteo</span>';
+  var h='<div class="mallan-int">Lo vendido es lo de <b>Proyección</b> (las ventas del equipo de tiendas), por la tienda de quien vendió y el <b>día en que se cargó</b>. '+
+    'Solo el mall cuenta la gente: las otras tiendas salen con lo vendido y «sin conteo». <b>Personas atendidas</b> = los clientes de la rueda y los «💛 es mío» (en la barra del mostrador y en «Tu día» el % es solo de la rueda).</div>';
+  h+='<div class="mallan-fs">'+
+    mallAnFicha('#00A09A', '👥 Personas atendidas · '+esc(MALL_TIENDA), String(m.pers), (m.esmio ? (m.rueda+' de la rueda + '+m.esmio+' es mío · ') : '')+mallAnDifTxt(m.pers, mp.pers, ''))+
+    mallAnFicha('#15803d', '🛒 Compraron', mallAnPcTxt(m.co, m.pers), m.co+' de '+m.pers+(mp.pers ? (' · la semana anterior '+mallAnPcTxt(mp.co, mp.pers)) : ''))+
+    mallAnFicha('#7c3aed', '💵 Bs por persona atendida', bp==null ? '—' : fmtBs0(bp), bpp==null ? 'la semana anterior: —' : ('la semana anterior '+fmtBs0(bpp)))+
+    mallAnFicha('#0f766e', '🧾 Vendido en el mall', fmtBs0(m.bs), m.n+(m.n===1 ? ' venta' : ' ventas')+' · la semana anterior '+fmtBs0(mp.bs))+'</div>';
+  /* las tiendas de la semana */
+  h+='<section class="mallan-box"><h4>Las tiendas · semana '+esc(mallAnSemTxt(S.desde, S.hasta))+'</h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-tiendas"><thead><tr><th>Tienda</th><th class="n">Vendido</th><th class="n">Ventas</th><th class="n">Personas</th><th class="n">Compraron</th><th class="n">Bs por persona</th></tr></thead><tbody>'+
+    D.tiendas.filter(function(t){ return t.bs>0.005 || t.conteo; }).map(function(t){
+      return '<tr data-st="'+esc(t.st)+'"><td><b>'+esc(t.nom)+'</b></td><td class="n">'+fmtBs0(t.bs)+'</td><td class="n">'+t.n+'</td>'+
+        (t.conteo ? ('<td class="n">'+m.pers+'</td><td class="n">'+mallAnPcTxt(m.co, m.pers)+'</td><td class="n"><b>'+(bp==null ? '—' : fmtBs0(bp))+'</b></td>') : ('<td colspan="3">'+sc+'</td>'))+'</tr>';
+    }).join('')+'</tbody></table></div></section>';
+  /* día por día */
+  var tsCol=D.tiendas.filter(function(t){ return t.bs>0.005 && !t.conteo; }), MT=D.tiendas.filter(function(t){ return t.conteo; })[0]||{ porDia:{} };
+  h+='<section class="mallan-box"><h4>Día por día</h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-dias"><thead><tr><th>Día</th><th class="n">Personas</th><th class="n">Compraron</th><th class="n">Vendido mall</th><th class="n">Bs por persona</th>'+
+    tsCol.map(function(t){ return '<th class="n">'+esc(t.nom)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    D.dias.map(function(d){
+      var x=m.porDia[d]||{ pers:0, co:0, hay:false }, bs=(MT.porDia||{})[d]||0, b2=mallAnPorPers(bs, x.pers);
+      return '<tr data-d="'+d+'"><td>'+esc(mallAnDiaTxt(d))+'</td>'+(x.hay ? ('<td class="n">'+x.pers+'</td><td class="n">'+x.co+' · '+mallAnPcTxt(x.co, x.pers)+'</td>') : '<td colspan="2"><small>sin toques</small></td>')+
+        '<td class="n">'+fmtBs0(bs)+'</td><td class="n">'+(b2==null ? '—' : fmtBs0(b2))+'</td>'+tsCol.map(function(t){ return '<td class="n">'+fmtBs0(t.porDia[d]||0)+'</td>'; }).join('')+'</tr>';
+    }).join('')+'</tbody></table></div></section>';
+  /* por vendedor */
+  h+='<section class="mallan-box"><h4>Por vendedor · la semana</h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-vend"><thead><tr><th>Vendedor</th><th>Tienda</th><th class="n">Vendido</th><th class="n">Ventas</th><th class="n">Personas</th><th class="n">Compraron</th><th class="n">Bs por persona</th></tr></thead><tbody>'+
+    D.vend.map(function(o){
+      var b3=o.pers ? mallAnPorPers(o.bs, o.pers) : null;
+      return '<tr><td><b>'+esc(o.v)+'</b></td><td>'+esc(o.st||'—')+'</td><td class="n">'+fmtBs0(o.bs)+'</td><td class="n">'+o.n+'</td>'+
+        (o.pers!=null ? ('<td class="n">'+o.pers+'</td><td class="n">'+mallAnPcTxt(o.co, o.pers)+'</td><td class="n"><b>'+(b3==null ? '—' : fmtBs0(b3))+'</b></td>') : ('<td colspan="3">'+sc+'</td>'))+'</tr>';
+    }).join('')+(D.vend.length ? '' : '<tr><td colspan="7"><small>Nadie vendió en esta semana.</small></td></tr>')+'</tbody></table></div></section>';
+  /* semana por semana */
+  var sem=[]; for(var i=MALLAN_SEMANAS_ATRAS-1; i>=0; i--){ var a=stockSumarDias(S.desde, -7*i), z=stockSumarDias(a, 6); if(z>S.hasta) z=S.hasta; sem.push({ a:a, z:z, D:mallPersonaDatos(a, z, { V:V }) }); }
+  h+='<section class="mallan-box"><h4>Semana por semana</h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-semanas"><thead><tr><th>Semana</th><th class="n">Personas</th><th class="n">Compraron</th><th class="n">Vendido mall</th><th class="n">Bs por persona</th>'+
+    tsCol.map(function(t){ return '<th class="n">'+esc(t.nom)+'</th>'; }).join('')+'</tr></thead><tbody>'+
+    sem.map(function(s){
+      var mm=s.D.mall, b4=mallAnPorPers(mm.bs, mm.pers), por={}; s.D.tiendas.forEach(function(t){ por[t.st]=t.bs; });
+      return '<tr><td>'+esc(fmtFechaCorta(s.a))+' a '+esc(fmtFechaCorta(s.z))+'</td><td class="n">'+(mm.diasConDatos ? mm.pers : '—')+'</td><td class="n">'+(mm.diasConDatos ? mallAnPcTxt(mm.co, mm.pers) : '—')+'</td>'+
+        '<td class="n">'+fmtBs0(mm.bs)+'</td><td class="n">'+(b4==null ? '—' : fmtBs0(b4))+'</td>'+tsCol.map(function(t){ return '<td class="n">'+fmtBs0(por[t.st]||0)+'</td>'; }).join('')+'</tr>';
+    }).join('')+'</tbody></table></div></section>';
+  /* el mes */
+  var ym=S.hasta.slice(0,7), Mm=mallPersonaMes(ym, { V:V }), bm=null;
+  Mm.tiendas.forEach(function(t){ if(t.st===MALL_TIENDA) bm=mallAnPorPers(t.bs, Mm.pers); });
+  h+='<section class="mallan-box"><h4>El mes · '+esc(mesNombre(ym))+' <small>lo vendido con entrega en el mes: el mismo número de Proyección → «🏬 Por tienda»</small></h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-mes"><thead><tr><th>Tienda</th><th class="n">Vendido</th><th class="n">Ventas</th><th class="n">Personas</th><th class="n">Compraron</th><th class="n">Bs por persona</th></tr></thead><tbody>'+
+    Mm.tiendas.filter(function(t){ return t.bs>0.005 || t.conteo; }).map(function(t){
+      return '<tr data-st="'+esc(t.st)+'" data-bs="'+t.bs+'"><td><b>'+esc(t.nom)+'</b></td><td class="n">'+fmtBs0(t.bs)+'</td><td class="n">'+t.n+'</td>'+
+        (t.conteo ? ('<td class="n">'+Mm.pers+'</td><td class="n">'+mallAnPcTxt(Mm.co, Mm.pers)+'</td><td class="n"><b>'+(bm==null ? '—' : fmtBs0(bm))+'</b></td>') : ('<td colspan="3">'+sc+'</td>'))+'</tr>';
+    }).join('')+'</tbody></table></div><p class="mallan-pie">La gente del mes: del 1° al '+esc(fmtFechaCorta(Mm.hasta))+'. Una venta cargada este mes con entrega el mes que viene cuenta allá (como en Proyección); por eso el mes no es la suma de las semanas.</p></section>';
+  return h;
+}
+/* 279 · la pestaña */
+function mallAnHorasHtml(S){
+  var desde=stockSumarDias(S.hasta, -(7*MALLAN.semanas-1)), D=mallHorasDatos(desde, S.hasta, { tipo:MALLAN.tipo });
+  var seg=function(id, opts, val, fn){ return '<div class="mallan-seg" id="'+id+'" role="group">'+opts.map(function(o){ return '<button type="button" data-v="'+o[0]+'" class="'+(String(o[0])===String(val) ? 'on' : '')+'" onclick="'+fn+'(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')+'</div>'; };
+  var h='<div class="mallan-ctl">'+seg('mallan-semanas', [[2,'2 semanas'],[3,'3 semanas'],[4,'4 semanas']], MALLAN.semanas, 'mallAnSemanas')+
+    seg('mallan-tipo', [['todos','Todos los días'],['semana','Lunes a viernes'],['finde','Sábado y domingo']], MALLAN.tipo, 'mallAnTipo')+'</div>';
+  h+='<div class="mallan-int">Del '+esc(fmtFechaCorta(desde))+' al '+esc(fmtFechaCorta(S.hasta))+' · '+D.nDias+(D.nDias===1 ? ' día' : ' días')+' con toques. Por hora, en promedio: las <b>personas atendidas</b> (rueda + «es mío», por la hora en que empezó la atención) y los <b>vendedores presentes</b> (desde «Llegué» hasta «Me fui», sin las pausas).</div>';
+  h+='<section class="mallan-rev"><h4>🧭 Qué conviene</h4><ol>'+D.recom.map(function(x){ return '<li data-k="'+esc(x.k)+'">'+esc(x.txt)+'</li>'; }).join('')+'</ol></section>';
+  if(D.horas.length){
+    var wr=document.getElementById('mallan-wrap'), W=Math.max(300, Math.min(1100, ((wr && wr.clientWidth) || 660)-30));
+    h+='<section class="mallan-box"><h4>Por hora</h4>'+mallAnHorasSvg(D, W)+
+      '<div class="mallan-ley"><span><i class="mallan-ley-b"></i>Personas atendidas por hora</span><span><i class="mallan-ley-l"></i>Vendedores presentes</span></div>'+
+      '<div class="mallan-tw"><table class="mallan-tb" id="mallan-horas"><thead><tr><th>Hora</th><th class="n">Personas por hora</th><th class="n">Vendedores</th><th class="n">Personas por vendedor</th></tr></thead><tbody>'+
+      D.horas.map(function(x){ return '<tr data-h="'+x.h+'"><td>'+x.h+' a '+(x.h+1)+' h</td><td class="n">'+mallAnN(x.at)+'</td><td class="n">'+mallAnN(x.pres)+'</td><td class="n">'+(x.carga==null ? '—' : mallAnN(x.carga))+'</td></tr>'; }).join('')+
+      '</tbody></table></div></section>';
+  }
+  return h;
+}
+/* El gráfico de 279: barras (personas por hora) y línea (vendedores), en UN eje (los dos se cuentan de a uno). */
+function mallAnHorasSvg(D, W){
+  var H=D.horas, Hh=220; W=W||640; var pl=34, pr=10, pt=12, pb=28, n=H.length, top=0;
+  H.forEach(function(x){ top=Math.max(top, x.at, x.pres); });
+  top=Math.max(1, Math.ceil(top*1.15));
+  var cw=(W-pl-pr)/n, X=function(i){ return pl+i*cw; }, Y=function(v){ return pt+(Hh-pt-pb)*(1-v/top); };
+  var g='', i, paso=top<=4 ? 1 : Math.ceil(top/4);
+  for(var t=0; t<=top; t+=paso) g+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+Y(t).toFixed(1)+'" y2="'+Y(t).toFixed(1)+'" stroke="#e5e9eb"/><text x="'+(pl-6)+'" y="'+(Y(t)+4).toFixed(1)+'" text-anchor="end" class="mallan-ax">'+t+'</text>';
+  var bars='', pts=[];
+  for(i=0; i<n; i++){
+    var x=H[i], bw=Math.max(4, cw*0.62), bx=X(i)+(cw-bw)/2, by=Y(x.at);
+    bars+='<g class="mallan-g"><title>'+x.h+' a '+(x.h+1)+' h: '+mallAnN(x.at)+' personas por hora · '+mallAnN(x.pres)+' vendedores</title>'+
+      '<rect x="'+X(i).toFixed(1)+'" y="'+pt+'" width="'+cw.toFixed(1)+'" height="'+(Hh-pt-pb)+'" fill="transparent"/>'+
+      (x.at>0 ? '<rect class="mallan-bar" x="'+bx.toFixed(1)+'" y="'+by.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0, Y(0)-by).toFixed(1)+'" rx="3"/>' : '')+
+      '<text x="'+(X(i)+cw/2).toFixed(1)+'" y="'+(Hh-10)+'" text-anchor="middle" class="mallan-ax">'+x.h+'</text></g>';
+    pts.push((X(i)+cw/2).toFixed(1)+','+Y(x.pres).toFixed(1));
+  }
+  var line='<polyline points="'+pts.join(' ')+'" fill="none" stroke="#1e3a5f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    pts.map(function(p){ var a=p.split(','); return '<circle cx="'+a[0]+'" cy="'+a[1]+'" r="4" fill="#1e3a5f" stroke="#fff" stroke-width="2"/>'; }).join('');
+  return '<svg class="mallan-svg" viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="Personas atendidas y vendedores presentes por hora">'+g+bars+line+'</svg>';
+}
+/* 280 · la pestaña */
+function mallAnExhibirHtml(S){
+  var E=mallExhibirDatos(S.hasta, MALLAN.exhDias);
+  var seg='<div class="mallan-ctl"><div class="mallan-seg" id="mallan-exh-dias" role="group">'+[30,60].map(function(n){ return '<button type="button" data-v="'+n+'" class="'+(MALLAN.exhDias===n ? 'on' : '')+'" onclick="mallAnExhDias('+n+')">Últimos '+n+' días</button>'; }).join('')+'</div></div>';
+  var h=seg+'<div class="mallan-int">Del '+esc(fmtFechaCorta(E.desde))+' al '+esc(fmtFechaCorta(E.hasta))+': lo que vendieron los vendedores del mall (colchones, somieres y combos, por modelo y medida), '+
+    (E.conStock ? ('contra el stock de la tienda (conteo del '+esc(fmtFechaCorta(E.conteo.f))+' + lo que llegó − lo vendido)') : '<b>sin el stock de la tienda</b> (no hay un conteo de '+esc(MALL_TIENDA)+' en «🏬 Stock de las tiendas»)')+
+    ', y lo que pidieron y no había (el motivo «📐 Medida» del mostrador y las cotizaciones que no se cerraron por la medida).</div>';
+  var item=function(x, cls){
+    if(x.medida) return '<li class="'+cls+'"><b>'+esc(x.medida)+'</b> <span>'+(x.por==='avista'
+      ? (x.n+(x.n===1 ? ' pidió esa medida' : ' pidieron esa medida')+' y dijeron que no había, pero la tienda SÍ tiene: que esté a la vista.')
+      : (x.n+(x.n===1 ? ' la pidió' : ' la pidieron')+' y no había'+(x.sinConteo ? ' (sin conteo de la tienda: revisá si la tienen)' : '')+'.'))+'</span></li>';
+    var f=x.f, st=f.tiene==null ? '' : (' · en la tienda: '+stockUnid(f.tiene));
+    var txt = x.por==='pidieron' ? (f.pidieron+(f.pidieron===1 ? ' cotización no se cerró' : ' cotizaciones no se cerraron')+' porque no había'+st)
+            : (cls==='mallan-pe' ? ('se vendió '+f.u+(f.u===1 ? ' vez' : ' veces')+' y la tienda no tiene: pedí una reposición (RPT) para exhibirlo') : ('se vendió '+f.u+(f.u===1 ? ' vez' : ' veces')+st));
+    return '<li class="'+cls+'" data-k="'+esc(f.k)+'"><b>'+esc(f.nom)+'</b> <span>'+esc(txt)+'</span></li>';
+  };
+  h+='<div class="mallan-exh">'+
+    '<section class="mallan-box mallan-col" id="mallan-ex-si"><h4>✅ Exhibir</h4><p class="mallan-pie">Lo que más se vende: que esté a la vista.</p><ul>'+(E.exhibir.length ? E.exhibir.map(function(x){ return item(x, 'mallan-ex'); }).join('') : '<li class="mallan-nada">Todavía no hay ventas del mall en estos días.</li>')+'</ul></section>'+
+    '<section class="mallan-box mallan-col" id="mallan-ex-pedir"><h4>📦 Pedir a la tienda</h4><p class="mallan-pie">Se vende o lo piden, y la tienda no lo tiene.</p><ul>'+(E.pedir.length ? E.pedir.map(function(x){ return item(x, 'mallan-pe'); }).join('') : '<li class="mallan-nada">Nada para pedir.</li>')+'</ul></section>'+
+    '<section class="mallan-box mallan-col" id="mallan-ex-sacar"><h4>↩️ Sacar</h4><p class="mallan-pie">Está en la tienda y no se vendió nada en '+E.dias+' días: ocupa lugar.</p><ul>'+
+      (!E.conStock ? '<li class="mallan-nada">Para saber qué sacar hace falta el conteo de la tienda: Stock → «🏬 Stock de las tiendas».</li>'
+                   : (E.sacar.length ? E.sacar.map(function(f){ return '<li class="mallan-sa" data-k="'+esc(f.k)+'"><b>'+esc(f.nom)+'</b> <span>hay '+stockUnid(f.tiene)+' y no se vendió ninguno</span></li>'; }).join('') : '<li class="mallan-nada">Todo lo que hay en la tienda se vendió en estos días.</li>'))+'</ul></section></div>';
+  if(E.top.length) h+='<section class="mallan-box"><h4>Lo más vendido en el mall</h4><div class="mallan-tw"><table class="mallan-tb" id="mallan-top"><thead><tr><th>Producto</th><th class="n">Unidades</th><th class="n">Ventas</th><th class="n">En la tienda</th></tr></thead><tbody>'+
+    E.top.map(function(f){ return '<tr data-k="'+esc(f.k)+'"><td><b>'+esc(f.nom)+'</b></td><td class="n">'+f.u+'</td><td class="n">'+f.ventas+'</td><td class="n">'+(f.tiene==null ? '—' : stockUnid(f.tiene))+'</td></tr>'; }).join('')+'</tbody></table></div></section>';
+  return h;
+}
+/* 📋 Copiar lo de la pestaña (para mandar por WhatsApp). */
+function mallAnTexto(){
+  var S=mallAnSemana(), L=['🏬 '+MALL_TIENDA+' · semana '+mallAnSemTxt(S.desde, S.hastaSem)];
+  if(MALLAN.tab==='porque'){
+    var A=mallPorQueDatos(S.desde, S.hasta), B=mallPorQueDatos(stockSumarDias(S.desde, -7), stockSumarDias(S.desde, -1));
+    L.push('', '¿Por qué no compraron? ('+A.tot.total+')');
+    MALLAN_MOT.forEach(function(M){ if(A.tot.m[M.k]) L.push('· '+M.t+': '+A.tot.m[M.k]); });
+    L.push('', 'Lo que conviene revisar:'); mallPorQueRevisar(A, B).forEach(function(x){ L.push('· '+x.txt); });
+  }else if(MALLAN.tab==='persona'){
+    var D=mallPersonaDatos(S.desde, S.hasta), m=D.mall, bp=mallAnPorPers(m.bs, m.pers);
+    L.push('', 'Personas atendidas: '+m.pers+' · compraron '+mallAnPcTxt(m.co, m.pers)+' · Bs por persona '+(bp==null ? '—' : fmtBs0(bp)));
+    D.tiendas.filter(function(t){ return t.bs>0.005 || t.conteo; }).forEach(function(t){ L.push('· '+t.nom+': '+fmtBs0(t.bs)+(t.conteo ? '' : ' (sin conteo de gente)')); });
+  }else if(MALLAN.tab==='horas'){
+    var H=mallHorasDatos(stockSumarDias(S.hasta, -(7*MALLAN.semanas-1)), S.hasta, { tipo:MALLAN.tipo });
+    L.push('', 'Cuántos vendedores poner ('+H.nDias+' días):'); H.recom.forEach(function(x){ L.push('· '+x.txt); });
+  }else{
+    var E=mallExhibirDatos(S.hasta, MALLAN.exhDias), nom=function(x){ return x.medida ? x.medida : x.f.nom; };
+    L.push('', 'Exhibir: '+(E.exhibir.map(nom).join(', ')||'—'), 'Pedir a la tienda: '+(E.pedir.map(nom).join(', ')||'—'), 'Sacar: '+(E.conStock ? (E.sacar.map(function(f){ return f.nom; }).join(', ')||'—') : 'sin conteo de la tienda'));
+  }
+  return L.join('\n');
+}
+function mallAnCopiar(){ copyText(mallAnTexto()); }
+
+/* ---------- 281 · EL MALL EN VIVO ---------- */
+var MVIV={ timer:0, leyendo:false, ok:0, err:'', x:{}, primero:true };
+var MVIV_MS=15000;
+function mvivActivo(){ return !navigator.webdriver || !!window.MVIV_PRUEBA; }
+function mvivAbierto(){ var ov=document.getElementById('mviv-ov'); return !!(ov && ov.style.display!=='none'); }
+function mvivPideUrl(){ try{ return /(^|[?&])envivo=1(&|$)/.test(location.search.replace(/^\?/, '&')) || /^#envivo(?![\w-])/.test(location.hash||''); }catch(e){ return false; } }
+function mvivAbrir(){
+  var ov=document.getElementById('mviv-ov'); if(!ov) return false;
+  ov.style.display='flex';
+  MVIV.primero=true;
+  mvivPintar();
+  if(UNLOCKED){ mvivTic(); mallLeerPrev(); }
+  if(!MVIV.timer) MVIV.timer=setInterval(function(){ if(!document.hidden && mvivAbierto() && UNLOCKED) mvivTic(); }, MVIV_MS);
+  return true;
+}
+function mvivCerrar(){
+  var ov=document.getElementById('mviv-ov'); if(ov) ov.style.display='none';
+  if(MVIV.timer){ clearInterval(MVIV.timer); MVIV.timer=0; }
+  try{
+    if(mvivPideUrl()){
+      var q=location.search.replace(/[?&]envivo=1(?=&|$)/, '').replace(/^&/, '?'), hs=/^#envivo/.test(location.hash||'') ? '' : (location.hash||'');
+      history.replaceState(null, '', location.pathname+q+hs);
+    }
+  }catch(e){}
+}
+document.addEventListener('keydown', function(e){
+  if(e.key!=='Escape' || !mvivAbierto()) return;
+  var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return;
+  mvivCerrar();
+});
+document.addEventListener('visibilitychange', function(){ if(!document.hidden && mvivAbierto() && UNLOCKED && Date.now()-MVIV.ok>MVIV_MS) mvivTic(); });
+/* La contraseña de Administración, sin salir de la pantalla: la MISMA cuenta de siempre (`tryUnlock`). */
+function mvivClave(){
+  var i=document.getElementById('mviv-pass'), ap=document.getElementById('admin-pass'); if(!i || !ap) return;
+  ap.value=i.value; tryUnlock();
+  if(UNLOCKED){ mvivPintar(); mvivTic(); mallLeerPrev(); }
+  else{ var er=document.getElementById('mviv-pass-err'); if(er) er.hidden=false; i.value=''; try{ i.focus(); }catch(e){} }
+}
+/* Lee lo de hoy: los toques del mostrador y la planilla (las ventas), una vuelta por vez. Sin red: se queda con lo último. */
+function mvivTic(){
+  if(MVIV.leyendo) return Promise.resolve(false);
+  if(!CONNECTED){ MVIV.err='Sin conexión con la planilla'; mvivPintar(); return Promise.resolve(false); }
+  MVIV.leyendo=true; mvivPintar();
+  var hoy=diaNegocio();
+  var a=mallPuede() ? mallLeerRango(hoy, hoy) : Promise.resolve(null);
+  var b=REFRESCO_EN_VUELO || refrescarEstado();
+  return Promise.all([Promise.resolve(a).catch(function(){ return false; }), Promise.resolve(b).catch(function(){ return false; })]).then(function(r){
+    MVIV.leyendo=false;
+    var ok=r[0]!==false && r[1]!==false;
+    if(ok){ MVIV.ok=Date.now(); MVIV.err=''; } else MVIV.err='No contestó la planilla';
+    if(mvivAbierto()) mvivPintar();
+    return ok;
+  });
+}
+/* Una cuenta de otro trabajo (la meta del día, la caja): solo si existe; si devuelve una promesa, se usa lo último que contestó. */
+function mvivExtra(nom, fn, args){
+  if(typeof fn!=='function') return null;
+  try{
+    var r=fn.apply(null, args);
+    if(r && typeof r.then==='function'){ r.then(function(v){ var cambio=JSON.stringify(v)!==JSON.stringify(MVIV.x[nom]); MVIV.x[nom]=v; if(cambio && mvivAbierto()) mvivPintar(); }, function(){}); return MVIV.x[nom]||null; }
+    return r||null;
+  }catch(e){ return null; }
+}
+/* → todo lo que muestra la pantalla, con las cuentas de siempre. */
+function mvivDatos(){
+  var ahora=Date.now(), hoy=isoDeTsBolivia(ahora), Tq=mallToquesDe(hoy);
+  var E=mallEstado(mallToquesParaEstado(), ahora), R=mallResumenDia(hoy, MALL_TIENDA, Tq);
+  var vs=pryVentas().filter(function(x){ return x.amb==='tienda' && x.st===MALL_TIENDA && x.reg===hoy; }), bs=0, ult=null, por={};
+  (STATE||[]).forEach(function(p){ if(p) por[p.id]=p; });
+  vs.forEach(function(x){ bs=r2(bs+x.bs); var p=por[x.id], ts=Number(p && p.ts)||0; if(!ult || ts>ult.ts) ult={ ts:ts, x:x, p:p }; });
+  var ultima=null;
+  if(ult){
+    var pr=((ult.p && ult.p.productos)||[]).filter(function(y){ return y && String(y.desc||'').trim(); });
+    ultima={ hora:ult.ts ? hhmmDeTs(ult.ts) : '', v:ult.x.v, bs:ult.x.bs, prod:pr.length ? (String(pr[0].desc).trim()+(pr[0].medida ? (' '+pr[0].medida) : '')+(pr.length>1 ? (' y '+(pr.length-1)+' más') : '')) : '' };
+  }
+  var H={}; R.porHora.forEach(function(x){ H[x.h]=(H[x.h]||0)+x.at; }); Object.keys(R.esmioHora||{}).forEach(function(h){ H[+h]=(H[+h]||0)+R.esmioHora[h]; });
+  var horas=Object.keys(H).map(function(h){ return { h:+h, n:H[h] }; }).sort(function(a,b){ return a.h-b.h; });
+  return { ahora:ahora, hoy:hoy, E:E, R:R, pers:R.atendidos+R.esmio, co:R.compraron+R.esmioCompro, miro:R.miraron, anoto:R.anotaron,
+           ventas:{ bs:bs, n:vs.length }, ultima:ultima, horas:horas,
+           meta:mvivExtra('meta', (typeof metaDiaTienda==='function') ? metaDiaTienda : null, [MALL_TIENDA, hoy]),
+           caja:mvivExtra('caja', (typeof cajaResumenDia==='function') ? cajaResumenDia : null, [MALL_TIENDA, hoy]) };
+}
+function mvivHace(ms){ var m=Math.max(0, Math.floor(ms/60000)); return m<1 ? 'recién' : (m<60 ? ('hace '+m+' min') : ('hace '+Math.floor(m/60)+' h '+(m%60 ? (m%60)+' min' : ''))).trim(); }
+function mvivPintar(){
+  var w=document.getElementById('mviv-wrap'), est=document.getElementById('mviv-est'); if(!w) return;
+  if(!UNLOCKED){
+    if(est) est.textContent='';
+    if(!document.getElementById('mviv-pass')) w.innerHTML='<div class="mviv-lock"><b>🔒 El mall en vivo es con la contraseña de Administración</b>'+
+      '<input type="password" id="mviv-pass" autocomplete="current-password" placeholder="Contraseña" aria-label="Contraseña de Administración" onkeydown="if(event.key===\'Enter\')mvivClave()">'+
+      '<button type="button" class="btn btn-primary" onclick="mvivClave()">Entrar</button><small id="mviv-pass-err" hidden>Esa no es la contraseña.</small></div>';
+    return;
+  }
+  var D; try{ D=mvivDatos(); }catch(e){ console.error(e); return; }
+  if(est){
+    var hh=MVIV.ok ? hhmmDeTs(MVIV.ok)+':'+('0'+new Date(MVIV.ok).getSeconds()).slice(-2) : '';
+    est.className='mviv-est'+(MVIV.err ? ' mviv-est-mal' : '');
+    est.textContent=MVIV.err ? ('⚠️ '+MVIV.err+(hh ? (': lo de las '+hh) : '')+' · reintenta solo')
+                             : (MVIV.leyendo && !MVIV.ok ? '⏳ Leyendo…' : ('🟢 En vivo · cada 15 s'+(hh ? (' · '+hh) : '')));
+  }
+  var h='';
+  if(!mallPuede()) h+='<div class="mallan-aviso" role="status">'+esc(mallFaltaTxt())+'</div>';
+  /* quién atiende */
+  var E=D.E, filas=E.fila.map(function(f){
+    var ico=f.estado==='atiende' ? '🗣️ Atendiendo' : f.estado==='esmio' ? '💛 Es mío' : f.estado==='pausa' ? '☕ En pausa' : (f.v===E.leToca ? '👉 Le toca' : '🟢 Libre');
+    var desde=f.desde ? (hhmmDeTs(f.desde)+' · '+mvivHace(D.ahora-f.desde)) : '';
+    return '<li class="mviv-v mviv-e-'+f.estado+(f.v===E.leToca ? ' mviv-le' : '')+'" data-v="'+esc(f.v)+'"><b>'+esc(f.v)+'</b><span class="mviv-chip">'+ico+'</span>'+
+      '<small>'+(f.estado==='libre' ? 'libre desde ' : 'desde ')+esc(desde)+' · '+f.n+(f.n===1 ? ' cliente' : ' clientes')+' hoy'+(f.seVa ? ' · se va al terminar' : '')+'</small></li>';
+  }).join('');
+  h+='<section class="mviv-c mviv-ahora"><h4>🏬 En el mostrador ahora</h4>'+
+    (E.leToca ? '<div class="mviv-toca">👉 Le toca a <b>'+esc(E.leToca)+'</b></div>' : (E.ocupados ? '<div class="mviv-toca">⏳ Están todos atendiendo</div>' : ''))+
+    (filas ? '<ul class="mviv-fila">'+filas+'</ul>' : '<p class="mviv-nada">Nadie en la rueda todavía.</p>')+'</section>';
+  /* la gente de hoy */
+  var pc=mallAnPc(D.co, D.pers);
+  h+='<section class="mviv-c mviv-gente"><h4>👥 La gente de hoy</h4><div class="mviv-3">'+
+    '<div><b id="mviv-pers">'+D.pers+'</b><small>atendidos</small></div><div><b id="mviv-co">'+D.co+'</b><small>compraron</small></div><div><b id="mviv-miro">'+D.miro+'</b><small>solo miró</small></div></div>'+
+    '<div class="mviv-conv"><span>Compraron</span><span class="mviv-pbar"><i style="width:'+(pc||0)+'%"></i></span><b id="mviv-pct">'+(pc==null ? '—' : (pc+' %'))+'</b></div>'+
+    (D.anoto ? '<small class="mviv-sub">📝 '+D.anoto+(D.anoto===1 ? ' dejó su celular' : ' dejaron su celular')+'</small>' : '')+'</section>';
+  /* lo vendido y la meta */
+  var M=D.meta, mh='';
+  if(M && Number(M.meta)>0){
+    var lleva=(M.lleva!=null) ? Number(M.lleva)||0 : D.ventas.bs, pm=Math.round(100*lleva/Number(M.meta));
+    mh='<div class="mviv-meta" id="mviv-meta"><div class="mviv-meta-t"><span>🎯 Meta de hoy <b>'+fmtBs0(M.meta)+'</b>'+(Number(M.minima)>0 ? (' · mínima '+fmtBs0(M.minima)) : '')+'</span><b>'+pm+' %</b></div>'+
+      '<span class="mviv-pbar mviv-pbar-m"><i style="width:'+Math.min(100, pm)+'%"></i></span>'+
+      '<small>'+(lleva>=Number(M.meta)-0.005 ? '🎉 Llegó a la meta del día' : ('faltan '+fmtBs0(Number(M.meta)-lleva)))+'</small></div>';
+  }
+  h+='<section class="mviv-c mviv-vend"><h4>🧾 Vendido hoy en la tienda</h4><div class="mviv-big" id="mviv-bs">'+fmtBs0(D.ventas.bs)+'</div><small>'+D.ventas.n+(D.ventas.n===1 ? ' venta cargada hoy' : ' ventas cargadas hoy')+'</small>'+mh+
+    (D.ultima ? ('<div class="mviv-ult" id="mviv-ult">🕐 Última venta'+(D.ultima.hora ? ' a las <b>'+esc(D.ultima.hora)+'</b>' : '')+': <b>'+esc(D.ultima.v)+'</b> · '+fmtBs0(D.ultima.bs)+(D.ultima.prod ? ' · '+esc(D.ultima.prod) : '')+'</div>') : '<p class="mviv-nada">Todavía no se cargó una venta hoy.</p>')+'</section>';
+  /* la caja */
+  var C=D.caja;
+  if(C){
+    h+='<section class="mviv-c mviv-caja" id="mviv-caja"><h4>💵 La caja</h4><div class="mviv-big">'+fmtBs0(C.debeHaber)+'</div><small>debería haber en efectivo</small><ul class="mviv-cl">'+
+      (C.quedoAyer!=null ? '<li><span>Quedó de ayer</span><b>'+fmtBs0(C.quedoAyer)+'</b></li>' : '')+
+      (C.efectivoCobrado!=null ? '<li><span>+ Efectivo cobrado hoy</span><b>'+fmtBs0(C.efectivoCobrado)+'</b></li>' : '')+
+      (C.retirado!=null ? '<li><span>− Retirado</span><b>'+fmtBs0(C.retirado)+'</b></li>' : '')+
+      (C.contadoPm!=null || C.contadoAm!=null ? '<li><span>Contado '+(C.contadoPm!=null ? 'a la tarde' : 'a la mañana')+'</span><b>'+fmtBs0(C.contadoPm!=null ? C.contadoPm : C.contadoAm)+'</b></li>' : '')+
+      (C.dif!=null && Math.abs(Number(C.dif)||0)>0.005 ? '<li class="mviv-dif"><span>Diferencia</span><b>'+fmtBs0(C.dif)+'</b></li>' : '')+'</ul>'+
+      (C.cerrada ? '<small>🔒 Caja cerrada</small>' : (Array.isArray(C.faltan) && C.faltan.length ? '<small>Falta: '+esc(C.faltan.join(', '))+'</small>' : ''))+'</section>';
+  }
+  /* la gente por hora */
+  var mx=1; D.horas.forEach(function(x){ mx=Math.max(mx, x.n); });
+  h+='<section class="mviv-c mviv-hrs"><h4>📊 La gente por hora</h4>'+(D.horas.length ? ('<div class="mviv-hb" id="mviv-horas">'+D.horas.map(function(x){
+      return '<div class="mviv-hc" title="'+x.h+' a '+(x.h+1)+' h: '+x.n+(x.n===1 ? ' persona' : ' personas')+'"><b>'+x.n+'</b><i style="height:'+Math.max(6, Math.round(100*x.n/mx))+'%"></i><small>'+x.h+'</small></div>'; }).join('')+'</div>')
+    : '<p class="mviv-nada">Todavía no se atendió a nadie hoy.</p>')+'</section>';
+  w.innerHTML='<div class="mviv-grid">'+h+'</div>';
+}
+/* El atajo: `?envivo=1` o `#envivo` (también desde el panel instalado, «Mall en vivo») abre esta pantalla; con el panel ya abierto, al cambiar el `#`. */
+window.mvivDesdeUrl=function(u){ if(/[#?&]envivo(=1)?(?![\w-])/.test(String(u||''))){ mvivAbrir(); return true; } return false; };
+document.addEventListener('DOMContentLoaded', function(){ if(mvivActivo() && mvivPideUrl()) setTimeout(mvivAbrir, 400); });
+window.addEventListener('hashchange', function(){ if(mvivActivo() && /^#envivo(?![\w-])/.test(location.hash||'') && !mvivAbierto()) mvivAbrir(); });
 
 var NX_RELOJ=0;
 function nxRelojArrancar(){ if(NX_RELOJ) return; NX_RELOJ=setInterval(function(){ nxBadges(); }, 60000); }
