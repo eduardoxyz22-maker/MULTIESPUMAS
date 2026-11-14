@@ -18806,3 +18806,8 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   la entrada de `FRQ`, su lectura en `frqSpans` (la palabra «HORARIO» sigue cortando la frase del edificio) y la etiqueta «🕐 Horario: …» que la 218 le había
   sumado a `fichaObsChips`; la hora escrita a mano la sigue leyendo `fichaNota` como antes de la 218. `test_frases_rapidas` 57/0 (1a-1b, 4, 5f, 6f-6g, 11).
 - Propuestas nuevas: «Mejoras 234 a 245» (https://claude.ai/artifact/ScavVWoAWbvumoE6xNHTxj), con los números de noviembre.
+- **Servidor `2026-11-14-a` IMPLEMENTADO el 14/11 por el dueño** (copió el `.gs` del enlace fijo `f22f45b…`, 8.941 líneas; probar ✅; Nueva versión). Lo
+  comprobé desde acá con `{action:'getlog'}` (devuelve solo la versión y las firmas de GET): contesta `2026-11-14-a`. Con eso se prenden en la página YA
+  publicada (13-d) la 181 (lunes 08:00 a Contabilidad, falta que Meta apruebe `mayoristas_vencido` con `crearPlantillasWhatsApp`) y el GPS de la 204
+  (la hoja «Historial GPS» se llena a las 21 h). `main` sigue con el `.gs` y ESPERADA en 13-a (la página publicada dice en gris «el servidor ya está en
+  14-a»): se pasan con la página de 211-218. Volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…` (8.104 líneas).

@@ -843,7 +843,7 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
 Asesora, entrega y producto, 2 días después del ✅: https://claude.ai/artifact/FkVXuRP3ccS3SWWEZti2Qu. Espera 6 decisiones del dueño. Al programarla,
 las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Claude, y el estado por número va en una hoja, no en Propiedades.
 
-## 🎯📧🏪📍🛍️🏭 Las mejoras 174-185, 190, 193, 203, 204 y 207 (§4px, 13/11; dueño: «174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185», «190, 193», «203, 204, 207» y «avisás que esté y publicás»; página PUBLICADA 13/11, versión 2026-11-13-d; el servidor `2026-11-13-b` (181 y el GPS de la 204) lo implementa el dueño: hasta entonces `main` sigue con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 13-a)
+## 🎯📧🏪📍🛍️🏭 Las mejoras 174-185, 190, 193, 203, 204 y 207 (§4px, 13/11; dueño: «174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185», «190, 193», «203, 204, 207» y «avisás que esté y publicás»; página PUBLICADA 13/11, versión 2026-11-13-d; el servidor `2026-11-13-b` (181 y el GPS de la 204) no se implementó sola: va adentro de la `2026-11-14-a`, IMPLEMENTADA 14/11 por el dueño)
 - **👥 174 Las metas de cada vendedora en «🎯 Metas por marca»**: debajo de cada marca, mínima y presupuesto editables (`metasVd*`), lo vendido y la proyección de
   `proyeccionMes(ym).marcas[].filas` (los de «Por vendedor»: no calcular nada aparte), % y si llega; abajo la suma contra la meta de la marca. Son las MISMAS de
   `__metas__` → `m[ym].vd` del cierre comercial (`ccmMetas`); sin guardar se muestran las sugeridas y guardar las confirma. La meta de una vendedora = su
@@ -904,7 +904,7 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   aparte; el enlace corto y el `&wa=1` valen. Afuera (`ubfEntra`): `fichaRetira`, venta de tienda, sistema, borradores, entregados, RPT a sucursal con pin y, como el bot,
   **Eduardo, ROHO y los internos** (con la planilla real salían «Roho» a la Tienda 1 y dos de FABRICA). Bloki se lo dice a logística (`l-ubic|…`). `test_ubic_faltan` (37).
 
-## 🛏️🕓🧾📅⚡ Las mejoras 211, 212, 216, 217 y 218 (§4py, 14/11; dueño: «211,212,216,217,218»; en la rama, espera «publica»; 216 y 217 piden el servidor `2026-11-14-a`, que lleva también la 13-b)
+## 🛏️🕓🧾📅⚡ Las mejoras 211, 212, 216, 217 y 218 (§4py, 14/11; dueño: «211,212,216,217,218»; en la rama, espera «publica»; 216 y 217 piden el servidor `2026-11-14-a`, que lleva también la 13-b: IMPLEMENTADO 14/11 por el dueño, probar ✅, contesta `2026-11-14-a`, enlace fijo `f22f45b…`, 8.941 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…`, 8.104 líneas. `main` sigue con el `.gs` y `SCRIPT_VERSION_ESPERADA` en 13-a hasta publicar la página)
 - **🛏️ 211 El dibujito de cada producto** (`prodIcoTipo` → colchón/somier/combo/almohada/respaldar/textil/otro; `prodIcoHtml`, memo `PICO_MEMO`): en la ficha
   y las fichas de Administración, la Lista de carga (`cargaAgrupar` guarda una línea de muestra en `px`), Mis pedidos y `#fx-der`. Colchón/somier/combo salen de
   `pryTipoProd` (el código manda); lo demás por la primera palabra (`PICO_ALM`, `PROD_MUEBLE`+`PICO_RESP`, `PROD_TIENDA`+`PICO_TELA`). ⚠️ Solo dibujo: el SVG no lleva
