@@ -289,6 +289,8 @@ function PREPARAR(){
   await page.clock.setFixedTime(hora('18:30'));
   r = await ev(async () => {
     _hoyDatos(); await refrescarEstado(); MVIV_MS=400;
+    /* (14/11, al juntar) la caja y la meta del día ya están en la página: para ver «sin ellas», se tapan un momento y se devuelven abajo */
+    window._mvivMetaReal=window.metaDiaTienda; window._mvivCajaReal=window.cajaResumenDia; window.metaDiaTienda=undefined; window.cajaResumenDia=undefined;
     document.getElementById('pry-envivo-btn').click(); await _esperar(600);
     var o={ vis:document.getElementById('mviv-ov').style.display, txt:_txt('#mviv-wrap'), est:_txt('#mviv-est'), pers:_txt('#mviv-pers'), co:_txt('#mviv-co'), miro:_txt('#mviv-miro'), pct:_txt('#mviv-pct'),
             bs:_txt('#mviv-bs'), ult:_txt('#mviv-ult'), meta:!!document.getElementById('mviv-meta'), caja:!!document.getElementById('mviv-caja'), horas:_txt('#mviv-horas'),
@@ -314,7 +316,7 @@ function PREPARAR(){
   chk('6h · con `cajaResumenDia`: debería haber Bs 3.500 en efectivo (500 de ayer + 3.000 cobrado), y lo que falta', /Bs 3\.500 debería haber en efectivo/.test(r.caja) && /Quedó de ayer Bs 500/.test(r.caja) && /Efectivo cobrado hoy Bs 3\.000/.test(r.caja) && /Falta: el conteo de la tarde/.test(r.caja), r.caja);
   chk('6i · sin red: se queda con lo último y dice de qué hora es', /No contestó la planilla: lo de las 18:30/.test(r.err) && /reintenta solo/.test(r.err) && r.siguePers==='5' && r.sigueBs==='Bs 10.700', r);
   if(CAPTURAS){ await ev(async () => { await mvivTic(); await _esperar(200); }); await page.screenshot({ path:path.join(CAPTURAS, 'mall_analisis_envivo_1280.png') }); }
-  r = await ev(async () => { mvivCerrar(); await _esperar(50); var t=MVIV.timer; delete window.metaDiaTienda; delete window.cajaResumenDia; return { vis:document.getElementById('mviv-ov').style.display, t:t }; });
+  r = await ev(async () => { mvivCerrar(); await _esperar(50); var t=MVIV.timer; window.metaDiaTienda=window._mvivMetaReal; window.cajaResumenDia=window._mvivCajaReal; return { vis:document.getElementById('mviv-ov').style.display, t:t }; });
   chk('6j · cerrar apaga el reloj', r.vis==='none' && !r.t, r);
   chk('sin errores de la página (1280 px)', errores.length===0, errores);
   await ctx.close();
@@ -341,7 +343,7 @@ function PREPARAR(){
     await page.setViewportSize({ width:390, height:1500 });
     await page.screenshot({ path:path.join(CAPTURAS, 'mall_analisis_envivo_390_entera.png') });
     await page.setViewportSize({ width:390, height:844 });
-    await ev(() => { delete window.metaDiaTienda; delete window.cajaResumenDia; });
+    await ev(() => { window.metaDiaTienda=window._mvivMetaReal; window.cajaResumenDia=window._mvivCajaReal; });
   }
   r = await ev(async () => { mvivCerrar(); await _esperar(50); var o={ hash:location.hash };
     mallAnAbrir('persona'); await _esperar(400); var b=document.getElementById('mallan-body'), o2={ sw:b.scrollWidth, cw:b.clientWidth, dw:document.documentElement.scrollWidth, iw:innerWidth };
