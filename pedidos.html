@@ -2599,6 +2599,8 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
 .cot-num{font-size:.72rem;font-weight:800;color:#0f766e;background:var(--teal-lt);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .cot-bd{font-size:.7rem;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap;background:#f1f5f9;color:#475569}
 .cot-bd.r{background:#fde2e4;color:#9b1c2a} .cot-bd.a{background:#fff4d6;color:#7c4b00} .cot-bd.ok{background:#dcfce7;color:#14532d}
+.cot-bd.err{white-space:normal;max-width:100%}   /* 🧾 «⚠️ El bot no pudo escribirle: …» trae el error de Meta, que puede ser largo */
+.cot-bot-err{margin:10px 0}.cot-bot-err ul{margin:6px 0 0 18px;padding:0}.cot-bot-err li{margin:2px 0}
 .cot-c2{font-size:.8rem;color:#334155;margin-top:4px;line-height:1.4}
 .cot-c3{font-size:.76rem;color:var(--muted);margin-top:3px}
 .cot-c3 b{color:var(--teal-dk)}
@@ -23139,10 +23141,20 @@ function pintarModoTienda(){
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) ni en la venta de tienda ni editando
 }
-function abrirVentaTienda(){
+function abrirVentaTienda(conCot){
+  /* 🧾 (mejora 251) Venía de «✓ Compró» de una cotización (la venta NUEVA con lo de la cotización): `resetForm` se llevaba la cotización y
+     los productos, y la venta de tienda se guardaba sin cerrarla. Se pregunta si es esa (o, desde el cartel de la cotización, `conCot`, ya
+     se sabe) y pasa con el cliente, el celular, la vendedora y los productos como están en el formulario. */
+  var F=null;
+  if(COT_VENTA && COT_VENTA.id && !EDIT_ID){
+    var c0=cotDe(COT_VENTA.id), q='la cotización '+(COT_VENTA.num||'')+(c0 ? (' de '+cotQuien(c0)) : '');
+    if(conCot===true || confirm('🧾 Estabas cargando la venta de '+q+'.\n\n• Aceptar: esta venta de tienda ES esa: pasa con el cliente y los productos, y al guardarla la cotización queda «compró».\n• Cancelar: es OTRA venta de tienda, nueva y vacía.'))
+      F=cotVentaFoto();
+  }
   EDIT_ID=null;
   showView('form'); resetForm();      // resetForm apaga el modo: se prende después
   VENTA_TIENDA=true; pintarModoTienda();
+  if(F) cotVentaReponer(F);
   var fc=document.getElementById('f-cliente'); if(fc){ fc.focus(); fc.scrollIntoView({block:'center'}); }
 }
 function cancelarVentaTienda(){
@@ -23178,9 +23190,11 @@ function pintarCampoOc(roho){
   // El selector no tiene sentido en ROHO: ahí el número lo manda el cliente.
   var wt=document.getElementById('f-doc-tipo'); if(wt) wt.style.display = roho ? 'none' : '';
 }
+var DOC_TIPO_PINTADO='OC';   // el tipo que el formulario muestra AHORA (lo deja `pintarDocTipo`): el botón ya cambió cuando llega el clic
 function setDocTipo(){
-  /* 🧾 (mejora 251) Sin el servidor 2026-11-14-b, o editando un pedido, la cotización no va: vuelve a 📄 OC y dice por qué. */
-  if(docTipoSel()==='COT' && !cotPuedeEmpezar()) segSet('f-doc-tipo','OC');
+  /* 🧾 (mejora 251) Sin el servidor 2026-11-14-b, editando un pedido, o si la persona dice «Cancelar» a la pregunta de un pedido a medio
+     cargar, la cotización no va: el botón vuelve al tipo que estaba y NO se toca nada (antes volvía a 📄 OC y repintaba limpiando). */
+  if(docTipoSel()==='COT' && DOC_TIPO_PINTADO!=='COT' && !cotPuedeEmpezar()){ segSet('f-doc-tipo', DOC_TIPO_PINTADO||'OC'); return; }
   pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarDocTipo(true);
 }
 /* Los dos bloques que dependen del tipo de documento, y lo que los tres tipos comparten
@@ -23188,6 +23202,7 @@ function setDocTipo(){
    tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
 function pintarDocTipo(limpiar){
   var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
+  DOC_TIPO_PINTADO=tipo;
   try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) ATC y RPT no apartan: lo apartado para un pedido se suelta
   try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
   /* 🎧 Una ATC no es una venta (§4bt) y una RPT tampoco (§4dk): no tienen N° de nota ni
@@ -23260,7 +23275,11 @@ var COT_MOTIVOS=[['precio','💸 El precio'],['medida','📏 La medida'],['demor
 var COT={ srv:{}, leido:0, leyendo:null, ultima:null, blob:null, ui:{}, filtro:'', vend:'' };
 var COT_RES={}, COT_VUELO={}, COT_VACIANDO=null;
 var COT_VENTA=null;            // la cotización que se está cerrando como venta («✓ Compró»): { id, num, total, dia }
-var COT_PASAJEROS={ busy:1, actualizar:1, clave:1 };   // se reintentan solos; cualquier otro «no» del servidor es firme
+/* Los «no» FIRMES del servidor (cotGuardar_ / cotMarcar_ del .gs 2026-11-14-b): reintentarlos no los arregla, así que salen de la cola y se
+   dicen. ⚠️ Es la lista al revés a propósito (revisión del 14/11): cualquier OTRO «no» —`ocupado` (el candado de la hoja no se consiguió en
+   8 s), `busy`, `clave`, una respuesta rara de Google, uno que todavía no existe— se queda en la cola y se reintenta solo. Con la lista de
+   los que se reintentan, un `ocupado` (que no estaba) se tomaba por firme y la cotización se BORRABA de la cola sin haber llegado. */
+var COT_FIRMES={ celular:1, vendedor:1, productos:1, fechas:1, sin_id:1, sin_cot:1, estado:1, no_esta:1, conflicto:1 };
 var COT_FONT='"Inter","Segoe UI",Roboto,Arial,sans-serif';
 function cotVa(){ return !(navigator.webdriver && !window.COT_PRUEBA); }
 function cotServidorOk(){ return servidorTiene(COT_SERVIDOR); }
@@ -23294,6 +23313,17 @@ function cotColaPoner(op){
 function cotColaQuitar(txt){
   var a=cotColaLeer(), b=a.filter(function(x){ return JSON.stringify(x)!==txt; });
   if(b.length!==a.length) lsPoner(COT_LS_COLA, JSON.stringify(b));
+}
+/* Cambia UNA op por otra EN SU LUGAR (no al final: lo que espera detrás de ella, como la marca de «Renovar», tiene que seguir detrás).
+   Devuelve el texto de la nueva, ya verificado en el aparato, o null (no estaba, o no se pudo guardar: entonces no se manda). */
+function cotColaReemplazar(txtViejo, op){
+  var a=cotColaLeer(), i=-1;
+  for(var j=0;j<a.length;j++) if(JSON.stringify(a[j])===txtViejo){ i=j; break; }
+  if(i<0) return null;
+  a[i]=op;
+  var txt=JSON.stringify(op);
+  if(!lsPoner(COT_LS_COLA, JSON.stringify(a))) return null;
+  return cotColaLeer().some(function(x){ return JSON.stringify(x)===txt; }) ? txt : null;
 }
 function cotSrvCargar(){ try{ var o=JSON.parse(localStorage.getItem(COT_LS_SRV)||'{}'); if(o && typeof o==='object' && !Array.isArray(o)) COT.srv=o; }catch(e){} }
 function cotSrvGuardar(){
@@ -23339,7 +23369,16 @@ function cotEnviarOp(op, txt){
     delete COT_VUELO[txt];
     if(res && res.ok){ cotColaQuitar(txt); if(res.cot && res.cot.id) cotSrvPoner(res.cot); return { ok:true, cot:res.cot||null, op:op }; }
     var e=String((res && res.error)||'');
-    if(res && res.ok===false && e && !COT_PASAJEROS[e]){   // un «no» firme: reintentarlo no lo arregla
+    /* 🔁 Un guardado PROPIO con sello («🔁 Renovar») que vuelve `conflicto`: casi siempre es una marca de este mismo aparato que llegó
+       antes y le subió el sello (⏰ Volver a llamar recién tocado). Se reintenta UNA vez sobre la versión del servidor (`actual`, con su
+       sello) conservando SOLO lo que este guardado cambiaba (`op.re`: el «vale hasta» y el día de llamar), en el mismo lugar de la cola. */
+    if(e==='conflicto' && op.k==='g' && op.re && !op.reN && res.actual && res.actual.id && Number(res.actual.rev)>0){
+      cotSrvPoner(res.actual);
+      var op2={ k:'g', id:String(op.id), t:Date.now(), p:cotPayloadGuardar(Object.assign({}, res.actual, op.re)), re:op.re, reN:1 };
+      var txt2=cotColaReemplazar(txt, op2);
+      if(txt2) return cotEnviarOp(op2, txt2);
+    }
+    if(res && res.ok===false && e && COT_FIRMES[e]){   // un «no» firme: reintentarlo no lo arregla (cualquier otro se reintenta)
       cotColaQuitar(txt);
       if(e==='conflicto' && res.actual && res.actual.id) cotSrvPoner(res.actual);
       return { ok:false, firme:true, error:e, actual:res.actual||null, op:op };
@@ -23385,8 +23424,11 @@ function cotPayloadGuardar(c){
   if(Number(c.rev)>0) p.rev=c.rev;   // corregir (renovar) va con el sello: si otro la cambió, vuelve `conflicto`
   return p;
 }
-function cotGuardarDurable(c){
-  var txt=cotColaPoner({ k:'g', id:String(c.id), t:Date.now(), p:cotPayloadGuardar(c) });
+/* `re` (opcional): lo que este guardado cambia de una cotización que ya está ({vence, prox} al renovar); con eso, un `conflicto` se
+   reintenta una vez sobre la versión del servidor (`cotEnviarOp`). */
+function cotGuardarDurable(c, re){
+  var op={ k:'g', id:String(c.id), t:Date.now(), p:cotPayloadGuardar(c) }; if(re) op.re=re;
+  var txt=cotColaPoner(op);
   if(!txt) return null;
   var prom=cotColaVaciar().then(function(){ return COT_RES[txt] || { ok:false, local:true, error:(CONNECTED ? 'sin_respuesta' : 'sin_red') }; });
   return { txt:txt, prom:prom };
@@ -23407,7 +23449,9 @@ function cotRefrescar(forzar){
   COT.leido=Date.now();
   if(cotColaEsperando()) cotColaVaciar();   // (con el mismo tope de una vez cada COT_LEER_MS: lo de cada 2 minutos va aparte)
   var hoy=diaNegocio(), antes=cotFirma();
-  COT.leyendo=conTopeDuro(apiPost({ action:'cotLeer', desde:stockSumarDias(hoy, -COT_LEER_DIAS), hasta:hoy }), COT_TOPE_MS, 'tardo_cot').then(function(res){
+  /* `abiertas:true`: también las abiertas de antes de los COT_LEER_DIAS días (el servidor las suma de cualquier día). Sin eso, una sin
+     cerrar de hace más de 60 días desaparecía de «Para hacer» y nadie la cerraba. */
+  COT.leyendo=conTopeDuro(apiPost({ action:'cotLeer', desde:stockSumarDias(hoy, -COT_LEER_DIAS), hasta:hoy, abiertas:true }), COT_TOPE_MS, 'tardo_cot').then(function(res){
     COT.leyendo=null;
     if(!(res && res.ok && Array.isArray(res.cots))) return false;
     var o={}; res.cots.forEach(function(c){ if(c && c.id) o[String(c.id)]=c; }); COT.srv=o; cotSrvGuardar();
@@ -23436,19 +23480,61 @@ function cotEmpezar(){
   if(!cotServidorOk()){ cotFaltaServidor(); return false; }
   if(EDIT_ID){ toast('✏️ Estás corrigiendo un pedido: guardalo o tocá «Cancelar edición», y después «🧾 Cotizar».','err',8000); showView('form'); return false; }
   showView('form');
-  if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }   // una cotización no es una venta de tienda
-  if(docTipoSel()!=='COT'){ segSet('f-doc-tipo','COT'); setDocTipo(); }
+  if(docTipoSel()!=='COT' || DOC_TIPO_PINTADO!=='COT'){
+    if(!cotConfirmarPasar()) return false;   // un pedido a medio cargar: Cancelar = no cambia nada
+    COT_PASAR_YA=true;
+    try{
+      if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }   // una cotización no es una venta de tienda
+      segSet('f-doc-tipo','COT'); setDocTipo();
+    } finally { COT_PASAR_YA=false; }
+    if(docTipoSel()!=='COT') return false;
+  }
   window.scrollTo(0,0);
   var fc=document.getElementById('f-celular'); if(fc){ try{ fc.focus({ preventScroll:true }); }catch(e){} }
   return true;
 }
 function cotSalir(){ segSet('f-doc-tipo','OC'); setDocTipo(); }
-/* ¿Se puede pasar el formulario a 🧾 ahora? Si no, dice por qué (el selector vuelve a 📄 OC). */
+/* ¿Se puede pasar el formulario a 🧾 ahora? Si no, dice por qué (y `setDocTipo` deja el botón en el tipo que estaba). */
+var COT_PASAR_YA=false;   // `cotEmpezar` ya preguntó: el `setDocTipo` que llama no vuelve a preguntar
 function cotPuedeEmpezar(){
   if(!cotServidorOk()){ cotFaltaServidor(); return false; }
   if(EDIT_ID){ toast('🧾 Una cotización se arma en un formulario nuevo: guardá este pedido o tocá «Cancelar edición».','err',8000); return false; }
+  if(!COT_PASAR_YA && !cotConfirmarPasar()) return false;
   if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }
   return true;
+}
+/* 🧾 Pasar a cotización un pedido NUEVO a medio cargar borra lo de la venta (la nota, el cobro, el método, el banco y los comprobantes sin
+   guardar: `pintarDocTipo(true)`), y lo de la entrega no va en la cotización. Se pregunta antes; Cancelar = no cambia nada.
+   «A medio cargar» = distinto del formulario vacío (`FORM_NUEVO_BASE`, como `confirmarReemplazoForm`), o con nota, plata o imágenes. */
+function cotLoQueSeBorra(){
+  var v=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var plata=function(id){ var t=v(id); return !!t && !/^[0\s.,]*$/.test(t); };   // «0» (lo que pone el formulario vacío) no es plata
+  var L=[];
+  if(v('f-nota')) L.push('la nota de venta ('+v('f-nota')+')');
+  if(segVal('f-pagado')==='SI' || plata('f-acuenta') || plata('f-saldo') || plata('f-cobrado') || plata('f-envio') || plata('f-monto2') || segVal('f-metodo') || segVal('f-banco') || (typeof MIXTO!=='undefined' && MIXTO))
+    L.push('el cobro (a cuenta, saldo, método y banco)');
+  var im=0; try{ im=imagenesSinPegar(true).length; }catch(e){ im=0; }
+  if(im) L.push(im===1 ? '1 comprobante sin guardar' : (im+' comprobantes sin guardar'));
+  return L;
+}
+/* Distinto del formulario vacío, sin contar lo que el panel pone solo y que la cotización no pierde: sus propios campos (el «vale hasta»),
+   el tipo de documento, el modo tienda con su tienda y su fecha sugeridas, y quién pide la reposición (la vendedora). Sin eso, ir y volver
+   de 🧾 con el formulario vacío preguntaba «a medio cargar». */
+function cotFormMedio(){
+  if(!FORM_NUEVO_BASE) return false;
+  try{
+    var IGN=/^f-(cot-|tienda-suc$|fecha-venta$|rpt-quien$)/;
+    var lim=function(txt){ var a=JSON.parse(txt); a[0]=(a[0]||[]).filter(function(c){ return c && !IGN.test(String(c[0]||'')); }); a[1]=null; a[2]=null; return JSON.stringify(a); };
+    return lim(formNuevoHuella())!==lim(FORM_NUEVO_BASE);
+  }catch(e){ return false; }
+}
+function cotConfirmarPasar(){
+  if(EDIT_ID) return true;   // editando no se llega: `cotPuedeEmpezar` lo frena antes
+  var L=cotLoQueSeBorra();
+  if(!L.length && !cotFormMedio()) return true;
+  return confirm('🧾 Tenés un pedido a medio cargar y SIN GUARDAR.\n\nAl pasarlo a cotización se quedan el cliente, el celular y los productos'+
+    (L.length ? (', pero se BORRA '+L.join(', ')+'.') : '.')+
+    ' Lo de la entrega (fecha, turno, zona, dirección, ubicación, observaciones) no va en la cotización.\n\n• Aceptar: pasarlo a cotización.\n• Cancelar: seguir con el pedido como está.');
 }
 function cotFormPintar(limpiar){
   var view=document.getElementById('view-form'), cot=(docTipoSel()==='COT');
@@ -23586,7 +23672,8 @@ function cotEstHtml(c, res){
   if(!res) return '⏳ Guardando la cotización en la planilla…';
   if(res.ok) return '✓ Guardada en la planilla'+(c.num?(' como <b>'+esc(c.num)+'</b>'):'')+'. Ya la podés mandar.';
   if(res.firme) return '❌ El servidor NO la aceptó ('+esc(res.error||'')+'). No quedó guardada: cargala de nuevo.';
-  return '⏳ Quedó guardada en este aparato y se manda sola cuando vuelva la conexión ('+esc(res.error||'sin conexión')+'). La imagen ya la podés mandar: el número llega después.';
+  var ocup=/^(ocupado|busy)$/.test(String(res.error||''));
+  return '⏳ Quedó guardada en este aparato y se manda sola '+(ocup ? 'en un rato (la planilla estaba ocupada)' : 'cuando vuelva la conexión')+' ('+esc(res.error||'sin conexión')+'). La imagen ya la podés mandar: el número llega después.';
 }
 function cotVentanaEstado(id, res){
   if(!COT.ultima || String(COT.ultima.id)!==String(id)) return;
@@ -23766,7 +23853,34 @@ function cotVentaPintar(){
   var c=COT_VENTA; el.hidden=!c;
   if(!c){ if(el.innerHTML) el.innerHTML=''; return; }
   el.innerHTML='<span>🧾 Venta de la cotización <b>'+esc(c.num||'sin número todavía')+'</b>'+(c.dia?(' del '+esc(cotDiaSem(c.dia))):'')+' ('+esc(cotBs(c.total))+'). Al guardarla, la cotización queda como <b>«compró»</b>.</span>'+
+    ((typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA) ? '' : '<button type="button" class="btn btn-ghost btn-sm cot-v-tienda" style="width:auto" onclick="abrirVentaTienda(true)" title="Se lo llevó del local: sin entrega ni camión">🏪 Se lo llevó de la tienda</button>')+
     '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="COT_VENTA=null;cotVentaPintar()">No es de esa cotización</button>';
+}
+/* Lo de la venta de una cotización que está en el formulario (la vendedora, el cliente, el celular y los productos como quedaron), para
+   pasarlo a la venta de tienda (`abrirVentaTienda`): `resetForm` lo borra. */
+function cotVentaFoto(){
+  if(!COT_VENTA) return null;
+  var v=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); }, prods=[];
+  try{ prods=getProductos(); }catch(e){ prods=[]; }
+  var c=cotDe(COT_VENTA.id);
+  return { cv:Object.assign({}, COT_VENTA), vend:v('f-vendedor'), cli:v('f-cliente'), cel:v('f-celular'), prods:prods, tienda:String((c && c.tienda)||'') };
+}
+function cotVentaReponer(F){
+  if(!F) return;
+  var pon=function(fid, val){ var e=document.getElementById(fid); if(e) e.value=String(val==null?'':val); };
+  if(F.vend){ pon('f-vendedor', F.vend); try{ applyVendedorLite(); }catch(e){} }
+  pon('f-cliente', F.cli); pon('f-celular', F.cel);
+  var ts=document.getElementById('f-tienda-suc');   // la tienda: la de la cotización si está en la lista; si no, la de la vendedora
+  if(ts){ ts.value=''; if(F.tienda && [].some.call(ts.options, function(o){ return o.value===F.tienda; })) ts.value=F.tienda; else try{ sugerirTiendaSuc(); }catch(e){} }
+  if(F.prods && F.prods.length){
+    var box=document.getElementById('f-productos'); box.innerHTML='';
+    F.prods.forEach(function(x){ addProdRow(x.desc, x.medida, x.codigo, x.cant, x.precio); });
+    try{ refreshDelButtons(); }catch(e){}
+  }
+  COT_VENTA=F.cv; cotVentaPintar();
+  try{ TOT_AUTO.toc=true; pintarTotalProds(); }catch(e){}
+  try{ celFormPintar(); }catch(e){}
+  try{ fxFormPintar(); }catch(e){}
 }
 /* Después de guardar (o de dejar en la cola) una venta: si nació de una cotización y antes no la tenía, la cotización pasa a «compró». */
 function cotTrasVenta(rec, prev){
@@ -23783,6 +23897,12 @@ function cotBotLlama(c){
   var bt=Number(c.botT)||0;   // ya la llamó (anotó una llamada) después de que se lo pidió al bot: se va
   return !(c.llamadas||[]).some(function(l){ return l && (Number(l.t)||0)>=bt; });
 }
+/* 🤖 Lo que el servidor deja en `bot`: `enviado` (le escribió), `llamar` / `compre` / `no` (le escribió y el cliente contestó), `no_va` (una
+   vieja que el bot no va a mirar) y `error` (Meta no lo dejó: el detalle en `botErr`). «Le escribió» son SOLO los cuatro primeros. */
+var COT_BOT_ESCRIBIO={ enviado:1, llamar:1, compre:1, no:1 };
+function cotBotEscribio(c){ return !!(c && COT_BOT_ESCRIBIO[String(c.bot||'')]); }
+function cotBotError(c){ return !!c && String(c.bot||'')==='error'; }
+function cotBotErrTxt(c){ return String((c && c.botErr)||'').replace(/\s+/g,' ').trim().slice(0, 240); }
 function cotDiceCompro(c){ var e=cotEstado(c); return !!c && (c.bot==='compre' || e==='dice_compro') && e!=='compro' && e!=='no'; }
 function cotHacerDatos(v){
   var hoy=diaNegocio(), L=cotTodas().filter(function(c){ return c && mismoVendedor(c.vendedor, v); });
@@ -23837,13 +23957,33 @@ function cotLlamarPintar(){
     (f==='llamar' || !f ? '<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Las que le mandaste hace unos días: preguntale si lo pensó. Lo que anotes vuelve a aparecer el día que elijas.</div>' : '')+
     (esp ? '<div class="cotv-est mal" style="margin-bottom:10px">⏳ '+esp+(esp===1?' cosa espera':' cosas esperan')+' en este aparato para ir a la planilla: se mandan solas.</div>' : '')+
     '<div class="cot-lista">'+(L.length ? L.map(cotCardHtml).join('') : '<div class="cot-vacio">✅ No hay ninguna para llamar ahora.</div>')+'</div></div>';
+  /* La ventana se vuelve a dibujar ENTERA cuando cambia algo (una lectura, una confirmación): lo que se estaba escribiendo en un recuadro
+     abierto (el motivo y la nota de «No le interesa», el día de «Volver a llamar», el «vale hasta» de «Renovar») y el foco se reponen. */
+  var F=cotLlamarFoto();
   openModal(h, true);
+  cotLlamarReponer(F);
+}
+function cotLlamarFoto(){
+  var box=document.getElementById('cot-llamar'); if(!box) return null;
+  var v={}, f=null, a=document.activeElement;
+  Array.prototype.forEach.call(box.querySelectorAll('input[id], select[id], textarea[id]'), function(e){ if(/^cot-(mot|nota|prox|vence)-/.test(e.id)) v[e.id]=e.value; });
+  if(a && a.id && box.contains(a)){ f={ id:a.id }; try{ if(typeof a.selectionStart==='number'){ f.s=a.selectionStart; f.e=a.selectionEnd; } }catch(e){} }
+  return { v:v, f:f };
+}
+function cotLlamarReponer(F){
+  if(!F) return;
+  Object.keys(F.v).forEach(function(id){ var e=document.getElementById(id); if(e && e.value!==F.v[id]) e.value=F.v[id]; });
+  if(F.f){
+    var e=document.getElementById(F.f.id);
+    if(e){ try{ e.focus({ preventScroll:true }); if(F.f.s!=null && typeof e.setSelectionRange==='function') e.setSelectionRange(F.f.s, F.f.e); }catch(x){} }
+  }
 }
 function cotCardHtml(c){
   var id=cotJs(c.id), e=cotEstado(c), ui=COT.ui[id]||'', abierta=cotAbierta(c), bt=[];
   var bot=cotBotLlama(c), dice=cotDiceCompro(c);
   if(bot) bt.push('<span class="cot-bd r">📞 Le pidió al bot que lo llames</span>');
   if(dice) bt.push('<span class="cot-bd a">🛍️ Dice que ya compró</span>');
+  if(cotBotError(c)){ var be=cotBotErrTxt(c); bt.push('<span class="cot-bd a err">⚠️ El bot no pudo escribirle'+(be?(': '+esc(be)):'')+'</span>'); }   // `no_va`: nada
   if(e==='vencida') bt.push('<span class="cot-bd a">🗓️ Venció el '+esc(fmtFechaCorta(c.vence))+'</span>');
   if(e==='compro') bt.push('<span class="cot-bd ok">✓ Compró</span>');
   if(e==='no') bt.push('<span class="cot-bd">✗ No le interesa'+(c.motivo?(' · '+esc(cotMotivoTxt(c.motivo))):'')+'</span>');
@@ -23861,7 +24001,8 @@ function cotCardHtml(c){
     h+='<div class="cot-acc">'+
       (wa ? '<a class="ah-go" href="'+esc(wa+'?text='+encodeURIComponent(cotTextoSeguir(c)))+'" target="_blank" rel="noopener">💬 WhatsApp</a>' : '')+
       (dice ? (b('ah-go-p','Sí, con nosotros',"cotUi('"+id+"','unir')")+b('','No, en otro lado',"cotNoOtroLado('"+id+"')"))
-            : b('ah-go-p','✓ Compró',"cotComproAbrir('"+id+"')"))+
+            : (b('ah-go-p','✓ Compró',"cotComproAbrir('"+id+"')")+
+               b('','🔗 Ya está cargada: elegir la venta',"cotUi('"+id+"','unir')")))+   // la venta ya está en el panel (la cargó sin pasar por acá)
       b('','⏰ Volver a llamar',"cotUi('"+id+"','volver')")+
       (e==='vencida' ? b('','🔁 Renovar',"cotUi('"+id+"','renovar')") : '')+
       (dice ? '' : b('ah-go-n','✗ No le interesa',"cotUi('"+id+"','no')"))+
@@ -23902,7 +24043,8 @@ function cotSubHtml(c, ui){
     return '<div class="cot-sub"><label>¿Cuál es su venta?</label>'+
       (P.length ? P.map(function(p){ return '<div class="cot-fila"><span style="flex:1 1 220px">'+esc(ocEtiq(p.oc)||'Pedido')+' · '+esc(p.cliente||'')+' · '+esc(fmtFecha(contaFecha(p)))+' · '+esc(cotBs(ventaTotal(p)))+'</span>'+
                   '<button type="button" class="ah-go ah-go-p" onclick="cotUnirPedido(\''+id+'\',\''+cotJs(p.id)+'\')">Es esta</button></div>'; }).join('')
-                : '<div style="font-size:.8rem;color:var(--muted)">No encontré ninguna venta con ese celular desde el '+esc(cotDiaSem(c.dia))+'.</div>')+
+                : '<div style="font-size:.8rem;color:var(--muted)">No encontré ninguna venta desde el '+esc(cotDiaSem(c.dia))+
+                  (cliCelClave(c.celular) ? (' con ese celular, ni de '+esc(nombreCanonico(c.vendedor)||c.vendedor||'la vendedora')+' sin celular.') : (' de '+esc(nombreCanonico(c.vendedor)||c.vendedor||'la vendedora')+'.'))+'</div>')+
       '<div class="cot-fila"><button type="button" class="ah-go" onclick="cotComproAbrir(\''+id+'\')">📄 Cargar la venta ahora</button></div></div>';
   }
   return '';
@@ -23932,18 +24074,32 @@ function cotRenovar(id){
   var e=document.getElementById('cot-vence-'+id), f=String((e&&e.value)||''), hoy=diaNegocio();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f<hoy){ if(e) e.classList.add('err'); toast('🗓️ Elegí hasta cuándo vale (de hoy en adelante).','err'); return; }
   var n=Object.assign({}, c, { vence:f, prox:diaHabilMas(hoy, COT_PROX_HABILES) });
-  var r=cotGuardarDurable(n);
+  /* Con lo que cambia (`re`): si una marca de este aparato llegó antes y le subió el sello, el `conflicto` se reintenta solo (`cotEnviarOp`). */
+  var r=cotGuardarDurable(n, { vence:n.vence, prox:n.prox });
   if(!r){ toast('No se pudo guardar una copia segura en este aparato: NO se renovó. Liberá espacio del navegador y volvé a intentar.','err',10000); return; }
   cotMarcar(c.id, { estado:'abierta', prox:n.prox, llamada:{ res:'renovo', nota:'vale hasta el '+fmtFechaCorta(f) } }, c.vendedor);
-  COT.ui[id]=''; toast('🔁 Renovada hasta el '+cotDiaSem(f)+' ✓ Mandásela de nuevo si hace falta.','ok',7000); cotRepintar();
+  COT.ui[id]=''; toast('🔁 Renovando hasta el '+cotDiaSem(f)+'…','ok'); cotRepintar();
+  /* El «✓» recién con el sí del servidor. Un «no» firme ya lo dijo `cotFirmeAviso`. */
+  return r.prom.then(function(res){
+    if(res && res.ok) toast('🔁 Renovada hasta el '+cotDiaSem(f)+' ✓ Mandásela de nuevo si hace falta.','ok',7000);
+    else if(res && !res.firme) toast('⏳ La renovación hasta el '+cotDiaSem(f)+' quedó en este aparato y se manda sola a la planilla ('+(res.error||'sin conexión')+'): todavía no está.','err',9000);
+    return res;
+  });
 }
-/* «Dice que ya compró · Sí, con nosotros»: su venta (mismo celular, cargada desde el día de la cotización). */
+/* «Sí, con nosotros» / «🔗 Ya está cargada»: su venta, cargada desde el día de la cotización. Con celular de los dos lados, el mismo celular;
+   si a uno de los dos le falta (una venta de tienda sin celular), una venta de la MISMA vendedora. Primero las del mismo celular, después
+   las más nuevas. La que ya es la venta de OTRA cotización no se ofrece. */
 function cotCandidatos(c){
-  var k=cliCelClave(c.celular); if(!k) return [];
+  var k=cliCelClave(c.celular), desde=String(c.dia||''), cid=String(c.id||'');
+  var mismoCel=function(p){ return !!k && cliCelClave(p.celular)===k; };
   return (STATE||[]).filter(function(p){
-    return p && !esFilaSistema(p) && !(typeof borradorDe==='function' && borradorDe(p.id)) && !esATC(p.oc) && !esRPT(p.oc) &&
-           cliCelClave(p.celular)===k && contaFecha(p)>=String(c.dia||'');
-  }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); }).slice(0,6);
+    if(!p || esFilaSistema(p) || (typeof borradorDe==='function' && borradorDe(p.id)) || esATC(p.oc) || esRPT(p.oc)) return false;
+    if(contaFecha(p)<desde) return false;
+    var pc=cotIdDe(p); if(pc && pc!==cid) return false;
+    var pk=cliCelClave(p.celular);
+    if(k && pk) return pk===k;
+    return !!c.vendedor && mismoVendedor(p.vendedor, c.vendedor);
+  }).sort(function(a,b){ return ((mismoCel(a)?0:1)-(mismoCel(b)?0:1)) || ((Number(b.ts)||0)-(Number(a.ts)||0)); }).slice(0,8);
 }
 function cotUnirPedido(id, pid){
   var c=cotDe(id), p=findById(pid); if(!c || !p) return;
@@ -23985,13 +24141,13 @@ function cotDiasCompra(c){
 }
 function cotTabDatos(L){
   var nuevo=function(k){ return { k:k, n:0, bs:0, bot:0, llamar:0, compro:0, comproBs:0, dias:[], no:0, abiertas:0 }; };
-  var D=nuevo('Todas'); D.vencidas=0; D.motivos={}; D.vend={}; D.tienda={}; D.botVisto=false;
+  var D=nuevo('Todas'); D.vencidas=0; D.motivos={}; D.vend={}; D.tienda={}; D.botVisto=false; D.botErr=[];
   var grupo=function(M, k){ return M[k]||(M[k]=nuevo(k)); };
   L.forEach(function(c){
     var e=cotEstado(c), tot=r2(Number(c.total)||0), d=(e==='compro') ? cotDiasCompra(c) : null;
     [D, grupo(D.vend, nombreCanonico(c.vendedor||'')||'Sin vendedor'), grupo(D.tienda, c.tienda||'Sin tienda')].forEach(function(G){
       G.n++; G.bs=r2(G.bs+tot);
-      if(c.bot) G.bot++;
+      if(cotBotEscribio(c)) G.bot++;   // `no_va` y `error` no son «le escribió»
       if(c.bot==='llamar') G.llamar++;
       if(e==='compro'){ G.compro++; G.comproBs=r2(G.comproBs+tot); if(d!=null) G.dias.push(d); }
       else if(e==='no') G.no++;
@@ -23999,7 +24155,8 @@ function cotTabDatos(L){
     });
     if(e==='vencida') D.vencidas++;
     if(e==='no'){ var m=c.motivo||'sin motivo'; D.motivos[m]=(D.motivos[m]||0)+1; }
-    if(c.bot) D.botVisto=true;
+    if(cotBotEscribio(c) || cotBotError(c)) D.botVisto=true;   // con `error` lo intentó (está prendido); `no_va` no dice nada
+    if(cotBotError(c)) D.botErr.push(c);
   });
   return D;
 }
@@ -24034,6 +24191,8 @@ function cotTabPintar(){
       f('No les interesó', D.no, '')+
       f('Siguen abiertas', D.abiertas, D.vencidas ? (D.vencidas+(D.vencidas===1?' vencida':' vencidas')) : '')+
     '</div>';
+    if(D.botErr.length) h+='<div class="cotv-est mal cot-bot-err">⚠️ El bot no pudo escribirle a '+(D.botErr.length===1?'1 cliente':(D.botErr.length+' clientes'))+' (Meta no lo dejó): llamalos o escribiles a mano.<ul>'+
+      D.botErr.map(function(c){ var be=cotBotErrTxt(c); return '<li><b>'+esc(cotQuien(c))+'</b> · '+esc(c.num||'cotización')+' · '+esc(nombreCanonico(c.vendedor||'')||c.vendedor||'')+(be?(' — '+esc(be)):'')+'</li>'; }).join('')+'</ul></div>';
     if(!D.n) h+='<div class="cot-vacio">Todavía no hay cotizaciones en '+esc(mesNombre(ym))+'.</div>';
     else {
       var tabla=function(tit, filas){
@@ -24054,7 +24213,7 @@ function cotTabTexto(){
   var L=cotTabLista(), D=cotTabDatos(L), dias=cotProm(D.dias), ym=COT_TAB.ym;
   var T=['🧾 Cotizaciones de '+mesNombre(ym), 'Hechas: '+D.n+' ('+cotBs(D.bs)+')', 'El bot les escribió: '+D.bot+(cotBotPrendido(D)?'':' (el mensaje de las 48 h todavía no está prendido)'),
          'Pidieron que las llamen: '+D.llamar, 'Compraron: '+D.compro+' ('+cotPct(D.compro, D.n)+'%, '+cotBs(D.comproBs)+')'+(dias==null?'':(' · en '+String(dias).replace('.',',')+' días en promedio')),
-         'No les interesó: '+D.no+' · siguen abiertas: '+D.abiertas, '', 'Por vendedor:'];
+         'No les interesó: '+D.no+' · siguen abiertas: '+D.abiertas].concat(D.botErr.length ? ['El bot no pudo escribirle: '+D.botErr.length+' ('+D.botErr.map(function(c){ var be=cotBotErrTxt(c); return cotQuien(c)+(be?(': '+be):''); }).join('; ')+')'] : [], ['', 'Por vendedor:']);
   cotGrupoFilas(D.vend).forEach(function(G){ T.push('• '+G.k+': '+G.n+' hechas, '+G.compro+' compraron ('+cotPct(G.compro, G.n)+'%)'); });
   T.push('', 'Por tienda:'); cotGrupoFilas(D.tienda).forEach(function(G){ T.push('• '+G.k+': '+G.n+' hechas, '+G.compro+' compraron ('+cotPct(G.compro, G.n)+'%)'); });
   var mk=Object.keys(D.motivos); if(mk.length){ T.push('', 'Por qué no les interesó:'); mk.sort(function(a,b){ return D.motivos[b]-D.motivos[a]; }).forEach(function(m){ T.push('• '+cotMotivoTxt(m)+': '+D.motivos[m]); }); }
@@ -24077,7 +24236,7 @@ function cotTabExcel(){
     var e=cotEstado(c), d=(e==='compro') ? cotDiasCompra(c) : null;
     det.push([c.num||'', fmtFecha(c.dia), c.vendedor||'', c.tienda||'', c.cliente||'', { v:String(c.celular||''), t:'s' },
       (c.productos||[]).map(function(x){ return (Number(x.cant)>1?(x.cant+'× '):'')+String(x.desc||'')+(x.medida?(' '+x.medida):''); }).join(' · '),
-      bs(c.total), fmtFecha(c.vence), e, e==='no' ? cotMotivoTxt(c.motivo) : '', c.bot||'', num((c.llamadas||[]).length), d==null?'':num(d)]);
+      bs(c.total), fmtFecha(c.vence), e, e==='no' ? cotMotivoTxt(c.motivo) : '', cotBotError(c) ? ('error'+(cotBotErrTxt(c)?(': '+cotBotErrTxt(c)):'')) : (c.bot||''), num((c.llamadas||[]).length), d==null?'':num(d)]);
   });
   var bytes=buildXlsx([{ name:'Resumen', cols:[{w:34},{w:16}], matrix:res },
                        { name:'Por vendedor', cols:[{w:24},{w:9},{w:14},{w:7},{w:12},{w:11},{w:14},{w:10},{w:7},{w:9}], matrix:grp('VENDEDOR', D.vend) },
@@ -60753,7 +60912,12 @@ function certDibujar(ctx, D, M, logo){
 }
 /* ---- el bloque de las ventanas ---- */
 var CERT_ICO='<svg viewBox="0 0 100 104" width="22" height="23" aria-hidden="true" focusable="false"><path d="M50 0L92 14V50Q90 88 50 104Q10 88 8 50V14Z" fill="#00B5AD"/><path d="M30 52L45 67L72 38" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/* ⚠️ Se pega adentro de tres ventanas (la ficha de Mis pedidos, «✅ Pedido guardado» y la ficha de Administración): un pedido raro (los
+   productos que no son una lista, un renglón vacío) no puede dejar sin abrir ninguna de ellas. Si algo tira, el bloque no sale y nada más. */
 function certBloqueHtml(p){
+  try{ return certBloqueArmar(p); }catch(e){ try{ console.warn('certificado:', e); }catch(x){} return ''; }
+}
+function certBloqueArmar(p){
   if(!p || !certVe() || !certEntra(p)) return '';
   var D=certDatos(p), id=esc(String(p.id).replace(/'/g, ''));
   CERT_P[String(p.id)]=p;
@@ -60781,13 +60945,19 @@ function certVer(id){
   var prev=document.getElementById('cert-prev'), bt=document.querySelector('#cert-b .cert-ver'); if(!prev) return Promise.resolve(null);
   if(!prev.hidden && prev.querySelector('img')){ prev.hidden=true; prev.innerHTML=''; if(bt) bt.textContent='👁️ Ver el certificado'; return Promise.resolve(null); }
   prev.hidden=false; prev.innerHTML='<div class="cert-cargando">⏳ Armando el certificado…</div>';
-  return certArmar(id).then(function(r){
+  var pr; try{ pr=certArmar(id); }catch(e){ pr=Promise.reject(e); }
+  return pr.then(function(r){
     var pv=document.getElementById('cert-prev'); if(!pv) return r;
     pv.innerHTML='<img alt="Certificado de garantía de '+esc(r.D.cliente)+'" src="'+r.cv.toDataURL('image/png')+'">';
     var b2=document.querySelector('#cert-b .cert-ver'); if(b2) b2.textContent='🙈 Esconder el certificado';
     certAviso(r);
     return r;
-  }, function(e){ prev.innerHTML='<div class="cert-cargando">No se pudo armar el certificado.</div>'; throw e; });
+  }, function(e){
+    /* El botón no espera la promesa (`onclick`): con `throw` quedaba un «unhandled rejection». La persona ya ve el mensaje. */
+    var pv=document.getElementById('cert-prev'); if(pv) pv.innerHTML='<div class="cert-cargando">No se pudo armar el certificado.</div>';
+    try{ console.warn('certificado:', e); }catch(x){}
+    return null;
+  });
 }
 function certArchivo(D){
   var cli=String(D.cliente||''); try{ cli=cli.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(e){}

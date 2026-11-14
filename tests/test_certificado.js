@@ -12,7 +12,9 @@
      4. el buscador (Ctrl+K) encuentra el código (con o sin guiones) y Enter abre ese pedido;
      5. «⬇️ Bajar imagen» baja el PNG y «💬 Mandar por WhatsApp» (en la compu) lo baja y abre el chat del cliente con el código;
      6. la ATC: con el celular propone las compras con colchón/somier (las más nuevas primero), «Usar esta compra» llena la fecha y, si están
-        vacíos, los productos; nunca pisa lo escrito; «Es otra» la esconde; elegir el cliente por el nombre también la muestra.
+        vacíos, los productos; nunca pisa lo escrito; «Es otra» la esconde; elegir el cliente por el nombre también la muestra;
+     8. (revisión del 14/11) si armar el certificado tira, el bloque no sale y las tres ventanas donde va se abren igual; «👁️ Ver» que falla
+        lo dice y no deja una promesa rechazada sin atender.
    Con la librería de verdad (`npm pack qrcode-generator@1.4.4` en el scratch, o `CERT_QR_LIB=<qrcode.js>`) también saca las capturas
    (`CERT_SALIDA`, por omisión /tmp): mall_cert_certificado.png, mall_cert_certificado_suena.png, mall_cert_pedido_guardado.png,
    mall_cert_atc.png y mall_cert_sin_qr.png.
@@ -297,6 +299,51 @@ function PREPARAR(){
   page = await abrir({ unlocked:true, cert:false });
   r = await atcNueva(page, '71234567');
   chk('6m en Playwright sin ATC_COMPRA_PRUEBA no aparece', r.vis===false, r);
+  await page.context().close();
+
+  // ============ 8. lo que no puede romper nada (revisión del 14/11) ============
+  page = await abrir({ unlocked:true });
+  r = await page.evaluate(() => {
+    var o={};
+    var abre=function(f, txt){ try{ closeModal(); f(); var b=document.getElementById('modal-box');
+      return document.getElementById('modal').classList.contains('on') && b.textContent.indexOf(txt)>=0 ? 'ok' : 'sin ventana'; }catch(e){ return 'THROW '+e.message; } };
+    // a) si armar los datos del certificado tira (un pedido raro, cualquier cosa), el bloque no sale y las TRES ventanas se abren igual
+    var cd=certDatos; certDatos=function(){ throw new Error('roto a propósito'); };
+    try{
+      try{ o.bloque=certBloqueHtml(findById('c01')); }catch(e){ o.bloque='THROW '+e.message; }
+      o.mis=abre(function(){ showMisModal('c01'); }, 'PEREZ ANA');
+      o.adm=abre(function(){ showPedidoModal('c01'); }, 'PEREZ ANA');
+      o.gua=abre(function(){ showWhatsappModal(findById('c01')); }, 'Pedido guardado');
+      o.cb=!!document.getElementById('cert-b');
+    } finally { certDatos=cd; }
+    // b) …y con los productos que no son una lista (el caso del guion de la revisión)
+    var raro=V({ id:'c10', oc:'11-260', cliente:'RARO PRUEBA', celular:'70000010', productos:'no es una lista' });
+    try{ o.raro=certBloqueHtml(raro); }catch(e){ o.raro='THROW '+e.message; }
+    closeModal();
+    return o; }).catch(e => ({ __err:String((e && e.message) || e).slice(0, 300) }));
+  chk('8a · si armar el certificado tira, `certBloqueHtml` devuelve vacío (no tira)', r.bloque==='', r.bloque);
+  chk('8b · …y la ficha de Mis pedidos, la de Administración y «✅ Pedido guardado» se abren igual, sin el bloque',
+      r.mis==='ok' && r.adm==='ok' && r.gua==='ok' && r.cb===false, r);
+  chk('8c · un pedido con los productos que no son una lista: sin certificado y sin error', r.raro==='', r.raro);
+  r = await page.evaluate(async () => {
+    var o={ rech:0 }, h=function(e){ o.rech++; try{ e.preventDefault(); }catch(x){} };
+    window.addEventListener('unhandledrejection', h);
+    closeModal(); showMisModal('c01');
+    var cl=certLogoCargar; certLogoCargar=function(){ return Promise.reject(new Error('sin_logo')); };
+    try{
+      document.querySelector('#cert-b .cert-ver').click();   // el botón NO espera la promesa (`onclick`)
+      await new Promise(function(ok){ setTimeout(ok, 400); });
+      o.msg=(document.getElementById('cert-prev')||{}).textContent||'';
+      o.res=await certVer('c01').then(function(x){ return x===null ? 'null' : 'otra cosa'; }, function(){ return 'rechazada'; });
+    } finally { certLogoCargar=cl; }
+    await new Promise(function(ok){ setTimeout(ok, 150); });
+    window.removeEventListener('unhandledrejection', h);
+    o.bien=await certVer('c01').then(function(x){ return !!(x && x.cv) && !!document.querySelector('#cert-prev img'); }, function(){ return false; });   // sin la falla, vuelve a andar
+    closeModal();
+    return o; }).catch(e => ({ __err:String((e && e.message) || e).slice(0, 300) }));
+  chk('8d · «👁️ Ver el certificado» que no se puede armar dice «No se pudo armar el certificado» y NO deja una promesa rechazada sin atender',
+      /No se pudo armar el certificado/.test(r.msg) && r.rech===0 && r.res==='null', r);
+  chk('8e · …y después, sin la falla, vuelve a mostrarlo', r.bien===true, r.bien);
   await page.context().close();
 
   // ============ capturas con el QR de verdad (datos inventados) ============
