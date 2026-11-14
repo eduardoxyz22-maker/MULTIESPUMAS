@@ -22576,8 +22576,8 @@ function submitPedido(){
     var _aparto=null; try{ _aparto=apartoParaGuardar(rec); }catch(eA){}   // ⏳ (14/11, 267) el lugar que se apartó para ESTE día y turno
     apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null), aparto:_aparto}).then(function(res){
       setSubmitting(false);
-      try{ apartoTrasGuardar(_aparto, res); }catch(eA){}   // con el sí, el servidor ya lo soltó: no se vuelve a soltar
       try{ guardarBtnFin(res, rec); }catch(eG){}   // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena (nunca frena el guardado)
+      try{ apartoTrasGuardar(_aparto, res); }catch(eA){}   // ⏳ (267) con el sí, el servidor ya soltó el lugar apartado: no se vuelve a soltar
       // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
       // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
       if(res && (res.ok===true || res.ok===false)) sacarEnvioForm();
