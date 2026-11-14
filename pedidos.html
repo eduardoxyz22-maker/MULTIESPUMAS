@@ -1960,6 +1960,49 @@ html.tema-halloween .fh-t:not(.sel){ background:rgba(255,255,255,.08); border-co
 .cupv-nota{ margin:0; font-size:.76rem; line-height:1.45; color:var(--muted); background:#f6f8f8; border-radius:10px; padding:8px 11px; }
 .cupv-nota.cupv-viejo{ background:#FEF3E2; color:#7c4b00; }
 .cupv-acc{ margin:0; align-items:center; } .cupv-acc .cupv-sp{ flex:1; }
+/* ===== 🛍️ (14/11, mejoras 266 y 267) Cupos abiertos de más, lo que se va a llenar y el lugar apartado ===== */
+.cupx-tag{ font-weight:800; color:#0b5e59; white-space:nowrap; }
+.cupo.full .cupx-tag{ color:inherit; }
+.ap-tag{ font-weight:700; color:#6d28d9; white-space:nowrap; }
+.cpr-form{ display:inline-block; margin-top:4px; font-weight:700; color:#7c4b00; }
+.fh-chips{ display:flex; flex-wrap:wrap; gap:4px; margin-top:-2px; }
+.fh-mas, .fh-ap{ font-size:.66rem; font-weight:800; border-radius:999px; padding:1px 7px; background:rgba(255,255,255,.22); color:#fff; white-space:nowrap; }
+.fh-t.sel .fh-mas{ background:var(--teal-lt); color:var(--teal-dk); } .fh-t.sel .fh-ap{ background:#ede9fe; color:#5b21b6; }
+.fh-t1 em.pr{ background:#fde68a !important; color:#7c4b00 !important; }
+.fh-alerta.k-pron{ background:#FFF7E8; color:#7c4b00; border:1px dashed #f6d9a8; }
+.fh-alerta .fh-abrir{ font:inherit; font-size:.78rem; font-weight:800; margin-left:8px; border:1px solid currentColor; background:#fff; color:inherit; border-radius:999px; padding:3px 11px; cursor:pointer; min-height:28px; }
+.cupv-mas{ font-size:.78rem; font-weight:800; color:#0b5e59; }
+.cupv-ap{ font-size:.78rem; font-weight:700; color:#5b21b6; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:10px; padding:6px 10px; }
+.cupv-pr{ font-size:.78rem; font-weight:700; color:#7c4b00; background:#FFF7E8; border:1px dashed #f6d9a8; border-radius:10px; padding:6px 10px; }
+.cupv-cx{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; font-size:.8rem; color:var(--text); }
+.cupv-cx .btn{ width:auto; }
+.cupx-viejo{ flex-basis:100%; margin:4px 0 0; font-size:.76rem; line-height:1.45; color:#7c4b00; background:#FEF3E2; border-radius:10px; padding:7px 10px; }
+.cupx{ display:flex; flex-direction:column; gap:12px; padding:16px 18px 18px; }
+.cupx-p, .cupx-res, .cupx-pr, .cupx-nota{ margin:0; font-size:.86rem; line-height:1.5; color:var(--text); }
+.cupx-res{ background:var(--teal-lt); border:1px solid var(--teal-border); border-radius:12px; padding:9px 12px; }
+.cupx-pr{ color:#7c4b00; background:#FFF7E8; border:1px dashed #f6d9a8; border-radius:12px; padding:8px 12px; font-size:.82rem; }
+.cupx-nota{ font-size:.76rem; color:var(--muted); }
+.cupx-step{ display:flex; align-items:center; justify-content:center; gap:18px; }
+.cupx-m{ width:48px; height:48px; border-radius:50%; border:1px solid var(--teal-border); background:#fff; color:var(--teal-dk); font:inherit; font-size:1.5rem; font-weight:800; cursor:pointer; line-height:1; }
+.cupx-m:disabled{ opacity:.35; cursor:not-allowed; }
+.cupx-n{ min-width:74px; text-align:center; font-size:2.4rem; font-weight:900; color:var(--teal-dk); font-variant-numeric:tabular-nums; }
+.cupx .modal-actions{ margin:0; align-items:center; flex-wrap:wrap; } .cupx .modal-actions .cupv-sp{ flex:1; }
+.cupx .modal-actions .btn{ width:auto; }
+.cpr{ border-left-color:#d97706; }
+.cpr-l{ display:flex; flex-direction:column; margin:8px 0 6px; border:1px solid var(--amber-border); border-radius:10px; background:#fff; }
+.cpr-f{ display:grid; grid-template-columns:minmax(150px,1.1fr) minmax(170px,2fr) auto; gap:4px 12px; align-items:center; padding:8px 11px; color:var(--text); }
+.cpr-f + .cpr-f{ border-top:1px dashed var(--amber-border); }
+.cpr-f.cpr-lleno .cpr-n b{ color:var(--red); }
+.cpr-d b{ color:var(--text) !important; } .cpr-n b{ color:#b45309 !important; } .cpr-n small{ color:var(--muted); }
+.cpr-acc{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+.cpr-nota{ font-size:.74rem; color:#8a5a12; opacity:.9; }
+@media (max-width:620px){ .cpr-f{ grid-template-columns:1fr; } .cpr-acc{ justify-content:flex-start; } }
+.aparto{ display:flex; align-items:flex-start; gap:10px; margin:0 0 14px; padding:10px 13px; border-radius:12px; background:#f5f3ff; border:1px solid #ddd6fe; color:#3b1d78; font-size:.84rem; line-height:1.4; animation:pop .18s ease; }
+.aparto[hidden]{ display:none !important; }
+.aparto .ap-ic{ font-size:1.25rem; line-height:1; flex:none; margin-top:1px; }
+.aparto .ap-t{ min-width:0; } .aparto .ap-t small{ display:block; color:#5b4a8a; font-size:.74rem; margin-top:2px; }
+.aparto .ap-reloj{ font-variant-numeric:tabular-nums; color:#6d28d9; }
+.aparto.ap-lleno{ background:var(--red-lt); border-color:var(--red-border); color:#7f1d1d; } .aparto.ap-lleno small{ color:#9b1c2a; }
 /* ===== 🗂️ (§4nr, 29/10) Tablas a tu gusto: qué columnas ver y el orden, guardado en la compu ===== */
 .tcol-bar{ position:relative; display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 8px; font-size:.78rem; }
 .tcol-b{ width:auto; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:#fff; color:var(--text); border-radius:999px; padding:6px 13px; font:inherit; font-weight:700; cursor:pointer; min-height:34px; }
@@ -2978,6 +3021,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <div id="fh" class="fh no-print" hidden></div>
       <div id="conn-form" class="conn off"><span class="dot"></span><span id="conn-form-txt"></span></div>
       <div id="cupo-form" class="cupo ok"></div>
+      <!-- ⏳ (14/11, mejora 267) «Lugar apartado para vos» mientras se carga y se cobra un pedido NUEVO (`apartoPintar`; servidor 2026-11-14-b). -->
+      <div id="aparto" class="aparto no-print" hidden aria-live="polite"></div>
       <a class="fh-viejo" href="tutorial.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--teal-dk);font-weight:700;text-decoration:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:20px;padding:7px 14px;margin-bottom:16px">❓ ¿Cómo llenar el pedido? — ver la guía</a>
       <a class="fh-viejo" href="guia-vendedor.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#0a6b47;font-weight:700;text-decoration:none;background:var(--green-lt);border:1px solid var(--green-border);border-radius:20px;padding:7px 14px;margin:0 0 16px 8px">🆕 Novedades — guía rápida</a>
 
@@ -3366,6 +3411,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         <div id="adm-avisos" class="adm-avisos">
           <div class="adm-avisos-cab no-print"><b>📄 Los avisos completos</b><button type="button" class="ah-go" onclick="admAvisosAbrir(false)">▴ Cerrar</button></div>
           <div id="cupo-admin" class="cupo ok"></div>
+          <!-- 📈 (14/11, mejora 266) Los turnos que se van a llenar en los próximos días hábiles, con «➕ Abrir cupos» (`cupPronAdmPintar`). -->
+          <div id="adm-cupos-pron"></div>
           <div id="nx-a3" class="no-print"></div>   <!-- 🔔 (§4js, A3) a las 15:00, los de mañana sin camión -->
           <div id="adm-revisar"></div>
           <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
@@ -8709,6 +8756,7 @@ function apiList(opts){
     try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
     try{ if(j.gpsDia) gpsDiaTomar(j.gpsDia); }catch(e){}   // 🛰️ (§4kp) y lo que pasó en el día: salidas, registro y paradas
+    try{ apartadosTomar(j.apartados, j.ahora); }catch(e){}   // ⏳ (14/11, 267) los lugares que otras ventas tienen apartados (servidor 2026-11-14-b)
     return j;
   });
 }
@@ -8801,6 +8849,9 @@ function apiSaveAhora(rec, opts){
   /* 🚀 (14/10) Un pedido de la tarde que salió cargado a la mañana (`adelantoAlSalir`): el servidor 2026-10-14-a le manda al cliente
      «cargado y en camino» en vez del cambio de día. Como `reserva`, viaja solo en este envío: si cae a la cola, sale el cambio de día. */
   if(opts && opts.adelanto) payload.adelanto=1;
+  /* ⏳ (14/11, mejora 267) El lugar que este formulario apartó mientras se cobraba (`apartarCupo`, servidor 2026-11-14-b): el portero no lo
+     cuenta contra este pedido y lo suelta. Como `reserva`, viaja SOLO en este envío: si cae a la cola, el apartado se vence solo. */
+  if(opts && opts.aparto) payload.aparto=String(opts.aparto);
   /* 📦 (30/10, propuesta 76) Esta página sabe de «el cliente avisa cuándo» (`entregaAConfirmar`): el servidor 2026-10-30-a no deja que una
      página sin F5 —que no la conoce— le ponga un día inventado a una venta sin día (le contesta `actualizar`). Va en TODO guardado (también
      el de la cola): es de la página, no de este envío. Un servidor de antes lo ignora. */
@@ -22519,8 +22570,10 @@ function submitPedido(){
     /* 📦 (02/10, §4hj) La reserva (armada arriba) viaja con el guardado: el servidor 2026-10-02-a la anota y, si otro vendedor
        que ESTA lectura no conocía apartó lo mismo en el medio, lo contesta en `saldo` y se le dice abajo, después de lo de
        siempre. Con un servidor de antes no vuelve nada y no cambia nada. */
-    apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null)}).then(function(res){
+    var _aparto=null; try{ _aparto=apartoParaGuardar(rec); }catch(eA){}   // ⏳ (14/11, 267) el lugar que se apartó para ESTE día y turno
+    apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null), aparto:_aparto}).then(function(res){
       setSubmitting(false);
+      try{ apartoTrasGuardar(_aparto, res); }catch(eA){}   // con el sí, el servidor ya lo soltó: no se vuelve a soltar
       try{ guardarBtnFin(res, rec); }catch(eG){}   // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena (nunca frena el guardado)
       // Una respuesta definitiva conserva el comportamiento del formulario: el rechazo
       // se corrige acá; no dejarlo en cola como un pedido que se mandará a escondidas.
@@ -22581,7 +22634,8 @@ function submitPedido(){
         // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         if(prev) upsert(prev); else STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();   // §4eo
         var tmsg = res.turno ? ('Turno '+res.turno+' lleno') : 'Cupos llenos';
-        toast('❌ '+tmsg+' para el '+fmtFecha(rec.fecha)+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
+        var _cxV=''; try{ _cxV=cupxServidorViejoTxt(rec.fecha, res.turno||rec.turno); }catch(eX){}   // ➕ (14/11, 266) el extra abierto que el servidor de antes no conoce
+        toast('❌ '+tmsg+' para el '+fmtFecha(rec.fecha)+(_cxV ? (' — '+_cxV) : ' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.'),'err',_cxV?12000:undefined);
         renderCupoForm();
         var cf=document.getElementById(fhVa() ? 'fh' : 'cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
         var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
@@ -23069,6 +23123,7 @@ function fmovAvisaAplicar(p, fNueva){
   return persistPedido(p, {});
 }
 function pintarModoTienda(){
+  try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) una venta de tienda no ocupa cupo: lo apartado se suelta
   var view=document.getElementById('view-form');
   if(view) view.classList.toggle('venta-tienda', !!VENTA_TIENDA);
   if(VENTA_TIENDA) llenarTiendaSuc();
@@ -23130,6 +23185,7 @@ function setDocTipo(){
    tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
 function pintarDocTipo(limpiar){
   var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
+  try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) ATC y RPT no apartan: lo apartado para un pedido se suelta
   try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
   /* 🎧 Una ATC no es una venta (§4bt) y una RPT tampoco (§4dk): no tienen N° de nota ni
      cobro. `fueraDeConta` ya las deja a las dos fuera de Contabilidad y del Cuadre, así
@@ -24333,6 +24389,7 @@ function confirmarReemplazoForm(){
   return true;
 }
 function resetForm(){
+  try{ apartoOlvidar(); }catch(e){}            // ⏳ (14/11, 267) el lugar apartado era del pedido que se estaba cargando: se suelta
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   recibioFormOlvidar();                        // 💵 (07/11) quién recibió el efectivo se elige de nuevo en cada pedido
   REPETIR_DE='';                               // 🔁 (§4ok-101)
@@ -24407,6 +24464,7 @@ function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
   if(!confirmarReemplazoForm()) return;
+  try{ apartoOlvidar(); }catch(e){}   // ⏳ (14/11, 267) se deja el pedido nuevo para corregir otro: lo apartado se suelta
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
   COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251)
   totalAutoOlvidar();   // 🧮 (06/11) abrir para editar no cambia ningún monto: solo lo que la persona toque después
@@ -25414,12 +25472,19 @@ function feriadoDe(f){ return (typeof FERIADOS!=='undefined' && FERIADOS && FERI
 var CUPOS_FECHA = { '2026-10-15': { AM:8, PM:9, motivo:'un camión en mantenimiento' } };
 function cupoFechaDe(fecha){ return (CUPOS_FECHA && CUPOS_FECHA[fecha]) || null; }
 function cupoFechaNota(fecha){ var e=cupoFechaDe(fecha); return e ? ' · <span class="cupo-nota">🔧 Este día hay menos cupos ('+esc(e.motivo||'cambio de logística')+')</span>' : ''; }
-function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0 || feriadoDe(fecha)) return 0;
+function limTurnoBase(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0 || feriadoDe(fecha)) return 0;
   var e=cupoFechaDe(fecha); if(e && e[turno]!=null) return Math.max(0, Number(e[turno])||0);
   if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
+/* ➕ (14/11, mejora 266) Los cupos que administración ABRIÓ de más para un día y turno (fila del sistema `__cupos_extra__`, `cupxExtra`).
+   Solo suman en un turno que sale (el domingo, el feriado y la tarde del sábado siguen en 0). El portero del servidor 2026-11-14-b los
+   suma igual; con uno de antes se ven acá pero el guardado puede volver con `cupos_llenos` (y el aviso lo dice). */
+function limTurno(fecha, turno){ var b=limTurnoBase(fecha, turno); return b>0 ? b+cupxExtra(fecha, turno) : b; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
 /* 📦 (propuesta 76) La venta que «avisa cuándo» no tiene día: no ocupa cupo (igual que en el portero del servidor, `porteroFecha_`). */
-function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t && !entregaAConfirmar(STATE[i])) n++; } return n; }
+function cuposPedidosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t && !entregaAConfirmar(STATE[i])) n++; } return n; }
+/* ⏳ (14/11, mejora 267) …más los lugares que OTRA venta tiene apartados mientras la cobran (`apartadosOtros`, de la lectura del servidor
+   2026-11-14-b): el portero también los cuenta. Lo apartado por este aparato no se resta. Sin servidor nuevo, 0. */
+function cuposUsadosTurno(fecha,turno){ return cuposPedidosTurno(fecha,turno)+apartadosOtros(fecha,turno); }
 /* ---- Turno y atraso ----
    normTurno() da 'AM' cuando el campo viene vacío, y para AVISAR DE UN ATRASO eso miente:
    marcaría atrasado a la 1 de la tarde un pedido al que nadie le puso turno. turnoDe()
@@ -25462,7 +25527,7 @@ function ajustarTurnoSeg(fecha){
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
 }
 /* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
-function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} try{ notaLeerPintar(); }catch(e){} fxFormPintar(); }   // 🧾 (mejora 216) el botón «Leer la nota» aparece cuando se sabe la versión del servidor
+function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} try{ notaLeerPintar(); }catch(e){} fxFormPintar(); try{ apartoMirar(); }catch(e){} }   // 🧾 (mejora 216) el botón «Leer la nota» aparece cuando se sabe la versión del servidor · ⏳ (267) el lugar apartado sigue al día y al turno elegidos
 function renderCupoFormBase(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   /* 📦 (propuesta 76) Sin día de entrega no hay camión ni cupo que mirar: la fecha es la de volver a llamar. */
@@ -25493,18 +25558,19 @@ function renderCupoFormBase(){
     return;
   }
   if(diaSabado(fecha)){
-    var uAMs=cuposUsadosTurno(fecha,'AM'), rAMs=Math.max(0,15-uAMs);
+    /* ➕ (14/11, 266) El límite del sábado sale de `limTurno` (15 + lo que administración abrió de más), no de un 15 escrito acá. */
+    var uAMs=cuposUsadosTurno(fecha,'AM'), lSab=limTurno(fecha,'AM'), rAMs=Math.max(0,lSab-uAMs);
     el.className='cupo '+(rAMs<=0?'full':(rAMs<=3?'warn':'ok'));
     el.innerHTML=(rAMs<=0
-      ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/15 AM)'+(uAMs>15?(' — <b>'+(uAMs-15)+'</b> más de los 15 que entran'):'')+'. Elegí otra fecha.'
-      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>'+
-      cupoVerBtn(fecha,'AM')+(rAMs<=0?_ed:'');
+      ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/'+lSab+cupxEtiq(fecha,'AM')+' AM'+apartadosTxt(fecha,'AM')+')'+(uAMs>lSab?(' — <b>'+(uAMs-lSab)+'</b> más de los '+lSab+' que entran'):'')+'. Elegí otra fecha.'
+      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/'+lSab+cupxEtiq(fecha,'AM')+' libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>'+apartadosNota(fecha)+
+      cupPronFormTxt(fecha)+cupoVerBtn(fecha,'AM')+(rAMs<=0?_ed:'');
     return;
   }
   var uAM=cuposUsadosTurno(fecha,'AM'), uPM=cuposUsadosTurno(fecha,'PM'), lAMf=limTurno(fecha,'AM'), lPMf=limTurno(fecha,'PM');   // 🔧 (14/10) el límite de ESE día
   var rAM=Math.max(0,lAMf-uAM), rPM=Math.max(0,lPMf-uPM);
   var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?lPMf:lAMf, usaSel=turno==='PM'?uPM:uAM;
-  var linea='🌅 AM: <b>'+rAM+'</b>/'+lAMf+' · 🌆 PM: <b>'+rPM+'</b>/'+lPMf+' libres'+cupoFechaNota(fecha);
+  var linea='🌅 AM: <b>'+rAM+'</b>/'+lAMf+cupxEtiq(fecha,'AM')+' · 🌆 PM: <b>'+rPM+'</b>/'+lPMf+cupxEtiq(fecha,'PM')+' libres'+apartadosNota(fecha)+cupoFechaNota(fecha);   // ➕⏳ (14/11, 266-267)
   if(restSel<=0){
     /* ⚠️ El número REAL, no el límite (§4fh). Antes decía «(12/12)» calculado como
        `lim+'/'+lim`, así que un día con 13 —administración puede forzar uno con la clave,
@@ -25513,12 +25579,12 @@ function renderCupoFormBase(){
        de 13 pasaba a 12 y el cartel seguía igual de rojo, sin decir por qué. */
     var _demas=(usaSel>limSel) ? ('<br>⚠️ Hay <b>'+usaSel+'</b> pedidos en '+turno+', <b>'+(usaSel-limSel)+'</b> más de los '+limSel+' que entran — administración forzó alguno. Sacando uno va a seguir lleno.') : '';
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+usaSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.'+_demas+'<br>'+linea+
-      cupoVerBtn(fecha, turno)+_ed;
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+usaSel+'/'+limSel+cupxEtiq(fecha, turno)+apartadosTxt(fecha, turno)+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.'+_demas+'<br>'+linea+
+      cupPronFormTxt(fecha)+cupoVerBtn(fecha, turno)+_ed;   // 📈 (14/11, 266) el otro turno de ese día, si se va a llenar
   }else{
     el.className='cupo '+(restSel<=3?'warn':'ok');
     el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'')+
-      cupoVerBtn(fecha, turno);
+      cupPronFormTxt(fecha)+cupoVerBtn(fecha, turno);   // 📈 (14/11, 266) lo que se va a llenar, debajo
   }
 }
 /* 🎨 ARRIBA DEL PEDIDO, LA C (§4nj, 27/10; dueño: «esta webada hay que modernizar» con la captura de la conexión, los cupos y los dos
@@ -25567,22 +25633,29 @@ function fhPintar(){
   else{
     var T={};
     ['AM','PM'].forEach(function(t){ var l=limTurno(fecha, t), u=cuposUsadosTurno(fecha, t), r=Math.max(0, l-u);
-      T[t]={ l:l, u:u, r:r, k:(!l ? 'k-off' : (r<=0 ? 'k-full' : (r<=3 ? 'k-warn' : 'k-ok'))), sel:(t===turno && l>0) }; });
+      T[t]={ l:l, u:u, r:r, p:cuposPedidosTurno(fecha, t), ap:apartadosOtros(fecha, t), x:(l>0 ? cupxExtra(fecha, t) : 0), pr:cupPronDe(fecha, t),
+             k:(!l ? 'k-off' : (r<=0 ? 'k-full' : (r<=3 ? 'k-warn' : 'k-ok'))), sel:(t===turno && l>0) }; });
     h+='<div class="fh-turnos">'+['AM','PM'].map(function(t){ var x=T[t];
-      var tag = !x.l ? '' : x.k==='k-full' ? 'Lleno' : x.k==='k-warn' ? '¡Quedan pocos!' : (x.sel ? 'Tu turno' : '');
-      var ver = x.u ? ('<button type="button" class="fh-ver" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+t+'\')">👀 Ver '+(x.u===1 ? 'el pedido' : ('los '+x.u+' pedidos'))+'</button>')
+      var tag = !x.l ? '' : x.k==='k-full' ? 'Lleno' : (x.pr && x.pr.llena) ? 'Se llena' : x.k==='k-warn' ? '¡Quedan pocos!' : (x.sel ? 'Tu turno' : '');   // 📈 (266) «se llena» dice más que «quedan pocos»
+      var ver = x.p ? ('<button type="button" class="fh-ver" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+t+'\')">👀 Ver '+(x.p===1 ? 'el pedido' : ('los '+x.p+' pedidos'))+'</button>')
                     : '<span class="fh-n">Todavía sin pedidos</span>';
+      var mas = (x.x ? '<span class="fh-mas" title="Administración abrió '+x.x+' lugar'+(x.x===1?'':'es')+' de más para este turno">+'+x.x+' abierto'+(x.x===1?'':'s')+'</span>' : '')+   // ➕ (266)
+                (x.ap ? '<span class="fh-ap" title="Otra venta lo tiene apartado mientras la cobran">⏳ '+x.ap+' apartado'+(x.ap===1?'':'s')+' por otra venta</span>' : '');   // ⏳ (267)
       return '<div class="fh-t '+x.k+(x.sel ? ' sel' : '')+'" data-t="'+t+'"><div class="fh-t1"><span>'+(t==='AM' ? '🌅 Mañana' : '🌆 Tarde')+'</span>'+
-        (tag ? '<em'+(tag==='Tu turno' ? ' class="tu"' : '')+'>'+tag+'</em>' : '')+'</div>'+
-        (x.l ? ('<div class="fh-n"><b>'+x.r+'</b>'+(x.r===1 ? 'libre' : 'libres')+' de '+x.l+'</div><div class="fh-bar"><i style="width:'+Math.min(100, Math.round(100*x.u/x.l))+'%"></i></div>'+ver)
+        (tag ? '<em'+(tag==='Tu turno' ? ' class="tu"' : (tag==='Se llena' ? ' class="pr"' : ''))+'>'+tag+'</em>' : '')+'</div>'+
+        (x.l ? ('<div class="fh-n"><b>'+x.r+'</b>'+(x.r===1 ? 'libre' : 'libres')+' de '+x.l+'</div>'+(mas ? '<div class="fh-chips">'+mas+'</div>' : '')+
+                '<div class="fh-bar"><i style="width:'+Math.min(100, Math.round(100*x.u/x.l))+'%"></i></div>'+ver)
              : '<div class="fh-n">El camión no sale los sábados a la tarde</div>')+'</div>'; }).join('')+'</div>';
     var s=T[turno];
     if(s && s.l){
       var alt=(T[otro[turno]] && T[otro[turno]].l) ? ('pasalo a la '+NOM[otro[turno]]+' u otro día') : 'elegí otro día';
       if(s.k==='k-full') avisos.push(['k-full', '🚫 La '+NOM[turno]+' del '+esc(dia)+' está llena ('+s.u+' de '+s.l+'): '+alt+'.'+
-        (s.u>s.l ? (' Hay '+(s.u-s.l)+' más de los '+s.l+' que entran (administración forzó alguno): sacando uno sigue lleno.') : '')+ed]);
+        (s.u>s.l ? (' Hay '+(s.u-s.l)+' más de los '+s.l+' que entran (administración forzó alguno): sacando uno sigue lleno.') : '')+ed+cupxBotonHtml(fecha, turno, 'fh-abrir')]);
       else if(s.k==='k-warn') avisos.push(['k-warn', '⚠️ '+(s.r===1 ? 'Queda 1 lugar' : ('Quedan '+s.r+' lugares'))+' a la '+NOM[turno]+'. Si se llena, '+alt+'.']);
+      /* 📈 (14/11, 266) Con lugar todavía, pero por lo que suele entrar faltando N días hábiles, se va a llenar: se dice ANTES (sin tapar lo de arriba). */
+      if(s.k!=='k-full' && s.pr && s.pr.llena) avisos.push(['k-pron', '📈 '+cupPronFrase(s.pr, NOM[turno])+' Si el cliente puede, '+alt+'.'+cupxBotonHtml(fecha, turno, 'fh-abrir')]);
     }
+    var otros=cupPronOtrosTxt(fecha); if(otros) avisos.push(['k-pron', otros]);   // 📈 (266) los otros días de esta semana que se van a llenar
   }
   if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
   var viejo=cot ? '' : cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
@@ -26397,10 +26470,11 @@ window.addEventListener('scroll', function(){ if(FX_PASOS_T) return; FX_PASOS_T=
    (entregadas incluidas — el bulto ya fue al camión), salvo las que no llevan fecha (ventas
    de tienda, retiros y borradores de Kommo, que por eso nunca ocupan cupo). */
 function cupoVerBtn(fecha, turno){
-  var n=cuposUsadosTurno(fecha, turno);
+  var n=cuposPedidosTurno(fecha, turno);   // ⏳ (14/11, 267) los PEDIDOS: un lugar apartado no tiene ficha que abrir
+  var cx=cupxBotonHtml(fecha, turno, 'btn btn-ghost btn-sm', 'margin-top:7px;margin-left:6px');   // ➕ (266) solo con la contraseña
   return cupoViejoAviso()+(n
-    ? ('<br><button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+esc(turno)+'\')">👀 Ver '+(n===1?('el pedido del turno '):('los '+n+' pedidos del turno '))+esc(turno)+'</button>')
-    : '');
+    ? ('<br><button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+esc(turno)+'\')">👀 Ver '+(n===1?('el pedido del turno '):('los '+n+' pedidos del turno '))+esc(turno)+'</button>'+cx)
+    : (cx ? '<br>'+cx : ''));
 }
 /* ⚠️ El cupo se cuenta sobre `STATE`, y si la última lectura falló eso es la COPIA GUARDADA
    en el dispositivo (§4fi). Entonces el número puede ser de hace horas —de ahí *«moví un
@@ -26419,7 +26493,9 @@ function cuposDelTurno(fecha, turno){
    pantalla. Ahora: arriba cuántos entran y la barra (mismos colores que `fhPintar`), quién ocupó los lugares, la lista en dos
    renglones (toda la fila abre el pedido) y el otro turno a un toque. La explicación del cupo queda abajo, chiquita. */
 function verCuposTurno(fecha, turno){
-  var t=normTurno(turno)||turno, l=cuposDelTurno(fecha, t), lim=limTurno(fecha, t), u=l.length, r=lim-u;
+  var t=normTurno(turno)||turno, l=cuposDelTurno(fecha, t), lim=limTurno(fecha, t), ap=apartadosOtros(fecha, t), u=l.length+ap, r=lim-u;   // ⏳ (267) lo apartado por otra venta también ocupa
+  var ext=lim>0 ? cupxExtra(fecha, t) : 0, pr=cupPronDe(fecha, t);   // ➕📈 (266)
+  CUPV_ABIERTO={ f:fecha, t:t };   // ➕ (266) para volver acá después de «Abrir cupos» y repintarla cuando cambia el extra
   var k=!lim ? 'k-off' : (r<=0 ? 'k-full' : (r<=3 ? 'k-warn' : 'k-ok'));
   var pill=!lim ? 'Sin camión' : (r<0 ? ((-r)+' de más') : (r===0 ? 'Lleno' : (r===1 ? '1 libre' : (r+' libres'))));
   var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha);
@@ -26431,10 +26507,13 @@ function verCuposTurno(fecha, turno){
   var h='<div class="modal-h"><h3>'+(t==='PM' ? '🌆' : '🌅')+' Turno '+esc(t)+' · '+esc(dia)+'</h3>'+
     '<button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b cupv">'+
-      '<div class="cupv-res '+k+'"><div class="cupv-r1"><div class="cupv-n"><b>'+u+'</b>de '+lim+' cupos ocupados'+
+      '<div class="cupv-res '+k+'"><div class="cupv-r1"><div class="cupv-n"><b>'+u+'</b>de '+lim+' cupos ocupados'+(ext ? ' <span class="cupv-mas">(+'+ext+' abierto'+(ext===1?'':'s')+')</span>' : '')+
         (ent ? (' · '+ent+' ya '+(ent===1 ? 'entregado' : 'entregados')) : '')+'</div><span class="cupv-pill">'+pill+'</span></div>'+
         (lim ? '<div class="cupv-bar"><i style="width:'+Math.min(100, Math.round(100*u/lim))+'%"></i></div>' : '')+
-        (quien ? '<div class="cupv-quien" aria-label="Quién ocupa el turno">'+quien+'</div>' : '')+'</div>'+
+        (quien ? '<div class="cupv-quien" aria-label="Quién ocupa el turno">'+quien+'</div>' : '')+
+        (ap ? '<div class="cupv-ap">⏳ '+ap+' lugar'+(ap===1?'':'es')+' apartado'+(ap===1?'':'s')+' por otra venta que se está cobrando (se libera solo si no la guardan)</div>' : '')+
+        (pr && pr.llena && r>0 ? '<div class="cupv-pr">📈 '+cupPronFrase(pr, t==='PM' ? 'tarde' : 'mañana')+'</div>' : '')+
+        cupxVerHtml(fecha, t)+'</div>'+
       (viejo ? '<p class="cupv-nota cupv-viejo">'+viejo.replace(/^<br>/, '')+'</p>' : '')+
       (u ? ('<ol class="cupv-l">'+l.map(function(p, i){
           var tipo=ocTipoDe(p.oc), id=esc(String(p.id));
@@ -27097,7 +27176,8 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
@@ -29152,6 +29232,9 @@ function admHacerDatos(){
     add({ k:'semana', sev:'r', ic:'🗓️', n:Sm.tot.alerta, t:'Falta revisar el stock de los próximos '+Sm.dias.length+' días hábiles', s:semanaAlertaFrase(Sm.tot)+' · '+semanaAlertaTxt(Sm), b:'🗓️ Ver la semana', fn:"admVerSemana('alerta')", tag:'stock de la semana' });
     add({ k:'semana-t', sev:'a', ic:'⚠️', n:Sm.tot.tarde, t:'Pedido a producción que puede no llegar a tiempo', s:'con '+(DIAS_PRODUCCION*24)+' h de producción y el día de recogerlo llega después de la entrega, o ya debía haber salido de fábrica', b:'Ver cuáles', fn:"admVerSemana('tarde')", tag:'puede no llegar' });
   }catch(e){}
+  // 📈 (14/11, mejora 266) los turnos que se llenan en los próximos días hábiles: los números del cartel `#adm-cupos-pron` (`cupPronAdmPintar`)
+  var Cp=ADM_AV.cupos||{};
+  add({ k:'cupos', sev:(Cp.rojo?'r':'a'), ic:'🎟️', n:Cp.n||0, t:(Cp.n===1?'Un turno se va a llenar':(Cp.n+' turnos se van a llenar'))+' en los próximos días', s:Cp.txt||'', b:'🎟️ Ver y abrir cupos', fn:"admIrA('adm-cupos-pron')", tag:'cupos que se llenan' });
   // 🚫 en un día sin camión (feriado o domingo)
   var R=ADM_AV.rev||{};
   add({ k:'diasin', sev:'r', ic:'🚫', n:R.diaSin||0, t:'Quedaron en un día sin camión', s:'feriado o domingo: no aparecen en ningún «Mañana» · pasalos a otro día', b:'Ver cuáles', fn:"admIrA('adm-revisar')", tag:'día sin camión' });
@@ -29461,6 +29544,7 @@ function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); try{ waRespPintar(); }catch(e){} renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
+  try{ cupPronAdmPintar(); }catch(e){ console.error(e); }   // 📈 (14/11, 266) los turnos que se van a llenar (deja sus números en ADM_AV.cupos)
   var list=admFilter();
   ADM_AV.nLista=list.length;
   try{ nxA3Pintar(); if(admSecVisible('cam')) nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
@@ -29564,7 +29648,7 @@ function admMasPintar(deMas){
     }else if(diaSabado(cdia)){
       cupoEl.className='cupo '+(rAM<=0?'full':(rAM<=3?'warn':'ok'));
       var uS=cuposUsadosTurno(cdia,'AM');   // (26/09) §4fh también el sábado: 17 en un turno de 15 se veía igual que 15
-      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'')+
+      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+lAM+cupxEtiq(cdia,'AM')+' libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'')+apartadosNota(cdia)+   // ➕⏳ (14/11, 266-267) el límite de ESE sábado
         (uS>lAM?(' · ⚠️ <b>'+(uS-lAM)+'</b> forzado'+(uS-lAM===1?'':'s')+' de más ('+uS+' AM)'):'');
     }else{
       var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
@@ -29572,7 +29656,7 @@ function admMasPintar(deMas){
       var uA=cuposUsadosTurno(cdia,'AM'), uP=cuposUsadosTurno(cdia,'PM');
       var demas=(uA>lAM?(uA-lAM):0)+(uP>lPM?(uP-lPM):0);
       cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
-      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+lAM+' · 🌆 PM: <b>'+rPM+'</b>/'+lPM+' libres'+(full?' — <b>LLENO</b>':'')+cupoFechaNota(cdia)+
+      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+lAM+cupxEtiq(cdia,'AM')+' · 🌆 PM: <b>'+rPM+'</b>/'+lPM+cupxEtiq(cdia,'PM')+' libres'+(full?' — <b>LLENO</b>':'')+apartadosNota(cdia)+cupoFechaNota(cdia)+
         (demas?(' · ⚠️ <b>'+demas+'</b> forzado'+(demas===1?'':'s')+' de más ('+uA+' AM · '+uP+' PM)'):'');
     }
   }
@@ -63698,6 +63782,524 @@ function cajaImprimir(html){
   window.print();
   setTimeout(function(){ document.body.classList.remove('printing-caja'); atciPaginaCss(false); c.innerHTML=''; }, 600);
 }
+
+/* ============================================================================
+   🛍️ LOS CUPOS QUE SE LLENAN Y EL LUGAR APARTADO (14/11, mejoras 266 y 267; el dueño abre una tienda en el mall con 4 vendedores y mucha
+   gente: *«si cada uno vende 3 por día son 12 entregas más por día»*, y en noviembre ya se llenaron 3 turnos. Aprobó la 266 y la 267).
+
+   266 · ➕ ABRIR CUPOS Y 📈 EL AVISO DE LO QUE SE VA A LLENAR
+   · `__cupos_extra__` (`CUPX_ID`, en `esFilaSistema`): JSON `{v:1, d:{"AAAA-MM-DD|AM": n}}` con n de 1 a `CUPX_MAX` (20). Es lo que
+     administración ABRIÓ de más para ese día y turno; `limTurno` lo suma (solo en un turno que sale) y con eso todo lo que dice «N/12» lo
+     muestra («13/14 (+2 abiertos)»). El portero del servidor 2026-11-14-b lo suma igual. Con un servidor de antes el extra se VE pero el
+     guardado puede volver con `cupos_llenos`: el aviso lo dice (`cupxServidorViejoTxt`).
+   · Se guarda como `__talonario__` (§4nv-82): la reescriben varios aparatos, así que va por REESCRITAS (se relee la planilla, se aplica
+     solo lo tocado acá, con el sello y `juntar`; sin señal queda en la cola con sus cambios). Por dentro cada turno es una clave
+     «día|turno|n»: cambiar 2 → 3 es sacar «…|2» y poner «…|3». Si dos aparatos lo cambian a la vez y la junta deja dos números en el mismo
+     turno, gana el que tocó el aparato que guarda (`cupxResolver`); si no, el más alto. Lo de hace más de `CUPX_GUARDA_DIAS` se poda con
+     un cambio explícito al guardar (nunca dentro de `armar`: un cambio que la fila no refleja quedaría en la cola para siempre).
+   · «➕ Abrir cupos» (`cupxAbrir`) SOLO con la contraseña de Administración (`UNLOCKED`; si no, la pide): en el cartel de lo que se va a
+     llenar (Administración), en «Ver los pedidos del turno» (`verCuposTurno`) y en el aviso del formulario. Elegir cuántos (0 a 20); 0 = quitar.
+   · 📈 `cupPronDe(fecha, turno)`: lo que hay ahora + lo que SUELE entrar para un día cuando faltan N días hábiles (1 a `CUP_PRON_DIAS`),
+     a esta misma hora. Sale de la planilla: para cada día hábil de los últimos `CUP_PRON_VENTANA` días y cada turno, cuántos pedidos ya
+     tenía N días hábiles antes a esta hora (por `ts`, el momento en que se cargó) y cuántos terminó teniendo; el promedio de la diferencia
+     (el sábado aparte si hay `CUP_PRON_MIN` días, si no con las mañanas). «Se llena» = lo que hay + lo que suele entrar ≥ el límite.
+     ⚠️ Un pedido que se MOVIÓ a ese día cuenta como cargado cuando se creó (no hay historia vieja del cambio de día), y un turno que se
+     llenó deja de crecer: el promedio es un poco bajo, nunca alto. Un turno de un día sin ningún pedido no se usa (no dice nada).
+     Se muestra en «Para hacer» de Administración (`ADM_AV.cupos`, que deja `cupPronAdmPintar`), en el cartel `#adm-cupos-pron` y arriba
+     del formulario (`fhPintar`, `renderCupoFormBase`). Solo avisa: no frena nada. En Playwright apagado salvo `CUP_PRON_PRUEBA`.
+
+   267 · ⏳ EL LUGAR APARTADO MIENTRAS SE COBRA (solo con el servidor 2026-11-14-b)
+   · En un pedido NUEVO del formulario (también el borrador de Kommo que se completa; nunca ATC, RPT, venta de tienda, «el cliente avisa
+     cuándo» ni al corregir un pedido), cuando la persona está trabajando en él (eligió día o turno, o el formulario ya no está vacío) y el
+     turno tiene lugar, la página llama `apartarCupo` y muestra «⏳ Lugar apartado: sábado 15/11 AM para vos · 9:42» (`#aparto`).
+   · Lo renueva (`apartarCupo` con su `id`) cada `APARTO_RENUEVA_MS` si hubo actividad en el formulario desde la última vez; sin actividad
+     se vence solo en el servidor. Cambiar día o turno suelta el anterior y aparta el nuevo; limpiar, cancelar o cerrar la página lo suelta
+     (`soltarCupo`; al cerrar, con `sendBeacon`). Al guardar va como `aparto` en el `save` (`apartoParaGuardar`): con el sí, el servidor ya lo
+     soltó (`apartoTrasGuardar`).
+   · `cupos_llenos` al apartar: se dice como hoy se dice «turno lleno» y se relee la planilla. Un fallo de red NO frena nada: sin respuesta
+     sigue todo como antes de la 267.
+   · Lo apartado por OTRO aparato (la lectura trae `apartados`) ocupa lugar en todas las cuentas (`cuposUsadosTurno`) y se dice: «12/12 ·
+     ⏳ 1 apartado por otra venta». Lo de este aparato no se resta. En Playwright apagado salvo `APARTO_PRUEBA`.
+   `tests/test_cupos_mall.js`.
+   ========================================================================== */
+var CUPX_CAMBIOS={}, CUPX_VER=0, CUPX_MAX=20, CUPX_GUARDA_DIAS=30, CUPX_SERVIDOR='2026-11-14-b';
+var CUPX_FILA_M={ arr:null }, CUPX_MEMO={ row:null, ver:-1, m:null }, CUPX_CLAVE_OK=false, _cupxT=null, CUPX_VENTANA=null, CUPV_ABIERTO=null;
+function cupxVa(){ return !(navigator.webdriver && !window.CUPX_PRUEBA); }   // los botones nuevos, apagados en las pruebas de siempre
+function cupxSlotOk(k){ return /^\d{4}-\d{2}-\d{2}\|(AM|PM)$/.test(String(k||'')); }
+function cupxClavesDeFila(fila){
+  try{
+    var o=JSON.parse((fila && fila.observaciones)||'{}')||{}, d=(o && o.d && typeof o.d==='object') ? o.d : {}, L=[];
+    for(var k in d){ var n=Math.round(Number(d[k])); if(cupxSlotOk(k) && n>=1 && n<=CUPX_MAX) L.push(k+'|'+n); }
+    return L;
+  }catch(e){ return []; }
+}
+/* De las claves «día|turno|n» a {día|turno: n}. Dos números en el mismo turno (dos aparatos a la vez): gana el de este aparato (`cam`),
+   si no el más alto. */
+function cupxResolver(set, cam){
+  var m={};
+  Object.keys(set||{}).forEach(function(k){
+    var i=k.lastIndexOf('|'), slot=k.slice(0, i), n=Number(k.slice(i+1));
+    if(!cupxSlotOk(slot) || !(n>=1 && n<=CUPX_MAX)) return;
+    var mio=!!(cam && cam[k]), a=m[slot];
+    if(!a || (mio && !a.mio) || (mio===a.mio && n>a.n)) m[slot]={ n:n, mio:mio };
+  });
+  var r={}; for(var s in m) r[s]=m[s].n; return r;
+}
+function cupxFilaDe(map){
+  var d={}; Object.keys(map||{}).sort().forEach(function(k){ if(map[k]>0) d[k]=map[k]; });
+  return filaSistema(CUPX_ID, '➕ CUPOS ABIERTOS DE MÁS (no tocar: la leen el panel y el portero)', JSON.stringify({ v:1, d:d }));
+}
+/* La fila de la planilla, sin recorrer STATE en cada `limTurno` (se llama miles de veces por dibujo). */
+function cupxFilaGuardada(){
+  var M=CUPX_FILA_M, A=(typeof STATE!=='undefined' && STATE) ? STATE : [];
+  if(M && M.arr===A && M.len===A.length && M.gen===STATE_GEN && M.ver===CUPX_VER && (M.i<0 || A[M.i]===M.row)) return M.row;
+  var row=null, idx=-1; for(var i=0;i<A.length;i++){ if(A[i] && String(A[i].id)===CUPX_ID){ row=A[i]; idx=i; break; } }
+  CUPX_FILA_M={ arr:A, len:A.length, gen:STATE_GEN, ver:CUPX_VER, i:idx, row:row };
+  return row;
+}
+/* Lo que vale: la fila de la planilla y, encima, lo tocado en este aparato que todavía no confirmó el servidor. */
+function cupxMapa(){
+  var f=cupxFilaGuardada();
+  if(CUPX_MEMO.m && CUPX_MEMO.row===f && CUPX_MEMO.ver===CUPX_VER) return CUPX_MEMO.m;   // la misma fila (el mismo objeto) y nada tocado acá
+  var cam=reescritaCambios(CUPX_ID, CUPX_CAMBIOS);
+  var m=cupxResolver(reescritaAplicar(cupxClavesDeFila(f), cam), cam);
+  CUPX_MEMO={ row:f, ver:CUPX_VER, m:m }; return m;
+}
+function cupxExtra(fecha, turno){
+  try{ if(!CUPX_ID || !fecha || !CUPX_MEMO) return 0; var n=cupxMapa()[String(fecha)+'|'+normTurno(turno)]; return n>0 ? n : 0; }catch(e){ return 0; }
+}
+function cupxEtiq(fecha, turno){ var n=limTurnoBase(fecha, turno)>0 ? cupxExtra(fecha, turno) : 0; return n ? (' <span class="cupx-tag">(+'+n+' abierto'+(n===1?'':'s')+')</span>') : ''; }
+/* Con un servidor de antes de 2026-11-14-b el portero no conoce el extra. */
+function cupxServidorViejo(){ return !!SERVER_VER && !servidorTiene(CUPX_SERVIDOR); }
+function cupxServidorViejoTxt(fecha, turno){
+  if(!(cupxExtra(fecha, turno)>0) || servidorTiene(CUPX_SERVIDOR)) return '';
+  return 'el turno tiene '+cupxExtra(fecha, turno)+' cupo'+(cupxExtra(fecha, turno)===1?'':'s')+' abierto'+(cupxExtra(fecha, turno)===1?'':'s')+' de más, pero el servidor todavía no los conoce: '+
+    'para que el extra valga, implementá el servidor 2026-11-14-b (mientras tanto, administración puede forzar el pedido con la clave)';
+}
+function cupxPuede(){ return !!UNLOCKED || CUPX_CLAVE_OK; }
+function cupxClave(){
+  if(cupxPuede()) return true;
+  var c=prompt('Abrir cupos pide la contraseña de Administración:',''); if(c==null) return false;
+  var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
+  if(sha256(String(c||''))===stored){ CUPX_CLAVE_OK=true; return true; }
+  toast('Esa no es la contraseña de Administración.','err'); return false;
+}
+/* El botón (solo con la contraseña, un turno que sale, hoy o después, y un día no cerrado). */
+function cupxBotonHtml(fecha, turno, cls, estilo){
+  if(!cupxVa() || !cupxPuede() || !fecha) return '';
+  var t=normTurno(turno); if(limTurnoBase(fecha, t)<=0 || fecha<todayStr() || diaCerrado(fecha)) return '';
+  var n=cupxExtra(fecha, t);
+  return '<button type="button" class="'+esc(cls||'btn btn-ghost btn-sm')+' cupx-btn"'+(estilo?(' style="'+esc(estilo)+'"'):'')+' onclick="event.stopPropagation();cupxAbrir(\''+esc(fecha)+'\',\''+t+'\')">'+
+    (n ? ('➕ Cupos abiertos: '+n+' · cambiar') : '➕ Abrir cupos')+'</button>';
+}
+/* El renglón de «Ver los pedidos del turno». */
+function cupxVerHtml(fecha, turno){
+  var t=normTurno(turno), b=limTurnoBase(fecha, t), n=b>0 ? cupxExtra(fecha, t) : 0;
+  if(!b) return '';
+  var txt=n ? ('➕ Administración abrió <b>'+n+'</b> lugar'+(n===1?'':'es')+' de más: entran '+b+' + '+n+' = <b>'+(b+n)+'</b>.') : '';
+  var vj=cupxServidorViejo() && n ? '<div class="cupx-viejo">⚠️ El servidor todavía no es el 2026-11-14-b: el extra se ve en el panel, pero al guardar puede decir «turno lleno». Para que valga, implementá el servidor 2026-11-14-b.</div>' : '';
+  var bt=cupxBotonHtml(fecha, t, 'btn btn-ghost btn-sm');
+  if(!txt && !bt) return '';
+  return '<div class="cupv-cx">'+(txt ? '<span>'+txt+'</span>' : '')+bt+vj+'</div>';
+}
+/* ---- la ventana «➕ Abrir cupos» ---- */
+function cupxAbrir(fecha, turno){
+  if(!cupxClave()) return;
+  var t=normTurno(turno), b=limTurnoBase(fecha, t);
+  if(b<=0){ toast('🚫 Ese turno no sale (domingo, feriado o la tarde del sábado): no se le pueden abrir cupos.','err'); return; }
+  var ya=cupxExtra(fecha, t), pr=cupPronDe(fecha, t, true), u=cuposUsadosTurno(fecha, t);
+  var sug=ya || (pr && pr.sug) || Math.max(1, u-b+1);
+  var desdeVer=!!(document.querySelector('#modal.on #modal-box .cupv') && CUPV_ABIERTO && CUPV_ABIERTO.f===fecha && CUPV_ABIERTO.t===t);
+  CUPX_VENTANA={ f:fecha, t:t, n:Math.min(CUPX_MAX, Math.max(0, sug)), ya:ya, volver:desdeVer ? 1 : 0 };
+  cupxVentanaPintar(pr);
+}
+function cupxVentanaPintar(pr){
+  var V=CUPX_VENTANA; if(!V) return;
+  var b=limTurnoBase(V.f, V.t), u=cuposUsadosTurno(V.f, V.t), lim=b+V.n, lib=lim-u;
+  if(pr===undefined) pr=cupPronDe(V.f, V.t, true);
+  var dia=(DIAS_SEM[dowDe(V.f)]||'')+' '+fmtFechaCorta(V.f), nom=V.t==='PM' ? '🌆 tarde' : '🌅 mañana';
+  var h='<div class="modal-h"><h3>➕ Abrir cupos · '+esc(nom)+' del '+esc(dia)+'</h3><button class="modal-x" onclick="cupxCerrar()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b cupx">'+
+      '<p class="cupx-p">Ese turno lleva <b>'+u+'</b> ocupado'+(u===1?'':'s')+' y entran <b>'+b+'</b>'+(V.ya ? (' + <b>'+V.ya+'</b> ya abierto'+(V.ya===1?'':'s')) : '')+'. ¿Cuántos lugares <b>MÁS</b> le das?</p>'+
+      '<div class="cupx-step" role="group" aria-label="Cuántos cupos de más">'+
+        '<button type="button" class="cupx-m" onclick="cupxPaso(-1)" aria-label="Uno menos"'+(V.n<=0?' disabled':'')+'>−</button>'+
+        '<output id="cupx-n" class="cupx-n" aria-live="polite">'+V.n+'</output>'+
+        '<button type="button" class="cupx-m" onclick="cupxPaso(1)" aria-label="Uno más"'+(V.n>=CUPX_MAX?' disabled':'')+'>+</button>'+
+      '</div>'+
+      '<p class="cupx-res">'+(V.n ? ('Con eso entran <b>'+b+' + '+V.n+' = '+lim+'</b> y '+(lib>0 ? ('quedan <b>'+lib+'</b> libre'+(lib===1?'':'s')) : (lib===0 ? 'queda <b>justo</b>' : ('siguen <b>'+(-lib)+'</b> de más')))+'.')
+                                  : ('Sin cupos de más: entran los <b>'+b+'</b> de siempre'+(lib<0 ? (' (hay '+(-lib)+' de más)') : '')+'.'))+'</p>'+
+      (pr && pr.suele!=null ? ('<p class="cupx-pr">📈 Faltando '+pr.k+' día'+(pr.k===1?'':'s')+' hábil'+(pr.k===1?'':'es')+', a esta hora suelen entrar <b>'+pr.suele+'</b> más'+
+          (pr.llena ? (': te sugiero <b>'+pr.sugTotal+'</b>'+(pr.sugTotal===V.n ? ' (es lo que está elegido)' : '')+'.') : '.')+'</p>') : '')+
+      (cupxServidorViejo() ? '<p class="cupx-viejo">⚠️ El servidor todavía no es el 2026-11-14-b: el extra se va a ver en el panel, pero al guardar un pedido el servidor puede decir «turno lleno». Para que valga, implementá el servidor 2026-11-14-b.</p>' : '')+
+      '<p class="cupx-nota">Lo ven todos los aparatos con la próxima lectura. Solo cambia el límite de este día y turno: no mueve ningún pedido.</p>'+
+      '<div class="modal-actions">'+
+        (V.ya ? '<button type="button" class="btn btn-ghost btn-sm" onclick="cupxGuardarVentana(0)">Quitar los '+V.ya+' abierto'+(V.ya===1?'':'s')+'</button>' : '')+
+        '<span class="cupv-sp"></span><button type="button" class="btn btn-ghost btn-sm" onclick="cupxCerrar()">Cancelar</button>'+
+        '<button type="button" class="btn btn-primary btn-sm" id="cupx-ok" onclick="cupxGuardarVentana()">'+(V.n===V.ya ? 'Listo' : (V.n ? ('Abrir '+V.n+' de más') : 'Dejarlo sin cupos de más'))+'</button>'+
+      '</div>'+
+    '</div>';
+  openModal(h);
+}
+function cupxPaso(d){ var V=CUPX_VENTANA; if(!V) return; V.n=Math.min(CUPX_MAX, Math.max(0, V.n+d)); cupxVentanaPintar(); }
+function cupxCerrar(){ var V=CUPX_VENTANA; CUPX_VENTANA=null; if(V && V.volver) verCuposTurno(V.f, V.t); else closeModal(); }
+function cupxGuardarVentana(n){
+  var V=CUPX_VENTANA; if(!V) return;
+  if(n==null) n=V.n;
+  if(n!==V.ya && !cupxPoner(V.f, V.t, n)) return;
+  cupxCerrar();
+}
+/* Poner el extra de un día y turno (0 = sacarlo). Devuelve si lo anotó. */
+function cupxPoner(fecha, turno, n){
+  if(!cupxPuede()){ toast('🔑 Abrir cupos pide la contraseña de Administración.','err'); return false; }
+  var t=normTurno(turno); n=Math.round(Number(n));
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(fecha||'')) || !(n>=0 && n<=CUPX_MAX)){ toast('Elegí entre 0 y '+CUPX_MAX+' cupos de más.','err'); return false; }
+  if(limTurnoBase(fecha, t)<=0){ toast('🚫 Ese turno no sale: no se le pueden abrir cupos.','err'); return false; }
+  var slot=fecha+'|'+t, set=reescritaAplicar(cupxClavesDeFila(cupxFilaGuardada()), reescritaCambios(CUPX_ID, CUPX_CAMBIOS));
+  Object.keys(set).forEach(function(k){ if(k.indexOf(slot+'|')===0) CUPX_CAMBIOS[k]=false; });
+  if(n>0) CUPX_CAMBIOS[slot+'|'+n]=true;
+  /* Lo de hace más de un mes se va con un cambio explícito (lo confirma el servidor como cualquier otro). */
+  var corte=stockSumarDias(todayStr(), -CUPX_GUARDA_DIAS);
+  Object.keys(set).forEach(function(k){ if(k.slice(0,10)<corte && !(k in CUPX_CAMBIOS)) CUPX_CAMBIOS[k]=false; });
+  CUPX_VER++;
+  cupxGuardar(); cupxRepintar();
+  var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), nom=t==='PM' ? 'la tarde' : 'la mañana';
+  toast(n ? ('➕ '+n+' cupo'+(n===1?'':'s')+' de más para '+nom+' del '+dia+': ahora entran '+limTurno(fecha, t)+'.'+(cupxServidorViejo() ? ' ⚠️ Para que el servidor lo acepte al guardar, implementá el servidor 2026-11-14-b.' : ''))
+            : ('Listo: '+nom+' del '+dia+' vuelve a los '+limTurnoBase(fecha, t)+' de siempre.'), cupxServidorViejo() && n ? 'err' : 'ok', cupxServidorViejo() && n ? 10000 : undefined);
+  return true;
+}
+function cupxFilaArmar(){ return cupxFilaDe(cupxMapa()); }
+function cupxPonerEnState(f){
+  if(!f) return;
+  var c=JSON.parse(JSON.stringify(f)); delete c._cambios;
+  var i=-1; for(var k=0;k<STATE.length;k++) if(STATE[k] && String(STATE[k].id)===CUPX_ID){ i=k; break; }
+  if(i>=0) STATE[i]=c; else STATE.push(c);
+  CUPX_VER++; try{ saveMirror(); }catch(e){}
+}
+REESCRITAS[CUPX_ID]={
+  cambios:function(){ return CUPX_CAMBIOS; },
+  claves:function(fila){ return cupxClavesDeFila(fila); },
+  armar:function(s){ CUPX_VER++; return cupxFilaDe(cupxResolver(s, reescritaCambios(CUPX_ID, CUPX_CAMBIOS))); },
+  listo:function(fila){ if(fila && String(fila.id)===CUPX_ID) cupxPonerEnState(fila); CUPX_VER++; cupxRepintar(); }
+};
+/* Con un respiro, como el talonario: tocar varias veces seguidas es UNA escritura. La intención entra a la cola al tocar. */
+function cupxGuardar(){
+  reescritaColaAlDia(CUPX_ID, CUPX_CAMBIOS);
+  try{ reescritaEncolar(cupxFilaArmar(), CUPX_CAMBIOS); }catch(e){}
+  REESCRITA_ESPERA[CUPX_ID]=1;
+  clearTimeout(_cupxT);
+  _cupxT=setTimeout(function(){
+    var listo=function(){ delete REESCRITA_ESPERA[CUPX_ID]; };
+    var mandar=function(){
+      var cam=reescritaCambios(CUPX_ID, CUPX_CAMBIOS), fila=reescritaConSello(cupxFilaArmar());
+      apiSave(fila, { juntar:true }).then(function(res){
+        listo();
+        if(res && res.ok){ var g=(res.pedido && String(res.pedido.id)===CUPX_ID) ? res.pedido : fila; cupxPonerEnState(g); reescritaConfirmada(CUPX_ID, cam, g); CUPX_VER++; cupxRepintar(); }
+        else reescritaEncolar(cupxFilaArmar(), CUPX_CAMBIOS);
+      }, function(){ listo(); reescritaEncolar(cupxFilaArmar(), CUPX_CAMBIOS); });
+    };
+    if(CONNECTED){
+      conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+        if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+        var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CUPX_ID) srv=p; });
+        reescritaRevAnotar(srv); if(srv) cupxPonerEnState(srv);
+      }, function(){}).then(mandar, mandar);
+    }
+    else { listo(); reescritaEncolar(cupxFilaArmar(), CUPX_CAMBIOS); }
+  }, 700);
+}
+function cupxRepintar(){
+  try{ renderCupoForm(); }catch(e){}
+  try{ if(UNLOCKED && document.getElementById('view-admin') && document.getElementById('view-admin').classList.contains('active')) renderAdmin(); }catch(e){}
+  try{ var ov=document.getElementById('modal'); if(ov && ov.classList.contains('on') && document.querySelector('#modal-box .cupv') && CUPV_ABIERTO) verCuposTurno(CUPV_ABIERTO.f, CUPV_ABIERTO.t); }catch(e){}
+}
+
+/* ---- 📈 lo que se va a llenar ---- */
+var CUP_PRON_VENTANA=42, CUP_PRON_DIAS=3, CUP_PRON_MIN=4, CUP_PRON_MEMO={ k:null, v:null };
+function cupPronVa(){ return !(navigator.webdriver && !window.CUP_PRON_PRUEBA); }
+/* N días hábiles antes (sin domingos ni feriados, como `sigDiaHabil` pero para atrás). */
+function cupHabilAtras(f, n){ for(var i=0;i<n;i++){ var d=stockSumarDias(f, -1); for(var j=0;j<30 && !diaHabil(d);j++) d=stockSumarDias(d, -1); f=d; } return f; }
+/* Cuántos días hábiles hay de `desde` (sin contarlo) hasta `f`; -1 si `f` no es hábil o queda muy lejos. */
+function cupHabilesHasta(desde, f){ var d=desde; for(var n=1;n<=10;n++){ d=sigDiaHabil(d); if(d===f) return n; if(d>f) return -1; } return -1; }
+/* El momento de un día de Bolivia a tal hora (minutos desde las 00:00): UTC−4 fijo, como `isoDeTsBolivia`. */
+function cupBoMs(f, min){ var x=String(f).split('-'); return Date.UTC(+x[0], +x[1]-1, +x[2], 0, 0)+(min+240)*60000; }
+function cupMinBolivia(){ var hb=horaBolivia(); return hb.getHours()*60+hb.getMinutes(); }
+/* Para cada grupo (AM, PM, SAB) y cada N (1..CUP_PRON_DIAS): cuántos pedidos entraron DESPUÉS de N días hábiles antes, a esta hora. */
+function cupPronHist(){
+  var hoy=todayStr(), min=cupMinBolivia(), k=STATE_GEN+'|'+(STATE ? STATE.length : 0)+'|'+hoy+'|'+Math.floor(min/15);
+  if(CUP_PRON_MEMO.k===k) return CUP_PRON_MEMO.v;
+  var desde=stockSumarDias(hoy, -CUP_PRON_VENTANA), G={};
+  (STATE||[]).forEach(function(p){
+    var f=p ? String(p.fecha||'') : ''; if(!f || f<desde || f>=hoy) return;
+    if(esFilaSistema(p) || entregaAConfirmar(p)) return;
+    var s=f+'|'+normTurno(p.turno); (G[s]=G[s]||[]).push(Number(p.ts)||0);
+  });
+  var S={};
+  for(var d=desde; d<hoy; d=stockSumarDias(d, 1)){
+    if(!pryDiaHabil(d)) continue;
+    ['AM','PM'].forEach(function(t){
+      if(limTurnoBase(d, t)<=0) return;
+      var L=G[d+'|'+t]; if(!L || !L.length) return;
+      var gr=diaSabado(d) ? 'SAB' : t;
+      for(var n=1;n<=CUP_PRON_DIAS;n++){
+        var corte=cupBoMs(cupHabilAtras(d, n), min), antes=0;
+        for(var i=0;i<L.length;i++) if(!L[i] || L[i]<corte) antes++;
+        var g=S[gr]=S[gr]||{}; (g[n]=g[n]||[]).push(L.length-antes);
+      }
+    });
+  }
+  CUP_PRON_MEMO={ k:k, v:S }; return S;
+}
+function cupPronSuele(gr, n){
+  var S=cupPronHist(), a=(S[gr] && S[gr][n]) || [];
+  if(a.length<CUP_PRON_MIN && gr==='SAB') a=(S.AM && S.AM[n]) || [];
+  if(a.length<CUP_PRON_MIN) return null;
+  var tot=a.reduce(function(x, y){ return x+y; }, 0);
+  return { suele:Math.round(tot/a.length), n:a.length };
+}
+/* El pronóstico de UN turno (null si no se puede decir). `siempre`: también fuera de la ventana de días (para la ventana de abrir). */
+function cupPronDe(fecha, turno, siempre){
+  try{
+    if(!cupPronVa() && !siempre) return null;
+    var t=normTurno(turno), hoy=todayStr(), base=limTurnoBase(fecha, t);
+    if(!fecha || base<=0 || diaCerrado(fecha)) return null;
+    var k=cupHabilesHasta(hoy, fecha); if(k<1 || (k>CUP_PRON_DIAS && !siempre)) return null;
+    var lim=limTurno(fecha, t), hay=cuposUsadosTurno(fecha, t), ext=lim-base;
+    var st=(k<=CUP_PRON_DIAS) ? cupPronSuele(diaSabado(fecha) ? 'SAB' : t, k) : null;
+    var o={ f:fecha, t:t, k:k, lim:lim, base:base, extra:ext, hay:hay, lleno:hay>=lim, suele:null, proy:hay, llena:hay>=lim, sug:0, sugTotal:ext };
+    if(st){ o.suele=st.suele; o.n=st.n; o.proy=hay+st.suele; o.llena=o.proy>=lim; }
+    /* Lo que sugiere abrir: lo que falta para que entre lo que suele entrar, y uno de margen; en total (ya abiertos + esto) hasta CUPX_MAX. */
+    if(o.llena){ o.sug=Math.max(1, o.proy-lim+1); o.sugTotal=Math.min(CUPX_MAX, ext+o.sug); }
+    return o;
+  }catch(e){ return null; }
+}
+/* Los turnos de los próximos días hábiles que se llenan (o ya están llenos). */
+function cupPronDatos(){
+  if(!cupPronVa()) return [];
+  var L=[], f=todayStr();
+  for(var i=1;i<=CUP_PRON_DIAS;i++){
+    f=sigDiaHabil(f);
+    ['AM','PM'].forEach(function(t){ var x=cupPronDe(f, t); if(x && x.llena) L.push(x); });
+  }
+  return L;
+}
+function cupDiaCorto(f){ return (DIAS_SEM[dowDe(f)]||'').slice(0,3)+' '+fmtFechaCorta(f); }
+function cupPronCorto(x){ return cupDiaCorto(x.f)+' '+(x.t==='PM'?'tarde':'mañana')+' ('+(x.lleno ? ('lleno: '+x.hay+' de '+x.lim) : (x.hay+' de '+x.lim+' + ~'+x.suele))+')'; }
+function cupPronFrase(x, nom){
+  if(!x) return '';
+  if(x.lleno) return 'La '+nom+' del '+cupDiaCorto(x.f)+' ya está llena ('+x.hay+' de '+x.lim+').';
+  return 'La '+nom+' del '+cupDiaCorto(x.f)+' se va a llenar: hay '+x.hay+' de '+x.lim+' y, faltando '+x.k+' día'+(x.k===1?'':'s')+' hábil'+(x.k===1?'':'es')+', a esta hora suelen entrar '+x.suele+' más.';
+}
+/* Debajo del cartel de cupos del formulario (el de siempre, `#cupo-form`): el turno de ese día que se va a llenar. */
+function cupPronFormTxt(fecha){
+  if(!cupPronVa()) return '';
+  var out=[];
+  ['AM','PM'].forEach(function(t){ var x=cupPronDe(fecha, t); if(x && x.llena && !x.lleno) out.push('📈 '+esc(cupPronFrase(x, t==='PM'?'tarde':'mañana'))); });
+  return out.length ? ('<br><span class="cpr-form">'+out.join('<br>')+'</span>') : '';
+}
+/* Arriba del formulario: los OTROS días de los próximos que se llenan (para ofrecerle otro al cliente a tiempo). */
+function cupPronOtrosTxt(fecha){
+  var L=cupPronDatos().filter(function(x){ return x.f!==fecha; });
+  if(!L.length) return '';
+  return '📈 En los próximos días se llena'+(L.length===1?'':'n')+': '+L.map(function(x){ return '<b>'+esc(cupDiaCorto(x.f)+' '+(x.t==='PM'?'tarde':'mañana'))+'</b>'+(x.lleno?' (lleno)':''); }).join(' · ')+'.';
+}
+/* El cartel de Administración (deja sus números en `ADM_AV.cupos` para «Para hacer»). */
+function cupPronAdmPintar(){
+  var el=document.getElementById('adm-cupos-pron'); if(!el) return;
+  ADM_AV.cupos={};
+  var L=cupPronDatos();
+  if(!L.length){ el.className=''; el.innerHTML=''; return; }
+  var rojo=L.some(function(x){ return x.lleno || x.k===1; });
+  ADM_AV.cupos={ n:L.length, rojo:rojo, txt:L.slice(0,3).map(cupPronCorto).join(' · ')+(L.length>3?(' y '+(L.length-3)+' más'):'') };
+  var viejo=cupxServidorViejo() && L.some(function(x){ return x.extra>0; });
+  var filas=L.map(function(x){
+    var nom=x.t==='PM' ? '🌆 tarde' : '🌅 mañana';
+    return '<div class="cpr-f'+(x.lleno?' cpr-lleno':'')+'"><div class="cpr-d"><b>'+esc(cupDiaCorto(x.f))+'</b> · '+nom+(x.extra?(' <span class="cupx-tag">(+'+x.extra+' abierto'+(x.extra===1?'':'s')+')</span>'):'')+'</div>'+
+      '<div class="cpr-n">'+(x.lleno ? ('<b>Lleno</b>: '+x.hay+' de '+x.lim) : ('<b>'+x.hay+'</b> de '+x.lim+' · suelen entrar <b>'+x.suele+'</b> más → ~'+x.proy))+
+        (x.lleno ? '' : ' <small>(faltan '+x.k+' día'+(x.k===1?'':'s')+' hábil'+(x.k===1?'':'es')+')</small>')+'</div>'+
+      '<div class="cpr-acc"><button type="button" class="rv-toggle" onclick="verCuposTurno(\''+esc(x.f)+'\',\''+x.t+'\')">👀 Ver</button>'+cupxBotonHtml(x.f, x.t, 'rv-toggle cpr-abrir')+'</div></div>';
+  }).join('');
+  el.className='revisar cpr';
+  el.innerHTML='<i class="late-dot"></i>🎟️ <b>'+(L.length===1 ? 'Un turno se va a llenar' : (L.length+' turnos se van a llenar'))+'</b> en los próximos '+CUP_PRON_DIAS+' días hábiles. '+
+    'Abrí más cupos a tiempo, antes de que las vendedoras tengan que mandar a los clientes a otro día.'+
+    '<div class="cpr-l">'+filas+'</div>'+
+    (viejo ? '<div class="cupx-viejo">⚠️ El servidor todavía no es el 2026-11-14-b: los cupos abiertos se ven en el panel pero el servidor no los conoce al guardar. Implementá el servidor 2026-11-14-b para que valgan.</div>' : '')+
+    '<div class="cpr-nota">ℹ️ La cuenta: lo que hay ahora (pedidos y lugares apartados) + lo que suele entrar para un día cuando faltan esos días hábiles, a esta hora '+
+      '(el promedio de los últimos '+CUP_PRON_VENTANA+' días). Es un aviso: no frena ninguna venta.</div>';
+}
+
+/* ---- ⏳ 267 el lugar apartado ---- */
+var APARTO=null, APARTO_PIDE=null, APARTO_GEN=0, APARTO_ACT=0, APARTO_ELIGIO=false, APARTO_LLENO=null, APARTO_YO='';
+var APARTADOS={}, APARTADOS_OFF=0, APARTO_V='2026-11-14-b', APARTO_RENUEVA_MS=4*60000, APARTO_TOPE_MS=12000, APARTO_VIDA_MS=10*60000, _apartoT=null, APARTO_TIC=null;
+function apartoActivo(){ return servidorTiene(APARTO_V) && !(navigator.webdriver && !window.APARTO_PRUEBA); }
+function apartoAparato(){ if(!APARTO_YO){ try{ APARTO_YO=entAparato(); }catch(e){ APARTO_YO='?'; } } return APARTO_YO; }
+function apartoAhoraSrv(){ return Date.now()+(APARTADOS_OFF||0); }
+/* Lo que trae la lectura: {"AAAA-MM-DD|AM": [{id, aparato, quien, hasta}]}. Sin `apartados` y con un servidor de antes, no hay. */
+function apartadosTomar(a, ahora){
+  if(a && typeof a==='object' && !Array.isArray(a)){ APARTADOS=a; if(Number(ahora)>0) APARTADOS_OFF=Number(ahora)-Date.now(); }
+  else if(!servidorTiene(APARTO_V)) APARTADOS={};
+}
+/* Los lugares de ese turno que OTRA venta tiene apartados y siguen vigentes (los de este aparato no). */
+function apartadosOtros(fecha, turno){
+  try{
+    if(!APARTADOS) return 0;
+    var L=APARTADOS[String(fecha)+'|'+normTurno(turno)]; if(!L || !L.length) return 0;
+    var ahora=apartoAhoraSrv(), yo=apartoAparato(), n=0;
+    for(var i=0;i<L.length;i++){
+      var a=L[i]; if(!a) continue;
+      if(Number(a.hasta)>0 && Number(a.hasta)<=ahora) continue;
+      if(APARTO && String(a.id)===String(APARTO.id)) continue;
+      if(a.aparato && String(a.aparato)===yo) continue;
+      n++;
+    }
+    return n;
+  }catch(e){ return 0; }
+}
+function apartadosTxt(fecha, turno){ var n=apartadosOtros(fecha, turno); return n ? (' · <span class="ap-tag">⏳ '+n+' apartado'+(n===1?'':'s')+' por otra venta</span>') : ''; }
+function apartadosNota(fecha){
+  var a=apartadosOtros(fecha, 'AM'), p=limTurnoBase(fecha, 'PM')>0 ? apartadosOtros(fecha, 'PM') : 0;
+  if(!a && !p) return '';
+  var t=function(n, x){ return n+' apartado'+(n===1?'':'s')+' por otra venta'+(x?(' ('+x+')'):''); };
+  return ' · <span class="ap-tag">⏳ '+((a && p) ? (t(a, 'AM')+' y '+t(p, 'PM')) : (a ? t(a, limTurnoBase(fecha,'PM')>0 ? 'AM' : '') : t(p, 'PM')))+'</span>';
+}
+/* El día y turno que corresponde apartar ahora (null = ninguno). */
+function apartoSlotQuiere(){
+  if(!apartoActivo() || !CONNECTED) return null;
+  if(EDIT_ID && !(typeof borradorDe==='function' && borradorDe(EDIT_ID))) return null;   // corregir un pedido no aparta (sí completar un borrador de Kommo)
+  if(VENTA_TIENDA || avisaFormOn() || docTipoSel()!=='OC') return null;
+  var fe=document.getElementById('f-fecha'), f=fe ? String(fe.value||'') : '', tv=segVal('f-turno');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || !tv) return null;
+  var t=normTurno(tv);
+  if(f<todayStr() || diaCerrado(f) || limTurno(f, t)<=0) return null;
+  return { f:f, t:t, k:f+'|'+t };
+}
+/* ¿La persona está cargando un pedido? Eligió día o turno, o el formulario ya no es el vacío del principio. */
+function apartoTrabajando(){
+  if(APARTO_ELIGIO) return true;
+  try{ return !!FORM_NUEVO_BASE && formNuevoHuella()!==FORM_NUEVO_BASE; }catch(e){ return false; }
+}
+function apartoMirar(){
+  if(!apartoActivo()){ if(APARTO) apartoSoltar(); return; }
+  clearTimeout(_apartoT); _apartoT=setTimeout(apartoAhora, 350);
+}
+function apartoAhora(){
+  var q=apartoSlotQuiere();
+  if(APARTO && (!q || q.k!==APARTO.k)) apartoSoltar();
+  if(APARTO_PIDE && (!q || APARTO_PIDE.k!==q.k)){ APARTO_GEN++; APARTO_PIDE=null; }   // lo que se estaba pidiendo ya no sirve: si llega, se suelta
+  if(q && !APARTO && !APARTO_PIDE && apartoTrabajando() && (Date.now()-APARTO_ACT)<APARTO_RENUEVA_MS &&
+     !(APARTO_LLENO && APARTO_LLENO.k===q.k && Date.now()-APARTO_LLENO.t<60000) &&
+     cuposUsadosTurno(q.f, q.t)<limTurno(q.f, q.t)) apartoPedir(q, null);
+  apartoPintar();
+}
+function apartoPedir(q, id){
+  var gen=++APARTO_GEN, renueva=!!id;
+  APARTO_PIDE={ k:q.k, gen:gen };
+  var pl={ action:'apartarCupo', fecha:q.f, turno:q.t, quien:String(quienEdita()||getVendedorMem()||''), aparato:apartoAparato() };
+  if(id) pl.id=String(id);
+  var fin=function(){ if(APARTO_PIDE && APARTO_PIDE.gen===gen) APARTO_PIDE=null; };
+  var pr; try{ pr=conTopeDuro(apiPost(pl), APARTO_TOPE_MS, 'tardo_datos'); }catch(e){ fin(); return; }
+  pr.then(function(r){
+    fin();
+    if(gen!==APARTO_GEN){   // la persona cambió de día o turno (o limpió) mientras tanto: lo que llegó tarde se suelta
+      if(r && r.ok && r.id && !(APARTO && String(APARTO.id)===String(r.id))) apartoSoltarId(r.id);
+      return;
+    }
+    if(r && r.ok && r.id){
+      var ahS=Number(r.ahora)>0 ? Number(r.ahora) : apartoAhoraSrv(), hasta=Number(r.hasta)||0;
+      var resta=hasta>0 ? Math.max(0, Math.min(60*60000, hasta-ahS)) : APARTO_VIDA_MS;
+      APARTO={ id:String(r.id), f:q.f, t:q.t, k:q.k, hasta:hasta, fin:Date.now()+resta, libres:(r.libres!=null ? Number(r.libres) : null), ren:Date.now() };
+      APARTO_LLENO=null;
+    }else if(r && r.ok===false && r.error==='cupos_llenos'){
+      APARTO=null; APARTO_LLENO={ k:q.k, f:q.f, tu:q.t, t:Date.now() };
+      apartoLlenoAvisar(q, renueva);
+    }
+    /* Cualquier otra respuesta (un error, un servidor que no conoce la acción): sigue como antes de la 267. Nunca frena. */
+    apartoPintar();
+  }, function(){ fin(); apartoPintar(); });
+}
+function apartoLlenoAvisar(q, renueva){
+  var lim=limTurno(q.f, q.t);
+  toast((renueva ? '⌛ Tu lugar apartado se venció y ' : '')+'Turno '+q.t+' lleno para el '+fmtFecha(q.f)+' — '+(renueva ? 'otra venta tomó el último lugar' : ('otra venta tomó el último lugar ('+lim+' de '+lim+')'))+'. '+(diaSabado(q.f) ? 'Elegí otra fecha.' : 'Probá el otro turno u otra fecha.'),'err',9000);
+  var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); }, 1600); }
+  try{ refrescarEstado(); }catch(e){}   // la planilla de ahora: el cartel de cupos pasa a decir «lleno»
+}
+function apartoSoltar(beacon){
+  var a=APARTO; APARTO=null; APARTO_GEN++;
+  if(a && a.id) apartoSoltarId(a.id, beacon);
+}
+function apartoSoltarId(id, beacon){
+  var pl={ action:'soltarCupo', id:String(id) };
+  if(beacon){ apartoBeacon(pl); return; }
+  try{ conTopeDuro(apiPost(pl), APARTO_TOPE_MS, 'tardo_datos').then(function(){}, function(){}); }catch(e){}
+}
+/* Al cerrar la página no hay tiempo de esperar respuesta: `sendBeacon` (o `fetch` con `keepalive`), con lo mismo que manda `apiPost`. */
+function apartoBeacon(pl){
+  try{
+    if(CLAVE_EQUIPO) pl.key=CLAVE_EQUIPO;
+    try{ pl.quien=getVendedorMem()||''; pl.dispositivo=dispositivoId(); }catch(e){}
+    var url=SHEETS_URL+(SHEETS_URL.indexOf('?')>=0?'&':'?')+'_='+Date.now(), body=JSON.stringify(pl);
+    if(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type:'text/plain;charset=utf-8' }))) return;
+    fetch(url, { method:'POST', keepalive:true, credentials:'omit', cache:'no-store', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:body }).catch(function(){});
+  }catch(e){}
+}
+/* Limpiar el formulario (guardado, cancelado, venta de tienda nueva…): se suelta y se empieza de cero. */
+function apartoOlvidar(){ apartoSoltar(); APARTO_ELIGIO=false; APARTO_ACT=0; APARTO_LLENO=null; APARTO_PIDE=null; clearTimeout(_apartoT); apartoPintar(); }
+/* Al guardar: el id va en el `save` solo si es de ESE día y turno. */
+function apartoParaGuardar(rec){
+  if(!APARTO || !rec) return null;
+  return (String(rec.fecha||'')===APARTO.f && normTurno(rec.turno)===APARTO.t) ? APARTO.id : null;
+}
+function apartoTrasGuardar(id, res){
+  if(!id || !(res && res.ok)) return;
+  if(APARTO && APARTO.id===String(id)){ APARTO=null; APARTO_GEN++; }   // el servidor ya lo soltó: no se suelta otra vez
+  APARTO_ELIGIO=false; apartoPintar();
+}
+function apartoSeg(){ return APARTO ? Math.round((APARTO.fin-Date.now())/1000) : 0; }
+function apartoReloj(s){ s=Math.max(0, s); var m=Math.floor(s/60), x=s%60; return m+':'+(x<10?'0':'')+x; }
+function apartoDiaTxt(a){ return (DIAS_SEM[dowDe(a.f)]||'')+' '+fmtFechaCorta(a.f)+' '+a.t; }
+function apartoPintar(){
+  var el=document.getElementById('aparto'); if(!el) return;
+  var h='', cls='aparto', act=apartoActivo();
+  if(act && APARTO && apartoSeg()>0){
+    h='<span class="ap-ic" aria-hidden="true">⏳</span><div class="ap-t"><div><b>Lugar apartado:</b> '+esc(apartoDiaTxt(APARTO))+' para vos · <b class="ap-reloj">'+apartoReloj(apartoSeg())+'</b></div>'+
+      '<small>Nadie más lo puede tomar mientras cargás y cobrás este pedido. Si dejás el formulario, se libera solo.</small></div>';
+  }else if(act && APARTO_LLENO && Date.now()-APARTO_LLENO.t<60000){
+    cls+=' ap-lleno';
+    var q=APARTO_LLENO;
+    h='<span class="ap-ic" aria-hidden="true">🚫</span><div class="ap-t"><div><b>'+(q.tu==='PM'?'La tarde':'La mañana')+' del '+esc((DIAS_SEM[dowDe(q.f)]||'')+' '+fmtFechaCorta(q.f))+' se llenó</b>: otra venta tomó el último lugar.</div>'+
+      '<small>'+(diaSabado(q.f) ? 'Elegí otra fecha.' : 'Elegí el otro turno u otra fecha.')+'</small></div>';
+  }
+  el.hidden=!h; el.className=cls;
+  var sinReloj=h.replace(/<b class="ap-reloj">[^<]*<\/b>/, '');
+  if(el._h!==sinReloj){ el.innerHTML=h; el._h=sinReloj; }
+  else if(h){ var r=el.querySelector('.ap-reloj'); if(r) r.textContent=apartoReloj(apartoSeg()); }
+  apartoTicPoner();
+}
+/* Un tic por segundo SOLO mientras hay algo apartado: el reloj, el vencimiento y la renovación. */
+function apartoTicPoner(){
+  if(APARTO && apartoActivo()){ if(!APARTO_TIC) APARTO_TIC=setInterval(apartoTic, 1000); }
+  else if(APARTO_TIC){ clearInterval(APARTO_TIC); APARTO_TIC=null; }
+}
+function apartoTic(){
+  if(!APARTO){ apartoTicPoner(); return; }
+  if(apartoSeg()<=0){   // se venció en el servidor (nadie trabajó en el formulario): si la persona vuelve, se aparta de nuevo
+    APARTO=null; APARTO_GEN++; apartoPintar(); if((Date.now()-APARTO_ACT)<APARTO_RENUEVA_MS) apartoMirar(); return;
+  }
+  if(!APARTO_PIDE && Date.now()-APARTO.ren>=APARTO_RENUEVA_MS && APARTO_ACT>APARTO.ren) apartoPedir({ f:APARTO.f, t:APARTO.t, k:APARTO.k }, APARTO.id);
+  apartoPintar();
+}
+/* Lo que se hace en el formulario cuenta como «sigue trabajando»; elegir día o turno, como «eligió». */
+function apartoActividad(ev){
+  APARTO_ACT=Date.now();
+  var tg=ev && ev.target;
+  if(tg && (tg.id==='f-fecha' || (tg.closest && tg.closest('#f-turno, #fx-dias, #fx-izq')))) APARTO_ELIGIO=true;
+  if(!apartoActivo()) return;
+  apartoMirar();   // con un respiro: suelta si ya no corresponde (otro día, turno o tipo) y aparta si hace falta
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var vf=document.getElementById('view-form');
+  if(vf) ['input','change','click','keydown'].forEach(function(t){ vf.addEventListener(t, apartoActividad, true); });
+  window.addEventListener('pagehide', function(){ if(APARTO) apartoSoltar(true); });
+});
 
 /* ---------------------------------------------------------------- C2 · PAGOS SIN TERMINAR
    Los pagos de los últimos `NX_PST_DIAS` días a los que les falta algo: el N° de recibo, la foto del comprobante (QR o tarjeta),
