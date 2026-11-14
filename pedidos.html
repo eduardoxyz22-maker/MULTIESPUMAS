@@ -3161,6 +3161,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       </div>
       <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
       <div id="atc-otra" class="atc-otra no-print" hidden></div>   <!-- 🔁 (13/11, 179) en una ATC: ese celular ya tuvo otra (solo avisa) -->
+      <div id="atc-compra" class="atc-compra no-print" hidden></div>   <!-- 🛡️ (14/11, 264) en una ATC: las compras de ese celular, para la fecha de compra -->
       <div id="fx-dup" class="fx-dup no-print" hidden></div>
 
       <div class="field">
@@ -7257,6 +7258,34 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .phx-i.phx-g .phx-x{ color:#6b7884; font-style:italic; }
 .phx-n{ margin-top:4px; color:var(--muted); font-size:.74rem; }
 @media (max-width:520px){ .phx-i{ grid-template-columns:minmax(0,1fr); gap:0; } }
+/* 🛡️ (14/11, 264) EL CERTIFICADO DE GARANTÍA en «✅ Pedido guardado» y en las fichas (`certBloqueHtml`): una fila corta; la imagen se ve
+   al tocar «👁️ Ver». Y en el formulario de una ATC, las compras de ese celular (`atcCompraPintar`). */
+.cert-b{ margin-top:14px; background:linear-gradient(135deg,#f0fdfb,#f4f7ff); border:1px solid var(--teal-border); border-left:5px solid var(--teal); border-radius:12px; padding:11px 13px; font-size:.82rem; color:#0f2333; min-width:0; }
+.cert-cab{ display:flex; align-items:flex-start; gap:10px; min-width:0; }
+.cert-ico{ flex:none; width:36px; height:36px; border-radius:10px; background:#fff; display:grid; place-items:center; box-shadow:0 2px 8px -4px rgba(15,35,51,.35); }
+.cert-tx{ min-width:0; flex:1; }
+.cert-tit{ font-weight:800; font-size:.92rem; }
+.cert-sub{ color:#3d4a57; font-size:.78rem; margin-top:2px; overflow-wrap:anywhere; line-height:1.5; }
+.cert-cod{ font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace; font-weight:800; background:#fff; border:1px dashed var(--teal-border); border-radius:7px; padding:1px 7px; letter-spacing:.05em; white-space:nowrap; }
+.cert-def{ color:var(--red); font-weight:700; }
+.cert-rev{ margin-top:7px; font-size:.74rem; color:#475569; }
+.cert-acc{ display:flex; gap:7px; flex-wrap:wrap; margin-top:9px; }
+.cert-acc .btn{ width:auto; flex:0 1 auto; }
+.cert-ver{ background:var(--teal); color:#fff; font-weight:700; }
+.cert-aviso{ margin-top:8px; font-size:.77rem; color:#7c4b00; background:var(--amber-lt); border:1px solid var(--amber-border); border-radius:8px; padding:6px 9px; }
+.cert-prev{ margin-top:10px; }
+.cert-prev img{ display:block; width:100%; max-width:430px; height:auto; margin:0 auto; border-radius:10px; box-shadow:0 10px 26px -14px rgba(15,35,51,.55); }
+.cert-cargando{ text-align:center; color:var(--muted); padding:10px 0; }
+.atc-compra{ margin:-4px 0 14px; background:#f0fdfa; border:1px solid var(--teal-border); border-left:5px solid var(--teal); border-radius:10px; padding:9px 12px; font-size:.8rem; color:#0f2333; }
+.atc-compra-t span{ color:#3d4a57; font-size:.74rem; }
+.atc-compra-f{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:7px; padding-top:7px; border-top:1px dashed var(--teal-border); }
+.atc-compra-x{ flex:1 1 240px; min-width:0; overflow-wrap:anywhere; }
+.atc-compra-f .btn{ width:auto; background:var(--teal); color:#fff; font-weight:700; }
+.atc-compra-f.usada .atc-compra-x{ color:#0f766e; }
+.atc-compra-ok{ font-weight:800; color:#0f766e; font-size:.76rem; }
+.atc-compra-pie{ margin-top:7px; }
+.atc-compra-pie .btn{ width:auto; }
+@media print{ .cert-b, .atc-compra{ display:none!important; } }
 </style>
 <style>
 /* 🏬🎡 (14/11, mejoras 252 y 253) La barra del mostrador de la tienda del mall, arriba de todo (`mallBarraHtml`), y lo suyo en «Tu día»
@@ -23955,7 +23984,7 @@ function pintarMotivoAtc(limpiar){
   pintarAntiguedadAtc();
   if(!atc) pintarAtcFalta(null);
   /* 🔁 (13/11, 179) ¿ese celular ya tuvo otra ATC? Un instante después: al abrir para editar (o al limpiar) el celular se pone DESPUÉS de esto. */
-  setTimeout(function(){ try{ atcRepPintar(); }catch(e){} }, 0);
+  setTimeout(function(){ try{ atcRepPintar(); }catch(e){} try{ atcCompraPintar(); }catch(e){} }, 0);   // 🛡️ (14/11, 264) y sus compras
   /* 📷 (§4lh) Si la persona pasa la ATC a OC, las fotos del producto recién subidas no se guardarían en ningún lado: se
      borran ahora (las que la ATC ya tenía se quedan en el pedido hasta que se guarde). */
   if(!atc && limpiar && compsArr(FORM_ATC_FOTOS).length){
@@ -24217,6 +24246,7 @@ function resetForm(){
   document.getElementById('f-celular').value='';
   var _fswR=document.getElementById('f-sinwa'); if(_fswR) _fswR.checked=false;   // 📱 (§4ok-95)
   nxCliLimpiar();                              // 👋 (§4js, P1)
+  try{ atcCompraLimpiar(); }catch(e){}         // 🛡️ (14/11, 264) «Es otra» vale para esta ATC
   segSet('f-turno','AM');
   var _tHint0=document.getElementById('f-turno-hint'); if(_tHint0) _tHint0.textContent='';
   document.getElementById('f-zona').value='';
@@ -24741,6 +24771,7 @@ function palBuscar(q){
   /* «Ir a…» por el COMIENZO de las palabras: «ros» no tiene que traer Contabilidad por «cob-ros». */
   var acc=palAcciones().filter(function(a){ var ws=palNorm(a.t+' '+a.q).split(' '); return !n || n.split(' ').every(function(w){ return ws.some(function(x){ return x.indexOf(w)===0; }); }); });
   if(!n){ return acc.map(function(a){ return { g:'Ir a', ic:a.ic, t:a.t, s:a.s, fn:a.fn }; }); }
+  try{ certPalBuscar(q).forEach(function(r){ out.push(r); }); }catch(e){}   // 🛡️ (14/11, 264) el código de un certificado de garantía
   // Pedidos: todas las palabras tienen que estar (cliente, OC, nota, celular, zona, vendedor, productos); los números sin guiones.
   var palabras=n.split(' ').filter(Boolean), peds=[];
   (STATE||[]).forEach(function(p){
@@ -36695,6 +36726,7 @@ function showMisModal(id){
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
+      certBloqueHtml(p)+   // 🛡️ (14/11, 264) el certificado de garantía
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -50377,6 +50409,7 @@ function showWhatsappModal(rec, volverA, reenvio){
         '<button class="btn btn-ghost btn-sm" onclick="'+salir+'">'+(reenvio?'Volver a la venta':'Cerrar')+'</button>'+
       '</div>'+
       (reenvio ? '' : nxClienteBloque(rec, 'nuevo'))+   // 💬 (§4js, P3) y el mensaje para el CLIENTE, listo para su WhatsApp
+      (reenvio ? '' : certBloqueHtml(rec))+             // 🛡️ (14/11, 264) y el certificado de garantía (por ahora, solo con la contraseña o ?cert=1)
     '</div>';
   openModal(html);
   try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
@@ -51288,6 +51321,7 @@ function showPedidoModal(id){
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
       '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
       botonesRpt(p)+mas+pedHistHtml(p)+   // 🕓 (mejora 212) la historia del pedido, cerrada
+      certBloqueHtml(p)+                  // 🛡️ (14/11, 264) el certificado de garantía
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
@@ -60139,6 +60173,557 @@ function nxAvisarCambio(id){
   openModal('<div class="modal-h"><h3>💬 Avisar al cliente</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+nxClienteBloque(p, 'cambio')+'<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button></div>');
 }
+
+/* ---------------------------------------------------------------- 🛡️ 264 · EL CERTIFICADO DE GARANTÍA (14/11)
+   El dueño aprobó la 264 con dos condiciones: *«lo revisaremos y diseñaremos el formato»* y *«debe llevar un QR también»*. Esto es la
+   PRIMERA VERSIÓN, para que él la revise: se ve SOLO con la contraseña de Administración (`UNLOCKED`) o con `?cert=1` en la dirección,
+   hasta que diga que sale para las vendedoras (`CERT_PARA_TODOS=true`).
+   · Qué ventas lo llevan (`certEntra`): una VENTA (📄 OC; nunca ATC ni RPT; también la venta de tienda) con al menos un colchón o un
+     somier (`pryTipoProd`, la misma regla de las unidades de Proyección). Afuera los pedidos internos, ROHO (reposición de sus tiendas)
+     y los mayoristas (Tienda Amiga, Copacaba, Luis Franco, la bodega de Multicenter): el certificado es para el cliente que usa el colchón.
+   · Qué dice (`certDatos`): a nombre de quien va la garantía (el campo «Garantía — a nombre de» o, vacío, el cliente), el N° de pedido,
+     la tienda de quien vendió ese día (`sucursalDeVendedor`; en una venta de tienda, la tienda de la venta), cada colchón/somier con su
+     medida y código, la fecha de compra (el día en que se cargó la venta: `contaFecha`), los años de garantía de su LÍNEA (`CERT_ANOS`,
+     la línea con `atciProdDe`, la MISMA regla del informe de ATC) y hasta cuándo vale, qué cubre y qué no (`CERT_TEXTO`), cómo pedirla,
+     un código de verificación y un QR.
+   · El código (`certCodigo`): `<N° de pedido>-<4 letras>`. Las letras salen de una huella del id del pedido (`certLetras`): sin azar, el
+     mismo pedido da SIEMPRE el mismo código. Escrito en el buscador (Ctrl+K) abre ese pedido (`certPalBuscar`), aunque el N° haya cambiado.
+   · El QR (`certQr*`): lo dibuja `qrcode-generator` 1.4.4 de cdnjs, que se baja recién al armar el primer certificado. Sin la librería
+     (sin internet) el certificado sale igual, SIN QR, y lo dice. Qué lleva lo decide el dueño: `CERT_QR_MODO='datos'` (un texto corto con
+     el código, el producto, la compra y «vale hasta») o `'url'` (`CERT_QR_URL?c=<código>`; con la dirección vacía, vuelve a 'datos').
+   · Es una IMAGEN (un lienzo de CERT_W×CERT_H): «💬 Mandar por WhatsApp» la comparte desde el celular (`navigator.share` con el archivo)
+     y, en la compu, la baja y abre el chat del cliente con un texto corto; «⬇️ Bajar imagen». El panel no manda nada solo y no guarda nada.
+   · Sale en «✅ Pedido guardado» (al lado del mensaje para el cliente), en la ficha de Mis pedidos y en la de Administración.
+   En Playwright no aparece salvo `window.CERT_PRUEBA` (tests/test_certificado.js). */
+var CERT_PARA_TODOS=false;                       // 🔒 primera versión: solo con la contraseña o con ?cert=1
+var CERT_DESDE='compra';                         // la garantía cuenta desde 'compra' (el día de la venta) o 'entrega' (el día agendado)
+var CERT_QR_MODO='datos';                        // 'datos' = el texto adentro del QR · 'url' = CERT_QR_URL + '?c=<código>'
+var CERT_QR_URL='';
+var CERT_QR_SRC='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', CERT_QR_TOPE_MS=8000;
+/* Años de garantía por LÍNEA. null = «a definir»: el certificado lo dice en rojo, para revisar. La línea la decide `certLinea`. */
+var CERT_ANOS={
+  'Titanio':null, 'Oro':null, 'Especial semiortopédico':null, 'Plata':null, 'Dream':null, 'Tropical':null, 'Colchoneta':null,
+  'Sueña':null,                                  // todas las líneas de Sueña (una que vaya distinto: «Sueña Premier Deluxe», «Sueña Smart»…)
+  'Somier':null,                                 // los somieres de las dos marcas
+  'Otro colchón':null                            // lo que el nombre no dice
+};
+/* El texto del certificado: BORRADOR para que el dueño lo corrija. */
+var CERT_TEXTO={
+  titulo:'Certificado de garantía',
+  cubre:[
+    'Defectos de fabricación: costuras, tela y materiales.',
+    'Hundimientos o deformaciones que no vuelven a su forma con el uso normal.',
+    'Resortes o estructura que se rompen o suenan.',
+    'En el somier: la estructura y las patas que vinieron con él.'
+  ],
+  noCubre:[
+    'Manchas, humedad, quemaduras, cortes o roturas.',
+    'Usarlo sin una base firme o sobre una base que no corresponde.',
+    'El desgaste normal de la tela con el tiempo.',
+    'Si se sacó la etiqueta, se abrió o lo reparó otra persona.'
+  ],
+  pedir:'Para pedir la garantía, escribí al WhatsApp que te mandó este certificado.',
+  pie:'Guardá este certificado junto con tu nota de venta o tu factura.'
+};
+var CERT_W=1080, CERT_H=1350;
+var CERT_LETRAS='ABCDEFGHJKMNPQRSTUVWXYZ';      // sin I, L ni O: no se confunden con 1 y 0
+var CERT_P={}, CERT_QR_PEND=null, CERT_LOGO=null;
+var CERT_LIN_HEAVEN={ TITANIO:'Titanio', ORO:'Oro', ESPECIAL:'Especial semiortopédico', PLATA:'Plata', DREAM:'Dream', TROPICAL:'Tropical', COLCHONETA:'Colchoneta' };
+function certVe(){
+  if(navigator.webdriver && !window.CERT_PRUEBA) return false;
+  return !!(CERT_PARA_TODOS || UNLOCKED || /[?&]cert=1(?:&|$)/.test(location.search||''));
+}
+/* Lo que el certificado cubre de un pedido: los renglones que son colchón, somier o los dos (combo), con su línea. */
+function certLineas(p){
+  var mv=marcaDe(p && p.vendedor)||'', out=[];
+  ((p && p.productos)||[]).forEach(function(x){
+    if(!x) return;
+    var t='', n=Number(x.cant)||0; try{ t=pryTipoProd(x); }catch(e){ t=''; }
+    if(!t || !(n>0)) return;
+    var cod=String(x.codigo||'').trim().toUpperCase(), cat=cod && CODIGOS[cod];
+    var desc=String(x.desc||'').trim()||(cat ? cat.d : ''); if(!desc) return;
+    var o=null; try{ o=atciProdDe(x, mv); }catch(e){ o=null; }
+    out.push({ desc:desc, medida:String(x.medida||'').trim(), codigo:String(x.codigo||'').trim(), cant:n, tipo:t,
+               marca:(o && o.marca)||mv, lin:certLinea(t, o) });
+  });
+  return out;
+}
+function certLinea(t, o){
+  if(t==='somier') return 'Somier';
+  if(o && o.marca==='suena'){
+    var s='Sueña '+String(o.lin||'').toLowerCase().replace(/(^|\s)\S/g, function(c){ return c.toUpperCase(); });
+    return Object.prototype.hasOwnProperty.call(CERT_ANOS, s) ? s : 'Sueña';
+  }
+  if(o && o.marca==='heaven' && CERT_LIN_HEAVEN[o.lin]) return CERT_LIN_HEAVEN[o.lin];
+  return 'Otro colchón';
+}
+function certAnosDe(lin){ var v=CERT_ANOS[lin]; return (typeof v==='number' && v>0) ? v : null; }
+/* Una venta que vale certificado (sin mirar quién lo ve ni a quién se le vendió). */
+function certCompraVale(p){
+  if(!p || esFilaSistema(p) || esATC(p.oc) || esRPT(p.oc)) return false;
+  if(esBorrador(p) || (typeof borradorDe==='function' && borradorDe(p.id))) return false;
+  return certLineas(p).length>0;
+}
+function certEntra(p){
+  if(!certCompraVale(p)) return false;
+  if(esRoho(p.vendedor) || cliEsInterno(p.vendedor||'') || stockClienteFuera(p) || stockEsMulticenter(p)) return false;
+  return true;
+}
+/* La huella: el mismo texto da siempre el mismo número (FNV-1a de 32 bits y una mezcla al final). */
+function certHuella(s){
+  s=String(s||''); var h=2166136261;
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h, 16777619)>>>0; }
+  h^=h>>>16; h=Math.imul(h, 2246822507)>>>0; h^=h>>>13; h=Math.imul(h, 3266489909)>>>0; h^=h>>>16;
+  return h>>>0;
+}
+function certLetras(p){
+  var h=certHuella('cert|'+String((p && p.id)||'')), o='';
+  for(var i=0;i<4;i++){ o+=CERT_LETRAS.charAt(h%CERT_LETRAS.length); h=Math.floor(h/CERT_LETRAS.length); }
+  return o;
+}
+function certOcTxt(p){ return String((p && p.oc)||'').replace(/^\s*OC\b\s*/i, '').replace(/\s+/g, '').trim() || 'SN'; }
+function certCodigo(p){ return certOcTxt(p)+'-'+certLetras(p); }
+function certSumarAnos(iso, n){
+  var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m || !(n>0)) return '';
+  var y=+m[1]+n, d=+m[3];
+  if(m[2]==='02' && d===29 && !((y%4===0 && y%100!==0) || y%400===0)) d=28;
+  return y+'-'+m[2]+'-'+(d<10?'0':'')+d;
+}
+function certTienda(p){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p.vendedor, contaFecha(p)) || ''; }
+function certMarca(L, p){
+  var c={ heaven:0, suena:0 };
+  (L||[]).forEach(function(l){ if(c[l.marca]!=null) c[l.marca]+=l.cant; });
+  var k=c.heaven>c.suena ? 'heaven' : (c.suena>c.heaven ? 'suena' : (marcaDe(p && p.vendedor)||''));
+  if(k!=='heaven' && k!=='suena') k='';
+  return { k:k, lbl:k==='suena' ? 'Sueña' : (k==='heaven' ? 'Heaven' : 'Multiespumas') };
+}
+function certDatos(p){
+  var L=certLineas(p), compra=contaFecha(p), desde=(CERT_DESDE==='entrega') ? (fechaSalida(p)||compra) : compra;
+  L.forEach(function(l){ l.anos=certAnosDe(l.lin); l.vence=l.anos ? certSumarAnos(desde, l.anos) : ''; });
+  var D={ id:String(p.id), codigo:certCodigo(p), oc:certOcTxt(p), cliente:String(p.garantia||'').trim()||String(p.cliente||'').trim()||'—',
+    comprador:String(p.cliente||'').trim(), cel:p.celular||'', tienda:certTienda(p), vendedor:p.vendedor||'', compra:compra, desde:desde,
+    lineas:L, aDefinir:L.some(function(l){ return !l.anos; }), marca:certMarca(L, p) };
+  D.qr=certQrTexto(D);
+  return D;
+}
+function certProdTxt(l){ return (l.cant>1 ? (l.cant+' × ') : '')+l.desc+(l.medida ? (' '+l.medida) : ''); }
+function certUnidadesTxt(L){
+  var c=0, s=0;
+  (L||[]).forEach(function(l){ if(l.tipo==='colchon' || l.tipo==='combo') c+=l.cant; if(l.tipo==='somier' || l.tipo==='combo') s+=l.cant; });
+  var a=[]; if(c) a.push(c+(c===1?' colchón':' colchones')); if(s) a.push(s+(s===1?' somier':' somieres'));
+  return a.join(' y ');
+}
+/* Lo que lleva el QR. Con 'url' y una dirección: la dirección con el código; si no, el texto corto con los datos. */
+function certQrTexto(D){
+  if(CERT_QR_MODO==='url' && String(CERT_QR_URL||'').trim()){
+    var u=String(CERT_QR_URL).trim();
+    return u+(u.indexOf('?')>=0 ? '&' : '?')+'c='+encodeURIComponent(D.codigo);
+  }
+  return ['MULTIESPUMAS · Garantía '+D.marca.lbl, 'Código: '+D.codigo, 'Compra: '+fmtFecha(D.compra)]
+    .concat(D.lineas.map(function(l){ return certProdTxt(l)+' · vale hasta '+(l.vence ? fmtFecha(l.vence) : 'a definir'); }))
+    .join('\n');
+}
+/* ---- la librería del QR: de cdnjs, una vez, recién cuando hace falta ---- */
+function certQrHay(){ return typeof window.qrcode==='function'; }
+function certQrCargar(){
+  if(certQrHay()) return Promise.resolve(true);
+  if(CERT_QR_PEND) return CERT_QR_PEND;
+  CERT_QR_PEND=new Promise(function(ok){
+    var listo=false, s=document.createElement('script'), t=null;
+    var fin=function(v){ if(listo) return; listo=true; clearTimeout(t); CERT_QR_PEND=null; if(!v && s.parentNode) s.parentNode.removeChild(s); ok(!!v && certQrHay()); };
+    t=setTimeout(function(){ fin(false); }, CERT_QR_TOPE_MS);
+    s.src=CERT_QR_SRC; s.async=true; s.onload=function(){ fin(true); }; s.onerror=function(){ fin(false); };
+    document.head.appendChild(s);
+  });
+  return CERT_QR_PEND;
+}
+/* La matriz del QR ({n, osc(fila, col)}) o null. Con UTF-8 si la librería lo trae (las tildes); si no, sin tildes. Corrección 'M'; si con
+   'M' sale de más de CERT_QR_MAX cuadraditos por lado (cada uno quedaría de 3 px en la imagen y WhatsApp la comprime), 'L', que es más chico.
+   Probado con un lector (jsQR): los cuadraditos tienen que ser de píxeles ENTEROS; de 3,4 px a veces no se leía. */
+var CERT_QR_MAX=45;
+function certQrMatriz(texto){
+  try{
+    var q=window.qrcode, t=String(texto||'');
+    if(q.stringToBytesFuncs && q.stringToBytesFuncs['UTF-8']) q.stringToBytes=q.stringToBytesFuncs['UTF-8'];
+    else { try{ t=t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(e){} t=t.replace(/[^\x20-\x7e\n]/g, ''); }
+    var hacer=function(nv){ var qr=q(0, nv); qr.addData(t); qr.make(); return qr; };
+    var qr=hacer('M'), n=qr.getModuleCount();
+    if(n>CERT_QR_MAX){ try{ var ql=hacer('L'), nl=ql.getModuleCount(); if(nl>0 && nl<n){ qr=ql; n=nl; } }catch(e){} }
+    if(!(n>0)) return null;
+    return { n:n, osc:function(r, c){ return !!qr.isDark(r, c); } };
+  }catch(e){ return null; }
+}
+function certLogoCargar(){
+  if(CERT_LOGO) return CERT_LOGO;
+  CERT_LOGO=new Promise(function(ok){
+    var im=new Image(), listo=false, fin=function(v){ if(listo) return; listo=true; ok(v); };
+    im.onload=function(){ fin(im); }; im.onerror=function(){ fin(null); };
+    setTimeout(function(){ fin(null); }, 3000);
+    try{ im.src='data:image/png;base64,'+LOGO_B64; }catch(e){ fin(null); }
+  });
+  return CERT_LOGO;
+}
+function certFuentes(){
+  try{
+    if(!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.race([Promise.all([document.fonts.load('800 60px Inter'), document.fonts.load('600 24px Inter')]),
+                         new Promise(function(ok){ setTimeout(ok, 1500); })]).catch(function(){});
+  }catch(e){ return Promise.resolve(); }
+}
+/* Arma el certificado: {cv, D, qr:true|false, falla:''|'sin_lib'|'error'}. */
+function certArmar(idOrP){
+  var p=(idOrP && typeof idOrP==='object') ? idOrP : (findById(idOrP) || CERT_P[String(idOrP)]);
+  if(!p || !certCompraVale(p)) return Promise.reject(new Error('no_entra'));
+  var D=certDatos(p);
+  return Promise.all([certQrCargar().catch(function(){ return false; }), certLogoCargar(), certFuentes()]).then(function(r){
+    var M=r[0] ? certQrMatriz(D.qr) : null;
+    var cv=document.createElement('canvas'); cv.width=CERT_W; cv.height=CERT_H;
+    certDibujar(cv.getContext('2d'), D, M, r[1]);
+    return { cv:cv, D:D, qr:!!M, falla:M ? '' : (r[0] ? 'error' : 'sin_lib') };
+  });
+}
+/* ---- el dibujo (los colores del panel y los de la marca; sin emojis: en el lienzo salen distintos en cada aparato) ---- */
+var CERT_SANS='Inter, system-ui, "Segoe UI", Roboto, Arial, sans-serif', CERT_MONO='ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace';
+var CERT_COL={
+  heaven:{ g:['#00B5AD','#0f766e','#1e3a5f'], a:'#00B5AD', t:'#0f766e', lt:'#e6f7f6' },
+  suena: { g:['#ca8a04','#a16207','#713f12'], a:'#FFD400', t:'#a16207', lt:'#fef9e1' },
+  '':    { g:['#00B5AD','#1e3a5f','#1d4ed8'], a:'#00B5AD', t:'#0f766e', lt:'#e6f7f6' }
+};
+function certRR(ctx, x, y, w, h, r){
+  r=Math.min(r, w/2, h/2);
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r); ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h); ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r); ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
+}
+function certCorta(ctx, s, max){
+  s=String(s||''); if(ctx.measureText(s).width<=max) return s;
+  while(s.length>1 && ctx.measureText(s+'…').width>max) s=s.slice(0, -1);
+  return s.replace(/\s+$/, '')+'…';
+}
+function certEnvolver(ctx, s, max){
+  var ws=String(s||'').split(/\s+/).filter(Boolean), L=[], cur='';
+  ws.forEach(function(w){ var t=cur ? (cur+' '+w) : w; if(cur && ctx.measureText(t).width>max){ L.push(cur); cur=w; } else cur=t; });
+  if(cur) L.push(cur);
+  return L;
+}
+function certFont(peso, px, mono){ return peso+' '+px+'px '+(mono ? CERT_MONO : CERT_SANS); }
+function certEscudo(ctx, x, y, s, fondo, tilde){
+  ctx.save(); ctx.translate(x, y); ctx.scale(s/100, s/100);
+  ctx.beginPath(); ctx.moveTo(50, 0); ctx.lineTo(92, 14); ctx.lineTo(92, 50); ctx.quadraticCurveTo(90, 88, 50, 104); ctx.quadraticCurveTo(10, 88, 8, 50);
+  ctx.lineTo(8, 14); ctx.closePath(); ctx.fillStyle=fondo; ctx.fill();
+  if(tilde){ ctx.beginPath(); ctx.moveTo(30, 52); ctx.lineTo(45, 67); ctx.lineTo(72, 38); ctx.lineWidth=10; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.strokeStyle=tilde; ctx.stroke(); }
+  ctx.restore();
+}
+function certDibujar(ctx, D, M, logo){
+  var W=CERT_W, H=CERT_H, C=CERT_COL[D.marca.k]||CERT_COL[''], X=80, AN=920, ROJO='#c81e3a', GRIS='#56636f', TINTA='#0f2333';
+  ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+  // el fondo y la tarjeta
+  var bg=ctx.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#e6fffe'); bg.addColorStop(.5, '#f4f7ff'); bg.addColorStop(1, '#eef2ff');
+  ctx.fillStyle=bg; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.shadowColor='rgba(15,35,51,.18)'; ctx.shadowBlur=36; ctx.shadowOffsetY=12;
+  certRR(ctx, 30, 30, W-60, H-60, 36); ctx.fillStyle='#fff'; ctx.fill(); ctx.restore();
+  // el encabezado con el color de la marca
+  ctx.save(); certRR(ctx, 30, 30, W-60, H-60, 36); ctx.clip();
+  var hg=ctx.createLinearGradient(30, 30, W-30, 260); hg.addColorStop(0, C.g[0]); hg.addColorStop(.55, C.g[1]); hg.addColorStop(1, C.g[2]);
+  ctx.fillStyle=hg; ctx.fillRect(30, 30, W-60, 230);
+  ctx.globalAlpha=.10; certEscudo(ctx, 770, 6, 290, '#fff', ''); ctx.globalAlpha=1;
+  ctx.fillStyle=C.a; ctx.fillRect(30, 260, W-60, 8);
+  ctx.restore();
+  // el logo en su pastilla blanca
+  certRR(ctx, X, 62, 262, 96, 20); ctx.fillStyle='#fff'; ctx.fill();
+  if(logo){ try{ ctx.drawImage(logo, 182, 140, 378, 135, X+14, 72, 234, 76); }catch(e){} }
+  else { ctx.fillStyle='#1f2a5a'; ctx.font=certFont(800, 30); ctx.fillText('MultiESPUMAS', X+20, 120); }
+  // la marca, arriba a la derecha
+  ctx.font=certFont(800, 30); var mt=D.marca.lbl.toUpperCase(), mw=ctx.measureText(mt).width+56;
+  certRR(ctx, W-80-mw, 70, mw, 56, 28); ctx.fillStyle='rgba(255,255,255,.16)'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,.75)'; ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(mt, W-80-mw/2, 109); ctx.textAlign='left';
+  if(D.aDefinir){
+    ctx.font=certFont(800, 18); var bt='BORRADOR · PARA REVISAR', bw=ctx.measureText(bt).width+28;
+    certRR(ctx, W-80-bw, 138, bw, 34, 17); ctx.fillStyle=ROJO; ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(bt, W-80-bw+14, 161);
+  }
+  certEscudo(ctx, X, 182, 58, 'rgba(255,255,255,.95)', C.g[1]);
+  ctx.fillStyle='#fff'; ctx.font=certFont(800, 56); ctx.fillText(certCorta(ctx, CERT_TEXTO.titulo, AN-80), X+76, 236);
+  // a nombre de
+  ctx.fillStyle=GRIS; ctx.font=certFont(700, 20); ctx.fillText('A NOMBRE DE', X, 318);
+  ctx.fillStyle=TINTA; ctx.font=certFont(800, 46); ctx.fillText(certCorta(ctx, D.cliente, AN), X, 368);
+  // N° de pedido · tienda · fecha de compra
+  var cajas=[['N° DE PEDIDO', D.oc], ['TIENDA', D.tienda||'—'], ['FECHA DE COMPRA', fmtFecha(D.compra)||'—']], cw=(AN-2*18)/3;
+  cajas.forEach(function(c, i){
+    var x=X+i*(cw+18);
+    certRR(ctx, x, 392, cw, 88, 18); ctx.fillStyle='#f4f7fb'; ctx.fill();
+    ctx.fillStyle=GRIS; ctx.font=certFont(700, 17); ctx.fillText(c[0], x+18, 424);
+    ctx.fillStyle=TINTA; ctx.font=certFont(800, 29); ctx.fillText(certCorta(ctx, c[1], cw-36), x+18, 462);
+  });
+  // los productos (hasta 3 renglones; con más, el tercero dice cuántos más hay)
+  ctx.fillStyle=GRIS; ctx.font=certFont(700, 20); ctx.fillText('LO QUE TIENE GARANTÍA', X, 528);
+  var L=D.lineas, ver=L.length>3 ? L.slice(0, 2) : L, y=544, RH=82;
+  ver.forEach(function(l){
+    certRR(ctx, X, y, AN, RH, 16); ctx.fillStyle=C.lt; ctx.fill();
+    ctx.fillStyle=C.a; ctx.fillRect(X, y+12, 7, RH-24);
+    var der=l.anos ? ('Garantía: '+l.anos+(l.anos===1?' año':' años')) : 'Años de garantía: a definir';
+    var der2=l.vence ? ('vale hasta el '+fmtFecha(l.vence)) : 'vale hasta: a definir';
+    ctx.font=certFont(800, 22); var dw=ctx.measureText(der).width;
+    ctx.font=certFont(600, 20); dw=Math.max(dw, ctx.measureText(der2).width);
+    ctx.textAlign='right';
+    ctx.fillStyle=l.anos ? C.t : ROJO; ctx.font=certFont(800, 22); ctx.fillText(der, X+AN-22, y+36);
+    ctx.fillStyle=l.vence ? GRIS : ROJO; ctx.font=certFont(600, 20); ctx.fillText(der2, X+AN-22, y+64);
+    ctx.textAlign='left';
+    var izq=AN-60-dw-24;
+    ctx.fillStyle=TINTA; ctx.font=certFont(800, 27); ctx.fillText(certCorta(ctx, (l.cant>1 ? (l.cant+' × ') : '')+l.desc, izq), X+26, y+37);
+    ctx.fillStyle=GRIS; ctx.font=certFont(600, 20);
+    ctx.fillText(certCorta(ctx, [l.medida, l.codigo ? ('cód. '+l.codigo) : '', 'línea '+l.lin].filter(Boolean).join(' · '), izq), X+26, y+66);
+    y+=RH+10;
+  });
+  if(L.length>3){
+    certRR(ctx, X, y, AN, 50, 14); ctx.fillStyle='#f4f7fb'; ctx.fill();
+    ctx.fillStyle=TINTA; ctx.font=certFont(700, 21);
+    var resto=L.slice(2), ru=resto.reduce(function(a, l){ return a+l.cant; }, 0);
+    ctx.fillText(certCorta(ctx, '+ '+ru+' más: '+resto.map(certProdTxt).join(' · '), AN-40), X+22, y+33);
+    y+=60;
+  }
+  // qué cubre y qué no (la letra se achica hasta que entra en el lugar que queda)
+  var top=y+16, fondo=1000, colW=(AN-30)/2, cols=[['Qué cubre', CERT_TEXTO.cubre, '#16a34a'], ['Qué no cubre', CERT_TEXTO.noCubre, ROJO]];
+  var px=22, arm=null;
+  for(; px>=15; px--){
+    ctx.font=certFont(500, px);
+    arm=cols.map(function(c){ return c[1].map(function(t){ return certEnvolver(ctx, t, colW-30); }); });
+    var alto=Math.max.apply(null, arm.map(function(it){ return it.reduce(function(a, ls){ return a+ls.length*(px+7)+8; }, 0); }));
+    if(top+40+alto<=fondo) break;
+  }
+  if(px<15) px=15;
+  cols.forEach(function(c, i){
+    var x=X+i*(colW+30), yy=top+28;
+    ctx.beginPath(); ctx.arc(x+12, yy-9, 12, 0, Math.PI*2); ctx.fillStyle=c[2]; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=3.5; ctx.lineCap='round'; ctx.beginPath();
+    if(i===0){ ctx.moveTo(x+6, yy-9); ctx.lineTo(x+11, yy-4); ctx.lineTo(x+18, yy-14); } else { ctx.moveTo(x+7, yy-14); ctx.lineTo(x+17, yy-4); ctx.moveTo(x+17, yy-14); ctx.lineTo(x+7, yy-4); }
+    ctx.stroke();
+    ctx.fillStyle=TINTA; ctx.font=certFont(800, 24); ctx.fillText(c[0], x+32, yy);
+    yy+=12+px;
+    ctx.font=certFont(500, px);
+    arm[i].forEach(function(ls){
+      ls.forEach(function(ln, j){
+        if(yy>fondo) return;
+        if(j===0){ ctx.beginPath(); ctx.arc(x+8, yy-px*0.35, 4, 0, Math.PI*2); ctx.fillStyle=c[2]; ctx.fill(); }
+        ctx.fillStyle='#34424f'; ctx.fillText(ln, x+22, yy); yy+=px+7;
+      });
+      yy+=8;
+    });
+  });
+  // cómo pedirla
+  certRR(ctx, X, 1012, AN, 80, 18); ctx.fillStyle=C.lt; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle=C.a; ctx.stroke();
+  ctx.beginPath(); ctx.arc(X+42, 1052, 22, 0, Math.PI*2); ctx.fillStyle='#25D366'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(X+42, 1052, 11, 0, Math.PI*2); ctx.stroke();
+  ctx.fillStyle=TINTA; ctx.font=certFont(800, 23);
+  var pl=certEnvolver(ctx, CERT_TEXTO.pedir, AN-110);
+  if(pl.length>2){ ctx.font=certFont(800, 20); pl=certEnvolver(ctx, CERT_TEXTO.pedir, AN-110).slice(0, 2); }
+  pl.forEach(function(ln, i){ ctx.fillText(ln, X+80, (pl.length===1 ? 1060 : 1045)+i*30); });
+  // el código y el QR
+  var QS=196, QX=X+AN-QS, QY=1104, AT=AN-QS-40;
+  ctx.fillStyle=GRIS; ctx.font=certFont(700, 19); ctx.fillText('CÓDIGO DE VERIFICACIÓN', X, 1142);
+  ctx.fillStyle=TINTA; ctx.font=certFont(800, 50, true); ctx.fillText(certCorta(ctx, D.codigo, AT), X, 1196);
+  ctx.fillStyle=GRIS; ctx.font=certFont(600, 19);
+  ctx.fillText(certCorta(ctx, 'La garantía cuenta desde '+(CERT_DESDE==='entrega' ? 'la entrega' : 'la compra')+' ('+fmtFecha(D.desde)+').', AT), X, 1230);
+  var pie=certEnvolver(ctx, CERT_TEXTO.pie, AT).slice(0, 2);
+  pie.forEach(function(ln, i){ ctx.fillText(ln, X, 1258+i*24); });
+  if(D.aDefinir){ ctx.fillStyle=ROJO; ctx.font=certFont(800, 18); ctx.fillText(certCorta(ctx, 'Años de garantía: a definir (es para revisar).', AT), X, 1258+pie.length*24+4); }
+  certRR(ctx, QX-8, QY-8, QS+16, QS+16, 14); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=2; ctx.strokeStyle='#d7e0e8'; ctx.stroke();
+  if(M){
+    /* Cuadraditos de píxeles ENTEROS (con 3,4 px el lector a veces no lo leía), centrados, con margen blanco alrededor. */
+    var cel=Math.max(1, Math.floor(QS/(M.n+2))), lado=cel*M.n, ox=QX+Math.floor((QS-lado)/2), oy=QY+Math.floor((QS-lado)/2);
+    ctx.fillStyle=TINTA;
+    for(var r=0;r<M.n;r++) for(var c=0;c<M.n;c++) if(M.osc(r, c)) ctx.fillRect(ox+c*cel, oy+r*cel, cel, cel);
+  } else {
+    ctx.save(); ctx.setLineDash([8, 6]); ctx.strokeStyle='#9aa7b2'; ctx.lineWidth=2; ctx.strokeRect(QX+10, QY+10, QS-20, QS-20); ctx.restore();
+    ctx.fillStyle='#6b7884'; ctx.font=certFont(700, 17); ctx.textAlign='center';
+    ['QR no disponible', '(sin conexión)'].forEach(function(t, i){ ctx.fillText(t, QX+QS/2, QY+QS/2-4+i*24); });
+    ctx.textAlign='left';
+  }
+}
+/* ---- el bloque de las ventanas ---- */
+var CERT_ICO='<svg viewBox="0 0 100 104" width="22" height="23" aria-hidden="true" focusable="false"><path d="M50 0L92 14V50Q90 88 50 104Q10 88 8 50V14Z" fill="#00B5AD"/><path d="M30 52L45 67L72 38" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function certBloqueHtml(p){
+  if(!p || !certVe() || !certEntra(p)) return '';
+  var D=certDatos(p), id=esc(String(p.id).replace(/'/g, ''));
+  CERT_P[String(p.id)]=p;
+  return '<div class="cert-b no-print" id="cert-b" data-id="'+id+'">'+
+    '<div class="cert-cab"><span class="cert-ico">'+CERT_ICO+'</span><div class="cert-tx"><div class="cert-tit">🛡️ Certificado de garantía</div>'+
+      '<div class="cert-sub">'+esc(certUnidadesTxt(D.lineas))+' · a nombre de <b>'+esc(D.cliente)+'</b> · código <span class="cert-cod">'+esc(D.codigo)+'</span>'+
+        (D.aDefinir ? ' · <span class="cert-def">años de garantía: a definir</span>' : '')+'</div></div></div>'+
+    (CERT_PARA_TODOS ? '' : '<div class="cert-rev">🔎 Primera versión para revisar el formato: las vendedoras todavía no lo ven.</div>')+
+    '<div class="cert-acc">'+
+      '<button type="button" class="btn btn-sm cert-ver" onclick="certVer(\''+id+'\')">👁️ Ver el certificado</button>'+
+      '<button type="button" class="btn btn-sm wa-btn cert-wa" onclick="certMandar(\''+id+'\')">💬 Mandar por WhatsApp</button>'+
+      '<button type="button" class="btn btn-sm btn-ghost cert-baja" onclick="certBajar(\''+id+'\')">⬇️ Bajar imagen</button>'+
+    '</div>'+
+    '<div class="cert-aviso" id="cert-aviso" hidden></div><div class="cert-prev" id="cert-prev" hidden></div></div>';
+}
+function certAviso(r){
+  var a=document.getElementById('cert-aviso'); if(!a) return;
+  if(r && !r.qr){
+    a.innerHTML=r.falla==='sin_lib' ? '⚠️ No se pudo bajar lo que dibuja el QR (¿sin internet?): el certificado salió <b>sin QR</b>. Probá de nuevo con conexión.'
+                                    : '⚠️ El QR no se pudo armar: el certificado salió <b>sin QR</b>.';
+    a.hidden=false;
+  } else { a.hidden=true; a.innerHTML=''; }
+}
+function certVer(id){
+  var prev=document.getElementById('cert-prev'), bt=document.querySelector('#cert-b .cert-ver'); if(!prev) return Promise.resolve(null);
+  if(!prev.hidden && prev.querySelector('img')){ prev.hidden=true; prev.innerHTML=''; if(bt) bt.textContent='👁️ Ver el certificado'; return Promise.resolve(null); }
+  prev.hidden=false; prev.innerHTML='<div class="cert-cargando">⏳ Armando el certificado…</div>';
+  return certArmar(id).then(function(r){
+    var pv=document.getElementById('cert-prev'); if(!pv) return r;
+    pv.innerHTML='<img alt="Certificado de garantía de '+esc(r.D.cliente)+'" src="'+r.cv.toDataURL('image/png')+'">';
+    var b2=document.querySelector('#cert-b .cert-ver'); if(b2) b2.textContent='🙈 Esconder el certificado';
+    certAviso(r);
+    return r;
+  }, function(e){ prev.innerHTML='<div class="cert-cargando">No se pudo armar el certificado.</div>'; throw e; });
+}
+function certArchivo(D){
+  var cli=String(D.cliente||''); try{ cli=cli.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }catch(e){}
+  return 'Certificado-garantia-'+String(D.oc).replace(/[^0-9A-Za-z-]+/g, '')+'-'+cli.replace(/[^0-9A-Za-z]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30)+'.png';
+}
+function certBlob(cv){
+  return new Promise(function(ok, mal){
+    try{ if(cv.toBlob){ cv.toBlob(function(b){ if(b) ok(b); else mal(new Error('sin_imagen')); }, 'image/png'); return; } }catch(e){}
+    try{ var d=atob(cv.toDataURL('image/png').split(',')[1]), u=new Uint8Array(d.length); for(var i=0;i<d.length;i++) u[i]=d.charCodeAt(i); ok(new Blob([u], { type:'image/png' })); }
+    catch(e){ mal(e); }
+  });
+}
+function certBajar(id){
+  return certArmar(id).then(function(r){
+    certAviso(r);
+    return certBlob(r.cv).then(function(b){ downloadBlob(b, certArchivo(r.D), 'image/png'); toast('⬇️ Certificado bajado: '+certArchivo(r.D), 'ok'); return r; });
+  }).catch(function(e){ toast('No se pudo armar el certificado: '+String((e && e.message) || e), 'err'); });
+}
+function certMsg(D){
+  var nom=(typeof nxNombreCorto==='function' ? nxNombreCorto(D.comprador || D.cliente) : '') || '';
+  return 'Hola'+(nom ? (' '+nom) : '')+', te mando el certificado de garantía de tu compra en '+D.marca.lbl+' (pedido N° '+D.oc+').\n'+
+    'Código de verificación: '+D.codigo+'\n'+
+    'Guardalo: para pedir la garantía, escribí a este mismo WhatsApp.';
+}
+/* En el celular (con `navigator.share` y archivos) se comparte la imagen; en la compu se baja y se abre el chat del cliente. */
+function certCelular(){ try{ return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent||'') || !!(window.matchMedia && matchMedia('(pointer:coarse)').matches); }catch(e){ return false; } }
+function certMandar(id){
+  return certArmar(id).then(function(r){
+    certAviso(r);
+    return certBlob(r.cv).then(function(b){
+      var txt=certMsg(r.D), nombre=certArchivo(r.D), f=null;
+      try{ f=new File([b], nombre, { type:'image/png' }); }catch(e){ f=null; }
+      if(f && certCelular() && navigator.canShare && navigator.share){
+        var ok=false; try{ ok=navigator.canShare({ files:[f] }); }catch(e){ ok=false; }
+        if(ok) return navigator.share({ files:[f], title:CERT_TEXTO.titulo, text:txt }).then(function(){ return { r:r, como:'share' }; }, function(e){
+          if(e && e.name==='AbortError') return { r:r, como:'cancelado' };
+          return certMandarCompu(r, b, txt, nombre);
+        });
+      }
+      return certMandarCompu(r, b, txt, nombre);
+    });
+  }).catch(function(e){ toast('No se pudo armar el certificado: '+String((e && e.message) || e), 'err'); });
+}
+function certMandarCompu(r, b, txt, nombre){
+  downloadBlob(b, nombre, 'image/png');
+  var u=misWaCliente(r.D.cel);
+  if(u){
+    window.open(u+'?text='+encodeURIComponent(txt), '_blank');
+    toast('⬇️ Bajé el certificado ('+nombre+'). En el chat de '+(r.D.comprador||'el cliente')+', adjuntalo con 📎 (está en Descargas).', 'ok', 9000);
+  } else toast('⬇️ Bajé el certificado ('+nombre+'). El cliente no tiene un celular de WhatsApp anotado: mandalo a mano.', 'err', 9000);
+  return { r:r, como:u ? 'chat' : 'bajado' };
+}
+/* ---- 🔎 el código en el buscador (Ctrl+K): «11-245-QXKM» abre ese pedido. Manda la huella (las 4 letras); el N° es para ordenar ---- */
+function certPalBuscar(q){
+  if(!certVe()) return [];
+  var s=String(q||'').toUpperCase().replace(/[^0-9A-Z]/g, '').replace(/^OC/, ''), m=s.match(/^([0-9]*)([A-Z]{4})$/);
+  if(!m || s.length<6) return [];
+  var pre=m[1], le=m[2], L=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || certLetras(p)!==le || !certEntra(p)) return;
+    L.push({ p:p, igual:certOcTxt(p).replace(/[^0-9A-Za-z]/g, '').toUpperCase()===pre });
+  });
+  L.sort(function(a, b){ return (b.igual-a.igual) || ((Number(b.p.ts)||0)-(Number(a.p.ts)||0)); });
+  return L.slice(0, 3).map(function(o){
+    var p=o.p, D=certDatos(p);
+    return { g:'Certificado de garantía', ic:'🛡️', t:D.cliente+' · '+(ocEtiq(p.oc)||'pedido'),
+      s:'Código '+D.codigo+' · compra '+fmtFecha(D.compra)+' · '+D.lineas.map(certProdTxt).join(' + ')+(o.igual ? '' : ' · ⚠️ el N° de pedido no coincide'),
+      fn:(function(pid){ return function(){ if(UNLOCKED && typeof showPedidoModal==='function') showPedidoModal(pid); else showMisModal(pid); }; })(p.id) };
+  });
+}
+/* ---------------------------------------------------------------- 🛡️ 264 · EN LA ATC: «TIENE COMPRAS»
+   Al cargar una ATC, apenas se escribe el celular (o se elige el cliente), si ese celular (`cliCelClave`) tiene compras con colchón o
+   somier (`certCompraVale`: ventas, también de tienda), se proponen —las más nuevas primero, hasta `ATC_COMPRA_MAX`— con «Usar esta
+   compra»: llena la fecha de compra y, si los productos están vacíos, los colchones/somieres de esa compra. NUNCA pisa lo que la
+   vendedora ya escribió (y lo dice). «Es otra» esconde la propuesta para ese celular. Solo propone: no guarda nada y no frena.
+   Para TODOS (no depende de la contraseña). En Playwright no aparece salvo `window.ATC_COMPRA_PRUEBA`. */
+var ATC_COMPRA_MAX=5, ATC_COMPRA={ oculto:{}, L:[], k:'' };
+function atcCompraVe(){ return !(navigator.webdriver && !window.ATC_COMPRA_PRUEBA); }
+/* Las compras de ese celular (clave de `cliCelClave`), de la más nueva a la más vieja; `hasta` = no después de ese día (al editar una ATC). */
+function atcCompras(k, excluir, hasta){
+  if(!k) return [];
+  return (STATE||[]).filter(function(p){
+    return p && String(p.id)!==String(excluir||'') && cliCelClave(p.celular)===k && certCompraVale(p) && (!hasta || contaFecha(p)<=hasta);
+  }).map(function(p){ return { p:p, f:contaFecha(p), L:certLineas(p) }; })
+    .sort(function(a, b){ return (a.f<b.f ? 1 : (a.f>b.f ? -1 : 0)) || ((Number(b.p.ts)||0)-(Number(a.p.ts)||0)); })
+    .slice(0, ATC_COMPRA_MAX);
+}
+function atcCompraLimpiar(){ ATC_COMPRA={ oculto:{}, L:[], k:'' }; var b=document.getElementById('atc-compra'); if(b){ b.hidden=true; b.innerHTML=''; b._h=''; } }
+function atcCompraProdsVacios(){
+  var ds=document.querySelectorAll('#f-productos .prod-desc');
+  for(var i=0;i<ds.length;i++) if(String(ds[i].value||'').trim()) return false;
+  return true;
+}
+function atcCompraPintar(){
+  var box=document.getElementById('atc-compra'); if(!box) return;
+  var k=(atcCompraVe() && docTipoSel()==='ATC') ? cliCelClave((document.getElementById('f-celular')||{}).value) : '';
+  var prev=EDIT_ID ? findById(EDIT_ID) : null, hasta=(prev && esATC(prev.oc)) ? atcEntro(prev) : '';
+  var L=(k && !ATC_COMPRA.oculto[k]) ? atcCompras(k, EDIT_ID, hasta) : [];
+  ATC_COMPRA.L=L; ATC_COMPRA.k=k;
+  if(!L.length){ box.hidden=true; box.innerHTML=''; box._h=''; return; }
+  var fc=String((document.getElementById('f-atc-compra')||{}).value||'');
+  var h='<div class="atc-compra-t">🛡️ <b>Tiene '+(L.length===1 ? 'una compra' : (L.length+' compras'))+' con colchón o somier</b> (mismo celular). '+
+      '<span>Tocá la que corresponde y se completa la fecha de compra'+(atcCompraProdsVacios() ? ' y el producto' : '')+'. No cambia lo que ya escribiste.</span></div>'+
+    L.map(function(o, i){
+      var usada=!!fc && fc===o.f;
+      return '<div class="atc-compra-f'+(usada ? ' usada' : '')+'"><div class="atc-compra-x">compró el <b>'+esc(fmtFecha(o.f))+'</b> · '+
+          esc(o.L.map(certProdTxt).join(' + '))+' · N° '+esc(certOcTxt(o.p))+'</div>'+
+        (usada ? '<span class="atc-compra-ok">✓ Es la fecha que quedó</span>'
+               : '<button type="button" class="btn btn-sm atc-compra-usar" onclick="atcCompraUsar('+i+')">Usar esta compra</button>')+'</div>';
+    }).join('')+
+    '<div class="atc-compra-pie"><button type="button" class="btn btn-ghost btn-sm atc-compra-otra" onclick="atcCompraOtra()">Es otra</button></div>';
+  box.hidden=false;
+  if(box._h!==h){ box.innerHTML=h; box._h=h; }
+}
+function atcCompraUsar(i){
+  var o=ATC_COMPRA.L[i]; if(!o) return;
+  var hecho=[], quedo=[];
+  var fc=document.getElementById('f-atc-compra');
+  if(fc){
+    if(!String(fc.value||'').trim()){ fc.value=o.f; hecho.push('la fecha de compra ('+fmtFecha(o.f)+')'); try{ pintarAntiguedadAtc(); atcCampoListo(fc); }catch(e){} }
+    else if(fc.value!==o.f) quedo.push('la fecha de compra ('+fmtFecha(fc.value)+')');
+  }
+  if(atcCompraProdsVacios()){
+    var box=document.getElementById('f-productos');
+    if(box){
+      box.innerHTML='';
+      o.L.forEach(function(l){ addProdRow(l.desc, l.medida, l.codigo, l.cant); });
+      if(!box.children.length) addProdRow();
+      try{ refreshDelButtons(); }catch(e){}
+      try{ formEtiquetar(box); }catch(e){}
+      try{ pintarTotalProds(); }catch(e){}
+      try{ saldoAvisosProgramar(); }catch(e){}
+      try{ fxFormPintar(); }catch(e){}
+      hecho.push(o.L.length===1 ? 'el producto' : 'los productos');
+    }
+  } else quedo.push('los productos');
+  atcCompraPintar();
+  toast(hecho.length ? ('🛡️ Completé '+hecho.join(' y ')+' con la compra N° '+certOcTxt(o.p)+'.'+(quedo.length ? (' Lo que ya estaba escrito no lo toqué: '+quedo.join(' y ')+'.') : ''))
+                     : ('No cambié nada: ya tenías escrito '+quedo.join(' y ')+'. Si es esta compra, borralo y tocá de nuevo.'), hecho.length ? 'ok' : 'err', 7000);
+}
+function atcCompraOtra(){
+  if(ATC_COMPRA.k) ATC_COMPRA.oculto[ATC_COMPRA.k]=1;
+  var b=document.getElementById('atc-compra'); if(b){ b.hidden=true; b.innerHTML=''; b._h=''; }
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var fc=document.getElementById('f-celular'); if(fc){ fc.addEventListener('input', atcCompraPintar); fc.addEventListener('change', atcCompraPintar); }
+  var fd=document.getElementById('f-doc-tipo'); if(fd) fd.addEventListener('click', function(){ setTimeout(atcCompraPintar, 0); });
+});
 
 /* ---------------------------------------------------------------- M1 · RECORDATORIO DE ENTREGA (Mis pedidos)
    La 5ª ficha, naranja, al lado de las otras cuatro: cuántas entregas tiene la vendedora el próximo día con camión y a cuántos
