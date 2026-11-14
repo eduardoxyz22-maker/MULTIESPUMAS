@@ -3037,6 +3037,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
 
       <div class="sec">📝 Observaciones</div>
       <div class="field">
+        <!-- ⚡ 218 (14/11) Frases rápidas: un toque escribe la frase siempre igual (`FRQ`, `frqTocar`); no en la venta de tienda. -->
+        <div id="frq" class="frq solo-entrega no-print" role="group" aria-label="Frases rápidas para las observaciones"></div>
         <textarea id="f-obs" placeholder="Notas del pedido: entregar después de las 15h, llamar antes, color específico, etc. (opcional)"></textarea>
       </div>
 
@@ -6769,6 +6771,17 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 #carga-overlay label > .pico,[data-carga-lugar] label > .pico{margin:0;align-self:center}
 .fx-pr .pico{width:20px;height:14px;vertical-align:-3px;margin-right:4px}
 @media print{ .pico{width:18px;height:13px} }
+/* ⚡ 218 (14/11) Frases rápidas arriba de las observaciones (`frqPintar`): prendido = la nota ya lo dice */
+.frq{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;min-width:0}
+.frq:empty{display:none}
+.frq .frq-b{display:inline-flex;align-items:center;gap:5px;min-height:36px;max-width:100%;padding:5px 12px;border:1px solid #cfd8dc;border-radius:999px;background:#fff;color:#2D2D2D;font:inherit;font-size:.8rem;font-weight:700;line-height:1.2;cursor:pointer;white-space:nowrap;box-shadow:none;transition:background-color .15s,border-color .15s,color .15s}
+.frq .frq-b:hover{border-color:var(--teal-mid,#00A09A)}
+.frq .frq-b:focus-visible{outline:3px solid rgba(0,160,154,.45);outline-offset:2px}
+.frq .frq-b.on{background:#d9f3f1;border-color:var(--teal-mid,#00A09A);color:#065f5b}
+.frq .frq-b.on::after{content:'✓';font-weight:800}
+.frq .frq-i{font-size:1rem;line-height:1}
+@media (max-width:420px){ .frq{gap:5px} .frq .frq-b{font-size:.76rem;padding:5px 10px} }
+@media (prefers-reduced-motion:reduce){ .frq .frq-b{transition:none} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -20335,6 +20348,153 @@ function obsRevIr(x){
   el.classList.add('obsrev-mira'); setTimeout(function(){ el.classList.remove('obsrev-mira'); }, 2500);
 }
 
+/* ⚡ 218 · FRASES RÁPIDAS EN LAS OBSERVACIONES (14/11; el dueño aprobó la 218: «Botones arriba del campo de observaciones con lo que
+   más se escribe. Un toque y queda escrito igual siempre, así la ficha de logística lo marca como etiqueta sin errores de tipeo. Se
+   puede seguir escribiendo a mano»). En 632 pedidos de octubre y noviembre, 100 dicen «llamar antes», 53 piso o edificio, 27 «paga al
+   recibir» y 10 «doble bolsa», cada uno escrito a su manera.
+   · Cada botón de `#frq` escribe UNA frase fija (`FRQ[].f`) al final del campo, separada con «. », y dispara el `input` del campo (los
+     pasos, «Para guardar» y la revisión de las observaciones lo ven). «Edificio · piso…» deja elegido el «…» para escribir el nombre;
+     «Horario…» deja el cursor después de «HORARIO: ». Las frases cerradas no mueven el foco (en el celular no abre el teclado).
+   · Prendido = la nota ya lo dice, con la frase fija o como se escribe a mano (`frqSpans`, con las palabras que lee la ficha de
+     logística: `fichaNota` y `fichaObsChips`). Tocar uno prendido saca SOLO los pedazos que lo dicen; lo demás de la nota queda.
+   · Los dos «llamar» van juntos: elegir uno reemplaza al otro (y a «llamar 2 horas antes» o «avisar antes de ir» escritos a mano).
+     «Avisar antes» sin hora prende «Llamar 1 h antes» (es lo que más se escribe), salvo que la nota ya diga otra hora.
+   · OC, RPT y ATC; no en la venta de tienda (`.solo-entrega`). Solo escribe en el campo: nada va a la planilla hasta «Guardar».
+   ⚠️ Una frase NUEVA va en `FRQ`, en `frqSpans` (cómo se la reconoce escrita a mano) y su etiqueta en `fichaObsChips`
+   (`tests/test_frases_rapidas.js` mira que cada frase fija salga como etiqueta en la ficha de logística). */
+var FRQ=[
+  { k:'l1',    g:'llamar', ic:'📞', t:'Llamar 1 h antes', f:'LLAMAR 1 HORA ANTES' },
+  { k:'l30',   g:'llamar', ic:'📞', t:'Media hora antes', f:'LLAMAR MEDIA HORA ANTES' },
+  { k:'edif',  ic:'🏢', t:'Edificio · piso…', f:'EDIFICIO …, PISO ', sel:[9, 10] },   // el «…» queda elegido: lo que se escribe lo reemplaza
+  { k:'paga',  ic:'💵', t:'Paga al recibir',  f:'PAGA AL RECIBIR' },
+  { k:'bolsa', ic:'🛍️', t:'Doble bolsa',      f:'PONER DOBLE BOLSA' },
+  { k:'hora',  ic:'🕐', t:'Horario…',         f:'HORARIO: ', abre:1 }
+];
+function frqDe(k){ for(var i=0;i<FRQ.length;i++) if(FRQ[i].k===k) return FRQ[i]; return null; }
+/* «no llamar antes», «sin doble bolsa», «no se cobra al entregar»: eso no prende nada (con una palabra en el medio, como mucho). */
+function frqNiega(U, i){ return /\b(?:NO|SIN|NI)\s+(?:[A-Z]+\s+)?$/.test(U.slice(Math.max(0, i-24), i)); }
+/* Dónde lo dice la nota: { <k>:{ i, j, canon, todos:[{i,j}] }, grupo:{ llamar:[{ i, j, k }] } }. Las posiciones son del texto tal cual
+   (`obsRevMay` pasa a mayúsculas sin tildes SIN cambiar el largo). `canon` = escrito con la frase fija. */
+function frqSpans(s){
+  s=String(s==null?'':s);
+  var U=obsRevMay(s), R={ grupo:{ llamar:[] } }, m, re, cortes=[];
+  var tramo=function(i, j){ while(j>i && /[\s.,;:]/.test(U.charAt(j-1))) j--; return j>i ? { i:i, j:j } : null; };
+  var dentro=function(x, L){ return (L||[]).some(function(y){ return x.i<y.j && y.i<x.j; }); };
+  var sumar=function(k, x){
+    if(!x || (R[k] && dentro(x, R[k].todos))) return;
+    if(!R[k]){
+      var o=frqDe(k), tx=U.slice(x.i, x.j).replace(/\s+/g,' ').trim(), ft=o.f.trim().replace(/[\s.,;:]+$/,'');
+      R[k]={ i:x.i, j:x.j, canon:(o.sel || o.abre) ? tx.indexOf(ft.split(' ')[0].replace(/:$/,''))===0 : tx===ft, todos:[] };
+    }
+    R[k].todos.push(x);
+  };
+  /* 📞 los verbos de `fichaNota` («llamar», «avisar», «comunicarse»…) con un «antes» en la misma frase. «Antes de las 12» y «antes del
+     mediodía» son un horario, no esto. La hora («una hora», «media hora», «30 min») dice cuál de los dos es. */
+  re=/(?:\bPOR\s+FAVOR\s*,?\s*)?\b(?:LLAMAR(?:LE|LO|LA)?|LLAMEN|LLAME|LLMAR|AVISAR(?:LE)?|AVISEN|AVISE|AVISA|AVIASAR|COMUNICAR(?:SE)?)\b([^.,;:\n]{0,40}?)\bANTES\b(?!\s+DEL?\s+(?:LAS?\s+)?\d)(?!\s+DEL?\s+MEDIO\s*DIA)(?:\s+DE\s+(?:IR|LLEGAR|SALIR|ENTREGAR|PASAR|LA\s+ENTREGA))?/g;
+  while((m=re.exec(U))){
+    if(frqNiega(U, m.index)) continue;
+    var mid=m[1], t=/(?:^|[^A-Z0-9])(\d+|UNA|UN|MEDIA|DOS|TRES|1\/2|½)\s*(HORAS?|HRS?|H|MIN(?:UTOS?)?|MINS?)\b/.exec(mid), k='gen';
+    if(t){
+      var n=t[1], min=/^MIN/.test(t[2]), ymedia=/^\s*Y\s+MEDIA\b/.test(mid.slice(t.index+t[0].length));
+      if(/^(MEDIA|1\/2|½)$/.test(n) ? !min : (min && n==='30')) k='l30';
+      else if((/^(1|UNA|UN)$/.test(n) && !min && !ymedia) || (min && n==='60')) k='l1';
+      else k='otro';
+    }
+    R.grupo.llamar.push({ i:m.index, j:m.index+m[0].length, k:k }); cortes.push(m.index);
+  }
+  var G=R.grupo.llamar, de=function(k){ return G.filter(function(x){ return x.k===k; }); };
+  de('l1').forEach(function(x){ sumar('l1', x); }); de('l30').forEach(function(x){ sumar('l30', x); });
+  if(!de('l1').length && !de('l30').length && !de('otro').length) de('gen').forEach(function(x){ sumar('l1', x); });
+  /* 💵 lo mismo que `fichaNota` lee como «cobra al entregar» (`N.contra`), con el verbo de adelante */
+  re=/(?:\b(?:EL\s+)?(?:SALDO\s+)?(?:LO\s+|SE\s+)?(?:PAGARA\s+AL\s+(?:MOMENTO(?:\s+DE\s+(?:LA\s+)?(?:ENTREGA|RECIBIR))?|ENTREGAR|RECIBIR)|PAGA\s+AL\s+(?:ENTREGAR|RECIBIR)|COBRAR\s+AL\s+ENTR?REGAR))\b|\b(?:(?:PAGARA|PAGA|PAGO|CANCELARA|CANCELA|COBRAR|COBRA)\s+(?:EL\s+SALDO\s+)?)?AL\s+MOMENTO\s+DE\s+LA\s+ENTREGA\b|\b(?:(?:PAGO|COBRO)\s+)?CONTRA\s?ENTREGA\b|\bSALDO\s+PAGARA\b/g;
+  while((m=re.exec(U))){ if(frqNiega(U, m.index)) continue; sumar('paga', tramo(m.index, m.index+m[0].length)); cortes.push(m.index); }
+  /* 🛍️ lo que `fichaObsChips` lee como «doble bolsa» */
+  re=/\b(?:(?:PONER(?:LE)?|COLOCAR(?:LE)?|LLEVAR|USAR|ENVOLVER(?:LO|LA)?(?:\s+EN)?|CON|EN)\s+(?:LA\s+|UNA\s+)?)?(?:DOBLE\s+BOLSAS?|(?:2|DOS)\s+BOLSAS)\b/g;
+  while((m=re.exec(U))){ if(frqNiega(U, m.index)) continue; sumar('bolsa', tramo(m.index, m.index+m[0].length)); cortes.push(m.index); }
+  /* 🏢 y 🕐 abiertos: desde la palabra hasta el fin de la frase (o hasta la frase siguiente que reconoce otro botón) */
+  var kE=[], kH=[];
+  re=/\b(?:EN\s+(?:EL\s+)?)?(?:EDIFICIO|EDIF\b\.?|DPTO\b\.?|DEPTO\b\.?)/g;
+  while((m=re.exec(U))){ if(!frqNiega(U, m.index)) kE.push({ i:m.index, f:m.index+m[0].length }); }
+  re=/\bHORARIOS?\b(?:\s+DE\s+(?:ENTREGA|ATENCION))?\s*:?/g;
+  while((m=re.exec(U))){ if(!frqNiega(U, m.index)) kH.push({ i:m.index, f:m.index+m[0].length }); }
+  var fin=function(x, otros){
+    var c=U.slice(x.f).search(/\.(?=\s|$)|[;\n]/), j=c<0 ? U.length : x.f+c;
+    cortes.concat(otros.map(function(y){ return y.i; })).forEach(function(z){ if(z>x.i && z<j) j=z; });
+    return tramo(x.i, j) || { i:x.i, j:x.f };
+  };
+  kE.forEach(function(x){ sumar('edif', fin(x, kH)); });
+  kH.forEach(function(x){ sumar('hora', fin(x, kE)); });
+  /* 🪜 el piso sin la palabra «edificio» («3er piso», «piso 5»), como lo lee `fichaObsChips` */
+  re=/(?:\b(?:EN\s+EL|AL)\s+)?\b\d+\s*(?:ER|ERO|DO|RO|TO|MO|VO|NO|°|º)?\s*PISO\b|\bPISO\s*(?:N\S*\s*)?\d+/g;
+  while((m=re.exec(U))){ if(!frqNiega(U, m.index)) sumar('edif', tramo(m.index, m.index+m[0].length)); }
+  /* 🕐 una hora escrita sin «horario» («de 11 a 12», «después de las 15»): la MISMA lectura de la ficha (`fichaNota`) */
+  try{
+    var N=fichaNota({ observaciones:s, celular:'', productos:[] });
+    if(N.hora){
+      var pos=obsRevUbicarHora(U, N);
+      if(pos){
+        var ini=pos.i, pre=/(?:\b(?:LA\s+)?ENTREGAR?\s+(?:POR\s+FAVOR\s+)?|\bPUEDE\s+RECIBIR\s+|\bRECIBE\s+)$/.exec(U.slice(Math.max(0, pos.i-30), pos.i));
+        if(pre) ini=pos.i-pre[0].length;
+        sumar('hora', tramo(ini, pos.j));
+      }
+    }
+  }catch(e){}
+  return R;
+}
+/* Saca el pedazo [i, j) y el separador que le sobra («A. B. C» sin B = «A. C»). */
+function frqSacar(s, i, j){
+  var a=s.slice(0, i), b=s.slice(j);
+  if(!a.trim() || /[.;,:\n][ \t]*$/.test(a)) b=b.replace(/^[ \t]*[.;,:]?/, '');
+  if(/\n[ \t]*$/.test(a)) b=b.replace(/^[ \t]*\n/, '');
+  a=a.replace(/[ \t]+$/, ''); b=b.replace(/^[ \t]+/, '');
+  if(!b.trim()) return a.replace(/[\s.,;:]+$/, '');
+  if(!a.trim()) return b.replace(/^[\s.,;:]+/, '');
+  return a+((/\n$/.test(a) || /^[\n.,;:]/.test(b)) ? '' : ' ')+b;
+}
+/* Pone la frase al final: «CASA AZUL» + «PAGA AL RECIBIR» = «CASA AZUL. PAGA AL RECIBIR». `i` = dónde empieza. */
+function frqPoner(s, f){
+  s=String(s||'');
+  if(/\n[ \t]*$/.test(s)){ var b0=s.replace(/[ \t]+$/, ''); return { s:b0+f, i:b0.length }; }
+  var a=s.replace(/\s+$/, '');
+  if(!a) return { s:f, i:0 };
+  var sep=/[.,;]$/.test(a) ? ' ' : '. ';
+  return { s:a+sep+f, i:(a+sep).length };
+}
+function frqTocar(k){
+  var el=document.getElementById('f-obs'), o=frqDe(k); if(!el || !o) return;
+  var s=String(el.value||''), S=frqSpans(s), sel=null;
+  var sacar=function(L){ L.slice().sort(function(a, b){ return b.i-a.i; }).forEach(function(x){ s=frqSacar(s, x.i, x.j); }); };
+  if(S[k]) sacar(S[k].todos);                                   // prendido: se saca lo que lo dice
+  else if(o.g && S.grupo[o.g] && S.grupo[o.g].length){          // el otro «llamar» (o uno escrito a mano): se reemplaza
+    var G=S.grupo[o.g].slice().sort(function(a, b){ return a.i-b.i; }), p=G[0];
+    sacar(G.slice(1));                                          // los de más atrás primero: no corren al primero
+    s=s.slice(0, p.i)+o.f+s.slice(p.j);
+  }
+  else { var r=frqPoner(s, o.f); s=r.s; if(o.sel) sel=[r.i+o.sel[0], r.i+o.sel[1]]; else if(o.abre) sel=[s.length, s.length]; }
+  el.value=s;
+  try{ el.dispatchEvent(new Event('input', { bubbles:true })); }catch(e){}
+  frqPintar();
+  if(sel){ try{ el.focus(); el.setSelectionRange(sel[0], sel[1]); }catch(e){} }
+}
+function frqPintar(){
+  var box=document.getElementById('frq'), el=document.getElementById('f-obs'); if(!box || !el) return;
+  if(!box.querySelector('.frq-b')){
+    box.innerHTML=FRQ.map(function(o){
+      return '<button type="button" class="frq-b" data-frq="'+o.k+'" aria-pressed="false" onclick="frqTocar(\''+o.k+'\')"><span class="frq-i" aria-hidden="true">'+o.ic+'</span>'+esc(o.t)+'</button>';
+    }).join('');
+    box._v=null;
+  }
+  var v=String(el.value||''); if(box._v===v) return; box._v=v;
+  var S={}; try{ S=frqSpans(v); }catch(e){ S={}; }
+  [].forEach.call(box.querySelectorAll('.frq-b'), function(b){
+    var k=b.getAttribute('data-frq'), x=S[k], o=frqDe(k);
+    b.classList.toggle('on', !!x); b.setAttribute('aria-pressed', x ? 'true' : 'false');
+    b.title=x ? (x.canon ? 'Ya está en las observaciones. Tocá para sacarlo.' : ('Ya lo dice: «'+v.slice(x.i, x.j).replace(/\s+/g,' ').trim()+'». Tocá para sacarlo.'))
+              : ('Escribe «'+o.f.trim()+'» en las observaciones.');
+  });
+}
+function frqIniciar(){ var el=document.getElementById('f-obs'); if(!el) return; el.addEventListener('input', frqPintar); frqPintar(); }
+
 function submitPedido(){
   clearErr();
   var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
@@ -22387,7 +22547,7 @@ function resetForm(){
   segSet('f-pagado','NO');
   var s=document.getElementById('f-saldo'); s.value='0'; s.disabled=false;
   document.getElementById('f-acuenta').value='0';
-  document.getElementById('f-obs').value='';
+  document.getElementById('f-obs').value=''; try{ frqPintar(); }catch(e){}   // ⚡ 218
   document.getElementById('f-garantia').value='';
   document.getElementById('f-facturar').value='';
   document.getElementById('f-nit').value='';
@@ -22487,7 +22647,7 @@ function editPedido(id){
      método (§4eu): `pintarEnvioCobrado` lo fuerza a «NO» si el método no está a la vista, y
      acá todavía no lo está. Así, un flete cobrado ENTERO abría en «NO» y guardar el pedido sin
      tocar nada le sacaba el método y el comprobante: Bs 150 que entraron, borrados. */
-  document.getElementById('f-obs').value=rec.observaciones||'';
+  document.getElementById('f-obs').value=rec.observaciones||''; try{ frqPintar(); }catch(e){}   // ⚡ 218
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';
   document.getElementById('f-nit').value=rec.nit||'';
@@ -23711,7 +23871,7 @@ function fxMesPintar(){
     '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+' este mes'+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt+' ('+fmtBs0(o.antes)+')'):'')+'</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
-function fxFormPintar(){ try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } try{ fpPintar(); }catch(e){} }
+function fxFormPintar(){ try{ frqPintar(); }catch(e){} try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } try{ fpPintar(); }catch(e){} }
 /* 🖥️ (§4ig) LOS COSTADOS: solo se arman con la pantalla ancha (en el celular no se ven y no se gasta nada). */
 function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1120px)').matches); }   // (§4ij) el iPad acostado (1180) entra
 var FX_DIAS_NOM=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
@@ -32400,7 +32560,7 @@ function completarBorrador(id){
   document.getElementById('f-celular').value=rec.celular||'';
   try{ celFormPintar(); }catch(e){}            // 📱 (§4ok-95) lo que trajo Kommo, cómo se va a guardar
   document.getElementById('f-direccion').value=rec.direccion||'';
-  document.getElementById('f-obs').value=rec.observaciones||'';
+  document.getElementById('f-obs').value=rec.observaciones||''; try{ frqPintar(); }catch(e){}   // ⚡ 218
   /* 📍 Lo que Kommo NO tiene, sacado de una entrega anterior al mismo cliente.
      Es el mayor ahorro disponible: zona, dirección y Maps son exactamente los tres
      datos que faltan. Se llenan como SUGERENCIA — la vendedora los ve y los cambia
@@ -48193,6 +48353,7 @@ function fichaObsChips(p){
     if(N.llamar) add('📞','Llamar '+N.llamar,'llamar');
     var pi=t.match(/(\d+)\s*(?:ER|ERO|DO|RO|TO|MO|VO|NO|°|º)?\s*PISO/) || t.match(/PISO\s*(?:N\S*\s*)?(\d+)/);
     if(pi) add('🪜','Subir al piso '+pi[1],'piso'); else if(/ESCALERA/.test(t)) add('🪜','Hay escaleras','piso'); else if(/\bSUBIR/.test(t)) add('🪜','Hay que subirlo','piso');
+    else if(/\bEDIFICIO\b|\bEDIF\b|\bDPTO\b|\bDEPTO\b/.test(t)) add('🏢','Es un edificio','piso');   // ⚡ 218 «EDIFICIO …, PISO » sin el número
     if(/(RETIRAR|LLEVAR|LLEVARSE|RECOGER|SACAR)\s+(?:EL\s+|SU\s+|LOS\s+)?(?:COLCHON(?:ES)?\s+)?VIEJO|COLCHON(ES)? VIEJO/.test(t)) add('♻️','Retirar el colchón viejo','viejo');
     if(/\bARMA(R|DO|RLO|RLA)\b|INSTALA|ENSAMBL/.test(t)) add('🔧','Armarlo en la casa','armar');
     // 🕐 (24/10, dueño: «cuando ponen hora en texto no identifica la etiqueta») la hora sale de fichaNota: «de 11 a 12», «a las 12:00»,
@@ -48200,6 +48361,13 @@ function fichaObsChips(p){
     var hTx=N.hora || N.horaTxt;
     if(hTx) add('🕐', hTx.charAt(0).toUpperCase()+hTx.slice(1), 'hora');
     else if(/(COORDINAR|CONFIRMAR|PREGUNTAR|ACORDAR)[^.·]{0,40}HORA/.test(t)) add('🕐','Coordinar la hora','hora');
+    else {   // ⚡ 218 «HORARIO: …» (la frase rápida) con algo que no es una hora que se entienda («cuando pueda», «9 a 11»): tal cual
+      var hz=/\bHORARIOS?\b(?:\s+DE\s+(?:ENTREGA|ATENCION))?\s*:?[ \t]*/.exec(obsRevMay(obs));
+      if(hz){
+        var hr=obs.slice(hz.index+hz[0].length), hc=hr.search(/\.(?=\s|$)|[;\n·]/), hx=(hc<0 ? hr : hr.slice(0, hc)).replace(/[\s,:]+$/,'').trim();
+        if(/[A-Za-z0-9ÁÉÍÓÚÑáéíóúñ]/.test(hx)) add('🕐','Horario: '+(hx.length>40 ? hx.slice(0, 40)+'…' : hx).toLowerCase(),'hora');
+      }
+    }
     if(/FACTURA/.test(t)) add('🧾','Llevar la factura','fact');
     if(/FRAGIL|CUIDADO/.test(t)) add('⚠️','Con cuidado','cuid');
     if(N.cobrar) add('💵','Cobrar '+fmtBs0(N.cobrar),'cobra'); else if(N.contra) add('💵','Cobra al entregar','cobra');
@@ -62471,6 +62639,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('f-maps').addEventListener('input',fxMapaProgramar);   // 🧰 (§4ih) el mapita
   document.getElementById('f-maps').addEventListener('input',function(){ ZONA_AUTO.tocado=1; });   // 📍 (§4nr, 30) solo lo que pega la persona
   document.getElementById('f-zona').addEventListener('input',zonaAutoEscribio);
+  try{ frqIniciar(); }catch(e){}   // ⚡ 218 las frases rápidas de las observaciones
   (function(){ var fn=document.getElementById('f-nota'), fv=document.getElementById('f-vendedor');   // §4ok-99: el N° de nota, al salir del campo
     if(fn){ fn.addEventListener('blur', notaRevisarPintar); fn.addEventListener('input', notaRevisarOcultar); }
     if(fv) fv.addEventListener('change', function(){ var el=document.getElementById('fx-nota'); if(el && !el.hidden) notaRevisarPintar(); }); })();
