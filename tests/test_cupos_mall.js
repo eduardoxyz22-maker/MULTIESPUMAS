@@ -17,6 +17,11 @@
       va como `aparto` al guardar (y no se suelta otra vez); limpiar el formulario y cerrar la página lo sueltan; `cupos_llenos` se dice
       como un turno lleno; un fallo de red no frena el guardado; ni al corregir un pedido ni en una ATC; sin el servidor nuevo, nada.
    6. Lo apartado por OTRA venta ocupa lugar en las cuentas y se dice; lo de este aparato no.
+   8. (revisión del 14/11) Lo que este aparato apartó y ya no usa no se queda frenando: un `apartarCupo` que contesta después del tope se
+      suelta al llegar; cada lectura suelta lo de este aparato que no es el apartado de ahora (no lo de otra pestaña viva, ni lo de la venta
+      en la cola, ni con un pedido en el aire), y un huérfano ya no le frena la venta a la misma vendedora. La venta que cae a la cola se
+      lleva su lugar (anotado APARTE, la fila no lo lleva) y el reenvío manda `aparto`; TODO guardado manda `aparato`. Los cupos abiertos
+      de más se guardan con `adminKey` si el aparato tiene la clave (sin clave, igual que antes).
 
    Reloj CLAVADO: jueves 19/11/2026, 10:00 de Bolivia. Un servidor de mentira en la página (`SRV`, por `fetch`). Solo datos inventados.
    Capturas (con `CAPTURAS=1`, o siempre en /tmp): /tmp/mall_cupos_{aviso,abrir,apartado}_{1280,390}.png
@@ -46,7 +51,7 @@ function PREPARAR(){
   window.EXTRA=function(d, rev){ var f=filaSistema('__cupos_extra__', '➕ CUPOS ABIERTOS DE MÁS', JSON.stringify({ v:1, d:d })); f.rev=rev||50; return f; };
   /* El servidor de mentira: lista (con `apartados` desde 2026-11-14-b), guardar (portero con lo abierto de más y lo apartado, y el sello de
      las filas del sistema que se juntan), apartar y soltar. */
-  window.SRV={ ver:'2026-11-14-b', rows:[], ap:{}, calls:[], n:0, rev:100, lleno:false, falla:false, listaVieja:null };
+  window.SRV={ ver:'2026-11-14-b', rows:[], ap:{}, calls:[], n:0, rev:100, lleno:false, falla:false, listaVieja:null, sinRed:false, demora:0 };
   window.SRV_LIM=function(f, t){
     var b=limTurnoBase(f, t); if(b<=0) return 0;
     if(SRV.ver>='2026-11-14-b'){ var x=SRV.rows.filter(function(r){ return r.id==='__cupos_extra__'; })[0];
@@ -61,6 +66,8 @@ function PREPARAR(){
   window.fetch=function(url, o){
     var b={}; try{ b=JSON.parse(o.body); }catch(e){}
     SRV.calls.push(b);
+    /* `sinRed`: todo lo que no es leer se corta (sin señal para guardar ni soltar) */
+    if(SRV.sinRed && b.action!=='list') return Promise.reject(new TypeError('Failed to fetch'));
     var r;
     if(b.action==='list'){
       var rows=SRV.listaVieja||SRV.rows; SRV.listaVieja=null;
@@ -86,7 +93,10 @@ function PREPARAR(){
         r={ ok:true, pedido:g, version:SRV.ver };
       }
     }else r={ ok:true, version:SRV.ver };
-    return Promise.resolve({ ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(JSON.stringify(r))); } });
+    var resp={ ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(JSON.stringify(r))); } };
+    /* `demora`: el servidor YA apartó, pero la respuesta llega tarde (Google lento) */
+    if(b.action==='apartarCupo' && SRV.demora) return new Promise(function(res){ setTimeout(function(){ res(resp); }, SRV.demora); });
+    return Promise.resolve(resp);
   };
   window.CARGAR=async function(rows){
     SRV.rows=JSON.parse(JSON.stringify(rows||[])); SRV.calls=[];
@@ -530,6 +540,142 @@ function PREPARAR(){
   chk('7c · una ATC no aparta', r.atc===0, r);
   chk('7d · un fallo de red al apartar no frena nada: el pedido se guarda igual, sin `aparto`', r.fallaPidio===1 && r.fallaAP===null && r.fallaSave===1 && r.fallaAparto===null && r.fallaOk, r);
   chk('7e · sin `APARTO_PRUEBA` (las pruebas de siempre) y con el servidor de antes, nunca se llama a `apartarCupo`', r.sinBandera===0 && r.viejo===0, r);
+
+  // ═════════ 8 · 🧹 lo que este aparato apartó y ya no usa (revisión del 14/11) ═════════
+  console.log('\n── 8. Lo apartado que quedó huérfano, la cola y el aparato ──');
+  r = await ev(async()=>{
+    window.APARTO_PRUEBA=1; SERVER_VER='2026-11-14-b';
+    var o={};
+    var rows=[]; for(var i=0;i<5;i++) rows.push(P({ fecha:MAR, turno:'AM' }));
+    SRV.ap={}; await CARGAR(rows);
+    /* a · Google contesta DESPUÉS del tope: el servidor apartó igual */
+    var topeAntes=APARTO_TOPE_MS; APARTO_TOPE_MS=200; SRV.demora=700;
+    showView('form'); resetForm(); await esperar(100); SRV.calls=[];
+    var fe=document.getElementById('f-fecha'); fe.value=MAR; fe.dispatchEvent(new Event('change',{bubbles:true})); document.querySelector('#f-turno button[data-val="AM"]').click();
+    await esperar(1700);
+    o.pidio=LLAMADAS('apartarCupo').length;
+    o.soltA=LLAMADAS('soltarCupo').map(function(x){ return x.id; });
+    o.quedanA=(SRV.ap[MAR+'|AM']||[]).map(function(a){ return a.id; });
+    o.APARTOa=APARTO;
+    APARTO_TOPE_MS=topeAntes; SRV.demora=0;
+    resetForm(); await esperar(100);
+    /* b · al leer la planilla, lo de ESTE aparato que no es el apartado de ahora se suelta (salvo otra pestaña viva y la venta en la cola) */
+    var yo=entAparato(), ah=Date.now();
+    SRV.ap={}; SRV.ap[MAR+'|PM']=[ { id:'huerf-1', aparato:yo, quien:'Isabel Robledo', hasta:ah+300000 }, { id:'otra-pest', aparato:yo, quien:'Isabel Robledo', hasta:ah+300000 },
+      { id:'en-cola', aparato:yo, quien:'Isabel Robledo', hasta:ah+300000 }, { id:'de-otro', aparato:'iPad · zzzz', quien:'Jonathan Monje', hasta:ah+300000 },
+      { id:'vieja-pest', aparato:yo, quien:'Isabel Robledo', hasta:ah+300000 } ];
+    localStorage.setItem('me_aparto_vivos', JSON.stringify({ 'otra-pest':ah, 'vieja-pest':ah-4*60000 }));
+    localStorage.setItem('me_aparto_cola', JSON.stringify({ 'pz':{ t:'{}', a:'en-cola', ts:ah } }));
+    SRV.calls=[]; await refrescarEstado(); await esperar(150);
+    o.soltB=LLAMADAS('soltarCupo').map(function(x){ return x.id; }).sort();
+    o.quedanB=(SRV.ap[MAR+'|PM']||[]).map(function(a){ return a.id; }).sort();
+    /* con un `apartarCupo` en el aire no se suelta nada (lo que está llegando puede ser justo ese) */
+    SRV.ap[MAR+'|PM'].push({ id:'huerf-2', aparato:yo, quien:'Isabel Robledo', hasta:ah+300000 });
+    APARTO_PIDE={ k:'x', gen:-1 }; SRV.calls=[]; await refrescarEstado(); await esperar(150);
+    o.soltEnAire=LLAMADAS('soltarCupo').length; APARTO_PIDE=null;
+    localStorage.removeItem('me_aparto_vivos'); localStorage.removeItem('me_aparto_cola');
+    /* b2 · lo que quedó huérfano ya no le frena la venta a la misma vendedora: 11 pedidos + 1 suyo huérfano en la mañana (12 lugares) */
+    var MIE='2026-11-25';   // un día que ninguna sección de antes tocó (con el reloj clavado, lo guardado acá «manda» para siempre)
+    var rowsF=[]; for(var j=0;j<11;j++) rowsF.push(P({ fecha:MIE, turno:'AM' }));
+    SRV.ap={}; SRV.ap[MIE+'|AM']=[{ id:'huerf-3', aparato:yo, quien:'Isabel Robledo', hasta:Date.now()+300000 }];
+    await CARGAR(rowsF);
+    delete window.APARTO_PRUEBA;   // sin apartar de nuevo: solo el guardado
+    var set=function(sel, v){ var x=document.querySelector(sel); x.value=v; x.dispatchEvent(new Event('input',{bubbles:true})); x.dispatchEvent(new Event('change',{bubbles:true})); };
+    showView('form'); resetForm(); await esperar(100);
+    fe.value=MIE; fe.dispatchEvent(new Event('change',{bubbles:true})); document.querySelector('#f-turno button[data-val="AM"]').click(); await esperar(300);
+    o.b2lim=limTurno(MIE,'AM'); o.b2srv=SRV_USADOS(MIE,'AM');
+    document.getElementById('f-vendedor').value='Carola Chavez'; applyVendedorLite();
+    set('#f-nota','8811'); set('#f-cliente','CLIENTE DEL HUERFANO'); set('#f-celular','71234571'); set('#f-productos .prod-codigo','CH1201'); set('#f-productos .prod-cant','1');
+    set('#f-zona','Norte'); set('#f-direccion','Av. Banzer 4to anillo'); set('#f-saldo','3000');
+    await esperar(400); _toasts.length=0; SRV.calls=[];
+    submitPedido(); await esperar(1500);
+    o.b2ok=/Pedido enviado al equipo/.test(_toasts.join('|')); o.b2lleno=/lleno/i.test(_toasts.join('|'));
+    o.b2fila=SRV.rows.some(function(x){ return x.cliente==='CLIENTE DEL HUERFANO'; });
+    try{ closeModal(); }catch(e){}
+    window.APARTO_PRUEBA=1;
+    return o;
+  });
+  chk('8a · un `apartarCupo` que contesta DESPUÉS del tope no deja el lugar apartado: se suelta en cuanto llega', r.pidio>=1 && r.quedanA.length===0 && r.soltA.length===r.pidio && r.APARTOa===null, r);
+  chk('8b · al leer la planilla se suelta lo de este aparato que ya no usa (huérfano y de una pestaña que ya no está); lo de otra pestaña viva, lo de la venta en la cola y lo de otro aparato, no',
+      (r.soltB||[]).join()==='huerf-1,vieja-pest' && (r.quedanB||[]).join()==='de-otro,en-cola,otra-pest', { soltB:r.soltB, quedanB:r.quedanB });
+  chk('8c · con un `apartarCupo` en el aire no se suelta nada', r.soltEnAire===0, r.soltEnAire);
+  chk('8d · un lugar huérfano de este mismo aparato ya no le frena la venta (11 pedidos + 1 suyo en una mañana de 12): el pedido se guarda', r.b2lim===12 && r.b2ok && r.b2fila && !r.b2lleno, r);
+
+  r = await ev(async()=>{
+    window.APARTO_PRUEBA=1; SERVER_VER='2026-11-14-b';
+    var o={}, set=function(sel, v){ var x=document.querySelector(sel); x.value=v; x.dispatchEvent(new Event('input',{bubbles:true})); x.dispatchEvent(new Event('change',{bubbles:true})); };
+    /* e · el guardado cae a la cola sin señal (ni para soltar): el lugar apartado se va con la venta que espera */
+    var rows=[]; for(var i=0;i<11;i++) rows.push(P({ fecha:MAR, turno:'AM' }));
+    SRV.ap={}; await CARGAR(rows);
+    showView('form'); resetForm(); await esperar(100); SRV.calls=[];
+    var fe=document.getElementById('f-fecha'); fe.value=MAR; fe.dispatchEvent(new Event('change',{bubbles:true})); document.querySelector('#f-turno button[data-val="AM"]').click(); await esperar(700);
+    var idC=APARTO && APARTO.id; o.idC=idC; o.lim=limTurno(MAR,'AM'); o.usadosSrv=SRV_USADOS(MAR,'AM');
+    document.getElementById('f-vendedor').value='Carola Chavez'; applyVendedorLite();
+    set('#f-nota','8812'); set('#f-cliente','CLIENTE EN COLA'); set('#f-celular','71234572'); set('#f-productos .prod-codigo','CH1201'); set('#f-productos .prod-cant','1');
+    set('#f-zona','Norte'); set('#f-direccion','Av. Banzer 4to anillo'); set('#f-saldo','3000');
+    await esperar(400); SRV.sinRed=true; SRV.calls=[]; _toasts.length=0;
+    submitPedido(); await esperar(3600);
+    var cola=getPending().filter(function(x){ return x.cliente==='CLIENTE EN COLA'; });
+    o.enCola=cola.length; o.colaSinMarca=!!cola.length && !('_aparto' in cola[0]) && !('aparto' in cola[0]) && !('aparato' in cola[0]);
+    var m=JSON.parse(localStorage.getItem('me_aparto_cola')||'{}'), x=cola.length ? m[cola[0].id] : null;
+    o.mapa=!!(x && x.a===idC && x.t===JSON.stringify(cola[0]));
+    o.intentoSave=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.cliente==='CLIENTE EN COLA'; }).map(function(y){ return { aparto:y.aparto||null, aparato:y.aparato||null }; });
+    o.soltoC=LLAMADAS('soltarCupo').map(function(y){ return y.id; });
+    o.APARTOc=APARTO; o.srvC=(SRV.ap[MAR+'|AM']||[]).map(function(a){ return a.id; });
+    try{ closeModal(); }catch(e){}
+    /* mientras espera, una lectura de la planilla no suelta su lugar (es de la venta de la cola) */
+    SRV.sinRed=false; SRV.calls=[]; await refrescarEstado(); await esperar(150);
+    o.soltoLeyendo=LLAMADAS('soltarCupo').map(function(y){ return y.id; });
+    /* vuelve la señal: la cola manda la venta con `aparto` y `aparato`; el turno (11 + su lugar = 12) no la frena */
+    SRV.calls=[]; await flushPending(); await esperar(200);
+    var sv=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.cliente==='CLIENTE EN COLA'; });
+    o.reenvio=sv.map(function(y){ return { aparto:y.aparto||null, aparato:y.aparato||null, marca:('_aparto' in y.pedido) }; });
+    o.yo=entAparato();
+    o.fila=SRV.rows.some(function(y){ return y.cliente==='CLIENTE EN COLA'; });
+    o.colaFin=getPending().filter(function(y){ return y.cliente==='CLIENTE EN COLA'; }).length;
+    o.mapaFin=localStorage.getItem('me_aparto_cola');
+    o.srvFin=(SRV.ap[MAR+'|AM']||[]).length;
+    /* i · un guardado de la cola sin lugar apartado (el chofer, Contabilidad…) también dice el aparato */
+    var otro=P({ id:'cola-sin-aparto', fecha:SAB, turno:'AM', cliente:'COLA DEL CHOFER' });
+    localStorage.setItem(LS_PEND, JSON.stringify([otro])); SRV.calls=[]; await flushPending(); await esperar(150);
+    var sv2=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.id==='cola-sin-aparto'; });
+    o.colaAparato=sv2.length ? sv2[0].aparato : null; o.colaAparto=sv2.length ? (sv2[0].aparto||null) : 'x';
+    return o;
+  });
+  chk('8e · el guardado que cae a la cola queda en la cola SIN ninguna marca en la fila, y el id de su lugar apartado anotado aparte (atado a esa copia)',
+      !!r.idC && r.lim===12 && r.usadosSrv===12 && r.enCola===1 && r.colaSinMarca && r.mapa, r);
+  chk('8f · el primer intento llevó `aparto` y `aparato`; al caer a la cola el lugar NO se suelta (se va con la venta) y sigue apartado en el servidor',
+      (r.intentoSave||[]).length>=1 && r.intentoSave[0].aparto===r.idC && !!r.intentoSave[0].aparato && (r.soltoC||[]).indexOf(r.idC)<0 && r.APARTOc===null && (r.srvC||[]).indexOf(r.idC)>=0, r);
+  chk('8g · mientras la venta espera en la cola, leer la planilla no suelta su lugar', (r.soltoLeyendo||[]).indexOf(r.idC)<0, r.soltoLeyendo);
+  chk('8h · al volver la señal, el reenvío desde la cola manda `aparto` (su lugar) y `aparato`, sin marcas en la fila: la mañana (11 + su lugar = 12 de 12) no lo frena',
+      (r.reenvio||[]).length===1 && r.reenvio[0].aparto===r.idC && r.reenvio[0].aparato===r.yo && !r.reenvio[0].marca && r.fila && r.colaFin===0 && !r.mapaFin && r.srvFin===0, r);
+  chk('8i · un guardado de la cola sin lugar apartado también manda `aparato` (y no `aparto`)', r.colaAparato===r.yo && r.colaAparto===null, r);
+
+  r = await ev(async()=>{
+    var o={};
+    /* j · ➕ los cupos abiertos de más se guardan con la clave de Administración del aparato (si la tiene); sin clave, igual que antes */
+    window.CUPX_PRUEBA=1; UNLOCKED=true;
+    var rows=[P({ fecha:MAR, turno:'AM' })];
+    SRV.ap={}; await CARGAR(rows);
+    ADMIN_KEY_LOCAL='clave-admin-de-prueba';
+    CUPX_CAMBIOS[MAR+'|AM']=2; CUPX_VER++; SRV.calls=[]; cupxGuardar(); await esperar(1300);
+    var sv=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.id==='__cupos_extra__'; });
+    o.conClave=sv.map(function(y){ return y.adminKey||null; });
+    ADMIN_KEY_LOCAL='';
+    CUPX_CAMBIOS[MAR+'|AM']=3; CUPX_VER++; SRV.calls=[]; cupxGuardar(); await esperar(1300);
+    var sv2=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.id==='__cupos_extra__'; });
+    o.sinClave=sv2.map(function(y){ return ('adminKey' in y) ? y.adminKey : null; }); o.sinClaveOk=SRV.rows.some(function(y){ return y.id==='__cupos_extra__'; });
+    /* un pedido común no lleva la clave */
+    ADMIN_KEY_LOCAL='clave-admin-de-prueba'; SRV.calls=[];
+    await apiSave(P({ id:'comun-1', fecha:SAB, turno:'AM', cliente:'PEDIDO COMUN' }), undefined); await esperar(100);
+    var sv3=LLAMADAS('save').filter(function(y){ return y.pedido && y.pedido.id==='comun-1'; });
+    o.comun=sv3.length ? (sv3[0].adminKey||null) : 'x';
+    ADMIN_KEY_LOCAL=''; delete window.CUPX_PRUEBA; UNLOCKED=false; CUPX_CAMBIOS={};
+    return o;
+  });
+  chk('8j · guardar los cupos abiertos de más manda `adminKey` cuando el aparato tiene la clave de Administración', (r.conClave||[]).length>=1 && r.conClave.every(function(k){ return k==='clave-admin-de-prueba'; }), r);
+  chk('8k · sin clave en el aparato no manda `adminKey` y guarda igual (sin claves en el servidor, como antes)', (r.sinClave||[]).length>=1 && r.sinClave.every(function(k){ return k===null; }) && r.sinClaveOk, r);
+  chk('8l · un guardado común no lleva la clave de Administración', r.comun===null, r);
 
   chk('sin errores de JavaScript en la página', errores.length===0, errores.slice(0,4));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

@@ -12,6 +12,11 @@
    6. Sin práctica todo sigue igual: un guardado normal SÍ sale y queda en la planilla.
    7. Prenderlo desde «¿Quién está usando el panel?» (pregunta antes) y desde el menú de Bloki.
    8. Capturas (1280 y 390 px) con la franja y un pedido de práctica, datos INVENTADOS: FOTOS=/tmp node tests/test_modo_practica.js
+   9. Lo de VERDAD que esperaba en la cola se queda quieto en práctica, la franja lo dice FIJO y sale al salir.
+   10. (revisión del 14/11) la hoja de compartir del celular (`navigator.share`) no comparte en práctica; prender la práctica manda antes la
+      cola de verdad y, si no sale, no se prende; la franja sigue la cola que deja otra pestaña; una fila del sistema cede a la de verdad
+      cuando la planilla trae un sello más nuevo; salir no pregunta el «¿salir?» del navegador y, si el navegador no navega, la pestaña
+      vuelve a la práctica entera a los 2 s.
    Datos SINTÉTICOS. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 https_proxy=http://127.0.0.1:9 node tests/test_modo_practica.js  (desde la raíz) */
 let pw; try { pw=require('playwright'); } catch(e) { pw=require('/opt/node22/lib/node_modules/playwright'); }
 const { chromium }=pw;
@@ -91,14 +96,16 @@ const pedido=(o)=>Object.assign({
   /* Un aparato contra S. Registra TODAS las peticiones del navegador. */
   const abrir=async (o)=>{
     o=o||{};
-    const ctx=await browser.newContext({ viewport:o.vp || { width:1280, height:900 }, timezoneId:'America/La_Paz' });
-    ctx.__log=[]; ctx.__popups=0;
+    const ctx=await browser.newContext(Object.assign({ viewport:o.vp || { width:1280, height:900 }, timezoneId:'America/La_Paz' }, o.ctxOpts||{}));
+    ctx.__log=[]; ctx.__popups=0; ctx.__ocupado=!!o.ocupado;
     ctx.on('request', (rq)=>{ let act=''; try{ const b=rq.postData(); if(b) act=(JSON.parse(b).action)||'save'; }catch(e){ act='?'; } ctx.__log.push({ url:rq.url(), m:rq.method(), act }); });
     await ctx.route(/^https?:/, async (r)=>{
       const rq=r.request();
       if(/script\.google\.com/.test(rq.url())){
         const cors={ 'Access-Control-Allow-Origin':'*', 'Access-Control-Allow-Headers':'*' };
         if(rq.method()==='OPTIONS') return r.fulfill({ status:204, headers:cors });
+        /* `ocupado`: el servidor contesta «busy» a todo lo que no es leer (la cola de verdad no puede salir) */
+        if(ctx.__ocupado){ let a='save'; try{ a=JSON.parse(rq.postData()||'{}').action||'save'; }catch(e){} if(!LECTURAS[a]) return r.fulfill({ status:200, headers:Object.assign({ 'Content-Type':'application/json' }, cors), body:JSON.stringify({ ok:false, error:'busy' }) }); }
         let t; try{ t=S.post(rq.postData()||'{}'); }catch(e){ t=JSON.stringify({ ok:false, error:String(e) }); }
         return r.fulfill({ status:200, headers:Object.assign({ 'Content-Type':'application/json' }, cors), body:t });
       }
@@ -108,8 +115,9 @@ const pedido=(o)=>Object.assign({
     const page=await ctx.newPage();
     page.on('pageerror', e=>errores.push(e.message));
     page.on('popup', ()=>{ ctx.__popups++; });
-    page.__dialogos=[];
-    page.on('dialog', d=>{ page.__dialogos.push(d.message()); d.accept(); });
+    page.__dialogos=[]; page.__tipos=[];
+    /* `__cancelaSalida`: el aviso del navegador al irse (`beforeunload`) se CANCELA, como quien toca «Quedarse» */
+    page.on('dialog', d=>{ page.__dialogos.push(d.message()); page.__tipos.push(d.type()); if(d.type()==='beforeunload' && page.__cancelaSalida) d.dismiss(); else d.accept(); });
     if(FOTOS) await page.emulateMedia({ reducedMotion:'reduce' });
     await page.clock.setFixedTime(new Date(RELOJ));
     await page.goto(url.pathToFileURL(PEDIDOS).href+(o.practica ? '?practica=1' : ''), { waitUntil:'load' });
@@ -423,10 +431,152 @@ const pedido=(o)=>Object.assign({
     return { real:JSON.parse(window.PRACTICA_CAPA.real(LS_PEND)||'[]').map(function(x){ return x.id; }), pr:getPending().length, tip:(document.getElementById('pr-tip')||{}).textContent||'' }; });
   chk('9a. en práctica, lo de verdad que esperaba en la cola NO se manda (ni de mentira) y sigue en la cola de verdad', escrituras(D.__ctx).length===0 && r.real.join()==='q1' && r.pr===0 && !S.fila('q1'), r);
   chk('9b. y Bloki avisa que hay 1 guardado de VERDAD esperando', /1 guardado de VERDAD esperando/.test(r.tip), r);
+  r=await D.evaluate(()=>{ var c=document.getElementById('pr-cola'); return { vis:!!c && !c.hidden && getComputedStyle(c).display!=='none', txt:c ? c.textContent : '' }; });
+  chk('9b2. con `?practica=1` y la cola de verdad con algo, la franja lo dice FIJO («Hay 1 guardado de VERDAD esperando… Tocá «Salir»»)', r.vis && /Hay 1 guardado de VERDAD esperando/.test(r.txt) && /Salir/.test(r.txt), r);
   await Promise.all([ D.waitForNavigation({ waitUntil:'load' }), D.evaluate(()=>{ practicaSalir(); }) ]);
   await D.waitForTimeout(400); await conectar(D); await D.evaluate(async ()=>{ await flushPending(); await esperar(300); });
   chk('9c. al salir de la práctica, el guardado de verdad sale solo y llega a la planilla', escrituras(D.__ctx).some(x=>x.act==='save') && !!S.fila('q1') && S.fila('q1').cliente==='COLA DE VERDAD', escrituras(D.__ctx));
   await D.__ctx.close();
+
+  /* ════════════ 10. Lo que encontró la revisión del 14/11 ════════════ */
+  console.log('\n── 10. Revisión del 14/11 ──');
+  const conToasts=(page)=>page.evaluate(()=>{ window._toasts=[]; if(!window._toastOrig) window._toastOrig=toast; toast=function(m){ window._toasts.push(String(m)); return window._toastOrig.apply(null, arguments); }; });
+  /* 10a-10d · la hoja de COMPARTIR del celular (`navigator.share`) */
+  {
+    const shareInit=()=>{ window.__share=[]; try{
+      Object.defineProperty(Navigator.prototype, 'canShare', { value:()=>true, configurable:true });
+      Object.defineProperty(Navigator.prototype, 'share', { value:(d)=>{ window.__share.push({ text:d && d.text, files:((d && d.files)||[]).length }); return Promise.resolve(); }, configurable:true });
+    }catch(e){} };
+    const M=await abrir({ practica:true, vp:{ width:390, height:844 }, ctxOpts:{ hasTouch:true, isMobile:true }, init:shareInit });
+    r=await M.evaluate(async ()=>{
+      var o={ coarse:cotEsCelular() };
+      var b=await new Promise(function(res){ var c=document.createElement('canvas'); c.width=10; c.height=10; c.toBlob(res, 'image/png'); });
+      COT.ultima={ id:'c1', num:'C-1', cliente:'CLIENTE INVENTADO', celular:'70011122', productos:[{ desc:'TITANIO', medida:'140x190', cant:1, precio:3000 }], total:3000, vence:'2026-11-20', entregaDesde:'2026-11-19', vendedor:'Mirian Salazar' };
+      COT.blob={ id:'c1', num:'C-1', b:b };
+      cotMandarWa(); await esperar(300);
+      var av=document.getElementById('pr-aviso'); o.aviso=av && !av.hidden ? av.innerText : ''; practicaAvisoCerrar();
+      o.puede=navigator.canShare({ files:[new File([b], 'x.png', { type:'image/png' })] });
+      try{ await navigator.share({ text:'Hola de verdad, tu certificado' }); o.err='compartió'; }catch(e){ o.err=e && e.name; }
+      o.aviso2=av && !av.hidden ? av.innerText : ''; practicaAvisoCerrar();
+      o.share=window.__share.slice();
+      return o;
+    });
+    chk('10a. en práctica, «Mandar por WhatsApp» de una cotización en el celular NO abre la hoja de compartir: sale el aviso con el mensaje', r.coarse && r.share.length===0 && /no se abre WhatsApp/.test(r.aviso) && /Cotización C-1/.test(r.aviso), r);
+    chk('10b. `navigator.canShare` dice que no y `navigator.share` muestra el aviso con el texto y contesta «cancelado» (`AbortError`)', r.puede===false && r.err==='AbortError' && /Hola de verdad, tu certificado/.test(r.aviso2), r);
+    chk('10c. el celular en práctica no compartió nada ni abrió otra ventana', r.share.length===0 && M.__ctx.__popups===0, { share:r.share, popups:M.__ctx.__popups });
+    await M.__ctx.close();
+    const M2=await abrir({ vp:{ width:390, height:844 }, ctxOpts:{ hasTouch:true, isMobile:true }, init:shareInit });
+    r=await M2.evaluate(async ()=>{ await navigator.share({ text:'de verdad' }); return { share:window.__share.slice(), puede:navigator.canShare({}) }; });
+    chk('10d. sin práctica la hoja de compartir sigue como siempre', r.share.length===1 && r.share[0].text==='de verdad' && r.puede===true, r);
+    await M2.__ctx.close();
+  }
+
+  /* 10e-10h · prender la práctica con guardados de VERDAD en la cola */
+  try{
+    const q2=pedido({ id:'q2', cliente:'COLA ANTES DE PRACTICAR', oc:'11-211', nota:'5011', celular:'70012345', ts:TS('2026-11-18','09:10') });
+    /* el servidor está ocupado desde que abre la página: la cola no puede salir */
+    const E=await abrir({ ocupado:true, init:`try{ if(!localStorage.getItem('__s2')){ localStorage.setItem('__s2','1'); localStorage.setItem('ME_PENDING_V1', JSON.stringify([${JSON.stringify(q2)}])); } }catch(e){}` });
+    await conToasts(E); E.__dialogos.length=0;
+    r=await E.evaluate(async ()=>{ var p=practicaEntrar(); if(p && p.then) await p; await esperar(300);
+      return { on:window.PRACTICA, ses:sessionStorage.getItem('me_practica'), cola:getPending().map(function(x){ return x.id; }), t:window._toasts.join(' | ') }; });
+    chk('10e. con un guardado de verdad que no puede salir, la práctica NO se prende y se dice («Hay 1 guardado de VERDAD esperando… esperá a que salgan»)',
+        E.__dialogos.some(d=>/Prender el MODO PRÁCTICA/.test(d)) && r.on===false && r.ses==null && r.cola.join()==='q2' && /Hay 1 guardado de VERDAD esperando/.test(r.t) && /esperá a que salgan/.test(r.t) && !S.fila('q2'), r);
+    /* vuelve el servidor: prender manda primero la cola y después se prende */
+    E.__ctx.__ocupado=false; E.__ctx.__log.length=0;
+    await Promise.all([ E.waitForNavigation({ waitUntil:'load', timeout:10000 }), E.evaluate(()=>{ practicaEntrar(); }) ]);
+    await E.waitForTimeout(500); await conectar(E);
+    r=await E.evaluate(()=>{ var c=document.getElementById('pr-cola'); return { on:window.PRACTICA, real:JSON.parse(window.PRACTICA_CAPA.real(LS_PEND)||'[]').length, aviso:!!c && !c.hidden }; });
+    const saveAntes=E.__ctx.__log.findIndex(x=>x.act==='save');
+    chk('10f. al prenderla, primero sale lo que esperaba en la cola (llega a la planilla) y recién ahí la pestaña queda en práctica, sin aviso de cola',
+        saveAntes>=0 && !!S.fila('q2') && S.fila('q2').cliente==='COLA ANTES DE PRACTICAR' && r.on===true && r.real===0 && !r.aviso, { r, saveAntes, fila:!!S.fila('q2') });
+    /* otra pestaña de este aparato (sin práctica) deja algo en la cola de verdad: la franja lo dice al momento, y cuando sale se va */
+    E.__ctx.__ocupado=true;
+    const E2=await E.__ctx.newPage();
+    await E2.goto(url.pathToFileURL(PEDIDOS).href, { waitUntil:'load' }); await E2.waitForTimeout(300);
+    const q3=pedido({ id:'q3', cliente:'COLA DE OTRA PESTAÑA', oc:'11-212', nota:'5012', celular:'70054321' });
+    /* (lo que escribe otra pestaña llega con retraso: se espera hasta 4 s a que se vea) */
+    const colaVis=(quiere)=>E.evaluate(async (q)=>{ for(var i=0;i<40;i++){ var c=document.getElementById('pr-cola'); if((!!c && !c.hidden)===q) break; await esperar(100); }
+      var c2=document.getElementById('pr-cola'); return { vis:!!c2 && !c2.hidden, txt:c2 ? c2.textContent : '' }; }, quiere);
+    await E2.evaluate((q)=>{ localStorage.setItem('ME_PENDING_V1', JSON.stringify([q])); }, q3);
+    r=await colaVis(true);
+    await E2.evaluate(()=>{ localStorage.removeItem('ME_PENDING_V1'); });
+    const r2=(await colaVis(false)).vis;
+    chk('10g. la franja sigue la cola de verdad que deja otra pestaña: aparece «Hay 1 guardado de VERDAD esperando» y se va cuando sale', r.vis && /Hay 1 guardado de VERDAD esperando/.test(r.txt) && r2===false, { r, despues:r2 });
+    E.__ctx.__ocupado=false;
+    await E2.close();
+
+    await E.__ctx.close();
+  }catch(e){ chk('10e-10g. la prueba no pudo seguir', false, String(e && e.message || e).slice(0,200)); }
+
+  /* 10h-10j · una fila del SISTEMA que el resto del equipo sigue guardando no queda congelada en la práctica */
+  try{
+    const F=await abrir({ practica:true });
+    F.__ctx.__log.length=0;
+    S.guardar(pedido({ id:'__pr_sis__', fecha:'', oc:'', cliente:'FILA DEL SISTEMA (prueba)', observaciones:'real v1', nota:'', celular:'', productos:[], saldo:0 }));
+    r=await F.evaluate(async ()=>{
+      var fila=function(j, id){ return ((j && j.pedidos)||[]).filter(function(x){ return x && x.id===id; })[0] || null; };
+      var j1=await apiList(), v1=fila(j1, '__pr_sis__'), r3=fila(j1, 'r3');
+      await apiPost({ action:'save', pedido:Object.assign({}, v1, { observaciones:'de práctica' }) });
+      await apiPost({ action:'save', pedido:Object.assign({}, r3, { observaciones:'r3 de práctica' }) });
+      var j2=await apiList();
+      return { v1:v1 && v1.observaciones, sis2:(fila(j2, '__pr_sis__')||{}).observaciones, r3b:(fila(j2, 'r3')||{}).observaciones };
+    });
+    const sisRev=S.fila('__pr_sis__').rev;
+    S.guardar(Object.assign({}, S.fila('__pr_sis__'), { observaciones:'real v2' }));
+    S.guardar(Object.assign({}, S.fila('r3'), { observaciones:'r3 de verdad, cambiado' }));
+    const r4=await F.evaluate(async ()=>{
+      var fila=function(j, id){ return ((j && j.pedidos)||[]).filter(function(x){ return x && x.id===id; })[0] || null; };
+      var j3=await apiList();
+      return { sis3:(fila(j3, '__pr_sis__')||{}).observaciones, enPr:!!practicaDatos().filas['__pr_sis__'], r3c:(fila(j3, 'r3')||{}).observaciones, r3Pr:!!practicaDatos().filas.r3 };
+    });
+    chk('10h. en práctica una fila del sistema guardada de práctica se ve de práctica mientras la de verdad no cambia…', r.v1==='real v1' && r.sis2==='de práctica' && r.r3b==='r3 de práctica', r);
+    chk('10i. …y cuando el resto del equipo la guarda (sello más nuevo) manda la de verdad; un PEDIDO tocado en práctica sigue siendo el de práctica',
+        r4.sis3==='real v2' && !r4.enPr && r4.r3c==='r3 de práctica' && r4.r3Pr && Number(S.fila('__pr_sis__').rev)>Number(sisRev), r4);
+    chk('10j. y la pestaña en práctica no mandó ninguna escritura', escrituras(F.__ctx).length===0, escrituras(F.__ctx));
+    await F.__ctx.close();
+  }catch(e){ chk('10h-10j. la prueba no pudo seguir', false, String(e && e.message || e).slice(0,200)); }
+
+  /* 10k-10n · «Salir» con una imagen sin pegar, y si el navegador no navega */
+  try{
+    const G=await abrir({ practica:true });
+    r=await G.evaluate(async ()=>{ var f=await apiFoto('x', 'X', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAAABJRU5ErkJggg==');
+      FORM_COMPS=[f.fotoId]; return { id:f.fotoId, sinPegar:imagenesSinPegar().length }; });
+    G.__tipos.length=0;
+    await Promise.all([ G.waitForNavigation({ waitUntil:'load', timeout:10000 }), G.evaluate(()=>{ practicaSalir(); }) ]);
+    await G.waitForTimeout(400);
+    const g=await G.evaluate(()=>({ on:window.PRACTICA, ses:sessionStorage.getItem('me_practica') }));
+    chk('10k. salir de la práctica con una imagen de práctica sin pegar no pregunta el «¿salir?» del navegador (se borra todo igual) y sale', r.sinPegar===1 && !G.__tipos.includes('beforeunload') && g.on===false && g.ses==null, { r, tipos:G.__tipos, g });
+    await G.__ctx.close();
+
+    /* Una pestaña en práctica (prendida desde la pestaña, sin `?practica=1`) a la que el navegador no la deja irse */
+    const H=await abrir({});
+    await Promise.all([ H.waitForNavigation({ waitUntil:'load' }), H.evaluate(()=>{ sessionStorage.setItem('me_practica', '1'); location.reload(); }) ]);
+    await H.waitForTimeout(400); await conectar(H); await conToasts(H);
+    r=await H.evaluate(async ()=>{ await apiPost({ action:'save', pedido:{ id:'x-antes', cliente:'ANTES DE SALIR', fecha:'', productos:[] } });
+      window.__frena=function(e){ e.preventDefault(); e.returnValue=''; }; addEventListener('beforeunload', window.__frena); return window.PRACTICA; });
+    H.__cancelaSalida=true; H.__tipos.length=0;
+    await H.evaluate(()=>{ practicaSalir(); });
+    await H.waitForTimeout(2600);
+    r=await H.evaluate(async ()=>{
+      var o={ on:window.PRACTICA, sal:!!window.PRACTICA_SALIENDO, ses:sessionStorage.getItem('me_practica'), datos:/ANTES DE SALIR/.test(sessionStorage.getItem('me_practica_datos')||''), t:window._toasts.join(' | ') };
+      var g=await apiPost({ action:'save', pedido:{ id:'x-tras', cliente:'TRAS CANCELAR', fecha:'', productos:[] } }); o.guarda=!!(g && g.ok && g.practica);
+      localStorage.setItem('me_prueba_capa', '1'); await esperar(450);
+      o.capa=/me_prueba_capa/.test(sessionStorage.getItem('me_practica_ls')||''); o.real=window.PRACTICA_CAPA.real('me_prueba_capa');
+      removeEventListener('beforeunload', window.__frena);
+      return o;
+    });
+    chk('10l. si el navegador no navega (se canceló su «¿salir?»), a los 2 s la pestaña vuelve a la práctica ENTERA: la marca, lo cargado y el aviso',
+        H.__tipos.includes('beforeunload') && r.on===true && r.sal===false && r.ses==='1' && r.datos && /Seguís en el modo práctica/.test(r.t), r);
+    chk('10m. …y sigue andando de práctica: guarda de mentira y la capa del aparato vuelve a guardarse (el localStorage de verdad no se toca)', r.guarda && r.capa && r.real==null, r);
+    /* si igual se iba (una navegación lenta, más de 2 s) dentro del minuto, se va SIN práctica */
+    H.__cancelaSalida=false;
+    await Promise.all([ H.waitForNavigation({ waitUntil:'load' }), H.evaluate(()=>{ location.reload(); }) ]);
+    await H.waitForTimeout(400);
+    const h=await H.evaluate(()=>({ on:window.PRACTICA, ses:['me_practica','me_practica_datos','me_practica_ls'].map(function(k){ return sessionStorage.getItem(k); }) }));
+    chk('10n. y si la página igual se va dentro del minuto de haber pedido salir (navegación lenta), se va sin práctica y sin nada de práctica', h.on===false && h.ses.every(v=>v==null), h);
+    chk('10o. en todo esto no salió ninguna escritura', escrituras(H.__ctx).length===0, escrituras(H.__ctx));
+    await H.__ctx.close();
+  }catch(e){ chk('10k-10o. la prueba no pudo seguir', false, String(e && e.message || e).slice(0,200)); }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

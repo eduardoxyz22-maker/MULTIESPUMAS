@@ -2513,6 +2513,9 @@ html.practica .pr-franja{display:flex;position:relative;z-index:3;align-items:ce
 .pr-f-tip[hidden]{display:none}
 .pr-f-tip b{font-weight:800}
 .pr-f-tip button{min-height:26px;padding:2px 9px;font-size:.74rem;margin-left:6px}
+.pr-f-cola{flex:1 1 100%;background:#fef2f2;border:1.5px solid #b91c1c;border-radius:8px;padding:5px 10px;font-size:.8rem;font-weight:600;color:#7f1d1d}
+.pr-f-cola[hidden]{display:none}
+.pr-f-cola b{font-weight:800}
 html.practica .logo-s{font-size:0}
 html.practica .logo-s::after{content:'🧪 PRÁCTICA';font-size:.58rem;color:#fde68a;letter-spacing:.14em;font-weight:800}
 .pr-chip{display:inline-block;background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:0 4px;margin-right:4px;font-size:.82em;line-height:1.35;font-weight:700;color:#7c2d12;vertical-align:baseline}
@@ -2544,7 +2547,7 @@ html.practica .logo-s::after{content:'🧪 PRÁCTICA';font-size:.58rem;color:#fd
 .pr-asis{display:flex;align-items:center;gap:8px;flex-wrap:wrap;border:1.5px dashed #d97706;background:#fffbeb;border-radius:10px;padding:7px 10px;margin:0 0 8px;font-size:.8rem;color:#7c2d12}
 .pr-asis button{font:inherit;font-weight:700;font-size:.78rem;border-radius:999px;padding:5px 11px;cursor:pointer;border:1px solid #d97706;background:#fff;color:#7c2d12}
 @media(max-width:700px){ html.practica .pr-franja{padding:5px 8px;font-size:.76rem;flex-wrap:wrap} .pr-f-t{flex:1 1 0;padding:4px 8px} .pr-f-lb{display:none}
-  .pr-franja button{padding:5px 10px;min-height:34px} .pr-f-tip{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.75rem;padding:4px 8px} }
+  .pr-franja button{padding:5px 10px;min-height:34px} .pr-f-tip{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.75rem;padding:4px 8px} .pr-f-cola{font-size:.75rem;padding:4px 8px} }
 @media print{ .pr-franja,.pr-velo,.pr-aviso{display:none!important} }
 /* El panel instalado sin barra (`html.wco`): la franja queda arriba de todo, así que «Salir» no puede quedar debajo de ─ ▢ ✕ de Windows */
 html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-right:calc(14px + var(--wco-r,0px) + 12px);min-height:var(--wco-h,0px)}
@@ -2642,7 +2645,8 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
      puede quedar en la cola de verdad y salir después, cuando se apague; y lo de verdad que esperaba en la cola se queda quieto, sin tocar.
    · NO DEJA SALIR NINGUNA ESCRITURA A LA RED: un `fetch` (o XHR, o `sendBeacon`) que no sea GET y no sea una lectura pura
      (`PRACTICA_LECTURAS`) se frena acá. Es la SEGUNDA guarda: la primera es `apiPost`, que contesta de mentira sin salir.
-   · no abre WhatsApp, el correo ni el teléfono: el panel lo cambia por un aviso (`practicaUrlFrena`, con `window.open` y los enlaces).
+   · no abre WhatsApp, el correo ni el teléfono: el panel lo cambia por un aviso (`practicaUrlFrena`, con `window.open`, los enlaces y la
+     hoja de compartir del celular, `navigator.share`).
    Apagado no instala NADA: el panel anda exactamente igual que siempre. */
 (function(){
   var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
@@ -2666,7 +2670,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   try{ OV.l=JSON.parse(G.call(SS, OVK.l)||'{}')||{}; }catch(e){ OV.l={}; }
   try{ OV.s=JSON.parse(G.call(SS, OVK.s)||'{}')||{}; }catch(e){ OV.s={}; }
   /* Lo que espera mandarse arranca vacío: lo de verdad no se toca y lo de práctica nunca entra ahí */
-  ['ME_PENDING_V1','me_borrar_pend','me_cierre_pend','me_forzar_cola','me_tst_pase_pend'].forEach(function(k){ if(!Object.prototype.hasOwnProperty.call(OV.l, k)) OV.l[k]=null; });
+  ['ME_PENDING_V1','me_borrar_pend','me_cierre_pend','me_forzar_cola','me_tst_pase_pend','me_aparto_cola'].forEach(function(k){ if(!Object.prototype.hasOwnProperty.call(OV.l, k)) OV.l[k]=null; });
   var cual=function(st){ return (LS && st===LS) ? 'l' : ((SS && st===SS) ? 's' : ''); };
   var propia=function(k){ return String(k).indexOf(K)===0; };
   var tiene=function(o, k){ return Object.prototype.hasOwnProperty.call(o, k); };
@@ -2691,7 +2695,9 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
     frenados:function(){ return frenados.slice(); },
     /* Al salir: se borra lo de práctica de la pestaña y la capa deja de guardarse; mientras la página se recarga, la capa sigue tapando
        (la cola de verdad no aparece justo antes de irse). */
-    salir:function(){ cortado=true; clearTimeout(T); try{ [K, OVK.l, OVK.s, 'me_practica_datos', 'me_practica_fotos'].forEach(function(k){ R.call(SS, k); }); }catch(e){} }
+    salir:function(){ cortado=true; clearTimeout(T); try{ [K, OVK.l, OVK.s, 'me_practica_datos', 'me_practica_fotos'].forEach(function(k){ R.call(SS, k); }); }catch(e){} },
+    /* La salida no se hizo (el navegador no navegó): la pestaña sigue en práctica y la capa vuelve a guardarse (`practicaSalir`). */
+    volver:function(){ cortado=false; try{ S.call(SS, K, '1'); }catch(e){} guardar(); }
   };
   /* ── la red: solo lecturas ── */
   var F=window.fetch;
@@ -2718,6 +2724,21 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
     if(window.practicaUrlAfuera(u)){ try{ if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else alert('🧪 Modo práctica: no se abre WhatsApp ni el correo.'); }catch(e){} return null; }
     return WO.apply(this, arguments);
   };
+  /* 📲 (revisión del 14/11) La hoja de COMPARTIR del celular (`navigator.share`: «💬 Mandar por WhatsApp» de una cotización o de un
+     certificado) también: mandaba el mensaje y la imagen DE VERDAD. `canShare` dice que no (el panel cae en abrir el chat, que ya
+     muestra el aviso) y `share`, si algo la llama igual, muestra el mismo aviso con el texto y contesta como si la persona hubiera
+     cancelado (`AbortError`: el panel no hace nada más). */
+  try{
+    if(('share' in navigator) || ('canShare' in navigator)){
+      var cancelado=function(){ try{ return new DOMException('🧪 Modo práctica: no se comparte nada', 'AbortError'); }catch(e){ var x=new Error('🧪 Modo práctica: no se comparte nada'); x.name='AbortError'; return x; } };
+      Object.defineProperty(navigator, 'share', { configurable:true, writable:true, value:function(d){
+        var t=''; try{ t=[d && d.title, d && d.text, d && d.url].filter(function(x){ return x; }).map(String).join('\n'); }catch(e){}
+        try{ var u='https://wa.me/?text='+encodeURIComponent(t); if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else alert('🧪 Modo práctica: no se comparte nada.'); }catch(e){}
+        return Promise.reject(cancelado());
+      } });
+      Object.defineProperty(navigator, 'canShare', { configurable:true, writable:true, value:function(){ return false; } });
+    }
+  }catch(e){}
   /* Los ENLACES a WhatsApp/correo/teléfono se reemplazan: el `href` de verdad pasa a `data-pr-href` y el enlace queda en «#» (así ni
      «abrir en otra pestaña» con el botón derecho llega al cliente); tocarlo muestra el aviso. */
   var urlDe=function(a){ return a.getAttribute('data-pr-href') || a.getAttribute('href'); };
@@ -2851,6 +2872,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
     <span class="pr-f-t">🧪 <b>MODO PRÁCTICA</b> — nada de esto se guarda de verdad</span>
     <button type="button" class="pr-f-ej" id="pr-ej-btn" onclick="practicaEjercicios()" title="Las 5 tareas para practicar">📋 <span class="pr-f-lb">Ejercicios</span> <i id="pr-ej-n">0/5</i></button>
     <button type="button" class="pr-f-salir" onclick="practicaSalir()" title="Borrar todo lo de práctica y volver al panel de verdad">Salir</button>
+    <span class="pr-f-cola" id="pr-cola" hidden></span>
     <span class="pr-f-tip" id="pr-tip" hidden></span>
   </div>
   <div class="header-in">
@@ -8855,12 +8877,22 @@ function apiSaveAhora(rec, opts){
      «cargado y en camino» en vez del cambio de día. Como `reserva`, viaja solo en este envío: si cae a la cola, sale el cambio de día. */
   if(opts && opts.adelanto) payload.adelanto=1;
   /* ⏳ (14/11, mejora 267) El lugar que este formulario apartó mientras se cobraba (`apartarCupo`, servidor 2026-11-14-b): el portero no lo
-     cuenta contra este pedido y lo suelta. Como `reserva`, viaja SOLO en este envío: si cae a la cola, el apartado se vence solo. */
+     cuenta contra este pedido y lo suelta. Lo manda el formulario y, si cae a la cola, el reenvío de la cola (`apartoColaDe`, anotado
+     aparte: la fila no lo lleva). */
   if(opts && opts.aparto) payload.aparto=String(opts.aparto);
   /* 📦 (30/10, propuesta 76) Esta página sabe de «el cliente avisa cuándo» (`entregaAConfirmar`): el servidor 2026-10-30-a no deja que una
      página sin F5 —que no la conoce— le ponga un día inventado a una venta sin día (le contesta `actualizar`). Va en TODO guardado (también
      el de la cola): es de la página, no de este envío. Un servidor de antes lo ignora. */
   payload.av=1;
+  /* ⏳ (revisión del 14/11, servidor 2026-11-14-b) El APARATO que guarda, el mismo texto que manda `apartarCupo` (`apartoAparato` =
+     `entAparato()`). Va en TODO guardado, también en el de la cola: el portero no le cuenta a este aparato como «de otra venta» lo que él
+     mismo tiene apartado (un lugar que quedó huérfano no le frena la venta a la vendedora que lo apartó), y lo suelta al escribir la fila.
+     Un servidor de antes lo ignora. */
+  try{ payload.aparato=apartoAparato(); }catch(eA){}
+  /* ➕ (revisión del 14/11, servidor 2026-11-14-b) Los cupos abiertos de más (`__cupos_extra__`) los toca solo Administración: con la clave
+     del equipo y la de Administración puestas, el servidor pide esa clave para la fila. Va si este aparato la tiene; sin clave no cambia nada
+     (sin claves en el servidor, igual que antes). */
+  if(rec && String(rec.id)===CUPX_ID && ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL;
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
      petición. Si el guardado tarda —el servidor puede esperar hasta 30 s el candado cuando
@@ -9347,10 +9379,12 @@ function flushPending(){
          se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
          computadora cambió mientras tanto. Las demás filas, como siempre. */
       var forz=forzarColaEs(rec);   // (25/10, ORD-2) lo que Administración forzó, forzado sigue
-      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec, forz ? {forzar:true} : undefined);
+      var apC=''; try{ apC=apartoColaDe(rec); }catch(eA){}   // ⏳ (revisión del 14/11) la venta que cayó a la cola con su lugar apartado, con él
+      var oC=(forz || apC) ? {} : undefined; if(forz) oC.forzar=true; if(apC) oC.aparto=apC;
+      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec, oC);
       return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
-        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])){ listos[String(rec.id)]=enviado; if(forz) forzarColaOlvidar(rec.id); }
+        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])){ listos[String(rec.id)]=enviado; if(forz) forzarColaOlvidar(rec.id); if(apC) try{ apartoColaOlvidar(rec.id, enviado); }catch(eA){} }
         if(res && !res.ok && RECHAZOS_FIRMES[res.error]) rechazados++;
       }, function(){});
     });
@@ -22549,6 +22583,7 @@ function submitPedido(){
      catch que lo encola. Guardar la MISMA fila/id/revisión antes de tocar la red. No avanzar
      si el navegador no pudo conservarla. El reenvío usa el «ok tardío» de apiSave, no otro id. */
   var _enviadoForm=JSON.stringify(rec);
+  var _aparto=null; try{ _aparto=apartoParaGuardar(rec); }catch(eA){}   // ⏳ (14/11, 267) el lugar que se apartó para ESTE día y turno
   if(CONNECTED){
     delete NO_ENCOLAR[rec.id];                  // un NUEVO intento explícito, tras corregir un rechazo
     queuePending(rec);
@@ -22557,10 +22592,14 @@ function submitPedido(){
       toast('No se pudo guardar una copia segura en este navegador. El pedido NO se envió y sigue en el formulario. No recargues: liberá espacio del dispositivo o copiá los datos antes de cerrar.','err',12000);
       return;
     }
+    /* ⏳ (revisión del 14/11) …y la copia de la cola sabe de su lugar apartado: si este envío no llega y sale después desde la cola,
+       el reenvío lleva `aparto` (`apartoColaDe`) y el portero no le cuenta su propio lugar como de otra venta. */
+    if(_aparto) try{ apartoColaAnotar(rec.id, _enviadoForm, _aparto); }catch(eA){}
   }
   var sacarEnvioForm=function(){
     // Solo esta foto. Otra pestaña puede haber dejado una corrección más nueva del mismo id.
     setPending(getPending().filter(function(p){ return JSON.stringify(p)!==_enviadoForm; }));
+    try{ apartoColaOlvidar(rec.id, _enviadoForm); }catch(eA){}
     updateFooter();
   };
   // Optimista: actualizamos la vista ya
@@ -22575,7 +22614,6 @@ function submitPedido(){
     /* 📦 (02/10, §4hj) La reserva (armada arriba) viaja con el guardado: el servidor 2026-10-02-a la anota y, si otro vendedor
        que ESTA lectura no conocía apartó lo mismo en el medio, lo contesta en `saldo` y se le dice abajo, después de lo de
        siempre. Con un servidor de antes no vuelve nada y no cambia nada. */
-    var _aparto=null; try{ _aparto=apartoParaGuardar(rec); }catch(eA){}   // ⏳ (14/11, 267) el lugar que se apartó para ESTE día y turno
     apiSave(rec, {forzar: _forzar, reserva:(_reserva ? _reserva.envio : null), aparto:_aparto}).then(function(res){
       setSubmitting(false);
       try{ guardarBtnFin(res, rec); }catch(eG){}   // ✨ (§4ni, 6 y 16) el botón dice cómo salió y suena (nunca frena el guardado)
@@ -22670,7 +22708,7 @@ function submitPedido(){
         renderCupoForm();
         return;
       }
-      else { afterEnCola(isEdit, 'el servidor no contestó como se esperaba'); return; }
+      else { try{ apartoACola(_aparto); }catch(eA){} afterEnCola(isEdit, 'el servidor no contestó como se esperaba'); return; }   // ⏳ el lugar apartado se va con la venta que espera
       after(isEdit);
       /* 📦 (02/10) El servidor dice que otro apartó lo mismo mientras se guardaba: se avisa DESPUÉS de lo de siempre (el pedido
          quedó guardado, el formulario vacío o la edición cerrada, y la ventana de siempre abierta). Con un servidor de antes no
@@ -22684,6 +22722,7 @@ function submitPedido(){
          con el botón para pasar la venta al grupo (§4eo). La venta se «pasaba» sin estar en
          la planilla. Ahora se dice dónde quedó y qué NO hacer todavía. */
       // 🙋 La versión CORTA: este cartel lo lee la vendedora, no quien administra (§4fa).
+      try{ apartoACola(_aparto); }catch(eA){}   // ⏳ (revisión del 14/11) el lugar apartado se va con la venta que espera en la cola
       afterEnCola(isEdit, (typeof motivoCorto==='function')?motivoCorto(e):'sin conexión');
     });
   }else{
@@ -33955,9 +33994,14 @@ document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntr
      (`practicaVestirGuardado`); «📋 Ejercicios» son 5 tareas que se tildan solas (`practicaEjMirar`).
    Al salir (`practicaSalir`) se borra todo y la página vuelve a leer la planilla. En Playwright no prende sola: la prueba usa `?practica=1`
    o `practicaEntrar()`. `tests/test_modo_practica.js`.
+   (revisión del 14/11) · prender manda ANTES la cola de verdad del aparato y, si algo no sale, no se prende (`practicaEntrar`); con
+   `?practica=1` y algo esperando, la franja lo dice fijo (`#pr-cola`, `practicaColaPintar`) · una fila del sistema (`__…`) guardada de
+   práctica cede a la de verdad cuando la planilla trae un sello más nuevo que el que vio al guardarla (`PR.vio`, `practicaSuperponer`) ·
+   si el navegador no navega al salir, a los 2 s la pestaña vuelve a la práctica entera (`practicaSalirNoSalio`); saliendo, el
+   «¿salir?» del navegador no se muestra · `navigator.share` también lleva al aviso (script del <head>).
    ========================================================================== */
 var PR_LS='me_practica_datos', PR_FOTOS_LS='me_practica_fotos';
-var PR=null;                  // { filas:{id:fila}, borrados:{id:1}, ej:{clave:cuándo}, n }
+var PR=null;                  // { filas:{id:fila}, borrados:{id:1}, ej:{clave:cuándo}, n, vio:{id:sello} }
 var PR_VISTO={};              // id → la fila de VERDAD como vino en la última lectura (para saber qué cambió una práctica)
 var PR_VER=0, PR_VER_LISTA=0; // cada guardado o borrado de práctica sube PR_VER; la lectura que ya lo trae lo anota
 var PR_FOTOS=null;            // id → { d: dataUrl, u: dirección para mostrarla }
@@ -33965,15 +34009,15 @@ var PR_DIJO={};               // los pasos que Bloki ya explicó (los del formul
 var PR_RESP_MS=90;            // lo que «tarda el servidor» de mentira (así el panel pasa por los mismos estados que de verdad)
 function practicaDatos(){
   if(PR) return PR;
-  PR={ filas:{}, borrados:{}, ej:{}, n:0 };
+  PR={ filas:{}, borrados:{}, ej:{}, n:0, vio:{} };
   try{ var o=JSON.parse(sessionStorage.getItem(PR_LS)||'null');
-    if(o && typeof o==='object'){ PR.filas=o.filas||{}; PR.borrados=o.borrados||{}; PR.ej=o.ej||{}; PR.n=Number(o.n)||0; } }catch(e){}
+    if(o && typeof o==='object'){ PR.filas=o.filas||{}; PR.borrados=o.borrados||{}; PR.ej=o.ej||{}; PR.n=Number(o.n)||0; PR.vio=(o.vio && typeof o.vio==='object') ? o.vio : {}; } }catch(e){}
   return PR;
 }
 function practicaGuardarDatos(){
   var P=practicaDatos(); PR_VER++;
   if(window.PRACTICA_SALIENDO) return;   // saliendo: no se vuelve a escribir lo que se acaba de borrar
-  try{ sessionStorage.setItem(PR_LS, JSON.stringify({ filas:P.filas, borrados:P.borrados, ej:P.ej, n:P.n })); }catch(e){}
+  try{ sessionStorage.setItem(PR_LS, JSON.stringify({ filas:P.filas, borrados:P.borrados, ej:P.ej, n:P.n, vio:P.vio })); }catch(e){}
 }
 function practicaCopia(o){ return o==null ? o : JSON.parse(JSON.stringify(o)); }
 function practicaEs(p){ return !!(window.PRACTICA && p && p.id!=null && practicaDatos().filas[String(p.id)]); }
@@ -34004,6 +34048,10 @@ function practicaGuardar(pl){
   ['_base','_dev','_t','_altaPendiente','_cambios'].forEach(function(k){ delete eco[k]; });
   eco.rev=Math.max((prev ? (Number(prev.rev)||0) : 0)+1, Date.now());   // como el servidor (§4fz)
   P.filas[id]=eco; delete P.borrados[id];
+  /* Una fila del SISTEMA (`__…`: el stock, la proyección de cada día, las tildes de la carga…) la sigue guardando sola el resto del equipo:
+     se anota el sello de VERDAD que esta pestaña veía al guardarla, y cuando la planilla trae uno más nuevo manda la de verdad
+     (`practicaSuperponer`). Sin esto quedaba congelada en la pestaña de práctica. */
+  if(id.indexOf('__')===0){ if(!P.vio) P.vio={}; P.vio[id]=PR_VISTO[id] ? (Number(PR_VISTO[id].rev)||0) : 0; }
   practicaGuardarDatos();
   setTimeout(function(){ try{ practicaTrasGuardarFila(eco, prev); }catch(e){} }, 0);
   return { ok:true, pedido:practicaCopia(eco), mode:(prev ? 'update' : 'add'), ahora:Date.now(), practica:1 };
@@ -34018,17 +34066,23 @@ function practicaBorrar(pl){
 }
 /* La planilla de verdad + la capa de práctica (`apiList`). Objetos NUEVOS: quien recibe la lista la toca. */
 function practicaSuperponer(lista){
-  var P=practicaDatos(), hay={}, out=[];
+  var P=practicaDatos(), hay={}, out=[], solto=false;
   PR_VISTO={};
   (lista||[]).forEach(function(p){
     if(!p || p.id==null){ out.push(p); return; }
     var id=String(p.id);
     PR_VISTO[id]=Object.assign({}, p);
     if(P.borrados[id]) return;
+    /* Una fila del sistema que la planilla trae con un sello MÁS NUEVO que el que la práctica vio al guardarla: la cambió el resto del
+       equipo después. Manda la de verdad y la copia de práctica se olvida (si se vuelve a tocar en práctica, se guarda otra vez). */
+    if(P.filas[id] && id.indexOf('__')===0 && (Number(p.rev)||0) > (Number((P.vio||{})[id])||0)){
+      delete P.filas[id]; if(P.vio) delete P.vio[id]; solto=true; out.push(p); return;
+    }
     if(P.filas[id]){ out.push(practicaCopia(P.filas[id])); hay[id]=1; return; }
     out.push(p);
   });
   Object.keys(P.filas).forEach(function(id){ if(!hay[id]) out.push(practicaCopia(P.filas[id])); });
+  if(solto) practicaGuardarDatos();
   return out;
 }
 function practicaCambioDesdeLista(){ var c=(PR_VER!==PR_VER_LISTA); PR_VER_LISTA=PR_VER; return c; }
@@ -34233,6 +34287,13 @@ function practicaVestirGuardado(rec, edicion){
   var b=box.querySelector('.modal-b'); if(b && !b.querySelector('.pr-res')) b.insertAdjacentHTML('afterbegin', practicaResumenHtml(rec, edicion));
 }
 /* ── Prender y salir ── */
+/* Lo de VERDAD que espera en la cola de este aparato (`ME_PENDING_V1`): en práctica no sale (la capa la tapa), así que antes de prender se
+   manda, y con algo esperando no se prende. `leer` = cómo leer lo de verdad (fuera de práctica, el localStorage; adentro, la capa). */
+function practicaColaReal(leer){
+  var a=[]; try{ a=JSON.parse((leer ? leer(LS_PEND) : localStorage.getItem(LS_PEND))||'[]')||[]; }catch(e){ a=[]; }
+  return Array.isArray(a) ? a.length : 0;
+}
+function practicaColaEsperaTxt(n){ return 'Hay '+n+' guardado'+(n===1?'':'s')+' de VERDAD esperando para llegar a la planilla'; }
 function practicaEntrar(){
   if(window.PRACTICA){ practicaEjercicios(); return; }
   if(!confirm('🧪 ¿Prender el MODO PRÁCTICA en esta pestaña?\n\n'+
@@ -34241,21 +34302,53 @@ function practicaEntrar(){
     '• Bloki te explica cada paso.\n'+
     '• Al salir se borra todo lo que cargaste.\n\n'+
     'El panel se vuelve a abrir: si tenés algo a medio cargar, guardalo antes.')) return;
-  try{ sessionStorage.setItem('me_practica', '1'); }catch(e){ toast('Este navegador no deja prender el modo práctica en esta pestaña.', 'err', 6000); return; }
-  location.reload();
+  var ir=function(){
+    try{ sessionStorage.setItem('me_practica', '1'); }catch(e){ toast('Este navegador no deja prender el modo práctica en esta pestaña.', 'err', 6000); return; }
+    location.reload();
+  };
+  /* (revisión del 14/11) Mientras la pestaña está en práctica, la cola de verdad de este aparato se queda QUIETA: primero sale todo lo
+     que esperaba y recién ahí se prende. Si algo no pudo salir (sin señal, el servidor ocupado), no se prende y se dice. */
+  var espera=function(m){
+    toast('⏳ '+practicaColaEsperaTxt(m)+': esperá a que salgan (Mis pedidos → «🔄 Reintentar ahora») y volvé a prender la práctica. Mientras tanto NO la prendí.', 'err', 12000);
+    try{ renderColaAviso(); }catch(e){}
+  };
+  var n=practicaColaReal();
+  if(!n) return ir();
+  if(!CONNECTED){ espera(n); return; }
+  toast('⏳ Mando '+(n===1 ? 'el guardado que esperaba' : ('los '+n+' guardados que esperaban'))+' antes de prender la práctica…', 'ok', 5000);
+  return Promise.resolve().then(flushPending).then(function(){ var m=practicaColaReal(); if(m) espera(m); else ir(); }, function(){ espera(practicaColaReal() || n); });
 }
+var PRACTICA_SALIR_T=0;   // cuándo se pidió salir (si el navegador no navegó, `practicaSalir` lo repone)
 function practicaSalir(){
   if(!window.PRACTICA) return;
   var P=practicaDatos(), n=Object.keys(P.filas).filter(function(id){ return id.indexOf('__')!==0; }).length;
   if(!confirm('🧪 ¿Salir del modo práctica?\n\nSe borra todo lo que cargaste de práctica'+(n ? (' ('+n+' pedido'+(n===1?'':'s')+')') : '')+
     ' y el panel vuelve a leer la planilla de verdad.')) return;
-  window.PRACTICA_SALIENDO=true;
+  window.PRACTICA_SALIENDO=true; PRACTICA_SALIR_T=Date.now();
   try{ window.PRACTICA_CAPA.salir(); }catch(e){}
-  try{ var F=practicaFotosCargar(); Object.keys(F).forEach(function(k){ if(F[k].u && /^blob:/.test(F[k].u)) URL.revokeObjectURL(F[k].u); }); }catch(e){}
+  /* (revisión del 14/11) Las direcciones «blob:» de las fotos de práctica NO se sueltan acá: se van solas con la página. Si el navegador
+     no navega (abajo), las fotos se siguen viendo. */
+  /* Si a los 2 s la página sigue acá (el navegador no navegó: se canceló su aviso de «¿salir?», o algo lo frenó), la pestaña vuelve a la
+     práctica ENTERA: la marca de la pestaña, la capa del aparato y lo cargado de práctica. Antes quedaba a medias (sin la marca y con todo
+     frenado). Si igual estaba navegando lento, `pagehide` vuelve a borrar todo justo antes de irse (abajo). */
+  setTimeout(practicaSalirNoSalio, 2000);
   var q=(location.search||'').replace(/([?&])practica=1(&|$)/, function(m, a, b){ return b ? a : ''; }).replace(/[?&]$/, '');
   var dest=location.pathname+q;
   if(dest===location.pathname+(location.search||'') && !location.hash) location.reload(); else location.replace(dest);
 }
+function practicaSalirNoSalio(){
+  if(!window.PRACTICA || !window.PRACTICA_SALIENDO) return;
+  window.PRACTICA_SALIENDO=false;
+  try{ window.PRACTICA_CAPA.volver(); }catch(e){}
+  try{ practicaGuardarDatos(); }catch(e){}
+  try{ var F=practicaFotosCargar(), o={}; Object.keys(F).forEach(function(k){ o[k]=F[k].d; }); if(Object.keys(o).length) sessionStorage.setItem(PR_FOTOS_LS, JSON.stringify(o)); }catch(e){}
+  toast('🧪 Seguís en el modo práctica: el panel no se volvió a abrir. Tocá «Salir» otra vez para volver al panel de verdad.', 'err', 8000);
+}
+/* Saliendo de verdad (la página se va dentro del minuto de haber pedido salir, aunque haya tardado más de 2 s): se borra todo otra vez,
+   por si `practicaSalirNoSalio` lo había repuesto. Pasado el minuto, quien se quedó en la pestaña sigue practicando como siempre. */
+window.addEventListener('pagehide', function(){
+  if(window.PRACTICA && PRACTICA_SALIR_T && Date.now()-PRACTICA_SALIR_T<60000){ window.PRACTICA_SALIENDO=true; try{ window.PRACTICA_CAPA.salir(); }catch(e){} }
+});
 function practicaQuienHtml(){
   return window.PRACTICA
     ? '<div class="quien-pr"><button type="button" onclick="quienCerrar();practicaEjercicios()">🧪 Estás en modo práctica · 📋 Ejercicios</button></div>'
@@ -34290,12 +34383,23 @@ function practicaMontar(){
   };
   document.addEventListener('change', mirar, true);
   document.addEventListener('input', mirar, true);
-  var cola=[]; try{ cola=JSON.parse(window.PRACTICA_CAPA.real(LS_PEND)||'[]')||[]; }catch(e){ cola=[]; }
+  var nCola=practicaColaPintar();
+  /* Otra pestaña de este aparato (sin práctica) puede mandar la cola de verdad mientras tanto: el aviso de la franja la sigue. */
+  window.addEventListener('storage', function(e){ if(!e || e.key==null || e.key===LS_PEND) practicaColaPintar(); });
   setTimeout(function(){
-    if(cola.length) practicaDecir('cola', true, { ico:'⏳', t:'Hay '+cola.length+' guardado'+(cola.length===1?'':'s')+' de VERDAD esperando', x:'Se quedan quietos mientras practicás y se mandan solos cuando salgas de la práctica.' });
+    if(nCola) practicaDecir('cola', true, { ico:'⏳', t:'Hay '+nCola+' guardado'+(nCola===1?'':'s')+' de VERDAD esperando', x:'Se quedan quietos mientras practicás y se mandan solos cuando salgas de la práctica.' });
     else practicaDecir('hola');
   }, 1200);
   try{ hdrMedir(); }catch(e){}
+}
+/* (revisión del 14/11) Con `?practica=1` la práctica se prende sin pasar por `practicaEntrar` (que antes manda la cola): si hay guardados de
+   VERDAD esperando, la franja lo dice FIJO, no solo en un consejo de Bloki que se va. */
+function practicaColaPintar(){
+  var el=document.getElementById('pr-cola'); if(!el || !window.PRACTICA) return 0;
+  var n=practicaColaReal(function(k){ return window.PRACTICA_CAPA.real(k); });
+  var h=n ? ('⏳ <b>'+esc(practicaColaEsperaTxt(n))+'</b>: no se mandan mientras practicás. Tocá «Salir» para que salgan.') : '';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; el.hidden=!n; try{ hdrMedir(); }catch(e){} }
+  return n;
 }
 document.addEventListener('DOMContentLoaded', function(){ try{ practicaMontar(); }catch(e){} });
 
@@ -59814,6 +59918,9 @@ function histStockPintar(){
    Contabilidad): el navegador pregunta. Lo que igual se escape lo agarra el barrido (§4ep). */
 window.addEventListener('beforeunload', function(e){
   try{
+    /* 🧪 (271, revisión del 14/11) Saliendo del modo práctica no se pregunta: esas imágenes son de práctica (nunca se subieron) y la persona
+       ya confirmó que se borra todo. Si el navegador preguntaba y se cancelaba, la pestaña quedaba a medias. */
+    if(window.PRACTICA && window.PRACTICA_SALIENDO) return;
     var n=imagenesSinPegar().length + Object.keys(CTA_PAGO_POR_ID||{}).reduce(function(a,k){ return a+compsArr((CTA_PAGO_POR_ID[k]||{}).comps).length; },0) + (CTA_PAGO?compsArr(CTA_PAGO.comps).length:0);
     if(n){ e.preventDefault(); e.returnValue=''; }
   }catch(err){}
@@ -64085,6 +64192,11 @@ function cajaImprimir(html){
      soltó (`apartoTrasGuardar`).
    · `cupos_llenos` al apartar: se dice como hoy se dice «turno lleno» y se relee la planilla. Un fallo de red NO frena nada: sin respuesta
      sigue todo como antes de la 267.
+   · (revisión del 14/11) Lo que este aparato apartó y ya no usa NO se queda frenando: una respuesta que llega después del tope se suelta
+     ahí mismo, y cada lectura suelta lo de este aparato que no es el apartado de ahora (`apartoHuerfanosSoltar`; respeta otra pestaña que
+     lo sigue usando, `me_aparto_vivos`, y la venta en la cola). Si el guardado cae a la cola, el lugar se va con la venta (`me_aparto_cola`,
+     `apartoACola`) y el reenvío lo manda como `aparto`. TODO guardado (también el de la cola) lleva `aparato` = `apartoAparato()`: el
+     servidor no le cuenta a este aparato lo que él mismo tiene apartado.
    · Lo apartado por OTRO aparato (la lectura trae `apartados`) ocupa lugar en todas las cuentas (`cuposUsadosTurno`) y se dice: «12/12 ·
      ⏳ 1 apartado por otra venta». Lo de este aparato no se resta. En Playwright apagado salvo `APARTO_PRUEBA`.
    `tests/test_cupos_mall.js`.
@@ -64402,8 +64514,64 @@ function apartoAparato(){ if(!APARTO_YO){ try{ APARTO_YO=entAparato(); }catch(e)
 function apartoAhoraSrv(){ return Date.now()+(APARTADOS_OFF||0); }
 /* Lo que trae la lectura: {"AAAA-MM-DD|AM": [{id, aparato, quien, hasta}]}. Sin `apartados` y con un servidor de antes, no hay. */
 function apartadosTomar(a, ahora){
-  if(a && typeof a==='object' && !Array.isArray(a)){ APARTADOS=a; if(Number(ahora)>0) APARTADOS_OFF=Number(ahora)-Date.now(); }
+  if(a && typeof a==='object' && !Array.isArray(a)){ APARTADOS=a; if(Number(ahora)>0) APARTADOS_OFF=Number(ahora)-Date.now(); try{ apartoHuerfanosSoltar(); }catch(e){} }
   else if(!servidorTiene(APARTO_V)) APARTADOS={};
+}
+/* 🧹 (revisión del 14/11) LO QUE ESTE APARATO APARTÓ Y YA NO USA. Un `apartarCupo` que contesta después del tope (`APARTO_TOPE_MS`), una
+   página que se recargó o se cerró sin poder soltar: el servidor lo tiene apartado 10 minutos y su portero lo cuenta como de OTRA venta
+   (la vendedora veía lugar y al guardar le decía «lleno»). Al leer la planilla se suelta lo de este aparato que no es el apartado de ahora,
+   salvo: un `apartarCupo` en el aire (lo que llega puede ser justo eso), lo de otra pestaña de este aparato que lo sigue usando
+   (`APARTO_VIVOS`, se anota mientras dura) y lo de una venta que espera en la cola (`apartoColaIds`: se manda con ella). */
+var LS_APARTO_VIVOS='me_aparto_vivos', APARTO_VIVO_MS=3*60000, APARTO_HUERF={}, APARTO_VIVO_MARCA=0;
+function apartoVivosLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_APARTO_VIVOS)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+function apartoVivoMarcar(id, sacar){
+  if(!id) return;
+  try{
+    var m=apartoVivosLeer(), ah=Date.now();
+    for(var k in m) if(!(Number(m[k])>ah-15*60000)) delete m[k];
+    if(sacar) delete m[String(id)]; else m[String(id)]=ah;
+    if(Object.keys(m).length) localStorage.setItem(LS_APARTO_VIVOS, JSON.stringify(m)); else localStorage.removeItem(LS_APARTO_VIVOS);
+    APARTO_VIVO_MARCA=ah;
+  }catch(e){}
+}
+function apartoHuerfanosSoltar(){
+  if(window.PRACTICA || !apartoActivo() || APARTO_PIDE || !APARTADOS) return 0;
+  var yo=apartoAparato(), vivos=apartoVivosLeer(), cola=apartoColaIds(), ah=Date.now(), n=0;
+  Object.keys(APARTADOS).forEach(function(k){
+    var L=APARTADOS[k]; if(!Array.isArray(L)) return;
+    L.forEach(function(a){
+      if(!a || a.id==null || String(a.aparato||'')!==yo) return;
+      var id=String(a.id);
+      if(APARTO && String(APARTO.id)===id) return;
+      if(cola[id] || (Number(vivos[id])>0 && ah-Number(vivos[id])<APARTO_VIVO_MS)) return;
+      if(APARTO_HUERF[id] && ah-APARTO_HUERF[id]<60000) return;   // ya se pidió soltarlo hace poco
+      APARTO_HUERF[id]=ah; n++;
+      apartoSoltarId(id);
+    });
+  });
+  return n;
+}
+/* 📨 La venta que cae a la COLA con su lugar apartado: el id va con ella, anotado APARTE en este aparato (como `me_forzar_cola`: la fila
+   no lleva la marca, que viajaría a la planilla), atado al texto EXACTO de lo que quedó en la cola. Al reenviarse desde la cola
+   (`flushPending`) sale con `aparto`: el portero no cuenta su propio lugar como de otra venta y, guardado bien, lo suelta. Una corrección
+   posterior del mismo pedido ya no coincide y sale sin él. */
+var LS_APARTO_COLA='me_aparto_cola';
+function apartoColaLeer(){ try{ var m=JSON.parse(localStorage.getItem(LS_APARTO_COLA)||'{}'); return (m && typeof m==='object') ? m : {}; }catch(e){ return {}; } }
+function apartoColaPoner(m){ try{ if(Object.keys(m).length) lsPoner(LS_APARTO_COLA, JSON.stringify(m)); else localStorage.removeItem(LS_APARTO_COLA); }catch(e){} }
+function apartoColaAnotar(pid, txt, aid){
+  if(!pid || !txt || !aid) return;
+  var m=apartoColaLeer(), ah=Date.now();
+  for(var k in m) if(!(m[k] && Number(m[k].ts)>ah-2*3600000)) delete m[k];
+  m[String(pid)]={ t:String(txt), a:String(aid), ts:ah }; apartoColaPoner(m);
+}
+function apartoColaDe(rec){ var m=apartoColaLeer(), x=rec && m[String(rec.id)]; return (x && x.t===JSON.stringify(rec)) ? String(x.a||'') : ''; }
+function apartoColaOlvidar(pid, txt){ var m=apartoColaLeer(), x=m[String(pid)]; if(!x || (txt && x.t!==txt)) return; delete m[String(pid)]; apartoColaPoner(m); }
+function apartoColaIds(){ var m=apartoColaLeer(), o={}; for(var k in m) if(m[k] && m[k].a) o[String(m[k].a)]=1; return o; }
+/* El guardado del formulario no llegó (cayó a la cola): el lugar apartado pasa a ser de la venta que espera, no del formulario. No se
+   suelta al limpiar el formulario (el reenvío lo usa y lo suelta; si no sale, se vence solo en 10 minutos). */
+function apartoACola(id){
+  if(!id || !APARTO || String(APARTO.id)!==String(id)) return;
+  APARTO=null; APARTO_GEN++; apartoVivoMarcar(id, true); apartoPintar();
 }
 /* Los lugares de ese turno que OTRA venta tiene apartados y siguen vigentes (los de este aparato no). */
 function apartadosOtros(fecha, turno){
@@ -64463,8 +64631,17 @@ function apartoPedir(q, id){
   var pl={ action:'apartarCupo', fecha:q.f, turno:q.t, quien:String(quienEdita()||getVendedorMem()||''), aparato:apartoAparato() };
   if(id) pl.id=String(id);
   var fin=function(){ if(APARTO_PIDE && APARTO_PIDE.gen===gen) APARTO_PIDE=null; };
-  var pr; try{ pr=conTopeDuro(apiPost(pl), APARTO_TOPE_MS, 'tardo_datos'); }catch(e){ fin(); return; }
+  var crudo, pr, atendido=false;
+  try{ crudo=apiPost(pl); pr=conTopeDuro(crudo, APARTO_TOPE_MS, 'tardo_datos'); }catch(e){ fin(); return; }
+  /* (revisión del 14/11) Google contestó DESPUÉS del tope: la página ya lo había dado por perdido, pero el servidor apartó el lugar (10
+     minutos, contado como de otra venta). Si lo que llegó no es el apartado de ahora, se suelta. Se mira un instante después, para que
+     una respuesta a tiempo la atienda primero el `then` de abajo. */
+  try{ crudo.then(function(r){ setTimeout(function(){
+    if(atendido) return;
+    if(r && r.ok && r.id && !(APARTO && String(APARTO.id)===String(r.id))){ APARTO_HUERF[String(r.id)]=Date.now(); apartoSoltarId(r.id); }
+  }, 0); }, function(){}); }catch(e){}
   pr.then(function(r){
+    atendido=true;
     fin();
     if(gen!==APARTO_GEN){   // la persona cambió de día o turno (o limpió) mientras tanto: lo que llegó tarde se suelta
       if(r && r.ok && r.id && !(APARTO && String(APARTO.id)===String(r.id))) apartoSoltarId(r.id);
@@ -64473,8 +64650,9 @@ function apartoPedir(q, id){
     if(r && r.ok && r.id){
       var ahS=Number(r.ahora)>0 ? Number(r.ahora) : apartoAhoraSrv(), hasta=Number(r.hasta)||0;
       var resta=hasta>0 ? Math.max(0, Math.min(60*60000, hasta-ahS)) : APARTO_VIDA_MS;
+      if(renueva && String(id)!==String(r.id)) apartoVivoMarcar(id, true);   // el servidor dio otro id (el de antes ya se había vencido)
       APARTO={ id:String(r.id), f:q.f, t:q.t, k:q.k, hasta:hasta, fin:Date.now()+resta, libres:(r.libres!=null ? Number(r.libres) : null), ren:Date.now() };
-      APARTO_LLENO=null;
+      APARTO_LLENO=null; apartoVivoMarcar(APARTO.id);
     }else if(r && r.ok===false && r.error==='cupos_llenos'){
       APARTO=null; APARTO_LLENO={ k:q.k, f:q.f, tu:q.t, t:Date.now() };
       apartoLlenoAvisar(q, renueva);
@@ -64493,7 +64671,7 @@ function apartoLlenoAvisar(q, renueva){
 }
 function apartoSoltar(beacon){
   var a=APARTO; APARTO=null; APARTO_GEN++;
-  if(a && a.id) apartoSoltarId(a.id, beacon);
+  if(a && a.id){ apartoVivoMarcar(a.id, true); apartoSoltarId(a.id, beacon); }
 }
 function apartoSoltarId(id, beacon){
   var pl={ action:'soltarCupo', id:String(id) };
@@ -64520,6 +64698,7 @@ function apartoParaGuardar(rec){
 function apartoTrasGuardar(id, res){
   if(!id || !(res && res.ok)) return;
   if(APARTO && APARTO.id===String(id)){ APARTO=null; APARTO_GEN++; }   // el servidor ya lo soltó: no se suelta otra vez
+  apartoVivoMarcar(id, true);
   APARTO_ELIGIO=false; apartoPintar();
 }
 function apartoSeg(){ return APARTO ? Math.round((APARTO.fin-Date.now())/1000) : 0; }
@@ -64551,8 +64730,9 @@ function apartoTicPoner(){
 function apartoTic(){
   if(!APARTO){ apartoTicPoner(); return; }
   if(apartoSeg()<=0){   // se venció en el servidor (nadie trabajó en el formulario): si la persona vuelve, se aparta de nuevo
-    APARTO=null; APARTO_GEN++; apartoPintar(); if((Date.now()-APARTO_ACT)<APARTO_RENUEVA_MS) apartoMirar(); return;
+    apartoVivoMarcar(APARTO.id, true); APARTO=null; APARTO_GEN++; apartoPintar(); if((Date.now()-APARTO_ACT)<APARTO_RENUEVA_MS) apartoMirar(); return;
   }
+  if(Date.now()-APARTO_VIVO_MARCA>=20000) apartoVivoMarcar(APARTO.id);   // «lo sigo usando», para las otras pestañas de este aparato
   /* Cada ~4 min, o antes si el servidor da menos tiempo (al 60 % de lo que dio), y solo si la persona hizo algo desde la última vez. */
   var ciclo=Math.min(APARTO_RENUEVA_MS, Math.max(30000, (APARTO.fin-APARTO.ren)*0.6));
   if(!APARTO_PIDE && Date.now()-APARTO.ren>=ciclo && APARTO_ACT>APARTO.ren) apartoPedir({ f:APARTO.f, t:APARTO.t, k:APARTO.k }, APARTO.id);
