@@ -257,7 +257,7 @@ seccion(() => {
   const linea = L.lineas.filter(l => /Historial GPS/.test(l)).join(' ');
   chk('6b con la hoja: cuántas filas y de cuántos días (sin datos de clientes)', /✅ La hoja «Historial GPS» tiene 6 fila\(s\) de 3 día\(s\), del 2026-11-11 al 2026-11-13/.test(linea) && !/Cliente/.test(linea), linea);
   chk('6c las funciones nuevas están en la lista de «el código está entero»', /El código está entero/.test(L.lineas.join('\n')) && ['gpsHistPaso_', 'gpsHistGuardar_', 'gpsHistCierre_', 'gpsHistLeer_'].every(n => typeof S2.ctx[n] === 'function'));
-  chk('6d la versión sigue siendo la 2026-11-13-b (lo del GPS va en la misma)', S2.ctx.SCRIPT_VERSION === '2026-11-13-b', S2.ctx.SCRIPT_VERSION);
+  chk('6d el GPS va desde la 2026-11-13-b (hoy, una igual o más nueva)', String(S2.ctx.SCRIPT_VERSION) >= '2026-11-13-b', S2.ctx.SCRIPT_VERSION);
 });
 
 // ══ 7-12. La página ════════════════════════════════════════════════════════
