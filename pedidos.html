@@ -60945,7 +60945,7 @@ function cajaCobroIds(L){
 function cajaMallNorm(R){
   if(!R || typeof R!=='object') return null;
   var num=function(o, ks){ for(var i=0;i<ks.length;i++){ var v=o[ks[i]]; if(v!=null && isFinite(Number(v))) return Number(v); } return null; };
-  var NS=['n','atendidas','atendidos','personas','gente','total','visitas'], CS=['c','compraron','compras','ventas','compro'];
+  var NS=['at','n','atendidas','atendidos','personas','gente','total','visitas'], CS=['co','c','compraron','compras','ventas','compro'];   /* «at»/«co» = la forma de mallResumenDia (porHora y porVend) */
   var lista=function(x, clave){
     if(!x) return [];
     if(Array.isArray(x)) return x.map(function(o){ return (o && typeof o==='object') ? o : null; }).filter(Boolean);
@@ -60957,7 +60957,7 @@ function cajaMallNorm(R){
     var n=num(o, NS); if(!isFinite(h) || n==null) return null;
     return { h:h, n:n, c:num(o, CS)||0 };
   }).filter(Boolean).sort(function(a,b){ return a.h-b.h; });
-  var V=lista(R.vendedores||R.porVendedor||R.vend||R.v, 'v').map(function(o){
+  var V=lista(R.porVend||R.vendedores||R.porVendedor||R.vend||R.v, 'v').map(function(o){
     var v=String(o.v||o.vendedor||o.nombre||'').trim(), n=num(o, NS); if(!v || n==null) return null;
     return { v:nombreCanonico(v)||v, n:n, c:num(o, CS)||0 };
   }).filter(Boolean).sort(function(a,b){ return b.n-a.n || a.v.localeCompare(b.v,'es'); });
