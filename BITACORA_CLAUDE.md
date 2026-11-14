@@ -18784,3 +18784,18 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - **Publicado** 13/11 como página 2026-11-13-d, SIN el `.gs` 13-b ni sus pruebas (`test_servidor`, `test_wa_bot`, `test_wa_mayoristas`, `test_gps_historial`) y con
   `SCRIPT_VERSION_ESPERADA` en 13-a; las columnas del GPS aparecen solas cuando el servidor conteste 13-b (`servidorTiene`). Al implementar el dueño: llevar a `main` el
   `.gs`, esas pruebas y la ESPERADA en 13-b.
+
+### §4py — 🛏️🕓🧾📅⚡ LAS MEJORAS 211, 212, 216, 217 Y 218 + LA PÁGINA 222-233 (14/11; dueño, con «Mejoras 210 a 221»: *«211,212,216,217,218, y dame maaaaaas mejoras visuales, facilidades etc»*)
+- Un agente por mejora en su worktree (`mej-211`, `mej-212`, `mej-216`, `mej-217`, `mej-218`), juntadas por `cherry-pick` en la rama; los choques fueron solo
+  el CSS del final del último `<style>` (se dejaron todos los bloques). Detalle de cada una en CLAUDE.md («Las mejoras 211, 212, 216, 217 y 218»).
+- **211** el dibujito de cada producto (`prodIcoTipo`/`prodIcoHtml`, solo dibujo, sin letras) en la ficha y las fichas de Administración, la Lista de carga,
+  Mis pedidos y la columna del formulario. **212** la historia del pedido (`fH` en los productos + `pedHistHtml`). **216** «🧾 Leer la nota» (servidor).
+  **217** el cliente elige el día nuevo por el bot y logística lo mueve (servidor). **218** las frases rápidas arriba de las observaciones (`frq*`).
+- **Arreglo al juntar** (lo encontró el agente de la 212, viene de §4pl): después de un `conflicto`, `ENT_SRV` no tomaba el ✅ de la fila de la planilla y el ✅
+  que había puesto otra página sin F5 se le anotaba a quien guardaba después. `entSrvAnotar(actual)` en el camino del `conflicto`; `test_entregado_quien` 7b.
+- **Servidor `2026-11-14-a`** = la 13-b (que el dueño no implementó todavía) + 216 + 217. La página muestra «Leer la nota» y los pedidos de cambio de día
+  solo con servidor ≥ 14-a (`NOTA_SERVIDOR`, `RD_SERVIDOR`): se puede publicar la página antes.
+- **Dudas que quedan para el dueño**: 217 ofrece solo días DESPUÉS del que tenía el pedido (`RD_ANTES_DEL_DIA=false`), habla de tú, «No, dejarlo» no le
+  avisa al cliente, logística puede recibir dos avisos (el urgente de Claude y el del día elegido), sin Claude no hay botones. 218: prender un botón por lo
+  escrito a mano y tocarlo borra ese pedazo. 212: lo que manda el bot no está en la historia (haría falta el servidor); `FH_DESDE` = el día de publicar.
+- Propuestas nuevas: «Mejoras 222 a 233» (https://claude.ai/artifact/JvSwRpgf1S9hW2cGHqC1GF), con números de las 137 ventas del equipo de noviembre.

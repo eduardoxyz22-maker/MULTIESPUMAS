@@ -904,6 +904,38 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   aparte; el enlace corto y el `&wa=1` valen. Afuera (`ubfEntra`): `fichaRetira`, venta de tienda, sistema, borradores, entregados, RPT a sucursal con pin y, como el bot,
   **Eduardo, ROHO y los internos** (con la planilla real salían «Roho» a la Tienda 1 y dos de FABRICA). Bloki se lo dice a logística (`l-ubic|…`). `test_ubic_faltan` (37).
 
+## 🛏️🕓🧾📅⚡ Las mejoras 211, 212, 216, 217 y 218 (§4py, 14/11; dueño: «211,212,216,217,218»; en la rama, espera «publica»; 216 y 217 piden el servidor `2026-11-14-a`, que lleva también la 13-b)
+- **🛏️ 211 El dibujito de cada producto** (`prodIcoTipo` → colchón/somier/combo/almohada/respaldar/textil/otro; `prodIcoHtml`, memo `PICO_MEMO`): en la ficha
+  y las fichas de Administración, la Lista de carga (`cargaAgrupar` guarda una línea de muestra en `px`), Mis pedidos y `#fx-der`. Colchón/somier/combo salen de
+  `pryTipoProd` (el código manda); lo demás por la primera palabra (`PICO_ALM`, `PROD_MUEBLE`+`PICO_RESP`, `PROD_TIENDA`+`PICO_TELA`). ⚠️ Solo dibujo: el SVG no lleva
+  `<text>` ni `<title>` (las pruebas comparan los textos con y sin el dibujo). En la ficha el nombre cede su ancho (`.pico + .fl-pn{flex-basis:194px}`) para que los
+  renglones se partan donde se partían. `tests/test_prod_ico.js` (20).
+- **🕓 212 La historia del pedido**: cada guardado que cambia el día o el turno deja `fH` en los productos (`{t, de, a, q, d}`, últimos `FH_HIST_MAX`=8;
+  `fhHistAnotar` en `guardarDurable`/`apiSave`, junto a `entHistAnotar`; `FH_SRV` = lo de la planilla, desde `mergePending`, `aplicarSello` y el `conflicto`).
+  ⚠️ Un camino NUEVO que mueva la fecha o el turno dice desde dónde con `fhDonde('…')`; `heredarMarcas` pasa `fH` y `deshDevolver` lo saltea. `pedHistHtml` /
+  `pedHistDatos`: «🕓 Historia del pedido (N)», plegada, en la ficha de Administración y la de Mis pedidos — la carga, cada cambio de día, los pagos, quién tocó el ✅,
+  el cierre, el camión que salió, el GPS de hoy y lo que el cliente escribió al bot (lo que el bot MANDÓ no está: haría falta el servidor). **`FH_DESDE` = el día de
+  publicar** (antes de esa fecha la carga no dice «para el …»). Playwright solo con `FH_PRUEBA`. `tests/test_historia_pedido.js` (31).
+  🧾 Al juntar: después de un `conflicto` también `entSrvAnotar(actual)` (§4pl): el ✅ que traía la planilla ya no se le anota a quien guarda después (`test_entregado_quien` 7b).
+- **🧾 216 «Leer la nota»** (servidor `notaLeer_`, acción `leerNota` afuera del candado, con la clave del equipo): la foto de la nota de venta (`achicarFoto` 1600 px,
+  tope 60 s) → Claude (`IA_COMP_MODELO`/`IA_MODELO`, esfuerzo bajo, `NOTA_ESQUEMA`) devuelve nota, fechas, cliente, celular, NIT, facturar a, dirección, productos,
+  montos, observaciones y dudas. La página (`#nota-leer` bajo «📦 Datos del pedido», `notaLeer*`) llena SOLO lo vacío, los productos con el código de la nota si
+  coincide o `prodCodigoAuto`, y muestra «Revisá lo que leí»; con productos ya cargados ofrece «Usar estos productos»; la fecha de entrega solo con «Usar ese día».
+  🚫 Nunca guarda. Tope `NOTA_TOPE_DIA` (80; `NOTA_DIA` cuenta, devuelve lo que Claude no contestó); `IA_NOTA=0` lo apaga; no anota nada en hojas ni registros.
+  Solo con servidor ≥ `NOTA_SERVIDOR` (14-a); Playwright con `NOTA_PRUEBA`. ~USD 0,02-0,05 por nota. `tests/test_leer_nota.js` (49, el `.gs` real),
+  `tests/test_leer_nota_pagina.js` (44).
+- **📅 217 El cliente elige el día nuevo por el bot**: si Claude dice `no_esta` u `otro_dia`, la respuesta sale con hasta 3 botones (`rd|<pedido>|<día>|<AM|PM>`,
+  `rdOpciones_`: días hábiles con lugar AHORA con las reglas del portero, el mismo turno primero, solo DESPUÉS del día que tenía, `RD_ANTES_DEL_DIA=false`; una vez por
+  pedido y día, `RD_OFRECE`). Tocar uno (`rdElegido_`, primero en `waHookAnotar_`) valida y guarda el pedido de cambio en `RD_PEND`, le contesta al cliente y avisa a
+  logística (`logistica_cambio_v2`). 🚫 **La fila del pedido no se toca**: el panel (`rd*`: pestaña Bot, «Para hacer», la ficha) ofrece «📅 Mover» (= `reproAplicar`,
+  con `forzar` y la clave si hay avisos) y «No, dejarlo»; `rdMarcar` lo marca. Sin plantillas nuevas (los botones son mensaje interactivo). Solo con Claude prendido.
+  `rdNoVa_` = `waNoCliente_` + lo que retira el cliente. Página con servidor ≥ `RD_SERVIDOR`; Playwright con `RD_PRUEBA`. `tests/test_wa_otro_dia.js` (60),
+  `tests/test_wa_otro_dia_pagina.js` (20).
+- **⚡ 218 Frases rápidas en las observaciones** (`#frq`, `solo-entrega`; `FRQ`, `frqPintar`/`frqTocar`): 📞 Llamar 1 h antes · 📞 Media hora antes · 🏢 Edificio · piso
+  · 💵 Paga al recibir · 🛍️ Doble bolsa · 🕐 Horario. Van al final con «. »; prendido = la nota ya lo dice (también escrito a mano: misma lectura que `fichaNota`);
+  tocarlo prendido saca SOLO ese pedazo (también lo escrito a mano); los dos «llamar» se reemplazan. La ficha de logística suma «🏢 Es un edificio» (sin piso) y
+  «🕐 Horario: …». `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (59).
+
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
@@ -1901,7 +1933,7 @@ que cambia `entregado` deja `eH` en cada producto (últimas 8: puesto/sacado, cu
 `entDonde`, para qué día). `entHistAnotar` en `guardarDurable` y `apiSave`, contra `ENT_SRV` (`mergePending`/`aplicarSello`); un cambio de OTRA página
 sin F5 no se le anota a nadie (`ENT_PROPIO`). Deshacer, reprogramar y Editar no lo borran (`deshDevolver` saltea `eH`, `heredarMarcas` lo pasa). Se
 ve en la ficha de Administración y en la de Mis pedidos (`entHistHtml`). ⚠️ Un camino NUEVO que cambie `entregado` llama a `entDonde('…')` y guarda por
-`guardarDurable`/`apiSave`. Playwright solo con `ENT_HIST_PRUEBA`. `tests/test_entregado_quien.js` (14).
+`guardarDurable`/`apiSave`. Playwright solo con `ENT_HIST_PRUEBA`. `tests/test_entregado_quien.js` (15; §7b = el `conflicto`, §4py).
 
 ## 🎟️ Cupos del camión (§4fh)
 - Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM; domingo y feriados cerrados, §4gy).
