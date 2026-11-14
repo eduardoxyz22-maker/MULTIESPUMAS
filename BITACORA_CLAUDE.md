@@ -18858,3 +18858,30 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   La compra en la ATC (`atcCompra*`) prendida para todos. `tests/test_certificado.js` (58).
 - **276-281**: «🏬 El mall» y «📡 El mall en vivo» en Proyección (`mallAn*`, `mviv*`), con la contraseña; atajo `#envivo` en el manifest y en
   `escritorio.js` (`?v=20261114a`). `tests/test_mall_analisis.js` (60).
+
+### §4pz-b — 🔎 La auditoría de Fable del mall (14/11; dueño: *«No publicaremos nada aún. Sin antes listar qué se está haciendo o se hará. Y Fable audite»*)
+- Cuatro revisores Fable (servidor, mostrador+caja, cotización+certificado, práctica+cupos+análisis) sobre `6e01cbc..3e33a76`: **ninguno encontró algo que
+  cambie lo de siempre** (otras tiendas, Contabilidad, Cuadre, cupos, bot, Kommo). 38 hallazgos dentro de lo nuevo; arreglados por cuatro agentes en
+  worktrees y juntados en la rama (sin publicar): `622acfe` (servidor), `070487a` (cotización/certificado), `f74a24b` (mostrador/caja), `d74a255`
+  (práctica/apartado). Scripts de los revisores en el scratchpad (`fable_srv/`, `fable_cot/`, `fable_mostrador/`, `fable_practica/`).
+- **Servidor (sigue `2026-11-14-b`, 10.100 líneas)**: el modo prueba del bot de cotizaciones usa su propia propiedad **`COT_PRUEBA`** (lista de celulares),
+  ya no `WA_PRUEBA` (que desvía TODO el bot); el bot de las 48 h solo mira cotizaciones de 48-96 h con `vence ≥ hoy` (las otras `bot='no_va'`); un error
+  de Meta deja `bot='error'` + `botErr` (columna nueva al FINAL de `COT_ENC`); `cotizacion_sin_llamar` solo con `estado==='abierta'` y las 2 h en horario
+  de tienda (`cotTiendaMas_`, lun-sáb hábil 09-20); el cliente oye «hoy / mañana temprano / el lunes temprano» (`cotCuandoLlama_`); **apartados**: uno por
+  aparato y turno (el nuevo suelta el anterior), tope 3 por día+turno (`apartados_tope`), vida 30 min desde `c`, el portero no cuenta como «de otro» el
+  del aparato que guarda (`body.aparato`, `apartadosOtrosDe_`) y `doSave` lo suelta; `RECHAZOS_NO_ANOTAR` (apartar/soltar/cot*/mall* no van a «Rechazos»);
+  `VENTA_GRANDE_BS` «8,000» = 8000 y ⚠️ si queda < 500; `__cupos_extra__` pide `forzarOk_` (con claves puestas); `fechaReal_` en mallLeer/cotLeer; Claude no
+  ve la cotización sin `cotBotPara_`.
+- **Página**: `payload.aparato = apartoAparato()` en TODO save (también la cola) y `adminKey` al guardar `__cupos_extra__`; el id del apartado de una venta
+  que cae a la cola va en `me_aparto_cola` (como `me_forzar_cola`); respuesta tardía de `apartarCupo` → se suelta; huérfanos del mismo aparato se sueltan
+  (`apartoHuerfanosSoltar`, salvo otra pestaña viva `me_aparto_vivos`, la cola o un pedido en el aire). Práctica: `navigator.share` frenado; no se entra con
+  guardados reales en la cola (`#pr-cola`); filas `__…` reales con `rev` mayor ganan (`PR.vio`); salir cancelado se repone a los 2 s. Cotización:
+  `COT_FIRMES` (solo esos «no» son firmes; `ocupado` y lo desconocido se reintentan), «🔗 Ya está cargada: elegir la venta», «Compró» → venta de tienda
+  conserva cliente y productos (`cotVentaFoto`/`cotVentaReponer`), «Cotizar» con pedido a medio cargar pregunta (`cotFormMedio`), la ventana de llamadas
+  repone lo escrito, «Renovar» reintenta sobre el `conflicto` (`op.re`), `abiertas:true`, `certBloqueHtml` con try (`certBloqueArmar`), «el bot les escribió»
+  = `cotBotEscribio`. Caja: el arqueo no repinta en el `change` (`cajaArqueoTextos`, `CAJA_APRIETA`), no guarda con servidor viejo
+  (`REESCRITAS[id].puede`), «💵 De ventas de otra tienda» (`E.ajenos`, sin cambiar totales), los dos interruptores del aparato se avisan; `mallEnviar` sin
+  bucle; `esc` en la medida de «El mall con números»; el en vivo muestra «Falta» de la caja.
+- **Quedan para el dueño** (no se tocaron): la hora del cambio de turno del mall (`MALL_CAMBIO_TURNO='15:00'`, el turno sale de la hora del «Llegué»),
+  «Pausa»+«Volví» al frente, la venta cargada sin «Atiendo» (hoy cuenta como cliente de la rueda), y el celular obligatorio en la cotización (así lo
+  aprobó; el revisor lo esperaba opcional porque el encargo se lo dijo mal).
