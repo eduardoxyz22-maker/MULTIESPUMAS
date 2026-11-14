@@ -933,9 +933,10 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   `rdNoVa_` = `waNoCliente_` + lo que retira el cliente. Página con servidor ≥ `RD_SERVIDOR`; Playwright con `RD_PRUEBA`. `tests/test_wa_otro_dia.js` (60),
   `tests/test_wa_otro_dia_pagina.js` (20).
 - **⚡ 218 Frases rápidas en las observaciones** (`#frq`, `solo-entrega`; `FRQ`, `frqPintar`/`frqTocar`): 📞 Llamar 1 h antes · 📞 Media hora antes · 🏢 Edificio · piso
-  · 💵 Paga al recibir · 🛍️ Doble bolsa · 🕐 Horario. Van al final con «. »; prendido = la nota ya lo dice (también escrito a mano: misma lectura que `fichaNota`);
-  tocarlo prendido saca SOLO ese pedazo (también lo escrito a mano); los dos «llamar» se reemplazan. La ficha de logística suma «🏢 Es un edificio» (sin piso) y
-  «🕐 Horario: …». `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (59).
+  · 💵 Paga al recibir · 🛍️ Doble bolsa. Van al final con «. »; prendido = la nota ya lo dice (también escrito a mano: misma lectura que `fichaNota`);
+  tocarlo prendido saca SOLO ese pedazo (también lo escrito a mano); los dos «llamar» se reemplazan. La ficha de logística suma «🏢 Es un edificio» (sin piso).
+  🚫 **Sin botón «🕐 Horario…»** (dueño, 14/11: *«no me convence ya que no tenemos horas específicas»*): no volver a ponerlo sin que lo pida; la hora escrita
+  a mano la sigue leyendo la ficha (`fichaNota`), como antes. `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (57).
 
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,

@@ -20631,8 +20631,10 @@ function obsRevIr(x){
    puede seguir escribiendo a mano»). En 632 pedidos de octubre y noviembre, 100 dicen «llamar antes», 53 piso o edificio, 27 «paga al
    recibir» y 10 «doble bolsa», cada uno escrito a su manera.
    · Cada botón de `#frq` escribe UNA frase fija (`FRQ[].f`) al final del campo, separada con «. », y dispara el `input` del campo (los
-     pasos, «Para guardar» y la revisión de las observaciones lo ven). «Edificio · piso…» deja elegido el «…» para escribir el nombre;
-     «Horario…» deja el cursor después de «HORARIO: ». Las frases cerradas no mueven el foco (en el celular no abre el teclado).
+     pasos, «Para guardar» y la revisión de las observaciones lo ven). «Edificio · piso…» deja elegido el «…» para escribir el nombre.
+     Las frases cerradas no mueven el foco (en el celular no abre el teclado).
+     🚫 Sin botón «🕐 Horario…» (14/11, dueño: *«no me convence ya que no tenemos horas específicas»*): no volver a ponerlo sin que lo
+     pida. La hora escrita a mano la sigue leyendo la ficha de logística (`fichaNota`), como siempre.
    · Prendido = la nota ya lo dice, con la frase fija o como se escribe a mano (`frqSpans`, con las palabras que lee la ficha de
      logística: `fichaNota` y `fichaObsChips`). Tocar uno prendido saca SOLO los pedazos que lo dicen; lo demás de la nota queda.
    · Los dos «llamar» van juntos: elegir uno reemplaza al otro (y a «llamar 2 horas antes» o «avisar antes de ir» escritos a mano).
@@ -20645,8 +20647,7 @@ var FRQ=[
   { k:'l30',   g:'llamar', ic:'📞', t:'Media hora antes', f:'LLAMAR MEDIA HORA ANTES' },
   { k:'edif',  ic:'🏢', t:'Edificio · piso…', f:'EDIFICIO …, PISO ', sel:[9, 10] },   // el «…» queda elegido: lo que se escribe lo reemplaza
   { k:'paga',  ic:'💵', t:'Paga al recibir',  f:'PAGA AL RECIBIR' },
-  { k:'bolsa', ic:'🛍️', t:'Doble bolsa',      f:'PONER DOBLE BOLSA' },
-  { k:'hora',  ic:'🕐', t:'Horario…',         f:'HORARIO: ', abre:1 }
+  { k:'bolsa', ic:'🛍️', t:'Doble bolsa',      f:'PONER DOBLE BOLSA' }
 ];
 function frqDe(k){ for(var i=0;i<FRQ.length;i++) if(FRQ[i].k===k) return FRQ[i]; return null; }
 /* «no llamar antes», «sin doble bolsa», «no se cobra al entregar»: eso no prende nada (con una palabra en el medio, como mucho). */
@@ -20689,7 +20690,7 @@ function frqSpans(s){
   /* 🛍️ lo que `fichaObsChips` lee como «doble bolsa» */
   re=/\b(?:(?:PONER(?:LE)?|COLOCAR(?:LE)?|LLEVAR|USAR|ENVOLVER(?:LO|LA)?(?:\s+EN)?|CON|EN)\s+(?:LA\s+|UNA\s+)?)?(?:DOBLE\s+BOLSAS?|(?:2|DOS)\s+BOLSAS)\b/g;
   while((m=re.exec(U))){ if(frqNiega(U, m.index)) continue; sumar('bolsa', tramo(m.index, m.index+m[0].length)); cortes.push(m.index); }
-  /* 🏢 y 🕐 abiertos: desde la palabra hasta el fin de la frase (o hasta la frase siguiente que reconoce otro botón) */
+  /* 🏢 abierto: desde la palabra hasta el fin de la frase (o hasta la frase siguiente que reconoce otro botón; «HORARIO» también corta) */
   var kE=[], kH=[];
   re=/\b(?:EN\s+(?:EL\s+)?)?(?:EDIFICIO|EDIF\b\.?|DPTO\b\.?|DEPTO\b\.?)/g;
   while((m=re.exec(U))){ if(!frqNiega(U, m.index)) kE.push({ i:m.index, f:m.index+m[0].length }); }
@@ -20701,22 +20702,9 @@ function frqSpans(s){
     return tramo(x.i, j) || { i:x.i, j:x.f };
   };
   kE.forEach(function(x){ sumar('edif', fin(x, kH)); });
-  kH.forEach(function(x){ sumar('hora', fin(x, kE)); });
   /* 🪜 el piso sin la palabra «edificio» («3er piso», «piso 5»), como lo lee `fichaObsChips` */
   re=/(?:\b(?:EN\s+EL|AL)\s+)?\b\d+\s*(?:ER|ERO|DO|RO|TO|MO|VO|NO|°|º)?\s*PISO\b|\bPISO\s*(?:N\S*\s*)?\d+/g;
   while((m=re.exec(U))){ if(!frqNiega(U, m.index)) sumar('edif', tramo(m.index, m.index+m[0].length)); }
-  /* 🕐 una hora escrita sin «horario» («de 11 a 12», «después de las 15»): la MISMA lectura de la ficha (`fichaNota`) */
-  try{
-    var N=fichaNota({ observaciones:s, celular:'', productos:[] });
-    if(N.hora){
-      var pos=obsRevUbicarHora(U, N);
-      if(pos){
-        var ini=pos.i, pre=/(?:\b(?:LA\s+)?ENTREGAR?\s+(?:POR\s+FAVOR\s+)?|\bPUEDE\s+RECIBIR\s+|\bRECIBE\s+)$/.exec(U.slice(Math.max(0, pos.i-30), pos.i));
-        if(pre) ini=pos.i-pre[0].length;
-        sumar('hora', tramo(ini, pos.j));
-      }
-    }
-  }catch(e){}
   return R;
 }
 /* Saca el pedazo [i, j) y el separador que le sobra («A. B. C» sin B = «A. C»). */
@@ -48653,13 +48641,6 @@ function fichaObsChips(p){
     var hTx=N.hora || N.horaTxt;
     if(hTx) add('🕐', hTx.charAt(0).toUpperCase()+hTx.slice(1), 'hora');
     else if(/(COORDINAR|CONFIRMAR|PREGUNTAR|ACORDAR)[^.·]{0,40}HORA/.test(t)) add('🕐','Coordinar la hora','hora');
-    else {   // ⚡ 218 «HORARIO: …» (la frase rápida) con algo que no es una hora que se entienda («cuando pueda», «9 a 11»): tal cual
-      var hz=/\bHORARIOS?\b(?:\s+DE\s+(?:ENTREGA|ATENCION))?\s*:?[ \t]*/.exec(obsRevMay(obs));
-      if(hz){
-        var hr=obs.slice(hz.index+hz[0].length), hc=hr.search(/\.(?=\s|$)|[;\n·]/), hx=(hc<0 ? hr : hr.slice(0, hc)).replace(/[\s,:]+$/,'').trim();
-        if(/[A-Za-z0-9ÁÉÍÓÚÑáéíóúñ]/.test(hx)) add('🕐','Horario: '+(hx.length>40 ? hx.slice(0, 40)+'…' : hx).toLowerCase(),'hora');
-      }
-    }
     if(/FACTURA/.test(t)) add('🧾','Llevar la factura','fact');
     if(/FRAGIL|CUIDADO/.test(t)) add('⚠️','Con cuidado','cuid');
     if(N.cobrar) add('💵','Cobrar '+fmtBs0(N.cobrar),'cobra'); else if(N.contra) add('💵','Cobra al entregar','cobra');
