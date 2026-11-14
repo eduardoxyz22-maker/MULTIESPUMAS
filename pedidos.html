@@ -2522,7 +2522,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
 (function(){
   var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
   /* Las lecturas puras que pueden ir a la planilla de verdad (todo lo demás, también lo que no tiene `action` —para el servidor es «save»—, NO) */
-  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1 };
+  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones */
   window.PRACTICA=false;
   if(!SP) return;
   var G=SP.getItem, S=SP.setItem, R=SP.removeItem;
