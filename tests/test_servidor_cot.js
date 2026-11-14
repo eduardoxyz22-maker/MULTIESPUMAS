@@ -222,6 +222,11 @@ seccion('2. cotMarcar / cotLeer', () => {
   chk('2b. estado «no» con el motivo (la llamada de antes sigue)', r.ok && r.cot.estado === 'no' && r.cot.motivo === 'le pareció caro' && r.cot.llamadas.length === 1, r.cot);
   r = S.post({ action: 'cotMarcar', id: a.id, estado: 'compro', pedido: 'p-123' });
   chk('2c. compró, con el pedido', r.ok && r.cot.estado === 'compro' && r.cot.pedido === 'p-123');
+  /* (14/11) la página manda la hora de la anotación (`llamada.t`): un reintento de la MISMA anotación no la repite */
+  r = S.post({ action: 'cotMarcar', id: a.id, llamada: { t: 1794700000000, res: 'compro' } });
+  const r2x = S.post({ action: 'cotMarcar', id: a.id, llamada: { t: 1794700000000, res: 'compro' } });
+  const r3x = S.post({ action: 'cotMarcar', id: a.id, llamada: { t: 1794700000999, res: 'volver' } });
+  chk('2c2. la misma llamada (mismo t de la página) mandada dos veces queda una; otra t, se suma', r.ok && r2x.ok && r2x.cot.llamadas.length === 2 && r3x.cot.llamadas.length === 3, r3x.cot && r3x.cot.llamadas);
   chk('2d. estado desconocido → estado; una que no está → no_esta; sin id → sin_id; prox mal → fechas', S.post({ action: 'cotMarcar', id: a.id, estado: 'perdida' }).error === 'estado' &&
       S.post({ action: 'cotMarcar', id: 'nada' }).error === 'no_esta' && S.post({ action: 'cotMarcar' }).error === 'sin_id' && S.post({ action: 'cotMarcar', id: a.id, prox: 'mañana' }).error === 'fechas');
   /* cotLeer */

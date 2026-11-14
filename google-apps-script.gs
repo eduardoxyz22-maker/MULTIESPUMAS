@@ -8504,7 +8504,10 @@ function cotMarcar_(body) {
     if (body.pedido != null) c.pedido = mallTxt_(body.pedido);
     if (body.prox != null) c.prox = String(body.prox || '');
     if (body.llamada && typeof body.llamada === 'object') {
-      c.llamadas.push({ t:ahora, quien:mallTxt_(body.quien || body.llamada.quien), res:mallTxt_(body.llamada.res).slice(0, 40), nota:mallTxt_(body.llamada.nota) });
+      /* La página manda la hora en que se anotó la llamada (`llamada.t`): un reintento de la MISMA anotación no la repite. */
+      var tc = Number(body.llamada.t) || 0;
+      if (!(tc > 0 && c.llamadas.some(function (x) { return x && Number(x.tc) === tc; })))
+        c.llamadas.push({ t:ahora, tc:tc || undefined, quien:mallTxt_(body.quien || body.llamada.quien), res:mallTxt_(body.llamada.res).slice(0, 40), nota:mallTxt_(body.llamada.nota) });
       if (c.llamadas.length > COT_LLAMADAS_MAX) c.llamadas = c.llamadas.slice(-COT_LLAMADAS_MAX);
     }
     c.rev = Math.max(c.rev + 1, ahora); c.actualizado = ahora;

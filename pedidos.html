@@ -2505,6 +2505,86 @@ html.practica .logo-s::after{content:'🧪 PRÁCTICA';font-size:.58rem;color:#fd
 @media print{ .pr-franja,.pr-velo,.pr-aviso{display:none!important} }
 /* El panel instalado sin barra (`html.wco`): la franja queda arriba de todo, así que «Salir» no puede quedar debajo de ─ ▢ ✕ de Windows */
 html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-right:calc(14px + var(--wco-r,0px) + 12px);min-height:var(--wco-h,0px)}
+/* 🧾 (14/11, mejora 251) LA COTIZACIÓN. En el formulario (`#view-form.cotizando`) se va todo lo que es de una venta o de una entrega: la
+   fecha, el turno, la dirección, el cobro, la factura, la garantía, las observaciones y la agenda de los camiones. Lo de los costados, como
+   la venta de tienda: dos columnas. */
+.cot-i{display:none}
+#view-form.cotizando .cot-i{display:inline}
+#view-form.cotizando .no-cot,#view-form.cotizando .solo-entrega,#view-form.cotizando .solo-turno,#view-form.cotizando #wrap-nota,
+#view-form.cotizando #wrap-cobro-todo,#view-form.cotizando #wrap-garantia,#view-form.cotizando #wrap-factura,#view-form.cotizando #f-oc,
+#view-form.cotizando #cupo-form,#view-form.cotizando #fx-izq,#view-form.cotizando #nota-leer,#view-form.cotizando #lite-hint,
+#view-form.cotizando #f-sinwa-wrap,#view-form.cotizando #fx-dias,#view-form.cotizando #fx-camion,#view-form.cotizando #fx-mapa{display:none !important}
+#view-form.cotizando .req-lite{display:inline !important}
+@media (min-width:1120px){ #view-form.active.cotizando{ grid-template-columns:minmax(0,1fr) 262px; } }
+@media (min-width:1300px){ #view-form.active.cotizando{ grid-template-columns:minmax(0,820px) minmax(290px,370px); } }
+.cot-caja{background:#f3fbfa;border:1px solid var(--teal-border);border-left:4px solid var(--teal);border-radius:12px;padding:12px 14px 4px;margin-bottom:14px}
+.cot-caja[hidden],.cot-venta[hidden],#pry-cot-w[hidden]{display:none !important}
+.cot-intro{font-size:.8rem;color:#065f5b;line-height:1.45;margin-bottom:10px}
+.cot-vb{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.cot-vb button{font:inherit;font-size:.74rem;font-weight:800;border-radius:999px;padding:5px 11px;border:1px solid var(--teal-border);background:#fff;color:#007a74;cursor:pointer;min-height:30px}
+.cot-vb button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.cot-vb button.bf{border-color:#a16207;color:#713f12;background:#fefce8}
+.cot-vb button.bf.on{background:#18181b;border-color:#facc15;color:#facc15}
+.cot-desde{min-height:44px;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--r-md);background:#fff;border:1px dashed var(--teal-border);font-size:.86rem;color:#16302e;line-height:1.35}
+.cot-desde b{color:var(--teal-dk)} .cot-desde small{color:var(--muted);font-size:.74rem}
+.cot-tienda{font-size:.78rem;color:var(--muted);margin:-4px 0 10px}
+.cot-tienda b{color:var(--text)}
+.cot-venta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#ecfdf5;border:1px solid #86d9ac;border-left:4px solid #16a34a;border-radius:var(--r-md);padding:10px 14px;margin-bottom:16px;font-size:.84rem;color:#14532d}
+.cot-venta>span{flex:1 1 240px;min-width:0}
+.fh-ic.fh-cot{cursor:pointer;font:inherit;font-size:.78rem;font-weight:800}
+.fh-ic.fh-cot.off{opacity:.75}
+.cot-tab-btn{background:#f3fbfa;color:#0f766e;border:1px solid #0f766e;font-weight:800}
+/* Con el 4° botón el selector no entraba en el celular (los botones se cortaban): se parte en dos renglones; en el celular, 2 × 2. */
+#f-doc-tipo.seg-4{display:flex;flex-wrap:wrap;max-width:100%}
+#f-doc-tipo.seg-4 button{flex:1 1 auto;white-space:nowrap;padding-left:14px;padding-right:14px}
+@media (max-width:640px){ #f-doc-tipo.seg-4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%} #f-doc-tipo.seg-4 button{padding:10px 8px} }
+/* La ventana de la cotización guardada, la de «📞 Llamar» y el tablero. */
+.cotv-est{font-size:.84rem;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:8px 12px;margin-bottom:12px;line-height:1.4}
+.cotv-est.mal{color:#7c4b00;background:#fff4d6;border-color:#f0d264}
+.cotv-img{display:flex;justify-content:center;background:#eef3f6;border-radius:14px;padding:10px;margin-bottom:12px}
+.cotv-img canvas{display:block;width:min(100%,420px);height:auto;border-radius:10px;box-shadow:0 10px 26px -16px rgba(15,23,42,.6)}
+.cotv-acc{display:flex;flex-wrap:wrap;gap:8px}
+.cotv-acc .btn{width:auto;flex:1 1 180px}
+.cotv-pie{font-size:.76rem;color:var(--muted);margin:10px 0 4px;line-height:1.45}
+.cotv-fin{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+.cotv-fin .btn{width:auto}
+.cot-lista{display:grid;gap:10px}
+.cot-c{border:1px solid #dbe7e6;border-left:4px solid var(--teal);border-radius:12px;padding:10px 12px;background:#fff}
+.cot-c.r{border-left-color:#d23645;background:#fff7f8} .cot-c.a{border-left-color:#c2620a} .cot-c.fin{border-left-color:#94a3b8;background:#f8fafc}
+.cot-c1{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:.92rem}
+.cot-cel{font-size:.8rem;color:var(--muted)}
+.cot-num{font-size:.72rem;font-weight:800;color:#0f766e;background:var(--teal-lt);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.cot-bd{font-size:.7rem;font-weight:800;border-radius:999px;padding:2px 8px;white-space:nowrap;background:#f1f5f9;color:#475569}
+.cot-bd.r{background:#fde2e4;color:#9b1c2a} .cot-bd.a{background:#fff4d6;color:#7c4b00} .cot-bd.ok{background:#dcfce7;color:#14532d}
+.cot-c2{font-size:.8rem;color:#334155;margin-top:4px;line-height:1.4}
+.cot-c3{font-size:.76rem;color:var(--muted);margin-top:3px}
+.cot-c3 b{color:var(--teal-dk)}
+.cot-acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.cot-acc .ah-go{text-decoration:none;display:inline-flex;align-items:center;min-height:36px}
+.ah-go.ah-go-n{background:#fff;border-color:#e2c4c8;color:#9b1c2a;box-shadow:none}
+.cot-sub{margin-top:9px;padding:10px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;display:grid;gap:8px;font-size:.8rem}
+.cot-sub label{font-weight:800;font-size:.76rem}
+.cot-sub .cot-fila{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cot-sub input,.cot-sub select{max-width:260px}
+.cot-sub .cot-fila input[type=text]{max-width:none;flex:1 1 200px}
+.cot-vacio{font-size:.86rem;color:var(--muted);text-align:center;padding:16px}
+.cot-tab-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;margin-bottom:12px}
+.cot-tab-bar label{font-size:.74rem;font-weight:800;display:grid;gap:4px}
+.cot-tab-bar .btn{width:auto}
+.cot-bot{font-size:.8rem;border-radius:10px;padding:8px 12px;margin-bottom:12px;background:#f1f5f9;color:#334155;border:1px solid #e2e8f0}
+.cot-bot.on{background:var(--teal-lt);color:#065f5b;border-color:var(--teal-border)}
+.cot-fichas{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.cot-f{border:1px solid #dbe7e6;border-radius:12px;padding:9px 11px;background:#fff}
+.cot-f small{display:block;font-size:.68rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.cot-f b{display:block;font-size:1.35rem;font-weight:900;color:#16302e;line-height:1.15;font-variant-numeric:tabular-nums}
+.cot-f span{font-size:.72rem;color:var(--muted)}
+.cot-tab h4{font-size:.86rem;margin:14px 0 6px}
+.cot-tbl{width:100%;border-collapse:collapse;font-size:.78rem;font-variant-numeric:tabular-nums}
+.cot-tbl th{background:#f1f5f9;color:#334155;text-align:left;font-size:.7rem;padding:6px 7px}
+.cot-tbl td{border-top:1px solid #e2e8f0;padding:6px 7px}
+.cot-tbl td.n,.cot-tbl th.n{text-align:right}
+.cot-tbl-w{overflow-x:auto}
+.cot-mot{display:flex;flex-wrap:wrap;gap:6px}
 </style>
 <script>
 /* 🧪 MODO PRÁCTICA (271, 14/11; el dueño abre una tienda en el mall con 4 vendedores nuevos y aprobó «modo práctica para los
@@ -2905,6 +2985,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         <span>✏️ Editando pedido <b id="edit-oc"></b></span>
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="cancelEdit()">Cancelar edición</button>
       </div>
+      <!-- 🧾 (14/11, mejora 251) La venta que sale de una cotización («✓ Compró»): al guardarla, la cotización queda como «compró». -->
+      <div id="cot-venta" class="cot-venta no-print" hidden></div>
 
       <div class="tienda-banner">
         <span>🏪 <b>Venta de tienda</b> — el cliente se lo lleva del local. No lleva fecha de entrega, turno ni dirección: queda como <b>SALIÓ DE TIENDA</b> y <b>no ocupa cupo del camión</b>.</span>
@@ -3044,11 +3126,29 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         </div>
       </div>
 
+      <!-- 🧾 (14/11, mejora 251) LA COTIZACIÓN: para el cliente que PIDE PRECIO para pensarlo y deja su celular. No es una venta: no ocupa
+           cupo, no aparta stock y no va a Contabilidad. Va pegada al selector que la hace aparecer, como la ATC y la RPT (§4br). `cotFormPintar`. -->
+      <div id="wrap-cot" class="cot-caja" hidden>
+        <div class="cot-intro">🧾 <b>Cotización</b> — para el cliente que <b>pide precio</b> para pensarlo y deja su celular para recibirla. <b>No es una venta</b>: no ocupa cupo del camión, no aparta stock y no va a Contabilidad. Al guardar te armo la imagen para mandársela por WhatsApp.</div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lb" for="f-cot-vence">🗓️ Vale hasta <span class="req">*</span></label>
+            <input type="date" id="f-cot-vence" onchange="cotFormPintar()">
+            <div id="f-cot-vence-bt" class="cot-vb"></div>
+          </div>
+          <div class="field">
+            <label class="lb">🚚 Entrega desde <span class="hint">(lo dice el cuadrito del stock: solo para mostrar)</span></label>
+            <div id="f-cot-desde" class="cot-desde">—</div>
+          </div>
+        </div>
+        <div id="f-cot-tienda" class="cot-tienda"></div>
+      </div>
+
       <div id="lite-hint" class="lite-only" style="font-size:.8rem;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:14px">✔️ <b>Modo simplificado</b> — para vos, la <b>Nota de venta</b>, <b>OC</b>, <b>celular</b> y <b>cobro</b> son opcionales, y podés <b>agendar para hoy mismo</b>.</div>
 
       <div class="grid2" id="wrap-cliente">
         <div class="field">
-          <label class="lb">Nombre del cliente <span class="req">*</span></label>
+          <label class="lb">Nombre del cliente <span class="req no-cot">*</span><span class="hint cot-i"> (opcional en una cotización)</span></label>
           <input type="text" id="f-cliente" placeholder="Nombre y apellido" autocomplete="off">
         </div>
         <div class="field">
@@ -3220,14 +3320,14 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       </div>
       </div><!-- /wrap-cobro-todo -->
 
-      <div class="sec">📝 Observaciones</div>
-      <div class="field">
+      <div class="sec no-cot">📝 Observaciones</div>
+      <div class="field no-cot">
         <!-- ⚡ 218 (14/11) Frases rápidas: un toque escribe la frase siempre igual (`FRQ`, `frqTocar`); no en la venta de tienda. -->
         <div id="frq" class="frq solo-entrega no-print" role="group" aria-label="Frases rápidas para las observaciones"></div>
         <textarea id="f-obs" placeholder="Notas del pedido: entregar después de las 15h, llamar antes, color específico, etc. (opcional)"></textarea>
       </div>
 
-      <div id="fx-mes" class="fx-mes no-print" hidden></div>
+      <div id="fx-mes" class="fx-mes no-print no-cot" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
         <!-- 🏪 §4ok-93 (05/11) En una venta de tienda NUEVA: guarda y vuelve al formulario de tienda con la misma tienda (las tandas de Charcas). -->
@@ -3575,6 +3675,11 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <!-- 🗺️ (13/11, mejora 207) Dónde se vende: lo vendido por zona y por marca, en un mapa y una lista, para la publicidad. `dsvAbrir`. -->
           <div class="field">
             <button class="btn btn-sm dsv-btn" id="pry-donde-btn" onclick="dsvAbrir()">🗺️ Dónde se vende</button>
+          </div>
+          <!-- 🧾 (14/11, mejoras 251 y 274) Las cotizaciones del mes: hechas, a cuántas les escribió el bot, cuántas compraron y en cuántos días.
+               `cotTabAbrir`. Se muestra con `cotIniciar` (en Playwright solo con `COT_PRUEBA`). -->
+          <div class="field" id="pry-cot-w" hidden>
+            <button class="btn btn-sm cot-tab-btn" id="pry-cot-btn" onclick="cotTabAbrir()">🧾 Cotizaciones</button>
           </div>
         </div>
         <div id="pry-nota"></div>
@@ -9683,6 +9788,8 @@ function pintarTotalProds(){
   // 🏪 En una reposición no hay precios: la caja del total no tiene nada que decir.
   if(!con || docTipoSel()==='RPT'){ cja.style.display='none'; cja.innerHTML=''; return; }
   cja.style.display='block';
+  /* 🧾 (mejora 251) En la cotización la suma ES el total que ve el cliente (no hay cobro). */
+  if(docTipoSel()==='COT'){ cja.innerHTML='<b>Total de la cotización: '+fmtBs(r2(t))+'</b>'+(sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'):''); return; }
   if(totalAutoVa()){ totalAutoPintar(cja, r2(t), sin); return; }   // 🧮 (06/11) el total se completa solo
   cja.innerHTML='<b>Los ítems suman '+fmtBs(r2(t))+'</b>'+
     (sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'):'')+
@@ -9815,6 +9922,7 @@ function cantidadesMal(){
    sigue igual (`data-orig`) es «heredado»: con la clave de Administración se puede guardar igual tras preguntar (como la ATC
    vieja, §4lh); un vendedor no. Lo mismo piden `fxPasosEstado` y «Para guardar» (§4mj: lo mismo que Guardar). */
 function precioObligatorio(vend){
+  if(docTipoSel()==='COT') return true;   // 🧾 (mejora 251) una cotización sin precio no le sirve al cliente: para todos, también Eduardo
   if(navigator.webdriver && !window.PRECIO_PRUEBA) return false;   // en Playwright solo con `PRECIO_PRUEBA`: las pruebas de siempre guardan ventas de ejemplo sin precio
   return docTipoSel()==='OC' && !esVendedorLite(vend) && !cliEsInterno(vend);
 }
@@ -10010,7 +10118,9 @@ function heredarMarcas(nuevos, viejos){
   var eH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.eH) && x.eH.length){ eH=x.eH; return true; } return false; });
   /* 📅 (mejora 212) …y quién le cambió el día o el turno (`fH`): lo mismo. */
   var fH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.fH) && x.fH.length){ fH=x.fH; return true; } return false; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); return x; };
+  /* 🧾 (mejora 251) …y de qué cotización salió la venta (`cot`). */
+  var cotV=''; (viejos||[]).some(function(x){ if(x && x.cot){ cotV=String(x.cot); return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV; return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -21173,6 +21283,7 @@ function frqIniciar(){ var el=document.getElementById('f-obs'); if(!el) return; 
 
 function submitPedido(){
   clearErr();
+  if(docTipoSel()==='COT'){ cotSubmit(); return; }   // 🧾 (mejora 251) la cotización no es una fila de «Pedidos»: va por `cotGuardar`
   var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
   /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
      guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
@@ -22051,6 +22162,9 @@ function submitPedido(){
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
      Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
   if(prev && typeof kleadDe==='function' && kleadDe(prev) && !kleadDe(rec)) setKlead(rec, kleadDe(prev));
+  /* 🧾 (mejora 251) La venta que sale de una cotización («✓ Compró») lleva su vínculo adentro de los productos (`cot`), y corregirla no se
+     lo lleva (`heredarMarcas` y este rescate). Al guardarla, `cotTrasVenta` pasa la cotización a «compró». */
+  try{ var _cotV=(!isEdit && COT_VENTA && COT_VENTA.id && docTipoSel()==='OC') ? COT_VENTA.id : (prev ? cotIdDe(prev) : ''); if(_cotV && !cotIdDe(rec)) setCotMarca(rec, _cotV); }catch(eCot){}
   /* 📦 (30/10, propuesta 76) El día de volver a llamar viaja adentro de los productos (`avisa`, ver `entregaAConfirmar`). Sin día de
      entrega tampoco hay camión: el que logística le había puesto para la fecha inventada se saca. Sin la casilla, la marca se va. */
   if(_avisa){ setAvisa(rec, _avisaF); rec.vehiculo=''; rec.chofer=''; }
@@ -22372,6 +22486,7 @@ function submitPedido(){
   function afterEnCola(wasEdit, motivo){
     var _desde=EDIT_DESDE;
     if(!wasEdit) try{ mallVentaHecha(rec); }catch(eM){}   // 🏬 (14/11, 252) en el mall, «compró» se anota solo: la venta existe aunque espere en la cola
+    try{ cotTrasVenta(rec, prev); }catch(eCot){}   // 🧾 (mejora 251) la venta quedó en la cola con su id: la cotización ya compró
     /* 📥 El borrador de Kommo completado ya es un pedido, aunque espere en la cola: sale de la
        bandeja como en `after()` (25/09). Si quedaba, decía «le falta la entrega» de una venta ya
        completada, y «Descartar» se la llevaba entera. */
@@ -22393,6 +22508,7 @@ function submitPedido(){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
     if(!wasEdit) try{ mallVentaHecha(rec); }catch(eM){}   // 🏬 (14/11, 252) en el mall, «compró» se anota solo (cierra la atención de ese vendedor)
     try{ asisAlGuardar(rec, _tienda); }catch(eA){}   // (12/10) Eduardo: lo que faltó, recién con el pedido YA guardado
+    try{ cotTrasVenta(rec, prev); }catch(eCot){}     // 🧾 (mejora 251) la venta de una cotización: la cotización pasa a «compró»
     try{ if(typeof kcTrasGuardar==='function') kcTrasGuardar(rec, prev); }catch(eK){}   // 📥 §4ok-91 la venta cierra su lead en Kommo (lo decide el servidor)
     /* 📥 Si era un borrador de Kommo, ya es un pedido: sale de la bandeja (§4ca).
        Sin esto quedaba en las dos listas y parecía que no se había guardado. */
@@ -22830,7 +22946,7 @@ function cancelarVentaTienda(){
 }
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
-function docTipoSel(){ var v=segVal('f-doc-tipo'); return (v==='ATC'||v==='RPT') ? v : 'OC'; }
+function docTipoSel(){ var v=segVal('f-doc-tipo'); return (v==='ATC'||v==='RPT'||v==='COT') ? v : 'OC'; }   // 🧾 (mejora 251) COT = cotización: no es una fila de «Pedidos» (`cotSubmit`)
 /* ATC = atención al cliente. Es un servicio, no una venta, así que lleva su propia
    numeración: cada serie corre por su cuenta y se distingue de un vistazo. */
 function pintarCampoOc(roho){
@@ -22845,15 +22961,19 @@ function pintarCampoOc(roho){
   fo.style.color      = manual ? '' : 'var(--muted)';
   fo.placeholder = manual ? 'Ej. 1024' : 'Se asigna solo al guardar';
   var lb=document.getElementById('f-oc-lb');
-  if(lb) lb.childNodes[0].nodeValue = tipo==='ATC' ? 'N° ATC ' : tipo==='RPT' ? 'N° de pedido ' : 'N° OC ';
+  if(lb) lb.childNodes[0].nodeValue = tipo==='ATC' ? 'N° ATC ' : tipo==='RPT' ? 'N° de pedido ' : tipo==='COT' ? 'N° de cotización ' : 'N° OC ';
   // En ROHO el cartel lo pone el "* obligatorio para ROHO": si no, se contradicen.
-  if(hint) hint.textContent = roho ? ''
+  if(hint) hint.textContent = roho ? '' : (tipo==='COT') ? '(lo pone el servidor al guardar: COT mes-número)'   // 🧾 (mejora 251)
     : (manual ? (tipo==='ATC'?'(atención al cliente)':tipo==='RPT'?'(reposición de tienda)':'(orden de compra, opcional)')
               : ('(se asigna solo — va por '+nextOcMes(null, tipo)+')'));
   // El selector no tiene sentido en ROHO: ahí el número lo manda el cliente.
   var wt=document.getElementById('f-doc-tipo'); if(wt) wt.style.display = roho ? 'none' : '';
 }
-function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarDocTipo(true); }
+function setDocTipo(){
+  /* 🧾 (mejora 251) Sin el servidor 2026-11-14-b, o editando un pedido, la cotización no va: vuelve a 📄 OC y dice por qué. */
+  if(docTipoSel()==='COT' && !cotPuedeEmpezar()) segSet('f-doc-tipo','OC');
+  pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarDocTipo(true);
+}
 /* Los dos bloques que dependen del tipo de documento, y lo que los tres tipos comparten
    (una ATC y una RPT no son ventas: ni nota ni cobro). `limpiar` = la persona cambió el
    tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
@@ -22894,6 +23014,884 @@ function pintarDocTipo(limpiar){
   if(_avOn && !avisaFormOn()){ var _ffa=document.getElementById('f-fecha'); if(_ffa) _ffa.value=''; }
   saldoAvisosProgramar();                     // 🧾 una ATC no lleva el cuadrito del saldo (§4gj)
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) «Leer la nota» es solo de 📄 OC
+  try{ cotFormPintar(limpiar); }catch(e){}   // 🧾 (mejora 251) la cotización: su bloque, el botón y lo que se esconde
+  try{ fhPintar(); }catch(e){}
+}
+/* ============================================================================
+   🧾 COTIZAR (14/11, mejora 251; el dueño aprobó la 251 «🧾 COTIZAR» y la 274 «el bot le escribe a las 48 h»)
+   Es para el cliente que PIDE PRECIO para pensarlo y deja su celular para recibirla. Al que solo pregunta y se va no se le pide nada
+   (eso lo cuenta «👀 Solo miró», otra mejora).
+   · Un 4° tipo en el formulario: «🧾 Cotización», al lado de 📄 OC / 🎧 ATC / 🏪 RPT, y «🧾 Cotizar» arriba (`#fh`). Los productos igual
+     que en una venta (código, medida, cantidad, PRECIO obligatorio, el cuadrito del stock), el CELULAR obligatorio (de WhatsApp), el
+     nombre opcional, «Vale hasta» (7 días; «hasta el fin de Black Friday» mientras dura la campaña, `bfCampana`) y «Entrega desde» = el
+     primer día con camión Y stock para todo: la MISMA cuenta del cuadrito (`saldoVeredictoFila` → `v.desde`), solo para mostrar.
+   · NO es una fila de «Pedidos»: va por `cotGuardar` del servidor 2026-11-14-b (hoja «Cotizaciones»). Nunca ocupa cupo, no cuenta como
+     venta, no aparta stock, no va a Contabilidad, ni al bot de los pedidos, ni a Kommo desde la página. Sin ese servidor, «🧾» dice que
+     falta implementarlo (`cotFaltaServidor`).
+   · Guardar = cola DURABLE de este aparato (`me_cot_cola`, como `guardarDurable`): se guarda ANTES de mandar (y si no se pudo guardar, no
+     se manda), se reintenta sola, no duplica por `id` (el servidor es idempotente) y una confirmación saca SOLO lo que se mandó.
+   · Al guardar, «✅ Cotización COT 11-014» con la IMAGEN (canvas con los colores del panel, `cotImagenDibujar`): «💬 Mandar por WhatsApp»
+     (en el celular con `navigator.share` y el archivo; si no, baja la imagen y abre el WhatsApp del cliente con el texto), «⬇️ Bajar
+     imagen» y «📋 Copiar texto». El panel no le manda nada solo al cliente.
+   · Seguimiento en «Para hacer» de la vendedora (`cotHacerItems` en `misHacerDatos`): «📞 Llamar a N cotizaciones» (abiertas con `prox`
+     ≤ hoy; `prox` = 2 días hábiles después), con «✓ Compró» (la OC NUEVA llena con lo de la cotización; al guardar la venta,
+     `cotTrasVenta` → `cotMarcar` compró, y el vínculo `cot:<id>` queda en los productos, que `heredarMarcas` pasa), «⏰ Volver a llamar» y
+     «✗ No le interesa» (motivo). Las vencidas: «¿la renovás?». Lo que deja el bot de las 48 h (274: es del servidor y está APAGADO hasta
+     probarlo): `bot:'llamar'` arriba de todo en rojo; `bot:'compre'` «dice que ya compró: ¿fue con nosotros?».
+   · Proyección → «🧾 Cotizaciones» (con la contraseña, `cotTabAbrir`): hechas, a cuántas les escribió el bot, cuántas pidieron llamada,
+     cuántas compraron y en cuántos días, por vendedor y por tienda, motivos; «📋 Copiar» y Excel.
+   · En Playwright no hay 4° botón, ni «🧾 Cotizar», ni el botón de Proyección salvo `window.COT_PRUEBA`. `tests/test_cotizar.js`.
+   ========================================================================== */
+var COT_SERVIDOR='2026-11-14-b';
+var COT_VALE_DIAS=7, COT_PROX_HABILES=2, COT_LEER_DIAS=60, COT_LEER_MS=90000, COT_TOPE_MS=45000, COT_SRV_TOPE=400;
+var COT_LS_COLA='me_cot_cola', COT_LS_SRV='me_cot_srv';
+/* Los motivos de «✗ No le interesa», tal como se guardan (`motivo`) y cómo se dicen. */
+var COT_MOTIVOS=[['precio','💸 El precio'],['medida','📏 La medida'],['demora','⏳ La demora de la entrega'],['compró en otro lado','🏬 Compró en otro lado'],['otro','✏️ Otro']];
+var COT={ srv:{}, leido:0, leyendo:null, ultima:null, blob:null, ui:{}, filtro:'', vend:'' };
+var COT_RES={}, COT_VUELO={}, COT_VACIANDO=null;
+var COT_VENTA=null;            // la cotización que se está cerrando como venta («✓ Compró»): { id, num, total, dia }
+var COT_PASAJEROS={ busy:1, actualizar:1, clave:1 };   // se reintentan solos; cualquier otro «no» del servidor es firme
+var COT_FONT='"Inter","Segoe UI",Roboto,Arial,sans-serif';
+function cotVa(){ return !(navigator.webdriver && !window.COT_PRUEBA); }
+function cotServidorOk(){ return servidorTiene(COT_SERVIDOR); }
+function cotJs(id){ return String(id==null?'':id).replace(/[^A-Za-z0-9_.:-]/g,''); }
+function cotUid(){ return 'cot'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
+function cotBs(n){ n=r2(Number(n)||0); return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); }
+function cotDiaSem(iso){ iso=String(iso||'').slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(iso) ? ((DIAS_SEM[dowDe(iso)]||'')+' '+fmtFechaCorta(iso)) : ''; }
+function cotQuien(c){ var n=String((c&&c.cliente)||'').trim(); return n || (c && c.celular ? ('el '+c.celular) : 'el cliente'); }
+function cotTiendaDe(v){ try{ return sucursalDeVendedor(v, diaNegocio())||''; }catch(e){ return ''; } }
+function cotVenceDef(){ return stockSumarDias(diaNegocio(), COT_VALE_DIAS); }
+function cotProxDe(c){ return String((c&&c.prox)||'') || diaHabilMas(String((c&&c.dia)||diaNegocio()), COT_PROX_HABILES); }
+/* 🛍️ La campaña de Black Friday, si está corriendo hoy (la misma cuenta que prende el tema, `bfCampana` del <head>). */
+function cotBf(){ try{ var hoy=diaNegocio(), C=(typeof window.bfCampana==='function') ? window.bfCampana(+hoy.slice(0,4)) : null; return (C && hoy>=C.desde && hoy<=C.hasta) ? C : null; }catch(e){ return null; } }
+function cotMotivoTxt(m){ for(var i=0;i<COT_MOTIVOS.length;i++) if(COT_MOTIVOS[i][0]===m) return COT_MOTIVOS[i][1].replace(/^\S+\s/,''); return String(m||''); }
+/* El vínculo de una venta con su cotización viaja adentro de los productos (`cot`, la convención de `avisa`/`klead`): la planilla tiene columnas fijas. */
+function cotIdDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && x.cot){ v=String(x.cot); return true; } return false; }); return v; }
+function setCotMarca(p, id){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(id) x.cot=String(id); else delete x.cot; }); }
+
+/* ---- La cola durable de este aparato ----
+   Cada cosa que va al servidor es una «op»: `{k:'g', id, t, p}` (cotGuardar: la cotización entera) o `{k:'m', id, t, q, p}` (cotMarcar).
+   Una sola `g` por cotización (la más nueva reemplaza, como `queuePending`); las `m` se mandan en orden y detrás de la `g` de su cotización. */
+function cotColaLeer(){ try{ var a=JSON.parse(localStorage.getItem(COT_LS_COLA)||'[]'); return Array.isArray(a) ? a.filter(function(x){ return x && x.id; }) : []; }catch(e){ return []; } }
+function cotColaPoner(op){
+  var a=cotColaLeer();
+  if(op.k==='g') a=a.filter(function(x){ return !(x.k==='g' && String(x.id)===String(op.id)); });
+  a.push(op);
+  var txt=JSON.stringify(op);
+  if(!lsPoner(COT_LS_COLA, JSON.stringify(a))) return null;
+  return cotColaLeer().some(function(x){ return JSON.stringify(x)===txt; }) ? txt : null;   // se verifica la copia antes de mandar
+}
+function cotColaQuitar(txt){
+  var a=cotColaLeer(), b=a.filter(function(x){ return JSON.stringify(x)!==txt; });
+  if(b.length!==a.length) lsPoner(COT_LS_COLA, JSON.stringify(b));
+}
+function cotSrvCargar(){ try{ var o=JSON.parse(localStorage.getItem(COT_LS_SRV)||'{}'); if(o && typeof o==='object' && !Array.isArray(o)) COT.srv=o; }catch(e){} }
+function cotSrvGuardar(){
+  try{
+    var L=Object.keys(COT.srv).map(function(k){ return COT.srv[k]; }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); }).slice(0, COT_SRV_TOPE), o={};
+    L.forEach(function(c){ o[String(c.id)]=c; }); COT.srv=o;
+    lsPoner(COT_LS_SRV, JSON.stringify(o), true);   // es una copia (se vuelve a leer): si no hay lugar, se va primero
+  }catch(e){}
+}
+function cotSrvPoner(c){ if(!c || !c.id) return; COT.srv[String(c.id)]=c; cotSrvGuardar(); }
+/* Lo que todavía espera en la cola, aplicado encima de lo que dijo el servidor: la pantalla ya lo muestra hecho. */
+function cotAplicar(c, p){
+  c=Object.assign({}, c);
+  if(p.estado) c.estado=p.estado;
+  if(p.motivo!=null) c.motivo=p.motivo;
+  if(p.pedido!=null) c.pedido=p.pedido;
+  if(p.prox) c.prox=p.prox;
+  if(p.llamada){ var L=(c.llamadas||[]).slice(); if(!L.some(function(l){ return l && Number(l.t)===Number(p.llamada.t); })) L.push(p.llamada); c.llamadas=L; }
+  c._pend=1;
+  return c;
+}
+function cotMezclar(base){
+  var m={};
+  (Array.isArray(base) ? base : Object.keys(base||{}).map(function(k){ return base[k]; })).forEach(function(c){ if(c && c.id) m[String(c.id)]=c; });
+  cotColaLeer().forEach(function(op){
+    var id=String(op.id), c=m[id];
+    if(op.k==='g'){
+      var p=op.p||{}, n=Object.assign({ estado:'abierta', llamadas:[], bot:'', num:'', motivo:'', pedido:'' }, c||{});
+      ['ts','tienda','vendedor','cliente','celular','productos','total','vence','entregaDesde','prox'].forEach(function(k){ if(k in p) n[k]=p[k]; });
+      n.id=id; if(!n.dia) n.dia=isoDeTsBolivia(Number(n.ts)||Date.now());
+      n._pend=1; m[id]=n;
+    } else if(c) m[id]=cotAplicar(c, op.p||{});
+  });
+  return Object.keys(m).map(function(k){ return m[k]; });
+}
+function cotTodas(){ return cotMezclar(COT.srv); }
+function cotDe(id){ id=String(id||''); var L=cotTodas(); for(var i=0;i<L.length;i++) if(String(L[i].id)===id) return L[i]; return null; }
+/* ---- Mandar ---- */
+function cotEnviarOp(op, txt){
+  var payload=(op.k==='g') ? { action:'cotGuardar', cot:op.p } : Object.assign({ action:'cotMarcar' }, op.p);
+  COT_VUELO[txt]=1;
+  return conTopeDuro(apiPost(payload), COT_TOPE_MS, 'tardo_cot').then(function(res){
+    delete COT_VUELO[txt];
+    if(res && res.ok){ cotColaQuitar(txt); if(res.cot && res.cot.id) cotSrvPoner(res.cot); return { ok:true, cot:res.cot||null, op:op }; }
+    var e=String((res && res.error)||'');
+    if(res && res.ok===false && e && !COT_PASAJEROS[e]){   // un «no» firme: reintentarlo no lo arregla
+      cotColaQuitar(txt);
+      if(e==='conflicto' && res.actual && res.actual.id) cotSrvPoner(res.actual);
+      return { ok:false, firme:true, error:e, actual:res.actual||null, op:op };
+    }
+    return { ok:false, local:true, error:e||'sin_respuesta', op:op };
+  }, function(err){ delete COT_VUELO[txt]; return { ok:false, local:true, error:String((err&&err.message)||err||'sin_red'), op:op }; });
+}
+function cotFirmeAviso(r){
+  if(!r || !r.firme) return;
+  if(r.error==='conflicto') toast('🧾 Otra persona cambió esta cotización mientras tanto: ya la actualicé en la pantalla. Si hace falta, volvé a hacerlo.','err',9000);
+  else toast('🧾 El servidor NO aceptó '+(r.op && r.op.k==='g' ? 'la cotización' : 'lo que anotaste en la cotización')+' ('+r.error+'). No quedó guardado: revisalo y volvé a intentar.','err',10000);
+}
+/* Manda lo que espera, en orden. Una cotización cuyo envío no salió frena lo que viene detrás de ella (y nada más). */
+function cotColaVaciar(){
+  if(COT_VACIANDO) return COT_VACIANDO.then(function(){ return cotColaVaciar(); });
+  if(!CONNECTED || !cotServidorOk()) return Promise.resolve();
+  var cola=cotColaLeer(); if(!cola.length) return Promise.resolve();
+  var bloq={}, i=0, antes=cotFirma();
+  var run=new Promise(function(fin){
+    (function sig(){
+      if(i>=cola.length){ fin(); return; }
+      var op=cola[i++], txt=JSON.stringify(op), id=String(op.id);
+      if(bloq[id] || COT_VUELO[txt] || !cotColaLeer().some(function(x){ return JSON.stringify(x)===txt; })){ sig(); return; }
+      cotEnviarOp(op, txt).then(function(r){
+        COT_RES[txt]=r;
+        if(!r.ok) bloq[id]=1;
+        cotFirmeAviso(r);
+        sig();
+      });
+    })();
+  });
+  COT_VACIANDO=run;
+  /* ⚠️ Se suelta en un `then` (no adentro de la vuelta): si todo se salteaba de una, quedaba trabada para siempre. Y se repinta SOLO si
+     algo cambió: sin conexión, repintar Mis pedidos volvía a pedir y a mandar sin parar. */
+  return run.then(function(){ if(COT_VACIANDO===run) COT_VACIANDO=null; if(cotFirma()!==antes) cotRepintar(); });
+}
+function cotColaEsperando(){ return cotColaLeer().length; }
+/* Guarda en la cola (y la verifica) y la manda. `null` = no se pudo guardar en el aparato: NO se manda nada. */
+function cotPayloadGuardar(c){
+  var p={ id:c.id, ts:c.ts, tienda:c.tienda||'', vendedor:c.vendedor||'', cliente:c.cliente||'', celular:c.celular||'',
+          productos:(c.productos||[]).map(function(x){ var o={ desc:x.desc||'', medida:x.medida||'', codigo:x.codigo||'', cant:Number(x.cant)||1, precio:r2(Number(x.precio)||0) }; return o; }),
+          total:r2(Number(c.total)||0), vence:c.vence||'', entregaDesde:c.entregaDesde||'', prox:c.prox||'' };
+  if(Number(c.rev)>0) p.rev=c.rev;   // corregir (renovar) va con el sello: si otro la cambió, vuelve `conflicto`
+  return p;
+}
+function cotGuardarDurable(c){
+  var txt=cotColaPoner({ k:'g', id:String(c.id), t:Date.now(), p:cotPayloadGuardar(c) });
+  if(!txt) return null;
+  var prom=cotColaVaciar().then(function(){ return COT_RES[txt] || { ok:false, local:true, error:(CONNECTED ? 'sin_respuesta' : 'sin_red') }; });
+  return { txt:txt, prom:prom };
+}
+function cotMarcar(id, campos, quien){
+  var p=Object.assign({ id:String(id) }, campos||{});
+  if(p.llamada) p.llamada=Object.assign({ t:Date.now(), quien:String(quien||getVendedorMem()||'') }, p.llamada);   // `t`: el servidor la reconoce si llega dos veces
+  var txt=cotColaPoner({ k:'m', id:String(id), t:Date.now(), q:Math.random().toString(36).slice(2,9), p:p });
+  if(!txt){ toast('No se pudo guardar una copia segura en este aparato: NO se anotó. Liberá espacio del navegador y volvé a intentar.','err',10000); return null; }
+  cotRepintar();
+  return cotColaVaciar().then(function(){ return COT_RES[txt] || { ok:false, local:true }; });
+}
+/* ---- Leer del servidor (lo de los últimos COT_LEER_DIAS días: abiertas, vencidas, las que el bot marcó y las cerradas) ---- */
+function cotRefrescar(forzar){
+  if(!cotServidorOk() || !CONNECTED) return Promise.resolve(false);
+  if(COT.leyendo) return COT.leyendo;
+  if(!forzar && Date.now()-COT.leido<COT_LEER_MS) return Promise.resolve(false);
+  COT.leido=Date.now();
+  if(cotColaEsperando()) cotColaVaciar();   // (con el mismo tope de una vez cada COT_LEER_MS: lo de cada 2 minutos va aparte)
+  var hoy=diaNegocio(), antes=cotFirma();
+  COT.leyendo=conTopeDuro(apiPost({ action:'cotLeer', desde:stockSumarDias(hoy, -COT_LEER_DIAS), hasta:hoy }), COT_TOPE_MS, 'tardo_cot').then(function(res){
+    COT.leyendo=null;
+    if(!(res && res.ok && Array.isArray(res.cots))) return false;
+    var o={}; res.cots.forEach(function(c){ if(c && c.id) o[String(c.id)]=c; }); COT.srv=o; cotSrvGuardar();
+    if(cotFirma()!==antes) cotRepintar();
+    return true;
+  }, function(){ COT.leyendo=null; return false; });
+  return COT.leyendo;
+}
+function cotFirma(){ try{ return JSON.stringify(cotTodas().map(function(c){ return [c.id, c.num, c.estado, c.prox, c.vence, c.bot, (c.llamadas||[]).length, c._pend?1:0]; })); }catch(e){ return ''; } }
+function cotRepintar(){
+  try{ var vm=document.getElementById('view-mis'); if(vm && vm.classList.contains('active')) renderMis(); }catch(e){}
+  try{ if(document.getElementById('cot-llamar')) cotLlamarPintar(); }catch(e){}
+  try{ if(document.getElementById('cot-tab')) cotTabPintar(); }catch(e){}
+}
+function cotFaltaServidor(){
+  var ver=SERVER_VER ? ('es la <code>'+esc(SERVER_VER)+'</code>') : 'todavía no se pudo leer (sin conexión con la planilla)';
+  openModal('<div class="modal-h"><h3>🧾 Falta implementar el servidor</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b" style="font-size:.9rem;line-height:1.5"><p>Las cotizaciones se guardan en la planilla con el servidor nuevo (<code>'+COT_SERVIDOR+'</code>), y el que está publicado '+ver+'.</p>'+
+    '<p>Avisale al dueño: tiene que pegar el código nuevo del servidor y hacer <b>Implementar → Nueva versión</b>. Hasta entonces no se puede guardar ninguna cotización.</p>'+
+    '<div style="text-align:right;margin-top:10px"><button type="button" class="btn btn-primary" style="width:auto" onclick="closeModal()">Entendido</button></div></div>');
+}
+
+/* ---- El formulario ---- */
+/* «🧾 Cotizar» de arriba: el formulario en cotización. */
+function cotEmpezar(){
+  if(!cotServidorOk()){ cotFaltaServidor(); return false; }
+  if(EDIT_ID){ toast('✏️ Estás corrigiendo un pedido: guardalo o tocá «Cancelar edición», y después «🧾 Cotizar».','err',8000); showView('form'); return false; }
+  showView('form');
+  if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }   // una cotización no es una venta de tienda
+  if(docTipoSel()!=='COT'){ segSet('f-doc-tipo','COT'); setDocTipo(); }
+  window.scrollTo(0,0);
+  var fc=document.getElementById('f-celular'); if(fc){ try{ fc.focus({ preventScroll:true }); }catch(e){} }
+  return true;
+}
+function cotSalir(){ segSet('f-doc-tipo','OC'); setDocTipo(); }
+/* ¿Se puede pasar el formulario a 🧾 ahora? Si no, dice por qué (el selector vuelve a 📄 OC). */
+function cotPuedeEmpezar(){
+  if(!cotServidorOk()){ cotFaltaServidor(); return false; }
+  if(EDIT_ID){ toast('🧾 Una cotización se arma en un formulario nuevo: guardá este pedido o tocá «Cancelar edición».','err',8000); return false; }
+  if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }
+  return true;
+}
+function cotFormPintar(limpiar){
+  var view=document.getElementById('view-form'), cot=(docTipoSel()==='COT');
+  if(view) view.classList.toggle('cotizando', cot);
+  var w=document.getElementById('wrap-cot'); if(w) w.hidden=!cot;
+  var b=document.getElementById('f-submit');
+  if(b && !b.disabled){
+    if(cot) b.textContent='🧾 Guardar cotización';
+    else if(b.textContent==='🧾 Guardar cotización') b.textContent=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA) ? 'Registrar venta de tienda' : (EDIT_ID ? 'Guardar cambios' : 'Guardar pedido');
+  }
+  if(!cot) return;
+  var fv=document.getElementById('f-cot-vence');
+  if(fv){ fv.min=diaNegocio(); if(limpiar || !fv.value) fv.value=cotVenceDef(); }
+  cotVenceBotones(); cotTiendaPintar(); cotDesdePintar();
+}
+function cotVenceBotones(){
+  var el=document.getElementById('f-cot-vence-bt'); if(!el) return;
+  var v=String((document.getElementById('f-cot-vence')||{}).value||''), hoy=diaNegocio(), bf=cotBf();
+  var op=[[stockSumarDias(hoy,7),'7 días',''],[stockSumarDias(hoy,15),'15 días','']];
+  if(bf && bf.hasta>hoy) op.push([bf.hasta,'🛍️ Hasta el fin de Black Friday ('+fmtFechaCorta(bf.hasta)+')','bf']);
+  var h=op.map(function(o){ return '<button type="button" class="'+(o[2]?o[2]+' ':'')+(o[0]===v?'on':'')+'" data-f="'+o[0]+'" onclick="cotVencePoner(this.getAttribute(\'data-f\'))">'+esc(o[1])+'</button>'; }).join('')+
+        (v ? '<span style="font-size:.74rem;color:var(--muted);align-self:center">vale hasta el '+esc(cotDiaSem(v))+'</span>' : '');
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function cotVencePoner(f){ var e=document.getElementById('f-cot-vence'); if(e){ e.value=f; e.classList.remove('err'); } cotVenceBotones(); try{ fxLadosProgramar(); }catch(x){} }
+function cotTiendaPintar(){
+  var el=document.getElementById('f-cot-tienda'); if(!el) return;
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), t=cotTiendaDe(v);
+  var h=v ? ('🏪 Te atiende <b>'+esc(nombreCanonico(v)||v)+'</b>'+(t?(' · <b>'+esc(t)+'</b>'):' · <span>sin tienda conocida</span>')+' — así sale en la imagen.') : '🏪 Elegí tu nombre (Vendedor) arriba: sale en la imagen.';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* 🚚 El primer día con camión Y stock para TODOS los productos: la cuenta del cuadrito de cada renglón (`v.desde`), el más tarde de todos.
+   Sin saldo cargado, con algo que no se reconoce o sin cupo en los próximos días: '' (a confirmar). Solo para mostrar. */
+function cotEntregaDesde(){
+  var filas; try{ filas=saldoFilasForm().filter(function(f){ return f.completo; }); }catch(e){ return ''; }
+  if(!filas.length) return '';
+  var max='';
+  for(var i=0;i<filas.length;i++){
+    var v=null; try{ v=saldoVeredictoFila(filas[i], '', ''); }catch(e){ v=null; }
+    if(!v || v.sinCupo || !v.desde) return '';
+    if(v.desde>max) max=v.desde;
+  }
+  return max;
+}
+function cotDesdePintar(){
+  var el=document.getElementById('f-cot-desde'); if(!el || docTipoSel()!=='COT') return;
+  var d=cotEntregaDesde();
+  var h=d ? ('<span>🚚</span><span>desde el <b>'+esc(cotDiaSem(d))+'</b><br><small>el primer día con camión y stock para todo, como dice el cuadrito</small></span>')
+          : '<span>🚚</span><span><b>a confirmar</b><br><small>sale cuando el cuadrito de cada producto dice el día (saldo cargado y cupo en el camión)</small></span>';
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* Guardar (desde `submitPedido`, que con 🧾 viene derecho acá). Valida lo de una cotización, la deja en la cola y abre la imagen. */
+function cotSubmit(){
+  clearErr();
+  if(!cotServidorOk()){ cotFaltaServidor(); return; }
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var vend=val('f-vendedor'), cli=val('f-cliente'), celT=val('f-celular'), faltan=[];
+  if(!vend){ markErr('f-vendedor'); faltan.push('tu nombre (Vendedor)'); }
+  if(!celT){ markErr('f-celular'); faltan.push('el celular del cliente'); }
+  var sinNombre=Array.prototype.filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo'), pr=c.querySelector('.prod-precio');
+    return d && !String(d.value||'').trim() && ((co && String(co.value||'').trim()) || (pr && String(pr.value||'').trim()));
+  });
+  sinNombre.forEach(function(c){ c.querySelector('.prod-desc').classList.add('err'); });
+  var prods=getProductos();
+  if(!prods.length){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd) pd.classList.add('err'); faltan.push('al menos un producto'); }
+  if(faltan.length || sinNombre.length){
+    toast(faltan.length ? ('🧾 Para guardar la cotización falta: '+faltan.join(', ')+'. Está marcado en rojo.')
+                        : '🧾 Hay un renglón con código o precio pero SIN producto: escribí qué producto es, o borralo (×).','err',8000);
+    try{ formIrAlPrimerError(); }catch(e){}
+    return;
+  }
+  var cel=celPartes(celT).cel;
+  if(!cel){
+    markErr('f-celular');
+    toast('📱 «'+celT+'» no es un celular de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591), o uno de otro país con «+» y el código del país. La cotización se la mandás por WhatsApp.','err',10000);
+    try{ var fce=document.getElementById('f-celular'); fce.focus(); fce.scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
+  var mal=cantidadesMal();
+  if(mal.length){ mal.forEach(function(q){ q.classList.add('err'); }); toast('🔢 La cantidad tiene que ser un número entero, de 1 para arriba. Corregí la que quedó en rojo.','err'); try{ mal[0].focus(); }catch(e){} return; }
+  var malP=[];
+  Array.prototype.forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(card){
+    var e=card.querySelector('.prod-precio'), d=card.querySelector('.prod-desc'); if(!e || !d || !String(d.value||'').trim()) return;
+    var er=montoError(e.value); if(er) malP.push({ e:e, n:'Precio c/u de '+String(d.value).trim(), err:er });
+  });
+  if(malP.length){ malP.forEach(function(x){ x.e.classList.add('err'); }); toast(montoAviso(malP[0].n, malP[0].e.value, malP[0].err),'err',9000); try{ malP[0].e.focus(); }catch(e){} return; }
+  var sinPre=preciosFaltan(vend);
+  if(sinPre.length){
+    sinPre.forEach(function(x){ x.e.classList.add('err'); });
+    toast('💵 Poné el PRECIO (c/u) de '+(sinPre.length===1 ? ('«'+sinPre[0].n+'»') : ('los '+sinPre.length+' productos marcados en rojo'))+': una cotización sin precio no le sirve al cliente.','err',9000);
+    try{ sinPre[0].e.focus(); sinPre[0].e.scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
+  var hoy=diaNegocio(), vence=val('f-cot-vence');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(vence) || vence<hoy){ markErr('f-cot-vence'); toast('🗓️ Poné hasta cuándo vale la cotización (de hoy en adelante).','err'); try{ document.getElementById('f-cot-vence').focus(); }catch(e){} return; }
+  var total=0; prods.forEach(function(x){ total=r2(total+(Number(x.precio)||0)*(Number(x.cant)||1)); });
+  var ts=Date.now();
+  var c={ id:cotUid(), ts:ts, dia:hoy, num:'', tienda:cotTiendaDe(vend), vendedor:nombreCanonico(vend)||vend, cliente:cli, celular:cel,
+          productos:prods.map(function(x){ return { desc:x.desc, medida:x.medida||'', codigo:x.codigo||'', cant:Number(x.cant)||1, precio:r2(Number(x.precio)||0) }; }),
+          total:total, vence:vence, entregaDesde:cotEntregaDesde(), estado:'abierta', motivo:'', pedido:'', prox:diaHabilMas(hoy, COT_PROX_HABILES),
+          llamadas:[], bot:'', botT:0, rev:0 };
+  var r=cotGuardarDurable(c);
+  if(!r){ toast('No se pudo guardar una copia segura en este aparato: la cotización NO se guardó y sigue en el formulario. Liberá espacio del navegador y volvé a tocar Guardar.','err',12000); return; }
+  try{ if(typeof mallCotHecha==='function') mallCotHecha(c); }catch(e){}   // 🏬 (la tienda del mall) se anotó al que pidió precio: «fin» con r 'anoto' y ref = la cotización
+  setVendedorMem(vend);
+  resetForm();
+  cotVentanaAbrir(c);
+  r.prom.then(function(res){ cotVentanaEstado(c.id, res); });
+}
+
+/* ---- La ventana de la cotización guardada y la imagen ---- */
+function cotVentanaAbrir(c){
+  COT.ultima=c; COT.blob=null;
+  openModal('<div class="modal-h"><h3 id="cotv-tit">✅ Cotización '+esc(c.num||'guardada')+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b" id="cotv">'+
+      '<div id="cotv-est" class="cotv-est" aria-live="polite">'+cotEstHtml(c, null)+'</div>'+
+      '<div class="cotv-img"><canvas id="cotv-canvas" role="img" aria-label="La imagen de la cotización, para mandarla por WhatsApp"></canvas></div>'+
+      '<div class="cotv-acc"><button type="button" class="btn btn-primary" id="cotv-wa" onclick="cotMandarWa()">💬 Mandar por WhatsApp</button>'+
+        '<button type="button" class="btn btn-ghost" onclick="cotBajarImagen()">⬇️ Bajar imagen</button>'+
+        '<button type="button" class="btn btn-ghost" onclick="cotCopiarTexto()">📋 Copiar texto</button></div>'+
+      '<div class="cotv-pie">El panel no le manda nada solo al cliente: se la mandás vos. El '+esc(cotDiaSem(c.prox))+' te aparece en «📋 Para hacer» de Mis pedidos para llamarlo.</div>'+
+      '<div class="cotv-fin"><button type="button" class="btn btn-ghost btn-sm" onclick="closeModal();cotEmpezar()">🧾 Otra cotización</button>'+
+        '<button type="button" class="btn btn-primary btn-sm" onclick="closeModal()">Listo</button></div>'+
+    '</div>', true);
+  cotImagenPintar(c);
+}
+function cotImagenPintar(c){
+  var cv=document.getElementById('cotv-canvas'); if(!cv) return;
+  cotImagenDibujar(c, cv);
+  COT.blob=null;
+  try{ cv.toBlob(function(b){ if(b && COT.ultima && String(COT.ultima.id)===String(c.id)) COT.blob={ id:String(c.id), num:c.num||'', b:b }; }, 'image/png'); }catch(e){}
+}
+function cotEstHtml(c, res){
+  if(!res) return '⏳ Guardando la cotización en la planilla…';
+  if(res.ok) return '✓ Guardada en la planilla'+(c.num?(' como <b>'+esc(c.num)+'</b>'):'')+'. Ya la podés mandar.';
+  if(res.firme) return '❌ El servidor NO la aceptó ('+esc(res.error||'')+'). No quedó guardada: cargala de nuevo.';
+  return '⏳ Quedó guardada en este aparato y se manda sola cuando vuelva la conexión ('+esc(res.error||'sin conexión')+'). La imagen ya la podés mandar: el número llega después.';
+}
+function cotVentanaEstado(id, res){
+  if(!COT.ultima || String(COT.ultima.id)!==String(id)) return;
+  var c=COT.ultima;
+  if(res && res.ok && res.cot) c=Object.assign({}, c, res.cot);
+  COT.ultima=c;
+  var est=document.getElementById('cotv-est'); if(!est) return;   // la ventana ya se cerró
+  est.innerHTML=cotEstHtml(c, res);
+  est.classList.toggle('mal', !!(res && !res.ok));
+  var t=document.getElementById('cotv-tit'); if(t) t.textContent='✅ Cotización '+(c.num||'guardada');
+  if(res && res.ok && res.cot && res.cot.num) cotImagenPintar(c);   // con el número que le puso el servidor
+}
+function cotMarcaTxt(c){
+  var m={};
+  ((c&&c.productos)||[]).forEach(function(x){ var k=''; try{ k=stockMarcaDeNombre((x&&x.desc)||''); }catch(e){} if(k==='heaven' || k==='suena') m[k]=1; });
+  if(!m.heaven && !m.suena){ var mv=''; try{ mv=marcaDe(c&&c.vendedor); }catch(e){} if(mv) m[mv]=1; }
+  if(m.heaven && m.suena) return 'Heaven Colchones · Sueña';
+  if(m.suena) return 'Sueña';
+  if(m.heaven) return 'Heaven Colchones';
+  return 'Heaven Colchones · Sueña';
+}
+function cotEnvolver(ctx, t, ancho, max){
+  var pal=String(t||'').split(/\s+/).filter(Boolean), L=[], cur='';
+  pal.forEach(function(w){ var p=cur ? cur+' '+w : w; if(!cur || ctx.measureText(p).width<=ancho) cur=p; else { L.push(cur); cur=w; } });
+  if(cur) L.push(cur);
+  var corta=function(u){ if(ctx.measureText(u).width<=ancho) return u; while(u.length>1 && ctx.measureText(u+'…').width>ancho) u=u.slice(0,-1); return u+'…'; };
+  if(max && L.length>max){ L=L.slice(0,max); L[max-1]=corta(L[max-1]+' …').replace(/\s…$/,'…'); }
+  return L.map(corta);
+}
+function cotRect(ctx, x, y, w, h, r, fill, borde){
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.lineTo(x+w-r, y); ctx.quadraticCurveTo(x+w, y, x+w, y+r); ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h); ctx.lineTo(x+r, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-r); ctx.lineTo(x, y+r); ctx.quadraticCurveTo(x, y, x+r, y); ctx.closePath();
+  if(fill){ ctx.fillStyle=fill; ctx.fill(); }
+  if(borde){ ctx.strokeStyle=borde; ctx.lineWidth=2; ctx.stroke(); }
+}
+/* La imagen: 1080 de ancho, el alto según los productos. Encabezado turquesa con la marca, para quién y quién atendió, los renglones, el
+   total, desde cuándo se entrega y hasta cuándo vale. Sin emojis adentro (en algunas compus salen cuadraditos). */
+function cotImagenDibujar(c, cv){
+  if(!cv || !cv.getContext) return null;
+  var ctx=cv.getContext('2d'); if(!ctx) return null;
+  var W=1080, PAD=60, IN=30, F=function(peso, px){ return peso+' '+px+'px '+COT_FONT; };
+  var marca=cotMarcaTxt(c), prods=((c&&c.productos)||[]).filter(function(x){ return x && String(x.desc||'').trim(); });
+  var anchoNom=W-2*PAD-2*IN-240;
+  ctx.font=F(800,30);
+  var filas=prods.map(function(x){ var L=cotEnvolver(ctx, String(x.desc||'').trim()+(x.medida?(' '+x.medida):''), anchoNom, 2); return { x:x, L:L, h:34+L.length*38+30+26 }; });
+  var hHead=250, hPara=146, hProds=filas.length ? filas.reduce(function(s,f){ return s+f.h; }, 0) : 90, hTot=124, hInfo=152, hPie=118;
+  var H=hHead+hPara+hProds+36+hTot+34+hInfo+hPie;
+  cv.width=W; cv.height=H; ctx=cv.getContext('2d');
+  ctx.textBaseline='alphabetic'; ctx.textAlign='left';
+  ctx.fillStyle='#f4f8fb'; ctx.fillRect(0,0,W,H);
+  /* el encabezado (el turquesa del panel) y abajo la franja de la marca */
+  var g=ctx.createLinearGradient(0,0,W,hHead); g.addColorStop(0,'#00B5AD'); g.addColorStop(.55,'#0f766e'); g.addColorStop(1,'#1e3a5f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,hHead);
+  var franja=(marca==='Sueña') ? ['#FFD400'] : (marca.indexOf('·')>=0 ? ['#5eead4','#FFD400'] : ['#5eead4']);
+  franja.forEach(function(col,i){ ctx.fillStyle=col; ctx.fillRect(Math.round(i*W/franja.length), hHead-10, Math.ceil(W/franja.length), 10); });
+  ctx.fillStyle='rgba(255,255,255,.88)'; ctx.font=F(800,26); ctx.fillText('COTIZACIÓN', PAD, 74);
+  ctx.textAlign='right'; ctx.fillText(fmtFecha(c.dia||diaNegocio()), W-PAD, 74); ctx.textAlign='left';
+  ctx.fillStyle='#ffffff'; ctx.font=F(900, marca.length>18 ? 52 : 62); ctx.fillText(marca, PAD, 152);
+  ctx.font=F(700,30); ctx.fillStyle='rgba(255,255,255,.94)'; ctx.fillText(c.num ? String(c.num) : 'Cotización', PAD, 206);
+  var y=hHead+64;
+  ctx.font=F(600,28); ctx.fillStyle='#64748b'; ctx.fillText('Para', PAD, y);
+  var wP=ctx.measureText('Para ').width;
+  ctx.font=F(800,36); ctx.fillStyle='#16302e'; ctx.fillText(cotEnvolver(ctx, String(c.cliente||'').trim()||'vos', W-2*PAD-wP, 1)[0], PAD+wP, y);
+  y+=48; ctx.font=F(600,26); ctx.fillStyle='#64748b';
+  ctx.fillText(cotEnvolver(ctx, 'Te atendió '+(c.vendedor||'')+(c.tienda?(', '+c.tienda):''), W-2*PAD, 1)[0], PAD, y);
+  var top=hHead+hPara;
+  cotRect(ctx, PAD, top, W-2*PAD, hProds, 22, '#ffffff', '#dbe7e6');
+  y=top;
+  if(!filas.length){ ctx.font=F(600,26); ctx.fillStyle='#94a3b8'; ctx.fillText('Sin productos', PAD+IN, y+54); }
+  filas.forEach(function(f,i){
+    var x=f.x, cant=Math.max(1, Number(x.cant)||1), pr=r2(Number(x.precio)||0), sub=r2(pr*cant);
+    if(i){ ctx.fillStyle='#e8efee'; ctx.fillRect(PAD+IN, y, W-2*PAD-2*IN, 2); }
+    ctx.font=F(800,30); ctx.fillStyle='#16302e';
+    f.L.forEach(function(l,j){ ctx.fillText(l, PAD+IN, y+34+28+j*38); });
+    ctx.font=F(600,24); ctx.fillStyle='#64748b';
+    ctx.fillText((cant>1 ? (cant+' × '+cotBs(pr)+' c/u') : '1 unidad')+(x.codigo?(' · cód. '+x.codigo):''), PAD+IN, y+34+28+f.L.length*38+4);
+    ctx.textAlign='right'; ctx.font=F(900,32); ctx.fillStyle='#008F88'; ctx.fillText(cotBs(sub), W-PAD-IN, y+34+28); ctx.textAlign='left';
+    y+=f.h;
+  });
+  y=top+hProds+36;
+  var gt=ctx.createLinearGradient(PAD,0,W-PAD,0); gt.addColorStop(0,'#00B5AD'); gt.addColorStop(1,'#0d8f88');
+  cotRect(ctx, PAD, y, W-2*PAD, hTot, 24, gt);
+  ctx.fillStyle='#ffffff'; ctx.font=F(800,32); ctx.fillText('Total', PAD+34, y+74);
+  ctx.textAlign='right'; ctx.font=F(900,54); ctx.fillText(cotBs(c.total), W-PAD-34, y+82); ctx.textAlign='left';
+  y+=hTot+34;
+  var linea=function(col, tit, txt, yy){
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(PAD+12, yy-10, 10, 0, Math.PI*2); ctx.fill();
+    ctx.font=F(700,28); ctx.fillStyle='#64748b'; ctx.fillText(tit, PAD+36, yy);
+    var w=ctx.measureText(tit+' ').width; ctx.font=F(800,30); ctx.fillStyle='#16302e'; ctx.fillText(cotEnvolver(ctx, txt, W-2*PAD-36-w, 1)[0], PAD+36+w, yy);
+  };
+  linea('#00B5AD', 'Entrega:', c.entregaDesde ? ('desde el '+cotDiaSem(c.entregaDesde)) : 'a coordinar', y+30);
+  linea('#c2620a', 'Vale hasta:', c.vence ? ('el '+cotDiaSem(c.vence)) : '—', y+92);
+  y+=hInfo;
+  ctx.fillStyle='#dbe7e6'; ctx.fillRect(PAD, y, W-2*PAD, 2);
+  ctx.textAlign='center'; ctx.font=F(600,26); ctx.fillStyle='#475569';
+  ctx.fillText('Para confirmar, respondé a este WhatsApp. Precios en bolivianos.', W/2, y+62);
+  ctx.textAlign='left';
+  return cv;
+}
+function cotArchivo(c){ return 'cotizacion-'+(String((c&&(c.num||c.dia))||'nueva').replace(/[^A-Za-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')||'nueva')+'.png'; }
+function cotImagenBlob(c){
+  if(COT.blob && c && COT.blob.id===String(c.id) && COT.blob.num===(c.num||'')) return Promise.resolve(COT.blob.b);
+  return new Promise(function(res){ var cv=document.createElement('canvas'); cotImagenDibujar(c, cv); try{ cv.toBlob(function(b){ res(b||null); }, 'image/png'); }catch(e){ res(null); } });
+}
+function cotTexto(c){
+  var L=['🧾 *Cotización'+(c.num?(' '+c.num):'')+'* · '+cotMarcaTxt(c),
+         'Para '+(String(c.cliente||'').trim()||'vos')+' · te atendió '+(c.vendedor||'')+(c.tienda?(', '+c.tienda):''), ''];
+  (c.productos||[]).forEach(function(x){
+    var cant=Math.max(1, Number(x.cant)||1), pr=r2(Number(x.precio)||0);
+    L.push('• '+(cant>1?(cant+'× '):'')+String(x.desc||'')+(x.medida?(' '+x.medida):'')+' — '+(cant>1 ? (cotBs(pr)+' c/u = '+cotBs(r2(pr*cant))) : cotBs(pr)));
+  });
+  L.push('', '*Total: '+cotBs(c.total)+'*',
+         '🚚 '+(c.entregaDesde ? ('Entrega desde el '+cotDiaSem(c.entregaDesde)) : 'Entrega: a coordinar'),
+         '🗓️ Vale hasta el '+cotDiaSem(c.vence), '', 'Para confirmar, respondé a este WhatsApp. Precios en bolivianos.');
+  return L.join('\n');
+}
+function cotEsCelular(){ try{ return !!(window.matchMedia && matchMedia('(pointer:coarse)').matches); }catch(e){ return false; } }
+function cotMandarWa(){
+  var c=COT.ultima; if(!c) return;
+  var txt=cotTexto(c), wa=misWaCliente(c.celular), url=wa ? (wa+'?text='+encodeURIComponent(txt)) : whatsappUrl(txt);
+  var bajarYAbrir=function(b){
+    if(b) downloadBlob(b, cotArchivo(c), 'image/png');
+    try{ window.open(url, '_blank', 'noopener'); }catch(e){}
+    toast(b ? '⬇️ Bajé la imagen. En el WhatsApp que se abrió, adjuntala con 📎 y mandala: el texto ya va escrito.' : '💬 Se abrió el WhatsApp del cliente con el texto de la cotización.','ok',10000);
+  };
+  var seguir=function(b){
+    var file=null; try{ if(b) file=new File([b], cotArchivo(c), { type:'image/png' }); }catch(e){ file=null; }
+    if(file && cotEsCelular() && navigator.share && navigator.canShare){
+      var se=false; try{ se=navigator.canShare({ files:[file] }); }catch(e){ se=false; }
+      /* Si el celular no deja compartir (la imagen tardó y el toque ya «se venció»), se baja y se abre el chat; cancelar no hace nada. */
+      if(se){ navigator.share({ files:[file], text:txt, title:'Cotización '+(c.num||'') }).catch(function(e){ if(!(e && e.name==='AbortError')) bajarYAbrir(b); }); return; }
+    }
+    bajarYAbrir(b);
+  };
+  /* Con la imagen ya armada se comparte en el mismo toque (el celular lo pide así); si no, se arma primero. */
+  if(COT.blob && COT.blob.id===String(c.id) && COT.blob.num===(c.num||'')) seguir(COT.blob.b);
+  else cotImagenBlob(c).then(seguir);
+}
+function cotBajarImagen(){
+  var c=COT.ultima; if(!c) return;
+  cotImagenBlob(c).then(function(b){
+    if(!b){ toast('Este navegador no pudo armar la imagen: copiá el texto.','err'); return; }
+    downloadBlob(b, cotArchivo(c), 'image/png'); toast('⬇️ Imagen bajada ✓','ok');
+  });
+}
+function cotCopiarTexto(){ var c=COT.ultima; if(c) copyText(cotTexto(c)); }
+
+/* ---- «Compró»: la venta NUEVA con lo de la cotización ---- */
+function cotComproAbrir(id){
+  var c=cotDe(id); if(!c){ toast('Esa cotización ya no está en la lista: actualizá Mis pedidos.','err'); return; }
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled){ toast('Hay un pedido enviándose. Esperá el resultado antes de cargar la venta.','err',7000); return; }
+  if(EDIT_ID){
+    var q=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
+    var quien=q ? ((q.cliente||'sin nombre')+(q.oc?(' ('+ocEtiq(q.oc)+')'):'')) : 'otro pedido';
+    if(!confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n• Aceptar: ese pedido queda como estaba y se abre la venta NUEVA de la cotización.\n• Cancelar: volvés a esa edición.')){ closeModal(); showView('form'); return; }
+  } else if(!confirmarReemplazoForm()) return;
+  closeModal(); showView('form'); resetForm();
+  COT_VENTA={ id:String(c.id), num:c.num||'', total:Number(c.total)||0, dia:c.dia||'' };
+  var pon=function(fid, v){ var e=document.getElementById(fid); if(e) e.value=String(v==null?'':v).trim(); };
+  if(c.vendedor){ pon('f-vendedor', c.vendedor); try{ applyVendedorLite(); }catch(e){} }
+  pon('f-cliente', c.cliente); pon('f-celular', c.celular);
+  var box=document.getElementById('f-productos'); box.innerHTML='';
+  (c.productos||[]).forEach(function(x){ if(x && String(x.desc||'').trim()) addProdRow(x.desc, x.medida, x.codigo, x.cant, x.precio); });
+  if(!box.children.length) addProdRow();
+  try{ refreshDelButtons(); }catch(e){}
+  try{ TOT_AUTO.toc=true; pintarTotalProds(); }catch(e){}   // 🧮 el saldo sale solo con los precios de la cotización
+  try{ celFormPintar(); }catch(e){}
+  try{ renderCupoForm(); }catch(e){}
+  try{ fxFormPintar(); }catch(e){}
+  cotVentaPintar();
+  window.scrollTo(0,0);
+  toast('🧾 Venta NUEVA con lo de la cotización '+(c.num||'')+' de '+cotQuien(c)+'. Elegí la fecha de entrega, poné la nota y el cobro. Al guardarla, la cotización queda como «compró».','ok',9000);
+}
+function cotVentaPintar(){
+  var el=document.getElementById('cot-venta'); if(!el) return;
+  var c=COT_VENTA; el.hidden=!c;
+  if(!c){ if(el.innerHTML) el.innerHTML=''; return; }
+  el.innerHTML='<span>🧾 Venta de la cotización <b>'+esc(c.num||'sin número todavía')+'</b>'+(c.dia?(' del '+esc(cotDiaSem(c.dia))):'')+' ('+esc(cotBs(c.total))+'). Al guardarla, la cotización queda como <b>«compró»</b>.</span>'+
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="COT_VENTA=null;cotVentaPintar()">No es de esa cotización</button>';
+}
+/* Después de guardar (o de dejar en la cola) una venta: si nació de una cotización y antes no la tenía, la cotización pasa a «compró». */
+function cotTrasVenta(rec, prev){
+  var id=cotIdDe(rec); if(!id || (prev && cotIdDe(prev)===id)) return null;
+  return cotMarcar(id, { estado:'compro', pedido:String(rec.id), llamada:{ res:'compro', nota:'venta '+(rec.oc||'') } }, rec.vendedor);
+}
+
+/* ---- «Para hacer» de la vendedora ---- */
+function cotEstado(c){ var e=String((c&&c.estado)||'abierta'); if(e==='abierta' && c.vence && String(c.vence)<diaNegocio()) return 'vencida'; return e; }
+function cotAbierta(c){ var e=cotEstado(c); return e==='abierta' || e==='vencida' || e==='dice_compro'; }
+function cotBotLlama(c){
+  if(!c || c.bot!=='llamar') return false;
+  var e=cotEstado(c); if(e!=='abierta' && e!=='vencida') return false;
+  var bt=Number(c.botT)||0;   // ya la llamó (anotó una llamada) después de que se lo pidió al bot: se va
+  return !(c.llamadas||[]).some(function(l){ return l && (Number(l.t)||0)>=bt; });
+}
+function cotDiceCompro(c){ var e=cotEstado(c); return !!c && (c.bot==='compre' || e==='dice_compro') && e!=='compro' && e!=='no'; }
+function cotHacerDatos(v){
+  var hoy=diaNegocio(), L=cotTodas().filter(function(c){ return c && mismoVendedor(c.vendedor, v); });
+  var D={ bot:[], dice:[], llamar:[], venc:[], todas:L };
+  L.forEach(function(c){
+    var e=cotEstado(c);
+    if(cotBotLlama(c)) D.bot.push(c);
+    else if(cotDiceCompro(c)) D.dice.push(c);
+    else if(e==='vencida') D.venc.push(c);
+    else if(e==='abierta' && cotProxDe(c)<=hoy) D.llamar.push(c);
+  });
+  var porProx=function(a,b){ var x=cotProxDe(a), y=cotProxDe(b); return x<y?-1:(x>y?1:((Number(a.ts)||0)-(Number(b.ts)||0))); };
+  D.llamar.sort(porProx); D.venc.sort(porProx);
+  return D;
+}
+function cotNoms(L){ return L.slice(0,3).map(function(c){ return cotQuien(c).replace(/^el /,''); }).join(', ')+(L.length>3?(' y '+(L.length-3)+' más'):''); }
+function cotHacerItems(v){
+  var R={ arriba:[], resto:[], ok:'' };
+  if(!v) return R;
+  var D=cotHacerDatos(v);
+  D.bot.forEach(function(c){
+    R.arriba.push({ sev:'r', ic:'📞', n:1, t:cotQuien(c)+' pidió que lo llames', s:'cotización del '+cotDiaSem(c.dia)+(c.num?(' · '+c.num):'')+' · '+cotBs(c.total)+' · se lo pidió al bot', b:'📞 Llamar', p:1, fn:"cotLlamarAbrir('"+cotJs(c.id)+"')" });
+  });
+  D.dice.forEach(function(c){
+    R.resto.push({ sev:'a', ic:'🛍️', n:1, t:cotQuien(c)+' dice que ya compró', s:'¿fue con nosotros? · '+(c.num||'cotización')+' del '+cotDiaSem(c.dia)+' · '+cotBs(c.total), b:'Ver', fn:"cotLlamarAbrir('"+cotJs(c.id)+"')" });
+  });
+  var n=D.llamar.length;
+  if(n) R.resto.push({ sev:'a', ic:'📞', n:n, t:'Llamar a '+(n===1?'1 cotización':(n+' cotizaciones')), s:cotNoms(D.llamar)+' · ¿lo pensaron?', b:'📞 Llamar', p:1, fn:"cotLlamarAbrir('llamar')" });
+  var m=D.venc.length;
+  if(m) R.resto.push({ sev:'a', ic:'🗓️', n:m, t:(m===1?'Una cotización vencida':(m+' cotizaciones vencidas'))+': ¿la renovás?', s:cotNoms(D.venc), b:'Ver', fn:"cotLlamarAbrir('venc')" });
+  if(cotVa() && cotServidorOk() && D.todas.length && !R.arriba.length && !R.resto.length) R.ok='Cotizaciones al día';
+  return R;
+}
+
+/* ---- La ventana «📞 Cotizaciones para llamar» ---- */
+function cotVendActual(){ var mv=document.getElementById('mis-vendedor'), v=''; try{ v=mv ? misVendedorSel(mv) : ''; }catch(e){ v=''; } return v || getVendedorMem() || ''; }
+function cotLlamarAbrir(f){ COT.filtro=String(f||''); COT.vend=cotVendActual(); COT.ui={}; cotRefrescar(false); cotLlamarPintar(); }
+function cotLlamarLista(){
+  var f=COT.filtro;
+  if(f && f!=='llamar' && f!=='venc'){ var c=cotDe(f); return c ? [c] : []; }
+  var D=cotHacerDatos(COT.vend);
+  if(f==='llamar') return D.llamar;
+  if(f==='venc') return D.venc;
+  return D.bot.concat(D.dice, D.llamar, D.venc);
+}
+function cotLlamarPintar(){
+  var L=cotLlamarLista(), f=COT.filtro;
+  var tit=(f==='venc') ? '🗓️ Cotizaciones vencidas' : (f==='llamar' || !f) ? '📞 Cotizaciones para llamar' : '🧾 Cotización';
+  var esp=cotColaEsperando();
+  var h='<div class="modal-h"><h3>'+tit+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b" id="cot-llamar">'+
+    (f==='llamar' || !f ? '<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Las que le mandaste hace unos días: preguntale si lo pensó. Lo que anotes vuelve a aparecer el día que elijas.</div>' : '')+
+    (esp ? '<div class="cotv-est mal" style="margin-bottom:10px">⏳ '+esp+(esp===1?' cosa espera':' cosas esperan')+' en este aparato para ir a la planilla: se mandan solas.</div>' : '')+
+    '<div class="cot-lista">'+(L.length ? L.map(cotCardHtml).join('') : '<div class="cot-vacio">✅ No hay ninguna para llamar ahora.</div>')+'</div></div>';
+  openModal(h, true);
+}
+function cotCardHtml(c){
+  var id=cotJs(c.id), e=cotEstado(c), ui=COT.ui[id]||'', abierta=cotAbierta(c), bt=[];
+  var bot=cotBotLlama(c), dice=cotDiceCompro(c);
+  if(bot) bt.push('<span class="cot-bd r">📞 Le pidió al bot que lo llames</span>');
+  if(dice) bt.push('<span class="cot-bd a">🛍️ Dice que ya compró</span>');
+  if(e==='vencida') bt.push('<span class="cot-bd a">🗓️ Venció el '+esc(fmtFechaCorta(c.vence))+'</span>');
+  if(e==='compro') bt.push('<span class="cot-bd ok">✓ Compró</span>');
+  if(e==='no') bt.push('<span class="cot-bd">✗ No le interesa'+(c.motivo?(' · '+esc(cotMotivoTxt(c.motivo))):'')+'</span>');
+  if(c._pend) bt.push('<span class="cot-bd" title="Está en este aparato: se manda sola a la planilla">⏳ sin enviar</span>');
+  var prods=(c.productos||[]).map(function(x){ return (Number(x.cant)>1?(x.cant+'× '):'')+String(x.desc||'')+(x.medida?(' '+x.medida):''); }).join(' · ');
+  var ll=(c.llamadas||[]).filter(function(l){ return l && l.res!=='compro'; }).length;
+  var wa=misWaCliente(c.celular);
+  var h='<div class="cot-c'+(bot?' r':(dice||e==='vencida'?' a':''))+(abierta?'':' fin')+'" data-id="'+id+'"><div class="cot-c1"><b>'+esc(cotQuien(c))+'</b>'+
+      (c.cliente && c.celular ? '<span class="cot-cel">'+esc(c.celular)+'</span>' : '')+'<span class="cot-num">'+esc(c.num||'COT sin número')+'</span>'+bt.join('')+'</div>'+
+    '<div class="cot-c2">'+esc(prods)+'</div>'+
+    '<div class="cot-c3"><b>'+esc(cotBs(c.total))+'</b> · hecha el '+esc(cotDiaSem(c.dia))+' · vale hasta el '+esc(cotDiaSem(c.vence))+(ll?(' · '+ll+(ll===1?' llamada':' llamadas')):'')+
+      (e==='abierta' ? (' · llamar el '+esc(cotDiaSem(cotProxDe(c)))) : '')+'</div>';
+  if(abierta){
+    var b=function(cls, txt, fn){ return '<button type="button" class="ah-go'+(cls?(' '+cls):'')+'" onclick="'+fn+'">'+txt+'</button>'; };
+    h+='<div class="cot-acc">'+
+      (wa ? '<a class="ah-go" href="'+esc(wa+'?text='+encodeURIComponent(cotTextoSeguir(c)))+'" target="_blank" rel="noopener">💬 WhatsApp</a>' : '')+
+      (dice ? (b('ah-go-p','Sí, con nosotros',"cotUi('"+id+"','unir')")+b('','No, en otro lado',"cotNoOtroLado('"+id+"')"))
+            : b('ah-go-p','✓ Compró',"cotComproAbrir('"+id+"')"))+
+      b('','⏰ Volver a llamar',"cotUi('"+id+"','volver')")+
+      (e==='vencida' ? b('','🔁 Renovar',"cotUi('"+id+"','renovar')") : '')+
+      (dice ? '' : b('ah-go-n','✗ No le interesa',"cotUi('"+id+"','no')"))+
+      '</div>'+cotSubHtml(c, ui);
+  }
+  return h+'</div>';
+}
+function cotTextoSeguir(c){
+  var nom=String(c.cliente||'').trim().split(/\s+/)[0]||'';
+  return '¡Hola'+(nom?(' '+nom):'')+'! Te escribo por la cotización '+(c.num?(c.num+' '):'')+'que te pasé el '+cotDiaSem(c.dia)+' ('+cotBs(c.total)+'). ¿Pudiste pensarlo? Cualquier duda, acá estoy. — '+(String(c.vendedor||'').split(' ')[0]||'');
+}
+function cotUi(id, que){ COT.ui[id]=(COT.ui[id]===que) ? '' : que; cotLlamarPintar(); var el=document.querySelector('.cot-c[data-id="'+id+'"]'); if(el){ try{ el.scrollIntoView({block:'nearest'}); }catch(e){} } }
+function cotSubHtml(c, ui){
+  var id=cotJs(c.id), hoy=diaNegocio();
+  if(ui==='volver'){
+    var def=diaHabilMas(hoy, COT_PROX_HABILES), ch=[[sigDiaHabil(hoy),'Mañana'],[def,'En 2 días hábiles'],[stockSumarDias(hoy,7),'En una semana']];
+    return '<div class="cot-sub"><label for="cot-prox-'+id+'">¿Cuándo lo volvés a llamar?</label><div class="cot-fila"><input type="date" id="cot-prox-'+id+'" value="'+def+'" min="'+hoy+'">'+
+      ch.map(function(o){ return '<button type="button" class="ah-go" onclick="document.getElementById(\'cot-prox-'+id+'\').value=\''+o[0]+'\'">'+o[1]+'</button>'; }).join('')+'</div>'+
+      '<div class="cot-fila"><input type="text" id="cot-nota-'+id+'" maxlength="200" placeholder="Qué te dijo (opcional)" aria-label="Qué te dijo">'+
+      '<button type="button" class="ah-go ah-go-p" onclick="cotVolverGuardar(\''+id+'\')">Anotar</button></div></div>';
+  }
+  if(ui==='no'){
+    return '<div class="cot-sub"><label for="cot-mot-'+id+'">¿Por qué no le interesa?</label><div class="cot-fila"><select id="cot-mot-'+id+'"><option value="">Elegí el motivo…</option>'+
+      COT_MOTIVOS.map(function(m){ return '<option value="'+esc(m[0])+'">'+esc(m[1])+'</option>'; }).join('')+'</select></div>'+
+      '<div class="cot-fila"><input type="text" id="cot-nota-'+id+'" maxlength="200" placeholder="Algo más (opcional)" aria-label="Algo más">'+
+      '<button type="button" class="ah-go ah-go-p" onclick="cotNoGuardar(\''+id+'\')">Anotar</button></div></div>';
+  }
+  if(ui==='renovar'){
+    var bf=cotBf(), def2=stockSumarDias(hoy, COT_VALE_DIAS);
+    return '<div class="cot-sub"><label for="cot-vence-'+id+'">¿Hasta cuándo vale ahora?</label><div class="cot-fila"><input type="date" id="cot-vence-'+id+'" value="'+def2+'" min="'+hoy+'">'+
+      '<button type="button" class="ah-go" onclick="document.getElementById(\'cot-vence-'+id+'\').value=\''+stockSumarDias(hoy,15)+'\'">15 días</button>'+
+      (bf && bf.hasta>hoy ? '<button type="button" class="ah-go" onclick="document.getElementById(\'cot-vence-'+id+'\').value=\''+bf.hasta+'\'">🛍️ Fin de Black Friday</button>' : '')+
+      '<button type="button" class="ah-go ah-go-p" onclick="cotRenovar(\''+id+'\')">🔁 Renovar</button></div>'+
+      '<div style="font-size:.74rem;color:var(--muted)">Con los mismos precios. Si cambiaron, mejor hacé una cotización nueva.</div></div>';
+  }
+  if(ui==='unir'){
+    var P=cotCandidatos(c);
+    return '<div class="cot-sub"><label>¿Cuál es su venta?</label>'+
+      (P.length ? P.map(function(p){ return '<div class="cot-fila"><span style="flex:1 1 220px">'+esc(ocEtiq(p.oc)||'Pedido')+' · '+esc(p.cliente||'')+' · '+esc(fmtFecha(contaFecha(p)))+' · '+esc(cotBs(ventaTotal(p)))+'</span>'+
+                  '<button type="button" class="ah-go ah-go-p" onclick="cotUnirPedido(\''+id+'\',\''+cotJs(p.id)+'\')">Es esta</button></div>'; }).join('')
+                : '<div style="font-size:.8rem;color:var(--muted)">No encontré ninguna venta con ese celular desde el '+esc(cotDiaSem(c.dia))+'.</div>')+
+      '<div class="cot-fila"><button type="button" class="ah-go" onclick="cotComproAbrir(\''+id+'\')">📄 Cargar la venta ahora</button></div></div>';
+  }
+  return '';
+}
+function cotNotaDe(id){ var e=document.getElementById('cot-nota-'+id); return String((e&&e.value)||'').replace(/\s+/g,' ').trim().slice(0,200); }
+function cotVolverGuardar(id){
+  var c=cotDe(id); if(!c) return;
+  var e=document.getElementById('cot-prox-'+id), f=String((e&&e.value)||'');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f<diaNegocio()){ if(e) e.classList.add('err'); toast('⏰ Elegí el día en que lo volvés a llamar (de hoy en adelante).','err'); return; }
+  if(!cotMarcar(c.id, { prox:f, llamada:{ res:'volver', nota:cotNotaDe(id) } }, c.vendedor)) return;
+  COT.ui[id]=''; toast('⏰ Anotado: te lo recuerdo el '+cotDiaSem(f)+' ✓','ok'); cotRepintar();
+}
+function cotNoGuardar(id){
+  var c=cotDe(id); if(!c) return;
+  var s=document.getElementById('cot-mot-'+id), m=String((s&&s.value)||'');
+  if(!m){ if(s) s.classList.add('err'); toast('Elegí por qué no le interesa: sirve para saber qué cambiar.','err'); return; }
+  if(!cotMarcar(c.id, { estado:'no', motivo:m, llamada:{ res:'no', nota:cotNotaDe(id) } }, c.vendedor)) return;
+  COT.ui[id]=''; toast('✗ Anotado: no le interesa ('+cotMotivoTxt(m)+').','ok'); cotRepintar();
+}
+function cotNoOtroLado(id){
+  var c=cotDe(id); if(!c) return;
+  if(!cotMarcar(c.id, { estado:'no', motivo:'compró en otro lado', llamada:{ res:'no', nota:'dice que compró en otro lado' } }, c.vendedor)) return;
+  COT.ui[id]=''; toast('Anotado: compró en otro lado.','ok'); cotRepintar();
+}
+function cotRenovar(id){
+  var c=cotDe(id); if(!c) return;
+  var e=document.getElementById('cot-vence-'+id), f=String((e&&e.value)||''), hoy=diaNegocio();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || f<hoy){ if(e) e.classList.add('err'); toast('🗓️ Elegí hasta cuándo vale (de hoy en adelante).','err'); return; }
+  var n=Object.assign({}, c, { vence:f, prox:diaHabilMas(hoy, COT_PROX_HABILES) });
+  var r=cotGuardarDurable(n);
+  if(!r){ toast('No se pudo guardar una copia segura en este aparato: NO se renovó. Liberá espacio del navegador y volvé a intentar.','err',10000); return; }
+  cotMarcar(c.id, { estado:'abierta', prox:n.prox, llamada:{ res:'renovo', nota:'vale hasta el '+fmtFechaCorta(f) } }, c.vendedor);
+  COT.ui[id]=''; toast('🔁 Renovada hasta el '+cotDiaSem(f)+' ✓ Mandásela de nuevo si hace falta.','ok',7000); cotRepintar();
+}
+/* «Dice que ya compró · Sí, con nosotros»: su venta (mismo celular, cargada desde el día de la cotización). */
+function cotCandidatos(c){
+  var k=cliCelClave(c.celular); if(!k) return [];
+  return (STATE||[]).filter(function(p){
+    return p && !esFilaSistema(p) && !(typeof borradorDe==='function' && borradorDe(p.id)) && !esATC(p.oc) && !esRPT(p.oc) &&
+           cliCelClave(p.celular)===k && contaFecha(p)>=String(c.dia||'');
+  }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); }).slice(0,6);
+}
+function cotUnirPedido(id, pid){
+  var c=cotDe(id), p=findById(pid); if(!c || !p) return;
+  if((p.productos||[]).length && cotIdDe(p)!==String(c.id)){ setCotMarca(p, c.id); persistPedido(p); }
+  cotMarcar(c.id, { estado:'compro', pedido:String(p.id), llamada:{ res:'compro', nota:'venta '+(p.oc||'') } }, c.vendedor);
+  COT.ui[cotJs(id)]=''; toast('✓ Anotado: compró ('+(ocEtiq(p.oc)||'su venta')+').','ok'); cotRepintar();
+}
+
+/* ---- 274 (la parte de la página): Proyección → «🧾 Cotizaciones» ---- */
+var COT_TAB={ ym:'', cots:null, cargando:false, error:'', bot48:null, n:0 };
+function cotTabAbrir(){
+  if(!UNLOCKED){ toast('🔒 «Cotizaciones» es con la contraseña de Administración (como la Proyección).','err',6000); return false; }
+  if(!COT_TAB.ym){ var pm=document.getElementById('pry-mes'); COT_TAB.ym=(pm && /^\d{4}-\d{2}$/.test(pm.value)) ? pm.value : diaNegocio().slice(0,7); }
+  cotTabCargar(); cotTabPintar();
+  return true;
+}
+function cotTabCargar(){
+  var ym=COT_TAB.ym, n=++COT_TAB.n;
+  COT_TAB.cots=null; COT_TAB.error=''; COT_TAB.bot48=null; COT_TAB.cargando=false;
+  if(!cotServidorOk()){ COT_TAB.error='servidor'; return; }
+  if(!CONNECTED){ COT_TAB.error='sin_red'; return; }
+  COT_TAB.cargando=true;
+  conTopeDuro(apiPost({ action:'cotLeer', desde:ym+'-01', hasta:pryFinDeMes(ym) }), COT_TOPE_MS, 'tardo_cot').then(function(res){
+    if(n!==COT_TAB.n) return;
+    COT_TAB.cargando=false;
+    if(res && res.ok && Array.isArray(res.cots)){ COT_TAB.cots=res.cots; if(res.bot48!=null) COT_TAB.bot48=(res.bot48===true || Number(res.bot48)===1); }
+    else COT_TAB.error=String((res && res.error)||'sin_respuesta');
+    cotTabPintar();
+  }, function(e){ if(n!==COT_TAB.n) return; COT_TAB.cargando=false; COT_TAB.error=String((e&&e.message)||e); cotTabPintar(); });
+}
+function cotTabMes(ym){ if(!/^\d{4}-\d{2}$/.test(String(ym||''))) return; COT_TAB.ym=ym; cotTabCargar(); cotTabPintar(); }
+function cotTabLista(){ var ym=COT_TAB.ym; return cotMezclar(COT_TAB.cots||[]).filter(function(c){ return String(c.dia||isoDeTsBolivia(Number(c.ts)||0)).slice(0,7)===ym; }); }
+function cotDiasCompra(c){
+  var f='', p=c.pedido ? findById(c.pedido) : null;
+  if(p) f=contaFecha(p);
+  if(!f) (c.llamadas||[]).forEach(function(l){ if(l && l.res==='compro' && Number(l.t)) f=isoDeTsBolivia(Number(l.t)); });
+  if(!f || !c.dia) return null;
+  return Math.max(0, stockDias(String(c.dia).slice(0,10), f));
+}
+function cotTabDatos(L){
+  var nuevo=function(k){ return { k:k, n:0, bs:0, bot:0, llamar:0, compro:0, comproBs:0, dias:[], no:0, abiertas:0 }; };
+  var D=nuevo('Todas'); D.vencidas=0; D.motivos={}; D.vend={}; D.tienda={}; D.botVisto=false;
+  var grupo=function(M, k){ return M[k]||(M[k]=nuevo(k)); };
+  L.forEach(function(c){
+    var e=cotEstado(c), tot=r2(Number(c.total)||0), d=(e==='compro') ? cotDiasCompra(c) : null;
+    [D, grupo(D.vend, nombreCanonico(c.vendedor||'')||'Sin vendedor'), grupo(D.tienda, c.tienda||'Sin tienda')].forEach(function(G){
+      G.n++; G.bs=r2(G.bs+tot);
+      if(c.bot) G.bot++;
+      if(c.bot==='llamar') G.llamar++;
+      if(e==='compro'){ G.compro++; G.comproBs=r2(G.comproBs+tot); if(d!=null) G.dias.push(d); }
+      else if(e==='no') G.no++;
+      else G.abiertas++;
+    });
+    if(e==='vencida') D.vencidas++;
+    if(e==='no'){ var m=c.motivo||'sin motivo'; D.motivos[m]=(D.motivos[m]||0)+1; }
+    if(c.bot) D.botVisto=true;
+  });
+  return D;
+}
+function cotProm(a){ if(!a || !a.length) return null; var s=0; a.forEach(function(x){ s+=x; }); return Math.round(10*s/a.length)/10; }
+function cotPct(a, b){ return b ? Math.round(100*a/b) : 0; }
+function cotBotPrendido(D){ return COT_TAB.bot48===true || (COT_TAB.bot48==null && !!(D && D.botVisto)); }
+function cotGrupoFilas(M){ return Object.keys(M).map(function(k){ return M[k]; }).sort(function(a,b){ return (b.n-a.n) || (b.compro-a.compro) || a.k.localeCompare(b.k,'es'); }); }
+function cotTabPintar(){
+  var ym=COT_TAB.ym, h='<div class="modal-h"><h3>🧾 Cotizaciones de '+esc(mesNombre(ym))+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b cot-tab" id="cot-tab"><div class="cot-tab-bar no-print"><label for="cot-tab-mes">Mes<input type="month" id="cot-tab-mes" value="'+esc(ym)+'" onchange="cotTabMes(this.value)"></label>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="cotTabCargar();cotTabPintar()">🔄 Actualizar</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="cotTabCopiar()">📋 Copiar</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="cotTabExcel()">⬇️ Excel</button></div>';
+  if(COT_TAB.error==='servidor'){
+    h+='<div class="cotv-est mal">🧾 Falta implementar el servidor <code>'+COT_SERVIDOR+'</code> (está '+esc(SERVER_VER||'sin leer')+'): hasta entonces no hay cotizaciones guardadas en la planilla.</div>';
+  } else if(COT_TAB.cargando && !COT_TAB.cots){
+    h+='<div class="cot-vacio">⏳ Leyendo las cotizaciones de '+esc(mesNombre(ym))+'…</div>';
+  } else if(COT_TAB.error && !COT_TAB.cots){
+    h+='<div class="cotv-est mal">⚠️ No se pudieron leer las cotizaciones ('+esc(COT_TAB.error)+'). Tocá «🔄 Actualizar».</div>';
+  } else {
+    var L=cotTabLista(), D=cotTabDatos(L), dias=cotProm(D.dias);
+    h+='<div class="cot-bot'+(cotBotPrendido(D)?' on':'')+'">'+(cotBotPrendido(D)
+        ? '🤖 El mensaje automático de las 48 h está prendido: el bot le escribe al cliente y deja anotado lo que contestó.'
+        : '🤖 El mensaje automático de las 48 h <b>todavía no está prendido</b>: por ahora el bot no le escribe a nadie (el seguimiento lo hace cada vendedora desde «Para hacer»).')+'</div>';
+    var f=function(t, v, s){ return '<div class="cot-f"><small>'+t+'</small><b>'+v+'</b>'+(s?('<span>'+s+'</span>'):'')+'</div>'; };
+    h+='<div class="cot-fichas">'+
+      f('Hechas', D.n, cotBs(D.bs)+' cotizados')+
+      f('El bot les escribió', D.bot, D.n ? (cotPct(D.bot, D.n)+'% de las hechas') : '')+
+      f('Pidieron que las llamen', D.llamar, D.bot ? (cotPct(D.llamar, D.bot)+'% de las que recibieron el mensaje') : '')+
+      f('Compraron', D.compro, (D.n ? (cotPct(D.compro, D.n)+'% · ') : '')+cotBs(D.comproBs))+
+      f('En cuántos días', dias==null ? '—' : (String(dias).replace('.',',')+(dias===1?' día':' días')), 'promedio, de la cotización a la venta')+
+      f('No les interesó', D.no, '')+
+      f('Siguen abiertas', D.abiertas, D.vencidas ? (D.vencidas+(D.vencidas===1?' vencida':' vencidas')) : '')+
+    '</div>';
+    if(!D.n) h+='<div class="cot-vacio">Todavía no hay cotizaciones en '+esc(mesNombre(ym))+'.</div>';
+    else {
+      var tabla=function(tit, filas){
+        return '<h4>'+tit+'</h4><div class="cot-tbl-w"><table class="cot-tbl"><thead><tr><th>'+(tit.indexOf('tienda')>=0?'Tienda':'Vendedor')+'</th><th class="n">Hechas</th><th class="n">Cotizado</th><th class="n">Bot</th><th class="n">Pidieron llamada</th><th class="n">Compraron</th><th class="n">%</th><th class="n">Días</th><th class="n">No</th><th class="n">Abiertas</th></tr></thead><tbody>'+
+          filas.map(function(G){ var dd=cotProm(G.dias); return '<tr><td>'+esc(G.k)+'</td><td class="n">'+G.n+'</td><td class="n">'+esc(cotBs(G.bs))+'</td><td class="n">'+G.bot+'</td><td class="n">'+G.llamar+'</td><td class="n">'+G.compro+'</td><td class="n">'+cotPct(G.compro, G.n)+'%</td><td class="n">'+(dd==null?'—':String(dd).replace('.',','))+'</td><td class="n">'+G.no+'</td><td class="n">'+G.abiertas+'</td></tr>'; }).join('')+
+          '</tbody></table></div>';
+      };
+      h+=tabla('👥 Por vendedor', cotGrupoFilas(D.vend))+tabla('🏪 Por tienda', cotGrupoFilas(D.tienda));
+      var mk=Object.keys(D.motivos).sort(function(a,b){ return D.motivos[b]-D.motivos[a]; });
+      h+='<h4>✗ Por qué no les interesó</h4>'+(mk.length ? '<div class="cot-mot">'+mk.map(function(m){ return '<span class="cot-bd">'+esc(cotMotivoTxt(m))+' · '+D.motivos[m]+'</span>'; }).join('')+'</div>' : '<div style="font-size:.8rem;color:var(--muted)">Ninguna anotada como «no le interesa».</div>');
+    }
+    if(COT_TAB.cargando) h+='<div style="font-size:.74rem;color:var(--muted);margin-top:8px">⏳ actualizando…</div>';
+  }
+  h+='<div style="font-size:.74rem;color:var(--muted);margin-top:12px">Las cotizaciones no son ventas: no entran en la Proyección, en Contabilidad ni en el stock. «Días» = desde la cotización hasta la venta.</div></div>';
+  openModal(h, true);
+}
+function cotTabTexto(){
+  var L=cotTabLista(), D=cotTabDatos(L), dias=cotProm(D.dias), ym=COT_TAB.ym;
+  var T=['🧾 Cotizaciones de '+mesNombre(ym), 'Hechas: '+D.n+' ('+cotBs(D.bs)+')', 'El bot les escribió: '+D.bot+(cotBotPrendido(D)?'':' (el mensaje de las 48 h todavía no está prendido)'),
+         'Pidieron que las llamen: '+D.llamar, 'Compraron: '+D.compro+' ('+cotPct(D.compro, D.n)+'%, '+cotBs(D.comproBs)+')'+(dias==null?'':(' · en '+String(dias).replace('.',',')+' días en promedio')),
+         'No les interesó: '+D.no+' · siguen abiertas: '+D.abiertas, '', 'Por vendedor:'];
+  cotGrupoFilas(D.vend).forEach(function(G){ T.push('• '+G.k+': '+G.n+' hechas, '+G.compro+' compraron ('+cotPct(G.compro, G.n)+'%)'); });
+  T.push('', 'Por tienda:'); cotGrupoFilas(D.tienda).forEach(function(G){ T.push('• '+G.k+': '+G.n+' hechas, '+G.compro+' compraron ('+cotPct(G.compro, G.n)+'%)'); });
+  var mk=Object.keys(D.motivos); if(mk.length){ T.push('', 'Por qué no les interesó:'); mk.sort(function(a,b){ return D.motivos[b]-D.motivos[a]; }).forEach(function(m){ T.push('• '+cotMotivoTxt(m)+': '+D.motivos[m]); }); }
+  return T.join('\n');
+}
+function cotTabCopiar(){ if(!COT_TAB.cots && COT_TAB.error){ toast('Todavía no hay cotizaciones leídas para copiar.','err'); return; } copyText(cotTabTexto()); }
+function cotTabExcel(){
+  if(!COT_TAB.cots){ toast('Todavía no hay cotizaciones leídas para bajar.','err'); return; }
+  var L=cotTabLista(), D=cotTabDatos(L), ym=COT_TAB.ym, H=1, BS=2, num=function(v){ return { v:Number(v)||0, t:'n' }; }, bs=function(v){ return { v:r2(Number(v)||0), t:'n', s:BS }; };
+  var res=[[{ v:'COTIZACIONES DE '+mesNombre(ym).toUpperCase(), s:H }], ['Leídas el '+fmtFecha(diaNegocio())+(cotBotPrendido(D)?'':' · el mensaje automático de las 48 h todavía no está prendido')], [],
+    ['Hechas', num(D.n)], ['Cotizado (Bs)', bs(D.bs)], ['El bot les escribió', num(D.bot)], ['Pidieron que las llamen', num(D.llamar)],
+    ['Compraron', num(D.compro)], ['Comprado (Bs)', bs(D.comproBs)], ['Días promedio hasta la venta', cotProm(D.dias)==null ? '' : num(cotProm(D.dias))], ['No les interesó', num(D.no)], ['Siguen abiertas', num(D.abiertas)]];
+  var grp=function(tit, M){
+    var r=[[{ v:tit, s:H }, { v:'HECHAS', s:H }, { v:'COTIZADO (Bs)', s:H }, { v:'BOT', s:H }, { v:'PIDIERON LLAMADA', s:H }, { v:'COMPRARON', s:H }, { v:'COMPRADO (Bs)', s:H }, { v:'DÍAS PROMEDIO', s:H }, { v:'NO', s:H }, { v:'ABIERTAS', s:H }]];
+    cotGrupoFilas(M).forEach(function(G){ var dd=cotProm(G.dias); r.push([G.k, num(G.n), bs(G.bs), num(G.bot), num(G.llamar), num(G.compro), bs(G.comproBs), dd==null?'':num(dd), num(G.no), num(G.abiertas)]); });
+    return r;
+  };
+  var det=[['N°','DÍA','VENDEDOR','TIENDA','CLIENTE','CELULAR','PRODUCTOS','TOTAL (Bs)','VALE HASTA','ESTADO','MOTIVO','BOT','LLAMADAS','DÍAS HASTA LA VENTA'].map(function(t){ return { v:t, s:H }; })];
+  L.slice().sort(function(a,b){ return (Number(a.ts)||0)-(Number(b.ts)||0); }).forEach(function(c){
+    var e=cotEstado(c), d=(e==='compro') ? cotDiasCompra(c) : null;
+    det.push([c.num||'', fmtFecha(c.dia), c.vendedor||'', c.tienda||'', c.cliente||'', { v:String(c.celular||''), t:'s' },
+      (c.productos||[]).map(function(x){ return (Number(x.cant)>1?(x.cant+'× '):'')+String(x.desc||'')+(x.medida?(' '+x.medida):''); }).join(' · '),
+      bs(c.total), fmtFecha(c.vence), e, e==='no' ? cotMotivoTxt(c.motivo) : '', c.bot||'', num((c.llamadas||[]).length), d==null?'':num(d)]);
+  });
+  var bytes=buildXlsx([{ name:'Resumen', cols:[{w:34},{w:16}], matrix:res },
+                       { name:'Por vendedor', cols:[{w:24},{w:9},{w:14},{w:7},{w:12},{w:11},{w:14},{w:10},{w:7},{w:9}], matrix:grp('VENDEDOR', D.vend) },
+                       { name:'Por tienda', cols:[{w:24},{w:9},{w:14},{w:7},{w:12},{w:11},{w:14},{w:10},{w:7},{w:9}], matrix:grp('TIENDA', D.tienda) },
+                       { name:'Detalle', cols:[{w:12},{w:11},{w:20},{w:14},{w:22},{w:12},{w:46},{w:12},{w:11},{w:11},{w:18},{w:9},{w:9},{w:10}], matrix:det }]);
+  downloadBlob(bytes, 'cotizaciones-'+ym+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('🧾 Cotizaciones de '+mesNombre(ym)+' descargadas ✓','ok');
+}
+
+/* ---- Al abrir la página ---- */
+function cotIniciar(){
+  cotSrvCargar();
+  if(cotVa()){
+    var seg=document.getElementById('f-doc-tipo');
+    if(seg && !seg.querySelector('button[data-val="COT"]')){
+      var b=document.createElement('button'); b.type='button'; b.setAttribute('data-val','COT'); b.textContent='🧾 Cotización';
+      b.title='Para el cliente que pide precio para pensarlo: no es una venta, no ocupa cupo ni aparta stock';
+      seg.appendChild(b); seg.classList.add('seg-4');   // con 4 botones, el CSS lo parte en dos renglones si no entra
+    }
+    var w=document.getElementById('pry-cot-w'); if(w) w.hidden=false;
+  }
+  var fv=document.getElementById('f-vendedor'); if(fv) fv.addEventListener('input', function(){ if(docTipoSel()==='COT') cotTiendaPintar(); });
+  window.addEventListener('online', function(){ if(cotColaEsperando()) cotColaVaciar(); });
+  setInterval(function(){ if(cotColaEsperando()) cotColaVaciar(); }, 120000);
 }
 /* 🏪 El bloque de la reposición: sucursal de destino en vez de cliente, y afuera todo lo
    que es de una venta a una persona (celular, garantía, factura, precios). */
@@ -23187,6 +24185,7 @@ function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   recibioFormOlvidar();                        // 💵 (07/11) quién recibió el efectivo se elige de nuevo en cada pedido
   REPETIR_DE='';                               // 🔁 (§4ok-101)
+  COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251) la venta de una cotización era la de antes
   OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
   totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
   try{ notaLeerOlvidar(); }catch(e){}          // 🧾 (mejora 216) lo leído de una nota era del pedido de antes
@@ -23257,6 +24256,7 @@ function editPedido(id){
   if(!rec) return;
   if(!confirmarReemplazoForm()) return;
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
+  COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251)
   totalAutoOlvidar();   // 🧮 (06/11) abrir para editar no cambia ningún monto: solo lo que la persona toque después
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
@@ -24386,22 +25386,30 @@ function fhPintar(){
   if(!va) return;
   var fecha=document.getElementById('f-fecha').value||todayStr(), turno=normTurno(segVal('f-turno'))||'';
   var NOM={ AM:'mañana', PM:'tarde' }, otro={ AM:'PM', PM:'AM' }, avisa=avisaFormOn();   // 📦 (propuesta 76)
+  var cot=(docTipoSel()==='COT'), cotB='';   // 🧾 (mejora 251) «🧾 Cotizar» (o «📄 Volver a pedido» con la cotización abierta)
+  try{ if(cotVa() && !EDIT_ID) cotB = cot
+    ? '<button type="button" class="fh-ic fh-cot" onclick="cotSalir()" title="Volver a cargar un pedido"><span class="q">📄</span><span class="tx">Volver a pedido</span></button>'
+    : ('<button type="button" class="fh-ic fh-cot'+(cotServidorOk() ? '' : ' off')+'" onclick="cotEmpezar()" title="'+(cotServidorOk()
+        ? 'Para el cliente que pide precio para pensarlo: le armás la imagen y se la mandás por WhatsApp'
+        : 'Falta implementar el servidor '+COT_SERVIDOR+': tocá para ver qué hacer')+'"><span class="q">🧾</span><span class="tx">Cotizar</span></button>'); }catch(e){ cotB=''; }
   var cf=document.getElementById('conn-form'), on=!!(cf && /\bon\b/.test(cf.className)), connTxt=(document.getElementById('conn-form-txt')||{}).innerHTML||'';
   var pill=on ? ['', 'En línea'] : (!CONNECTED ? [' off', 'Solo en este equipo'] : ((CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO) ? [' off', 'Conectando…'] : [' off', 'Sin conexión']));
   var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
   var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), ed=EDIT_ID ? ' ✏️ Estás corrigiendo: se puede guardar igual.' : '';
   var h='<span class="fh-murc" aria-hidden="true"><i></i><i></i><i></i></span><span class="fh-luna" aria-hidden="true"></span>'+   // 🎃 (§4nk) solo se ven en octubre
-    '<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : 'Nuevo pedido')+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+
+    '<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : (cot ? 'Nueva cotización' : 'Nuevo pedido'))+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+cotB+
     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
     '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
       (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
-    (avisa ? ('<div class="fh-dia">📦 <b>El cliente avisa cuándo</b> · '+(document.getElementById('f-fecha').value ? ('volver a llamar el <b>'+esc(dia)+'</b>') : 'elegí el día de volver a llamar')+'</div>')
+    (cot ? '<div class="fh-dia">🧾 <b>Cotización</b> · no es una venta: no ocupa cupo del camión, no aparta stock y no va a Contabilidad</div>' :
+     avisa ? ('<div class="fh-dia">📦 <b>El cliente avisa cuándo</b> · '+(document.getElementById('f-fecha').value ? ('volver a llamar el <b>'+esc(dia)+'</b>') : 'elegí el día de volver a llamar')+'</div>')
            : ('<div class="fh-dia">🚚 Camión del <b>'+esc(dia)+'</b>'+cupoFechaNota(fecha)+'</div>'));
-  var cerr = avisa ? '' : diaCerrado(fecha) ? ('🔒 El '+esc(dia)+' está cerrado: administración ya armó el camión. Elegí otra fecha.')
+  var cerr = (avisa || cot) ? '' : diaCerrado(fecha) ? ('🔒 El '+esc(dia)+' está cerrado: administración ya armó el camión. Elegí otra fecha.')
            : diaDomingo(fecha) ? '🚫 Los domingos no se agenda. Elegí otra fecha.'
            : feriadoDe(fecha) ? ('🚫 Feriado: '+esc(feriadoDe(fecha))+'. El camión no sale; elegí otra fecha.') : '';
   var avisos=[];
-  if(avisa) h+='<div class="fh-alerta k-avc">No ocupa cupo del camión · el bot no le escribe · no sale en la carga. El stock queda apartado.</div>';
+  if(cot){ /* 🧾 la cotización no tiene camión: solo la conexión, abajo */ }
+  else if(avisa) h+='<div class="fh-alerta k-avc">No ocupa cupo del camión · el bot no le escribe · no sale en la carga. El stock queda apartado.</div>';
   else if(cerr) h+='<div class="fh-cerrado">'+cerr+(ed ? '<br><small>'+ed+'</small>' : '')+'</div>';
   else{
     var T={};
@@ -24424,7 +25432,7 @@ function fhPintar(){
     }
   }
   if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
-  var viejo=cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
+  var viejo=cot ? '' : cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
   h+=avisos.map(function(a){ return '<div class="fh-alerta '+a[0]+'">'+a[1]+'</div>'; }).join('');
   if(box._h===h) return;   // lo mismo de antes: no rearmar (los murciélagos y el «En línea» no vuelven a empezar)
   box._h=h; box.innerHTML=h;
@@ -24606,23 +25614,29 @@ function fxDerPintar(){
   });
   var acu=montoForm('f-acuenta'), sal=montoForm('f-saldo'), pagado=segVal('f-pagado')==='SI';
   var ini=(v||'?').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase();
-  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':'🧾 Tu pedido')+'</div><div class="fx-dp">'+
+  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':(tipo==='COT'?'🧾 Tu cotización':'🧾 Tu pedido'))+'</div><div class="fx-dp">'+
     '<div class="fx-cab"><div class="av">'+esc(ini)+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
-      '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':'🏪 Reposición'))+(v?(' · '+esc(v)):'')+'</div></div></div>';
+      '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':(tipo==='COT'?'🧾 Cotización':'🏪 Reposición')))+(v?(' · '+esc(v)):'')+'</div></div></div>';
   var avOn=avisaFormOn();   // 📦 (propuesta 76) la fecha es la de volver a llamar
-  if(!tienda) h+='<div class="fx-fila"><span class="i">'+(avOn?'📦':'🚚')+'</span><span>'+(avOn?'Avisa cuándo · llamar ':'')+(f?('<b>'+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+'</b>'+((t && !avOn)?(' · turno '+esc(t)):'')):'<span class="vacio">sin fecha</span>')+'</span></div>'+
+  var cotF=(tipo==='COT');   // 🧾 (mejora 251) sin entrega ni cobro: hasta cuándo vale y desde cuándo se entrega
+  if(cotF){ var _cv=val('f-cot-vence'), _cd=''; try{ _cd=cotEntregaDesde(); }catch(eC){}
+    h+='<div class="fx-fila"><span class="i">🗓️</span><span>'+(_cv?('vale hasta el <b>'+esc(cotDiaSem(_cv))+'</b>'):'<span class="vacio">sin «vale hasta»</span>')+'</span></div>'+
+       '<div class="fx-fila"><span class="i">🚚</span><span>'+(_cd?('entrega desde el '+esc(cotDiaSem(_cd))):'<span class="vacio">entrega a confirmar</span>')+'</span></div>'; }
+  if(!tienda && !cotF) h+='<div class="fx-fila"><span class="i">'+(avOn?'📦':'🚚')+'</span><span>'+(avOn?'Avisa cuándo · llamar ':'')+(f?('<b>'+esc(['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(f)]+' '+f.slice(8,10)+'/'+f.slice(5,7))+'</b>'+((t && !avOn)?(' · turno '+esc(t)):'')):'<span class="vacio">sin fecha</span>')+'</span></div>'+
       '<div class="fx-fila"><span class="i">📍</span><span>'+(zona?esc(zona):'<span class="vacio">sin zona</span>')+'</span></div>';
   if(cel) h+='<div class="fx-fila"><span class="i">📞</span><span>'+esc(cel)+'</span></div>';
   h+='<div class="fx-prs">'+(prods.length ? prods.map(function(p){
       return '<div class="fx-pr"><span>'+(p.ico?p.ico[0]:'🛏️')+'</span><div>'+prodIcoHtml({ codigo:p.c, desc:p.d })+'<b>'+(p.q>1?(p.q+'× '):'')+esc(p.d)+'</b>'+(p.m?(' · '+esc(p.m)):'')+
         (p.ico?('<div class="st" style="color:'+p.ico[1]+'">'+esc(p.ico[2])+'</div>'):'')+'</div><span class="m">'+(p.sub>0?fmtBs0(p.sub):'')+'</span></div>';
     }).join('') : '<div class="fx-fila"><span class="i">🛏️</span><span class="vacio">todavía sin productos</span></div>')+'</div>';
+  if(cotF && tot>0) h+='<div class="fx-tot"><span>Total de la cotización</span><b>'+fmtBs(r2(tot))+'</b></div>';   // 🧾 (251)
   if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
       (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
-  var chk=[['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
+  var chk=cotF ? [['Vendedor',!!v],['Celular',!!celPartes(cel).cel],['Productos',prods.length>0]] : [['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
   if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
-  if(!tienda){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
-  if(!tienda && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
+  if(cotF) chk.push(['Vale hasta', !!fxPasosEstado()[2]]);
+  if(!tienda && !cotF){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
+  if(!tienda && !cotF && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
   if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
   if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
   if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
@@ -24634,10 +25648,10 @@ function fxDerPintar(){
   }
   h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
   /* 📝 (idea 119) lo que Guardar va a preguntar de las observaciones, adelantado en una línea (la MISMA cuenta: `obsRevAvisos`) */
-  var _orv=[]; try{ if(!tienda && tipo!=='ATC') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
+  var _orv=[]; try{ if(!tienda && tipo!=='ATC' && tipo!=='COT') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
   if(_orv.length) h+='<div class="fx-obsrev" title="'+esc(_orv.map(function(x){ return x.t; }).join('\n'))+'">⚠️ Las observaciones dicen otra cosa</div>';
   h+='</div>';
-  if(v && !EDIT_ID){
+  if(v && !EDIT_ID && !cotF){   // 🧾 (251) en la cotización no va lo vendido
     var o=fxMesDe(nombreCanonico(v)), hoy=todayStr(), nH=0, bH=0;
     (STATE||[]).forEach(function(p){ if(p && !esFilaSistema(p) && !borradorDe(p.id) && !esATC(p.oc) && !esRPT(p.oc) && mismoVendedor(p.vendedor,v) && contaFecha(p)===hoy){ nH++; bH+=ventaTotal(p); } });
     h+='<div class="fx-hoy"><div class="g">'+nH+'</div><div><b>'+(nH===1?'pedido cargado hoy':'pedidos cargados hoy')+'</b><div class="s">'+fmtBs0(bH)+' vendidos hoy</div></div></div>'+
@@ -25133,7 +26147,7 @@ function fpPintar(){
   if(!document.getElementById('view-form').classList.contains('active')) return;
   if(!fpArmar()) return;
   var E=fxPasosEstado(), val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
-  var ok=[E[0] && (VENTA_TIENDA || !!val('f-fecha')), E[1], E[2], E[3]];
+  var ok=[E[0] && (VENTA_TIENDA || docTipoSel()==='COT' || !!val('f-fecha')), E[1], E[2], E[3]];   // 🧾 (251) la cotización no lleva fecha
   var vis=FP_PASOS.map(function(o){ var el=document.getElementById('fp-'+o.n); var v=fpVisible(el); if(el) el.hidden=!v; return v; });
   var act=-1; for(var i=0;i<4;i++){ if(vis[i] && !ok[i]){ act=i; break; } }
   var nV=vis.filter(Boolean).length, nOk=0;
@@ -25184,6 +26198,8 @@ function fxPasosEstado(sinRecibio){   // sinRecibio: el chip «Saldo o pagado» 
       return d && !String(d.value||'').trim() && ((co && String(co.value||'').trim()) || (pr && String(pr.value||'').trim()));
     })) prods=false;
   }catch(e){}
+  /* 🧾 (mejora 251) La cotización: el vendedor y un celular de WhatsApp; los productos con precio; hasta cuándo vale. Sin entrega ni cobro. */
+  if(tipo==='COT') return [ !!val('f-vendedor') && !!celPartes(val('f-celular')).cel, prods, /^\d{4}-\d{2}-\d{2}$/.test(val('f-cot-vence')) && val('f-cot-vence')>=diaNegocio(), true ];
   var pag=segVal('f-pagado');
   /* ⚠️ (25/10, auditoría N-UI3) Lo mismo que exige `submitPedido`, ni más ni menos: sin la nota decía «4 de 4 ¡listo para guardar!»
      y Guardar la pedía. Celular: todo menos RPT (también la ATC); la zona, también en una RPT; ROHO, su N° de OC; la ATC, lo de `atcFaltan`. */
@@ -26364,6 +27380,7 @@ function celPartes(t){
   return { cel:bu[0]||'', otros:bu.slice(1).concat(otros), t:s };
 }
 function celObligatorio(vend){
+  if(docTipoSel()==='COT') return true;   // 🧾 (mejora 251) la cotización se la mandás por WhatsApp: el celular tiene que servir
   if(navigator.webdriver && !window.CEL_PRUEBA) return false;   // en Playwright solo con `CEL_PRUEBA`
   return docTipoSel()==='OC' && !VENTA_TIENDA && !esVendedorLite(vend) && !cliEsInterno(vend);
 }
@@ -26497,7 +27514,8 @@ function celFormPintar(){
   var h='', cls='cel-aviso';
   if(mal){
     cls+=' mal';
-    h = o.sinWa ? '📵 Se guarda «'+esc(o.t)+'» tal cual: el bot no le va a escribir a este cliente.'
+    h = (docTipoSel()==='COT') ? ('📱 «'+esc(o.t)+'» no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país). La cotización se la mandás por WhatsApp: corregilo.')
+      : o.sinWa ? '📵 Se guarda «'+esc(o.t)+'» tal cual: el bot no le va a escribir a este cliente.'
                 : '📱 «'+esc(o.t)+'» no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país: +54 9 11 2345 6789). Corregilo; si el cliente no tiene WhatsApp, tildá la casilla de abajo.';
   } else if(o.aplica && o.n.cel && (o.n.cel!==o.t || o.n.otros.length)){
     h='✓ Se guarda como <b>'+esc(o.n.cel)+'</b>'+(/^\+/.test(o.n.cel) ? ' 🌎 (número de otro país)' : '')+(o.n.otros.length ? (' · el otro número va a Observaciones: «Otro cel: '+esc(o.n.otros.join(', '))+'»') : '')+'.';
@@ -34689,6 +35707,9 @@ function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el
 function misHacerDatos(v, mine){
   var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
   var q=misPendientes(mine);
+  /* 🧾 (mejoras 251 y 274) Las cotizaciones: lo que el cliente le pidió al bot (que lo llamen) va arriba de todo, en rojo; lo demás abajo. */
+  var _cot={ arriba:[], resto:[], ok:'' }; try{ _cot=cotHacerItems(v); }catch(e){}
+  _cot.arriba.forEach(add);
   /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
   /* 📅 (30/10, §78) lo que es SOLO de la fecha de la foto no es plata: va aparte, en ámbar (`ctaAvSoloFecha`) */
   try{ var av0=ctaAvAbiertos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
@@ -34714,6 +35735,7 @@ function misHacerDatos(v, mine){
   add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo para completar', s:misNom2(br)+' · '+(!brP ? 'falta la fecha de entrega' : brP===br.length ? 'parecen ya cargadas: confirmalas' : (brP+(brP===1?' parece ya cargada':' parecen ya cargadas')+'; a las otras les falta la fecha')),
     b:'Completar ↓', p:1, fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
   try{ add(avisaHacerItem(mine, 'avisa', function(L){ return misNom2(L); })); }catch(e){}   // 📦 (propuesta 76) «📞 Llamá a N clientes con entrega a confirmar»
+  _cot.resto.forEach(add); if(_cot.ok) OK.push(_cot.ok);   // 🧾 (251) «📞 Llamar a N cotizaciones», las vencidas y «dice que ya compró»
   /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar); (§4nl, Astra A08) con el
      mes de Bolivia, como Tu día */
   var mes=diaNegocio().slice(0,7), deben=mine.filter(function(p){ return (p.fecha||'').slice(0,7)===mes && !p.pagado && (Number(p.saldo)||0)>0; });
@@ -35352,6 +36374,7 @@ function renderMis(){
     mc('var(--green)','Total cargados',mine.length,'histórico');
   misFichasVivas(box, pend>0);                      // 🎨 (§4jj) color + dibujito en cada ficha
   nxM1Ficha(box, v, todos);                         // 🔔 (§4js, M1) la 5ª ficha: avisar a los clientes de mañana
+  if(_nuevo) try{ cotRefrescar(false); }catch(e){}                           // 🧾 (mejora 251) las cotizaciones, una vez cada COT_LEER_MS
   if(_nuevo) try{ misTopPintar(v, mine); }catch(e){ console.error(e); }   // ✨ (§4mf)
   if(_eq) try{ misEqPintar(mine); }catch(e){ console.error(e); }          // 👑 (§4nn)
   var _ani=document.getElementById('mis-anillo'); if(_ani) _ani.innerHTML=misAnilloHtml(mine, todos);   // ⭕ (§4ik)
@@ -36871,7 +37894,7 @@ function clfDestQuitar(){
    sin venta de tienda, sin enlace (o con el que puso esto mismo) y sin una dirección escrita distinta. */
 function destParaForm(){
   if(VENTA_TIENDA) return null;
-  var tipo=docTipoSel(); if(tipo==='RPT') return null;
+  var tipo=docTipoSel(); if(tipo==='RPT' || tipo==='COT') return null;   // 🧾 (251) la cotización no tiene entrega
   var nuevo=!EDIT_ID || (typeof borradorDe==='function' && !!borradorDe(EDIT_ID)); if(!nuevo) return null;
   var fm=document.getElementById('f-maps'), cli=String((document.getElementById('f-cliente')||{}).value||'').trim(), ven=String((document.getElementById('f-vendedor')||{}).value||'').trim();
   if(!fm || !cli || !ven) return null;
@@ -41562,7 +42585,7 @@ function saldoDatos(sinId){
   return SALDO_CACHE;
 }
 function saldoSinId(){ return (EDIT_ID && findById(EDIT_ID)) ? EDIT_ID : ''; }
-function saldoFechaForm(){ if(VENTA_TIENDA || avisaFormOn()) return ''; var e=document.getElementById('f-fecha'); return e ? String(e.value||'') : ''; }   // 📦 la de volver a llamar no es un día de entrega
+function saldoFechaForm(){ if(VENTA_TIENDA || avisaFormOn() || docTipoSel()==='COT') return ''; var e=document.getElementById('f-fecha'); return e ? String(e.value||'') : ''; }   // 🧾 (251) la cotización no tiene día de entrega   // 📦 la de volver a llamar no es un día de entrega
 function saldoAvisoActivo(){
   if(VENTA_TIENDA || docTipoSel()==='ATC') return false;
   var p=EDIT_ID ? findById(EDIT_ID) : null;
@@ -42382,6 +43405,7 @@ function saldoAvisosPintarYa(filas){
       saldoCajaPintar(f.box, saldoVeredictoFila(f, sinId, fecha));
       f.box._firma=f.g+'|'+f.total;
     });
+    try{ cotDesdePintar(); }catch(e){}   // 🧾 (mejora 251) «Entrega desde» de la cotización = la misma cuenta
     fxLadosProgramar();   // 🖥️ (§4ig) los íconos del pedido en vivo
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
@@ -65511,6 +66535,16 @@ function mallVentaHecha(rec){
   }catch(e){ return null; }
 }
 
+/* 🧾 (251) Una cotización guardada en el mall cuenta como «se anotó» (252): la misma regla que la venta (`mallVentaHecha`). */
+function mallCotHecha(c){
+  try{
+    if(!c || !mallActivo() || !mallPuede()) return null;
+    var v=nombreCanonico(c.vendedor||''); if(!v || contaExcluido(v)) return null;
+    if(!(mallAparato() || mallEsVendedor(v))) return null;
+    return mallTocar('fin', v, { r:'anoto', ref:c.id });
+  }catch(e){ return null; }
+}
+
 /* ---------- «🔄 ¿Fue parejo?»: hoy y el día anterior con datos ---------- */
 function mallParejoAbrir(){
   mallParejoPintar();
@@ -65666,6 +66700,7 @@ document.addEventListener('DOMContentLoaded',function(){
     if(fc){ ['input','change'].forEach(function(t){ fc.addEventListener(t, function(e){ var el=e.target; setTimeout(function(){ revisar(el); }, 0); }, true); }); }
     window.formPlataAutollenada=revisar;
   })();
+  try{ cotIniciar(); }catch(e){ console.error(e); }   // 🧾 (mejora 251) el 4° botón (antes de `initSeg`), la cola de las cotizaciones
   initSeg('f-doc-tipo',setDocTipo);
   initSeg('cta-mode',setContaModo);
   initSeg('cta-base',setContaBase);
