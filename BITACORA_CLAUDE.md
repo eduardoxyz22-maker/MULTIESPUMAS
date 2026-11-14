@@ -18821,3 +18821,11 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   el panel»*): https://claude.ai/artifact/712WNCvPh54e4gJHxyRuBU. Datos: 140 ventas del equipo del 01 al 14/11, 40 % de tienda, 66 % con QR, hora pico 18-19 h;
   Kommo «Visita tienda» compra el 46 % (24 de 52) contra 2 % de Facebook; en una tablet con la CPU 6× más lenta el panel abre en 2,8 s (0,6 s en una compu), lee
   la planilla en 0,7 s y da el primer saldo en 0,8 s; publicado pesa 1,1 MB comprimido (3,6 MB achicado). Recomendadas: 246 + 247 + 249 + 254, después 251 (servidor).
+- **La tienda del mall en detalle + 258 a 281** (dueño, 14/11: *«246 (te diré solo a quiénes debe aparecer eso), 247 sería venta "salió de tienda"…
+  248 nadie se lleva su colchón de un mall, así que la 247 obsoleta. 251… 252… 253 cómo se rige… al final del día debería ser equitativo. 254 más detalles para
+  mostrarle a contabilidad, 256… dame MUCHO MÁS MEJORAS»*): https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc. 247 y 248 descartadas; 246 espera la lista de
+  quién lo ve. En detalle: 251 (visita anotada → lead de Kommo «Visita tienda» + WhatsApp + seguimiento), 252 (contador: solo «👀 Solo miró» se toca, lo demás
+  sale solo; en la barra, Tu día, la caja, Proyección y el cierre 21:15), 253 (rueda: 7 reglas, «Es mío», pausa, «¿Fue parejo?» ±1 turno, al día siguiente
+  arranca el que tuvo menos), 254 (Contabilidad → «🏬 Caja por tienda»: ventas, cobros, efectivo = quedó + cobrado − retirado contra lo contado, QR contra el
+  extracto, lo que falta, 🔒 cerrar, Excel de 4 hojas, PDF con firmas) y 256 (meta de hoy = lo que falta del presupuesto ÷ días hábiles que quedan). Ideas
+  nuevas 258-281 por grupo; recomendadas 253 + 252 + 251 + 254 + 256, y 258 y 266. Nada programado.
