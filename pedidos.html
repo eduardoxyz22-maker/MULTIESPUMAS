@@ -60199,7 +60199,9 @@ var CERT_PARA_TODOS=false;                       // 🔒 primera versión: solo 
 var CERT_DESDE='compra';                         // la garantía cuenta desde 'compra' (el día de la venta) o 'entrega' (el día agendado)
 var CERT_QR_MODO='datos';                        // 'datos' = el texto adentro del QR · 'url' = CERT_QR_URL + '?c=<código>'
 var CERT_QR_URL='';
-var CERT_QR_SRC='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', CERT_QR_TOPE_MS=8000;
+/* La librería del QR: el archivo del paquete npm por jsDelivr (existe seguro: es el mismo `qrcode.js` del paquete 1.4.4) y, si no
+   carga, la copia de cdnjs. Desde la sesión de trabajo no se pudo abrir ninguno de los dos (el proxy no deja): probarlo una vez en el aparato. */
+var CERT_QR_SRC='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js', CERT_QR_SRC2='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', CERT_QR_TOPE_MS=8000;
 /* Años de garantía por LÍNEA. null = «a definir»: el certificado lo dice en rojo, para revisar. La línea la decide `certLinea`. */
 var CERT_ANOS={
   'Titanio':null, 'Oro':null, 'Especial semiortopédico':null, 'Plata':null, 'Dream':null, 'Tropical':null, 'Colchoneta':null,
@@ -60328,13 +60330,14 @@ function certQrHay(){ return typeof window.qrcode==='function'; }
 function certQrCargar(){
   if(certQrHay()) return Promise.resolve(true);
   if(CERT_QR_PEND) return CERT_QR_PEND;
-  CERT_QR_PEND=new Promise(function(ok){
+  var uno=function(src){ return new Promise(function(ok){
     var listo=false, s=document.createElement('script'), t=null;
-    var fin=function(v){ if(listo) return; listo=true; clearTimeout(t); CERT_QR_PEND=null; if(!v && s.parentNode) s.parentNode.removeChild(s); ok(!!v && certQrHay()); };
+    var fin=function(v){ if(listo) return; listo=true; clearTimeout(t); if(!v && s.parentNode) s.parentNode.removeChild(s); ok(!!v && certQrHay()); };
     t=setTimeout(function(){ fin(false); }, CERT_QR_TOPE_MS);
-    s.src=CERT_QR_SRC; s.async=true; s.onload=function(){ fin(true); }; s.onerror=function(){ fin(false); };
+    s.src=src; s.async=true; s.onload=function(){ fin(true); }; s.onerror=function(){ fin(false); };
     document.head.appendChild(s);
-  });
+  }); };
+  CERT_QR_PEND=uno(CERT_QR_SRC).then(function(v){ return (v || !CERT_QR_SRC2) ? v : uno(CERT_QR_SRC2); }).then(function(v){ CERT_QR_PEND=null; return v; });
   return CERT_QR_PEND;
 }
 /* La matriz del QR ({n, osc(fila, col)}) o null. Con UTF-8 si la librería lo trae (las tildes); si no, sin tildes. Corrección 'M'; si con

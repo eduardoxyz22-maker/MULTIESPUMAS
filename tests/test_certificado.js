@@ -29,7 +29,7 @@ const HAY_QR = fs.existsSync(QR_LIB);
 const JSQR = process.env.CERT_JSQR || '/tmp/claude-0/-home-user-MULTIESPUMAS/dab3dfa4-9445-5474-b412-a4265b40568c/scratchpad/qrlib/jsqr/package/dist/jsQR.js';
 const HAY_JSQR = fs.existsSync(JSQR);
 const SALIDA = process.env.CERT_SALIDA || '/tmp';
-const QR_URL = /cdnjs\.cloudflare\.com\/ajax\/libs\/qrcode-generator\/1\.4\.4\/qrcode\.min\.js$/;
+const QR_URL = /(cdnjs\.cloudflare\.com\/ajax\/libs\/qrcode-generator\/1\.4\.4\/qrcode\.min\.js|cdn\.jsdelivr\.net\/npm\/qrcode-generator@1\.4\.4\/qrcode\.js)$/;
 
 function PREPARAR(){
   var c=document.getElementById('conn-form'); if(c) c.style.display='none';
@@ -94,7 +94,7 @@ function PREPARAR(){
   let r = await page.evaluate(() => ({ ve:certVe(), todos:CERT_PARA_TODOS, desde:CERT_DESDE, modo:CERT_QR_MODO, url:CERT_QR_URL, src:CERT_QR_SRC }));
   chk('1a sin la contraseña ni ?cert=1 no se ve', r.ve===false, r);
   chk('1b CERT_PARA_TODOS=false, CERT_DESDE=compra, CERT_QR_MODO=datos y la dirección vacía', r.todos===false && r.desde==='compra' && r.modo==='datos' && r.url==='', r);
-  chk('1c la librería del QR es qrcode-generator 1.4.4 de cdnjs', r.src==='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', r.src);
+  chk('1c la librería del QR es qrcode-generator 1.4.4 (jsDelivr, y cdnjs de respaldo)', r.src==='https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js', r.src);
   chk('1d …y en la ficha de Mis pedidos no hay certificado', (await hayBloque(page, 'mis'))==='');
   await page.evaluate(() => { UNLOCKED=true; });
   let t = await hayBloque(page, 'mis');
