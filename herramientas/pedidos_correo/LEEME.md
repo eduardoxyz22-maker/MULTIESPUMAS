@@ -114,5 +114,8 @@ TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
 - ⚠️ **Juan Carlos Arce se equivoca en los códigos y en el total** (dueño: *«debes verificar también el nombre del producto… lo que vale es el
   precio individual por producto»*): el producto sale del NOMBRE + las plazas (1 = 90x190, 1½ = 105x190, 2 = 140x190, 2½ = 160x190, 3 =
   180x190 o 200x200), cruzado con el código; si no coinciden, gana el nombre y se anota en observaciones. Ej.: su «CH301» era el CH1301.
+- 📐 **Medida especial** (14/11, dueño, OP-03-11-26 de Copacaba, «COLCHON SEMIORTOPEDICO DE 22 CM DE ALTURA DE 110X190»: *«es medida especial
+  tal cual dice el correo, no tengo el código aún»*): la medida que no es estándar va TAL CUAL (`110x190`), SIN código y con `"especial": true`
+  en el renglón (el script lo acepta así); se fabrica a pedido: fecha = la regla de 48 h + 1 día. Se dice en observaciones. Cargado: 11-171.
 - El total es SIEMPRE Σ cantidad × precio unitario (el script lo hace). Poner el total impreso en `total_impreso`: si no coincide, el script
   lo anota.

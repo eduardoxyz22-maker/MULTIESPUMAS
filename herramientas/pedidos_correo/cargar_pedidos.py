@@ -122,10 +122,13 @@ def armar(d, P):
     for x in d['productos']:
         cant = int(x['cant'])
         precio = round(float(x['precio']), 2)
-        if cant < 1 or precio <= 0 or not str(x.get('codigo') or '').strip():
+        # (14/11, dueño: «es medida especial tal cual dice el correo, no tengo el código aún»): una MEDIDA ESPECIAL va sin
+        # código (`"especial": true` en el renglón), como la carga el panel (§4gk: se fabrica a pedido, nunca sale del stock).
+        sin_cod = bool(x.get('especial')) and str(x.get('medida') or '').strip()
+        if cant < 1 or precio <= 0 or (not sin_cod and not str(x.get('codigo') or '').strip()):
             raise ValueError('renglón incompleto: %r' % x)
         prods.append({"desc": str(x['desc']).strip(), "medida": str(x.get('medida') or '').strip(),
-                      "codigo": str(x['codigo']).strip().upper(), "cant": cant, "precio": precio})
+                      "codigo": str(x.get('codigo') or '').strip().upper(), "cant": cant, "precio": precio})
     suma = round(sum(x['cant'] * x['precio'] for x in prods), 2)
     obs = str(d.get('observaciones') or '').strip()
     ti = d.get('total_impreso')
