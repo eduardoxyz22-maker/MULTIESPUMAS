@@ -18814,3 +18814,10 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - **PUBLICADO 14/11, `7b0910b`** (dueño: *«si publica»*): la página `2026-11-14-a` con 211, 212, 216 (solo con la contraseña), 217 y 218 (sin «🕐 Horario…»), el `.gs`
   14-a y `SCRIPT_VERSION_ESPERADA` 14-a en `main` (por `cherry-pick` de los commits del cambio; las pruebas del servidor 13-b —`test_gps_historial`,
   `test_wa_mayoristas`— entran con él). `FH_DESDE`='2026-11-14' = el día de publicar.
+- **Novedades para los grupos (14/11)**: la última lista fue la del 07/11 (hasta la 07-f); la nueva junta todo lo publicado del 07 al 14/11 por área, con
+  «Copiar para WhatsApp»: https://claude.ai/artifact/EL6suf9gmeCy5iwSEcCQ7r. Las metas de noviembre YA están guardadas (`__metas__` → `m['2026-11'].vd`, 10
+  vendedores): «Tu comisión» de «Tu día» ya se ve.
+- **Mejoras 246 a 257 · la tienda del mall** (dueño, 14/11: *«tendré 4 vendedores en un mall con un flujo impresionante de gente, necesito optimizar más aún
+  el panel»*): https://claude.ai/artifact/712WNCvPh54e4gJHxyRuBU. Datos: 140 ventas del equipo del 01 al 14/11, 40 % de tienda, 66 % con QR, hora pico 18-19 h;
+  Kommo «Visita tienda» compra el 46 % (24 de 52) contra 2 % de Facebook; en una tablet con la CPU 6× más lenta el panel abre en 2,8 s (0,6 s en una compu), lee
+  la planilla en 0,7 s y da el primer saldo en 0,8 s; publicado pesa 1,1 MB comprimido (3,6 MB achicado). Recomendadas: 246 + 247 + 249 + 254, después 251 (servidor).
