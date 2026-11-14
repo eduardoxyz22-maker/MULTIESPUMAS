@@ -2739,6 +2739,16 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       </div>
 
       <div class="sec">📦 Datos del pedido</div>
+      <!-- 🧾 (14/11, mejora 216) «Leer la nota»: Claude llena el pedido NUEVO desde la foto de la nota de venta (`notaLeer*`). Solo 📄 OC nuevo,
+           con el servidor que tiene `leerNota`. Nunca guarda: la vendedora revisa y toca Guardar. -->
+      <div id="nota-leer" class="nota-leer no-print" hidden>
+        <div class="nl-bar">
+          <button type="button" class="btn btn-sm nl-btn" id="nota-leer-btn" onclick="notaLeerElegir()">🧾 Leer la nota</button>
+          <span class="nl-ay">¿Tenés la nota de venta escrita? Sacale una foto y lleno el pedido por vos: después revisás y guardás.</span>
+          <input type="file" id="nota-leer-file" accept="image/*" hidden onchange="notaLeerArchivo(this)" aria-label="Foto de la nota de venta">
+        </div>
+        <div id="nota-leer-caja" class="nl-caja" hidden aria-live="polite"></div>
+      </div>
 
       <div class="grid2">
         <div class="field solo-entrega">
@@ -6782,6 +6792,33 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .frq .frq-i{font-size:1rem;line-height:1}
 @media (max-width:420px){ .frq{gap:5px} .frq .frq-b{font-size:.76rem;padding:5px 10px} }
 @media (prefers-reduced-motion:reduce){ .frq .frq-b{transition:none} }
+/* 🧾 (14/11, mejora 216) «Leer la nota» (`notaLeer*`): el botón arriba de «Datos del pedido» y la caja «Revisá lo que leí» */
+.nota-leer{display:grid;gap:8px;margin:0 0 14px}
+.nota-leer[hidden],.nota-leer .nl-caja[hidden]{display:none!important}
+.nota-leer .nl-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--teal-lt);border:1px dashed var(--teal-border);border-radius:12px;padding:10px 12px}
+.nota-leer .nl-btn{background:var(--teal);color:#fff;border:0;font-weight:800;white-space:nowrap;min-height:40px;padding:8px 14px;width:auto}
+.nota-leer .nl-btn:disabled{opacity:.75;cursor:progress}
+.nota-leer .nl-ay{font-size:.8rem;color:#065f5b;min-width:0;flex:1 1 220px}
+.nota-leer .nl-caja{border:1px solid var(--teal-border);border-radius:12px;background:#fff;padding:12px 14px;display:grid;gap:6px;font-size:.84rem;color:var(--text);box-shadow:var(--sh-card);min-width:0}
+.nota-leer .nl-caja.nl-ojo{border-color:var(--amber-border);background:#fffdf7}
+.nota-leer .nl-caja.nl-mal{border-color:var(--red-border);background:var(--red-lt)}
+.nota-leer .nl-cab{display:flex;align-items:center;gap:8px}.nota-leer .nl-cab b{font-size:.95rem;color:#065f5b}
+.nota-leer .nl-caja.nl-mal .nl-cab b{color:var(--red)}
+.nota-leer .nl-x{margin-left:auto;border:0;background:none;font-size:1.3rem;line-height:1;cursor:pointer;color:var(--muted);min-width:32px;min-height:32px}
+.nota-leer .nl-sub{color:var(--muted);font-size:.8rem}
+.nota-leer .nl-t{font-weight:800;font-size:.82rem;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.nota-leer .nl-l,.nota-leer .nl-p{list-style:none;display:grid;gap:3px;padding:0;margin:0;min-width:0}
+.nota-leer .nl-l li span{color:var(--muted)}
+.nota-leer .nl-p li{padding:4px 8px;border-radius:8px;background:var(--gray-lt);overflow-wrap:anywhere}
+.nota-leer .nl-p small{color:var(--muted)}
+.nota-leer .nl-cod{font-family:ui-monospace,monospace;font-size:.76rem;background:var(--teal-lt);color:#065f5b;border-radius:6px;padding:1px 6px}
+.nota-leer .nl-sin{color:var(--amber);font-weight:700}
+.nota-leer .nl-t.nl-ojo{color:#7c4b00}.nota-leer .nl-l.nl-ojo li{color:#7c4b00}
+.nota-leer .nl-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.nota-leer .nl-acc small{color:var(--muted)}
+.nota-leer .nl-cargando{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.nota-leer .nl-cargando small{color:var(--muted)}
+.nota-leer .nl-rueda{width:18px;height:18px;border-radius:50%;border:3px solid var(--teal-border);border-top-color:var(--teal);animation:nl-gira .9s linear infinite;flex:none}
+@keyframes nl-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.nota-leer .nl-rueda{animation:none}}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -22134,6 +22171,7 @@ function pintarModoTienda(){
   var _bp=document.getElementById('f-submit-prox'); if(_bp) _bp.hidden=!(VENTA_TIENDA && !EDIT_ID);   // 🏪 §4ok-93 solo en una venta de tienda NUEVA
   try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
+  try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) ni en la venta de tienda ni editando
 }
 function abrirVentaTienda(){
   EDIT_ID=null;
@@ -22214,6 +22252,7 @@ function pintarDocTipo(limpiar){
   try{ avisaFormPintar(); }catch(e){}
   if(_avOn && !avisaFormOn()){ var _ffa=document.getElementById('f-fecha'); if(_ffa) _ffa.value=''; }
   saldoAvisosProgramar();                     // 🧾 una ATC no lleva el cuadrito del saldo (§4gj)
+  try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) «Leer la nota» es solo de 📄 OC
 }
 /* 🏪 El bloque de la reposición: sucursal de destino en vez de cliente, y afuera todo lo
    que es de una venta a una persona (celular, garantía, factura, precios). */
@@ -22509,6 +22548,7 @@ function resetForm(){
   REPETIR_DE='';                               // 🔁 (§4ok-101)
   OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
   totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
+  try{ notaLeerOlvidar(); }catch(e){}          // 🧾 (mejora 216) lo leído de una nota era del pedido de antes
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   /* (30/09, R1-3) Propone el próximo día CON CAMIÓN (sin domingo ni feriado), no «mañana» a secas: la víspera de un feriado
@@ -23626,7 +23666,7 @@ function ajustarTurnoSeg(fecha){
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
 }
 /* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
-function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} fxFormPintar(); }
+function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} try{ notaLeerPintar(); }catch(e){} fxFormPintar(); }   // 🧾 (mejora 216) el botón «Leer la nota» aparece cuando se sabe la versión del servidor
 function renderCupoFormBase(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   /* 📦 (propuesta 76) Sin día de entrega no hay camión ni cupo que mirar: la fecha es la de volver a llamar. */
@@ -58972,6 +59012,276 @@ function ctaAvAutoRevisar(){
   }).catch(function(){ return 0; }).then(function(n){ CTA_AV_AUTO.corre=false; return n; });
 }
 // §4ok-92 fin =========================================================================
+/* ============================================================================
+   🧾 (14/11, mejora 216; el dueño la aprobó: «se saca una foto a la nota de venta escrita a mano y Claude llena el pedido: N° de nota,
+   cliente, productos, precios y lo que pagó a cuenta. Lo mismo que ya hace con los comprobantes de pago, pero para cargar la venta»)
+   LEER LA NOTA. Las 97 ventas del equipo de noviembre tienen N° de nota: la nota ya existe en papel y después se tipea todo otra vez.
+   · El botón «🧾 Leer la nota» va arriba de «Datos del pedido», SOLO en un pedido NUEVO de 📄 OC (ni ATC, ni RPT, ni venta de tienda, ni
+     editando) y solo con el servidor que tiene la acción (`servidorTiene(NOTA_SERVIDOR)`; con uno anterior no aparece).
+   · Elige la foto (`accept="image/*"`: en el celular, la cámara o la galería), la achica (`achicarFoto`, 1600 px) y la manda al servidor
+     (`apiPost` → `leerNota`, con `conTopeDuro` de 60 s). El servidor se la pasa a Claude y devuelve lo que leyó; no guarda nada.
+   · Llena SOLO lo VACÍO: N° de nota, cliente, celular (con `celPartes`), NIT, facturar a, dirección, «A cuenta» (si estaba en 0), el saldo
+     (si quedó en 0: la suma de los productos − «A cuenta» con el total que se completa solo, §4ok; si no, el de la nota) y las
+     observaciones (se SUMAN a lo escrito). Lo que ya estaba escrito no se toca y se dice («No cambié…»).
+   · Los productos: si no había ninguno (un renglón vacío), arma los renglones (`addProdRow`) con el código de la lista de precios: el que
+     trae la nota si es de ese producto y esa medida; si no, el de la MISMA identidad del stock (`prodCodigoAuto` → `stockInfo`), que lo
+     dice abajo («✓ Lo reconocí…»). Si ya había productos, los muestra con «Usar estos productos» (reemplaza los renglones) en vez de pisarlos.
+   · NUNCA guarda: muestra «Revisá lo que leí» con lo que llenó, lo que no cambió y las dudas de Claude, y la persona toca Guardar como
+     siempre (las mismas validaciones de `submitPedido`). Cada campo llenado manda su `input`/`change`: «Para guardar», los pasos, el total
+     y el cuadrito del saldo se repintan solos.
+   · Si mientras leía cambió el formulario (se guardó, se canceló, se pasó a ATC/RPT/tienda o se abrió otro para editar), lo leído se tira.
+   · En Playwright apagado salvo `window.NOTA_PRUEBA`. `tests/test_leer_nota_pagina.js` (la página) y `tests/test_leer_nota.js` (el servidor).
+   ========================================================================== */
+var NOTA_SERVIDOR='2026-11-14-a', NOTA_TOPE_MS=60000, NOTA_FOTO_PX=1600, NOTA_FOTO_CAL=0.82;
+var NOTA_LEER={ gen:0, vuelo:false, prods:null, usados:false, ultimo:null };
+function notaLeerBs(n){ n=r2(Number(n)||0); return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); }   // «Bs 4.100» (con centavos solo si los tiene)
+function notaLeerActivo(){ return !navigator.webdriver || !!window.NOTA_PRUEBA; }
+function notaLeerVe(){
+  return notaLeerActivo() && servidorTiene(NOTA_SERVIDOR) && docTipoSel()==='OC' && !VENTA_TIENDA && !EDIT_ID;
+}
+/* Muestra o esconde el botón (desde `renderCupoForm`, `pintarDocTipo` y `pintarModoTienda`). Escondido, lo que había en la caja se va. */
+function notaLeerPintar(){
+  var w=document.getElementById('nota-leer'); if(!w) return;
+  var ve=notaLeerVe();
+  if(w.hidden===ve) w.hidden=!ve;
+  if(!ve && (NOTA_LEER.vuelo || NOTA_LEER.ultimo)) notaLeerOlvidar();
+  notaLeerBoton();
+}
+/* Un pedido nuevo (resetForm), otro tipo o una edición: lo leído —y lo que está leyendo— ya no es de este formulario. */
+function notaLeerOlvidar(){
+  NOTA_LEER.gen++; NOTA_LEER.vuelo=false; NOTA_LEER.prods=null; NOTA_LEER.usados=false; NOTA_LEER.ultimo=null;
+  var c=document.getElementById('nota-leer-caja'); if(c){ c.hidden=true; c.innerHTML=''; c.className='nl-caja'; }
+  notaLeerBoton();
+}
+function notaLeerBoton(){
+  var b=document.getElementById('nota-leer-btn'); if(!b) return;
+  var t=NOTA_LEER.vuelo ? '⏳ Leyendo la nota…' : '🧾 Leer la nota';
+  if(b.textContent!==t) b.textContent=t;
+  b.disabled=!!NOTA_LEER.vuelo;
+}
+function notaLeerElegir(){
+  if(NOTA_LEER.vuelo || !notaLeerVe()) return;
+  var f=document.getElementById('nota-leer-file'); if(!f) return;
+  f.value=''; f.click();
+}
+function notaLeerArchivo(inp){
+  var file=inp && inp.files && inp.files[0];
+  if(!file) return;
+  if(file.type && !/^image\//i.test(file.type)){ notaLeerFalla('sin_foto', null); return; }
+  notaLeerCon(file);
+}
+function notaLeerCaja(h, cls){
+  var c=document.getElementById('nota-leer-caja'); if(!c) return;
+  c.className='nl-caja'+(cls?(' nl-'+cls):''); c.innerHTML=h; c.hidden=!h;
+}
+/* La foto → el servidor → el formulario. Devuelve la promesa (las pruebas la esperan). */
+function notaLeerCon(file){
+  if(!notaLeerVe() || NOTA_LEER.vuelo) return Promise.resolve(null);
+  var gen=++NOTA_LEER.gen; NOTA_LEER.vuelo=true; NOTA_LEER.prods=null; NOTA_LEER.usados=false; NOTA_LEER.ultimo=null; notaLeerBoton();
+  notaLeerCaja('<div class="nl-cargando"><span class="nl-rueda" aria-hidden="true"></span><b>Leyendo la nota…</b> <small>tarda unos 10 a 30 segundos. Mientras tanto podés seguir llenando: lo que escribas no se pisa.</small></div>', 'cargando');
+  var fin=function(){ if(gen===NOTA_LEER.gen){ NOTA_LEER.vuelo=false; notaLeerBoton(); } };
+  return Promise.resolve().then(function(){ return achicarFoto(file, NOTA_FOTO_PX, NOTA_FOTO_CAL); }).then(function(d){
+    var m=String(d||'').match(/^data:(image\/[a-z+.\-]+);base64,(.+)$/i);
+    if(!m) throw new Error('sin_foto');
+    if(gen!==NOTA_LEER.gen) return null;
+    return conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'leerNota', img:m[2], mt:m[1].toLowerCase() }); }), NOTA_TOPE_MS, 'tardo_nota');
+  }).then(function(res){
+    if(gen!==NOTA_LEER.gen) return null;
+    fin();
+    if(!notaLeerVe()){ notaLeerOlvidar(); return null; }   // mientras leía, el formulario dejó de ser un pedido nuevo de OC
+    if(res && res.ok && res.nota) return notaLeerAplicar(res.nota, res);
+    notaLeerFalla((res && res.error) || 'ia_error', res); return null;
+  }, function(e){
+    if(gen!==NOTA_LEER.gen) return null;
+    fin();
+    notaLeerFalla(String((e && e.message) || 'red'), null); return null;
+  });
+}
+function notaLeerFallaTxt(err, res){
+  var tope=(res && Number(res.tope)) || 80, det=(res && res.detalle) ? String(res.detalle).slice(0, 140) : '';
+  return err==='tope' ? ('Ya se leyeron las '+tope+' notas de hoy (el tope del día): esta cargala a mano.')
+       : err==='ia_apagada' ? 'La lectura de notas está apagada en el servidor por ahora: cargá la venta a mano.'
+       : err==='sin_clave' ? 'Al servidor le falta la clave de Claude: avisale a Eduardo. Mientras, cargá la venta a mano.'
+       : err==='no_se_lee' ? ('No pude leer la nota en esa foto'+(det?(' ('+det+')'):'')+'. Sacá otra: de frente, con buena luz y la nota entera.')
+       : err==='grande' ? 'La foto es muy pesada: sacala de nuevo o elegí otra.'
+       : (err==='sin_foto' || /imagen|archivo/.test(err)) ? 'Eso no parece una foto: elegí la foto de la nota (JPG o PNG).'
+       : err==='ocupado' ? 'Claude está ocupado ahora mismo: probá de nuevo en un minuto.'
+       : /tardo/.test(err) ? 'Claude tardó más de 1 minuto en contestar: probá de nuevo.'
+       : err==='clave' ? 'El servidor pide la clave del equipo: ingresala y probá de nuevo.'
+       : ('No pude leer la nota ahora ('+(det || 'sin conexión, o el servidor no contestó')+'). Probá de nuevo o cargala a mano.');
+}
+function notaLeerFalla(err, res){
+  NOTA_LEER.ultimo={ err:err };
+  notaLeerCaja('<div class="nl-cab"><b>🧾 No pude leer la nota</b><button type="button" class="nl-x" onclick="notaLeerCerrar()" aria-label="Cerrar">×</button></div>'+
+    '<div class="nl-sub">'+esc(notaLeerFallaTxt(err, res))+'</div>'+
+    (/^(tope|ia_apagada|sin_clave|clave)$/.test(err) ? '' : '<div class="nl-acc"><button type="button" class="btn btn-ghost btn-sm" onclick="notaLeerElegir()">📷 Probar con otra foto</button></div>'), 'mal');
+}
+function notaLeerCerrar(){ var c=document.getElementById('nota-leer-caja'); if(c){ c.hidden=true; c.innerHTML=''; } NOTA_LEER.ultimo=null; }
+/* ¿El formulario no tiene productos todavía? (Un renglón vacío, o con solo la medida elegida.) */
+function notaLeerProdsVacios(){
+  return [].every.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var v=function(s){ var e=c.querySelector(s); return e ? String(e.value||'').trim() : ''; };
+    return !v('.prod-desc') && !v('.prod-codigo') && !v('.prod-precio');
+  });
+}
+/* Un producto leído → cómo va al renglón: con el código de la nota si es de ese producto y esa medida; si no, por el nombre y la medida
+   con la identidad del stock (la misma de `prodCodigoAuto`). */
+function notaLeerProdUno(x){
+  var desc=String((x && x.desc)||'').replace(/\s+/g,' ').trim().toUpperCase(), med=String((x && x.medida)||'').trim(), cod=String((x && x.codigo)||'').trim().toUpperCase();
+  var medC=med ? (saldoMedidaCanon(med)||med) : '';
+  var r={ leido:desc, desc:desc, medida:medC, codigo:'', cant:Math.max(1, Math.round(Number(x && x.cant)||1)), precio:r2(Number(x && x.precio)||0), por:'', codNota:cod, codMal:'' };
+  var cat=cod ? CODIGOS[cod] : null;
+  if(cat && (!medC || !String(cat.m||'').trim() || saldoMismaMedida(cat.m, medC))){
+    r.codigo=cod; r.desc=nombreVenta(cat.d, cod); if(String(cat.m||'').trim()) r.medida=cat.m; r.por='codigo'; return r;
+  }
+  if(cod) r.codMal=cat ? (cod+' es de '+nombreVenta(cat.d, cod)+(cat.m?(' '+cat.m):'')) : (cod+' no está en la lista de precios');
+  if(desc && medC){
+    try{
+      var i=stockInfo({ desc:desc, medida:medC, codigo:'' }), k=i && i.cat && i.cat.code;
+      if(k && CODIGOS[k] && String(CODIGOS[k].m||'').trim()){ r.codigo=k; r.desc=nombreVenta(CODIGOS[k].d, k); r.medida=CODIGOS[k].m; r.por='nombre'; }
+    }catch(e){}
+  }
+  return r;
+}
+function notaLeerProductos(L){ return (L||[]).map(notaLeerProdUno).filter(function(p){ return !!p.desc; }); }
+/* Los renglones del formulario = los leídos. Por el nombre, el código lo pone `prodCodigoAuto` (que lo dice abajo del renglón). */
+function notaLeerPonerProds(P){
+  var box=document.getElementById('f-productos'); if(!box) return;
+  box.innerHTML='';
+  P.forEach(function(p){
+    addProdRow(p.desc, p.medida, p.por==='codigo' ? p.codigo : '', p.cant, p.precio>0 ? p.precio : '');
+    var cards=box.querySelectorAll('.prod-card'), card=cards[cards.length-1];
+    if(card && p.por!=='codigo'){
+      try{ prodCodigoAuto(card); }catch(e){}
+      var c=card.querySelector('.prod-codigo'), d=card.querySelector('.prod-desc'), k=c ? String(c.value||'').trim().toUpperCase() : '';
+      if(k && CODIGOS[k] && d) d.value=nombreVenta(CODIGOS[k].d, k);   // como si lo hubiera elegido de la lista («COLCHON TITANIO ICE»)
+    }
+  });
+  if(!P.length) addProdRow();
+  try{ refreshDelButtons(); pintarProdRpt(); }catch(e){}
+  try{ box.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+}
+function notaLeerAplicar(n, res){
+  var el=function(id){ return document.getElementById(id); };
+  var vacio=function(e){ return !!e && !String(e.value||'').trim(); };
+  var hecho=[], quedo=[], dudas=(n.dudas||[]).slice(), avisos=[], tocados=[];
+  var poner=function(id, v, nombre){
+    v=String(v==null?'':v).trim(); var e=el(id); if(!v || !e) return;
+    if(vacio(e)){ e.value=v; tocados.push(e); hecho.push([nombre, v]); }
+    else if(normNombre(e.value)!==normNombre(v)) quedo.push([nombre, v]);
+  };
+  poner('f-nota', n.nota, 'N° de nota');
+  poner('f-cliente', n.cliente, 'Cliente');
+  if(n.celular){
+    var cp=celPartes(n.celular), cel=[cp.cel].concat(cp.otros).filter(Boolean).join(' - ');
+    if(cel) poner('f-celular', cel, 'Celular');
+    else dudas.push('El celular que leí («'+n.celular+'») no parece un número: escribilo a mano.');
+  }
+  poner('f-nit', n.nit, 'NIT / CI');
+  poner('f-facturar', n.facturarA, 'Facturar a');
+  poner('f-direccion', n.direccion, 'Dirección');
+  var fa=el('f-acuenta'), acuN=r2(Number(n.acuenta)||0);
+  if(fa && acuN>0){
+    if(!(montoForm(fa)>0.005)){ fa.value=String(acuN); tocados.push(fa); hecho.push(['A cuenta', notaLeerBs(acuN)]); }
+    else if(Math.abs(montoForm(fa)-acuN)>0.005) quedo.push(['A cuenta', notaLeerBs(acuN)]);
+  }
+  if(n.observaciones){
+    var fo=el('f-obs');
+    if(fo && normNombre(fo.value).indexOf(normNombre(n.observaciones))<0){
+      var ya=String(fo.value||'').replace(/\s+$/,'');
+      fo.value=ya ? (ya+'\n'+n.observaciones) : n.observaciones; tocados.push(fo); hecho.push(['Observaciones', n.observaciones]);
+    }
+  }
+  var fs=el('f-saldo'), salAntes=fs ? montoForm(fs) : 0;
+  var P=notaLeerProductos(n.productos), puestos=false;
+  NOTA_LEER.prods=P; NOTA_LEER.usados=false;
+  if(P.length && notaLeerProdsVacios()){ notaLeerPonerProds(P); puestos=true; NOTA_LEER.usados=true; }
+  P.forEach(function(p){
+    if(p.codMal) dudas.push('El código que leí ('+p.codMal+') no es de «'+p.leido+(p.medida?(' '+p.medida):'')+'»: '+(p.codigo?('lo puse por el nombre ('+p.codigo+').'):'revisá el código.'));
+    if(!(p.precio>0)) avisos.push('Falta el precio de «'+p.desc+'»: escribilo.');
+  });
+  /* Cada campo llenado avisa, como si se hubiera escrito (el «¿ya compró?» por celular/NIT, «Para guardar», los pasos, el cobro). */
+  tocados.forEach(function(e){ try{ e.dispatchEvent(new Event('input', { bubbles:true })); e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){} });
+  try{ notaRevisarPintar(); }catch(e){}       // §4ok-99: el N° de nota, como al salir del campo
+  /* El saldo: con los precios puestos, el total que se completa solo (§4ok, 06/11) hace la cuenta; si no la hizo, el de la nota (o el
+     total − «A cuenta»). Si el saldo ya estaba escrito, no se toca. */
+  try{ TOT_AUTO.toc=true; }catch(e){}
+  try{ pintarTotalProds(); }catch(e){}
+  var sumaP=0, conP=0, sinP=0;
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var d=c.querySelector('.prod-desc'); if(!d || !String(d.value||'').trim()) return;
+    var pr=montoForm(c.querySelector('.prod-precio')), ct=parseInt((c.querySelector('.prod-cant')||{}).value,10)||0;
+    if(pr>0){ sumaP+=pr*ct; conP++; } else sinP++;
+  });
+  sumaP=r2(sumaP);
+  var totN=r2(Number(n.total)||0), salN=r2(Number(n.saldo)||0);
+  if(!(salN>0) && totN>0 && acuN>0 && totN>acuN) salN=r2(totN-acuN);
+  if(fs && segVal('f-pagado')!=='SI'){
+    if(salAntes>0.005){ if(salN>0 && Math.abs(montoForm(fs)-salN)>0.005) quedo.push(['Saldo', notaLeerBs(salN)]); }
+    else {
+      if(!(montoForm(fs)>0.005) && salN>0){ fs.value=String(salN); try{ fs.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){} try{ updateMetodoVisibility(); }catch(x){} }
+      if(montoForm(fs)>0.005) hecho.push(['Saldo por cobrar', notaLeerBs(montoForm(fs))]);
+    }
+  }
+  if(puestos && totN>0 && conP && !sinP && Math.abs(sumaP-totN)>0.005)
+    avisos.push('Los productos suman '+notaLeerBs(sumaP)+' y la nota dice total '+notaLeerBs(totN)+': revisá los precios.');
+  if(totN>0 && acuN>0 && Number(n.saldo)>0 && Math.abs(r2(acuN+Number(n.saldo))-totN)>0.005)
+    avisos.push('En la nota, a cuenta '+notaLeerBs(acuN)+' + saldo '+notaLeerBs(n.saldo)+' no da el total '+notaLeerBs(totN)+'.');
+  NOTA_LEER.ultimo={ n:n, hecho:hecho, quedo:quedo, dudas:dudas, avisos:avisos, puestos:puestos, res:res || {} };
+  notaLeerResumen();
+  try{ fpPintarLuego(); }catch(e){}
+  try{ saldoAvisosProgramar(); }catch(e){}
+  try{ fxFormPintar(); }catch(e){}
+  return NOTA_LEER.ultimo;
+}
+var NOTA_METODO_TXT={ efectivo:'💵 efectivo', qr:'📱 QR', tarjeta:'💳 tarjeta', transferencia:'🏦 transferencia' };
+function notaLeerProdHtml(p){
+  var por=p.por==='codigo' ? 'el código de la nota' : (p.por==='nombre' ? 'por el nombre y la medida' : '');
+  return '<li><b>'+esc(String(p.cant))+' × '+esc(p.desc)+(p.medida?(' '+esc(p.medida)):'')+'</b>'+
+    (p.codigo ? ' <span class="nl-cod">'+esc(p.codigo)+'</span>' : ' <span class="nl-sin">sin código: elegilo de la lista</span>')+
+    (p.precio>0 ? (' · '+esc(notaLeerBs(p.precio))+' c/u') : ' · <span class="nl-sin">sin precio</span>')+
+    (por ? ' <small>('+por+')</small>' : '')+'</li>';
+}
+function notaLeerResumen(){
+  var U=NOTA_LEER.ultimo; if(!U || !U.n) return;
+  var n=U.n, P=NOTA_LEER.prods||[], h='';
+  h+='<div class="nl-cab"><b>🧾 Revisá lo que leí de la nota'+(n.nota?(' '+esc(n.nota)):'')+'</b><button type="button" class="nl-x" onclick="notaLeerCerrar()" aria-label="Cerrar">×</button></div>';
+  h+='<div class="nl-sub">Llené solo lo que estaba vacío. <b>No se guardó nada</b>: revisá cada dato y tocá «Guardar pedido» como siempre.'+
+     (n.fecha?(' Nota del '+esc(fmtFecha(n.fecha))+'.'):'')+'</div>';
+  if(U.hecho.length) h+='<ul class="nl-l">'+U.hecho.map(function(x){ return '<li>✓ <span>'+esc(x[0])+':</span> <b>'+esc(x[1])+'</b></li>'; }).join('')+'</ul>';
+  if(P.length){
+    if(U.puestos || NOTA_LEER.usados) h+='<div class="nl-t">🛏️ Productos que puse ('+P.length+')</div><ul class="nl-p">'+P.map(notaLeerProdHtml).join('')+'</ul>';
+    else h+='<div class="nl-t">🛏️ Productos que leí ('+P.length+') — el pedido ya tenía productos, así que no los cambié</div><ul class="nl-p">'+P.map(notaLeerProdHtml).join('')+'</ul>'+
+      '<div class="nl-acc"><button type="button" class="btn btn-primary btn-sm" onclick="notaLeerUsarProds()">Usar estos productos</button> <small>reemplaza los renglones de abajo</small></div>';
+  }
+  var plata=[];
+  if(n.total>0) plata.push('total '+notaLeerBs(n.total));
+  if(n.acuenta>0) plata.push('a cuenta '+notaLeerBs(n.acuenta)+(n.metodo?(' con '+(NOTA_METODO_TXT[n.metodo]||n.metodo)):''));
+  if(n.saldo>0) plata.push('saldo '+notaLeerBs(n.saldo));
+  if(plata.length) h+='<div class="nl-t">💰 La nota dice: '+esc(plata.join(' · '))+'</div>'+
+    (n.acuenta>0 ? '<div class="nl-sub">En «Cobro» elegí con qué pagó el adelanto'+(n.metodo?(' ('+esc(NOTA_METODO_TXT[n.metodo]||n.metodo)+')'):'')+' y subí el comprobante, como siempre.</div>' : '');
+  var fe=String(n.entrega||''), ff=(document.getElementById('f-fecha')||{}).value||'';
+  if(fe && fe!==ff && fe>=tomorrowStr()) h+='<div class="nl-t">📅 La nota dice entrega el '+esc(fmtFecha(fe))+' <button type="button" class="btn btn-ghost btn-sm" onclick="notaLeerUsarFecha()">Usar ese día</button></div>';
+  if(U.quedo.length) h+='<div class="nl-t">✋ No cambié lo que ya estaba escrito</div><ul class="nl-l nl-q">'+U.quedo.map(function(x){ return '<li><span>'+esc(x[0])+':</span> la nota dice <b>'+esc(x[1])+'</b></li>'; }).join('')+'</ul>';
+  var ojo=U.avisos.concat(U.dudas);
+  if(ojo.length) h+='<div class="nl-t nl-ojo">⚠️ Fijate en esto</div><ul class="nl-l nl-ojo">'+ojo.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>';
+  notaLeerCaja(h, ojo.length ? 'ojo' : 'ok');
+}
+function notaLeerUsarProds(){
+  var P=NOTA_LEER.prods; if(!P || !P.length || !notaLeerVe()) return;
+  notaLeerPonerProds(P); NOTA_LEER.usados=true;
+  try{ TOT_AUTO.toc=true; pintarTotalProds(); }catch(e){}
+  try{ saldoAvisosProgramar(); fpPintarLuego(); fxFormPintar(); }catch(e){}
+  if(NOTA_LEER.ultimo) NOTA_LEER.ultimo.puestos=true;
+  notaLeerResumen();
+}
+function notaLeerUsarFecha(){
+  var U=NOTA_LEER.ultimo, fe=U && U.n && U.n.entrega, f=document.getElementById('f-fecha'); if(!fe || !f) return;
+  f.value=fe;
+  try{ f.dispatchEvent(new Event('input', { bubbles:true })); f.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+  notaLeerResumen();
+}
+// 🧾 mejora 216 fin =====================================================================
 /* ============================================================================
    🔎 (30/10, propuesta 78, elegida por el dueño) EL COMPROBANTE SE LEE AL SUBIRLO.
    La revisión con IA del 26/10 encontró 13 errores de plata de octubre (3 «QR + efectivo» anotados todo QR, una foto de Bs 10 para un
