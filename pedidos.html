@@ -6837,6 +6837,22 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .rd-ficha{margin:8px 0}
 .rd-ficha .rd-c{margin-top:0}
 .rd-vacio{margin:6px 0 12px}
+/* 🕓 (mejora 212) LA HISTORIA DEL PEDIDO (`pedHistHtml`): una línea de tiempo con puntos; turquesa lo normal, ámbar los cambios de día,
+   rojo el ✅ sacado, gris lo que no dejó nombre. Cerrada al abrir la ficha. */
+.phx{ margin-top:10px; font-size:.8rem; color:#3d4a57; background:#f7fafb; border:1px solid var(--gray-lt,#e3e9ee); border-radius:10px; padding:6px 11px; min-width:0; }
+.phx>summary{ cursor:pointer; font-weight:700; color:#0f2333; padding:3px 0; min-height:28px; display:list-item; }
+.phx-l{ list-style:none; margin:8px 0 2px; padding:0 0 0 2px; position:relative; }
+.phx-l::before{ content:''; position:absolute; left:7px; top:8px; bottom:10px; width:2px; background:#cfe9e7; border-radius:2px; }
+.phx-i{ position:relative; padding:2px 0 8px 24px; display:grid; grid-template-columns:minmax(82px,max-content) minmax(0,1fr); gap:2px 10px; align-items:baseline; }
+.phx-i::before{ content:''; position:absolute; left:2px; top:5px; width:12px; height:12px; border-radius:50%; background:var(--teal,#00B5AD); box-shadow:0 0 0 3px #f7fafb; }
+.phx-i.phx-f::before{ background:var(--amber,#e0a100); }
+.phx-i.phx-r::before{ background:var(--red,#d93848); }
+.phx-i.phx-g::before{ background:#9aa7b2; }
+.phx-t{ font-weight:700; color:#56636f; white-space:nowrap; font-variant-numeric:tabular-nums; }
+.phx-x{ min-width:0; overflow-wrap:anywhere; line-height:1.4; }
+.phx-i.phx-g .phx-x{ color:#6b7884; font-style:italic; }
+.phx-n{ margin-top:4px; color:var(--muted); font-size:.74rem; }
+@media (max-width:520px){ .phx-i{ grid-template-columns:minmax(0,1fr); gap:0; } }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -7258,6 +7274,7 @@ function errorCopiaDurable(){
 function guardarDurable(rec, opts){
   delete NO_ENCOLAR[rec.id];
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
+  try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) quién le cambió el día o el turno
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
   if(esFilaRetiro(rec) && !(Number(rec.rev)>0)){
@@ -8063,6 +8080,7 @@ function borradoAqui(id){ var t=BORRADO_AQUI[String(id)]; return !!(t && Date.no
 function apiSave(rec, opts){
   var id=rec&&rec.id;
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
+  try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
   if(!SAVE_EN_VUELO[id]){
@@ -8263,6 +8281,7 @@ function verificarEcoForm(srv, rec, prev){
    `localManda` lo compara con el `ahora` de cada lectura para saber si esa lectura ya lo tiene. */
 function aplicarSello(rec, srv, ahora){
   try{ entSrvAnotar(srv && srv.id!=null ? srv : rec); }catch(e){}   // 🧾 (10/11) lo que quedó en la planilla
+  try{ fhSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 📅 (mejora 212) …el día, el turno y su último renglón
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
   var ret=null;
@@ -8439,6 +8458,7 @@ function rechazoFirme(rec, res, colaTxt){
     var actual=res.pedido;
     if(actual && actual.id){
       actual.oc=cleanOC(actual.oc);
+      try{ fhSrvAnotar(actual); }catch(e){}   // 📅 (mejora 212) la fila de la planilla es la que queda en pantalla: el próximo cambio de día sale de ahí
       if(typeof esBorrador==='function' && esBorrador(actual)){
         STATE=STATE.filter(function(p){ return p.id!==actual.id; });
         BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(actual.id); }).concat([actual]);
@@ -9581,7 +9601,9 @@ function heredarMarcas(nuevos, viejos){
   var fmov=0; (viejos||[]).forEach(function(x){ var n=Number(x && x.fmov)||0; if(n>fmov) fmov=n; });
   /* 🧾 (10/11) …y quién puso o sacó el «Entregado» (`eH`): corregir el pedido no lo borra. */
   var eH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.eH) && x.eH.length){ eH=x.eH; return true; } return false; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); return x; };
+  /* 📅 (mejora 212) …y quién le cambió el día o el turno (`fH`): lo mismo. */
+  var fH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.fH) && x.fH.length){ fH=x.fH; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -9777,6 +9799,206 @@ function entHistHtml(p){
     '<ul>'+H.slice().reverse().map(function(e){ return '<li>'+entHistLinea(e)+'</li>'; }).join('')+'</ul>'+
     (raro?'<div class="ent-hist-n">⚠️ Después lo cambió un aparato con el panel sin actualizar (sin F5): ese cambio no dejó nombre.</div>':'')+
     '</details>';
+}
+/* ============================================================================
+   📅 QUIÉN LE CAMBIÓ EL DÍA (mejora 212, 14/11; dueño: «La historia del pedido… cada cambio de día con quién lo hizo… Así no hace falta
+   preguntar por WhatsApp "¿quién lo movió?"»; en su página: «los cambios de día con fecha y nombre: desde que se publique»).
+   La MISMA idea que `eH` (arriba), para la FECHA y el TURNO: cada guardado que cambia el día o el turno deja un renglón adentro del pedido
+   (`fH` en cada producto; los últimos `FH_HIST_MAX`): t (cuándo), de / a (cómo estaba y cómo quedó: 'AAAA-MM-DD|AM', 'AAAA-MM-DD|PM',
+   'AAAA-MM-DD|' sin turno, '' sin día = «el cliente avisa cuándo»), q (`quienEdita()`; '?' si nadie eligió), d (desde dónde: cada camino lo
+   dice con `fhDonde`, si no la pestaña, `entVista`) y k (con la contraseña).
+   · Se anota al GUARDAR (`guardarDurable` y `apiSave`, junto con `entHistAnotar`), contra lo último que dijo la planilla (`FH_SRV` = el día
+     y las horas de sus renglones, de `mergePending`, de `aplicarSello` y de la fila que trae un «conflicto»).
+   · Un renglón que la planilla todavía no tiene (su hora no está entre las de los renglones de la planilla) es de ESTE aparato y está en camino:
+     el próximo cambio sale de ahí (dos cambios seguidos no salen los dos «del 12/11»), y la copia de la cola que se reenvía después de un
+     F5 no lo vuelve a anotar. Es lo que hace `ENT_PROPIO` para `eH`, pero sin depender de la memoria de la pestaña.
+   · Si la planilla ya tiene el día que se manda, no se anota: si lo cambió una página sin F5 (no conoce `fH`), no se le echa la culpa a
+     quien guarda otra cosa después. La historia lo dice como «sin nombre» (`pedHistDatos`).
+   · Sin lectura de la planilla todavía, o un pedido NUEVO (todavía no está en la planilla), no se anota: cargarlo no es cambiarle el día.
+   · No van los mismos que `eH` (`entHistNoVa`: sistema, retiros, borradores de Kommo, venta de tienda). Sin turno y AM son el mismo cupo
+     (`normTurno`): pasar de uno al otro no se anota.
+   · El contador `fmov` (§4ok-96) sigue igual: cuántas veces se movió (lo pregunta al reprogramar); esto dice quién, cuándo y de dónde a dónde.
+   · `heredarMarcas` lo pasa a todos los renglones; `deshDevolver` lo saltea (deshacer un turno suma un renglón, no borra el de antes). En
+     Playwright apagado salvo `FH_PRUEBA` (las pruebas de siempre comparan los productos tal cual), igual que la historia de abajo. */
+var FH_SRV={}, FH_DONDE=null, FH_HIST_MAX=8, FH_DESDE='2026-11-14';
+function fhHistActivo(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
+function fhDonde(txt){ FH_DONDE={ d:String(txt||''), t:Date.now() }; }
+function fhClave(p){ var f=String((p&&p.fecha)||'').slice(0,10); return /^\d{4}-\d{2}-\d{2}$/.test(f) ? (f+'|'+turnoDe(p)) : ''; }
+function fhNorm(k){ k=String(k==null?'':k); return /\|$/.test(k) ? (k+'AM') : k; }
+function fhMismo(a, b){ return fhNorm(a)===fhNorm(b); }
+function fhDia(k){ return String(k||'').slice(0,10); }
+function fhHistDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].fH) && pr[i].fH.length) return pr[i].fH; return []; }
+function fhUltT(p){ var H=fhHistDe(p); return H.length ? (Number(H[H.length-1].t)||0) : 0; }
+/* Lo que dijo la planilla de este pedido (lectura, guardado confirmado o la fila de un «conflicto»). */
+function fhSrvAnotar(x){
+  if(!x || x.id==null) return;
+  var id=String(x.id);
+  try{ if(esBorrador(x)){ delete FH_SRV[id]; return; } }catch(e){}   // completar un borrador de Kommo no es cambiarle el día
+  FH_SRV[id]={ k:fhClave(x), t:fhUltT(x), ts:fhHistDe(x).map(function(e){ return Number(e && e.t)||0; }) };
+}
+function fhHistAnotar(rec){
+  if(!fhHistActivo() || entHistNoVa(rec)) return;
+  var id=String(rec.id), s=FH_SRV[id]; if(!s) return;              // sin lectura, o todavía no está en la planilla
+  var cur=fhClave(rec), H=fhHistDe(rec), last=H.length?H[H.length-1]:null;
+  var enCamino=!!last && (s.ts||[]).indexOf(Number(last.t)||0)<0;   // un renglón de acá que la planilla todavía no tiene
+  var base=enCamino ? String(last.a||'') : s.k;
+  if(fhMismo(base, cur)) return;
+  var e={ t:Date.now(), de:String(base), a:cur, q:quienEdita()||'?', d:(FH_DONDE && Date.now()-FH_DONDE.t<20000) ? FH_DONDE.d : entVista() };
+  if(typeof UNLOCKED!=='undefined' && UNLOCKED) e.k=1;
+  if(last && e.t<=(Number(last.t)||0)) e.t=(Number(last.t)||0)+1;  // dos en el mismo milisegundo: que no se confundan
+  FH_DONDE=null;                           // un camino que mueve varios pedidos (el adelanto) lo dice antes de cada uno
+  var N=H.concat([e]).slice(-FH_HIST_MAX);
+  rec.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); });
+  try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); }); }catch(err){}
+}
+/* «12/11 🌅» · «12/11 🌆» · «12/11» (sin turno) · «sin día» */
+function fhTxt(k){
+  k=String(k||''); if(!k) return 'sin día';
+  var t=k.slice(11); return fmtFechaCorta(k.slice(0,10))+(t==='AM'?' 🌅':t==='PM'?' 🌆':'');
+}
+/* ============================================================================
+   🕓 LA HISTORIA DEL PEDIDO (mejora 212, 14/11; dueño: «una línea de tiempo con todo lo que le pasó al pedido: cuándo se cargó, cada
+   cambio de día con quién lo hizo, los pagos, los mensajes del bot, cuándo salió el camión y quién puso o sacó el ✅»).
+   SOLO MIRA y SOLO con lo que el panel ya tiene (no le pide nada a la planilla ni al servidor):
+   · la carga (`p.ts`, quién la cargó, para qué día —solo si se sabe: cargado desde `FH_DESDE`, sin renglones perdidos por el tope y sin
+     más cambios de día que los anotados (`fmov` los cuenta todos desde el 06/11)—, lo que dejó a cuenta (`anticipoDe`) y si vino de Kommo);
+   · cada cambio de día y de turno (`fH`), y los que no dejaron nombre (el día de un renglón no es el que dejó el anterior: una página sin F5);
+   · los pagos (`contaPagos`: día, monto, con qué, recibo, quién recibió `>Nombre`; no tienen hora: van al final de su día);
+   · quién puso o sacó el ✅ (`eH`) y el ✅ Cierre de entregas (`eF/eT/eQ`; el renglón de `eH` de ese mismo cierre no se repite);
+   · la última modificación que vio logística (`mod`), sin repetir el cambio de día que ya está con nombre;
+   · cuándo salió el camión ese día (`camionSalio`: a mano o el GPS) y si el GPS lo vio en la puerta (`gpsLlegadaDe`, solo hoy);
+   · lo que el cliente le contestó al bot, si el panel ya lo trajo (`WA_RESP`). Lo que MANDA el bot no llega a la página: no se inventa.
+   Una sola cuenta (`pedHistDatos`), un solo dibujo (`pedHistHtml`): en la ficha de Administración y en la de Mis pedidos. Cerrada al abrir;
+   `PHX_ABIERTA` la deja abierta mientras se vuelve a dibujar la ficha del mismo pedido. En Playwright no se dibuja salvo `FH_PRUEBA`. */
+var PHX_ABIERTA='';
+function pedHistVe(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
+/* Un día (y una hora de Bolivia) en ms. Sin hora: al final del día (lo que solo tiene día va después de lo que tiene hora). */
+function phxMs(dia, hhmm){
+  var h=/^\d{2}:\d{2}$/.test(String(hhmm||'')) ? String(hhmm) : '';
+  var t=Date.parse(String(dia||'')+'T'+(h||'23:59')+':00-04:00');
+  return isFinite(t) ? (t+(h?0:59000)) : NaN;
+}
+function phxBs(n){ n=Number(n)||0; return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); }
+function phxQuien(q){ q=String(q||'?'); return q==='?' ? 'alguien que no eligió su nombre' : q; }
+/* La hora de una respuesta al bot («Tue Oct 13 2026 09:41:00 GMT-0400…», ISO, o «13/10 09:41»), en ms; NaN si no se entiende. */
+function phxRespMs(t){
+  t=String(t||''); if(!t) return NaN;
+  if(/GMT|^\d{4}-\d{2}-\d{2}T/.test(t)){ var ms=Date.parse(t); return isFinite(ms) ? ms : NaN; }
+  var m=t.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\s+(\d{1,2}):(\d{2})/); if(!m) return NaN;
+  var z=function(v){ return ('0'+v).slice(-2); }, hoy=todayStr(), y=m[3] ? (m[3].length===2 ? '20'+m[3] : m[3]) : hoy.slice(0,4);
+  if(!m[3] && (y+'-'+z(m[2]))>hoy.slice(0,7)) y=String(Number(y)-1);   // «28/12» mirado el 03/01 es del año pasado
+  return phxMs(y+'-'+z(m[2])+'-'+z(m[1]), z(m[4])+':'+m[5]);
+}
+function pedHistDatos(p){
+  var ev=[]; if(!p || typeof p!=='object') return ev;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p)) return ev; }catch(e){ return ev; }
+  var tienda=false; try{ tienda=esVentaTienda(p); }catch(e){}
+  var atc=esATC(p.oc), rpt=esRPT(p.oc), cargado=contaFecha(p), H=fhHistDe(p), E=entHistDe(p), cie=cierreEntDe(p);
+  var poner=function(o){ if(!isFinite(o.t)) return; o.n=ev.length; ev.push(o); };
+  /* 1. La carga. */
+  var cambiosDia=H.filter(function(e){ return fhDia(e.de) && fhDia(e.de)!==fhDia(e.a); }).length;
+  var sinAnotar=Math.max(0, fmovDe(p)-cambiosDia);
+  var origenOk=!tienda && cargado>=FH_DESDE && H.length<FH_HIST_MAX && !sinAnotar;
+  var origen=H.length ? String(H[0].de||'') : fhClave(p);
+  var ant=anticipoDe(p), antJunto=!!(ant && (Number(ant.monto)||0)>0 && (!ant.fecha || ant.fecha===cargado));
+  if(Number(p.ts)>0){
+    var v=String(p.vendedor||'').trim()||'alguien', x=[];
+    var h0=atc ? ('Entró la ATC · la cargó <b>'+esc(v)+'</b>') : rpt ? ('<b>'+esc(v)+'</b> pidió la reposición') :
+      tienda ? ('<b>'+esc(v)+'</b> registró la venta en tienda') : ('Lo cargó <b>'+esc(v)+'</b>');
+    if(origenOk) h0+=origen ? (' para el '+esc(fhTxt(origen))) : ' sin día: el cliente avisa cuándo';
+    if(antJunto) x.push(esc(phxBs(ant.monto))+' a cuenta'+(cobroMetodoTxt(ant)?(' ('+esc(cobroMetodoTxt(ant))+')'):''));
+    if(kleadDe(p) || String(p.id).indexOf(BORRADOR_PREF)===0) x.push('📥 vino de Kommo');
+    if(sinAnotar) x.push('le cambiaron el día '+sinAnotar+' vez'+(sinAnotar===1?'':'es')+' sin que quedara quién');
+    poner({ t:Number(p.ts), h:true, k:'carga', ico:atc?'🎧':rpt?'🏪':'📝', html:h0+(x.length?(' · '+x.join(' · ')):'') });
+  }
+  /* 2. Los cambios de día y de turno, y los que no dejaron nombre (el día de un renglón no es el que dejó el anterior). */
+  var prev=H.length ? String(H[0].de||'') : undefined;
+  H.forEach(function(e){
+    var de=String(e.de||''), a=String(e.a||''), q='<b>'+esc(phxQuien(e.q))+'</b>', txt;
+    if(prev!==undefined && !fhMismo(prev, de))
+      poner({ t:(Number(e.t)||0)-1, sinHora:true, k:'raro', ico:'❔', html:'Lo pasaron al '+esc(fhTxt(de))+' (estaba para el '+esc(fhTxt(prev))+') desde un aparato con el panel sin actualizar: no dejó nombre' });
+    if(!de) txt=q+' le puso día: el '+esc(fhTxt(a))+' (el cliente avisaba cuándo)';
+    else if(!a) txt=q+' lo pasó a «el cliente avisa cuándo» (estaba para el '+esc(fhTxt(de))+')';
+    else if(fhDia(de)===fhDia(a)) txt=q+' lo pasó a la '+(a.slice(11)==='PM'?'tarde 🌆':'mañana 🌅')+' del '+esc(fmtFechaCorta(fhDia(a)));
+    else txt=q+' lo pasó al '+esc(fhTxt(a))+' (estaba para el '+esc(fhTxt(de))+')';
+    poner({ t:Number(e.t), h:true, k:'fecha', ico:'📅', html:txt+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') });
+    prev=a;
+  });
+  /* 3. Los pagos (sin hora: al final de su día). El adelanto del día de la carga va en la línea de la carga. */
+  contaPagos(p).forEach(function(c){
+    if(!c || (c.anticipo && antJunto)) return;
+    var dia=String(c.fecha||'')||cargado, m=Number(c.monto)||0, met=cobroMetodoTxt(c), nota=limpiaNota(c.nota), rec=limpiaRecibio(c.recibio);
+    var txt=(esEnvio(c) ? '🚚 Recargo por entrega' : c.anticipo ? 'A cuenta' : 'Pago')+' · <b>'+(m>0 ? esc(phxBs(m)) : 'monto no anotado')+'</b>'+
+      (met?(' · '+esc(met)):'')+(nota?(' · nota '+esc(nota)):'')+(rec?(' · recibió '+esc(rec)):'')+(c.fecha?'':' · sin fecha anotada');
+    poner({ t:phxMs(dia, ''), dia:dia, k:'pago', ico:'💵', html:txt });
+  });
+  /* 4. El ✅: el cierre de entregas y quién lo puso o lo sacó. El renglón de `eH` que es el MISMO cierre (±10 min) no se repite. */
+  var cieT=(cie && cie.t) ? Number(cie.t) : 0;
+  E.forEach(function(e){
+    var on=!!Number(e.v);
+    if(on && cieT && Math.abs((Number(e.t)||0)-cieT)<600000) return;
+    poner({ t:Number(e.t), h:true, k:on?'ent':'sacado', ico:on?'✅':'↩️',
+      html:'<b>'+esc(phxQuien(e.q))+'</b> '+(on?'lo marcó entregado':'le sacó el ✅ entregado')+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') });
+  });
+  if(cieT) poner({ t:cieT, h:true, k:'ent', ico:'✅', html:'<b>Entregado</b> · cierre'+(cie.q?(' de <b>'+esc(cie.q)+'</b>'):'')+
+    ((cie.f && cie.f!==isoDeTsBolivia(cieT))?(' · se entregó el '+esc(fmtFechaCorta(cie.f))):'') });
+  var ultE=E.length ? !!Number(E[E.length-1].v) : null;
+  /* 5. La última modificación que vio logística (`mod`), sin repetir el cambio de día que ya está arriba con nombre. */
+  var md=modDe(p);
+  if(md && md.f){
+    var mh=/^\d{2}:\d{2}$/.test(String(md.h||'')) ? String(md.h) : '';
+    var conFH=H.some(function(e){ return isoDeTsBolivia(e.t)===md.f; });
+    var ds=(md.d||[]).filter(function(t){ return !(conFH && /^(📅|🕐)/.test(String(t))); });
+    if(ds.length) poner({ t:phxMs(md.f, mh), h:!!mh, dia:md.f, k:'mod', ico:'✏️',
+      html:((md.por && md.por!=='?') ? ('<b>'+esc(md.por)+'</b> lo modificó') : 'Lo modificaron')+': '+ds.map(function(t){ return esc(t); }).join(' · ') });
+  }
+  /* 6. El camión de ese día: cuándo salió (a mano o el GPS) y si el GPS lo vio en la puerta (solo hoy). */
+  var veh=''; try{ veh=vehiculoDe(p); }catch(e){}
+  if(!tienda && p.fecha && veh && String(p.fecha)<=todayStr()){
+    var hs=''; try{ hs=camionSalio(p.fecha, veh); }catch(e){}
+    if(hs){
+      var hh=/^\d{2}:\d{2}$/.test(hs) ? hs : '', gps=false; try{ gps=!salioClave(p.fecha, veh); }catch(e){}
+      poner({ t:phxMs(p.fecha, hh)-(hh?0:30000), h:!!hh, dia:p.fecha, k:'salio', ico:'🚚',
+        html:'Salió el camión <b>'+esc(veh)+'</b>'+(p.chofer?(' ('+esc(p.chofer)+')'):'')+(gps?' · lo dice el GPS':'') });
+    }
+    var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){}
+    if(ll && ll.t0) poner({ t:Number(ll.t0), h:true, k:'gps', ico:'🛰️', html:'El GPS vio el camión <b>'+esc(ll.veh||veh)+'</b> en la puerta: '+esc(gpsLlegadaTxt(ll)) });
+  }
+  /* 7. Lo que el cliente le contestó al bot (si el panel ya lo trajo: acá no se pide nada). */
+  ((typeof WA_RESP!=='undefined' && Array.isArray(WA_RESP)) ? WA_RESP : []).forEach(function(r){
+    if(!r || String(r.id||'')!==String(p.id)) return;
+    var t=phxRespMs(r.t), ok=isFinite(t);
+    poner({ t:ok ? t : phxMs(todayStr(), ''), h:ok, sinHora:!ok, k:'bot', ico:'💬',
+      html:'El cliente le escribió al bot: «'+esc(String(r.txt||'').slice(0,160))+'»'+
+        (r.resp ? (' · 🤖 le contestó: «'+esc(String(r.resp).slice(0,160))+'»') : '')+(r.at ? (' · ✓ '+esc(r.at)) : '') });
+  });
+  ev.sort(function(a, b){ return (a.t-b.t) || (a.n-b.n); });
+  /* 8. Lo que quedó distinto de lo último anotado, al final y sin hora: lo cambió un aparato con el panel sin actualizar. */
+  var fin=function(ico, html){ ev.push({ t:Infinity, sinHora:true, k:'raro', ico:ico, html:html, n:ev.length }); };
+  if(prev!==undefined && !fhMismo(prev, fhClave(p)))
+    fin('❔', 'Ahora está para el '+esc(fhTxt(fhClave(p)))+': lo cambió un aparato con el panel sin actualizar (no dejó nombre)');
+  if(!tienda){
+    if(p.entregado && !cieT && ultE!==true) fin('✅', 'Figura entregado: no quedó anotado quién lo marcó');
+    else if(!p.entregado && ultE===true) fin('↩️', 'Ya no figura entregado: lo sacó un aparato con el panel sin actualizar (no dejó nombre)');
+  }
+  return ev;
+}
+function phxCuando(e){
+  if(e.sinHora || !isFinite(e.t)) return 'sin hora';
+  return e.h ? entTs(e.t) : fmtFechaCorta(e.dia||isoDeTsBolivia(e.t));
+}
+function pedHistHtml(p){
+  if(!pedHistVe() || !p) return '';
+  var ev=[]; try{ ev=pedHistDatos(p); }catch(e){ ev=[]; }
+  if(!ev.length) return '';
+  var cls={ fecha:' phx-f', raro:' phx-g', sacado:' phx-r' }, id=String(p.id), viejo=contaFecha(p)<FH_DESDE;
+  return '<details class="phx"'+(PHX_ABIERTA===id?' open':'')+' data-id="'+esc(id)+'" ontoggle="PHX_ABIERTA=this.open?this.getAttribute(\'data-id\'):\'\'">'+
+    '<summary>🕓 Historia del pedido ('+ev.length+')</summary>'+
+    '<ol class="phx-l">'+ev.map(function(e){
+      return '<li class="phx-i'+(cls[e.k]||'')+'"><span class="phx-t">'+esc(phxCuando(e))+'</span><span class="phx-x"><span class="phx-ico">'+e.ico+'</span> '+e.html+'</span></li>';
+    }).join('')+'</ol>'+
+    (viejo ? '<div class="phx-n">Los cambios de día y de turno quedan con nombre desde el '+esc(fmtFechaCorta(FH_DESDE))+': los de antes no se anotaban.</div>' : '')+
+  '</details>';
 }
 function avisoModifHtml(p, compacto, linea){
   var m=modDe(p); if(!m) return '';
@@ -23449,7 +23671,7 @@ function deshDevolver(cur, antes, despues){
   var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
   [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
   Object.keys(claves).forEach(function(k){
-    if(k==='eH') return;                                          // 🧾 (10/11) quién tocó el «Entregado»: deshacer no lo borra
+    if(k==='eH' || k==='fH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
     var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
     if(J(a)===J(d)) return;
     var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
@@ -23480,6 +23702,7 @@ function deshTurnoOfrecer(id, antes, turno, quedan, pr){
   deshTaparAviso();
   deshOfrecer((turno==='PM' ? '🌆 ' : '🌅 ')+(p.cliente||'El pedido')+' pasó a la '+(turno==='PM' ? 'tarde' : 'mañana')+' · quedan '+quedan+' cupo'+(quedan===1?'':'s'), function(){
     var abierta=document.getElementById('modal').classList.contains('on');
+    fhDonde('↩️ Deshacer');                         // 📅 (mejora 212)
     cambiarTurno(id, antes, true);
     if(!abierta) closeModal();                                    // `cambiarTurno` reabre la ficha: desde la ficha chica no hace falta
     try{ renderAdmin(); }catch(e){}
@@ -25210,6 +25433,7 @@ function mergePending(serverList){
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   try{ serverList.forEach(function(p){ if(p) entSrvAnotar(p); }); }catch(e){}   // 🧾 (10/11) lo que dice la planilla del «Entregado» (`entHistAnotar`)
+  try{ serverList.forEach(function(p){ if(p) fhSrvAnotar(p); }); }catch(e){}    // 📅 (mejora 212) …y del día y el turno (`fhHistAnotar`)
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
      deshace la marca: lo toca de nuevo y ese segundo guardado revierte en el servidor. Es
@@ -28188,6 +28412,7 @@ function reproConfirmar(){
   /* 📅 (§4ok-96) ¿Otra fecha de relleno? Un toque lo pasa a «el cliente avisa cuándo». */
   if(fmovPreguntar(p, f)){
     var _fl=fmovDiaLlamar(f);
+    fhDonde('📅 Reprogramar («todavía no sabe»)');   // 📅 (mejora 212) quién le cambió el día
     fmovAvisaAplicar(p, f);
     toast('📦 Quedó «el cliente avisa cuándo»: sin día de entrega, no ocupa cupo y el bot no le escribe. Volver a llamar el '+fmtFecha(_fl)+'.','ok',7000);
     reproVolver();
@@ -28201,6 +28426,7 @@ function reproConfirmar(){
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
+  fhDonde('📅 Reprogramar');                        // 📅 (mejora 212) quién le cambió el día
   reproAplicar(p, f, t, avisos.length>0);
   toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓'+(_saleEnt?' · ya no figura entregado':''),'ok');
   reproVolver();                          // vuelve a la ficha desde la que se abrió
@@ -28798,6 +29024,7 @@ function adelantoAlSalir(veh, h){
     return pr.then(function(){
       var q=findById(p.id);
       if(!q || q.fecha!==f || turnoDe(q)!=='PM' || vehiculoDe(q)!==veh || !adelantoCargadoEntero(q)) return;
+      fhDonde('🚀 el '+veh+' salió a la mañana con lo de la tarde cargado');   // 📅 (mejora 212) uno por pedido
       return reproAplicar(q, f, 'AM', true, { adelanto:1 }).then(function(r){
         if(r && (r.ok || r.local)){ hechos.push(q); tildes+=adelantoTildesAM(q); }
       }, function(){});
@@ -32090,6 +32317,7 @@ function guardarProgramarDevAtc(id){
   var rec=_yaDev ? a.rec : (p.fecha||''), rturno=_yaDev ? (a.rturno||'') : (p.turno||'');
   mergeAtcDatos(p, { rec:rec, rturno:rturno, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
   p.fecha=f; p.turno=t; p.entregado=false;
+  fhDonde('🎧 programar la devolución de la ATC');   // 📅 (mejora 212)
   persistPedido(p, _avisos.length?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
 }
@@ -32106,6 +32334,7 @@ function quitarProgramarDevAtc(id){
   var _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest) || cuposUsadosTurno(_dest,_tur)>=limTurno(_dest,_tur));
   if(_forzar && !asegurarClaveAdmin()) return;
   p.fecha=_dest; p.turno=_tur; p.entregado=true;   // vuelve al día del recojo, ya recogido
+  fhDonde('🎧 quitar la devolución de la ATC');      // 📅 (mejora 212)
   // `rec` se va también: la fecha del pedido vuelve a ser el recojo (si quedaba, un 📅 después no se veía).
   mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'', rec:'', rturno:'' });
   persistPedido(p, _forzar?{forzar:true}:undefined); closeModal(); renderAtc();
@@ -34468,7 +34697,7 @@ function showMisModal(id){
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
+    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -48266,6 +48495,7 @@ function cambiarTurno(id, turno, sinDeshacer){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la devolución de una ATC cambia de turno con el viaje — (26/09) también la YA entregada
   p.turno=turno;
   atcSeguirViaje(p, _enDev);
+  if(!sinDeshacer) fhDonde('botón de turno ('+(turno==='PM'?'🌆 a la tarde':'🌅 a la mañana')+')');   // 📅 (mejora 212) «Deshacer» dice el suyo
   var _pr=persistPedido(p, _forzar?{forzar:true}:undefined);
   reabrirFicha(id);
   toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
@@ -49065,7 +49295,7 @@ function showPedidoModal(id){
       /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
       '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
-      botonesRpt(p)+mas+
+      botonesRpt(p)+mas+pedHistHtml(p)+   // 🕓 (mejora 212) la historia del pedido, cerrada
       '<div class="fl-pie">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
@@ -49506,6 +49736,7 @@ function cierreEntRpConfirmar(){
   if(av.length && !asegurarClaveAdmin()) return Promise.resolve(null);
   var antes={ f:p.fecha, t:normTurno(p.turno)||'' };
   delete CIERRE_ENT_SEL[String(p.id)]; delete CIERRE_ENT_DIA[String(p.id)];
+  fhDonde('✅ Cierre de entregas («No salió · reprogramar»)');   // 📅 (mejora 212)
   var pr=reproAplicar(p, f, t, av.length>0);
   CIERRE_ENT_RP_HECHOS.push({ id:String(p.id), oc:ocEtiq(p.oc)||'—', cli:p.cliente||'', de:antes, a:{ f:f, t:t } });
   CIERRE_ENT_RP={ id:'', f:'', t:'' };
