@@ -2467,6 +2467,12 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
+.cta-om{background:#fff8e6;border:1px solid #f3d38a;border-left:4px solid #f0a020;border-radius:10px;padding:8px 12px;margin:0 0 10px;font-size:.84rem;color:#7c4b00}
+.cta-om[hidden]{display:none!important}
+.cta-om .cta-om-l{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cta-om .cta-om-v{border:1px solid #f3d38a;background:#fff;color:#7c4b00;border-radius:8px;padding:4px 9px;font:inherit;font-size:.8rem;cursor:pointer;min-height:32px}
+.cta-om .cta-om-v:hover{background:#fdf0cf}
+.cta-om .cta-om-t{border:0;background:var(--teal);color:#fff;border-radius:9px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;min-height:34px;margin-top:6px}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -12737,6 +12743,7 @@ function renderConta(){
   try{ nxPstBoton(); }catch(e){}   // 🧾 (§4js, C2) cuántos pagos sin terminar
   try{ cajaBotonesPintar(); }catch(e){}   // 🏬 (14/11, mejora 254) «Caja de Ventura Sur»
   var list=contaLista();
+  try{ ctaOtrosPintar(list); }catch(e){}   // 📅 (298) lo buscado que está en otros meses
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0, nCarg=0, _TS=talSet();
   list.forEach(function(p){
     envios=r2(envios+envioTotal(p));
@@ -61344,6 +61351,53 @@ document.addEventListener('keydown', function(e){
   if(a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) || a.isContentEditable)) return;   // en un campo, las flechas son del campo
   if(ctaNavIr(e.key==='ArrowRight' ? 1 : -1)) e.preventDefault();
 });
+
+/* ---------- 📅 298 CONTABILIDAD AVISA SI LO BUSCADO ES DE OTRO MES ----------
+   De los 29 pagos de saldo de noviembre, 8 (Bs 33.340) fueron de ventas de agosto a octubre: con «Mes» = noviembre el buscador miraba
+   solo noviembre y el cliente «no aparecía». Con algo escrito en el buscador, lo que coincide (con el mismo vendedor y la misma planilla,
+   `contaFiltro`) y está fuera del período elegido sale debajo, con «Ver en todos los meses» o tocando una para abrirla. Los totales del
+   período no cambian: solo muestra. */
+function ctaOtrosVa(){ try{ return !navigator.webdriver || !!window.CTA_OTROS_PRUEBA; }catch(e){ return true; } }
+function ctaOtrosMeses(enLista){
+  var q=((document.getElementById('cta-search')||{}).value||'').trim(), modo=segVal('cta-mode')||'mes';
+  if(!q || modo==='todo') return null;
+  var ya={}; (enLista||[]).forEach(function(p){ ya[String(p.id)]=1; });
+  var deEsta=contaFiltro();
+  var L=STATE.filter(function(p){ return !ya[String(p.id)] && deEsta(p); })
+             .sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+  return { q:q, modo:modo, L:L, n:(enLista||[]).length };
+}
+function ctaOtrosPintar(enLista){
+  var el=document.getElementById('cta-om');
+  var R=ctaOtrosVa() ? ctaOtrosMeses(enLista) : null;
+  if(!R || !R.L.length){ if(el) el.hidden=true; return; }
+  if(!el){
+    var ban=document.getElementById('cta-banner'); if(!ban || !ban.parentNode) return;
+    el=document.createElement('div'); el.id='cta-om'; el.className='cta-om no-print'; el.setAttribute('role','status');
+    ban.parentNode.insertBefore(el, ban);
+  }
+  var dia=(R.modo==='dia'), anio=diaNegocio().slice(0,4);
+  var cuando=function(p){
+    var f=contaFechaBase(p)||'';
+    if(dia) return fmtFechaCorta(f);
+    var ym=(contaFechaMesBase(p)||f).slice(0,7);
+    return ym.slice(0,4)===anio ? mesNombre(ym).replace(/ de \d{4}$/,'') : mesNombre(ym);
+  };
+  var per = dia ? ('el '+fmtFechaCorta((document.getElementById('cta-dia')||{}).value||diaNegocio()))
+                : mesNombre(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7)).replace(/ de \d{4}$/,'');
+  var N=R.L.length, M=8;
+  el.innerHTML='📅 '+(R.n ? '<b>También hay '+N+' en '+(dia?'otros días':'otros meses')+'</b> con «'+esc(R.q)+'»:'
+                          : ('Ninguna venta de <b>'+esc(per)+'</b> con «'+esc(R.q)+'». <b>Pero hay '+N+' en '+(dia?'otros días':'otros meses')+':</b>'))+
+    '<div class="cta-om-l">'+R.L.slice(0,M).map(function(p){
+      var s=contaFaltaCobrar(p);
+      return '<button type="button" class="cta-om-v" data-id="'+esc(String(p.id))+'" onclick="showContaModal(this.dataset.id)" title="Abrir esta venta">'+
+        esc([ocEtiq(p.oc||'')||('nota '+(p.nota||'—')), cuando(p), (p.cliente||'').split(/\s+/).slice(0,2).join(' ')].filter(Boolean).join(' · '))+
+        (s>0.005 ? (' · <b>saldo '+fmtBs(s)+'</b>') : '')+'</button>';
+    }).join('')+(N>M ? ('<span style="align-self:center">y '+(N-M)+' más</span>') : '')+'</div>'+
+    '<button type="button" class="cta-om-t" onclick="ctaOtrosVerTodo()">Ver en todos los meses</button>';
+  el.hidden=false;
+}
+function ctaOtrosVerTodo(){ segSet('cta-mode','todo'); setContaModo('todo'); }
 
 /* ---------- el arranque de lo de arriba ---------- */
 document.addEventListener('DOMContentLoaded', function(){
