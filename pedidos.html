@@ -3230,6 +3230,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         </div>
       </div>
       <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
+      <div id="kbc" class="vd-kbc no-print" hidden></div>   <!-- 📥 (15/11, 307) ese celular ya está en la bandeja de Kommo -->
       <div id="atc-otra" class="atc-otra no-print" hidden></div>   <!-- 🔁 (13/11, 179) en una ATC: ese celular ya tuvo otra (solo avisa) -->
       <div id="atc-compra" class="atc-compra no-print" hidden></div>   <!-- 🛡️ (14/11, 264) en una ATC: las compras de ese celular, para la fecha de compra -->
       <div id="fx-dup" class="fx-dup no-print" hidden></div>
@@ -7597,6 +7598,9 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-rv-q{width:56px;max-width:100%;border:1px solid #cfd8dc;border-radius:7px;padding:4px 6px;font-weight:700;font:inherit;text-align:center}
 .vd-rv-sin{background:#fff8e1;border:1px solid #f5d98a;color:#6b5310;border-radius:9px;padding:6px 10px;font-size:.8rem;font-weight:700;margin-top:8px}
 .vd-rv-ok{background:#e9f8ef;border:1px solid #bfe6cd;color:#0a6b47;border-radius:10px;padding:8px 12px;font-size:.84rem;font-weight:700;margin:2px 0 12px}
+/* 307 · la bandeja de Kommo */
+.vd-kbc{margin:2px 0 14px;border:2px solid #7c3aed;background:#f5f0ff;border-radius:12px;padding:11px 13px;font-size:.86rem;color:#2e1065}
+.vd-kbc b{color:#5b21b6}.vd-kbc-s{font-size:.78rem;color:#4c4570;margin-top:5px}.vd-kbc-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -69647,6 +69651,77 @@ if(blokiProdVa()) ASIS_AYUDA.push({ q:'¿Qué es la nota de remisión y dónde l
   p:['🧾 La nota de remisión es el papel que se da cuando la venta NO lleva factura. Toda venta lleva una de las dos: factura o nota de remisión.',
      'Su número lo anotás DESPUÉS de cargar el pedido, cuando ya lo tengas: en 💰 Contabilidad tocá la venta y, en «🧾 Factura o remisión», elegí cuál es y escribí el número («💾 Guardar N°»).',
      'Mientras falte, te sale en «📋 Para hacer» de Mis pedidos («Anotá la factura o la nota de remisión»). Es obligatorio.'] });
+
+/* ---------------------------------------------------------------------------
+   📥 307 · «ESTE CLIENTE YA ESTÁ EN TU BANDEJA DE KOMMO»
+   En un pedido NUEVO (📄 OC, no venta de tienda), al escribir el celular (o cuando P1 lo completa), si en SU bandeja (`borradoresDe`, sin
+   las ya cargadas: `borrPendientes`) hay una venta con ese número (`cliCelClave`), sale el cartel violeta. «📥 Usar la de Kommo» convierte el
+   formulario ABIERTO en el completado de ese borrador (EDIT_ID = su id `kommo-…`, como `completarBorrador`): lo ya escrito se queda —también
+   el cobro y las imágenes— y de Kommo se completa solo lo vacío. Al guardar, la venta queda unida a su lead y sale de la bandeja.
+   «No, es otra venta» lo saca. KOMMO_BANDEJA_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var KBC={ no:{}, id:'' }, KBC_T=0;
+function kbcVa(){ return vdVa('KOMMO_BANDEJA_PRUEBA'); }
+function kbcLimpiar(){ clearTimeout(KBC_T); KBC={ no:{}, id:'' }; kbcPintar(null); }
+function kbcProgramar(){
+  /* el número cambió y ya no es el del cartel: se va en el acto (no espera a la búsqueda) */
+  var b=KBC.id ? borradorDe(KBC.id) : null;
+  if(b && cliCelClave((document.getElementById('f-celular')||{}).value||'')!==cliCelClave(b.celular)) kbcPintar(null);
+  clearTimeout(KBC_T); KBC_T=setTimeout(kbcBuscar, 350);
+}
+function kbcBuscar(){
+  if(!document.getElementById('kbc')) return;
+  if(!kbcVa() || EDIT_ID || VENTA_TIENDA || docTipoSel()!=='OC'){ kbcPintar(null); return; }
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), cel=cliCelClave((document.getElementById('f-celular')||{}).value||'');
+  if(!v || !cel){ kbcPintar(null); return; }
+  var L=[]; try{ L=borrPendientes(borradoresDe(v)); }catch(e){ L=[]; }
+  L=L.filter(function(b){ return b && cliCelClave(b.celular)===cel && !KBC.no[String(b.id)] && !borradorEnColaComoPedido(b.id); });
+  kbcPintar(L[0]||null);
+}
+function kbcPintar(b){
+  var el=document.getElementById('kbc'); if(!el) return;
+  if(!b){ el.hidden=true; el.innerHTML=''; KBC.id=''; return; }
+  KBC.id=String(b.id);
+  var f=b.ts ? fmtFechaCorta(isoDeTsBolivia(b.ts)) : '', monto=Number(b.saldo)||Number(b.acuenta)||0;
+  var prods=(b.productos||[]).filter(function(x){ return x && String(x.desc||x.codigo||'').trim(); });
+  el.hidden=false;
+  el.innerHTML='<div>📥 <b>Este cliente está en tu bandeja de Kommo</b>'+(f?(' desde el '+esc(f)):'')+' (lead «'+esc(String(b.cliente||'sin nombre').trim())+'»'+(monto>0.005?(', '+fmtBs0(monto)):'')+').</div>'+
+    (prods.length ? ('<div class="vd-kbc-s">Kommo trae: '+esc(prods.slice(0,3).map(function(x){ return String(x.desc||x.codigo).trim()+(x.medida?(' '+x.medida):'')+' × '+(x.cant||1); }).join(' · '))+(prods.length>3?' y más':'')+'</div>') : '')+
+    '<div class="vd-kbc-s">Si lo cargás desde ahí, la venta queda unida a Kommo y la bandeja no se llena de repetidos. Lo que ya escribiste (productos, precio, fecha, cobro) se queda.</div>'+
+    '<div class="vd-kbc-b"><button type="button" class="vd-b vd-b-k" onclick="kbcUsar()">📥 Usar la de Kommo</button><button type="button" class="vd-b vd-b-s" onclick="kbcNo()">No, es otra venta</button></div>';
+}
+function kbcNo(){ if(KBC.id) KBC.no[KBC.id]=1; kbcPintar(null); }
+function kbcUsar(){
+  var b=borradorDe(KBC.id);
+  if(!b){ toast('Esa venta de Kommo ya no está en tu bandeja.','err'); kbcPintar(null); return; }
+  if(EDIT_ID){ kbcPintar(null); return; }
+  var sub=document.getElementById('f-submit'); if(sub && sub.disabled){ toast('Hay un pedido enviándose. Esperá el resultado.','err',6000); return; }
+  EDIT_ID=String(b.id); EDIT_REV=(b.rev!=null) ? b.rev : null; EDIT_DESDE='mis';
+  var eb=document.getElementById('edit-banner'); if(eb) eb.classList.add('on');
+  var eo=document.getElementById('edit-oc'); if(eo) eo.textContent='de Kommo · '+String(b.cliente||'').trim();
+  var lleno=[];
+  var poner=function(id, val, nom){ var e=document.getElementById(id); val=String(val||'').trim(); if(!e || !val || String(e.value||'').trim()) return; e.value=val; lleno.push(nom); };
+  poner('f-cliente', b.cliente, 'el nombre'); poner('f-direccion', b.direccion, 'la dirección'); poner('f-obs', b.observaciones, 'las observaciones');
+  var hayProd=[].some.call(document.querySelectorAll('#f-productos .prod-desc'), function(d){ return String(d.value||'').trim(); });
+  var hayPrecio=[].some.call(document.querySelectorAll('#f-productos .prod-precio'), function(i){ return montoForm(i)>0.005; });   // lo que puso ELLA (antes de traer lo de Kommo)
+  var prods=(b.productos||[]).filter(function(x){ return x && (x.desc||x.codigo); });
+  if(!hayProd && prods.length){
+    var box=document.getElementById('f-productos'); box.innerHTML='';
+    prods.forEach(function(pr){
+      var cat=null; try{ cat=buscaCatalogo(pr); }catch(e){ cat=null; }
+      addProdRow(cat ? cat.d : (limpiaNombreProd(pr.desc)||pr.desc), (cat && cat.m) ? cat.m : (pr.medida||medidaDeTexto(pr.desc)), (cat && cat.code) ? cat.code : pr.codigo, pr.cant, pr.precio);
+    });
+    lleno.push('los productos');
+    try{ refreshDelButtons(); }catch(e){} try{ pintarTotalProds(); }catch(e){} try{ saldoAvisosProgramar(); }catch(e){}
+  }
+  if(!hayPrecio && segVal('f-pagado')!=='SI' && montoForm('f-acuenta')<=0.005 && montoForm('f-saldo')<=0.005 && (Number(b.saldo)||0)>0.005){
+    document.getElementById('f-saldo').value=String(r2(Number(b.saldo))); lleno.push('el monto');
+  }
+  try{ frqPintar(); }catch(e){} try{ celFormPintar(); }catch(e){} try{ nxCliPintar(null); }catch(e){}
+  kbcPintar(null);
+  try{ renderCupoForm(); }catch(e){}
+  toast('📥 Ahora estás completando la venta de Kommo de '+(String(b.cliente||'').trim()||'ese cliente')+'. '+(lleno.length?('De Kommo le puse '+lleno.join(', ')+'. '):'')+'Al guardar queda unida a su lead y sale de tu bandeja.','ok',9000);
+}
 
 /* ---------------------------------------------------------------------------
    Los enganches del formulario (una vez, al abrir la página)
