@@ -2451,6 +2451,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 @media(max-width:520px){.ver-nueva{gap:6px;padding:6px 4px 6px 10px}.ver-nueva .vn-tx small,.ver-nueva .vn-l{display:none}.ver-nueva .vn-ic{font-size:1.05rem}
   .ver-nueva .vn-tx b{font-size:.86rem;white-space:nowrap}.ver-nueva .vn-ok{padding:8px 12px;min-height:38px}.ver-nueva .vn-x{width:34px;height:34px}}
 @keyframes vn-entra{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+/* ⚡ (15/11, mejoras 294-303: facilidad y velocidad) — el código, en el bloque «FACILIDAD Y VELOCIDAD» (al lado de `verRecargar`). */
+.bl-pill{position:absolute;z-index:2;pointer-events:none;background:#e3f7f6;color:#00807a;border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700;white-space:nowrap;line-height:1.5}
+.bl-pill[hidden]{display:none!important}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -3648,7 +3651,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <!-- 🔎 (10/10, §4jf, dueño: «eduardo necesita un buscador, para buscar por nro de nota, nombre cliente o producto»).
            Va FUERA de la lista que se redibuja: escribir no le saca el foco al campo. -->
       <div id="mis-busca" style="display:none;gap:6px;align-items:center;margin:0 0 8px">
-        <input type="search" id="mis-q" placeholder="🔎 Buscar N° de nota, cliente, producto u OC" autocomplete="off" oninput="misBuscar(this.value)" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:16px">
+        <input type="search" id="mis-q" placeholder="🔎 Buscar N° de nota, cliente, producto u OC" autocomplete="off" oninput="misBuscarLuego(this)" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font:inherit;font-size:16px">
         <button class="btn btn-ghost btn-sm" id="mis-q-x" style="width:auto;display:none" onclick="misBuscar('');document.getElementById('mis-q').value=''">✕</button>
       </div>
       <div id="mis-q-info" style="display:none;font-size:.82rem;color:var(--muted);margin:-2px 0 8px"></div>
@@ -3904,7 +3907,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         </div>
         <div class="field" style="flex:1;min-width:150px">
           <label class="lb">Buscar</label>
-          <input type="text" id="cta-search" placeholder="Cliente, nota, NIT, producto…" oninput="renderConta()">
+          <input type="text" id="cta-search" placeholder="Cliente, nota, NIT, producto…" oninput="buscarLuego('cta', this, renderConta)">
         </div>
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
@@ -61068,6 +61071,68 @@ function verRecargar(){
   location.href=location.pathname+'?'+q.join('&')+location.hash;
   return true;
 }
+/* ============================================================================
+   ⚡ FACILIDAD Y VELOCIDAD (15/11/2026, mejoras 294-303; el dueño eligió 294, 295, 296, 297, 298, 299, 301, 302 y 303 — la 300 no).
+   Cada una va APAGADA en Playwright salvo su bandera (`window.<ALGO>_PRUEBA`): las pruebas de siempre no cambian.
+   · 294 `buscarLuego` — los buscadores de Administración, Contabilidad y Mis pedidos dibujan una vez, ¼ s después de la última letra.
+   · 295 `misCobrar` — «💵 Cobrar Bs …» en Mis pedidos abre la ficha de Contabilidad de siempre, ya en «💵 Pago».
+   · 296 `pes*` (`pesContaRapida`, `pesMisEntrar`, `pesAdmEntrar`) — cambiar a Contabilidad, Mis pedidos o Administración dibuja al toque con lo leído; si la lectura tiene menos de un
+     minuto no pide otra, y si la que llega es igual no redibuja.
+   · 297 `CTA_NAV` — «◀ 3 de 69 ▶» arriba de la ficha de Contabilidad, por la lista que se estaba mirando.
+   · 298 `ctaOtrosMeses` — lo buscado que está en otros meses.
+   · 299 `ffi*` — «= el cliente» en «Facturar a» y el aviso del NIT raro.
+   · 301 `exs*` — soltar el Excel sobre el panel y «✅ Usar los tres».
+   · 302 `admDia*` — la contraseña de Administración recordada en esta compu hasta el fin del día de Bolivia.
+   · 303 `nov*` — «✨ Lo nuevo para vos» después de recargar por una versión nueva (las notas, en `panel-version.json`).
+   ========================================================================== */
+
+/* ---------- 🔎 294 BUSCAR SIN QUE SE TRABE LA LETRA ----------
+   Medido con la planilla del 15/11 (2.030 filas): cada letra redibujaba la lista entera; «titanio» trababa la pantalla 0,4-0,6 s (2 s en
+   una compu lenta). Ahora el buscador espera a que se deje de escribir `BUSCAR_LUEGO_MS` y dibuja UNA vez; mientras tanto, al lado del
+   campo, «🔎 buscando…». Enter dibuja enseguida. Lo que encuentra es lo mismo de siempre: la función que dibuja es la de siempre. */
+var BUSCAR_LUEGO_MS=250, BUSCAR_LUEGO={};
+function buscarLuegoVa(){ try{ return !navigator.webdriver || !!window.BUSCAR_LUEGO_PRUEBA; }catch(e){ return true; } }
+function buscarLuego(k, el, fn){
+  if(!buscarLuegoVa()){ fn(); return; }
+  var B=BUSCAR_LUEGO[k]||(BUSCAR_LUEGO[k]={});
+  clearTimeout(B.t); B.fn=fn; B.el=el;
+  buscarPill(k, el, true);
+  B.t=setTimeout(function(){ buscarYa(k); }, BUSCAR_LUEGO_MS);
+}
+/* Lo que esperaba, ahora (Enter). Devuelve si había algo esperando. */
+function buscarYa(k){
+  var B=BUSCAR_LUEGO[k]; if(!B || !B.fn) return false;
+  clearTimeout(B.t); B.t=0; var fn=B.fn; B.fn=null;
+  try{ fn(); } finally { buscarPill(k, B.el, false); }
+  return true;
+}
+function buscarPill(k, el, on){
+  if(!el || !el.parentNode) return;
+  var p=document.getElementById('bl-pill-'+k);
+  if(!p){
+    if(!on) return;
+    p=document.createElement('span'); p.id='bl-pill-'+k; p.className='bl-pill'; p.setAttribute('aria-hidden','true'); p.textContent='🔎 buscando…';
+    var par=el.parentNode; try{ if(getComputedStyle(par).position==='static') par.style.position='relative'; }catch(e){}
+    par.insertBefore(p, el.nextSibling);
+  }
+  if(on){   // a la derecha adentro del campo, a la altura del campo
+    p.hidden=false;
+    p.style.top=Math.round(el.offsetTop+(el.offsetHeight-p.offsetHeight)/2)+'px';
+    p.style.left=Math.round(el.offsetLeft+el.offsetWidth-p.offsetWidth-8)+'px';
+  } else p.hidden=true;
+}
+function misBuscarLuego(el){ buscarLuego('mis', el, function(){ misBuscar(el.value); }); }
+function buscarLuegoIniciar(){
+  [['adm-search','adm'],['cta-search','cta'],['mis-q','mis']].forEach(function(x){
+    var el=document.getElementById(x[0]); if(!el) return;
+    el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ if(buscarYa(x[1])) e.preventDefault(); } });
+  });
+}
+
+/* ---------- el arranque de lo de arriba ---------- */
+document.addEventListener('DOMContentLoaded', function(){
+  try{ buscarLuegoIniciar(); }catch(e){ console.error(e); }
+});
 /* 🪟 SIN BARRA DE TÍTULO (30/10, §4ny; el dueño eligió la «B»). El manifest pide `display_override: window-controls-overlay`: en la compu,
    con el panel instalado, Chrome saca la barra y deja los botones de Windows encima de la página (con la flechita ︿ se vuelve a la barra).
    `navigator.windowControlsOverlay` dice si está así y dónde queda la franja libre; acá se pasa a `html.wco` y a `--wco-h` (alto de la
@@ -70374,9 +70439,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('f-submit').addEventListener('click',submitPedido);
   document.getElementById('adm-dia').value=todayStr();
   document.getElementById('adm-mes').value=monthStr();
-  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){
+  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){ buscarLuego('adm', sb, function(){   // 🔎 (294) una vez, al dejar de escribir
     if(ADM_HOY_DEF && (QUICK_FILTER==='hoy' || QUICK_FILTER==='')) QUICK_FILTER=sb.value.trim() ? '' : 'hoy';   // 📅 (31/10) buscar mira todo; borrar vuelve a Hoy
-    if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+    if(UNLOCKED){ admTopeReset(); renderAdmin(); } }); });
   /* (3.3) Un navegador que repone lo escrito al recargar (F5) dejaba «Hoy» + la búsqueda vieja = lista vacía sin explicación. */
   if(sb){ sb.setAttribute('autocomplete','off'); if(ADM_HOY_DEF && sb.value.trim() && QUICK_FILTER==='hoy') QUICK_FILTER=''; }
   document.getElementById('adm-dia').addEventListener('change',function(){ admHoySoltar(); if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
