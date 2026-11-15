@@ -18885,3 +18885,12 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - **Quedan para el dueño** (no se tocaron): la hora del cambio de turno del mall (`MALL_CAMBIO_TURNO='15:00'`, el turno sale de la hora del «Llegué»),
   «Pausa»+«Volví» al frente, la venta cargada sin «Atiendo» (hoy cuenta como cliente de la rueda), y el celular obligatorio en la cotización (así lo
   aprobó; el revisor lo esperaba opcional porque el encargo se lo dijo mal).
+
+### §4qa — 💡 MEJORAS 282 A 343 (15/11; dueño: *«Más mejoras visuales, estéticas, funcionales, ¡mucho mucho mucho más!»*)
+- Seis agentes (visual, facilidad/velocidad, vendedoras, logística/stock, contabilidad, dueño) con la planilla del 15/11 01:03 (solo noviembre),
+  reglas en `scratchpad/mejoras_282/BRIEF.md`; 65 ideas, 3 juntadas (la factura con el N° que sigue, los avisos viejos de Contabilidad, «Salió» = confirmar
+  el turno) → **62**, 282-343, cada una con su demo (datos inventados). Página: https://claude.ai/artifact/Q89KyMFKaD1TXEr7rppMc5. Nada programado.
+- ⚠️ Dicho arriba de la página: (1) el WhatsApp de los lunes 08:00 a Contabilidad (`mayoristas_vencido`, 181) dirá Bs 136.195 vencidos de Bs 345.106 porque
+  de 99 OC de mayoristas solo hay 4 pagos anotados en el panel (idea 322); (2) logística dejó de anotar el camión (12-14/11: 2 de 53; 12-31/10: 241 de 264;
+  el 16/11: 0 de 22) y no hay tildes de carga ni «🚚 Salió» desde el 26/10 (idea 312).
+- Ojo para quien use el arnés con una planilla bajada con `cargar_pedidos.leer()`: la lista no trae `ok:true` y el panel la rechaza; agregar `ok`, `version`, `ahora`.
