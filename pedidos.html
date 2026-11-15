@@ -4820,7 +4820,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
   .adm-top,.adm-secs,.adm-avisos,#admin-content .adm-sec[data-sec="cam"],#admin-content .adm-sec[data-sec="her"]{display:none!important}
   #admin-content .adm-sec[data-sec="ped"]{display:block!important}
 }
-.af-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(285px,100%),1fr));gap:12px;align-items:stretch}   /* (§4mk, UI-05) a 320 px la ficha de 285 + los márgenes pasaba el ancho: la página corría de costado */
+.af-cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(285px,100%),1fr));gap:12px;align-items:stretch}
+/* 🧱 (15/11, mejora 292) sin huecos: las mismas columnas, cada ficha de su alto */
+.af-cg.af-mz{display:flex;align-items:flex-start;gap:12px}
+.af-cg.af-mz>.af-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px}   /* (§4mk, UI-05) a 320 px la ficha de 285 + los márgenes pasaba el ancho: la página corría de costado */
 .af-f{background:#fff;border:1px solid #e3eaea;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;cursor:pointer;box-shadow:0 1px 2px rgba(0,60,60,.05),0 4px 14px rgba(0,60,60,.04);transition:box-shadow .15s,transform .15s}
 .af-f:hover{box-shadow:0 2px 4px rgba(0,60,60,.08),0 8px 22px rgba(0,60,60,.09);transform:translateY(-1px)}
 .af-f.af-ent{opacity:.6}.af-f.af-mod{border-color:#f3d48a}.af-f.af-no{border-color:#f4c2c6}
@@ -30599,7 +30602,48 @@ function admFichasPintar(list, dn){
     return antesGps+'<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
       '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';
   }).join('');
+  try{ afMasonry(box); }catch(e){ console.error(e); }   // 🧱 (15/11, mejora 292) sin huecos entre las fichas
 }
+/* ============================================================================
+   🧱 (15/11, mejora 292) LAS FICHAS DE ADMINISTRACIÓN SIN HUECOS. Las fichas miden de 200 a 349 px y en la grilla cada fila tomaba el alto
+   de la más alta: el 17 % de lo que ocupaban las 22 fichas de hoy (13 % en «Semana») era blanco de relleno entre los productos y los
+   botones. Ahora cada ficha tiene su alto y la siguiente va debajo de la más corta («columna más baja primero»): entra al menos una ficha
+   más por pantalla. El orden sigue siendo por N° del día, de izquierda a derecha (1, 2, 3 arriba; la 4 debajo de la más corta…).
+   Se arma DESPUÉS de dibujar (mismo HTML de cada ficha, solo cambian de caja) y se rehace al cambiar el ancho de la ventana. Las mismas
+   columnas que la grilla (`.af-cg` decide cuántas entran). Una sola fila no se toca. Solo presentación. En Playwright, la grilla de
+   siempre salvo `window.AF_MASONRY_PRUEBA`. */
+function afMasonryActivo(){ try{ return !navigator.webdriver || !!window.AF_MASONRY_PRUEBA; }catch(e){ return true; } }
+var AF_MAS_GAP=12;
+function afMasonry(box){
+  if(!box || !afMasonryActivo()) return;
+  [].forEach.call(box.querySelectorAll('.af-cg'), function(g){
+    /* deshacer lo de antes (al cambiar el ancho): las fichas vuelven a la grilla en su orden */
+    if(g.classList.contains('af-mz')){
+      var F0=[].slice.call(g.querySelectorAll('.af-f')).sort(function(a,b){ return (a._afI||0)-(b._afI||0); });
+      g.classList.remove('af-mz'); g.innerHTML=''; F0.forEach(function(f){ g.appendChild(f); });
+    }
+    var F=[].slice.call(g.children).filter(function(x){ return x.classList && x.classList.contains('af-f'); });
+    if(F.length!==g.children.length || !g.getClientRects().length) return;   // algo que no es una ficha, o escondida: como siempre
+    var cols=String(getComputedStyle(g).gridTemplateColumns||'').split(/\s+/).filter(function(x){ return /px$/.test(x); }).length;
+    if(cols<2 || F.length<=cols) return;   // una sola columna, o una sola fila: no hay huecos que llenar
+    g.style.alignItems='start';
+    var H=F.map(function(f){ return f.offsetHeight; });   // una sola medida, con el ancho de la columna
+    g.style.alignItems='';
+    var alto=[], C=[];
+    for(var c=0;c<cols;c++){ alto.push(0); var d=document.createElement('div'); d.className='af-col'; C.push(d); }
+    F.forEach(function(f, i){
+      var k=0; for(var c2=1;c2<cols;c2++) if(alto[c2]<alto[k]-1) k=c2;   // la más baja; empate, la de la izquierda
+      f._afI=i; C[k].appendChild(f); alto[k]+=H[i]+AF_MAS_GAP;
+    });
+    g.classList.add('af-mz'); g.innerHTML=''; C.forEach(function(d){ g.appendChild(d); });
+  });
+}
+var AF_MAS_T=null, AF_MAS_W=0;
+window.addEventListener('resize', function(){
+  clearTimeout(AF_MAS_T);
+  AF_MAS_T=setTimeout(function(){ var b=document.getElementById('adm-fichas'); if(!b || b.hidden || !afMasonryActivo()) return;
+    var w=b.clientWidth; if(w===AF_MAS_W) return; AF_MAS_W=w; try{ afMasonry(b); }catch(e){} }, 180);
+});
 /* ================================================================================================================================
    ✨ ARRIBA DE ADMINISTRACIÓN: «📋 Para hacer» + «☀️ Hoy» + tres pestañas (§4me, 24/10)
    El dueño, con captura: *«parece noticiero de alertas»*; eligió *«un mix de la B con la C»* y pidió *«más pulido, más estético,
