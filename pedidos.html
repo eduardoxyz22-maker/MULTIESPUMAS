@@ -5574,6 +5574,12 @@ button.cp-ok .cp-tip{ font-weight:600; opacity:.88; overflow:hidden; text-overfl
 ::highlight(busca){ background-color:#FFE58A; color:inherit; }
 .lb .bh-n{ font-weight:700; color:#00A09A; text-transform:none; letter-spacing:0; margin-left:2px; }
 .adm-busca .bh-n{ flex:none; white-space:nowrap; font-size:.78rem; font-weight:800; color:#00A09A; padding:0 4px 0 6px; opacity:1; }
+/* 💵 (15/11, mejora 291) la plata en pantalla: ancho fijo, «Bs» y «,00» suaves (con opacidad: sirve sobre cualquier fondo), el centavo de verdad con su color */
+x-pl{ display:inline; font-variant-numeric:tabular-nums; white-space:nowrap; }
+x-pl x-bs{ display:inline; font-size:.78em; font-weight:600; opacity:.62; }
+x-pl x-cv{ display:inline; font-size:.74em; opacity:.5; }
+x-pl x-cv.pl-si{ opacity:1; font-weight:700; }
+td.pl-sola, th.pl-col{ text-align:right!important; }
 @media (prefers-reduced-motion: reduce){ button.cp-ok .cp-tick{ animation:none; stroke-dashoffset:0; } }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📇 (14/10) Clientes para Excel */
@@ -12279,6 +12285,7 @@ function cbzPintar(){
   else if(CBZ.tab==='ent') h+=cbzVieneHtml(D);
   else h+=cbzAntHtml(D);
   box.innerHTML=h;
+  plataEnNodo(box);   // 💵 (15/11, mejora 291)
   try{ if(box.parentNode && sc) box.parentNode.scrollTop=sc; }catch(e){}
 }
 function cbzBarras(L, tot, defs, onclick){
@@ -12831,6 +12838,7 @@ function cxTopPintar(list, vSel, R){
   var M=CX_TOP_M||{ vendido:0, cobrado:0, falta:0, nDeben:0, n:0 };
   var I=cxHacerDatos(list, R), V=I.slice(0, I.length>6?5:6), resto=I.slice(V.length), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
   CX_HACER_ULT=I;   // 💬 (idea 9) Bloki contesta «¿qué me falta hacer?» con el último que se dibujó
+  setTimeout(function(){ plataEnIds(['cx-top']); }, 0);   // 💵 (15/11, mejora 291) cuando ya se dibujó
   phAnotar('conta', I.length, 'Contabilidad');   // 🔴 (15/11, mejora 287) el número en la pestaña del navegador
   var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
@@ -12918,6 +12926,7 @@ function trozosMas(clave){
   T.i=fin; TROZOS_N[clave]=fin;
   if(TROZOS_OBS) TROZOS_OBS.unobserve(m);   // el marcador viejo se reemplaza: que el observador no lo siga mirando
   m.insertAdjacentHTML('beforebegin', html);
+  if(clave==='conta') plataEnIds(['tbl-conta']);   // 💵 (15/11, mejora 291) las filas que llegan después, igual que las primeras
   if(fin<T.items.length) m.outerHTML=trozoMarcador(clave, T.items.length-fin, T.o);
   else { m.remove(); delete TROZOS[clave]; }
   setTimeout(trozosMirar, 0);
@@ -13028,6 +13037,7 @@ function renderConta(){
     '</tr>';
   }, { tabla:true, cols:14 })+'</tbody>';
   try{ tblEstilo(); tblBarPintar('conta'); }catch(e){ console.error(e); }   // 🗂️ (§4nr, 33)
+  plataEnIds(['tbl-conta', 'cta-metrics', 'cta-marcas', 'cx-cards', 'cx-vivo']);   // 💵 (15/11, mejora 291)
 }
 /* La fecha de entrega, y el aviso cuando cae en OTRO MES que el ingreso: es el caso de
    la venta cargada a fin de mes que sale al mes siguiente. */
@@ -17890,6 +17900,7 @@ function renderCuadre(){
     var _ni=[].filter.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'), function(x){ return x.getAttribute('data-forma')===_focoArq.f; })[0];
     if(_ni){ if(_ni.value!==_focoArq.v) _ni.value=_focoArq.v; try{ _ni.focus(); _ni.setSelectionRange(_focoArq.s, _focoArq.e); }catch(e){} }
   }
+  plataEnIds(['cta-pane-cuadre']);   // 💵 (15/11, mejora 291)
 }
 /* 🔎 Qué se busca en cada renglón del detalle: todo lo que la persona ve en la fila.
    El monto se compara con y sin formato ("5500", "5.500,00" y "5500,00" encuentran lo
@@ -26837,7 +26848,7 @@ function fxCuentaNum(tok){ var d=(tok.split(',')[1]||'').length; var v=parseFloa
 function fxCuentaFmt(v,d){ return Number(v).toLocaleString('es-BO',{minimumFractionDigits:d,maximumFractionDigits:d}); }
 function fxCuentaUno(el){
   if(el._fxCuenta) return; el._fxCuenta=1;
-  var fin=el.textContent, m=fin.match(/\d[\d.]*(?:,\d+)?/); if(!m) return;
+  var fin=el.textContent, finH=el.innerHTML, m=fin.match(/\d[\d.]*(?:,\d+)?/); if(!m) return;
   var n=fxCuentaNum(m[0]); if(!isFinite(n.v) || fxCuentaFmt(n.v,n.d)!==m[0]) return;
   var mc=el.closest('.mc'), lb=mc && mc.querySelector('.mc-lbl'), caja=el.closest('[id]');
   var clave=(caja?caja.id:'')+'|'+(lb?lb.textContent:''), desde=FX_CUENTA_ANT[clave];
@@ -26848,7 +26859,7 @@ function fxCuentaUno(el){
   function paso(ts){
     if(!el.isConnected){ return; }
     if(t0===null) t0=ts; var k=Math.min(1,(ts-t0)/dur), e=1-Math.pow(1-k,3);
-    el.textContent = k>=1 ? fin : pre+fxCuentaFmt(desde+(n.v-desde)*e, n.d)+post;
+    if(k>=1) el.innerHTML=finH; else el.textContent=pre+fxCuentaFmt(desde+(n.v-desde)*e, n.d)+post;   // 💵 (mejora 291) al final, el HTML de antes
     if(k<1) requestAnimationFrame(paso);
   }
   requestAnimationFrame(paso);
@@ -38457,7 +38468,7 @@ function misTopPintar(v, mine){
       E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
       '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
-  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  if(el._h!==h){ el.innerHTML=h; el._h=h; plataEnNodo(el); }   // 💵 (15/11, mejora 291)
   try{ antesIrteQuizas(v); }catch(e){}               // 🌙 (15/11, 310) desde las 19:00, una vez por día
   try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
 }
@@ -41581,6 +41592,67 @@ function bhCuentaPintar(d, inp, cajas){
   var t=(caja?'':' · ')+(n===1 ? '1 coincide' : (n+' coinciden'));
   if(sp.textContent!==t) sp.textContent=t;
 }
+/* ============================================================================
+   💵 (15/11, mejora 291) LA PLATA SE LEE DE UN VISTAZO. En Contabilidad (Carola, noviembre) había 215 montos a la vista y los 215
+   terminaban en «,00», pegados al texto, con «Bs» y los centavos del mismo tamaño que los miles. Ahora, en pantalla: números de ancho
+   fijo (los miles uno debajo del otro), «Bs» más chico y suave, «,00» chico y suave; un centavo de verdad («,50») se ve con su color
+   (§4mm: el centavo cuenta y no se pierde). Una celda de tabla que es solo un monto se alinea a la derecha (y su título también, si toda
+   la columna es de montos).
+   ⚠️ El número NO cambia y el texto que se lee tampoco: «Bs 12.345,00» sigue siendo «Bs 12.345,00» (`innerText`/`textContent` idénticos;
+   las pruebas, Excel, WhatsApp y copias no se enteran). Se hace DESPUÉS de dibujar, sobre lo ya dibujado (`plataEnNodo`): la tabla y
+   las fichas de Contabilidad (también lo que llega «de a partes», `trozosMas`), el Cuadre, la Cobranza, el libro de arriba
+   (`cxTopPintar`) y «Tu día» (`misTopPintar`). Nunca adentro de un SVG (un <span> ahí no se dibuja), de un campo o de una opción.
+   En Playwright, apagado salvo `window.PLATA_PRUEBA`. */
+function plataActiva(){ try{ return !navigator.webdriver || !!window.PLATA_PRUEBA; }catch(e){ return true; } }
+var PLATA_RE=/\bBs (-?\d{1,3}(?:\.\d{3})+|-?\d+)(,\d\d)?(?![\d,])/g;
+var PLATA_SALTA={ SCRIPT:1, STYLE:1, TEXTAREA:1, SELECT:1, OPTION:1, INPUT:1, NOSCRIPT:1, BUTTON:1 };
+function plataEnNodo(root){
+  if(!root || !plataActiva() || !root.ownerDocument) return 0;
+  var tw=document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode:function(n){
+    var v=n.nodeValue; if(!v || v.indexOf('Bs ')<0) return NodeFilter.FILTER_REJECT;
+    for(var e=n.parentNode; e && e!==root.parentNode; e=e.parentNode){
+      if(e.nodeType!==1) continue;
+      if(PLATA_SALTA[e.nodeName] || e.namespaceURI==='http://www.w3.org/2000/svg' || e.nodeName==='X-PL') return NodeFilter.FILTER_REJECT;
+    }
+    return NodeFilter.FILTER_ACCEPT; } });
+  var L=[], n; while((n=tw.nextNode())) L.push(n);
+  var hechos=0, tds=[];
+  L.forEach(function(t){
+    var v=t.nodeValue, frag=document.createDocumentFragment(), k=0, m;
+    PLATA_RE.lastIndex=0;
+    while((m=PLATA_RE.exec(v))){
+      if(m.index>k) frag.appendChild(document.createTextNode(v.slice(k, m.index)));
+      /* etiquetas propias (no <span>): las reglas de cada pantalla que pintan «.algo span» no las tocan */
+      var sp=document.createElement('x-pl');
+      var bs=document.createElement('x-bs'); bs.textContent='Bs '; sp.appendChild(bs);
+      sp.appendChild(document.createTextNode(m[1]));
+      if(m[2]){ var cv=document.createElement('x-cv'); if(m[2]!==',00') cv.className='pl-si'; cv.textContent=m[2]; sp.appendChild(cv); }
+      frag.appendChild(sp); hechos++; k=m.index+m[0].length;
+    }
+    if(!k) return;
+    if(k<v.length) frag.appendChild(document.createTextNode(v.slice(k)));
+    var td=t.parentNode && t.parentNode.closest ? t.parentNode.closest('td') : null;
+    t.parentNode.replaceChild(frag, t);
+    if(td && tds.indexOf(td)<0) tds.push(td);
+  });
+  /* una celda que es SOLO un monto, a la derecha; y el título de su columna si toda la columna es de montos (o «—») */
+  var tablas=[];
+  tds.forEach(function(td){
+    var ms=td.querySelectorAll('x-pl'), tx=td.textContent.replace(/\s+/g,' ').trim();
+    if(ms.length===1 && ms[0].textContent.replace(/\s+/g,' ').trim()===tx){ td.classList.add('pl-sola'); var tb=td.closest('table'); if(tb && tablas.indexOf(tb)<0) tablas.push(tb); }
+  });
+  tablas.forEach(function(tb){
+    var ths=tb.tHead && tb.tHead.rows[0] ? tb.tHead.rows[0].cells : null; if(!ths) return;
+    for(var c=0;c<ths.length;c++){
+      var hay=0, otro=0;
+      for(var r=0;r<tb.tBodies.length;r++) [].forEach.call(tb.tBodies[r].rows, function(tr){ var cel=tr.cells[c]; if(!cel || tr.cells.length!==ths.length) return;
+        if(cel.classList.contains('pl-sola')) hay++; else if(!/^(—|-|)$/.test(cel.textContent.trim())) otro++; });
+      if(hay && !otro) ths[c].classList.add('pl-col');
+    }
+  });
+  return hechos;
+}
+function plataEnIds(ids){ if(!plataActiva()) return; ids.forEach(function(id){ var e=document.getElementById(id); if(e) try{ plataEnNodo(e); }catch(_){} }); }
 /* Escribir en cualquiera de los buscadores lo vuelve a pintar (lo que se redibuja después lo agarra el MutationObserver). */
 document.addEventListener('input', function(e){
   try{ var t=e.target; if(!t || !t.id || !bhActivo()) return;
