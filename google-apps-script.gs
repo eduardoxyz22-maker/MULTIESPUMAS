@@ -3012,17 +3012,24 @@ var IAC_MIMES = { 'image/jpeg':'image', 'image/jpg':'image', 'image/png':'image'
    monto, la fecha, el N° de autorización y los últimos 4 dígitos de la tarjeta (`tarjeta_ultimos4` → `u4`). Las fotos que la pregunta de
    antes marcó «no es un comprobante» (`cp:false` con `pv` < 3) se vuelven a leer UNA vez (`iacReleer_`): salen como `faltan` (también con
    `leer:1`, sin gastar) y la próxima lectura —la que decide la persona— las lee con esta pregunta; ya con `pv` 3 no se repiten. */
-var IAC_PREGUNTA_V = 3;
+/* 💳 (2026-11-15-a, mejora 331; versión 4 de la pregunta) Del voucher de la tarjeta, además: el LOTE (`tarjeta_lote` → `lo`: cada lote es UN abono
+   del banco, días después), la autorización aparte (`tarjeta_autorizacion` → `au`; `ref` sigue siendo la autorización) y el banco de la máquina POS
+   (`pos_banco` → `pb`). La página (Cuadre «💳 Tarjeta por POS y lote», el aviso al subir el voucher) los compara; acá solo se leen. Un voucher
+   leído con la pregunta 3 NO se vuelve a leer solo (sería pagar otra vez por lo mismo): `forzar` lo relee si Contabilidad lo pide. `iacReleer_`
+   sigue releyendo solo lo que una pregunta de ANTES de la 3 marcó «no es un comprobante» (IAC_RELEER_ANTES_DE). */
+var IAC_PREGUNTA_V = 4;
+var IAC_RELEER_ANTES_DE = 3;   // §4ok-E3: se releen (una vez) las «no es comprobante» leídas con una pregunta anterior a esta
 var IAC_ESQUEMA = { type:'object', additionalProperties:false,
   properties:{ es_comprobante:{ type:'boolean' }, legible:{ type:'boolean' }, monto:{ type:'number' }, moneda:{ type:'string' },
                fecha:{ type:'string' }, hora:{ type:'string' }, banco_origen:{ type:'string' }, banco_destino:{ type:'string' },
                destinatario:{ type:'string' }, ordenante:{ type:'string' }, referencia:{ type:'string' },
                tipo:{ type:'string', enum:IAC_TIPOS }, nota:{ type:'string' },
                es_nota_venta:{ type:'boolean' }, nota_total:{ type:'number' }, nota_efectivo:{ type:'number' }, nota_qr:{ type:'number' },
-               nota_tarjeta:{ type:'number' }, nota_transferencia:{ type:'number' }, tarjeta_ultimos4:{ type:'string' } },
+               nota_tarjeta:{ type:'number' }, nota_transferencia:{ type:'number' }, tarjeta_ultimos4:{ type:'string' },
+               tarjeta_lote:{ type:'string' }, tarjeta_autorizacion:{ type:'string' }, pos_banco:{ type:'string' } },
   required:['es_comprobante', 'legible', 'monto', 'moneda', 'fecha', 'hora', 'banco_origen', 'banco_destino', 'destinatario',
             'ordenante', 'referencia', 'tipo', 'nota', 'es_nota_venta', 'nota_total', 'nota_efectivo', 'nota_qr', 'nota_tarjeta',
-            'nota_transferencia', 'tarjeta_ultimos4'] };
+            'nota_transferencia', 'tarjeta_ultimos4', 'tarjeta_lote', 'tarjeta_autorizacion', 'pos_banco'] };
 var IAC_SISTEMA = 'Sos el lector de comprobantes de pago de Multiespumas, una fábrica de colchones de Santa Cruz, Bolivia (marcas Heaven y Sueña). ' +
   'Te llega la foto o la captura que un cliente mandó como prueba de pago: QR interoperable, transferencia, depósito o voucher de tarjeta de un banco ' +
   'o billetera de Bolivia (el voucher de tarjeta es el papelito que imprime la máquina POS, a veces pegado o abrochado a la nota de venta); a veces es la nota de venta de la tienda (papel con el total y cómo pagó el cliente). Leé solo lo que se ve. Si un dato no se ve o no estás seguro, dejalo vacío (y el monto en 0): no lo adivines ni lo completes ' +
@@ -3043,6 +3050,10 @@ var IAC_PIDE = 'Leé este comprobante y completá:\n' +
   '- tipo: ' + IAC_TIPOS.join(', ') + '.\n' +
   '- nota: una frase corta solo si algo llama la atención (por ejemplo «es la pantalla de confirmar, no el comprobante» o «transferencia programada»); si no, vacío.\n' +
   '- tarjeta_ultimos4: si es un voucher de tarjeta, los últimos 4 dígitos de la tarjeta (de «XXXX XXXX XXXX 1234» → 1234); si no, vacío.\n' +
+  '- tarjeta_lote: si es un voucher de tarjeta, el número de LOTE que imprime (LOTE, LOTE N°, BATCH), tal cual y sin espacios; si no se ve o no es un voucher, vacío.\n' +
+  '- tarjeta_autorizacion: si es un voucher de tarjeta, el número de autorización o aprobación (AUT, AUTORIZACION, APROB., COD. AUT.), tal cual y sin espacios; si no, vacío.\n' +
+  '- pos_banco: si es un voucher de tarjeta, el banco dueño de la máquina POS o adquirente, el que imprime arriba del voucher (por ejemplo BISA, BNB, ' +
+  'Mercantil Santa Cruz, Económico, Ganadero, Unión, Fassil, Sol, Prodem, Linkser); NO el de la tarjeta del cliente. Si no se ve o no es un voucher, vacío.\n' +
   '- es_nota_venta: true si la imagen es la NOTA DE VENTA, factura o recibo de la tienda (no un comprobante del banco). En ese caso es_comprobante=false ' +
   '(salvo que tenga el voucher de la tarjeta pegado o al lado: entonces es_comprobante=true con los datos del voucher) y ' +
   'completá nota_total (el total de la venta) y cuánto dice que se pagó con cada medio: nota_efectivo, nota_qr, nota_tarjeta, nota_transferencia ' +
@@ -3092,6 +3103,13 @@ function iacNormal_(j, modelo) {
   /* 💳 §4ok-E3 los últimos 4 dígitos de la tarjeta de un voucher (solo si son 4 números). */
   var u4 = String(j.tarjeta_ultimos4 == null ? '' : j.tarjeta_ultimos4).replace(/\D/g, '');
   if (u4.length >= 4) o.u4 = u4.slice(-4);
+  /* 💳 (2026-11-15-a, mejora 331) el lote, la autorización y el banco del POS, solo de un voucher de tarjeta (de otra cosa serían ruido). */
+  if (o.ti === 'tarjeta' || o.u4) {
+    var lo = iacTexto_(j.tarjeta_lote, 20).replace(/\s+/g, ''), au = iacTexto_(j.tarjeta_autorizacion, 20).replace(/\s+/g, ''), pb = iacTexto_(j.pos_banco, 40);
+    if (lo) o.lo = lo;
+    if (au) { o.au = au; if (!o.ref) o.ref = au; }
+    if (pb) o.pb = pb;
+  }
   if (j.es_nota_venta === true) {
     var n2 = function (v) { var x = Math.round((Number(v) || 0) * 100) / 100; return x > 0 ? x : 0; };
     /* §4ok-E3 La nota de venta con el voucher de la tarjeta pegado ES comprobante (el del voucher); sin voucher, como siempre: no lo es. */
@@ -3100,7 +3118,7 @@ function iacNormal_(j, modelo) {
   return o;
 }
 /** §4ok-E3 ¿Se vuelve a leer con la pregunta de ahora? Solo lo que una pregunta anterior marcó «no es un comprobante» (sin error), una vez. */
-function iacReleer_(o) { return !!o && !o.err && o.cp === false && !(Number(o.pv) >= IAC_PREGUNTA_V); }
+function iacReleer_(o) { return !!o && !o.err && o.cp === false && !(Number(o.pv) >= IAC_RELEER_ANTES_DE); }
 function iacAnotar_(sh, id, o) {
   try { sh.appendRow([id, waBo_(o.t || Date.now()).txt, o.m || '', o.bd || '', o.f || '', o.ref || '', JSON.stringify(o), o.md || '']); } catch (e) {}
 }

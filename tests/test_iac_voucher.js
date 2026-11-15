@@ -71,7 +71,7 @@ console.log('\n── 1. La pregunta ──');
 {
   const a = cargar([], {});
   const C = a.ctx;
-  chk('⚠️ a. la pregunta pasó a la versión 3 (para releer lo de la 2)', C.IAC_PREGUNTA_V === 3, C.IAC_PREGUNTA_V);
+  chk('⚠️ a. la pregunta pasó a la versión 3 (para releer lo de la 2) y desde la 2026-11-15-a a la 4 (el lote del voucher, mejora 331); se releen solas las de antes de la 3', C.IAC_PREGUNTA_V === 4 && C.IAC_RELEER_ANTES_DE === 3, [C.IAC_PREGUNTA_V, C.IAC_RELEER_ANTES_DE]);
   chk('⚠️ b. nombra el voucher de POS / tarjeta como comprobante, también pegado a la nota de venta',
     /VOUCHER DE TARJETA/.test(C.IAC_PIDE) && /POS/.test(C.IAC_PIDE) && /pegado/.test(C.IAC_PIDE) && /es_comprobante=true, tipo=tarjeta/.test(C.IAC_PIDE));
   chk('c. la nota de venta con el voucher pegado: es_comprobante=true (lo dice la pregunta)', /salvo que tenga el voucher de la tarjeta/.test(C.IAC_PIDE));
@@ -85,7 +85,7 @@ console.log('\n── 2. Lo que se guarda de cada lectura (iacNormal_) ──');
   const base = { es_comprobante:true, legible:true, monto:800, moneda:'BOB', fecha:'2026-11-02', hora:'15:05', banco_origen:'', banco_destino:'', destinatario:'', ordenante:'',
     referencia:'778899', tipo:'tarjeta', nota:'', es_nota_venta:false, nota_total:0, nota_efectivo:0, nota_qr:0, nota_tarjeta:0, nota_transferencia:0, tarjeta_ultimos4:'9876' };
   const v = C.iacNormal_(base, 'm');
-  chk('⚠️ a. un voucher solo: comprobante de tarjeta con monto, fecha, autorización y los 4 dígitos', v.cp === true && v.ti === 'tarjeta' && v.m === 800 && v.f === '2026-11-02' && v.ref === '778899' && v.u4 === '9876' && v.pv === 3, JSON.stringify(v));
+  chk('⚠️ a. un voucher solo: comprobante de tarjeta con monto, fecha, autorización y los 4 dígitos', v.cp === true && v.ti === 'tarjeta' && v.m === 800 && v.f === '2026-11-02' && v.ref === '778899' && v.u4 === '9876' && v.pv === C.IAC_PREGUNTA_V, JSON.stringify(v));
   const n = C.iacNormal_(Object.assign({}, base, { monto:1500, es_nota_venta:true, nota_total:2000, nota_efectivo:500, nota_tarjeta:1500, tarjeta_ultimos4:'**** 4321' }), 'm');
   chk('⚠️ b. la nota de venta con el voucher pegado: ES comprobante (el del voucher) y trae lo de la nota', n.cp === true && n.nv === 1 && n.m === 1500 && n.ne === 500 && n.nt === 2000 && n.u4 === '4321', JSON.stringify(n));
   const s = C.iacNormal_(Object.assign({}, base, { es_comprobante:false, tipo:'otro', monto:0, es_nota_venta:true, nota_total:990, nota_efectivo:600, nota_qr:390, tarjeta_ultimos4:'' }), 'm');
@@ -115,8 +115,8 @@ console.log('\n── 3. Se releen SOLO las marcadas «no es un comprobante», u
   const r1 = a.pedir({ fotos:todas });
   const N = r1.res.fNota || {};
   chk('⚠️ c. al leer: solo esas dos van a Claude, con la pregunta nueva', a.claude.length === 2 && a.claude.every(b => /VOUCHER DE TARJETA/.test(b.messages[0].content[1].text)) && r1.leidas === 2, JSON.stringify({ n:a.claude.length, leidas:r1.leidas }));
-  chk('⚠️ d. el voucher pegado en la nota ahora ES comprobante: Bs 1.500 de tarjeta, con la nota (efectivo 500) y los 4 dígitos', N.cp === true && N.m === 1500 && N.ti === 'tarjeta' && N.nv === 1 && N.ne === 500 && N.u4 === '4321' && N.pv === 3, JSON.stringify(N));
-  chk('e. el colchón sigue sin ser comprobante (ahora con la pregunta 3)', (r1.res.fCol || {}).cp === false && (r1.res.fCol || {}).pv === 3, JSON.stringify(r1.res.fCol));
+  chk('⚠️ d. el voucher pegado en la nota ahora ES comprobante: Bs 1.500 de tarjeta, con la nota (efectivo 500) y los 4 dígitos', N.cp === true && N.m === 1500 && N.ti === 'tarjeta' && N.nv === 1 && N.ne === 500 && N.u4 === '4321' && N.pv === a.ctx.IAC_PREGUNTA_V, JSON.stringify(N));
+  chk('e. el colchón sigue sin ser comprobante (ahora con la pregunta de ahora)', (r1.res.fCol || {}).cp === false && (r1.res.fCol || {}).pv === a.ctx.IAC_PREGUNTA_V, JSON.stringify(r1.res.fCol));
   const n1 = a.claude.length, r2 = a.pedir({ fotos:todas, leer:1 }), r3 = a.pedir({ fotos:todas });
   chk('⚠️ f. una sola vez: después ya no se releen (ni con `leer:1` ni leyendo)', r2.faltan.length === 0 && !r2.releer && r3.faltan.length === 0 && a.claude.length === n1 && r3.res.fCol.cp === false, JSON.stringify({ f2:r2.faltan, f3:r3.faltan, n:a.claude.length }));
   const r4 = a.pedir({ fotos:['fNueva'] });
