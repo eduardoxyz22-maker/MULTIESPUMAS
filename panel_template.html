@@ -2037,6 +2037,21 @@ const {
   useEffect
 } = React;
 const D = window.PANEL_DATA;
+/* 🛒 (15/11, mejora 335) LAS VENTAS CARGADAS EN EL PANEL DE PEDIDOS QUE NO TIENEN FICHA EN KOMMO. generar.py ya las sumó (entregadas:
+   cierres + cerrado + pipeline; sin entregar: solo pipeline) y deja aparte cuántas son: `D.panelSinFicha` {c, bs, p, pbs} del mes y
+   `v.panel` {c, bs, p, pbs} por vendedora. Acá solo se DICE, para que no se confundan con las de Kommo. Sin esos datos (la lectura
+   del panel falló) no aparece nada: el dashboard queda como antes. */
+const PSF = D.panelSinFicha && (D.panelSinFicha.c || D.panelSinFicha.p) ? D.panelSinFicha : null;
+function pzTxt(o) {
+  if (!o || !(o.c || o.p)) return "";
+  const bs = n => "Bs " + Math.round(n || 0).toLocaleString("en-US");
+  const partes = [];
+  if (o.c) partes.push(o.c + " ya " + (o.c === 1 ? "entregada" : "entregadas") + " (" + bs(o.bs) + ", cuentan como cierres)");
+  if (o.p) partes.push(o.p + " por entregar (" + bs(o.pbs) + ", solo en el pipeline)");
+  const n = (o.c || 0) + (o.p || 0);
+  return "🛒 Incluye " + n + (n === 1 ? " venta cargada" : " ventas cargadas") + " en el panel de pedidos sin ficha en Kommo: " + partes.join(" y ") + ".";
+}
+window.pzTxt = pzTxt;
 // Sparkline: si hay valor del mes anterior, la línea va de "prev" → "v" (sube si mejoró, baja si empeoró vs el mes pasado).
 // Sin prev (métricas sin historial) queda plana con una ondulación mínima. El último punto siempre es el valor real.
 function sparkOf(v, prev) {
@@ -2522,7 +2537,10 @@ function ProfileDrawer({
     }
   }, v.pipeline ? fmtMoney(v.pipeline) : "—"), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "Pipeline total"))), /*#__PURE__*/React.createElement("div", {
+  }, "Pipeline total"))), v.panel && /*#__PURE__*/React.createElement("div", {
+    className: "pz-nota",
+    style: { margin: "-2px 0 10px", fontSize: ".72rem", color: "var(--muted)", lineHeight: 1.4 }
+  }, pzTxt(v.panel)), /*#__PURE__*/React.createElement("div", {
     className: "dr-kpis"
   }, /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
@@ -3712,6 +3730,16 @@ function TeamTable({
   }), { cierres: 0, value: 0, pipeline: 0 });
   const hasPrevPipe = T.some(v => v.prev && v.prev.pipeline != null && v.prev.pipeline > 0);
   const pmAbbr = (D.prevMonth || "").slice(0, 3);
+  // 🛒 (335) Debajo de los cierres y del pipeline: cuántos son del panel de pedidos sin ficha en Kommo (ya están sumados).
+  const pzSub = (o, cual) => {
+    const n = o ? (cual === "p" ? o.p : o.c) : 0;
+    if (!n) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "pz-sub",
+      title: pzTxt(o),
+      style: { marginTop: 2, fontSize: ".58rem", fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }
+    }, cual === "p" ? "🛒 " + n + " por entregar" : "🛒 +" + n + " sin ficha");
+  };
   // Mini-línea "▲/▼ Jun: <valor a la fecha>" bajo el número de la celda.
   const deltaSub = (cur, prev, fmt) => {
     if (prev == null) return null;
@@ -3768,7 +3796,7 @@ function TeamTable({
     style: {
       fontWeight: 800
     }
-  }, v.cierres, deltaSub(v.cierres, v.prev && v.prev.cierres, null)), /*#__PURE__*/React.createElement("td", {
+  }, v.cierres, deltaSub(v.cierres, v.prev && v.prev.cierres, null), pzSub(v.panel, "c")), /*#__PURE__*/React.createElement("td", {
     className: "r"
   }, /*#__PURE__*/React.createElement(Pill, {
     tone: convTone(window.convPct(v))
@@ -3782,7 +3810,7 @@ function TeamTable({
     }
   }, v.value ? fmtMoney(v.value) : "—", deltaSub(v.value, v.prev && v.prev.value, fmtMoney)), cols === "full" && /*#__PURE__*/React.createElement("td", {
     className: "r num"
-  }, v.pipeline ? fmtMoney(v.pipeline) : "—", deltaSub(v.pipeline, v.prev && v.prev.pipeline != null && v.prev.pipeline > 0 ? v.prev.pipeline : null, fmtMoney)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Pill, {
+  }, v.pipeline ? fmtMoney(v.pipeline) : "—", deltaSub(v.pipeline, v.prev && v.prev.pipeline != null && v.prev.pipeline > 0 ? v.prev.pipeline : null, fmtMoney), pzSub(v.panel, "p")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Pill, {
     tone: v.promMin == null ? "" : v.promMin <= 60 ? "green" : v.promMin <= 240 ? "amber" : "red"
   }, v.promTxt || "—"), /*#__PURE__*/React.createElement("div", {
     style: { marginTop: 3, fontSize: ".6rem", color: "var(--faint)" }
@@ -3790,7 +3818,7 @@ function TeamTable({
     className: "r num"
   }, tot.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
     className: "r num"
-  }, tot.cierres, deltaSub(tot.cierres, totPrev.cierres, null)), /*#__PURE__*/React.createElement("td", {
+  }, tot.cierres, deltaSub(tot.cierres, totPrev.cierres, null), pzSub(PSF, "c")), /*#__PURE__*/React.createElement("td", {
     className: "r"
   }, totConv, "%"), cols === "full" && /*#__PURE__*/React.createElement("td", {
     className: "r num"
@@ -3799,7 +3827,7 @@ function TeamTable({
     style: { color: "var(--green)" }
   }, fmtMoney(tot.value), deltaSub(tot.value, totPrev.value, fmtMoney)), cols === "full" && /*#__PURE__*/React.createElement("td", {
     className: "r num"
-  }, fmtMoney(tot.pipeline), deltaSub(tot.pipeline, hasPrevPipe ? totPrev.pipeline : null, fmtMoney)), /*#__PURE__*/React.createElement("td", null, D.metrics && D.metrics.promPrimera || "—"))));
+  }, fmtMoney(tot.pipeline), deltaSub(tot.pipeline, hasPrevPipe ? totPrev.pipeline : null, fmtMoney), pzSub(PSF, "p")), /*#__PURE__*/React.createElement("td", null, D.metrics && D.metrics.promPrimera || "—"))));
 }
 
 // CSV download helper — quotes fields, triggers browser download.
@@ -3819,7 +3847,7 @@ function downloadCSV(filename, headers, rows) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 function exportTeamCSV() {
-  downloadCSV(`heaven_equipo_${D.month}_${D.year}.csv`, ["Vendedora", "Sucursal", "Leads", "Cierres", "Conversion %", "Ticket (Bs)", "Pipeline (Bs)", "Calificados", "No responden", "Backlog", "% <24h"], D.team.map(v => [v.name, v.suc, v.leads, v.cierres, v.conv, v.ticket, v.value, v.calif, v.noResp, v.backlog, v.u24]));
+  downloadCSV(`heaven_equipo_${D.month}_${D.year}.csv`, ["Vendedora", "Sucursal", "Leads", "Cierres", "Conversion %", "Ticket (Bs)", "Pipeline (Bs)", "Calificados", "No responden", "Backlog", "% <24h", "Cierres sin ficha en Kommo (panel)", "Por entregar sin ficha en Kommo (panel)"], D.team.map(v => [v.name, v.suc, v.leads, v.cierres, v.conv, v.ticket, v.value, v.calif, v.noResp, v.backlog, v.u24, (v.panel && v.panel.c) || 0, (v.panel && v.panel.p) || 0]));
 }
 window.downloadCSV = downloadCSV;
 window.exportTeamCSV = exportTeamCSV;
@@ -4386,9 +4414,9 @@ function ViewResumen() {
   const chDetail = c => ({
     title: c.ic + " " + c.name,
     ico: "conversion",
-    color: c.carry ? "#7A5AF0" : c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
-    totalTxt: c.carry ? c.cierres + " cierres" : fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
-    desc: c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
+    color: c.panel ? "#D98300" : c.carry ? "#7A5AF0" : c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
+    totalTxt: c.panel ? c.cierres + " cierres" + (c.pend ? " · " + c.pend + " por entregar" : "") : c.carry ? c.cierres + " cierres" : fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
+    desc: c.panel ? "Ventas cargadas en el panel de pedidos que no tienen ficha en Kommo (ventas de tienda y las que nadie uni\xF3). Las ya entregadas cuentan como cierres; las que faltan entregar suman solo al pipeline. La barra es el n\xFAmero de cierres por vendedora." : c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
     rows: (c.byV || []).map(b => {
       const tv = D.team.find(t => t.name === b.name);
       return {
@@ -4397,11 +4425,11 @@ function ViewResumen() {
         color: tv ? tv.color : "#808A96",
         ini: tv ? tv.ini : b.name.split(" ").slice(0, 2).map(p => p[0] || "").join("").toUpperCase(),
         valNum: c.carry ? b.cierres : b.leads,
-        valTxt: c.carry ? b.cierres + " cierres" : fmtInt(b.leads) + " (" + b.cierres + "✓)"
+        valTxt: c.panel ? b.cierres + " cierres" + (b.pend ? " · " + b.pend + " por entregar" : "") : c.carry ? b.cierres + " cierres" : fmtInt(b.leads) + " (" + b.cierres + "✓)"
       };
     }),
-    extraTitle: c.carry ? "Por canal" : undefined,
-    extraRows: c.carry ? (c.byCh || []).map(b => ({
+    extraTitle: c.carry && !c.panel ? "Por canal" : undefined,
+    extraRows: c.carry && !c.panel ? (c.byCh || []).map(b => ({
       name: b.name,
       label: b.name,
       suc: "",
@@ -4410,8 +4438,8 @@ function ViewResumen() {
       valNum: b.cierres,
       valTxt: b.cierres + " cierres"
     })) : undefined,
-    extra2Title: c.carry ? "Por tipo de carga" : undefined,
-    extra2Rows: c.carry ? [{
+    extra2Title: c.carry && !c.panel ? "Por tipo de carga" : undefined,
+    extra2Rows: c.carry && !c.panel ? [{
       name: "Autom\xE1tico (bot)",
       label: "Autom\xE1tico (bot)",
       suc: "",
@@ -4430,7 +4458,8 @@ function ViewResumen() {
     }] : undefined
   });
   // ── Rendimiento de origen: reparto de los cierres del mes (base = G.cierres) ──
-  const carryRow = (D.channels || []).find(c => c.carry);
+  const carryRow = (D.channels || []).find(c => c.carry && !c.panel);
+  const panelRow = (D.channels || []).find(c => c.panel);   // 🛒 (335) las ventas del panel sin ficha en Kommo
   const mesesAnt = carryRow ? carryRow.cierres : 0;
   const FALLBACK = ["Carga manual vendedora", "Autom\xe1tico (bot)"];
   const fallbackCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) >= 0);
@@ -4461,9 +4490,11 @@ function ViewResumen() {
   };
   const loadRows = [{ lbl: "✍ Manual (este mes)", n: D.origin.manualClosed || 0, color: "var(--green)" }, { lbl: "⚙ Bot (este mes)", n: D.origin.autoClosed || 0, color: "#646E7B" }];
   if (mesesAnt) loadRows.push({ lbl: "↩ De meses anteriores", n: mesesAnt, color: "#7A5AF0", carry: true });
+  if (panelRow && panelRow.cierres) loadRows.push({ lbl: "🛒 Sin ficha en Kommo", n: panelRow.cierres, color: "#D98300", carry: true, detail: chDetail(panelRow) });
   const chRows = realCh.map(c => ({ lbl: c.ic + " " + c.name, n: c.cierres || 0, color: "var(--brand)" }));
   if (sinCanal) chRows.push({ lbl: "⚪ Sin canal marcado", n: sinCanal, color: "#9AA3AF", detail: sinCanalDetail });
   if (mesesAnt) chRows.push({ lbl: "↩ De meses anteriores", n: mesesAnt, color: "#7A5AF0", carry: true });
+  if (panelRow && panelRow.cierres) chRows.push({ lbl: "🛒 Sin ficha en Kommo", n: panelRow.cierres, color: "#D98300", carry: true, detail: chDetail(panelRow) });
   chRows.sort((a, b) => b.n - a.n);
   const originShareRow = (r, i) => {
     const pct = G.cierres ? Math.round(r.n / G.cierres * 100) : 0;
@@ -4506,7 +4537,10 @@ function ViewResumen() {
     className: "num"
   }, fmtMoney(G.pipeline)), " pipeline")), /*#__PURE__*/React.createElement("p", {
     className: "rhero-sub"
-  }, "Actualizado ", D.updated, " \xB7 datos en vivo desde Kommo. El an\xE1lisis del mes vive en la pesta\xF1a de inteligencia."), /*#__PURE__*/React.createElement("button", {
+  }, "Actualizado ", D.updated, " \xB7 datos en vivo desde Kommo. El an\xE1lisis del mes vive en la pesta\xF1a de inteligencia."), PSF && /*#__PURE__*/React.createElement("p", {
+    className: "rhero-sub pz-nota",
+    style: { marginTop: 4 }
+  }, pzTxt(PSF)), /*#__PURE__*/React.createElement("button", {
     className: "btn pri diag2-cta",
     onClick: () => window.__go("analisis")
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -4636,9 +4670,9 @@ function ViewResumen() {
     ac: "#159A57",
     ico: "trophy",
     tip: "Monto de deals que llegaron a Compradores (revenue confirmado).",
-    detail: mkDetail("Cerrado en el mes", "trophy", "#159A57", fmtMoney(cerradoTotal), "Monto de los deals que cada vendedora llev\xF3 a la etapa Compradores este mes.", v => v.value || 0, n => fmtMoney(n)),
+    detail: mkDetail("Cerrado en el mes", "trophy", "#159A57", fmtMoney(cerradoTotal), "Monto de los deals que cada vendedora llev\xF3 a la etapa Compradores este mes." + (PSF ? " " + pzTxt(PSF) : ""), v => v.value || 0, n => fmtMoney(n)),
     spark: sparkOf(cerradoTotal, pCerrado),
-    sub: `${G.cierres} compradores`
+    sub: PSF && PSF.c ? `${G.cierres} compradores · 🛒 ${PSF.c} sin ficha en Kommo` : `${G.cierres} compradores`
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Pipeline total",
     num: G.pipeline,
@@ -4646,9 +4680,9 @@ function ViewResumen() {
     ac: "#00B5AD",
     ico: "proyeccion",
     tip: "Valor de todos los deals en todas las etapas.",
-    detail: mkDetail("Pipeline total", "proyeccion", "#00B5AD", fmtMoney(G.pipeline), "Valor de todos los deals abiertos de cada vendedora, en todas las etapas.", v => v.pipeline || 0, n => fmtMoney(n)),
+    detail: mkDetail("Pipeline total", "proyeccion", "#00B5AD", fmtMoney(G.pipeline), "Valor de todos los deals abiertos de cada vendedora, en todas las etapas." + (PSF ? " " + pzTxt(PSF) : ""), v => v.pipeline || 0, n => fmtMoney(n)),
     spark: sparkOf(G.pipeline),
-    sub: "todas las etapas"
+    sub: PSF && PSF.p ? `todas las etapas · 🛒 ${PSF.p} por entregar` : "todas las etapas"
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Sin seguimiento",
     num: D.metrics.backlogPct,
@@ -5908,7 +5942,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "v num"
       }, v.cierres), /*#__PURE__*/React.createElement("div", {
         className: "l"
-      }, "Cierres")), /*#__PURE__*/React.createElement("div", {
+      }, "Cierres"), v.panel && v.panel.c ? /*#__PURE__*/React.createElement("div", {
+        className: "pz-sub", title: pzTxt(v.panel),
+        style: { marginTop: 2, fontSize: ".6rem", fontWeight: 700, color: "var(--muted)" }
+      }, "🛒 +", v.panel.c, " sin ficha") : null), /*#__PURE__*/React.createElement("div", {
         className: "tm"
       }, /*#__PURE__*/React.createElement("div", {
         className: "v num",
@@ -5917,7 +5954,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, v.pipeline ? money(v.pipeline) : "—"), /*#__PURE__*/React.createElement("div", {
         className: "l"
-      }, "Pipeline")), /*#__PURE__*/React.createElement("div", {
+      }, "Pipeline"), v.panel && v.panel.p ? /*#__PURE__*/React.createElement("div", {
+        className: "pz-sub", title: pzTxt(v.panel),
+        style: { marginTop: 2, fontSize: ".6rem", fontWeight: 700, color: "var(--muted)" }
+      }, "🛒 ", v.panel.p, " por entregar") : null), /*#__PURE__*/React.createElement("div", {
         className: "tm"
       }, /*#__PURE__*/React.createElement("div", {
         className: "v num",
