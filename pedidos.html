@@ -5618,6 +5618,21 @@ html.cc-on .ci-carril:hover .ci-van{ animation-play-state:paused; }
 .cie-r1 .cie-acc{ display:inline-flex; gap:6px; margin-left:auto; }
 .cie-r1 .cie-acc .btn{ white-space:nowrap; }
 .cie-r1-ayuda{ font-size:.8rem; color:#24504e; background:#f1faf9; border:1px solid #cfe9e7; border-radius:10px; padding:6px 10px; margin:0 0 8px; }
+/* 🗂️ (15/11, mejora 284) Mis pedidos: lo entregado y pagado en renglones */
+.mis-cf-sep{ grid-column:1/-1; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:10px 0 2px; padding:8px 12px; border-radius:12px; background:#ecfaf2; border:1px solid #bfe8d0; color:#0a6b47; font-size:.86rem; }
+.mis-cf-sep small{ color:#3f7d63; }
+.mis-cf-modo{ margin-left:auto; font:inherit; font-size:.76rem; font-weight:700; border:1px solid #9ad9b6; background:#fff; color:#0a6b47; border-radius:999px; padding:4px 11px; cursor:pointer; }
+.mis-cf{ grid-column:1/-1; display:flex; align-items:center; gap:10px; min-height:40px; padding:6px 12px; background:#fff; border:1px solid #e3eaea; border-left:4px solid #22A06B; border-radius:11px; cursor:pointer; font-size:.84rem; color:#2d3b3b; }
+.mis-cf:hover{ background:#f6fbfa; border-color:#cfe3e2; }
+.mis-cf:focus-visible{ outline:3px solid #00B5AD; outline-offset:1px; }
+.mis-cf-ok{ flex:none; width:22px; height:22px; border-radius:50%; background:#dcfce7; color:#16a34a; display:grid; place-items:center; font-weight:900; font-size:.8rem; }
+.mis-cf-n{ flex:none; min-width:22px; color:#7b8b8b; font-weight:700; font-size:.76rem; text-align:right; }
+.mis-cf-d{ flex:none; width:82px; color:#5b6b6b; white-space:nowrap; }
+.mis-cf-cli{ flex:0 1 230px; min-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#132626; }
+.mis-cf-p{ flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#4d5b5b; }
+.mis-cf-p i{ font-style:normal; color:#7b8b8b; } .mis-cf-p em{ font-style:normal; color:#9aa9a9; }
+.mis-cf-pag{ flex:none; font-size:.72rem; font-weight:800; color:#0a6b47; background:#dcfce7; border-radius:999px; padding:2px 9px; }
+.mis-cf-v{ flex:none; color:#7b8b8b; }
 /* ✅ (15/11, mejora 289) el botón que copió dice «Copiado» 2 segundos, del mismo tamaño */
 button.cp-ok{ background:#0f766e!important; color:#fff!important; border-color:#0f766e!important; background-image:none!important; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; transition:none!important; }
 button.cp-ok .cp-tick{ width:15px; height:15px; vertical-align:-3px; margin-right:4px; fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:24; stroke-dashoffset:24; animation:cpTilde .35s ease forwards .05s; }
@@ -39054,6 +39069,12 @@ function renderMis(){
   /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
      dijera que faltaban 180. Ahora lo dice y deja ver más. */
   var verNota=misVeNota(v);                         // (07/10) la nota de venta, solo a Eduardo
+  /* 🗂️ (15/11, mejora 284) lo entregado y pagado va al final, en renglones, después de su separador */
+  MIS_CF_PRIMERO=null; MIS_CF_N=0; MIS_CF_CTX={ todos:todos, verNota:verNota };
+  if(misCompactoActivo()){
+    var _cf=lista.filter(misEsCompacta);
+    if(_cf.length){ lista=lista.filter(function(x){ return !misEsCompacta(x); }).concat(_cf); MIS_CF_N=_cf.length; MIS_CF_PRIMERO=String(_cf[0].id); }
+  }
   var _tope=trozosActivo() ? lista.length : MIS_TOPE;   // ⚡ (§4oa, H4) de a partes, el «Ver más» del trozo es el único; sin trozos (las pruebas), el corte de 120
   tbl.innerHTML=trozosHtml('mis', lista.slice(0,_tope), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
     (lista.length>_tope ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
@@ -39090,7 +39111,49 @@ function misNotaTxt(p){
 }
 /* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
    en el celular, que es donde las vendedoras miran esto. */
+/* ============================================================================
+   🗂️ (15/11, mejora 284) MIS PEDIDOS: LO ENTREGADO Y PAGADO, EN UNA LÍNEA. Carola en «📋 Todos» tenía 129 tarjetas: 8 por entregar y 121
+   entregadas, cada una de ~390 px con su viaje y sus botones; con las primeras 30 la página ya medía 8.300 px. Ahora lo entregado y pagado
+   (o que no se cobra: ATC y RPT) va al final, después de un separador «✅ Entregados y pagados · 121», en renglones de ~40 px: ✓, día,
+   cliente, producto principal y «pagado». Tocar el renglón lo abre entero, con sus botones. Lo que está por entregar y lo entregado CON
+   saldo (o sin monto anotado) quedan como tarjetas grandes, como siempre. Por aparato, «Ver como tarjetas» vuelve a lo de antes
+   (`me_mis_compacto`). Solo presentación. En Playwright, como siempre salvo `window.MIS_COMPACTO_PRUEBA`. */
+var MIS_CF_ABIERTAS={}, MIS_CF_PRIMERO=null, MIS_CF_N=0, MIS_CF_CTX={ todos:false, verNota:false }, LS_MIS_COMPACTO='me_mis_compacto';
+function misCompactoPuede(){ try{ return !navigator.webdriver || !!window.MIS_COMPACTO_PRUEBA; }catch(e){ return true; } }
+function misCompactoActivo(){ if(!misCompactoPuede()) return false; try{ return localStorage.getItem(LS_MIS_COMPACTO)!=='0'; }catch(e){ return true; } }
+function misCompactoPoner(on){ try{ localStorage.setItem(LS_MIS_COMPACTO, on?'1':'0'); }catch(e){} MIS_CF_ABIERTAS={}; renderMis(); }
+/* ¿Va en un renglón? Entregado y sin nada por cobrar (pagado, o una ATC/RPT que no se cobra). Sin monto anotado, no: eso pide algo. */
+function misEsCompacta(p){
+  if(!p || !p.entregado) return false;
+  if(noSeCobra(p) || p.pagado) return true;
+  try{ return cobrosVisibles(p).length>0 && (Number(p.saldo)||0)<=0.005; }catch(e){ return false; }
+}
+function misCfSepHtml(n){
+  return '<div class="mis-cf-sep"><span>✅ Entregados y pagados · <b>'+n+'</b></span><small>tocá uno para verlo entero</small>'+
+    '<button type="button" class="mis-cf-modo" onclick="misCompactoPoner(false)">Ver como tarjetas</button></div>';
+}
+function misCfFilaHtml(p, n){
+  var pr=(p.productos||[]).filter(function(x){ return String(x.desc||'').trim(); }), x0=pr[0];
+  var prod=x0 ? (String(x0.desc||'').trim()+(x0.medida?(' '+String(x0.medida).trim()):'')+((Number(x0.cant)||1)>1?(' ×'+x0.cant):'')) : '—';
+  var dia='', f=fechaSalida(p); try{ dia=(['dom','lun','mar','mié','jue','vie','sáb'][dowDe(f)]||'')+' '+fmtFechaCorta(f); }catch(e){ dia=f||''; }
+  return '<div class="mis-cf" data-id="'+esc(String(p.id))+'" data-n="'+esc(String(n))+'" role="button" tabindex="0" onclick="misCompactaAbrir(this.getAttribute(\'data-id\'))" title="Tocá para ver la tarjeta entera">'+
+    '<span class="mis-cf-ok" aria-hidden="true">✓</span><span class="mis-cf-n">'+esc(String(n))+'</span><span class="mis-cf-d">'+esc(dia)+'</span>'+
+    '<b class="mis-cf-cli">'+esc(p.cliente||'—')+'</b>'+
+    '<span class="mis-cf-p">'+esc(prod)+(pr.length>1?(' <i>+'+(pr.length-1)+'</i>'):'')+(p.oc?(' <em>· '+esc(ocEtiq(p.oc))+'</em>'):'')+'</span>'+
+    '<span class="mis-cf-pag">'+(noSeCobra(p)?'no se cobra':'pagado')+'</span><span class="mis-cf-v" aria-hidden="true">▾</span></div>';
+}
+function misCompactaAbrir(id){
+  id=String(id); MIS_CF_ABIERTAS[id]=1;
+  var el=document.querySelector('#mis-lista .mis-cf[data-id="'+CSS.escape(id)+'"]'), p=findById(id);
+  if(el && p) el.outerHTML=misCardHtmlBase(p, Number(el.getAttribute('data-n'))||'', MIS_CF_CTX.todos, MIS_CF_CTX.verNota);
+}
 function misCardHtml(p, n, todos, verNota){
+  if(!misCompactoActivo()) return misCardHtmlBase(p, n, todos, verNota);
+  var sep=(MIS_CF_PRIMERO!=null && String(p.id)===MIS_CF_PRIMERO) ? misCfSepHtml(MIS_CF_N) : '';
+  if(misEsCompacta(p) && !MIS_CF_ABIERTAS[String(p.id)]) return sep+misCfFilaHtml(p, n);
+  return sep+misCardHtmlBase(p, n, todos, verNota);
+}
+function misCardHtmlBase(p, n, todos, verNota){
   if(verNota===undefined) verNota=misVeNota();
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
