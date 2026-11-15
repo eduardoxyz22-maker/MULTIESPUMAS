@@ -5546,6 +5546,24 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .cie-rp-av{ background:var(--amber-lt); border:1px solid var(--amber-border); border-radius:10px; padding:8px 11px; color:#8a5a00; font-size:.8rem; }
 .cie-rp-ok{ background:#b45309!important; color:#fff!important; border-color:#b45309!important; }
 .cie-rp-hechos{ margin:0 0 10px; padding:8px 11px; border-radius:10px; background:#fff7ed; border:1px solid #fed7aa; font-size:.82rem; display:grid; gap:2px; }
+/* 🧾 (15/11, mejora 290) el cierre en un renglón: lo largo se recorta con «…» (dice todo con el mouse) y el renglón se parte solo si no entra */
+.cie-r1 > *{ flex:none; }
+.cie-r1 .cie-oc{ white-space:nowrap; }
+.cie-r1 .cie-cli{ flex:1 1 120px; min-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cie-r1 .cie-zona{ max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+.cie-r1 .cie-tur, .cie-r1 .cie-gps{ white-space:nowrap; }
+.cie-r1 .cie-veh{ max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+.cie-r1 .cie-cam-in{ display:inline-flex; align-items:center; gap:6px; }
+.cie-r1 .cie-cam-in.ret{ max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); font-size:.8rem; display:inline-block; }
+.cie-r1 .cie-cam-sel{ width:auto!important; min-width:150px; max-width:210px; min-height:34px; padding:4px 8px; font-size:.82rem; border:1px solid #bfd3d6; border-radius:9px; background:#fff; color:var(--text); cursor:pointer; }
+.cie-r1 .cie-cam-sel.gps{ border-color:#00B5AD; background:#E6F7F6; color:#00706b; font-weight:700; }
+.cie-r1 .cie-cam-sel.elegido{ border-color:#00A09A; font-weight:700; }
+.cie-gps-chip{ display:inline-flex; align-items:center; gap:3px; font-size:.7rem; font-weight:800; color:#00706b; background:#E6F7F6; border:1px solid #99DDD9; border-radius:999px; padding:1px 8px 1px 6px; white-space:nowrap; line-height:1.5; vertical-align:middle; }
+.cie-gps-ico{ width:12px; height:12px; flex:none; }
+.cie-r1 .cie-gps-asig{ padding:3px 9px; font-size:.74rem; background:#1d4ed8; color:#fff; border-color:#1d4ed8; white-space:nowrap; }
+.cie-r1 .cie-acc{ display:inline-flex; gap:6px; margin-left:auto; }
+.cie-r1 .cie-acc .btn{ white-space:nowrap; }
+.cie-r1-ayuda{ font-size:.8rem; color:#24504e; background:#f1faf9; border:1px solid #cfe9e7; border-radius:10px; padding:6px 10px; margin:0 0 8px; }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📇 (14/10) Clientes para Excel */
 .cli-ctl{ padding:11px 14px; background:#fff; border-bottom:1px solid var(--gray-md); display:flex; gap:12px 22px; flex-wrap:wrap; align-items:flex-start; }
@@ -53827,6 +53845,7 @@ function abrirCierreEntregas(){
 }
 function cierreEntFila(p, atrasado){
   var on=!!CIERRE_ENT_SEL[p.id], hoy=todayStr();
+  if(cieRenglonActivo()) return cieRenglonFila(p, atrasado);   // 🧾 (15/11, mejora 290) el camión en el mismo renglón
   return '<label class="cie-row'+(atrasado?' atr':'')+'" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
     '<input type="checkbox" class="cie-ent-chk" data-id="'+esc(String(p.id))+'"'+(on?' checked':'')+' onchange="cierreEntToggle(this.getAttribute(\'data-id\'), this.checked)" style="width:18px;height:18px">'+
     '<b>'+esc(ocEtiq(p.oc)||'—')+'</b>'+
@@ -53885,8 +53904,67 @@ function cierreEntCamHtml(p){
 function cierreEntCamElegir(id, v){
   id=String(id); CIERRE_ENT_CAM[id]=VEHICULOS[v] ? v : '';
   var p=findById(id), el=document.querySelector('#modal-box .cie-cam[data-id="'+CSS.escape(id)+'"]');
-  if(p && el) el.outerHTML=cierreEntCamHtml(p);
+  if(p && el) el.outerHTML=el.classList.contains('cie-cam-in') ? cieRenglonCamHtml(p) : cierreEntCamHtml(p);   // 🧾 (mejora 290) el del renglón
 }
+/* ============================================================================
+   🧾 (15/11, mejora 290) CIERRE DE ENTREGAS: UN RENGLÓN POR PEDIDO. El dueño: «ok pero hay que mejorarlo, veo íconos superpuestos». Con
+   la planilla real del lunes 16/11 los 26 pedidos del cierre llevaban una segunda línea «🚚 ¿Qué camión lo llevó?» (idea 203): la lista
+   medía 3.243 px. Ahora, en la compu, el selector del camión va EN el renglón (entre el turno y «📅 No salió»), el que propone el GPS se
+   ve en turquesa con una pastilla «🛰️ GPS» AL LADO (nunca adentro del selector: un emoji en una opción se dibuja encima de la letra en
+   algunos aparatos) y lo largo (cliente, zona, lo que vio el GPS) se recorta con «…» y dice todo al pasar el mouse. El renglón se parte
+   (flex-wrap) solo si no entra: nada se encima. Es SOLO presentación: el mismo `CIERRE_ENT_CAM`, `cierreEntCamElegir`, `plan.cam` y el
+   mismo guardado al confirmar (`cierreEntAplicar` → `cierreEntCamPoner`); el «🚚 Asignar» del GPS (idea 133) sigue, en chico.
+   En Playwright, como antes, salvo `window.CIE_RENGLON_PRUEBA`. */
+function cieRenglonActivo(){ try{ return !navigator.webdriver || !!window.CIE_RENGLON_PRUEBA; }catch(e){ return true; } }
+/* El camión del renglón: el selector (sin camión), «lo retira el cliente» o el camión que ya tiene. */
+function cieRenglonCamHtml(p){
+  var id=String(p.id), r=cierreEntRetira(p);
+  if(vehiculoDe(p)) return '<span class="cie-veh" title="'+esc(vehiculoDe(p)+(p.chofer?(' · '+p.chofer):''))+'">🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>';
+  if(r) return '<span class="cie-cam ret cie-cam-in" data-id="'+esc(id)+'" title="'+esc('Lo retiró el cliente en '+r.donde+': no lleva camión.')+'">🏬 lo retiró en '+esc(r.donde)+'</span>';
+  var v=cierreEntCamElegido(p), o=cierreEntCamGps(p), gps=!!(o && v===o.veh);
+  return '<span class="cie-cam cie-cam-in" data-id="'+esc(id)+'">'+
+    '<select id="cie-cam-'+esc(id)+'" class="cie-cam-sel'+(gps?' gps':(v?' elegido':''))+'" data-id="'+esc(id)+'" aria-label="¿Qué camión lo llevó?" title="'+
+      esc(v ? 'Se guarda al confirmar, con el chofer que iba en ese camión ese día' : 'Si salió, elegí qué camión lo llevó (se guarda al confirmar)')+'" '+
+      'onchange="cierreEntCamElegir(this.getAttribute(\'data-id\'), this.value)">'+camOpcionesHtml(v, '¿Qué camión lo llevó?')+'</select>'+
+    (gps ? ('<span class="cie-gps-chip" title="'+esc('Lo dice el GPS: '+gpsCamionQuienTxt(o)+' se paró en su puerta. Es una propuesta: cambialo si no fue ese.')+'">'+CIE_GPS_ICO+'GPS</span>') : '')+
+  '</span>';
+}
+/* Lo que vio el GPS, corto (lo largo queda en el `title`). */
+function cieRenglonGpsHtml(p){
+  var g=cierreEntGps(p); if(!g) return '';
+  if(g.k==='vio') return '<span class="badge cie-gps vio" title="'+esc('📍 '+gpsLlegadaTxt(g.ll)+'. Lo dice el GPS: no es un ✅, tildalo si se entregó')+'">📍 '+(g.ll.abierta?'ahí desde ':'llegó ')+esc(gpsHoraTxt(g.ll.t0))+'</span>';
+  if(g.k==='novio') return '<span class="badge b-amber cie-gps novio" title="El camión ya volvió y el GPS no lo vio parado cerca de este pedido">🛰️ no se paró ahí</span>';
+  if(g.k==='aprox') return '<span class="badge b-gray cie-gps aprox" title="La ubicación es aproximada (por la dirección escrita): el GPS no puede asegurar si se paró ahí">≈ ubicación aproximada</span>';
+  return '<span class="badge b-gray cie-gps sinpin" title="El pedido no tiene ubicación: el GPS no puede decir si pasó">sin ubicación</span>';
+}
+function cieRenglonFila(p, atrasado){
+  var on=!!CIERRE_ENT_SEL[p.id], id=esc(String(p.id)), oc=ocEtiq(p.oc)||'—', cli=p.cliente||'(sin cliente)', o=atrasado ? null : gpsCamionPropDe(p);
+  return '<label class="cie-row cie-r1'+(atrasado?' atr':'')+'" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem;cursor:pointer">'+
+    '<input type="checkbox" class="cie-ent-chk" data-id="'+id+'"'+(on?' checked':'')+' onchange="cierreEntToggle(this.getAttribute(\'data-id\'), this.checked)" style="width:18px;height:18px">'+
+    '<b class="cie-oc">'+esc(oc)+'</b>'+
+    '<span class="cie-cli" title="'+esc(cli)+'">'+esc(cli)+'</span>'+
+    (p.zona ? ('<span class="cie-zona" title="'+esc(p.zona)+'">'+esc(p.zona)+'</span>') : '')+
+    '<span class="badge b-gray cie-tur">'+(normTurno(p.turno)==='PM'?'🌆 PM':'🌅 AM')+'</span>'+
+    cieRenglonCamHtml(p)+
+    (atrasado ? '' : cieRenglonGpsHtml(p))+
+    (o ? ('<button type="button" class="btn btn-sm cie-gps-cam-btn cie-gps-asig" data-id="'+id+'" title="'+esc('Lo dice el GPS: '+gpsCamionQuienTxt(o)+'. «Asignar» lo guarda ya, sin confirmar la entrega.')+'" '+
+      'onclick="event.preventDefault();event.stopPropagation();gpsCamionAsignar(this.getAttribute(\'data-id\'), \'cie\')">🚚 Asignar</button>') : '')+   // idea 133, en chico
+    (atrasado ? ('<span class="badge b-amber">para el '+esc(fmtFechaCorta(p.fecha))+'</span>') : '')+
+    '<span class="cie-acc">'+
+      '<button type="button" class="btn btn-ghost btn-sm cie-rp-btn'+(CIERRE_ENT_RP.id===String(p.id)?' on':'')+'" data-id="'+id+'" onclick="event.preventDefault();cierreEntRpAbrir(this.getAttribute(\'data-id\'))" title="No salió: reprogramalo a otro día sin salir del cierre">📅 No salió</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-id="'+id+'" onclick="event.preventDefault();showPedidoModal(this.getAttribute(\'data-id\'))">Ver</button>'+
+    '</span>'+
+  '</label>'+
+  (atrasado ? cierreEntDiaHtml(p) : '')+cierreEntRpHtml(p);
+}
+/* La línea de arriba que explica el selector (solo si algún renglón lo tiene). */
+function cieRenglonAyudaHtml(L){
+  if(!cieRenglonActivo() || !(L||[]).some(cierreEntCamPide)) return '';
+  return '<div class="cie-r1-ayuda">🚚 Los que no tienen camión traen el selector en su renglón: elegí cuál lo llevó (se guarda al confirmar, con el chofer de ese camión ese día). '+
+    '<span class="cie-gps-chip">'+CIE_GPS_ICO+'GPS</span> = lo propone el GPS.</div>';
+}
+/* La antenita de la pastilla, dibujada (un emoji 🛰️ se ve distinto en cada aparato y en algunos pisa la letra). */
+var CIE_GPS_ICO='<svg class="cie-gps-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="10" r="2" fill="currentColor"/><path d="M4.6 6.6a4.8 4.8 0 0 1 6.8 0M2.4 4.4a7.9 7.9 0 0 1 11.2 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 /* Pone el camión elegido (y el chofer de ese camión ese día, si no tenía) en UN pedido ya releído. No pisa nada. */
 function cierreEntCamPoner(p, veh){
   if(!p || !veh || !VEHICULOS[veh] || vehiculoDe(p)) return false;
@@ -54087,6 +54165,7 @@ function renderCierreEntregas(){
       '<input id="cie-ent-quien" type="text" value="'+esc(_qv!=null?_qv:cierreEntQuien())+'" placeholder="Nombre" style="width:220px" autocomplete="off"></div>'+
     cierreEntGpsResumenHtml(H)+
     cierreEntRpHechosHtml()+
+    cieRenglonAyudaHtml(H.concat(A))+   // 🧾 (mejora 290)
     '<div class="cie-sec" style="font-weight:700;font-size:.9rem;margin:6px 0 2px">Programados para hoy · '+H.length+'</div>'+
     (H.length ? H.map(function(p){ return cierreEntFila(p,false); }).join('') : '<div style="font-size:.86rem;color:var(--muted);padding:6px 0">No queda ninguno sin confirmar.</div>')+
     (A.length ? ('<div class="cie-sec atr" style="font-weight:700;font-size:.9rem;margin:14px 0 2px">Atrasados (fecha pasada, sin confirmar) · '+A.length+'</div>'+
