@@ -3291,6 +3291,20 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         <label class="lb">Dirección</label>
         <textarea id="f-direccion" placeholder="Calle, número, referencia…"></textarea>
       </div>
+      <!-- 🚌 (15/11, 311) los envíos al interior por transportadora: lo que logística necesita, en su lugar (`flota*`) -->
+      <div class="vd-flota solo-entrega no-print" id="wrap-flota" hidden>
+        <label class="vd-flota-sw"><input type="checkbox" id="f-flota" onchange="flotaPintar(true)"> 🚌 Va por flota (al interior)</label>
+        <div id="f-flota-box" hidden>
+          <div class="vd-flota-gr">
+            <div class="field"><label class="lb" for="f-flota-emp">Empresa</label><input type="text" id="f-flota-emp" list="dl-flotas" placeholder="Ej. Trans Guarayos" autocomplete="off"></div>
+            <div class="field"><label class="lb" for="f-flota-ciu">Ciudad</label><input type="text" id="f-flota-ciu" placeholder="Ej. Concepción" autocomplete="off"></div>
+            <div class="field"><label class="lb" for="f-flota-rec">Lo recibe allá <span class="hint">(nombre y celular)</span></label><input type="text" id="f-flota-rec" placeholder="Ej. Juana Pérez · 7…" autocomplete="off"></div>
+            <div class="field"><label class="lb">Flete de la flota</label><div class="seg" id="f-flota-pago"><button type="button" data-val="X" class="active">Por pagar</button><button type="button" data-val="P">Pagado</button></div></div>
+          </div>
+          <datalist id="dl-flotas"></datalist>
+          <div class="vd-flota-prev" id="f-flota-prev"></div>
+        </div>
+      </div>
 
       <!-- 🎧 TODA la sección se esconde en una ATC (§4bt): no se cobra nada, y de hecho
            `fueraDeConta` ya deja las ATC fuera de Contabilidad y del Cuadre — o sea que lo
@@ -7639,6 +7653,13 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-ai-ck.vd-on{background:#10b981;border-color:#10b981}
 .vd-ai-fin{margin-top:10px;text-align:center;font-size:.86rem;color:#5b7480}
 .vd-ai-fin.vd-on{color:#0a6b47;font-weight:800;font-size:.95rem}
+/* 311 · va por flota */
+.vd-flota{background:#fffaf0;border:1px solid #f1dfb0;border-radius:12px;padding:10px 13px;margin:0 0 14px}
+.vd-flota-sw{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem;color:#5a3d00;cursor:pointer}
+.vd-flota-sw input{width:18px;height:18px}
+.vd-flota-gr{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:8px}
+.vd-flota-gr .field{margin-bottom:6px}
+.vd-flota-prev{font-size:.78rem;color:#5b7480;margin-top:2px}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -36333,6 +36354,7 @@ function misHacerDatos(v, mine){
   MIS_LISTAS.saldoAnt={ t:'🗓️ Saldo de meses anteriores · '+fmtBs(aBs), s:'Ya las entregaste y siguen sin cobrarse. No son ventas de este mes.', L:ant, m:function(p){ return fmtBs(contaFaltaCobrar(p)); } };
   add({ sev:'a', ic:'🗓️', n:ant.length, t:'Saldo de meses anteriores', s:fmtBs(aBs)+' · '+misNom2(ant)+' · ya entregadas', b:'Ver', fn:"misVerLista('saldoAnt')" });
   try{ var w=waRespDeVend(v); add({ sev:'i', ic:'💬', n:w.length, t:'Clientes que contestaron al bot', s:'leelos y tocá «Ya lo atendí»', b:'Leer', fn:"misIrA('wa-resp-mis')", ok:'Sin respuestas del bot' }); }catch(e){}
+  try{ add(flotaGuiaItem(mine)); }catch(e){}   // 🚌 (15/11, 311) «📸 Subí la foto de la guía»
   var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
   I.ok=OK; return I;
 }
@@ -69794,6 +69816,82 @@ function pcobAlGuardar(rec, prev){
   if(!pcobVa()){ if(prev && pcobDe(prev) && pcobCobra(rec)) setPcob(rec, pcobDe(prev)); return; }
   setPcob(rec, (pcobFormAplica() && PCOB_SEL) ? PCOB_SEL : '');
 }
+
+/* ---------------------------------------------------------------------------
+   🚌 311 · «VA POR FLOTA»: LOS ENVÍOS AL INTERIOR
+   Casilla junto a la dirección: empresa, ciudad, quién lo recibe allá y el flete de la flota «Por pagar» (de entrada: dueño, *«siempre
+   enviamos por pagar»*) o «Pagado». Al prenderla, lo VACÍO se pone solo: zona BIMODAL, la ubicación aproximada de la terminal Bimodal
+   (`&aprox=1`: cada transportadora está en su puesto alrededor; las ubicaciones reales de noviembre caen ahí) y la dirección
+   «TRANSPORTADORA <empresa> — enviar a <ciudad>»; apagarla saca solo lo que puso ella. Viaja adentro de los productos
+   (`flota:{e,c,r,p}`). Logística lo ve como etiqueta «🚌 Trans Guarayos → Concepción · por pagar» (ficha y Lista de carga) y en Mis pedidos
+   sale «📸 Subí la foto de la guía» (la foto queda en las fotos de la entrega, `pedirFoto`). FLOTA_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var FLOTA_PIN='https://www.google.com/maps?q=-17.7868,-63.1624&aprox=1', FLOTA_ZONA='BIMODAL', FLOTA_AUTO={ z:'', m:'', d:'' }, FLOTA_GUIA_DIAS=20;
+var FLOTA_EMPRESAS=['Trans Guarayos','Bioceánica','San Jorge','Trans Unificado','Divino Niño','Cosmos','Expreso Tarija','Flota Yungueña','Trans Moxos','Quilquincho','Santa Cruz 2','Imperio','Chino Bus','Águila Amazónico'];
+function flotaVa(){ return vdVa('FLOTA_PRUEBA'); }
+function flotaDe(p){ var v=null; ((p&&p.productos)||[]).some(function(x){ if(x && x.flota && typeof x.flota==='object' && (x.flota.e || x.flota.c)){ v=x.flota; return true; } return false; }); return v; }
+function setFlota(p, f){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(f && (f.e || f.c)) x.flota={ e:String(f.e||''), c:String(f.c||''), r:String(f.r||''), p:(f.p==='P') ? 'P' : 'X' }; else delete x.flota; }); }
+function flotaTxt(f){ if(!f) return ''; return [String(f.e||'').trim(), f.c ? ('→ '+String(f.c).trim()) : ''].filter(Boolean).join(' ')+' · '+((f.p==='P') ? 'flete pagado' : 'por pagar'); }
+function flotaFormAplica(){ return flotaVa() && docTipoSel()==='OC' && !VENTA_TIENDA; }
+function flotaForm(){
+  var v=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  return { e:v('f-flota-emp'), c:v('f-flota-ciu'), r:v('f-flota-rec'), p:(segVal('f-flota-pago')==='P') ? 'P' : 'X' };
+}
+function flotaOn(){ var ck=document.getElementById('f-flota'); return !!(flotaFormAplica() && ck && ck.checked); }
+function flotaPintar(tocado){
+  var w=document.getElementById('wrap-flota'); if(!w) return;
+  w.hidden=!flotaFormAplica();
+  var on=flotaOn(), box=document.getElementById('f-flota-box'); if(box) box.hidden=!on;
+  if(tocado) flotaAuto(on);
+  var pv=document.getElementById('f-flota-prev'), ff=flotaForm();
+  if(pv) pv.textContent=!on ? '' : ((ff.e || ff.c) ? ('Logística lo ve así: 🚌 '+flotaTxt(ff)) : ('Poné la empresa y la ciudad: logística lo ve como etiqueta en la ficha y en la carga ('+((ff.p==='P')?'flete pagado':'por pagar')+').'));
+}
+function flotaAuto(on){
+  var z=document.getElementById('f-zona'), m=document.getElementById('f-maps'), d=document.getElementById('f-direccion');
+  if(on){
+    if(z && !String(z.value||'').trim()){ z.value=FLOTA_ZONA; FLOTA_AUTO.z=FLOTA_ZONA; }
+    if(m && !String(m.value||'').trim()){ m.value=FLOTA_PIN; FLOTA_AUTO.m=FLOTA_PIN; try{ fxMapaProgramar(); }catch(e){} }
+    flotaDirAuto();
+  }else{
+    if(z && FLOTA_AUTO.z && z.value===FLOTA_AUTO.z) z.value='';
+    if(m && FLOTA_AUTO.m && m.value===FLOTA_AUTO.m){ m.value=''; try{ fxMapaProgramar(); }catch(e){} }
+    if(d && FLOTA_AUTO.d && d.value===FLOTA_AUTO.d) d.value='';
+    FLOTA_AUTO={ z:'', m:'', d:'' };
+  }
+}
+function flotaDirAuto(){
+  var d=document.getElementById('f-direccion'); if(!d || !flotaOn()) return;
+  var f=flotaForm(), txt='TRANSPORTADORA '+(f.e ? f.e.toUpperCase() : 'ZONA BIMODAL')+(f.c ? (' — enviar a '+f.c.toUpperCase()) : '');
+  if(!String(d.value||'').trim() || d.value===FLOTA_AUTO.d){ d.value=txt; FLOTA_AUTO.d=txt; }
+}
+function flotaCargar(p){
+  var f=p ? flotaDe(p) : null, ck=document.getElementById('f-flota');
+  if(ck) ck.checked=!!f;
+  var pon=function(id, v){ var e=document.getElementById(id); if(e) e.value=String(v||''); };
+  pon('f-flota-emp', f && f.e); pon('f-flota-ciu', f && f.c); pon('f-flota-rec', f && f.r);
+  segSet('f-flota-pago', (f && f.p==='P') ? 'P' : 'X');
+  FLOTA_AUTO={ z:'', m:'', d:'' };
+  flotaPintar(false); setTimeout(function(){ try{ flotaPintar(false); }catch(e){} }, 0);   // al editar, el tipo y la venta de tienda se ponen después
+}
+function flotaAlGuardar(rec, prev){
+  if(!flotaVa()){ if(prev && flotaDe(prev)) setFlota(rec, flotaDe(prev)); return; }
+  setFlota(rec, flotaOn() ? flotaForm() : null);
+}
+/* «📸 Subí la foto de la guía»: lo que ya salió (✅ o fecha pasada), de los últimos FLOTA_GUIA_DIAS días, sin ninguna foto de la entrega. */
+function flotaGuiaItem(mine){
+  if(!flotaVa()) return null;
+  var hoy=todayStr(), desde=stockSumarDias(hoy, -FLOTA_GUIA_DIAS);
+  var L=(mine||[]).filter(function(p){
+    if(!p || !flotaDe(p) || esFilaSistema(p) || esBorrador(p)) return false;
+    var fs=String(p.fecha||''); if(!(p.entregado || (fs && fs<=hoy)) || (fs && fs<desde)) return false;
+    return !fotosEntregaDe(p).length;
+  });
+  MIS_LISTAS.flotaGuia={ t:'📸 Subí la foto de la guía de la flota', s:'Tocá cada pedido para elegir la foto de la guía: queda en las fotos de la entrega y se la mandás al cliente por WhatsApp.', L:L, abrir:'flotaGuiaSubir',
+    m:function(p){ return esc('🚌 '+flotaTxt(flotaDe(p))); } };
+  return { sev:'a', ic:'📸', n:L.length, t:'Subí la foto de la guía de la flota', s:misNom2(L)+' · para mandársela al cliente', b:'Subir', fn:"misVerLista('flotaGuia')" };
+}
+function flotaGuiaSubir(id){ if(!findById(id)){ toast('Ese pedido ya no está en la lista.','err'); return; } pedirFoto(id); }
+
 
 /* ---------------------------------------------------------------------------
    ✅ 309 · ¿TIENE EL PANEL AL DÍA? UNA FILA POR VENDEDORA
