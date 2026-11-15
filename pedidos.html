@@ -1855,6 +1855,31 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .desh.ver .desh-barra{ animation:desh-barra 5s linear forwards; }
 @keyframes desh-barra{ to{ transform:scaleX(0); } }
 body.desh-on .toast.show{ transform:translateX(-50%) translateY(-74px); }
+/* 🗂️ (15/11, mejora 285) los avisos en una pila abajo a la izquierda; `#toast` queda escondido con el último texto */
+.toast.toast-pila{ display:none!important; }
+.av-pila{ position:fixed; left:16px; bottom:calc(20px + env(safe-area-inset-bottom,0px)); z-index:7000; display:flex; flex-direction:column; gap:8px; width:min(380px, calc(100vw / var(--vz,1)) - 32px); pointer-events:none; }
+body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
+.av-c{ pointer-events:auto; position:relative; display:flex; gap:10px; align-items:flex-start; background:#fff; color:#1f2a2a; border-radius:14px; border:1px solid #e3eaea; border-left:5px solid #00A09A;
+  box-shadow:0 10px 30px rgba(9,40,40,.22); padding:11px 38px 13px 12px; font-size:.84rem; line-height:1.4; overflow:hidden; animation:avEntra .28s cubic-bezier(.2,.8,.3,1); text-align:left; }
+.av-c.av-ok{ border-left-color:#16a34a; } .av-c.av-err{ border-left-color:#CE2939; } .av-c.av-info{ border-left-color:#00A09A; }
+.av-c.av-otra{ animation:avOtra .35s ease; }
+.av-c.av-sale{ opacity:0; transform:translateX(-14px); transition:opacity .2s, transform .2s; }
+.av-ic{ flex:none; width:28px; height:28px; border-radius:9px; display:grid; place-items:center; font-size:1rem; background:#E6F7F6; }
+.av-ok .av-ic{ background:#dcfce7; } .av-err .av-ic{ background:#FDEAEC; }
+.av-tx{ min-width:0; overflow-wrap:anywhere; }
+.av-tx b{ display:block; font-weight:800; color:#132626; }
+.av-tx span{ display:block; color:#4d5b5b; margin-top:1px; }
+.av-err .av-tx b{ color:#9b1c2a; }
+.av-x{ position:absolute; top:7px; right:7px; width:26px; height:26px; border:0; background:transparent; border-radius:8px; color:#6b7b7b; cursor:pointer; font-size:.82rem; line-height:1; padding:0; }
+.av-x:hover{ background:#eef4f4; color:#132626; }
+.av-bar{ position:absolute; left:0; bottom:0; height:3px; width:100%; background:#00A09A; transform-origin:left center; }
+.av-ok .av-bar{ background:#16a34a; }
+.av-quieto .av-bar{ animation-play-state:paused!important; }
+@keyframes avBar{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+@keyframes avEntra{ from{ opacity:0; transform:translateY(12px); } }
+@keyframes avOtra{ 40%{ transform:translateX(5px); } }
+@media (max-width:700px){ .av-pila{ left:8px; width:calc(calc(100vw / var(--vz,1)) - 16px); bottom:calc(84px + env(safe-area-inset-bottom,0px)); } }
+@media (prefers-reduced-motion: reduce){ .av-c, .av-c.av-otra{ animation:none; } .av-bar{ display:none; } }
 @media(max-width:700px){ .desh{ bottom:calc(84px + env(safe-area-inset-bottom)); } }
 @media(prefers-reduced-motion:reduce){ .desh{ transition:none; } }
 @media print{ .desh{ display:none!important; } }
@@ -28420,10 +28445,68 @@ function toast(msg,kind,ms){
     msg='🧪 '+_pm+((_pm===msg && /✓/.test(msg)) ? ' · de práctica' : '');
   }
   el.textContent=msg; el.className='toast show'+(kind?(' '+kind):'');
+  /* 🗂️ (15/11, mejora 285) en la pila de la esquina; `#toast` sigue con el último texto (las pruebas lo leen), escondido */
+  var _pila=avisosActivo(); if(_pila){ el.classList.add('toast-pila'); try{ avisoPoner(msg, kind, ms); }catch(eA){ el.classList.remove('toast-pila'); } }
   /* (27/09, revisión en el celular) Sin tiempo propio, el aviso duraba 2,8 s sea cual sea su largo: «Subiste la imagen pero
      no anotaste ningún pago…» (234 letras) se iba antes de terminar de leerlo. Ahora dura lo que lleva leerlo (≈ 50 ms por
      letra, entre 2,8 y 12 s). Los que ya dicen su tiempo quedan igual. */
   clearTimeout(_toastT); _toastT=setTimeout(function(){ el.className='toast'; }, ms||toastMs(msg));
+}
+/* ============================================================================
+   🗂️ (15/11, mejora 285) AVISOS QUE NO SE PISAN NI TAPAN LO QUE ESTÁS LEYENDO. Los 717 avisos del panel salían por el mismo cartel,
+   abajo al medio: uno solo a la vez (el segundo borraba al primero), sin ✕, y los de error tapaban hasta 12 s lo de atrás. Ahora salen
+   abajo a la IZQUIERDA (Bloki está a la derecha), en tarjetas blancas con su color al costado, su dibujo y un título en negrita, apilados
+   hasta 3 (el más nuevo abajo). Los de «listo» se van solos con una barrita de tiempo (con el mouse encima, esperan); los de ERROR se
+   quedan hasta que tocás ✕: así no se pierden. El mismo aviso dos veces seguidas no se repite: se renueva.
+   ⚠️ La MISMA firma `toast(msg, kind, ms)`: los 717 llamados no cambian, y `#toast` sigue teniendo el último texto y su clase (las pruebas
+   lo leen), solo que escondido. Con el «Deshacer» a la vista (#desh) la pila sube. En Playwright, el cartel de siempre salvo
+   `window.AVISOS_PRUEBA`. */
+var AVISOS_MAX=3;
+function avisosActivo(){ try{ return !navigator.webdriver || !!window.AVISOS_PRUEBA; }catch(e){ return true; } }
+function avisoPila(){
+  var p=document.getElementById('avisos-pila');
+  if(!p){ p=document.createElement('div'); p.id='avisos-pila'; p.className='av-pila no-print'; p.setAttribute('role','status'); p.setAttribute('aria-live','polite'); document.body.appendChild(p); }
+  return p;
+}
+/* El dibujo: el emoji con que empieza el aviso (casi todos lo traen); si no, el de su tipo. Y el título: la primera oración, si es corta. */
+function avisoPartes(txt, kind){
+  var t=String(txt==null?'':txt).trim(), ic='';
+  var m=null; try{ m=t.match(new RegExp('^((?:\\p{Extended_Pictographic}|[\\u2705\\u2714\\u274C\\u26A0])(?:[\\uFE0F\\u200D]|\\p{Extended_Pictographic})*)\\s*', 'u')); }catch(e){ m=null; }   // (con RegExp: un navegador viejo no rompe la página)
+  if(m){ ic=m[1]; t=t.slice(m[0].length); }
+  if(!ic) ic = kind==='err' ? '⚠️' : kind==='ok' ? '✅' : 'ℹ️';
+  var tit='', cuerpo=t, mm=t.match(/^([\s\S]{6,90}?[.:!?])\s+([\s\S]+)$/);
+  if(mm){ tit=mm[1]; cuerpo=mm[2]; } else if(t.length<=90){ tit=t; cuerpo=''; }
+  return { ic:ic, tit:tit, cuerpo:cuerpo };
+}
+function avisoPoner(msg, kind, ms){
+  var p=avisoPila(), txt=String(msg==null?'':msg), k=kind||'';
+  var ult=p.lastElementChild;
+  if(ult && ult._txt===txt && ult._kind===k && !ult._saliendo){ avisoReloj(ult, ms); ult.classList.remove('av-otra'); void ult.offsetWidth; ult.classList.add('av-otra'); return ult; }
+  var P=avisoPartes(txt, k), el=document.createElement('div');
+  el.className='av-c av-'+(k==='ok'?'ok':k==='err'?'err':'info'); el._txt=txt; el._kind=k;
+  el.innerHTML='<span class="av-ic" aria-hidden="true">'+esc(P.ic)+'</span><div class="av-tx">'+(P.tit?('<b>'+esc(P.tit)+'</b>'):'')+(P.cuerpo?('<span>'+esc(P.cuerpo)+'</span>'):'')+'</div>'+
+    '<button type="button" class="av-x" aria-label="Cerrar el aviso" title="Cerrar">✕</button>'+(k==='err'?'':'<i class="av-bar"></i>');
+  el.querySelector('.av-x').addEventListener('click', function(){ avisoQuitar(el); });
+  el.addEventListener('mouseenter', function(){ clearTimeout(el._t); el.classList.add('av-quieto'); });
+  el.addEventListener('mouseleave', function(){ el.classList.remove('av-quieto'); if(el._kind!=='err') avisoReloj(el, 3000); });
+  p.appendChild(el);
+  var vivos=[].filter.call(p.children, function(x){ return !x._saliendo; });
+  while(vivos.length>AVISOS_MAX){ avisoQuitar(vivos.shift(), true); }
+  avisoReloj(el, ms);
+  return el;
+}
+/* Los de «listo»/información se van solos (lo que dura leerlos, `toastMs`, o lo que diga el llamado); los de error, con ✕. */
+function avisoReloj(el, ms){
+  clearTimeout(el._t);
+  if(el._kind==='err') return;
+  var dur=ms||toastMs(el._txt), bar=el.querySelector('.av-bar');
+  if(bar){ bar.style.animation='none'; void bar.offsetWidth; bar.style.animation='avBar '+dur+'ms linear forwards'; }
+  el._t=setTimeout(function(){ avisoQuitar(el); }, dur);
+}
+function avisoQuitar(el, ya){
+  if(!el || el._saliendo) return; el._saliendo=true; clearTimeout(el._t);
+  if(ya || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){ el.remove(); return; }
+  el.classList.add('av-sale'); setTimeout(function(){ el.remove(); }, 220);
 }
 function toastMs(msg){ return Math.min(12000, Math.max(2800, String(msg==null?'':msg).length*50)); }
 
