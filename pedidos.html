@@ -2484,6 +2484,12 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .exs-tres .exs-al:first-of-type{border-top:0}
 .exs-tres .exs-ok{color:#047857;font-weight:700;white-space:nowrap}
 .exs-tres button{margin-top:8px}
+.admdia-chk{display:flex;gap:8px;align-items:center;justify-content:center;margin:2px 0 12px;font-size:.9rem;cursor:pointer}
+.admdia-chk input{width:auto!important;height:auto!important}
+.admdia-chk small{display:block;color:var(--muted);font-size:.74rem}
+.admdia-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:linear-gradient(90deg,#00B5AD,#00A09A);color:#fff;border-radius:10px;padding:6px 10px;margin:0 0 10px;font-weight:700;font-size:.84rem}
+.admdia-bar button{border:0;background:rgba(255,255,255,.22);color:#fff;border-radius:8px;padding:5px 10px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;min-height:32px}
+.admdia-bar button:hover{background:rgba(255,255,255,.34)}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -27442,6 +27448,13 @@ function tryUnlock(){
   var pass=document.getElementById('admin-pass').value;
   var stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH;
   if(sha256(pass)===stored){
+    admAbrirSesion(false);
+    try{ admDiaTrasEntrar(stored); }catch(e){}   // 🔓 (302) «Recordar en esta compu hasta la noche»
+  }else{ document.getElementById('admin-err').style.display='block'; }
+}
+/* Lo que hace una contraseña buena. `recuerdo` = la abrió la contraseña recordada del día (302) al abrir la página: no lee la planilla
+   (ya la está leyendo la carga de arranque) y Administración se dibuja al entrar a la pestaña, como siempre. */
+function admAbrirSesion(recuerdo){
     UNLOCKED=true;
     mostrarBotonesTodos();
     try{ botTabPintar(); }catch(e){}   // 🤖 (24/10) la clave habilita la pestaña Bot
@@ -27450,10 +27463,10 @@ function tryUnlock(){
     document.getElementById('admin-content').style.display='block';
     document.getElementById('admin-pass').value='';
     document.getElementById('admin-err').style.display='none';
-    loadFromServer(false);
+    if(!recuerdo) loadFromServer(false);
+    else { try{ var _va=document.getElementById('view-admin'); if(_va && _va.classList.contains('active')) loadFromServer(false); }catch(e){} }
     nxLS(LS_ADM_DEV, 1); nxBadges();   // 🔔 (§4js, A3) este dispositivo es de administración: la pestaña muestra los sin camión
     setTimeout(function(){ try{ saludDelDia(); }catch(e){} }, 400);   // 🌅 (§4im) una vez por mañana, solo acá (con la clave)
-  }else{ document.getElementById('admin-err').style.display='block'; }
 }
 function changePass(){
   var a=prompt('Nueva contraseña (mínimo 4 caracteres):'); if(a==null) return;
@@ -27461,6 +27474,7 @@ function changePass(){
   var b=prompt('Repetí la nueva contraseña:'); if(b==null) return;
   if(a!==b){ alert('No coinciden.'); return; }
   localStorage.setItem(LS_ADMIN,sha256(a));
+  try{ admDiaOlvidar(); }catch(e){}   // 🔓 (302) la recordada del día era de la contraseña de antes
   toast('Contraseña actualizada ✓ (en este dispositivo)','ok');
 }
 
@@ -61600,10 +61614,90 @@ function exsUsarTres(btn){
   setTimeout(paso, 30);
 }
 
+/* ---------- 🔓 302 LA CONTRASEÑA DE ADMINISTRACIÓN VALE EL DÍA ----------
+   La contraseña vivía solo mientras la página estaba abierta: cada F5, cada «Hay una versión nueva → Recargar» y cada mañana la pedían
+   de nuevo (31 versiones del 01 al 14/11). Debajo de la contraseña, «☑ Recordar en esta compu hasta la noche» (solo en las compus de
+   la oficina o de logística: la que ya usó la contraseña, `me_adm_dev`, o quien eligió Logística o Administración). Se guarda SOLO en
+   este aparato (`localStorage`) y hasta el fin del día de Bolivia (`diaNegocio`): al día siguiente la pide otra vez. No se guarda la
+   contraseña: se guarda una huella de la huella guardada + el día; cambiar la contraseña en esta compu la vuelve inválida (y la cierra).
+   Mientras vale, arriba de Administración: «🔓 Administración abierta en esta compu hasta las 23:59 · 🔒 Cerrar la sesión de
+   administración», para quien quiera borrarla. */
+var ADM_DIA_LS='me_adm_dia', ADM_DIA={ on:false, d:'' };
+function admDiaVa(){ try{ return !navigator.webdriver || !!window.ADM_DIA_PRUEBA; }catch(e){ return true; } }
+function admDiaHash(){ var s=DEFAULT_HASH; try{ s=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){} return s; }
+function admDiaHuella(stored, d){ return sha256(String(stored)+'|'+String(d)+'|me-adm-dia'); }
+function admDiaOfrece(){
+  if(!admDiaVa()) return false;
+  var r=''; try{ r=quienRol(); }catch(e){}
+  return r==='logistica' || r==='admin' || !!nxLS(LS_ADM_DEV);
+}
+function admDiaLeer(){ try{ return JSON.parse(localStorage.getItem(ADM_DIA_LS)||'null'); }catch(e){ return null; } }
+function admDiaVale(){
+  var o=admDiaLeer(), d=diaNegocio();
+  return !!(o && o.d===d && o.h===admDiaHuella(admDiaHash(), d));
+}
+function admDiaOlvidar(){ try{ localStorage.removeItem(ADM_DIA_LS); }catch(e){} ADM_DIA.on=false; admDiaBarra(); }
+/* La casilla debajo de la contraseña. */
+function admDiaLockPintar(){
+  var lb=document.querySelector('#admin-lock .lock-box'), ya=document.getElementById('admdia-wrap');
+  if(!admDiaOfrece()){ if(ya) ya.remove(); return; }
+  if(ya || !lb) return;
+  var fld=lb.querySelector('.field'); if(!fld) return;
+  var w=document.createElement('label'); w.id='admdia-wrap'; w.className='admdia-chk no-print';
+  w.innerHTML='<input type="checkbox" id="admdia-chk"><span>Recordar en esta compu hasta la noche<small>Mañana la pide otra vez. Se cierra con «🔒 Cerrar la sesión».</small></span>';
+  fld.parentNode.insertBefore(w, fld.nextSibling);
+}
+/* Después de una contraseña buena (`tryUnlock`): si la casilla está tildada, se recuerda. */
+function admDiaTrasEntrar(stored){
+  var c=document.getElementById('admdia-chk');
+  if(c && c.checked && admDiaOfrece()){
+    var d=diaNegocio();
+    try{ localStorage.setItem(ADM_DIA_LS, JSON.stringify({ d:d, h:admDiaHuella(stored, d), t:Date.now() })); ADM_DIA={ on:true, d:d }; }
+    catch(e){ toast('No se pudo recordar la contraseña en esta compu (el navegador no deja guardar): igual quedó abierta.','err',7000); }
+    c.checked=false;
+  }
+  admDiaBarra();
+}
+/* Al abrir la página: si vale para hoy, se abre sola (lo mismo que poner la contraseña, `admAbrirSesion`). */
+function admDiaRestaurar(){
+  if(!admDiaVa() || UNLOCKED) return false;
+  if(!admDiaVale()){ if(admDiaLeer()) try{ localStorage.removeItem(ADM_DIA_LS); }catch(e){} return false; }   // de otro día o de otra contraseña: se borra
+  ADM_DIA={ on:true, d:diaNegocio() };
+  admAbrirSesion(true);
+  return true;
+}
+function admDiaBarra(){
+  var cont=document.querySelector('#admin-content .adm-card'), b=document.getElementById('admdia-bar');
+  var on=admDiaVa() && UNLOCKED && admDiaVale();
+  if(!on){ if(b) b.remove(); return; }
+  if(!b){ if(!cont) return; b=document.createElement('div'); b.id='admdia-bar'; b.className='admdia-bar no-print'; cont.insertBefore(b, cont.firstChild); }
+  b.innerHTML='<span>🔓 Administración abierta en esta compu hasta las 23:59</span><button type="button" onclick="admDiaCerrar()">🔒 Cerrar la sesión de administración</button>';
+}
+/* Borra lo recordado y vuelve a pedir la contraseña, sin recargar. */
+function admDiaCerrar(silencio){
+  admDiaOlvidar();
+  UNLOCKED=false;
+  try{ mostrarBotonesTodos(); }catch(e){}
+  try{ botTabPintar(); }catch(e){}
+  try{ notaLeerPintar(); }catch(e){}
+  var lk=document.getElementById('admin-lock'), ct=document.getElementById('admin-content');
+  if(lk) lk.style.display=''; if(ct) ct.style.display='none';
+  try{ if(pesVista('bot') && !botVe()) showView('admin'); }catch(e){}
+  try{ nxBadges(); }catch(e){}
+  admDiaLockPintar();
+  if(!silencio) toast('🔒 Se cerró la sesión de Administración en esta compu: la contraseña se pide otra vez.','ok',6000);
+}
+/* Si la página queda abierta de un día para el otro, a la medianoche de Bolivia la sesión recordada se cierra. */
+setInterval(function(){
+  try{ if(ADM_DIA.on && UNLOCKED && ADM_DIA.d && diaNegocio()!==ADM_DIA.d){ admDiaCerrar(true); toast('🔒 Empezó otro día: la contraseña de Administración se pide de nuevo.','ok',8000); } }catch(e){}
+}, 60000);
+
 /* ---------- el arranque de lo de arriba ---------- */
 document.addEventListener('DOMContentLoaded', function(){
   try{ buscarLuegoIniciar(); }catch(e){ console.error(e); }
   try{ ffiIniciar(); }catch(e){ console.error(e); }
+  try{ admDiaLockPintar(); admDiaRestaurar(); }catch(e){ console.error(e); }
+  setTimeout(function(){ try{ admDiaLockPintar(); admDiaBarra(); }catch(e){} }, 0);
 });
 /* 🪟 SIN BARRA DE TÍTULO (30/10, §4ny; el dueño eligió la «B»). El manifest pide `display_override: window-controls-overlay`: en la compu,
    con el panel instalado, Chrome saca la barra y deja los botones de Windows encima de la página (con la flechita ︿ se vuelve a la barra).
