@@ -3455,6 +3455,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
              (camiones completos, bultos por cargar, pedidos listos y los cupos del próximo camión). Las cuentas son las de siempre:
              cada cartel de abajo deja sus números en `ADM_AV` al dibujarse y `admHacerPintar` los ordena. Los carteles completos
              siguen existiendo (mismos ids) en «📄 Ver los avisos completos». -->
+        <!-- 🚚 (15/11, mejora 312) «¿Salió un camión?»: un botón grande por camión, arriba de «Para hacer» y «Hoy» (`salioBarPintar`). -->
+        <section id="adm-salio" class="sal-bar no-print" hidden></section>
         <div id="adm-top" class="adm-top no-print" hidden><section id="adm-hacer" class="ah-card"></section><section id="adm-hoy" class="ah-hoy"></section></div>
 
         <div id="adm-avisos" class="adm-avisos">
@@ -4823,6 +4825,41 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .gps-cam-l{flex-basis:100%;display:grid;gap:4px}.gps-cam-f{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid #d9e6f7}
 .gps-cam-f .btn{padding:3px 10px;font-size:.78rem}
 .cie-gps-cam{color:#1d4ed8;font-size:.82rem}.cie-gps-cam .btn{padding:2px 9px;font-size:.76rem;margin-left:4px;background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+/* 🚚 (15/11, mejora 312) «Salió»: un botón grande por camión arriba de «Hoy», la ventana de lo que lleva y «¿En qué camión salió?» */
+.sal-bar{margin:4px 0 12px;padding:11px 13px 12px;border-radius:16px;background:#eef4f4;border:1px solid #cfe3e2;color:#1f2d3d}
+.sal-bar[hidden]{display:none}
+.sal-cab{display:flex;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-bottom:8px}
+.sal-cab>b{font-size:.98rem;color:#0f5f5b}.sal-cab small{flex-basis:100%;color:#4b5f5e;font-size:.78rem}
+.sal-tu{display:inline-flex;gap:3px;background:#fff;border:1px solid #cfe3e2;border-radius:999px;padding:3px}
+.sal-tu button{border:0;background:transparent;border-radius:999px;padding:4px 11px;font:inherit;font-size:.78rem;font-weight:700;color:#4b5f5e;cursor:pointer}
+.sal-tu button.on{background:#00A09A;color:#fff}
+.sal-cams{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.sal-cam{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:#fff;border:2px solid #d7e6e5;border-radius:12px;padding:9px 11px;cursor:pointer;font:inherit;color:#1f2d3d;transition:border-color .15s,box-shadow .15s,transform .15s}
+.sal-cam:hover{border-color:#00B5AD;box-shadow:0 0 0 3px rgba(0,181,173,.2);transform:translateY(-1px)}
+.sal-cam b{font-size:.93rem}.sal-cam small{color:#5b6b7a;font-size:.76rem}.sal-cam small.sal-ya{color:#0a6b47;font-weight:700}
+.sal-cam.vacio{opacity:.66}.sal-cam.todo{border-style:dashed;background:#f7fbfb}.sal-cam.todo b{color:#0f5f5b}
+.sal-pie{margin-top:8px;font-size:.78rem;color:#9a4b00}
+.sal-h h3{color:#fff}.sal-h-a{background:#b45309!important}
+.sal-m .sal-mtop{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px;font-size:.84rem;color:#4b5f5e}
+.sal-m .sal-sec{margin:12px 0 2px;font-size:.84rem;font-weight:800;color:#0f5f5b}.sal-m .sal-sec small{font-weight:500;color:#5b6b7a}
+.sal-r{display:flex;align-items:center;gap:9px;padding:7px 6px;border-bottom:1px solid #eef2f2;cursor:pointer;font-size:.86rem;border-radius:8px}
+.sal-r.on{background:#f2fbfa}.sal-r input{width:19px;height:19px;accent-color:#00A09A;flex:none}
+.sal-r .sal-q{flex:1;min-width:0}.sal-r .sal-q small{display:block;color:#5b6b7a;font-size:.74rem}
+.sal-tag{flex:none;font-size:.72rem;padding:2px 8px;border-radius:999px;background:#e6f7f6;color:#00756f;white-space:nowrap}
+.sal-tag.pm{background:#fff3e0;color:#9a4b00}
+.sal-prop{flex:none;max-width:38%;font-size:.72rem;color:#1d4ed8;text-align:right}
+.sal-r2{margin:2px 0 6px 34px;font-size:.8rem;color:#4b5f5e}.sal-r2 select{width:auto;min-width:170px;min-height:34px}
+.sal-vacio{margin:6px 0;font-size:.82rem;color:#5b6b7a}
+.sal-que{margin:12px 0 6px;padding:9px 12px;border-radius:10px;background:#e6f7f6;color:#0f5f5b;font-size:.82rem;line-height:1.5}
+.sal-ok-btn{background:#00A09A!important;border-color:#00A09A!important;color:#fff!important;font-weight:800;width:auto}
+.sal-nota{margin:8px 0 0;font-size:.74rem;color:#6b7b7a}
+.sal-res{font-size:.95rem;margin-bottom:6px}.sal-res-l{font-size:.84rem;margin:4px 0;color:#0f5f5b}.sal-res-a{color:#7c4b00}.sal-res-r{color:#8a1c24}
+.sal-res-lista{font-size:.82rem;color:#4b5f5e;margin:6px 0 10px;line-height:1.5}
+.sal-pq{font-size:.88rem;margin:0 0 4px}
+.sal-pbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:10px 0 4px}
+.sal-pb{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 13px;border:2px solid #cfe3e2;border-radius:12px;background:#f7fbfb;font:inherit;color:#1f2d3d;cursor:pointer;text-align:left}
+.sal-pb b{font-size:1rem}.sal-pb small{color:#5b6b7a;font-size:.78rem}.sal-pb:hover{border-color:#00A09A}
+.sal-pb.on{border-color:#00B5AD;background:#e6f7f6;box-shadow:0 0 0 3px rgba(0,181,173,.2)}
 .agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
 .agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
 .agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
@@ -29851,6 +29888,7 @@ function renderAdmin(){
   try{ nxA3Pintar(); if(admSecVisible('cam')) nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
   try{ if(admSecVisible('cam')) cargaVivaPintar(); }catch(e){ console.error(e); }   // (§4me) con su pestaña escondida no se dibuja (3D y mapa miden la caja)
   admArribaPintar();   // ✨ (§4me) «Para hacer», «Hoy» y las pestañas, con lo que acaban de dejar los carteles
+  try{ salioBarPintar(); }catch(e){ console.error(e); }   // 🚚 (mejora 312) «🚚 Salió el …» arriba de «Hoy»
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
@@ -30908,18 +30946,22 @@ function cvGpsLinea(x){
   return '<div class="cvc-gps">🛰️ <b>'+esc(gpsDondeTxt(x))+'</b> · '+x.v+' km/h'+(x.m?'':' · motor apagado')+(x.r?(' · '+gpsHace(x)):'')+(x.vu?(' · volvió '+esc(x.vu)):'')+
     ' <a href="https://www.google.com/maps?q='+x.la+','+x.lo+'" target="_blank" rel="noopener">ver ↗</a></div>';
 }
-function camionSalioMarcar(veh, on){
+/* 🚚 (15/11, mejora 312) `opts` = { sinPreguntar, sinAdelanto, sinAviso }: «🚚 Salió» ya mostró lo que lleva y la persona eligió lo de la tarde
+   que va (con su adelanto): no se vuelve a preguntar por la Lista de carga ni se adelanta otra cosa. Sin `opts`, como siempre. */
+function camionSalioMarcar(veh, on, opts){
+  opts=opts||{};
   var f=todayStr(), k=salioClave(f, veh);
   if(on){
     if(k) return;
-    var D=null; try{ D=cargaVivaDatos(); }catch(e){}
+    var D=null; if(!opts.sinPreguntar){ try{ D=cargaVivaDatos(); }catch(e){} }
     var c=D && D.porK && D.porK[veh], falta=c ? Math.max(0, (c.total||0)-(c.dentro||0)) : 0;
     if(falta && !confirm('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?')) return;
     var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
     setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
     try{ depPanel(null); }catch(e){}
-    toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
-    try{ adelantoAlSalir(veh, z(h.getHours())+':'+z(h.getMinutes())); }catch(e){}   // 🚀 (14/10) lo de la tarde que salió cargado, a la mañana
+    if(!opts.sinAviso) toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
+    if(opts.sinAdelanto){ try{ adelantoHecho(f, veh, z(h.getHours())+':'+z(h.getMinutes()), true); }catch(e){} }
+    else { try{ adelantoAlSalir(veh, z(h.getHours())+':'+z(h.getMinutes())); }catch(e){} }   // 🚀 (14/10) lo de la tarde que salió cargado, a la mañana
   }else{
     if(!k) return;
     if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
@@ -38822,7 +38864,7 @@ function copiarBusca(){
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
 function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; var foto=deshFotoEntrega(p); entDonde('Administración (botón Entregó)'); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr);   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
+function quickEntregado(id){ var p=findById(id); if(!p) return; if(salioPreguntaAntes(p, 'quick')) return; /* 🚚 (mejora 312) sin camión: primero «¿en qué camión salió?» */ var foto=deshFotoEntrega(p); entDonde('Administración (botón Entregó)'); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr);   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
   rptFaltaAlEntregar(p, false); }   // 🏪 (30/10, propuesta 83) una RPT con ✗ o 🏭 sin llegar: ¿armamos la de lo que faltó?
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
@@ -52016,6 +52058,7 @@ function setEstado(id,val){
 }
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
+  if(salioPreguntaAntes(p, 'ficha')) return;   // 🚚 (mejora 312) sin camión: primero «¿en qué camión salió?»
   var foto=deshFotoEntrega(p);                  // ↩️ (§4ni, 7) para «Deshacer»
   entDonde('ficha (botón Entregado)');
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
@@ -52627,6 +52670,282 @@ function gpsCamionAsignarTodos(desde, ids){
   return Promise.all(V.map(function(o){ return guardarDurable(o.p); }));
 }
 /* fin idea 133 */
+/* ============================================================================
+   🚚 «SALIÓ»: EL CAMIÓN Y EL ✅ DE LO QUE LLEVA, EN UN TOQUE (15/11, mejora 312; dueño: «312»).
+   Del 12 al 14/11 solo 2 de 53 entregas tenían camión anotado, y el ✅ se ponía de a uno con «Entregó» cuando salía el camión (12 toques
+   en 5 minutos el 14/11). Arriba de «Hoy» (`#adm-salio`) va un botón grande por camión: «🚚 Salió el Carry». Abre lo de ESE turno sin ✅:
+   tildado lo que tiene ese camión y lo que el GPS (`gpsCamionPropDe`, idea 133) o la zona (`nxSugDatos`, solo «ya va a…» o «pasa a ~N
+   km») le ponen; lo demás sin camión, destildado. «✅ Salieron estos N» —UN toque de una persona: nada se marca solo— relee la planilla y
+   · pone el ✅ con la MISMA marca del cierre de entregas (`cierreEntAplicar`: su registro `eF/eT/eQ` de hoy y «desde dónde» en la historia
+     del ✅) y, en lo que no tenía camión, el camión y el chofer de ese camión ese día (`camChoferDelDia`), en el MISMO guardado durable;
+   · anota «🚚 Salió HH:MM» del camión (`camionSalioMarcar`), si ni la marca a mano ni el GPS lo dicen ya;
+   · lo de la TARDE que se tildó a la mañana (antes de las ADELANTO_HORA_MAX) pasa antes a la mañana con `reproAplicar(…, {adelanto:1})`:
+     el bot le avisa al cliente que va en camino (§4lb). Nada de la tarde se adelanta sin tildarlo.
+   «✅ Todo el turno» abre lo mismo para TODOS los camiones (cada pedido con su camión; uno sin camión, con su selector): sirve para confirmar
+   de una vez lo entregado de un turno. Sin una lectura buena de la planilla no se marca nada (la regla del cierre: nunca sobre una copia vieja).
+   «Entregó» en una ficha SIN camión (`quickEntregado`, `toggleEntregado`) primero pregunta «¿En qué camión salió?» con un botón grande por
+   camión (el que dice el GPS o la zona, marcado) y «🏬 Lo retiró el cliente / sin camión»: el camión va en el mismo guardado del ✅.
+   En Playwright, apagado salvo `window.SALIO_PRUEBA`. `tests/test_salio_camion.js`.
+   ========================================================================== */
+var SALIO={ veh:'', t:'', tb:'', sel:{}, cam:{}, en:false, pasa:'' };
+function salioActivo(){ try{ return !(navigator.webdriver && !window.SALIO_PRUEBA); }catch(e){ return true; } }
+function salioSug(hoy){ var s={}; try{ nxSugDatos(hoy).lista.forEach(function(x){ s[String(x.p.id)]={ v:x.v, por:String(x.por||'') }; }); }catch(e){} return s; }
+/* El camión que le pone el panel a un pedido SIN camión: el GPS (lo vio en la puerta) y, si no, la zona solo cuando es concreta. */
+function salioPropDe(p, sug, deHoy){
+  var o=null; try{ o=gpsCamionPropDe(p, deHoy); }catch(e){ o=null; }
+  if(o && VEHICULOS[o.veh]) return { v:o.veh, gps:true, txt:'🛰️ el GPS lo vio en la puerta'+(o.aprox?' (ubicación aproximada)':'') };
+  var s=(sug||{})[String(p.id)];
+  if(s && s.v && VEHICULOS[s.v] && /^(ya va a|pasa a)/.test(s.por)) return { v:s.v, zona:true, txt:'📍 '+s.por };
+  return null;
+}
+/* Lo de HOY sin ✅ que va en camión (la regla del cierre: `cierreEntEntra`), con su turno y el camión que tiene o que el panel le pone. */
+function salioItems(){
+  var hoy=todayStr(), sug=salioSug(hoy), deHoy=(STATE||[]).filter(function(q){ return q && q.fecha===hoy; });
+  return deHoy.filter(cierreEntEntra).map(function(p){
+    var v=vehiculoDe(p), ret=!v && !!cierreEntRetira(p), prop=(v || ret) ? null : salioPropDe(p, sug, deHoy);
+    return { p:p, id:String(p.id), tu:normTurno(p.turno), v:v, ret:ret, prop:prop, va:v || (prop ? prop.v : '') };
+  }).sort(function(a,b){ return cierreEntOrden(a.p, b.p); });
+}
+/* El turno de entrada: la mañana hasta las 12 (si hay algo de la mañana); después, la tarde (si hay). */
+function salioTurnoAuto(I){
+  var hoy=todayStr(), n={ AM:0, PM:0 };
+  I.forEach(function(it){ if(!it.ret) n[it.tu]++; });
+  var t=(horaBolivia().getHours()<ADELANTO_HORA_MAX || !(limTurno(hoy,'PM')>0)) ? 'AM' : 'PM';
+  if(!n[t] && n[t==='AM'?'PM':'AM']) t=(t==='AM'?'PM':'AM');
+  return t;
+}
+function salioTurnoTxt(t){ return t==='PM' ? 'tarde' : 'mañana'; }
+/* ---------- La barra de arriba de «Hoy» ---------- */
+function salioBarTurno(t){ SALIO.tb=(t==='PM'?'PM':'AM'); salioBarPintar(); }
+function salioBarPintar(){
+  var el=document.getElementById('adm-salio'); if(!el) return;
+  var hoy=todayStr(), apagar=function(){ if(!el.hidden || el._h){ el.hidden=true; el.innerHTML=''; el._h=''; } };
+  if(!salioActivo() || !(limTurno(hoy,'AM')>0 || limTurno(hoy,'PM')>0)) return apagar();
+  var I=salioItems(), n={ AM:0, PM:0 };
+  I.forEach(function(it){ if(!it.ret) n[it.tu]++; });
+  if(!n.AM && !n.PM) return apagar();
+  var t=(SALIO.tb==='AM' || SALIO.tb==='PM') ? SALIO.tb : salioTurnoAuto(I);
+  var cams=Object.keys(VEHICULOS).map(function(v){
+    var lleva=I.filter(function(it){ return it.tu===t && it.va===v; }).length;
+    var ya=(STATE||[]).filter(function(p){ return p && p.fecha===hoy && p.entregado && !esFilaSistema(p) && vehiculoDe(p)===v && normTurno(p.turno)===t; }).length;
+    var sale=camionSalio(hoy, v), ch=camChoferDelDia(v, hoy);
+    return '<button type="button" class="sal-cam'+(lleva?'':' vacio')+'" data-v="'+esc(v)+'" onclick="salioAbrir(this.dataset.v)" title="Lo que lleva el '+esc(v)+' de la '+salioTurnoTxt(t)+': se tilda y se le pone el ✅, el camión y el chofer de una vez">'+
+      '<b>🚚 Salió el '+esc(v)+'</b><small>'+esc(ch||'sin chofer')+' · '+(lleva ? (lleva+' pedido'+(lleva===1?'':'s')+' sin ✅') : 'ninguno sin ✅')+'</small>'+
+      ((sale || ya) ? ('<small class="sal-ya">'+(sale?('🛣️ salió '+esc(sale)):'')+(sale&&ya?' · ':'')+(ya?('✅ '+ya+' ya entregado'+(ya===1?'':'s')):'')+'</small>') : '')+'</button>';
+  }).join('');
+  var sinV=I.filter(function(it){ return it.tu===t && !it.va && !it.ret; }).length;
+  var tb=function(k, ic){ return '<button type="button" class="'+(t===k?'on':'')+'" aria-pressed="'+(t===k)+'" onclick="salioBarTurno(\''+k+'\')">'+ic+' '+(k==='PM'?'Tarde':'Mañana')+' · '+n[k]+'</button>'; };
+  var h='<div class="sal-cab"><b>🚚 ¿Salió un camión?</b><span class="sal-tu" role="group" aria-label="Turno">'+tb('AM','🌅')+(limTurno(hoy,'PM')>0?tb('PM','🌆'):'')+'</span>'+
+      '<small>Tocá el camión que salió: te muestro lo que lleva, ya tildado, y con un toque le ponés el ✅, el camión y el chofer. Nada se marca solo.</small></div>'+
+    '<div class="sal-cams">'+cams+
+      '<button type="button" class="sal-cam todo" onclick="salioAbrir(\'\')" title="Todos los camiones del turno juntos: para confirmar de una vez lo que se entregó"><b>✅ Todo el turno</b><small>lo de la '+salioTurnoTxt(t)+' de todos los camiones · '+n[t]+' sin ✅</small></button></div>'+
+    (sinV ? ('<div class="sal-pie">⚠️ '+sinV+' pedido'+(sinV===1?'':'s')+' de la '+salioTurnoTxt(t)+' sin camión (ni el GPS ni la zona dicen cuál): tildalo en el camión que lo lleva.</div>') : '');
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  el.hidden=false;
+}
+/* ---------- La ventana de un camión (o del turno entero) ---------- */
+function salioSecciones(I){
+  var veh=SALIO.veh, t=SALIO.t, hoy=todayStr();
+  var tardeOk=(t==='AM' && horaBolivia().getHours()<ADELANTO_HORA_MAX && limTurno(hoy,'PM')>0);
+  var S={ lleva:[], sin:[], tarde:[], ret:[], pre:[] };
+  I.forEach(function(it){
+    if(veh){
+      if(it.tu===t){
+        if(it.va===veh){ S.lleva.push(it); S.pre.push(it); }
+        else if(!it.v && !it.ret) S.sin.push(it);
+      } else if(tardeOk && it.tu==='PM' && it.va===veh) S.tarde.push(it);
+    } else if(it.tu===t){
+      if(it.ret) S.ret.push(it);
+      else { S.lleva.push(it); if(it.va) S.pre.push(it); }
+    }
+  });
+  return S;
+}
+function salioAbrir(veh, t){
+  SALIO.veh=String(veh||''); if(SALIO.veh && !VEHICULOS[SALIO.veh]) SALIO.veh='';
+  var I=salioItems();
+  SALIO.t=(t==='AM' || t==='PM') ? t : ((SALIO.tb==='AM' || SALIO.tb==='PM') ? SALIO.tb : salioTurnoAuto(I));
+  SALIO.sel={}; SALIO.cam={}; SALIO.en=false;
+  salioSecciones(I).pre.forEach(function(it){ SALIO.sel[it.id]=true; });
+  MODAL_KIND='admin';
+  salioRender();
+}
+function salioCambiarTurno(t){ salioAbrir(SALIO.veh, t); }
+function salioCamDe(it){ return Object.prototype.hasOwnProperty.call(SALIO.cam, it.id) ? SALIO.cam[it.id] : (it.prop ? it.prop.v : ''); }
+function salioTildados(){ return Object.keys(SALIO.sel).filter(function(id){ return SALIO.sel[id] && !!findById(id); }); }
+function salioFilaHtml(it, dn){
+  var p=it.p, id=esc(it.id), on=!!SALIO.sel[it.id], veh=SALIO.veh;
+  var tag=it.tu==='PM' ? ('<span class="sal-tag pm">🌆 tarde'+(veh && SALIO.t==='AM'?' · ¿va ahora?':'')+'</span>') : '<span class="sal-tag">🌅 mañana</span>';
+  var quien=it.v ? ('🚚 '+esc(it.v)+(p.chofer?(' · '+esc(p.chofer)):'')) : (it.ret ? '🏬 lo retira el cliente' : 'sin camión');
+  var prop=(!it.v && it.prop) ? ('<span class="sal-prop">'+esc(it.prop.txt)+((!veh || it.prop.v!==veh)?(': '+esc(it.prop.v)):'')+'</span>') : '';
+  var sel=(!veh && !it.v && !it.ret) ? ('<div class="sal-r2"><label for="sal-cam-'+id+'">🚚 Salió en</label> <select id="sal-cam-'+id+'" class="sal-cam-sel" data-id="'+id+'" onchange="salioCamElegir(this.dataset.id, this.value)">'+camOpcionesHtml(salioCamDe(it), '— sin camión —')+'</select></div>') : '';
+  return '<label class="sal-r'+(on?' on':'')+'"><input type="checkbox" class="sal-chk" data-id="'+id+'"'+(on?' checked':'')+' onchange="salioTildar(this.dataset.id, this.checked)">'+
+    '<span class="sal-q"><b>'+esc(String(dn[p.id]||'—'))+'</b> · '+esc(p.cliente||'(sin cliente)')+(p.zona?(' · '+esc(p.zona)):'')+
+      '<small>'+esc(ocEtiq(p.oc)||'—')+' · '+quien+'</small></span>'+prop+tag+'</label>'+sel;
+}
+function salioQueHtml(){
+  var ids=salioTildados(), veh=SALIO.veh, hoy=todayStr(), n=ids.length;
+  if(!n) return 'Tildá lo que salió. Nada se marca hasta que toques el botón.';
+  var porId={}; if(!veh) salioItems().forEach(function(it){ porId[it.id]=it; });
+  var sinCam=0, cam=0, tarde=0;
+  ids.forEach(function(id){
+    var p=findById(id); if(!p) return;
+    if(!vehiculoDe(p) && !cierreEntRetira(p)){ var v=veh || SALIO.cam[id] || (porId[id] ? salioCamDe(porId[id]) : ''); if(v && VEHICULOS[v]) cam++; else sinCam++; }
+    if(veh && SALIO.t==='AM' && normTurno(p.turno)==='PM') tarde++;
+  });
+  var L=['✅ <b>Entregado</b> en '+(n===1?'el pedido tildado':('los '+n+' tildados'))+' (lo mismo que tocar «Entregó» en cada uno)'];
+  if(cam) L.push('🚚 '+(veh ? ('camión <b>'+esc(veh)+'</b> y chofer <b>'+esc(camChoferDelDia(veh, hoy)||'—')+'</b>') : 'el camión elegido y su chofer de hoy')+' en '+cam+' que no lo tenía'+(cam===1?'':'n'));
+  if(veh){ var s=camionSalio(hoy, veh); L.push(s ? ('🛣️ el '+esc(veh)+' ya figura salido a las '+esc(s)) : ('🛣️ «Salió '+esc(hhmmBolivia())+'» en el '+esc(veh)+': las vendedoras lo ven «en camino»')); }
+  if(tarde) L.push('🌆 '+tarde+' de la tarde pasa'+(tarde===1?'':'n')+' a la mañana: el bot le avisa al cliente que va en camino');
+  if(sinCam) L.push('⚠️ '+sinCam+' queda'+(sinCam===1?'':'n')+' sin camión anotado (elegilo arriba si sabés en cuál salió)');
+  return L.join('<br>');
+}
+function salioBotonTxt(){
+  var n=salioTildados().length;
+  if(!n) return 'Tildá lo que salió';
+  return SALIO.veh ? ('✅ Salieron estos '+n+' con el '+SALIO.veh+' · '+hhmmBolivia()) : ('✅ Confirmar '+n+' entrega'+(n===1?'':'s')+' de la '+salioTurnoTxt(SALIO.t));
+}
+function salioPieRepintar(){
+  var q=document.getElementById('sal-que'); if(q) q.innerHTML=salioQueHtml();
+  var b=document.getElementById('sal-ok'); if(b && !SALIO.en){ b.textContent=salioBotonTxt(); b.disabled=!salioTildados().length; }
+}
+function salioTildar(id, on){
+  SALIO.sel[String(id)]=!!on;
+  var c=document.querySelector('#modal-box .sal-chk[data-id="'+CSS.escape(String(id))+'"]'); if(c && c.parentNode) c.parentNode.classList.toggle('on', !!on);
+  salioPieRepintar();
+}
+function salioCamElegir(id, v){
+  id=String(id); SALIO.cam[id]=VEHICULOS[v] ? v : '';
+  if(VEHICULOS[v] && !SALIO.sel[id]){ SALIO.sel[id]=true; var c=document.querySelector('#modal-box .sal-chk[data-id="'+CSS.escape(id)+'"]'); if(c){ c.checked=true; if(c.parentNode) c.parentNode.classList.add('on'); } }
+  salioPieRepintar();
+}
+function salioRender(){
+  var I=salioItems(), S=salioSecciones(I), veh=SALIO.veh, t=SALIO.t, hoy=todayStr(), dn=dayNumMap();
+  var vivos={}; S.lleva.concat(S.sin, S.tarde, S.ret).forEach(function(it){ vivos[it.id]=1; });
+  Object.keys(SALIO.sel).forEach(function(id){ if(!vivos[id]) delete SALIO.sel[id]; });
+  var dia=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dowDe(hoy)]||'';
+  var tb=function(k, ic){ return '<button type="button" class="'+(t===k?'on':'')+'" aria-pressed="'+(t===k)+'" onclick="salioCambiarTurno(\''+k+'\')">'+ic+' '+(k==='PM'?'Tarde':'Mañana')+'</button>'; };
+  var fil=function(L){ return L.map(function(it){ return salioFilaHtml(it, dn); }).join(''); };
+  var h='<div class="modal-h sal-h"><h3>'+(veh ? ('🚚 Salió el '+esc(veh)) : ('✅ Lo que salió a la '+salioTurnoTxt(t)))+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b sal-m"><div class="sal-mtop"><span>📅 Hoy, '+esc(dia)+' '+esc(fmtFechaCorta(hoy))+
+      (veh ? (' · chofer de hoy: <b>'+esc(camChoferDelDia(veh, hoy)||'—')+'</b>'+(camionSalio(hoy, veh)?(' · ya figura salido a las '+esc(camionSalio(hoy, veh))):'')) : '')+'</span>'+
+      '<span class="sal-tu" role="group" aria-label="Turno">'+tb('AM','🌅')+(limTurno(hoy,'PM')>0?tb('PM','🌆'):'')+'</span></div>';
+  if(veh){
+    h+='<div class="sal-sec">Lo que lleva el '+esc(veh)+' · '+S.lleva.length+' <small>(tildado: tiene ese camión, o el GPS o la zona lo ponen ahí)</small></div>'+
+      (S.lleva.length ? fil(S.lleva) : '<p class="sal-vacio">Ningún pedido de la '+salioTurnoTxt(t)+' tiene este camión todavía: tildá abajo lo que lleva.</p>');
+    if(S.sin.length) h+='<div class="sal-sec">Sin camión · '+S.sin.length+' <small>(tildá lo que también va en el '+esc(veh)+')</small></div>'+fil(S.sin);
+    if(S.tarde.length) h+='<div class="sal-sec">🌆 De la tarde, en el '+esc(veh)+' · '+S.tarde.length+' <small>(si lo cargaste ahora, tildalo: pasa a la mañana y el bot le avisa al cliente que va en camino)</small></div>'+fil(S.tarde);
+  } else {
+    var grupos={}, orden=[], VK=Object.keys(VEHICULOS);
+    S.lleva.forEach(function(it){ var g=it.va||''; if(!grupos[g]){ grupos[g]=[]; orden.push(g); } grupos[g].push(it); });
+    orden.sort(function(a,b){ return ((a==='')-(b==='')) || (VK.indexOf(a)-VK.indexOf(b)); });
+    if(!orden.length) h+='<p class="sal-vacio">No queda nada de la '+salioTurnoTxt(t)+' sin ✅.</p>';
+    orden.forEach(function(g){
+      h+='<div class="sal-sec">'+(g ? ('🚚 '+esc(g)+' · '+esc(camChoferDelDia(g, hoy)||'—')) : '❓ Sin camión')+' · '+grupos[g].length+(g?'':' <small>(elegí en qué camión salió, o dejalo sin camión)</small>')+'</div>'+fil(grupos[g]);
+    });
+    if(S.ret.length) h+='<div class="sal-sec">🏬 Lo retira el cliente · '+S.ret.length+' <small>(no lleva camión: tildalo si ya lo retiró)</small></div>'+fil(S.ret);
+  }
+  var n=salioTildados().length;
+  h+='<div class="sal-que" id="sal-que">'+salioQueHtml()+'</div>'+
+    '<div class="modal-actions"><button type="button" class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+      '<button type="button" class="btn btn-primary sal-ok-btn" id="sal-ok"'+(n?'':' disabled')+' onclick="salioConfirmar()">'+esc(salioBotonTxt())+'</button></div>'+
+    '<p class="sal-nota">Se relee la planilla antes de marcar: lo que otro equipo ya marcó, borró o pasó a otro día se saltea y se dice.</p></div>';
+  openModal(h, true);
+}
+function salioQuien(){ var q=''; try{ q=quienEdita(); }catch(e){} return q || cierreEntQuien() || ''; }
+/* El toque: relee, adelanta lo de la tarde tildado, pone el ✅ (con el camión que faltaba) y anota la salida del camión. */
+function salioConfirmar(){
+  if(SALIO.en) return Promise.resolve(null);
+  var ids=salioTildados(), veh=SALIO.veh, hoy=todayStr(), t=SALIO.t;
+  if(!ids.length){ toast('No hay nada tildado.','err'); return Promise.resolve(null); }
+  var porId={}; salioItems().forEach(function(it){ porId[it.id]=it; });
+  var cam={}, tarde=[];
+  ids.forEach(function(id){
+    var p=findById(id), it=porId[id]; if(!p) return;
+    if(!vehiculoDe(p) && !cierreEntRetira(p)){ var v=veh || SALIO.cam[id] || (it ? salioCamDe(it) : ''); if(v && VEHICULOS[v]) cam[id]=v; }
+    if(veh && t==='AM' && normTurno(p.turno)==='PM') tarde.push(id);
+  });
+  var h=hhmmBolivia(), btn=document.getElementById('sal-ok');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Releyendo la planilla…'; }
+  SALIO.en=true;
+  var relectura=CONNECTED ? refrescarEstadoYa().catch(function(){ return false; }) : Promise.resolve(false);
+  return relectura.then(function(leyo){
+    if(!leyo){
+      SALIO.en=false; if(btn){ btn.disabled=false; btn.textContent=salioBotonTxt(); }
+      toast('📵 No pude leer la planilla (sin señal o Google no contestó): no se marcó nada. Probá de nuevo en un momento.','err',9000);
+      return { leyo:false };
+    }
+    if(btn) btn.textContent='⏳ Guardando…';
+    var ad=[];
+    return tarde.reduce(function(pr, id){ return pr.then(function(){
+      var q=findById(id);
+      if(!q || q.entregado || q.fecha!==hoy || normTurno(q.turno)!=='PM') return;
+      fhDonde('🚚 Salió el '+veh+' a la mañana con lo de la tarde');   // 📅 (mejora 212) uno por pedido
+      return reproAplicar(q, hoy, 'AM', true, { adelanto:1 }).then(function(r){ if(r && (r.ok || r.local)) ad.push(q); return r; }, function(){});
+    }); }, Promise.resolve()).then(function(){
+      var plan={ ids:ids, antes:{}, dias:{}, quien:salioQuien(), hoy:hoy, ts:Date.now(), cam:cam, donde:'🚚 Salió '+(veh ? ('el '+veh) : ('(lo de la '+salioTurnoTxt(t)+')')) };
+      ids.forEach(function(id){ plan.antes[id]={ fecha:hoy, hoy:true }; plan.dias[id]=hoy; });
+      return cierreEntAplicar(plan);
+    }).then(function(r){
+      var marco=false;
+      if(veh && r.hechos.length && !camionSalio(hoy, veh)){ try{ camionSalioMarcar(veh, true, { sinPreguntar:true, sinAdelanto:true, sinAviso:true }); marco=true; }catch(e){} }
+      SALIO.en=false;
+      try{ salioBarPintar(); }catch(e){}
+      salioResultado(r, { veh:veh, t:t, h:(veh && camionSalio(hoy, veh)) || h, marco:marco, ad:ad });
+      return Object.assign({ leyo:true, marco:marco, adelantados:ad.length }, r, { hechos:r.hechos.length, saltados:r.saltados.length });
+    });
+  }, function(){ SALIO.en=false; if(btn){ btn.disabled=false; btn.textContent=salioBotonTxt(); } return null; });
+}
+function salioResultado(r, o){
+  var hechos=r.hechos||[], saltados=r.saltados||[], total=(r.respuestas||[]).length, parcial=(r.cola||0)>0 || (r.rechazados||0)>0;
+  var tit=o.veh ? ('🚚 Salió el '+o.veh+(o.h?(' · '+o.h):'')) : ('✅ Lo que salió a la '+salioTurnoTxt(o.t));
+  var html='<div class="modal-h sal-h'+(parcial?' sal-h-a':'')+'"><h3>'+esc(tit)+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div><div class="modal-b sal-m">'+
+    '<div class="sal-res"><b>✅ '+hechos.length+' entrega'+(hechos.length===1?'':'s')+' con ✅</b>'+(total?(' · guardado en la planilla: '+(r.ok||0)+' de '+total):'')+'</div>'+
+    (o.marco ? ('<div class="sal-res-l">🛣️ El '+esc(o.veh)+' figura salido a las '+esc(o.h)+': las vendedoras lo ven «en camino» en Mis pedidos.</div>') : '')+
+    ((o.ad||[]).length ? ('<div class="sal-res-l">🌆 Pasaron a la mañana: '+o.ad.map(function(q){ return esc(ocEtiq(q.oc)||'—')+' · '+esc(q.cliente||''); }).join(', ')+'. El bot le avisa al cliente que va en camino.</div>') : '')+
+    (r.cola ? ('<div class="sal-res-l sal-res-a">⏳ <b>'+r.cola+'</b> no llegó a la planilla todavía: queda en la cola de este aparato y se reintenta solo.</div>') : '')+
+    (r.rechazados ? ('<div class="sal-res-l sal-res-r">⚠️ <b>'+r.rechazados+'</b> rechazado'+(r.rechazados===1?'':'s')+' por el servidor: otra persona cambió ese pedido. Abrilo y volvé a marcarlo.</div>') : '')+
+    (hechos.length ? ('<div class="sal-res-lista">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||'')+(vehiculoDe(p)?(' · 🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')):' · sin camión'); }).join('<br>')+'</div>') : '')+
+    (o.veh ? '' : cierreEntSinCamHtml(r))+
+    (saltados.length ? ('<div class="sal-sec">No se marcaron · '+saltados.length+'</div><div class="sal-res-lista">'+saltados.map(function(x){ return (x.p ? (esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'')) : esc(String(x.id)))+': <b>'+esc(x.por)+'</b>'; }).join('<br>')+'</div>') : '')+
+    rptFaltaCierreHtml(hechos)+
+    '<div class="modal-actions"><button type="button" class="btn btn-primary btn-sm sal-ok-btn" onclick="closeModal()">Listo</button></div></div>';
+  openModal(html, true);
+}
+/* ---------- «Entregó» en una ficha sin camión: primero, en cuál salió ---------- */
+function salioPreguntaAntes(p, desde){
+  if(SALIO.pasa && SALIO.pasa===String(p && p.id)){ SALIO.pasa=''; return false; }
+  if(!salioActivo() || !p || p.entregado || !p.fecha || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p) || !cierreEntCamPide(p)) return false;
+  salioPreguntar(p.id, desde);
+  return true;
+}
+function salioPreguntar(id, desde){
+  var p=findById(id); if(!p) return;
+  var hoy=todayStr(), prop=(p.fecha===hoy) ? salioPropDe(p, salioSug(hoy)) : null, dn=dayNumMap()[p.id], d=(desde==='ficha'?'ficha':'quick');
+  var vs=Object.keys(VEHICULOS).slice(); if(prop) vs.sort(function(a,b){ return (b===prop.v)-(a===prop.v); });
+  var pid=esc(String(p.id));
+  var bts=vs.map(function(v){
+    var on=!!(prop && prop.v===v);
+    return '<button type="button" class="sal-pb'+(on?' on':'')+'" data-id="'+pid+'" data-v="'+esc(v)+'" data-d="'+d+'" onclick="salioPreguntaElegir(this.dataset.id, this.dataset.v, this.dataset.d)">'+
+      '<b>🚚 '+esc(v)+'</b><small>'+esc(camChoferDelDia(v, p.fecha)||'sin chofer')+(on?(' · '+(prop.gps?'🛰️ el GPS dice este':'📍 va a esa zona')):'')+'</small></button>';
+  }).join('');
+  openModal('<div class="modal-h sal-h"><h3>🚚 ¿En qué camión salió?</h3><button class="modal-x" data-id="'+pid+'" data-d="'+d+'" onclick="salioPreguntaCancelar(this.dataset.id, this.dataset.d)" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b sal-m"><p class="sal-pq">'+(dn?('El <b>N° '+esc(String(dn))+'</b>'):('<b>'+esc(ocEtiq(p.oc)||'El pedido')+'</b>'))+' · '+esc(p.cliente||'')+(p.zona?(' · '+esc(p.zona)):'')+
+      ' no tiene camión anotado. Tocá en cuál salió: se guarda junto con el ✅ (con el chofer que iba en ese camión ese día).</p>'+
+    '<div class="sal-pbs">'+bts+'</div>'+
+    '<div class="modal-actions"><button type="button" class="btn btn-ghost btn-sm" data-id="'+pid+'" data-d="'+d+'" onclick="salioPreguntaElegir(this.dataset.id, \'\', this.dataset.d)">🏬 Lo retiró el cliente / sin camión</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" data-id="'+pid+'" data-d="'+d+'" onclick="salioPreguntaCancelar(this.dataset.id, this.dataset.d)">Cancelar</button></div></div>');
+}
+function salioPreguntaElegir(id, v, desde){
+  var p=findById(id); if(!p){ closeModal(); return; }
+  if(v && VEHICULOS[v] && !vehiculoDe(p)){ p.vehiculo=v; if(!String(p.chofer||'').trim()) p.chofer=camChoferDelDia(v, p.fecha); }
+  SALIO.pasa=String(p.id);
+  closeModal();
+  if(desde==='ficha') toggleEntregado(p.id); else quickEntregado(p.id);
+  SALIO.pasa='';
+}
+function salioPreguntaCancelar(id, desde){ closeModal(); if(desde==='ficha' && findById(id)) reabrirFicha(id); }
+/* fin mejora 312 */
 /* ✨ (§4kc) La barra «N de M tildados»: se repinta al tildar (`cierreEntToggle`). */
 function cierreEntAvanceHtml(){
   var tot=cierreEntHoy().length+cierreEntAtrasados().length, n=cierreEntTildados().length;
@@ -52653,7 +52972,7 @@ function cierreEntDia(id, v){
 /* Marca UN pedido: la marca de siempre + el registro adentro de cada producto. `dia` = día de entrega declarado. */
 /* ⚠️ (05/10, dueño) Lo DESTILDADO no recibe ninguna marca: «un pedido con fecha pasada y sin tildar, logística lo entregó; lo
    que no entregan lo reprograman». La marca «no salió» (`eX`) que pedía Codex (R2) se hizo y se sacó el mismo día. */
-function cierreEntMarcar(p, quien, dia, ts){ entDonde('✅ Cierre de entregas'+(quien?(' (cierra '+quien+')'):''));   // 🧾 (10/11) quién tocó el «Entregado»
+function cierreEntMarcar(p, quien, dia, ts, donde){ entDonde(donde || ('✅ Cierre de entregas'+(quien?(' (cierra '+quien+')'):'')));   // 🚚 (mejora 312) «Salió» dice desde dónde   // 🧾 (10/11) quién tocó el «Entregado»
   p.entregado=true; atcAlMarcarEntregado(p); if(typeof sonidoPanel==='function') sonidoPanel('ding');   // 🔔 (§4ni) una vez aunque sean muchos
   (p.productos||[]).forEach(function(x){ if(x){ x.eF=String(dia||p.fecha||''); x.eT=ts; x.eQ=String(quien||''); } });
 }
@@ -52682,7 +53001,7 @@ function cierreEntAplicar(plan){
     if(p.entregado){ saltados.push({ p:p, por:'ya lo marcó otro equipo' }); return; }
     if(a.fecha && p.fecha!==a.fecha){ saltados.push({ p:p, por:'lo reprogramaron para el '+fmtFecha(p.fecha) }); return; }
     if(!cierreEntEntra(p)){ saltados.push({ p:p, por:'ya no es una entrega del camión' }); return; }
-    cierreEntMarcar(p, plan.quien, (plan.dias||{})[id]||plan.hoy, ts); hechos.push(p);
+    cierreEntMarcar(p, plan.quien, (plan.dias||{})[id]||plan.hoy, ts, plan.donde); hechos.push(p);
     if(cierreEntCamPoner(p, (plan.cam||{})[String(id)])) conCam++;   // 🚚 (idea 203) el camión elegido, en el MISMO guardado del ✅
   });
   var sinCam=hechos.filter(function(p){ return cierreEntCamPide(p); });
