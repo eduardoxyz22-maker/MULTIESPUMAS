@@ -3918,6 +3918,9 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         <div id="cx-tiempo"></div>
         <div id="cx-mano"></div>
         <div id="cua-retiros"></div>
+        <!-- 🧾📄 (15/11, mejora 328) Lo retirado contra sus ventas: con factura o con remisión (`retDocPintar`). 💳 (mejora 331) La tarjeta por POS y lote (`tjPosPintar`). -->
+        <div id="cua-doc"></div>
+        <div id="cua-tarjeta"></div>
         <div class="two-col cua-2col">
           <div id="cua-alertas"></div>
           <div id="cua-pendientes"></div>
@@ -6047,6 +6050,26 @@ td.csg-c.csg-borde{ background:#fff7e6; }
 .pub-w{ display:inline-block; width:90px; height:8px; border-radius:4px; background:#eef2f2; vertical-align:middle; overflow:hidden; }
 .pub-w i{ display:block; height:100%; background:#00B5AD; }
 .pub-n{ font-size:.7rem; color:#94a3b8; margin-top:8px; }
+/* 🧾📄 328 · el retiro contra sus ventas */
+.rdc-s{ font-size:.76rem; color:var(--muted); margin:-4px 0 8px; line-height:1.45; }
+.rdc-t th{ background:#f3f8f8; color:#4b5b5b; } .rdc-t .r{ text-align:right; }
+.rdc-mal{ color:#b42318; font-weight:700; white-space:nowrap; } .rdc-ok{ color:#00A09A; font-weight:700; }
+.rdc-l{ display:flex; flex-direction:column; gap:8px; margin-top:10px; }
+.rdc-ret{ border:1px solid #f5c26b; background:#fff7e6; border-radius:10px; padding:9px 11px; color:#7c4b00; font-size:.8rem; line-height:1.45; }
+.rdc-ret b{ color:#5c3700; }
+.rdc-acc{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:7px; }
+.rdc-part{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.rdc-rec{ width:210px; max-width:100%; }
+.rdc-b{ background:#00B5AD; color:#fff; border:0; font-weight:700; width:auto; }
+.rdc-b2{ background:#fff; color:#00A09A; border:1px solid #00B5AD; }
+.rdc-n{ font-size:.74rem; color:var(--muted); margin-top:8px; }
+/* 💳 331 · la tarjeta por POS y lote */
+.tj-s{ font-size:.76rem; color:var(--muted); margin:-4px 0 8px; line-height:1.45; }
+.tj-t th{ background:#f3f8f8; color:#4b5b5b; } .tj-t .r{ text-align:right; }
+.tj-t small{ color:var(--muted); font-weight:500; }
+tr.tj-otro td{ background:#fff7e6; } tr.tj-otro small{ color:#b45309; }
+.tj-g{ color:var(--muted); }
+.tj-n{ font-size:.74rem; color:var(--muted); margin-top:8px; line-height:1.5; }
 /* 🎯 (27/10, §4nb) Las metas por marca, en Proyección. */
 .mt-btn{ background:#e6f7f6; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
 .mt-box{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:14px 16px; margin:4px 0 14px; display:flex; flex-direction:column; gap:12px; }
@@ -17733,6 +17756,8 @@ function renderCuadre(){
 
   // ---- efectivo cobrado vs. retirado, vendedor por vendedor
   renderCuadreRetiros();
+  try{ retDocPintar(); }catch(e){}   // 🧾📄 (15/11, mejora 328) el retiro contra sus ventas: con factura o con remisión
+  try{ tjPosPintar(); }catch(e){}    // 💳 (15/11, mejora 331) la tarjeta por POS y lote
   /* ✨ (§4jw) G semáforo, J día por día y H quién tiene el efectivo: leen lo mismo que la tabla del cierre y la de retiros. */
   try{ cxSemaforoPintar(CIE); }catch(e){}
   try{ cxTiempoPintar(pagos); }catch(e){}
@@ -18669,7 +18694,7 @@ function renderRetiros(){
             '<td><b>'+esc(r.entrega||'—')+'</b></td>'+
             '<td>'+esc(r.retira||'—')+'</td>'+
             '<td>'+(r.notas.length?r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' '):'<span style="color:var(--amber)">sin recibo</span>')+'</td>'+
-            '<td style="white-space:nowrap">'+(r.tipo==='Facturado'?'<span class="badge b-verif">🧾 Facturado</span>':'<span class="badge b-gray">📄 No facturado</span>')+'</td>'+
+            '<td style="white-space:nowrap">'+(r.tipo==='Facturado'?'<span class="badge b-verif">🧾 Facturado</span>':'<span class="badge b-gray">📄 No facturado</span>')+retDocBadge(r)+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b>'+(retEnCola(r.id)?'<br><span class="badge b-amber" title="Está guardado solo en este dispositivo: se manda solo al reconectar">⏳ todavía no está en la planilla</span>':'')+'</td>'+
             '<td style="white-space:nowrap">'+(r.fotos.length
                 ? r.fotos.map(function(fid,k){ return fotoImgHtml(fid,{alt:'Imagen '+(k+1), title:'Ver en grande',
@@ -18983,6 +19008,249 @@ function renderCuadreRetiros(){
       : '<div class="empty" style="padding:18px 0">No hubo efectivo ni retiros en '+esc(mesTxt)+'.</div>')+
     notaFuera+
     '</div>';
+}
+
+/* ============================================================================
+   🧾📄 (15/11, mejora 328; el dueño la aprobó) FACTURADO O NO: EL RETIRO CONTRA SUS VENTAS. En noviembre, de los cobros tildados en retiros,
+   Bs 6.060 de una venta con factura se retiraron como «No facturado» y 4 de ventas con remisión como «Facturado»; otros, de ventas sin factura
+   ni remisión anotada, con el tipo elegido a ojo. `retTipoDocs` propone el tipo al CARGAR el retiro con lo que se sabía en ese momento, y
+   después nadie lo vuelve a mirar (la factura se anota más tarde, en Contabilidad).
+   · Debajo de «Efectivo cobrado vs. retirado» del Cuadre, por persona: lo retirado de ventas con factura contra lo retirado como «Facturado»
+     (y lo mismo con remisión), y cada retiro guardado que no coincide con sus ventas: «⚠️ su cobro es de una venta con factura 14», con
+     «Pasar a «Facturado»» (todo lo que tapa es del otro tipo) o «🧾+📄 Partir en dos recibos» (tapa de los dos: la parte del otro tipo pasa a
+     un retiro nuevo con el N° del otro recibo; el de antes queda con su recibo, su tipo y lo demás). En la lista de retiros, la marca ⚠️.
+   · Qué tapa cada retiro = `efePareo` (la regla del efectivo: lo tildado, el mismo monto, cobros seguidos, del más viejo); de qué es cada venta
+     = `docVentaDe` (lo que anotó Contabilidad). Lo que no tiene factura ni remisión va con lo no facturado, como en «Las dos» (13/11).
+   · Corregir pasa por `persistRetiro` (`guardarDurable`) con el sello que se ve, como ✏️; la hora del retiro no cambia. Nada se corrige solo.
+   · Solo con el emparejamiento (desde octubre, día o mes). En Playwright apagado salvo `window.RET_DOC_PRUEBA`.
+   ========================================================================== */
+function retDocVe(){ return !(navigator.webdriver && !window.RET_DOC_PRUEBA); }
+/* Lo que tapa un retiro, por tipo de venta: {F, R, X} (Bs), las ventas con su N° y el estado: 'ok' | 'pasar' (todo del otro tipo) | 'partir'. */
+function retDocDeRetiro(r, PAR){
+  PAR=PAR||efePareo();
+  var px=PAR && PAR.porRet ? PAR.porRet[r.id] : null; if(!px) return null;
+  var o={ r:r, F:0, R:0, X:0, sobra:r2(px.sobra||0), tapa:[], otras:[], tipo:r.tipo };
+  px.tapa.forEach(function(t){
+    var p=t.c.p, d=docVentaDe(p), k=(d==='F' || d==='R') ? d : 'X';
+    o[k]=r2(o[k]+t.u); o.tapa.push({ c:t.c, u:r2(t.u), d:k, num:docNumDe(p) });
+  });
+  var otro = r.tipo==='Facturado' ? 'R' : 'F';
+  o.otro=otro;
+  /* «Facturado» con cobros de remisión (o sin anotar, que van con lo no facturado) y «No facturado» con cobros de factura */
+  o.malBs = r.tipo==='Facturado' ? r2(o.R+o.X) : o.F;
+  o.malDoc = r.tipo==='Facturado' ? o.R : o.F;   // lo que está anotado del otro tipo (lo sin anotar no es un error: se eligió a ojo)
+  o.otras=o.tapa.filter(function(t){ return t.d===otro; });
+  var propio = r.tipo==='Facturado' ? o.F : r2(o.R+o.X);
+  o.est = !(o.malDoc>0.005) ? 'ok' : (propio>0.005 ? 'partir' : 'pasar');
+  return o;
+}
+/* El Cuadre: por persona y los retiros que no coinciden (del período, con el filtro de vendedora). */
+function retDocDatos(pe, vend){
+  if(!pe) pe=cuadrePeriodo(); if(vend==null) vend=cuadreVendedor();
+  if(!efePareoAplica(pe)) return null;
+  var PAR=efePareo(), P={}, orden=[], mal=[];
+  retirosDe(pe, vend).forEach(function(r){
+    var o=retDocDeRetiro(r, PAR); if(!o) return;
+    var k=normNombre(r.entrega)||'(sin)', e=P[k];
+    if(!e){ e=P[k]={ nombre:r.entrega||'—', F:0, R:0, X:0, fac:0, nofac:0, malBs:0, n:0 }; orden.push(k); }
+    e.F=r2(e.F+o.F); e.R=r2(e.R+o.R); e.X=r2(e.X+o.X); e.n++;
+    if(r.tipo==='Facturado') e.fac=r2(e.fac+r.monto); else e.nofac=r2(e.nofac+r.monto);
+    if(o.est!=='ok'){ e.malBs=r2(e.malBs+o.malDoc); mal.push(o); }
+  });
+  var filas=orden.map(function(k){ return P[k]; }).filter(function(e){ return e.F>0.005 || e.R>0.005 || e.X>0.005; })
+    .sort(function(a,b){ return b.malBs-a.malBs || a.nombre.localeCompare(b.nombre,'es'); });
+  mal.sort(function(a,b){ return a.r.fecha<b.r.fecha ? -1 : (a.r.fecha>b.r.fecha ? 1 : 0); });
+  var sinAnot=0; filas.forEach(function(e){ sinAnot=r2(sinAnot+e.X); });
+  return { filas:filas, mal:mal, sinAnot:sinAnot };
+}
+function retDocVentaTxt(t){ var p=t.c.p; return (t.d==='F' ? 'una venta con factura' : 'una venta con remisión')+(t.num ? (' '+t.num) : '')+' ('+String(p.cliente||'—')+', '+fmtFechaCorta(t.c.f)+', '+fmtBs(t.u)+')'; }
+function retDocRetHtml(o){
+  var r=o.r, otroTipo = r.tipo==='Facturado' ? 'No facturado' : 'Facturado';
+  var ventas=o.otras.map(retDocVentaTxt);
+  var btn = o.est==='pasar'
+    ? '<button type="button" class="btn btn-sm rdc-b" data-id="'+esc(r.id)+'" onclick="retDocPasar(this.getAttribute(\'data-id\'))">Pasar a «'+esc(otroTipo)+'»</button>'
+    : '<span class="rdc-part"><input type="text" class="rdc-rec" autocomplete="off" placeholder="N° del recibo de lo '+(otroTipo==='Facturado' ? 'facturado' : 'no facturado')+'" aria-label="N° del otro recibo">'+
+      '<button type="button" class="btn btn-sm rdc-b rdc-b2" data-id="'+esc(r.id)+'" onclick="retDocPartir(this.getAttribute(\'data-id\'), this)">🧾+📄 Partir en dos recibos</button></span>';
+  var parte = o.est==='partir' ? (' Pasaría '+fmtBs(o.malBs)+' a un retiro «'+otroTipo+'» con el otro recibo; este queda con '+fmtBs(r2(r.monto-o.malBs))+'.') : '';
+  return '<div class="rdc-ret" data-id="'+esc(r.id)+'"><b>Retiro del '+esc(fmtFechaCorta(r.fecha))+' · '+esc(r.entrega||'—')+' · '+fmtBs(r.monto)+' · «'+esc(r.tipo)+'»'+(r.notas.length ? (' · recibo '+esc(r.notas.join(', '))) : '')+'</b><br>'+
+    '⚠️ '+(ventas.length===1 ? 'El cobro que tapa es de ' : 'Tapa cobros de ')+esc(ventas.join('; '))+'.'+esc(parte)+
+    '<div class="rdc-acc">'+btn+'</div></div>';
+}
+function retDocHtml(D){
+  if(!D || (!D.filas.length && !D.mal.length)) return '';
+  var ok=function(e){ return e.malBs>0.005 ? '<span class="rdc-mal">⚠️ '+fmtBs(e.malBs)+' en el otro tipo</span>' : '<span class="rdc-ok">✓</span>'; };
+  var h='<div class="cua-box rdc" id="cua-doc-box"><div class="cua-t">🧾 Retirado con factura y sin factura — '+esc(cuadrePeriodoTxt())+'</div>'+
+    '<div class="rdc-s">De lo que tapó cada retiro (la regla del efectivo): cuánto era de ventas con <b>factura</b> y con <b>nota de remisión</b>, contra el tipo con que se retiró.</div>'+
+    '<div class="tw"><table class="mini rdc-t"><thead><tr><th>Quién</th><th class="r">De ventas con factura</th><th class="r">Retirado «Facturado»</th><th class="r">De ventas con remisión</th><th class="r">Retirado «No facturado»</th><th class="r">Sin anotar</th><th></th></tr></thead><tbody>'+
+    D.filas.map(function(e){ return '<tr><td><b>'+esc(e.nombre)+'</b></td><td class="r">'+fmtBs(e.F)+'</td><td class="r">'+fmtBs(e.fac)+'</td><td class="r">'+fmtBs(e.R)+'</td><td class="r">'+fmtBs(e.nofac)+'</td>'+
+      '<td class="r">'+(e.X>0.005 ? fmtBs(e.X) : '—')+'</td><td>'+ok(e)+'</td></tr>'; }).join('')+'</tbody></table></div>';
+  if(D.mal.length) h+='<div class="rdc-l">'+D.mal.map(retDocRetHtml).join('')+'</div>';
+  if(D.sinAnot>0.005) h+='<div class="rdc-n">'+fmtBs(D.sinAnot)+' retirado es de ventas sin factura ni remisión anotada: el tipo se eligió a ojo. Va con lo no facturado hasta que Contabilidad anote el documento de la venta.</div>';
+  return h+'</div>';
+}
+function retDocPintar(){
+  var box=document.getElementById('cua-doc'); if(!box) return;
+  if(!retDocVe()){ box.innerHTML=''; return; }
+  var h=''; try{ h=retDocHtml(retDocDatos()); }catch(e){ h=''; }
+  box.innerHTML=h;
+}
+/* La marquita de la lista de retiros. */
+function retDocBadge(r){
+  if(!retDocVe()) return '';
+  var o=null; try{ o=retDocDeRetiro(r); }catch(e){ o=null; }
+  if(!o || o.est==='ok') return '';
+  return '<br><span class="badge b-amber rdc-badge" title="'+esc(o.otras.map(retDocVentaTxt).join('; '))+'">⚠️ sus cobros: '+(o.otro==='F' ? 'con factura' : 'con remisión')+'</span>';
+}
+/* La fila del retiro como está en la lista, con el sello que se ve y su hora (no se mueve). */
+function retDocFila(id){ for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)) return RETIROS[k]; return null; }
+function retDocGuardar(f, r, cambios){
+  var x={}; for(var k in r) x[k]=r[k]; for(var c in cambios) x[c]=cambios[c];
+  var fila=filaDeRetiro(x);
+  if(f){ fila.ts=Number(f.ts)||fila.ts; var rv=Math.max(Number(f.rev)||0, Number(SAVE_REV[fila.id])||0); if(rv>0) fila.rev=rv; }
+  return { fila:fila, prom:persistRetiro(fila) };
+}
+function retDocAviso(res, txt){
+  if(res && res.ok) toast(txt+' ✓','ok',6000);
+  else if(res && res.error==='conflicto'){ /* `rechazoFirme` ya lo dijo */ }
+  else if(res && res.error==='borrado') toast('❌ Ese retiro lo borraron desde otro equipo: no se cambió.','err',9000);
+  else if(res && res.error==='almacenamiento') errorCopiaDurable();
+  else toast('⚠️ Quedó guardado solo en este dispositivo: se manda solo al reconectar.','err',9000);
+}
+function retDocPasar(id){
+  var f=retDocFila(id); if(!f) return;
+  var r=retiroDe(f), o=retDocDeRetiro(r); if(!o || o.est!=='pasar'){ renderCuadreSiActivo(); return; }
+  var nuevo = r.tipo==='Facturado' ? 'No facturado' : 'Facturado';
+  if(!confirm('¿Pasar el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') a «'+nuevo+'»?\n\nLo que tapa es de '+o.otras.map(retDocVentaTxt).join('; ')+'.')) return;
+  var G=retDocGuardar(f, r, { tipo:nuevo });
+  renderRetirosSiActivo(); renderCuadreSiActivo();
+  return G.prom.then(function(res){ retDocAviso(res, 'Retiro pasado a «'+nuevo+'»'); renderRetirosSiActivo(); renderCuadreSiActivo(); return res; });
+}
+function retDocPartir(id, btn){
+  var f=retDocFila(id); if(!f) return;
+  var r=retiroDe(f), o=retDocDeRetiro(r); if(!o || o.est!=='partir'){ renderCuadreSiActivo(); return; }
+  var box=btn && btn.closest ? btn.closest('.rdc-ret') : null, inp=box ? box.querySelector('.rdc-rec') : null;
+  var rec=inp ? limpiaNota(inp.value) : '';
+  if(!rec){ if(inp){ inp.classList.add('err'); inp.focus(); } toast('Anotá el N° del otro recibo (el que firma por la otra parte)','err'); return; }
+  if(r.notas.indexOf(rec)>=0){ if(inp) inp.focus(); toast('El recibo '+rec+' ya es el de este retiro: cada recibo va en uno solo','err'); return; }
+  var nuevo = r.tipo==='Facturado' ? 'No facturado' : 'Facturado', mueve=o.malBs, queda=r2(r.monto-mueve);
+  if(!(mueve>0.005) || !(queda>0.005)) return;
+  /* qué cobros van con cada parte: los del otro tipo (y, si este es «Facturado», también lo sin anotar) pasan al retiro nuevo */
+  var pasa=function(t){ return r.tipo==='Facturado' ? t.d!=='F' : t.d==='F'; };
+  var tk=function(t){ return { id:t.c.id, f:t.c.f, m:r2(t.c.m) }; };
+  var tickN=o.tapa.filter(pasa).map(tk), tickV=o.tapa.filter(function(t){ return !pasa(t); }).map(tk);
+  if(!confirm('¿Partir el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') en dos recibos?\n\n'+
+              '· «'+r.tipo+'» '+fmtBs(queda)+' (recibo '+(r.notas.join(', ')||'—')+')\n· «'+nuevo+'» '+fmtBs(mueve)+' (recibo '+rec+')')) return;
+  var base=String(r.obs||''), nota=function(otro){ return (base ? (base+' · ') : '')+'retiro en dos recibos: el otro es el '+otro; };
+  var G1=retDocGuardar(f, r, { monto:queda, tick:tickV, obs:nota(rec) });
+  var x={ id:RETIRO_PREF+uid()+'__', fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:mueve, notas:[rec], tipo:nuevo, fotos:r.fotos, obs:nota(r.notas.join(', ')||'—'), tick:tickN };
+  var f2=filaDeRetiro(x); f2.ts=Number(f.ts)||f2.ts;
+  var p2=persistRetiro(f2);
+  renderRetirosSiActivo(); renderCuadreSiActivo();
+  toast('⏳ Guardando los dos retiros…','ok');
+  return Promise.all([G1.prom, p2]).then(function(R2){
+    var ok=R2.filter(function(z){ return z && z.ok; }).length;
+    if(ok===2) toast('Retiro partido en dos recibos ✓ («'+r.tipo+'» '+fmtBs(queda)+' · «'+nuevo+'» '+fmtBs(mueve)+')','ok',7000);
+    else retDocAviso(R2[0] && R2[0].ok ? R2[1] : R2[0], 'Retiro partido');
+    renderRetirosSiActivo(); renderCuadreSiActivo(); return R2;
+  });
+}
+
+/* ============================================================================
+   💳 (15/11, mejora 331; la parte de la página — el servidor 2026-11-15-a ya lee el lote) LA TARJETA: SU POS Y EL VOUCHER LEÍDO. 13 cobros con
+   tarjeta en noviembre (Bs 63.755) y ninguno decía de qué POS (banco) ni el lote: el abono del banco llega por lote, días después, y no había
+   con qué cruzarlo.
+   · Al subir la foto del voucher (formulario, «Registrar pago» y el 📎 de un pago ya registrado), además de lo de siempre (`iacComparar`: si el
+     monto no coincide avisa, como con el QR), una línea con lo que leyó Claude: lote, autorización, los 4 últimos de la tarjeta y el banco del
+     POS; si la tienda tiene su POS y el voucher dice otro banco, lo dice (solo aviso). Con servidor ≥ `TJ_SERVIDOR` (los vouchers leídos con la
+     pregunta 4 traen `lo`/`au`/`pb`); con uno anterior no se muestra nada nuevo.
+   · El POS de cada tienda: `POS_TIENDA` (a mano, por ejemplo {'Mia Plaza':'BISA'}; hoy vacía) o, si no, el que más se repite en los vouchers
+     ya leídos de esa tienda (`TJ_POS_MIN` o más). La tarjeta NO guarda banco en el pago: el POS «puesto solo» es solo para mostrar.
+   · En el Cuadre, «💳 Tarjeta por POS y lote»: los cobros con tarjeta del período agrupados por POS (el del voucher; si no, el de la tienda) y
+     lote: cada lote es UN abono del banco. Lo ya leído se pide con `leer:1` (sale de la hoja, no gasta nada).
+   · Solo mira. En Playwright apagado salvo `window.TARJ_POS_PRUEBA`.
+   ========================================================================== */
+var TJ_SERVIDOR='2026-11-15-a', POS_TIENDA={}, TJ_POS_MIN=2, TJ_CARGA={};
+function tjVe(){ return !(navigator.webdriver && !window.TARJ_POS_PRUEBA); }
+function tjServidorOk(){ return servidorTiene(TJ_SERVIDOR); }
+function tjEsTarjeta(x){ return /^Tarjeta/i.test(String((x && (x.metB!=null ? x.metB : x.metodo))||'')); }
+/* La tienda de un pago con tarjeta: la de la venta de tienda, o la de quien vendió ese día. */
+function tjTiendaDe(p, f){ if(!p) return ''; return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p.vendedor, f||contaFecha(p)) || ''; }
+/* Lo leído del voucher de un pago (la primera foto buena con algo de la tarjeta). */
+function tjLeido(comps){
+  var o=null; (comps||[]).some(function(f){ var r=IAC.res[f]; if(r && !r.err && r.cp!==false && (r.lo || r.au || r.pb || r.u4)){ o=r; return true; } return false; });
+  return o;
+}
+/* El POS que se aprende de los vouchers leídos: {tienda: banco} con el que más se repite (al menos TJ_POS_MIN). */
+function tjPosAprendido(){
+  var C={};
+  (STATE||[]).forEach(function(p){ compsPagosDe(p).forEach(function(x){
+    if(!tjEsTarjeta(x)) return; var o=tjLeido(x.comps), b=o ? iacBanco(o.pb) : ''; if(!b) return;
+    var t=tjTiendaDe(p, x.f); if(!t) return; var e=C[t]||(C[t]={}); e[b]=(e[b]||0)+1; }); });
+  var out={}; Object.keys(C).forEach(function(t){ var best='', n=0; Object.keys(C[t]).forEach(function(b){ if(C[t][b]>n){ n=C[t][b]; best=b; } }); if(n>=TJ_POS_MIN) out[t]=best; });
+  return out;
+}
+function tjPosDe(tienda, A){ if(!tienda) return { b:'', de:'' }; if(POS_TIENDA[tienda]) return { b:iacBanco(POS_TIENDA[tienda])||String(POS_TIENDA[tienda]), de:'lista' };
+  A=A||tjPosAprendido(); return A[tienda] ? { b:A[tienda], de:'aprendido' } : { b:'', de:'' }; }
+/* La línea debajo del voucher recién subido. `x` = el pago (como lo arma `iasFormX`/`iasContaX`/el 📎), `c` = lo que dijo `iacComparar`. */
+function tjVoucherHtml(x, c){
+  if(!tjVe() || !tjServidorOk() || !x || !tjEsTarjeta(x) || !c || c.est==='pe') return '';
+  var o=tjLeido(x.comps), tienda=tjTiendaDe(x.p, x.f), pos=tjPosDe(tienda);
+  if(!o && !pos.b) return '';
+  var d=[];
+  if(o){ if(o.lo) d.push('lote <b>'+esc(o.lo)+'</b>'); if(o.au) d.push('autorización <b>'+esc(o.au)+'</b>'); if(o.u4) d.push('tarjeta terminada en <b>'+esc(o.u4)+'</b>'); if(o.pb) d.push('POS <b>'+esc(o.pb)+'</b>'); }
+  var h=d.length ? iasLinea('ias-ok tj-v', '💳 Leí el voucher: '+d.join(' · ')+'.') : '';
+  var b=o ? iacBanco(o.pb) : '';
+  if(pos.b && b && b!==pos.b) h+=iasLinea('ias-am tj-v', '⚠️ El voucher es de un POS de <b>'+esc(o.pb)+'</b> y el de '+esc(tienda)+' es <b>'+esc(pos.b)+'</b>: ¿se cobró en otra máquina?');
+  else if(pos.b && !b) h+=iasLinea('ias-gris tj-v', '💳 POS de '+esc(tienda)+': <b>'+esc(pos.b)+'</b> (puesto solo'+(pos.de==='aprendido' ? ', de sus vouchers' : '')+').');
+  return h;
+}
+/* El Cuadre: los cobros con tarjeta del período por POS y lote. */
+function tjPosDatos(pe, vend){
+  var A=tjPosAprendido(), G={}, orden=[], tot={ n:0, bs:0, sinLeer:0, otroPos:0 }, ids=[];
+  cuadrePagos(pe, vend).forEach(function(c){
+    if(!tjEsTarjeta(c)) return;
+    var o=tjLeido(c.comps), tienda=tjTiendaDe(c.p, c.fecha), pos=tjPosDe(tienda, A), b=o ? iacBanco(o.pb) : '';
+    c.comps.forEach(function(f){ if(!IAC.res[f]) ids.push(f); });
+    var posTxt=b ? (o.pb || b) : (pos.b ? pos.b : ''), lote=(o && o.lo) ? String(o.lo) : '';
+    var k=(b || pos.b || '?')+'|'+(lote || '?');
+    var g=G[k]; if(!g){ g=G[k]={ pos:posTxt, posDe:b ? 'voucher' : (pos.b ? 'tienda' : ''), lote:lote, n:0, bs:0, tiendas:{}, cobros:[], otro:false }; orden.push(k); }
+    g.n++; g.bs=r2(g.bs+c.monto); if(tienda) g.tiendas[tienda]=1; g.cobros.push(c);
+    if(b && pos.b && b!==pos.b){ g.otro=true; tot.otroPos++; }
+    tot.n++; tot.bs=r2(tot.bs+c.monto); if(!o) tot.sinLeer++;
+  });
+  var L=orden.map(function(k){ return G[k]; }).sort(function(a,b){ return (a.pos ? 0 : 1)-(b.pos ? 0 : 1) || String(a.pos).localeCompare(String(b.pos),'es') || (a.lote ? 0 : 1)-(b.lote ? 0 : 1) || String(a.lote).localeCompare(String(b.lote),'es',{ numeric:true }); });
+  return { L:L, tot:tot, faltan:ids };
+}
+function tjPosHtml(D, pe){
+  if(!D || !D.tot.n) return '';
+  var srv=tjServidorOk();
+  var h='<div class="cua-box tj" id="cua-tarjeta-box"><div class="cua-t">💳 Tarjeta por POS y lote — '+esc(cuadrePeriodoTxt())+'</div>'+
+    '<div class="tj-s">'+D.tot.n+' cobro'+(D.tot.n===1 ? '' : 's')+' con tarjeta por '+fmtBs(D.tot.bs)+'. Cada lote es <b>un</b> abono del banco: se compara de una mirada con el extracto.</div>'+
+    '<div class="tw"><table class="mini tj-t"><thead><tr><th>POS</th><th>Lote</th><th>Tiendas</th><th class="r">Cobros</th><th class="r">Bs</th></tr></thead><tbody>'+
+    D.L.map(function(g){
+      return '<tr'+(g.otro ? ' class="tj-otro"' : '')+'><td>'+(g.pos ? ('<b>'+esc(g.pos)+'</b>'+(g.posDe==='tienda' ? ' <small>(el de la tienda)</small>' : '')) : '<span class="tj-g">POS sin leer</span>')+(g.otro ? ' <small>⚠️ no es el POS de la tienda</small>' : '')+'</td>'+
+        '<td>'+(g.lote ? esc(g.lote) : '<span class="tj-g">—</span>')+'</td><td>'+esc(Object.keys(g.tiendas).sort().join(', ')||'—')+'</td>'+
+        '<td class="r">'+g.n+'</td><td class="r"><b>'+fmtBs(g.bs)+'</b></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  var notas=[];
+  if(!srv) notas.push('El lote y el banco del POS se leen del voucher con el servidor '+TJ_SERVIDOR+' (todavía no implementado): por ahora sale el POS de la tienda, si se sabe.');
+  if(D.tot.sinLeer) notas.push(D.tot.sinLeer+' sin voucher leído'+(D.faltan.length && iacServidorOk() ? ' (⏳ trayendo lo ya leído…)' : '')+': se leen al subir la foto, o en Comprobantes → «🤖 Revisar las fotos con IA».');
+  if(!Object.keys(POS_TIENDA).length) notas.push('El POS de cada tienda sale de sus vouchers ya leídos (el que más se repite).');
+  return h+(notas.length ? '<div class="tj-n">'+notas.map(esc).join('<br>')+'</div>' : '')+'</div>';
+}
+/* Lo ya leído de las fotos del período, sin gastar (una vez cada 10 minutos por período). */
+function tjCargar(D, pe){
+  if(!D || !D.faltan.length || !iacServidorOk() || !CONNECTED) return;
+  var k=pe.modo+'|'+pe.val; if(TJ_CARGA[k] && Date.now()-TJ_CARGA[k]<10*60000) return; TJ_CARGA[k]=Date.now();
+  conTopeDuro(apiPost({ action:'iaComprobantes', fotos:D.faltan.slice(0, 1900), leer:1 }), 60000, 'tardo_ia')
+    .then(function(r){ if(r && r.ok){ iacTomar(r); tjPosPintar(true); } }, function(){});
+}
+function tjPosPintar(sinCargar){
+  var box=document.getElementById('cua-tarjeta'); if(!box) return;
+  if(!tjVe()){ box.innerHTML=''; return; }
+  var pe=cuadrePeriodo(), D=null; try{ D=tjPosDatos(pe); }catch(e){ D=null; }
+  box.innerHTML=tjPosHtml(D, pe);
+  if(!sinCargar) tjCargar(D, pe);
 }
 
 /* 👁 (07/11, dueño: «Al darle al efectivo, ¿no debería mostrar qué clientes pagaron y cuánto?») Los cobros en efectivo del período del Cuadre
@@ -65396,7 +65664,7 @@ function iasPintarForm(){
     var h='';
     try{ var c=iasEvaluar(iasFormX(+k));
       if(c && tvFotoFechaProponer(c)) c=iasEvaluar(iasFormX(+k));   // 📅 §4ok-93 la venta de tienda toma el día de la foto
-      if(c) h=iasHtml(c, iasCtxForm(+k))+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
+      if(c) h=iasHtml(c, iasCtxForm(+k))+tjVoucherHtml(iasFormX(+k), c)+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -65404,7 +65672,7 @@ function iasPintarConta(){
   var box=document.getElementById('ias-cta'); if(!box) return;
   var h='';
   try{ var p=findById(box.getAttribute('data-id')), x=iasContaX(p), c=iasEvaluar(x);
-    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban }); }catch(e){ h=''; }
+    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, c); }catch(e){ h=''; }
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
 }
 function iasRepintar(){ iasPintarForm(); iasPintarConta(); iasPintarPeg(); }
@@ -65458,7 +65726,7 @@ function iasPegHtml(p, i, fid){
   var x=iasPegXDe(p, i, fid); if(!x) return '';
   var r=iasPegEvaluar(x); if(!r) return '';
   if(r.est==='peg-err') return iasLinea('ias-gris', '🔎 No pude leer la foto ahora. <small>Queda para «🤖 Revisar las fotos con IA» del mes.</small>');
-  return iasHtml(r, { donde:'peg', ef:false, cor:false, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+
+  return iasHtml(r, { donde:'peg', ef:false, cor:false, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, r)+
     (r.est==='mal' ? iasLinea('ias-gris', '<small>Si hay que arreglarlo: <b>✏️ Corregir</b> en este pago.</small>') : '');
 }
 function iasPegBox(p, c, i){
