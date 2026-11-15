@@ -3316,6 +3316,15 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-saldo" value="0"></div>
         </div>
       </div>
+      <!-- 💳 (15/11, 308) cómo va a pagar lo que falta: logística lleva el POS o el QR (`pcob*`; no es obligatorio) -->
+      <div class="field" id="wrap-pcob" hidden>
+        <label class="lb">¿Cómo paga lo que falta? <span class="hint">(lo ve logística: llevar el POS o el QR)</span></label>
+        <div class="vd-pc-ops" id="f-pcob" role="group" aria-label="Cómo paga lo que falta">
+          <button type="button" data-val="E" aria-pressed="false" onclick="pcobElegir(this)">💵 Efectivo<small>al chofer</small></button>
+          <button type="button" data-val="Q" aria-pressed="false" onclick="pcobElegir(this)">📱 QR<small>llevar el QR</small></button>
+          <button type="button" data-val="T" aria-pressed="false" onclick="pcobElegir(this)">💳 Tarjeta<small>llevar el POS</small></button>
+        </div>
+      </div>
 
       <div class="field" id="wrap-metodo" style="display:none">
         <label class="lb">¿Con qué pagó? <span class="req">*</span></label>
@@ -7601,6 +7610,13 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 /* 307 · la bandeja de Kommo */
 .vd-kbc{margin:2px 0 14px;border:2px solid #7c3aed;background:#f5f0ff;border-radius:12px;padding:11px 13px;font-size:.86rem;color:#2e1065}
 .vd-kbc b{color:#5b21b6}.vd-kbc-s{font-size:.78rem;color:#4c4570;margin-top:5px}.vd-kbc-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+/* 308 · cómo paga lo que falta */
+.vd-pc-ops{display:flex;gap:8px;flex-wrap:wrap}
+.vd-pc-ops button{flex:1;min-width:120px;border:2px solid #d5e2e2;border-radius:12px;padding:9px;text-align:center;font-weight:800;font-size:.86rem;background:#fff;cursor:pointer;font-family:inherit;color:#14313a}
+.vd-pc-ops button small{display:block;font-weight:600;color:#5b7480;font-size:.72rem;margin-top:2px}
+.vd-pc-ops button.vd-on{border-color:var(--teal);background:#E6F7F6;color:#007a74}
+.vd-tag{display:inline-block;background:#ede9fe;color:#5b21b6;border-radius:999px;padding:1px 9px;font-weight:800;font-size:.74rem;margin-left:4px;white-space:nowrap}
+.vd-tag.vd-fl{background:#fff3d6;color:#7a4b00}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -69721,6 +69737,35 @@ function kbcUsar(){
   kbcPintar(null);
   try{ renderCupoForm(); }catch(e){}
   toast('📥 Ahora estás completando la venta de Kommo de '+(String(b.cliente||'').trim()||'ese cliente')+'. '+(lleno.length?('De Kommo le puse '+lleno.join(', ')+'. '):'')+'Al guardar queda unida a su lead y sale de tu bandeja.','ok',9000);
+}
+
+/* ---------------------------------------------------------------------------
+   💳 308 · ¿CÓMO PAGA LO QUE FALTA? (y llevar el POS)
+   Debajo de «Saldo por cobrar», con saldo en una venta a domicilio: 💵 Efectivo · 📱 QR · 💳 Tarjeta (no es obligatorio). Viaja adentro de
+   los productos (`pcob:'E'|'Q'|'T'`, la convención de `sinwa`/`fdoc`) y lo leen la hoja de ruta (`cobroRutaTxt`), la ficha de logística
+   (`fichaObsChips`) y la Lista de carga: «💳 llevar el POS» / «📱 llevar el QR de la empresa». Ningún monto nuevo en la ficha de logística.
+   PAGA_COMO_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var PCOB_TXT={ E:{ ic:'💵', t:'Efectivo', s:'al chofer', ruta:'💵 paga en efectivo' },
+               Q:{ ic:'📱', t:'QR', s:'llevar el QR', ruta:'📱 llevar el QR de la empresa' },
+               T:{ ic:'💳', t:'Tarjeta', s:'llevar el POS', ruta:'💳 llevar el POS' } };
+var PCOB_SEL='';
+function pcobVa(){ return vdVa('PAGA_COMO_PRUEBA'); }
+function pcobDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && PCOB_TXT[x.pcob]){ v=x.pcob; return true; } return false; }); return v; }
+function setPcob(p, v){ ((p&&p.productos)||[]).forEach(function(x){ if(!x) return; if(PCOB_TXT[v]) x.pcob=v; else delete x.pcob; }); }
+function pcobCobra(p){ return !!p && !p.pagado && !noSeCobra(p) && (Number(p.saldo)||0)>0.005; }
+function pcobRutaTxt(p){ var v=pcobDe(p); return (v && pcobCobra(p)) ? PCOB_TXT[v].ruta : ''; }
+function pcobFormAplica(){ return pcobVa() && docTipoSel()==='OC' && !VENTA_TIENDA && segVal('f-pagado')!=='SI' && montoForm('f-saldo')>0.005; }
+function pcobPintar(){
+  var w=document.getElementById('wrap-pcob'); if(!w) return;
+  w.hidden=!pcobFormAplica();
+  [].forEach.call(w.querySelectorAll('button[data-val]'), function(b){ var on=b.getAttribute('data-val')===PCOB_SEL; b.classList.toggle('vd-on', on); b.setAttribute('aria-pressed', on?'true':'false'); });
+}
+function pcobElegir(b){ var v=b ? b.getAttribute('data-val') : ''; PCOB_SEL=(PCOB_SEL===v) ? '' : (PCOB_TXT[v] ? v : ''); pcobPintar(); }
+function pcobCargar(p){ PCOB_SEL=p ? pcobDe(p) : ''; pcobPintar(); setTimeout(function(){ try{ pcobPintar(); }catch(e){} }, 0); }   // al editar, el saldo se pone después
+function pcobAlGuardar(rec, prev){
+  if(!pcobVa()){ if(prev && pcobDe(prev) && pcobCobra(rec)) setPcob(rec, pcobDe(prev)); return; }
+  setPcob(rec, (pcobFormAplica() && PCOB_SEL) ? PCOB_SEL : '');
 }
 
 /* ---------------------------------------------------------------------------
