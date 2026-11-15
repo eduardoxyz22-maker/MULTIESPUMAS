@@ -5634,6 +5634,21 @@ x-pl x-bs{ display:inline; font-size:.78em; font-weight:600; opacity:.62; }
 x-pl x-cv{ display:inline; font-size:.74em; opacity:.5; }
 x-pl x-cv.pl-si{ opacity:1; font-weight:700; }
 td.pl-sola, th.pl-col{ text-align:right!important; }
+/* ➡️ (15/11, mejora 283) las tablas anchas: la pastilla de lo que sigue, la sombra del borde, la columna fija y la barra fina */
+.tw-mas-h{ position:relative; height:0; z-index:6; }
+.tw-mas-h[hidden]{ display:none; }
+.tw-mas-h.tw-sombra::after{ content:''; position:absolute; right:1px; top:1px; width:30px; height:var(--tw-h,0px); border-radius:0 var(--r-lg) var(--r-lg) 0; pointer-events:none;
+  background:linear-gradient(90deg, rgba(9,40,40,0), rgba(9,40,40,.16)); }
+.tw-mas{ position:absolute; top:6px; font:inherit; font-size:.74rem; font-weight:800; border-radius:999px; padding:5px 12px; cursor:pointer; white-space:nowrap; max-width:min(460px, 70%); overflow:hidden; text-overflow:ellipsis;
+  background:#fff; color:#00706b; border:1.5px solid #99DDD9; box-shadow:0 4px 14px rgba(9,40,40,.18); }
+.tw-mas:hover{ background:#E6F7F6; }
+.tw-mas-der{ right:12px; } .tw-mas-izq{ left:12px; }
+html.tw-mas-on #tbl-conta td.tw-fija, html.tw-mas-on #tbl-atc td.tw-fija{ position:sticky; left:0; z-index:2; background:#fff; box-shadow:1px 0 0 var(--gray-lt), 6px 0 10px -8px rgba(9,40,40,.25); }
+html.tw-mas-on #tbl-conta th.tw-fija, html.tw-mas-on #tbl-atc th.tw-fija{ position:sticky; left:0; z-index:4; }
+html.tw-mas-on #cx-tw, html.tw-mas-on #atv-tw{ scrollbar-width:thin; scrollbar-color:#00A09A #e6f2f1; }
+html.tw-mas-on #cx-tw::-webkit-scrollbar, html.tw-mas-on #atv-tw::-webkit-scrollbar{ height:8px; width:8px; }
+html.tw-mas-on #cx-tw::-webkit-scrollbar-thumb, html.tw-mas-on #atv-tw::-webkit-scrollbar-thumb{ background:#00A09A; border-radius:8px; }
+html.tw-mas-on #cx-tw::-webkit-scrollbar-track, html.tw-mas-on #atv-tw::-webkit-scrollbar-track{ background:#e6f2f1; }
 @media (prefers-reduced-motion: reduce){ button.cp-ok .cp-tick{ animation:none; stroke-dashoffset:0; } }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📇 (14/10) Clientes para Excel */
@@ -13092,6 +13107,7 @@ function renderConta(){
   }, { tabla:true, cols:14 })+'</tbody>';
   try{ tblEstilo(); tblBarPintar('conta'); }catch(e){ console.error(e); }   // 🗂️ (§4nr, 33)
   plataEnIds(['tbl-conta', 'cta-metrics', 'cta-marcas', 'cx-cards', 'cx-vivo']);   // 💵 (15/11, mejora 291)
+  twMasPintar('cx-tw');   // ➡️ (15/11, mejora 283) la columna del cliente fija y «→ N columnas más»
 }
 /* La fecha de entrega, y el aviso cuando cae en OTRO MES que el ingreso: es el caso de
    la venta cargada a fin de mes que sale al mes siguiente. */
@@ -33751,6 +33767,7 @@ function renderAtc(){
   }).join('');
   document.getElementById('tbl-atc').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('tbl-atc').style.display=list.length?'table':'none';
+  twMasPintar('atv-tw');   // ➡️ (15/11, mejora 283) el N° ATC fijo y «→ N columnas más»
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
   try{ atvPintar(list, mesSel); }catch(e){ console.error(e); }
   try{ atcqPintar(list); }catch(e){ console.error(e); }   // 📉🔁⏳ (178-180)
@@ -41942,6 +41959,70 @@ function plataEnNodo(root){
   return hechos;
 }
 function plataEnIds(ids){ if(!plataActiva()) return; ids.forEach(function(id){ var e=document.getElementById(id); if(e) try{ plataEnNodo(e); }catch(_){} }); }
+/* ============================================================================
+   ➡️ (15/11, mejora 283) LAS TABLAS ANCHAS AVISAN LO QUE SIGUE A LA DERECHA. En una compu de 1.366 px la tabla de Ventas de Contabilidad
+   sigue 1.097 px a la derecha sin ninguna señal (NIT, Pago, Pagos recibidos, Recargo y Observaciones no se ven) y la de ATC, 876 px con 6
+   columnas escondidas. Ahora: arriba a la derecha de la tabla, una pastilla «→ 5 columnas más: Pagos recibidos, NIT…» que lleva hasta
+   ahí (y, ya corrida, «← Volver al principio»); una sombra suave en el borde derecho mientras haya más; la columna que dice de quién es
+   cada renglón queda fija al correr a la derecha (en Ventas, «Cliente»; en ATC, el N° ATC; se corre hasta el borde y se queda ahí); y
+   la barra de desplazamiento, fina y turquesa. Los títulos ya quedaban arriba al bajar adentro de la tabla (`.tw-tall` + `thead th`).
+   Solo presentación: lo que se ve de cada columna sale de sus títulos (también con «☰ Columnas» escondiendo alguna). En Playwright,
+   apagado salvo `window.TW_MAS_PRUEBA`. */
+var TW_MAS_DEF={ 'cx-tw':{ fija:'Cliente' }, 'atv-tw':{ fija:'N° ATC' } };
+function twMasActivo(){ try{ return !navigator.webdriver || !!window.TW_MAS_PRUEBA; }catch(e){ return true; } }
+try{ if(twMasActivo()) document.documentElement.classList.add('tw-mas-on'); }catch(e){}
+function twMasPintar(id){
+  if(!twMasActivo()) return;
+  var w=document.getElementById(id), t=w && w.querySelector('table'); if(!w || !t) return;
+  var D=TW_MAS_DEF[id]||{};
+  /* la columna fija: la del título que diga `D.fija` */
+  var th=t.tHead && t.tHead.rows[0] ? [].slice.call(t.tHead.rows[0].cells) : [];
+  var ix=-1; th.forEach(function(c, i){ if(ix<0 && D.fija && c.textContent.replace(/[▲▼↕\s]+$/,'').trim().indexOf(D.fija)===0) ix=i; });
+  if(ix>=0){
+    th[ix].classList.add('tw-fija');
+    [].forEach.call(t.tBodies, function(tb){ [].forEach.call(tb.rows, function(tr){ if(tr.cells.length===th.length && tr.cells[ix]) tr.cells[ix].classList.add('tw-fija'); }); });
+  }
+  if(!w._twMira){
+    w._twMira=1;
+    var tic=null, otra=function(){ if(tic) return; tic=requestAnimationFrame(function(){ tic=null; twMasMirar(id); }); };
+    w.addEventListener('scroll', otra, { passive:true });
+    window.addEventListener('resize', otra);
+    if(window.ResizeObserver){ try{ new ResizeObserver(otra).observe(w); }catch(e){} }
+    /* lo que llega «de a partes» (`trozosMas`) o se redibuja sin pasar por acá: se vuelve a marcar */
+    if(window.MutationObserver){ try{ var mt=null; new MutationObserver(function(){ clearTimeout(mt); mt=setTimeout(function(){ twMasPintar(id); }, 0); }).observe(t, { childList:true, subtree:true }); }catch(e){} }
+  }
+  twMasMirar(id);
+}
+/* qué títulos quedan pasando el borde derecho; la pastilla y la sombra */
+function twMasMirar(id){
+  var w=document.getElementById(id), t=w && w.querySelector('table'); if(!w || !t) return;
+  var h=w.previousElementSibling;
+  if(!h || !h.classList.contains('tw-mas-h')){ h=document.createElement('div'); h.className='tw-mas-h no-print'; w.parentNode.insertBefore(h, w); }
+  if(!w.getClientRects().length || t.style.display==='none' || w.scrollWidth<=w.clientWidth+2){ h.innerHTML=''; h._h=''; h.hidden=true; h.classList.remove('tw-sombra'); w.classList.remove('tw-hay-mas'); return; }
+  var wr=w.getBoundingClientRect(), borde=wr.left+w.clientWidth*(wr.width/(w.offsetWidth||wr.width||1));
+  var th=t.tHead && t.tHead.rows[0] ? [].slice.call(t.tHead.rows[0].cells) : [];
+  var ocultas=th.filter(function(c){ if(!c.getClientRects().length) return false; var r=c.getBoundingClientRect(); return r.right>borde+4; })
+               .map(function(c){ return c.textContent.replace(/[▲▼↕]/g,'').replace(/\s+/g,' ').trim(); }).filter(Boolean);
+  var fin=w.scrollLeft+w.clientWidth>=w.scrollWidth-2, inicio=w.scrollLeft<=2;
+  w.classList.toggle('tw-hay-mas', !fin);
+  h.hidden=false;
+  h.style.setProperty('--tw-h', Math.min(w.clientHeight, t.offsetHeight)+'px');
+  var html='';
+  if(ocultas.length && !fin){
+    var mx=ocultas.slice(0,3).join(', ')+(ocultas.length>3?'…':'');
+    html='<button type="button" class="tw-mas tw-mas-der" data-id="'+id+'" onclick="twMasIr(this.getAttribute(\'data-id\'), 1)" title="'+esc('Columnas que siguen a la derecha: '+ocultas.join(', '))+'">→ '+ocultas.length+' columna'+(ocultas.length===1?'':'s')+' más: '+esc(mx)+'</button>';
+  } else if(!inicio){
+    html='<button type="button" class="tw-mas tw-mas-izq" data-id="'+id+'" onclick="twMasIr(this.getAttribute(\'data-id\'), -1)">← Volver al principio</button>';
+  }
+  if(h._h!==html){ h.innerHTML=html; h._h=html; }
+  h.classList.toggle('tw-sombra', !fin);
+}
+function twMasIr(id, dir){
+  var w=document.getElementById(id); if(!w) return;
+  var x=dir>0 ? w.scrollWidth : 0;
+  try{ w.scrollTo({ left:x, behavior:(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) ? 'auto' : 'smooth' }); }catch(e){ w.scrollLeft=x; }
+  setTimeout(function(){ twMasMirar(id); }, 450);
+}
 /* Escribir en cualquiera de los buscadores lo vuelve a pintar (lo que se redibuja después lo agarra el MutationObserver). */
 document.addEventListener('input', function(e){
   try{ var t=e.target; if(!t || !t.id || !bhActivo()) return;
