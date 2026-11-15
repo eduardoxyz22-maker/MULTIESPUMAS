@@ -2454,6 +2454,9 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 /* ⚡ (15/11, mejoras 294-303: facilidad y velocidad) — el código, en el bloque «FACILIDAD Y VELOCIDAD» (al lado de `verRecargar`). */
 .bl-pill{position:absolute;z-index:2;pointer-events:none;background:#e3f7f6;color:#00807a;border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700;white-space:nowrap;line-height:1.5}
 .bl-pill[hidden]{display:none!important}
+.mcb-btn{background:var(--teal)!important;border-color:var(--teal)!important;color:#fff!important;font-weight:800!important}
+.mcb-btn:hover{background:var(--teal-dk)!important}
+.t2-f .mcb-btn{flex:none;border:0;border-radius:9px;padding:5px 10px;font:inherit;font-size:.78rem;cursor:pointer;min-height:32px}
 .pesav{margin:0 0 10px;padding:7px 12px;border-radius:10px;font-size:.8rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f2fbfb;border:1px solid var(--teal-border);color:#065f5b}
 .pesav.mal{background:var(--red-lt,#fdecec);border-color:var(--red-border,#f3b4b4);color:#8a1c24}
 .pesav[hidden]{display:none!important}
@@ -19892,7 +19895,9 @@ function showContaModal(id){
   /* ⏳ (06/10, §4hr) «← Volver a la lista» solo si esta venta se abrió desde la lista de lo que falta cobrar y la ventana
      sigue abierta (un repintado de la misma ficha lo conserva; abrirla de nuevo desde otro lado, no). */
   var _moPc=document.getElementById('modal');
-  if(POR_COBRAR_VOLVER && (POR_COBRAR_VOLVER.id!==String(id) || !(_moPc && _moPc.classList.contains('on')))) POR_COBRAR_VOLVER=null;
+  /* 💵 (295) `nuevo` = recién pedida desde Mis pedidos («Cobrar» de una tarjeta abre la ficha sin ventana abierta) */
+  if(POR_COBRAR_VOLVER && (POR_COBRAR_VOLVER.id!==String(id) || (!POR_COBRAR_VOLVER.nuevo && !(_moPc && _moPc.classList.contains('on'))))) POR_COBRAR_VOLVER=null;
+  if(POR_COBRAR_VOLVER) delete POR_COBRAR_VOLVER.nuevo;
   try{ ctaNavMirar(id); }catch(e){ CTA_NAV=null; }   // ◀ ▶ (297) las flechas siguen solo si se abrió desde una lista
   MODAL_KIND='conta';
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
@@ -19976,7 +19981,8 @@ function showContaModal(id){
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
       ctaNavHtml(p.id)+   // ◀ ▶ (297)
-      clfVolverHtml(p.id)+(POR_COBRAR_VOLVER ? (POR_COBRAR_VOLVER.origen==='efe'
+      clfVolverHtml(p.id)+(POR_COBRAR_VOLVER ? (POR_COBRAR_VOLVER.origen==='mis' ? misCobrarVolverHtml()   // 💵 (295)
+          : POR_COBRAR_VOLVER.origen==='efe'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirEfectivo(EFE_VER_QUIEN, EFE_VER_SOLO)">← Volver al '+(EFE_VER_SOLO?'efectivo por retirar':'efectivo cobrado')+'</button>')
           : POR_COBRAR_VOLVER.origen==='cbz'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cbzVolver()">← Volver a la cobranza</button>')
@@ -37014,10 +37020,11 @@ function misVerLista(k){
   openModal('<div class="modal-h"><h3>'+esc(o.t)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
     (o.s?('<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">'+esc(o.s)+'</div>'):'')+
     o.L.map(function(p){
-      /* ◀ ▶ (297) la ficha de Contabilidad abierta desde la lista sigue la lista */
+      /* ◀ ▶ (297) la ficha de Contabilidad abierta desde la lista sigue la lista; 💵 (295) en las de saldo, «Cobrar» al lado */
       var abre=(o.abrir==='showContaModal' && ctaNavVa()) ? ('misListaAbrirConta(\''+esc(String(p.id))+'\',\''+esc(k)+'\')') : ('closeModal();'+(o.abrir||'showMisModal')+'(\''+esc(String(p.id))+'\')');
+      var cob=/^(saldo|saldoAnt|eqSaldo)$/.test(k) ? misCobrarBtnHtml(p, '', 'lista', k) : '';
       return '<div class="t2-f" onclick="'+abre+'"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
-      esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+'</div>'; }).join('')+'</div>');
+      esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+cob+'</div>'; }).join('')+'</div>');
 }
 function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello'); }
 function misHacerDatos(v, mine){
@@ -37815,6 +37822,7 @@ function misCardHtml(p, n, todos, verNota){
     fotosHtml(p, false)+
     (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">ENTREGADO</div>':'')+
     '<div class="cho-links">'+
+      misCobrarBtnHtml(p, 'cho-link', 'tarjeta')+   // 💵 (295) cobrar el saldo sin ir a Contabilidad
       '<button class="cho-link ico" onclick="event.stopPropagation();editarDesdeMis(\''+p.id+'\')">✏️ Editar</button>'+
       (p.maps?('<a class="cho-link ico" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ubicación</a>')
              :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
@@ -38017,6 +38025,7 @@ function showMisModal(id){
     '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
       certBloqueHtml(p)+   // 🛡️ (14/11, 264) el certificado de garantía
       '<div class="modal-actions" style="margin-top:16px">'+
+        misCobrarBtnHtml(p, 'btn btn-sm', 'ficha')+   // 💵 (295) la ficha de Contabilidad, ya en «💵 Pago»
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
         (misVeRepetir() ? repetirBtnHtml(p, 'btn btn-sm btn-ghost') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
@@ -61147,6 +61156,46 @@ function buscarLuegoIniciar(){
     var el=document.getElementById(x[0]); if(!el) return;
     el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ if(buscarYa(x[1])) e.preventDefault(); } });
   });
+}
+
+/* ---------- 💵 295 COBRAR EL SALDO DESDE MIS PEDIDOS ----------
+   Del 01 al 14/11 se registraron 29 pagos de saldo en otro día que la venta (8 vendedoras): la lista «💵 Saldo por cobrar» abría la ficha
+   de Mis pedidos, sin «Registrar pago», y había que ir a Contabilidad, escribir el nombre y buscar la fila. Ahora cada pedido con saldo
+   lleva «💵 Cobrar Bs …» (en su tarjeta, en las listas de saldo de «Para hacer» y en su ficha) que abre LA MISMA ficha de Contabilidad
+   (`showContaModal`), ya en «💵 Pago», con «← Volver a Mis pedidos». Las reglas del pago (foto, quién recibió) son las de siempre. */
+function misCobrarVa(){ try{ return !navigator.webdriver || !!window.MIS_COBRAR_PRUEBA; }catch(e){ return true; } }
+function misCobrarPuede(p){
+  if(!misCobrarVa() || !p || esFilaSistema(p) || noSeCobra(p) || esBorrador(p)) return false;
+  if(fueraDeConta(p) && fueraDeConta(p, 'mayor')) return false;   // ni el equipo ni los mayoristas (ROHO, internos)
+  return contaFaltaCobrar(p)>0.005;
+}
+/* cls = las clases del botón donde va (la tarjeta, la ficha, un renglón de la lista). */
+function misCobrarBtnHtml(p, cls, desde, k){
+  if(!misCobrarPuede(p)) return '';
+  return '<button type="button" class="'+(cls||'cho-link')+' mcb-btn" data-id="'+esc(String(p.id))+'" data-desde="'+esc(desde||'tarjeta')+'" data-k="'+esc(k||'')+'"'+
+    ' onclick="event.stopPropagation();misCobrar(this.dataset.id, this.dataset.desde, this.dataset.k)" title="Abre la ficha de Contabilidad de esta venta, lista para registrar el pago">💵 Cobrar '+fmtBs(contaFaltaCobrar(p))+'</button>';
+}
+function misCobrar(id, desde, k){
+  var p=findById(String(id)); if(!p) return;
+  POR_COBRAR_VOLVER={ origen:'mis', id:String(id), desde:desde||'tarjeta', k:k||'', nuevo:1 };
+  /* ◀ ▶ (297): desde una lista de «Para hacer», la ficha sigue esa lista */
+  var o=(desde==='lista' && k && typeof MIS_LISTAS!=='undefined') ? MIS_LISTAS[k] : null;
+  if(o && ctaNavVa()) CTA_NAV={ ids:(o.L||[]).map(function(x){ return String(x.id); }), t:String(o.t||'').replace(/\s*·\s*Bs[\s\S]*$/,''), abrir:1, mis:k };
+  else CTA_NAV=null;
+  if(CTA_ULTIMA===String(id)) CTA_TIPO='pago';   // abrir otra venta ya arranca en «💵 Pago» (showContaModal); la misma, también
+  showContaModal(String(id));
+  setTimeout(function(){ var m=document.getElementById('cta-pago-monto'); if(m){ try{ m.scrollIntoView({ block:'center' }); }catch(e){} } }, 60);
+}
+function misCobrarVolverHtml(){
+  return '<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="misCobrarVolver()">← Volver a Mis pedidos</button>';
+}
+function misCobrarVolver(){
+  var V=POR_COBRAR_VOLVER; POR_COBRAR_VOLVER=null; CTA_NAV=null;
+  closeModal();
+  var vw=document.getElementById('view-mis'); if(vw && vw.classList.contains('active')){ try{ renderMis(); }catch(e){} }
+  if(!V) return;
+  if(V.desde==='lista' && V.k && MIS_LISTAS[V.k]) misVerLista(V.k);
+  else if(V.desde==='ficha' && findById(V.id)) showMisModal(V.id);
 }
 
 /* ---------- 🚀 296 CAMBIAR DE PESTAÑA SIN ESPERAR A GOOGLE ----------
