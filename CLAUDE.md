@@ -25,6 +25,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     último dato bueno. Lo que puede faltar sin mentir va con `esencial=False` (contactos, razones de pérdida, catálogo). ⚠️ Una lectura
     NUEVA es esencial salvo que se diga lo contrario. 👥 La vendedora del mes anterior sin nada este mes entra al FINAL del equipo con 0,
     `soloPrev` y meta 0 si no está en `VENDOR_CFG` (CRM-03). `tests/test_generar_integridad.py` (Kommo de mentira, carpeta temporal).
+  - 🛒 **Las ventas del panel SIN ficha en Kommo entran** (mejora 335, 15/11; dueño: *«cerrado si ya se entregó… si no estaremos a la espera de que
+    el vendedor anote»*; en la rama, sin publicar): con la MISMA lectura del panel de las metas (`panel_leer`, no esencial), `ventas_panel_sin_ficha`
+    toma las ventas del equipo de Heaven (`VENDOR_CFG` + `PANEL_HEAVEN` = `MARCAS` heaven) sin ATC/RPT/sistema/borradores/`CONTA_EXCLUIR`, por el
+    día en que se CARGARON (`ts`, = «Fecha contrato» que escribe la 91). Entregada (✅, fecha ya pasada o venta de tienda) = cierre + cerrado +
+    pipeline; sin entregar = solo pipeline. Monto = `venta_total` (= `ventaTotal`; `parseMonto`, `r2` de JavaScript). No se suman: con `klead` o id
+    `kommo-<lead>`, ni la que tiene celular (últimos 8) + vendedora de una venta de Kommo que nadie reclama (lead en Compradores o tarjeta de la
+    bandeja, ≤45 días; una por lead). Mes anterior igual (MoM parejo). Se ve aparte: `v.panel`/`D.panelSinFicha` {c, bs, p, pbs}, fila de canal
+    «🛒 Venta sin ficha en Kommo» (`carry` + `panel`), «🛒 +N sin ficha» / «🛒 N por entregar», la ficha y el resumen de WhatsApp. ⚠️ Un vendedor
+    nuevo de Heaven va también en `PANEL_HEAVEN`; si cambia `ventaTotal`/`parseCobros`/`fueraDeConta`, cambia acá (`test_generar_integridad` §17-25,
+    `test_panel_meta` §5 con `--solo-datos-335`). Del panel solo salen números: nunca clientes, celulares ni OC.
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 
