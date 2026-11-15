@@ -5158,6 +5158,12 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
   .pl-ya-chk{ white-space:normal; }
 }
 @media (prefers-reduced-motion: reduce){ .ci-van.corre,.ci-rodillos{ animation:none; } }
+/* 🌊 (15/11, mejora 293) las fichas entran de a una al cambiar de filtro; la cinta de Stock se desvanece en los bordes y se frena con el mouse */
+.cc-in{ animation:ccEntra .38s cubic-bezier(.2,.8,.3,1) both; animation-delay:calc(var(--cc-i,0) * 35ms); }
+@keyframes ccEntra{ from{ opacity:0; transform:translateY(10px) scale(.97); } }
+html.cc-on .ci-carril:has(> .ci-van.corre){ -webkit-mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,transparent,#000 28px,#000 calc(100% - 28px),transparent); }
+html.cc-on .ci-carril:hover .ci-van{ animation-play-state:paused; }
+@media (prefers-reduced-motion: reduce){ .cc-in{ animation:none; } }
 .tm-eje,.tm-fila{ display:grid; grid-template-columns:minmax(150px,230px) 1fr; gap:10px; align-items:center; }
 .tm-dias{ position:relative; height:16px; font-size:.68rem; color:var(--muted); }
 .tm-dias span{ position:absolute; transform:translateX(-50%); white-space:nowrap; }
@@ -30602,7 +30608,38 @@ function admFichasPintar(list, dn){
     return antesGps+'<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
       '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';
   }).join('');
+  ccEntrar('adm', box, '.af-f', admCcClave());   // 🌊 (15/11, mejora 293) al cambiar de filtro, de a una (antes de las columnas: en el orden del día)
   try{ afMasonry(box); }catch(e){ console.error(e); }   // 🧱 (15/11, mejora 292) sin huecos entre las fichas
+}
+/* ============================================================================
+   🌊 (15/11, mejora 293) LAS FICHAS ENTRAN EN CASCADA Y LA CINTA DE STOCK SIN CORTES. Al tocar un filtro, las 22 o 39 fichas aparecían de
+   golpe y la vista saltaba: ahora entran de a una (35 ms entre cada una; de la 20 en adelante todas juntas, así nada tarda más de un
+   segundo) y se nota qué cambió. SOLO al cambiar de filtro (Hoy / Mañana / Semana, Día / Mes / Todo, el día o el mes en Administración;
+   el chip o la vendedora en Mis pedidos): ni la lectura de cada minuto, ni al escribir en el buscador, ni la primera vez. En Stock, la
+   cinta «Hoy» se desvanece en los dos bordes (ya no corta «…ANIO ICE») y se frena con el mouse encima. Con «reducir movimiento» de
+   Windows, todo aparece de una. Solo presentación. En Playwright, apagado salvo `window.CASCADA_PRUEBA`. */
+function ccActivo(){ try{ return !navigator.webdriver || !!window.CASCADA_PRUEBA; }catch(e){ return true; } }
+try{ if(ccActivo()) document.documentElement.classList.add('cc-on'); }catch(e){}
+var CC_CLAVE={}, CC_TOPE=20, CC_PASO_MS=35;
+function admCcClave(){
+  var g=function(id){ var e=document.getElementById(id); return e ? e.value : ''; };
+  var m=''; try{ m=segVal('adm-mode'); }catch(e){}
+  return [QUICK_FILTER, m, g('adm-dia'), g('adm-mes'), admVista()].join('|');
+}
+function ccEntrar(k, box, sel, clave){
+  if(!box || !ccActivo()) return 0; CC_CLAVE=CC_CLAVE||{};
+  var ant=CC_CLAVE[k]; CC_CLAVE[k]=clave;
+  if(ant===undefined || ant===clave) return 0;   // la primera vez o el mismo filtro (la lectura de cada minuto): sin animación
+  try{ if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return 0; }catch(e){}
+  var L=[].slice.call(box.querySelectorAll(sel));
+  L.forEach(function(el, i){
+    el.style.setProperty('--cc-i', Math.min(i, CC_TOPE));
+    el.classList.add('cc-in');
+    var fin=function(e){ if(e && (e.target!==el || e.animationName!=='ccEntra')) return; el.classList.remove('cc-in'); el.style.removeProperty('--cc-i'); el.removeEventListener('animationend', fin); };
+    el.addEventListener('animationend', fin);
+    setTimeout(fin, CC_TOPE*CC_PASO_MS+900);   // por si la animación no llegó a correr (pestaña escondida)
+  });
+  return L.length;
 }
 /* ============================================================================
    🧱 (15/11, mejora 292) LAS FICHAS DE ADMINISTRACIÓN SIN HUECOS. Las fichas miden de 200 a 349 px y en la grilla cada fila tomaba el alto
@@ -30633,7 +30670,7 @@ function afMasonry(box){
     for(var c=0;c<cols;c++){ alto.push(0); var d=document.createElement('div'); d.className='af-col'; C.push(d); }
     F.forEach(function(f, i){
       var k=0; for(var c2=1;c2<cols;c2++) if(alto[c2]<alto[k]-1) k=c2;   // la más baja; empate, la de la izquierda
-      f._afI=i; C[k].appendChild(f); alto[k]+=H[i]+AF_MAS_GAP;
+      f._afI=i; C[k].appendChild(f); alto[k]+=H[i]+(AF_MAS_GAP||12);
     });
     g.classList.add('af-mz'); g.innerHTML=''; C.forEach(function(d){ g.appendChild(d); });
   });
@@ -38798,6 +38835,7 @@ function renderMis(){
     (lista.length>_tope ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
       'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
       '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
+  ccEntrar('mis', tbl, '.cho-card', [v, todos?1:0, MIS_FILTER].join('|'));   // 🌊 (15/11, mejora 293) al cambiar de filtro, de a una
 }
 /* Quién lleva el pedido. Se muestra SIEMPRE (aunque no haya chofer): que no aparezca la fila
    no significa "no tiene chofer", significa "no sé", y la vendedora necesita distinguirlo. */
