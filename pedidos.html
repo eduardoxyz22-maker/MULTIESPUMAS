@@ -7617,6 +7617,18 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-pc-ops button.vd-on{border-color:var(--teal);background:#E6F7F6;color:#007a74}
 .vd-tag{display:inline-block;background:#ede9fe;color:#5b21b6;border-radius:999px;padding:1px 9px;font-weight:800;font-size:.74rem;margin-left:4px;white-space:nowrap}
 .vd-tag.vd-fl{background:#fff3d6;color:#7a4b00}
+/* 309 · ¿tiene el panel al día? */
+.vd-ad{grid-column:1/-1}
+.vd-ad-g{display:grid;grid-template-columns:minmax(120px,1.4fr) repeat(5,minmax(52px,1fr)) 64px;gap:6px 4px;align-items:center;font-size:.8rem;padding:4px 2px}
+.vd-ad-th{font-size:.68rem;color:#5b7480;font-weight:700;text-align:center}
+.vd-ad-nm{font-weight:800;color:#14313a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;background:none;text-align:left;cursor:pointer;font:inherit;padding:4px 0}
+.vd-ad-d{width:30px;height:26px;border-radius:13px;margin:0 auto;display:grid;place-items:center;color:#fff;font-weight:800;font-size:.7rem;border:0;cursor:pointer;font-family:inherit;padding:0 4px;min-width:30px;width:auto}
+.vd-ad-v{background:#10b981}.vd-ad-a{background:#f59e0b}.vd-ad-r{background:#ef4444}
+.vd-ad-pc{font-weight:900;text-align:right}
+.vd-ad-pie{font-size:.74rem;color:#5b7480;margin-top:6px}
+.vd-ad-yo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#f3f8f8;border:1px solid #d5ecea;border-radius:11px;padding:7px 10px;margin:0 0 10px;font-size:.8rem}
+.vd-ad-yo b.vd-ad-pc{margin-left:auto}
+.vd-ad-yo .vd-ad-d{margin:0}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -36650,7 +36662,8 @@ function misTopPintar(v, mine){
   var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
   var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
-  var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small></div>'+
+  var _ad=''; try{ _ad=alDiaFilaHtml(v); }catch(e){}   // ✅ (15/11, 309) su fila de «¿al día?», arriba de «Para hacer»
+  var izq='<div class="ah-card">'+_ad+'<div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small></div>'+
     (I.length ? ('<div class="ah-lista">'+(MIS_HACER_MAS?I:V).map(fila).join('')+'</div>'+
         (resto.length?('<button type="button" class="ah-mas" onclick="MIS_HACER_MAS=!MIS_HACER_MAS;renderMis()">'+(MIS_HACER_MAS?'▴ Ver menos':('▾ Ver '+resto.length+' más: '+esc(resto.map(function(o){ return o.t.toLowerCase()+' ('+o.n+')'; }).join(' · '))))+'</button>'):''))
       : '<div class="ah-vacio"><span>✅</span><div><b>No tenés nada pendiente. ¡Bien ahí!</b><small>Ni productos que no hay, ni atrasados, ni ubicaciones, ni saldos, ni clientes por avisar.</small></div></div>')+
@@ -36852,7 +36865,8 @@ function misEqPintar(mine){
           '<td class="vt-tie">'+(f.Ti.n?fmtBs0(f.Ti.bs):'—')+'</td><td class="vt-cash">'+(f.ef>0.005?fmtBs0(f.ef):'—')+'</td></tr>'; }).join('')+
       '</tbody></table></div>') : '<div class="ah-vacio"><span>📭</span><div><b>Ninguna vendedora tiene ventas este mes ni el anterior</b></div></div>')+
     '<div class="mis-eq-pie">Sin Eduardo, ROHO ni los pedidos internos: esos se ven eligiendo su nombre. La lista de abajo tiene los pedidos de todos.</div></div>';
-  var h=izq+der+tabla;
+  var _adT=''; try{ _adT=alDiaTablaHtml(filas.map(function(f){ return f.v; })); }catch(e){}   // ✅ (15/11, 309) ¿tienen el panel al día?
+  var h=izq+der+tabla+_adT;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
 /* La bandeja de Kommo en filas cortas (§4mf): los mismos botones que la tarjeta grande (`borrCardHtml`). */
@@ -66292,6 +66306,7 @@ function blokiEntender(q){
   if(BLOKI_RE.como.test(t) && !/^como\s+(?:voy|vamos|va|van|estoy|estamos)\b/.test(t) && asisBuscar(raw).length) return null;     // «¿cómo hago…?» con su respuesta escrita: es de la ayuda («¿cómo voy?» no)
   var D=blokiDia(t), r=D.resto, o={ t:t, raw:raw, dia:D.dia, turno:D.turno, resto:r };
   if(BLOKI_RE.codigo.test(r)){ o.tipo='codigo'; return o; }               // 🏷️ «código del cloud 90x190»
+  if(alDiaVa() && /\bal\s+dia\b/.test(t) && /\b(panel|tiene|tienen|tengo|esta|estan|estoy)\b/.test(t)){ o.tipo='aldia'; return o; }   // ✅ (15/11, 309) «¿Fernando tiene el panel al día?»
   var comoHago=/^(?:como|por\s+que|porque|que\s+significa|me\s+mostras)\b/.test(t) && !/^como\s+(?:voy|vamos|va|van|estoy|estamos)\b/.test(t);
   var t2=comoHago ? '' : blokiTipo2(r, t, o); if(t2){ o.tipo=t2; return o; }   // «¿cómo hago el cierre de entregas?» es de la ayuda, aunque la ayuda no se la muestre a esta persona             // 💬 (07/11, idea 9) ventas, cobranza, pedidos, productos, logística, «qué me falta», el mensaje
   if(BLOKI_RE.cupos.test(r)){ o.tipo='cupos'; return o; }
@@ -66330,6 +66345,7 @@ function blokiResponder(o){
   if(o.tipo==='entregas') return blokiEntregas(o);
   if(o.tipo==='cliente') return blokiCliente(o);
   if(o.tipo==='stock') return blokiStock(o);
+  if(o.tipo==='aldia') return blokiAlDia(o);     // ✅ (15/11, 309)
   if(o.tipo==='codigo') return blokiCodigo(o);
   if(o.tipo==='prod') return blokiProd(o);       // 🧽 (15/11, 306)
   var F={ ventas:blokiVentas, deben:blokiDeben, efectivo:blokiEfectivo, avisos:blokiAvisos, factura:blokiFactura, sinstock:blokiSinStock, sincamion:blokiSinCamion,
@@ -69766,6 +69782,117 @@ function pcobCargar(p){ PCOB_SEL=p ? pcobDe(p) : ''; pcobPintar(); setTimeout(fu
 function pcobAlGuardar(rec, prev){
   if(!pcobVa()){ if(prev && pcobDe(prev) && pcobCobra(rec)) setPcob(rec, pcobDe(prev)); return; }
   setPcob(rec, (pcobFormAplica() && PCOB_SEL) ? PCOB_SEL : '');
+}
+
+/* ---------------------------------------------------------------------------
+   ✅ 309 · ¿TIENE EL PANEL AL DÍA? UNA FILA POR VENDEDORA
+   Cinco puntos por vendedora con las cuentas de siempre: 🧾 factura (`docVentaFalta`), 📣 avisos de Contabilidad (`ctaAvAbiertos`), 📍
+   ubicaciones de lo que viene (`misPendientes`), 📥 Kommo (`borrPendientes(borradoresDe)`) y 💵 efectivo sin entregar (`misEfectivoDatos`).
+   Verde = nada · ámbar = de esta semana · rojo = de más de AL_DIA_VIEJO días o de plata (un aviso de plata; una ubicación para el próximo
+   camión). «al día N %» = los verdes. En «👑 Ver todos» la tabla; cada vendedora ve su fila arriba de «Para hacer»; tocar un punto abre esa
+   lista. Bloki contesta «¿Fernando tiene el panel al día?». Solo mira. AL_DIA_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var AL_DIA_VIEJO=4, AL_DIA_CACHE={ k:'', M:{} };
+function alDiaVa(){ return vdVa('AL_DIA_PRUEBA'); }
+/* ⏱️ Con la planilla real (2.030 filas) el efectivo de cada vendedora (`misEfectivoDatos`) rehace el Cuadre del equipo entero: 10
+   vendedoras = 1,3 s. Mientras se arman las filas, `cuadreEfectivo`/`cuadrePagos`/`retirosDe` recuerdan lo que ya calcularon con los
+   mismos datos (son la misma cuenta, no otra), y cada fila queda guardada hasta que cambia la planilla, el día o la bandeja de Kommo. */
+function vdConMemo(fn){
+  var oE=cuadreEfectivo, oP=cuadrePagos, oR=retirosDe, M={};
+  var memo=function(nom, f){ return function(){ var k=nom+'|'+JSON.stringify([].slice.call(arguments)); if(!Object.prototype.hasOwnProperty.call(M, k)) M[k]=f.apply(this, arguments); return M[k]; }; };
+  cuadreEfectivo=memo('e', oE); cuadrePagos=memo('p', oP); retirosDe=memo('r', oR);
+  try{ return fn(); } finally{ cuadreEfectivo=oE; cuadrePagos=oP; retirosDe=oR; }
+}
+function alDiaClave(){ return STATE_GEN+'|'+diaNegocio()+'|'+(BORRADORES||[]).map(function(b){ return b && b.id; }).join(','); }
+function alDiaDatos(v){
+  var k=alDiaClave(); if(AL_DIA_CACHE.k!==k) AL_DIA_CACHE={ k:k, M:{} };
+  var n=normNombre(v); if(AL_DIA_CACHE.M[n]) return AL_DIA_CACHE.M[n];
+  return (AL_DIA_CACHE.M[n]=vdConMemo(function(){ return alDiaCalcular(v); }));
+}
+function alDiaDeTodas(vends){ return vdConMemo(function(){ return vends.map(alDiaDatos); }); }
+function alDiaCalcular(v){
+  var hoy=diaNegocio(), prox=proximoDiaEntrega();
+  var mine=(STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && mismoVendedor(p.vendedor, v); });
+  var dTs=function(ts){ var f=ts ? isoDeTsBolivia(ts) : ''; return f ? diasEntre(f, hoy) : 0; };
+  var D=[];
+  var fac=mine.filter(function(p){ try{ return docVentaFalta(p); }catch(e){ return false; } });
+  D.push({ k:'fac', ic:'🧾', t:'Factura', n:fac.length, L:fac, sev:!fac.length ? 'v' : (fac.some(function(p){ return dTs(p.ts)>AL_DIA_VIEJO; }) ? 'r' : 'a'),
+    s:fac.length ? (fac.length+(fac.length===1?' venta':' ventas')+' sin N° de factura o remisión') : 'todas con factura o remisión' });
+  var av0=[]; try{ av0=ctaAvAbiertos(v); }catch(e){ av0=[]; }
+  var avP=av0.filter(function(a){ try{ return !ctaAvSoloFecha(a); }catch(e){ return true; } });
+  D.push({ k:'av', ic:'📣', t:'Avisos', n:av0.length, sev:!av0.length ? 'v' : (avP.length ? 'r' : 'a'),
+    s:av0.length ? (av0.length+' aviso'+(av0.length===1?'':'s')+' de Contabilidad'+(avP.length ? (' ('+avP.length+' de plata)') : ' (solo la fecha de la foto)')) : 'sin avisos de Contabilidad' });
+  var ub=misPendientes(mine).sinGps.filter(function(p){ return !esBorrador(p) && !esVentaTienda(p) && p.fecha && p.fecha>=todayStr(); });
+  D.push({ k:'ub', ic:'📍', t:'Ubic.', n:ub.length, L:ub, sev:!ub.length ? 'v' : (ub.some(function(p){ return p.fecha<=prox; }) ? 'r' : 'a'),
+    s:ub.length ? (ub.length+(ub.length===1?' entrega':' entregas')+' sin ubicación de Google Maps') : 'ubicaciones completas' });
+  var br=[]; try{ br=borrPendientes(borradoresDe(v)); }catch(e){ br=[]; }
+  D.push({ k:'ko', ic:'📥', t:'Kommo', n:br.length, sev:!br.length ? 'v' : (br.some(function(b){ return diasDeBorrador(b)>AL_DIA_VIEJO; }) ? 'r' : 'a'),
+    s:br.length ? (br.length+(br.length===1?' venta':' ventas')+' de Kommo para completar') : 'sin ventas de Kommo pendientes' });
+  var E=null; try{ E=misEfectivoDatos(v); }catch(e){ E=null; }
+  var tot=E ? (Number(E.tot)||0) : 0, viejo='';
+  if(E && tot>0.005){ var ult=E.ult ? String(E.ult.fecha||'') : ''; var pend=(E.nuevos||[]).filter(function(c){ return !ult || c.f>ult; }); viejo=((pend[0]||(E.nuevos||[])[0])||{}).f||''; }
+  var dEf=viejo ? diasEntre(viejo, hoy) : 0;
+  D.push({ k:'ef', ic:'💵', t:'Efectivo', n:tot>0.005 ? 1 : 0, bs:tot, dias:dEf, sev:!(tot>0.005) ? 'v' : (dEf>AL_DIA_VIEJO ? 'r' : 'a'),
+    s:tot>0.005 ? (fmtBs0(tot)+' en efectivo sin entregar'+(viejo ? (' (desde el '+fmtFechaCorta(viejo)+')') : '')) : 'todo el efectivo entregado' });
+  var ok=D.filter(function(d){ return d.sev==='v'; }).length;
+  return { v:v, D:D, pct:Math.round(ok/D.length*100) };
+}
+function alDiaPunto(d, v){
+  var txt=d.sev==='v' ? '✓' : (d.k==='ef' ? (d.dias>0 ? (d.dias+'d') : 'hoy') : String(d.n));
+  return '<button type="button" class="vd-ad-d vd-ad-'+d.sev+'" data-v="'+esc(v)+'" data-k="'+d.k+'" onclick="alDiaTocar(this)" title="'+esc(d.ic+' '+d.s)+'" aria-label="'+esc(d.t+': '+d.s)+'">'+esc(txt)+'</button>';
+}
+function alDiaColor(p){ return p>=100 ? '#047857' : (p>=60 ? '#b45309' : '#ef4444'); }
+function alDiaTablaHtml(vends){
+  if(!alDiaVa() || !vends || !vends.length) return '';
+  var F=alDiaDeTodas(vends.filter(function(v){ return v && !contaExcluido(v); }));
+  if(!F.length) return '';
+  F.sort(function(a,b){ return a.pct-b.pct || a.v.localeCompare(b.v,'es'); });
+  var cab=['🧾 Factura','📣 Avisos','📍 Ubic.','📥 Kommo','💵 Efectivo'].map(function(t){ return '<span class="vd-ad-th">'+t+'</span>'; }).join('');
+  return '<div class="ah-card vd-ad" id="vd-al-dia"><div class="ah-cab"><span class="ah-ico">✅</span><h4>¿Tienen el panel al día? · '+esc(nxDiaTxt(diaNegocio()))+'</h4><span class="ah-sp"></span><small>tocá un punto para ver esa lista</small></div>'+
+    '<div class="vd-ad-g"><span></span>'+cab+'<span class="vd-ad-th">Al día</span>'+
+    F.map(function(R){
+      return '<button type="button" class="vd-ad-nm" data-v="'+esc(R.v)+'" onclick="misEqElegir(this.getAttribute(\'data-v\'))" title="Ver los pedidos de '+esc(R.v)+'">'+esc(R.v)+'</button>'+
+        R.D.map(function(d){ return alDiaPunto(d, R.v); }).join('')+'<span class="vd-ad-pc" style="color:'+alDiaColor(R.pct)+'">'+R.pct+' %</span>';
+    }).join('')+'</div>'+
+    '<div class="vd-ad-pie">Verde = nada pendiente · ámbar = de esta semana · rojo = de más de '+AL_DIA_VIEJO+' días o de plata. Sale de lo mismo que «Para hacer» de cada una.</div></div>';
+}
+function alDiaFilaHtml(v){
+  if(!alDiaVa() || !v || contaExcluido(v)) return '';
+  var R=alDiaDatos(v);
+  return '<div class="vd-ad-yo" id="vd-al-dia-yo"><span>✅ <b>Tu panel al día</b></span>'+R.D.map(function(d){ return '<span title="'+esc(d.s)+'">'+d.ic+'</span>'+alDiaPunto(d, v); }).join('')+
+    '<b class="vd-ad-pc" style="color:'+alDiaColor(R.pct)+'">'+R.pct+' %</b></div>';
+}
+function alDiaTocar(el){
+  var v=el && el.getAttribute('data-v'), k=el && el.getAttribute('data-k'); if(!v || !k) return;
+  var R=alDiaDatos(v), d=R.D.filter(function(x){ return x.k===k; })[0]; if(!d) return;
+  var yo=!MIS_TODOS && mismoVendedor(misVendedorSel(), v);
+  if(k==='fac'){ MIS_LISTAS.adFac={ t:'🧾 '+v+' · sin N° de factura o remisión', s:'Tocá cada venta y anotá si va con factura o con nota de remisión y su número.', L:d.L, abrir:'showContaModal' }; misVerLista('adFac'); return; }
+  if(k==='ub'){ MIS_LISTAS.adUb={ t:'📍 '+v+' · entregas sin ubicación', s:'Pedísela al cliente por WhatsApp (en la ficha del pedido).', L:d.L, m:function(p){ return esc(p.fecha ? fmtFechaCorta(p.fecha) : ''); } }; misVerLista('adUb'); return; }
+  if(k==='av'){ ctaAvVer(v); return; }
+  if(k==='ko'){ if(!yo) misEqElegir(v); setTimeout(function(){ misIrA('mis-borradores'); }, 80); return; }
+  if(k==='ef'){ if(yo){ MIS_EF_ABIERTO=true; renderMis(); misIrA('mis-top'); } else { try{ misEqEfectivoVer(); }catch(e){} } return; }
+}
+/* Bloki: «¿Fernando tiene el panel al día?», «¿tengo el panel al día?» */
+function blokiAlDia(o){
+  var S=blokiAlcance(), t=sinTildes(String(o.t||'')).toLowerCase(), quien='';
+  (VENDEDORES||[]).forEach(function(n){
+    if(quien || contaExcluido(n)) return;
+    var pn=sinTildes(String(n).split(' ')[0]).toLowerCase();
+    if(pn.length>=3 && new RegExp('\\b'+pn+'\\b').test(t)) quien=n;
+  });
+  var yoPide=/\b(tengo|estoy|mi|mis)\b/.test(t);
+  if(!quien && (yoPide || !S.todo) && S.yo) quien=S.yo;
+  if(!quien){
+    if(!S.todo) return blokiQuienSos('si tenés el panel al día');
+    var vs=alDiaDeTodas((VENDEDORES||[]).filter(function(n){ return !contaExcluido(n); })).slice().sort(function(a,b){ return a.pct-b.pct; });
+    return { h:'✅ Cómo tiene el panel cada vendedora (lo más atrasado primero):', filas:vs.map(function(R){ return { t:R.v+' · '+R.pct+' %', s:R.D.filter(function(d){ return d.sev!=='v'; }).map(function(d){ return d.ic+' '+d.s; }).join(' · ')||'todo al día' }; }),
+      btns:UNLOCKED ? [['👑 Ver la tabla', function(){ try{ asisCerrar(); }catch(e){} showView('mis'); MIS_TODOS=true; try{ pintarBotonTodos('mis-todos-btn', true); }catch(e){} renderMis(); setTimeout(function(){ misIrA('vd-al-dia'); }, 120); }]] : [] };
+  }
+  if(!S.todo && !mismoVendedor(quien, S.yo)) return { h:'Solo te puedo decir lo tuyo: preguntame «¿tengo el panel al día?».', mal:1 };
+  var R=alDiaDatos(quien), yo=mismoVendedor(quien, S.yo);
+  return { h:(R.pct>=100?'✅ ':'')+(yo?'Tenés':('<b>'+esc(quien)+'</b> tiene'))+' el panel al día en un <b>'+R.pct+' %</b>.', mal:R.pct<60,
+    filas:R.D.map(function(d){ return { t:(d.sev==='v'?'✅ ':(d.sev==='r'?'🔴 ':'🟠 '))+d.ic+' '+d.t, s:d.s }; }),
+    btns:[['👀 Ver '+(yo?'mis':'sus')+' pedidos', function(){ try{ asisCerrar(); }catch(e){} showView('mis'); misEqElegir(quien); }]] };
 }
 
 /* ---------------------------------------------------------------------------
