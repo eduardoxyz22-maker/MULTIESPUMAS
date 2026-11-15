@@ -5633,6 +5633,24 @@ html.cc-on .ci-carril:hover .ci-van{ animation-play-state:paused; }
 .mis-cf-p i{ font-style:normal; color:#7b8b8b; } .mis-cf-p em{ font-style:normal; color:#9aa9a9; }
 .mis-cf-pag{ flex:none; font-size:.72rem; font-weight:800; color:#0a6b47; background:#dcfce7; border-radius:999px; padding:2px 9px; }
 .mis-cf-v{ flex:none; color:#7b8b8b; }
+/* 📌 (15/11, mejora 286) Administración en fichas: el título del día y turno pegado arriba, la barrita, y «↑ Arriba» */
+html.af-peg-on #adm-fichas .af-gr > .af-g{ position:sticky; top:calc(var(--hdr-h,0px) + var(--af-chips,0px)); z-index:5; margin:12px 0 8px; padding:7px 10px; border-radius:12px;
+  background:rgba(246,250,250,.94); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); box-shadow:0 8px 18px -12px rgba(9,40,40,.45); }
+html.af-peg-on.tema-halloween #adm-fichas .af-gr > .af-g, html.af-peg-on.tema-todos-santos #adm-fichas .af-gr > .af-g,
+html.af-peg-on.tema-black-friday #adm-fichas .af-gr > .af-g{ background:rgba(20,16,22,.9); box-shadow:0 8px 18px -12px rgba(0,0,0,.7); }
+.af-gbar{ flex:none; margin-left:auto; width:90px; height:7px; border-radius:9px; background:#dfeceb; overflow:hidden; }
+.af-gbar i{ display:block; height:100%; border-radius:9px; background:#F0A23B; }
+.af-gbar.af-gbar-ok i{ background:#22A06B; }
+.arriba-btn{ position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom,0px)); z-index:2550; border:0; font:inherit; font-weight:800; font-size:.8rem;
+  background:#00A09A; color:#fff; border-radius:999px; padding:9px 18px; box-shadow:0 6px 16px rgba(0,160,154,.35); cursor:pointer; white-space:nowrap;
+  opacity:0; transform:translate(-50%, 10px); transition:opacity .2s, transform .2s; pointer-events:none; }
+.arriba-btn.on{ opacity:1; transform:translate(-50%, 0); pointer-events:auto; }
+body.desh-on .arriba-btn{ opacity:0; pointer-events:none; }   /* «↩️ Deshacer» va en el mismo lugar los 5 s que dura */
+.arriba-btn:hover{ background:#008F88; }
+.arriba-btn:focus-visible{ outline:3px solid #fff; outline-offset:2px; box-shadow:0 0 0 6px #00A09A; }
+@media (max-width:700px){ .arriba-btn{ bottom:calc(86px + env(safe-area-inset-bottom,0px)); } }
+@media print{ .arriba-btn{ display:none!important; } }
+@media (prefers-reduced-motion: reduce){ .arriba-btn{ transition:none; } }
 /* ✅ (15/11, mejora 289) el botón que copió dice «Copiado» 2 segundos, del mismo tamaño */
 button.cp-ok{ background:#0f766e!important; color:#fff!important; border-color:#0f766e!important; background-image:none!important; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; transition:none!important; }
 button.cp-ok .cp-tick{ width:15px; height:15px; vertical-align:-3px; margin-right:4px; fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:24; stroke-dashoffset:24; animation:cpTilde .35s ease forwards .05s; }
@@ -9953,6 +9971,7 @@ function showViewAhora(v){
   try{ if(ASIS.montado){ asisCerrar(); blokiPoner(); setTimeout(function(){ asisRefrescar(); }, 400); } }catch(e){}   // 🧑‍💼 §4jx: los avisos de la pestaña nueva · 🧽 el traje de la pestaña
   if(_nav){ try{ navDeslizar(_nav, v); icoAnimar(document.querySelector('.nav button.active')); }catch(e){} }   // 🧭🎨 (§4ni, 5 y 9)
   try{ if(window.PRACTICA) practicaVista(v); }catch(e){}   // 🧪 (271) Bloki explica la pestaña
+  try{ arribaLuego(); }catch(e){}   // 📌 (15/11, mejora 286) «↑ Arriba» solo en Administración en fichas y en Mis pedidos
 }
 function initConnUI(){
   renderConnEstado();
@@ -30816,9 +30835,9 @@ function admFichasPintar(list, dn){
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
     var tt=g.t===0?'🌅 Mañana':g.t===1?'🌆 Tarde':'sin turno';
-    if(g.av) return '<div class="af-g"><span class="af-gt">📦 El cliente avisa cuándo</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+
+    if(g.av) return afPegG('', '<div class="af-g"><span class="af-gt">📦 El cliente avisa cuándo</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+
       '<span class="af-gc af-gc-gris">sin día · no ocupan cupo · el stock queda apartado</span></div>'+
-      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';   // 📦 (propuesta 76)
+      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>');   // 📦 (propuesta 76) · 📌 (mejora 286) afPegG
     /* ✨ (§4me, dueño: «¿y qué onda esas barras?») En vez de la barrita: cuántos están listos y cuántos cupos quedan en ese turno
        (los de `cuposUsadosTurno`/`limTurno`, los mismos del formulario); un día que ya pasó dice cuántos se entregaron. */
     var pasado=g.f && g.f<todayStr(), ent=g.ps.filter(function(p){ return p.entregado; }).length, gc=[];
@@ -30833,11 +30852,13 @@ function admFichasPintar(list, dn){
         if(lim>0) gc.push('<span class="af-gc '+(lib<0?'af-gc-mal':lib===0?'af-gc-lleno':lib<=3?'af-gc-poco':'af-gc-cupo')+'" title="'+us+' de '+lim+' lugares ocupados en este turno">🎟️ '+
           (lib<0?((-lib)+' de más (forzado'+(-lib===1?'':'s')+')'):lib===0?'turno lleno':('queda'+(lib===1?'':'n')+' '+lib+' cupo'+(lib===1?'':'s')))+'</span>'); }
     }
-    return antesGps+'<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+'</div>'+
-      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>';
+    return antesGps+afPegG(g.f, '<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+
+      afPegBarra(pasado ? ent : listos, n, pasado)+'</div>'+   // 📌 (15/11, mejora 286) el título pegado arriba y la barrita
+      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>');
   }).join('');
   ccEntrar('adm', box, '.af-f', admCcClave());   // 🌊 (15/11, mejora 293) al cambiar de filtro, de a una (antes de las columnas: en el orden del día)
   try{ afMasonry(box); }catch(e){ console.error(e); }   // 🧱 (15/11, mejora 292) sin huecos entre las fichas
+  afPegMedir(); arribaLuego();   // 📌 (15/11, mejora 286) el título debajo de la barra de filtros · «↑ Arriba» según lo que hay ahora
 }
 /* ============================================================================
    🌊 (15/11, mejora 293) LAS FICHAS ENTRAN EN CASCADA Y LA CINTA DE STOCK SIN CORTES. Al tocar un filtro, las 22 o 39 fichas aparecían de
@@ -30909,6 +30930,65 @@ window.addEventListener('resize', function(){
   AF_MAS_T=setTimeout(function(){ var b=document.getElementById('adm-fichas'); if(!b || b.hidden || !afMasonryActivo()) return;
     var w=b.clientWidth; if(w===AF_MAS_W) return; AF_MAS_W=w; try{ afMasonry(b); }catch(e){} }, 180);
 });
+/* ============================================================================
+   📌 (15/11, mejora 286) AL BAJAR, EL DÍA Y EL TURNO QUEDAN ARRIBA. «🗓️ Semana» en fichas son 39 fichas en 8 grupos de día y turno y la
+   página mide 8 pantallas: al bajar, el título «Lunes 16/11 · 🌅 Mañana · ✅ 7 de 12 listos» se iba de la pantalla y las fichas no
+   decían de qué día eran; para volver había que girar la rueda al revés. Ahora el título del grupo se queda pegado debajo del encabezado
+   mientras se ven SUS fichas, debajo de la barra de filtros (cada grupo va en su caja `.af-gr`: el del grupo siguiente lo reemplaza), con
+   una barrita de cuántos están listos (en un día que pasó, cuántos se entregaron). Pasadas dos pantallas aparece «↑ Arriba» abajo al
+   medio (en Administración en fichas y en Mis pedidos; a la derecha lo tapaba el globo de Bloki); en Administración, si el grupo de HOY
+   quedó arriba, dice «↑ Arriba · Hoy» y lleva ahí. Solo presentación: los títulos dicen lo mismo de siempre. En Playwright, como siempre salvo `window.AF_PEGADO_PRUEBA`. */
+function afPegActivo(){ try{ return !navigator.webdriver || !!window.AF_PEGADO_PRUEBA; }catch(e){ return true; } }
+try{ if(afPegActivo()) document.documentElement.classList.add('af-peg-on'); }catch(e){}
+function afPegG(f, html){
+  if(!afPegActivo()) return html;
+  return '<div class="af-gr"'+(f && f===todayStr() ? ' data-hoy="1"' : '')+'>'+html+'</div>';
+}
+/* La barra de filtros de Administración (Todos · Hoy · Semana…) ya va pegada debajo del encabezado y su alto cambia con el ancho: el título
+   del grupo se pega DEBAJO de ella (y, si un grupo termina, pasa por detrás). */
+function afPegMedir(){
+  if(!afPegActivo()) return 0;
+  var b=document.getElementById('adm-fichas'), c=document.getElementById('adm-chips'), h=0;
+  try{ if(c && c.getClientRects().length && getComputedStyle(c).position==='sticky') h=c.offsetHeight; }catch(e){}
+  if(b) b.style.setProperty('--af-chips', h+'px');
+  return h;
+}
+function afPegBarra(k, n, pasado){
+  if(!afPegActivo() || !n) return '';
+  var pc=Math.max(0, Math.min(100, Math.round(100*k/n)));
+  return '<span class="af-gbar'+(k>=n?' af-gbar-ok':'')+'" aria-hidden="true" title="'+k+' de '+n+' '+(pasado?'entregados':'listos')+'"><i style="width:'+pc+'%"></i></span>';
+}
+var ARRIBA={ btn:null, tic:null };
+function arribaDonde(){
+  var va=document.getElementById('view-admin'), vm=document.getElementById('view-mis'), fb=document.getElementById('adm-fichas');
+  if(va && va.classList.contains('active') && fb && !fb.hidden && fb.getClientRects().length) return 'adm';
+  if(vm && vm.classList.contains('active')) return 'mis';
+  return '';
+}
+/* el grupo de hoy, si quedó ARRIBA de lo que se ve (si está abajo, «Arriba» es el principio de la página) */
+function arribaHoy(){
+  var h=document.querySelector('#adm-fichas .af-gr[data-hoy="1"]');
+  return (h && h.getBoundingClientRect().top<0) ? h : null;
+}
+function arribaMirar(){
+  ARRIBA.tic=null; if(!afPegActivo() || !document.body) return;
+  var b=ARRIBA.btn;
+  if(!b){ b=document.createElement('button'); b.type='button'; b.id='arriba-btn'; b.className='arriba-btn no-print'; b.setAttribute('aria-hidden','true'); b.tabIndex=-1;
+    b.onclick=arribaIr; document.body.appendChild(b); ARRIBA.btn=b; }
+  var d=arribaDonde(), on=!!d && (window.scrollY||0) > 2*(window.innerHeight||768);
+  if(on){ var t=(d==='adm' && arribaHoy()) ? '↑ Arriba · Hoy' : '↑ Arriba'; if(b.textContent!==t) b.textContent=t; }
+  b.classList.toggle('on', on); b.setAttribute('aria-hidden', on?'false':'true'); b.tabIndex=on?0:-1;
+}
+function arribaLuego(){ if(ARRIBA.tic || !afPegActivo()) return; try{ ARRIBA.tic=requestAnimationFrame(arribaMirar); }catch(e){ arribaMirar(); } }
+function arribaIr(){
+  var y=0, h=arribaDonde()==='adm' ? arribaHoy() : null;
+  if(h){ var top=h.getBoundingClientRect().top+(window.scrollY||0), c=document.getElementById('adm-chips'), ch=0;
+    try{ if(c && getComputedStyle(c).position==='sticky') ch=c.getBoundingClientRect().height; }catch(e){}
+    y=Math.max(0, top-hdrAltoEn(top)-ch-8); }
+  var suave=true; try{ suave=!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){}
+  try{ window.scrollTo({ top:y, behavior:suave?'smooth':'auto' }); }catch(e){ window.scrollTo(0, y); }
+}
+try{ if(afPegActivo()){ window.addEventListener('scroll', arribaLuego, { passive:true }); window.addEventListener('resize', function(){ afPegMedir(); arribaLuego(); }); } }catch(e){}
 /* ================================================================================================================================
    ✨ ARRIBA DE ADMINISTRACIÓN: «📋 Para hacer» + «☀️ Hoy» + tres pestañas (§4me, 24/10)
    El dueño, con captura: *«parece noticiero de alertas»*; eligió *«un mix de la B con la C»* y pidió *«más pulido, más estético,
