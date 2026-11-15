@@ -1880,6 +1880,26 @@ body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
 @keyframes avOtra{ 40%{ transform:translateX(5px); } }
 @media (max-width:700px){ .av-pila{ left:8px; width:calc(calc(100vw / var(--vz,1)) - 16px); bottom:calc(84px + env(safe-area-inset-bottom,0px)); } }
 @media (prefers-reduced-motion: reduce){ .av-c, .av-c.av-otra{ animation:none; } .av-bar{ display:none; } }
+/* ❓ (15/11, mejora 282) la pregunta del panel: arriba de todo (también de una ficha abierta), botones que dicen lo que hacen */
+.preg-ov{ position:fixed; inset:0; z-index:9500; background:rgba(9,30,30,.42); display:grid; place-items:center; padding:16px; animation:pregFondo .15s ease; }
+.preg-c{ width:min(520px, 100%); background:#fff; color:#1f2a2a; border-radius:18px; box-shadow:0 18px 50px rgba(9,40,40,.35); overflow:hidden; animation:pregEntra .22s cubic-bezier(.2,.8,.3,1); font-family:inherit; }
+.preg-h{ display:flex; gap:12px; align-items:center; padding:18px 20px 6px; }
+.preg-i{ width:46px; height:46px; border-radius:13px; display:grid; place-items:center; font-size:1.4rem; background:#E6F7F6; flex:none; }
+.preg-av .preg-i{ background:#FEF3E2; } .preg-pel .preg-i{ background:#FDEAEC; }
+.preg-ht{ min-width:0; }
+.preg-h h4{ margin:0; font-size:1.04rem; font-weight:800; color:#132626; line-height:1.3; overflow-wrap:anywhere; }
+.preg-h small{ display:block; color:#5b6b6b; font-size:.8rem; margin-top:3px; line-height:1.35; overflow-wrap:anywhere; }
+.preg-b{ margin:4px 0 0; padding:4px 20px 2px 78px; font-size:.86rem; line-height:1.45; color:#2d3b3b; max-height:calc(50vh / var(--vz,1)); overflow:auto; }
+.preg-b li{ margin:4px 0; overflow-wrap:anywhere; }
+.preg-a{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; padding:14px 20px 18px; }
+.preg-a button{ font:inherit; font-weight:800; font-size:.88rem; border-radius:12px; padding:11px 16px; cursor:pointer; border:1.5px solid #99DDD9; background:#fff; color:#00706b; min-height:44px; }
+.preg-a .preg-si{ background:#00A09A; border-color:#00A09A; color:#fff; }
+.preg-pel .preg-a .preg-si{ background:#CE2939; border-color:#CE2939; }
+.preg-a button:focus-visible{ outline:3px solid #00B5AD; outline-offset:2px; }
+@keyframes pregEntra{ from{ opacity:0; transform:translateY(10px) scale(.97); } }
+@keyframes pregFondo{ from{ opacity:0; } }
+@media (max-width:560px){ .preg-b{ padding-left:20px; } .preg-a button{ flex:1 1 auto; } }
+@media (prefers-reduced-motion: reduce){ .preg-ov, .preg-c{ animation:none; } }
 @media(max-width:700px){ .desh{ bottom:calc(84px + env(safe-area-inset-bottom)); } }
 @media(prefers-reduced-motion:reduce){ .desh{ transition:none; } }
 @media print{ .desh{ display:none!important; } }
@@ -20659,6 +20679,17 @@ function ctaBorrarPago(id, i){
   var tipo = esEnvio(c) ? 'el recargo por entrega' : (c.anticipo ? 'el ADELANTO' : 'el pago');
   var saldoAntes=r2(Number(p.saldo)||0), saldoDesp = esEnvio(c) ? saldoAntes : r2(saldoAntes+monto);
   var recibio=limpiaRecibio(c.recibio);
+  /* ❓ (15/11, mejora 282) con la bandera, la pregunta del panel y, al contestar «sí», lo de siempre (`_ctaBorrarPagoHecho`) */
+  if(pregActivo()){
+    preguntar({ icono:'🗑️', peligro:true, titulo:'¿Borrar '+tipo+' de '+fmtBs(monto)+'?',
+      sub:[que, c.fecha?fmtFechaCorta(c.fecha):'', limpiaNota(c.nota)?('recibo '+limpiaNota(c.nota)):'', recibio?('lo recibió '+recibio):'', p.cliente||''].filter(Boolean).join(' · '),
+      lineas:[ esEnvio(c) ? 'El resto de la venta no se toca.' : ('El total de la venta no cambia: lo que falta cobrar pasa de '+fmtBs(Math.max(0,saldoAntes))+' a '+fmtBs(Math.max(0,saldoDesp))+(saldoDesp<-0.009?(' (sigue cobrada de más por '+fmtBs(-saldoDesp)+')'):'')+'.'),
+        fotos.length ? ((fotos.length===1?'Su imagen de respaldo va':('Sus '+fotos.length+' imágenes de respaldo van'))+' a la papelera si ningún otro pago la'+(fotos.length===1?'':'s')+' usa.') : '',
+        regEnSistema(p) ? '⚠️ Esta venta figura ✅ CARGADA en el sistema contable: si este pago ya se cargó allá, corregilo también allá.' : '',
+        'No se puede deshacer: habría que registrarlo de nuevo a mano.' ],
+      no:'No, dejarlo', si:'🗑 Sí, borrar '+(esEnvio(c)?'el recargo':(c.anticipo?'el adelanto':'el pago')) }).then(function(si){ if(si) _ctaBorrarPagoHecho(); });
+    return;
+  }
   if(!confirm('🗑 ¿Borrar '+tipo+' de '+fmtBs(monto)+' ('+que+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):'')+(limpiaNota(c.nota)?(' · recibo '+limpiaNota(c.nota)):'')+
               (recibio?(' · lo recibió '+recibio):'')+') de '+(p.cliente||'esta venta')+'?\n\n'+
               (esEnvio(c) ? 'El resto de la venta no se toca.'
@@ -20667,6 +20698,8 @@ function ctaBorrarPago(id, i){
               (fotos.length ? ('\n\n'+(fotos.length===1?'Su imagen de respaldo':('Sus '+fotos.length+' imágenes de respaldo'))+' va'+(fotos.length===1?'':'n')+' a la papelera si ningún otro pago la'+(fotos.length===1?'':'s')+' usa.') : '')+
               (regEnSistema(p) ? '\n\n⚠️ Esta venta figura ✅ CARGADA en el sistema contable: si este pago ya se cargó allá, hay que corregirlo también allá.' : '')+
               '\n\nEsto NO se puede deshacer: para recuperarlo habría que registrarlo de nuevo a mano.')) return;
+  return _ctaBorrarPagoHecho();
+  function _ctaBorrarPagoHecho(){
   ctaPagoRecordar();                               // §4fy: un pago a medio cargar no se pierde con el repintado
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
   var pr;
@@ -20699,6 +20732,7 @@ function ctaBorrarPago(id, i){
   toast('🗑 Borrado: '+que+' '+fmtBs(monto)+(esEnvio(c)?'':(' · falta cobrar '+fmtBs(Math.max(0,saldoFin))+(saldoFin<-0.009?(' · ⚠️ sigue cobrada de más por '+fmtBs(-saldoFin)):''))),'ok',8000);
   reabrirFicha(id);
   return pr;
+  }   // fin de `_ctaBorrarPagoHecho` (mejora 282)
 }
 /* ↩️ ERA UN PAGO DE LA VENTA, NO UN RECARGO (dueño, 28/09: *«¿cómo borro los recargos por entrega? No eran recargos por
    entrega sino pagos»*). Las vendedoras anotaban cobros de la venta en «🚚 Recargo por entrega». «🗑 Quitar el recargo» se
@@ -23760,18 +23794,22 @@ function submitPedido(){
          (~1 segundo). Si la red no contesta en 4 segundos se guarda igual con el número
          provisorio: mejor una OC a corregir que una vendedora que no puede trabajar —
          y para eso está el aviso de repetidas en Administración. */
-      if(!fxDupConfirmar()) return;                                      // 🧰 (§4ih) ¿el mismo pedido dos veces?
-      if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba) · 📦 sin día no se pregunta: el cuadrito ya lo dice
-      if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
-      if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;              // 🏪 (15/11, 304) ¿se suma a la RPT que ya va a esa tienda? (solo si la vendedora lo acepta)
-      guardarYa();
+      /* ❓ (15/11, mejora 282) las dos preguntas siguen con lo que viene cuando se contestan (fuera de la bandera, sincrónicas como siempre) */
+      fxDupPreguntar(function(){                                         // 🧰 (§4ih) ¿el mismo pedido dos veces?
+        var _fin=function(){
+          if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
+          if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;          // 🏪 (15/11, 304) ¿se suma a la RPT que ya va a esa tienda? (solo si la vendedora lo acepta)
+          guardarYa();
+        };
+        if(_avisa) _fin(); else saldoPreguntarAlGuardar(prev, isEdit, _deBorrador, _fin);   // 🧾 con la planilla recién bajada (ver arriba) · 📦 sin día no se pregunta: el cuadrito ya lo dice
+      });
     });
     return;
   }
-  if(!fxDupConfirmar()) return;                                          // 🧰 (§4ih) ¿el mismo pedido dos veces?
-  if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
-  if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;                  // 🏪 (15/11, 304)
-  guardarYa();
+  fxDupPreguntar(function(){                                             // 🧰 (§4ih) ¿el mismo pedido dos veces?
+    var _fin=function(){ if(rptSumarPreguntar(rec, isEdit, guardarYa)) return; guardarYa(); };   // 🏪 (15/11, 304)
+    if(_avisa) _fin(); else saldoPreguntarAlGuardar(prev, isEdit, _deBorrador, _fin);   // 🧾 sin conexión: con lo que hay
+  });
   }   // fin de `seguirAlGuardar` (idea 119)
 
   function guardarYa(){
@@ -26057,8 +26095,13 @@ function confirmEdicionModal(rec, cambios){
 
 function deletePedido(id){
   var rec=findById(id); if(!rec) return;
-  if(!confirm('¿Eliminar el pedido de '+(rec.cliente||'')+(rec.oc?(' (N° '+rec.oc+')'):'')+'?')) return;
-  borrarConDeshacer(id);                         // ↩️ (§4ni, 7) 5 s para arrepentirse antes de ir a la planilla
+  var _pr=(rec.productos||[]).map(function(x){ return String(x.desc||'').trim(); }).filter(Boolean);
+  pregunta('¿Eliminar el pedido de '+(rec.cliente||'')+(rec.oc?(' (N° '+rec.oc+')'):'')+'?',
+    { icono:'🗑️', peligro:true, titulo:'¿Borrar el pedido'+(rec.oc?(' '+(ocEtiq(rec.oc)||rec.oc)):'')+'?',
+      sub:[rec.cliente||'', _pr.slice(0,2).join(' · ')+(_pr.length>2?(' y '+(_pr.length-2)+' más'):''), rec.fecha?fmtFechaCorta(rec.fecha)+(rec.turno?(' '+normTurno(rec.turno)):''):''].filter(Boolean).join(' · '),
+      lineas:['Sale de la planilla para todo el equipo.', deshVa() ? 'Tenés 5 segundos para deshacerlo («↩️ Deshacer» abajo).' : 'No se puede deshacer.'],
+      no:'No, dejarlo', si:'🗑 Sí, borrar el pedido' },
+    function(){ borrarConDeshacer(id); });   // ↩️ (§4ni, 7) 5 s para arrepentirse antes de ir a la planilla · ❓ (mejora 282) la pregunta del panel
 }
 function realDelete(id){
   var loc=findById(id), copia=loc?JSON.parse(JSON.stringify(loc)):null;
@@ -27545,19 +27588,46 @@ function fxDupPintar(){
   el.hidden=false;
 }
 var FX_DUP_OK='';
+function fxDupFirma(L){ return L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'')+'|'+String((document.getElementById('f-nota')||{}).value||''); }
+/* 🏪 (15/11) Una sola pregunta por RPT: si la repetida es una de las que la 304 ofrece para SUMAR («¿Sumamos estos productos ahí?»),
+   esa ventana ya la nombra y deja elegir; preguntar antes «¿repetida?» eran dos ventanas seguidas por lo mismo. */
+function fxDupRptSalta(L){
+  try{
+    if(L && L.length && L[0].porRpt && typeof rptSumarVa==='function' && rptSumarVa()){
+      var _ids={}; rptSumarCands(L[0].suc, null).forEach(function(p){ _ids[String(p.id)]=1; });
+      return L.some(function(d){ return !!_ids[String(d.p.id)]; });
+    }
+  }catch(e){}
+  return false;
+}
+/* ❓ (15/11, mejora 282) La misma pregunta en la ventana del panel; `seguir` = guardar. Fuera de la bandera, la de siempre. */
+function fxDupPreguntar(seguir){
+  if(!pregActivo()){ if(fxDupConfirmar()) seguir(); return; }
+  var L; try{ L=fxDupBuscar(); }catch(e){ seguir(); return; }
+  if(!L.length){ seguir(); return; }
+  var firma=fxDupFirma(L); if(FX_DUP_OK===firma){ seguir(); return; }
+  if(fxDupRptSalta(L)){ seguir(); return; }   // 🏪 la pregunta la hace la 304
+  var porNota=L.some(function(d){ return d.porNota; }), num=String((document.getElementById('f-nota')||{}).value||'').trim();
+  var porRpt=L.some(function(d){ return d.porRpt; });   // 🏪 (mejora 317) la reposición repetida, con sus palabras
+  var o=porRpt ? { icono:'🏪', aviso:true, titulo:'¿Reposición repetida? '+L[0].suc+' ya pidió y todavía no le llegó',
+        lineas:L.map(rptDupTxt).concat(['Si es OTRO pedido de la tienda, guardala. Si es el mismo, volvé y corregí la que ya está (así no salen dos veces).']),
+        no:'✏️ Volver sin guardar', si:'💾 Es otro pedido: guardar' }
+    : porNota ? { icono:'🔢', aviso:true, titulo:'¿Número repetido? El '+num+' ya está en otro pedido tuyo', lineas:L.map(fxDupTxt).concat(['Si te equivocaste de número, volvé y corregilo. Si es el mismo pedido del proveedor en dos entregas, guardalo igual.']),
+                  no:'✏️ Volver y corregir', si:'💾 Guardar igual' }
+    : { icono:'👯', aviso:true, titulo:'¿Pedido repetido? '+(L.some(function(d){ return d.porCel; })?'Este celular':'Este cliente')+' ya tiene '+(L.length===1?'un pedido':(L.length+' pedidos')),
+        lineas:L.map(fxDupTxt).concat(['Si es OTRA compra, guardala. Si es el mismo pedido, volvé y corregí el que ya está (así no salen dos camiones).']),
+        no:'✏️ Volver sin guardar', si:'💾 Es otra compra: guardar' };
+  preguntar(o).then(function(si){
+    if(si){ FX_DUP_OK=firma; seguir(); return; }
+    fxDupPintar(); var el=document.getElementById('fx-dup'); if(el){ try{ el.scrollIntoView({block:'center'}); }catch(e){} }
+  });
+}
 function fxDupConfirmar(){
   var L; try{ L=fxDupBuscar(); }catch(e){ return true; }
   if(!L.length) return true;
-  var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'')+'|'+String((document.getElementById('f-nota')||{}).value||'');
+  var firma=fxDupFirma(L);
   if(FX_DUP_OK===firma) return true;
-  /* 🏪 (15/11) Una sola pregunta por RPT: si la repetida es una de las que la 304 ofrece para SUMAR («¿Sumamos estos productos ahí?»),
-     esa ventana ya la nombra y deja elegir; preguntar antes «¿repetida?» eran dos ventanas seguidas por lo mismo. */
-  try{
-    if(L[0].porRpt && typeof rptSumarVa==='function' && rptSumarVa()){
-      var _ids={}; rptSumarCands(L[0].suc, null).forEach(function(p){ _ids[String(p.id)]=1; });
-      if(L.some(function(d){ return _ids[String(d.p.id)]; })) return true;
-    }
-  }catch(e){}
+  if(fxDupRptSalta(L)) return true;   // 🏪 (15/11) una sola pregunta por RPT (ver `fxDupRptSalta`)
   var si=L.some(function(d){ return d.porRpt; }) ?   // 🏪 (mejora 317)
     confirm('⚠️ ¿REPOSICIÓN REPETIDA?\n\n'+L[0].suc+' ya pidió y todavía no le llegó:\n'+L.map(function(d){ return '• '+rptDupTxt(d); }).join('\n')+
       '\n\nSi es OTRO pedido de la tienda, guardala igual. Si es el mismo, cancelá y corregí la que ya está (así no salen dos veces).\n\n• Aceptar: guardar esta reposición.\n• Cancelar: volver sin guardar.') :
@@ -28507,6 +28577,50 @@ function avisoQuitar(el, ya){
   if(!el || el._saliendo) return; el._saliendo=true; clearTimeout(el._t);
   if(ya || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){ el.remove(); return; }
   el.classList.add('av-sale'); setTimeout(function(){ el.remove(); }, 220);
+}
+/* ============================================================================
+   ❓ (15/11, mejora 282) LAS PREGUNTAS DEL PANEL CON BOTONES QUE DICEN QUÉ HACEN. La ventanita gris del navegador («Esta página dice» +
+   Aceptar/Cancelar) se usaba 90 veces, y en ~18 había que explicar adentro qué hacía «Aceptar». Ahora, en las que más salen, una ventana
+   del panel: un dibujo, un título corto, 2 o 3 renglones y dos botones que dicen lo que hacen («✏️ Volver y corregir» / «💾 Guardar
+   igual»; «No, dejarlo» / «🗑 Sí, borrar el pedido» en rojo). El botón SEGURO tiene el foco (Enter = el seguro), Esc o tocar afuera =
+   el seguro; nunca más «Aceptar» a ciegas. Va en su propia capa, arriba de una ficha abierta (#modal).
+   `preguntar(o)` devuelve una promesa (true = el botón de «sí»). `pregunta(texto, o, siFn, noFn)` es lo que usan los lugares: fuera de
+   la bandera hace el `confirm(texto)` de SIEMPRE, sincrónico y con el mismo texto (las pruebas contestan diálogos); con la bandera, la
+   ventana nueva y sigue con `siFn`/`noFn` cuando se contesta.
+   Pasadas en esta tanda (las que más salen): el saldo antes de guardar, el pedido/número repetido, borrar un pedido, borrar un pago y
+   «¿salió igual?» del camión. Las que están en el medio de `submitPedido` (ATC/precio/celular heredados, «sin monto», día cerrado,
+   pagos que se borran al guardar…) siguen con la del navegador: pasarlas exige cortar el guardado en dos y volver a empezarlo.
+   En Playwright, la del navegador salvo `window.PREG_PRUEBA`. */
+function pregActivo(){ try{ return !navigator.webdriver || !!window.PREG_PRUEBA; }catch(e){ return true; } }
+function pregunta(texto, o, siFn, noFn){
+  if(!pregActivo()){ if(confirm(texto)){ if(siFn) siFn(); return true; } if(noFn) noFn(); return false; }
+  preguntar(o).then(function(si){ if(si){ if(siFn) siFn(); } else if(noFn) noFn(); });
+  return null;
+}
+function preguntar(o){
+  o=o||{};
+  return new Promise(function(res){
+    var antes=document.activeElement, ov=document.createElement('div');
+    ov.className='preg-ov no-print'; ov.setAttribute('role','alertdialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','preg-tit');
+    var L=(o.lineas||[]).filter(function(x){ return x!=null && String(x)!==''; });
+    ov.innerHTML='<div class="preg-c'+(o.peligro?' preg-pel':'')+(o.aviso?' preg-av':'')+'">'+
+      '<div class="preg-h"><div class="preg-i" aria-hidden="true">'+esc(o.icono||'❓')+'</div><div class="preg-ht"><h4 id="preg-tit">'+esc(o.titulo||'¿Seguro?')+'</h4>'+(o.sub?('<small>'+esc(o.sub)+'</small>'):'')+'</div></div>'+
+      (L.length ? ('<ul class="preg-b">'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>') : '')+
+      '<div class="preg-a"><button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button><button type="button" class="preg-si">'+esc(o.si||'Sí')+'</button></div></div>';
+    document.body.appendChild(ov);
+    var bNo=ov.querySelector('.preg-no'), bSi=ov.querySelector('.preg-si'), hecho=false;
+    var fin=function(v){ if(hecho) return; hecho=true; document.removeEventListener('keydown', kd, true); ov.remove(); try{ if(antes && antes.focus && antes.isConnected) antes.focus(); }catch(e){} res(!!v); };
+    var kd=function(e){
+      if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fin(false); return; }
+      if(e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation(); (document.activeElement===bNo ? bSi : bNo).focus(); return; }
+      if(!ov.contains(e.target)) { e.stopImmediatePropagation(); }   // las teclas no se van a lo de atrás
+    };
+    document.addEventListener('keydown', kd, true);
+    bNo.addEventListener('click', function(){ fin(false); });
+    bSi.addEventListener('click', function(){ fin(true); });
+    ov.addEventListener('click', function(e){ if(e.target===ov) fin(false); });
+    setTimeout(function(){ try{ bNo.focus(); }catch(e){} }, 0);
+  });
 }
 function toastMs(msg){ return Math.min(12000, Math.max(2800, String(msg==null?'':msg).length*50)); }
 
@@ -32754,13 +32868,23 @@ function camionSalioMarcar(veh, on, opts){
     if(k) return;
     var D=null; if(!opts.sinPreguntar){ try{ D=cargaVivaDatos(); }catch(e){} }
     var c=D && D.porK && D.porK[veh], falta=c ? Math.max(0, (c.total||0)-(c.dentro||0)) : 0;
-    if(falta && !confirm('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?')) return;
-    var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
-    setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
-    try{ depPanel(null); }catch(e){}
-    if(!opts.sinAviso) toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
-    if(opts.sinAdelanto){ try{ adelantoHecho(f, veh, z(h.getHours())+':'+z(h.getMinutes()), true); }catch(e){} }
-    else { try{ adelantoAlSalir(veh, z(h.getHours())+':'+z(h.getMinutes())); }catch(e){} }   // 🚀 (14/10) lo de la tarde que salió cargado, a la mañana
+    var _sale=function(){
+      var h=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; };
+      setCargaChk(cargaChkKey(f, veh, CARGA_SALIO)+'|'+z(h.getHours())+':'+z(h.getMinutes()), true);
+      try{ depPanel(null); }catch(e){}
+      if(!opts.sinAviso) toast('🛣️ '+veh+' salió a las '+z(h.getHours())+':'+z(h.getMinutes())+': las vendedoras lo ven «en camino» en Mis pedidos.','ok',5000);
+      if(opts.sinAdelanto){ try{ adelantoHecho(f, veh, z(h.getHours())+':'+z(h.getMinutes()), true); }catch(e){} }
+      else { try{ adelantoAlSalir(veh, z(h.getHours())+':'+z(h.getMinutes())); }catch(e){} }   // 🚀 (14/10) lo de la tarde que salió cargado, a la mañana
+    };
+    if(falta){   // ❓ (15/11, mejora 282) la pregunta del panel; al contestar «sí», lo de siempre y el repintado
+      var _r=pregunta('Al '+veh+' le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga.\n\n¿Salió igual?',
+        { icono:'🚚', aviso:true, titulo:'¿Salió el '+veh+' igual?', sub:'Le falta'+(falta===1?'':'n')+' tildar '+falta+' bulto'+(falta===1?'':'s')+' en la Lista de carga',
+          lineas:['Si lo cargaron todo, primero tildá lo que falta en la Lista de carga.', 'Si salió así, queda «salió» a esta hora y las vendedoras lo ven «en camino».'],
+          no:'No, voy a tildar', si:'🛣️ Sí, salió igual' },
+        function(){ _sale(); try{ renderCargaSiActiva(); }catch(e){} try{ cargaVivaPintar(); }catch(e){} });
+      return;
+    }
+    _sale();
   }else{
     if(!k) return;
     if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
@@ -46204,9 +46328,31 @@ function saldoAlertaTxt(v){
 }
 /* true = guardar. Pregunta solo si algún producto quedó SIN saldo libre o la fecha es antes de lo posible. */
 function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
-  var filas; try{ filas=saldoFilasAGuardar(prev, isEdit, deBorrador); }catch(e){ return true; }
-  if(!filas.length) return true;
-  var sinId=saldoSinId(), fecha=saldoFechaForm(), lineas=[], primero=null;
+  var D=saldoPreguntaDatos(prev, isEdit, deBorrador); if(!D) return true;
+  var si=confirm('⚠️ ANTES DE GUARDAR, MIRÁ EL SALDO:\n\n'+D.lineas.join('\n\n')+
+                 '\n\n¿Le avisaste '+D.aQuien+' cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
+  if(!si && D.primero){ try{ D.primero.scrollIntoView({block:'center'}); }catch(e){} }
+  return si;
+}
+/* ❓ (15/11, mejora 282) La MISMA pregunta en la ventana del panel; `seguir` = guardar. Fuera de la bandera, la de siempre. */
+function saldoPreguntarAlGuardar(prev, isEdit, deBorrador, seguir){
+  if(!pregActivo()){ if(saldoConfirmarAlGuardar(prev, isEdit, deBorrador)) seguir(); return; }
+  var D=saldoPreguntaDatos(prev, isEdit, deBorrador); if(!D){ seguir(); return; }
+  var uno=D.items.length===1, it=D.items[0];
+  preguntar({ icono:'📦', aviso:true,
+    titulo: uno ? (it.nom+(it.cant>1?(' ×'+it.cant):'')) : ('Antes de guardar, mirá el saldo de '+D.items.length+' productos'),
+    sub: uno ? 'Antes de guardar, mirá el saldo' : ('¿Le avisaste '+D.aQuien+' cuánto tiene que esperar?'),
+    lineas: uno ? [it.txt, '¿Le avisaste '+D.aQuien+' cuánto tiene que esperar?'] : D.items.map(function(x){ return x.nom+(x.cant>1?(' ×'+x.cant):'')+': '+x.txt; }),
+    no:'✏️ Volver y corregir', si:'💾 Guardar igual' }).then(function(si){
+      if(si) seguir();
+      else if(D.primero){ try{ D.primero.scrollIntoView({block:'center'}); }catch(e){} }
+    });
+}
+/* Lo que dice la pregunta del saldo (o null si no hay nada que preguntar). */
+function saldoPreguntaDatos(prev, isEdit, deBorrador){
+  var filas; try{ filas=saldoFilasAGuardar(prev, isEdit, deBorrador); }catch(e){ return null; }
+  if(!filas.length) return null;
+  var sinId=saldoSinId(), fecha=saldoFechaForm(), lineas=[], primero=null, items=[];
   filas.forEach(function(r){
     var f=r.f, v, t='';
     try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
@@ -46216,15 +46362,12 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
     else if(r.cambia && v.noRec) t='❓ no reconozco este producto: ni la lista de precios ni el Excel de los almacenes lo tienen con este nombre. Revisá el nombre o el código'+((v.cand&&v.cand.length)?(' (¿es '+v.cand.map(function(c){ return c.nombre||c.k||''; }).filter(Boolean).slice(0,2).join(' o ')+'?)'):'')+'; si es un producto nuevo, avisá a logística.';
     if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
     if(t){ var ar=saldoArrancaTxt(v); if(ar) t+=' '+ar; }                   // 🕔 (28/09) por qué empieza otro día
-    if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
+    if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); items.push({ nom:saldoNombre(f.x), cant:f.total, txt:t }); if(!primero) primero=f.box; }
   });
   saldoAvisosPintarYa();                       // que el cuadrito diga lo mismo que la pregunta
-  if(!lineas.length) return true;
+  if(!lineas.length) return null;
   var aQuien=(docTipoSel()==='RPT') ? 'a la sucursal' : 'al cliente';     // (rev8) en una RPT el «cliente» es la tienda
-  var si=confirm('⚠️ ANTES DE GUARDAR, MIRÁ EL SALDO:\n\n'+lineas.join('\n\n')+
-                 '\n\n¿Le avisaste '+aQuien+' cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
-  if(!si && primero){ try{ primero.scrollIntoView({block:'center'}); }catch(e){} }
-  return si;
+  return { lineas:lineas, items:items, primero:primero, aQuien:aQuien };
 }
 
 /* ---- 📦 El libro de reservas del servidor (02/10, §4hj) ----
