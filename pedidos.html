@@ -14011,14 +14011,14 @@ function pubPintar(R){
   el.setAttribute('data-ym', R.ym);
   try{ el.innerHTML=pubHtml(R.ym); }catch(e){ el.innerHTML=''; }
 }
-function pubRepintar(){
+function pubRepintar(forzar){
   var el=document.getElementById('pry-pub'); if(!el || !pubVe() || !UNLOCKED) return;
   var ym=el.getAttribute('data-ym'); if(!ym) return;
   var foco=document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('pub-g');
-  if(foco) return;   // no se repinta mientras se escribe el gasto
+  if(foco && !forzar) return;   // no se repinta mientras se escribe el gasto (salvo al guardar o cancelar)
   try{ el.innerHTML=pubHtml(ym); }catch(e){}
 }
-function pubEditar(on){ PUB_EDITA=!!on; pubRepintar(); if(on){ var i=document.querySelector('#pry-pub .pub-g'); if(i) i.focus(); } }
+function pubEditar(on){ PUB_EDITA=!!on; pubRepintar(true); if(on){ var i=document.querySelector('#pry-pub .pub-g'); if(i) i.focus(); } }
 function pubGuardar(){
   var el=document.getElementById('pry-pub'), ym=el && el.getAttribute('data-ym'); if(!ym || PUB_ENV) return;
   var nuevo={}, mal='';
@@ -14042,11 +14042,12 @@ function pubGuardar(){
       if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
       var g=(r.pedido && String(r.pedido.id)===PUB_ID) ? r.pedido : fila;
       STATE=STATE.filter(function(p){ return String(p.id)!==PUB_ID; }); STATE.push(g);
-      fin(); PUB_EDITA=false; pubRepintar();
+      fin(); PUB_EDITA=false; pubRepintar(true);
       toast('📣 Gasto de '+mesNombre(ym)+' guardado','ok',5000);
       return r;
     });
-  }).catch(function(er){ fin(); pubRepintar(); toast('❌ No se guardó el gasto: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); return null; });
+  }).catch(function(er){ fin(); var bt=document.getElementById('pub-guardar'); if(bt){ bt.disabled=false; bt.textContent='💾 Guardar el gasto'; }   // lo escrito queda
+    toast('❌ No se guardó el gasto: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); return null; });
 }
 
 /* ============================================================================
