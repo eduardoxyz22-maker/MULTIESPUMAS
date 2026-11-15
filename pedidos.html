@@ -4893,6 +4893,14 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 #pap-overlay .pap-mn-u{width:58px;text-align:right;padding:3px 6px;border:1px solid #9fd6d2;border-radius:7px;font:inherit;font-weight:700;background:#fff}
 #pap-overlay .pap-mn-u.err{border-color:#CE2939;background:#fdecee}
 #pap-overlay .pap-mn-acc{display:flex;gap:8px;flex-wrap:wrap}
+/* 🔎 (15/11, mejora 314) Al subir el Excel: lo marcado ✔ que ya no está */
+.exa-res{font-weight:700;color:#0f5f5b;margin:2px 0 4px}
+.exa-ley{color:var(--muted);font-size:.82rem;margin:0 0 8px}
+.exa-sec{margin:10px 0 4px;font-size:.88rem;color:#1f2d3d}
+.exa-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 9px;border-radius:9px;background:#f4f8f8;margin-bottom:4px;font-size:.84rem}
+.exa-r span{min-width:0;overflow-wrap:anywhere}
+.exa-r .btn{flex:none;width:auto}
+.exa-mas{color:var(--muted);font-size:.8rem;margin:2px 0 6px}
 .agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
 .agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
 .agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
@@ -30123,6 +30131,81 @@ function papMandeDeshacer(){
   return pr;
 }
 /* fin mejora 313 */
+/* ============================================================================
+   🔎 AL SUBIR EL EXCEL: LO MARCADO ✔ QUE YA NO ESTÁ (15/11, mejora 314; dueño: «314» → «que solo AVISE»).
+   Al terminar los Excel solo salía «guardado». Para el 16 y el 17/11, con el último Excel había 3 pedidos marcados ✔ que ningún almacén
+   respaldaba, un «✔ Banzer» que estaba en Moreno y 9 renglones sin marcar. Ahora, cuando termina el archivo (el último almacén del lote o el
+   único), si hay algo así en lo de HOY y el próximo día con camión, sale una ventana que SOLO AVISA:
+   · ⚠️ lo marcado ✔ (o 📥) que ningún almacén tiene (`stockAsignar().sinRespaldo`, la MISMA cuenta de la Revisión automática);
+   · 📍 lo marcado en un lugar que está en otro (`realoja` y `almMal`: «dice Banzer → está en Moreno»);
+   · ⬜ los renglones sin marcar (`semanaLinea` = 'rev').
+   Cada uno con «👀 Ver el pedido» (la ficha, con «← Volver al aviso») y abajo «🤖 Revisar y marcar» (la Revisión automática de siempre). No cambia ninguna marca.
+   En Playwright apagado salvo `window.EX_AVISO_PRUEBA`. `tests/test_excel_aviso.js`.
+   ========================================================================== */
+var EX_AVISO_TOPE=12;
+var EX_AVISO_USADO=false;   // en este archivo se usó (💾) al menos un almacén: al terminar (o al cancelar el resto) se avisa
+function exAvisoLugar(t){ return t.aca ? 'PTF' : (t.sale ? saleNombre(t.alm) : ('📥 '+recogerAlmCorto(t.alm))); }
+function exAvisoOc(id){ var p=findById(id); return p ? (ocEtiq(p.oc)||'—') : '—'; }
+function exAvisoActivo(){ try{ return !(navigator.webdriver && !window.EX_AVISO_PRUEBA); }catch(e){ return true; } }
+function exAvisoDatos(){
+  var hoy=todayStr(), prox=proximoDiaEntrega(), dias={}; dias[hoy]=1; dias[prox]=1;
+  var A=null; try{ A=stockAsignar(); }catch(e){ A=null; }
+  var enDias=function(f){ return !!dias[String(f||'')]; };
+  var sin=((A && A.sinRespaldo)||[]).filter(function(r){ return enDias(r.fecha); });
+  var lug=[], vistos={};
+  ((A && A.realoja)||[]).forEach(function(r){ if(!enDias(r.fecha)) return; var k=r.id+'|'+r.nom; if(vistos[k]) return; vistos[k]=1;
+    lug.push({ id:r.id, cliente:r.cliente, fecha:r.fecha, nom:r.nom, dice:r.dice||'', esta:(r.en||[]).map(function(e){ return e.u+' en '+exAvisoLugar(e); }).join(' y ') }); });   // la MISMA forma de `revRealojaHtml`
+  ((A && A.almMal)||[]).forEach(function(r){ if(!enDias(r.fecha)) return; var k=r.id+'|'+r.nom; if(vistos[k]) return; vistos[k]=1; lug.push({ id:r.id, cliente:r.cliente, fecha:r.fecha, nom:r.nom, dice:r.dice||'', esta:'está en '+(r.esta||'—') }); });
+  var vac=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || !enDias(p.fecha) || p.entregado || esATC(p.oc) || esFilaSistema(p) || esBorrador(p) || esVentaTienda(p)) return;
+    (p.productos||[]).forEach(function(x){ if(x && semanaLinea(p, x)==='rev') vac.push({ id:String(p.id), cliente:p.cliente||'', fecha:p.fecha, nom:String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):''), u:Number(x.cant)||0 }); });
+  });
+  var porF=function(a,b){ return String(a.fecha).localeCompare(String(b.fecha)); };
+  sin.sort(porF); lug.sort(porF); vac.sort(porF);
+  return { hoy:hoy, prox:prox, sin:sin, lug:lug, vac:vac, n:sin.length+lug.length+vac.length };
+}
+/* Lo llama `confirmarImportExist` al terminar el archivo (el último almacén) y `existCancelar` si ya se usó alguno. Sin nada que decir, no sale. */
+function exAvisoAlTerminar(){
+  EX_AVISO_USADO=false;
+  if(!exAvisoActivo()) return null;
+  var D=null; try{ D=exAvisoDatos(); }catch(e){ return null; }
+  if(!D || !D.n) return D;
+  exAvisoAbrir(D);
+  return D;
+}
+function exAvisoDiaTxt(f){ return f===todayStr() ? 'hoy' : (f===tomorrowStr() ? 'mañana' : nxDiaTxt(f)); }
+function exAvisoFilaHtml(id, txt){
+  return '<div class="exa-r"><span>'+txt+'</span><button type="button" class="btn btn-sm btn-ghost" data-id="'+esc(String(id))+'" onclick="exAvisoVer(this.dataset.id)">👀 Ver el pedido</button></div>';
+}
+function exAvisoAbrir(D){
+  D=D || exAvisoDatos();
+  var pedC=function(L){ var v={}; L.forEach(function(x){ v[x.id]=1; }); return Object.keys(v).length; };
+  var sec=function(ic, tit, L, fila){ if(!L.length) return ''; return '<div class="exa-sec">'+ic+' <b>'+tit+'</b></div>'+L.slice(0, EX_AVISO_TOPE).map(fila).join('')+
+    (L.length>EX_AVISO_TOPE ? ('<div class="exa-mas">… y '+(L.length-EX_AVISO_TOPE)+' más (están en la 🤖 Revisión automática)</div>') : ''); };
+  var dias='hoy y '+exAvisoDiaTxt(D.prox);
+  var res=[D.sin.length ? ('⚠️ '+pedC(D.sin)+' pedido'+(pedC(D.sin)===1?'':'s')+' con ✔ que el Excel ya no tiene') : '',
+           D.lug.length ? ('📍 '+D.lug.length+' marcado'+(D.lug.length===1?'':'s')+' en un lugar que está en otro') : '',
+           D.vac.length ? ('⬜ '+D.vac.length+' sin marcar') : ''].filter(Boolean).join(' · ');
+  var h='<div class="modal-h exa-h"><h3>🔎 Con el Excel de hoy, lo de '+esc(dias)+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b exa-m"><div class="exa-res">'+esc(res)+'</div>'+
+    '<p class="exa-ley">El panel no cambia ninguna marca solo: abrí cada pedido y corregila, o tocá «🤖 Revisar y marcar» (la Revisión automática: propone y vos aplicás).</p>'+
+    sec('⚠️', 'Marcados con ✔ que ningún almacén tiene', D.sin, function(r){ return exAvisoFilaHtml(r.id, '<b>'+esc(ocEtiq(r.oc)||'—')+'</b> · '+esc(r.cliente)+' · <b>'+esc(r.nom)+'</b> × '+r.u+(r.faltan<r.u?(' (faltan '+r.faltan+')'):'')+' · '+esc(exAvisoDiaTxt(r.fecha))); })+
+    sec('📍', 'Marcados en un lugar y están en otro', D.lug, function(r){ return exAvisoFilaHtml(r.id, '<b>'+esc(exAvisoOc(r.id))+'</b> · '+esc(r.cliente)+' · <b>'+esc(r.nom)+'</b> · marcado '+esc(r.dice||'—')+', pero '+esc(r.esta||'—')+' · '+esc(exAvisoDiaTxt(r.fecha))); })+
+    sec('⬜', 'Sin marcar', D.vac, function(r){ return exAvisoFilaHtml(r.id, '<b>'+esc(exAvisoOc(r.id))+'</b> · '+esc(r.cliente)+' · '+esc(r.nom)+' × '+r.u+' · '+esc(exAvisoDiaTxt(r.fecha))); })+
+    '<div class="modal-actions"><button type="button" class="btn btn-sm" onclick="closeModal()">Listo</button>'+
+      '<button type="button" class="btn btn-primary btn-sm exa-rev" onclick="closeModal();abrirStock();abrirStockRevisar()">🤖 Revisar y marcar</button></div></div>';
+  MODAL_KIND='admin';
+  openModal(h, true);
+}
+function exAvisoVer(id){
+  if(!findById(id)){ toast('Ese pedido ya no está en la lista.','err'); return; }
+  showPedidoModal(id);
+  var b=document.createElement('button'); b.type='button'; b.id='exa-volver'; b.className='btn btn-ghost btn-sm'; b.style.cssText='width:auto;margin-bottom:10px'; b.textContent='← Volver al aviso del Excel';
+  b.onclick=function(){ exAvisoAbrir(); };
+  var mb=document.querySelector('#modal-box .modal-b'); if(mb) mb.prepend(b);
+}
+/* fin mejora 314 */
 function admSugIr(d){
   try{ if(!nxSugVisible()) nxSugMostrar(true); }catch(e){}
   NX_SUG_DIA=d; admSecPoner('cam'); try{ nxSugPintar(); }catch(e){}
@@ -49318,6 +49401,7 @@ function existLoteDe(filas, delNombre){
 function existCancelar(){
   var falta=[]; if(EXIST_IMP && EXIST_IMP.lote && EXIST_IMP.lote.n>1){ falta=[EXIST_IMP].concat(EXIST_COLA||[]).map(function(x){ return stockAlmCorto(x.almacen); }); }
   EXIST_COLA=[]; EXIST_IMP=null; closeModal(); existLoteTerminar(); existRepintarAlFinal();
+  if(EX_AVISO_USADO) exAvisoAlTerminar();   // 🔎 (15/11, mejora 314) se usó algún almacén y se cortó el resto: avisa igual
   if(falta.length) toast('⏹ No se usó el Excel de '+falta.join(', ')+': '+(falta.length===1?'ese almacén quedó':'esos almacenes quedaron')+' con el corte de antes.','err',8000);
 }
 /* ⏳ (18/10, §4ls VB-2/VB-5) «💾 Usar estas existencias y seguir con …»: el botón se apaga y dice «Guardando…» ANTES de trabajar (antes la
@@ -49437,6 +49521,7 @@ function onExistArchivo(ev){
   var delNombre=existHoraDeNombre(f.name);
   EXIST_COLA=[];
   existLoteTerminar();                           // 🏭 (17/10) un lote a medias se cierra con lo que alcanzó a usar
+  EX_AVISO_USADO=false;   // 🔎 (mejora 314) un archivo nuevo empieza de cero
   /* 🌅🌙 (23/10, rutina de dos Excel por día) Antes de armar la vista previa se relee la planilla: el control compara contra el ÚLTIMO
      corte, que pudo subirlo otro aparato (el de la mañana en la oficina, el de la noche desde el celular), y contra los ✅ del cierre.
      Sin esa lectura comparaba con lo de este aparato (con Stock abierto no se relee solo). Si no se puede leer, se avisa y sigue. */
@@ -50844,6 +50929,8 @@ function confirmarImportExist(){
   var stockProm=guardarStock(); closeModal();
   if(EXIST_COLA && EXIST_COLA.length) EXIST_REPINTAR=true;     // ⏳ (§4ls VB-5) se redibuja al terminar el archivo
   else { EXIST_REPINTAR=false; renderStock(); renderAdmin(); reclamoFabGuardar(); }   // §4ok-105 terminó el archivo: el reclamo del día para el bot
+  EX_AVISO_USADO=true;   // 🔎 (15/11, mejora 314) este archivo ya cambió el stock
+  if(!(EXIST_COLA && EXIST_COLA.length)) exAvisoAlTerminar();   // 🔎 (mejora 314) terminó el archivo: lo marcado ✔ que el Excel ya no tiene (solo avisa)
   EXIST_IMP=null;
   /* 📚 (16/10, §4lp) El archivo con varios almacenes: el próximo, sobre el stock que este acaba de dejar (como subir el Excel que sigue). */
   if(EXIST_COLA && EXIST_COLA.length){ EXIST_IMP=EXIST_COLA.shift(); renderImportExist(); }
