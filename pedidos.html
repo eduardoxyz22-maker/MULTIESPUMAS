@@ -66158,6 +66158,9 @@ function blokiMedidas(s){
   else if((m=/\b(\d|UNA|UN|UNO|DOS|TRES)\s*(?:PLAZAS?|PLZ|PL)\s+Y\s+MEDIA\b/.exec(s))){ med={ plz:num(m[1])+0.5 }; cortar(m); }
   else if((m=/\b(\d(?:\.5)?|UNA|UN|UNO|DOS|TRES)\s*(?:PLAZAS?|PLZ|PL)\b/.exec(s))){ med={ plz:num(m[1]) }; cortar(m); }
   else if((m=/\b(\d)\s*½/.exec(s))){ med={ plz:+m[1]+0.5 }; cortar(m); }
+  /* 🧽 (15/11, 306) las plazas como número suelto: «2.5», «1,5» (blokiNorm deja el punto), «2 1/2», como en el formulario (`MEDIDA_PLZ`) */
+  else if(blokiProdVa() && (m=/\b([123])\.(5|0)\b(?![\d\/]|\s*[X\*])/.exec(s))){ med={ plz:+m[1]+(m[2]==='5'?0.5:0) }; cortar(m); }
+  else if(blokiProdVa() && (m=/\b([123])\s+1\/2\b/.exec(s))){ med={ plz:+m[1]+0.5 }; cortar(m); }
   else if((m=/\b(90|105|140|160|180|200)\b(?!\s*[X\*\/])/.exec(s))){ med={ anchos:[+m[1]] }; cortar(m); }
   if(med && med.plz!=null){ med.anchos=BLOKI_PLZ[String(med.plz)]||[]; if(!med.anchos.length) med=null; }
   return { med:med, s:s };
@@ -66279,6 +66282,7 @@ function blokiEntender(q){
   if(BLOKI_RE.saldoDe.test(r) && !P.cands.length && !P.porCodigo){ o.tipo='cliente'; return o; }   // «saldo de Juan Pérez»: no es un producto
   if(P.cands.length && (P.porCodigo || BLOKI_RE.stockFuerte.test(r) || BLOKI_RE.stockDebil.test(r) || BLOKI_RE2.vuelve.test(r))){ o.tipo='stock'; return o; }   // (idea 9) «¿cuándo vuelve a haber…?»
   if(BLOKI_RE.stockFuerte.test(r) && (P.palabras.length || P.med)){ o.tipo='stock'; return o; }   // «stock de xyz»: no lo encuentra, y lo dice
+  if(blokiProdVa() && blokiSoloProducto(P)){ o.tipo='prod'; return o; }   // 🧽 (15/11, 306) el nombre de un producto solo («titanio ice 2.5»)
   return null;
 }
 function blokiEntenderMemo(q){
@@ -66307,6 +66311,7 @@ function blokiResponder(o){
   if(o.tipo==='cliente') return blokiCliente(o);
   if(o.tipo==='stock') return blokiStock(o);
   if(o.tipo==='codigo') return blokiCodigo(o);
+  if(o.tipo==='prod') return blokiProd(o);       // 🧽 (15/11, 306)
   var F={ ventas:blokiVentas, deben:blokiDeben, efectivo:blokiEfectivo, avisos:blokiAvisos, factura:blokiFactura, sinstock:blokiSinStock, sincamion:blokiSinCamion,
           llega:blokiLlega, precio:blokiPrecio, medidas:blokiMedidasR, top:blokiTop, cargar:blokiCargar, moreno:blokiMoreno, cierre:blokiCierre, gps:blokiGps,
           hacer:blokiHacer, mensaje:blokiMensaje }[o.tipo];
@@ -69579,6 +69584,69 @@ function rptVendioAgregar(){
   RPT_VENDIO.ok='Agregaste '+sel.length+' producto'+(sel.length===1?'':'s')+' de lo que vendió '+D.suc+' («Reposición»). Revisalos abajo antes de guardar.';
   rptVendioPintar();
 }
+
+/* ---------------------------------------------------------------------------
+   🧽 306 · BLOKI ENTIENDE «TITANIO ICE 2.5» Y EL PRODUCTO SOLO
+   Las plazas escritas como número suelto («2.5», «1,5», «2 1/2») son la medida, como en el formulario (`MEDIDA_PLZ`: 1, 1½, 2, 2½, 3); y el
+   nombre de un producto escrito SOLO (todas las palabras son de productos, sin «hay» ni «stock») contesta con una tarjeta: si hay y desde
+   qué día (`blokiStockDe`), el precio típico (`blokiPrecioDe`), el código y cuántos se vendieron este mes, con «➕ Cargarlo en un pedido».
+   La ayuda «¿Qué es la nota de remisión y dónde la anoto?» va AL FINAL de `ASIS_AYUDA`. BLOKI_PROD_PRUEBA en Playwright (las dos cosas).
+   --------------------------------------------------------------------------- */
+function blokiProdVa(){ return vdVa('BLOKI_PROD_PRUEBA'); }
+/* ¿La pregunta es SOLO el nombre de un producto? (con `rapido`: todas las palabras que quedan son de productos) */
+/* Una palabra SOLA que también es de todos los días («plata», «negro», «nuevo») o es solo el tipo («colchón») no alcanza: con otra palabra o
+   con la medida, sí. */
+var BLOKI_PROD_COMUNES=blokiMapa('PLATA NEGRO NUEVO PLUS ESPECIAL LITE RELAX FLEX PRO BEIGE CAFE PLOMO COLCHON COLCHONES SOMIER SOMIERES ALMOHADA ALMOHADAS ALM RESPALDAR CUNA COLCHONETA COMBO');
+function blokiSoloProducto(P){
+  if(!P || !P.cands || !P.cands.length || !P.palabras || !P.palabras.length) return false;
+  if(String(P.nombre||'').split(' ').filter(Boolean).length!==P.palabras.length) return false;
+  if(P.palabras.length===1 && !P.med && (P.palabras[0].length<4 || BLOKI_PROD_COMUNES[P.palabras[0]])) return false;
+  return true;
+}
+function blokiProd(o){
+  var P=blokiProductos(o.resto, false), med=P.med;
+  return blokiUnProducto(o, function(c){ return blokiProdTarjeta(c, o, med); });
+}
+function blokiVendidosMes(c){
+  var mes=diaNegocio().slice(0,7), u=0;
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || fueraDeConta(p, 'tienda') || esBorrador(p)) return;
+    if(String(contaFecha(p)||'').slice(0,7)!==mes) return;
+    (p.productos||[]).forEach(function(x){ var n=Number(x&&x.cant)||0, k=''; if(!(n>0)) return; try{ k=stockClave(x); }catch(e){} if(k && k===c.k) u+=n; });
+  });
+  return u;
+}
+function blokiProdTarjeta(c, o, med){
+  var a=blokiStockDe(c, o.dia, 1, o.turno)||{ h:'', nums:[], sub:[], warn:[] };
+  a.h='🛏️ '+(a.h||('<b>'+esc(c.lbl)+'</b>'))+(c.code?(' · <span style="color:var(--muted)">'+esc(c.code)+'</span>'):'');
+  a.nums=a.nums||[]; a.sub=a.sub||[];
+  var pr=null; try{ pr=blokiPrecioDe(c, o); }catch(e){ pr=null; }
+  if(pr && pr.nums && pr.nums[0]) a.nums.push({ n:pr.nums[0].n, l:'precio típico' });
+  if(c.k) a.nums.push({ n:String(blokiVendidosMes(c)), l:'vendidos este mes' });
+  if(med && med.plz!=null) a.sub.unshift('Entendí «'+esc(String(med.plz).replace('.5',' ½'))+'» como '+esc(blokiMedTxt(med))+', como en el formulario.');
+  if(c.code) a.sub.push('Código: <b>'+esc(c.code)+'</b>.');
+  a.btns=(a.btns||[]).concat([['➕ Cargarlo en un pedido', function(){ blokiCargarEnPedido(c); }]]);
+  return a;
+}
+/* «➕ Cargarlo en un pedido»: un renglón más en el formulario (el que esté abierto), con el código; la cantidad y el precio los pone la vendedora. */
+function blokiCargarEnPedido(c){
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled){ toast('Hay un pedido enviándose. Esperá el resultado.','err',6000); return; }
+  if(docTipoSel()==='COT' || docTipoSel()==='ATC'){ toast('Estás cargando una '+(docTipoSel()==='COT'?'cotización':'ATC')+': cambiá a 📄 OC para cargar el producto en un pedido.','err',8000); }
+  try{ asisCerrar(); }catch(e){}
+  showView('form');
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(cd){
+    var d=cd.querySelector('.prod-desc'), co=cd.querySelector('.prod-codigo');
+    if(d && !String(d.value||'').trim() && !(co && String(co.value||'').trim())) cd.remove();
+  });
+  addProdRow(nombreVenta(c.d, c.code), c.m||'', c.code||'', 1);
+  try{ refreshDelButtons(); }catch(e){} try{ pintarProdRpt(); }catch(e){} try{ pintarTotalProds(); }catch(e){} try{ saldoAvisosProgramar(); }catch(e){}
+  toast('➕ Agregué '+c.lbl+' al pedido'+(EDIT_ID?' que estás editando':'')+'. Poné la cantidad y el precio.','ok',7000);
+}
+if(blokiProdVa()) ASIS_AYUDA.push({ q:'¿Qué es la nota de remisión y dónde la anoto?', k:'nota remision remisión factura numero anotar donde papel sin factura documento venta', v:'conta', f:['#tab-conta','#view-conta'],
+  p:['🧾 La nota de remisión es el papel que se da cuando la venta NO lleva factura. Toda venta lleva una de las dos: factura o nota de remisión.',
+     'Su número lo anotás DESPUÉS de cargar el pedido, cuando ya lo tengas: en 💰 Contabilidad tocá la venta y, en «🧾 Factura o remisión», elegí cuál es y escribí el número («💾 Guardar N°»).',
+     'Mientras falte, te sale en «📋 Para hacer» de Mis pedidos («Anotá la factura o la nota de remisión»). Es obligatorio.'] });
 
 /* ---------------------------------------------------------------------------
    Los enganches del formulario (una vez, al abrir la página)
