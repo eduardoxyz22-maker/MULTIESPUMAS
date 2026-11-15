@@ -5564,6 +5564,13 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .cie-r1 .cie-acc{ display:inline-flex; gap:6px; margin-left:auto; }
 .cie-r1 .cie-acc .btn{ white-space:nowrap; }
 .cie-r1-ayuda{ font-size:.8rem; color:#24504e; background:#f1faf9; border:1px solid #cfe9e7; border-radius:10px; padding:6px 10px; margin:0 0 8px; }
+/* ✅ (15/11, mejora 289) el botón que copió dice «Copiado» 2 segundos, del mismo tamaño */
+button.cp-ok{ background:#0f766e!important; color:#fff!important; border-color:#0f766e!important; background-image:none!important; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; transition:none!important; }
+button.cp-ok .cp-tick{ width:15px; height:15px; vertical-align:-3px; margin-right:4px; fill:none; stroke:#fff; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:24; stroke-dashoffset:24; animation:cpTilde .35s ease forwards .05s; }
+button.cp-ok .cp-t{ font-weight:800; }
+button.cp-ok .cp-tip{ font-weight:600; opacity:.88; overflow:hidden; text-overflow:ellipsis; }
+@keyframes cpTilde{ to{ stroke-dashoffset:0; } }
+@media (prefers-reduced-motion: reduce){ button.cp-ok .cp-tick{ animation:none; stroke-dashoffset:0; } }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📇 (14/10) Clientes para Excel */
 .cli-ctl{ padding:11px 14px; background:#fff; border-bottom:1px solid var(--gray-md); display:flex; gap:12px 22px; flex-wrap:wrap; align-items:flex-start; }
@@ -41412,14 +41419,59 @@ function pedidoText(p){
   return lines.join('\n');
 }
 function copyText(text){
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copiado ✓','ok');},function(){fallbackCopy(text);}); }
-  else fallbackCopy(text);
+  var _b=copiadoBotonDeAhora();   // ✅ (15/11, mejora 289) el botón que se tocó, para decir «Copiado» AHÍ
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ copiadoAviso(_b); },function(){fallbackCopy(text, _b);}); }
+  else fallbackCopy(text, _b);
 }
 function copyPedido(id){ var p=findById(id); if(p) copyText(pedidoText(p)); }
-function fallbackCopy(text){
+function fallbackCopy(text, _b){
+  if(_b===undefined) _b=copiadoBotonDeAhora();
   var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
-  try{ document.execCommand('copy'); toast('Copiado ✓','ok'); }catch(e){ prompt('Copiá el pedido:',text); }
+  try{ document.execCommand('copy'); copiadoAviso(_b); }catch(e){ prompt('Copiá el pedido:',text); }
   ta.remove();
+}
+/* ============================================================================
+   ✅ (15/11, mejora 289) «✓ COPIADO» EN EL MISMO BOTÓN QUE SE TOCÓ. Antes todos los «📋 Copiar…» avisaban con «Copiado ✓» en el cartelito
+   de abajo al medio, lejos del botón (y a veces tapado por otro aviso). Ahora el botón tocado se pone verde oscuro y dice «✓ Copiado»
+   (si es ancho, «· pegalo con Ctrl + V») con una tilde que se dibuja; a los 2 segundos vuelve a ser el de siempre. Guarda su ancho y su
+   alto: nada de alrededor se corre. Sin botón (un atajo de teclado) o si el botón ya no está (se cerró la ventana), queda el aviso de
+   siempre. Solo `copyText`/`fallbackCopy`: los ~48 llamados no cambian. En Playwright, el aviso de siempre salvo `window.COPIADO_PRUEBA`. */
+function copiadoActivo(){ try{ return !navigator.webdriver || !!window.COPIADO_PRUEBA; }catch(e){ return true; } }
+/* El <button> que se está tocando AHORA: el del evento en curso; si la copia llega un momento después (se armó el texto esperando algo), el
+   último botón tocado hace menos de `COPIADO_CLIC_MS`. Nunca una ficha entera con role=button; una copia sin toque, el aviso de siempre. */
+var COPIADO_ULT=null, COPIADO_CLIC_MS=3000;
+document.addEventListener('click', function(e){ try{ var b=e.target && e.target.closest && e.target.closest('button'); if(b) COPIADO_ULT={ b:b, t:Date.now() }; }catch(_){} }, true);
+function copiadoBotonDeAhora(){
+  if(!copiadoActivo()) return null;
+  var b=null, ev=window.event;
+  try{ if(ev && ev.target && ev.target.closest && /^(click|pointerup|mouseup|touchend|keydown|keyup)$/.test(ev.type||'')) b=ev.target.closest('button'); }catch(e){}
+  if(!b && COPIADO_ULT && Date.now()-COPIADO_ULT.t<COPIADO_CLIC_MS) b=COPIADO_ULT.b;
+  return b || null;
+}
+function copiadoAviso(b){ if(!copiadoEnBoton(b)) toast('Copiado ✓','ok'); }
+var COPIADO_MS=2000;
+function copiadoEnBoton(b){
+  try{
+    if(!b || !b.isConnected || !b.offsetWidth || !copiadoActivo()) return false;
+    if(!b._cpOrig) b._cpOrig={ h:b.innerHTML, w:b.style.width, hh:b.style.height, al:b.getAttribute('aria-label') };
+    clearTimeout(b._cpT);
+    var w=b.offsetWidth, h=b.offsetHeight;   // px del panel (con el zoom de la pantalla grande también)
+    b.style.width=w+'px'; b.style.height=h+'px';
+    b.classList.add('cp-ok');
+    b.innerHTML='<svg class="cp-tick" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5"/></svg><span class="cp-t">Copiado</span>'+
+      (w>=200 ? '<span class="cp-tip"> · pegalo con Ctrl + V</span>' : '');
+    b.setAttribute('aria-label', 'Copiado: pegalo con Ctrl + V');
+    b._cpPuesto=b.innerHTML;
+    b._cpT=setTimeout(function(){ copiadoVolver(b); }, COPIADO_MS);
+    return true;
+  }catch(e){ return false; }
+}
+function copiadoVolver(b){
+  var o=b && b._cpOrig; if(!o) return;
+  b._cpOrig=null; clearTimeout(b._cpT); b.classList.remove('cp-ok');
+  if(b.innerHTML===b._cpPuesto) b.innerHTML=o.h;   // si mientras tanto alguien le cambió el texto, no se pisa
+  b.style.width=o.w; b.style.height=o.hh;
+  if(o.al==null) b.removeAttribute('aria-label'); else b.setAttribute('aria-label', o.al);
 }
 function whatsappUrl(text){ return 'https://wa.me/?text='+encodeURIComponent(text); }
 
