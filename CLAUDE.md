@@ -35,6 +35,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     «🛒 Venta sin ficha en Kommo» (`carry` + `panel`), «🛒 +N sin ficha» / «🛒 N por entregar», la ficha y el resumen de WhatsApp. ⚠️ Un vendedor
     nuevo de Heaven va también en `PANEL_HEAVEN`; si cambia `ventaTotal`/`parseCobros`/`fueraDeConta`, cambia acá (`test_generar_integridad` §17-25,
     `test_panel_meta` §5 con `--solo-datos-335`). Del panel solo salen números: nunca clientes, celulares ni OC.
+    🧾 **Con factura cuenta en el mes en que se cargó** (dueño, 15/11: *«si está marcada facturada cuenta como cierre en el mes por más que se
+    entregue en el siguiente»*): `_panel_clasificar` — factura («F» + N°, `_panel_facturada`) o la marca «cuenta en <mes>» (`vmes`) → cierre en el
+    mes de CARGA, entregada o no; sin factura y entregada en un mes posterior → cierre en el mes de la ENTREGA (`eF` del cierre o la fecha); lo
+    pendiente sin factura → pipeline del mes EN CURSO (mira hasta `PANEL_VENTANA_MESES`=6 atrás). La remisión no es factura.
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 
