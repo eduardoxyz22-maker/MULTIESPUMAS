@@ -29608,6 +29608,8 @@ function admHacerDatos(){
   var C=ADM_AV.cierre||{};
   if(C.pend) add({ k:'cie-p', sev:'r', ic:'⏳', n:C.pend, t:'Cierre de entregas sin sincronizar', s:'se aplica solo con la próxima lectura de la planilla', b:'🔄 Intentar', fn:'refrescarEstado()', tag:'cierre sin sincronizar' });
   else add({ k:'cie', sev:'a', ic:'✅', n:(C.hoy||0)+(C.atr||0), t:'Cierre de entregas', s:[(C.hoy?(C.hoy+' de hoy sin confirmar'):''),(C.atr?(C.atr+' atrasado'+(C.atr===1?'':'s')+' sin resolver'):'')].filter(Boolean).join(' · '), b:'✅ Hacer el cierre', p:1, fn:'abrirCierreEntregas()', tag:'cierre de entregas' });
+  // 🌙 (15/11, mejora 321) el Excel de la tarde: desde las 17:30 o apenas está el último ✅ del día
+  try{ add(excelTardeHacer()); }catch(e){}
   // 🏪 reposiciones atrasadas
   var Rp=ADM_AV.rpt||{};
   add({ k:'rpt', sev:'a', ic:'🏪', n:Rp.n||0, t:'Reposiciones de tienda sin entregar', s:(Rp.tiendas||'')+(Rp.peor?(' · la más vieja, hace '+Rp.peor+' día'+(Rp.peor===1?'':'s')):''), b:'Ver', fn:"admSecPoner('ped');admVerRptAtrasadas()", tag:'reposiciones' });
@@ -29632,6 +29634,49 @@ function admHacerDatos(){
   I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
   return I;
 }
+/* ============================================================================
+   🌙 EL EXCEL DE LA TARDE, RECORDADO DESPUÉS DEL ÚLTIMO ✅ (15/11, mejora 321; dueño: «321»; la parte de la PÁGINA).
+   Desde el 23/10 se suben dos Excel por día (§4lx: antes de cargar y al final del día). Del 11 al 14/11 el de la mañana estuvo todos los días
+   y el de la tarde solo el 13/11: el aviso de las 10:00 mira solo si falta el Excel del DÍA. En «Para hacer» de Administración, desde las
+   EXCEL_TARDE_HORA (17:30, Bolivia) —o apenas está el último ✅ del día, pasadas las 12— va «🌙 Falta el Excel de la tarde» con los almacenes
+   a los que les falta y el botón para subirlo (`abrirImportExist`, el de siempre).
+   · Los almacenes: PTF (`STOCK.c`) y cada otro almacén con un Excel en los últimos 7 días (`STOCK.g`; Moreno incluido). «De la tarde» = su
+     último corte es de HOY y de las EXCEL_TARDE_DESDE (12:00) en adelante (la hora del Excel; sin hora, la hora en que se subió).
+   · Sin el Excel de la mañana de hoy en ninguno no sale (para eso está el aviso de siempre del Excel del día). Ni domingo ni feriado.
+   · Solo avisa. El WhatsApp de las 19:00 es del servidor (lo hace otro encargo). En Playwright apagado salvo `window.EXCEL_TARDE_PRUEBA`.
+   `tests/test_excel_tarde.js`.
+   ========================================================================== */
+var EXCEL_TARDE_HORA='17:30', EXCEL_TARDE_DESDE='12:00', EXCEL_TARDE_DIAS=7;
+function excelTardeActivo(){ try{ return !(navigator.webdriver && !window.EXCEL_TARDE_PRUEBA); }catch(e){ return true; } }
+function excelTardeHora(c){ var h=String((c&&c.hora)||'').slice(0,5); if(/^\d{2}:\d{2}$/.test(h)) return h; return (c && Number(c.t)) ? hhmmDeTs(Number(c.t)) : ''; }
+function excelTardeDatos(){
+  if(!excelTardeActivo() || typeof STOCK==='undefined' || !STOCK) return null;
+  var hoy=todayStr(); if(!diaHabil(hoy)) return null;
+  var desde=stockSumarDias(hoy, -EXCEL_TARDE_DIAS), A=[];
+  var mirar=function(nom, c){ if(!c || !c.f || c.f<desde) return; var h=c.f===hoy ? excelTardeHora(c) : ''; A.push({ nom:nom, hoy:c.f===hoy, tarde:c.f===hoy && h>=EXCEL_TARDE_DESDE, h:h }); };
+  mirar('PTF', STOCK.c);
+  Object.keys(STOCK.g||{}).forEach(function(nm){
+    var g=STOCK.g[nm]; if(!g || !Object.keys(g.u||{}).length || stockEsLog(nm)) return;
+    mirar(almEsSalida(nm) ? saleNombre(nm) : stockAlmCorto(nm), g);
+  });
+  if(!A.length || !A.some(function(a){ return a.hoy; })) return null;   // sin el de la mañana: lo dice el aviso del Excel del día
+  var faltan=A.filter(function(a){ return !a.tarde; });
+  if(!faltan.length) return null;
+  var ahora=hhmmBolivia();
+  var L=(STATE||[]).filter(function(p){ return p && p.fecha===hoy && !esFilaSistema(p) && !esBorrador(p) && !esVentaTienda(p); });
+  var ultimo=L.length>0 && L.every(function(p){ return !!p.entregado; }) && ahora>=EXCEL_TARDE_DESDE;
+  if(ahora<EXCEL_TARDE_HORA && !ultimo) return null;
+  return { faltan:faltan, todos:A, ultimo:ultimo, ahora:ahora };
+}
+/* El renglón de «Para hacer». */
+function excelTardeHacer(){
+  var D=excelTardeDatos(); if(!D) return null;
+  var nom=D.faltan.map(function(a){ return a.nom; }), ya=D.todos.filter(function(a){ return a.tarde; }).map(function(a){ return a.nom; });
+  return { k:'xls-tarde', sev:'a', ic:'🌙', n:D.faltan.length, t:(D.ultimo ? 'Ya está el último ✅ de hoy: falta el Excel de la tarde' : 'Falta el Excel de la tarde'),
+    s:nom.join(', ')+' · con las entregas de hoy adentro'+(ya.length?(' (ya está el de '+ya.join(', ')+')'):''), b:'📥 Subir el Excel', p:1,
+    fn:'abrirStock();abrirImportExist()', tag:'Excel de la tarde' };
+}
+/* fin mejora 321 */
 function admSugIr(d){
   try{ if(!nxSugVisible()) nxSugMostrar(true); }catch(e){}
   NX_SUG_DIA=d; admSecPoner('cam'); try{ nxSugPintar(); }catch(e){}
