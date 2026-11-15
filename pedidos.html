@@ -6031,6 +6031,14 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .quien-b i, .quien-sigo i{ flex:none; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-weight:900; font-size:.82rem; color:#fff; background:var(--c,#00B5AD); }
 .quien-otros{ display:flex; flex-wrap:wrap; gap:8px; padding:10px 16px 16px; border-top:1px dashed var(--gray-md); margin-top:10px; }
 .quien-otros button{ flex:1; min-width:140px; padding:9px 10px; border:1px solid var(--gray-md); border-radius:12px; background:#f7f9fa; font:inherit; font-size:.84rem; font-weight:700; cursor:pointer; }
+/* 🚚 (15/11, mejora 320) «Soy logística», grande y con el nombre de la persona */
+.quien-log{ margin:14px 16px 0; padding:10px 12px 12px; border:2px solid var(--teal); border-radius:14px; background:var(--teal-lt); }
+.quien-log-b{ display:flex; align-items:center; gap:12px; width:100%; padding:4px 2px; border:0; background:transparent; font:inherit; cursor:pointer; text-align:left; color:#0f3d3a; }
+.quien-log-b > span:nth-child(2){ flex:1; min-width:0; } .quien-log-b b{ display:block; font-size:1.05rem; } .quien-log-b small{ display:block; color:#3d6b67; font-size:.8rem; margin-top:2px; }
+.quien-log-i{ flex:none; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-size:1.6rem; background:#fff; }
+.quien-log-b em{ font-style:normal; font-weight:900; color:var(--teal-dk); font-size:1.4rem; }
+.quien-log-n{ display:flex; align-items:center; gap:8px; margin-top:6px; font-size:.82rem; font-weight:700; color:#0f5f5b; }
+.quien-log-n input{ flex:1; min-width:0; max-width:220px; padding:7px 10px; border:1px solid var(--teal-border); border-radius:9px; font:inherit; font-size:.86rem; background:#fff; }
 .asis-quien{ color:#7dd3cf; text-decoration:underline; cursor:pointer; white-space:nowrap; }
 @media print{ .quien{ display:none!important; } }
 @media (prefers-reduced-motion:reduce){ .quien-c, .quien-b{ animation:none!important; } }
@@ -10585,9 +10593,14 @@ function cambiaronProductos(antes, ahora){
    Contabilidad). '?' = nadie eligió en ese aparato. No es una contraseña: es el nombre que la persona eligió. */
 function quienEdita(){
   var v=''; try{ v=String(getVendedorMem()||'').trim(); }catch(e){}
+  /* 🚚 (15/11, mejora 320) Un pedido interno (FABRICA, ALBA…) dejaba ese nombre como «tu nombre» de la compu de logística: del 10 al 14/11,
+     50 ✅ dijeron «FABRICA». Un nombre interno guardado de antes ya no cuenta como quién usa el panel. */
+  if(v && quienLogActivo() && cliEsInterno(v)) v='';
   if(v) return v;
   var r=''; try{ r=quienRol(); }catch(e){}
-  return ({ admin:'Administración', logistica:'Logística', conta:'Contabilidad' })[r]||'';
+  var n=({ admin:'Administración', logistica:'Logística', conta:'Contabilidad' })[r]||'';
+  if(r==='logistica' && quienLogActivo()){ var ln=quienLogNombre(); if(ln) n+=' · '+ln; }   // 🚚 (mejora 320) «Logística · Ernesto»
+  return n;
 }
 function marcarModificado(rec, quien, cambios){
   var m={ f:todayStr(), h:horaCorta(), q:String(quien||'').trim(), por:quienEdita()||'?', d:cambios.slice(0,6) };
@@ -22945,6 +22958,8 @@ function setVendedorMem(v){
     if(exacto) v=(typeof nombreCanonico==='function')?nombreCanonico(exacto):exacto;
     else if(prefijo || k.length<3) return;                 // a mitad de tipear: no se guarda
   }
+  /* 🚚 (15/11, mejora 320) Cargar un pedido de FABRICA, ALBA u otro interno no cambia «tu nombre» de la compu (era la compu de logística). */
+  if(v && quienLogActivo() && typeof cliEsInterno==='function' && cliEsInterno(v)) return;
   try{ localStorage.setItem('me_mis_vendedor', v); }catch(e){}
 }
 /* ============================================================================
@@ -34061,6 +34076,9 @@ function quienAbrir(cambiar){
   var box=document.getElementById('quien');
   if(!box){ box=document.createElement('div'); box.id='quien'; box.className='quien no-print'; document.body.appendChild(box); }
   var ult=getVendedorMem(), rol=quienRol(), L=quienLista();
+  var logOn=quienLogActivo(), logArr=false;   // 🚚 (mejora 320) «Soy logística», grande
+  if(logOn && ult && cliEsInterno(ult)) ult='';   // «Sigo siendo FABRICA» no: un interno no es quien usa el panel
+  if(logOn) logArr=(rol==='logistica' || (!ult && !rol) || quienAparatoEntrega()>=QUIEN_LOG_ENTREGA_MIN);
   var yo=(typeof blokiSrc==='function') ? '<img src="'+blokiSrc('bloki')+'" alt="" width="70" height="62">' : '';
   var ROLES={ admin:['🔒','Administración'], logistica:['🚚','Logística'], conta:['🧾','Contabilidad'] }, R=ROLES[rol];
   var antes=(ult && !cambiar) ? ('<button type="button" class="quien-sigo" data-v="'+esc(ult)+'" onclick="quienElegir(this.getAttribute(\'data-v\'))"><i style="--c:'+QUIEN_COL[Math.max(0,L.indexOf(ult))%QUIEN_COL.length]+'">'+esc(quienIni(ult))+'</i><span>Sigo siendo <b>'+esc(ult)+'</b></span><em>✓</em></button>')
@@ -34068,17 +34086,62 @@ function quienAbrir(cambiar){
   box.innerHTML='<div class="quien-c" role="dialog" aria-modal="true" aria-labelledby="quien-t">'+
     '<div class="quien-h">'+yo+'<div><b id="quien-t">👋 ¡Hola! ¿Quién está usando el panel?</b><small>Así te muestro tus pedidos y te aviso lo tuyo.</small></div>'+
       (cambiar ? '<button type="button" class="quien-x" aria-label="Cerrar" onclick="quienCerrar()">✕</button>' : '')+'</div>'+
+    (logOn && logArr && (rol!=='logistica' || cambiar) ? quienLogHtml() : '')+   // 🚚 (mejora 320) arriba: esta compu es de logística
     antes+
+    (logOn && rol==='logistica' && !cambiar ? quienLogNombreHtml() : '')+
+    (logOn && !logArr ? quienLogHtml() : '')+
     (antes ? '<div class="quien-sep">o elegí otro nombre</div>' : '')+
     '<div class="quien-g">'+L.map(function(v, i){
       return '<button type="button" class="quien-b'+(v===ult?' on':'')+'" style="--c:'+QUIEN_COL[i%QUIEN_COL.length]+';animation-delay:'+Math.min(i,10)*40+'ms" data-v="'+esc(v)+'" onclick="quienElegir(this.getAttribute(\'data-v\'))"><i>'+esc(quienIni(v))+'</i><span>'+esc(v)+'</span></button>';
     }).join('')+'</div>'+
-    '<div class="quien-otros"><button type="button" onclick="quienElegir(\'\', \'logistica\')">🚚 Soy de logística</button><button type="button" onclick="quienElegir(\'\', \'conta\')">🧾 Contabilidad</button><button type="button" onclick="quienElegir(\'\', \'admin\')">🔒 Administración</button></div>'+
+    '<div class="quien-otros">'+(logOn ? '' : '<button type="button" onclick="quienElegir(\'\', \'logistica\')">🚚 Soy de logística</button>')+'<button type="button" onclick="quienElegir(\'\', \'conta\')">🧾 Contabilidad</button><button type="button" onclick="quienElegir(\'\', \'admin\')">🔒 Administración</button></div>'+
     practicaQuienHtml()+   // 🧪 (271) «Soy nuevo/a: quiero practicar»
   '</div>';
   box.hidden=false;
 }
 function quienCerrar(){ var b=document.getElementById('quien'); if(b) b.hidden=true; }
+/* ==========================================================================
+   🚚 QUE EL PANEL SEPA QUE ES LOGÍSTICA (15/11, mejora 320; dueño: «320»).
+   Del 10 al 14/11, 50 de los ✅ decían que los puso «FABRICA», 25 «Administración» y 2 «Isabel Robledo»: 71 salieron de la MISMA compu
+   Windows y ninguno decía «Logística». Cargar un pedido interno (FABRICA, ALBA…) dejaba ese nombre como «tu nombre» de la compu
+   (`setVendedorMem`), `quienEdita` lo ponía primero, y el grito de Bloki de las 16:00 (`semanaGritoVe`, solo logística) no salía nunca.
+   · `setVendedorMem` ya no guarda un nombre interno (`cliEsInterno`); uno guardado de antes no cuenta (`quienEdita`, «Sigo siendo…»).
+   · «¿Quién está usando el panel?» ofrece «🚚 Soy logística» GRANDE, con el nombre de la persona (opcional, `me_quien_log_nombre`): arriba
+     de todo si esta compu ya es de logística o marcó «Entregó» seguido esta semana (la historia del ✅, `eH`, de este aparato), si no
+     debajo de «Sigo siendo…». Así el ✅ dice «Logística · Ernesto». No es una contraseña ni control de acceso.
+   En Playwright apagado salvo `window.QUIEN_LOG_PRUEBA` (la ventana sale además con `QUIEN_PRUEBA`). `tests/test_quien_logistica.js`.
+   ========================================================================== */
+var QUIEN_LS_LOGN='me_quien_log_nombre', QUIEN_LOG_ENTREGA_MIN=3;
+function quienLogActivo(){ try{ return !(navigator.webdriver && !window.QUIEN_LOG_PRUEBA); }catch(e){ return true; } }
+function quienLogNombre(v){
+  try{
+    if(arguments.length){ v=String(v||'').replace(/[<>]/g,'').replace(/\s+/g,' ').trim().slice(0,30); if(v) localStorage.setItem(QUIEN_LS_LOGN, v); else localStorage.removeItem(QUIEN_LS_LOGN); }
+    return localStorage.getItem(QUIEN_LS_LOGN)||'';
+  }catch(e){ return ''; }
+}
+/* Cuántas veces ESTA compu puso «Entregado» en los últimos 7 días (la historia del ✅ de cada pedido, §4pl). */
+function quienAparatoEntrega(){
+  var a='', desde=Date.now()-7*86400000, n=0;
+  try{ a=entAparato(); }catch(e){ return 0; }
+  (STATE||[]).forEach(function(p){ try{ entHistDe(p).forEach(function(e){ if(e && Number(e.v) && e.a===a && Number(e.t)>=desde) n++; }); }catch(e){} });
+  return n;
+}
+function quienLogHtml(){
+  var n=quienAparatoEntrega();
+  return '<div class="quien-log"><button type="button" class="quien-log-b" onclick="quienElegirLogistica()"><span class="quien-log-i">🚚</span>'+
+      '<span><b>Soy logística</b><small>'+(n>=QUIEN_LOG_ENTREGA_MIN ? ('Esta compu marcó «Entregó» '+n+' veces esta semana') : 'Cargás los camiones, marcás lo que salió y subís los Excel')+'</small></span><em>›</em></button>'+
+    quienLogNombreCampo()+'</div>';
+}
+/* Ya eligió logística: «Sigo en Logística» queda arriba y acá solo el nombre, para cambiarlo. */
+function quienLogNombreHtml(){ return '<div class="quien-log" style="padding-top:6px">'+quienLogNombreCampo()+'</div>'; }
+function quienLogNombreCampo(){
+  return '<label class="quien-log-n" for="quien-log-nom">Tu nombre <input type="text" id="quien-log-nom" maxlength="30" autocomplete="off" placeholder="(opcional) por ejemplo Ernesto" value="'+esc(quienLogNombre())+'" onchange="quienLogNombre(this.value)"></label>';
+}
+function quienElegirLogistica(){
+  var i=document.getElementById('quien-log-nom'); if(i) quienLogNombre(i.value);
+  quienElegir('', 'logistica');
+}
+/* fin mejora 320 */
 /* (12/10, dueño: «elegí vendedor pero en contabilidad seguía saliendo todos») Los filtros de vendedor de Contabilidad (Ventas y Cuadre)
    arrancan en quien entró, UNA vez por elección: si después elige «Todos» a mano, no se lo vuelve a poner. */
 var QUIEN_CONTA_PUESTO={};
