@@ -19190,8 +19190,11 @@ function tjPosAprendido(){
   var out={}; Object.keys(C).forEach(function(t){ var best='', n=0; Object.keys(C[t]).forEach(function(b){ if(C[t][b]>n){ n=C[t][b]; best=b; } }); if(n>=TJ_POS_MIN) out[t]=best; });
   return out;
 }
-function tjPosDe(tienda, A){ if(!tienda) return { b:'', de:'' }; if(POS_TIENDA[tienda]) return { b:iacBanco(POS_TIENDA[tienda])||String(POS_TIENDA[tienda]), de:'lista' };
-  A=A||tjPosAprendido(); return A[tienda] ? { b:A[tienda], de:'aprendido' } : { b:'', de:'' }; }
+/* El banco con su nombre de siempre («Banco BISA S.A.» → «BISA», «Banco Económico» → «Económico»); el que no se conoce, su clave. */
+function tjBancoNom(t){ return ctaAvBancoDe(t) || iacBanco(t) || String(t||''); }
+/* {b: la clave para comparar, nom: para mostrar, de: 'lista' | 'aprendido' | ''} */
+function tjPosDe(tienda, A){ if(!tienda) return { b:'', nom:'', de:'' }; if(POS_TIENDA[tienda]) return { b:iacBanco(POS_TIENDA[tienda])||String(POS_TIENDA[tienda]), nom:String(POS_TIENDA[tienda]), de:'lista' };
+  A=A||tjPosAprendido(); return A[tienda] ? { b:A[tienda], nom:tjBancoNom(A[tienda]), de:'aprendido' } : { b:'', nom:'', de:'' }; }
 /* La línea debajo del voucher recién subido. `x` = el pago (como lo arma `iasFormX`/`iasContaX`/el 📎), `c` = lo que dijo `iacComparar`. */
 function tjVoucherHtml(x, c){
   if(!tjVe() || !tjServidorOk() || !x || !tjEsTarjeta(x) || !c || c.est==='pe') return '';
@@ -19201,8 +19204,8 @@ function tjVoucherHtml(x, c){
   if(o){ if(o.lo) d.push('lote <b>'+esc(o.lo)+'</b>'); if(o.au) d.push('autorización <b>'+esc(o.au)+'</b>'); if(o.u4) d.push('tarjeta terminada en <b>'+esc(o.u4)+'</b>'); if(o.pb) d.push('POS <b>'+esc(o.pb)+'</b>'); }
   var h=d.length ? iasLinea('ias-ok tj-v', '💳 Leí el voucher: '+d.join(' · ')+'.') : '';
   var b=o ? iacBanco(o.pb) : '';
-  if(pos.b && b && b!==pos.b) h+=iasLinea('ias-am tj-v', '⚠️ El voucher es de un POS de <b>'+esc(o.pb)+'</b> y el de '+esc(tienda)+' es <b>'+esc(pos.b)+'</b>: ¿se cobró en otra máquina?');
-  else if(pos.b && !b) h+=iasLinea('ias-gris tj-v', '💳 POS de '+esc(tienda)+': <b>'+esc(pos.b)+'</b> (puesto solo'+(pos.de==='aprendido' ? ', de sus vouchers' : '')+').');
+  if(pos.b && b && b!==pos.b) h+=iasLinea('ias-am tj-v', '⚠️ El voucher es de un POS de <b>'+esc(tjBancoNom(o.pb))+'</b> y el de '+esc(tienda)+' es <b>'+esc(pos.nom)+'</b>: ¿se cobró en otra máquina?');
+  else if(pos.b && !b) h+=iasLinea('ias-gris tj-v', '💳 POS de '+esc(tienda)+': <b>'+esc(pos.nom)+'</b> (puesto solo'+(pos.de==='aprendido' ? ', de sus vouchers' : '')+').');
   return h;
 }
 /* El Cuadre: los cobros con tarjeta del período por POS y lote. */
@@ -19212,7 +19215,7 @@ function tjPosDatos(pe, vend){
     if(!tjEsTarjeta(c)) return;
     var o=tjLeido(c.comps), tienda=tjTiendaDe(c.p, c.fecha), pos=tjPosDe(tienda, A), b=o ? iacBanco(o.pb) : '';
     c.comps.forEach(function(f){ if(!IAC.res[f]) ids.push(f); });
-    var posTxt=b ? (o.pb || b) : (pos.b ? pos.b : ''), lote=(o && o.lo) ? String(o.lo) : '';
+    var posTxt=b ? tjBancoNom(o.pb) : (pos.b ? pos.nom : ''), lote=(o && o.lo) ? String(o.lo) : '';
     var k=(b || pos.b || '?')+'|'+(lote || '?');
     var g=G[k]; if(!g){ g=G[k]={ pos:posTxt, posDe:b ? 'voucher' : (pos.b ? 'tienda' : ''), lote:lote, n:0, bs:0, tiendas:{}, cobros:[], otro:false }; orden.push(k); }
     g.n++; g.bs=r2(g.bs+c.monto); if(tienda) g.tiendas[tienda]=1; g.cobros.push(c);
