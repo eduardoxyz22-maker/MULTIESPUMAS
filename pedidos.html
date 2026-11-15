@@ -2931,6 +2931,8 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   </div>
   <!-- 🚚 (§4iw, 09/10, dueño: «A») La ruta del camión: el camión mira a la izquierda y va de derecha a izquierda (de frente). -->
   <div class="h-ruta no-print" aria-hidden="true"><span class="h-astro"></span><span class="h-lejos"></span><span class="h-luna"></span><span class="h-murc"><i></i><i></i><i></i></span><span class="h-cerca"></span><span class="h-calle"></span><span class="h-camion"><svg viewBox="0 0 86 40"><g class="hc-humo"><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/><circle cx="86" cy="27" r="2.6" fill="rgba(255,255,255,.6)"/></g><g class="hc-cuerpo"><rect x='26' y='3' width='57' height='25' rx='3' fill='#fff' stroke='#d5dde6'/><g transform='translate(29 8) scale(0.78)' opacity='1'><path d='M0 12 C5 7 12 6 19 8 C12 8.5 6 10.5 1 14 Z' fill='#e9609a'/><path d='M1 8.5 C6 3.5 13 2.5 20 4.5 C13 5 7 7 2 10.5 Z' fill='#f08a24'/><path d='M3 5 C8 0.5 14 -0.5 20 1 C14 1.5 8.5 3.5 4 7 Z' fill='#f6c437'/></g><text x='46.5' y='15.2' textLength='34.5' lengthAdjust='spacingAndGlyphs' font-size='7' font-weight='800' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Multi<tspan font-weight='900'>ESPUMAS</tspan></text><text x='46.7' y='20.6' textLength='20' lengthAdjust='spacingAndGlyphs' font-size='3.6' fill='#1f3b73' font-family='system-ui,Arial,sans-serif'>Viscarra S.R.L.</text><rect x='26' y='24' width='57' height='1.6' fill='#e9609a'/><rect x='26' y='25.6' width='57' height='1.2' fill='#f08a24'/><rect x='26' y='26.8' width='57' height='1.2' fill='#f6c437'/><path d='M25 9 h-11 q-6 0 -9 6 l-4 8 v6 q0 2 2 2 h22 z' fill='#1f3b73'/><path d='M22 11.5 h-8 q-4 0 -6 4 l-2.5 5.5 h16.5 z' fill='#bfe9ff'/><rect class='hc-faro' x='1' y='24' width='3.4' height='2.6' rx='1' fill='#fde68a'/><rect x='2' y='28' width='80' height='3' rx='1.2' fill='#1f2937'/><rect x='82' y='26' width='4' height='1.6' fill='#6b7280'/></g><g><circle cx='14' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='14' cy='31' r='3.2' fill='#9ca3af'/><rect x='13.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='10.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='60' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='60' cy='31' r='3.2' fill='#9ca3af'/><rect x='59.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='56.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g><g><circle cx='72' cy='31' r='6' fill='#111827'/><g class='hc-rayos'><circle cx='72' cy='31' r='3.2' fill='#9ca3af'/><rect x='71.3' y='27.8' width='1.4' height='6.4' fill='#4b5563'/><rect x='68.8' y='30.3' width='6.4' height='1.4' fill='#4b5563'/></g></g></svg></span></div>
+  <!-- 🎯 (15/11, mejora 342) La meta del mes, solo con la contraseña: una barrita debajo de la franja (`hdrMetaPintar`). Tocarla abre Proyección. -->
+  <div id="hdr-meta" class="hdr-meta no-print" role="button" tabindex="0" hidden onclick="hdrMetaAbrir()" title="Abrir Proyección"></div>
 </div>
 <script>
 /* 🌅 EL CIELO SEGÚN LA HORA (§4pj, 10/11). `hdrCieloPintar(h)`: h = hora de Bolivia con decimales (sin argumento, la de ahora). Deja en
@@ -3840,7 +3842,11 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <!-- 📈 (15/11, mejora 340) Por qué se movió la proyección desde la foto de ayer: ventas nuevas o la cuenta (`pryMovPintar`). Solo mira. -->
+        <div id="pry-mov"></div>
         <div id="pry-metas"></div>
+        <!-- 💰 (15/11, mejora 338) Las comisiones del mes si siguen así y quién está al borde de un escalón (`ccmSiguePintar`). No se guarda. -->
+        <div id="pry-com"></div>
         <!-- 🛍️ (13/11, mejora 177) Black Friday en números: solo mientras dura la campaña y 7 días después (`bfnPintar`). Solo mira. -->
         <div id="pry-bf"></div>
         <!-- ✨ (§4jw, K) Una ficha por marca con la curva del mes: lo vendido día a día, hasta dónde llegaría y la meta. -->
@@ -3853,6 +3859,9 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
         <!-- 🏁 y 🟩 (§4pj, 10/11, ideas 166 y 167): la carrera del mes y el calendario de calor. Solo miran. -->
         <div id="pry-carrera"></div>
         <div id="pry-calor"></div>
+        <!-- 📣 (15/11, mejora 337) Lo que vende cada Bs de publicidad: el gasto (fila `__publicidad__`, solo en el panel) contra los leads y ventas
+             por canal del dashboard publicado (`pubPintar`). Solo con la contraseña. -->
+        <div id="pry-pub"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
         <div id="pry-hist"></div>
@@ -5935,6 +5944,109 @@ td.adm-barra{ background-repeat:no-repeat; background-size:calc(100% - 16px) 5px
 .sem-v-urge.on{ background:#b4232c; border-color:#b4232c; }
 .sem-v:disabled{ opacity:.45; cursor:default; }
 .sem-v-x{ color:var(--teal-dk); border-style:dashed; }
+/* ══ (15/11) Las mejoras de Contabilidad y del dueño: 328, 331, 333, 337, 338, 340, 342 y 343. Solo cómo se ve. ══ */
+/* 📈 340 · por qué se movió la proyección */
+.pmv{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:4px 0 14px; }
+.pmv-c{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; font-size:.86rem; color:var(--text); }
+.pmv-c b{ font-size:1.2rem; font-variant-numeric:tabular-nums; color:#7c3aed; }
+.pmv-p{ font-size:.76rem; color:var(--muted); }
+.pmv-e{ margin-top:9px; background:#ecfaf9; border-radius:10px; padding:9px 12px; font-size:.84rem; line-height:1.5; color:var(--text); }
+.pmv-e.pmv-gris{ background:#f1f5f9; color:#475569; }
+.pmv-bar{ display:flex; height:12px; border-radius:6px; overflow:hidden; margin:6px 0 5px; background:#eef2f2; }
+.pmv-bar i{ display:block; height:100%; }
+i.pmv-v{ background:#00A09A; } i.pmv-k{ background:#9ca3af; }
+.pmv-l{ display:flex; gap:6px 14px; flex-wrap:wrap; font-size:.76rem; color:#4b5b5b; }
+.pmv-l i{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+.pmv-g{ margin-top:6px; font-size:.74rem; color:var(--muted); }
+/* 🎯 342 · la meta del mes arriba (adentro del encabezado: su alto entra en --hdr-h) */
+.hdr-meta{ display:flex; align-items:center; gap:6px 14px; flex-wrap:wrap; background:#fff; color:#1f2d2d; border-top:1px solid #dbe7e7; padding:6px 18px 7px; font-size:.78rem; line-height:1.35; cursor:pointer; position:relative; z-index:2; }
+.hdr-meta[hidden]{ display:none!important; }
+.hdr-meta:hover{ background:#f7fdfc; } .hdr-meta:focus-visible{ outline:2px solid var(--teal); outline-offset:-2px; }
+.hm-e{ white-space:nowrap; } .hm-t{ white-space:nowrap; } .hm-x{ color:#5b6b6b; }
+.hm-bar{ flex:1 1 140px; position:relative; height:10px; border-radius:5px; background:#eef2f2; overflow:hidden; min-width:110px; max-width:520px; }
+.hm-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; }
+.hm-bv.hm-ok{ background:#00A09A; } .hm-bp.hm-ok{ background:#a9e3df; }
+.hm-bv.hm-cerca{ background:#d97706; } .hm-bp.hm-cerca{ background:#fde3b5; }
+.hm-bv.hm-mal{ background:#dc2626; } .hm-bp.hm-mal{ background:#fbcaca; }
+.hm-c{ display:inline-block; border-radius:9px; padding:1px 8px; font-weight:800; }
+.hm-c.hm-ok{ background:#dcfce7; color:#14532d; } .hm-c.hm-cerca{ background:#fff1d6; color:#92400e; } .hm-c.hm-mal{ background:#fee2e2; color:#991b1b; }
+/* 🎯 333 · cada tienda contra su meta */
+.ptm{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:12px 0 14px; }
+.ptm-t{ font-weight:800; font-size:.92rem; color:var(--text); margin-bottom:2px; }
+.ptm-s{ font-size:.76rem; color:var(--muted); margin-bottom:8px; line-height:1.45; }
+.ptm-r{ border-top:1px dashed #e3eded; }
+.ptm-r summary{ display:grid; grid-template-columns:minmax(96px,150px) 1fr 56px; gap:2px 10px; align-items:center; padding:7px 0; cursor:pointer; list-style:none; font-size:.82rem; }
+.ptm-r summary::-webkit-details-marker{ display:none; }
+.ptm-r summary:focus-visible{ outline:2px solid var(--teal); outline-offset:2px; border-radius:6px; }
+.ptm-n{ font-weight:700; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ptm-b{ position:relative; height:12px; border-radius:6px; background:#eef2f2; }
+.ptm-b i{ position:absolute; left:0; top:0; bottom:0; border-radius:6px; }
+.ptm-b u{ position:absolute; top:-3px; bottom:-3px; width:2px; background:#1f2d2d; opacity:.55; }
+.ptm-pc{ font-weight:800; text-align:right; font-variant-numeric:tabular-nums; }
+.ptm-f{ grid-column:2 / 4; font-size:.72rem; color:var(--muted); font-variant-numeric:tabular-nums; }
+.ptm-bv.ptm-ok{ background:#00A09A; } .ptm-bp.ptm-ok{ background:#a9e3df; }
+.ptm-bv.ptm-ce{ background:#d97706; } .ptm-bp.ptm-ce{ background:#fde3b5; }
+.ptm-bv.ptm-ma{ background:#dc2626; } .ptm-bp.ptm-ma{ background:#fbcaca; }
+.ptm-pc.ptm-ok{ color:#047857; } .ptm-pc.ptm-ce{ color:#b45309; } .ptm-pc.ptm-ma{ color:#b91c1c; }
+.ptm-sin summary{ opacity:.7; }
+.ptm-vs{ padding:2px 0 9px; }
+.ptm-v{ display:grid; grid-template-columns:minmax(120px,1.2fr) 1fr 1fr; gap:4px 10px; font-size:.76rem; padding:3px 0 3px 12px; border-left:3px solid #e3eded; margin:2px 0; font-variant-numeric:tabular-nums; }
+.ptm-v small{ color:var(--muted); }
+.ptm-l{ display:flex; gap:6px 14px; flex-wrap:wrap; font-size:.72rem; color:var(--muted); margin-top:8px; }
+.ptm-l b{ display:inline-block; width:10px; height:10px; border-radius:3px; vertical-align:-1px; margin-right:4px; }
+/* 🏬 343 · la tienda nueva, día por día */
+.ptn{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:12px 0 14px; }
+.ptn-t{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-size:.88rem; }
+.ptn-n{ background:#00B5AD; color:#fff; font-size:.64rem; font-weight:800; border-radius:8px; padding:2px 8px; letter-spacing:.04em; }
+.ptn-a{ font-size:.74rem; color:var(--muted); margin:2px 0 4px; }
+.ptn-svg{ width:100%; max-width:720px; height:auto; display:block; }
+.ptn-l{ display:flex; gap:6px 14px; flex-wrap:wrap; font-size:.74rem; color:#4b5b5b; margin-top:2px; }
+.ptn-l1{ color:#00A09A; font-weight:700; } .ptn-l2{ color:#b45309; } .ptn-l3{ color:#6b7280; }
+.ptn-s{ font-size:.8rem; margin-top:6px; background:#ecfaf9; border-radius:9px; padding:7px 11px; color:var(--text); line-height:1.45; }
+/* 💰 338 · las comisiones si siguen así */
+.csg{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:4px 0 14px; }
+.csg-t{ font-weight:800; font-size:.92rem; color:var(--text); }
+.csg-t small{ font-weight:500; font-size:.74rem; color:var(--muted); margin-left:6px; }
+.csg-k{ display:flex; gap:8px; margin:8px 0 10px; flex-wrap:wrap; }
+.csg-k div{ flex:1 1 160px; background:#f3f8f8; border-radius:9px; padding:7px 10px; font-size:.76rem; color:#4b5b5b; }
+.csg-k b{ display:block; font-size:1.15rem; color:var(--text); font-variant-numeric:tabular-nums; }
+.csg-k .csg-p b{ color:#00A09A; }
+.csg-tab{ width:100%; border-collapse:collapse; font-size:.8rem; }
+.csg-tab th{ font-size:.7rem; color:#4b5b5b; background:#f3f8f8; text-align:left; font-weight:700; padding:5px 6px; border-bottom:1px solid #e3ecec; }
+.csg-tab td{ padding:6px; border-bottom:1px solid #f1f5f5; font-variant-numeric:tabular-nums; }
+.csg-tab .r{ text-align:right; }
+.csg-m{ color:var(--muted); font-size:.74rem; } .csg-m.csg-mb{ color:#b45309; font-weight:700; }
+tr.csg-borde td{ background:#fff7e6; }
+.csg-n{ font-size:.72rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+td.csg-c small{ display:block; color:var(--muted); font-size:.68rem; } td.csg-c.csg-borde small{ color:#b45309; font-weight:700; }
+td.csg-c.csg-borde{ background:#fff7e6; }
+.csg-tot{ color:#0f766e; }
+/* 📣 337 · lo que vende cada Bs de publicidad */
+.pub{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:4px 0 14px; }
+.pub-h{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-weight:800; font-size:.92rem; color:var(--text); }
+.pub-s{ font-size:.76rem; color:var(--muted); margin:3px 0 9px; line-height:1.45; }
+.pub-in{ display:flex; gap:8px 12px; align-items:center; flex-wrap:wrap; font-size:.8rem; margin-bottom:10px; background:#f7fbfb; border:1px solid #cfdede; border-radius:10px; padding:8px 10px; }
+.pub-in-t{ font-weight:700; }
+.pub-in-c{ display:flex; align-items:center; gap:6px; }
+.pub-in-c input{ width:120px; }
+.pub-av{ font-size:.8rem; background:#fffbeb; border:1px solid #fcd34d; border-radius:9px; padding:8px 11px; color:#7c4b00; margin-bottom:8px; }
+.pub-av-r{ background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+.pub-tot{ font-size:.82rem; background:#ecfaf9; border-radius:9px; padding:7px 11px; margin-bottom:9px; color:var(--text); }
+.pub-g3{ display:grid; grid-template-columns:repeat(auto-fill,minmax(min(190px,100%),1fr)); gap:8px; }
+.pub-k{ border:1px solid #e3ecec; border-radius:10px; padding:8px 10px; min-width:0; }
+.pub-k > b{ display:block; font-size:.82rem; margin-bottom:4px; color:var(--text); }
+.pub-k > div{ font-size:.74rem; color:#4b5b5b; line-height:1.55; }
+.pub-k-libre{ background:#fafcfc; }
+.pub-big{ font-size:1.05rem; font-weight:800; color:#00A09A; margin-top:4px; }
+.pub-big.pub-mal{ color:#b91c1c; } .pub-big.pub-gris{ color:#94a3b8; font-size:.86rem; }
+.pub-mm{ margin-top:10px; font-size:.78rem; color:#4b5b5b; }
+.pub-tab{ width:100%; border-collapse:collapse; font-size:.78rem; margin-top:4px; }
+.pub-tab th{ font-size:.7rem; color:#4b5b5b; background:#f3f8f8; text-align:left; font-weight:700; padding:5px 6px; }
+.pub-tab td{ padding:5px 6px; border-bottom:1px solid #f1f5f5; font-variant-numeric:tabular-nums; }
+.pub-tab .r{ text-align:right; } .pub-gr{ color:var(--muted); }
+.pub-w{ display:inline-block; width:90px; height:8px; border-radius:4px; background:#eef2f2; vertical-align:middle; overflow:hidden; }
+.pub-w i{ display:block; height:100%; background:#00B5AD; }
+.pub-n{ font-size:.7rem; color:#94a3b8; margin-top:8px; }
 /* 🎯 (27/10, §4nb) Las metas por marca, en Proyección. */
 .mt-btn{ background:#e6f7f6; color:#0f766e; border:1px solid #0f766e; font-weight:800; }
 .mt-box{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:14px 16px; margin:4px 0 14px; display:flex; flex-direction:column; gap:12px; }
@@ -13521,7 +13633,10 @@ function cxPryPintar(R){
                        pie:(t.vendedores.length===1 ? 'Su proyección es la de '+t.vendedores[0] : 'La suma de la proyección de sus vendedores') }, animaT);
       }).join('')+'</div>';
   }
-  box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml;
+  /* 🎯 (15/11, mejora 333) cada tienda contra su meta · 🏬 (mejora 343) la tienda nueva, día por día. Solo miran. */
+  var tMeta=''; if(pryTMetaVe()){ try{ tMeta=pryTMetaHtml(R, T); }catch(e){ tMeta=''; } }
+  var tNueva=''; if(pryTNuevaVe()){ try{ tNueva=pryTNuevaHtml(R, T); }catch(e){ tNueva=''; } }
+  box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml+tMeta+tNueva;
 }
 /* 🏬 (§4pb) Las tiendas del mes de `R` (la cuenta de `proyeccionMes`): por tienda (la de cada vendedor en ese mes, `pryVentas` → `st`: cada
    vendedor entero en una; el reparto por lo vendido queda para quien no tiene tienda en la lista), ventas, unidades, lo vendido, la proyección,
@@ -13555,6 +13670,360 @@ function cxPryTiendas(R){
     t.vendedores.sort(function(a,b){ return a.localeCompare(b,'es'); });
     return t;
   }).sort(function(a,b){ return (b.proy-a.proy) || (b.vendido-a.vendido) || a.k.localeCompare(b.k,'es'); });
+}
+
+/* ============================================================================
+   🎯 (15/11, mejora 333; el dueño la aprobó) CADA TIENDA CONTRA SU META, en Proyección. Las fichas «🏬 Por tienda» dicen lo vendido y la
+   proyección pero no contra qué: la cuenta se hacía a mano, vendedora por vendedora. Ahora, debajo de ellas, una barra por tienda: lo vendido
+   pintado, la proyección clara y una raya en la meta, con «faltan Bs X por día hábil». Verde si llega, ámbar si está cerca (90 %), rojo si no;
+   de la que mejor va a la que más le falta. Tocar una abre sus vendedoras con su meta.
+   · LA META DE UNA TIENDA = la suma de la de sus vendedoras GUARDADA para el mes (`ccmMetas(ym).ok`; la de cada una = su presupuesto, o la
+     mínima si no tiene presupuesto: la regla de la 174). Sin metas guardadas lo dice (no se mide contra una sugerencia).
+   · De qué tienda es cada una: la de sus ventas de ese mes (`pryVentas` → `st`, cada vendedor entero en su tienda); quien vendió en dos tiendas
+     reparte su meta en proporción a lo que vendió en cada una (como `cxPryTiendas` reparte la proyección); quien no vendió nada, la suya en la
+     lista (`sucursalDeVendedor` con el día 1 del mes). Lo vendido y la proyección son los de `cxPryTiendas`: nada se calcula aparte.
+   · Faltan por día = (meta − vendido) ÷ los días hábiles que quedan (contando hoy si es hábil), como `metaMarcaDatos`.
+   · En Playwright apagado salvo `window.PRY_TMETA_PRUEBA`.
+   ========================================================================== */
+var PRY_TMETA_AB={};
+function pryTMetaVe(){ return !(navigator.webdriver && !window.PRY_TMETA_PRUEBA); }
+function pryTMetaDatos(R, T){
+  T=T||cxPryTiendas(R);
+  var mt=ccmMetas(R.ym), out={ ym:R.ym, ok:!!mt.ok, filas:[], estado:R.estado };
+  out.dq=(R.estado==='curso') ? (R.dr+(diaHabil(R.hoy)?1:0)) : (R.estado==='futuro' ? R.dr : 0);
+  if(!mt.ok) return out;
+  var filas={};
+  (R.marcas||[]).forEach(function(m){ m.filas.forEach(function(r){ if(r.amb==='tienda') filas[normNombre(r.vendedor)]=r; }); });
+  ((R.sinMarca && R.sinMarca.filas)||[]).forEach(function(r){ if(r.amb==='tienda') filas[normNombre(r.vendedor)]=r; });
+  var porV={};
+  (R.V||[]).forEach(function(x){
+    if(x.amb!=='tienda' || x.ym!==R.ym) return;
+    var k=normNombre(x.v), o=porV[k]||(porV[k]={ v:x.v, bs:0, n:0, st:{}, stn:{} }), st=x.st||'';
+    o.bs=r2(o.bs+x.bs); o.n++; o.st[st]=r2((o.st[st]||0)+x.bs); o.stn[st]=(o.stn[st]||0)+1;
+  });
+  var TT={}, orden=[];
+  var tienda=function(st){ if(!TT[st]){ var t=T.filter(function(z){ return (z.st||'')===st; })[0]||null;
+    TT[st]={ st:st, k:(st||'Sin tienda'), vendido:t ? t.vendido : 0, proy:t ? (R.estado==='cerrado' ? t.vendido : t.proy) : 0, meta:0, vends:[], col:t ? t.col : '#64748b' }; orden.push(st); } return TT[st]; };
+  T.forEach(function(t){ tienda(t.st||''); });
+  var vistos={};
+  Object.keys(mt.vd||{}).forEach(function(nm){
+    var mm=ccmMetaDe(mt.vd, nm), meta=mm[1]>0 ? mm[1] : mm[0], k=normNombre(nm); if(vistos[k]) return; vistos[k]=1;
+    var pv=porV[k], r=filas[k], parts=[];
+    if(pv && pv.n) Object.keys(pv.st).forEach(function(st){ var pr = pv.bs>0.009 ? pv.st[st]/pv.bs : pv.stn[st]/pv.n; if(pr>0) parts.push([st, pr]); });
+    else { var s2=sucursalDeVendedor(nm, R.ym+'-01'); if(s2 && meta>0) parts.push([s2, 1]); }
+    parts.forEach(function(q){
+      var e=tienda(q[0]), pr=q[1], bs=pv ? (pv.st[q[0]]||0) : 0, py=r ? ((R.estado==='cerrado' ? r.vendido : r.proy)*pr) : bs;
+      if(meta>0) e.meta=r2(e.meta+meta*pr);
+      e.vends.push({ v:nombreCanonico(nm)||nm, meta:r2((meta>0 ? meta : 0)*pr), parte:pr<0.999, vendido:r2(bs), proy:r2(py) });
+    });
+  });
+  /* quien vendió y no tiene meta guardada, también en la lista (sin meta) */
+  Object.keys(porV).forEach(function(k){ if(vistos[k]) return; var pv=porV[k], r=filas[k];
+    Object.keys(pv.st).forEach(function(st){ var pr = pv.bs>0.009 ? pv.st[st]/pv.bs : pv.stn[st]/pv.n, e=tienda(st);
+      e.vends.push({ v:pv.v, meta:0, parte:pr<0.999, vendido:r2(pv.st[st]), proy:r2(r ? ((R.estado==='cerrado' ? r.vendido : r.proy)*pr) : pv.st[st]) }); }); });
+  out.filas=orden.map(function(st){
+    var e=TT[st];
+    e.vends.sort(function(a,b){ return (b.meta>0)-(a.meta>0) || b.proy-a.proy || a.v.localeCompare(b.v,'es'); });
+    if(e.meta>0){
+      e.pv=e.vendido/e.meta*100; e.pp=e.proy/e.meta*100; e.falta=r2(e.meta-e.vendido); e.porDia=(e.falta>0.009 && out.dq>0) ? e.falta/out.dq : 0;
+      var p = R.estado==='cerrado' ? e.pv : e.pp;
+      e.est = e.vendido>=e.meta-0.005 ? 'ok' : (R.estado==='cerrado' ? 'mal' : (p>=99.995 ? 'ok' : (p>=90 ? 'cerca' : 'mal')));
+    }
+    return e;
+  }).filter(function(e){ return e.meta>0 || e.vendido>0.009; })
+    .sort(function(a,b){ return (b.meta>0)-(a.meta>0) || ((b.meta>0) ? ((R.estado==='cerrado' ? b.pv-a.pv : b.pp-a.pp)) : (b.vendido-a.vendido)) || a.k.localeCompare(b.k,'es'); });
+  return out;
+}
+function pryTMetaPct(n){ return Math.round(Number(n)||0)+' %'; }
+function pryTMetaHtml(R, T){
+  var D=pryTMetaDatos(R, T), mes=mesNombre(R.ym).replace(/ de \d{4}$/,'');
+  var cab='<div class="ptm" id="pry-tmeta"><div class="ptm-t">🎯 Cada tienda contra su meta · '+esc(mes)+'</div>';
+  if(!D.ok) return cab+'<div class="ptm-s">Para ver cada tienda contra su meta, guardá las metas de cada vendedora de '+esc(mes)+' (🎯 Metas → por vendedora). La meta de una tienda es la suma de la de su gente.</div></div>';
+  var con=D.filas.filter(function(e){ return e.meta>0; });
+  if(!con.length) return cab+'<div class="ptm-s">Las metas de '+esc(mes)+' no tienen vendedoras con meta en ninguna tienda.</div></div>';
+  var curso=(R.estado!=='cerrado'), esc0=Math.min(200, Math.max(100, con.reduce(function(a,e){ return Math.max(a, curso ? e.pp : 0, e.pv); }, 0)));
+  var W=function(p){ return (Math.max(0, Math.min(esc0, p))/esc0*100).toFixed(1)+'%'; }, raya=W(100);
+  var h=cab+'<div class="ptm-s">La meta de la tienda = la suma de la meta de sus vendedoras (el presupuesto, o la mínima). '+(curso ? 'Ordenadas por lo que se proyecta.' : 'El mes cerró: lo vendido contra la meta.')+' Tocá una para ver a su gente.</div>';
+  D.filas.forEach(function(e){
+    var p=curso ? e.pp : e.pv, cls={ ok:'ptm-ok', cerca:'ptm-ce', mal:'ptm-ma' }[e.est]||'';
+    var pie = !(e.meta>0) ? 'sin meta guardada para su gente'
+      : e.est==='ok' ? (e.vendido>=e.meta-0.005 ? ('🎉 llegó: '+fmtBs0(e.vendido-e.meta)+' arriba') : 'llega ✅')
+      : (curso && e.porDia>0) ? ('faltan '+fmtBs0(e.porDia)+' por día hábil') : (curso ? '' : ('le faltaron '+fmtBs0(e.falta)));
+    var lista=e.vends.map(function(v){
+      return '<div class="ptm-v"><span>'+esc(v.v)+(v.parte ? ' <small>(la parte de lo que vendió acá)</small>' : '')+'</span><span>'+fmtBs0(v.vendido)+(curso ? (' · 📈 '+fmtBs0(v.proy)) : '')+'</span><span>'+(v.meta>0 ? ('🎯 '+fmtBs0(v.meta)+' · '+pryTMetaPct((curso ? v.proy : v.vendido)/v.meta*100)) : 'sin meta')+'</span></div>';
+    }).join('');
+    h+='<details class="ptm-r'+(e.meta>0 ? '' : ' ptm-sin')+'" data-st="'+esc(e.st)+'"'+(PRY_TMETA_AB[e.st] ? ' open' : '')+' ontoggle="PRY_TMETA_AB[this.getAttribute(\'data-st\')]=this.open">'+
+      '<summary><span class="ptm-n">'+esc(e.k)+'</span>'+
+      '<span class="ptm-b" role="img" aria-label="'+esc(e.k)+(e.meta>0 ? (': vendido '+Math.round(e.pv)+' por ciento de la meta'+(curso ? (', se proyecta '+Math.round(e.pp)+' por ciento') : '')) : ': sin meta')+'">'+
+        (e.meta>0 && curso ? '<i class="ptm-bp '+cls+'" style="width:'+W(e.pp)+'"></i>' : '')+(e.meta>0 ? '<i class="ptm-bv '+cls+'" style="width:'+W(e.pv)+'"></i><u style="left:'+raya+'"></u>' : '')+'</span>'+
+      '<span class="ptm-pc '+cls+'">'+(e.meta>0 ? pryTMetaPct(p) : '—')+'</span>'+
+      '<span class="ptm-f">'+(e.meta>0 ? ('vendido '+fmtBs0(e.vendido)+(curso ? (' · 📈 '+fmtBs0(e.proy)) : '')+' de '+fmtBs0(e.meta)+(pie ? ' · '+esc(pie) : '')) : ('vendido '+fmtBs0(e.vendido)+' · '+esc(pie)))+'</span></summary>'+
+      '<div class="ptm-vs">'+(lista || '<div class="ptm-v"><span>Nadie con meta guardada en esta tienda.</span></div>')+'</div></details>';
+  });
+  return h+'<div class="ptm-l"><span><b class="ptm-bv ptm-ok"></b>vendido</span>'+(curso ? '<span><b class="ptm-bp ptm-ok"></b>si sigue así</span>' : '')+'<span>│ la raya = la meta</span><span>verde llega · ámbar cerca (90 %) · rojo no llega</span></div></div>';
+}
+
+/* ============================================================================
+   🏬 (15/11, mejora 343; el dueño la aprobó) LA TIENDA NUEVA, DÍA POR DÍA. Tienda Banzer arrancó noviembre con 3 días hábiles en cero y después
+   vendió casi todos los días; Ventura Mall está por abrir. Saber si una tienda nueva arranca bien era armar la cuenta a mano. Durante sus primeros
+   30 días, debajo de las fichas de tienda, una curva chica: lo acumulado día hábil por día hábil desde que abrió, contra la tienda nueva anterior
+   en sus primeros días y contra una tienda de siempre de la misma marca en los mismos días, y una frase («Día 8: Bs 71.000, igual que Tienda
+   Banzer a esta altura y el 73 % de Central»).
+   · Las MISMAS ventas de las fichas (`pryVentas`: el equipo de tiendas, cada venta con la tienda de quien vendió en su mes, `st`), puestas en el
+     día en que se cargaron (`reg`), para el mes de entrega que sea. Lo cargado ANTES de abrir no cuenta (no lo vendió la tienda nueva); la de
+     siempre se mide igual, con lo cargado en esos mismos días.
+   · Abrió = el día 1 del primer mes en que la tienda tiene ventas, o su primera venta si es después (`TIENDA_APERTURA` lo puede escribir a mano,
+     por ejemplo para Ventura Mall). Es «nueva» si abrió más de `PRY_TNUEVA_GRACIA` días después de la primera venta del panel (las de siempre
+     tienen ventas desde el principio) y hace `PRY_TNUEVA_DIAS` días o menos.
+   · Días = días hábiles (lunes a sábado, sin feriados: `pryDiaHabil`) desde que abrió hasta hoy. Solo mira. En Playwright apagado salvo
+     `window.PRY_TNUEVA_PRUEBA`.
+   ========================================================================== */
+var TIENDA_APERTURA={}, PRY_TNUEVA_DIAS=30, PRY_TNUEVA_GRACIA=45;
+function pryTNuevaVe(){ return !(navigator.webdriver && !window.PRY_TNUEVA_PRUEBA); }
+/* Las tiendas con su día de apertura: {T:{st:{st, abre, primera, mes, marca}}, primera} (la primera venta del panel). */
+function pryTiendasAbren(V){
+  var o={}, prim='';
+  (V||pryVentas()).forEach(function(x){
+    if(x.amb!=='tienda' || !x.st || !x.reg) return;
+    if(!prim || x.reg<prim) prim=x.reg;
+    var e=o[x.st]||(o[x.st]={ st:x.st, primera:x.reg, mes:x.ym, g:{} });
+    if(x.reg<e.primera) e.primera=x.reg; if(x.ym<e.mes) e.mes=x.ym; e.g[x.g]=(e.g[x.g]||0)+1;
+  });
+  Object.keys(o).forEach(function(k){ var e=o[k], m0=e.mes+'-01'; e.abre=TIENDA_APERTURA[k] || (e.primera>m0 ? e.primera : m0);
+    var gk='', gn=-1; Object.keys(e.g).forEach(function(g){ if(e.g[g]>gn){ gn=e.g[g]; gk=g; } }); e.marca=gk; });
+  return { T:o, primera:prim };
+}
+/* Los días hábiles desde `abre` hasta `hasta` (incluidos); con `tope`, no más de esos. */
+function pryTNuevaDias(abre, hasta, tope){ var L=[], f=abre, n=0; while(f && f<=hasta && n<400){ if(pryDiaHabil(f)) L.push(f); f=stockSumarDias(f, 1); n++; if(tope && L.length>=tope) break; } return L; }
+/* Lo acumulado de la tienda `st` en cada uno de los días `dias`: lo que se CARGÓ desde `dias[0]` (para el mes que sea). Lo cargado antes de abrir
+   no es de la tienda nueva (Carola dejó en octubre, en Central, ventas para noviembre), así que no cuenta. */
+function pryTNuevaAcum(V, st, dias, hasta){
+  var d0=dias.length ? dias[0] : '', c=dias.map(function(){ return 0; });
+  V.forEach(function(x){
+    if(x.amb!=='tienda' || (x.st||'')!==st || !x.reg || x.reg<d0) return;
+    var i=0; while(i<dias.length && x.reg>dias[i]) i++;
+    if(i<dias.length) c[i]+=x.bs; else if(hasta && x.reg<=hasta) c[dias.length-1]+=x.bs;   // lo de un domingo o feriado, en el último día hábil
+  });
+  for(var i=1;i<c.length;i++) c[i]+=c[i-1];
+  return c.map(function(v){ return r2(v); });
+}
+function pryTNuevaDatos(R){
+  var V=pryVentas(), A=pryTiendasAbren(V), hoy=diaNegocio(), out=[];
+  if(!A.primera) return out;
+  var lim=stockSumarDias(A.primera, PRY_TNUEVA_GRACIA);
+  var nuevas=Object.keys(A.T).map(function(k){ return A.T[k]; }).filter(function(e){ return e.abre>lim; }).sort(function(a,b){ return a.abre<b.abre ? -1 : (a.abre>b.abre ? 1 : 0); });
+  nuevas.forEach(function(e, i){
+    if(e.abre>hoy || stockSumarDias(e.abre, PRY_TNUEVA_DIAS)<hoy) return;
+    var dias=pryTNuevaDias(e.abre, hoy); if(!dias.length) return;
+    var c=pryTNuevaAcum(V, e.st, dias, hoy), N=dias.length;
+    var cero=0; while(cero<N && !(c[cero]>0.009)) cero++;
+    /* la tienda nueva anterior, en SUS primeros días */
+    var ant=null; for(var j=i-1;j>=0;j--){ var d2=pryTNuevaDias(nuevas[j].abre, hoy, N); if(d2.length>=Math.min(N, 3)){ ant={ st:nuevas[j].st, c:pryTNuevaAcum(V, nuevas[j].st, d2) }; break; } }
+    /* una de siempre, de la misma marca: la que más vendió en esos mismos días */
+    var sie=null;
+    Object.keys(A.T).forEach(function(k){ var t=A.T[k]; if(t.abre>lim || t.st===e.st || (e.marca && t.marca!==e.marca)) return;
+      var cc=pryTNuevaAcum(V, t.st, dias, hoy); if(!sie || cc[N-1]>sie.c[N-1]) sie={ st:t.st, c:cc }; });
+    out.push({ st:e.st, abre:e.abre, dias:dias, c:c, n:N, cero:cero, ant:ant, sie:sie, marca:e.marca });
+  });
+  return out;
+}
+function pryTNuevaComp(v, ref, nom, alt){
+  if(!(ref>0.009)) return '';
+  var q=v/ref;
+  if(q>=0.9 && q<=1.1) return 'igual que '+nom+(alt ? ' a esta altura' : ' en los mismos días');
+  return 'el '+Math.round(q*100)+' % de '+nom+(alt ? ' a esta altura' : ' en los mismos días');
+}
+function pryTNuevaHtml(R){
+  if(R.estado!=='curso') return '';
+  var L=pryTNuevaDatos(R); if(!L.length) return '';
+  return L.map(function(D){
+    var N=D.n, v=D.c[N-1], W=500, H=150, X0=34, X1=488, aN=D.ant ? D.ant.c.slice(0, N) : null;
+    var top=Math.max(v, aN && aN.length ? aN[aN.length-1] : 0, D.sie ? D.sie.c[N-1] : 0, 1)*1.12;
+    var X=function(i){ return (N>1 ? X0+i/(N-1)*(X1-X0) : (X0+X1)/2).toFixed(1); }, Y=function(y){ return (130-y/top*118).toFixed(1); };
+    var linea=function(c, col, w, dash){ var pts=c.map(function(y,i){ return X(i)+','+Y(y); }).join(' '); return c.length>1 ? '<polyline fill="none" stroke="'+col+'" stroke-width="'+w+'"'+(dash ? ' stroke-dasharray="4 3"' : '')+' stroke-linejoin="round" points="'+pts+'"/>' : '<circle cx="'+X(0)+'" cy="'+Y(c[0])+'" r="3" fill="'+col+'"/>'; };
+    var kTxt=function(n){ n=Math.round(n/1000); return n.toLocaleString('es-BO')+'k'; };
+    var grid=''; [0, 0.5, 1].forEach(function(f){ var y=(130-f*118/1.12).toFixed(1); grid+='<line x1="'+X0+'" x2="'+X1+'" y1="'+y+'" y2="'+y+'" stroke="#e3ecec"/><text x="0" y="'+(+y+3).toFixed(1)+'" font-size="9" fill="#94a3b8">'+kTxt(f*top/1.12)+'</text>'; });
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" class="ptn-svg" role="img" aria-label="Lo vendido acumulado de '+esc(D.st)+' desde que abrió">'+grid+
+      (D.sie ? linea(D.sie.c, '#9ca3af', 2, true) : '')+(aN ? linea(aN, '#f59e0b', 2, true) : '')+linea(D.c, '#00A09A', 3, false)+
+      '<circle cx="'+X(N-1)+'" cy="'+Y(v)+'" r="4.5" fill="#00A09A"/>'+
+      '<text x="'+X0+'" y="146" font-size="10" fill="#94a3b8">día 1</text><text x="'+(X1-30)+'" y="146" font-size="10" fill="#94a3b8">día '+N+'</text></svg>';
+    var comp=[aN && aN.length ? pryTNuevaComp(v, aN[aN.length-1], D.ant.st, true) : '', D.sie ? pryTNuevaComp(v, D.sie.c[N-1], D.sie.st, false) : ''].filter(Boolean);
+    var frase='Día '+N+': <b>'+fmtBs0(v)+'</b>'+(comp.length ? (', '+esc(comp.join(' y '))) : '')+'.'+(D.cero ? (' '+D.cero+' día'+(D.cero===1 ? '' : 's')+' hábil'+(D.cero===1 ? '' : 'es')+' en cero al abrir.') : '');
+    return '<div class="ptn" data-st="'+esc(D.st)+'"><div class="ptn-t"><b>🏬 '+esc(D.st)+' · sus primeros días hábiles</b><span class="ptn-n">TIENDA NUEVA</span></div>'+
+      '<div class="ptn-a">abrió el '+esc(pryDiaTxt(D.dias[0]))+' · lo que se vendió desde ese día, acumulado por el día en que se cargó</div>'+svg+
+      '<div class="ptn-l"><span class="ptn-l1">━ '+esc(D.st)+'</span>'+(aN ? '<span class="ptn-l2">┅ '+esc(D.ant.st)+' (en sus primeros días)</span>' : '')+(D.sie ? '<span class="ptn-l3">┅ '+esc(D.sie.st)+' (de siempre, los mismos días)</span>' : '')+'</div>'+
+      '<div class="ptn-s">'+frase+'</div></div>';
+  }).join('');
+}
+
+/* ============================================================================
+   📣 (15/11, mejora 337; el dueño la aprobó) LO QUE VENDE CADA BS DE PUBLICIDAD, en Proyección (solo con la contraseña). Facebook trae el 63 %
+   de los leads y cierra el 1,7 %; «Visita tienda» trae 56 y cierra 24; el dashboard dice «Revisar inversión en canales» pero no sabe cuánto se
+   invierte. Ahora, por canal pagado: lo gastado, leads, ventas, Bs vendidos, costo por lead y por venta, y la cifra grande «Bs 1 → Bs 10,3»;
+   abajo, mes por mes, para ver si una campaña rinde más o menos que la anterior.
+   · 🔒 EL GASTO NO VA AL DASHBOARD (es público, GitHub Pages): vive en la fila del sistema `__publicidad__` (`PUB_ID`, en `esFilaSistema`),
+     JSON `{v:1, m:{'2026-11':{c:{'Facebook':7200, 'Instagram':1200}, t, por}}}`: lo gastado en el mes por canal, lo que va del mes (se corrige
+     cuando se quiera). Guardar relee la planilla y cambia SOLO ese mes (como las metas; sin sello: gana el último).
+   · Leads, ventas y Bs por canal salen del dashboard publicado (`index.html` del mismo sitio, el mes en curso; un mes anterior, su
+     `panel_AAAA_MM.html`): `window.PANEL_DATA.channels` (lo que `generar.py` ya calcula de Kommo: leads del mes, cierres de esos leads y su
+     valor). Sin claves. Si no se puede leer (sin internet, el archivo abierto en la compu), se dice y no se inventa nada.
+   · Mes por mes con el gasto de los meses guardados y los leads de su dashboard. Semana por semana no se puede todavía: el dashboard no
+     cuenta los canales por semana.
+   · Solo mira (salvo «Guardar el gasto»). En Playwright apagado salvo `window.PUB_PRUEBA`; la lectura del dashboard pasa por `pubDashTraer`.
+   ========================================================================== */
+var PUB_ID='__publicidad__', PUB_CANALES_PAGOS=['Facebook','Instagram','Tiktok'], PUB_ENV=0, PUB_EDITA=false, PUB_DASH={}, PUB_DASH_CADA=10*60000, PUB_MESES_ATRAS=3;
+function pubVe(){ return !(navigator.webdriver && !window.PUB_PRUEBA); }
+function pubLeer(fila){
+  var r = arguments.length ? fila : (STATE||[]).filter(function(p){ return p && String(p.id)===PUB_ID; })[0], o={};
+  try{ o=JSON.parse((r && r.observaciones)||'{}')||{}; }catch(e){ o={}; }
+  return { v:1, m:(o.m && typeof o.m==='object') ? o.m : {} };
+}
+function pubGastoDe(ym){ var e=pubLeer().m[ym], c=(e && e.c && typeof e.c==='object') ? e.c : {}, o={}; Object.keys(c).forEach(function(k){ var v=Number(c[k]); if(v>0) o[k]=v; }); return o; }
+function pubNorm(t){ return sinTildes(String(t||'')).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+/* La página del dashboard de un mes: el mes en curso es `index.html`; uno anterior, su archivo del historial. */
+function pubDashUrl(ym){ return ym===diaNegocio().slice(0,7) ? 'index.html' : ('panel_'+ym.replace('-','_')+'.html'); }
+function pubDashTraer(url){ return fetch(url+(url.indexOf('?')<0 ? '?' : '&')+'_='+Date.now(), { cache:'no-store', credentials:'omit' }).then(function(r){ if(!r.ok) throw new Error('http_'+r.status); return r.text(); }); }
+/* `window.PANEL_DATA = {...};` del HTML del dashboard → el objeto (o null). Se prueba cada «};» hasta que el JSON entero se entienda. */
+function pubDashDe(html){
+  html=String(html||''); var i=html.indexOf('window.PANEL_DATA'); if(i<0) return null;
+  var a=html.indexOf('{', i); if(a<0) return null;
+  for(var k=html.indexOf('};', a), n=0; k>=0 && n<80; k=html.indexOf('};', k+2), n++){ try{ var o=JSON.parse(html.slice(a, k+1)); if(o && typeof o==='object') return o; }catch(e){} }
+  return null;
+}
+/* El mes del dashboard ('2026-11') por su `month` («Noviembre») y `year`. */
+function pubDashYm(D){ if(!D) return ''; var m=MESES_ES.indexOf(String(D.month||'').toLowerCase()); return (m>=0 && D.year) ? (D.year+'-'+(m<9?'0':'')+(m+1)) : ''; }
+/* Lo del dashboard de `ym`, de a una lectura cada 10 min: {estado:'ok'|'lee'|'error'|'otro', D, err, t}. Repinta la caja al terminar. */
+function pubDash(ym, forzar){
+  var c=PUB_DASH[ym];
+  if(c && !forzar && (c.estado==='lee' || Date.now()-c.t<PUB_DASH_CADA)) return c;
+  var e={ estado:'lee', D:(c && c.D)||null, err:'', t:Date.now() }; PUB_DASH[ym]=e;
+  var p; try{ p=conTopeDuro(Promise.resolve(pubDashTraer(pubDashUrl(ym))), 20000, 'tardo_dashboard'); }catch(x){ p=Promise.reject(x); }
+  Promise.resolve(p).then(function(html){
+    var D=pubDashDe(html); if(!D) throw new Error('sin_datos');
+    var y=pubDashYm(D); e.D=D; e.estado=(y && y!==ym) ? 'otro' : 'ok'; e.ym=y;
+  }).catch(function(x){ e.estado='error'; e.err=String((x && x.message)||x); }).then(function(){ e.t=Date.now(); pubRepintar(); });
+  return e;
+}
+/* Un canal del dashboard: {nom, ic, leads, cierres, bs} (sin la fila «Cerrados de meses anteriores»). */
+function pubCanales(D){
+  return ((D && D.channels)||[]).filter(function(c){ return c && !c.carry && c.name; }).map(function(c){
+    var n=Number(c.cierres)||0, bs=Number(c.pipeline); if(!(bs>=0)) bs=n*(Number(c.ticket)||0);
+    return { nom:String(c.name), ic:String(c.ic||''), leads:Number(c.leads)||0, cierres:n, bs:bs||0 };
+  });
+}
+/* Los canales con su gasto: los pagos (`PUB_CANALES_PAGOS` y los que tienen gasto) primero; cada uno con costo por lead, por venta y Bs por Bs. */
+function pubDatos(ym, D){
+  var G=pubGastoDe(ym), C=pubCanales(D), por={}, out=[];
+  C.forEach(function(c){ por[pubNorm(c.nom)]=c; });
+  var pagos=[]; PUB_CANALES_PAGOS.concat(Object.keys(G)).forEach(function(n){ if(pagos.every(function(x){ return pubNorm(x)!==pubNorm(n); })) pagos.push(n); });
+  pagos.forEach(function(n){
+    var c=por[pubNorm(n)] || { nom:n, ic:'', leads:0, cierres:0, bs:0 }, g=0;
+    Object.keys(G).forEach(function(k){ if(pubNorm(k)===pubNorm(n)) g=G[k]; });
+    if(!por[pubNorm(n)] && !(g>0)) return;
+    out.push({ nom:c.nom, ic:c.ic, leads:c.leads, cierres:c.cierres, bs:c.bs, gasto:g, pago:true,
+               cpl:(g>0 && c.leads) ? g/c.leads : null, cpv:(g>0 && c.cierres) ? g/c.cierres : null, roi:g>0 ? c.bs/g : null });
+    delete por[pubNorm(n)];
+  });
+  Object.keys(por).forEach(function(k){ var c=por[k]; out.push({ nom:c.nom, ic:c.ic, leads:c.leads, cierres:c.cierres, bs:c.bs, gasto:0, pago:false, cpl:null, cpv:null, roi:null,
+    conv:c.leads ? c.cierres/c.leads : null }); });
+  var tot={ gasto:0, leads:0, cierres:0, bs:0 }; out.forEach(function(x){ if(x.gasto>0){ tot.gasto=r2(tot.gasto+x.gasto); tot.leads+=x.leads; tot.cierres+=x.cierres; tot.bs=r2(tot.bs+x.bs); } });
+  tot.roi=tot.gasto>0 ? tot.bs/tot.gasto : null;
+  return { ym:ym, canales:out, tot:tot, gasto:G };
+}
+function pubX(n){ return (Math.round(n*10)/10).toLocaleString('es-BO', { minimumFractionDigits:1, maximumFractionDigits:1 }); }
+function pubCardHtml(x){
+  var big = x.gasto>0 ? ('<div class="pub-big'+(x.roi!=null && x.roi<5 ? ' pub-mal' : '')+'">Bs 1 → Bs '+pubX(x.roi||0)+'</div>') : (x.pago ? '<div class="pub-big pub-gris">sin gasto cargado</div>' : '<div class="pub-big pub-gris">sin gasto</div>');
+  var l=[];
+  if(x.gasto>0) l.push('Gastado '+fmtBs0(x.gasto));
+  l.push(x.leads+' lead'+(x.leads===1?'':'s')+' · '+x.cierres+' venta'+(x.cierres===1?'':'s'));
+  l.push(fmtBs0(x.bs)+' vendidos');
+  if(x.cpl!=null) l.push('Costo por lead '+fmtBs0(x.cpl));
+  if(x.gasto>0) l.push(x.cpv!=null ? ('Costo por venta '+fmtBs0(x.cpv)) : 'ninguna venta todavía');
+  else if(x.leads) l.push(Math.round(x.cierres/x.leads*100)+' % compra');
+  return '<div class="pub-k'+(x.pago ? '' : ' pub-k-libre')+'" data-canal="'+esc(x.nom)+'"><b>'+esc((x.ic ? x.ic+' ' : '')+x.nom)+'</b><div>'+l.map(esc).join('<br>')+'</div>'+big+'</div>';
+}
+function pubMesesHtml(ym){
+  var ms=[]; for(var i=0, m=ym; i<=PUB_MESES_ATRAS; i++, m=metasMesMas(m, -1)){ if(m<PRY_PRIMER_MES) break; var G=pubGastoDe(m); if(Object.keys(G).length) ms.push(m); }
+  if(ms.length<2) return '';
+  var filas=ms.map(function(m){
+    var e=pubDash(m), D=(e.estado==='ok') ? e.D : null;
+    if(!D) return '<tr><td>'+esc(mesNombre(m))+'</td><td colspan="5" class="pub-gr">'+(e.estado==='lee' ? '⏳ leyendo su dashboard…' : 'no se pudo leer su dashboard')+'</td></tr>';
+    var P=pubDatos(m, D), t=P.tot, w=t.roi ? Math.min(100, Math.round(t.roi/20*100)) : 0;
+    return '<tr><td>'+esc(mesNombre(m))+'</td><td class="r">'+fmtBs0(t.gasto)+'</td><td class="r">'+t.leads+'</td><td class="r">'+t.cierres+'</td><td class="r">'+fmtBs0(t.bs)+'</td>'+
+      '<td><span class="pub-w"><i style="width:'+w+'%"></i></span> '+(t.roi!=null ? ('Bs '+pubX(t.roi)) : '—')+'</td></tr>';
+  }).join('');
+  return '<div class="pub-mm"><b>Mes por mes (Bs vendido por Bs gastado, los canales con gasto)</b><div class="ccm-scroll"><table class="pub-tab"><thead><tr><th>Mes</th><th class="r">Gastado</th><th class="r">Leads</th><th class="r">Ventas</th><th class="r">Vendido</th><th>Bs por Bs</th></tr></thead><tbody>'+filas+'</tbody></table></div></div>';
+}
+function pubEditHtml(ym, P){
+  var G=P ? P.gasto : pubGastoDe(ym), noms=[];
+  PUB_CANALES_PAGOS.concat(Object.keys(G)).forEach(function(n){ if(noms.every(function(x){ return pubNorm(x)!==pubNorm(n); })) noms.push(n); });
+  return '<div class="pub-in"><span class="pub-in-t">Lo gastado en '+esc(mesNombre(ym).replace(/ de \d{4}$/,''))+' (lo que va del mes):</span>'+noms.map(function(n, i){
+      var v=0; Object.keys(G).forEach(function(k){ if(pubNorm(k)===pubNorm(n)) v=G[k]; });
+      return '<label class="pub-in-c">'+esc(n)+' <span class="num-money"><input type="text" inputmode="decimal" autocomplete="off" class="pub-g" data-canal="'+esc(n)+'" value="'+(v>0 ? esc(String(r2(v))) : '')+'" placeholder="0"></span></label>';
+    }).join('')+
+    '<button type="button" class="btn btn-sm btn-primary" id="pub-guardar" onclick="pubGuardar()"'+(PUB_ENV ? ' disabled' : '')+'>'+(PUB_ENV ? '⏳ Guardando…' : '💾 Guardar el gasto')+'</button>'+
+    '<button type="button" class="btn btn-ghost btn-sm" onclick="pubEditar(false)">Cancelar</button></div>';
+}
+function pubHtml(ym){
+  var e=pubDash(ym), mes=mesNombre(ym).replace(/ de \d{4}$/,'');
+  var h='<div class="pub" id="pry-pub-box"><div class="pub-h"><span>📣 Lo que vende cada Bs de publicidad · '+esc(mes)+'</span>'+
+    (PUB_EDITA ? '' : '<button type="button" class="btn btn-sm mt-btn" id="pub-editar" onclick="pubEditar(true)">✏️ Cargar el gasto</button>')+'</div>'+
+    '<div class="pub-s">El gasto lo escribís vos y queda solo en el panel (el dashboard es público: ahí no va). Leads, ventas y Bs vendidos, del dashboard de Kommo de ese mes.</div>';
+  if(PUB_EDITA) h+=pubEditHtml(ym, null);
+  if(e.estado==='lee' && !e.D) return h+'<div class="pub-av">⏳ Leyendo el dashboard de Kommo…</div></div>';
+  if(e.estado==='error' && !e.D) return h+'<div class="pub-av pub-av-r">No se pudo leer el dashboard de Kommo ('+esc(e.err||'sin respuesta')+'): sin eso no hay leads ni ventas por canal. Se lee del mismo sitio que el panel; probá «🔄 Actualizar» con internet.</div></div>';
+  if(e.estado==='otro') return h+'<div class="pub-av">El dashboard que está publicado todavía es de '+esc(mesNombre(e.ym||''))+': cuando se actualice va a decir '+esc(mes)+'.</div></div>';
+  var P=pubDatos(ym, e.D);
+  if(!P.canales.length) return h+'<div class="pub-av">El dashboard de '+esc(mes)+' no trae canales.</div></div>';
+  var t=P.tot;
+  h+=(t.gasto>0 ? ('<div class="pub-tot">Con gasto: '+fmtBs0(t.gasto)+' → '+t.leads+' leads · '+t.cierres+' ventas · '+fmtBs0(t.bs)+' vendidos · <b>Bs 1 → Bs '+pubX(t.roi||0)+'</b></div>')
+                 : '<div class="pub-av">Todavía no hay gasto cargado para '+esc(mes)+': tocá «✏️ Cargar el gasto».</div>')+
+     '<div class="pub-g3">'+P.canales.map(pubCardHtml).join('')+'</div>'+pubMesesHtml(ym)+
+     '<div class="pub-n">Ventas = las fichas de Kommo que entraron este mes por ese canal y cerraron (Kommo). Lo que cerró de leads de meses anteriores no está acá. Dashboard del '+esc(String((e.D && e.D.updated)||''))+'.</div></div>';
+  return h;
+}
+function pubPintar(R){
+  var el=document.getElementById('pry-pub'); if(!el) return;
+  if(!pubVe() || !UNLOCKED || !R){ el.innerHTML=''; return; }
+  el.setAttribute('data-ym', R.ym);
+  try{ el.innerHTML=pubHtml(R.ym); }catch(e){ el.innerHTML=''; }
+}
+function pubRepintar(){
+  var el=document.getElementById('pry-pub'); if(!el || !pubVe() || !UNLOCKED) return;
+  var ym=el.getAttribute('data-ym'); if(!ym) return;
+  var foco=document.activeElement && document.activeElement.classList && document.activeElement.classList.contains('pub-g');
+  if(foco) return;   // no se repinta mientras se escribe el gasto
+  try{ el.innerHTML=pubHtml(ym); }catch(e){}
+}
+function pubEditar(on){ PUB_EDITA=!!on; pubRepintar(); if(on){ var i=document.querySelector('#pry-pub .pub-g'); if(i) i.focus(); } }
+function pubGuardar(){
+  var el=document.getElementById('pry-pub'), ym=el && el.getAttribute('data-ym'); if(!ym || PUB_ENV) return;
+  var nuevo={}, mal='';
+  [].forEach.call(document.querySelectorAll('#pry-pub .pub-g'), function(inp){
+    var t=String(inp.value||'').trim(), n=inp.getAttribute('data-canal'); if(!t) return;
+    var er=montoError(t); if(er && !mal){ mal=n+': '+er; try{ inp.focus(); }catch(e){} return; }
+    var v=r2(parseMonto(t)||0); if(v>0) nuevo[n]=v;
+  });
+  if(mal){ toast('❌ '+mal,'err',7000); return; }
+  if(!CONNECTED){ toast('❌ Sin conexión con la planilla: el gasto no se guardó.','err',7000); return; }
+  PUB_ENV=1; var b=document.getElementById('pub-guardar'); if(b){ b.disabled=true; b.textContent='⏳ Guardando…'; }
+  var fin=function(r){ PUB_ENV=0; return r; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('no se pudo leer la planilla');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===PUB_ID) srv=p; });
+    var D=pubLeer(srv);
+    if(Object.keys(nuevo).length) D.m[ym]={ c:nuevo, t:Date.now(), por:String((typeof quienEdita==='function' && quienEdita())||'') }; else delete D.m[ym];
+    var fila=filaSistema(PUB_ID, '📣 GASTO EN PUBLICIDAD (no tocar: lo lee el panel)', JSON.stringify(D));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[PUB_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(!(r && r.ok)) throw new Error((r && (r.error||r.motivo)) || 'la planilla no lo aceptó');
+      var g=(r.pedido && String(r.pedido.id)===PUB_ID) ? r.pedido : fila;
+      STATE=STATE.filter(function(p){ return String(p.id)!==PUB_ID; }); STATE.push(g);
+      fin(); PUB_EDITA=false; pubRepintar();
+      toast('📣 Gasto de '+mesNombre(ym)+' guardado','ok',5000);
+      return r;
+    });
+  }).catch(function(er){ fin(); pubRepintar(); toast('❌ No se guardó el gasto: '+((er && er.message)||'error')+'. Probá de nuevo.','err',8000); return null; });
 }
 
 /* ============================================================================
@@ -14135,6 +14604,77 @@ function ccmDatos(ym){
            fuera:ventas.filter(function(x){ return x.est!=='cuenta' && x.est!=='ajuste'; }) };
 }
 
+/* ============================================================================
+   💰 (15/11, mejora 338; el dueño la aprobó) LAS COMISIONES DEL MES, SI SIGUEN ASÍ. Al 15/11 el Cierre comercial daba Bs 5.648 (solo con lo
+   vendido) y nadie veía el total a fin de mes ni quién estaba al borde de un escalón (Fernando, a Bs 22 de su mínima). Ahora: una ficha en
+   Proyección (hoy · si siguen así · cuántas están a menos de `CCM_SIGUE_BORDE` de un escalón, con la tabla) y una columna «Si sigue así» en
+   el Cierre comercial, con el total arriba (para separar la plata). Es para saber a quién empujar esta semana; la cuenta del cierre NO cambia y
+   esto no se guarda en ningún lado.
+   · LA MISMA cuenta del cierre (`ccmCuenta`: lo que entra, metas, escala, Titanio, ajustes) con lo vendido de cada una llevado a su proyección:
+     lo que entra hoy + lo que le falta para llegar a la proyección de Proyección (`proyeccionMes`, su `proy − vendido`; así una venta ya
+     pagada en otro mes o sacada del cierre sigue afuera). El % y el escalón siguiente, con `ccmPctDe` / `ccmTramoSig` (la mínima es escalón);
+     el bono Titanio crece en la misma proporción que lo vendido; los ajustes de meses cerrados van como están.
+   · Solo con el mes en curso y abierto. En Playwright apagado salvo `window.CCM_SIGUE_PRUEBA`.
+   ========================================================================== */
+var CCM_SIGUE_BORDE=15000;
+function ccmSigueVe(){ return !(navigator.webdriver && !window.CCM_SIGUE_PRUEBA); }
+/* K = `ccmCuenta(ym)` o `ccmDatos(ym)` (lo que tenga filas, es, cerrado, cal); R = `proyeccionMes(ym)` (opcional). null si el mes no está en curso o está cerrado. */
+function ccmSigueDatos(ym, K, R){
+  K=K||ccmCuenta(ym);
+  if(!K || K.cerrado || K.cal!=='curso') return null;
+  R=R||proyeccionMes(ym);
+  var pr={}; (R.marcas||[]).concat(R.sinMarca ? [R.sinMarca] : []).forEach(function(m){ (m.filas||[]).forEach(function(r){ if(r.amb==='tienda') pr[normNombre(r.vendedor)]=r; }); });
+  var o={ ym:ym, fin:pryFinDeMes(ym), filas:[], hoy:0, sigue:0, borde:0, bsHoy:0, bsSigue:0 };
+  (K.filas||[]).filter(ccmFilaVe).forEach(function(r){
+    var p=pr[normNombre(r.v)], mas=p ? Math.max(0, r2(p.proy-p.vendido)) : 0, bs=r2(r.bs+mas), fac=r.bs>0.005 ? bs/r.bs : 1;
+    var em=K.es && K.es.esc ? K.es.esc[r.g] : null, q=(em && !r.sinMetas) ? ccmPctDe(em, bs, r.mi, r.pr) : { pct:0, t:null };
+    var co=r2(bs*q.pct/100), bo=r2(r2(r.ti*fac)*(r.bp||0)/100), to=r2(co+bo+(r.ajCom||0)+(r.ajBono||0));
+    var sig=(em && !r.sinMetas) ? ccmTramoSig(em, bs, r.mi, r.pr) : null;
+    var borde=!!(sig && sig.falta>0.005 && sig.falta<=CCM_SIGUE_BORDE);
+    var f={ v:r.v, g:r.g, hoy:r.to, bsHoy:r.bs, bs:bs, pct:q.pct, tramo:q.t, co:co, bo:bo, to:to, sig:sig, borde:borde, sinMetas:r.sinMetas, mi:r.mi, pr:r.pr,
+            aMin:!!(sig && !(q.pct>0) && r.mi>0 && Math.abs(sig.desde-r.mi)<0.005) };
+    o.filas.push(f); o.hoy=r2(o.hoy+r.to); o.sigue=r2(o.sigue+to); o.bsHoy=r2(o.bsHoy+r.bs); o.bsSigue=r2(o.bsSigue+bs); if(borde) o.borde++;
+  });
+  o.filas.sort(function(a,b){ return b.to-a.to || b.bs-a.bs || a.v.localeCompare(b.v,'es'); });
+  return o;
+}
+/* «a Bs 4.900 del 2,75 %» / «⚠️ a Bs 22 de la mínima» / «le faltan Bs 22.500 para la mínima». */
+function ccmSigueMira(f){
+  if(f.sinMetas) return 'sin metas: sin comisión';
+  if(!f.sig) return f.pct>0 ? 'ya en el tramo más alto' : '';
+  var cuanto=fmtBs0(Math.ceil(f.sig.falta));
+  if(f.aMin) return f.borde ? ('⚠️ a '+cuanto+' de la mínima') : ('le faltan '+cuanto+' para la mínima');
+  return f.borde ? ('a '+cuanto+' del '+ccmPcTxt(f.sig.pct)) : '';
+}
+function ccmSigueHtml(R, S){
+  if(!S) return '';
+  var fin=fmtFechaCorta(S.fin);
+  var filas=S.filas.map(function(f){
+    var m=ccmSigueMira(f);
+    return '<tr class="'+(f.borde ? 'csg-borde' : '')+'"><td><b>'+esc(f.v)+'</b></td><td class="r">'+fmtBs0(f.hoy)+'</td><td class="r"><b>'+fmtBs0(f.to)+'</b></td>'+
+      '<td>'+(f.sinMetas ? '—' : (f.pct>0 ? ccmPcTxt(f.pct) : (f.bo>0.005 ? 'solo bono' : '—')))+'</td><td class="csg-m'+(f.borde ? ' csg-mb' : '')+'">'+esc(m)+'</td></tr>';
+  }).join('');
+  return '<div class="csg" id="pry-com-box"><div class="csg-t">💰 Comisiones de '+esc(mesNombre(S.ym).replace(/ de \d{4}$/,''))+' <small>si siguen así · no se guarda: la cuenta del cierre no cambia</small></div>'+
+    '<div class="csg-k"><div>Hoy, con lo vendido<b>'+fmtBs0(S.hoy)+'</b></div><div class="csg-p">Si siguen así, al '+esc(fin)+'<b>'+fmtBs0(S.sigue)+'</b></div>'+
+      '<div>A menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón<b>'+S.borde+'</b></div></div>'+
+    '<div class="ccm-scroll"><table class="csg-tab"><thead><tr><th>Vendedora</th><th class="r">Hoy</th><th class="r">Si sigue así</th><th>Tramo</th><th>Para mirar</th></tr></thead><tbody>'+filas+'</tbody></table></div>'+
+    '<div class="csg-n">La misma cuenta del 🏁 Cierre comercial (metas, escala, Titanio y ajustes), con lo vendido de cada una llevado a su proyección. En ámbar, quién está a menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón: a quién empujar esta semana.</div></div>';
+}
+function ccmSiguePintar(R){
+  var el=document.getElementById('pry-com'); if(!el) return;
+  if(!ccmSigueVe() || !R || R.estado!=='curso'){ el.innerHTML=''; return; }
+  var h=''; try{ h=ccmSigueHtml(R, ccmSigueDatos(R.ym, null, R)); }catch(e){ h=''; }
+  el.innerHTML=h;
+}
+/* Para la columna del Cierre comercial: la fila de una vendedora en `S` (por su nombre). */
+function ccmSigueDe(S, v){ if(!S) return null; var k=normNombre(v); for(var i=0;i<S.filas.length;i++) if(normNombre(S.filas[i].v)===k) return S.filas[i]; return null; }
+
+/* La celda de la columna «Si sigue así» de una fila del cierre. */
+function ccmSigueCelda(S, r){
+  var f=ccmSigueDe(S, r.v); if(!f) return '<td class="csg-c">—</td>';
+  var m=ccmSigueMira(f);
+  return '<td class="csg-c'+(f.borde ? ' csg-borde' : '')+'"><b>'+fmtBs0(f.to)+'</b>'+(m ? ('<small>'+esc(m)+'</small>') : '')+'</td>';
+}
 /* ---- la ventana ---- */
 function ccmAbrir(ym){
   if(!UNLOCKED){ toast('🔒 El cierre comercial es solo con la contraseña de Administración.','err',6000); return; }
@@ -14178,13 +14718,16 @@ function ccmHtml(R){
   if(R.cerrado) h+='<div class="ccm-av ccm-av-ok">🔒 Estos números quedaron congelados. Lo que cambie después en las ventas de '+esc(mc)+' va como <b>ajuste a '+esc(R.destino ? mesNombre(R.destino) : 'el mes siguiente')+'</b>, con el % que cada uno tuvo acá.</div>';
   /* primero los números; lo que hay que revisar va abajo, justo antes de «Cerrar» */
   if(!R.cerrado && R.rev.n) h+='<div class="ccm-av">⚠️ Antes de cerrar hay <b>'+R.rev.n+' cosa'+(R.rev.n===1 ? '' : 's')+' para revisar</b> (abajo, en «Para revisar»).</div>';
+  /* 💰 (15/11, mejora 338) «si sigue así»: la misma cuenta con la proyección de cada una (solo el mes en curso y abierto; no se guarda) */
+  R.sg=null; if(ccmSigueVe() && !R.cerrado && R.cal==='curso'){ try{ R.sg=ccmSigueDatos(R.ym, R); }catch(e){ R.sg=null; } }
   /* por marca */
   var conAj=R.tot.ajCom || R.tot.ajBono || R.ajustes.length;
   R.marcas.forEach(function(m){ if(m.filas.length) h+=ccmMarcaHtml(R, m.g, m.filas, m.tot, conAj); });
   if(R.sin.length) h+=ccmMarcaHtml(R, { k:'sin', lbl:'Sin marca', ico:'⚠️', col:'#d97706', txt:'#92400e' }, R.sin, ccmSuma(R.sin), conAj);
   if(R.tot.n || R.tot.to) h+='<div class="ccm-box" style="border-left:5px solid #0f766e"><div class="ccm-t">💵 Total a pagar — '+esc(mes)+'</div>'+
     '<div style="font-size:1.15rem;font-weight:800;color:#0f766e">'+fmtBs(R.tot.to)+'</div><div class="ccm-nota">comisiones '+fmtBs(R.tot.co)+' · bono Titanio '+fmtBs(R.tot.bo)+
-    (conAj ? (' · ajustes '+fmtBs(r2(R.tot.ajCom+R.tot.ajBono))) : '')+' · vendido '+fmtBs(R.tot.bs)+' en '+R.tot.n+' ventas · '+R.tot.u+' unidades</div></div>';
+    (conAj ? (' · ajustes '+fmtBs(r2(R.tot.ajCom+R.tot.ajBono))) : '')+' · vendido '+fmtBs(R.tot.bs)+' en '+R.tot.n+' ventas · '+R.tot.u+' unidades</div>'+
+    (R.sg ? ('<div class="ccm-nota csg-tot">📈 <b>Si siguen así, al '+esc(fmtFechaCorta(R.sg.fin))+': '+fmtBs0(R.sg.sigue)+'</b> (para separar la plata) · '+R.sg.borde+' a menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón · es una estimación, no se guarda</div>') : '')+'</div>';
   /* ⚠️ para revisar */
   if(!R.cerrado) h+=ccmRevisarHtml(R);
   /* ajustes */
@@ -14209,7 +14752,7 @@ function ccmHtml(R){
 }
 function ccmMarcaHtml(R, g, filas, t, conAj){
   var col=g.col||'#00B5AD', tx=g.txt||col;
-  var head='<tr><th>Vendedor</th><th>Ventas</th><th>Unid.</th><th>Vendido</th><th>Mínima</th><th>Presupuesto</th><th>% mín.</th><th>% pres.</th><th>Comisión</th><th>Comisión Bs</th><th>Titanio Bs</th><th>Bono</th>'+(conAj ? '<th>Ajuste</th>' : '')+'<th>Total</th></tr>';
+  var head='<tr><th>Vendedor</th><th>Ventas</th><th>Unid.</th><th>Vendido</th><th>Mínima</th><th>Presupuesto</th><th>% mín.</th><th>% pres.</th><th>Comisión</th><th>Comisión Bs</th><th>Titanio Bs</th><th>Bono</th>'+(conAj ? '<th>Ajuste</th>' : '')+'<th>Total</th>'+(R.sg ? '<th title="Con la proyección de cada una: no se guarda">📈 Si sigue así</th>' : '')+'</tr>';
   var rows=filas.map(function(r){
     var pMin=r.mi>0 ? r.bs/r.mi*100 : null, pPres=r.pr>0 ? r.bs/r.pr*100 : null;
     var sub = g.k==='sin' ? 'no está en ninguna marca: sin escala' : (r.sinMetas ? 'sin metas: sin comisión' : ccmTramoTxt(r.tramo));
@@ -14218,10 +14761,11 @@ function ccmMarcaHtml(R, g, filas, t, conAj){
       '<td><span class="ccm-pc'+(r.pc ? '' : ' ccm-0')+'">'+ccmPcTxt(r.pc)+'</span></td><td>'+fmtBs(r.co)+'</td>'+
       '<td>'+fmtBs(r.ti)+(r.tiFalta ? ('<small class="ccm-mal">'+r.tiFalta+' sin precio</small>') : '')+'</td><td>'+fmtBs(r.bo)+(r.bp ? ('<small>'+ccmPcTxt(r.bp)+'</small>') : '')+'</td>'+
       (conAj ? ('<td>'+((r.ajCom || r.ajBono) ? fmtBs(r2(r.ajCom+r.ajBono)) : '—')+(r.aj ? ('<small>por '+fmtBs(r.aj)+' vendido</small>') : '')+'</td>') : '')+
-      '<td class="ccm-tot">'+fmtBs(r.to)+'</td></tr>';
+      '<td class="ccm-tot">'+fmtBs(r.to)+'</td>'+(R.sg ? ccmSigueCelda(R.sg, r) : '')+'</tr>';
   }).join('');
   var foot='<tr><td>Total '+esc(g.lbl)+'</td><td>'+t.n+'</td><td>'+t.u+'</td><td>'+fmtBs(t.bs)+'</td><td></td><td></td><td></td><td></td><td></td><td>'+fmtBs(t.co)+'</td><td>'+fmtBs(t.ti)+'</td><td>'+fmtBs(t.bo)+'</td>'+
-    (conAj ? ('<td>'+fmtBs(r2(t.ajCom+t.ajBono))+'</td>') : '')+'<td class="ccm-tot">'+fmtBs(t.to)+'</td></tr>';
+    (conAj ? ('<td>'+fmtBs(r2(t.ajCom+t.ajBono))+'</td>') : '')+'<td class="ccm-tot">'+fmtBs(t.to)+'</td>'+
+    (R.sg ? ('<td class="csg-c"><b>'+fmtBs0(filas.reduce(function(a, r){ var f=ccmSigueDe(R.sg, r.v); return r2(a+(f ? f.to : 0)); }, 0))+'</b></td>') : '')+'</tr>';
   var escTx='';
   if(g.k!=='sin'){ var em=R.es.esc[g.k]; escTx='Escala'+(R.es.de && R.es.de!=='sep' ? (' (la guardada para '+esc(mesNombre(R.es.de))+')') : (R.es.ok ? '' : ' ⚠️ sin confirmar'))+': '+
     ((em && em.t.length) ? em.t.map(function(t){ return ccmPcTxt(t[2])+' '+ccmTramoTxt(t); }).join(' · ') : 'sin tramos')+' · bono Titanio '+ccmPcTxt(em ? em.bono : 0)+'.'; }
@@ -15967,7 +16511,9 @@ function renderProyeccion(){
   if(MEq) h+=mc('#0f766e','🎯 Meta del equipo', fmtBs0(MEq), 'va el '+metaPct(E.vendido, MEq)+'%'+(conProy ? (' · se proyecta el '+metaPct(E.proy, MEq)+'%') : '')+' ('+MARCAS.filter(function(g){ return metaDe(R.ym, g.k); }).map(function(g){ return g.lbl; }).join(' + ')+')');
   box.innerHTML=h;
   try{ cxFichasVivas(box, 'cxPryF'); }catch(e){}
+  try{ pryMovPintar(R); }catch(e){}  // 📈 (15/11, mejora 340) por qué se movió la proyección desde ayer
   try{ metasPintar(R); }catch(e){}   // 🎯 (§4nb) cómo va cada marca contra su meta
+  try{ ccmSiguePintar(R); }catch(e){} // 💰 (15/11, mejora 338) las comisiones del mes, si siguen así
   try{ bfnPintar(R); }catch(e){}     // 🛍️ (13/11, mejora 177) Black Friday en números, solo durante la campaña
   try{ cxPryPintar(R); }catch(e){}   // ✨ (§4jw, K) la curva de cada marca
   acomodarFichas();
@@ -16067,6 +16613,7 @@ function renderProyeccion(){
   document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
   try{ pryCarreraPoner(R); }catch(e){}   // 🏁 (§4pj, 166) la carrera del mes
   try{ pryCalorPoner(R); }catch(e){}     // 🟩 (§4pj, 167) el calendario de calor
+  try{ pubPintar(R); }catch(e){}         // 📣 (15/11, mejora 337) lo que vende cada Bs de publicidad
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
   var _ph=document.getElementById('pry-hist'); if(_ph) _ph.innerHTML=pryHistHtml(R);   // 📒 (§4mn) lo que dijo cada día
@@ -16131,7 +16678,15 @@ function pryHistEntrada(R){
   var hb=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; }, b={};
   R.marcas.forEach(function(m){ var mt=R.metodos[m.g.k]||{}; b[m.g.k]=[Math.round(m.tot.vendido), Math.round(m.tot.proy), mt.m==='curva' ? 'c' : 'r']; });
   return { h:z(hb.getHours())+':'+z(hb.getMinutes()), dt:R.dt, dr:R.dr, v:Math.round(R.equipo.vendido), p:Math.round(R.equipo.proy), b:b,
-           mp:Math.round((R.mayor && R.mayor.tot.proy)||0), ru:(R.roho && R.roho.tot.proyU)||0 };
+           mp:Math.round((R.mayor && R.mayor.tot.proy)||0), ru:(R.roho && R.roho.tot.proyU)||0, t:pryHistTiendas(R) };
+}
+/* 🏬 (15/11, para el WhatsApp de la 341: «tiendas» / «tienda <nombre>» del dueño) Lo vendido y la proyección de cada tienda, tal cual las fichas
+   «🏬 Por tienda» (`cxPryTiendas`: cada vendedor entero en su tienda de ese mes): `t:{'<tienda>':[vendido, proyección]}`. El servidor lo lee con
+   `waTiendasMes_` (la proyección de una tienda solo sale de acá). Sin tiendas, `{}`. */
+function pryHistTiendas(R){
+  var t={};
+  try{ cxPryTiendas(R).forEach(function(x){ t[x.st||'']=[Math.round(x.vendido), Math.round(x.proy)]; }); }catch(e){ t={}; }
+  return t;
 }
 /* Lo de la planilla + la foto de hoy (la más tarde del día gana), sin días de más ni letras de más. */
 function pryHistJuntar(base, dia, ent){
@@ -16221,6 +16776,58 @@ function pryHistHtml(R){
   return cab+'<div class="pry-intro">'+esc(intro)+'</div>'+
     '<div class="pry-scroll"><table class="pry-tabla" id="pry-hist-t"><thead><tr><th>El día</th><th>Ya vendido</th><th>Equipo</th>'+
     gs.map(function(g){ return '<th>'+g.ico+' '+esc(g.lbl)+'</th>'; }).join('')+'</tr></thead><tbody>'+filas+'</tbody>'+foot+'</table></div></div>';
+}
+/* ============================================================================
+   📈 (15/11, mejora 340; el dueño: «por qué se movió la proyección») POR QUÉ SE MOVIÓ LA PROYECCIÓN. Del 09 al 10/11 la del equipo subió
+   Bs 108.973: Bs 44.970 eran ventas nuevas para el mes y Bs 64.003 fue la cuenta (Heaven pasó de «ritmo» a «curva» y al otro día volvió). El
+   número solo no lo dice. Al lado de la proyección, una línea: cuánto se movió desde la última foto de un día anterior (`__pry_hist__`), cuánto
+   son ventas nuevas (Δ lo vendido) y cuánto es la cuenta (Δ proyección − Δ vendido), y qué marca cambió de forma. Si casi todo el salto es la
+   cuenta (75 % o más, del mismo signo, y el salto es de Bs 1.000 o más) va en gris: no es que se vendió más.
+   · LA MISMA regla del WhatsApp del cierre (`waPryMov_` / `waPryMovCuenta_` del .gs, `WA_PRY_MOV_CUENTA`), contra lo de AHORA (la cuenta de
+     `proyeccionMes`, como lo guarda `pryHistEntrada`). Solo mira: no cambia ninguna cuenta. En Playwright solo con `window.PRY_MOV_PRUEBA`.
+   ========================================================================== */
+var PRY_MOV_CUENTA=0.75;   // = WA_PRY_MOV_CUENTA del .gs
+function pryMovVe(){ return !(navigator.webdriver && !window.PRY_MOV_PRUEBA); }
+/* {de, ayer, dv, dp, cuenta, cambios:[{k, nom, de, a}], gris, antes:{v,p}, ahora:{v,p}} o null (mes que no está en curso, o sin foto de un día anterior del mes). */
+function pryMovDatos(R, d){
+  if(!R || R.estado!=='curso') return null;
+  d=d||pryHistLeer();
+  var ks=Object.keys(d).filter(function(k){ return k.slice(0,7)===R.ym && k<R.hoy && d[k] && d[k].p!=null; }).sort();
+  if(!ks.length) return null;
+  var de=ks[ks.length-1], y=d[de], x=pryHistEntrada(R), MET={ c:'curva', r:'ritmo' };
+  var dv=Math.round(Number(x.v)||0)-Math.round(Number(y.v)||0), dp=Math.round(Number(x.p)||0)-Math.round(Number(y.p)||0), cambios=[];
+  var by=(y.b && typeof y.b==='object') ? y.b : {};
+  MARCAS.forEach(function(g){
+    var m1=Array.isArray(by[g.k]) ? by[g.k][2] : '', m2=Array.isArray(x.b[g.k]) ? x.b[g.k][2] : '';
+    if(m1 && m2 && m1!==m2 && MET[m1] && MET[m2]) cambios.push({ k:g.k, nom:g.lbl, de:MET[m1], a:MET[m2] });
+  });
+  var cuenta=dp-dv;
+  return { de:de, h:String(y.h||''), ayer:(de===stockSumarDias(R.hoy,-1)), dv:dv, dp:dp, cuenta:cuenta, cambios:cambios,
+           gris:(Math.abs(dp)>=1000 && cuenta*dp>0 && Math.abs(cuenta)>=PRY_MOV_CUENTA*Math.abs(dp)), antes:{ v:Math.round(Number(y.v)||0), p:Math.round(Number(y.p)||0) }, ahora:{ v:x.v, p:x.p } };
+}
+function pryMovSig(n){ n=Math.round(Number(n)||0); return (n<0 ? '−' : '+')+fmtBs0(Math.abs(n)); }
+function pryMovHtml(R, M){
+  if(!M) return '';
+  var cuando=M.ayer ? 'desde ayer' : ('desde el '+pryDiaTxt(M.de)), quieto=Math.abs(M.dp)<1;
+  var cab='<div class="pmv-c"><span>📈 Proyección del equipo · '+esc(pryDiaTxt(R.hoy))+'</span><b>'+fmtBs0(M.ahora.p)+'</b></div>'+
+    '<div class="pmv-p">'+(M.ayer ? 'ayer' : ('el '+esc(pryDiaTxt(M.de))))+' decía '+fmtBs0(M.antes.p)+(M.h ? (' (a las '+esc(M.h)+')') : '')+'</div>';
+  if(quieto) return '<div class="pmv" id="pry-mov-box">'+cab+'<div class="pmv-e pmv-gris">= Igual que '+(M.ayer ? 'ayer' : ('el '+esc(pryDiaTxt(M.de))))+
+    (M.dv ? (' ('+esc(pryMovSig(M.dv))+' de ventas nuevas, compensado por la cuenta)') : '')+'.</div></div>';
+  var av=Math.abs(M.dv), ac=Math.abs(M.cuenta), tot=(av+ac)||1, wv=Math.round(av/tot*100), wc=100-wv;
+  var cam=M.cambios.length ? (': '+M.cambios.map(function(c){ return esc(c.nom)+' pasó de «'+esc(c.de)+'» a «'+esc(c.a)+'»'; }).join(', ')) : '';
+  var vtx = M.dv>=0 ? (fmtBs0(M.dv)+' son ventas nuevas para este mes') : (fmtBs0(-M.dv)+' menos de ventas (se movieron de mes o se sacaron)');
+  var ctx = (M.cuenta>=0 ? fmtBs0(M.cuenta) : ('−'+fmtBs0(-M.cuenta)))+' es la cuenta'+cam;
+  return '<div class="pmv" id="pry-mov-box">'+cab+
+    '<div class="pmv-e'+(M.gris ? ' pmv-gris' : '')+'">'+(M.dp>0 ? '▲ ' : '▼ ')+'<b>'+(M.dp>0 ? 'Subió ' : 'Bajó ')+fmtBs0(Math.abs(M.dp))+' '+esc(cuando)+'</b>'+
+      '<div class="pmv-bar" role="img" aria-label="'+esc(vtx+' · '+ctx.replace(/<[^>]+>/g,''))+'"><i class="pmv-v" style="width:'+wv+'%"></i><i class="pmv-k" style="width:'+wc+'%"></i></div>'+
+      '<div class="pmv-l"><span><i class="pmv-v"></i>'+vtx+'</span><span><i class="pmv-k"></i>'+ctx+'</span></div></div>'+
+    (M.gris ? '<div class="pmv-g">Casi todo el salto es «la cuenta»: no es que se vendió más.</div>' : '')+'</div>';
+}
+function pryMovPintar(R){
+  var el=document.getElementById('pry-mov'); if(!el) return;
+  if(!pryMovVe()){ el.innerHTML=''; return; }
+  var h=''; try{ h=pryMovHtml(R, pryMovDatos(R)); }catch(e){ h=''; }
+  el.innerHTML=h;
 }
 /* 🧪 La prueba: los dos últimos meses cerrados y el que está en curso (solo lo que ya pasó), una tabla por marca. */
 function pryPruebaHtml(R){
@@ -25214,6 +25821,7 @@ function updateStats(o){
   /* ⚡ (§4oa, 85) Con una lectura sin cambios no se recalculan si se calcularon hace menos de un minuto (su reloj propio los repasa igual). */
   if(typeof nxBadges==='function' && !(o && o.igual && Date.now()-NX_BADGES_T<55000)) nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
   try{ vivoPintar(); }catch(e){}                  // 🔔 (§4ni, 10) la campanita «En vivo»
+  try{ hdrMetaPintar(); }catch(e){}               // 🎯 (15/11, mejora 342) la meta del mes arriba, solo con la contraseña
 }
 
 /* 🚚 (§4iw, 09/10, dueño: «A») Arriba: el día de hoy y dos anillos con los cupos LIBRES del próximo camión (AM y PM).
@@ -25292,6 +25900,54 @@ function hdrPintar(man, rAM, rPM){
   requestAnimationFrame(function(){ requestAnimationFrame(function(){ [].forEach.call(cs, function(c){ c.style.strokeDashoffset=c.getAttribute('data-o'); }); }); });
   try{ hdrMedir(); }catch(e){}   // (§4mo) con los anillos puestos el encabezado puede cambiar de alto
 }
+
+/* 🎯 (15/11, mejora 342; el dueño, solo con la contraseña) LA META DEL MES ARRIBA. Debajo de la franja turquesa, una barrita: «🎯 Noviembre · vendido
+   56 % · si sigue así 94 % de Bs 1.102.000 · faltan Bs 37.500 por día hábil»; verde si llega, ámbar si está cerca (90 %), rojo si no. Tocarla abre
+   Proyección. Los vendedores no la ven (`UNLOCKED`).
+   · Una sola verdad: la meta, lo vendido, la proyección y lo que falta por día salen de `metaMarcaDatos(proyeccionMes(mes))` de cada marca con
+     meta (lo mismo que «🎯 Cómo van contra la meta» de Proyección). La proyección es pesada: se calcula a lo sumo cada `HDR_META_CADA` (10 min)
+     o al cambiar de mes. Su alto entra en el encabezado, así que `--hdr-h` lo cuenta (`hdrMedir`) y no tapa nada.
+   · En Playwright apagada salvo `window.HDR_META_PRUEBA`. */
+var HDR_META={ t:0, ym:'', D:null }, HDR_META_CADA=10*60000;
+function hdrMetaVe(){ return !!UNLOCKED && !(navigator.webdriver && !window.HDR_META_PRUEBA); }
+function hdrMetaDatos(ym){
+  var R=proyeccionMes(ym), o={ ym:ym, M:0, v:0, p:0, dq:0, n:0, estado:R.estado, marcas:[] };
+  R.marcas.forEach(function(m){ var d=metaMarcaDatos(R, m); if(!d) return; o.n++; o.M=r2(o.M+d.M); o.v=r2(o.v+d.v); o.p=r2(o.p+d.p); o.dq=d.dq; o.marcas.push(m.g.lbl); });
+  if(!o.n) return o;
+  o.falta=r2(o.M-o.v); o.porDia=(o.falta>0.009 && o.dq>0) ? o.falta/o.dq : 0;
+  o.pv=metaPct(o.v, o.M); o.pp=metaPct(o.p, o.M);
+  o.est = o.v>=o.M-0.005 ? 'llego' : (o.p>=o.M-0.005 ? 'va' : (o.p>=0.9*o.M ? 'cerca' : 'lejos'));
+  return o;
+}
+function hdrMetaHtml(D){
+  var mes=mesNombre(D.ym).replace(/ de \d{4}$/,''), Mes=mes.charAt(0).toUpperCase()+mes.slice(1);
+  if(!D.n) return '<span class="hm-e">🎯 <b>'+esc(Mes)+'</b></span><span class="hm-x">todavía no tiene metas · cargalas en Proyección → 🎯 Metas</span>';
+  var cls={ llego:'hm-ok', va:'hm-ok', cerca:'hm-cerca', lejos:'hm-mal' }[D.est]||'';
+  var w1=Math.min(100, D.pv), w2=Math.min(100, D.pp), curso=(D.estado==='curso');
+  var dia = D.est==='llego' ? ('🎉 llegó: '+fmtBs0(D.v-D.M)+' arriba de la meta') : (D.porDia>0 ? ('faltan '+fmtBs0(D.porDia)+' por día hábil') : '');
+  return '<span class="hm-e">🎯 <b>'+esc(Mes)+'</b></span>'+
+    '<span class="hm-bar" aria-hidden="true">'+(curso ? '<i class="hm-bp '+cls+'" style="width:'+w2+'%"></i>' : '')+'<i class="hm-bv '+cls+'" style="width:'+w1+'%"></i></span>'+
+    '<span class="hm-t">vendido <b>'+D.pv+' %</b>'+(curso ? (' · si sigue así <span class="hm-c '+cls+'">'+D.pp+' %</span>') : '')+' de '+fmtBs0(D.M)+'</span>'+
+    (dia ? '<span class="hm-x">'+esc(dia)+'</span>' : '');
+}
+function hdrMetaPintar(forzar){
+  var el=document.getElementById('hdr-meta'); if(!el) return;
+  var antes=!el.hidden;
+  if(!hdrMetaVe()){ if(antes){ el.hidden=true; el.innerHTML=''; try{ hdrMedir(); }catch(e){} } return; }
+  var ym=diaNegocio().slice(0,7);
+  if(forzar || !HDR_META.D || HDR_META.ym!==ym || Date.now()-HDR_META.t>=HDR_META_CADA){
+    try{ HDR_META.D=hdrMetaDatos(ym); }catch(e){ HDR_META.D=null; }
+    HDR_META.t=Date.now(); HDR_META.ym=ym;
+  }
+  var D=HDR_META.D; if(!D){ el.hidden=true; return; }
+  var h=hdrMetaHtml(D);
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  el.setAttribute('aria-label', 'Meta de '+mesNombre(ym)+(D.n ? (': vendido '+D.pv+' por ciento'+(D.estado==='curso' ? (', si sigue así '+D.pp+' por ciento') : '')) : ': sin metas')+'. Abrir Proyección');
+  el.hidden=false;
+  if(!antes) try{ hdrMedir(); }catch(e){}
+}
+/* Enter y Espacio la abren con el manejador de siempre de las fichas `role="button"` (§4mk, UI-01). */
+function hdrMetaAbrir(){ try{ showView('conta'); segSet('cta-tab','proy'); setContaTab('proy'); var inp=document.getElementById('pry-mes'); if(inp && inp.value!==HDR_META.ym && HDR_META.ym){ inp.value=HDR_META.ym; renderProyeccion(); } }catch(e){} }
 
 /* ✨ (§4iw) D5 · un sello que cae y se va al guardar una corrección, cobrar o marcar entregado. No tapa nada (no se puede tocar)
    y no reemplaza el aviso de abajo. En las pruebas automáticas no sale, salvo `window.FX_PRUEBA` (como las escenas de §4if). */
@@ -27650,7 +28306,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
