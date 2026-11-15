@@ -2454,6 +2454,10 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 /* ⚡ (15/11, mejoras 294-303: facilidad y velocidad) — el código, en el bloque «FACILIDAD Y VELOCIDAD» (al lado de `verRecargar`). */
 .bl-pill{position:absolute;z-index:2;pointer-events:none;background:#e3f7f6;color:#00807a;border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:700;white-space:nowrap;line-height:1.5}
 .bl-pill[hidden]{display:none!important}
+.pesav{margin:0 0 10px;padding:7px 12px;border-radius:10px;font-size:.8rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#f2fbfb;border:1px solid var(--teal-border);color:#065f5b}
+.pesav.mal{background:var(--red-lt,#fdecec);border-color:var(--red-border,#f3b4b4);color:#8a1c24}
+.pesav[hidden]{display:none!important}
+.pesav a{text-decoration:underline;cursor:pointer;font-weight:700}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -9645,11 +9649,11 @@ function showViewAhora(v){
      son tablas y listas: se estiran a lo ancho de la pantalla */
   document.body.classList.toggle('ancha', v!=='form');
   if(v==='form'){ refrescarSiHaceRato(); saldoAvisosProgramar(); try{ fpPintarLuego(); }catch(e){} }   // por si administración cerró un día recién · 🧾 el saldo (§4gj) · 🪜 los pasos se miden al volver (N-UI1)
-  if(v==='conta') refreshConta();
+  if(v==='conta') refreshConta({ rapida:1 });   // 🚀 (296) al toque con lo leído (`pesContaRapida`); 🔄 Actualizar sigue leyendo siempre
   if(v==='atc') refreshAtc();
   if(v==='bot'){ try{ waRespPintar(); waRespTraer(); }catch(e){} }
-  if(v==='admin' && UNLOCKED) loadFromServer(false);
-  if(v==='mis'){ misVendedorSel(); refreshMis(); }
+  if(v==='admin' && UNLOCKED) pesAdmEntrar();   // 🚀 (296) = loadFromServer(false), sin leer si se leyó hace < 1 min
+  if(v==='mis'){ misVendedorSel(); pesMisEntrar(); }   // 🚀 (296) = refreshMis(), sin leer si se leyó hace < 1 min
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
   try{ if(ASIS.montado){ asisCerrar(); blokiPoner(); setTimeout(function(){ asisRefrescar(); }, 400); } }catch(e){}   // 🧑‍💼 §4jx: los avisos de la pestaña nueva · 🧽 el traje de la pestaña
   if(_nav){ try{ navDeslizar(_nav, v); icoAnimar(document.querySelector('.nav button.active')); }catch(e){} }   // 🧭🎨 (§4ni, 5 y 9)
@@ -11761,7 +11765,7 @@ function contaProdTxt(prods){
            (prodPrecio(x)>0 ? ('  ·  '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))) : '');
   });
 }
-function refreshConta(){
+function refreshConta(o){
   var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=diaNegocio().slice(0,7);
   var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=diaNegocio();
   var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=diaNegocio();
@@ -11770,6 +11774,8 @@ function refreshConta(){
   llenarSelectContaVendedor();
   var pinta=function(){ llenarSelectContaVendedor(); contaRepintar(); };
   if(!CONNECTED){ pinta(); return; }
+  if(o && o.rapida && pesContaRapida(pinta)) return;   // 🚀 (296) al cambiar de pestaña: dibuja ya; lee atrás solo si hace más de 1 min
+  try{ pesAviso(''); }catch(e){}
   try{ if(esqCargando()) cxTopPintar([], '', {}); }catch(e){}   // ⏳ (§4mg, V6) el esqueleto mientras llega la planilla
   apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } pinta(); })
            .catch(pinta);
@@ -61126,6 +61132,80 @@ function buscarLuegoIniciar(){
   [['adm-search','adm'],['cta-search','cta'],['mis-q','mis']].forEach(function(x){
     var el=document.getElementById(x[0]); if(!el) return;
     el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ if(buscarYa(x[1])) e.preventDefault(); } });
+  });
+}
+
+/* ---------- 🚀 296 CAMBIAR DE PESTAÑA SIN ESPERAR A GOOGLE ----------
+   Contabilidad esperaba la planilla para dibujar (2-3 s con la tabla vacía, aunque se hubiera leído hace segundos) y Mis pedidos y
+   Administración dibujaban, leían y volvían a dibujar todo. Ahora las tres hacen lo que ATC ya hacía (§4ea): dibujan al instante con lo
+   leído; si la última lectura buena tiene menos de `PES_FRESCA_MS` no piden otra, y si la que llega es igual (`LECTURA_IGUAL`) no
+   redibujan. 🔄 Actualizar sigue leyendo siempre. ⚠️ Nunca se muestra algo más viejo que la última lectura buena sin decirlo: sin
+   ninguna lectura buena todavía (la copia del aparato) es lo de siempre (se espera a Google), y si la lectura de atrás falla se dice. */
+var PES_FRESCA_MS=60000;
+function pesRapidaVa(){ try{ return !navigator.webdriver || !!window.PES_RAPIDA_PRUEBA; }catch(e){ return true; } }
+function pesFresca(){ return !!(CONNECTED && ULTIMO_REFRESCO && Date.now()-ULTIMO_REFRESCO<PES_FRESCA_MS); }
+function pesVista(v){ var el=document.getElementById('view-'+v); return !!(el && el.classList.contains('active')); }
+/* La lectura: si ya hay una en camino (otra pestaña recién tocada, el cuadrito del saldo), se espera esa en vez de pedir otra. */
+function pesLeer(){ return (typeof REFRESCO_EN_VUELO!=='undefined' && REFRESCO_EN_VUELO) || refrescarEstado(); }
+/* El aviso de arriba de Contabilidad: leyendo atrás («🔄 Actualizando…») o «📴 no se pudo» con la hora de lo que se ve. */
+function pesAviso(estado){
+  var v=document.getElementById('view-conta'); if(!v) return;
+  var el=document.getElementById('pes-av-conta');
+  if(!estado){ if(el) el.hidden=true; return; }
+  if(!el){ el=document.createElement('div'); el.id='pes-av-conta'; el.className='pesav no-print'; el.setAttribute('role','status');
+    var cc=v.querySelector('.card'); (cc||v).insertBefore(el, (cc||v).firstChild); }
+  var hora=ULTIMO_REFRESCO ? hhmmDeTs(ULTIMO_REFRESCO) : '';
+  el.className='pesav no-print'+(estado==='mal'?' mal':'');
+  el.innerHTML = estado==='mal'
+    ? ('📴 <b>No se pudo actualizar</b>: lo que ves es lo leído a las <b>'+esc(hora)+'</b>. <a onclick="refreshConta()">🔄 Volver a intentar</a>')
+    : ('<span class="spin" style="border-color:rgba(0,0,0,.15);border-top-color:var(--teal)"></span> Actualizando… lo que ves es lo leído a las <b>'+esc(hora)+'</b>.');
+  el.hidden=false;
+}
+/* Contabilidad. Devuelve true si se ocupó (si no, `refreshConta` sigue con lo de siempre). */
+function pesContaRapida(pinta){
+  if(!pesRapidaVa() || !CONNECTED || !ULTIMO_REFRESCO) return false;
+  pinta();
+  if(pesFresca()){ pesAviso(''); return true; }
+  pesAviso('lee');
+  pesLeer().then(function(ok){
+    if(!ok){ pesAviso('mal'); return; }
+    pesAviso('');
+    if(!LECTURA_IGUAL && pesVista('conta')) pinta();
+  });
+  return true;
+}
+/* Mis pedidos (como `refreshMis`, que queda para 🔄 y el reloj de 30 s). */
+function pesMisEntrar(){
+  if(!pesRapidaVa() || !CONNECTED || !ULTIMO_REFRESCO) return refreshMis();
+  renderMis();
+  if(pesFresca()){ misEstado(''); updateFooter(); return Promise.resolve(true); }
+  if(MIS_CARGANDO) return Promise.resolve(false);
+  MIS_CARGANDO=true; misEstado('cargando');
+  return pesLeer().then(function(ok){
+    MIS_CARGANDO=false; misEstado(ok?'':'error');   // el de error dice de cuándo es lo que se ve
+    if(ok && !LECTURA_IGUAL && pesVista('mis')) renderMis();
+    updateFooter(); return ok;
+  }, function(){ MIS_CARGANDO=false; misEstado('error'); updateFooter(); return false; });
+}
+/* Lo del GPS que dibuja Administración (los camiones): llega con cada lectura aunque la planilla no cambie (`autoRepintar`). */
+function pesGpsFirma(){ try{ return JSON.stringify([GPS && GPS.u, typeof GPS_DIA!=='undefined' ? GPS_DIA : null]); }catch(e){ return String(Math.random()); } }
+/* Administración (como `loadFromServer(false)`, que queda para 🔄 y la contraseña). */
+function pesAdmEntrar(){
+  if(!pesRapidaVa() || !CONNECTED || !ULTIMO_REFRESCO){ loadFromServer(false); return; }
+  renderAdmin();
+  if(getPending().length) flushPending();
+  if(pesFresca()) return;
+  setAdminLoading(true);
+  var g0=pesGpsFirma();
+  pesLeer().then(function(ok){
+    setAdminLoading(false);
+    if(ok){
+      if((!LECTURA_IGUAL || pesGpsFirma()!==g0) && pesVista('admin') && UNLOCKED) renderAdmin();
+      updateFooter(); cargaEstado('ok'); renderCupoForm();
+    } else {
+      cargaEstado('error');
+      toast('No se pudo actualizar ('+(ULTIMO_ERROR||'sin respuesta')+'): estás viendo lo leído a las '+hhmmDeTs(ULTIMO_REFRESCO)+'.','err',8000);
+    }
   });
 }
 
