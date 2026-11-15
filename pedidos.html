@@ -7570,6 +7570,20 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .td-reco-l small{color:#6b5310;font-weight:700;white-space:nowrap}
 .td-reco-n{color:#6b6b6b}
 </style>
+<style>
+/* 🧑‍💼 (15/11) Las mejoras para vendedoras 304-311: clases `vd-*` (no reusar nombres del panel). Tema claro, colores del panel. */
+.vd-pill{display:inline-block;background:#fff;border:1px solid #cfe7e5;border-radius:999px;padding:3px 10px;font-weight:700;font-size:.78rem;margin:2px 4px 2px 0;color:#14313a}
+.vd-mini{font-size:.78rem;color:#5b7480;margin-top:8px;line-height:1.45}
+.vd-ojo{color:#7c4b00;font-weight:700}
+.vd-av{border:2px solid var(--teal);background:#E6F7F6;border-radius:12px;padding:12px 14px;color:#14313a;font-size:.88rem;line-height:1.5}
+.vd-av b{color:#007a74}
+.vd-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:.82rem}
+.vd-cupo{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}.vd-cupo i{width:15px;height:15px;border-radius:4px;background:var(--teal)}.vd-cupo i.vd-l{background:#d8e6e6}
+.vd-b{border:0;border-radius:10px;padding:8px 13px;font-weight:800;font-size:.83rem;cursor:pointer;font-family:inherit}
+.vd-b-k{background:#7c3aed;color:#fff}.vd-b-s{background:#fff;color:#14313a;border:1px solid #cfd8dc}.vd-b-p{background:var(--teal);color:#fff}
+.vd-lnk{border:0;background:none;color:var(--teal-dk);font-weight:800;cursor:pointer;font:inherit;text-decoration:underline;padding:0 4px}
+@media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
+</style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
 <script src="escritorio.js?v=20261114a" defer></script>
@@ -11218,7 +11232,8 @@ function cobroRutaTxt(p){
   if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32', f:''};   // (25/09)
   if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00', f:f};
   if((Number(p&&p.saldo)||0)<=0.005) return {t:(f?'✅ NADA QUE COBRAR DE LA VENTA':'✅ NADA QUE COBRAR'), c:'#2e7d32', f:f};
-  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b', f:f};
+  var _pc=''; try{ _pc=pcobRutaTxt(p); }catch(e){}   // 💳 (15/11, 308) cómo paga: llevar el POS o el QR
+  return {t:'💰 COBRAR '+fmtBs(p.saldo)+(_pc?(' · '+_pc):''), c:'#c0392b', f:f};
 }
 /* El renglón "debe Bs X" solo cuando de verdad hay saldo (si es 0 no dice nada). */
 function debeLinea(p){
@@ -22418,6 +22433,8 @@ function submitPedido(){
   /* 🧾 (06/11) La factura o nota de remisión la anota CONTABILIDAD (`fdoc`/`fdocn` en los productos): la vendedora no la ve, y corregir el
      pedido desde el formulario (que rearma los productos) no se la tiene que llevar. Una ATC o una RPT no la llevan. */
   if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && (docVentaDe(prev) || docNumDe(prev))) setDocVenta(rec, docVentaDe(prev), docNumDe(prev));
+  /* 💳🚌 (15/11, 308 y 311) cómo paga lo que falta y si va por flota: del formulario (viajan adentro de los productos) */
+  try{ pcobAlGuardar(rec, prev); }catch(e){} try{ flotaAlGuardar(rec, prev); }catch(e){}
   /* 📅 (08/11) La marca «cuenta en el mes en que se cargó» la pone Contabilidad (`vmes`): corregir el pedido no se la lleva. */
   if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && ventaMesMarca(prev)) setVentaMes(rec, ventaMesMarca(prev));
   /* 📅 (§4ok-96) Una vez más que se le mueve la fecha (desde una fecha puesta; también al pasar a «avisa cuándo»). */
@@ -22565,12 +22582,14 @@ function submitPedido(){
       if(!fxDupConfirmar()) return;                                      // 🧰 (§4ih) ¿el mismo pedido dos veces?
       if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba) · 📦 sin día no se pregunta: el cuadrito ya lo dice
       if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
+      if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;              // 🏪 (15/11, 304) ¿se suma a la RPT que ya va a esa tienda? (solo si la vendedora lo acepta)
       guardarYa();
     });
     return;
   }
   if(!fxDupConfirmar()) return;                                          // 🧰 (§4ih) ¿el mismo pedido dos veces?
   if(!_avisa && !saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
+  if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;                  // 🏪 (15/11, 304)
   guardarYa();
   }   // fin de `seguirAlGuardar` (idea 119)
 
@@ -24657,6 +24676,7 @@ function resetForm(){
   avisaFormPintar();                           // 📦 (propuesta 76) sin la casilla: «Fecha de entrega» y el turno de siempre
   clearErr();
   try{ celFormPintar(); }catch(e){}            // 📱 (§4ok-95)
+  try{ kbcLimpiar(); }catch(e){} try{ rptVendioLimpiar(); }catch(e){} try{ pcobCargar(null); }catch(e){} try{ flotaCargar(null); }catch(e){}   // 🧑‍💼 (15/11, 307, 305, 308, 311) al final: con el saldo ya en 0
   renderCupoForm();
   FORM_NUEVO_BASE=formNuevoHuella();
 }
@@ -24708,6 +24728,7 @@ function editPedido(id){
     c.setAttribute('data-orig', String((c.querySelector('.prod-desc')||{}).value||'').trim()+'|'+(_ms && _ms.value==='Otros' ? String((_ot&&_ot.value)||'').trim() : String((_ms&&_ms.value)||''))); } });
   document.getElementById('f-celular').value=rec.celular||'';
   var _fsw=document.getElementById('f-sinwa'); if(_fsw) _fsw.checked=sinWaDe(rec) && !celPartes(rec.celular).cel;   // 📱 (§4ok-95)
+  try{ pcobCargar(rec); }catch(e){} try{ flotaCargar(rec); }catch(e){}   // 💳🚌 (15/11, 308 y 311)
   try{ celFormPintar(); }catch(e){}
   /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
      le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
@@ -31089,7 +31110,7 @@ function cargaBloquesHtmlDe(list, fecha){
     });
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div class="carga-stop '+docCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+docChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+(esModificado(p)?' <span style="color:var(--red);font-weight:800">⚠️ MODIFICADO</span>':'')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop '+docCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+docChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+(esModificado(p)?' <span style="color:var(--red);font-weight:800">⚠️ MODIFICADO</span>':'')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+vdCargaTags(p)+'</div>';
     });
     html+='</div>';
   });
@@ -51164,6 +51185,9 @@ function fichaObsChips(p){
   }
   var pv=fichaProvincia(' '+flMay([p&&p.observaciones, p&&p.direccion, p&&p.zona].join(' . '))+' ');
   if(pv!==null) add('🛣️','Va a provincia'+(pv?(' · '+pv):''),'prov');
+  /* 💳🚌 (15/11, 308 y 311) lo que marcó la vendedora: llevar el POS o el QR, y la flota (sin montos) */
+  try{ var _pc=pcobCobra(p) ? pcobDe(p) : ''; if(_pc==='T' && !out.some(function(c){ return c.k==='tarj'; })) add('💳','Llevar el POS (paga con tarjeta)','tarj'); else if(_pc==='Q') add('📱','Llevar el QR de la empresa','qr'); }catch(e){}
+  try{ var _fl=flotaDe(p); if(_fl) add('🚌', flotaTxt(_fl), 'flota'); }catch(e){}
   return out;
 }
 /* 6 · (24/10) Con `id`, cada etiqueta se TOCA y queda «✓ hecha» en ESE aparato (`me_ficha_tilde`; no va a la planilla). Al prender
@@ -69320,6 +69344,7 @@ document.addEventListener('DOMContentLoaded',function(){
     var av=document.getElementById('revstk-avance'), ok=document.getElementById('revstk-avance-listo');
     if(av && ok && ok.style.display!=='none'){ av.remove(); return; }
     modalFondo(); } });   // 📥 (§4ls VE4) la vista previa del Excel no se cierra con almacenes por ver
+  try{ vdIniciar(); }catch(e){ console.error(e); }   // 🧑‍💼 (15/11, 304-311) los enganches del formulario
   refreshDatalists();
   resetForm();
   updateStats();
@@ -69329,6 +69354,134 @@ document.addEventListener('DOMContentLoaded',function(){
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
   nxBadges(); nxRelojArrancar();   // ✨ (§4js) los números de las pestañas, y cada minuto (las 15:00 y las 17:00)
 });
+/* ============================================================================
+   🧑‍💼 LAS MEJORAS PARA VENDEDORAS 304-311 (15/11/2026; el dueño, de la página «Mejoras 282 a 343»: 304, 305, 306, 307, 308, 309, 310 y
+   311 «ok»; 305 «ok pero aún no subo stock de las tiendas, ¿debo subirlo cada mes?»; 311 «ok pero siempre enviamos por pagar»).
+   Cada una va APAGADA en Playwright salvo su bandera (`vdVa`), para que las pruebas de siempre no cambien. Ninguna calcula nada aparte:
+   salen de las cuentas de siempre (`depCargado`, `camionSalio`, `tstCalcular`, `blokiStockDe`, `blokiPrecioDe`, `borradoresDe`,
+   `misHacerDatos`, `misEfectivoDatos`, `docVentaFalta`, `ctaAvAbiertos`…). Lo que guarda un pedido va por `persistPedido`/`guardarDurable`
+   o por el guardado de siempre del formulario.
+   ========================================================================== */
+function vdVa(bandera){ return !(navigator.webdriver && !window[bandera]); }
+/* Lo que logística ve en la Lista de carga y en la ficha (308 y 311): etiquetas, sin montos. */
+function vdCargaTags(p){
+  var h='';
+  try{ var pc=pcobRutaTxt(p); if(pc && pcobDe(p)!=='E') h+=' <span class="vd-tag">'+esc(pc)+'</span>'; }catch(e){}
+  try{ var f=flotaDe(p); if(f) h+=' <span class="vd-tag vd-fl">🚌 '+esc(flotaTxt(f))+'</span>'; }catch(e){}
+  return h;
+}
+
+/* ---------------------------------------------------------------------------
+   🏪 304 · LA RPT SE SUMA A LA QUE YA VA A ESA TIENDA (si la vendedora lo acepta)
+   Al guardar una RPT NUEVA: si ya hay otra a la MISMA sucursal (`sucursalDeRpt`) de hoy a RPT_SUMAR_DIAS días hábiles, sin entregar, sin
+   «🚚 Ya salió» (`camionSalio`) y sin NADA tildado en la carga (`depCargado`), sale «¿Sumamos estos productos ahí?». «➕ Sumar» agrega los
+   renglones (sin marcas de logística) a esa RPT con «MODIFICADO» (`marcarModificado`) y la guarda por `persistPedido`; «Mandar aparte»
+   sigue el guardado de siempre. ⚠️ NUNCA se junta sola: sin el toque, no se suma nada. RPT_SUMAR_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var RPT_SUMAR_DIAS=3;
+/* las marcas que son del PEDIDO (viajan en cada renglón): el renglón sumado las toma de la RPT de destino */
+var RPT_SUMAR_MARCAS=['mod','fmov','eH','fH','rpf','klead'];
+function rptSumarVa(){ return vdVa('RPT_SUMAR_PRUEBA'); }
+function rptCargadoAlgo(p){ return (p.productos||[]).some(function(x){ try{ return !!x && depCargado(p, x).u>0; }catch(e){ return false; } }); }
+function rptSumarCands(suc, idNuevo){
+  var hoy=todayStr(), lim=diaHabilMas(hoy, RPT_SUMAR_DIAS);
+  return (STATE||[]).filter(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || !esRPT(p.oc) || p.entregado) return false;
+    if(idNuevo && String(p.id)===String(idNuevo)) return false;
+    if(sucursalDeRpt(p)!==suc) return false;
+    var f=String(p.fecha||''); if(!f || f<hoy || f>lim) return false;
+    if(camionSalio(f, vehiculoDe(p))) return false;
+    return !rptCargadoAlgo(p);
+  }).sort(function(a,b){ return String(a.fecha).localeCompare(String(b.fecha)) || ((normTurno(a.turno)==='PM')?1:0)-((normTurno(b.turno)==='PM')?1:0); });
+}
+function rptUnid(p){ var n=0; ((p&&p.productos)||[]).forEach(function(x){ n+=Number(x&&x.cant)||0; }); return n; }
+/* Devuelve true si abrió la pregunta (el guardado sigue desde ahí). */
+function rptSumarPreguntar(rec, isEdit, seguir){
+  if(!rptSumarVa() || isEdit || !rec || docTipoSel()!=='RPT') return false;
+  var suc=sucursalDeRpt(rec); if(!suc) return false;
+  var L=rptSumarCands(suc, rec.id); if(!L.length) return false;
+  var t=L[0], tn=normTurno(t.turno), tur=(tn==='PM') ? 'tarde' : 'mañana';
+  var lim=limTurno(t.fecha, tn), us=cuposUsadosTurno(t.fecha, tn);
+  var mios=(rec.productos||[]).filter(function(x){ return x && String(x.desc||x.codigo||'').trim(); });
+  if(!mios.length) return false;
+  var pill=function(x){ return '<span class="vd-pill">'+esc(prodCorto(x))+'</span>'; };
+  var cupo='';
+  if(lim>0){ for(var i=0;i<Math.min(lim, 16);i++) cupo+='<i'+(i<us?'':' class="vd-l"')+'></i>'; }
+  var otraF=rec.fecha && String(rec.fecha)!==String(t.fecha);
+  openModal('<div class="modal-h"><h3>🚚 Ya va una RPT a '+esc(suc)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" id="vd-rs">'+
+      '<div class="vd-av">'+
+        '<div>La <b>'+esc(ocEtiq(t.oc)||'RPT')+'</b> sale el <b>'+esc(nxDiaTxt(t.fecha))+' · '+tur+'</b> ('+rptUnid(t)+' u.) y <b>todavía no se cargó</b>. ¿Sumamos estos productos ahí?</div>'+
+        '<div class="vd-row">'+(t.productos||[]).filter(function(x){ return x && String(x.desc||x.codigo||'').trim(); }).map(pill).join('')+'<span>+ lo tuyo:</span>'+mios.map(pill).join('')+'</div>'+
+        '<div class="vd-mini">Juntas son <b>1 viaje y 1 lugar del camión</b>.'+(lim>0 ? (' Esa '+tur+' ya tiene '+us+' de '+lim+':') : '')+'</div>'+
+        (cupo ? ('<div class="vd-cupo" aria-hidden="true">'+cupo+'</div>') : '')+
+        (otraF ? ('<div class="vd-mini vd-ojo">⚠️ La tuya la pusiste para el '+esc(nxDiaTxt(rec.fecha))+': sumada va el '+esc(nxDiaTxt(t.fecha))+'.</div>') : '')+
+        (L.length>1 ? ('<div class="vd-mini">Hay '+(L.length-1)+' RPT más a '+esc(suc)+' en estos días: te propongo la primera.</div>') : '')+
+      '</div>'+
+      '<div class="modal-actions" style="margin-top:12px">'+
+        '<button type="button" class="btn btn-primary" id="vd-rs-sumar" style="flex:1;min-width:160px">➕ Sumar a la '+esc(ocEtiq(t.oc)||'RPT')+'</button>'+
+        '<button type="button" class="btn btn-ghost" id="vd-rs-aparte" style="flex:1;min-width:140px">Mandar aparte</button>'+
+      '</div>'+
+      '<div class="vd-mini">Al sumar, logística ve la '+esc(ocEtiq(t.oc)||'RPT')+' con «⚠️ MODIFICADO: se sumaron '+mios.length+' producto'+(mios.length===1?'':'s')+'». «Mandar aparte» la guarda como siempre.</div>'+
+    '</div>');
+  var hecho=false, tid=String(t.id);
+  document.getElementById('vd-rs-sumar').onclick=function(){ if(hecho) return; hecho=true; closeModal(); rptSumarAplicar(tid, rec, seguir); };
+  document.getElementById('vd-rs-aparte').onclick=function(){ if(hecho) return; hecho=true; closeModal(); seguir(); };
+  try{ setSubmitting(false); }catch(e){}
+  return true;
+}
+function rptSumarAplicar(tid, rec, seguir){
+  var suc=sucursalDeRpt(rec), t=findById(tid);
+  if(!t || rptSumarCands(suc, rec.id).indexOf(t)<0){
+    toast('⚠️ Esa RPT ya se empezó a cargar, salió o cambió: no se sumó nada. Tu RPT sigue en el formulario: tocá «Guardar» para mandarla aparte.','err',10000);
+    return Promise.resolve(null);
+  }
+  var antes=JSON.parse(JSON.stringify(t)), base=(t.productos||[])[0]||{}, marcas={};
+  RPT_SUMAR_MARCAS.forEach(function(k){ if(base[k]!=null && k!=='mod') marcas[k]=base[k]; });
+  var nuevos=(rec.productos||[]).filter(function(x){ return x && String(x.desc||x.codigo||'').trim(); }).map(function(x){
+    var y={}; ['desc','medida','codigo','cant','rtipo','robs'].forEach(function(k){ if(x[k]!=null && x[k]!=='') y[k]=x[k]; });
+    Object.keys(marcas).forEach(function(k){ y[k]=Array.isArray(marcas[k]) ? marcas[k].slice() : marcas[k]; });
+    return y;
+  });
+  if(!nuevos.length) return Promise.resolve(null);
+  t.productos=(t.productos||[]).concat(nuevos);
+  var obs=String(rec.observaciones||'').trim(), tobs=String(t.observaciones||'').trim();
+  if(obs && tobs.indexOf(obs)<0) t.observaciones=tobs ? (tobs+' · '+obs) : obs;
+  var quien=rec.vendedor||t.vendedor||'';
+  marcarModificado(t, quien, ['➕ se sumaron '+nuevos.length+' producto'+(nuevos.length===1?'':'s')+' de otra RPT'+(quien?(' de '+nombreCanonico(quien)):'')].concat(difPedido(antes, t)));
+  t.verificado=false;
+  try{ setSubmitting(false); }catch(e){}
+  try{ resetForm(); }catch(e){}
+  var oc=ocEtiq(t.oc)||'RPT';
+  return persistPedido(t).then(function(r){
+    if(r && r.ok) toast('➕ Listo: se sumó a la '+oc+' ('+nuevos.length+' producto'+(nuevos.length===1?'':'s')+'). Un viaje y un lugar del camión.','ok',8000);
+    else if(r && r.local) toast('➕ Se sumó a la '+oc+'. Quedó en este aparato y se manda sola a la planilla.','ok',8000);
+    else toast('⚠️ No se pudo guardar la suma en la '+oc+' ('+((r && (r.motivo||r.error))||'sin respuesta')+'). Revisala en Mis pedidos.','err',10000);
+    try{ renderMis(); }catch(e){}
+    return r;
+  });
+}
+
+/* ---------------------------------------------------------------------------
+   Los enganches del formulario (una vez, al abrir la página)
+   --------------------------------------------------------------------------- */
+function vdIniciar(){
+  var hay=function(n){ return typeof window[n]==='function'; }, en=function(f){ try{ f(); }catch(e){ console.error(e); } };
+  if(hay('kbcProgramar')) en(function(){ ['f-celular','f-cliente','f-vendedor'].forEach(function(id){ var e=document.getElementById(id); if(e) e.addEventListener('input', kbcProgramar); }); });   // 307
+  if(hay('rptVendioPintar')) en(function(){   // 305
+    var suc=document.getElementById('f-rpt-suc'); if(suc){ suc.addEventListener('input', rptVendioPintar); suc.addEventListener('change', rptVendioPintar); }
+    var rv=document.getElementById('rpt-vendio'); if(rv){ rv.addEventListener('change', rptVendioBoton); rv.addEventListener('input', rptVendioBoton); }
+  });
+  if(hay('flotaPintar')) en(function(){   // 311
+    initSeg('f-flota-pago', function(){ flotaPintar(false); });
+    ['f-flota-emp','f-flota-ciu','f-flota-rec'].forEach(function(id){ var e=document.getElementById(id); if(e) e.addEventListener('input', function(){ flotaDirAuto(); flotaPintar(false); }); });
+    var dl=document.getElementById('dl-flotas'); if(dl) dl.innerHTML=FLOTA_EMPRESAS.map(function(n){ return '<option value="'+esc(n)+'"></option>'; }).join('');
+  });
+  /* 308 y 311: aparecen y se van con lo que se toca del formulario (el tipo, la venta de tienda, el saldo) */
+  var vf=document.getElementById('view-form');
+  if(vf){ var t=function(){ setTimeout(function(){ if(hay('pcobPintar')) en(pcobPintar); if(hay('flotaPintar')) en(function(){ flotaPintar(false); }); }, 0); };
+    vf.addEventListener('click', t); vf.addEventListener('input', t); vf.addEventListener('change', t); t(); }
+}
 </script>
 </body>
 </html>
