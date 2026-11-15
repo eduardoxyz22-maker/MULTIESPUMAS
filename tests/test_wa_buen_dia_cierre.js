@@ -226,7 +226,9 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const S = servidor(ON);
     const T = Array.from(S.ctx.WA_PLANTILLAS), vars = (t) => (t.match(/\{\{\d+\}\}/g) || []);
     /* 🛏️ (2026-11-07-d) el cierre sale con la v2 (el botón) y la de antes queda de respaldo (`vieja`). */
-    [['vendedora_buen_dia', 'bd', 'plantilla'], ['cierre_del_dia_v2', 'cd', 'plantilla'], ['cierre_del_dia', 'cd', 'vieja']].forEach(([n, k, campo]) => {
+    /* 🎯 (2026-11-15-a) la v3 (9 datos: + la meta y lo de hoy por tienda) es la del cierre; la v2 y la primera quedan de respaldo con los 7 de siempre
+       (la v3 se prueba en tests/test_wa_cierre_metas.js). */
+    [['vendedora_buen_dia', 'bd', 'plantilla'], ['cierre_del_dia_v2', 'cd', 'vieja'], ['cierre_del_dia', 'cd', 'vieja2']].forEach(([n, k, campo]) => {
       const pl = T.find(x => x.n === n);
       chk('1a ' + n + ' en WA_PLANTILLAS con {{1}}…{{7}} y un ejemplo de 7', !!pl && vars(pl.t).join() === '{{1}},{{2}},{{3}},{{4}},{{5}},{{6}},{{7}}' && pl.e.length === 7, pl && vars(pl.t));
       chk('1b ' + n + ': no empieza ni termina con un dato, sin dos pegados', !!pl && !/^\{\{/.test(pl.t) && !/\}\}$/.test(pl.t.trim()) && !/\}\}\s*\{\{/.test(pl.t));
@@ -313,7 +315,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
   });
 
   seccion('5. El cierre del día', () => {
-    const S = lleno(); const cd = () => S.salen('cierre_del_dia_v2');
+    const S = lleno(); const cd = () => S.salen('cierre_del_dia_v3');   // 🎯 (2026-11-15-a) la v3: los 7 de siempre + la meta y las tiendas
     poner(HOY + ' 21:10'); S.repaso();
     chk('5a a las 21:10 todavía no', cd().length === 0, S.salen());
     S.limpiar(); poner(HOY + ' 21:20'); S.repaso();
@@ -326,8 +328,9 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
         p[3] === 'Juan: 1 prod., Bs 4.500 · Carola: 1 prod., Bs 3.000 · Isabel: 1 prod., Bs 2.000 · Mauricio: 1 prod., Bs 2.000 · Mirian: 1 prod., Bs 1.000 · Maria: 1 prod., Bs 700 · Pedro: 1 prod., Bs 300', p[3]);
     chk('5g {{5}} las entregas de hoy con ✅ (Eduardo también; ni la venta de tienda ni el borrador)', p[4] === '2 de 11 con ✅ · 9 sin marcar', p[4]);
     chk('5h {{6}} Kommo: los leads nuevos de hoy y los sin responder hace más de 1 h (el de las 21:00 todavía no)', p[5] === '31 leads nuevos · 3 sin responder hace más de 1 h', p[5]);
-    chk('5i {{7}} el mes, de la foto de hoy de la proyección, con lo de cada marca (la más grande primero)', p[6] === 'Bs 287.400 vendidos · proyección Bs 1.020.000 (Heaven Bs 800.000 · Sueña Bs 220.000) (cálculo de las 17:05)', p[6]);
-    chk('5j ningún dato con saltos de línea ni de más de 250 letras', p.length === 7 && p.every(t => t.length <= 250 && !/[\r\n\t]/.test(t)), p.map(t => t.length));
+    /* 📈 (2026-11-15-a, mejora 340) + por qué se movió desde la foto anterior (la del 09/11): +37.400 vendido, +30.000 la proyección → −7.400 la cuenta */
+    chk('5i {{7}} el mes, de la foto de hoy de la proyección, con lo de cada marca (la más grande primero) y por qué se movió desde la foto de ayer', p[6] === 'Bs 287.400 vendidos · proyección Bs 1.020.000 (Heaven Bs 800.000 · Sueña Bs 220.000) (cálculo de las 17:05) · ▲ subió Bs 30.000 desde ayer: Bs 37.400 son ventas nuevas y −Bs 7.400 es la cuenta', p[6]);
+    chk('5j ningún dato con saltos de línea ni de más de 250 letras (9 datos desde la v3)', p.length === 9 && p.every(t => t.length <= 250 && !/[\r\n\t]/.test(t)), p.map(t => t.length));
     S.limpiar(); poner(HOY + ' 22:30'); S.repaso();
     chk('5k una vez por día (a las 22:30 no se repite)', cd().length === 0, S.salen());
     // 🛏️ (07-d) Los productos: la suma de las cantidades de los renglones con producto
@@ -348,22 +351,23 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     // Sin la foto de hoy
     const S2 = lleno(); const fila = S2.sh._datos.find(f => f[0] === '__pry_hist__'); fila[16] = JSON.stringify({ v: 1, d: { '2026-11-09': PRY.d['2026-11-09'], '2026-10-31': { h: '18:00', v: 1, p: 2 } } });
     poner(HOY + ' 21:20'); S2.repaso();
-    chk('5l sin la foto de hoy: «sin cálculo de hoy» con la última del mes', (S2.salen('cierre_del_dia_v2')[0] || { p: [] }).p[6] === 'sin cálculo de hoy (el último, del 09/11: Bs 250.000 vendidos · proyección Bs 990.000)', S2.salen('cierre_del_dia_v2'));
+    chk('5l sin la foto de hoy: «sin cálculo de hoy» con la última del mes', (S2.salen('cierre_del_dia_v3')[0] || { p: [] }).p[6] === 'sin cálculo de hoy (el último, del 09/11: Bs 250.000 vendidos · proyección Bs 990.000)', S2.salen('cierre_del_dia_v3'));
     const fila2 = S2.sh._datos.find(f => f[0] === '__pry_hist__');
     chk('5m sin ninguna del mes: «sin cálculo de hoy»', S2.ctx.waCdPry_({ observaciones: JSON.stringify({ v: 1, d: { '2026-10-31': { h: '18:00', v: 1, p: 2 } } }) }, S2.ctx.waBo_(RELOJ.ms)) === 'sin cálculo de hoy' && !!fila2);
     // Kommo que no contesta
     const F = lleno(); F.kommo.falla = true; poner(HOY + ' 21:20'); F.repaso();
-    chk('5n Kommo no contesta: «sin dato» y sale igual', (F.salen('cierre_del_dia_v2')[0] || { p: [] }).p[5] === 'sin dato', F.salen('cierre_del_dia_v2'));
+    chk('5n Kommo no contesta: «sin dato» y sale igual', (F.salen('cierre_del_dia_v3')[0] || { p: [] }).p[5] === 'sin dato', F.salen('cierre_del_dia_v3'));
     // Domingo: con ventas sale; sin nada no
     const D = servidor(ON); kommoLleno(D); D.cargar([P('d1', 'Carola Chavez', { oc: '11-601', ts: TS('2026-11-15', '12:00'), saldo: 800, productos: DOC(9) })]);
     poner('2026-11-15 21:20'); D.repaso();
-    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia_v2').length === 1 && D.salen('cierre_del_dia_v2')[0].p[1] === 'Bs 800 · 1 venta · 1 producto' && D.salen('cierre_del_dia_v2')[0].p[3] === 'Carola: 1 prod., Bs 800' && D.salen('cierre_del_dia_v2')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia_v2'));
+    /* 🛍️ (2026-11-15-a) el 15/11/2026 es de Black Friday (del 13 al 30/11): sale la de la campaña */
+    chk('5o el domingo, con una venta de tienda o de las que abren el domingo, sale', D.salen('cierre_del_dia_bf').length === 1 && D.salen('cierre_del_dia_bf')[0].p[1] === 'Bs 800 · 1 venta · 1 producto' && D.salen('cierre_del_dia_bf')[0].p[3] === 'Carola: 1 prod., Bs 800' && D.salen('cierre_del_dia_bf')[0].p[4] === 'no había entregas', D.salen('cierre_del_dia_bf'));
     const V = servidor(ON); V.cargar(FIX); poner('2026-11-16 21:20'); V.repaso();
-    chk('5p un día sin ventas cargadas ni entregas no sale (y no queda como error en la hoja)', V.salen('cierre_del_dia_v2').length === 0 && !V.hoja().some(f => f[3] === 'Dueño: cierre del día'), V.salen());
+    chk('5p un día sin ventas cargadas ni entregas no sale (y no queda como error en la hoja)', V.salen().filter(x => /^cierre_del_dia/.test(x.pl)).length === 0 && !V.hoja().some(f => f[3] === 'Dueño: cierre del día'), V.salen());
     const W = servidor(Object.assign({}, ON, { WA_DUENO: '' })); W.cargar(FIX); poner(HOY + ' 21:20'); W.repaso();
-    chk('5q sin WA_DUENO no sale', W.salen('cierre_del_dia_v2').length === 0);
+    chk('5q sin WA_DUENO no sale', W.salen().filter(x => /^cierre_del_dia/.test(x.pl)).length === 0);
     const Q = lleno(); poner(HOY + ' 23:30'); Q.repaso();
-    chk('5r después de las 23:15 (el bot estuvo parado) ya no sale', Q.salen('cierre_del_dia_v2').length === 0);
+    chk('5r después de las 23:15 (el bot estuvo parado) ya no sale', Q.salen().filter(x => /^cierre_del_dia/.test(x.pl)).length === 0);
   });
 
   seccion('5b. (2026-11-07-d) 🛏️ El botón «Ver qué vendió cada uno»: el detalle por vendedor, como texto, solo al dueño', () => {
@@ -374,15 +378,21 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const textos = (S, to) => S.meta.llamadas.filter(c => c.body && c.body.type === 'text' && (!to || c.body.to === to)).map(c => c.body.text.body);
     const H = { WA_HOOK_KEY: 'clave-hook' };
     const S = lleno(H); poner(HOY + ' 21:20'); S.repaso();
-    const c = S.meta.llamadas.find(x => x.body && x.body.template && x.body.template.name === 'cierre_del_dia_v2');
-    chk('5b1 el cierre sale con la v2 y su botón trae el día («cd|2026-11-10»)', !!c && c.body.template.components.length === 2 &&
+    const c = S.meta.llamadas.find(x => x.body && x.body.template && x.body.template.name === 'cierre_del_dia_v3');
+    chk('5b1 el cierre sale con la v3 (2026-11-15-a; antes la v2) y su botón trae el día («cd|2026-11-10»)', !!c && c.body.template.components.length === 2 &&
         JSON.stringify(c.body.template.components[1]) === JSON.stringify({ type: 'button', sub_type: 'quick_reply', index: '0', parameters: [{ type: 'payload', payload: 'cd|2026-11-10' }] }), c && c.body.template.components);
-    // Sin la v2 aprobada: la de antes, SIN botón y con los mismos 7 datos
-    const V = lleno(H); V.meta.responder = (b) => (b.template && b.template.name === 'cierre_del_dia_v2') ? { code: 404, body: { error: { code: 132001, message: 'Template name does not exist in the translation' } } } : null;
+    // Sin la v3 aprobada: la v2 con los 7 de siempre; sin la v3 ni la v2: la de antes, SIN botón y con los mismos 7 datos (2026-11-15-a)
+    const no = (ns) => (b) => (b.template && ns.indexOf(b.template.name) >= 0) ? { code: 404, body: { error: { code: 132001, message: 'Template name does not exist in the translation' } } } : null;
+    const V3 = lleno(H); V3.meta.responder = no(['cierre_del_dia_v3']);
+    poner(HOY + ' 21:20'); V3.repaso();
+    const l3 = V3.meta.llamadas.filter(x => x.body && x.body.template && /^cierre_del_dia/.test(x.body.template.name));
+    chk('5b2a la v3 todavía no aprobada: sale la v2 con los 7 primeros datos (sin la meta ni las tiendas) y sin botón', l3.length === 2 && l3[0].body.template.name === 'cierre_del_dia_v3' && l3[1].body.template.name === 'cierre_del_dia_v2' &&
+        l3[1].body.template.components.length === 1 && JSON.stringify(l3[1].body.template.components[0].parameters) === JSON.stringify(l3[0].body.template.components[0].parameters.slice(0, 7)), l3.map(x => x.body.template.name + ':' + x.body.template.components[0].parameters.length));
+    const V = lleno(H); V.meta.responder = no(['cierre_del_dia_v3', 'cierre_del_dia_v2']);
     poner(HOY + ' 21:20'); V.repaso();
     const ll = V.meta.llamadas.filter(x => x.body && x.body.template && /^cierre_del_dia/.test(x.body.template.name));
-    chk('5b2 la v2 todavía no aprobada: sale cierre_del_dia (la de antes), sin botón, con los mismos 7 datos', ll.length === 2 && ll[1].body.template.name === 'cierre_del_dia' && ll[1].body.template.components.length === 1 &&
-        JSON.stringify(ll[1].body.template.components[0].parameters) === JSON.stringify(ll[0].body.template.components[0].parameters), ll.map(x => x.body.template.name + ':' + x.body.template.components.length));
+    chk('5b2 la v3 y la v2 todavía no aprobadas: sale cierre_del_dia (la de antes), sin botón, con los mismos 7 datos', ll.length === 3 && ll[2].body.template.name === 'cierre_del_dia' && ll[2].body.template.components.length === 1 &&
+        JSON.stringify(ll[2].body.template.components[0].parameters) === JSON.stringify(ll[0].body.template.components[0].parameters.slice(0, 7)), ll.map(x => x.body.template.name + ':' + x.body.template.components.length));
     // El dueño toca el botón (al otro día a la mañana: el detalle es el del día del cierre)
     S.limpiar(); poner('2026-11-11 08:10');
     hook(S, '59177000007', { type: 'button', button: { payload: 'cd|2026-11-10', text: 'Ver qué vendió cada uno' } });
@@ -432,7 +442,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const ef = S.salen('efectivo_del_dia').map(x => x.to);
     chk('5c1 el efectivo de las 18:00 le llega SOLO al primero de WA_DUENO (el dueño)', JSON.stringify(ef) === JSON.stringify(['59177000007']), S.salen().map(x => x.pl + ':' + x.to));
     S.limpiar(); poner(HOY + ' 21:20'); S.repaso();
-    const cd = S.salen('cierre_del_dia_v2').map(x => x.to).sort();
+    const cd = S.salen('cierre_del_dia_v3').map(x => x.to).sort();
     chk('5c2 el cierre del día les llega a los DOS', JSON.stringify(cd) === JSON.stringify(['59177000007', '59177000008']), S.salen().map(x => x.pl + ':' + x.to));
     S.limpiar(); poner(HOY + ' 21:30');
     S.ctx.doPost({ parameter: { wa: 'clave-hook' }, postData: { contents: JSON.stringify({ object: 'whatsapp_business_account', entry: [{ id: 'X', changes: [{ field: 'messages',

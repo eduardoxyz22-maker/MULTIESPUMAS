@@ -1697,8 +1697,10 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   // l. las tres versiones iguales
   const srcL = fs.readFileSync(GS, 'utf8'), phL = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
   const vG = (srcL.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], vE = (srcL.match(/var ESTA_VERSION = '([^']+)'/)||[])[1], vP = (phL.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/)||[])[1];
-  chk('⚠️ l. SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA (la página) son la misma: 2026-11-14-b',
-      vG==='2026-11-14-b' && vE===vG && vP===vG, JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
+  /* (15/11, 2026-11-15-a) El servidor va primero: la página espera la 15-a cuando use lo nuevo (el lote del voucher, 331); mientras tanto puede
+     seguir esperando la 14-b, que la 15-a trae entera. */
+  chk('⚠️ l. SCRIPT_VERSION y ESTA_VERSION (adentro de probarAntesDeImplementar) son la misma: 2026-11-15-a; la página espera esa o la 14-b (que la 15-a trae entera)',
+      vG==='2026-11-15-a' && vE===vG && (vP===vG || vP==='2026-11-14-b'), JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));

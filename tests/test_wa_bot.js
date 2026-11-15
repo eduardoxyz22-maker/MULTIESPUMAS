@@ -429,12 +429,14 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
   /* §4ok-E (05/11) + las del jueves: logistica_hoy_falta (en vez de logistica_sin_camion_v2),
      alerta_leads, alerta_leads_volvieron, reclamo_fabrica y las «_ubic» de confirmación y recordatorio (`ubic` en WA_TIPOS). */
   /* 🛏️ (2026-11-07-d) + `cierre_del_dia`: la de antes del botón sigue en la lista (es el respaldo de `cierre_del_dia_v2` y se creó desde acá). */
-  const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).concat(['cierre_del_dia']).filter((n, i, a) => a.indexOf(n) === i).sort();
+  /* 🎯🛍️ (2026-11-15-a) la v3 es la del cierre; la v2 y la primera quedan de respaldo, y la de Black Friday va en `bf`. */
+  const nombresU = nombres.concat(Object.keys(tipos).map(k => tipos[k].ubic).filter(Boolean)).concat(Object.keys(tipos).map(k => tipos[k].bf).filter(Boolean))
+    .concat(['cierre_del_dia', 'cierre_del_dia_v2']).filter((n, i, a) => a.indexOf(n) === i).sort();
   chk('son las de WA_TIPOS (y sus «_ubic»), con el mismo nombre, sin repetir', JSON.stringify(T.map(x => x.n).sort()) === JSON.stringify(nombresU), T.map(x => x.n));
   const nVars = (t) => (t.match(/\{\{\d+\}\}/g) || []).length;
   const esperado = { confirmacion_pedido_v2: 9, cambio_entrega_v2: 6, recordatorio_entrega_v2: 9, logistica_pedido_nuevo_v2: 6, logistica_cambio_v2: 3, logistica_hoy_falta: 5, pedido_en_camino: 6, logistica_pedir_hoy: 5, logistica_excel_falta: 3, logistica_cierre_falta: 3,
                      alerta_leads: 4, alerta_leads_volvieron: 4, reclamo_fabrica: 5, efectivo_del_dia: 5,   // 💵 (2026-11-06-b) → 📅 (06-d) el efectivo de cada día
-                     vendedora_buen_dia: 7, cierre_del_dia: 7, cierre_del_dia_v2: 7,   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño (07-d: la v2 con el botón)
+                     vendedora_buen_dia: 7, cierre_del_dia: 7, cierre_del_dia_v2: 7, cierre_del_dia_v3: 9, cierre_del_dia_bf: 10, cierre_del_mes: 9, logistica_excel_tarde: 3,   // 🎯🛍️📅🌙 (2026-11-15-a)   // ☀️🌙 (2026-11-07-a) el buen día a las vendedoras y el cierre del día al dueño (07-d: la v2 con el botón)
                      confirmacion_pedido_ubic: 9, recordatorio_entrega_ubic: 9,
                      pedir_ubicacion: 6, vendedoras_bajan: 5,
                      pedido_correo_tr4: 6,
@@ -457,7 +459,11 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
       !!er && JSON.stringify(er.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ya lo recibí' }]) &&   // 💵✅ (2026-11-07-f)
       !!ll.find(c => c.body.name === 'cotizacion_seguimiento') && JSON.stringify(ll.find(c => c.body.name === 'cotizacion_seguimiento').body.components[1].buttons) ===
         JSON.stringify([{ type: 'QUICK_REPLY', text: 'Que me llamen' }, { type: 'QUICK_REPLY', text: 'Ya compré' }, { type: 'QUICK_REPLY', text: 'No, gracias' }]) &&   // 🧾🤖 (2026-11-14-b)
-      ll.filter(c => c.body.components.length > 1).length === 4, v2 && v2.body.components);
+      /* 🎯🛍️📅 (2026-11-15-a) + la v3 y la de Black Friday (el mismo botón) y el mes cerrado (dos) */
+      ['cierre_del_dia_v3', 'cierre_del_dia_bf'].every(n => { const c = ll.find(x => x.body.name === n); return !!c && JSON.stringify(c.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver qué vendió cada uno' }]); }) &&
+      !!ll.find(c => c.body.name === 'cierre_del_mes') && JSON.stringify(ll.find(c => c.body.name === 'cierre_del_mes').body.components[1].buttons) ===
+        JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver por vendedora' }, { type: 'QUICK_REPLY', text: 'Ver por tienda' }]) &&
+      ll.filter(c => c.body.components.length > 1).length === 7, v2 && v2.body.components);
   chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === T.length - 1, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
