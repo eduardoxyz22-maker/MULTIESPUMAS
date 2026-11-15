@@ -17,7 +17,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   await ctx.route(/^https?:\/\//, r => r.abort());
   const page = await ctx.newPage();
   const errores = []; page.on('pageerror', e => errores.push(e.message));
-  page.on('dialog', d => d.accept());
+  let DIALOGOS = 0; page.on('dialog', d => { DIALOGOS++; d.accept(); });
   await page.clock.setFixedTime(new Date('2026-11-11T10:00:00-04:00'));
   await page.goto('file://' + path.resolve(process.env.PEDIDOS || 'pedidos.html'), { waitUntil: 'load' });
   await page.waitForTimeout(300);
@@ -143,6 +143,18 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   const sinSuc = await ev(() => rptSumarPreguntar({ id: 'x', cliente: 'Cliente cualquiera', productos: [{ desc: 'A', cant: 1 }] }, false, function () {}));
   const oc = await ev(() => { segSet('f-doc-tipo', 'OC'); setDocTipo(); return rptSumarPreguntar({ id: 'x', cliente: 'Charcas', productos: [{ desc: 'A', cant: 1 }] }, false, function () {}); });
   chk('7b · sin sucursal o en una OC, no pregunta', sinSuc === false && oc === false, { sinSuc, oc });
+
+  // ============ 7c. con la 317 prendida, UNA sola pregunta ============
+  await ev(() => { closeModal(); window.RPT_DUP_PRUEBA = 1; FX_DUP_OK = ''; });
+  antes = await ev(() => ({ n: _pl.length }));
+  const dAntes = DIALOGOS;
+  await ev(() => { _cargar('Charcas', [{ d: 'COLCHON SOFT', m: '140x190', c: 'COLT0048', n: 2, t: 'Reposición' }]); });
+  const dup = await ev(() => fxDupBuscar().map(function (d) { return d.p.id; }));
+  await ev(() => { submitPedido(); });
+  await esperar(700);
+  r = await ev(() => ({ modal: !!document.getElementById('vd-rs'), n: _pl.length }));
+  chk('7c · una RPT repetida que la 304 ofrece sumar: sale SOLO «¿Sumamos?» (sin el «¿reposición repetida?» antes)', dup.indexOf('11-016') >= 0 && r.modal && DIALOGOS === dAntes && r.n === antes.n, { dup, r, dialogos: DIALOGOS - dAntes });
+  await ev(() => { closeModal(); window.RPT_DUP_PRUEBA = 0; });
 
   chk('8 · sin errores de la página', errores.length === 0, errores);
   await browser.close();

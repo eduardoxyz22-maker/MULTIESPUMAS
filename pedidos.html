@@ -26489,6 +26489,14 @@ function fxDupConfirmar(){
   if(!L.length) return true;
   var firma=L.map(function(d){ return d.p.id; }).join(',')+'|'+String((document.getElementById('f-cliente')||{}).value||'')+'|'+String((document.getElementById('f-nota')||{}).value||'');
   if(FX_DUP_OK===firma) return true;
+  /* 🏪 (15/11) Una sola pregunta por RPT: si la repetida es una de las que la 304 ofrece para SUMAR («¿Sumamos estos productos ahí?»),
+     esa ventana ya la nombra y deja elegir; preguntar antes «¿repetida?» eran dos ventanas seguidas por lo mismo. */
+  try{
+    if(L[0].porRpt && typeof rptSumarVa==='function' && rptSumarVa()){
+      var _ids={}; rptSumarCands(L[0].suc, null).forEach(function(p){ _ids[String(p.id)]=1; });
+      if(L.some(function(d){ return _ids[String(d.p.id)]; })) return true;
+    }
+  }catch(e){}
   var si=L.some(function(d){ return d.porRpt; }) ?   // 🏪 (mejora 317)
     confirm('⚠️ ¿REPOSICIÓN REPETIDA?\n\n'+L[0].suc+' ya pidió y todavía no le llegó:\n'+L.map(function(d){ return '• '+rptDupTxt(d); }).join('\n')+
       '\n\nSi es OTRO pedido de la tienda, guardala igual. Si es el mismo, cancelá y corregí la que ya está (así no salen dos veces).\n\n• Aceptar: guardar esta reposición.\n• Cancelar: volver sin guardar.') :
