@@ -3189,6 +3189,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
             <input type="text" id="f-rpt-quien" placeholder="Se toma del vendedor" autocomplete="off" readonly style="background:var(--gray-lt);color:var(--muted)">
           </div>
         </div>
+        <div id="rpt-vendio" class="no-print" hidden></div>   <!-- 📦 (15/11, 305) lo que vendió la tienda desde su última RPT -->
         <div class="field" style="margin-top:2px">
           <label class="lb">📧 Al guardar</label>
           <div style="font-size:.78rem;color:var(--rpt-dk);line-height:1.5">Se puede bajar el <b>Excel del formato</b> para mandarlo por correo a <b>logística</b>, y pasarlo por <b>WhatsApp</b>, desde la ficha del pedido.<br>⏳ <span style="color:var(--muted)">Adicionales (protectores, cabeceras…): 7 días hábiles.</span></div>
@@ -7582,6 +7583,20 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-b{border:0;border-radius:10px;padding:8px 13px;font-weight:800;font-size:.83rem;cursor:pointer;font-family:inherit}
 .vd-b-k{background:#7c3aed;color:#fff}.vd-b-s{background:#fff;color:#14313a;border:1px solid #cfd8dc}.vd-b-p{background:var(--teal);color:#fff}
 .vd-lnk{border:0;background:none;color:var(--teal-dk);font-weight:800;cursor:pointer;font:inherit;text-decoration:underline;padding:0 4px}
+/* 305 · lo que vendió la tienda */
+.vd-rv{background:#fff;border:1px solid #cfe7e5;border-radius:12px;padding:12px 14px;margin:2px 0 12px}
+.vd-rv-h{font-weight:800;font-size:.92rem;color:#14313a}
+.vd-rv-s{font-size:.78rem;color:#5b7480;margin:3px 0 8px;line-height:1.45}
+.vd-rv-t{width:100%;border-collapse:collapse;font-size:.83rem;table-layout:fixed}
+.vd-rv-t th{text-align:left;font-size:.68rem;color:#5b7480;font-weight:700;padding:4px 5px;background:#f3f8f8;white-space:normal;line-height:1.2;text-transform:none;letter-spacing:0}
+.vd-rv-t th:nth-child(1){width:26px}.vd-rv-t th:nth-child(3),.vd-rv-t th:nth-child(4){width:60px;text-align:center}.vd-rv-t th:nth-child(5){width:64px}
+.vd-rv-t td{padding:6px 5px;border-top:1px solid #eef2f3;vertical-align:middle;white-space:normal;overflow-wrap:anywhere}
+.vd-rv-t td.vd-n{font-weight:800;text-align:center}
+.vd-rv-t td.vd-poco{color:#b45309}
+.vd-rv-t tr.vd-rv-g td{background:#fbf7ee;color:#7c4b00;font-weight:800;font-size:.76rem}
+.vd-rv-q{width:56px;max-width:100%;border:1px solid #cfd8dc;border-radius:7px;padding:4px 6px;font-weight:700;font:inherit;text-align:center}
+.vd-rv-sin{background:#fff8e1;border:1px solid #f5d98a;color:#6b5310;border-radius:9px;padding:6px 10px;font-size:.8rem;font-weight:700;margin-top:8px}
+.vd-rv-ok{background:#e9f8ef;border:1px solid #bfe6cd;color:#0a6b47;border-radius:10px;padding:8px 12px;font-size:.84rem;font-weight:700;margin:2px 0 12px}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -24340,6 +24355,7 @@ function pintarRpt(limpiar){
     ['f-garantia','f-facturar','f-nit'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
   }
   pintarProdRpt();
+  try{ rptVendioPintar(); }catch(e){}   // 📦 (15/11, 305)
 }
 function llenarSucursales(){
   var dl=document.getElementById('dl-sucursales'); if(!dl) return;
@@ -69460,6 +69476,108 @@ function rptSumarAplicar(tid, rec, seguir){
     try{ renderMis(); }catch(e){}
     return r;
   });
+}
+
+/* ---------------------------------------------------------------------------
+   🏪 305 · LA RPT SE ARMA CON LO QUE VENDIÓ LA TIENDA
+   Al elegir la sucursal en una RPT: «📦 Lo que vendió <tienda> desde su última RPT (DD/MM)»: sus ventas de tienda (`sucursalDeVenta`) desde
+   que se CARGÓ la última RPT a esa sucursal (sin una: los últimos RPT_VENDIO_SIN días; tope RPT_VENDIO_TOPE), por la clave del stock.
+   El dueño (15/11): *«aún no subo stock de las tiendas, ¿debo subirlo cada mes?»* → con un conteo en «🏬 Stock de las tiendas»
+   (`tstCalcular`) se descuenta lo que la tienda ya tiene (pedir = vendido − le queda); sin conteo, se propone por lo vendido y se dice en
+   una línea. Bolsas, sábanas y protectores (`esProdDeTienda`) van en su grupo (el conteo no los lleva). Nada se guarda solo: «Agregar los
+   tildados» llena los renglones como «Reposición» con `addProdRow`. RPT_VENDIO_PRUEBA en Playwright.
+   --------------------------------------------------------------------------- */
+var RPT_VENDIO_SIN=30, RPT_VENDIO_TOPE=45, RPT_VENDIO={ suc:'', D:null, cerrado:false, ok:'' };
+function rptVendioVa(){ return vdVa('RPT_VENDIO_PRUEBA'); }
+function rptVendioDatos(suc){
+  var hoy=diaNegocio(), idEd=String(EDIT_ID||''), ult=null;
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || !esRPT(p.oc) || String(p.id)===idEd || sucursalDeRpt(p)!==suc) return;
+    if(!ult || (Number(p.ts)||0)>(Number(ult.ts)||0)) ult=p;
+  });
+  var lim=stockSumarDias(hoy, -RPT_VENDIO_TOPE), desde='', desdeTs=0, tope=false;
+  if(ult && Number(ult.ts)){ desde=isoDeTsBolivia(ult.ts); desdeTs=Number(ult.ts); if(desde<lim){ desde=lim; desdeTs=0; tope=true; } }
+  else { ult=null; desde=stockSumarDias(hoy, -RPT_VENDIO_SIN); }
+  var G={};
+  (STATE||[]).forEach(function(p){
+    if(!stockCuenta(p) || esRPT(p.oc) || !esVentaTienda(p) || sucursalDeVenta(p)!==suc) return;
+    var f=contaFecha(p); if(!f || f<desde || f>hoy) return;
+    if(desdeTs && f===desde && (Number(p.ts)||0)<=desdeTs) return;     // lo vendido ANTES de cargar esa RPT ya lo cubría ella
+    (p.productos||[]).forEach(function(x){
+      var c=Number(x&&x.cant)||0; if(!(c>0) || !String((x&&(x.desc||x.codigo))||'').trim()) return;
+      var k=''; try{ k=stockAliasDe(stockClave(x)); }catch(e){ k=''; }
+      if(!k || k==='|') k='t:'+normNombre(x.desc)+'|'+normMedida(x.medida);
+      var g=G[k]=G[k]||{ k:k, v:0, nv:0, x:null, ts:-1, tienda:false };
+      g.v+=c; g.nv++;
+      if((Number(p.ts)||0)>=g.ts){ g.ts=Number(p.ts)||0; g.x=x; }
+      try{ if(esProdDeTienda(x)) g.tienda=true; }catch(e){}
+    });
+  });
+  var t=null; try{ if(tstHayConteo()){ var T=tstCalcular(); t=(T[suc] && T[suc].base) ? T[suc] : null; } }catch(e){ t=null; }
+  var L=Object.keys(G).map(function(k){
+    var g=G[k], x=g.x||{};
+    g.nom=String(x.desc||x.codigo||'').trim()+(x.medida?(' '+x.medida):'');
+    g.tiene=null;
+    if(t && !g.tienda){ var r=t.P[k]; g.tiene=r ? r.tiene : 0; }
+    g.pedir=(g.tiene!=null) ? Math.max(0, g.v-Math.max(0, g.tiene)) : g.v;
+    return g;
+  }).sort(function(a,b){ return (a.tienda?1:0)-(b.tienda?1:0) || b.v-a.v || a.nom.localeCompare(b.nom,'es'); });
+  return { suc:suc, ult:ult, desde:desde, tope:tope, conteo:t ? t.base : null, L:L };
+}
+function rptVendioSuc(){ var s=sucursalDe((document.getElementById('f-rpt-suc')||{}).value||''); return s ? s.n : ''; }
+function rptVendioLimpiar(){ RPT_VENDIO={ suc:'', D:null, cerrado:false, ok:'' }; var el=document.getElementById('rpt-vendio'); if(el){ el.hidden=true; el.innerHTML=''; } }
+function rptVendioPintar(){
+  var el=document.getElementById('rpt-vendio'); if(!el) return;
+  var suc=rptVendioSuc();
+  if(!rptVendioVa() || EDIT_ID || docTipoSel()!=='RPT' || !suc || /ROHO/i.test(suc)){ el.hidden=true; el.innerHTML=''; RPT_VENDIO.suc=''; return; }
+  if(RPT_VENDIO.suc!==suc || !RPT_VENDIO.D){ RPT_VENDIO.suc=suc; RPT_VENDIO.cerrado=false; RPT_VENDIO.D=rptVendioDatos(suc); }
+  var D=RPT_VENDIO.D; el.hidden=false;
+  if(RPT_VENDIO.cerrado){ el.innerHTML='<div class="vd-rv-ok">✓ '+esc(RPT_VENDIO.ok)+' <button type="button" class="vd-lnk" onclick="rptVendioReabrir()">Ver la lista otra vez</button></div>'; return; }
+  var tit='📦 Lo que vendió '+esc(suc)+(D.ult ? (' desde su última RPT ('+esc(fmtFechaCorta(D.desde))+')') : (' en los últimos '+RPT_VENDIO_SIN+' días'))+(D.tope?(' · los últimos '+RPT_VENDIO_TOPE+' días'):'');
+  if(!D.L.length){
+    el.innerHTML='<div class="vd-rv"><div class="vd-rv-h">'+tit+'</div><div class="vd-rv-s">'+(D.ult?'':'No tiene RPT anterior en el panel. ')+'No hay ventas de tienda de '+esc(suc)+' cargadas en el panel en ese tiempo: cargá la reposición a mano.</div></div>';
+    return;
+  }
+  var fila=function(g, i){
+    return '<tr data-i="'+i+'"><td><input type="checkbox" class="vd-rv-ck" aria-label="Pedir '+esc(g.nom)+'"'+(g.pedir>0?' checked':'')+'></td><td>'+esc(g.nom)+'</td>'+
+      '<td class="vd-n">'+g.v+'</td><td class="vd-n'+((g.tiene!=null && g.tiene<=1)?' vd-poco':'')+'">'+(g.tiene==null?'<span style="color:#9aa">—</span>':Math.max(0,g.tiene))+'</td>'+
+      '<td><input type="number" min="0" max="999" step="1" class="vd-rv-q" aria-label="Cantidad a pedir de '+esc(g.nom)+'" value="'+g.pedir+'"></td></tr>';
+  };
+  var filas='', grupo=false;
+  D.L.forEach(function(g, i){
+    if(g.tienda && !grupo){ grupo=true; filas+='<tr class="vd-rv-g"><td colspan="5">🛍️ Bolsas, sábanas y protectores'+(D.conteo?' (el conteo de la tienda no los lleva)':'')+'</td></tr>'; }
+    filas+=fila(g, i);
+  });
+  el.innerHTML='<div class="vd-rv"><div class="vd-rv-h">'+tit+'</div>'+
+    '<div class="vd-rv-s">Sus ventas de tienda'+(D.ult?(' cargadas después de la '+esc(ocEtiq(D.ult.oc)||'RPT anterior')):'')+'. Tildá lo que querés reponer y cambiá la cantidad si hace falta: nada se agrega solo.</div>'+
+    '<table class="vd-rv-t"><thead><tr><th></th><th>Producto</th><th>Vendido</th><th>Le queda</th><th>Pedir</th></tr></thead><tbody>'+filas+'</tbody></table>'+
+    (D.conteo ? ('<div class="vd-rv-s" style="margin:8px 0 0">«Le queda» sale del conteo del '+esc(fmtFechaCorta(D.conteo.f))+' de 🏬 Stock de las tiendas, con lo que entró y salió después. Pedir = lo vendido − lo que le queda.</div>')
+              : '<div class="vd-rv-sin">Sin conteo de la tienda: se propone por lo vendido.</div>')+
+    '<div style="margin-top:10px"><button type="button" class="vd-b vd-b-p" id="vd-rv-add" onclick="rptVendioAgregar()"></button></div></div>';
+  rptVendioBoton();
+}
+function rptVendioSel(){
+  var el=document.getElementById('rpt-vendio'), D=RPT_VENDIO.D, out=[]; if(!el || !D) return out;
+  [].forEach.call(el.querySelectorAll('tr[data-i]'), function(tr){
+    var ck=tr.querySelector('.vd-rv-ck'), q=tr.querySelector('.vd-rv-q'), n=Math.round(Number(q && q.value)||0), g=D.L[+tr.getAttribute('data-i')];
+    if(g && ck && ck.checked && n>0) out.push({ g:g, n:Math.min(999, n) });
+  });
+  return out;
+}
+function rptVendioBoton(){ var b=document.getElementById('vd-rv-add'); if(!b) return; var n=rptVendioSel().length; b.disabled=!n; b.textContent=n ? ('Agregar '+(n===1?'el tildado':('los '+n+' tildados'))+' a la RPT') : 'Tildá lo que querés reponer'; }
+function rptVendioReabrir(){ RPT_VENDIO.cerrado=false; rptVendioPintar(); }
+function rptVendioAgregar(){
+  var D=RPT_VENDIO.D, sel=rptVendioSel(); if(!D) return;
+  if(!sel.length){ toast('Tildá al menos un producto con cantidad.','err'); return; }
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var d=c.querySelector('.prod-desc'), co=c.querySelector('.prod-codigo');
+    if(d && !String(d.value||'').trim() && !(co && String(co.value||'').trim())) c.remove();
+  });
+  sel.forEach(function(s){ var x=s.g.x||{}; addProdRow(String(x.desc||'').trim(), String(x.medida||'').trim(), String(x.codigo||'').trim(), s.n, '', RPT_TIPOS[0]); });
+  try{ refreshDelButtons(); }catch(e){} try{ pintarProdRpt(); }catch(e){} try{ pintarTotalProds(); }catch(e){} try{ saldoAvisosProgramar(); }catch(e){}
+  RPT_VENDIO.cerrado=true;
+  RPT_VENDIO.ok='Agregaste '+sel.length+' producto'+(sel.length===1?'':'s')+' de lo que vendió '+D.suc+' («Reposición»). Revisalos abajo antes de guardar.';
+  rptVendioPintar();
 }
 
 /* ---------------------------------------------------------------------------
