@@ -5570,6 +5570,10 @@ button.cp-ok .cp-tick{ width:15px; height:15px; vertical-align:-3px; margin-righ
 button.cp-ok .cp-t{ font-weight:800; }
 button.cp-ok .cp-tip{ font-weight:600; opacity:.88; overflow:hidden; text-overflow:ellipsis; }
 @keyframes cpTilde{ to{ stroke-dashoffset:0; } }
+/* 🖍️ (15/11, mejora 288) lo buscado, en amarillo suave (no cambia el texto: es un resaltado del navegador) */
+::highlight(busca){ background-color:#FFE58A; color:inherit; }
+.lb .bh-n{ font-weight:700; color:#00A09A; text-transform:none; letter-spacing:0; margin-left:2px; }
+.adm-busca .bh-n{ flex:none; white-space:nowrap; font-size:.78rem; font-weight:800; color:#00A09A; padding:0 4px 0 6px; opacity:1; }
 @media (prefers-reduced-motion: reduce){ button.cp-ok .cp-tick{ animation:none; stroke-dashoffset:0; } }
 @media (max-width:560px){ .cie-rp{ margin-left:0; } }
 /* 📇 (14/10) Clientes para Excel */
@@ -41476,6 +41480,112 @@ function copiadoVolver(b){
   b.style.width=o.w; b.style.height=o.hh;
   if(o.al==null) b.removeAttribute('aria-label'); else b.setAttribute('aria-label', o.al);
 }
+/* ============================================================================
+   🖍️ (15/11, mejora 288) LO QUE BUSCASTE, RESALTADO EN AMARILLO. Hay 8 buscadores y ninguno marcaba qué coincidió: con 246 pedidos en
+   noviembre y 2-3 productos por ficha había que leer todo para ver por qué apareció uno. Ahora cada palabra buscada (de 2 letras o más)
+   se pinta en amarillo suave donde aparece, sin acentos ni mayúsculas (como busca el panel), y al lado de «Buscar» dice «· N coinciden»
+   (los que quedaron a la vista) en Administración, Contabilidad y ATC (Mis pedidos ya lo dice abajo del buscador).
+   Con la «Custom Highlight API» del navegador (`CSS.highlights`): NO toca el HTML de las fichas ni el texto que se lee (las pruebas que leen
+   textos no cambian). Cada lista se mira de nuevo cuando se redibuja (`MutationObserver`, con un respiro de 120 ms). Un navegador viejo sin
+   esa función busca como siempre, sin resaltar. Solo mira. En Playwright, apagado salvo `window.BUSCA_HL_PRUEBA`. */
+var BH_DEF=[
+  { q:'mis-q', cajas:['#mis-lista'] },
+  { q:'adm-search', cajas:['#adm-fichas', '#tbl-pedidos tbody'], obs:['#adm-fichas', '#tbl-pedidos'], items:'.af-f, #tbl-pedidos tbody tr', n:1 },
+  { q:'cta-search', cajas:['#tbl-conta tbody', '#cx-cards'], obs:['#tbl-conta', '#cx-cards'], items:'#tbl-conta tbody tr, #cx-cards .cx-vc', n:1 },
+  { q:'atc-search', cajas:['#tbl-atc tbody', '#atv-cards'], obs:['#tbl-atc', '#atv-cards'], items:'#tbl-atc tbody tr, .atv-c', n:1 },
+  { q:'stk-q', cajas:['#stock-body'] },
+  { q:'alm-q', cajas:['#alm-body'] },
+  { q:'comps-q', cajas:['#comps-lista'] },
+  { q:'pal-in', cajas:['#pal-res'] },
+  { q:'cua-buscar', cajas:function(inp){ var b=inp.closest('.cua-box'); return b ? [].slice.call(b.querySelectorAll('tbody')) : []; },
+    obs:function(inp){ var b=inp.closest('.cua-box'); return (b && b.parentNode) ? [b.parentNode] : []; } }
+];
+/* Lo que se vigila para volver a pintar: lo que NO se reemplaza al redibujar (una tabla reescribe su <tbody> entero). */
+function bhObservar(d, inp, cajas){
+  var L=cajas;
+  if(typeof d.obs==='function'){ try{ L=d.obs(inp)||[]; }catch(e){ L=[]; } }
+  else if(d.obs) L=d.obs.map(function(sel){ return document.querySelector(sel); }).filter(Boolean);
+  L.forEach(bhMirar);
+}
+var BH_MAX_RANGOS=4000, BH_T=null, BH_VISTAS=(typeof WeakSet!=='undefined') ? new WeakSet() : null, BH_OBS=null;
+function bhActivo(){ try{ return !!(window.CSS && CSS.highlights && window.Highlight) && (!navigator.webdriver || !!window.BUSCA_HL_PRUEBA); }catch(e){ return false; } }
+/* Las palabras buscadas, como las compara el panel: sin acentos, en minúscula; de 2 letras o más; sin repetir; hasta 8. */
+function bhPalabras(q){
+  var w=sinTildes(q).split(/\s+/).map(function(x){ return x.replace(/^[«"'(\[]+|[»"'),.;:!?\]]+$/g,''); }).filter(function(x){ return x.length>=2; });
+  var v={}; return w.filter(function(x){ if(v[x]) return false; v[x]=1; return true; }).slice(0,8);
+}
+/* El texto de un nodo «aplanado» (sin acentos, minúscula) con, para cada letra, de qué letra del original vino. */
+function bhAplanar(t){
+  if(/^[\x00-\x7f]*$/.test(t)) return { s:t.toLowerCase(), m:null };
+  var s='', m=[];
+  for(var i=0;i<t.length;i++){
+    var c=t[i], cc=t.charCodeAt(i);
+    if(cc>=0xD800 && cc<=0xDBFF && i+1<t.length){ c=t.slice(i, i+2); }
+    var a; try{ a=c.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }catch(e){ a=c.toLowerCase(); }
+    for(var k=0;k<a.length;k++){ s+=a[k]; m.push(i); }
+    if(c.length===2) i++;
+  }
+  m.push(t.length); return { s:s, m:m };
+}
+function bhCajas(d, inp){
+  var L=[];
+  if(typeof d.cajas==='function'){ try{ L=d.cajas(inp)||[]; }catch(e){ L=[]; } }
+  else d.cajas.forEach(function(sel){ var e=document.querySelector(sel); if(e) L.push(e); });
+  return L.filter(function(e){ return e && e.getClientRects().length; });
+}
+function bhMirar(caja){
+  if(!window.MutationObserver || !BH_VISTAS) return;
+  if(!BH_OBS) BH_OBS=new MutationObserver(function(){ bhLuego(); });
+  if(BH_VISTAS.has(caja)) return;
+  BH_VISTAS.add(caja); BH_OBS.observe(caja, { childList:true, subtree:true, characterData:true });
+}
+function bhLuego(ms){ clearTimeout(BH_T); BH_T=setTimeout(function(){ try{ bhPintar(); }catch(e){ console.error(e); } }, ms==null?120:ms); }
+var BH_SALTA={ SCRIPT:1, STYLE:1, TEXTAREA:1, SELECT:1, OPTION:1, INPUT:1, NOSCRIPT:1 };
+function bhPintar(){
+  if(!bhActivo()) return;
+  var rangos=[], total=0;
+  BH_DEF.forEach(function(d){
+    var inp=document.getElementById(d.q), W=inp ? bhPalabras(inp.value||'') : [];
+    var cajas=inp ? bhCajas(d, inp) : [];
+    if(inp) bhObservar(d, inp, cajas);
+    if(d.n) bhCuentaPintar(d, inp, W.length ? cajas : null);
+    if(!W.length) return;
+    cajas.forEach(function(caja){
+      var tw=document.createTreeWalker(caja, NodeFilter.SHOW_TEXT, { acceptNode:function(n){
+        var pa=n.parentNode; if(!pa || BH_SALTA[pa.nodeName] || !n.nodeValue || n.nodeValue.length<2) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT; } });
+      var n;
+      while((n=tw.nextNode()) && total<BH_MAX_RANGOS){
+        var A=bhAplanar(n.nodeValue);
+        W.forEach(function(w){
+          var k=0, pos;
+          while((pos=A.s.indexOf(w, k))>=0 && total<BH_MAX_RANGOS){
+            var a=A.m ? A.m[pos] : pos, b=A.m ? A.m[pos+w.length] : pos+w.length;
+            try{ var r=document.createRange(); r.setStart(n, a); r.setEnd(n, b); rangos.push(r); total++; }catch(e){}
+            k=pos+w.length;
+          }
+        });
+      }
+    });
+  });
+  try{ if(rangos.length){ var H=new Highlight(); rangos.forEach(function(r){ H.add(r); }); CSS.highlights.set('busca', H); } else CSS.highlights.delete('busca'); }catch(e){}
+}
+/* «· N coinciden» al lado de la etiqueta «Buscar» (los que quedaron a la vista: la lista ya viene filtrada por la búsqueda). */
+function bhCuentaPintar(d, inp, cajas){
+  /* en Administración la etiqueta «Buscar» no se ve (§4me): va adentro de la caja del buscador, a la derecha */
+  var caja=inp.closest('.adm-busca'), f=inp.closest('.field'), host=caja || (f && f.querySelector('.lb')); if(!host) return;
+  var sp=host.querySelector('.bh-n');
+  if(!cajas){ if(sp) sp.remove(); return; }
+  var n=[].filter.call(document.querySelectorAll(d.items), function(e){ return e.getClientRects().length && cajas.some(function(c){ return c.contains(e); }); }).length;
+  if(!sp){ sp=document.createElement('span'); sp.className='bh-n'; sp.setAttribute('aria-live','polite'); host.appendChild(sp); }
+  var t=(caja?'':' · ')+(n===1 ? '1 coincide' : (n+' coinciden'));
+  if(sp.textContent!==t) sp.textContent=t;
+}
+/* Escribir en cualquiera de los buscadores lo vuelve a pintar (lo que se redibuja después lo agarra el MutationObserver). */
+document.addEventListener('input', function(e){
+  try{ var t=e.target; if(!t || !t.id || !bhActivo()) return;
+    for(var i=0;i<BH_DEF.length;i++) if(BH_DEF[i].q===t.id){ bhLuego(); setTimeout(bhLuego, 450); return; } }catch(_){}
+}, true);
 function whatsappUrl(text){ return 'https://wa.me/?text='+encodeURIComponent(text); }
 
 /* ============================================================================
@@ -67949,6 +68059,7 @@ function nxBadges(){
   try{ asisPreguntasMandar(); }catch(e){}   // ❓ (K) lo que quedó esperando señal
   try{ anuncioBtnPintar(); }catch(e){}   // 📢 (13/10)
   try{ phPintar(); }catch(e){}   // 🔴 (15/11, mejora 287)
+  try{ if(bhActivo()) bhLuego(); }catch(e){}   // 🖍️ (15/11, mejora 288) un buscador lleno por el panel (sin escribir) también se resalta
 }
 /* ============================================================================
    🔴 (15/11, mejora 287) EL NÚMERO DE «PARA HACER» EN LA PESTAÑA DEL NAVEGADOR Y EN EL ÍCONO. Con el panel detrás de Kommo o de WhatsApp
