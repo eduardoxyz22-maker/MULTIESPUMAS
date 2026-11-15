@@ -12827,6 +12827,7 @@ function cxTopPintar(list, vSel, R){
   var M=CX_TOP_M||{ vendido:0, cobrado:0, falta:0, nDeben:0, n:0 };
   var I=cxHacerDatos(list, R), V=I.slice(0, I.length>6?5:6), resto=I.slice(V.length), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
   CX_HACER_ULT=I;   // 💬 (idea 9) Bloki contesta «¿qué me falta hacer?» con el último que se dibujó
+  phAnotar('conta', I.length, 'Contabilidad');   // 🔴 (15/11, mejora 287) el número en la pestaña del navegador
   var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
   var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'antes del cierre del mes':'')+'</small></div>'+
@@ -31406,6 +31407,7 @@ function admHacerFila(o, i){
 function admHacerPintar(){
   var el=document.getElementById('adm-hacer'); if(!el || !admTabsActivas()) return;
   var I=admHacerDatos(), V=ADM_HACER_MAS ? I : I.slice(0,3), resto=I.slice(3);
+  phAnotar('adm', I.length, quienRol()==='admin' ? 'Administración' : 'Logística');   // 🔴 (15/11, mejora 287) el número en la pestaña del navegador
   var rojos=I.filter(function(o){ return o.sev==='r'; }).length;
   var h='<div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+
       '<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small>'+
@@ -38404,6 +38406,7 @@ function metaDiaHoraFuerte(v, dia){
 function misTopPintar(v, mine){
   var el=document.getElementById('mis-top'); if(!el) return;
   var I=misHacerDatos(v, mine), V=I.slice(0,5), resto=I.slice(5), rojos=I.filter(function(o){ return o.sev==='r'; }).length;
+  phAnotar('mis', I.length, String(v||'').trim().split(/\s+/)[0]);   // 🔴 (15/11, mejora 287) el número en la pestaña del navegador
   var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
   var _ad=''; try{ _ad=alDiaFilaHtml(v); }catch(e){}   // ✅ (15/11, 309) su fila de «¿al día?», arriba de «Para hacer»
@@ -67945,6 +67948,77 @@ function nxBadges(){
   try{ asisRefrescar(); }catch(e){}   // 🧑‍💼 §4jx
   try{ asisPreguntasMandar(); }catch(e){}   // ❓ (K) lo que quedó esperando señal
   try{ anuncioBtnPintar(); }catch(e){}   // 📢 (13/10)
+  try{ phPintar(); }catch(e){}   // 🔴 (15/11, mejora 287)
+}
+/* ============================================================================
+   🔴 (15/11, mejora 287) EL NÚMERO DE «PARA HACER» EN LA PESTAÑA DEL NAVEGADOR Y EN EL ÍCONO. Con el panel detrás de Kommo o de WhatsApp
+   Web nadie se enteraba de lo pendiente hasta volver: la pestaña decía siempre «Pedidos». Ahora dice «(5) Pedidos · Carola», el ícono de
+   las hojas lleva un circulito rojo con el número (late una vez cuando sube) y, con el panel instalado, el mismo número sale en el ícono
+   de la barra de tareas de Windows (`navigator.setAppBadge`). En 0, todo como antes.
+   ⚠️ NO se cuenta nada aparte: es el MISMO número que el globito de «📋 Para hacer» que se acaba de dibujar (`misTopPintar`,
+   `admHacerPintar`, `cxTopPintar` lo anotan con `phAnotar`). Manda el de la pestaña que se está viendo; en otra pestaña del panel (el
+   formulario, ATC…), el último dibujado si tiene menos de `PH_VIGENCIA_MS` (30 min); si no, nada. Solo cambia el título y el ícono:
+   no guarda nada. En Playwright, apagado salvo `window.TITULO_PRUEBA`. */
+var PH_CUENTA={}, PH_VIGENCIA_MS=30*60*1000, PH_PUESTO={ tit:null, base:null, n:0, ico:'' }, PH_ICO_ORIG=null;
+function phActivo(){ try{ return !navigator.webdriver || !!window.TITULO_PRUEBA; }catch(e){ return true; } }
+function phAnotar(k, n, quien){
+  try{ if(!phActivo()) return; PH_CUENTA=PH_CUENTA||{};   // (puede llegar antes de que el script termine de cargar: nunca rompe el dibujo)
+    PH_CUENTA[k]={ n:Math.max(0, Number(n)||0), t:Date.now(), quien:String(quien||'') }; phPintar(); }catch(e){}
+}
+/* ¿Cuál vale ahora? El de la vista activa; si la vista no tiene «Para hacer», el último dibujado (si es reciente). */
+function phElegido(){
+  var v=document.querySelector('.view.active'), k=v ? ({ 'view-mis':'mis', 'view-admin':'adm', 'view-conta':'conta' })[v.id] : '';
+  if(k && PH_CUENTA[k]) return PH_CUENTA[k];
+  var ult=null; Object.keys(PH_CUENTA).forEach(function(x){ var c=PH_CUENTA[x]; if(c && (!ult || c.t>ult.t)) ult=c; });
+  return (ult && Date.now()-ult.t<PH_VIGENCIA_MS) ? ult : null;
+}
+function phInstalado(){
+  try{ if(window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: window-controls-overlay)').matches)) return true; }catch(e){}
+  return !!navigator.standalone;
+}
+/* El título: si alguien más lo cambió (el panel instalado lo deja en «Pedidos», el modo práctica le agrega «🧪»), esa es la base nueva. */
+function phTitulo(n, quien){
+  var t=document.title;
+  if(PH_PUESTO.tit===null || t!==PH_PUESTO.tit) PH_PUESTO.base=t;
+  var base=PH_PUESTO.base||'Pedidos';
+  if(!n){ if(t!==base) document.title=base; PH_PUESTO.tit=base; return base; }
+  var nt='('+(n>99?'99+':n)+') '+(quien && /^Pedidos/.test(base) ? base.replace(/^Pedidos/, 'Pedidos · '+quien) : base);
+  if(t!==nt) document.title=nt;
+  PH_PUESTO.tit=nt; return nt;
+}
+/* Las hojas de `iconos/hojas.svg` con el circulito rojo y el número (dibujado: sin lienzo, anda también abriendo el archivo). */
+var PH_HOJAS='<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2B3566"/><stop offset="1" stop-color="#171d3d"/></linearGradient></defs><rect width="512" height="512" rx="112" fill="url(#g)"/><g transform="translate(108.0 80.0) scale(1)"><path d="M150 0 C140 60 175 100 230 140 C280 176 300 230 296 282 C280 230 240 205 190 180 C130 150 115 90 150 0 Z" fill="#F7E7A0"/><path d="M62 78 C70 140 120 165 180 190 C240 215 280 255 296 318 C262 275 220 262 160 252 C90 240 52 180 62 78 Z" fill="#DA8B62"/><path d="M0 168 C22 230 80 248 140 256 C200 264 262 290 296 352 C250 318 200 318 140 322 C70 326 18 270 0 168 Z" fill="#E7B5D5"/></g>';
+function phIcoSvg(n, grande){
+  var t=n>99?'99+':String(n), r=grande?178:150, fs=t.length>2?150:(t.length>1?200:250);
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'+PH_HOJAS+
+    '<circle cx="'+(512-r)+'" cy="'+r+'" r="'+r+'" fill="#CE2939" stroke="#fff" stroke-width="24"/>'+
+    '<text x="'+(512-r)+'" y="'+r+'" dy=".36em" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="'+fs+'" fill="#fff">'+t+'</text></svg>';
+}
+function phIcoPoner(href){
+  var L=[].slice.call(document.querySelectorAll('link[rel~="icon"]'));
+  if(!PH_ICO_ORIG) PH_ICO_ORIG=L.map(function(l){ return { l:l, href:l.getAttribute('href'), type:l.getAttribute('type') }; });
+  PH_ICO_ORIG.forEach(function(o){
+    if(href){ if(o.l.getAttribute('href')!==href){ o.l.setAttribute('type','image/svg+xml'); o.l.setAttribute('href', href); } }
+    else if(o.l.getAttribute('href')!==o.href){ o.l.setAttribute('href', o.href); if(o.type==null) o.l.removeAttribute('type'); else o.l.setAttribute('type', o.type); }
+  });
+}
+function phPintar(){
+  if(!phActivo() || !PH_PUESTO || !PH_CUENTA) return;
+  var c=phElegido(), n=c ? c.n : 0;
+  phTitulo(n, c ? c.quien : '');
+  var antes=PH_PUESTO.n; PH_PUESTO.n=n;
+  if(!n){ if(PH_PUESTO.ico){ PH_PUESTO.ico=''; phIcoPoner(''); } }
+  else{
+    var href='data:image/svg+xml,'+encodeURIComponent(phIcoSvg(n));
+    if(n>antes && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)){   // late una vez cuando sube
+      phIcoPoner('data:image/svg+xml,'+encodeURIComponent(phIcoSvg(n, true)));
+      clearTimeout(PH_PUESTO.lt); PH_PUESTO.lt=setTimeout(function(){ if(PH_PUESTO.n===n) phIcoPoner(PH_PUESTO.ico); }, 450);
+    }
+    else if(PH_PUESTO.ico!==href) phIcoPoner(href);
+    PH_PUESTO.ico=href;
+  }
+  /* el ícono de la barra de tareas, solo con el panel instalado */
+  try{ if(phInstalado() && navigator.setAppBadge && PH_PUESTO.app!==n){ PH_PUESTO.app=n; var pr=n ? navigator.setAppBadge(n) : navigator.clearAppBadge(); if(pr && pr.catch) pr.catch(function(){}); } }catch(e){}
 }
 /* ============================================================================
    🧑‍💼 EDUARDO, EL ASISTENTE DEL PANEL (§4jx, 11/10). El dueño: *«quiero que crees un avatar de mí… como un asistente virtual que
