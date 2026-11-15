@@ -7629,6 +7629,16 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-ad-yo{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:#f3f8f8;border:1px solid #d5ecea;border-radius:11px;padding:7px 10px;margin:0 0 10px;font-size:.8rem}
 .vd-ad-yo b.vd-ad-pc{margin-left:auto}
 .vd-ad-yo .vd-ad-d{margin:0}
+/* 310 · antes de irte */
+.vd-ai-top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.vd-ai-moon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#00B5AD,#007a74);display:grid;place-items:center;font-size:1.3rem;flex:none}
+.vd-ai-h{font-weight:800;font-size:1rem;color:#14313a}.vd-ai-s{font-size:.76rem;color:#5b7480}
+.vd-ai-it{display:flex;align-items:center;gap:8px;padding:9px 0;border-top:1px solid #eef2f3;font-size:.86rem}
+.vd-ai-it .vd-ai-tx{flex:1;min-width:0}
+.vd-ai-ck{width:22px;height:22px;border-radius:6px;border:2px solid #cfd8dc;display:grid;place-items:center;font-size:.72rem;color:#fff;flex:none}
+.vd-ai-ck.vd-on{background:#10b981;border-color:#10b981}
+.vd-ai-fin{margin-top:10px;text-align:center;font-size:.86rem;color:#5b7480}
+.vd-ai-fin.vd-on{color:#0a6b47;font-weight:800;font-size:.95rem}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
@@ -36700,13 +36710,14 @@ function misTopPintar(v, mine){
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
-      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+'</div></div>';   // 🏬 (254) «Caja de hoy» en el aparato del mall
+      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+antesIrteBotonHtml(v)+'</div></div>';   // 🌙 (15/11, 310) «Me voy»   // 🏬 (254) «Caja de hoy» en el aparato del mall
   var det=(MIS_EF_ABIERTO && (E.nuevos.length || E.retiros.length)) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo de '+esc(mesN(E.mes))+' · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
       E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+(c.envio?' · 🚚 flete':'')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
       E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
       '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  try{ antesIrteQuizas(v); }catch(e){}               // 🌙 (15/11, 310) desde las 19:00, una vez por día
   try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
 }
 var MIS_HACER_MAS=false;
@@ -69894,6 +69905,69 @@ function blokiAlDia(o){
     filas:R.D.map(function(d){ return { t:(d.sev==='v'?'✅ ':(d.sev==='r'?'🔴 ':'🟠 '))+d.ic+' '+d.t, s:d.s }; }),
     btns:[['👀 Ver '+(yo?'mis':'sus')+' pedidos', function(){ try{ asisCerrar(); }catch(e){} showView('mis'); misEqElegir(quien); }]] };
 }
+
+/* ---------------------------------------------------------------------------
+   🌙 310 · «ANTES DE IRTE»: LO DE HOY QUE FALTA
+   Desde ANTES_IRTE_HORA (19:00 de Bolivia), en Mis pedidos de una vendedora, una ventanita con SOLO lo de hoy: ventas cargadas hoy sin
+   factura o remisión (`docVentaFalta`), entregas del próximo camión sin ubicación (`misPendientes`), efectivo cobrado hoy sin entregar
+   (`misEfectivoDatos`) y ventas de Kommo de hoy sin completar (`borrPendientes`), cada una con su botón. Todo en verde: «✅ Listo, buen
+   descanso». Sale sola UNA vez por día y aparato (`me_antes_irte`); cuando quiera, con «🌙 Me voy». No frena nada. ANTES_IRTE_PRUEBA.
+   --------------------------------------------------------------------------- */
+var LS_ANTES_IRTE='me_antes_irte', ANTES_IRTE_HORA=19;
+function antesIrteVa(){ return vdVa('ANTES_IRTE_PRUEBA'); }
+function antesIrteDatos(v){
+  var hoy=diaNegocio(), prox=proximoDiaEntrega();
+  var mine=(STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v); });
+  var deHoy=function(ts){ return !!ts && isoDeTsBolivia(ts)===hoy; };
+  var cargadas=mine.filter(function(p){ return !esATC(p.oc) && !esRPT(p.oc) && deHoy(p.ts); });
+  var fac=cargadas.filter(function(p){ try{ return docVentaFalta(p); }catch(e){ return false; } });
+  var ub=misPendientes(mine).sinGps.filter(function(p){ return p.fecha===prox && !esVentaTienda(p); });
+  var E=null; try{ E=misEfectivoDatos(v); }catch(e){ E=null; }
+  var cobHoy=0, retHoy=0;
+  if(E){ (E.nuevos||[]).forEach(function(c){ if(c.f===hoy) cobHoy=r2(cobHoy+(Number(c.m)||0)); }); (E.retiros||[]).forEach(function(r){ if(r.fecha===hoy) retHoy=r2(retHoy+(Number(r.monto)||0)); }); }
+  var ef=E ? r2(Math.max(0, Math.min(Number(E.tot)||0, r2(cobHoy-retHoy)))) : 0;
+  var br=[]; try{ br=borrPendientes(borradoresDe(v)).filter(function(b){ return deHoy(b.ts); }); }catch(e){ br=[]; }
+  MIS_LISTAS.aiFac={ t:'🧾 Ventas de hoy sin factura o remisión', s:'Tocá cada venta y anotá si va con factura o con nota de remisión y su número.', L:fac, abrir:'showContaModal' };
+  MIS_LISTAS.aiUb={ t:'📍 Entregas del '+nxDiaTxt(prox)+' sin ubicación', s:'Abrí cada pedido y pedile la ubicación al cliente por WhatsApp.', L:ub };
+  var I=[
+    { k:'fac', ok:!fac.length, t:fac.length ? ('🧾 '+fac.length+(fac.length===1?' venta de hoy':' ventas de hoy')+' sin factura o remisión') : '🧾 Ventas de hoy con factura o remisión', b:'Anotar', fn:"closeModal();misVerLista('aiFac')" },
+    { k:'ub', ok:!ub.length, t:ub.length ? ('📍 '+ub.length+(ub.length===1?' entrega':' entregas')+' del '+nxDiaTxt(prox)+' sin ubicación') : ('📍 Las entregas del '+nxDiaTxt(prox)+' tienen ubicación'), b:'Pedir ubicación', fn:"closeModal();misVerLista('aiUb')" },
+    { k:'ef', ok:!(ef>0.005), t:ef>0.005 ? ('💵 '+fmtBs0(ef)+' en efectivo de hoy sin entregar') : '💵 Nada de efectivo de hoy sin entregar', b:'Ver', fn:"closeModal();MIS_EF_ABIERTO=true;renderMis();misIrA('mis-top')" },
+    { k:'ko', ok:!br.length, t:br.length ? ('📥 '+br.length+(br.length===1?' venta de Kommo de hoy':' ventas de Kommo de hoy')+' sin completar') : '📥 Kommo de hoy completo', b:'Completar', fn:"closeModal();misIrA('mis-borradores')" }
+  ];
+  return { v:v, hoy:hoy, cargadas:cargadas.length, I:I, listo:I.every(function(x){ return x.ok; }) };
+}
+function antesIrteAbrir(v){
+  v=v||misVendedorSel(); if(!v || MIS_TODOS){ toast('Elegí tu nombre en Mis pedidos.','err'); return; }
+  var D=antesIrteDatos(v), hb=horaBolivia(), hora=('0'+hb.getHours()).slice(-2)+':'+('0'+hb.getMinutes()).slice(-2);
+  antesIrteVisto(v, true);
+  var it=function(x){ return '<div class="vd-ai-it" data-k="'+x.k+'"><span class="vd-ai-ck'+(x.ok?' vd-on':'')+'" aria-hidden="true">'+(x.ok?'✓':'')+'</span><span class="vd-ai-tx">'+esc(x.t)+'</span>'+
+    (x.ok ? '' : ('<button type="button" class="ah-go" onclick="'+x.fn+'">'+esc(x.b)+'</button>'))+'</div>'; };
+  openModal('<div class="modal-h"><h3>🌙 Antes de irte</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b" id="vd-antes-irte">'+
+    '<div class="vd-ai-top"><div class="vd-ai-moon" aria-hidden="true">🌙</div><div><div class="vd-ai-h">Antes de irte, '+esc(String(v).split(' ')[0])+'</div><div class="vd-ai-s">Solo lo de HOY · '+esc(nxDiaTxt(D.hoy))+' · '+hora+'</div></div></div>'+
+    '<div class="vd-ai-it"><span class="vd-ai-ck vd-on" aria-hidden="true">✓</span><span class="vd-ai-tx">'+D.cargadas+(D.cargadas===1?' venta cargada hoy':' ventas cargadas hoy')+'</span></div>'+
+    D.I.map(it).join('')+
+    '<div class="vd-ai-fin'+(D.listo?' vd-on':'')+'">'+(D.listo ? '✅ Listo, buen descanso' : 'Cuando estén todos en verde: «✅ Listo, buen descanso». No frena nada.')+'</div>'+
+    '<div class="modal-actions" style="margin-top:10px"><button type="button" class="btn btn-ghost" onclick="closeModal()" style="flex:1">Cerrar</button></div></div>');
+}
+/* ¿Ya salió hoy para esta vendedora en este aparato? (`me_antes_irte` = {d: el día, v: [vendedoras]}); con `marcar`, lo anota. */
+function antesIrteVisto(v, marcar){
+  var hoy=diaNegocio(), k=normNombre(v), o=null;
+  try{ o=JSON.parse(localStorage.getItem(LS_ANTES_IRTE)||'null'); }catch(e){ o=null; }
+  if(!o || o.d!==hoy || !Array.isArray(o.v)) o={ d:hoy, v:[] };
+  var ya=o.v.indexOf(k)>=0;
+  if(marcar && !ya){ o.v.push(k); try{ localStorage.setItem(LS_ANTES_IRTE, JSON.stringify(o)); }catch(e){} }
+  return ya;
+}
+function antesIrteQuizas(v){
+  if(!antesIrteVa() || !v || MIS_TODOS || contaExcluido(v) || esVendedorLite(v)) return;
+  if(horaBolivia().getHours()<ANTES_IRTE_HORA || antesIrteVisto(v)) return;
+  var vm=document.getElementById('view-mis'); if(!vm || !vm.classList.contains('active')) return;
+  var md=document.getElementById('modal'); if(md && md.classList.contains('on')) return;
+  antesIrteVisto(v, true);
+  setTimeout(function(){ var m=document.getElementById('modal'); if(m && m.classList.contains('on')) return; antesIrteAbrir(v); }, 500);
+}
+function antesIrteBotonHtml(v){ return (antesIrteVa() && v && !contaExcluido(v) && !esVendedorLite(v)) ? '<button type="button" class="ah-go" id="vd-me-voy" onclick="antesIrteAbrir()">🌙 Me voy</button>' : ''; }
 
 /* ---------------------------------------------------------------------------
    Los enganches del formulario (una vez, al abrir la página)
