@@ -2473,6 +2473,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .cta-om .cta-om-v{border:1px solid #f3d38a;background:#fff;color:#7c4b00;border-radius:8px;padding:4px 9px;font:inherit;font-size:.8rem;cursor:pointer;min-height:32px}
 .cta-om .cta-om-v:hover{background:#fdf0cf}
 .cta-om .cta-om-t{border:0;background:var(--teal);color:#fff;border-radius:9px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;min-height:34px;margin-top:6px}
+.ffi-chip{margin-left:6px;border:1px solid var(--teal);color:#00807a;border-radius:16px;padding:1px 10px;font:inherit;font-size:.74rem;font-weight:700;background:#e9fbfa;cursor:pointer;vertical-align:middle;min-height:26px}
+.ffi-chip.on{background:var(--teal);color:#fff}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -61399,9 +61401,75 @@ function ctaOtrosPintar(enLista){
 }
 function ctaOtrosVerTodo(){ segSet('cta-mode','todo'); setContaModo('todo'); }
 
+/* ---------- 🧾 299 «FACTURAR A» IGUAL AL CLIENTE EN UN TOQUE ----------
+   En noviembre 62 de 96 ventas con NIT tenían en «Facturar a» el mismo nombre del cliente, escrito dos veces; y 3 NIT tenían 11 o 14
+   números (¿dos pegados?). Al lado de «Facturar a», «= el cliente» copia el nombre y, mientras nadie lo cambie a mano, sigue al cliente
+   si se lo corrige. Debajo del NIT, una línea ámbar si tiene letras, menos de 5 o más de 12 números. Nunca frena el guardado. */
+var FFI={ sigue:false, ult:'' };
+function ffiVa(){ try{ return !navigator.webdriver || !!window.FFI_PRUEBA; }catch(e){ return true; } }
+function ffiIgual(){
+  var c=document.getElementById('f-cliente'), f=document.getElementById('f-facturar'); if(!c || !f) return;
+  var v=String(c.value||'').trim();
+  if(!v){ toast('Escribí primero el nombre del cliente.','err'); try{ c.focus(); }catch(e){} return; }
+  f.value=v; FFI.sigue=true; FFI.ult=v; ffiPintar();
+  try{ f.dispatchEvent(new Event('input', { bubbles:true })); }catch(e){}
+}
+function ffiCliente(){   // el cliente cambió: «Facturar a» lo sigue solo si seguía siendo la copia
+  var c=document.getElementById('f-cliente'), f=document.getElementById('f-facturar'); if(!c || !f) return;
+  if(FFI.sigue && f.value===FFI.ult){ var v=String(c.value||'').trim(); if(v){ f.value=v; FFI.ult=v; } }
+  ffiPintar();
+}
+function ffiPintar(){
+  var b=document.getElementById('ffi-igual'), c=document.getElementById('f-cliente'), f=document.getElementById('f-facturar'); if(!b || !c || !f) return;
+  if(FFI.sigue && f.value!==FFI.ult) FFI.sigue=false;          // se escribió otra cosa a mano (o se vació el formulario)
+  var on=!!String(f.value||'').trim() && String(f.value).trim()===String(c.value||'').trim();
+  b.classList.toggle('on', on);
+  b.textContent=on ? '✓ = el cliente' : '= el cliente';
+  b.title=on ? 'Va igual que el nombre del cliente'+(FFI.sigue?' (si corregís el cliente, esto lo sigue)':'') : 'Copiar el nombre del cliente';
+}
+/* El NIT: lo que mira es el largo de los números y si tiene letras. Solo avisa. */
+function ffiNitAviso(t){
+  t=String(t||'').trim(); if(!t) return '';
+  var d=t.replace(/\D/g,''), letras=/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t);
+  if(d.length>12) return '⚠️ El NIT tiene '+d.length+' números: ¿se pegaron dos? (un NIT o un CI tiene de 5 a 12). Se guarda igual si está bien.';
+  if(d.length<5) return '⚠️ El NIT tiene '+(d.length ? ('solo '+d.length+' número'+(d.length===1?'':'s')) : 'ningún número')+': un NIT o un CI tiene de 5 a 12. Se guarda igual si está bien.';
+  if(letras) return '⚠️ El NIT tiene letras («'+t+'»): ¿es un CI con complemento? Revisalo antes de facturar. Se guarda igual si está bien.';
+  return '';
+}
+function ffiNitPintar(){
+  var n=document.getElementById('f-nit'), av=document.getElementById('ffi-nit'); if(!n || !av) return;
+  var h=ffiNitAviso(n.value);
+  av.hidden=!h; if(av._h!==h){ av.textContent=h; av._h=h; }
+}
+function ffiIniciar(){
+  if(!ffiVa()) return;
+  var f=document.getElementById('f-facturar'), c=document.getElementById('f-cliente'), n=document.getElementById('f-nit'); if(!f || !c) return;
+  var lb=f.parentNode && f.parentNode.querySelector('label.lb');
+  if(lb && !document.getElementById('ffi-igual')){
+    var b=document.createElement('button'); b.type='button'; b.id='ffi-igual'; b.className='ffi-chip no-print'; b.textContent='= el cliente';
+    b.addEventListener('click', function(e){ e.preventDefault(); ffiIgual(); });
+    lb.appendChild(b);
+  }
+  if(n && !document.getElementById('ffi-nit')){
+    var av=document.createElement('div'); av.id='ffi-nit'; av.className='cel-aviso mal'; av.hidden=true; av.setAttribute('role','status');
+    n.parentNode.insertBefore(av, n.nextSibling);
+    n.addEventListener('input', ffiNitPintar); n.addEventListener('blur', ffiNitPintar);
+  }
+  c.addEventListener('input', ffiCliente);
+  f.addEventListener('input', ffiPintar);
+  /* el formulario se vacía o se llena por código (nuevo pedido, editar): el botón y el aviso se ponen al día */
+  ['resetForm','editPedido'].forEach(function(nm){
+    var orig=window[nm]; if(typeof orig!=='function' || orig._ffi) return;
+    var w=function(){ var r=orig.apply(this, arguments); try{ if(nm==='resetForm'){ FFI.sigue=false; FFI.ult=''; } ffiPintar(); ffiNitPintar(); setTimeout(function(){ ffiPintar(); ffiNitPintar(); }, 200); }catch(e){} return r; };
+    w._ffi=1; window[nm]=w;
+  });
+  ffiPintar(); ffiNitPintar();
+}
+
 /* ---------- el arranque de lo de arriba ---------- */
 document.addEventListener('DOMContentLoaded', function(){
   try{ buscarLuegoIniciar(); }catch(e){ console.error(e); }
+  try{ ffiIniciar(); }catch(e){ console.error(e); }
 });
 /* 🪟 SIN BARRA DE TÍTULO (30/10, §4ny; el dueño eligió la «B»). El manifest pide `display_override: window-controls-overlay`: en la compu,
    con el panel instalado, Chrome saca la barra y deja los botones de Windows encima de la página (con la flechita ︿ se vuelve a la barra).
