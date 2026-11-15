@@ -89,14 +89,14 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   fs.writeFileSync(tmp, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D5) + ';'));
   const res5 = await abrir('resumen');
   chk('5a. el resumen dice cuántas son del panel sin ficha en Kommo, cuántas entregadas (cierres) y cuántas por entregar (pipeline)',
-    /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 5 ya entregadas o con factura \(Bs 4,500, cuentan como cierres\) y 5 por entregar \(Bs 3,820, solo en el pipeline\)/.test(res5),
+    /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 6 ya entregadas o con factura\/remisión \(Bs 4,590, cuentan como cierres\) y 4 por entregar \(Bs 3,750, solo en el pipeline\)/.test(res5),
     (res5.match(/[^\n]*sin ficha en Kommo[^\n]*/) || [''])[0]);
-  chk('5b. el pulso del mes lo dice en «Cerrado en el mes» y en «Pipeline total»', /7 compradores · 🛒 5 sin ficha en Kommo/.test(res5) && /todas las etapas · 🛒 5 por entregar/.test(res5), '');
-  chk('5c. en «Rendimiento de origen» las de Kommo y las del panel suman los cierres del mes («🛒 Sin ficha en Kommo» 60 %)', /🛒 Sin ficha en Kommo\s*71%/.test(res5), (res5.match(/🛒 Sin ficha en Kommo[^\n]*\n?[^\n]*/) || [''])[0]);
+  chk('5b. el pulso del mes lo dice en «Cerrado en el mes» y en «Pipeline total»', /8 compradores · 🛒 6 sin ficha en Kommo/.test(res5) && /todas las etapas · 🛒 4 por entregar/.test(res5), '');
+  chk('5c. en «Rendimiento de origen» las de Kommo y las del panel suman los cierres del mes («🛒 Sin ficha en Kommo» 75 %)', /🛒 Sin ficha en Kommo\s*75%/.test(res5), (res5.match(/🛒 Sin ficha en Kommo[^\n]*\n?[^\n]*/) || [''])[0]);
   const eq5 = await abrir('equipo');
   chk('5d. debajo de los cierres y del pipeline de Ana, en la tabla del resumen y en su tarjeta del equipo: «🛒 +3 sin ficha» y «🛒 3 por entregar»',
-    /🛒 \+5 sin ficha/.test(res5) && /🛒 5 por entregar/.test(res5) && /🛒 \+5 sin ficha/.test(eq5) && /🛒 5 por entregar/.test(eq5),
-    [/🛒 \+5 sin ficha/.test(res5), /🛒 5 por entregar/.test(res5), /🛒 \+5 sin ficha/.test(eq5), /🛒 5 por entregar/.test(eq5)].join(' '));
+    /🛒 \+6 sin ficha/.test(res5) && /🛒 4 por entregar/.test(res5) && /🛒 \+6 sin ficha/.test(eq5) && /🛒 4 por entregar/.test(eq5),
+    [/🛒 \+6 sin ficha/.test(res5), /🛒 4 por entregar/.test(res5), /🛒 \+6 sin ficha/.test(eq5), /🛒 4 por entregar/.test(eq5)].join(' '));
   let canal5 = '', nan5 = [], delPanel5 = [];
   for (const v of (D5.nav || []).map(n => n.id)) {
     const t = await abrir(v);
@@ -117,7 +117,7 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
     await page.waitForTimeout(500);
     const dr = await page.evaluate(() => (document.querySelector('aside.drawer.show') || {}).innerText || '');
     await page.close();
-    chk('5h. la ficha de Ana lo dice con sus números (3 entregadas, 3 por entregar)', /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 5 ya entregadas o con factura/.test(dr), dr.slice(0, 200));
+    chk('5h. la ficha de Ana lo dice con sus números (3 entregadas, 3 por entregar)', /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 6 ya entregadas o con factura\/remisión/.test(dr), dr.slice(0, 200));
   }
   chk('5i. sin errores de JavaScript con las ventas del panel', !errores.length, errores[0]);
 

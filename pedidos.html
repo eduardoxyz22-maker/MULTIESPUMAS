@@ -23697,7 +23697,7 @@ function submitPedido(){
   }
   /* 🧾 (06/11) La factura o nota de remisión la anota CONTABILIDAD (`fdoc`/`fdocn` en los productos): la vendedora no la ve, y corregir el
      pedido desde el formulario (que rearma los productos) no se la tiene que llevar. Una ATC o una RPT no la llevan. */
-  if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && (docVentaDe(prev) || docNumDe(prev))) setDocVenta(rec, docVentaDe(prev), docNumDe(prev));
+  if(prev && !esATC(rec.oc) && !esRPT(rec.oc) && (docVentaDe(prev) || docNumDe(prev))) setDocVenta(rec, docVentaDe(prev), docNumDe(prev), docTDe(prev));   // 📅 con el día en que se anotó
   /* 💳🚌 (15/11, 308 y 311) cómo paga lo que falta y si va por flota: del formulario (viajan adentro de los productos) */
   try{ pcobAlGuardar(rec, prev); }catch(e){} try{ flotaAlGuardar(rec, prev); }catch(e){}
   /* 📅 (08/11) La marca «cuenta en el mes en que se cargó» la pone Contabilidad (`vmes`): corregir el pedido no se la lleva. */
@@ -29336,11 +29336,20 @@ var DOCV_TXT={ F:'🧾 Factura', R:'📄 Nota de remisión' };
 var DOCV_DESDE='2026-11-01';
 function docVentaDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && (x.fdoc==='F' || x.fdoc==='R')){ v=x.fdoc; return true; } return false; }); return v; }
 function docNumDe(p){ var v=''; ((p&&p.productos)||[]).some(function(x){ if(x && x.fdocn!=null && String(x.fdocn).trim()){ v=String(x.fdocn).trim(); return true; } return false; }); return v; }
-function setDocVenta(p, v, num){
+/* 📅 (15/11, dueño: «con nota de remisión tb cuenta. Si se anota que se hizo la nota de remisión o factura pero se entrega el otro mes va en el
+   mes que se marcó») `fdocT` = cuándo se anotó el documento (ms), en los productos como `fdoc`. Lo pone el primer guardado que lo deja COMPLETO
+   (tipo y N°); corregir el tipo o el número después no lo cambia (el documento ya estaba hecho), y sacarlo lo borra. El dashboard
+   (`_panel_doc` de generar.py) cuenta esa venta como cierre en ESE mes; sin `fdocT` (lo anotado antes del 15/11), en el mes en que se cargó.
+   `copiaT` (solo al rescatarlo del pedido anterior en `submitPedido`): se copia tal cual, también 0 = no se sabe. */
+function docTDe(p){ var v=0; ((p&&p.productos)||[]).some(function(x){ var t=x ? Number(x.fdocT) : 0; if(t>0){ v=t; return true; } return false; }); return v; }
+function setDocVenta(p, v, num, copiaT){
   num=String(num==null?'':num).replace(/\s+/g,' ').trim().slice(0,40);
+  var completo=(v==='F' || v==='R') && !!num, antes=!!(docVentaDe(p) && docNumDe(p));
+  var T=!completo ? 0 : (copiaT!==undefined ? (Number(copiaT)>0 ? Number(copiaT) : 0) : (antes ? docTDe(p) : Date.now()));
   ((p&&p.productos)||[]).forEach(function(x){ if(!x) return;
     if(v==='F' || v==='R') x.fdoc=v; else delete x.fdoc;
-    if(num) x.fdocn=num; else delete x.fdocn; });
+    if(num) x.fdocn=num; else delete x.fdocn;
+    if(T) x.fdocT=T; else delete x.fdocT; });
 }
 /* ¿Le falta? Solo a una venta del equipo cargada desde DOCV_DESDE (y que tenga productos donde guardarlo). */
 function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.id) && ((p.productos||[]).length>0) && contaFecha(p)>=DOCV_DESDE; }
@@ -29350,7 +29359,8 @@ function docVentaChip(p){
   /* (06/11, revisión de Fable) Lo que falta va SIEMPRE en ámbar, también con el tipo y sin el número (`setDocVenta` lo permite y una fila
      tocada a mano en la planilla también): «Para hacer» la cuenta y la tabla no la puede pintar de azul. */
   if(docVentaFalta(p)) return '<span class="badge b-amber" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Falta anotar la factura o la nota de remisión (en la ficha de la venta)">❓ '+(d ? ((d==='F'?'Fact.':'Rem.')+' sin N°') : 'falta fact./rem.')+'</span>';
-  if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
+  var tt=docTDe(p), cuando=tt ? (' · anotada el '+fmtFechaCorta(isoDeTsBolivia(tt))) : '';
+  if(d) return '<span class="badge '+(d==='F'?'b-blue':'b-gray')+'" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="'+(d==='F'?'Factura':'Nota de remisión')+(n?(' N° '+esc(n)):' sin número')+cuando+'">'+(d==='F'?'🧾 Fact. ':'📄 Rem. ')+(n?esc(n):'s/n°')+'</span>';
   return '';
 }
 /* La fila de la ficha de Contabilidad: elegir y anotar el N°. */

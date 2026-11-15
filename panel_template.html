@@ -2046,7 +2046,7 @@ function pzTxt(o) {
   if (!o || !(o.c || o.p)) return "";
   const bs = n => "Bs " + Math.round(n || 0).toLocaleString("en-US");
   const partes = [];
-  if (o.c) partes.push(o.c + " ya " + (o.c === 1 ? "entregada" : "entregadas") + " o con factura (" + bs(o.bs) + ", cuentan como cierres)");
+  if (o.c) partes.push(o.c + " ya " + (o.c === 1 ? "entregada" : "entregadas") + " o con factura/remisión (" + bs(o.bs) + ", cuentan como cierres)");
   if (o.p) partes.push(o.p + " por entregar (" + bs(o.pbs) + ", solo en el pipeline)");
   const n = (o.c || 0) + (o.p || 0);
   return "🛒 Incluye " + n + (n === 1 ? " venta cargada" : " ventas cargadas") + " en el panel de pedidos sin ficha en Kommo: " + partes.join(" y ") + ".";
@@ -4416,7 +4416,7 @@ function ViewResumen() {
     ico: "conversion",
     color: c.panel ? "#D98300" : c.carry ? "#7A5AF0" : c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
     totalTxt: c.panel ? c.cierres + " cierres" + (c.pend ? " · " + c.pend + " por entregar" : "") : c.carry ? c.cierres + " cierres" : fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
-    desc: c.panel ? "Ventas cargadas en el panel de pedidos que no tienen ficha en Kommo (ventas de tienda y las que nadie uni\xF3). Las ya entregadas o con factura cuentan como cierres (con factura, en el mes en que se carg\xF3, aunque se entregue despu\xE9s); las que faltan entregar suman solo al pipeline. La barra es el n\xFAmero de cierres por vendedora." : c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
+    desc: c.panel ? "Ventas cargadas en el panel de pedidos que no tienen ficha en Kommo (ventas de tienda y las que nadie uni\xF3). Las ya entregadas o con factura o nota de remisi\xF3n cuentan como cierres (con factura o remisi\xF3n, en el mes en que se anot\xF3, aunque se entregue despu\xE9s); las que faltan entregar suman solo al pipeline. La barra es el n\xFAmero de cierres por vendedora." : c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
     rows: (c.byV || []).map(b => {
       const tv = D.team.find(t => t.name === b.name);
       return {

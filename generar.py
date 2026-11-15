@@ -167,12 +167,14 @@ def metas_del_panel(year, month, lectura=None):
 #  · EL MES = el día en que se CARGÓ la venta (`ts`, en Bolivia: `contaFecha` del panel), porque así cuenta el dashboard sus cierres:
 #    por «Fecha contrato», que la 91 escribe = el día de la venta (`kcFechaCampo_` del .gs). Si no, la misma venta contaría en un mes
 #    con ficha y en otro sin ficha.
-#  · 🧾 (15/11, dueño: «si está marcada facturada cuenta como cierre en el mes, por más que se entregue en el siguiente») una venta con
-#    FACTURA (tipo «F» y su N°, `docVentaDe`/`docNumDe` de la página) o con la marca de Contabilidad «esta venta cuenta en <mes>»
-#    (`vmes`, §4pb) es CIERRE en el mes en que se cargó (o el marcado), entregada o no. Una SIN factura que se entrega en un mes
-#    posterior al de su carga es cierre en el mes de la ENTREGA (el ✅ con su día del cierre `eF`, o la fecha ya pasada): así no queda
-#    para siempre en el pipeline de un mes que ya cerró. Lo que falta entregar sin factura es pipeline del mes EN CURSO (sigue abierto
-#    ahora, aunque se haya cargado antes).
+#  · 🧾📄 (15/11, dueño: «si está marcada facturada cuenta como cierre en el mes, por más que se entregue en el siguiente» y después «con
+#    nota de remisión tb cuenta. Si se anota que se hizo la nota de remisión o factura pero se entrega el otro mes va en el mes que se
+#    marcó») una venta con FACTURA o NOTA DE REMISIÓN (tipo «F» o «R» y su N°, `docVentaDe`/`docNumDe` de la página) es CIERRE en el mes
+#    en que se ANOTÓ el documento (`fdocT`, que la página guarda desde el 15/11; sin él, el mes en que se cargó), entregada o no. La
+#    marca de Contabilidad «esta venta cuenta en <mes>» (`vmes`, §4pb) la cierra en el mes en que se cargó. Una que se entrega es
+#    cierre en el mes de la ENTREGA (el ✅ con su día del cierre `eF`, o la fecha ya pasada). Vale lo que pase PRIMERO (nunca antes del
+#    mes en que se cargó): así no queda para siempre en el pipeline de un mes que ya cerró. Lo que falta entregar sin documento es
+#    pipeline del mes EN CURSO (sigue abierto ahora, aunque se haya cargado antes).
 #  · QUIÉNES: el equipo de Heaven (VENDOR_CFG + PANEL_HEAVEN = `MARCAS` heaven de pedidos.html; tests/test_generar_integridad.py
 #    compara las dos listas), sin ATC, RPT, filas del sistema, borradores de Kommo, Eduardo (mayoristas), ROHO ni los internos
 #    (`fueraDeConta` de la página, con CONTA_EXCLUIR). El monto = `ventaTotal` de la página (lo que falta + lo cobrado + el adelanto,
@@ -321,11 +323,20 @@ PANEL_VENTANA_MESES = 6                 # una venta cargada hasta 6 meses antes 
 def _panel_prods(p):
     return [x for x in (p.get("productos") if isinstance(p.get("productos"), list) else []) if isinstance(x, dict)]
 
-def _panel_facturada(p):
-    """🧾 Con factura: `docVentaDe(p)==='F'` y `docNumDe(p)` (el primer renglón que los tenga, como la página)."""
+def _panel_doc(p):
+    """🧾📄 Con factura o nota de remisión (`docVentaDe(p)` «F» o «R» y `docNumDe(p)`, el primer renglón que los tenga, como la página):
+    el día de Bolivia en que se anotó (`docTDe(p)` = `fdocT`, ms) o "" si no se sabe (anotada antes del 15/11). None = sin documento."""
     tipo = next((x.get("fdoc") for x in _panel_prods(p) if x.get("fdoc") in ("F", "R")), "")
     num = next((str(x.get("fdocn")).strip() for x in _panel_prods(p) if x.get("fdocn") is not None and str(x.get("fdocn")).strip()), "")
-    return tipo == "F" and bool(num)
+    if tipo not in ("F", "R") or not num:
+        return None
+    t = next((_js_num(x.get("fdocT")) for x in _panel_prods(p) if _js_num(x.get("fdocT")) > 0), 0)
+    if not t:
+        return ""
+    try:
+        return datetime.datetime.fromtimestamp(t / 1000.0, BOL_TZ).strftime("%Y-%m-%d")
+    except (OverflowError, OSError, ValueError):
+        return ""
 
 def _panel_vmes(p):
     """`ventaMesMarca(p)`: la marca de Contabilidad «esta venta cuenta en <mes>» ('AAAA-MM' o '')."""
@@ -350,16 +361,18 @@ def _panel_clasificar(p, hoy, ym):
     if not re.match(r"^\d{4}-\d{2}-\d{2}$", carga or ""):
         return None
     cm = carga[:7]
-    if _panel_facturada(p) or _panel_vmes(p):
-        mes = _panel_vmes(p) or cm
-        if mes > cm:
-            mes = cm
-        return (mes, int(carga[8:10]) if mes == cm else 1, True)
+    dia = lambda d: d if re.match(r"^\d{4}-\d{2}-\d{2}$", d or "") and d > carga else carga   # nunca antes del día en que se cargó
+    cierres = []                                    # los días en que se pudo cerrar: vale el PRIMERO
+    if _panel_vmes(p):
+        cierres.append(carga)                       # «cuenta en <el mes en que se cargó>»
+    doc = _panel_doc(p)
+    if doc is not None:
+        cierres.append(dia(doc))                    # el día en que se anotó la factura o la remisión (sin día: el de la carga)
     if _panel_entregada(p, hoy):
-        ent = _panel_dia_entrega(p, hoy, carga)
-        if not re.match(r"^\d{4}-\d{2}-\d{2}$", ent or "") or ent[:7] <= cm:
-            return (cm, int(carga[8:10]), True)
-        return (ent[:7], int(ent[8:10]), True)
+        cierres.append(dia(_panel_dia_entrega(p, hoy, carga)))
+    if cierres:
+        d = min(cierres)
+        return (d[:7], int(carga[8:10]) if d[:7] == cm else int(d[8:10]), True)
     if cm > ym:
         return None
     return (ym, int(carga[8:10]) if cm == ym else 1, False)
@@ -422,7 +435,7 @@ def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
             if dia[:7] == ym:
                 n["conLead"] += 1
             continue
-        cl = _panel_clasificar(p, hoy, ym)     # 🧾 (15/11) factura → mes de carga; sin factura, entregada → mes de la entrega; pendiente → este mes
+        cl = _panel_clasificar(p, hoy, ym)     # 🧾📄 (15/11) factura o remisión → el mes en que se anotó; entregada → el de la entrega; pendiente → este mes
         if not cl or cl[0] not in (ym, ym_prev):
             continue
         cand.append({"v": vk, "mes": cl[0], "dd": cl[1], "ts": int(_js_num(p.get("ts"))), "tel": _tel8(p.get("celular")),
@@ -477,7 +490,7 @@ def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
         if not c["bs"] > 0.005:
             t["sm"] += 1
     tc = out["tot"]["cur"]
-    txt = (f"{tc['c']} entregada(s) o con factura (cierres) y {tc['p']} por entregar (pipeline) sin ficha en Kommo en {MESES[month].lower()} {year}"
+    txt = (f"{tc['c']} entregada(s) o con factura/remisión (cierres) y {tc['p']} por entregar (pipeline) sin ficha en Kommo en {MESES[month].lower()} {year}"
            f" · {n['conLead']} ya con ficha · {n['parecen']} con el celular de una venta de Kommo (no se suman)"
            + (f" · {tc['sm']} sin monto anotado" if tc["sm"] else ""))
     return out, txt
@@ -1770,7 +1783,7 @@ def build_wsp(pd):
         psf = pd.get("panelSinFicha") or {}
         psf_line = ""
         if psf.get("c") or psf.get("p"):
-            psf_line = (f"_🛒 Incluye {psf.get('c', 0)} venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura (Bs {bs(psf.get('bs', 0))})"
+            psf_line = (f"_🛒 Incluye {psf.get('c', 0)} venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura/remisión (Bs {bs(psf.get('bs', 0))})"
                         + (f" y {psf.get('p', 0)} por entregar en el pipeline (Bs {bs(psf.get('pbs', 0))})" if psf.get("p") else "") + "_\n")
         peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
         bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)

@@ -191,7 +191,10 @@ FILAS_335 = [
     fila("a22", ts=_TSP, fecha=_FUT, entregado=True, saldo=300, productos=[{"desc": "COLCHON", "cant": 1, "eF": _HOY}]),               # del anterior SIN factura, entregada HOY: cierre de ESTE mes
     fila("a23", fecha=_FUT, saldo=500, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "F", "fdocn": "778"}]),                         # de este mes CON factura, sin entregar: cierre de este mes
     fila("a24", ts=_TSP, fecha=_FUT, saldo=150, productos=[{"desc": "COLCHON", "cant": 1, "vmes": _PAS[:7]}]),                           # marcada «cuenta en <mes anterior>»: cierre del anterior
-    fila("a25", ts=_TSP, fecha=_FUT, saldo=70, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "R", "fdocn": "55"}]),                  # con REMISIÓN (no es factura), sin entregar: pipeline de este mes
+    fila("a25", ts=_TSP, fecha=_FUT, saldo=70, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "R", "fdocn": "55"}]),                  # con REMISIÓN (cuenta igual) sin el día en que se anotó: cierre del ANTERIOR (el de la carga)
+    # 📄 (15/11, dueño: «con nota de remisión tb cuenta… va en el mes que se marcó que se facturó o hizo la nota de remisión»)
+    fila("a26", ts=_TSP, fecha=_FUT, saldo=90, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "R", "fdocn": "56", "fdocT": _TS}]),   # del anterior, remisión anotada el 1° de ESTE mes, sin entregar: cierre de ESTE mes
+    fila("a27", ts=_TSP, fecha=_PAS, saldo=40, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "F", "fdocn": "779", "fdocT": _TS}]),  # del anterior y ENTREGADA en el anterior, factura anotada este mes: cierre del ANTERIOR (vale lo primero)
     # ── no entran ──
     fila("a5", fecha=_PAS, saldo=900, productos=[{"desc": "COLCHON", "cant": 1, "klead": "1"}]),     # con su lead (`klead`): ya la cuenta Kommo
     fila("kommo-4", fecha=_PAS, saldo=900),                                                          # venta que vino de Kommo (id kommo-<lead>)
@@ -430,42 +433,42 @@ salio, pd, txt, archivos = correr_335()
 if pd:
     ana = {t["name"]: t for t in pd["team"]}.get("Ana Prueba", {})
     pz = ana.get("panel") or {}
-    chk("17a. entregadas (fecha ya pasada, ✅ aunque la fecha sea después, venta de tienda, la del mes anterior entregada hoy) y con factura → 5 cierres más, Bs 2.000 + 1.000 + 700 + 300 + 500",
-        pz.get("c") == 5 and pz.get("bs") == 4500, pz)
-    chk("17b. sin entregar ni factura (por delante, HOY sin ✅, «avisa cuándo», la del mes anterior, la de remisión) → 5 en el pipeline, Bs 3.000 + 100 + 50 + 600 + 70",
-        pz.get("p") == 5 and pz.get("pbs") == 3820, pz)
-    chk("17c. los cierres de Ana = 2 de Kommo (leads 1 y 5) + 5 del panel = 7; lo cerrado = 1.000 + 2.500 + 4.500 = 8.000",
-        ana.get("cierres") == 7 and ana.get("value") == 8000, {k: ana.get(k) for k in ("cierres", "value", "pipeline", "conv")})
-    chk("17d. el pipeline = Kommo (3.500) + todo lo vendido en el panel sin ficha (4.500 + 3.820) = 11.820", ana.get("pipeline") == 11820, ana.get("pipeline"))
-    chk("17e. la conversión y lo global cuentan con el total (7 cierres / 3 leads; global 7 cierres, Bs 8.000)",
-        pd["global"]["cierres"] == 7 and pd["global"]["cerrado"] == 8000 and ana.get("conv") == round(7 / 3 * 100, 1), (pd["global"], ana.get("conv")))
+    chk("17a. entregadas (fecha ya pasada, ✅ aunque la fecha sea después, venta de tienda, la del mes anterior entregada hoy), con factura y con remisión anotada este mes → 6 cierres más, Bs 2.000 + 1.000 + 700 + 300 + 500 + 90",
+        pz.get("c") == 6 and pz.get("bs") == 4590, pz)
+    chk("17b. sin entregar ni documento (por delante, HOY sin ✅, «avisa cuándo», la del mes anterior) → 4 en el pipeline, Bs 3.000 + 100 + 50 + 600",
+        pz.get("p") == 4 and pz.get("pbs") == 3750, pz)
+    chk("17c. los cierres de Ana = 2 de Kommo (leads 1 y 5) + 6 del panel = 8; lo cerrado = 1.000 + 2.500 + 4.590 = 8.090",
+        ana.get("cierres") == 8 and ana.get("value") == 8090, {k: ana.get(k) for k in ("cierres", "value", "pipeline", "conv")})
+    chk("17d. el pipeline = Kommo (3.500) + todo lo vendido en el panel sin ficha (4.590 + 3.750) = 11.840", ana.get("pipeline") == 11840, ana.get("pipeline"))
+    chk("17e. la conversión y lo global cuentan con el total (8 cierres / 3 leads; global 8 cierres, Bs 8.090)",
+        pd["global"]["cierres"] == 8 and pd["global"]["cerrado"] == 8090 and ana.get("conv") == round(8 / 3 * 100, 1), (pd["global"], ana.get("conv")))
     psf = pd.get("panelSinFicha") or {}
     chk("18a. con ficha en Kommo (`klead` y `kommo-<lead>`) no se suman de nuevo: el resumen dice 2 ya con ficha",
-        psf.get("conLead") == 2 and psf.get("c") == 5, psf)
+        psf.get("conLead") == 2 and psf.get("c") == 6, psf)
     chk("18b. la que tiene el celular y la vendedora de una venta de Kommo sin unir (la tarjeta de la bandeja y el lead 5) NO se suma: 2",
         psf.get("parecen") == 2, psf)
     chk("19. ATC, RPT, interno (ALBA), mayorista (Eduardo), ROHO y Sueña quedan fuera: nadie más en el equipo",
         sorted(t["name"] for t in pd["team"]) == ["Ana Prueba", "Beto Prueba"] and not (({t["name"]: t for t in pd["team"]}.get("Beto Prueba") or {}).get("panel")),
         [t["name"] for t in pd["team"]])
     pr = ana.get("prev") or {}
-    chk("20. el mes anterior suma su entregada, la de factura y la marcada (Kommo 1.000 + panel 400 + 250 + 150 = 1.800, 4 cierres) y no la que se entregó este mes ni las pendientes",
-        pr.get("cierres") == 4 and pr.get("value") == 1800 and pr.get("valueFull") == 1800, pr)
+    chk("20. el mes anterior suma su entregada, la de factura, la marcada, la de remisión sin día y la entregada antes de anotar la factura (Kommo 1.000 + panel 400 + 250 + 150 + 70 + 40 = 1.910, 6 cierres) y no la que se entregó este mes, la de remisión anotada este mes ni las pendientes",
+        pr.get("cierres") == 6 and pr.get("value") == 1910 and pr.get("valueFull") == 1910, pr)
     wk = (ana.get("weekly") or {})
     _h7 = int(_HOY[8:10]) <= 7          # la del mes anterior entregada HOY va a la semana de hoy
-    chk("21. la semana 1 (días 1-7) lleva los cierres de Kommo y los del panel cargados el 1°: 6, Bs 7.700 (+ la entregada hoy si hoy es de la semana 1)",
-        (wk.get("c") or [0])[0] == 6 + _h7 and (wk.get("m") or [0])[0] == 7700 + 300 * _h7, wk)
+    chk("21. la semana 1 (días 1-7) lleva los cierres de Kommo, los del panel cargados el 1° y la remisión anotada el 1°: 7, Bs 7.790 (+ la entregada hoy si hoy es de la semana 1)",
+        (wk.get("c") or [0])[0] == 7 + _h7 and (wk.get("m") or [0])[0] == 7790 + 300 * _h7, wk)
     chs = pd.get("channels") or []
     fp = next((c for c in chs if c.get("panel")), {})
-    chk("22a. «🛒 Venta sin ficha en Kommo» en los canales (aparte, sin leads ni conversión): 5 cierres, 5 por entregar",
-        fp.get("cierres") == 5 and fp.get("pend") == 5 and fp.get("carry") is True and fp.get("leads") == 0, fp)
+    chk("22a. «🛒 Venta sin ficha en Kommo» en los canales (aparte, sin leads ni conversión): 6 cierres, 4 por entregar",
+        fp.get("cierres") == 6 and fp.get("pend") == 4 and fp.get("carry") is True and fp.get("leads") == 0, fp)
     chk("22b. …y los canales siguen sumando los cierres del mes (2 de Kommo + 3)", sum(c.get("cierres", 0) for c in chs) == pd["global"]["cierres"], [(c["name"], c["cierres"]) for c in chs])
     w = pd.get("wsp") or ""
     chk("22c. el resumen de WhatsApp lo dice aparte (cuántas y cuánto, en el ranking y abajo del mes)",
-        "🛒 5 sin ficha en Kommo" in w and "Incluye 5 venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura" in w, [l for l in w.split("\n") if "🛒" in l])
+        "🛒 6 sin ficha en Kommo" in w and "Incluye 6 venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura/remisión" in w, [l for l in w.split("\n") if "🛒" in l])
     fuga = [s for s in SECRETOS_335 + ("PRUEBA_DE_MENTIRA",) if s in txt or s in ULTIMO_HTML]
     chk("23a. ni el registro ni el index.html (PÚBLICOS) dicen nada de la lista: clientes, celulares, OC, recibos, fotos, la dirección del panel", not fuga, fuga)
     chk("23b. una sola lectura al panel (metas y ventas con la misma)", len(PANEL_PEDIDOS) == 1, len(PANEL_PEDIDOS))
-    chk("23c. el registro dice cuántas entraron, en números", re.search(r"5 entregada\(s\) o con factura \(cierres\) y 5 por entregar", txt) is not None, [l for l in txt.split("\n") if "ficha" in l][:3])
+    chk("23c. el registro dice cuántas entraron, en números", re.search(r"6 entregada\(s\) o con factura/remisión \(cierres\) y 4 por entregar", txt) is not None, [l for l in txt.split("\n") if "ficha" in l][:3])
 else:
     chk("17. (el panel con las ventas del panel no se escribió)", False, txt[-400:])
 
