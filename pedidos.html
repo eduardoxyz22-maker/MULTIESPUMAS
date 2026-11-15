@@ -2475,6 +2475,15 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .cta-om .cta-om-t{border:0;background:var(--teal);color:#fff;border-radius:9px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;min-height:34px;margin-top:6px}
 .ffi-chip{margin-left:6px;border:1px solid var(--teal);color:#00807a;border-radius:16px;padding:1px 10px;font:inherit;font-size:.74rem;font-weight:700;background:#e9fbfa;cursor:pointer;vertical-align:middle;min-height:26px}
 .ffi-chip.on{background:var(--teal);color:#fff}
+.exs-zona{position:fixed;inset:0;z-index:4600;background:rgba(0,90,85,.18);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.exs-zona[hidden]{display:none!important}
+.exs-zona div{border:3px dashed var(--teal);border-radius:18px;background:#f2fbfb;color:#00807a;font-weight:800;font-size:1.05rem;padding:26px 34px;box-shadow:0 14px 34px -14px rgba(9,72,68,.55);text-align:center}
+.exs-zona small{display:block;font-weight:400;color:#5b6b6b;font-size:.82rem;margin-top:4px}
+.exs-tres{background:#ecfdf5;border:1px solid #a7f3d0;border-left:4px solid #10b981;border-radius:10px;padding:9px 13px;margin:12px 0 0;font-size:.84rem;color:#065f46}
+.exs-tres .exs-al{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid #d1fae5}
+.exs-tres .exs-al:first-of-type{border-top:0}
+.exs-tres .exs-ok{color:#047857;font-weight:700;white-space:nowrap}
+.exs-tres button{margin-top:8px}
 /* 🪟 (30/10, §4ny; el dueño eligió la «B») EL PANEL INSTALADO SIN BARRA DE TÍTULO: el encabezado llega hasta arriba y los botones de Windows
    (─ ▢ ✕) quedan encima. `html.wco` y `--wco-h/l/r/bg` los pone `wcoMedir` (abajo). Lo que se toca no puede quedar debajo de esos botones:
    · el encabezado se arrastra para mover la ventana (sus botones no) y lo de la derecha se corre lo que haga falta;
@@ -50466,6 +50475,7 @@ function existRepintarControl(){
   var inc=(rol==='otro') ? { am:false, pm:false } : stockIncLeer('exist-inc');   // 🚚 (§4ls) mañana y tarde
   var el=document.getElementById('exist-control'); if(el) el.innerHTML=existControlHtml(R, rol, inc);
   existBotonUsar();
+  try{ exsTresPintar(); }catch(e){}   // 📥 (301) con otro rol o casillas, se vuelve a mirar
 }
 /* ⛔ (06/10) Con un corte que no entra (más viejo, o sin saber si es más nuevo) el botón de usarlo se apaga y lo dice. Cambia
    con el «¿qué almacén es?»: el de fábrica y Banzer tienen cada uno su corte vigente. */
@@ -50876,6 +50886,7 @@ function renderImportExist(){
     '</div></div>';
   openModal(html, true);
   existBotonUsar();
+  try{ exsTresPintar(); }catch(e){}   // 📥 (301) «✅ Usar los tres» si ninguno tiene nada para mirar
 }
 /* 🚚 (26/09) ¿Se le puede ofrecer «de acá también salen camiones»? A todos menos al de fábrica (ya es el
    de salida, con su conteo aparte) y a IM / Industrias Moreno: «solo de Moreno hay que ir a traer». */
@@ -61464,6 +61475,129 @@ function ffiIniciar(){
     w._ffi=1; window[nm]=w;
   });
   ffiPintar(); ffiNitPintar();
+}
+
+/* ---------- 📥 301 EL EXCEL DEL STOCK: SOLTARLO Y «USAR LOS TRES» ----------
+   El 13/11 se subieron 6 Excel (dos vueltas de los tres almacenes). Cada vuelta: abrir Stock, «📥 Subir existencias», buscar el
+   archivo en la ventana de Windows y confirmar PTF, Banzer e IM de a uno.
+   · Soltar el archivo (desde la barra de descargas) sobre el panel, con Stock abierto o con la contraseña de Administración, hace lo
+     mismo que elegirlo con el botón (`onExistArchivo`).
+   · Si NINGUNO de los almacenes del archivo tiene nada para mirar —nada «sin explicar», nada para tildar, ninguna hora que falte, el
+     total del reporte igual a lo leído, ningún aviso— la vista previa ofrece «✅ Usar los N» con las casillas de los turnos a la vista.
+     Hace exactamente lo de tocar «Usar» en cada uno (`confirmarImportExist`), de a uno, y ANTES de cada uno lo vuelve a mirar con el
+     stock que dejó el anterior: si alguno resulta tener algo, se para ahí con su vista previa abierta, como hoy. */
+function exsVa(){ try{ return !navigator.webdriver || !!window.EXIST_SOLTAR_PRUEBA; }catch(e){ return true; } }
+function exsPuede(){
+  var so=document.getElementById('stock-overlay');
+  return !!(UNLOCKED || (so && so.style.display==='flex'));
+}
+function exsHayArchivo(e){ try{ var t=e.dataTransfer && e.dataTransfer.types; return !!t && [].indexOf.call(t, 'Files')>=0; }catch(x){ return false; } }
+function exsZona(on){
+  var z=document.getElementById('exs-zona');
+  if(!z){ if(!on) return; z=document.createElement('div'); z.id='exs-zona'; z.className='exs-zona no-print';
+    z.innerHTML='<div>📥 Soltá acá el Excel «EXISTENCIAS ALMACEN»<small>de uno o de los tres almacenes: se abre la vista previa de siempre</small></div>'; document.body.appendChild(z); }
+  z.hidden=!on;
+}
+var EXS_T=0;
+document.addEventListener('dragover', function(e){
+  if(!exsVa() || !exsPuede() || !exsHayArchivo(e)) return;
+  e.preventDefault(); try{ e.dataTransfer.dropEffect='copy'; }catch(x){}
+  exsZona(true); clearTimeout(EXS_T); EXS_T=setTimeout(function(){ exsZona(false); }, 400);   // `dragleave` no avisa bien al salir de la ventana
+});
+document.addEventListener('drop', function(e){
+  if(!exsVa() || !exsPuede() || !exsHayArchivo(e)) return;
+  e.preventDefault(); clearTimeout(EXS_T); exsZona(false);
+  var fs=(e.dataTransfer && e.dataTransfer.files) || [], f=fs[0];
+  if(!f) return;
+  if(!/\.xlsx$/i.test(f.name||'')){ toast('📥 Soltá el Excel «EXISTENCIAS ALMACEN» (.xlsx) que sacás del sistema de Moreno.','err',7000); return; }
+  if(fs.length>1) toast('📥 Soltaste '+fs.length+' archivos: uso el primero ('+f.name+'). Si traen los tres almacenes en uno, alcanza con ese.','warn',8000);
+  try{ var so=document.getElementById('stock-overlay'); if(so && so.style.display!=='flex') abrirStock(); }catch(x){}
+  onExistArchivo({ target:{ files:[f] } });
+});
+/* Lo que ve la vista previa de un almacén, sin abrirla: el rol y las casillas que propone (`renderImportExist`). */
+function exsDefecto(R){
+  var rol = R.esLog ? 'log' : ((existPuedeSalir(R.almacen) && almEsSalida(R.almacen)) ? 'sale' : 'otro');
+  var dep=existIncDep(R, rol), prop=stockIncPropuesta(R.hora, dep);
+  return { rol:rol, dep:dep, prop:prop, inc:(dep===null) ? { am:false, pm:false } : { am:!!prop.am.v, pm:!!prop.pm.v } };
+}
+/* ¿Hay algo para mirar en este almacén? Devuelve el motivo ('' = nada). */
+function exsMotivo(R, rol, inc, prop){
+  if(!R) return 'no hay archivo';
+  if(existNoEsDeHoy(R)) return 'no es de hoy';
+  if(!R.hora || (prop && prop.sinHora)) return 'le falta la hora';
+  if(!R.conocido) return 'es la primera vez que se sube';
+  if(R.totalReporte!=null && Math.abs(Number(R.totalReporte)-Number(R.total))>0.001) return 'el total del reporte no coincide';
+  if((R.colisiones||[]).length || R.malos) return 'tiene renglones para revisar';
+  var C=stockConciliar(R, rol, inc);
+  if(C.sinPrevio) return 'es su primer corte';
+  if(C.corteViejo) return 'no entra (corte viejo)';
+  var algo=(C.filas||[]).some(function(f){ return (Number(f.sinExplicar)||0)>0 || (f.fab||[]).length || (f.sug||[]).length || f.tipo==='det'; });
+  if(algo) return 'tiene diferencias sin explicar';
+  if(rol==='log'){ try{ if(existFabDevueltas(R, '').length) return 'corrige un archivo anterior'; }catch(e){} }
+  try{ if(existRecsViejasHtml()) return 'hay algo de una página vieja'; }catch(e){}
+  if(rol==='log' && inc.pm && String(R.fecha||'')===todayStr()){ try{ if(stockIncSinCierreHoy(R.fecha)) return 'quedan entregas de hoy sin el ✅ del cierre'; }catch(e){} }
+  return '';
+}
+/* El que está a la vista, con lo que muestra AHORA la vista previa (el rol y las casillas pueden haberse tocado). */
+function exsMotivoActual(){
+  var R=EXIST_IMP; if(!R) return 'no hay archivo';
+  var rol=(document.getElementById('exist-rol')||{}).value||'otro', d=exsDefecto(R);
+  if(rol!==d.rol) return 'se cambió qué almacén es';
+  var inc=(rol==='otro') ? { am:false, pm:false } : stockIncLeer('exist-inc');
+  return exsMotivo(R, rol, inc, d.prop);
+}
+/* La caja de «✅ Usar los N»: solo si el archivo trae varios almacenes y ni el de ahora ni los que siguen tienen nada para mirar. */
+function exsTresPintar(){
+  var viejo=document.getElementById('exs-tres'); if(viejo) viejo.remove();
+  if(!exsVa() || EXIST_GUARDANDO) return;
+  var R=EXIST_IMP, cola=EXIST_COLA||[]; if(!R || !R.lote || !cola.length) return;
+  var acc=document.querySelector('#modal-box .modal-actions'); if(!acc || !document.getElementById('exist-usar')) return;
+  var todos=[R].concat(cola), filas=[], ok=true;
+  todos.forEach(function(x, i){
+    var d=exsDefecto(x), m = i===0 ? exsMotivoActual() : exsMotivo(x, d.rol, d.inc, d.prop);
+    if(m) ok=false;
+    var inc = i===0 ? ((((document.getElementById('exist-rol')||{}).value||'otro')==='otro') ? null : stockIncLeer('exist-inc')) : (d.dep===null ? null : d.inc);
+    filas.push('<div class="exs-al"><span>'+(x.esLog?'🏭':(d.rol==='sale'?'🏪':'📥'))+' <b>'+esc(x.esLog?'PTF':stockAlmCorto(x.almacen))+'</b> · '+stockUnid(x.total)+' u'+
+      (inc ? (' · <span style="color:var(--muted)">'+(inc.am?'🌅 ya trae la mañana':'🌅 sin la mañana')+' · '+(inc.pm?'🌆 ya trae la tarde':'🌆 sin la tarde')+'</span>') : '')+'</span>'+
+      '<span class="exs-ok">'+(m ? ('<span style="color:#b45309">'+esc(m)+'</span>') : '✓ todo cierra')+'</span></div>');
+  });
+  if(!ok) return;   // con algo para mirar, uno por uno como siempre (no se ofrece)
+  var nom=todos.map(function(x){ return x.esLog?'PTF':stockAlmCorto(x.almacen); });
+  var box=document.createElement('div'); box.id='exs-tres'; box.className='exs-tres';
+  box.innerHTML='<b>✅ Los '+todos.length+' almacenes cierran:</b> nada sin explicar, nada para tildar, con la hora y el total del reporte.'+
+    '<div style="margin-top:6px">'+filas.join('')+'</div>'+
+    '<div style="font-size:.78rem;color:#047857;margin-top:4px">Las casillas de los turnos: las de '+esc(nom[0])+' son las de arriba; las de los otros, las que propone el panel. Si querés cambiar alguna, «Usar» de a uno.</div>'+
+    '<button type="button" class="btn btn-primary btn-sm" id="exs-tres-btn" style="width:100%;background:#047857" onclick="exsUsarTres(this)">✅ Usar los '+todos.length+' ('+esc(nom.join(', '))+')</button>';
+  acc.parentNode.insertBefore(box, acc);
+}
+/* De a uno, como tocar «Usar» en cada uno; antes de cada uno se vuelve a mirar. */
+function exsUsarTres(btn){
+  if(EXIST_GUARDANDO) return;
+  var m=exsMotivoActual(); if(m){ toast('✋ '+stockAlmCorto((EXIST_IMP||{}).almacen||'')+': '+m+'. Revisalo y usalo con «Usar».','err',8000); exsTresPintar(); return; }
+  EXIST_GUARDANDO=true;
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Guardando…'; }
+  var hechos=[], proms=[];
+  var fin=function(paro){
+    EXIST_GUARDANDO=false;
+    Promise.all(proms).then(function(rs){
+      var cola=0, rech=0; rs.forEach(function(r){ if(r){ cola+=r.cola||0; rech+=(r.rechazados||[]).length; } });
+      var txt=(hechos.length ? ('Usados '+hechos.length+': '+hechos.join(', ')) : 'No se usó ninguno')+(paro?('. ✋ '+paro):'')+
+        (cola?(' · ⏳ '+cola+' guardado'+(cola===1?'':'s')+' en la cola de este aparato (se manda solo)'):'')+(rech?(' · ⚠️ '+rech+' rechazado'+(rech===1?'':'s')):'');
+      toast((paro||cola||rech?'⏳ ':'✅ ')+txt,(paro||rech)?'err':'ok',paro?12000:9000);
+    });
+    if(EXIST_IMP){ try{ var b=document.getElementById('exist-usar'); if(b){ b.disabled=false; existBotonUsar(); } exsTresPintar(); }catch(e){} }
+  };
+  var paso=function(){
+    var R=EXIST_IMP; if(!R) return fin('');
+    var mot=exsMotivoActual();
+    if(mot) return fin(stockAlmCorto(R.almacen)+': '+mot+'. Quedó abierto para que lo revises.');
+    var antes=EXIST_IMP, nom=R.esLog?'PTF':stockAlmCorto(R.almacen), pr=null;
+    try{ pr=confirmarImportExist(); }catch(e){ fin(nom+': no se pudo usar ('+(e&&e.message||e)+')'); throw e; }
+    if(EXIST_IMP===antes) return fin(nom+': no se usó');
+    hechos.push(nom); proms.push(Promise.resolve(pr).catch(function(){ return null; }));
+    if(EXIST_IMP) setTimeout(paso, 120); else fin('');
+  };
+  setTimeout(paso, 30);
 }
 
 /* ---------- el arranque de lo de arriba ---------- */
