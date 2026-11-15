@@ -4877,6 +4877,12 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .rtd-t{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;padding:7px 0;border-top:1px solid #f1e6da;font-size:.85rem}
 .rtd-l{flex:1;min-width:260px}.rtd-l small{display:block;color:#6b7b7a;font-size:.75rem}.rtd-rep{color:#9a4b00}
 .rtd-acc{display:flex;gap:5px;flex-wrap:wrap}.rtd-acc .btn{width:auto}.rtd-junta{background:#8b5e34!important;border-color:#8b5e34!important;color:#fff!important;font-weight:700}
+/* ❓ (15/11, mejora 316) «Revisá el nombre antes de pedir»: gris, aparte del pedido */
+.pnr-caja{margin:10px 0;padding:10px 12px;border-radius:12px;background:#f1f5f9;border:1px dashed #94a3b8;color:#1f2d3d}
+.pnr-cab{font-size:.88rem}.pnr-cab span{color:#64748b;font-size:.8rem}.pnr-ley{margin:4px 0 6px;font-size:.78rem;color:#475569}
+.pnr-r{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #e2e8f0;font-size:.84rem}
+.pnr-q{flex:1;min-width:240px}.pnr-q small{display:block;color:#64748b;font-size:.74rem}.pnr-q em{font-style:normal;color:#9a4b00;font-size:.74rem}
+.pnr-r .btn{width:auto;background:#fff}.pnr-dar{border-color:#9a4b00!important;color:#9a4b00!important;font-weight:700}
 .agp-fila{display:flex;gap:10px;align-items:flex-start;padding:8px 4px;border-bottom:1px solid #eef3f3;cursor:pointer}
 .agp-fila input{width:18px;height:18px;margin-top:2px;flex:none}.agp-fila .agp-t{display:grid;gap:3px;font-size:.86rem;color:var(--text)}
 .agp-fila .agp-t small{color:var(--muted);font-size:.78rem}
@@ -29922,6 +29928,91 @@ function rptTiendasJuntar(s){
   });
 }
 /* fin mejora 317 */
+/* ============================================================================
+   ❓ EL PLAN NO PIDE PRODUCTOS QUE NO EXISTEN (15/11, mejora 316; dueño: «316»).
+   De los 31 productos que el Plan mandaba a pedir el 15/11, 8 (26 de 161 unidades) eran nombres que ni la lista de precios ni los Excel
+   conocen («somieres» 140x190 de un pedido interno, «OC 260200619» como producto, «SEMIORTOPEDICO 25 CM», lo de ROHO escrito a su manera) y
+   uno con la medida al revés («180x105»). Ahora, en `stockData`, un renglón que no es un producto (`fdEsProducto`, la MISMA regla de «¿Qué
+   es esto?» de «Lo que nos debe la fábrica», §4ok-104b) —o uno de la lista con la medida al revés— y que NO está en ningún almacén ni viene:
+   · no pide nada (`fabricar`/`pedir`/`recoger` en 0, aviso «nombre»): no suma a «Pedí ya», a «Qué producir», a «Pedido a producción» ni a
+     la copia para la fábrica (`stockProducirCalc` lo saltea, como lo descontinuado). Lo que habría pedido queda en `o.revPedir`;
+   · va a un bloque gris «❓ Revisá el nombre antes de pedir» en el Plan y en «Pedido a producción»: el renglón, cuánto pediría, qué pedido es
+     y quién lo cargó, con «✏️ Abrir el pedido» (la ficha, con su ✏️ Editar) y, si la medida está al revés, «↔️ ¿Es 105x180?» que la da vuelta
+     en esos pedidos (pregunta antes y guarda cada pedido por el camino de siempre).
+   Lo vendido sin entregar SIGUE reservado y a la vista (el vendedor lo ve igual en su cuadrito): solo no se pide a fábrica hasta corregirlo.
+   En Playwright apagado salvo `window.PLAN_NOMBRE_PRUEBA` (las pruebas del stock usan nombres inventados). `tests/test_plan_nombre.js`.
+   ========================================================================== */
+function planNombreActivo(){ try{ return !(navigator.webdriver && !window.PLAN_NOMBRE_PRUEBA); }catch(e){ return true; } }
+/* «180x105» → «105x180» (la medida al revés: el primer número más grande que el segundo). '' si no. */
+function stockMedidaReves(m){
+  var r=String(m||'').match(/^\s*(\d{2,3})\s*[xX×✕*]\s*(\d{2,3})\s*(?:cm|CM)?\s*$/);
+  if(!r) return '';
+  var a=Number(r[1]), b=Number(r[2]);
+  return a>b ? (r[2]+'x'+r[1]) : '';
+}
+/* ¿Hay que revisar el nombre de este renglón antes de pedirlo? 'nombre' · 'medida' · ''. */
+function stockRevNombreDe(o){
+  if(!o || !o.k || !planNombreActivo()) return '';
+  if((o.deposito>0) || (o.enSale>0) || (o.enOtros>0) || (o.enCamino>0)) return '';   // está en un almacén o viene: es un producto
+  var es=false; try{ es=fdEsProducto(o.k); }catch(e){ return ''; }
+  if(!es) return 'nombre';
+  if(stockMedidaReves(o.medida)){
+    var exacto=false; try{ exacto=!!(FD_CAT.s[o.k] || FD_CAT.s[stockAliasDe(o.k)] || stockHayEnInventario(o.k)); }catch(e){ exacto=true; }
+    if(!exacto) return 'medida';
+  }
+  return '';
+}
+/* En `stockData`, al final de cada renglón: lo saca del pedido. */
+function stockRevNombreAplicar(o){
+  var t=stockRevNombreDe(o); if(!t) return;
+  o.revNombre=t; o.revPedir=Math.max(0, o.fabricar||0)+Math.max(0, o.recoger||0);
+  o.pedir=0; o.recoger=0; o.fabricar=0; o.pedirReserva=false; o.aviso='nombre';
+}
+/* El bloque gris: cada renglón con sus pedidos. */
+function planNombreDatos(d){
+  return ((d && d.lista)||[]).filter(function(o){ return o.revNombre && (o.revPedir>0 || o.comp>0); }).map(function(o){
+    var G=null; try{ G=stockPedidosDetalle(o.k); }catch(e){ G=null; }
+    var peds=G ? G.pendientes.concat(G.atrasados, G.produccion).map(function(r){ return r.p; }) : [];
+    var vistos={}; peds=peds.filter(function(p){ if(!p || vistos[p.id]) return false; vistos[p.id]=1; return true; });
+    return { o:o, peds:peds, u:o.revPedir>0 ? o.revPedir : (o.comp||0), dar:o.revNombre==='medida' ? stockMedidaReves(o.medida) : '' };
+  });
+}
+function planNombreHtml(d, donde){
+  var L=planNombreDatos(d); if(!L.length) return '';
+  var u=0; L.forEach(function(x){ u+=x.u; });
+  return '<div class="pnr-caja" id="'+(donde==='pap'?'pnr-pap':'pnr-plan')+'"><div class="pnr-cab"><b>❓ Revisá el nombre antes de pedir</b> · '+L.length+(L.length===1?' renglón':' renglones')+' · '+stockUnid(u)+' u <span>(no suman al pedido ni a la copia para la fábrica)</span></div>'+
+    '<p class="pnr-ley">Ni la lista de precios ni los Excel de los almacenes conocen estos nombres (o la medida está al revés): abrí el pedido y elegí el producto de la lista. Lo vendido sigue reservado; recién corregido entra al pedido a producción.</p>'+
+    L.map(function(x){
+      var o=x.o;
+      return '<div class="pnr-r"><span class="pnr-q">«'+esc(o.desc||'—')+'»'+(o.medida?(' <b>'+esc(o.medida)+'</b>'):'')+' × '+esc(stockUnid(x.u))+
+          (o.revNombre==='medida' ? ' <em>medida al revés</em>' : '')+
+          '<small>'+(x.peds.length ? x.peds.slice(0,4).map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.vendedor||'sin vendedora'); }).join(' · ')+(x.peds.length>4?(' y '+(x.peds.length-4)+' más'):'') : 'sin pedido pendiente')+'</small></span>'+
+        x.peds.slice(0,3).map(function(p){ return '<button type="button" class="btn btn-sm btn-ghost" data-id="'+esc(String(p.id))+'" data-k="'+esc(o.k)+'" onclick="stockAbrirPedidoDesdeLista(this.dataset.id, this.dataset.k)">✏️ Abrir '+esc(ocEtiq(p.oc)||'el pedido')+'</button>'; }).join('')+
+        (x.dar && x.peds.length ? ('<button type="button" class="btn btn-sm pnr-dar" data-k="'+esc(o.k)+'" onclick="planNombreDarVuelta(this.dataset.k)">↔️ ¿Es '+esc(x.dar)+'? Dar vuelta</button>') : '')+
+      '</div>';
+    }).join('')+'</div>';
+}
+/* «↔️ Dar vuelta»: en los pedidos pendientes de ese renglón, la medida pasa a «105x180» (el mismo renglón, con sus marcas). */
+function planNombreDarVuelta(k){
+  var o=stockData().lista.filter(function(x){ return x.k===k; })[0];
+  var nueva=o ? stockMedidaReves(o.medida) : ''; if(!o || !nueva){ toast('Ese renglón ya no tiene la medida al revés.','ok'); try{ renderStock(); }catch(e){} return Promise.resolve([]); }
+  var X=planNombreDatos({ lista:[o] })[0], peds=X ? X.peds : [];
+  if(!peds.length){ toast('No hay pedidos pendientes con esa medida.','ok'); return Promise.resolve([]); }
+  if(!confirm('↔️ ¿Dar vuelta la medida?\n\n«'+(o.desc||'')+'» '+o.medida+' pasa a '+nueva+' en:\n'+peds.map(function(p){ return '   • '+(ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).join('\n')+
+    '\n\nSi no es eso, cancelá y abrí el pedido para corregirlo a mano.')) return Promise.resolve([]);
+  var prs=[];
+  peds.forEach(function(p){
+    var q=findById(p.id); if(!q) return; var cambio=false;
+    (q.productos||[]).forEach(function(x){ if(x && stockClave(x)===k && stockMedidaReves(x.medida)){ x.medida=stockMedidaReves(x.medida); cambio=true; } });
+    if(cambio) prs.push(persistPedido(q));
+  });
+  stockOlvidarIndice();
+  toast('↔️ Medida corregida a '+nueva+' en '+prs.length+' pedido'+(prs.length===1?'':'s')+'.','ok',5000);
+  try{ renderStock(); }catch(e){}
+  try{ if(typeof papAbierto==='function' && papAbierto()) papActualizar(); }catch(e){}
+  return Promise.all(prs);
+}
+/* fin mejora 316 */
 function admSugIr(d){
   try{ if(!nxSugVisible()) nxSugMostrar(true); }catch(e){}
   NX_SUG_DIA=d; admSecPoner('cam'); try{ nxSugPintar(); }catch(e){}
@@ -42831,6 +42922,7 @@ function stockData(extra){
       o.pedirReserva=true;
       o.aviso=(o.dias!=null && o.dias<=o.lead) ? 'urgente' : 'pedir';
     }
+    stockRevNombreAplicar(o);   // ❓ (15/11, mejora 316) un nombre que no es un producto (o la medida al revés) no se pide a fábrica
     o.reclamar=o.pedidos.filter(function(q){ return q.llega && q.llega<hoy; });   // 🧮 (§4hn) vencidos que ningún Excel mostró: reclamar, no dar por llegados
     return o;
   }).sort(function(a,b){
@@ -45620,7 +45712,7 @@ function stockRangoMes(o, MS, PI){
 function stockProducirDe(o, MS, PI){
   var hoy=todayStr();
   var r={ sem:0, quin:0, d30:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, antes:0, hay:0, ok:false };
-  if(stockHaySalir(o)==null || o.descont) return r;
+  if(stockHaySalir(o)==null || o.descont || o.revNombre) return r;
   /* El tope en 0 va sobre el DEPÓSITO solo (§4ew): con conteo viejo (contados 3, salieron 8 →
      −5) y 5 en Moreno, «Hay» decía 0 y el negativo se comía lo de Moreno, mientras la tabla de
      abajo (`stockCuantoPedir`, con `max(0,deposito)` aparte) decía «recoger 5».
@@ -45735,7 +45827,7 @@ function stockProducirCalc(d){
   PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,d30:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0,antes:0,tot:0}, medidas:{} }; });
   var cubiertos=0, sinContar=0;
   d.lista.forEach(function(o){
-    if(o.descont) return;
+    if(o.descont || o.revNombre) return;   // ❓ (mejora 316) lo que no es un producto va a «Revisá el nombre»
     /* 🔁 (18/10, §4ls Mes-VM9) Sin rotación (ni en 15 ni en 30 días) el mes ya no estima por el año pasado (`stockRangoMes`): sin nada
        vendido pendiente, no hay nada que planificar. */
     if(!(o.rota || o.porDiaMes>0 || o.comp>0)) return;     // ni rota, ni vendido pendiente: nada que planificar
@@ -46315,7 +46407,8 @@ function papPintarPedir(){
   var tot=papSuma(PAP.TODAS, p), tiend=0;
   PAP.TODAS.forEach(function(f){ tiend+=papTiendasDe(f, p); });
   var _fd=''; try{ _fd=fdHtml('pap'); }catch(e){}   // 🏭 (30/10, propuesta 75) lo que la fábrica nos debe, antes de pedir más
-  var h=papAvisosHtml(PAP, true)+_fd+'<section class="pap-tot" aria-label="Total a pedir">'+
+  var _nom=''; try{ _nom=planNombreHtml(stockData(), 'pap'); }catch(e){}   // ❓ (15/11, mejora 316) lo que no entra hasta corregir el nombre
+  var h=papAvisosHtml(PAP, true)+_fd+_nom+'<section class="pap-tot" aria-label="Total a pedir">'+
     '<div class="pap-eti">Pedir a producción · '+esc(P.frase)+' · '+esc(papHastaTxt(P))+'</div>'+
     '<div class="pap-totn">'+papFmt(tot)+'<span>unidades</span></div>';
   if(p==='tot') h+='<div class="pap-tots">= '+esc(papSumaTxt(PAP.TODAS))+'</div>';
@@ -59219,6 +59312,7 @@ function sfAccion(o){
     case 'unico':   return stockPlanPideTxt(o) ? ('📦 Sin rotación en 15 días'+stockPlanPideTxt(o)) : (o.rotaMes ? '📦 Sin rotación en 15 días · por ahora alcanza para el mes' : '📦 Pedido único: no se repone');   // (§4jd, A1-7)
     case 'sobra':   return stockPlanPideTxt(o) ? ('💤 Sin entregas en 15 días'+stockPlanPideTxt(o)) : '💤 Sobra: no pedir más';   // (17/10, §4lr U40) como 'unico' (§4jd A1-7)
     case 'sincontar': return 'Sin contar: subí el Excel';
+    case 'nombre': return '❓ Revisá el nombre antes de pedir';   // (15/11, mejora 316)
   }
   /* ✏️ (18/10, §4ls textos, cuadrito H4) Sin nada en ningún almacén, nada vendido y nada que pida el plan: lo que no rota se hace a pedido
      (regla del dueño: no tener stock de lo que no se vende). «✅ Alcanza» con «Hay 0» se leía como que había, mientras el cuadrito del
@@ -59541,7 +59635,7 @@ function planFiltro(f){ PLAN_F=f; PLAN_ABIERTA=''; planRepintar(); }
 function stockPlanDatos(d, lista){
   var P={};
   if(d.contado){ try{ stockProducir(d).bloques.forEach(function(B){ B.filas.forEach(function(f){ P[f.o.k]=f; }); }); }catch(e){} }
-  var L=lista.slice().sort(function(a,b){
+  var L=lista.filter(function(o){ return !o.revNombre; }).sort(function(a,b){   // ❓ (mejora 316) van aparte, en «Revisá el nombre»
     var ra=(a.aviso in SF_ORDEN)?SF_ORDEN[a.aviso]:9, rb=(b.aviso in SF_ORDEN)?SF_ORDEN[b.aviso]:9; if(ra!==rb) return ra-rb;
     var da=a.dias==null?999:a.dias, db=b.dias==null?999:b.dias; if(da!==db) return da-db;
     return ((b.fabricar||0)-(a.fabricar||0)) || ((b.vendidos||0)-(a.vendidos||0));
@@ -59599,6 +59693,7 @@ function stockPlanHtml(d, lista){
       '<th>Tener<small>objetivo · punto de pedido</small></th>'+
       '<th>Pedir<small>7 días</small></th><th>Pedir<small>15 días · incluye los 7</small></th><th>Pedir<small>'+esc(MS.nombre)+' · además de 15 días</small></th></tr></thead><tbody>'+
       (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
+    planNombreHtml(d, 'plan')+   // ❓ (15/11, mejora 316)
     '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;planRepintar()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
