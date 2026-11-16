@@ -11174,10 +11174,10 @@ function iaProductos_(body) {
         var code = String((c && c.c) || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 14); if (!code) return null;
         return { c:code, txt:code + ' = ' + iagTxt_(c.n, 70) + (c.m ? ' ' + iagTxt_(c.m, 20) : '') + (c.de === 'excel' ? ' (Excel)' : '') };
       }).filter(Boolean);
-      if (!C.length) return;                                  // sin candidatos no hay nada que elegir: no se le pregunta
-      cands[r] = {}; C.forEach(function (c) { cands[r][c.c] = 1; });
+      if (!C.length && uno) return;                           // en el formulario, sin candidatos no hay nada que elegir
+      cands[r] = {}; C.forEach(function (c) { cands[r][c.c] = 1; });   // sin candidatos igual va: Claude dice si es un producto o no (un N° de orden)
       filas.push('r: ' + r + ' | escrito: «' + iagTxt_(x.desc, 90) + '» | medida: ' + (iagTxt_(x.medida, 30) || '(no dice)') + ' | cant: ' + (Math.round(Number(x.cant) || 0) || 1) +
-                 (x.quien ? ' | lo cargó: ' + iagTxt_(x.quien, 30) : '') + '\n   candidatos: ' + C.map(function (c) { return c.txt; }).join(' · '));
+                 (x.quien ? ' | lo cargó: ' + iagTxt_(x.quien, 30) : '') + '\n   candidatos: ' + (C.length ? C.map(function (c) { return c.txt; }).join(' · ') : '(ninguno)'));
     });
     if (!filas.length) return { error:'vacio' };
     var user = '<renglones>\n' + filas.join('\n') + '\n</renglones>\n\n' + IAG_PROD_PIDE;

@@ -145,7 +145,7 @@ console.log('\n── 2. 360 · los productos escritos a mano ──');
   chk('a. ok, sin candado y sin abrir la planilla', r.ok === true && a.candado.length === 0 && a.hoja.length === 0, r);
   chk('b. va cada renglón con lo escrito, la medida, la cantidad y SUS candidatos (código = nombre medida, «(Excel)»), entre <renglones>',
     /<renglones>/.test(txt) && /r: ICE\|90X190 \| escrito: «ice 90x190» \| medida: 90x190 \| cant: 1 \| lo cargó: FABRICA/.test(txt) && /CH2001 = TITANIO ICE 90x190/.test(txt) && /CH5001 = COLCHON SEMIORTOP\. 105x180 \(Excel\)/.test(txt), txt.slice(0, 400));
-  chk('c. un renglón sin candidatos no va (no hay nada que elegir) y lo escrito va sin «<»', !/algo sin candidatos/.test(txt) && !/<script>/.test(txt));
+  chk('c. un renglón sin candidatos va igual («(ninguno)»: Claude dice si es un producto) y lo escrito va sin «<»', /escrito: «algo sin candidatos» \| medida: \(no dice\) \| cant: 1\n   candidatos: \(ninguno\)/.test(txt) && !/<script>/.test(txt), txt.slice(-900, -600));
   chk('d. el esquema: todas las claves obligatorias y la seguridad es una lista cerrada', esquemaCompleto(b.output_config.format.schema) &&
     JSON.stringify(b.output_config.format.schema.properties.renglones.items.properties.seguridad.enum) === JSON.stringify(['seguro', 'dudoso', 'no_es_producto', 'no_se']));
   const R = {}; (r.res.renglones || []).forEach(x => { R[x.r] = x; });
@@ -159,7 +159,8 @@ console.log('\n── 2. 360 · los productos escritos a mano ──');
   const u1 = a.post({ action: 'iaProductos', uno: true, renglones: [RENG[0]], forzar: true });
   chk('k. el formulario (`uno`): un renglón, tope aparte de 60', u1.ok && u1.tope === 60 && u1.usadas === 1, u1);
   chk('l. `uno` con dos renglones → «muy_largo»', a.post({ action: 'iaProductos', uno: true, renglones: [RENG[0], RENG[1]] }).error === 'muy_largo');
-  chk('m. sin renglones con candidatos → «vacio», sin preguntar', a.post({ action: 'iaProductos', renglones: [RENG[4]] }).error === 'vacio' && a.claude.length === 2);
+  chk('m. en el formulario (`uno`), un renglón sin candidatos → «vacio», sin preguntar', a.post({ action: 'iaProductos', uno: true, renglones: [RENG[4]] }).error === 'vacio' && a.claude.length === 2);
+  chk('n. sin renglones → «vacio»', a.post({ action: 'iaProductos', renglones: [] }).error === 'vacio' && a.claude.length === 2);
 }
 
 /* ---------- 364 · el stock de la semana ---------- */

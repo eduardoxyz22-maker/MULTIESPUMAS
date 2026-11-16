@@ -31797,9 +31797,9 @@ function iapNoReconoce(x){
   var i=null; try{ i=stockInfo(x); }catch(e){ return false; }
   if(!i || i.cat) return false;
   try{ if(stockHayEnInventario(i.k) || stockCodigoDelSistema(cod)) return false; }catch(e){ return false; }
-  /* 📐 la medida especial de un producto de la lista se fabrica a pedido: no es un nombre que falte (la medida al revés, sí) */
-  var me=normMedida(x.medida||''), mr=me ? stockMedidaReves(me) : '';
-  if(me && !esMedidaConocida(me) && !(mr && esMedidaConocida(mr))){ try{ if(stockEnCatalogo({ desc:x.desc, medida:'', codigo:'' })) return false; }catch(e){} }
+  /* 📐 la medida especial de un producto de la lista se fabrica a pedido: no es un nombre que falte (la medida al revés —«180x105»—, sí) */
+  var me=normMedida(x.medida||'');
+  if(me && !esMedidaConocida(me) && !stockMedidaReves(me)){ try{ if(stockEnCatalogo({ desc:x.desc, medida:'', codigo:'' })) return false; }catch(e){} }
   return true;
 }
 function iapRenglones(){
@@ -31828,7 +31828,12 @@ function iapPuntaje(ws, toks, me, mr, cm, famW, famC){
     for(var t in toks){ if(t.length>=3 && (t.indexOf(w)===0 || w.indexOf(t)===0)){ sc+=1.5; alguna=true; return; } }
   });
   if(!alguna) return 0;
-  if(me){ if(cm===me) sc+=3; else if(mr && cm===mr) sc+=2.5; else if(cm) sc-=2; }
+  if(me && cm){
+    var an=function(m){ return String(m||'').split('x')[0]; };
+    if(cm===me) sc+=3; else if(mr && cm===mr) sc+=2.5;
+    else if(an(cm)===an(me) || (mr && an(cm)===an(mr))) sc+=0.5;   // el mismo ancho: «180x105» al revés es un 105
+    else sc-=1;
+  }
   if(famW!==famC) sc-=1.5;
   return sc;
 }
@@ -31837,6 +31842,8 @@ function iapCandidatos(desc, medida){
   var me=normMedida(medida||'')||normMedida(medidaDeTexto(desc)), mr=me ? normMedida(stockMedidaReves(me)) : '', famW=stockFamilia(ws), C=[], vis={};
   stockCatalogo().forEach(function(c){
     var sc=iapPuntaje(ws, c.toks, me, mr, c.nm, famW, c.fam); if(!(sc>0) || vis[c.code]) return; vis[c.code]=1;
+    if(CODIGOS[c.code] && CODIGOS[c.code].x) sc-=1;                       // lo que ya no se fabrica, después
+    var nm=c.nd+'|'+c.nm; if(vis[nm]) return; vis[nm]=1;                  // el mismo producto y medida con dos códigos: uno
     C.push({ c:c.code, n:nombreVenta(c.d, c.code), m:c.m||'', de:'lista', sc:sc });
   });
   var I=null; try{ I=blokiCodIdx(); }catch(e){ I=null; }
@@ -31845,8 +31852,16 @@ function iapCandidatos(desc, medida){
     var tk=stockTokens(x.d).set, sc=iapPuntaje(ws, tk, me, mr, normMedida(x.m||''), famW, stockFamilia(tk)); if(!(sc>0)) return; vis[x.code]=1;
     C.push({ c:x.code, n:x.d, m:x.m||'', de:'excel', sc:sc-0.25 });
   });
-  C.sort(function(a,b){ return (b.sc-a.sc) || (a.n<b.n ? -1 : (a.n>b.n ? 1 : 0)); });
+  var F=iapFrecuencia();
+  C.sort(function(a,b){ return (b.sc-a.sc) || ((F[b.c]||0)-(F[a.c]||0)) || (a.n<b.n ? -1 : (a.n>b.n ? 1 : 0)); });   // empate: lo que más se vende primero
   return C.slice(0, IAP_CANDS).map(function(c){ return { c:c.c, n:c.n, m:c.m, de:c.de }; });
+}
+/* Cuántas veces aparece cada código en los pedidos de la planilla (para desempatar candidatos). Una vez por lectura. */
+function iapFrecuencia(){
+  var k=(STATE||[]).length+'|'+(typeof ULTIMO_REFRESCO!=='undefined' ? ULTIMO_REFRESCO : 0);
+  if(IAP.freqK===k && IAP.freq) return IAP.freq;
+  var F={}; (STATE||[]).forEach(function(p){ if(!p || esFilaSistema(p)) return; (p.productos||[]).forEach(function(x){ var c=String((x && x.codigo)||'').trim().toUpperCase(); if(c) F[c]=(F[c]||0)+(Number(x.cant)||1); }); });
+  IAP.freqK=k; IAP.freq=F; return F;
 }
 /* El nombre y la medida de un código (la lista o los Excel). */
 function iapProdDe(code){
@@ -31873,8 +31888,7 @@ function iapLote(forzar){
     if(!forzar && o.d===hoy) return fin(null);
     var R=o.r||{}, falta=iapRenglones().filter(function(g){ return !R[g.ll]; }).slice(0, IAP_LOTE), envio=[];
     falta.forEach(function(g){
-      var C=iapCandidatos(g.desc, g.medida); if(!C.length) return;
-      var p0=g.peds[0]||{};
+      var C=iapCandidatos(g.desc, g.medida), p0=g.peds[0]||{};   // sin candidatos va igual: Claude dice si es un producto (un N° de orden no)
       envio.push({ r:g.ll, desc:g.desc, medida:g.medida, cant:g.cant, quien:String(p0.vendedor||'').slice(0,30), cands:C });
     });
     if(!envio.length) return fin(null);
