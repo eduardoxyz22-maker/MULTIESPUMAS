@@ -8632,6 +8632,31 @@ html.tema-black-friday .cam-ley b{color:#fde68a}
 .sem-i{width:20px;height:20px;flex:none;border-radius:50%;background:#fff;border:1px solid currentColor;color:inherit;font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:.8}
 .sem-r1 small.sem-r1-ex{display:none;flex-basis:100%;margin:0}
 .sem-r1.sem-r1-ab small.sem-r1-ex{display:block}
+/* 413 · cuántos, primero y grande; la medida una sola vez */
+.cq{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 6px;border-radius:8px;background:#12302e;color:#fff;font-weight:800;font-size:.92rem;font-variant-numeric:tabular-nums;flex:none}
+.cq.mas{background:#f59e0b;color:#2b1700}
+.cq-m{font-style:normal;display:inline-block;max-width:100%;margin-left:6px;padding:0 6px;border:1.5px solid #12302e;border-radius:6px;font-size:.74rem;font-weight:800;color:#12302e;white-space:normal;overflow-wrap:anywhere;vertical-align:1px}
+.lugd li.lg2{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;row-gap:2px;align-items:start}
+.lugd li.lg2 > .cq{grid-row:1/3;margin-top:1px}
+.lugd li.lg2 .lg2-n{font-weight:600;min-width:0}
+.lg2-de{font-weight:800;margin-left:4px}.lg2-de.mo{color:#6b21a8}
+.af-c.mas{background:#f59e0b;color:#2b1700;border-radius:5px;padding:0 5px}
+/* 414 · la Hoja de ruta: un producto por renglón (al imprimir, en blanco y negro) */
+.rtl{list-style:none;margin:4px 0 6px;padding:0;display:grid;gap:3px;max-width:900px}
+.rtl li{display:grid;grid-template-columns:18px auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:4px 8px;border-radius:8px;background:#f6f9f9;border:1px solid #e6eeee}
+.rtl-ck{width:16px;height:16px;border:2px solid #9fb3b2;border-radius:4px;background:#fff}
+.rtl .cq{height:26px;min-width:30px;font-size:.88rem}
+.rtl-n{font-weight:700;color:#1d2b2b;font-size:.88rem;min-width:0}
+.rtl-n small{margin-left:6px;color:#7b8b8a;font-weight:600;font-size:.72rem}
+.rtl-lg{font-size:.72rem;font-weight:800;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.rtl-lg.ptf{background:#dff5f3;color:#00706a}.rtl-lg.bz{background:#e3edfd;color:#1d4fb8}.rtl-lg.mo{background:#efe7fc;color:#6b21a8}.rtl-lg.no{background:#fde7e9;color:#9b1c25}
+@media print{
+  .rtl li{background:#fff!important;border-color:#999!important}
+  .rtl .cq,.rtl .cq.mas{background:#fff!important;color:#000!important;border:1.5px solid #000}
+  .rtl .cq-m{border-color:#000;color:#000}
+  .rtl-lg{background:#fff!important;color:#000!important;border:1px solid #000}
+  .rtl-ck{border-color:#000}
+}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -32236,7 +32261,8 @@ function admFichaHtml(p, dn){
   var MAX=4, filas=carga.slice(0, MAX).map(function(x){
     var tag=prodLugarTag(x) || ' <span class="lug lug-sr">sin revisar</span>';
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
-    return '<div class="af-pl"><span class="af-c">'+esc(String(x.cant||0))+'</span>'+prodIcoHtml(x)+'<span class="af-nm">'+esc(x.desc||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
+    var cp=cantPrimeroVa();   // 🎨 (mejora 413) el nombre sin la medida repetida y la cantidad en ámbar si es más de 1
+    return '<div class="af-pl"><span class="af-c'+((cp && (Number(x.cant)||0)>1)?' mas':'')+'">'+esc(String(x.cant||0))+'</span>'+prodIcoHtml(x)+'<span class="af-nm">'+esc((cp ? prodNombreCorto(x) : x.desc)||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
   }).join('')+(carga.length>MAX?('<div class="af-mas">+'+(carga.length-MAX)+' producto'+(carga.length-MAX===1?'':'s')+' más</div>'):'')+
     '';   // (24/10, dueño) lo de tienda NO va en la ficha rápida (se confundía con «recoger de tienda»): se ve al abrirla
   var chips=[]; try{ chips=fichaObsChips(p).filter(function(c){ return c.k!=='cobra'; }); }catch(e){}   // (24/10, dueño) lo de cobrar no va en la ficha rápida
@@ -35930,6 +35956,31 @@ function cargaAgrupar(list){
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
   return { byV:byV, order:order };
 }
+/* 🎨 (16/11, mejora 413; dueño: «me gustan todas… menos la 403») CUÁNTOS, PRIMERO Y GRANDE; LA MEDIDA UNA SOLA VEZ. Cada renglón era «COLCHON ECO
+   FLEX 2 PLAZAS 140X190CM FLEX 140×190 × 1»: la cantidad al final, chiquita, después de un nombre de dos renglones, y la medida DOS veces (en
+   noviembre, 93 de 397 productos: casi todo lo de ROHO y lo que entra por correo). Ahora la cantidad en un cuadrito oscuro a la izquierda
+   (ámbar si es más de 1, para que no se escape), el nombre sin la medida repetida (`prodNombreCorto`: SOLO para mostrar, el nombre guardado no
+   cambia) y la medida como etiqueta con borde. En «📍 Lo del día, por lugar», las fichas de Administración y la Lista de carga; lo de Moreno con
+   «📥 de Moreno» en violeta. En Playwright como antes salvo `window.CANT_PRIMERO_PRUEBA`. `tests/test_v413_414.js`. */
+function cantPrimeroVa(){ try{ return vdVa('CANT_PRIMERO_PRUEBA'); }catch(e){ return false; } }
+function prodNombreCorto(x){
+  var d=String((x&&x.desc)||'').trim(), m=String((x&&x.medida)||'').match(/(\d{2,3})\s*[x×*]\s*(\d{2,3})/i);
+  if(!d || !m) return d;
+  var re=new RegExp('(^|[^0-9])(?:DE\\s+)?'+m[1]+'\\s*[xX×*]\\s*'+m[2]+'(?:\\s*CMS?\\b)?(?![0-9])', 'gi');
+  var c=d.replace(re, '$1').replace(/\s{2,}/g,' ').replace(/[\s,\-–·]+$/,'').trim();
+  return c || d;
+}
+function cantCuadroHtml(n){ n=Number(n)||0; return '<b class="cq'+(n>1?' mas':'')+'">'+n+'</b>'; }
+function cargaNomMedHtml(x, kk){
+  if(!x) return esc(kk);
+  return esc(prodNombreCorto(x)||kk)+(x.medida ? (' <em class="cq-m">'+esc(String(x.medida).replace(/x/gi,'×'))+'</em>') : '');
+}
+function lugCantHtml(r, cls){
+  var veh=(camColorVa() && VEHICULOS[r.veh]) ? ('<i class="cam-dot" style="--vc:'+camColor(r.veh)+'"></i>'+esc(r.veh)) : esc(r.veh);
+  var de=(r.de && cls!=='aca' && cls!=='sale') ? (' <small class="lg2-de'+(cls==='trae'?' mo':'')+'">'+(cls==='trae'?'📥 ':'🏬 ')+'de '+esc(r.de)+'</small>') : '';
+  return '<li class="lg2" onclick="showPedidoModal(\''+esc(r.id)+'\')" title="Abrir el pedido">'+cantCuadroHtml(r.u)+
+    '<span class="lg2-n">'+cargaNomMedHtml(r.x, r.t)+de+'</span><span class="lg2-w">'+esc(String(r.cli).split(' ').slice(0,2).join(' '))+' · '+veh+'</span></li>';
+}
 /* 🏭 / 🏪 lo que sube al camión `k` en un turno (`o` = su grupo de `cargaAgrupar`), con los tildes de ese turno */
 function cargaSeccionesHtml(o, fecha, k, t){
   var pk=Object.keys(o.prod).sort();   // (lo que va entero a Banzer no entra acá: ver arriba)
@@ -35940,7 +35991,9 @@ function cargaSeccionesHtml(o, fecha, k, t){
     (pk.length ? pk.map(function(kk){
       // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
       var ck=cargaChkKey(fecha,k,kk,'',t), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]), nSR=cargaSinRespDe(o, kk);
-      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+cargaSinRespHtml(nSR)+'</label>'; }).join('')
+      return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+(todoNo?0:o.prod[kk])+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> '+
+        (cantPrimeroVa() ? (cantCuadroHtml(o.prod[kk])+' '+prodIcoHtml(o.px&&o.px[kk])+'<span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+cargaNomMedHtml(o.px&&o.px[kk], kk)+'</span>')   // 🎨 (mejora 413)
+          : ('<b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'))+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+cargaSinRespHtml(nSR)+'</label>'; }).join('')
       /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
          «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
       : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
@@ -35949,7 +36002,9 @@ function cargaSeccionesHtml(o, fecha, k, t){
     html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
       sk.map(function(kk){
         var ck=cargaChkKey(fecha,k,kk,n,t), nSR=(o.prod[kk]!=null)?0:cargaSinRespDe(o, kk);   // ⚠️ (§4ls V-REV-8) si no se dijo arriba
-        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span>'+esc(kk)+'</span>'+cargaSinRespHtml(nSR)+'</label>';
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" data-u="'+o.sale[n][kk]+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked);cargaCamionTildo(this)"'+(isCargaChk(ck)?' checked':'')+'> '+
+          (cantPrimeroVa() ? (cantCuadroHtml(o.sale[n][kk])+' '+prodIcoHtml(o.px&&o.px[kk])+'<span>'+cargaNomMedHtml(o.px&&o.px[kk], kk)+'</span>')   // 🎨 (mejora 413)
+            : ('<b style="min-width:34px;color:#0369a1">'+o.sale[n][kk]+'×</b> '+prodIcoHtml(o.px&&o.px[kk])+'<span>'+esc(kk)+'</span>'))+cargaSinRespHtml(nSR)+'</label>';
       }).join('')+'</div>';
   });
   return html;
@@ -60237,11 +60292,11 @@ function admLugaresDatos(f){
       if(!x || !(Number(x.cant)>0)) return;
       if(deTiendaNoViaja(p, x)) return;   // (24/10, dueño) protectores y adicionales los entrega la tienda: no se cargan ni se recogen (en una RPT sí viajan)
       var nom=(x.desc||'')+(x.medida?(' '+x.medida):'');
-      if(x.chk==='no'){ C.no.push({ t:nom, u:Number(x.cant), cli:p.cliente||'', veh:veh, id:p.id }); return; }
+      if(x.chk==='no'){ C.no.push({ t:nom, u:Number(x.cant), cli:p.cliente||'', veh:veh, id:p.id, x:x }); return; }
       var pa=prodPartes(x);
       if(!pa.length){ sin++; return; }
       pa.forEach(function(e){
-        var r={ t:nom, u:e.u, cli:p.cliente||'', veh:veh, id:p.id };
+        var r={ t:nom, u:e.u, cli:p.cliente||'', veh:veh, id:p.id, x:x };
         if(e.tipo==='aca') C.aca.push(r);
         else if(e.tipo==='sale'){ r.de=saleNombre(e.de); C.sale.push(r); }
         else if(recogeTiendaDe(e.de)){ r.de=recogeTiendaDe(e.de); C.tda.push(r); }   // 🏬 (13/10) de una tienda
@@ -60258,6 +60313,7 @@ function admLugaresHtml(){
     var u=0; lista.forEach(function(r){ u+=r.u; });
     return '<div class="lugd lugd-'+cls+'"><div class="lugd-h"><span>'+tit+'</span><b>'+stockUnid(u)+'</b></div>'+
       (lista.length ? ('<ul>'+lista.map(function(r){
+        if(cantPrimeroVa() && r.x) return lugCantHtml(r, cls);   // 🎨 (mejora 413) cuántos primero y la medida una sola vez
         return '<li onclick="showPedidoModal(\''+esc(r.id)+'\')" title="Abrir el pedido"><span>'+esc(r.t)+' <b>× '+stockUnid(r.u)+'</b>'+(r.de&&cls!=='aca'&&cls!=='sale'?(' <small>de '+esc(r.de)+'</small>'):'')+'</span><span>'+esc(String(r.cli).split(' ').slice(0,2).join(' '))+' · '+((camColorVa() && VEHICULOS[r.veh]) ? ('<i class="cam-dot" style="--vc:'+camColor(r.veh)+'"></i>'+esc(r.veh)) : esc(r.veh))+'</span></li>';   // 🎨 (mejora 404) el color del camión
       }).join('')+'</ul>') : '<div class="lugd-vacio">nada</div>')+'</div>';
   };
@@ -60757,7 +60813,8 @@ function renderRuta(){
       html+='<div class="rt-stop" style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(_rk[k]?(_rk[k].kmDe[String(p.id)]!=null?('<span class="nx-km">'+(_rk[k].kmDe[String(p.id)]<1?'&lt;1':Math.round(_rk[k].kmDe[String(p.id)]))+' km</span>'):'<span class="nx-km" style="background:#FFF3E6;color:#b45309">sin ubicación</span>'):'')+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
-        '<span style="color:#444">🛏️ '+esc(prodTextRuta(p.productos))+'</span><br>'+   // (26/09) «(cargar en Banzer)»
+        (rutaListaVa() ? rutaProdsHtml(p.productos)   // 🎨 (mejora 414) un producto por renglón
+          : ('<span style="color:#444">🛏️ '+esc(prodTextRuta(p.productos))+'</span><br>'))+   // (26/09) «(cargar en Banzer)»
         (atcComodinAviso(p)?('<b class="b-comodin" style="color:#1d4ed8">'+esc(atcComodinAviso(p))+'</b><br>'):'')+cobro+   // (26/09)
         (p.maps?(' &nbsp;·&nbsp; <a href="'+esc(p.maps)+'" target="_blank" rel="noopener">🗺️ Maps</a>'):'')+
         (p.observaciones?('<br><span style="color:#a05a00">📝 '+esc(p.observaciones)+'</span>'):'')+'</div>';
@@ -60765,6 +60822,36 @@ function renderRuta(){
     html+='</div>';
   });
   document.getElementById('ruta-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+}
+/* 🎨 (16/11, mejora 414; dueño: «me gustan todas… menos la 403») HOJA DE RUTA: UN PRODUCTO POR RENGLÓN. Los productos de una parada iban en una
+   tira separada por «|» («COLCHON TITANIO ICE · 200×200 · cód ch1222 × 1 | ALMOHADA · 50×70 · cód CD1403 × 2 (cargar en Banzer) | …»): dos
+   renglones que el chofer tenía que descifrar. Ahora una lista: un cuadrito para tildar en el papel, la cantidad grande (ámbar si es más de 1),
+   el nombre sin la medida repetida (`prodNombreCorto`), la medida en su etiqueta, el código chiquito y de dónde se carga como pastilla (🏭 PTF ·
+   🏪 Banzer · 📥 Moreno · ⛔ no hay; lo que no está marcado, sin pastilla). Lo demás de la parada (dirección, cobro, Maps, nota) igual; al
+   imprimir, en blanco y negro. El WhatsApp de la ruta (`rutaWhatsapp`) no cambia. En Playwright como antes salvo `window.RUTA_LISTA_PRUEBA`.
+   `tests/test_v413_414.js`. */
+function rutaListaVa(){ try{ return vdVa('RUTA_LISTA_PRUEBA'); }catch(e){ return false; } }
+function rutaLugarTxt(x){
+  if(!x) return null;
+  if(x.chk==='no') return { c:'no', t:'⛔ no hay' };
+  var pa=prodPartes(x), out=[];
+  pa.forEach(function(e){
+    var t=e.tipo==='aca' ? '🏭 PTF' : e.tipo==='sale' ? ('🏪 '+saleNombre(e.de)) : (recogeTiendaDe(e.de) ? ('🏬 '+recogerAlmCorto(e.de)) : ('📥 '+(e.de ? recogerAlmCorto(e.de) : 'Moreno')));
+    if(out.indexOf(t)<0) out.push(t);
+  });
+  if(!out.length) return null;
+  var c=pa.some(function(e){ return e.tipo==='trae'; }) ? 'mo' : pa.some(function(e){ return e.tipo==='sale'; }) ? 'bz' : 'ptf';
+  return { c:c, t:out.join(' + ') };
+}
+function rutaProdsHtml(prods){
+  var L=(prods||[]).filter(Boolean);
+  if(!L.length) return '';
+  return '<ul class="rtl">'+L.map(function(x){
+    var lg=rutaLugarTxt(x), n=Number(x.cant)||0;
+    return '<li><span class="rtl-ck" aria-hidden="true"></span>'+cantCuadroHtml(n)+
+      '<span class="rtl-n">'+esc(prodNombreCorto(x)||x.desc||'—')+(x.medida?('<em class="cq-m">'+esc(String(x.medida).replace(/x/gi,'×'))+'</em>'):'')+(x.codigo?('<small>'+esc(String(x.codigo).toUpperCase())+'</small>'):'')+'</span>'+
+      (lg ? ('<span class="rtl-lg '+lg.c+'">'+esc(lg.t)+'</span>') : '<span></span>')+'</li>';
+  }).join('')+'</ul>';
 }
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
