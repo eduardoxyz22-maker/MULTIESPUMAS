@@ -1314,6 +1314,19 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-fila{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 12px;border-top:1px solid var(--gray-md);font-size:.84rem}
 .pry-fila small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px;font-weight:400}
 .pry-q{min-width:0}
+/* 🚚🧾 (16/11) entregado / por entregar / por facturar debajo del nombre (pryEntHtml) */
+.pmid{flex:1 1 300px;min-width:220px;max-width:640px;margin:0 6px 0 4px;align-self:center}
+.pmid .m415{margin:0;max-width:none}
+.pmid.con415 .pent{margin-top:9px}
+.pent{max-width:640px}
+@media (max-width:1000px){ .pmid{order:3;flex:1 1 100%;max-width:none;margin:8px 0 2px} }
+.pent-b{display:flex;height:7px;border-radius:99px;overflow:hidden;background:#eef2f2}
+.pent-b i{display:block;height:100%}
+.pent-b i.e{background:#16a34a} .pent-b i.p{background:#f59e0b}
+.pent-t{display:flex;flex-wrap:wrap;gap:3px 12px;margin-top:4px;font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.pent-t b{color:var(--text,#1f2a2a);font-weight:700}
+.pent-t .e b{color:#15803d} .pent-t .p b{color:#b45309} .pent-t .d b{color:#b45309} .pent-t .ok{color:#15803d}
+.pent-t em{font-style:normal;color:#b91c1c}
 .pry-n{text-align:right;white-space:nowrap;order:2}
 .pry-mom{order:1;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}
 .pry-mom-l{width:110px;height:30px;display:block}
@@ -9268,6 +9281,41 @@ td.m427-g{color:#b6c3c2!important;font-weight:400}
    «si sigue así» más claro, una raya en su presupuesto y otra gris en la mínima; verde si llega, ámbar cerca (90 %), rojo si no.
    Las metas son las GUARDADAS del mes (`ccmMetas(ym)` con `ok`; las sugeridas no se dibujan) y lo vendido y la proyección, los de la
    fila (`proyeccionMes`). En el iPad la barra baja a su renglón. Bandera: `PRY_VD_BARRA_PRUEBA`. */
+/* 🚚🧾 (16/11; dueño, con la captura de «Por vendedor»: «ahí debería mostrar lo ya entregado y lo pendiente por entregar/facturar, en ese espacio
+   en blanco… para entender su total»). Debajo del nombre de cada vendedor: de lo vendido del mes, cuánto ya se ENTREGÓ (✅ del cierre de
+   entregas, o venta de tienda: sale en el acto) y cuánto falta entregar (con cuántas ya tenían que haber salido y no tienen ✅), con una barrita
+   de dos colores, y cuánto falta FACTURAR (`docVentaFalta`: sin factura ni nota de remisión anotada). Son las MISMAS ventas de la fila
+   (`pryVentas` con el mismo `vk` y el mismo mes): entregado + por entregar = lo vendido de la fila. SOLO MIRA. Bandera: `PRY_ENT_PRUEBA`. */
+function pryEntDatos(ym){
+  try{ if(!vdVa('PRY_ENT_PRUEBA')) return null; }catch(e){ return null; }
+  var hoy=diaNegocio(), M={};
+  pryVentas().forEach(function(x){
+    if(x.ym!==ym || x.amb==='roho') return;
+    var p=findById(x.id); if(!p) return;
+    var o=M[x.vk]||(M[x.vk]={ ent:{ n:0, bs:0 }, pen:{ n:0, bs:0, tarde:0 }, doc:{ n:0, bs:0 } });
+    var ya=!!p.entregado || esVentaTienda(p);
+    if(ya){ o.ent.n++; o.ent.bs=r2(o.ent.bs+x.bs); }
+    else { o.pen.n++; o.pen.bs=r2(o.pen.bs+x.bs); if(x.f<hoy) o.pen.tarde++; }
+    var falta=false; try{ falta=!!docVentaFalta(p); }catch(e){}
+    if(falta){ o.doc.n++; o.doc.bs=r2(o.doc.bs+x.bs); }
+  });
+  return M;
+}
+/* El hueco del medio de la fila: la barra hacia el presupuesto (415, si hay metas guardadas) y, debajo, lo entregado / por entregar / por facturar. */
+function pryMedioHtml(m415, ent){
+  if(!ent) return m415;
+  return '<div class="pmid'+(m415 ? ' con415' : '')+'">'+m415+ent+'</div>';
+}
+function pryEntHtml(D, r){
+  var o=D && r ? D[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)] : null;
+  if(!o || !(o.ent.n+o.pen.n)) return '';
+  var tot=o.ent.bs+o.pen.bs, we=tot>0.009 ? Math.round(o.ent.bs/tot*1000)/10 : (o.ent.n/(o.ent.n+o.pen.n)*100);
+  return '<div class="pent" title="De lo vendido del mes: lo ya entregado (✅ del cierre de entregas o venta de tienda) y lo que falta entregar; y las ventas sin factura ni nota de remisión anotada">'+
+    '<div class="pent-b" role="img" aria-label="Entregado '+Math.round(we)+' por ciento"><i class="e" style="width:'+we+'%"></i><i class="p" style="width:'+(100-we)+'%"></i></div>'+
+    '<div class="pent-t"><span class="e">✅ Entregado <b>'+fmtBs(o.ent.bs)+'</b> · '+o.ent.n+'</span>'+
+      '<span class="p">🚚 Por entregar <b>'+fmtBs(o.pen.bs)+'</b> · '+o.pen.n+(o.pen.tarde ? (' <em>('+o.pen.tarde+' ya debía'+(o.pen.tarde===1?'':'n')+' salir, sin ✅)</em>') : '')+'</span>'+
+      (o.doc.n ? ('<span class="d" title="Ventas sin factura ni nota de remisión anotada">🧾 Por facturar <b>'+fmtBs(o.doc.bs)+'</b> · '+o.doc.n+'</span>') : '<span class="ok">🧾 Todo facturado o con remisión</span>')+'</div></div>';
+}
 function m415Datos(R){
   try{ if(!vdVa('PRY_VD_BARRA_PRUEBA')) return null; }catch(e){ return null; }
   if(!R || R.estado==='futuro') return null;
@@ -19079,6 +19127,7 @@ function renderProyeccion(){
   var _A=null; try{ _A=pryAltura(R); }catch(e){}
   PRY_MOM_CTX={ R:R, A:_A, filas:{} };                // 📊 (§4nj) para abrir la tablita de un vendedor sin rearmar todo
   var _VDB=null; try{ _VDB=m415Datos(R); }catch(e){}   // 🎨 (16/11, mejora 415) la barra de cada una hacia su presupuesto
+  var _ENT=null; try{ _ENT=pryEntDatos(R.ym); }catch(e){}   // 🚚🧾 (16/11) lo entregado, lo que falta entregar y lo que falta facturar
   var filaHtml=function(r){
     var det=[nV(r.n), nU(r.u)];
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
@@ -19090,7 +19139,7 @@ function renderProyeccion(){
     if(mom){ PRY_MOM_CTX.filas[vk]=r; if(ab){ try{ det2=pryMomDetHtml(R, _A, r); }catch(e){} } }
     return '<div class="pry-fila'+(mom ? ' pry-toca' : '')+(ab ? ' pry-abre' : '')+'"'+(mom ? (' data-vk="'+esc(vk)+'" role="button" tabindex="0" aria-expanded="'+ab+'" title="Tocá para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs"') : '')+'>'+
            '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
-           (_VDB ? m415Html(_VDB, r) : '')+
+           pryMedioHtml(_VDB ? m415Html(_VDB, r) : '', _ENT ? pryEntHtml(_ENT, r) : '')+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
            (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+(ab ? '▾ cerrar' : 'ventas · unidades ▸')+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
   };
