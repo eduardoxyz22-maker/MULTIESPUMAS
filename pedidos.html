@@ -8582,6 +8582,22 @@ html.tema-black-friday .cam-ley b{color:#fde68a}
 .ach-c{margin-left:auto;flex:none;color:#a3242e;font-weight:700}.ach-c.si{color:#16302f}
 .ach-g{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:.72rem;font-weight:800;background:#eef4f4;color:#24413f;border:1px solid #cfe3e2;white-space:nowrap}
 .ach-g button{border:0;background:none;color:#00877f;font:inherit;font-weight:800;cursor:pointer;padding:0;text-decoration:underline}
+/* 408 · Plan de stock: los tres depósitos en color y un solo aviso de reclamo */
+.pld{display:flex;gap:3px;margin-top:4px;flex-wrap:nowrap}
+.pld span{display:inline-flex;align-items:center;gap:3px;padding:1px 6px 1px 5px;border-radius:999px;font-size:.66rem;font-weight:800;line-height:1.5;white-space:nowrap}
+.pld span i{font-style:normal;font-weight:700;opacity:.85}
+.pld .pld-ptf{background:#dff5f3;color:#00706a}.pld .pld-bz{background:#e3edfd;color:#1d4fb8}.pld .pld-mo{background:#efe7fc;color:#6b21a8}
+.pld .cero{background:#f1f3f4;color:#a3adb0}
+.pld-rec{display:inline-flex;align-items:center;gap:5px;margin:4px 6px 0 0;padding:3px 10px;border-radius:999px;background:#fff1e6;border:1px solid #f7c59f;color:#9a3412;font-size:.72rem;font-weight:800;white-space:nowrap;vertical-align:middle;cursor:help}
+.pld-rec b{color:#7c2d12}
+/* 409 · los Excel del día como casilleros */
+.ex3{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.ex3 > span{display:inline-flex;align-items:center;gap:3px;padding:1px 7px 1px 3px;border-radius:999px;font-size:.68rem;font-weight:800;white-space:nowrap;border:1px solid;font-style:normal}
+.ex3 > span i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;color:#fff;font-size:.6rem}
+.ex3 > span.ex3-ok{background:#e7f7ee;border-color:#a7e3c0;color:#0f6b3a}.ex3 > span.ex3-ok i{background:#16a34a}
+.ex3 > span.ex3-no{background:#fff1f2;border-color:#f6c3c7;color:#a3242e}.ex3 > span.ex3-no i{background:#e5484d}
+.ex3 > span em{font-style:normal;font-weight:600;opacity:.85;color:inherit}
+.s3-t.ex3-t .s3-tx{flex:1;min-width:0}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -34040,6 +34056,7 @@ function admSecsPintar(){
   var hoyX=todayStr(), cf=(STOCK && STOCK.c && STOCK.c.f) || '';
   var stk=!cf ? '<em>todavía no hay ningún Excel cargado</em>' : cf===hoyX ? ('Excel de hoy'+(STOCK.c.hora?(' · '+esc(String(STOCK.c.hora).slice(0,5))):'')+' · saldos y qué pedir')
         : ('<em>falta el Excel de hoy</em> · el último es del '+esc(fmtFechaCorta(cf)));
+  if(cf && excel3Va()){ var X3=excelDelDiaLista(); if(X3.length) stk='<span class="ex3">'+excel3Chips(X3)+'</span>'; }   // 🎨 (mejora 409) los mismos casilleros
   var h=a('abrirStock()','as-stk','📦','Stock y reposición', stk, 'Subir los Excel de los almacenes, ver los saldos y qué pedir a fábrica')+
     a('abrirImportRoho()','as-roho','📥','Importar ROHO', 'el Excel de ROHO → pedidos', 'Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» de ROHO y se crean los pedidos')+
     b('her','🧰','Herramientas', s==='her' ? '← tocá de nuevo para volver a los pedidos' : (nT+' herramientas · carga, mensajes, stock, ajustes'));
@@ -65168,6 +65185,22 @@ function stockCintaGrupos(d){
    con `.s3-on`; nada nuevo hace cuentas: los números son los de la cinta (`stockCintaGrupos`) y los cortes (`stockCortesViejos`).
    En Playwright, apagado salvo `window.STK_TOP_PRUEBA`. */
 function stkTopActivo(){ return !navigator.webdriver || !!window.STK_TOP_PRUEBA; }
+/* 🎨 (16/11, mejora 409; dueño: «me gustan todas… menos la 403») LOS EXCEL DEL DÍA COMO CASILLEROS. La tarjeta decía «falta el de hoy · el
+   último es del 14/11» y no decía CUÁL faltaba (con el de PTF ya subido seguía igual, y la pastilla de arriba decía «corte de hoy»). Ahora un
+   casillero por almacén: «✓ PTF 08:40» en verde, «✗ Banzer 14/11» en rojo; el título dice «Excel del día · faltan 2» y la tarjeta queda roja
+   solo mientras falte alguno («Los 3 Excel de hoy ✓»). Lo mismo en la ficha «Stock y reposición» de Administración. Mismos datos
+   (`excelDelDiaLista`: `STOCK.c` y `STOCK.g` con la regla de `stockCortesViejos`). En Playwright como antes salvo `window.EXCEL3_PRUEBA`.
+   `tests/test_v409_excel_casilleros.js`. */
+function excel3Va(){ try{ return vdVa('EXCEL3_PRUEBA'); }catch(e){ return false; } }
+function excel3Chips(X){
+  return X.map(function(x){ return '<span class="ex3-'+(x.ok?'ok':'no')+'" title="'+esc(x.nombre+': '+(x.ok?('el de hoy'+(x.h?(', '+x.h):'')):('el último es del '+fmtFechaCorta(x.f))))+'"><i>'+(x.ok?'✓':'✗')+'</i>'+esc(x.nombre)+' <em>'+esc(x.ok ? (x.h||'hoy') : fmtFechaCorta(x.f))+'</em></span>'; }).join('');
+}
+function excel3TileHtml(alDia){
+  var X=excelDelDiaLista(); if(!X.length) return '';
+  var fal=X.filter(function(x){ return !x.ok; }).length;
+  return '<button type="button" class="s3-t s3-ex ex3-t'+(fal?' s3-mal':'')+'" onclick="abrirImportExist()"><span class="s3-ic">📥</span><span class="s3-tx">'+
+    '<b>'+(fal ? ('Excel del día · falta'+(fal===1?' 1':('n '+fal))) : ('Los '+X.length+' Excel de hoy ✓'))+'</b><span class="ex3">'+excel3Chips(X)+'</span></span><span class="s3-ab" aria-hidden="true">↗</span></button>';
+}
 function stkTopPintar(d){
   var el=document.getElementById('stk-top'), ov=document.getElementById('stock-overlay'); if(!el || !ov) return;
   try{ ofertaBotonPintar(); }catch(e){}   // 🏷️ (13/11, mejora 193) «Qué ofertar» en la fila de siempre, solo con la contraseña
@@ -65186,8 +65219,9 @@ function stkTopPintar(d){
   var t=function(fn, cls, ic, ti, sub){ return '<button type="button" class="s3-t '+cls+'" onclick="'+fn+'"><span class="s3-ic">'+ic+'</span><span class="s3-tx"><b>'+ti+'</b><small>'+sub+'</small></span><span class="s3-ab" aria-hidden="true">↗</span></button>'; };
   var ch=function(fn, txt){ return '<button type="button" class="s3-ch" onclick="'+fn+'">'+txt+'</button>'; };
   var rv=[por.ya.length?(por.ya.length+' pedir ya'):'', por.sem.length?(por.sem.length+' esta semana'):'', por.rev.length?(por.rev.length+' revisar'):''].filter(Boolean).join(' · ')||'nada urgente';
+  var ex3=excel3Va() ? excel3TileHtml(alDia) : '';   // 🎨 (mejora 409) los Excel del día como casilleros
   var h='<div class="s3-grandes">'+
-      t('abrirImportExist()', 's3-ex'+(alDia?'':' s3-mal'), '📥', 'Subir los Excel del día', exTxt)+
+      (ex3 || t('abrirImportExist()', 's3-ex'+(alDia?'':' s3-mal'), '📥', 'Subir los Excel del día', exTxt))+
       t('abrirStockRevisar()', 's3-rv'+(por.ya.length?' s3-urge':''), '🤖', 'Revisión automática', rv)+
       t('abrirPap()', 's3-pp', '🏭', 'Pedido a producción', '7 días · 15 días · '+esc(MS.nombre))+
       t('abrirAlm()', 's3-bz', '📍', 'Banzer o PTF', 'qué tener en cada depósito')+
@@ -65252,7 +65286,8 @@ function stockPlanHtml(d, lista){
   var filas=F.slice(0,tope).map(function(x){
     var o=x.o, h=sfHay(o), r=sfReloj(o), ab=PLAN_ABIERTA===o.k;
     var hay = h==null ? '<span class="pl-cero">sin contar</span>'
-      : ('<b>'+stockUnid(sfTotal(o))+'</b><small>'+stockUnid(Math.max(0,o.deposito||0))+' · '+stockUnid(o.enSale||0)+' · '+stockUnid(o.enOtros||0)+'</small>');
+      : ('<b>'+stockUnid(sfTotal(o))+'</b>'+(planColorVa() ? planDepHtml(o)   // 🎨 (mejora 408) los tres depósitos con nombre y color
+          : ('<small>'+stockUnid(Math.max(0,o.deposito||0))+' · '+stockUnid(o.enSale||0)+' · '+stockUnid(o.enOtros||0)+'</small>')));
     var corta = h==null ? '—' : r.txt.replace(/^(⏳|⛔)\s*/,'');
     var tr='<tr class="pl-fila'+(ab?' abierta':'')+'" data-k="'+esc(o.k)+'" data-g="'+x.g+'" onclick="if(!event.target.closest(\'button\'))planAbrir(this.dataset.k)">'+
       '<td><b class="pl-nm">'+esc(o.desc)+'</b><small>'+esc(o.medida||'')+(o.cod?(' · cód '+esc(o.cod)):'')+'</small></td>'+
@@ -65461,9 +65496,29 @@ function stockAutoHtml(o){
   });
   return h;
 }
+/* 🎨 (16/11, mejora 408; dueño: «me gustan todas… menos la 403») PLAN DE STOCK: LOS 3 DEPÓSITOS EN COLOR Y UN SOLO AVISO. «Hay» decía el total
+   y abajo «0 · 0 · 0» en gris chico (había que acordarse del orden del título): ahora tres pastillas con nombre y color (PTF turquesa, Banzer
+   azul, Moreno violeta; las que están en 0, grises). Y el reclamo salía DOS veces en «Qué hacer hoy» (el párrafo «⚠️ Ya pedí 5 el 27/10…» y la
+   caja «Hay 5 pedidas el 27/10 que no llegaron…»): queda UNA pastilla «⏳ 5 pedidas el 27/10 no llegaron · reclamá» con los dos textos enteros
+   al pasar el mouse. Mismos números (`sfTotal`, `o.deposito`, `o.enSale`, `o.enOtros`, `planYaVencidos`, `fdAtrasadosYa`). Va con la 368.
+   En Playwright como antes salvo `window.PLAN_COLOR_PRUEBA`. `tests/test_v408_plan_color.js`. */
+function planColorVa(){ try{ return vdVa('PLAN_COLOR_PRUEBA'); }catch(e){ return false; } }
+function planDepHtml(o){
+  var d=function(cls, nom, n){ n=Math.max(0, Number(n)||0); return '<span class="pld-'+cls+(n?'':' cero')+'"><i>'+nom+'</i> '+stockUnid(n)+'</span>'; };
+  return '<div class="pld">'+d('ptf','PTF',o.deposito)+d('bz','Banzer',o.enSale)+d('mo','Moreno',o.enOtros)+'</div>';
+}
+function planReclamoHtml(n, fechas, tit){
+  return '<span class="pld-rec" title="'+esc(tit)+'">⏳ <b>'+stockUnid(n)+'</b> pedid'+(n===1?'a':'as')+' el '+esc(fdFechasTxt(fechas))+' no '+(n===1?'llegó':'llegaron')+' · <b>reclamá</b></span>';
+}
 function planYaHtml(o){
-  var hoy=todayStr(), T=stockTiemposFabrica(), h=stockAutoHtml(o);
+  var hoy=todayStr(), T=stockTiemposFabrica(), h=stockAutoHtml(o), pc=planColorVa(), vencT=[], vencN=0, vencF=[];
   planYaVencidos(o).forEach(function(q){
+    if(pc){   // 🎨 (mejora 408) va en UNA pastilla, con el texto entero al pasar el mouse
+      var tot0=Number(q.total)||0, ru0=Number(q.ru)||0; vencN+=Math.round(Number(q.u)||0); if(vencF.indexOf(q.f)<0) vencF.push(q.f);
+      vencT.push('Ya pedí '+stockUnid(tot0>0&&ru0>0?tot0:q.u)+' el '+fmtFechaCorta(q.f)+(tot0>0&&ru0>0 ? (': llegaron '+stockUnid(ru0)+' y faltan '+stockUnid(q.u)) : '')+
+        ': tenía que llegar el '+fmtFechaCorta(stockEsperado(q,T))+' y ningún Excel lo mostró. Ya no se cuenta como en camino: reclamá a la fábrica.');
+      return;
+    }
     /* ✏️ (18/10, §4ls textos, Man-VM10) Si llegó una parte, se dice cuánto llegó y cuánto falta (decía «Ya pedí 2… ningún Excel lo mostró»
        cuando de 5 habían llegado 3). */
     var tot=Number(q.total)||0, ru=Number(q.ru)||0;
@@ -65472,6 +65527,11 @@ function planYaHtml(o){
                    : (': tenía que llegar el '+fmtFechaCorta(stockEsperado(q,T))+' y ningún Excel lo mostró'))+
       '. Ya no se cuenta como en camino: reclamá a la fábrica (está en «🏭 Lo que nos debe la fábrica»).</div>';
   });
+  var pcRec='';
+  if(pc){ var _a0=fdAtrasadosYa(o.k);
+    if(_a0.n>0) pcRec=planReclamoHtml(_a0.n, _a0.fechas, vencT.concat(['Hay '+stockUnid(_a0.n)+' pedidas que no llegaron: reclamá antes de pedir más (está en «🏭 Lo que nos debe la fábrica»).']).join('\n'));
+    else if(vencN>0) pcRec=planReclamoHtml(vencN, vencF.sort(), vencT.join('\n'));
+    h+=pcRec; }
   planYaVigentes(o).forEach(function(q){
     h+='<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" checked data-k="'+esc(o.k)+'" data-id="'+esc(q.id)+'" onchange="planYaPedi(this.dataset.k,this.checked,this.dataset.id)"> ✓ Ya pedí '+stockUnid(q.u)+
       (q.f===hoy?' hoy':(' el '+fmtFechaCorta(q.f)))+' · se entrega desde ~'+fmtFechaCorta(stockEsperado(q,T))+'</label>';
@@ -65481,7 +65541,7 @@ function planYaHtml(o){
   /* 🏭 (30/10, propuesta 75) ANTES DE VOLVER A PEDIR: si hay lo mismo pedido y atrasado (ningún Excel lo mostró), se dice al lado de la
      casilla. En octubre 6 productos se volvieron a marcar «Ya pedí» justo cuando vencía el anterior, sin saber si Moreno ya lo tenía. */
   var _atr=fdAtrasadosYa(o.k);
-  if(_atr.n>0) h+='<div class="pl-ya-reclamar">⚠️ Hay '+stockUnid(_atr.n)+' pedid'+(_atr.n===1?'a':'as')+' el '+esc(fdFechasTxt(_atr.fechas))+' que no '+(_atr.n===1?'llegó':'llegaron')+': reclamá antes de pedir más.</div>';
+  if(_atr.n>0 && !pc) h+='<div class="pl-ya-reclamar">⚠️ Hay '+stockUnid(_atr.n)+' pedid'+(_atr.n===1?'a':'as')+' el '+esc(fdFechasTxt(_atr.fechas))+' que no '+(_atr.n===1?'llegó':'llegaron')+': reclamá antes de pedir más.</div>';
   /* ✏️ (18/10, §4ls textos, Man-VM10) «más» solo si hay un «Ya pedí» que sigue contando: con uno vencido arriba se leía «23 + 21». */
   return h+'<label class="pl-ya-chk" onclick="event.stopPropagation()"><input type="checkbox" data-k="'+esc(o.k)+'" onchange="planYaPedi(this.dataset.k,this.checked)"> Ya pedí '+stockUnid(o.fabricar)+(planYaVigentes(o).length?' más':'')+'</label>';
 }
