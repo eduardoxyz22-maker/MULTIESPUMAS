@@ -2743,7 +2743,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
 (function(){
   var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
   /* Las lecturas puras que pueden ir a la planilla de verdad (todo lo demás, también lo que no tiene `action` —para el servidor es «save»—, NO) */
-  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1, iaSemana:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones · iaSemana (16-a): el porqué y la mano guardados */
+  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1, iaSemana:1, chatLeer:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones · iaSemana (16-a): el porqué y la mano guardados · chatLeer (16-a, 344): el chat del equipo se lee (en práctica no manda el «visto» ni mensajes) */
   window.PRACTICA=false;
   if(!SP) return;
   var G=SP.getItem, S=SP.setItem, R=SP.removeItem;
@@ -8133,7 +8133,9 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
-<script src="escritorio.js?v=20261114a" defer></script>
+<script src="escritorio.js?v=20261116a" defer></script>
+<!-- 💬 (16/11, mejora 344) el chat del equipo: el botón «💬 Chat» de arriba y su panel a la derecha. `defer`, después de escritorio.js. Al cambiarlo, subir el ?v=. -->
+<script src="chat.js?v=20261116a" defer></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -9308,6 +9310,7 @@ function apiList(opts){
   var pl={action:'list'}, pideZ=listaZPuede(), pideDelta=!opts.entera && listaDeltaPuede();
   if(pideZ) pl.z=1;
   if(pideDelta) pl.desde=LISTA_BASE.ahora;
+  try{ if(window.chatListaPedir) window.chatListaPedir(pl); }catch(e){}   // 💬 (mejora 344) quién es y qué versión del chat tiene: vuelve con cuántos sin leer (chat.js)
   return apiPost(pl).then(function(j){
     return listaAbrir(j).then(null, function(){
       /* No se pudo abrir (un navegador que no sabe, o algo raro en el camino): en esta pestaña, sin comprimir. */
@@ -9346,6 +9349,7 @@ function apiList(opts){
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
     try{ if(j.gpsDia) gpsDiaTomar(j.gpsDia); }catch(e){}   // 🛰️ (§4kp) y lo que pasó en el día: salidas, registro y paradas
     try{ apartadosTomar(j.apartados, j.ahora); }catch(e){}   // ⏳ (14/11, 267) los lugares que otras ventas tienen apartados (servidor 2026-11-14-b)
+    try{ if(window.chatListaTomar) window.chatListaTomar(j.chat); }catch(e){}   // 💬 (mejora 344) el chat del equipo: cuántos sin leer (servidor 2026-11-16-a)
     return j;
   });
 }

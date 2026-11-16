@@ -598,6 +598,9 @@ function probarAntesDeImplementar() {
   try { probarIag_(bien, ojo); } catch (e) { ojo('No pude mirar las ATC, los productos y «Lo que no cierra» (2026-11-16-a): ' + motivo(e)); }
   /* 25. 🧠🤝 (2026-11-16-a, mejoras 356 y 362) El porqué de la semana y «Quién necesita una mano»: a quién va, si Claude puede y cuántas lecturas hay. Solo lee. */
   try { probarIaSemanal_(bien, ojo); } catch (e) { ojo('No pude mirar el porqué de la semana ni «Quién necesita una mano» (2026-11-16-a): ' + motivo(e)); }
+  /* 💬 (2026-11-16-a, mejora 344) El chat del equipo: la hoja «Chat» (si ya existe, cuántos mensajes) y el disparador que borra lo de más de
+         90 días. Solo lee (ningún texto de nadie); informa, no frena. */
+  try { probarChat_(bien, ojo); } catch (e) { ojo('No pude mirar el chat del equipo (2026-11-16-a): ' + motivo(e)); }
 
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
@@ -1634,6 +1637,9 @@ function doPostCuerpo_(e) {
   /* 🧠🤝 (2026-11-16-a, mejoras 356 y 362) El porqué de la semana y «Quién necesita una mano»: leer, armar y «Ya hablé con ella». Sin candado: hablan con
      Claude y escriben SOLO la hoja «IA semanal» (con su candado corto). Tope por día: IA_SEMANA_TOPE_DIA. */
   if (/^ia(Semana|Porque|Equipo|EquipoHable)$/.test(action)) return jsonOut(iaSemanalAccion_(action, body));
+  /* 💬 (2026-11-16-a, mejora 344) El chat del equipo: su propia hoja («Chat»), con el candado del documento (corto) para escribir y la caché
+     para leer. Nunca el candado de doPost. Ver «EL CHAT DEL EQUIPO» al final del archivo. */
+  if (action === 'chatEnviar' || action === 'chatLeer' || action === 'chatBorrar' || action === 'chatFoto') return jsonOut(chatAccion_(action, body));
   /* 📖 LEER NO NECESITA CANDADO (§4dt).
      `readAll()` es UN solo `getDataRange().getValues()`: una foto de la planilla en un
      instante, no una lectura fila por fila que se pueda mezclar con un guardado a medias.
@@ -1650,6 +1656,7 @@ function doPostCuerpo_(e) {
     if (gps) lst.gps = gps;
     if (gd) lst.gpsDia = gd;                            // (2026-10-13-b) salidas, registro y paradas de hoy, también de la caché
     try { lst.apartados = apartadosParaLista_(); } catch (eAp) {}   // 🎟️ (2026-11-14-b, mejora 267) los lugares apartados ahora (una propiedad: sin red ni planilla)
+    try { var cht = chatParaLista_(body); if (cht) lst.chat = cht; } catch (eCh) {}   // 💬 (2026-11-16-a, mejora 344) cuántos sin leer del chat (de la caché: sin leer la hoja)
     return listaResponder_(lst, body);
   }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
@@ -10278,7 +10285,7 @@ function kommoRepaso() {
 /** ▶️ CORRER UNA VEZ desde el editor (Ejecutar ▸ instalarDisparadores): deja el repaso
     cada 5 minutos. Pide autorización la primera vez; es normal. */
 function instalarDisparadores() {
-  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas', 'waRepaso', 'gpsRepaso', 'backupDiario'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
+  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas', 'waRepaso', 'gpsRepaso', 'backupDiario', 'chatPodar'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
   ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('barrerFotosHuerfanas').timeBased().everyDays(1).atHour(3).create();   // 🖼️ §4ep, de madrugada
   ScriptApp.newTrigger('waRepaso').timeBased().everyMinutes(5).create();                    // 🤖 (2026-10-11-a) el bot de WhatsApp; apagado mientras WA_ACTIVO no sea 1
@@ -10286,7 +10293,8 @@ function instalarDisparadores() {
   /* 💾 (2026-10-29-a, el dueño eligió la «4») La copia entera de la planilla a Drive, cada noche de 2 a 3 (se guardan las últimas
      BACKUP_KEEP). Antes había que instalarla a mano en Activadores y no se sabía si estaba. */
   ScriptApp.newTrigger('backupDiario').timeBased().everyDays(1).atHour(2).create();
-  var msg = '✅ Listo: kommoRepaso y waRepaso (el bot de WhatsApp) corren cada 5 minutos, gpsRepaso (el GPS de los camiones) cada minuto, backupDiario (la copia de la planilla a Drive) de 2 a 3 am y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
+  ScriptApp.newTrigger('chatPodar').timeBased().everyDays(1).atHour(4).create();   // 💬 (2026-11-16-a, mejora 344) el chat: lo de más de 90 días se borra (4A)
+  var msg = '✅ Listo: kommoRepaso y waRepaso (el bot de WhatsApp) corren cada 5 minutos, gpsRepaso (el GPS de los camiones) cada minuto, backupDiario (la copia de la planilla a Drive) de 2 a 3 am, barrerFotosHuerfanas una vez por día (3 am) y chatPodar (el chat: lo de más de 90 días) a las 4 am. Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
   if (typeof Logger !== 'undefined') Logger.log(msg);
   return msg;
 }
@@ -11963,4 +11971,475 @@ function probarIaSemanal_(bien, ojo) {
   bien('🤝🧠 Claude para el porqué y el equipo: ' + (no ? 'no se puede ahora (' + iaSemNoTxt_(no) + '): el porqué sale con reglas fijas y el equipo no se arma' : 'listo') +
        ' · hoy ' + u.n + ' de ' + iaSemTope_() + ' (IA_SEMANA_TOPE_DIA) · desde el ' + (u.tot.desde || '—') + ': ' + u.tot.n + ' consultas, ~USD ' + (Math.round(iaCostoUsd_(u.tot) * 100) / 100) +
        ' · la hoja «' + WP_HOJA + '» tiene ' + F.filter(function (x) { return x.tipo === 'porque'; }).length + ' lectura(s) del porqué y ' + F.filter(function (x) { return x.tipo === 'equipo'; }).length + ' del equipo.');
+}
+
+/* ============================================================================
+ * 💬 (2026-11-16-a, mejora 344) EL CHAT DEL EQUIPO ADENTRO DEL PANEL. El dueño (15/11): «si es posible crear un chat interno en el panel
+ * entre vendedores y Eduardo también»; eligió (16/11) 1A, 2A, 3C, 4A y 5B:
+ *   · 1A: el grupo de todo el equipo (`eq`), cada uno por privado con Eduardo y entre compañeras (`p:<a>|<b>`, las dos personas en orden),
+ *     y las «ventanillas» de Logística y de Contabilidad (`b:log|<vendedora>`, `b:conta|<vendedora>`: cada vendedora su hilo, las demás no
+ *     lo ven). Una persona es su nombre sin tildes ni mayúsculas («mirian salazar», «eduardo anez»); Logística es `log` y Contabilidad `conta`.
+ *   · 2A: SIN PIN. «Privado» = no aparece en la pantalla de los demás (`chatLeer` le manda a cada uno lo suyo), no «secreto»: el dueño ve todo
+ *     en la hoja y en los respaldos, y sin PANEL_KEY la dirección del servidor es pública (como los pedidos). Nadie tiene «ver todo» en el panel.
+ *   · 3C: SIN WhatsApp por lo no leído: el número rojo, el aviso de Windows y Bloki (todo eso es de la página).
+ *   · 4A: 90 días (CHAT_GUARDA_DIAS): lo más viejo se borra solo, con su foto (`chatPodar`, disparador diario, y una vez por día al escribir).
+ *   · 5B: @Bloki contesta con los números del panel — lo arma la página de quien pregunta y lo manda como un mensaje de «bloki» (`por` = quién
+ *     preguntó). Acá no hay IA del chat.
+ * Dónde: la hoja «Chat» (una fila por mensaje) y «Chat vistos» (una fila por persona: hasta dónde leyó cada conversación). NADA toca «Pedidos»
+ * ni el candado de doPost: escribir va con el candado del documento (`mallCandado_`, corto) y leer sale de la caché (los últimos 7 días).
+ * Acciones (afuera del candado de doPost, con la clave del equipo como todo): `chatEnviar`, `chatLeer`, `chatBorrar`, `chatFoto`; y la lectura
+ * `list` lleva un dato chico (`chat:{v, n, t}`: la versión, cuántos sin leer tiene quien pide y la hora del último) sin leer la hoja.
+ * La página los usa solo con el servidor 2026-11-16-a o más nuevo. `tests/test_servidor_chat.js`, `tests/test_chat.js`.
+ * ========================================================================== */
+var CHAT_HOJA = 'Chat', CHAT_VISTOS_HOJA = 'Chat vistos';
+var CHAT_ENC = ['id', 'ts', 'dia', 'hora', 'conv', 'de', 'rol', 'nombre', 'texto', 'fotos', 'pedidos', 'responde', 'marca', 'aparato', 'por'];
+var CHAT_VISTOS_ENC = ['persona', 'vistos', 'cuando'];
+var CHAT_TXT_MAX = 1000;          // letras por mensaje
+var CHAT_POR_VEZ = 10;            // mensajes por envío (la cola de un aparato que volvió a tener señal)
+var CHAT_FOTOS_MAX = 4;           // fotos por mensaje
+var CHAT_PED_MAX = 6;             // pedidos nombrados por mensaje («id~11-188»)
+var CHAT_CACHE_DIAS = 7;          // lo que vive en la caché (y lo que trae la primera lectura de un aparato)
+var CHAT_DUP_FILAS = 4000;        // para ver si un mensaje ya entró y para armar la caché: las últimas filas de la hoja
+var CHAT_CACHE_SEG = 21600;       // 6 horas, el tope de CacheService
+var CHAT_TROZO = 90000;           // CacheService aguanta 100 KB por clave
+var CHAT_GUARDA_DIAS = 90;        // 4A: lo de más de 90 días se borra solo
+var CHAT_CANDADO_MS = 5000;       // el candado del documento, corto: escribir un mensaje es < 1 s
+var CHAT_BORRAR_MIN = 10;         // se puede borrar lo propio hasta 10 minutos después (y uno de margen por los relojes)
+var CHAT_ANTES_MAX = 100;         // «ver los mensajes anteriores»: de a 100
+var CHAT_NOMBRE_MAX = 50;
+var CHAT_FOTOS_FOLDER = 'Fotos chat MultiEspumas', CHAT_FOTOS_PROP = 'CHAT_FOTOS_FOLDER_ID';
+var CHAT_ROLES = { v:1, d:1, l:1, c:1, b:1 };     // vendedora/or · dueño · logística · contabilidad · Bloki
+var CHAT_RESERVADOS = { log:1, conta:1, bloki:1, eq:1 };
+/* Un «no» del chat (ocupado, quien, …) no es un guardado de un pedido: no va a «Rechazos». */
+RECHAZOS_NO_ANOTAR.chatEnviar = 1; RECHAZOS_NO_ANOTAR.chatLeer = 1; RECHAZOS_NO_ANOTAR.chatBorrar = 1; RECHAZOS_NO_ANOTAR.chatFoto = 1;
+
+/** La clave de una persona: sin tildes, sin mayúsculas, solo letras, números y espacios («Eduardo Añez» → «eduardo anez»). La página arma la
+    misma (`chatClave` de chat.js): tests/test_chat.js las compara. */
+function chatPersona_(s) {
+  return waNorm_(s).replace(/ñ/g, 'n').replace(/[^a-z0-9 ]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+}
+/** La conversación, escrita siempre igual: `eq`, `p:<a>|<b>` (en orden, dos personas distintas) o `b:log|<v>` / `b:conta|<v>`. '' si no vale. */
+function chatConvNorm_(c) {
+  c = String(c == null ? '' : c).trim();
+  if (c === 'eq') return 'eq';
+  var m = /^p:([^|]{1,60})\|([^|]{1,60})$/.exec(c);
+  if (m) {
+    var a = chatPersona_(m[1]), b = chatPersona_(m[2]);
+    if (!a || !b || a === b || a === 'bloki' || b === 'bloki' || a === 'eq' || b === 'eq') return '';
+    return 'p:' + (a < b ? a + '|' + b : b + '|' + a);
+  }
+  m = /^b:(log|conta)\|([^|]{1,60})$/.exec(c);
+  if (m) { var v = chatPersona_(m[2]); return (v && !CHAT_RESERVADOS[v]) ? ('b:' + m[1] + '|' + v) : ''; }
+  return '';
+}
+/** ¿Esa persona está en esa conversación? (= la ve en el panel). Logística es `log` y Contabilidad `conta`: ven todas sus ventanillas. */
+function chatVe_(conv, q) {
+  if (!conv || !q) return false;
+  if (conv === 'eq') return true;
+  var m = /^p:([^|]+)\|(.+)$/.exec(conv);
+  if (m) return m[1] === q || m[2] === q;
+  m = /^b:(log|conta)\|(.+)$/.exec(conv);
+  if (m) return m[2] === q || m[1] === q;
+  return false;
+}
+/** Una persona que puede leer y escribir: cualquiera salvo Bloki y `eq` (Logística y Contabilidad sí). */
+function chatQuienVale_(q) { return !!q && q !== 'bloki' && q !== 'eq'; }
+function chatTxt_(v, max) { return String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max || 80); }
+/** El texto de un mensaje: con sus renglones (sin \r ni otros caracteres de control), hasta CHAT_TXT_MAX letras. */
+function chatTexto_(v) {
+  return String(v == null ? '' : v).replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, ' ').replace(/\n{4,}/g, '\n\n\n').trim().slice(0, CHAT_TXT_MAX);
+}
+function chatHoja_(crear) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(CHAT_HOJA);
+  if (!sh && crear) {
+    sh = ss.insertSheet(CHAT_HOJA);
+    try { sh.getRange('A:A').setNumberFormat('@'); sh.getRange('C:O').setNumberFormat('@'); } catch (e) {}   // el día y la hora como TEXTO (si no, Google los convierte)
+    sh.getRange(1, 1, 1, CHAT_ENC.length).setValues([CHAT_ENC]);
+    try { sh.setFrozenRows(1); } catch (e2) {}
+  }
+  return sh;
+}
+function chatVistosHoja_(crear) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(CHAT_VISTOS_HOJA);
+  if (!sh && crear) {
+    sh = ss.insertSheet(CHAT_VISTOS_HOJA);
+    try { sh.getRange('A:C').setNumberFormat('@'); } catch (e) {}
+    sh.getRange(1, 1, 1, CHAT_VISTOS_ENC.length).setValues([CHAT_VISTOS_ENC]);
+    try { sh.setFrozenRows(1); } catch (e2) {}
+  }
+  return sh;
+}
+/** Un mensaje que manda la página → {m} limpio o {mal:'por qué', id}. */
+function chatValidar_(x) {
+  if (!x || typeof x !== 'object') return { mal:'no es un mensaje', id:'' };
+  var id = String(x.id == null ? '' : x.id).trim();
+  if (!/^[A-Za-z0-9._-]{4,60}$/.test(id)) return { mal:'id', id:id.slice(0, 60) };
+  var conv = chatConvNorm_(x.conv); if (!conv) return { mal:'conversación', id:id };
+  var rol = String(x.rol || ''), de = chatPersona_(x.de);
+  if (!CHAT_ROLES[rol] || !de || de === 'eq') return { mal:'quién', id:id };
+  if ((rol === 'l') !== (de === 'log') || (rol === 'c') !== (de === 'conta') || (rol === 'b') !== (de === 'bloki')) return { mal:'quién', id:id };
+  var por = '';
+  if (rol === 'b') { por = chatPersona_(x.por); if (!chatQuienVale_(por) || !chatVe_(conv, por)) return { mal:'no es de la conversación', id:id }; }
+  else if (!chatVe_(conv, de)) return { mal:'no es de la conversación', id:id };
+  var txt = chatTexto_(x.txt);
+  var fotos = (Array.isArray(x.fotos) ? x.fotos : []).map(function (f) { return String(f || '').trim(); }).filter(function (f) { return /^[A-Za-z0-9_-]{10,100}$/.test(f); }).slice(0, CHAT_FOTOS_MAX);
+  if (!txt && !fotos.length) return { mal:'vacío', id:id };
+  var ped = (Array.isArray(x.ped) ? x.ped : []).map(function (p) { return String(p || '').replace(/[;\s]+/g, ' ').trim(); })
+    .filter(function (p) { return /^[^~]{1,60}~[^~]{1,20}$/.test(p); }).slice(0, CHAT_PED_MAX);
+  var resp = String(x.resp || '').trim(); if (!/^[A-Za-z0-9._-]{4,60}$/.test(resp)) resp = '';
+  return { m:{ i:id, c:conv, d:de, r:rol, n:chatTxt_(x.dn, CHAT_NOMBRE_MAX), x:txt, f:fotos, p:ped, q:resp, u:x.u ? 1 : 0, b:por, ap:chatTxt_(x.ap || '', 60) } };
+}
+function chatFila_(m) {
+  var b = waBo_(m.t);
+  return [mallCelda_(m.i), m.t, b.hoy, b.txt.slice(6), m.c, mallCelda_(m.d), m.r, mallCelda_(m.n), mallCelda_(m.x), (m.f || []).join(' '), (m.p || []).join(';'),
+          m.q || '', (m.bt ? 'x' + m.bt : (m.u ? 'u' : '')), mallCelda_(m.ap || ''), mallCelda_(m.b || '')];
+}
+/** Una fila de la hoja → el mensaje como lo recibe la página ({i, t, c, d, r, n, x, f, p, q, u?, b?, bt?}). null si no es un mensaje. */
+function chatDeFila_(r) {
+  var id = mallDeCelda_(r[0]).trim(), ts = Number(r[1]) || 0, conv = String(r[4] || '');
+  if (!id || !(ts > 0) || !conv) return null;
+  var mk = String(r[12] || ''), m = { i:id, t:ts, c:conv, d:mallDeCelda_(r[5]), r:String(r[6] || ''), n:mallDeCelda_(r[7]), x:mallDeCelda_(r[8]),
+    f:String(r[9] || '').split(/\s+/).filter(Boolean), p:String(r[10] || '').split(';').filter(Boolean), q:String(r[11] || '') };
+  if (mk === 'u') m.u = 1;
+  if (/^x\d+$/.test(mk)) { m.bt = Number(mk.slice(1)); m.x = ''; m.f = []; }
+  var por = mallDeCelda_(r[14]); if (por) m.b = por;
+  return m;
+}
+function chatCola_(sh, n) {
+  var last = sh.getLastRow(); if (last < 2) return { primera:2, filas:[] };
+  var desde = Math.max(2, last - n + 1);
+  return { primera:desde, filas:sh.getRange(desde, 1, last - desde + 1, CHAT_ENC.length).getValues() };
+}
+function chatVersionNueva_() { return String(Date.now()) + '.' + Math.floor(Math.random() * 1e9); }
+/* ── La caché ──
+   `chat_mv` = la versión de los MENSAJES (cambia con un mensaje nuevo o borrado) y `chat_ult` + `chat_ult_<i>` los de los últimos 7 días,
+   armados con esa versión: si no coinciden, se rearman desde las últimas filas de la hoja.
+   `chat_v` = la versión de TODO (mensajes y «visto»): es la que viaja en `list`; si es la misma que tiene la página, no se calcula nada.
+   `chat_vistos` = la hoja «Chat vistos» entera ({persona: {conv: hora}}). La caché se puede vaciar en cualquier momento: siempre hay camino
+   por la hoja. */
+function chatCacheLeer_(c, mv) {
+  if (!c || !mv) return null;
+  try {
+    var meta = JSON.parse(c.get('chat_ult') || 'null');
+    if (!meta || String(meta.v) !== String(mv) || !(Number(meta.n) >= 0)) return null;
+    var txt = '';
+    for (var i = 0; i < meta.n; i++) { var t = c.get('chat_ult_' + i); if (t == null) return null; txt += t; }
+    var L = JSON.parse(txt || '[]');
+    return Array.isArray(L) ? L : null;
+  } catch (e) { return null; }
+}
+function chatCacheGuardar_(c, mv, L) {
+  if (!c) return;
+  try {
+    var txt = JSON.stringify(L || []), todo = {}, n = 0;
+    for (var i = 0; i < txt.length; i += CHAT_TROZO) { todo['chat_ult_' + n] = txt.slice(i, i + CHAT_TROZO); n++; }
+    todo.chat_ult = JSON.stringify({ v:String(mv || ''), n:n });
+    c.putAll(todo, CHAT_CACHE_SEG);
+  } catch (e) {}
+}
+/** Los mensajes de los últimos CHAT_CACHE_DIAS días (todos: cada lectura filtra lo de cada persona). De la caché si está al día; si no, de las
+    últimas filas de la hoja (y quedan en la caché). `soloCache`: la lectura `list` no lee la hoja nunca (devuelve null). */
+function chatUltimos_(soloCache) {
+  var c = getCache_(), mv = '';
+  if (c) { try { mv = c.get('chat_mv') || ''; } catch (e) { mv = ''; } var L0 = chatCacheLeer_(c, mv); if (L0) return L0; }
+  if (soloCache) return null;
+  var sh = chatHoja_(false), desde = Date.now() - CHAT_CACHE_DIAS * 86400000, L = [];
+  if (sh) chatCola_(sh, CHAT_DUP_FILAS).filas.forEach(function (r) { var m = chatDeFila_(r); if (m && (m.t >= desde || (m.bt || 0) >= desde)) L.push(m); });
+  L.sort(function (a, b) { return a.t - b.t; });
+  if (c) {
+    try {
+      if (!mv) { mv = chatVersionNueva_(); c.put('chat_mv', mv, CHAT_CACHE_SEG); }
+      if (!c.get('chat_v')) c.put('chat_v', chatVersionNueva_(), CHAT_CACHE_SEG);
+    } catch (e2) {}
+    chatCacheGuardar_(c, mv, L);
+  }
+  return L;
+}
+/** {persona: {conv: hora}}: hasta dónde leyó cada uno. De la caché o de la hoja «Chat vistos» (una fila por persona). */
+function chatVistosDeHoja_() {
+  var V = {}, sh = chatVistosHoja_(false);
+  if (sh && sh.getLastRow() >= 2) sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) {
+    var p = chatPersona_(mallDeCelda_(r[0])); if (!p) return;
+    try { var o = JSON.parse(String(r[1] || '{}')); if (o && typeof o === 'object') V[p] = o; } catch (e) {}
+  });
+  return V;
+}
+function chatVistos_(soloCache) {
+  var c = getCache_();
+  if (c) { try { var t = c.get('chat_vistos'); if (t) return JSON.parse(t); } catch (e) {} }
+  if (soloCache) return null;
+  var V = chatVistosDeHoja_();
+  if (c) { try { c.put('chat_vistos', JSON.stringify(V), CHAT_CACHE_SEG); } catch (e2) {} }
+  return V;
+}
+/** Anota «leí hasta acá» de una persona (solo lo que avanza y solo de conversaciones suyas). Con el candado del documento, un instante; si
+    no se consigue, queda para la lectura siguiente (la página lo vuelve a mandar). → true si cambió algo. */
+function chatVistoAnotar_(q, visto) {
+  if (!q || !visto || typeof visto !== 'object') return false;
+  var V = chatVistos_(false) || {}, mio = V[q] || {}, nuevo = {}, hay = false, ahora = Date.now();
+  for (var k in visto) {
+    if (!Object.prototype.hasOwnProperty.call(visto, k)) continue;
+    var cv = chatConvNorm_(k), ts = Math.min(Number(visto[k]) || 0, ahora + 60000);
+    if (!cv || !chatVe_(cv, q) || !(ts > 0)) continue;
+    if (ts > (Number(mio[cv]) || 0)) { nuevo[cv] = ts; hay = true; }
+  }
+  if (!hay) return false;
+  var L = mallCandado_();
+  try { if (L) L.waitLock(CHAT_CANDADO_MS); } catch (e) { return false; }
+  try {
+    var sh = chatVistosHoja_(true), V2 = chatVistosDeHoja_(), m2 = V2[q] || {}, cambio = false, c = getCache_();
+    for (var c2 in nuevo) if (nuevo[c2] > (Number(m2[c2]) || 0)) { m2[c2] = nuevo[c2]; cambio = true; }
+    V2[q] = m2;
+    if (!cambio) { if (c) try { c.put('chat_vistos', JSON.stringify(V2), CHAT_CACHE_SEG); } catch (e3) {} return false; }
+    var fila = -1, last = sh.getLastRow();
+    if (last >= 2) { var ps = sh.getRange(2, 1, last - 1, 1).getValues(); for (var i = 0; i < ps.length; i++) if (chatPersona_(mallDeCelda_(ps[i][0])) === q) { fila = i + 2; break; } }
+    var reng = [mallCelda_(q), JSON.stringify(m2), waBo_(ahora).txt];
+    if (fila > 0) sh.getRange(fila, 1, 1, 3).setValues([reng]); else sh.getRange(Math.max(1, last) + 1, 1, 1, 3).setValues([reng]);
+    if (c) { try { c.put('chat_vistos', JSON.stringify(V2), CHAT_CACHE_SEG); c.put('chat_v', chatVersionNueva_(), CHAT_CACHE_SEG); } catch (e4) {} }
+    return true;
+  } finally { try { if (L) L.releaseLock(); } catch (e5) {} }
+}
+/** Cuántos sin leer tiene `q` y la hora del último mensaje que le toca (lo que no escribió él: tampoco lo que Bloki le contestó a él). La
+    página cuenta igual (`chatSinLeerDe`). */
+function chatSinLeer_(q, L, V) {
+  var mio = (V && V[q]) || {}, n = 0, t = 0;
+  (L || []).forEach(function (m) {
+    if (!m || m.bt || m.d === q || m.b === q || !chatVe_(m.c, q)) return;
+    if (m.t > t) t = m.t;
+    if (m.t > (Number(mio[m.c]) || 0)) n++;
+  });
+  return { n:n, t:t };
+}
+/** Lo que va adentro de la lectura `list` (body.cv = la versión que tiene la página, body.cq = quién es). Sin leer ninguna hoja: si la caché
+    no lo tiene, nada (la página lee con `chatLeer` cada 5 minutos) o `x:1` (lo de la caché no está entero: que lea con `chatLeer`). */
+function chatParaLista_(body) {
+  var c = getCache_(); if (!c) return null;
+  var v = ''; try { v = c.get('chat_v') || ''; } catch (e) { v = ''; }
+  if (!v) return null;
+  var out = { v:v };
+  if (String((body && body.cv) || '') === v) return out;
+  var q = chatPersona_(body && body.cq); if (!chatQuienVale_(q)) return out;
+  var L = chatUltimos_(true), V = chatVistos_(true);
+  if (!L || !V) { out.x = 1; return out; }
+  var s = chatSinLeer_(q, L, V); out.n = s.n; out.t = s.t;
+  return out;
+}
+/** 💬 `chatEnviar` {msgs:[{id, conv, de, rol, dn, txt, fotos?, ped?, resp?, u?, por?, ap?}]} (hasta CHAT_POR_VEZ) → {ok, n, dup, mal, malos,
+    ts:{id: hora del servidor}, v}. La hora la pone el SERVIDOR (ordena). Sin repetir: un reintento con el mismo id no agrega nada (los ids de
+    la caché y de las últimas filas de la hoja). {ok:false, error:'ocupado'} = reintentar (el mensaje queda en la cola del aparato). */
+function chatEnviar_(body) {
+  var lista = body && body.msgs;
+  if (!Array.isArray(lista) || !lista.length) return { ok:false, error:'sin_mensajes', version:SCRIPT_VERSION };
+  if (lista.length > CHAT_POR_VEZ) return { ok:false, error:'demasiados', tope:CHAT_POR_VEZ, version:SCRIPT_VERSION };
+  var nuevos = [], malos = [], dup = 0, enEste = {}, tsDe = {};
+  lista.forEach(function (x) {
+    var r = chatValidar_(x);
+    if (r.mal) { malos.push({ id:r.id, motivo:r.mal }); return; }
+    if (enEste[r.m.i]) { dup++; return; }
+    enEste[r.m.i] = 1; nuevos.push(r.m);
+  });
+  var res = function (n, v) { return { ok:true, n:n, dup:dup, mal:malos.length, malos:malos.slice(0, 10), ts:tsDe, v:v || '', version:SCRIPT_VERSION }; };
+  if (!nuevos.length) return res(0);
+  var c = getCache_();
+  if (c) {
+    try {
+      var ya = c.getAll(nuevos.map(function (m) { return 'chat_id_' + m.i; })) || {};
+      if (nuevos.every(function (m) { return ya['chat_id_' + m.i]; })) { nuevos.forEach(function (m) { tsDe[m.i] = Number(ya['chat_id_' + m.i]) || 0; }); dup += nuevos.length; return res(0); }
+    } catch (e) {}
+  }
+  var L = mallCandado_();
+  try { if (L) L.waitLock(CHAT_CANDADO_MS); } catch (e2) { return { ok:false, error:'ocupado', version:SCRIPT_VERSION }; }
+  try {
+    var sh = chatHoja_(true), ahora = Date.now(), vistos = {}, ultT = 0;
+    chatCola_(sh, CHAT_DUP_FILAS).filas.forEach(function (r) { var id = mallDeCelda_(r[0]).trim(), t = Number(r[1]) || 0; if (id) vistos[id] = t; if (t > ultT) ultT = t; });
+    var base = Math.max(ahora, ultT + 1), filas = [], agregados = [];
+    nuevos.forEach(function (m) {
+      if (vistos[m.i] != null) { dup++; tsDe[m.i] = vistos[m.i]; return; }
+      m.t = base + agregados.length; vistos[m.i] = m.t; tsDe[m.i] = m.t;
+      filas.push(chatFila_(m)); agregados.push(m);
+    });
+    if (filas.length) {
+      var last = Math.max(1, sh.getLastRow());
+      try { var max = sh.getMaxRows(); if (last + filas.length > max) sh.insertRowsAfter(max, last + filas.length - max); } catch (e3) {}
+      sh.getRange(last + 1, 1, filas.length, CHAT_ENC.length).setValues(filas);   // en bloque, adentro del candado del documento
+    }
+    var vNue = '';
+    if (c) {
+      try {
+        var ids = {}; nuevos.forEach(function (m) { if (tsDe[m.i]) ids['chat_id_' + m.i] = String(tsDe[m.i]); }); c.putAll(ids, CHAT_CACHE_SEG);
+        if (agregados.length) {
+          var mvAnt = c.get('chat_mv') || '', H = chatCacheLeer_(c, mvAnt), mvNue = chatVersionNueva_();
+          vNue = chatVersionNueva_();
+          if (H) {
+            agregados.forEach(function (m) { H.push(chatParaPagina_(m)); });
+            var desde = ahora - CHAT_CACHE_DIAS * 86400000;
+            H = H.filter(function (m) { return m.t >= desde || (m.bt || 0) >= desde; });
+            chatCacheGuardar_(c, mvNue, H);
+          }
+          c.put('chat_mv', mvNue, CHAT_CACHE_SEG);
+          c.put('chat_v', vNue, CHAT_CACHE_SEG);
+        }
+      } catch (e4) {}
+    }
+    try { chatPodarHoja_(sh, false); } catch (e5) {}
+    return res(agregados.length, vNue);
+  } finally { try { if (L) L.releaseLock(); } catch (e6) {} }
+}
+/** El mensaje como viaja a la página (sin el aparato, sin campos vacíos). */
+function chatParaPagina_(m) {
+  var o = { i:m.i, t:m.t, c:m.c, d:m.d, r:m.r, n:m.n, x:m.x, f:m.f || [], p:m.p || [], q:m.q || '' };
+  if (m.u) o.u = 1;
+  if (m.b) o.b = m.b;
+  if (m.bt) o.bt = m.bt;
+  return o;
+}
+/** 💬 `chatLeer` {cq: quién, desde?, visto?: {conv: hora}, conv?, antes?} → {ok, v, ahora, msgs, vistos: {conv: {persona: hora}}, desde, mas?}.
+    Sin `desde`: lo de los últimos 7 días de esa persona. Con `desde`: lo que llegó (o se borró) después. Con `conv` + `antes`: los
+    CHAT_ANTES_MAX mensajes anteriores de esa conversación, de la hoja («ver los anteriores»). Sin candado, salvo un instante para el «visto». */
+function chatLeer_(body) {
+  body = body || {};
+  var q = chatPersona_(body.cq);
+  if (!chatQuienVale_(q)) return { ok:false, error:'quien', version:SCRIPT_VERSION };
+  if (body.visto) { try { chatVistoAnotar_(q, body.visto); } catch (e) {} }
+  var c = getCache_(), ahora = Date.now();
+  if (body.antes) {
+    var cv = chatConvNorm_(body.conv), antes = Number(body.antes) || 0;
+    if (!cv || !chatVe_(cv, q) || !(antes > 0)) return { ok:false, error:'conversación', version:SCRIPT_VERSION };
+    var sh = chatHoja_(false), A = [];
+    if (sh && sh.getLastRow() >= 2) sh.getRange(2, 1, sh.getLastRow() - 1, CHAT_ENC.length).getValues().forEach(function (r) {
+      if (String(r[4] || '') !== cv || !((Number(r[1]) || 0) < antes)) return;
+      var m = chatDeFila_(r); if (m) A.push(m);
+    });
+    A.sort(function (a, b) { return a.t - b.t; });
+    return { ok:true, version:SCRIPT_VERSION, ahora:ahora, msgs:A.slice(-CHAT_ANTES_MAX).map(chatParaPagina_), mas:A.length > CHAT_ANTES_MAX, conv:cv };
+  }
+  var L = chatUltimos_(false), desde = Number(body.desde) || 0, msgs = [];
+  L.forEach(function (m) {
+    if (!chatVe_(m.c, q)) return;
+    if (desde && !(m.t > desde || (m.bt || 0) > desde)) return;
+    msgs.push(chatParaPagina_(m));
+  });
+  var V = chatVistos_(false) || {}, vis = {};
+  for (var p in V) {
+    if (!Object.prototype.hasOwnProperty.call(V, p)) continue;
+    for (var k in V[p]) if (Object.prototype.hasOwnProperty.call(V[p], k) && chatVe_(k, q)) (vis[k] = vis[k] || {})[p] = Number(V[p][k]) || 0;
+  }
+  var v = '';
+  if (c) { try { v = c.get('chat_v') || ''; if (!v) v = chatVersionNueva_(); c.put('chat_v', v, CHAT_CACHE_SEG); } catch (e2) {} }
+  return { ok:true, version:SCRIPT_VERSION, v:v, ahora:ahora, msgs:msgs, vistos:vis, desde:ahora - CHAT_CACHE_DIAS * 86400000 };
+}
+/** 🗑 `chatBorrar` {id, cq} → {ok, bt}. Solo lo propio (o lo que Bloki le contestó a esa persona) y hasta CHAT_BORRAR_MIN minutos; el texto
+    y las fotos se van de la hoja (las fotos a la papelera) y queda «🗑 Mensaje borrado». */
+function chatBorrar_(body) {
+  var q = chatPersona_(body && body.cq), id = String((body && body.id) || '').trim();
+  if (!chatQuienVale_(q) || !/^[A-Za-z0-9._-]{4,60}$/.test(id)) return { ok:false, error:'datos', version:SCRIPT_VERSION };
+  var L = mallCandado_();
+  try { if (L) L.waitLock(CHAT_CANDADO_MS); } catch (e) { return { ok:false, error:'ocupado', version:SCRIPT_VERSION }; }
+  try {
+    var sh = chatHoja_(false); if (!sh) return { ok:false, error:'no_esta', version:SCRIPT_VERSION };
+    var C = chatCola_(sh, CHAT_DUP_FILAS), ahora = Date.now(), fila = -1, m = null;
+    for (var i = C.filas.length - 1; i >= 0; i--) if (mallDeCelda_(C.filas[i][0]).trim() === id) { fila = C.primera + i; m = chatDeFila_(C.filas[i]); break; }
+    if (!m) return { ok:false, error:'no_esta', version:SCRIPT_VERSION };
+    if (m.bt) return { ok:true, ya:1, bt:m.bt, version:SCRIPT_VERSION };
+    if (m.d !== q && !(m.r === 'b' && m.b === q)) return { ok:false, error:'no_es_tuyo', version:SCRIPT_VERSION };
+    if (ahora - m.t > (CHAT_BORRAR_MIN + 1) * 60000) return { ok:false, error:'tarde', min:CHAT_BORRAR_MIN, version:SCRIPT_VERSION };
+    var fotos = m.f || [];
+    sh.getRange(fila, 9, 1, 2).setValues([['', '']]);
+    sh.getRange(fila, 13).setValue('x' + ahora);
+    fotos.forEach(function (fid) { try { chatFotoPapelera_(fid); } catch (e2) {} });
+    var c = getCache_();
+    if (c) {
+      try {
+        var mvAnt = c.get('chat_mv') || '', H = chatCacheLeer_(c, mvAnt), mvNue = chatVersionNueva_();
+        if (H) { H.forEach(function (x) { if (x.i === id) { x.bt = ahora; x.x = ''; x.f = []; } }); chatCacheGuardar_(c, mvNue, H); }
+        c.put('chat_mv', mvNue, CHAT_CACHE_SEG); c.put('chat_v', chatVersionNueva_(), CHAT_CACHE_SEG);
+      } catch (e3) {}
+    }
+    return { ok:true, bt:ahora, version:SCRIPT_VERSION };
+  } finally { try { if (L) L.releaseLock(); } catch (e4) {} }
+}
+/* ── 📷 Las fotos del chat: su carpeta PROPIA (no la de las entregas: el barrido diario de huérfanas, §4ep, mira solo las columnas de
+   «Pedidos» y las movería al día siguiente). «Cualquiera con el enlace», como las de entrega (§4cd). */
+function chatFotosFolder_() {
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty(CHAT_FOTOS_PROP);
+  if (id) { try { return DriveApp.getFolderById(id); } catch (e) { try { props.deleteProperty(CHAT_FOTOS_PROP); } catch (e2) {} } }
+  var it = DriveApp.getFoldersByName(CHAT_FOTOS_FOLDER), f = it.hasNext() ? it.next() : DriveApp.createFolder(CHAT_FOTOS_FOLDER);
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e3) {}
+  try { props.setProperty(CHAT_FOTOS_PROP, f.getId()); } catch (e4) {}
+  return f;
+}
+/** 📷 `chatFoto` {dataUrl, cq} → {ok, fotoId}. Hasta 6 MB (la página ya la achica). */
+function chatFoto_(body) {
+  var d = String((body && body.dataUrl) || ''), m = d.match(/^data:(image\/[a-z+.\-]+);base64,(.+)$/i);
+  if (!m) return { ok:false, error:'formato', version:SCRIPT_VERSION };
+  var bytes;
+  try { bytes = Utilities.base64Decode(m[2]); } catch (e) { return { ok:false, error:'ilegible', version:SCRIPT_VERSION }; }
+  if (bytes.length > 6 * 1024 * 1024) return { ok:false, error:'muy_pesada', version:SCRIPT_VERSION };
+  var q = chatPersona_(body.cq).replace(/\s+/g, '_') || 'x';
+  var nombre = 'chat_' + q + '_' + Utilities.formatDate(new Date(), 'GMT-4', 'yyyyMMdd_HHmmss') + '.' + (m[1].indexOf('png') >= 0 ? 'png' : 'jpg');
+  try {
+    var f = chatFotosFolder_().createFile(Utilities.newBlob(bytes, m[1], nombre));
+    try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e2) {}
+    return { ok:true, fotoId:f.getId(), version:SCRIPT_VERSION };
+  } catch (e3) { return { ok:false, error:'drive', version:SCRIPT_VERSION }; }
+}
+/** Manda a la papelera una foto del chat, SOLO si vive en la carpeta del chat (un id cualquiera de ese Drive, no). */
+function chatFotoPapelera_(fid) {
+  var f = DriveApp.getFileById(fid), carpeta = chatFotosFolder_().getId(), padres = f.getParents(), nuestra = false;
+  while (padres.hasNext()) if (padres.next().getId() === carpeta) nuestra = true;
+  if (nuestra) f.setTrashed(true);
+  return nuestra;
+}
+/* ── 🧹 4A: lo de más de 90 días se va ── */
+/** Las filas del principio (las más viejas) de más de CHAT_GUARDA_DIAS días. `siempre`: aunque ya se haya podado hoy (el disparador). */
+function chatPodarHoja_(sh, siempre) {
+  var hoy = waBo_(Date.now()).hoy;
+  if (!siempre && prop_('CHAT_PODA') === hoy) return 0;
+  try { PropertiesService.getScriptProperties().setProperty('CHAT_PODA', hoy); } catch (e) {}
+  var last = sh.getLastRow(); if (last < 2) return 0;
+  var corte = Date.now() - CHAT_GUARDA_DIAS * 86400000, ts = sh.getRange(2, 2, last - 1, 1).getValues(), k = 0;
+  while (k < ts.length && (Number(ts[k][0]) || 0) < corte) k++;
+  if (k > 0) sh.deleteRows(2, k);
+  return k;
+}
+/** ▶️ Disparador diario (instalarDisparadores, 4 am): borra los mensajes de más de 90 días y manda a la papelera las fotos del chat de más de
+    90 días. Se puede correr a mano desde el editor. */
+function chatPodar() {
+  var res = { ts:new Date().toISOString(), filas:0, fotos:0, error:'' };
+  try {
+    var sh = chatHoja_(false);
+    if (sh) {
+      var L = mallCandado_();
+      try { if (L) L.waitLock(20000); res.filas = chatPodarHoja_(sh, true); } finally { try { if (L) L.releaseLock(); } catch (e0) {} }
+    }
+    var corte = Date.now() - CHAT_GUARDA_DIAS * 86400000;
+    if (prop_(CHAT_FOTOS_PROP)) {
+      var it = chatFotosFolder_().getFiles();
+      while (it.hasNext()) { var f = it.next(); try { if (f.getDateCreated().getTime() < corte) { f.setTrashed(true); res.fotos++; } } catch (e1) {} }
+    }
+    if (res.filas) { var c = getCache_(); if (c) try { c.remove('chat_mv'); c.put('chat_v', chatVersionNueva_(), CHAT_CACHE_SEG); } catch (e2) {} }
+  } catch (e) { res.error = String((e && e.message) || e); }
+  try { PropertiesService.getScriptProperties().setProperty('CHAT_PODA_ULTIMO', JSON.stringify(res)); } catch (e3) {}
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(res));
+  return res;
+}
+/** El despacho de las acciones del chat (una línea en doPostCuerpo_, afuera del candado de doPost). */
+function chatAccion_(action, body) {
+  if (action === 'chatEnviar') return chatEnviar_(body);
+  if (action === 'chatLeer') return chatLeer_(body);
+  if (action === 'chatBorrar') return chatBorrar_(body);
+  if (action === 'chatFoto') return chatFoto_(body);
+  return { ok:false, error:'accion', version:SCRIPT_VERSION };
+}
+/** `probarAntesDeImplementar`: las hojas del chat (si existen), cuántos mensajes y la poda. Solo lee (ni un texto de nadie). */
+function probarChat_(bien, ojo) {
+  var sh = chatHoja_(false);
+  if (!sh) bien('💬 La hoja «' + CHAT_HOJA + '» todavía no existe: se arma sola con el primer mensaje del chat del equipo.');
+  else {
+    var enc = sh.getRange(1, 1, 1, CHAT_ENC.length).getValues()[0].map(function (x) { return String(x || ''); });
+    if (enc.join('|') !== CHAT_ENC.join('|')) ojo('💬 La hoja «' + CHAT_HOJA + '» no tiene los encabezados que espera el servidor: ¿la tocaron a mano?');
+    else bien('💬 La hoja «' + CHAT_HOJA + '» tiene ' + Math.max(0, sh.getLastRow() - 1) + ' mensaje(s); se guardan ' + CHAT_GUARDA_DIAS + ' días.');
+  }
+  var t = []; try { t = kTriggersDe_('chatPodar'); } catch (e) {}
+  if (!t.length) ojo('💬 Falta el disparador «chatPodar» (borra lo de más de ' + CHAT_GUARDA_DIAS + ' días): corré «instalarDisparadores» una vez.');
 }
