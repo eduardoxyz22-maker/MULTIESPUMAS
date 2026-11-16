@@ -32350,14 +32350,20 @@ function flSalta(inp){
   return false;
 }
 /* Debajo del campo; si el campo está en un renglón (flex, grid) o adentro de una etiqueta en línea, debajo de eso. */
+function flRenglon(p){
+  if(!p || p===document.body) return false;
+  var cs=getComputedStyle(p), d=cs.display;
+  return ((d==='flex' || d==='inline-flex') && String(cs.flexDirection).indexOf('column')<0) || d==='grid' || d==='inline-grid' || (p.tagName==='LABEL' && d.indexOf('inline')===0);
+}
 function flAncla(inp){
   var el=inp;
   for(var i=0;i<3;i++){
     var p=el.parentElement; if(!p || p===document.body) break;
-    var cs=getComputedStyle(p), d=cs.display;
-    var enRenglon=((d==='flex' || d==='inline-flex') && String(cs.flexDirection).indexOf('column')<0) || d==='grid' || d==='inline-grid' || (p.tagName==='LABEL' && d.indexOf('inline')===0);
-    if(!enRenglon) break;
-    el=p;
+    if(flRenglon(p)){ el=p; continue; }
+    /* el campo en su columna de una fila flex (Monto · Fecha del pago · N° nota): el letrero debajo de la FILA, si no empuja a las otras */
+    var g=p.parentElement, gs=g && g!==document.body ? getComputedStyle(g) : null;
+    if(gs && (gs.display==='flex' || gs.display==='inline-flex') && String(gs.flexDirection).indexOf('column')<0){ el=g; continue; }
+    break;
   }
   return el;
 }
@@ -32369,7 +32375,7 @@ function flPintar(inp){
   if(!v){ if(h){ h.hidden=true; h._k=key; } return; }
   if(!h || !h.isConnected){
     h=document.createElement('div'); h.className='fl-hint'; h.setAttribute('aria-live','polite'); inp._flH=h; h._inp=inp;
-    var a=flAncla(inp); a.parentNode.insertBefore(h, a.nextSibling); FL_HINTS.push(h);
+    var a=flAncla(inp); h._lejos=(a!==inp && a!==inp.parentElement); a.parentNode.insertBefore(h, a.nextSibling); FL_HINTS.push(h);
   }
   h._k=key; h.hidden=false;
   var rel=flRelHoy(v), vu=(FL_SIN_PREGUNTA.indexOf(inp.id)<0 && !(inp.getAttribute('data-c')==='fcom') && inp._flNo!==v) ? flVuelta(v, flVenta(inp)) : null;
@@ -32381,7 +32387,7 @@ function flPintar(inp){
     h.querySelector('.fl-no').onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); inp._flNo=v; flPintar(inp); };
   } else {
     h.className='fl-hint';
-    h.textContent=flLetras(v)+(rel ? (' · '+rel) : '');
+    h.textContent=(h._lejos ? '📅 ' : '')+flLetras(v)+(rel ? (' · '+rel) : '');   // lejos del campo (debajo de la fila), con el 📅 se sabe de cuál es
   }
 }
 /* «Sí, poner …»: como si la persona la hubiera escrito (corren los `oninput`/`onchange` de ese campo). */
@@ -32430,7 +32436,7 @@ function ayDe(t){ return t && t.closest ? t.closest('[title],[data-ayuda]') : nu
 function ayTexto(el){ var t=el.getAttribute('data-ayuda'); if(t==null) t=el.getAttribute('title'); return String(t||'').trim(); }
 /* El nombre de lo señalado (el texto del botón): solo si es corto y la explicación no empieza diciéndolo. */
 function ayNombre(el, txt){
-  var n=String(el.getAttribute('aria-label')||el.textContent||'').replace(/\s+/g,' ').trim();
+  var n=String(el.getAttribute('aria-label')||String(el.innerText||el.textContent||'').trim().split('\n')[0]||'').replace(/\s+/g,' ').trim();   // el primer renglón que se ve
   if(!n || n.length>48) return '';
   var a=n.toLowerCase().replace(/[^\wáéíóúñü ]/g,'').trim(), b=txt.toLowerCase().replace(/[^\wáéíóúñü ]/g,'').trim();
   if(!a || b.indexOf(a)===0) return '';

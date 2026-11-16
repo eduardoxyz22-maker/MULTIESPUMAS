@@ -42,7 +42,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     page._ctx=ctx; return page;
   };
   const escribir = (page, sel, v) => page.evaluate(([sel, v]) => { var i=document.querySelector(sel); i.value=v; i.dispatchEvent(new Event('input', { bubbles:true })); i.dispatchEvent(new Event('change', { bubbles:true })); return true; }, [sel, v]);
-  const hint = (page, sel) => page.evaluate((sel) => { var i=document.querySelector(sel), h=i && i._flH; return h ? { t:h.textContent.replace(/\s+/g,' ').trim(), ojo:h.classList.contains('fl-ojo'), hidden:h.hidden, vis:!!h.getClientRects().length } : null; }, sel);
+  const hint = (page, sel) => page.evaluate((sel) => { var i=document.querySelector(sel), h=i && i._flH; return h ? { t:h.textContent.replace(/\s+/g,' ').trim().replace(/^📅 /,''), lejos:/^📅 /.test(h.textContent), ojo:h.classList.contains('fl-ojo'), hidden:h.hidden, vis:!!h.getClientRects().length } : null; }, sel);
 
   console.log('\n── 1. Sin la bandera ──');
   let page = await abrir(false);
@@ -79,12 +79,15 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await hint(page, '#cta-pago-fecha');
   chk('3b en ámbar: «Quedó miércoles 11 de marzo: 8 meses antes de la venta. ¿Quisiste decir martes 3 de noviembre?»',
       r && r.ojo && /Quedó miércoles 11 de marzo: 8 meses antes de la venta\. ¿Quisiste decir martes 3 de noviembre\?/.test(r.t) && /Sí, poner 03\/11/.test(r.t) && /No, es así/.test(r.t), r);
+  r = await page.evaluate(() => { var i=document.getElementById('cta-pago-fecha'), h=i._flH, fila=h.previousElementSibling;
+    return { fila:!!fila && fila.contains(i) && fila.children.length>=3, enColumna:i.parentElement.contains(h) }; });
+  chk('3b2 en la fila Monto · Fecha · N° nota, el letrero va debajo de la FILA (no empuja a las otras columnas)', r.fila && !r.enColumna, r);
   r = await page.evaluate(async () => { window.__cambios=0; var i=document.getElementById('cta-pago-fecha'); i._flH.querySelector('.fl-si').click(); await new Promise(function(x){ setTimeout(x, 40); });
-    return { v:i.value, cambios:window.__cambios, t:i._flH.textContent, ojo:i._flH.classList.contains('fl-ojo') }; });
+    return { v:i.value, cambios:window.__cambios, t:i._flH.textContent.replace(/^📅 /,''), ojo:i._flH.classList.contains('fl-ojo') }; });
   chk('3c «Sí, poner 03/11» la pone, corre el change del campo y queda «martes 3 de noviembre · hace 13 días»', r.v==='2026-11-03' && r.cambios===1 && r.t==='martes 3 de noviembre · hace 13 días' && !r.ojo, r);
   await escribir(page, '#cta-pago-fecha', '2026-03-11');
   r = await page.evaluate(async () => { var i=document.getElementById('cta-pago-fecha'); i._flH.querySelector('.fl-no').click(); await new Promise(function(x){ setTimeout(x, 40); });
-    var t1=i._flH.textContent, o1=i._flH.classList.contains('fl-ojo'); flRepasar(); return { v:i.value, t:t1, ojo:o1, ojo2:i._flH.classList.contains('fl-ojo') }; });
+    var t1=i._flH.textContent.replace(/^📅 /,''), o1=i._flH.classList.contains('fl-ojo'); flRepasar(); return { v:i.value, t:t1, ojo:o1, ojo2:i._flH.classList.contains('fl-ojo') }; });
   chk('4a «No, es así» deja la fecha y no vuelve a preguntar (queda el día en letras)', r.v==='2026-03-11' && r.t==='miércoles 11 de marzo' && !r.ojo && !r.ojo2, r);
   await escribir(page, '#cta-pago-fecha', '2026-05-11');
   r = await hint(page, '#cta-pago-fecha');
@@ -120,7 +123,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var h=i._flH, row=box.querySelector('.__row');
     return { despuesDeFila:row.nextElementSibling===h, t:h.textContent, label:h.parentElement.tagName };
   });
-  chk('8 en un renglón, el letrero va debajo del renglón (no adentro de la etiqueta)', r.despuesDeFila && r.t==='lunes 16 de noviembre · hoy' && r.label==='DIV', r);
+  chk('8 en un renglón, el letrero va debajo del renglón (no adentro de la etiqueta), con el 📅', r.despuesDeFila && r.t==='📅 lunes 16 de noviembre · hoy' && r.label==='DIV', r);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
