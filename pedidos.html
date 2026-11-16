@@ -31803,7 +31803,14 @@ function iapNoReconoce(x){
   if(me && !esMedidaConocida(me) && !stockMedidaReves(me)){ try{ if(stockEnCatalogo({ desc:x.desc, medida:'', codigo:'' })) return false; }catch(e){} }
   return true;
 }
+/* Se recuerda mientras no cambie la planilla (`STATE_GEN`), el stock ni el día: el Plan lo pide en cada dibujo. */
 function iapRenglones(){
+  var gen=(typeof STATE_GEN!=='undefined' ? STATE_GEN : 0)+'|'+todayStr(), M=IAP.ren;
+  if(M && M.gen===gen && M.st===STATE && M.sk===STOCK) return M.L.slice();
+  var L=iapRenglonesCalc(); IAP.ren={ gen:gen, st:STATE, sk:STOCK, L:L };
+  return L.slice();
+}
+function iapRenglonesCalc(){
   var hoy=todayStr(), desde=stockSumarDias(hoy, -IAP_DIAS), G={}, L=[];
   (STATE||[]).forEach(function(p){
     if(!p || esFilaSistema(p) || !stockCuenta(p)) return;
