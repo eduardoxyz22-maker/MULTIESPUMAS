@@ -63,10 +63,13 @@ const RELOJ = '2026-10-07T10:00:00-04:00';           // miércoles, 10 de la ma�
       var cards=[].slice.call(document.querySelectorAll('#mis-lista .cho-card'));
       var de=function(id){ var c=cards.filter(function(x){ return (x.getAttribute('onclick')||'').indexOf("'"+id+"'")>=0; })[0];
                            return c?c.textContent.replace(/\s+/g,' '):null; };
-      var ficha=function(id){ showMisModal(id); var h=document.querySelector('#modal-box .modal-h h3'); var t=h?h.textContent:null; closeModal(); return t; };
+      var ficha=function(id){ showMisModal(id); var h=document.querySelector('#modal-box .modal-h h3'); var t=h?h.textContent:null;
+        // 🧾 (16/11) el N° también en «Datos»: el renglón «N° de nota de venta»
+        var d=[].filter.call(document.querySelectorAll('#modal-box .dl-row'), function(x){ return /N° de nota de venta/.test((x.querySelector('.dl-k')||{}).textContent||''); })[0];
+        window.__datoNota=window.__datoNota||{}; window.__datoNota[id]=d ? d.querySelector('.dl-v').textContent.trim() : null; closeModal(); return t; };
       var o={ cards:cards.length };
       ['e-con','e-sin','e-atc','e-rpt','e-html','c-con'].forEach(function(id){ o[id]=de(id); });
-      o.fichaCon=ficha('e-con'); o.fichaSin=ficha('e-sin'); o.fichaCarola=ficha('c-con'); o.fichaAtc=ficha('e-atc');
+      window.__datoNota={}; o.fichaCon=ficha('e-con'); o.fichaSin=ficha('e-sin'); o.fichaCarola=ficha('c-con'); o.fichaAtc=ficha('e-atc'); o.dato=window.__datoNota;
       return o;
     };
   });
@@ -82,6 +85,7 @@ const RELOJ = '2026-10-07T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('la ficha que se abre al tocarla también la dice arriba: «MULTICENTER · OC 10-050 · Nota 4567»',
       r.fichaCon==='MULTICENTER · OC 10-050 · Nota 4567', r.fichaCon);
   chk('…y la de un pedido sin nota queda como estaba', r.fichaSin==='MULTICENTER · OC 10-051', r.fichaSin);
+  chk('🧾 la ficha también dice el N° en «Datos»: «N° de nota de venta 4567» (sin nota / ATC: no)', r.dato && r.dato['e-con']==='4567' && r.dato['e-sin']===null && r.dato['e-atc']===null, r.dato);
   chk('…y la de la ATC también', r.fichaAtc==='UNA ATC · ATC 10-001', r.fichaAtc);
 
   // ══ 2. Una vendedora no la ve ═══════════════════════════════════════════════
@@ -91,6 +95,7 @@ const RELOJ = '2026-10-07T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('su tarjeta sigue igual: la OC sí, la nota NO (aunque el pedido tenga nota 1024)',
       /OC 10-052/.test(r['c-con']||'') && !/Nota|sin nota|1024/.test(r['c-con']||''), r['c-con']);
   chk('su ficha tampoco dice la nota', r.fichaCarola==='CLIENTE DE CAROLA · OC 10-052', r.fichaCarola);
+  chk('🧾 …ni en «Datos»', r.dato && r.dato['c-con']===null, r.dato);
 
   // ══ 3. El nombre escrito distinto ════════════════════════════════════════════
   console.log('\n── 3. El mismo Eduardo escrito de otra forma ──');

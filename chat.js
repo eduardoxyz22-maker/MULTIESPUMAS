@@ -850,7 +850,13 @@ function abrirPedido(id){
 function borrar(id){
   var m=C.msgs[id], Y=yo(); if(!m || !Y) return;
   if(m.pend || m.err){ C.cola=C.cola.filter(function(x){ return x.id!==id; }); colaGuardar(); delete C.msgs[id]; C.gen++; pintarTodo(); return; }
-  if(!confirm('¿Borrar este mensaje? Lo deja de ver todo el que estaba en la conversación.')) return;
+  /* ❓ (16/11, la 282 en todo el panel) la ventana del panel (`preguntaYa` de pedidos.html): al contestar, vuelve a correr `borrar` */
+  var _t='¿Borrar este mensaje? Lo deja de ver todo el que estaba en la conversación.';
+  var _si=(typeof window.preguntaYa==='function')
+    ? window.preguntaYa(_t, { titulo:'¿Borrar este mensaje?', icono:'🗑️', peligro:true, lineas:['Lo deja de ver todo el que estaba en la conversación.'],
+        no:'No, dejarlo', si:'🗑 Sí, borrarlo' }, function(){ borrar(id); })
+    : confirm(_t);
+  if(!_si) return;
   apiPost({ action:'chatBorrar', id:id, cq:Y.k }).then(function(r){
     if(r && r.ok){ m.bt=r.bt||Date.now(); m.x=''; m.f=[]; C.gen++; pintarTodo(); toast('🗑 Borrado: ya no lo ve nadie en el panel.', 'ok', 3500); }
     else toast(r && r.error==='tarde' ? '🗑 Pasaron más de 10 minutos: ya no se puede borrar.' : '🗑 No se pudo borrar. Probá de nuevo.', 'warn', 4500);

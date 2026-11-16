@@ -1002,6 +1002,36 @@ Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 
 - Servidor **2026-11-16-a**: `pedidoSinCliente_` → `falta_cliente` para una fila NUEVA sin cliente (no sistema, no retiro, no borrador de Kommo); en
   `RECHAZOS_FIRMES` y `motivoDelServidor`. ⚠️ Un camino nuevo que cree pedidos tiene que mandar `cliente`. `tests/test_roho_cliente.js` (40; 37 rojas contra lo de antes).
 
+## 🎨❓🧾 Las visuales 367 y 390-440, todas las preguntas en la ventana del panel y la nota en «Datos» (§4qd, 16/11; dueño: «todas menos la 403», con la captura del Modo práctica *«¿no que mis alertas no salían ya esas feas?»* y *«ok avisame y publica»*; PUBLICADO 16/11, versión 2026-11-16-b)
+- 🎨 **367 y 390-440 (menos la 403, *«que cosa más antiestética, NO»*)**: SOLO presentación, cada una con su bandera en Playwright (`vdVa('<X>_PRUEBA')`:
+  PS_FRANJA 390, MIS_ORDEN 391, FALTA_CAMPO 392, AG_LLEGA 393, MIS_TARJ 394, KX_LADO 395, AL_DIA_PALABRAS 396, GUARDADO_ANCHO 397, DOC_COLOR 398,
+  TURNO_CARDS 399, MIS_BOTONES 400, MIS_MES 401, FICHA_BARRA 402, CAM_COLOR 404, SAL_FRANJA 405, DIA_LOG 406, ADM_CHICAS 407, PLAN_COLOR 408, EXCEL3 409,
+  CAL_CUPOS 410, HACER_PILLS 411, SEM_RENGLON 412, CANT_PRIMERO 413, RUTA_LISTA 414, PRY_VD_BARRA/PRY_TABLERO/PRY_CURVA_META/… 415-417 y 425-426, Contabilidad
+  418-424/427/428, HDR_TABS 429, MODAL_PIE 430, NOCHE_DIC 431, WZ 432, PG 433, CUENTA 434, META_OSC 435, ATC_CAMINO 436, CEROS 437, BARRAS 438, GLOBO 439,
+  TINTE 440, FH_CORTO 367) y su prueba `tests/test_v<NNN>_*.js`. Las cuentas salen de las funciones de siempre. Fotos de cómo quedaron:
+  https://claude.ai/artifact/4iCAAgc9LX6uo6GAk82GFD. ⚠️ Un `vh`/`vw` nuevo va `calc(N / var(--vz,1))` (la 397 lo olvidó: `test_vidrio_agrandar`) y un id que
+  se arma al vuelo no se busca con `getElementById('literal')` (`test_onclicks`).
+- ❓ **Ninguna ventanita gris del navegador** («…github.io dice»): la 282 había pasado 5; ahora todas (~115, en 4 lotes) salen en la ventana del panel con
+  título, renglones y botones que dicen lo que hacen. Tres piezas, al lado de `preguntar`: **`preguntaYa(texto, o, otraVez)`** (= `confirm`: la 1ª vez abre la
+  ventana y devuelve **null** —el lugar CORTA sin hacer nada—; al contestar vuelve a correr `otraVez()` y en el mismo lugar devuelve true/false; las respuestas
+  de una tanda se recuerdan en `PREG_MEMO`), **`preguntaTextoYa(texto, valor, o, otraVez)`** (= `prompt`; `o.campoClave` tapa lo escrito: claves y contraseñas)
+  y **`avisoVentana(texto, o)`** (= `alert`, no frena). Fuera de la bandera (Playwright sin `PREG_PRUEBA`) hacen lo del navegador con el MISMO texto: las
+  pruebas viejas contestan diálogos. ⚠️ **Un `confirm`/`prompt`/`alert` NUEVO va con estas**, con el texto de siempre como 1er argumento y un `o` que se lea.
+  ⚠️ `otraVez` vuelve a correr TODO lo de antes de la pregunta: eso tiene que poder repetirse sin efecto (leer, calcular), nunca guardar/encolar/mover antes.
+  ⚠️ Una función que pregunta y la llama otra recibe y pasa `otraVez` (`fmovPreguntar`, `confirmarReemplazoForm`, `reproStockConfirmar`, `asegurarClaveAdmin`
+  → `pedirClaveAdmin`, `confirmarImportExist` —«Usar los tres» sigue con los demás—, `cupxClave`); sin él, sale la del navegador. `submitPedido` vuelve a
+  empezar entero con `_otraVez` (repone `TV_PROXIMA`). En el primer medio segundo tocar el fondo no contesta (el 2º clic de un doble clic en «Guardar»).
+  Quedan con `confirm` solo los caminos SIN bandera (`fxDupConfirmar`, `saldoConfirmarAlGuardar`, `ctaBorrarPago`: con la bandera ya preguntan por la 282).
+  `chat.js` usa `window.preguntaYa` (`?v=20261116b`). Pruebas: `test_preg_todas` (25), `test_preg_lA` (41), `test_preg_lB` (39), `test_preg_lC` (46),
+  `test_preg_lD` (47), `test_preguntas_panel` (17).
+- 🧾 **El N° de la nota de venta en «📋 Datos»** de la ficha de Mis pedidos (`misNotaFila`, primer renglón, grande; dueño, con la ficha del 11-207: *«eduardo
+  necesita ver el nro de nota de venta»*): misma regla de §4hu (solo con Eduardo elegido, no ATC ni RPT). `test_mis_nota` (21).
+- ✅⏳ **Proyección → «Por vendedor»: lo vendido partido en dos** (dueño, con la captura: *«en ese espacio en blanco… para entender su total»* y *«dijimos
+  que ENTREGADO ES FACTURADO… eso confunde»*): en el hueco del medio de cada fila (debajo de la barra de la 415 si hay metas), «✅ Entregado o facturado
+  Bs X · N» (`pryEntCerrada`: ✅, venta de tienda, o factura/remisión con su N° = la regla de cierre de la 335) y «⏳ Pendiente Bs Y · M» (con cuántas ya
+  debían salir sin ✅), con su barrita. Las MISMAS ventas de la fila (`pryEntDatos` sobre `pryVentas`, mismo `ym` y `vk`; sin ROHO): las dos partes suman lo
+  vendido. 🚫 Nada de «por facturar» aparte. `pryMedioHtml`, `PRY_ENT_PRUEBA`, `tests/test_pry_entregado.js` (11).
+
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
