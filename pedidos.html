@@ -8470,6 +8470,14 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .fx-agd.p393-no .p393-tag .p393-por{font-weight:600}
 .fx-agd.p393-si .p393-tag{background:#22a06b;color:#fff}
 .fx-agd .p393-ok{display:block;margin-top:1px;font-size:.6rem;font-weight:800;color:#15803d}
+/* 394 · cada producto de la tarjeta de Mis pedidos con su punto y su cantidad */
+.cho-card.mis-c .p394-l{display:flex;align-items:center;gap:8px;line-height:1.35;padding:2px 0}
+.cho-card.mis-c .p394-q{flex:none;min-width:30px;text-align:center;font-weight:900;font-size:.8rem;color:#0f3b39;background:#e6f7f6;border:1px solid #bfe9e6;border-radius:999px;padding:1px 7px}
+.cho-card.mis-c .p394-dot{flex:none;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+.cho-card.mis-c .p394-dot.v{background:#22a06b}.cho-card.mis-c .p394-dot.a{background:#e8a317}.cho-card.mis-c .p394-dot.r{background:#e11d48}.cho-card.mis-c .p394-dot.g{background:#cbd5e1}
+.cho-card.mis-c .p394-l .nm{min-width:0}
+.cho-card.mis-c .p394-l .es{font-size:.74rem;font-weight:800;margin-left:2px}
+.cho-card.mis-c .p394-l .es.a{color:#a16207}.cho-card.mis-c .p394-l .es.r{color:#be123c}.cho-card.mis-c .p394-l .es.g{color:#64748b}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -42243,7 +42251,8 @@ function misCardHtml(p, n, todos, verNota){
 }
 function misCardHtmlBase(p, n, todos, verNota){
   if(verNota===undefined) verNota=misVeNota();
-  var prod=(p.productos||[]).map(function(x){
+  var _t394=misTarjVa();   // 🎨 (16/11, mejora 394) cada producto con su punto de color y la cantidad en una fichita
+  var prod=_t394 ? misProdsHtml(p) : (p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no' && entregaAConfirmar(p)) t=t+' <span style="color:var(--muted)">— sin stock por ahora</span>';   // 📦 (propuesta 76) sin día no es una alarma
     else if(x.chk==='no')  t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
@@ -42284,10 +42293,10 @@ function misCardHtmlBase(p, n, todos, verNota){
     /* 🧾 (§4ip) Íconos en vez de «PRODUCTOS / DIRECCIÓN / COBRO / CHOFER»: el título queda para quien lo pase por arriba. */
     '<div class="mis-ico">'+
       '<span class="mi" title="Productos">🛏️</span><div class="cho-row">'+prod+'</div>'+
-      (p.estado?('<span class="mi" title="Stock">📦</span><div class="cho-row">'+estadoBadge(p.estado)+'</div>'):'')+
+      ((p.estado && !_t394)?('<span class="mi" title="Stock">📦</span><div class="cho-row">'+estadoBadge(p.estado)+'</div>'):'')+   // 🎨 (394) el stock ya va en cada producto
       (p.direccion?('<span class="mi" title="Dirección">📍</span><div class="cho-row">'+esc(p.direccion)+'</div>'):'')+
       '<span class="mi" title="Cobro">💵</span><div class="cho-row">'+cobro+'</div>'+
-      '<span class="mi" title="Chofer">🚚</span><div class="cho-row">'+choferTexto(p)+'</div>'+
+      ((_t394 && !String(p.chofer||'').trim()) ? '' : ('<span class="mi" title="Chofer">🚚</span><div class="cho-row">'+choferTexto(p)+'</div>'))+   // 🎨 (394) recién con chofer
     '</div>'+
     fotosHtml(p, false)+
     (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">ENTREGADO</div>':'')+
@@ -42334,6 +42343,30 @@ function misCuandoDatos(p){
 function misCuandoHtml(p){
   var D=misCuandoDatos(p); if(!D) return '';
   return '<div class="p391-b p391-'+D.c+'"><span>'+esc(D.t)+'</span><span class="d">'+esc(D.d)+'</span></div>';
+}
+/* 🎨 (16/11, mejora 394; dueño: «La tarjeta del pedido con lo que importa para vender») Cada producto de la tarjeta de Mis pedidos llevaba
+   «(cargar en Banzer)» en azul (dato de logística), todas las tarjetas sin camión decían «🚚 Sin asignar todavía» (27 de 27 en noviembre) y
+   «📦 En stock / En producción» repetía lo que ya dice el viaje de arriba. Ahora cada producto va en su renglón con un punto de color (verde
+   hay · ámbar se trae de Moreno o está en producción · rojo no hay · gris sin revisar), la cantidad en una fichita y su dibujito, sin el
+   «cargar en…»; el renglón del chofer aparece recién cuando hay chofer y el del stock se va. Las marcas son las de siempre (`x.chk`,
+   `enProduccion`, `esRecoger`, `prodHay`); la ficha entera (`showMisModal`) no cambia. En Playwright como antes salvo `window.MIS_TARJ_PRUEBA`.
+   `tests/test_v391_mis_tarjetas.js` §394. */
+function misTarjVa(){ try{ return vdVa('MIS_TARJ_PRUEBA'); }catch(e){ return false; } }
+function misProdEstado(p, x){
+  if(x.chk==='no' && entregaAConfirmar(p)) return { c:'g', t:'sin stock por ahora' };   // 📦 (propuesta 76) sin día no es una alarma
+  if(x.chk==='no') return { c:'r', t:'no hay'+(enProduccion(x) ? (' · 🏭 en producción'+prodLugarTxt(x)) : '') };
+  if(enProduccion(x)) return { c:'a', t:'en producción'+prodLugarTxt(x) };
+  if(esRecoger(x)) return { c:'a', t:'se trae de '+recogerCorto(x) };
+  if(prodHay(x)) return { c:'v', t:'' };
+  return { c:'g', t:'' };
+}
+function misProdsHtml(p){
+  var T={ v:'hay', a:'se trae o se fabrica', r:'no hay', g:'sin revisar' };
+  return (p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).map(function(x){
+    var E=misProdEstado(p, x);
+    return '<div class="p394-l"><span class="p394-dot '+E.c+'" title="'+esc(T[E.c])+'"></span><span class="p394-q">'+esc(x.cant||1)+'</span>'+prodIcoHtml(x)+
+      '<span class="nm">'+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(E.t?(' <span class="es '+E.c+'">· '+esc(E.t)+'</span>'):'')+'</span></div>';
+  }).join('');
 }
 /* 🧾 (§4ip, 09/10; dueño: «lo demás aplica» — muestra 1) Cómo está el pedido, para el color del borde de su tarjeta:
    entregado (✅ marcado) · falta stock (una línea «✗ no hay») · debe plata (saldo y no es ATC/RPT) · va bien. Solo mira. */

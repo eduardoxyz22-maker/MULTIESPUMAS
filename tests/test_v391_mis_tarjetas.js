@@ -6,6 +6,9 @@
          día más cercano al más lejano (lo atrasado primero, lo que «avisa cuándo» al final de eso) y después lo entregado del más nuevo al
          más viejo; cada tarjeta sin entregar con su franja «⏰ Ya pasó su día · era el viernes 13/11 · hace 3 días», «📅 Hoy», «🚚 Mañana»,
          «Esta semana», «Más adelante», «📦 Sin día». «⏰ Atrasados» sigue con el que más espera arriba. Los chips cuentan lo mismo.
+   394 · Sin `MIS_TARJ_PRUEBA`: los renglones de siempre («× 2», «(cargar en Banzer)», «Sin asignar todavía», «📦 Stock»). Con la bandera:
+         cada producto con su punto (verde hay · ámbar se trae de Moreno o en producción · rojo no hay · gris sin revisar), la cantidad en
+         una fichita y su dibujito, sin «cargar en…»; el renglón del chofer solo con chofer y sin el del stock.
    Datos SINTÉTICOS. Reloj clavado el lunes 16/11/2026 10:00. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_v391_mis_tarjetas.js */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -71,6 +74,33 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return [].map.call(document.querySelectorAll('#mis-lista > .cho-card'), function(c){ return (c.getAttribute('onclick')||'').replace(/^.*showMisModal\('([^']+)'.*$/,'$1'); }); });
   chk('391i «⏰ Atrasados» sigue con el que más espera arriba', r[0]==='atr2' && r.indexOf('atr')>0, r);
   await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='atr2'; }); });
+
+  console.log('\n── 394. Lo que importa para vender ──');
+  const tarjeta = () => ev(() => { STATE=STATE.filter(function(p){ return p.id!=='t394' && p.id!=='t394c'; });
+    STATE.push(__P({ id:'t394', oc:'11-020', cliente:'TARJETA', fecha:'2026-11-18', estado:'stock', productos:[
+      { desc:'COLCHON TITANIO ICE', codigo:'CH1220', medida:'140x190', cant:2, precio:4290, chk:'ok', chkDe:'01-05-025  Almacen Distribucion Banzer' },
+      { desc:'SOMIER TITANIO ICE', codigo:'CH1212', medida:'140x190', cant:1, precio:2690, chk:'im' },
+      { desc:'ALMOHADA', codigo:'CD1403', medida:'50x70', cant:2, precio:180, chk:'no' },
+      { desc:'COLCHON SOFT', codigo:'CH1000', medida:'105x190', cant:1, precio:1500, enProd:true },
+      { desc:'PROTECTOR', medida:'140x190', cant:1, precio:200 } ] }));
+    STATE.push(__P({ id:'t394c', oc:'11-021', cliente:'CON CHOFER', fecha:'2026-11-18', chofer:'Omar', vehiculo:'Carry' }));
+    MIS_FILTER='todos'; renderMis();
+    var c=document.querySelector('#mis-lista .cho-card[onclick*="t394\'"]'), c2=document.querySelector('#mis-lista .cho-card[onclick*="t394c"]');
+    var titulos=function(x){ return [].map.call(x.querySelectorAll('.mis-ico .mi'), function(m){ return m.getAttribute('title'); }); };
+    return { txt:c.innerText.replace(/\s+/g,' '), lineas:[].map.call(c.querySelectorAll('.p394-l'), function(l){ return [(l.querySelector('.p394-dot')||{}).className, (l.querySelector('.p394-q')||{}).textContent, !!l.querySelector('.pico'), l.querySelector('.nm').textContent]; }),
+      tit:titulos(c), tit2:titulos(c2), cho2:c2.innerText.replace(/\s+/g,' ') }; });
+  r = await tarjeta();
+  chk('394a sin la bandera: los renglones de siempre («× 2», «(cargar en Banzer)», «Sin asignar todavía», el 📦 Stock)', /× 2/.test(r.txt) && /cargar en Banzer/.test(r.txt) && /Sin asignar todavía/.test(r.txt) && r.tit.indexOf('Stock')>=0 && r.lineas.length===0, r);
+  await ev(() => { window.MIS_TARJ_PRUEBA=1; });
+  r = await tarjeta();
+  chk('394b cada producto en su renglón con su punto, la cantidad en fichita y su dibujito', r.lineas.length===5 && r.lineas.every(l=>/p394-dot/.test(l[0]) && l[2]) && r.lineas.map(l=>l[1]).join(',')==='2,1,2,1,1', r.lineas);
+  chk('394c los puntos: Banzer = hay (verde) · Moreno = ámbar «se trae de Moreno» · no hay = rojo · en producción = ámbar · sin revisar = gris',
+      / v$/.test(r.lineas[0][0]) && / a$/.test(r.lineas[1][0]) && /se trae de (IM|Moreno)/.test(r.lineas[1][3]) && / r$/.test(r.lineas[2][0]) && /no hay/.test(r.lineas[2][3]) &&
+      / a$/.test(r.lineas[3][0]) && /en producción/.test(r.lineas[3][3]) && / g$/.test(r.lineas[4][0]), r.lineas.map(l=>l[0]+' '+l[3]));
+  chk('394d sin «(cargar en Banzer)» ni «× N»', !/cargar en/.test(r.txt) && !/× \d/.test(r.txt), r.txt.slice(0,300));
+  chk('394e sin chofer no hay renglón de chofer, y el del stock se fue', r.tit.indexOf('Chofer')<0 && r.tit.indexOf('Stock')<0 && !/Sin asignar todavía/.test(r.txt), r.tit);
+  chk('394f con chofer, el renglón aparece', r.tit2.indexOf('Chofer')>=0 && /Omar/.test(r.cho2), r.tit2);
+  await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='t394' && p.id!=='t394c'; }); });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
