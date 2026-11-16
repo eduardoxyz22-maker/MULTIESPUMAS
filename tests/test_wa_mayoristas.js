@@ -149,7 +149,7 @@ const MAY = [
 const LUNES = '2026-11-16';
 const CONTA = '59177000009', DUENO = '59177000007';
 const ON = { WA_ACTIVO: '1', WA_TOKEN: 'tok-de-mentira', WA_PHONE_ID: '1234567890', WA_LOGISTICA: 'Ernesto:59171000001',
-  WA_DUENO: 'Eduardo:' + DUENO, WA_CONTABILIDAD: 'Eliana:' + CONTA };
+  WA_DUENO: 'Eduardo:' + DUENO, WA_CONTABILIDAD: 'Eliana:' + CONTA, WA_MV_ACTIVO: '1' };   // (16-a) prendido a mano: de entrada va apagado (§2n)
 const conMay = (props, datos) => { const S = servidor(Object.assign({}, ON, props || {})); S.cargar(datos || MAY); return S; };
 const mv = (S) => S.salen('mayoristas_vencido');
 const NOMBRES = ['Multicenter', 'MULTICENTER', 'Tienda Amiga', 'COPACABA', 'Copacaba', 'ROHO', 'Luis Franco', 'FERRETERIA', 'ELECTROCENTER', 'MOSTRADOR', 'CAMSA', 'Villareal', 'PEREZ', 'Juana'];
@@ -203,6 +203,8 @@ const NOMBRES = ['Multicenter', 'MULTICENTER', 'Tienda Amiga', 'COPACABA', 'Copa
     chk('2k con WA_PRUEBA va al número de prueba («(prueba) Eliana» en la hoja)', mv(pr).length === 1 && mv(pr)[0].to === '59170000099' && pr.hoja().some(f => f[4] === '(prueba) Eliana'), mv(pr).map(x => x.to));
     const apag = conMay({ WA_ACTIVO: '0' }); poner(LUNES + ' 08:05'); apag.repaso();
     chk('2l con el bot apagado no sale', mv(apag).length === 0);
+    const sinAct = conMay({ WA_MV_ACTIVO: '' }); poner(LUNES + ' 08:05'); sinAct.repaso();
+    chk('2n (16-a, dueño 16/11: «A») sin WA_MV_ACTIVO = 1 no sale ni queda marcado como hecho', mv(sinAct).length === 0 && !(JSON.parse(sinAct.P.WA_HECHO || '{}').mv), [mv(sinAct), sinAct.P.WA_HECHO]);
     const dos = conMay({ WA_CONTABILIDAD: 'Eliana:' + CONTA + ', Contadora:70000010' }); poner(LUNES + ' 08:05'); dos.repaso();
     chk('2m con dos números en WA_CONTABILIDAD, a los dos (y a nadie más)', JSON.stringify(mv(dos).map(x => x.to).sort()) === JSON.stringify(['59170000010', CONTA].sort()), mv(dos).map(x => x.to));
   });

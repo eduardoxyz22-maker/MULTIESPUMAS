@@ -5641,6 +5641,12 @@ function probarBotG_(bien, ojo) {
  *      allá, cambia acá (un plazo nuevo va en `CBZ_PLAZOS` Y en WA_MV_PLAZOS).
  * ========================================================================== */
 var WA_HORA_MV = 8;                        // lunes 08:00 de Bolivia (o el primer día hábil de la semana)
+/* ⏸️ (2026-11-16-a, dueño 16/11: «Mayoristas de lunes a contabilidad A» = apagarlo hasta poner al día los pagos) El aviso de los lunes
+   sale SOLO con la propiedad WA_MV_ACTIVO = 1. Como la pantalla de Propiedades del script ya tiene 50 y no deja agregar más, se prende y se
+   apaga desde el editor con `prenderMayoristasVencido()` / `apagarMayoristasVencido()` (elegir la función arriba y ▶ Ejecutar). */
+function waMvActivo_() { try { return String(PropertiesService.getScriptProperties().getProperty('WA_MV_ACTIVO') || '') === '1'; } catch (e) { return false; } }
+function prenderMayoristasVencido() { PropertiesService.getScriptProperties().setProperty('WA_MV_ACTIVO', '1'); Logger.log('✅ Prendido: los lunes a las 08:00, lo vencido de los mayoristas a Contabilidad.'); }
+function apagarMayoristasVencido() { PropertiesService.getScriptProperties().deleteProperty('WA_MV_ACTIVO'); Logger.log('⏸️ Apagado: los lunes no sale el aviso de los mayoristas.'); }
 var WA_MV_PROX_DIAS = 7;                   // «vence en los próximos 7 días»: de hoy a 7 días (⚠️ el texto de la plantilla dice «7 días»)
 var WA_MV_MAYORISTAS = ['Eduardo Añez'];   // = CONTA_MAYORISTAS de la página
 var WA_MV_PLAZOS = { 'Tienda Amiga':120, 'ROHO':60, 'Multicenter':60, 'Copacaba':15, 'Luis Franco':15 };   // = CBZ_PLAZOS (días corridos)
@@ -7223,7 +7229,7 @@ function waRepasoBot_() {
     }
     /* 🏭⏳ (2026-11-13-b, mejora 181) Lunes 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo vencido de los mayoristas,
        SOLO a Contabilidad (WA_CONTABILIDAD; al dueño no). Sin nada vencido ni que venza en 7 días, `waArmar_` no lo manda. Una vez (`mv`). */
-    if (cfg.conta.length && B.hora >= WA_HORA_MV && B.hora < WA_HORA_MV + WA_VENTANA_H && hecho.mv !== B.hoy && waMvToca_(B.hoy)) {
+    if (waMvActivo_() && cfg.conta.length && B.hora >= WA_HORA_MV && B.hora < WA_HORA_MV + WA_VENTANA_H && hecho.mv !== B.hoy && waMvToca_(B.hoy)) {
       cfg.conta.forEach(function (L) { msgs.push({ k:'mv', a:L.nombre, dia:B.hoy, n:0 }); });
       hecho.mv = B.hoy; cambio = true;
     }
