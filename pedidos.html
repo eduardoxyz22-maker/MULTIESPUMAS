@@ -26350,8 +26350,10 @@ function submitPedido(){
      la venta se guarda sin fecha de entrega ni turno: no hay día, domingo, cupo ni camión que validar. Se saltea el bloque de abajo. */
   var _avisa=avisaFormOn(), _avisaF=_avisa ? String(document.getElementById('f-fecha').value||'') : '';
   /* 📅 (§4ok-96) ✏️ Editar le cambia la fecha a una venta: ¿es otra de relleno? Aceptar = la casilla de la 76, con ese día de volver a llamar. */
-  if(!_avisa && !VENTA_TIENDA && isEdit && prev && !_deBorrador && avisaFormPuede() &&
-     fmovPreguntar(Object.assign({}, prev, { observaciones: document.getElementById('f-obs').value }), String(document.getElementById('f-fecha').value||''))){
+  var _fm96=(!_avisa && !VENTA_TIENDA && isEdit && prev && !_deBorrador && avisaFormPuede()) ?
+     fmovPreguntar(Object.assign({}, prev, { observaciones: document.getElementById('f-obs').value }), String(document.getElementById('f-fecha').value||''), _otraVez) : false;
+  if(_fm96===null) return;   // ❓ (16/11) espera la respuesta en la ventana del panel
+  if(_fm96){
     var _fl96=fmovDiaLlamar(document.getElementById('f-fecha').value), _cav=document.getElementById('f-avisa');
     if(_cav) _cav.checked=true;
     avisaFormPintar();
