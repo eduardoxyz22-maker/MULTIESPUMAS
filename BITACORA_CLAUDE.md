@@ -18918,3 +18918,17 @@ todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
   «DIRECCIÓN», «TELÉFONO») importaba igual, en silencio. Además tomaba el nombre SOLO de la primera fila de la nota y no traducía `&#xa;`/`&#xa0;`
   (1 nombre y 9 observaciones de la planilla los tienen escritos tal cual).
 - **Hecho**: ver CLAUDE.md «🧾 ROHO: ningún pedido sin el nombre del cliente». Servidor 16-a con `falta_cliente`. Volver a subir el Excel completa los 18.
+
+- **PUBLICADO 16/11, página `2026-11-16-a`** (dueño: *«implemente el gs, sale todo ok, publica»*): el servidor `2026-11-16-a` (enlace fijo `263f43d…`,
+  13.141 líneas, con la revisión de Fable 1-6) IMPLEMENTADO por el dueño; comprobado desde acá con `{action:'getlog'}`: contesta `2026-11-16-a`. A `main` va
+  todo lo de la rama desde la publicación de la 14-a (`6e01cbc`): la 14-b y la 15-a (que no se habían publicado solas), las mejoras 344-389, el bono
+  Titanio, ROHO sin nombre (§4qc), la 335 del dashboard (ventas sin ficha en Kommo) y el `.gs` + `SCRIPT_VERSION_ESPERADA` en 16-a. Por el diff de
+  `6e01cbc..263f43d` aplicado sobre `main` (sin `herramientas/pedidos_correo`, que vive solo en la rama); NO van las visuales 390-440 (rama `mej390-junta`).
+  Las 68 pruebas que cargan el `.gs` en verde sobre `263f43d` (la batería entera ya había pasado en `075ae24`).
+- **Pedidos por correo (16/11)**: el dueño, *«no importa si sale lleno el panel, Eduardo y Ernesto pueden meter pedidos por más que salga lleno… cuando la
+  clave esté puesta se puede meter así esté lleno»*: `cargar_pedidos.py` guarda en el primer día con lugar y en el acto mueve al día pedido con `forzar`
+  (el bot junta «nuevo + cambio» en un aviso de pedido nuevo). Las «OCs del nuevo requerimiento» de Flavia Ordoñez (ROHO) son pedidos: 11-208 (T3, OC
+  260013347, martes 17/11) y 11-209 (T1, OC 260013346, miércoles 18/11), los dos en un día lleno. La tarea programada busca también a fordonez@.
+  ⚠️ Corrección del dueño, el mismo día: *«solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»*. Forzar un día lleno va
+  SOLO con `"dia_del_dueno": true` en el JSON (lo pongo yo cuando él dice el día); las vueltas automáticas siguen al primer día con cupo. La 11-207
+  (Multicenter, OC 33658) queda el jueves 19/11.

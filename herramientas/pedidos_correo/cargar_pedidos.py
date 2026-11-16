@@ -11,7 +11,12 @@ Eduardo Añez. Antes de cada uno relee la planilla:
   · la OC del panel es la siguiente del mes (como `nextOcMes`) y el N° del día el siguiente de esa fecha (`nextNroDia`);
   · el total es SIEMPRE Σ cantidad × precio unitario (si el PDF trae otro total, se anota y no se usa);
   · si el servidor dice que el día está lleno, cerrado o es feriado, prueba el siguiente día hábil (sin domingos) en el
-    mismo turno (el sábado solo AM) y lo anota en las observaciones. Nunca fuerza.
+    mismo turno (el sábado solo AM) y lo anota en las observaciones: va para cuando haya cupo.
+  · 🎟️ SOLO si el dueño dijo el día (16/11: «solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»): el
+    pedido lleva `"dia_del_dueno": true` en el JSON y, si ese día sale LLENO, queda EN ESE DÍA igual: el servidor no deja crear uno
+    nuevo en un turno lleno, así que se guarda en el primer día con lugar y en el acto se MUEVE al día pedido con `forzar` (lo mismo que
+    hace Administración con la clave). El bot junta «nuevo + cambio» en UN aviso de pedido nuevo con el día final. Cerrado, feriado o
+    domingo no se fuerzan nunca.
   · cada guardado va con `tr4:1` (08/11, dueño: «por cada pedido que generes en el panel… un mensaje únicamente a mí… y recordarme
     que lo debo subir al TR4»): desde el servidor 2026-11-07-f, a los ~2 minutos el bot le manda `pedido_correo_tr4` al PRIMERO de
     WA_DUENO con los datos del pedido. Un servidor anterior lo ignora.
@@ -239,14 +244,18 @@ def main():
                             "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps'])})
             continue
         pedida = rec['fecha']
+        turno0 = rec['turno']
         obs_base = rec['observaciones']
         res = None
+        lleno = None   # 🎟️ (16/11) el día pedido estaba lleno: después de guardarlo se mueve ahí con `forzar`
         for intento in range(6):
             res = post({"action": "save", "pedido": rec, "av": 1, "tr4": 1})   # tr4: el bot le avisa al dueño que lo suba al TR4 (servidor 07-f)
             if res.get('ok'):
                 break
             if res.get('error') not in REINTENTA:
                 break
+            if intento == 0 and res.get('error') == 'cupos_llenos' and d.get('dia_del_dueno') is True:
+                lleno = {"usados": res.get('usados'), "cupos": res.get('cupos')}
             f2 = siguiente_habil(rec['fecha'])
             if datetime.date.fromisoformat(f2).weekday() == 5 and rec['turno'] == 'PM':
                 rec['turno'] = 'AM'   # el sábado el camión sale solo a la mañana
@@ -256,11 +265,26 @@ def main():
             rec['oc'] = next_oc(P)
             rec['observaciones'] = obs_base + (' · Se pidió para el %s pero ese día no tenía lugar (o estaba cerrado/feriado): quedó el %s %s.'
                                                % (pedida, f2, rec['turno']))
+        forzado = None
+        if res and res.get('ok') and lleno and rec['fecha'] != pedida:
+            g = dict(res.get('pedido') or rec)
+            g['fecha'] = pedida
+            g['turno'] = turno0
+            g['observaciones'] = obs_base + (' · El %s %s estaba lleno (%s de %s): se cargó igual en ese día porque el dueño pidió ese día.'
+                                             % (pedida, turno0, lleno.get('usados'), lleno.get('cupos')))
+            r2 = post({"action": "save", "pedido": g, "forzar": True, "av": 1})
+            if r2.get('ok'):
+                res = r2
+                rec['fecha'], rec['turno'] = pedida, turno0
+                rec['nroDia'] = (r2.get('pedido') or {}).get('nroDia') or rec['nroDia']
+                forzado = True
+            else:
+                forzado = 'no se pudo pasar al ' + pedida + ': ' + str(r2.get('error') or r2)[:120]
         if res and res.get('ok'):
             g = res.get('pedido') or {}
             resumen.append({"clave": clave, "resultado": "CARGADO", "oc": g.get('oc') or rec['oc'], "fecha": rec['fecha'],
                             "turno": rec['turno'], "nroDia": g.get('nroDia') or rec['nroDia'], "total": rec['saldo'],
-                            "pedida": pedida, "lugar_guardado": bool(rec['maps'])})
+                            "pedida": pedida, "lugar_guardado": bool(rec['maps']), **({"dia_lleno_forzado": forzado} if forzado else {})})
         else:
             resumen.append({"clave": clave, "resultado": "NO cargado", "error": (res or {}).get('error'), "detalle": res})
         time.sleep(2)
