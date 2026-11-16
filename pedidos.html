@@ -10099,7 +10099,7 @@ html.tema-black-friday .cam-ley b{color:#fde68a}
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
 <script src="escritorio.js?v=20261116a" defer></script>
 <!-- 💬 (16/11, mejora 344) el chat del equipo: el botón «💬 Chat» de arriba y su panel a la derecha. `defer`, después de escritorio.js. Al cambiarlo, subir el ?v=. -->
-<script src="chat.js?v=20261116a" defer></script>
+<script src="chat.js?v=20261116b" defer></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -43331,13 +43331,18 @@ function choCobrarMetodo(id, metodo){
   if(noSeCobra(p)){ toast(noSeCobraTxt(p),'err',7000); renderChofer(); return; }   // (25/09) como markPaid/quickCobrado (§4fy)
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
   var fleteF=envioPorCobrar(p);                    // (26/09) el flete va aparte: que no se anote acá como cobro de la venta
-  var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
+  var _otra=function(){ choCobrarMetodo(id, metodo); };   // ❓ (16/11) la ventana del panel: al contestar, vuelve a correr desde acá
+  var txt=preguntaTextoYa('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
     'Cliente: '+(p.cliente||'')+'\n'+
     'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
     (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
     'Falta: '+fmtBs(falta)+'\n'+
     (fleteF>0.005?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
-    '\nEscribí el monto:', falta>0?String(r2(falta)):'');   // r2 (26/09): lo que propone el panel pasa por `montoError`
+    '\nEscribí el monto:', falta>0?String(r2(falta)):'',   // r2 (26/09): lo que propone el panel pasa por `montoError`
+    { titulo:'¿Cuánto cobraste en '+metodo+'?', icono:metodoIcono(metodo), sub:(p.cliente||''),
+      lineas:['El pedido dice cobrar: '+fmtBs(objetivo), cobrado>0?('Ya entraron: '+fmtBs(cobrado)):'', 'Falta: '+fmtBs(falta),
+              fleteF>0.005?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.'):''],
+      campoTipo:'decimal', campoAyuda:'El monto, ej. 1750', no:'Cancelar', si:'💰 Anotar el cobro' }, _otra);
   if(txt==null) return;
   // (26/09, revisión de Codex) el texto ENTERO: «-1500» y «−1500» se anotaban como un cobro de 1.500, «1e3» de 13.
   var _err=montoError(txt);
@@ -43345,11 +43350,15 @@ function choCobrarMetodo(id, metodo){
   var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   if(monto>falta+0.005){
-    if(!confirm('⚠️ Ojo, te estás pasando.\n\n'+
+    if(!preguntaYa('⚠️ Ojo, te estás pasando.\n\n'+
       'El pedido dice cobrar '+fmtBs(objetivo)+'.\n'+
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
       (fleteF>0.005?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Tocá Cancelar y anotá solo lo de la venta.\n\n'):'')+
-      '¿Lo anoto igual?')) return;
+      '¿Lo anoto igual?',
+      { titulo:'Te estás pasando: ¿lo anoto igual?', icono:'⚠️', aviso:true, sub:metodo+' '+fmtBs(monto)+' · '+(p.cliente||''),
+        lineas:['El pedido dice cobrar '+fmtBs(objetivo)+'.', 'Con este cobro juntarías '+fmtBs(cobrado+monto)+': son '+fmtBs(monto-falta)+' de más.',
+                fleteF>0.005?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Anotá solo lo de la venta.'):''],
+        no:'No, no lo anoto', si:'💰 Anotarlo igual' }, _otra)) return;
   }
   /* ⚠️ `cobrosDe`, NO `cobrosVisibles` (§4fg): si la venta venía «PAGADA sin monto», el pago
      de mentira que `cobrosVisibles` descarta se lleva consigo el comprobante que subió la
@@ -43378,7 +43387,10 @@ function choQuitarCobro(id, idx){
   if(idx<0 || idx>=arr.length) return;
   // §4fy: un pago con recibo o comprobante lo registró Contabilidad o la tienda: no es del chofer.
   if(!cobroDeLaPuerta(arr[idx])){ toast('Ese pago lo registró Contabilidad o la tienda (tiene recibo o imagen): no se quita desde acá.','err',6000); return; }
-  if(!confirm('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?')) return;
+  if(!preguntaYa('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?',
+    { titulo:'¿Quitar este cobro?', icono:'🗑️', peligro:true, sub:(p.cliente||''),
+      lineas:[cobroMetodoTxt(arr[idx])+' '+fmtBs(arr[idx].monto)+(arr[idx].fecha?(' · '+fmtFechaCorta(arr[idx].fecha)):'')],
+      no:'No, dejarlo', si:'🗑 Sí, quitarlo' }, function(){ choQuitarCobro(id, idx); })) return;   // ❓ (16/11) otro cobro en ese lugar = otro texto: pregunta de nuevo
   arr.splice(idx,1);
   aplicarCobros(p, arr); renderChofer();
   toast('Cobro quitado','ok');
@@ -43388,7 +43400,10 @@ function choEntregado(id){
   /* (26/09) Destildar PREGUNTA. Con un doble toque la tarjeta se repintaba entre los dos y el
      segundo caía en «✓ Entregado»: la entrega volvía a «pendiente» en la planilla sin que el
      chofer lo notara. Marcar sigue siendo un toque. */
-  if(p.entregado && !confirm('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.')) return;
+  if(p.entregado && !preguntaYa('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.',
+      { titulo:'¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?', icono:'↩️', lineas:['Le saca el ✅: queda como pendiente.', 'Si ya la dejaste, dejala como está.'],
+        no:'No, ya la entregué', si:'↩️ Sí, no se entregó' },
+      function(){ var q=findById(id); if(q && q.entregado) choEntregado(id); })) return;   // ❓ (16/11) si mientras tanto ya no tenía ✅, no se toca
   var quiere=!p.entregado, t0=Date.now(), choco=false;
   /* ⚠️ (26/09, revisión de Codex) EL VIAJE QUE EL CHOFER TOCÓ: el día, y en una ATC si era el recojo o la
      devolución. El reintento de abajo solo va si la fila del servidor sigue siendo ESE viaje: si en el
@@ -43442,10 +43457,14 @@ function choDeshacerCobro(id){
   var quedan=todos.length-fuera.length;
   /* ⚠️ Nombra QUÉ se borra y cuánto (§4fy), igual que el ↺ de la tabla desde §4fd: antes decía
      «¿Deshacer el cobro de X?», en singular y sin montos, y se llevaba todos los pagos. */
-  if(!confirm('¿Borrar '+(fuera.length===1?'el cobro':('los '+fuera.length+' cobros'))+' de la puerta de '+(p.cliente||'')+'?\n\n'+
+  if(!preguntaYa('¿Borrar '+(fuera.length===1?'el cobro':('los '+fuera.length+' cobros'))+' de la puerta de '+(p.cliente||'')+'?\n\n'+
       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
       '\n\nTotal: '+fmtBs(tot)+
-      (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
+      (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''),
+      { titulo:'¿Borrar '+(fuera.length===1?'el cobro':('los '+fuera.length+' cobros'))+' de la puerta?', icono:'🗑️', peligro:true, sub:(p.cliente||''),
+        lineas:fuera.map(function(c){ return cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).concat(['Total: '+fmtBs(tot),
+                quedan ? (quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.')) : '']),
+        no:'No, dejarlos', si:'🗑 Sí, borrar'+(fuera.length===1?'lo':'los') }, function(){ choDeshacerCobro(id); })) return;
   aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); }));
   renderChofer();
   toast((fuera.length===1?'Cobro borrado: ':'Cobros borrados: ')+fmtBs(tot),'ok');
@@ -44741,7 +44760,13 @@ function misSelloNuevo(id){ if(MIS_SELLO_VISTO[id]) return false; MIS_SELLO_VIST
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
 function editarUbicacion(id, reopen, deVendedora){
   var p=findById(id); if(!p) return;
-  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nSi pegás un enlace corto (maps.app.goo.gl) lo abro yo y guardo la ubicación.\n\nDejalo vacío para quitar la ubicación:', p.maps||'');
+  var nuevo=preguntaTextoYa('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nSi pegás un enlace corto (maps.app.goo.gl) lo abro yo y guardo la ubicación.\n\nDejalo vacío para quitar la ubicación:', p.maps||'',
+    { titulo:'Ubicación de '+(p.cliente||'este pedido'), icono:'📍',
+      lineas:['Pegá el link de Google Maps, las coordenadas (-17.749444, -63.104556) o el código del lugar (5P2Q+PFX).',
+              'En Maps mantené apretado el punto y copiá lo que aparece abajo.', 'Un enlace corto (maps.app.goo.gl) lo abro yo y guardo la ubicación.',
+              'Vacío = quitar la ubicación.'],
+      campoAyuda:'Link, coordenadas o código del lugar', no:'Cancelar', si:'📍 Guardar la ubicación' },
+    function(){ editarUbicacion(id, reopen, deVendedora); });   // ❓ (16/11) la ventana del panel
   if(nuevo==null) return;
   var norm=normalizaUbicacion(nuevo);
   if(norm===null){ toast('No se entiende: pegá el enlace, las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX)','err'); return; }
@@ -44803,7 +44828,9 @@ function editarDesdeMis(id){
   var avisos=[];
   if(p.entregado) avisos.push('🚚 Este pedido YA FUE ENTREGADO. Cambiarlo ahora no cambia lo que salió en el camión.');
   if(teniaRevision(p)) avisos.push('📦 El almacén YA REVISÓ este pedido. Si le cambiás algo les va a saltar un aviso de «PEDIDO MODIFICADO» para que vuelvan a revisar el stock.');
-  if(avisos.length && !confirm(avisos.join('\n\n')+'\n\n¿Abrirlo igual para corregirlo?')) return;
+  if(avisos.length && !preguntaYa(avisos.join('\n\n')+'\n\n¿Abrirlo igual para corregirlo?',
+      { titulo:'¿Abrirlo igual para corregirlo?', icono:'✏️', aviso:true, sub:(p.cliente||'')+(p.oc?(' · '+ocEtiq(p.oc)):''), lineas:avisos,
+        no:'No, dejarlo', si:'✏️ Abrirlo para corregir' }, function(){ editarDesdeMis(id); })) return;
   closeModal(); editPedido(id);
 }
 function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
@@ -46128,7 +46155,10 @@ function clfDestPegar(){
 }
 function clfDestQuitar(){
   var B=clfDestBase(); if(!B) return;
-  if(!confirm('¿Quitar el lugar de entrega guardado de '+(B.D.nombre||B.cli)+' con '+B.v+'?\n\nLos pedidos que ya lo tomaron no cambian.')) return;
+  if(!preguntaYa('¿Quitar el lugar de entrega guardado de '+(B.D.nombre||B.cli)+' con '+B.v+'?\n\nLos pedidos que ya lo tomaron no cambian.',
+      { titulo:'¿Quitar el lugar de entrega guardado?', icono:'📌', peligro:true, sub:(B.D.nombre||B.cli)+' con '+B.v,
+        lineas:['Los pedidos nuevos ya no lo toman solos.', 'Los pedidos que ya lo tomaron no cambian.'],
+        no:'No, dejarlo', si:'🗑 Sí, quitarlo' }, function(){ clfDestQuitar(); })) return;
   if(destQuitar(B.cli, B.v)) toast('Listo: '+(B.D.nombre||B.cli)+' ya no tiene un lugar guardado con '+B.v+'.','ok');
 }
 /* En el formulario: ¿este pedido toma el lugar guardado? Solo un pedido NUEVO (o un borrador de Kommo que se completa), 📄 OC o 🎧 ATC,
@@ -46202,9 +46232,14 @@ function repetirPedido(id){
     /* Una edición abierta sin guardar (como «＋ Nuevo pedido», §4gi): sin preguntar, el pedido nuevo PISARÍA esa venta. */
     var q=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
     var quien=q ? ((q.cliente||'sin nombre')+(q.oc?(' ('+ocEtiq(q.oc)+')'):'')) : 'otro pedido';
-    if(!confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
+    var _rp=preguntaYa('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
                 '• Aceptar: ese pedido queda como estaba y se abre el pedido NUEVO repetido.\n'+
-                '• Cancelar: volvés a esa edición.')){ closeModal(); showView('form'); return; }
+                '• Cancelar: volvés a esa edición.',
+                { titulo:'Estabas editando el pedido de '+quien+' y NO lo guardaste', icono:'✏️', aviso:true,
+                  lineas:['Si abrís el pedido NUEVO repetido, ese pedido queda como estaba (sin los cambios que no guardaste).'],
+                  no:'✏️ Volver a esa edición', si:'🔁 Abrir el pedido nuevo' }, function(){ repetirPedido(id); });
+    if(_rp===null) return;                         // ❓ (16/11) espera la respuesta en la ventana del panel
+    if(!_rp){ closeModal(); showView('form'); return; }
   } else if(!confirmarReemplazoForm()) return;
   closeModal(); showView('form'); resetForm();
   REPETIR_DE=String(p.id);
@@ -46952,12 +46987,20 @@ function quickCobrado(id){
     /* 🚚 (26/09) El cobro que recibió el CHOFER (`>Nombre`, §4eq) lo tiene él hasta rendirlo a Contabilidad: deshacerlo de
        un toque lo sacaba de lo que tiene que rendir. Lo que se deshace no cambia; ahora se pregunta, con su nombre y el monto. */
     var delChofer=fuera.filter(function(c){ return !!limpiaRecibio(c.recibio); });
-    if((n>1 || quedan || delChofer.length) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
+    if((n>1 || quedan || delChofer.length) && !preguntaYa('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
                        fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · 🚚 lo recibió '+limpiaRecibio(c.recibio)):''); }).join('\n')+
                        '\n\nTotal: '+fmtBs(tot)+
                        (delChofer.length ? ('\n\n🚚 '+delChofer.map(function(c){ return limpiaRecibio(c.recibio)+' recibió '+fmtBs(c.monto); }).join(' · ')+' en la puerta: '+
                          (delChofer.length===1?'si lo deshacés, deja de figurar en lo que tiene que rendir a Contabilidad.':'si los deshacés, dejan de figurar en lo que tienen que rendir a Contabilidad.')) : '')+
-                       (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
+                       (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''),
+                       { titulo:'¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta?', icono:'↩️', peligro:true, sub:(p.cliente||'esta venta'),
+                         lineas:fuera.map(function(c){ return cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · 🚚 lo recibió '+limpiaRecibio(c.recibio)):''); })
+                           .concat(['Total: '+fmtBs(tot),
+                             delChofer.length ? ('🚚 '+delChofer.map(function(c){ return limpiaRecibio(c.recibio)+' recibió '+fmtBs(c.monto); }).join(' · ')+' en la puerta: '+
+                               (delChofer.length===1?'si lo deshacés, deja de figurar en lo que tiene que rendir a Contabilidad.':'si los deshacés, dejan de figurar en lo que tienen que rendir a Contabilidad.')) : '',
+                             quedan ? (quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.')) : '']),
+                         no:'No, dejarlos', si:'↩️ Sí, deshacer'+(n===1?'lo':'los') },
+                       function(){ var q=findById(id); if(q && q.pagado) quickCobrado(id); })) return;   // ❓ (16/11) si mientras tanto ya no estaba pagada, el toque cobraría: no se repite
     aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); })); toast('Cobro deshecho ✓','ok'); return;
   }
   if(esATC(p.oc) || esRPT(p.oc)){ toast(noSeCobraTxt(p),'err',6000); return; }   // §4fy
@@ -47456,7 +47499,8 @@ function copyPedido(id){ var p=findById(id); if(p) copyText(pedidoText(p)); }
 function fallbackCopy(text, _b){
   if(_b===undefined) _b=copiadoBotonDeAhora();
   var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
-  try{ document.execCommand('copy'); copiadoAviso(_b); }catch(e){ prompt('Copiá el pedido:',text); }
+  try{ document.execCommand('copy'); copiadoAviso(_b); }catch(e){ preguntaTextoYa('Copiá el pedido:', text, { titulo:'Copiá el pedido', icono:'📋', solo:true, si:'Listo',
+    lineas:['No se pudo copiar solo: seleccioná el texto y copialo (Ctrl + C).'] }); }   // ❓ (16/11) nada espera la respuesta
   ta.remove();
 }
 /* ============================================================================
@@ -55534,7 +55578,12 @@ function guardarStockPedido(){
 function cancelarStockPedido(id){
   /* ✏️ (18/10, §4ls textos, VB-9) La ✕ de una RECOGIDA preguntaba «¿Sacar este pedido a fábrica…?». */
   var q0=(STOCK.p||[]).filter(function(x){ return x && x.id===id; })[0];
-  if(!confirm(q0 && q0.tipo==='recogida' ? '¿Sacar esta recogida de Moreno de la lista? No suma ni resta nada del depósito ni de Moreno.' : '¿Sacar este pedido a fábrica de la lista? No suma ni resta nada del depósito.')) return;
+  var _rec=!!(q0 && q0.tipo==='recogida');
+  if(!preguntaYa(_rec ? '¿Sacar esta recogida de Moreno de la lista? No suma ni resta nada del depósito ni de Moreno.' : '¿Sacar este pedido a fábrica de la lista? No suma ni resta nada del depósito.',
+      { titulo:_rec ? '¿Sacar esta recogida de Moreno de la lista?' : '¿Sacar este pedido a fábrica de la lista?', icono:'🗑️', peligro:true,
+        sub:q0 ? (stockNombreClave(q0.k)+' · '+stockUnid(Number(q0.u)||0)) : '',
+        lineas:[_rec ? 'No suma ni resta nada del depósito ni de Moreno.' : 'No suma ni resta nada del depósito.'],
+        no:'No, dejarlo', si:'🗑 Sí, sacarlo' }, function(){ cancelarStockPedido(id); })) return;
   STOCK.p=(STOCK.p||[]).filter(function(x){ return !(x&&x.id===id); });
   guardarStock(); closeModal(); renderStock(); renderAdmin();
 }
@@ -55696,6 +55745,7 @@ function stockRecogidaPasarLineas(){
    vez); 'sumar' = llegaron después. Sin `modo` y con una detección que puede ser esta recogida, se PREGUNTA (antes se sumaban siempre:
    PTF contaba 2 colchones que no existen hasta el próximo Excel). */
 function recibirStockPedido(id, modo){
+  var _m0=modo, _otra=function(){ recibirStockPedido(id, _m0); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr con lo mismo
   var q=(STOCK.p||[]).filter(function(x){ return x&&x.id===id&&!x.r; })[0];
   if(!q){ toast('Ese pedido ya no está en la lista.','err'); return; }
   var inp=document.getElementById('stk-rec-'+id);
@@ -55707,8 +55757,14 @@ function recibirStockPedido(id, modo){
   if(dets.length && modo!=='excel'){
     if(stockRecogidaPreguntar(q, u, dets)) return;                 // espera el toque en el renglón
     var n0=0; dets.forEach(function(d){ n0+=Number(d.u)||0; });
-    modo=confirm('El Excel de PTF del '+fmtFechaCorta(dets[0].f)+(dets[0].hora?(' '+String(dets[0].hora).slice(0,5)):'')+' ya mostró '+n0+' de más sin explicar de este producto, y se sacó después de programar esta recogida.\n\n'+
-                 '¿Son estas? Aceptar = sí, ya están en ese Excel (se cierra sin sumarlas otra vez). Cancelar = llegaron después (se suman).') ? 'excel' : 'sumar';
+    var _son=preguntaYa('El Excel de PTF del '+fmtFechaCorta(dets[0].f)+(dets[0].hora?(' '+String(dets[0].hora).slice(0,5)):'')+' ya mostró '+n0+' de más sin explicar de este producto, y se sacó después de programar esta recogida.\n\n'+
+                 '¿Son estas? Aceptar = sí, ya están en ese Excel (se cierra sin sumarlas otra vez). Cancelar = llegaron después (se suman).',
+                 { titulo:'¿Son las que ya mostró el Excel de PTF?', icono:'🚚', sub:stockNombreClave(q.k),
+                   lineas:['El Excel de PTF del '+fmtFechaCorta(dets[0].f)+(dets[0].hora?(' '+String(dets[0].hora).slice(0,5)):'')+' ya mostró '+n0+' de más sin explicar de este producto, y se sacó después de programar esta recogida.',
+                           'Sí: ya están en ese Excel, se cierra sin sumarlas otra vez.', 'No: llegaron después, se suman a PTF.'],
+                   no:'➕ No, llegaron después: sumarlas', si:'✅ Sí, ya están en ese Excel' }, _otra);
+    if(_son===null) return;                        // ❓ (16/11) espera la respuesta
+    modo=_son ? 'excel' : 'sumar';
   }
   if(modo!=='excel') dets=[];
   var yaEn=0; dets.forEach(function(d){ yaEn+=Number(d.u)||0; }); yaEn=Math.min(u, yaEn);
@@ -55722,7 +55778,11 @@ function recibirStockPedido(id, modo){
        `nr`: se suma acá y NO se le descuenta al almacén (su reporte ya no las tiene). */
     var alm=q.de || stockAlmPorDefecto(), fuente=(STOCK.g||{})[alm], hayAlla=(fuente&&fuente.u) ? Number(fuente.u[q.k]) : NaN;
     if(!(isFinite(hayAlla) && hayAlla>=resto)){
-      if(!confirm('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+resto+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.')) return;
+      if(!preguntaYa('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+resto+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.',
+          { titulo:'¿Llegaron igual?', icono:'📥', aviso:true, sub:stockNombreClave(q.k),
+            lineas:['El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+resto+': lo más probable es que se sacó DESPUÉS de retirarlas.',
+                    'Si llegaron, se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.'],
+            no:'No, no llegaron', si:'📥 Sí, llegaron' }, _otra)) return;
       sinResta=true;
     }
   }
@@ -58284,16 +58344,26 @@ function confirmarImportExist(){
   var rol=(document.getElementById('exist-rol')||{}).value||'otro';
   /* ⚠️ (26/09) Pasar a «depósito de fábrica» un almacén que NO lo es REEMPLAZA el conteo de «acá en fábrica»
      (de donde salen los camiones) por el suyo. Casi pasa con Banzer: se pregunta antes, nombrando los dos. */
+  var _otra=function(){ confirmarImportExist(); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr (lo de arriba solo lee)
   if(rol==='log' && !R.esLog && STOCK.c && STOCK.c.alm && normNombre(STOCK.c.alm)!==normNombre(R.almacen) &&
-     !confirm('⚠️ Vas a usar «'+R.almacen+'» como el DEPÓSITO DE FÁBRICA (de donde salen los camiones).\n\n'+
+     !preguntaYa('⚠️ Vas a usar «'+R.almacen+'» como el DEPÓSITO DE FÁBRICA (de donde salen los camiones).\n\n'+
               'Su conteo REEMPLAZA al de «'+STOCK.c.alm+'»'+(STOCK.c.f?(' del '+fmtFecha(STOCK.c.f)):'')+', y el panel va a creer que eso está a mano para cargar.\n\n'+
               'Si es Banzer, tocá Cancelar y elegí «🚚 Depósito del que TAMBIÉN salen camiones»: lleva su propio conteo y se carga ahí. '+
-              'Si es Moreno, elegí «📥 Almacén al que hay que ir a buscar».')) return;
+              'Si es Moreno, elegí «📥 Almacén al que hay que ir a buscar».',
+              { titulo:'¿Usar «'+R.almacen+'» como el depósito de fábrica?', icono:'⚠️', aviso:true,
+                lineas:['Es de donde salen los camiones: su conteo REEMPLAZA al de «'+STOCK.c.alm+'»'+(STOCK.c.f?(' del '+fmtFecha(STOCK.c.f)):'')+', y el panel va a creer que eso está a mano para cargar.',
+                        'Si es Banzer, elegí «🚚 Depósito del que TAMBIÉN salen camiones»: lleva su propio conteo y se carga ahí.',
+                        'Si es Moreno, elegí «📥 Almacén al que hay que ir a buscar».'],
+                no:'✏️ No, elegir otro', si:'Sí, es el depósito de fábrica' }, _otra)) return;
   /* 🚚 (26/09) «Ir a buscar» para un depósito que el dueño dijo que es de salida (Banzer): se pregunta, y si
      se confirma se RESPETA (`'trae'`): el panel vuelve a mandar a buscarlo. */
   if(rol==='otro' && existPuedeSalir(R.almacen) && ALM_SALIDA.some(function(a){ return recogerMismo(a, R.almacen); }) &&
-     !confirm('«'+R.almacen+'» es un depósito del que TAMBIÉN salen camiones (Banzer): lo suyo se carga ahí, sin ir a buscarlo.\n\n'+
-              '¿Seguro que querés tratarlo como un almacén al que hay que IR A BUSCAR? El panel va a mandar a recogerlo, como a Moreno.')) return;
+     !preguntaYa('«'+R.almacen+'» es un depósito del que TAMBIÉN salen camiones (Banzer): lo suyo se carga ahí, sin ir a buscarlo.\n\n'+
+              '¿Seguro que querés tratarlo como un almacén al que hay que IR A BUSCAR? El panel va a mandar a recogerlo, como a Moreno.',
+              { titulo:'¿Tratar «'+R.almacen+'» como un almacén al que hay que ir a buscar?', icono:'📥', aviso:true,
+                lineas:['Es un depósito del que TAMBIÉN salen camiones (Banzer): lo suyo se carga ahí, sin ir a buscarlo.',
+                        'Si seguís, el panel va a mandar a recogerlo, como a Moreno.'],
+                no:'✏️ No, elegir otro', si:'Sí, hay que ir a buscarlo' }, _otra)) return;
   /* 🧮 (§4hn) El control del corte se calcula ANTES de reemplazar el conteo (compara contra el previo) y se aplica
      DESPUÉS (las recepciones nacen sobre el conteo nuevo).
      ⛔ (06/10) Un Excel más viejo que el que ya está cargado de ese almacén NO entra (antes, con el tilde «usarlo igual»,
@@ -59531,7 +59601,21 @@ function cambiarTurno(id, turno, sinDeshacer){
 function editarDesdeCarga(id){ EDIT_DESDE='carga'; closeModal(); closeCarga(); editPedido(id); }
 function eliminarDesdeCarga(id){
   var p=findById(id); if(!p) return;
-  if(!confirm('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos'+(deshVa()?': tenés 5 segundos para deshacerlo.':' y no se puede deshacer.'))) return;
+  if(!preguntaYa('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos'+(deshVa()?': tenés 5 segundos para deshacerlo.':' y no se puede deshacer.'),
+      borrarPedidoPregO(p), function(){ eliminarDesdeCarga(id); })) return;
+  closeModal(); borrarConDeshacer(id);
+}
+/* ❓ (16/11, la 282 en todo el panel) La ventana de «¿borrar el pedido?» (la misma de `deletePedido`), para la Lista de carga y la ficha. */
+function borrarPedidoPregO(p){
+  p=p||{};
+  var pr=(p.productos||[]).map(function(x){ return String((x&&x.desc)||'').trim(); }).filter(Boolean);
+  return { icono:'🗑️', peligro:true, titulo:'¿Borrar el pedido'+(p.oc?(' '+(ocEtiq(p.oc)||p.oc)):'')+'?',
+    sub:[p.cliente||'', pr.slice(0,2).join(' · ')+(pr.length>2?(' y '+(pr.length-2)+' más'):''), p.fecha?fmtFechaCorta(p.fecha)+(p.turno?(' '+normTurno(p.turno)):''):''].filter(Boolean).join(' · '),
+    lineas:['Sale de la planilla para todo el equipo.', deshVa() ? 'Tenés 5 segundos para deshacerlo («↩️ Deshacer» abajo).' : 'No se puede deshacer.'],
+    no:'No, dejarlo', si:'🗑 Sí, borrar el pedido' };
+}
+function fichaEliminar(id){
+  if(!preguntaYa('¿Eliminar este pedido?', borrarPedidoPregO(findById(id)), function(){ fichaEliminar(id); })) return;
   closeModal(); borrarConDeshacer(id);
 }
 
@@ -60389,7 +60473,7 @@ function showPedidoModal(id){
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
-        '<button class="btn btn-ghost btn-sm fl-borrar" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();borrarConDeshacer(\''+p.id+'\');}">🗑 Eliminar</button>'+
+        '<button class="btn btn-ghost btn-sm fl-borrar" onclick="fichaEliminar(\''+p.id+'\')">🗑 Eliminar</button>'+
         '<button class="btn btn-primary fl-listo" onclick="closeModal()">✓ Listo</button>'+
       '</div>'+
     '</div>';
@@ -60881,9 +60965,11 @@ function cierreEntRpConfirmar(){
   var f=CIERRE_ENT_RP.f, t=CIERRE_ENT_RP.t;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí el día nuevo','err'); return Promise.resolve(null); }
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es el mismo día y el mismo turno','err'); return Promise.resolve(null); }
-  var av=reproAvisos(p, f, t);
-  if(av.length && !confirm('⚠️ Ojo:\n\n   • '+av.join('\n   • ')+'\n\n¿Reprogramar igual?')) return Promise.resolve(null);
-  if(!reproStockConfirmar(p, f, t)) return Promise.resolve(null);   // 📦 (19/10, §4ls CR-1) el stock: solo avisa
+  var av=reproAvisos(p, f, t), _otra=function(){ cierreEntRpConfirmar(); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr
+  if(av.length && !preguntaYa('⚠️ Ojo:\n\n   • '+av.join('\n   • ')+'\n\n¿Reprogramar igual?',
+      { titulo:'¿Reprogramar igual?', icono:'⚠️', aviso:true, sub:(ocEtiq(p.oc)||p.cliente||'Pedido')+' → '+diaSemana(f)+' '+fmtFechaCorta(f)+' · '+t, lineas:av,
+        no:'No, elegir otro día', si:'📅 Reprogramar igual' }, _otra)) return Promise.resolve(null);
+  if(!reproStockConfirmar(p, f, t, _otra)) return Promise.resolve(null);   // 📦 (19/10, §4ls CR-1) el stock: solo avisa
   if(av.length && !asegurarClaveAdmin()) return Promise.resolve(null);
   var antes={ f:p.fecha, t:normTurno(p.turno)||'' };
   delete CIERRE_ENT_SEL[String(p.id)]; delete CIERRE_ENT_DIA[String(p.id)];
@@ -64566,9 +64652,13 @@ function ubicarSinLinkMapa(){
   if(!l.length){ toast('No hay pedidos sin ubicación con una dirección para buscar.','err'); return; }
   l.sort(function(a,b){ return String(b.fecha||'').localeCompare(String(a.fecha||'')); });
   var TOPE=80, lote=l.slice(0,TOPE);
-  if(!confirm('Se van a buscar '+lote.length+' direcciones escritas en el servidor (tarda ~1 minuto cada 40).\n\n'+
+  if(!preguntaYa('Se van a buscar '+lote.length+' direcciones escritas en el servidor (tarda ~1 minuto cada 40).\n\n'+
               'Lo que encuentre queda guardado en el pedido como ubicación APROXIMADA (la cuadra, no la puerta) y aparece en el mapa.'+
-              (l.length>TOPE?('\n\nSon '+l.length+': se hacen los '+TOPE+' más nuevos; volvé a tocar para seguir.'):'')+'\n\n¿Seguimos?')) return;
+              (l.length>TOPE?('\n\nSon '+l.length+': se hacen los '+TOPE+' más nuevos; volvé a tocar para seguir.'):'')+'\n\n¿Seguimos?',
+              { titulo:'¿Buscar '+lote.length+' direcci'+(lote.length===1?'ón':'ones')+' en el servidor?', icono:'📍',
+                lineas:['Tarda ~1 minuto cada 40.', 'Lo que encuentre queda guardado en el pedido como ubicación APROXIMADA (la cuadra, no la puerta) y aparece en el mapa.',
+                        l.length>TOPE?('Son '+l.length+': se hacen los '+TOPE+' más nuevos; volvé a tocar para seguir.'):''],
+                no:'No, ahora no', si:'📍 Sí, buscarlas' }, function(){ ubicarSinLinkMapa(); })) return;
   var bu=document.getElementById('mapa-ubicar'); if(bu) bu.disabled=true;
   ubicarPorDireccion(lote, function(r){
     if(bu) bu.disabled=false;
@@ -64812,9 +64902,12 @@ function fijablesRev(){
 function fijarUbicRev(){
   var lista=fijablesRev();
   if(!lista.length) return;
-  if(!confirm('Se van a guardar '+lista.length+' ubicaciones dentro de los pedidos.\n\n'+
+  if(!preguntaYa('Se van a guardar '+lista.length+' ubicaciones dentro de los pedidos.\n\n'+
               'El enlace corto se reemplaza por las coordenadas exactas: quedan para siempre, '+
-              'las ve cualquier dispositivo y ya no dependen de que el enlace siga funcionando.\n\n¿Seguimos?')) return;
+              'las ve cualquier dispositivo y ya no dependen de que el enlace siga funcionando.\n\n¿Seguimos?',
+              { titulo:'¿Guardar '+lista.length+' ubicaci'+(lista.length===1?'ón':'ones')+' dentro de los pedidos?', icono:'📌',
+                lineas:['El enlace corto se reemplaza por las coordenadas exactas.', 'Quedan para siempre, las ve cualquier dispositivo y ya no dependen de que el enlace siga funcionando.'],
+                no:'No, ahora no', si:'📌 Sí, guardarlas' }, function(){ fijarUbicRev(); })) return;
   lista.forEach(function(x){
     x.p.maps='https://www.google.com/maps?q='+x.g.lat+','+x.g.lng;
     MAPA_COORDS[x.p.maps]={lat:x.g.lat, lng:x.g.lng};
@@ -68519,8 +68612,12 @@ function fdNoSePidio(id){
   var q=fdQ(id); if(!q || q.r){ toast('Ese pedido ya no está abierto.','err'); fdRepintar(); return; }
   var lleg=0; (Array.isArray(q.recs) ? q.recs : []).forEach(function(r){ if(r && !r.an) lleg+=Math.round(Number(r.u)||0); });
   if(!lleg) lleg=Math.round(Number(q.ru)||0);
-  if(!confirm('¿Seguro que no se pidió a la fábrica?\n\n'+stockNombreClave(q.k)+': '+(lleg?('lo que falta ('+stockUnid(q.u)+') se saca; lo que ya llegó ('+stockUnid(lleg)+') queda.'):('el «Ya pedí '+stockUnid(q.u)+'» del '+fmtFechaCorta(q.f)+' se saca de la lista.'))+
-              '\n\nSi hace falta, el panel lo vuelve a pedir.')) return;
+  if(!preguntaYa('¿Seguro que no se pidió a la fábrica?\n\n'+stockNombreClave(q.k)+': '+(lleg?('lo que falta ('+stockUnid(q.u)+') se saca; lo que ya llegó ('+stockUnid(lleg)+') queda.'):('el «Ya pedí '+stockUnid(q.u)+'» del '+fmtFechaCorta(q.f)+' se saca de la lista.'))+
+              '\n\nSi hace falta, el panel lo vuelve a pedir.',
+              { titulo:'¿Seguro que no se pidió a la fábrica?', icono:'🏭', sub:stockNombreClave(q.k),
+                lineas:[lleg?('Lo que falta ('+stockUnid(q.u)+') se saca; lo que ya llegó ('+stockUnid(lleg)+') queda.'):('El «Ya pedí '+stockUnid(q.u)+'» del '+fmtFechaCorta(q.f)+' se saca de la lista.'),
+                        'Si hace falta, el panel lo vuelve a pedir.'],
+                no:'No, sí se pidió', si:'Sí, no se pidió' }, function(){ fdNoSePidio(id); })) return;
   /* Con algo llegado se cierra en lo que llegó (lo pedido pasa a ser eso); sin nada, se saca como «destildar» (`planYaPedi`). */
   if(lleg>0){ stockRecsDe(q); q.total=lleg; stockNormalizarRecepciones(STOCK); }
   else STOCK.p=(STOCK.p||[]).filter(function(x){ return !(x && String(x.id)===String(id)); });
@@ -68547,7 +68644,10 @@ function fdProdLlego(arg){
 }
 function fdProdNoSePidio(arg){
   var R=fdRenglon(arg); if(!R || !enProduccionPendiente(R.x)){ toast('Ese renglón ya no está en producción.','err'); fdRepintar(); return; }
-  if(!confirm('¿Seguro que no se mandó a fabricar?\n\nA '+ocEtiq(R.p.oc)+' se le saca el 🏭 de '+stockNombreClave(stockClave(R.x))+'.')) return;
+  if(!preguntaYa('¿Seguro que no se mandó a fabricar?\n\nA '+ocEtiq(R.p.oc)+' se le saca el 🏭 de '+stockNombreClave(stockClave(R.x))+'.',
+      { titulo:'¿Seguro que no se mandó a fabricar?', icono:'🏭', sub:ocEtiq(R.p.oc)+(R.p.cliente?(' · '+R.p.cliente):''),
+        lineas:['A '+ocEtiq(R.p.oc)+' se le saca el 🏭 de '+stockNombreClave(stockClave(R.x))+'.'],
+        no:'No, sí se mandó', si:'Sí, sacarle el 🏭' }, function(){ fdProdNoSePidio(arg); })) return;
   prodQuitarProduccion(R.x);
   syncVerificado(R.p, true); upsert(R.p); saveMirror(); guardarDurable(R.p);
   stockOlvidarIndice(); fdRepintar(); try{ renderAdmin(); }catch(e){}
@@ -69192,9 +69292,15 @@ function verDespues(){ if(VER.nueva) VER.despues[VER.nueva]=Date.now()+VER_DESPU
 function verRecargar(){
   var b=document.getElementById('f-submit');
   if(b && b.disabled){ toast('Hay un pedido enviándose: esperá a que termine y después recargá.','err',7000); return false; }
-  var medio=(!EDIT_ID && FORM_NUEVO_BASE && formNuevoHuella()!==FORM_NUEVO_BASE);
-  if(medio && !confirm('Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: recargar igual (se pierde lo escrito).\nCancelar: seguir con el pedido; recargá después de guardarlo.')) return false;
-  if(EDIT_ID && !confirm('Estás corrigiendo un pedido y todavía no lo guardaste.\n\nAceptar: recargar igual (se pierden los cambios sin guardar).\nCancelar: seguir; recargá después de guardar.')) return false;
+  var medio=(!EDIT_ID && FORM_NUEVO_BASE && formNuevoHuella()!==FORM_NUEVO_BASE), _otra=function(){ verRecargar(); };   // ❓ (16/11) la ventana del panel
+  if(medio && !preguntaYa('Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: recargar igual (se pierde lo escrito).\nCancelar: seguir con el pedido; recargá después de guardarlo.',
+      { titulo:'Tenés un pedido NUEVO a medio llenar y sin guardar', icono:'✏️', aviso:true,
+        lineas:['Si recargás ahora, se pierde lo escrito.', 'Si no, seguí con el pedido y recargá después de guardarlo.'],
+        no:'✏️ Seguir con el pedido', si:'🔄 Recargar igual' }, _otra)) return false;
+  if(EDIT_ID && !preguntaYa('Estás corrigiendo un pedido y todavía no lo guardaste.\n\nAceptar: recargar igual (se pierden los cambios sin guardar).\nCancelar: seguir; recargá después de guardar.',
+      { titulo:'Estás corrigiendo un pedido y todavía no lo guardaste', icono:'✏️', aviso:true,
+        lineas:['Si recargás ahora, se pierden los cambios sin guardar.', 'Si no, seguí y recargá después de guardar.'],
+        no:'✏️ Seguir corrigiendo', si:'🔄 Recargar igual' }, _otra)) return false;
   var q=location.search.replace(/^\?/,'').split('&').filter(function(x){ return x && !/^nv=/.test(x); });
   q.push('nv='+encodeURIComponent(VER.nueva||PANEL_V));
   location.href=location.pathname+'?'+q.join('&')+location.hash;
@@ -70246,7 +70352,9 @@ function waRespUbicHtml(r){
 function waRespUsarUbic(w){
   var r=(WA_RESP||[]).filter(function(x){ return x && x.w===w; })[0], u=r && r.ubi, p=u && u.id ? findById(u.id) : null;
   if(!p || !u.link){ toast('No encuentro ese pedido: abrilo y cambiá la ubicación a mano.','err'); return; }
-  if(String(p.maps||'').trim() && !confirm('¿Cambiar la ubicación de '+(p.cliente||'este pedido')+' por la que mandó el cliente por WhatsApp?\n\nLa de ahora: '+p.maps+'\nLa nueva: '+u.link)) return;
+  if(String(p.maps||'').trim() && !preguntaYa('¿Cambiar la ubicación de '+(p.cliente||'este pedido')+' por la que mandó el cliente por WhatsApp?\n\nLa de ahora: '+p.maps+'\nLa nueva: '+u.link,
+      { titulo:'¿Cambiar la ubicación de '+(p.cliente||'este pedido')+'?', icono:'📍', sub:'Por la que mandó el cliente por WhatsApp',
+        lineas:['La de ahora: '+p.maps, 'La nueva: '+u.link], no:'No, dejar la de ahora', si:'📍 Usar la nueva' }, function(){ waRespUsarUbic(w); })) return;
   guardarUbicacion(p, u.link, null, !UNLOCKED && !!getVendedorMem() && mismoVendedor(getVendedorMem(), p.vendedor));
   try{ waRespPintar(); }catch(e){}
 }
@@ -70448,9 +70556,11 @@ function rdMover(k){
   var e=rdEstado(r);
   if(e.k!=='ok'){ toast('Ya no hace falta moverlo: '+e.t+'.', 'err'); rdDespues(r.id); return; }
   if(!rdServidorOk()){ toast('El servidor todavía no tiene esto: movelo con 📅 Reprogramar.', 'err'); return; }
-  var p=e.p, f=r.f, t=r.t, avisos=reproAvisos(p, f, t);
-  if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Mover igual al '+fmtFecha(f)+' · '+t+'?')) return;
-  if(!reproStockConfirmar(p, f, t)) return;              // 📦 solo si es antes del día que tenía (§4ls CR-1)
+  var p=e.p, f=r.f, t=r.t, avisos=reproAvisos(p, f, t), _otra=function(){ rdMover(k); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr
+  if(avisos.length && !preguntaYa('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Mover igual al '+fmtFecha(f)+' · '+t+'?',
+      { titulo:'¿Mover igual al '+fmtFecha(f)+' · '+t+'?', icono:'⚠️', aviso:true, sub:(p.cliente||''), lineas:avisos,
+        no:'No, dejarlo', si:'📅 Mover igual' }, _otra)) return;
+  if(!reproStockConfirmar(p, f, t, _otra)) return;              // 📦 solo si es antes del día que tenía (§4ls CR-1)
   if(avisos.length && !asegurarClaveAdmin()) return;     // 🛡️ forzar pide la clave (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+normTurno(p.turno), cli=p.cliente||'el cliente', pr;
   RD_HECHOS[k]=1; rdPintarTodo();
@@ -72289,11 +72399,18 @@ function ctaAvArrPregunta(p, x, f){
       (antes.slice(0,7)!==f.f.slice(0,7) ? (' (pasa de '+mesNombre(antes)+' a '+mesNombre(f.f)+')') : '')+'; lo cobrado el día de la carga va con ella.'+reg+'\n\n¿Pasarla?'; }
   return '';
 }
+/* ❓ (16/11) La misma pregunta en la ventana del panel: el título y los renglones salen del texto; el «¿Partirlo?» del final va al botón. */
+function ctaAvArrPregO(q){
+  var o=pregDeTexto(q), u=o.lineas.length ? o.lineas[o.lineas.length-1] : '', m=u.match(/^¿(.+)\?$/);
+  if(m){ o.lineas.pop(); o.si='✓ Sí, '+m[1].charAt(0).toLowerCase()+m[1].slice(1); }
+  o.no='No, dejarlo como está';
+  return o;
+}
 /* Un toque: pregunta, arregla el pago y, con el «sí» de la planilla, cierra el aviso (y cualquier otro abierto del mismo pago). */
 function ctaAvArreglar(avId, pid, key, f, origen, v){
   var p=findById(pid), x=p ? compsPagosDe(p).filter(function(y){ return ctaAvClave(y)===key; })[0] : null;
   if(!x){ toast('Ese pago cambió desde el aviso: abrí la venta y miralo.','err',7000); ctaAvRepintar(); return Promise.resolve(false); }
-  var q=ctaAvArrPregunta(p, x, f); if(!q || !confirm(q)) return Promise.resolve(false);
+  var q=ctaAvArrPregunta(p, x, f); if(!q || !preguntaYa(q, ctaAvArrPregO(q), function(){ ctaAvArreglar(avId, pid, key, f, origen, v); })) return Promise.resolve(false);
   var label=ctaAvArrTxt(x, f).replace(/^\S+\s/,'').replace(/^./, function(s){ return s.toLowerCase(); });
   var pr=ctaAvAplicar(p, x, f); if(!pr || !pr.then){ ctaAvRepintar(); return Promise.resolve(false); }
   var quien=ctaAvQuien(v, origen);
@@ -72327,8 +72444,12 @@ function ctaAvTiendaTodasHtml(L, v){
 }
 function ctaAvTiendaTodas(v){
   var T=ctaAvTiendaLista(ctaAvAbiertos(v)); if(!T.length) return Promise.resolve(0);
-  if(!confirm('📅 Pasar estas '+T.length+' ventas de tienda al día de la foto de su pago:\n\n'+T.map(function(t){ return '· '+(t.a.cli||'')+(t.a.nota?(' · nota '+t.a.nota):'')+': '+fmtFechaCorta(contaFecha(t.x.p))+' → '+fmtFechaCorta(t.f.f); }).join('\n')+
-    '\n\nCada una cuenta ese día en Contabilidad y Proyección, y lo cobrado el día de la carga va con ella.\n\n¿Pasarlas?')) return Promise.resolve(0);
+  if(!preguntaYa('📅 Pasar estas '+T.length+' ventas de tienda al día de la foto de su pago:\n\n'+T.map(function(t){ return '· '+(t.a.cli||'')+(t.a.nota?(' · nota '+t.a.nota):'')+': '+fmtFechaCorta(contaFecha(t.x.p))+' → '+fmtFechaCorta(t.f.f); }).join('\n')+
+    '\n\nCada una cuenta ese día en Contabilidad y Proyección, y lo cobrado el día de la carga va con ella.\n\n¿Pasarlas?',
+    { titulo:'¿Pasar estas '+T.length+' ventas de tienda al día de la foto de su pago?', icono:'📅',
+      lineas:T.map(function(t){ return (t.a.cli||'')+(t.a.nota?(' · nota '+t.a.nota):'')+': '+fmtFechaCorta(contaFecha(t.x.p))+' → '+fmtFechaCorta(t.f.f); })
+        .concat(['Cada una cuenta ese día en Contabilidad y Proyección, y lo cobrado el día de la carga va con ella.']),
+      no:'No, dejarlas', si:'📅 Sí, pasarlas' }, function(){ ctaAvTiendaTodas(v); })) return Promise.resolve(0);
   var quien=ctaAvQuien(v, 'av'), proms=T.map(function(t){
     var pr=ctaAvMoverTienda(t.x.p, t.f.f);
     return pr ? pr.then(function(res){ return (res && res.ok) ? { id:t.a.id, ok:Date.now(), okPor:quien, okArr:'pasó la venta al '+fmtFechaCorta(t.f.f) } : null; }, function(){ return null; }) : Promise.resolve(null);
@@ -73934,7 +74055,10 @@ function cajaCerrar(dia, t){
   var av=[];
   if(D.F.n) av.push(D.F.n+' cosa'+(D.F.n===1?'':'s')+' en rojo en «Lo que falta»');
   if(D.A.difCierre!=null && Math.abs(D.A.difCierre)>0.005) av.push((D.A.difCierre<0?'faltan ':'sobran ')+fmtBs(Math.abs(D.A.difCierre))+' en la caja');
-  if(!confirm('¿Cerrar la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?'+(av.length?('\n\nOjo: '+av.join(' y ')+'.'):'')+'\n\nDespués, cambiar lo contado o los tildes de ese día pide la contraseña de Administración.')) return;
+  if(!preguntaYa('¿Cerrar la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?'+(av.length?('\n\nOjo: '+av.join(' y ')+'.'):'')+'\n\nDespués, cambiar lo contado o los tildes de ese día pide la contraseña de Administración.',
+      { titulo:'¿Cerrar la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?', icono:'🔒', aviso:av.length>0,
+        lineas:[av.length?('Ojo: '+av.join(' y ')+'.'):'', 'Después, cambiar lo contado o los tildes de ese día pide la contraseña de Administración.'],
+        no:'No, todavía no', si:'🔒 Sí, cerrar la caja' }, function(){ cajaCerrar(dia, t); })) return;   // ❓ (16/11) lo contado ya quedó anotado arriba: repetirlo no cambia nada
   CAJA_CAMBIOS[cajaK(cajaDk(dia, t), 'cerr', [Date.now(), quienEdita()||''])]=true;
   CAJA_VER++; cajaGuardar(); cajaPintar();
   cajaExcel(dia, t);
@@ -73943,7 +74067,9 @@ function cajaCerrar(dia, t){
 function cajaReabrir(dia, t){
   if(cajaServidorFrena()) return;
   if(!cajaClavePuede()){ toast('🔑 Reabrir una caja cerrada pide la contraseña de Administración.','err'); return; }
-  if(!confirm('¿Reabrir la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?')) return;
+  if(!preguntaYa('¿Reabrir la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?',
+      { titulo:'¿Reabrir la caja de '+cajaNombre(t)+' del '+fmtFecha(dia)+'?', icono:'🔓', lineas:['Se puede volver a cambiar lo contado y los tildes de ese día.'],
+        no:'No, dejarla cerrada', si:'🔓 Sí, reabrirla' }, function(){ cajaReabrir(dia, t); })) return;
   var dk=cajaDk(dia, t), S=cajaSet();
   Object.keys(S).forEach(function(k){ var x=cajaLeerClave(k); if(x && x.dk===dk && x.campo==='cerr') CAJA_CAMBIOS[k]=false; });
   CAJA_VER++; cajaGuardar(); cajaPintar();
@@ -74198,9 +74324,10 @@ function cupxServidorViejoTxt(fecha, turno){
     'para que el extra valga, implementá el servidor 2026-11-14-b (mientras tanto, administración puede forzar el pedido con la clave)';
 }
 function cupxPuede(){ return !!UNLOCKED || CUPX_CLAVE_OK; }
-function cupxClave(){
+function cupxClave(otraVez){
   if(cupxPuede()) return true;
-  var c=prompt('Abrir cupos pide la contraseña de Administración:',''); if(c==null) return false;
+  var c=preguntaTextoYa('Abrir cupos pide la contraseña de Administración:','',
+    { titulo:'Abrir cupos pide la contraseña de Administración', icono:'🔑', campoAyuda:'La contraseña', no:'Cancelar', si:'🔓 Seguir' }, otraVez); if(c==null) return false;   // ❓ (16/11) `otraVez` = abrir de nuevo al contestar
   var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
   if(sha256(String(c||''))===stored){ CUPX_CLAVE_OK=true; return true; }
   toast('Esa no es la contraseña de Administración.','err'); return false;
@@ -74225,7 +74352,7 @@ function cupxVerHtml(fecha, turno){
 }
 /* ---- la ventana «➕ Abrir cupos» ---- */
 function cupxAbrir(fecha, turno){
-  if(!cupxClave()) return;
+  if(!cupxClave(function(){ cupxAbrir(fecha, turno); })) return;
   var t=normTurno(turno), b=limTurnoBase(fecha, t);
   if(b<=0){ toast('🚫 Ese turno no sale (domingo, feriado o la tarde del sábado): no se le pueden abrir cupos.','err'); return; }
   var ya=cupxExtra(fecha, t), pr=cupPronDe(fecha, t, true), u=cuposUsadosTurno(fecha, t);
@@ -78611,7 +78738,10 @@ function mallAccion(que, i, m, medida){
   if(que==='miro'){ mallTocar(abierta ? 'fin' : 'miro', v, { r:abierta ? 'miro' : '', m:m||'', medida:medida||'' }); return; }
   if(que==='anoto'){ mallTocar('fin', v, { r:'anoto' }); return; }
   if(que==='mefui'){
-    if(!confirm('👋 ¿'+v+' se va?\n\nSale de la rueda'+(abierta ? ' cuando termine con el cliente que está atendiendo' : '')+'. Si vuelve, toca «Llegué» y entra al final.')) return;
+    if(!preguntaYa('👋 ¿'+v+' se va?\n\nSale de la rueda'+(abierta ? ' cuando termine con el cliente que está atendiendo' : '')+'. Si vuelve, toca «Llegué» y entra al final.',
+        { titulo:'¿'+v+' se va?', icono:'👋', lineas:['Sale de la rueda'+(abierta ? ' cuando termine con el cliente que está atendiendo' : '')+'.', 'Si vuelve, toca «Llegué» y entra al final.'],
+          no:'No, se queda', si:'👋 Sí, se va' },
+        function(){ var j=(MALL.vs||[]).indexOf(v); if(j>=0) mallAccion(que, j, m, medida); })) return;   // ❓ (16/11) por el nombre: la barra se repinta cada 5 s
     var T=f ? f.turno : '';
     if(!mallTocar('mefui', v)) return;
     /* ¿Terminó el turno? (no queda nadie de ese turno en la rueda): «¿Fue parejo?» */
@@ -80576,7 +80706,9 @@ function pqsHtml(){
 }
 function pqsArmar(otra){
   if(PQS.armando || !pqsVe()) return;
-  if(otra && !confirm('Claude la vuelve a armar con los números de ahora (cuesta unos centavos de dólar). ¿Seguimos?')) return;
+  if(otra && !preguntaYa('Claude la vuelve a armar con los números de ahora (cuesta unos centavos de dólar). ¿Seguimos?',
+      { titulo:'¿Que Claude la vuelva a armar?', icono:'🤖', lineas:['La arma con los números de ahora.', 'Cuesta unos centavos de dólar.'],
+        no:'No, dejar la de antes', si:'🤖 Sí, armarla de nuevo' }, function(){ pqsArmar(otra); })) return;
   PQS.armando=true; PQS.msg=''; pqsRepintar();
   conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'iaPorque', otra:otra ? 1 : 0 }); }), PQS_CLAUDE_MS, 'tardo_claude')
     .then(function(r){
@@ -80676,7 +80808,9 @@ function mnoHtml(){
 }
 function mnoPedir(otra){
   if(MNO.pidiendo || !pqsVe()) return;
-  if(otra && !confirm('Claude la vuelve a armar con lo de ahora (cuesta unos centavos de dólar). Lo que marcaste «Ya hablé» se conserva. ¿Seguimos?')) return;
+  if(otra && !preguntaYa('Claude la vuelve a armar con lo de ahora (cuesta unos centavos de dólar). Lo que marcaste «Ya hablé» se conserva. ¿Seguimos?',
+      { titulo:'¿Que Claude la vuelva a armar?', icono:'🤖', lineas:['La arma con lo de ahora.', 'Cuesta unos centavos de dólar.', 'Lo que marcaste «Ya hablé» se conserva.'],
+        no:'No, dejar la de antes', si:'🤖 Sí, armarla de nuevo' }, function(){ mnoPedir(otra); })) return;
   var sem=mnoSemana(), datos=[];
   try{ datos=mnoDatos(sem); }catch(e){ MNO.msg='No se pudo juntar lo de cada persona ('+String((e && e.message) || e)+').'; pqsRepintar(); return; }
   if(!datos.length){ MNO.msg='No hay vendedoras del equipo para mirar.'; pqsRepintar(); return; }
