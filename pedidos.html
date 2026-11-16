@@ -5177,6 +5177,22 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .fd-btn{ min-height:30px; padding:2px 9px; font-size:.76rem; background:#fff; border:1px solid var(--gray-md); color:#1b2a2b; font-weight:700; }
 .fd-mas{ margin-top:6px; }
 #pap-overlay .fd-caja{ margin:0 0 12px; }
+/* 🏭🎧 (16/11, mejora 368) En Stock, lo de la fábrica y las ATC en fábrica en un renglón cada uno, plegados. */
+.fd-caja.fd-plg{ padding:7px 10px 7px 12px; margin-bottom:8px; }
+.fd-caja.fd-plg.fd-vacia{ padding:9px 12px; }
+.fd-plg-atc{ border-left-color:#be185d; }
+.fd-plg-sum{ list-style:none; flex-wrap:nowrap; align-items:center; gap:8px 12px; }
+.fd-plg-sum::-webkit-details-marker{ display:none; }
+.fd-plg-t{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }
+.fd-plg-t > b{ font-size:.98rem; color:#1b2a2b; } .fd-plg-t > span{ color:var(--muted); font-size:.8rem; }
+.fd-plg-bt{ flex:none; display:flex; align-items:center; gap:6px; }
+.fd-plg-bt .fd-copiar{ margin-left:0; min-height:32px; padding:3px 10px; font-size:.76rem; white-space:nowrap; }
+.fd-plg-ver{ display:inline-flex; align-items:center; min-height:32px; padding:3px 11px; border-radius:8px; border:1px solid var(--teal-border,#9fd9d4); background:#f2fbfa; color:#0f766e; font-weight:800; font-size:.78rem; white-space:nowrap; }
+.fd-plg-ver::after{ content:'Ver ▾'; }
+details[open] > summary .fd-plg-ver::after{ content:'Ocultar ▴'; }
+.fd-plg[open] > .fd-plg-sum{ border-bottom:1px solid #eef2f3; padding-bottom:7px; margin-bottom:4px; }
+.fd-plg-atc .fd-atc{ border-top:0; margin-top:0; padding-top:2px; } .fd-plg-atc .fd-atc > .fd-fcab{ display:none; }
+@media (max-width:700px){ .fd-plg-sum{ flex-wrap:wrap; } .fd-plg-bt{ width:100%; justify-content:flex-end; } }
 @media (max-width:820px){
   .fd-th{ display:none; }
   .fd-fila{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:3px 10px; }
@@ -62162,6 +62178,7 @@ function fdProdHtml(pr){
 function fdToggle(el){ var k=el && el.getAttribute('data-key'); if(!k) return; if(el.open) FD_ABIERTO[k]=1; else delete FD_ABIERTO[k]; }
 function fdHtml(donde){
   var L=fdLista(), id = donde==='pap' ? 'fd-caja-pap' : 'fd-caja';
+  if(donde!=='pap' && fdPlgVa()){ try{ return fdPlgHtml(L, id); }catch(e){} }   // 🏭🎧 (16/11, mejora 368) en Stock, dos renglones plegados
   var _atc=''; try{ _atc=fdAtcHtml(); }catch(e){ _atc=''; }   // 🎧 (15/11, mejora 318) las ATC que esperan en fábrica
   if(!L.length) return '<div class="fd-caja fd-vacia" id="'+id+'">🏭 <b>Lo que nos debe la fábrica:</b> nada. Todo lo marcado «✓ Ya pedí» o 🏭 ya llegó.</div>'+(_atc ? ('<div class="fd-caja fd-atc-sola">'+_atc+'</div>') : '');
   var nP=0, nU=0, nA=0;
@@ -62170,13 +62187,14 @@ function fdHtml(donde){
   var h='<details class="fd-caja" id="'+id+'"'+(ab?' open':'')+' ontoggle="visPrefSet(\'fdDebe\',this.open)">'+
     '<summary class="fd-sum"><b>🏭 Lo que nos debe la fábrica</b><span>'+(nP ? (nP+' producto'+(nP===1?'':'s')+' · faltan '+stockUnid(nU)+' unidad'+(nU===1?'':'es')) : 'todo llegó')+
       (nA?(' · <b class="fd-rojo">'+nA+' atrasado'+(nA===1?'':'s')+'</b>'):'')+'</span></summary>'+
-    '<p class="fd-ley">Cada «✓ Ya pedí» y cada pedido de cliente mandado a fabricar (🏭), hasta que llega. Al subir los Excel del día, lo que '+
-      'entró en los tres almacenes juntos (PTF, Banzer y Moreno; un pase de un almacén a otro no cuenta) lo cierra solo, empezando por lo más viejo. '+
-      'Con el primer Excel del día también repasa los días que no se miraron (la hoja «Historial stock»). '+
-      'Tocá un producto para ver cada pedido.</p>';
-  L.forEach(function(g){
+    fdLeyHtml();
+  h+=L.map(fdFabSecHtml).join('');
+  return h+_atc+'</details>';
+}
+/* Una fábrica: su cabecera (con «📋 Copiar el reclamo») y sus productos. La usan la caja de siempre y la plegada (mejora 368). */
+function fdFabSecHtml(g){
     var falta=0, atr=0; g.prods.forEach(function(pr){ falta+=pr.falta; if(pr.falta>0 && pr.atraso>0) atr++; });
-    h+='<section class="fd-fab"><div class="fd-fcab"><b>'+g.info.ico+' '+esc(g.info.nombre)+'</b><span>'+(falta ? ('faltan '+stockUnid(falta)) : 'todo llegó')+
+    return '<section class="fd-fab"><div class="fd-fcab"><b>'+g.info.ico+' '+esc(g.info.nombre)+'</b><span>'+(falta ? ('faltan '+stockUnid(falta)) : 'todo llegó')+
         (atr?(' · <b class="fd-rojo">'+atr+' atrasado'+(atr===1?'':'s')+'</b>'):'')+'</span>'+
         ((atr && g.fab!=='?') ? ('<button type="button" class="btn btn-sm fd-copiar" data-fab="'+esc(g.fab)+'" onclick="fdCopiarReclamo(this.getAttribute(\'data-fab\'))">📋 Copiar el reclamo para '+esc(g.info.corto)+'</button>') : '')+'</div>'+
       (g.fab==='?' ? '<p class="fd-ley fd-que">No está en la lista de precios ni en ningún Excel de los almacenes (un texto suelto, un nombre mal escrito o algo que no se sabe qué es): el Excel no lo puede cerrar solo y no se le reclama a ninguna fábrica. Revisá qué es: si llegó, «✓ Llegó»; si no se pidió, «✕ No se pidió».</p>' : '')+
@@ -62184,9 +62202,57 @@ function fdHtml(donde){
       g.prods.slice(0, FD_TODOS[g.fab] ? g.prods.length : FD_TOPE).map(fdProdHtml).join('')+'</div>'+
       (g.prods.length>FD_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm fd-mas" data-fab="'+esc(g.fab)+'" onclick="fdVerTodos(this.getAttribute(\'data-fab\'))">'+
         (FD_TODOS[g.fab] ? ('🙈 Ver solo los primeros '+FD_TOPE) : ('👁️ Ver los '+(g.prods.length-FD_TOPE)+' que siguen'))+'</button>') : '')+'</section>';
-  });
-  return h+_atc+'</details>';
 }
+/* ============================================================================
+   🏭🎧 STOCK: EL PLAN PRIMERO, LO DE LA FÁBRICA EN UNA LÍNEA (16/11, mejora 368; dueño la eligió).
+   Al abrir Stock el «📋 Plan de stock» empezaba a ~3.500 px: antes iban «Lo que nos debe la fábrica» (2.600 px, abierto) y las ATC en fábrica.
+   Ahora son DOS renglones plegados arriba del Plan, con el resumen que ya calcula `fdLista` (unidades que faltan, atrasados, el más viejo)
+   y `atcFabEsperan` (cuántas y la más vieja); «Ver» los abre ahí mismo, enteros como antes, y cada compu recuerda si los dejó abiertos
+   (`visPref` 'fdPlg' / 'fdAtcPlg'). «📋 Reclamo …» copia el MISMO reclamo de siempre (`fdCopiarReclamo`). No cambia ninguna cuenta.
+   Solo en Stock («Pedido a producción» sigue igual). En Playwright como antes salvo `window.FD_PLEGADO_PRUEBA`. `tests/test_fd_plegado.js`.
+   ========================================================================== */
+function fdPlgVa(){ try{ return vdVa('FD_PLEGADO_PRUEBA'); }catch(e){ return false; } }
+function fdPlgResumen(L){
+  var r={ nP:0, nU:0, nA:0, viejo:0, recl:[] };
+  (L||[]).forEach(function(g){
+    var atr=0;
+    g.prods.forEach(function(pr){ if(pr.falta>0){ r.nP++; r.nU+=pr.falta; if(pr.atraso>0){ r.nA++; atr++; if(pr.atraso>r.viejo) r.viejo=pr.atraso; } } });
+    if(atr && g.fab!=='?') r.recl.push(g);
+  });
+  return r;
+}
+function fdPlgVerHtml(){ return '<span class="fd-plg-ver" aria-hidden="true"></span>'; }
+function fdPlgHtml(L, id){
+  var h='', A=[]; try{ A=atcFabEsperan(); }catch(e){ A=[]; }
+  if(!L.length){
+    h+='<div class="fd-caja fd-vacia fd-plg" id="'+id+'">🏭 <b>Lo que nos debe la fábrica:</b> nada. Todo lo marcado «✓ Ya pedí» o 🏭 ya llegó.</div>';
+  } else {
+    var R=fdPlgResumen(L), ab=visPref('fdPlg', false);
+    var tit = R.nU ? ('🏭 La fábrica nos debe '+stockUnid(R.nU)+' unidad'+(R.nU===1?'':'es')) : '🏭 Lo que nos debe la fábrica: todo llegó';
+    var sub = R.nU ? (R.nP+' producto'+(R.nP===1?'':'s')+(R.nA ? (' · <b class="fd-rojo">'+R.nA+' atrasado'+(R.nA===1?'':'s')+'</b> (el más viejo, '+R.viejo+' día'+(R.viejo===1?'':'s')+')') : ' · nada atrasado')) : 'nada pendiente';
+    h+='<details class="fd-caja fd-plg" id="'+id+'"'+(ab?' open':'')+' ontoggle="visPrefSet(\'fdPlg\',this.open)">'+
+      '<summary class="fd-sum fd-plg-sum"><span class="fd-plg-t"><b>'+tit+'</b><span>'+sub+'</span></span><span class="fd-plg-bt">'+
+        R.recl.map(function(g){ return '<button type="button" class="btn btn-sm fd-copiar fd-plg-rec" data-fab="'+esc(g.fab)+'" title="Copia el reclamo de lo atrasado para '+esc(g.info.nombre)+', para mandarlo por WhatsApp." onclick="event.preventDefault();event.stopPropagation();fdCopiarReclamo(this.getAttribute(\'data-fab\'))">📋 Reclamo '+esc(g.info.corto)+'</button>'; }).join('')+
+        fdPlgVerHtml()+'</span></summary>'+
+      fdLeyHtml()+L.map(fdFabSecHtml).join('')+'</details>';
+  }
+  if(A.length){
+    var abA=visPref('fdAtcPlg', false), vieja=A[0].d;
+    h+='<details class="fd-caja fd-plg fd-plg-atc" id="fd-atc-caja"'+(abA?' open':'')+' ontoggle="visPrefSet(\'fdAtcPlg\',this.open)">'+
+      '<summary class="fd-sum fd-plg-sum"><span class="fd-plg-t"><b>🎧 '+A.length+' ATC en fábrica hace +'+ATC_FAB_DIAS+' días</b><span>'+(A.length===1?'hace ':'la más vieja, ')+vieja+' días</span></span>'+
+        '<span class="fd-plg-bt">'+fdPlgVerHtml()+'</span></summary>'+fdAtcHtml()+'</details>';
+  }
+  return h;
+}
+/* La explicación de la caja (la misma de siempre): con «ⓘ Cómo funciona» (mejora 377) si está prendido. */
+function fdLeyHtml(){
+  var t='Cada «✓ Ya pedí» y cada pedido de cliente mandado a fabricar (🏭), hasta que llega. Al subir los Excel del día, lo que '+
+      'entró en los tres almacenes juntos (PTF, Banzer y Moreno; un pase de un almacén a otro no cuenta) lo cierra solo, empezando por lo más viejo. '+
+      'Con el primer Excel del día también repasa los días que no se miraron (la hoja «Historial stock»). '+
+      'Tocá un producto para ver cada pedido.';
+  return '<p class="fd-ley">'+t+'</p>';
+}
+/* fin mejora 368 */
 function fdVerTodos(fab){ fab=String(fab||''); if(FD_TODOS[fab]) delete FD_TODOS[fab]; else FD_TODOS[fab]=1; fdRepintar(); }
 /* Se redibuja donde esté a la vista: la pantalla de Stock y la ventana «Pedido a producción». */
 function fdRepintar(){
