@@ -1,11 +1,12 @@
-/* 🚚🧾 PROYECCIÓN → «POR VENDEDOR»: LO ENTREGADO, LO QUE FALTA ENTREGAR Y LO QUE FALTA FACTURAR (16/11/2026; dueño, con la captura de la
-   lista: «ahí debería mostrar lo ya entregado y lo pendiente por entregar/facturar, en ese espacio en blanco… para entender su total»).
+/* ✅⏳ PROYECCIÓN → «POR VENDEDOR»: LO ENTREGADO O FACTURADO Y LO PENDIENTE (16/11/2026; dueño, con la captura de la lista: «ahí debería mostrar
+   lo ya entregado y lo pendiente por entregar/facturar, en ese espacio en blanco… para entender su total», y «dijimos que ENTREGADO ES
+   FACTURADO… eso confunde»).
 
    LO QUE ESTA PRUEBA CUIDA
    1. Sin la bandera (`PRY_ENT_PRUEBA`): nada nuevo en la fila.
-   2. Con la bandera, en cada vendedor: «✅ Entregado Bs X · N» (✅ del cierre de entregas o venta de tienda) + «🚚 Por entregar Bs Y · M»
-      = lo vendido de la fila (las MISMAS ventas: el mismo mes y el mismo vendedor), con cuántas ya debían salir sin ✅; «🧾 Por facturar
-      Bs Z · K» (sin factura ni remisión) o «Todo facturado o con remisión»; la barrita de dos colores con el % entregado.
+   2. Con la bandera, en cada vendedor: «✅ Entregado o facturado Bs X · N» (✅ del cierre de entregas, venta de tienda, o factura / remisión
+      anotada con su N°) + «⏳ Pendiente Bs Y · M» = lo vendido de la fila (las MISMAS ventas: el mismo mes y el mismo vendedor), con cuántas
+      ya debían salir sin ✅; la barrita de dos colores; NADA de «por facturar» aparte.
    3. Ventas de otro mes no entran; ROHO no lleva el renglón.
    4. Con metas guardadas (415) va debajo de la barra del presupuesto, en el mismo hueco del medio.
    Datos SINTÉTICOS. Reloj clavado: lunes 16/11/2026 10:00 de Bolivia.   Se corre:  node tests/test_pry_entregado.js */
@@ -78,17 +79,17 @@ function PREPARAR(){
     await page.evaluate(() => PINTAR(false)); await page.waitForTimeout(150);
     let r=await page.evaluate(() => ({ c:FILA('Carola Chavez'), m:FILA('Maria Flores') }));
     chk('2 · Carola: lo vendido de la fila es noviembre (Bs 11.000,00)', r.c && r.c.vend==='Bs 11.000,00', r.c);
-    chk('2 · entregado: las 2 con ✅ (Bs 7.000,00 · 2)', r.c && /✅ Entregado Bs 7\.000,00 · 2/.test(r.c.t), r.c && r.c.t);
-    chk('2 · por entregar: 2 (Bs 4.000,00), y 1 ya debía salir sin ✅', r.c && /🚚 Por entregar Bs 4\.000,00 · 2 \(1 ya debía salir, sin ✅\)/.test(r.c.t), r.c && r.c.t);
-    chk('2 · entregado + por entregar = lo vendido de la fila', 7000+4000===11000);
-    chk('2 · por facturar: las 2 sin factura ni remisión (Bs 5.500,00 · 2)', r.c && /🧾 Por facturar Bs 5\.500,00 · 2/.test(r.c.t), r.c && r.c.t);
-    chk('2 · la barrita: 63,6 % entregado', r.c && r.c.w==='63.6%', r.c && r.c.w);
-    chk('2 · Maria: todo facturado o con remisión', r.m && /Todo facturado o con remisión/.test(r.m.t) && /✅ Entregado Bs 6\.000,00 · 1/.test(r.m.t) && /🚚 Por entregar Bs 2\.000,00 · 1/.test(r.m.t) && !/ya debía/.test(r.m.t), r.m && r.m.t);
+    chk('2 · entregado o facturado: las 2 con ✅ y la de remisión por entregar (Bs 8.500,00 · 3)', r.c && /✅ Entregado o facturado Bs 8\.500,00 · 3/.test(r.c.t), r.c && r.c.t);
+    chk('2 · pendiente: la que ni se entregó ni se facturó (Bs 2.500,00 · 1), que ya debía salir', r.c && /⏳ Pendiente Bs 2\.500,00 · 1 \(1 ya debía salir, sin ✅\)/.test(r.c.t), r.c && r.c.t);
+    chk('2 · las dos partes = lo vendido de la fila', 8500+2500===11000);
+    chk('2 · sin «por facturar» aparte', r.c && !/facturar|Por entregar/.test(r.c.t), r.c && r.c.t);
+    chk('2 · la barrita: 77,3 % cerrado', r.c && r.c.w==='77.3%', r.c && r.c.w);
+    chk('2 · Maria: todo cerrado (entregada + con remisión), pendiente 0', r.m && /✅ Entregado o facturado Bs 8\.000,00 · 2/.test(r.m.t) && /⏳ Pendiente Bs 0,00 · 0/.test(r.m.t) && !/ya debía/.test(r.m.t), r.m && r.m.t);
     chk('3 · lo de octubre no entra (Bs 9.000 no suma en ningún lado)', r.c && !/9\.000/.test(r.c.t));
     /* 4. con metas guardadas: debajo de la barra de la 415 */
     await page.evaluate(() => PINTAR(true)); await page.waitForTimeout(150);
     r=await page.evaluate(() => FILA('Carola Chavez'));
-    chk('4 · con metas guardadas: en el hueco del medio, debajo de la barra del presupuesto', r && r.medio && r.con415 && /✅ Entregado Bs 7\.000,00/.test(r.t), r);
+    chk('4 · con metas guardadas: en el hueco del medio, debajo de la barra del presupuesto', r && r.medio && r.con415 && /✅ Entregado o facturado Bs 8\.500,00/.test(r.t), r);
     await page._ctx.close(); }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
