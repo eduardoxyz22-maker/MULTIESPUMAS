@@ -3417,6 +3417,41 @@ html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .wz-tit small, 
 #tbl-pedidos tr > td:first-child .pg-tag{ display:block; margin-top:3px; font-size:.68rem; font-weight:800; white-space:nowrap; }
 #tbl-pedidos tr.pg-ir .pg-tag{ color:#0f766e; } #tbl-pedidos tr.pg-ok .pg-tag{ color:#15803d; } #tbl-pedidos tr.pg-cola .pg-tag{ color:#92400e; }
 @media(prefers-reduced-motion:reduce){ #adm-fichas .af-f.pg-ir, .af-f.pg-ir > .pg-chip, .af-f.pg-ir > .pg-chip i{ animation:none; } }
+/* 434 · La cuenta regresiva del tema en el encabezado, al lado de «Buscar»: una etiqueta dorada con forma de entrada en Black Friday («faltan 11
+   días · vie 27/11»; el día, «¡Black Friday!» que late despacito; después, «últimos N días») y roja en Navidad. Solo compu. Si el encabezado
+   no entra en un renglón, primero se va la fecha (`hc-chica`), después el título (`hc-mini`) y si igual no entra, no se ve (`hc-no`).
+   Quieta con «reducir movimiento». */
+.hdr-cuenta{ display:none; }
+@media(min-width:701px){ .hdr-cuenta.on{ display:inline-flex; } }
+.hdr-cuenta{ flex:none; margin-left:auto; align-items:center; gap:10px; position:relative; padding:7px 14px 7px 12px; border-radius:12px; overflow:hidden;
+  background:linear-gradient(135deg,#fde047 0%,#facc15 45%,#f59e0b 100%); color:#141007; box-shadow:0 6px 18px -6px rgba(250,204,21,.55), inset 0 0 0 1px rgba(255,255,255,.35);
+  -webkit-mask:radial-gradient(circle 6px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 6px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat; }
+#hdr-cuenta{ margin:0 0 0 auto !important; }   /* (otra regla del encabezado le ponía margen a los dos lados y quedaba al medio) */
+.hdr-cuenta.on + .pal-btn{ margin-left:0; }
+.hdr-cuenta.toca{ cursor:pointer; }
+.hdr-cuenta.toca:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+.hdr-cuenta .hc-ic{ font-size:1.25rem; line-height:1; }
+.hdr-cuenta .hc-t{ display:flex; flex-direction:column; line-height:1.05; }
+.hdr-cuenta .hc-t small{ font-size:.6rem; font-weight:900; letter-spacing:.14em; opacity:.8; }
+.hdr-cuenta .hc-t b{ font-size:.86rem; font-weight:800; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.hdr-cuenta .hc-n{ display:inline-grid; place-items:center; min-width:30px; height:26px; padding:0 5px; border-radius:7px; background:#141007; color:#fde047; font-size:1.05rem; font-weight:900;
+  box-shadow:inset 0 -13px 0 rgba(255,255,255,.06); font-variant-numeric:tabular-nums; }
+.hdr-cuenta .hc-f{ font-size:.7rem; font-weight:800; padding-left:10px; border-left:1.5px dashed rgba(20,16,7,.45); white-space:nowrap; }
+.hdr-cuenta::after{ content:''; position:absolute; top:0; bottom:0; width:40%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent); transform:skewX(-18deg); animation:hc-brillo 4.5s ease-in-out infinite; pointer-events:none; }
+@keyframes hc-brillo{ 0%,70%{ left:-60%; } 100%{ left:130%; } }
+.hdr-cuenta.hoy{ background:linear-gradient(135deg,#fef08a,#facc15 40%,#ef4444 140%); animation:hc-late 1.6s ease-in-out infinite; }
+.hdr-cuenta.hoy .hc-t b{ font-size:.95rem; }
+@keyframes hc-late{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.04); } }
+.hdr-cuenta.nav{ background:linear-gradient(135deg,#dc2626,#b91c1c 55%,#15803d 140%); color:#fff; box-shadow:0 6px 18px -6px rgba(220,38,38,.55), inset 0 0 0 1px rgba(255,255,255,.25); }
+.hdr-cuenta.nav .hc-n{ background:#fff; color:#b91c1c; }
+.hdr-cuenta.nav .hc-f{ border-left-color:rgba(255,255,255,.5); }
+.hdr-cuenta.hc-chica .hc-f{ display:none; }
+.hdr-cuenta.hc-mini{ padding:6px 10px; gap:6px; } .hdr-cuenta.hc-mini .hc-f, .hdr-cuenta.hc-mini .hc-t small{ display:none; }
+.hdr-cuenta.on.hc-no{ display:none; }
+html.hdr-bajo .hdr-cuenta{ padding-top:5px; padding-bottom:5px; }
+@media(prefers-reduced-motion:reduce){ .hdr-cuenta, .hdr-cuenta::after{ animation:none !important; } }
+@media print{ .hdr-cuenta{ display:none !important; } }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3640,6 +3675,90 @@ function pgPintar(){
     if(tg) tg.textContent=e==='ir' ? '⏳ Guardando…' : e==='ok' ? '✓ Guardado' : '📴 Sin enviar';
   });
 }
+
+/* 🎨 (16/11, mejora 434; dueño: elegida de la página de ideas 390-440) LA CUENTA REGRESIVA DEL TEMA EN EL ENCABEZADO. El tema de Black Friday va
+   del 13 al 30/11, pero en ningún lado decía cuánto faltaba para el viernes 27/11 ni que el día llegó. Al lado de «Buscar» (`#hdr-cuenta`,
+   antes de `#pal-btn`), una etiqueta con forma de entrada:
+   · Black Friday (`html.tema-black-friday`): «🛍️ BLACK FRIDAY · faltan 11 días · vie 27/11»; el viernes, «HOY ES ¡BLACK FRIDAY! · hasta el lun
+     30/11» (late despacito); del sábado al lunes, «últimos N días». Los días salen de `bfCampana(año)`, la MISMA cuenta del tema (`BF_DIAS`
+     del <head>); hoy es `diaNegocio()` (Bolivia). Pasada la campaña no se ve. Con la contraseña, tocarla abre «🛍️ Black Friday en números»
+     (Proyección); sin ella, no hace nada.
+   · Navidad (`html.tema-navidad`): roja, «🎄 NAVIDAD · faltan 10 días · jue 24/12»; el 24 y el 25, «¡Feliz Navidad!»; después, nada.
+   Se repinta cada 10 minutos (cambia el día). Solo compu (≥ 701 px); si el encabezado no entra en un renglón (la 378 pone la meta al lado del
+   día), primero se va la fecha, después el título y, si igual no entra, no se muestra. Con el encabezado chico de la 429 se esconde. En Playwright apagada salvo
+   `window.CUENTA_PRUEBA`. `tests/test_v434_cuenta_tema.js`. */
+var HC={ el:null, firma:'', tic:null };
+function hcVa(){ try{ return vdVa('CUENTA_PRUEBA'); }catch(e){ return false; } }
+function hcDias(desde, hasta){ return Math.round((Date.parse(hasta+'T12:00:00Z')-Date.parse(desde+'T12:00:00Z'))/864e5); }
+function hcDiaTxt(f){ var d=new Date(f+'T12:00:00Z'); return ['dom','lun','mar','mié','jue','vie','sáb'][d.getUTCDay()]+' '+f.slice(8,10)+'/'+f.slice(5,7); }
+/* Qué dice hoy: { k:'bf'|'nav', clase, small, b (con el número), f, tit } o null. */
+function hcDatos(hoy){
+  hoy=hoy||diaNegocio();
+  var html=document.documentElement, a=+hoy.slice(0,4);
+  if(html.classList.contains('tema-black-friday')){
+    var C=(typeof window.bfCampana==='function') ? window.bfCampana(a) : null; if(!C) return null;
+    var n=hcDias(hoy, C.viernes), q=hcDias(hoy, C.hasta)+1;
+    if(q<=0) return null;
+    if(n>0) return { k:'bf', clase:'', ic:'🛍️', small:'BLACK FRIDAY', b:'faltan <span class="hc-n">'+n+'</span> día'+(n===1?'':'s'), f:hcDiaTxt(C.viernes),
+      tit:'Black Friday: faltan '+n+' día'+(n===1?'':'s')+' (viernes '+fmtFechaCorta(C.viernes)+')' };
+    if(n===0) return { k:'bf', clase:'hoy', ic:'🛍️', small:'HOY ES', b:'¡BLACK FRIDAY!', f:'hasta el '+hcDiaTxt(C.hasta), tit:'Hoy es Black Friday (la campaña sigue hasta el '+fmtFechaCorta(C.hasta)+')' };
+    return { k:'bf', clase:'', ic:'🛍️', small:'BLACK FRIDAY', b:'últimos <span class="hc-n">'+q+'</span> día'+(q===1?'':'s'), f:'hasta el '+hcDiaTxt(C.hasta),
+      tit:'Black Friday: quedan '+q+' día'+(q===1?'':'s')+' de campaña (hasta el '+fmtFechaCorta(C.hasta)+')' };
+  }
+  if(html.classList.contains('tema-navidad')){
+    var nv=a+'-12-24', m=hcDias(hoy, nv);
+    if(m>0) return { k:'nav', clase:'nav', ic:'🎄', small:'NAVIDAD', b:'faltan <span class="hc-n">'+m+'</span> día'+(m===1?'':'s'), f:hcDiaTxt(nv), tit:'Navidad: faltan '+m+' día'+(m===1?'':'s') };
+    if(m>=-1) return { k:'nav', clase:'nav', ic:'🎄', small:'NAVIDAD', b:'¡Feliz Navidad!', f:hcDiaTxt(m===0 ? nv : (a+'-12-25')), tit:'¡Feliz Navidad!' };
+  }
+  return null;
+}
+function hcArmar(){
+  if(HC.el) return true;
+  if(!hcVa()) return false;
+  var pb=document.getElementById('pal-btn'); if(!pb) return false;
+  var el=document.createElement('div'); el.id='hdr-cuenta'; el.className='hdr-cuenta no-print';
+  el.onclick=hcTocar; el.onkeydown=function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); hcTocar(); } };
+  pb.parentNode.insertBefore(el, pb); HC.el=el;
+  window.addEventListener('resize', function(){ try{ hcAcomodar(); }catch(e){} });
+  HC.tic=setInterval(function(){ try{ hcPintar(); }catch(e){} }, 10*60000);
+  hcPintar(); return true;
+}
+function hcPintar(hoy){
+  var el=HC.el; if(!el) return;
+  var D=hcDatos(hoy), puede=!!(D && D.k==='bf' && UNLOCKED), mm=document.getElementById('hdr-meta-mini');
+  var f=D ? JSON.stringify([D, puede, !!(mm && !mm.hidden), document.documentElement.classList.contains('hdr-bajo')]) : '';
+  if(f===HC.firma) return;   // nada cambió: ni se vuelve a medir
+  HC.firma=f;
+  {
+    if(!D){ el.className='hdr-cuenta no-print'; el.innerHTML=''; el.removeAttribute('title'); el.removeAttribute('role'); el.removeAttribute('tabindex'); try{ hdrMedir(); }catch(e){} return; }
+    el.className='hdr-cuenta no-print on'+(D.clase?(' '+D.clase):'')+(puede?' toca':'');
+    el.innerHTML='<span class="hc-ic" aria-hidden="true">'+D.ic+'</span><span class="hc-t"><small>'+esc(D.small)+'</small><b>'+D.b+'</b></span><span class="hc-f">'+esc(D.f)+'</span>';
+    el.title=D.tit+(puede?' · tocá para ver Black Friday en números':'');
+    if(puede){ el.setAttribute('role','button'); el.setAttribute('tabindex','0'); } else { el.removeAttribute('role'); el.removeAttribute('tabindex'); }
+    el.setAttribute('aria-label', D.tit);
+  }
+  hcAcomodar();
+}
+/* ¿El encabezado quedó en un renglón? Si no, primero sin la fecha, después sin el título. */
+function hcAcomodar(){
+  var el=HC.el; if(!el || !el.classList.contains('on')) return;
+  var hi=el.parentNode, uno=function(){ var t=null, ok=true; [].forEach.call(hi.children, function(c){ if(!ok || !c.offsetWidth || getComputedStyle(c).position==='absolute') return; var y=c.offsetTop+c.offsetHeight/2; if(t===null) t=y; else if(Math.abs(y-t)>c.offsetHeight/2+8) ok=false; }); return ok; };
+  el.classList.remove('hc-chica','hc-mini','hc-no');
+  if(!uno()) el.classList.add('hc-chica');
+  if(!uno()){ el.classList.remove('hc-chica'); el.classList.add('hc-mini'); }
+  if(!uno()){ el.classList.remove('hc-mini'); el.classList.add('hc-no'); }   // ni así: mejor no está (el encabezado no se parte por ella)
+  try{ hdrMedir(); }catch(e){}
+}
+function hcTocar(){
+  var D=hcDatos(); if(!D || D.k!=='bf' || !UNLOCKED) return;
+  try{
+    showView('conta'); segSet('cta-tab','proy'); setContaTab('proy');
+    var ir=function(){ if(document.getElementById('pix-s-bf') && typeof pixIr==='function'){ pixIr('bf'); return; }
+      var b=document.getElementById('pry-bf'); if(!b) return; var dest=b.getBoundingClientRect().top+window.scrollY; window.scrollTo(0, Math.max(0, dest-hdrAltoEn(dest)-10)); };
+    setTimeout(ir, 350);
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', function(){ try{ hcArmar(); }catch(e){} });
 </script>
 
 <div class="wrap">
@@ -27842,6 +27961,7 @@ function updateStats(o){
   if(typeof nxBadges==='function' && !(o && o.igual && Date.now()-NX_BADGES_T<55000)) nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
   try{ vivoPintar(); }catch(e){}                  // 🔔 (§4ni, 10) la campanita «En vivo»
   try{ hdrMetaPintar(); }catch(e){}               // 🎯 (15/11, mejora 342) la meta del mes arriba, solo con la contraseña
+  try{ hcPintar(); }catch(e){}                    // 🎨 (16/11, mejora 434) la cuenta regresiva del tema (y si se puede tocar)
 }
 
 /* 🚚 (§4iw, 09/10, dueño: «A») Arriba: el día de hoy y dos anillos con los cupos LIBRES del próximo camión (AM y PM).
