@@ -2533,6 +2533,17 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .ph-sem-f{padding:5px 0;border-top:1px dashed #e2e8ea;cursor:pointer;display:flex;flex-direction:column}
 .ph-sem-f small{color:#64748b;font-size:.74rem}
 .ph-sem-c{margin-top:6px;background:#e3f7f6;border-radius:8px;padding:6px 9px;color:#0f5c58;font-size:.8rem}
+/* 🧹 (mejora 389) ordenar la bandeja de Kommo */
+.band-ord{white-space:nowrap}
+.bo-b{display:flex;gap:10px;align-items:flex-start;border:1.5px solid #e2e8ea;border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer;background:#fff;color:#1e2b30}
+.bo-b.bo-on{border-color:#00B5AD;background:#f0fbfa}
+.bo-b input{width:auto;margin-top:3px}
+.bo-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bo-tx small{color:#557074;font-size:.78rem}
+.bo-l{display:flex;flex-direction:column;gap:1px;font-size:.78rem;color:#334;margin-top:3px}
+.bo-mas{color:#64748b}
+.bo-q{font-size:.84rem;color:#334;margin:4px 0 8px}
+.bo-av{font-size:.84rem;color:#0f5c58;font-weight:700;margin-bottom:6px}
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -37658,6 +37669,7 @@ function renderBorradoresMis(){
           (n ? 'Todavía no ocupan lugar en ningún camión: eso pasa cuando les pongas la fecha y guardes.' : '')+'</div>'))+
         (car.length ? ('<div class="borr-car" style="margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.84rem;color:#0a6b47">✅ <b>'+car.length+
           (car.length===1?' ya está cargada':' ya están cargadas')+'</b> en el panel (mismo celular y vendedora): no cuentan como pendientes. '+borrUnirBtnHtml(car.length, todos)+'</div>') : '')+
+        (function(){ var b=bandejaOrdBtnHtml(lista); return b ? ('<div style="margin-top:7px">'+b+'</div>') : ''; })()+   // 🧹 (mejora 389)
       '</div>'+
       (misPlegado('kommo') ? '' : (orden.slice(0,12).map(function(p){ return borrCardHtml(p, todos); }).join('')+
       (orden.length>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(orden.length-12)+' más</div>') : '')))+
@@ -37746,38 +37758,127 @@ function completarBorrador(id){
 }
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;
+  if(!borradorEnColaComoPedido(id) &&
+     !confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
+  descartarBorradorHacer(id, false);
+}
+/* 🧹 (mejora 389) El descarte de siempre, sin preguntar; `callado` (para «Ordenar mi bandeja») no avisa cada uno. Devuelve la promesa con
+   cómo terminó: 'ok' · 'sinConexion' · 'cola' · 'noEsta' · 'conflicto' · 'incierto' · 'fallo'. */
+function descartarBorradorHacer(id, callado){
+  var avisa=callado ? function(){} : function(){ return toast.apply(null, arguments); };
+  var rec=borradorDe(id); if(!rec) return Promise.resolve('noEsta');
   /* ⚠️ Ya completada y esperando en la cola (25/09): no hay borrador que descartar. `borrarEnServidor`
      la sacaría de la cola y borraría la fila: la venta se perdía entera. */
   if(borradorEnColaComoPedido(id)){
     BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
     saveBorrMirror(); renderBorrSiActivo();
-    toast('📥 Esa venta ya la completaste: está en la cola de este dispositivo y se manda sola a la planilla. No se descartó nada.','err',9000);
-    return;
+    avisa('📥 Esa venta ya la completaste: está en la cola de este dispositivo y se manda sola a la planilla. No se descartó nada.','err',9000);
+    return Promise.resolve('cola');
   }
-  if(!confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
   var copia=JSON.parse(JSON.stringify(rec));
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
   saveBorrMirror(); renderBorrSiActivo();
+  var prom=Promise.resolve('sinConexion');
   if(CONNECTED){
     BORRADO_AQUI[String(id)]=Date.now();    // (26/09) una lectura vieja no la devuelve a la bandeja (ver `borradoAqui`)
     /* §4fz: un borrador que otra vendedora YA completó es un pedido con el MISMO id (§4es):
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
     var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
-    borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
-      if(r.ok) return;
+    prom=borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
+      if(r.ok) return 'ok';
       delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
-        toast('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
+        avisa('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
         try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){}
-        return;
+        return 'conflicto';
       }
-      if(r.incierto){ toast('⚠️ Google no confirmó el descarte ('+r.error+'). Si sigue en la planilla, vuelve a la bandeja con el próximo refresco.','err',9000); return; }
+      if(r.incierto){ avisa('⚠️ Google no confirmó el descarte ('+r.error+'). Si sigue en la planilla, vuelve a la bandeja con el próximo refresco.','err',9000); return 'incierto'; }
       volverBorr();     // §4fz-b (E13): un «no» claro la devuelve a la bandeja
-      toast('No se pudo descartar en el servidor ('+motivoBorrar(r)+'): sigue en la bandeja. Probá de nuevo.','err');
-    }, function(){ volverBorr(); toast('No se pudo descartar: sigue en la bandeja. Probá de nuevo con señal.','err'); });
+      avisa('No se pudo descartar en el servidor ('+motivoBorrar(r)+'): sigue en la bandeja. Probá de nuevo.','err');
+      return 'fallo';
+    }, function(){ volverBorr(); avisa('No se pudo descartar: sigue en la bandeja. Probá de nuevo con señal.','err'); return 'fallo'; });
   }
-  toast('Borrador descartado','ok');
+  avisa('Borrador descartado','ok');
+  return prom;
+}
+/* ============================================================================
+   🧹 (mejora 389, 16/11; dueño la eligió) ORDENAR LA BANDEJA DE KOMMO EN UN TOQUE.
+   María tenía 36 ventas de Kommo en la bandeja: 23 ya las había cargado a mano (el panel las reconoce y espera «🔗 Unir») y 13 sin nada
+   adentro, 10 de hace más de 15 días. Su «Para hacer» decía «📥 13 de Kommo» todos los días y ya no lo miraba.
+   · «🧹 Ordenar mi bandeja» (en la bandeja, con algo para ordenar): dos bloques ya tildados — «🔗 Unir las N que ya cargaste» (las MISMAS de
+     «Unir las N», `borrCargadasDe`: mismo lead, o mismo celular y vendedora con una venta viva) y «🗑️ Sacar las N vacías de más de
+     `BANDEJA_VACIA_DIAS` días» (sin productos ni monto, que no parecen ninguna venta: `bandejaVacias`) — y «Hacer las 2 cosas».
+   · Corre de a una, por los mismos caminos: unir = `borrUnirUna` (la venta que ya está queda con la marca de Kommo), sacar = el «Descartar» de
+     siempre (`descartarBorradorHacer`: el servidor lo anota en KOMMO_DESCARTADOS y no vuelve). Los dos van por `borrEnSerie`, y lo que Google
+     no hizo vuelve a la bandeja y se dice al final («N no se pudieron: siguen en la bandeja»).
+   · En Playwright el botón no sale salvo `BANDEJA_PRUEBA`. `tests/test_bandeja_ordenar.js`.
+   ========================================================================== */
+var BANDEJA_VACIA_DIAS=15, BANDEJA_ORD=null;
+function bandejaOrdVa(){ try{ return !navigator.webdriver || !!window.BANDEJA_PRUEBA; }catch(e){ return true; } }
+function bandejaVacia(b){
+  var nada=!((b&&b.productos)||[]).some(function(x){ return x && String(x.desc||x.codigo||'').trim(); });
+  return nada && !(borrMontoKommo(b)>0);
+}
+function bandejaVacias(lista){ return (lista||[]).filter(function(b){ var g=null; try{ g=borrGemelo(b); }catch(e){} return !g && bandejaVacia(b) && diasDeBorrador(b)>BANDEJA_VACIA_DIAS; }); }
+function bandejaLista(){ var todos=MIS_TODOS && UNLOCKED; return todos ? BORRADORES.slice() : borradoresDe(misVendedorSel()); }
+function bandejaDatos(lista){
+  var car=borrCargadasDe(lista), vac=bandejaVacias(lista), ids={};
+  car.forEach(function(o){ ids[String(o.b.id)]=1; }); vac.forEach(function(b){ ids[String(b.id)]=1; });
+  var resto=(lista||[]).filter(function(b){ return !ids[String(b.id)]; });
+  return { car:car, vac:vac, resto:resto, semana:resto.filter(function(b){ return diasDeBorrador(b)<=7; }).length };
+}
+function bandejaOrdBtnHtml(lista){
+  if(!bandejaOrdVa()) return '';
+  var D=bandejaDatos(lista), n=D.car.length+D.vac.length; if(!n) return '';
+  return '<button type="button" class="ah-go ah-go-p band-ord" id="band-ord-btn" onclick="bandejaOrdenarAbrir()" title="Unir las que ya cargaste y sacar las vacías viejas, de una vez">🧹 Ordenar mi bandeja ('+n+')</button>';
+}
+function bandejaOrdenarAbrir(){
+  var D=bandejaDatos(bandejaLista());
+  if(!D.car.length && !D.vac.length){ toast('Tu bandeja ya está ordenada ✓','ok'); return; }
+  BANDEJA_ORD={ car:D.car.map(function(o){ return { b:String(o.b.id), p:String(o.g.p.id) }; }), vac:D.vac.map(function(b){ return String(b.id); }), uc:D.car.length>0, uv:D.vac.length>0, corre:null };
+  bandejaOrdenarPintar(D);
+}
+function bandejaOrdenarPintar(D){
+  D=D||bandejaDatos(bandejaLista());
+  var O=BANDEJA_ORD||{}, nom=function(s){ return String(s||'(sin nombre)').trim(); }, mas=function(n){ return n>0 ? ('<span class="bo-mas">… y '+n+' más</span>') : ''; };
+  var bloque=function(k, on, ic, t, sub, L){ if(!L.length) return '';
+    return '<label class="bo-b'+(on?' bo-on':'')+'"><input type="checkbox" id="bo-'+k+'"'+(on?' checked':'')+(O.corre?' disabled':'')+' onchange="BANDEJA_ORD.u'+k+'=this.checked;bandejaOrdenarPintar()">'+
+      '<span class="bo-tx"><b>'+ic+' '+t+'</b><small>'+sub+'</small><span class="bo-l">'+L+'</span></span></label>'; };
+  var Lc=D.car.slice(0,6).map(function(o){ return '<span>'+esc(nom(o.b.cliente))+' → '+esc(borrOcDia(o.g.p))+'</span>'; }).join('')+mas(D.car.length-6);
+  var Lv=D.vac.slice(0,6).map(function(b){ return '<span>'+esc(nom(b.cliente))+' · hace '+diasDeBorrador(b)+' días</span>'; }).join('')+mas(D.vac.length-6);
+  var n=(O.uc?D.car.length:0)+(O.uv?D.vac.length:0), dos=O.uc && O.uv && D.car.length && D.vac.length;
+  var quedan=D.resto.length+(O.uc?0:D.car.length)+(O.uv?0:D.vac.length);
+  openModal('<div class="modal-h"><h3>🧹 Ordenar mi bandeja de Kommo</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div><div class="modal-b bo">'+
+    bloque('c', O.uc, '🔗', 'Unir '+(D.car.length===1?'la que ya cargaste':('las '+D.car.length+' que ya cargaste'))+' a mano', 'Mismo cliente (celular) y misma vendedora que un pedido tuyo: el panel ya las reconoce. Queda una sola venta, la que ya tenías.', Lc)+
+    bloque('v', O.uv, '🗑️', 'Sacar '+(D.vac.length===1?'la vacía':('las '+D.vac.length+' vacías'))+' de más de '+BANDEJA_VACIA_DIAS+' días', 'Sin productos ni monto: no fueron ventas. No vuelven a aparecer (en Kommo no se borra nada).', Lv)+
+    '<div class="bo-q">'+(quedan ? ('Después quedan <b>'+quedan+'</b>'+(D.semana?(' ('+D.semana+' de esta semana)'):'')+': esas completalas (falta la fecha de entrega).') : 'Después la bandeja queda vacía ✓')+'</div>'+
+    (O.corre ? ('<div class="bo-av" id="bo-av">⏳ '+esc(O.corre)+'</div>') : '')+
+    '<div class="modal-actions"><button type="button" class="btn btn-primary" id="bo-hacer" style="flex:1"'+((!n || O.corre)?' disabled':'')+' onclick="bandejaOrdenarHacer()">'+
+      (O.corre ? '⏳ Ordenando…' : (dos ? 'Hacer las 2 cosas' : (n ? ('Hacer esto ('+n+')') : 'Tildá algo')))+'</button>'+
+      '<button type="button" class="btn btn-ghost" onclick="closeModal()"'+(O.corre?' disabled':'')+'>Ahora no</button></div></div>');
+}
+function bandejaOrdenarHacer(){
+  var O=BANDEJA_ORD; if(!O || O.corre) return Promise.resolve(null);
+  if(!CONNECTED){ toast('Este aparato no está conectado a la planilla: conectate para ordenar la bandeja.','err',7000); return Promise.resolve(null); }
+  var tareas=[];
+  if(O.uc) O.car.forEach(function(x){ tareas.push({ k:'c', f:function(){ return borrUnirUna(x.b, x.p, true); } }); });
+  if(O.uv) O.vac.forEach(function(id){ tareas.push({ k:'v', f:function(){ return descartarBorradorHacer(id, true); } }); });
+  if(!tareas.length) return Promise.resolve(null);
+  var R={ c:0, v:0, mal:0 }, N=tareas.length;
+  var paso=function(i){
+    if(i>=N){
+      BANDEJA_ORD=null; closeModal(); renderBorrSiActivo(); try{ renderMis(); }catch(e){}
+      var h=[]; if(R.c) h.push('se '+(R.c===1?'unió 1':('unieron '+R.c))); if(R.v) h.push('se '+(R.v===1?'sacó 1 vacía':('sacaron '+R.v+' vacías')));
+      toast((h.length ? ('🧹 Listo: '+h.join(' y ')+'.') : '🧹 No se pudo ordenar nada.')+(R.mal ? (' ⚠️ '+R.mal+' no se '+(R.mal===1?'pudo':'pudieron')+': '+(R.mal===1?'sigue':'siguen')+' en la bandeja, probá de nuevo en un momento.') : ''), R.mal?'err':'ok', 9000);
+      return Promise.resolve(R);
+    }
+    O.corre=(i+1)+' de '+N; var av=document.getElementById('bo-av'); if(av) av.textContent='⏳ '+O.corre; else bandejaOrdenarPintar();
+    return Promise.resolve().then(tareas[i].f).then(function(r){ if(r==='ok' || r==='mismo') R[tareas[i].k]++; else R.mal++; }, function(){ R.mal++; })
+      .then(function(){ return paso(i+1); });
+  };
+  O.corre='1 de '+N; bandejaOrdenarPintar();
+  return paso(0);
 }
 
 function avisoMisHtml(mine){
@@ -39419,7 +39520,7 @@ function borrBandejaCompacta(lista, todos){
     return '<div class="kx-gt">'+ic+' '+t+' · <b>'+A.length+'</b> <small>'+sub+'</small>'+(extra||'')+'</div>'+ver.map(function(p){ return borrFilaHtml(p, todos); }).join('')+
       (A.length>3?('<button type="button" class="ah-mas" onclick="MIS_KX_MAS.'+k+'=!MIS_KX_MAS.'+k+';renderBorradoresMis()">'+(MIS_KX_MAS[k]?'▴ Ver menos':('▾ Ver las otras '+(A.length-3)))+'</button>'):''); };
   var n=gem.length+nue.length;
-  return '<div class="kx"><div class="kx-cab"><span class="ah-ico">📥</span><h4>Ventas de Kommo para completar</h4><span class="ah-badge ah-badge-a" title="Sin las que ya están cargadas">'+n+'</span><span class="ah-sp"></span><small>'+(car.length?(car.length+(car.length===1?' ya está cargada':' ya están cargadas')+' · '):'')+'todavía no ocupan lugar en ningún camión</small>'+misPlegarBtn('kommo')+'</div>'+
+  return '<div class="kx"><div class="kx-cab"><span class="ah-ico">📥</span><h4>Ventas de Kommo para completar</h4><span class="ah-badge ah-badge-a" title="Sin las que ya están cargadas">'+n+'</span><span class="ah-sp"></span><small>'+(car.length?(car.length+(car.length===1?' ya está cargada':' ya están cargadas')+' · '):'')+'todavía no ocupan lugar en ningún camión</small>'+bandejaOrdBtnHtml(lista)+misPlegarBtn('kommo')+'</div>'+
     (misPlegado('kommo') ? '' : (grupo('car','✅','Ya están cargadas','no cuentan como pendientes', car, ' '+borrUnirBtnHtml(car.length, todos))+
       grupo('gem','✋','Parecen ya cargadas','confirmá y se van de acá', gem)+grupo('nue','🆕','Nuevas','falta ponerles la fecha de entrega', nue)))+'</div>';
 }
