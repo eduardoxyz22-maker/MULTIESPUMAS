@@ -8581,6 +8581,17 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 #f-turno.p399.seg-err{box-shadow:0 0 0 3px var(--red-lt)!important;border-radius:16px}
 .p399-dia{font-weight:600;color:var(--muted)}
 @media (max-width:420px){ #f-turno.p399{grid-template-columns:1fr} }
+/* 401 · lo entregado y pagado, en una tarjeta por mes (los renglones siguen siendo hermanos en la grilla: se juntan con márgenes negativos) */
+#mis-lista .p401-mh{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;padding:10px 16px;margin:6px 0 -12px;background:linear-gradient(90deg,#ecfaf2,#f7fdfa);border:1px solid #d7efe2;border-radius:16px 16px 0 0}
+#mis-lista .p401-mh b{font-size:.98rem;color:#0a5c3d}
+#mis-lista .p401-mh span{color:#3f7d63;font-size:.8rem;font-weight:700}
+#mis-lista .p401-mh .t{margin-left:auto;font-size:.95rem;font-weight:900;color:#0a5c3d;font-variant-numeric:tabular-nums}
+#mis-lista .mis-cf.p401{border-radius:0;border-width:0 1px 1px 1px;border-style:solid;border-color:#e3eaea;border-left:1px solid #e3eaea;margin-bottom:-12px;min-height:38px}
+#mis-lista .mis-cf.p401.p401-ult{border-radius:0 0 16px 16px;margin-bottom:0}
+#mis-lista .mis-cf.p401 .pico{flex:none}
+#mis-lista .mis-cf.p401 .p401-bs{flex:none;width:96px;text-align:right;font-weight:800;color:#132626;font-variant-numeric:tabular-nums}
+#mis-lista .mis-cf.p401 .mis-cf-pag{flex:none;width:86px;text-align:center}
+@media (max-width:700px){ #mis-lista .mis-cf.p401 .p401-bs{width:auto} #mis-lista .mis-cf.p401 .mis-cf-pag{width:auto} }
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -42375,6 +42386,7 @@ function renderMis(){
   if(misCompactoActivo()){
     var _cf=lista.filter(misEsCompacta);
     if(_cf.length){ lista=lista.filter(function(x){ return !misEsCompacta(x); }).concat(_cf); MIS_CF_N=_cf.length; MIS_CF_PRIMERO=String(_cf[0].id); }
+    misMesArmar(_cf);   // 🎨 (16/11, mejora 401) lo entregado y pagado, por mes
   }
   var _tope=trozosActivo() ? lista.length : MIS_TOPE;   // ⚡ (§4oa, H4) de a partes, el «Ver más» del trozo es el único; sin trozos (las pruebas), el corte de 120
   tbl.innerHTML=trozosHtml('mis', lista.slice(0,_tope), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
@@ -42435,13 +42447,40 @@ function misCfSepHtml(n){
 }
 function misCfFilaHtml(p, n){
   var pr=(p.productos||[]).filter(function(x){ return String(x.desc||'').trim(); }), x0=pr[0];
+  var M=MIS_P401[String(p.id)];   // 🎨 (16/11, mejora 401) en la tarjeta de su mes, con el dibujito y lo que vale
   var prod=x0 ? (String(x0.desc||'').trim()+(x0.medida?(' '+String(x0.medida).trim()):'')+((Number(x0.cant)||1)>1?(' ×'+x0.cant):'')) : '—';
   var dia='', f=fechaSalida(p); try{ dia=(['dom','lun','mar','mié','jue','vie','sáb'][dowDe(f)]||'')+' '+fmtFechaCorta(f); }catch(e){ dia=f||''; }
-  return '<div class="mis-cf" data-id="'+esc(String(p.id))+'" data-n="'+esc(String(n))+'" role="button" tabindex="0" onclick="misCompactaAbrir(this.getAttribute(\'data-id\'))" title="Tocá para ver la tarjeta entera">'+
+  return '<div class="mis-cf'+(M?(' p401'+(M.ult?' p401-ult':'')):'')+'" data-id="'+esc(String(p.id))+'" data-n="'+esc(String(n))+'" role="button" tabindex="0" onclick="misCompactaAbrir(this.getAttribute(\'data-id\'))" title="Tocá para ver la tarjeta entera">'+
     '<span class="mis-cf-ok" aria-hidden="true">✓</span><span class="mis-cf-n">'+esc(String(n))+'</span><span class="mis-cf-d">'+esc(dia)+'</span>'+
     '<b class="mis-cf-cli">'+esc(p.cliente||'—')+'</b>'+
+    ((M && x0) ? prodIcoHtml(x0) : '')+
     '<span class="mis-cf-p">'+esc(prod)+(pr.length>1?(' <i>+'+(pr.length-1)+'</i>'):'')+(p.oc?(' <em>· '+esc(ocEtiq(p.oc))+'</em>'):'')+'</span>'+
+    (M ? ('<span class="p401-bs">'+(M.bs>0.005 ? fmtBs0(M.bs) : '—')+'</span>') : '')+
     '<span class="mis-cf-pag">'+(noSeCobra(p)?'no se cobra':'pagado')+'</span><span class="mis-cf-v" aria-hidden="true">▾</span></div>';
+}
+/* 🎨 (16/11, mejora 401; dueño: «Lo entregado y pagado, por mes y con lo que vale») Los renglones de «✅ Entregados y pagados» eran sueltos (113
+   para Carola, 40 px con 12 px entre cada uno), sin la plata de cada venta ni dónde empezaba cada mes. Ahora van juntos en una tarjeta por
+   mes con su título («Noviembre · 13 entregas · Bs 46.090»), el dibujito del producto y el total de cada venta a la derecha (las ATC y RPT
+   dicen «—» y «no se cobra»). Tocar un renglón sigue abriendo la tarjeta entera. El monto es `ventaTotal` (el de Contabilidad) y el mes, el de
+   `fechaSalida`. Son los MISMOS renglones (siguen llegando de a partes): el título va delante del primero de cada mes y la tarjeta se arma
+   con CSS. En Playwright como antes salvo `window.MIS_MES_PRUEBA` (con `MIS_COMPACTO_PRUEBA`). `tests/test_v391_mis_tarjetas.js` §401. */
+var MIS_P401={}, MIS_MES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function misMesVa(){ try{ return vdVa('MIS_MES_PRUEBA'); }catch(e){ return false; } }
+function misMesArmar(cf){
+  MIS_P401={};
+  if(!misMesVa() || !cf || !cf.length) return;
+  var runs=[], cur=null, anio=diaNegocio().slice(0,4);
+  cf.forEach(function(p){
+    var k=String(fechaSalida(p)||'').slice(0,7), bs=noSeCobra(p) ? 0 : (Number(ventaTotal(p))||0);
+    if(!cur || cur.k!==k){ cur={ k:k, ids:[], n:0, bs:0 }; runs.push(cur); }
+    cur.ids.push(String(p.id)); cur.n++; cur.bs+=bs;
+    MIS_P401[String(p.id)]={ bs:bs };
+  });
+  runs.forEach(function(r){
+    var m=+r.k.slice(5,7), y=r.k.slice(0,4), nom=m ? (MIS_MES_NOM[m-1]+(y!==anio?(' '+y):'')) : 'Sin fecha';
+    MIS_P401[r.ids[0]].cab='<div class="p401-mh" data-mes="'+esc(r.k)+'"><b>'+esc(nom)+'</b><span>'+r.n+(r.n===1?' entrega':' entregas')+'</span><span class="t">'+fmtBs0(r.bs)+'</span></div>';
+    MIS_P401[r.ids[r.ids.length-1]].ult=true;
+  });
 }
 function misCompactaAbrir(id){
   id=String(id); MIS_CF_ABIERTAS[id]=1;
@@ -42451,6 +42490,7 @@ function misCompactaAbrir(id){
 function misCardHtml(p, n, todos, verNota){
   if(!misCompactoActivo()) return misCardHtmlBase(p, n, todos, verNota);
   var sep=(MIS_CF_PRIMERO!=null && String(p.id)===MIS_CF_PRIMERO) ? misCfSepHtml(MIS_CF_N) : '';
+  var _M=MIS_P401[String(p.id)]; if(_M && _M.cab) sep+=_M.cab;   // 🎨 (16/11, mejora 401) el título del mes
   if(misEsCompacta(p) && !MIS_CF_ABIERTAS[String(p.id)]) return sep+misCfFilaHtml(p, n);
   return sep+misCardHtmlBase(p, n, todos, verNota);
 }

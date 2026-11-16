@@ -17,6 +17,9 @@
    396 · «✅ Tu panel al día» (con `AL_DIA_PRUEBA`): sin `AL_DIA_PALABRAS_PRUEBA`, la tira de íconos de siempre. Con la bandera: cinco
          casilleros con su nombre y qué falta en palabras, del color de siempre, la barra con el %, y cada uno se toca como antes. Los
          números son los de `alDiaDatos`.
+   401 · «✅ Entregados y pagados» (con `MIS_COMPACTO_PRUEBA`): sin `MIS_MES_PRUEBA`, los renglones sueltos de siempre. Con la bandera: un
+         título por mes («Noviembre · 2 entregas · Bs 4.500»), el total de cada venta (`ventaTotal`) a la derecha («—» en una ATC) y el
+         dibujito del producto; tocar un renglón lo abre entero, como siempre.
    Datos SINTÉTICOS. Reloj clavado el lunes 16/11/2026 10:00. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_v391_mis_tarjetas.js */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -176,6 +179,28 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('396f arriba la barra con el % (el mismo de siempre)', r.pc===r.pct+' %' && r.bar===r.pct+'%', [r.pc, r.bar, r.pct]);
   r = await ev(() => { document.querySelector('#__ad .p396-c[data-k="ub"]').click(); var m=document.getElementById('modal'), o={ ab:m.classList.contains('on') }; try{ closeModal(); }catch(e){} document.getElementById('__ad').remove(); return o; });
   chk('396g tocar un casillero hace lo mismo que antes (abre la lista)', r.ab===true, r);
+
+  console.log('\n── 401. Lo entregado y pagado, por mes ──');
+  const meses = () => ev(() => { window.MIS_COMPACTO_PRUEBA=1;
+    var keep=STATE.filter(function(p){ return !/^m401/.test(p.id); });
+    var E=function(id, f, oc, monto){ return __P({ id:id, oc:oc, cliente:'ENT '+id, fecha:f, entregado:true, pagado:true, saldo:0, metodoPago:'Efectivo '+monto, productos:[{ desc:'COLCHON SOFT', codigo:'CH1000', medida:'140x190', cant:1, precio:monto }] }); };
+    STATE=keep.concat([ E('m401a','2026-11-12','11-050',3000), E('m401b','2026-11-10','11-040',1500), E('m401c','2026-11-09','ATC 11-005',0), E('m401d','2026-10-20','10-090',2000) ]);
+    MIS_FILTER='ent'; renderMis();
+    var L=document.getElementById('mis-lista');
+    return { cabs:[].map.call(L.querySelectorAll('.p401-mh'), function(h){ return h.innerText.replace(/\s+/g,' ').trim(); }),
+      filas:[].map.call(L.querySelectorAll('.mis-cf'), function(f){ return { id:f.getAttribute('data-id'), bs:(f.querySelector('.p401-bs')||{}).textContent||null, pico:!!f.querySelector('.pico'), ult:f.classList.contains('p401-ult'), pag:(f.querySelector('.mis-cf-pag')||{}).textContent }; }),
+      tot:{ a:ventaTotal(findById('m401a')), b:ventaTotal(findById('m401b')) } }; });
+  r = await meses();
+  chk('401a sin la bandera: los renglones sueltos de siempre (sin título de mes ni monto)', r.cabs.length===0 && r.filas.length>=4 && r.filas.every(f=>f.bs===null), r);
+  await ev(() => { window.MIS_MES_PRUEBA=1; });
+  r = await meses();
+  chk('401b un título por mes: «Noviembre 3 entregas Bs 4.500» y «Octubre 1 entrega Bs 2.000»', r.cabs.join(' | ')==='Noviembre 3 entregas Bs 4.500 | Octubre 1 entrega Bs 2.000', r.cabs);
+  const F=(id)=>r.filas.filter(f=>f.id===id)[0]||{};
+  chk('401c cada renglón con lo que vale (`ventaTotal`) y su dibujito; la ATC «—» y «no se cobra»', F('m401a').bs==='Bs 3.000' && F('m401b').bs==='Bs 1.500' && F('m401c').bs==='—' && /no se cobra/.test(F('m401c').pag) && F('m401a').pico && r.tot.a===3000, r.filas);
+  chk('401d el último de cada mes cierra la tarjeta', F('m401c').ult && F('m401d').ult && !F('m401a').ult, r.filas.map(f=>f.id+':'+f.ult));
+  r = await ev(() => { document.querySelector('#mis-lista .mis-cf[data-id="m401a"]').click(); return !!document.querySelector('#mis-lista .cho-card[onclick*="m401a"]'); });
+  chk('401e tocar un renglón lo abre entero, como siempre', r===true, r);
+  await ev(() => { STATE=STATE.filter(function(p){ return !/^m401/.test(p.id); }); MIS_CF_ABIERTAS={}; });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
