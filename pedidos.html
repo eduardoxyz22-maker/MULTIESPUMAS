@@ -12263,7 +12263,7 @@ function pedirClaveAdmin(otraVez){
   var _n0=PREG_ABIERTAS;
   var c=preguntaTextoYa('Clave de administración del servidor (ADMIN_KEY):','',
     { titulo:'Clave de administración del servidor', icono:'🛡️', lineas:['Es la que exige el servidor para forzar un pedido a un día cerrado o a un turno lleno (ADMIN_KEY).', 'Se guarda en este dispositivo.'],
-      campoAyuda:'La clave de administración', no:'Cancelar', si:'💾 Guardar la clave' },
+      campoAyuda:'La clave de administración', campoClave:true, no:'Cancelar', si:'💾 Guardar la clave' },
     (typeof otraVez==='function') ? otraVez : function(){ pedirClaveAdmin(); });
   if(c==null) return (PREG_ABIERTAS>_n0) ? 'espera' : undefined;
   c=c.trim(); if(!c) return;
@@ -12273,7 +12273,7 @@ function pedirClaveAdmin(otraVez){
 function pedirClaveEquipo(){
   var c=preguntaTextoYa('Clave del equipo (te la da el administrador):','',
     { titulo:'Clave del equipo', icono:'🔐', lineas:['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'],
-      campoAyuda:'La clave del equipo', no:'Cancelar', si:'💾 Guardar y probar' },
+      campoAyuda:'La clave del equipo', campoClave:true, no:'Cancelar', si:'💾 Guardar y probar' },
     function(){ pedirClaveEquipo(); });
   if(c==null) return;
   c=c.trim(); if(!c){ toast('Sin clave no se puede.','err'); return; }
@@ -17442,7 +17442,7 @@ function ccmCerrarMes(){
 }
 function ccmClaveOk(txt, otraVez, o){
   /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel: null mientras espera o si cancela; al contestar vuelve a correr `otraVez` */
-  var c=preguntaTextoYa(txt,'', o, otraVez); if(c==null) return null;
+  var c=preguntaTextoYa(txt,'', Object.assign({ campoClave:true }, o||{}), otraVez); if(c==null) return null;   // la contraseña, tapada
   var guardada=null; try{ guardada=localStorage.getItem(LS_ADMIN); }catch(e){}
   return sha256(String(c))===(guardada||DEFAULT_HASH);
 }
@@ -26593,7 +26593,7 @@ function submitPedido(){
   _forzar = !!(isEdit && UNLOCKED && (_mueveFecha || _mueveTurno) &&
              (diaCerrado(fechaSel) || diaDomingo(fechaSel) || feriadoDe(fechaSel) || (diaSabado(fechaSel) && turnoSel==='PM') ||
               cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)));
-  if(_forzar && !asegurarClaveAdmin()) return;
+  if(_forzar && !asegurarClaveAdmin(_otraVez)) return;   // ❓ (16/11) con la clave en la ventana, el guardado sigue solo
   }
   // Los combos se sacaron de la lista de precios: cada producto va cargado por separado,
   // porque un "COMBO" en una sola línea no deja revisar stock ni contar bultos por producto.
@@ -41835,7 +41835,7 @@ function quitarProgramarDevAtc(id){
      hizo y no le suma un bulto a ningún camión. */
   var _dest=a.rec||p.fecha, _tur=a.rturno||'';
   var _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest) || cuposUsadosTurno(_dest,_tur)>=limTurno(_dest,_tur));
-  if(_forzar && !asegurarClaveAdmin()) return;
+  if(_forzar && !asegurarClaveAdmin(function(){ quitarProgramarDevAtc(id); })) return;   // ❓ (16/11) con la clave en la ventana, sigue solo
   p.fecha=_dest; p.turno=_tur; p.entregado=true;   // vuelve al día del recojo, ya recogido
   fhDonde('🎧 quitar la devolución de la ATC');      // 📅 (mejora 212)
   // `rec` se va también: la fecha del pedido vuelve a ser el recojo (si quedaba, un 📅 después no se veía).
