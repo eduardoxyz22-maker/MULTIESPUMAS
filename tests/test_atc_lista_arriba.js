@@ -38,7 +38,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   };
   const orden = (page) => page.evaluate(() => {
     var card=document.querySelector('#view-atc > .card');
-    var ids=[].map.call(card.children, function(c){ return c.id || c.className; }).filter(function(x){ return /atv-|atc-/.test(x); });
+    var ids=[].map.call(card.children, function(c){ return c.id || c.className; }).filter(function(x){ return /atv-|atc-/.test(x) && x!=='atc-ia'; });   /* `atc-ia` = la 359 (Claude lee las ATC): otra caja, va al final */
     var tw=document.getElementById('atv-tw');
     return { ids:ids, twTop:Math.round(tw.getBoundingClientRect().top+scrollY), calq:!!document.getElementById('atc-calq') };
   });
@@ -82,7 +82,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     document.getElementById('atc-motivo').value=''; renderAtc();
     document.querySelector('#atc-calq summary').click(); await new Promise(function(x){ setTimeout(x, 80); });
     var pref=visPref('atcCal', true);
-    renderAtc(); var ids=[].map.call(document.querySelector('#view-atc > .card').children, function(c){ return c.id; }).filter(Boolean);
+    renderAtc(); var ids=[].map.call(document.querySelector('#view-atc > .card').children, function(c){ return c.id; }).filter(function(x){ return x && x!=='atc-ia'; });
     return { pref:pref, abierto:document.getElementById('atc-calq').open, ids:ids };
   });
   chk('4d cerrarlo también queda anotado', r.pref===false && r.abierto===false, r);
