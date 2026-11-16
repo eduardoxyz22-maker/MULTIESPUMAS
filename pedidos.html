@@ -8460,6 +8460,16 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 #p392-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @keyframes p392in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){ .p392-falta{animation:none} }
+/* 393 · la agenda dice desde qué día llega el pedido */
+.fx-agd.p393-no{background:repeating-linear-gradient(135deg,#fff 0 7px,#fdecee 7px 14px);border-color:#f2a7ad}
+.fx-agd.p393-no .fx-tur{opacity:.55}
+.fx-agd.p393-no.sel{border-color:#e11d48;box-shadow:0 0 0 3px rgba(225,29,72,.18)}
+.fx-agd.p393-si{border-color:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.16);background:linear-gradient(180deg,#f0fdf6,#fff)}
+.fx-agd .p393-tag{grid-column:1/-1;display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:2px -2px 0;padding:4px 8px;border-radius:8px;font-size:.68rem;font-weight:800;line-height:1.25}
+.fx-agd.p393-no .p393-tag{background:#fff;border:1px solid #f2a7ad;color:#9f1239}
+.fx-agd.p393-no .p393-tag .p393-por{font-weight:600}
+.fx-agd.p393-si .p393-tag{background:#22a06b;color:#fff}
+.fx-agd .p393-ok{display:block;margin-top:1px;font-size:.6rem;font-weight:800;color:#15803d}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -28594,16 +28604,18 @@ function fxIzqPintar(){
   var el=document.getElementById('fx-izq'); if(!el || !fxAncho()) return;
   var fsel=(document.getElementById('f-fecha')||{}).value||'', tsel=normTurno(segVal('f-turno')||''), v=((document.getElementById('f-vendedor')||{}).value||'');
   var desde=esVendedorLite(v)?todayStr():tomorrowStr(), filas='';
+  var LL=agLlegaDatos(desde);   // 🎨 (16/11, mejora 393) desde qué día llega todo el pedido (los cuadritos del saldo)
   for(var i=0;i<FX_DIAS_N;i++){
-    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), sel=(f===fsel);
+    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), sel=(f===fsel), ll=(LL && !L.cerrado) ? (f<LL.desde ? 'no' : (f===LL.desde ? 'si' : 'ok')) : '';
     var tur=['AM','PM'].filter(function(t){ return limTurno(f,t)>0 && !diaCerrado(f); }).map(function(t){
       var lim=limTurno(f,t), u=cuposUsadosTurno(f,t), lib=Math.max(0,lim-u), pct=Math.min(100,Math.round(100*u/lim));
       var col=lib<=0?'var(--red)':(lib<=3?'var(--amber)':'var(--green)');
       return '<div class="fx-tr'+(sel&&tsel===t?' sel':'')+'" data-t="'+t+'"><span>'+(t==='AM'?'🌅':'🌆')+'</span><div class="b"><i style="width:'+pct+'%;background:'+col+'"></i></div><span class="q" style="color:'+col+'" title="'+u+' de '+lim+' ocupados">'+(lib<=0?'lleno':(lib+' libre'+(lib===1?'':'s')))+'</span></div>';
     }).join('');
-    filas+='<button type="button" class="fx-agd'+(L.cerrado?' off':'')+(sel?' sel':'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'), event)"')+'>'+
-      '<div><div class="d">'+FX_DIAS_NOM[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'/'+f.slice(5,7)+'</div></div>'+
-      (L.cerrado ? '<div class="fx-agc">'+(L.cerrado==='feriado'?('🎉 feriado'+(feriadoDe(f)?(': '+esc(feriadoDe(f))):'')):'🚫 '+L.cerrado)+'</div>' : '<div class="fx-tur">'+tur+'</div>')+'</button>';
+    filas+='<button type="button" class="fx-agd'+(L.cerrado?' off':'')+(sel?' sel':'')+(ll?(' p393-'+ll):'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'), event)"')+'>'+
+      '<div><div class="d">'+FX_DIAS_NOM[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'/'+f.slice(5,7)+'</div>'+(ll==='ok'?'<span class="p393-ok">✓ llega todo</span>':'')+'</div>'+
+      (L.cerrado ? '<div class="fx-agc">'+(L.cerrado==='feriado'?('🎉 feriado'+(feriadoDe(f)?(': '+esc(feriadoDe(f))):'')):'🚫 '+L.cerrado)+'</div>' : '<div class="fx-tur">'+tur+'</div>')+
+      (ll==='no' ? ('<div class="p393-tag">⛔ No llega: '+LL.no+'</div>') : (ll==='si' ? '<div class="p393-tag">✅ Desde acá llega todo · tocá para elegirlo</div>' : ''))+'</button>';
   }
   var nVer=(fsel && tsel) ? cuposUsadosTurno(fsel,tsel) : 0;
   var h='<div class="fx-lt">📅 Agenda de entregas</div><div class="fx-sub">Tocá un día (o su turno) para elegirlo. Lo libre de cada camión.</div>'+
@@ -28611,6 +28623,35 @@ function fxIzqPintar(){
     (nVer ? '<button type="button" class="btn btn-ghost btn-sm fx-ver" onclick="verCuposTurno(\''+esc(fsel)+'\',\''+esc(tsel)+'\')">👀 Ver '+(nVer===1?'el pedido':('los '+nVer+' pedidos'))+' del turno '+esc(tsel)+'</button>' : '');
   if(el._h!==h){ var cam=document.getElementById('fx-izq-cam'), firma=cam&&cam._firma, html=cam&&cam.innerHTML; el.innerHTML=h; el._h=h;
     var nuevo=document.getElementById('fx-izq-cam'); if(nuevo && firma){ nuevo._firma=firma; nuevo.innerHTML=html; nuevo.hidden=false; } }
+}
+/* 🎨 (16/11, mejora 393; dueño: «La agenda dice desde qué día llega tu pedido») Con un colchón que solo está en Moreno, la agenda seguía
+   marcando mañana con «8 libres» como si estuviera todo bien: que no llegaba lo decía solo el cuadrito del producto, más abajo, y la
+   pregunta al guardar. Ahora los días en que el pedido NO llega van rayados en rojo con «⛔ No llega: <producto> (está en Moreno)», el
+   primer día en que llega todo en verde con «✅ Desde acá llega todo · tocá para elegirlo» y los siguientes con «✓ llega todo». El día
+   sale de lo que YA calculó el cuadrito de cada producto (`box._v.minimo`/`desde` de `saldoVeredicto`): el más tarde de todos. Los cupos
+   de cada día siguen siendo los de siempre (un día sin lugar sigue diciendo «lleno»). Tocar un día lo elige, como siempre. Solo dibujo.
+   En Playwright como antes salvo `window.AG_LLEGA_PRUEBA`. `tests/test_v393_agenda_llega.js`. */
+function agLlegaVa(){ try{ return vdVa('AG_LLEGA_PRUEBA'); }catch(e){ return false; } }
+var AG_LLEGA_POR={ moreno:'está en Moreno', recogida:'viene de Moreno', prod:'en producción', pedir:'hay que producirlo', especial:'medida especial', fabcli:'se fabrica para este pedido' };
+function agLlegaNombre(t){
+  var n=String(t||'').toLowerCase().replace(/(^|[\s(])([a-záéíóúñ])/g, function(m, a, b){ return a+b.toUpperCase(); });
+  return n.replace(/^Colchon\b/, 'Colchón');
+}
+/* { desde: el primer día en que llega todo, no: el HTML de «qué no llega» } o null si llega todo desde el primer día de la agenda. */
+function agLlegaDatos(primer){
+  if(!agLlegaVa()) return null;
+  var V=[];
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var b=c.querySelector('.prod-saldo'), v=b && !b.hidden ? b._v : null; if(!v) return;
+    var d=v.minimo || v.desde; if(!d || !/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return;
+    V.push({ d:String(d), tipo:v.tipo, n:String((c.querySelector('.prod-desc')||{}).value||'').trim() });
+  });
+  var desde=V.reduce(function(m, x){ return x.d>m ? x.d : m; }, '');
+  if(!desde || desde<=primer) return null;
+  var tarde=V.filter(function(x){ return x.d===desde; });
+  var no=tarde.slice(0,2).map(function(x){ return esc(agLlegaNombre(x.n)||'un producto')+(AG_LLEGA_POR[x.tipo] ? (' <span class="p393-por">('+esc(AG_LLEGA_POR[x.tipo])+')</span>') : ''); }).join(', ')+
+         (tarde.length>2 ? (' y '+(tarde.length-2)+' más') : '');
+  return { desde:desde, no:no };
 }
 /* Tocar el turno de un día de la agenda elige el día Y el turno. */
 function fxElegirDia(f, ev){
@@ -28836,7 +28877,7 @@ function gladoHtml(chk, tipo, tienda){
     '<div class="glado-n">Es el mismo botón de abajo: pregunta lo mismo antes de guardar.</div>';
 }
 var FX_LADOS_T=null;
-function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()) fxDerPintar(); }catch(e){} }, 150); }
+function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()){ fxDerPintar(); if(agLlegaVa()) fxIzqPintar(); } }catch(e){} }, 150); }   // 🎨 (393) la agenda, con lo del saldo
 /* 3 · El dibujo del cuadrito del saldo. */
 function fxEscenaSaldo(tipo){
   if(tipo==='hay') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="6" y="56" width="106" height="5" rx="2" fill="#94a3b8"/>'+
