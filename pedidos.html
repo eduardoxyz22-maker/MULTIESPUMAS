@@ -8511,6 +8511,22 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .fl-hay.fb-hay{margin-top:0}
 .fb-ley{display:flex;align-items:center;gap:6px;margin:4px 0 6px;font-size:.7rem;color:#7a5a00;font-weight:700;line-height:1.3}
 .fb-ley b{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:999px;background:#fff3c4;border:1px solid #e3a400;color:#6b4300}
+/* 404 · cada camión con su color: la «patente» (franja del color + nombre + chofer), la esquinita de la ficha y la leyenda */
+.cam-pl{display:inline-flex;align-items:stretch;max-width:100%;border-radius:7px;overflow:hidden;border:1.5px solid var(--vc,#94a3b8);background:#fff;font-size:.72rem;line-height:1;vertical-align:middle;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.cam-pl i{font-style:normal;background:var(--vc,#94a3b8);color:#fff;display:flex;align-items:center;padding:3px 6px;font-size:.78rem}
+.cam-pl b{display:flex;align-items:center;padding:3px 7px;color:#14302e;font-weight:800;white-space:nowrap}
+.cam-pl span{display:flex;align-items:center;padding:3px 7px 3px 0;color:#4d6563;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cam-pl.cam-pl-gr{font-size:.86rem}.cam-pl.cam-pl-gr i{font-size:.95rem;padding:4px 8px}
+.af-cam{overflow:visible!important}
+.af-f.af-vc{position:relative}
+.af-f.af-vc::after{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 26px 26px 0;border-color:transparent var(--vc) transparent transparent;pointer-events:none}
+.cam-ley{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:2px 0 8px;font-size:.74rem;color:var(--muted)}
+.cam-ley b{font-weight:800;margin-right:2px}
+html.tema-black-friday .cam-ley, html.tema-halloween .cam-ley, html.tema-todos-santos .cam-ley{color:#d6d3d1}
+html.tema-black-friday .cam-ley b{color:#fde68a}
+.cam-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--vc);margin:0 4px 0 1px;vertical-align:0}
+.sal-cam.sal-vc{border-left:6px solid var(--cc,#9fb3b2)}
+.cie-veh.cam-pl{margin:0}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -32103,11 +32119,13 @@ function admFichaHtml(p, dn){
                                  : '<span class="af-pin off" title="Sin enlace de ubicación">📍</span>')+' '+   // 📍 (24/10, dueño) el pin abre el mapa directo
                   (p.zona?('<b>'+esc(p.zona)+'</b>'+(p.direccion?' · ':'')):'')+esc(p.direccion||(p.zona?'':'sin dirección'))+'</div>');
   var cam=ret ? '' : entregaAConfirmar(p) ? ('<div class="avc-l">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</div>')   // 📦 (propuesta 76) sin día no espera camión
-    : (p.vehiculo ? ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>') : '<div class="rojo">🚛 Sin camión</div>');
+    : (p.vehiculo ? (camColorVa() ? ('<div class="af-cam">'+camPlacaHtml(p.vehiculo, p.chofer||'')+'</div>')   // 🎨 (mejora 404) la patente con su color
+                                  : ('<div>🚛 <b>'+esc(p.vehiculo)+'</b>'+(p.chofer?(' · '+esc(p.chofer)):'')+'</div>')) : '<div class="rojo">🚛 Sin camión</div>');
   var btn=function(ic, t, fn, cl){ return '<button type="button" class="'+(cl||'')+'" onclick="event.stopPropagation();'+fn+'" title="'+esc(t)+'">'+ic+'<small>'+esc(t)+'</small></button>'; };
   var rk=admFichaColor(p);   // 🎨 (24/10, dueño) la ficha entera: ATC, RPT, verde = todo OK, rojo = falta algo; lo demás va en el producto
   var gpsL=admGpsLlegoHtml(p, 'ficha');   // §4ok-106 📍 «Llegó HH:MM (GPS)» al lado de «Entregó» (solo mira: el ✅ lo pone una persona)
-  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+'" data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
+  var vc=(!ret && p.vehiculo && camColorVa()) ? camColor(p.vehiculo) : '';   // 🎨 (mejora 404) la esquinita del color del camión
+  return '<div class="af-f af-'+E.c.split(' ')[0]+(rk?(' af-k-'+rk):'')+(vc?' af-vc':'')+'"'+(vc?(' style="--vc:'+vc+'"'):'')+' data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
     '<div class="af-hd">'+(function(){ var t=normTurno(p.turno);   // 🌅🌆 (24/10, dueño: «el número es una cosa y el sticker otra»: el turno solo, a la izquierda)
         return '<span class="af-tu"><b>'+(N||'—')+'</b></span>'; })()+   // (24/10, dueño) el N° del día solo, con su fondo
       '<div class="af-who"><b>'+clfNombre(p, p.cliente||'—', 'admin')+'</b><span class="af-sub"><em>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+'</em>'+
@@ -32197,7 +32215,8 @@ function admFichasPintar(list, dn){
   }
   var vis=grupos.filter(function(g){ return g.ver.length; });
   var gpsBar=admGpsEntHtml(list)+gpsCamionHtml(list), gpsPuesto=false;   // §4ok-106 arriba del día de hoy (el primer turno de hoy que se ve); + idea 133, el camión que faltó
-  box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+pasHtml+vis.map(function(g){
+  var camLey=''; if(camColorVa()){ var vsL={}; L.forEach(function(p){ if(p.vehiculo && VEHICULOS[p.vehiculo]) vsL[p.vehiculo]=1; }); camLey=camLeyendaHtml(Object.keys(VEHICULOS).filter(function(v){ return vsL[v]; })); }   // 🎨 (mejora 404)
+  box.innerHTML=(ley.length?('<div class="af-ley">'+ley.map(function(l){ return '<span class="af-k-'+l[0]+'"><i></i>'+l[1]+'</span>'; }).join('')+'</div>'):'')+camLey+pasHtml+vis.map(function(g){
     var antesGps=''; if(gpsBar && !gpsPuesto && g.f===hoyF){ antesGps=gpsBar; gpsPuesto=true; }
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
@@ -35814,10 +35833,11 @@ function cargaBloquesHtmlDe(list, fecha){
     var nSinStock=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
     var nEnProd=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return esRecoger(x); }); }).length;
     var nSale=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return Object.keys(cargaSaleDe(x)).length>0; }); }).length;   // (26/09)
-    html+='<div class="carga-cam" data-veh="'+esc(k)+'" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
+    html+='<div class="carga-cam" data-veh="'+esc(k)+'" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+((!esSin && camColorVa())?(';border-left:6px solid '+camColor(k)):'')+'">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
-        '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
-        (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
+        ((!esSin && camColorVa()) ? camPlacaHtml(k, chof.join(', '), 'cam-pl-gr')   // 🎨 (mejora 404) la patente del camión con su color
+          : ('<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
+        (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')))+
         '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+(nEnProd?(' · <span style="color:#a67c00">📥 '+nEnProd+' por recoger de '+esc(cargaAlmTxt(o))+'</span>'):'')+(nSale?(' · <span style="color:#0369a1">🏪 '+nSale+' con carga en '+esc(o.saleOrden.join(' y '))+'</span>'):'')+'</span></div>';
     html+='<div class="cc-lugar no-print"></div>';   // 🚛 el camión cargándose (§4im): se dibuja con los tildes, en cargaCamionesPintar
     /* 🌅🌆 (14/10, dueño: «separá mañana y tarde») lo de cada turno en su sección, con su propio tilde (`cargaChkKey(…, t)`). Un camión
@@ -57970,7 +57990,8 @@ function cieRenglonActivo(){ try{ return !navigator.webdriver || !!window.CIE_RE
 /* El camión del renglón: el selector (sin camión), «lo retira el cliente» o el camión que ya tiene. */
 function cieRenglonCamHtml(p){
   var id=String(p.id), r=cierreEntRetira(p);
-  if(vehiculoDe(p)) return '<span class="cie-veh" title="'+esc(vehiculoDe(p)+(p.chofer?(' · '+p.chofer):''))+'">🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>';
+  if(vehiculoDe(p)) return camColorVa() ? camPlacaHtml(vehiculoDe(p), p.chofer||'', 'cie-veh')   // 🎨 (mejora 404)
+    : '<span class="cie-veh" title="'+esc(vehiculoDe(p)+(p.chofer?(' · '+p.chofer):''))+'">🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>';
   if(r) return '<span class="cie-cam ret cie-cam-in" data-id="'+esc(id)+'" title="'+esc('Lo retiró el cliente en '+r.donde+': no lleva camión.')+'">🏬 lo retiró en '+esc(r.donde)+'</span>';
   var v=cierreEntCamElegido(p), o=cierreEntCamGps(p), gps=!!(o && v===o.veh);
   return '<span class="cie-cam cie-cam-in" data-id="'+esc(id)+'">'+
@@ -58524,7 +58545,7 @@ function salioBarPintar(){
     var lleva=I.filter(function(it){ return it.tu===t && it.va===v; }).length;
     var ya=(STATE||[]).filter(function(p){ return p && p.fecha===hoy && p.entregado && !esFilaSistema(p) && vehiculoDe(p)===v && normTurno(p.turno)===t; }).length;
     var sale=camionSalio(hoy, v), ch=camChoferDelDia(v, hoy);
-    return '<button type="button" class="sal-cam'+(lleva?'':' vacio')+'" data-v="'+esc(v)+'" onclick="salioAbrir(this.dataset.v)" title="Lo que lleva el '+esc(v)+' de la '+salioTurnoTxt(t)+': se tilda y se le pone el ✅, el camión y el chofer de una vez">'+
+    return '<button type="button" class="sal-cam'+(lleva?'':' vacio')+(camColorVa()?' sal-vc':'')+'" data-v="'+esc(v)+'"'+(camColorVa()?(' style="--cc:'+camColor(v)+'"'):'')+' onclick="salioAbrir(this.dataset.v)" title="Lo que lleva el '+esc(v)+' de la '+salioTurnoTxt(t)+': se tilda y se le pone el ✅, el camión y el chofer de una vez">'+
       '<b>🚚 Salió el '+esc(v)+'</b><small>'+esc(ch||'sin chofer')+' · '+(lleva ? (lleva+' pedido'+(lleva===1?'':'s')+' sin ✅') : 'ninguno sin ✅')+'</small>'+
       ((sale || ya) ? ('<small class="sal-ya">'+(sale?('🛣️ salió '+esc(sale)):'')+(sale&&ya?' · ':'')+(ya?('✅ '+ya+' ya entregado'+(ya===1?'':'s')):'')+'</small>') : '')+'</button>';
   }).join('');
@@ -59959,7 +59980,7 @@ function admLugaresHtml(){
     var u=0; lista.forEach(function(r){ u+=r.u; });
     return '<div class="lugd lugd-'+cls+'"><div class="lugd-h"><span>'+tit+'</span><b>'+stockUnid(u)+'</b></div>'+
       (lista.length ? ('<ul>'+lista.map(function(r){
-        return '<li onclick="showPedidoModal(\''+esc(r.id)+'\')" title="Abrir el pedido"><span>'+esc(r.t)+' <b>× '+stockUnid(r.u)+'</b>'+(r.de&&cls!=='aca'&&cls!=='sale'?(' <small>de '+esc(r.de)+'</small>'):'')+'</span><span>'+esc(String(r.cli).split(' ').slice(0,2).join(' '))+' · '+esc(r.veh)+'</span></li>';
+        return '<li onclick="showPedidoModal(\''+esc(r.id)+'\')" title="Abrir el pedido"><span>'+esc(r.t)+' <b>× '+stockUnid(r.u)+'</b>'+(r.de&&cls!=='aca'&&cls!=='sale'?(' <small>de '+esc(r.de)+'</small>'):'')+'</span><span>'+esc(String(r.cli).split(' ').slice(0,2).join(' '))+' · '+((camColorVa() && VEHICULOS[r.veh]) ? ('<i class="cam-dot" style="--vc:'+camColor(r.veh)+'"></i>'+esc(r.veh)) : esc(r.veh))+'</span></li>';   // 🎨 (mejora 404) el color del camión
       }).join('')+'</ul>') : '<div class="lugd-vacio">nada</div>')+'</div>';
   };
   var hay=C.aca.length+C.sale.length+C.trae.length+C.tda.length+C.no.length;
@@ -60145,6 +60166,21 @@ var VEHICULOS = {
   'Foton encarpado': ['Cristhian','Diego'],
   'Foton insumo':    ['Miguel Melgar']
 };
+/* 🎨 (16/11, mejora 404; dueño: «me gustan todas… menos la 403») CADA CAMIÓN CON SU COLOR, EN TODO EL PANEL. Un camión nuevo = un color
+   más acá (si no, sale gris). El camión va como una «patente» con la franja de su color (`camPlacaHtml`) en las fichas de Administración
+   (y la ficha lleva una esquinita del color), «¿Salió un camión?», el Cierre de entregas, la Lista de carga, «Lo del día, por lugar», la Hoja
+   de ruta y los círculos de «Camiones con lo sugerido» (`nxSugColor`): se reconoce el camión sin leer. «Sin camión» sigue en rojo. Solo
+   presentación. En Playwright como antes salvo `window.CAM_COLOR_PRUEBA`. `tests/test_v404_camion_color.js`. */
+var VEH_COLOR={ 'Carry':'#2f80ed', 'Foton nuevo':'#8b5cf6', 'Foton encarpado':'#f59e0b', 'Foton insumo':'#64748b' };
+function camColorVa(){ try{ return vdVa('CAM_COLOR_PRUEBA'); }catch(e){ return false; } }
+function camColor(v){ return VEH_COLOR[v] || '#94a3b8'; }
+function camPlacaHtml(v, ch, cls){
+  return '<span class="cam-pl'+(cls?(' '+cls):'')+'" style="--vc:'+camColor(v)+'" title="'+esc(v+(ch?(' · '+ch):''))+'"><i>🚛</i><b>'+esc(v)+'</b>'+(ch?('<span>'+esc(ch)+'</span>'):'')+'</span>';
+}
+function camLeyendaHtml(vs){
+  vs=(vs||Object.keys(VEHICULOS)).filter(function(v){ return VEHICULOS[v]; });
+  return vs.length ? ('<div class="cam-ley"><b>Camiones:</b>'+vs.map(function(v){ return camPlacaHtml(v, ''); }).join('')+'</div>') : '';
+}
 /* (06/11, «es rotativo») El chofer que va en un camión: el que más aparece en esos pedidos; si ninguno lo dice, el primero de la lista. */
 function choferDeCamion(v, peds){
   var C={}, best='', bn=0;
@@ -60427,9 +60463,11 @@ function renderRuta(){
     var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=saldoACobrar(p); if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
     var aCobrar=(cobrar>0 || fleteC>0.005);
     var esSin=(k==='Sin chofer');
-    html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
+    /* 🎨 (mejora 404) el camión de este chofer (el que más aparece en sus paradas), con su color */
+    var vR=''; if(!esSin && camColorVa()){ var cV={}, bn=0; stops.forEach(function(p){ var v=vehiculoDe(p); if(v && VEHICULOS[v]){ cV[v]=(cV[v]||0)+1; if(cV[v]>bn){ bn=cV[v]; vR=v; } } }); }
+    html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+(vR?(';border-left:6px solid '+camColor(vR)):'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
-      '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
+      '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+(vR?camPlacaHtml(vR, ''):'')+
       '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+(_rk[k]?(' · '+rutaSalidaTxt(_rk[k].deps||[])+' · ~'+Math.round(_rk[k].km)+' km'+(_rk[k].sin?(' · '+_rk[k].sin+' sin ubicación, al final'):'')):'')+'</span>'+
       (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.005?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
       (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
@@ -71850,7 +71888,8 @@ function nxSugZonaDePin(g, conocidos){
   return mejor;
 }
 var NX_SUG_COLORES=['#0ea5e9','#8b5cf6','#f59e0b','#64748b','#ec4899','#10b981'];
-function nxSugColor(v){ var i=Object.keys(VEHICULOS).indexOf(v); return NX_SUG_COLORES[(i<0?0:i)%NX_SUG_COLORES.length]; }
+function nxSugColor(v){ if(camColorVa() && VEH_COLOR[v]) return VEH_COLOR[v];   // 🎨 (mejora 404) el color de cada camión, el mismo en todo el panel
+  var i=Object.keys(VEHICULOS).indexOf(v); return NX_SUG_COLORES[(i<0?0:i)%NX_SUG_COLORES.length]; }
 function nxSugDatos(dia){
   var cams={}, orden=Object.keys(VEHICULOS), trabajan=orden.filter(function(v){ return !/insumo/i.test(v); });
   if(!trabajan.length) trabajan=orden;
