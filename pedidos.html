@@ -5012,7 +5012,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .aia-f{background:#e6f7f6;border-left:4px solid #00A09A;border-radius:8px;padding:8px 10px;font-size:.82rem;color:#0f3d3a;line-height:1.4}
 .aia-f ol{margin:4px 0 0 18px;padding:0}.aia-f li{margin:3px 0}.aia-f small{color:#3d6b67}
 .aia-err{background:#fff4d6;border:1px solid #f0d264;border-radius:8px;padding:7px 10px;font-size:.8rem;color:#7c4b00;margin:8px 0}
-.aia-k{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.aia-k .btn{width:auto}
+.aia-k{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.aia-k .btn{width:auto;background:#fff;border:1px solid #cfe9e7;color:#0f3d3a}
 .aia-y{background:#00B5AD!important;border-color:#00B5AD!important;color:#fff!important;font-weight:700}
 /* 🧠 (16/11, mejora 360) Los productos escritos a mano, debajo de «❓ Revisá el nombre» */
 .iap-caja{margin:10px 0;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #cfe9e7;border-left:5px solid #00B5AD;color:#1f2d3d}
@@ -5026,6 +5026,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .iap-ok{font-style:normal;color:#047857;font-weight:700}.iap-dd{font-style:normal;color:#b45309;font-weight:700}.iap-no{font-style:normal;color:#b91c1c;font-weight:700}
 .iap-k{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.iap-k .btn{width:auto;background:#fff}
 .iap-y{background:#00B5AD!important;border-color:#00B5AD!important;color:#fff!important;font-weight:700}
+.iap-op{background:#e6f7f6!important;border:1px solid #00A09A!important;color:#0f5f5a!important;font-weight:700}
 .iap-pie{margin-top:8px;font-size:.8rem;color:#475569}.iap-pie .btn{width:auto}.iap-err{color:#7c4b00}
 .iap-form{margin:4px 0 2px;padding:6px 9px;border-radius:8px;background:#e6f7f6;border:1px solid #9fd6d2;color:#0f3d3a;font-size:.8rem;line-height:1.5}
 .iap-form[hidden]{display:none}.iap-form .btn{width:auto;padding:3px 9px;margin-left:4px}.iap-form small{color:#3d6b67}
@@ -5042,7 +5043,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .iss-qp{display:block;color:#475569;margin-top:3px}.iss-q{display:block;color:#0f766e;font-weight:700;margin-top:3px}
 .iss-d{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.iss-d i{font-style:normal;font-size:.72rem;border-radius:5px;padding:1px 6px;background:#f1f7f7;color:#334155}
 .iss-d i.m{background:#fee2e2;color:#b91c1c}.iss-d i.p{background:#dcfce7;color:#047857}
-.iss-k{display:flex;flex-wrap:wrap;gap:6px}.iss-k .btn{width:auto}
+.iss-k{display:flex;flex-wrap:wrap;gap:6px}.iss-k .btn{width:auto;background:#fff;border:1px solid #cfe9e7;color:#0f3d3a}
 /* ✓ (15/11, mejora 313) «¿Lo mandaste?» en «Pedido a producción» */
 #pap-overlay .pap-mande{margin:8px 14px 10px;padding:10px 12px;border-radius:12px;background:#e6f7f6;border:2px solid #00B5AD;color:#0f3d3a;font-size:.86rem}
 #pap-overlay .pap-mande.ok{background:#dcfce7;border-color:#86efac;color:#14532d}
@@ -31935,7 +31936,7 @@ function iapHtml(){
     } else if(P.s==='dudoso' && (P.op||[]).length){
       var ops=P.op.map(iapProdDe).filter(Boolean);
       b='<b>¿'+ops.map(function(x){ return esc(x.n+(x.m ? ' '+x.m : '')); }).join(' o ')+'?</b><small>'+esc(P.m||'no dice cuál')+' · '+iapSegTxt('dudoso')+'</small>';
-      if(puede) k=ops.map(function(x){ return '<button type="button" class="btn btn-sm" data-ll="'+esc(g.ll)+'" data-c="'+esc(x.code)+'" onclick="iapAplicar(this.dataset.ll, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join('');
+      if(puede) k=ops.map(function(x){ return '<button type="button" class="btn btn-sm iap-op" data-ll="'+esc(g.ll)+'" data-c="'+esc(x.code)+'" onclick="iapAplicar(this.dataset.ll, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join('');
     } else b='<b>'+(P.s==='no_es_producto' ? 'No es un producto' : 'Claude no lo reconoce')+'</b><small>'+esc(P.m||'')+(P.m ? ' · ' : '')+iapSegTxt(P.s)+' · abrí el pedido y corregilo a mano</small>';
     return '<div class="iap-r"><span class="iap-a">«'+esc(g.desc)+'»'+(g.medida ? (' '+esc(g.medida)) : '')+' × '+esc(stockUnid(g.cant))+
         '<small>'+g.peds.slice(0,3).map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.vendedor||'sin vendedora'); }).join(' · ')+(g.peds.length>3 ? (' y '+(g.peds.length-3)+' más') : '')+'</small></span>'+
@@ -32018,7 +32019,7 @@ function iapFormHtml(P, ll){
   if(P.s==='seguro' && iapProdDe(P.c)){ var x=iapProdDe(P.c);
     return '🧠 ¿Es <b>'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</b> ('+esc(x.code)+')?'+(P.m ? (' <small>'+esc(P.m)+'</small>') : '')+' <button type="button" class="btn btn-sm iap-y" data-c="'+esc(x.code)+'" onclick="iapFormUsar(this, this.dataset.c)">Usar ese</button>'; }
   if(P.s==='dudoso' && (P.op||[]).length){ var ops=P.op.map(iapProdDe).filter(Boolean); if(!ops.length) return '';
-    return '🧠 Puede ser'+(P.m ? (' <small>('+esc(P.m)+')</small>') : '')+': '+ops.map(function(x){ return '<button type="button" class="btn btn-sm" data-c="'+esc(x.code)+'" onclick="iapFormUsar(this, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join(' '); }
+    return '🧠 Puede ser'+(P.m ? (' <small>('+esc(P.m)+')</small>') : '')+': '+ops.map(function(x){ return '<button type="button" class="btn btn-sm iap-op" data-c="'+esc(x.code)+'" onclick="iapFormUsar(this, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join(' '); }
   if(P.s==='no_es_producto') return '🧠 Esto no parece un producto'+(P.m ? (' ('+esc(P.m)+')') : '')+': escribí el producto de la lista.';
   return '';
 }
