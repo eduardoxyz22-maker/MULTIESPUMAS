@@ -2545,6 +2545,23 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .bo-q{font-size:.84rem;color:#334;margin:4px 0 8px}
 .bo-av{font-size:.84rem;color:#0f5c58;font-weight:700;margin-bottom:6px}
 .rz-por{display:block;color:#7a6a3c;font-size:.72rem}   /* 🗺️ (mejora 384) */
+/* 🎓 (mejora 381) la tarjeta de «Te muestro cómo» (el mismo diseño del recorrido) */
+.asis-tour.ensena{ border-color:#f59e0b; }
+.asis-tour.ensena[hidden]{ display:none!important; }
+/* 📊 (mejora 382) el uso del panel */
+.uso-top{background:#fff8e6;border:1px solid #f3d38b;border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:.86rem;color:#4a3400}
+.uso-sub{font-size:.8rem;color:var(--muted);margin:0 0 9px}
+.uso-t{width:100%;border-collapse:collapse;font-size:.84rem}
+.uso-t td{border-top:1px solid #e5edf0;padding:7px 6px;vertical-align:top}
+.uso-t td.uso-n{width:34%}
+.uso-e{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.uso-verde .uso-e{background:#22A06B} .uso-ambar .uso-e{background:#f59e0b} .uso-gris .uso-e{background:#94a3b8} .uso-nm .uso-e{background:#cbd5e1}
+.uso-gris td.uso-d,.uso-nm td.uso-d{color:#64748b}
+.uso-q{display:block;color:#64748b;font-size:.74rem}
+.uso-b{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.uso-b button{width:auto;font-size:.74rem;padding:4px 8px}
+.uso-ok td{opacity:.7}
+.asis-tour.ensena .asis-acc{ flex-wrap:wrap; }
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -29130,10 +29147,11 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
+var ENSENA_ID='__ensena__';              // 🎓 (mejora 381/382) lo que el dueño pidió que Bloki enseñe (desde «📊 Uso del panel»)
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
@@ -32247,6 +32265,8 @@ function admArribaPintar(){
 }
 function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
+  try{ ensenaMirar(); }catch(e){}   // 🎓 (mejora 381) Bloki le enseña a logística lo que nunca usó
+  try{ usoBotonPintar(); }catch(e){}   // 📊 (mejora 382) «Uso del panel», con la contraseña
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); try{ waRespPintar(); }catch(e){} renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   try{ cupPronAdmPintar(); }catch(e){ console.error(e); }   // 📈 (14/11, 266) los turnos que se van a llenar (deja sus números en ADM_AV.cupos)
@@ -39330,6 +39350,7 @@ function misTopPintar(v, mine){
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; plataEnNodo(el); }   // 💵 (15/11, mejora 291)
   try{ antesIrteQuizas(v); }catch(e){}               // 🌙 (15/11, 310) desde las 19:00, una vez por día
+  try{ ensenaMirar(); }catch(e){}                    // 🎓 (mejora 381) Bloki enseña lo que nunca hizo
   try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
 }
 var MIS_HACER_MAS=false;
@@ -71878,6 +71899,305 @@ function asisTourPaso(d){
     c.hidden=false;
   }, P.v && asisVista()!==P.v ? 450 : 200);
 }
+/* ============================================================================
+   🎓 «TE MUESTRO CÓMO»: BLOKI ENSEÑA LO QUE NUNCA HICISTE (mejora 381, 16/11; dueño la eligió)
+   Juan Pablo tenía 11 avisos de Contabilidad y había cerrado 0; María 36 ventas de Kommo en la bandeja y nunca tocó «🔗 Unir»; logística puso
+   78 ✅ de a uno con «Entregó» y usó «✅ Cierre de entregas» 1 vez. Nada miraba qué no hizo NUNCA cada persona para enseñarle justo eso.
+   · Cinco tareas (`ENSENA_TAREAS`): cerrar un aviso de Contabilidad, anotar la factura o remisión, unir una venta de Kommo ya cargada, el
+     cierre de entregas (logística) y cobrar el saldo. Cada una sabe cuántas tiene la persona (`datos`: las MISMAS cuentas de «Para hacer»)
+     y si alguna vez la hizo (lo que ya guarda la planilla: `ok` de los avisos, `fdoc`, `klead` en un pedido que no vino de Kommo, `eT` del
+     cierre, un cobro que no es el adelanto).
+   · Con ≥ `ENSENA_MIN` (3) y nunca hecha, Bloki ofrece UNA vez por persona y tarea (`me_ensena`, en el aparato): «¿Te muestro cómo? (1
+     minuto)». Si dice que sí, abre la pantalla, ilumina el botón exacto (el brillo del recorrido, `asisFoco`) y dice qué tocar, paso a paso,
+     con SU primer caso de verdad; al final, «¡Listo! Te quedan N». «Ya sé, no me muestres más» lo apaga para esa persona. Solo señala: no
+     toca nada (lo toca la persona).
+   · Desde «📊 Uso del panel» (382) el dueño puede pedir «🎓 Que Bloki la enseñe»: queda en la fila del sistema `__ensena__` (`ENSENA_ID`,
+     para todos los aparatos) y Bloki la vuelve a ofrecer, con 1 o más, a quien todavía no la hizo (aunque ya se la hubiera ofrecido).
+   · Se mira al dibujar Mis pedidos (con una vendedora elegida) y Administración (logística), con un respiro, nunca con una ventana abierta ni
+     durante el recorrido. En Playwright apagado salvo `ENSENA_PRUEBA`. `tests/test_bloki_ensena.js`.
+   ========================================================================== */
+var ENSENA_LS='me_ensena', ENSENA_MIN=3, ENSENA={ T:null, ofrecio:false, k:'', i:0, c:null, v:'', P:null }, ENSENA_ESPERA_MS=2500;
+function ensenaActivo(){ try{ return !navigator.webdriver || !!window.ENSENA_PRUEBA; }catch(e){ return true; } }
+function ensenaLeer(){ try{ var o=JSON.parse(localStorage.getItem(ENSENA_LS)||'{}'); return (o && typeof o==='object') ? o : {}; }catch(e){ return {}; } }
+function ensenaClave(persona, k){ return normNombre(persona||'?')+'|'+k; }
+function ensenaPoner(persona, k, est){ var o=ensenaLeer(); o[ensenaClave(persona, k)]={ e:est, t:Date.now() }; try{ localStorage.setItem(ENSENA_LS, JSON.stringify(o)); }catch(e){} }
+function ensenaEstado(persona, k){ return ensenaLeer()[ensenaClave(persona, k)]||null; }
+/* lo que pidió el dueño (para todos los aparatos): { k:{ t, por } } */
+function ensenaPedidos(){
+  var r=(STATE||[]).filter(function(p){ return p && String(p.id)===ENSENA_ID; })[0];
+  try{ var o=JSON.parse((r && r.observaciones)||'{}')||{}; return (o.e && typeof o.e==='object') ? o.e : {}; }catch(e){ return {}; }
+}
+function ensenaMios(v){ return (STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v); }); }
+function ensenaCli(p){ return String((p&&p.cliente)||'—').trim().split(/\s+/).slice(0,3).join(' '); }
+var ENSENA_TAREAS=[
+  { k:'aviso', rol:'vend', t:'cerrar un aviso de Contabilidad', ic:'📣',
+    datos:function(v){ var L=[]; try{ L=ctaAvAbiertos(v); }catch(e){}
+      var hizo=false; try{ hizo=ctaAvLeer().some(function(a){ return a && a.ok && !a.au && mismoVendedor(a.vend, v); }); }catch(e){}
+      return { n:L.length, nunca:!hizo, c:L[0]||null, que:(L.length===1?'aviso':'avisos')+' de Contabilidad' }; },
+    pasos:function(c, v){ return [
+      { abrir:function(){ ctaAvVer(v); }, f:['.ctav-it[data-av="'+c.id+'"] .ctav-bt .ah-go:not(.ah-go-p)', '.ctav-it .ctav-bt .ah-go:not(.ah-go-p)'], t:'📣 Tu primer aviso',
+        x:'Es el de '+(c.cli||'tu cliente')+': '+(c.txt||'algo distinto de lo anotado')+'. Si hay que corregir el pago, tocá «Abrir la venta» y arreglalo.' },
+      { f:['.ctav-it[data-av="'+c.id+'"] .ah-go-p', '.ctav-it .ah-go-p'], t:'✓ Cuando ya está bien',
+        x:'Si ya lo arreglaste (o estaba bien), tocá el botón que brilla: «✓ Ya lo corregí». Contabilidad ve que lo revisaste.' } ]; } },
+  { k:'factura', rol:'vend', t:'anotar la factura o la nota de remisión', ic:'🧾',
+    datos:function(v){ var M=ensenaMios(v), L=M.filter(docVentaFalta);
+      return { n:L.length, nunca:!M.some(function(p){ return docVentaDe(p) && docNumDe(p); }), c:L[0]||null, que:(L.length===1?'venta':'ventas')+' sin el N° de factura o remisión' }; },
+    pasos:function(c){ return [
+      { abrir:function(){ showContaModal(String(c.id)); }, f:['#cta-doc button[data-v="F"]', '#cta-doc'], t:'🧾 ¿Factura o remisión?',
+        x:'Es la venta de '+ensenaCli(c)+'. Tocá «🧾 Factura» o «📄 Nota de remisión», la que le hiciste.' },
+      { f:['#cta-doc-num'], t:'El número', x:'Escribí el N° que te dio el sistema.' },
+      { f:['#cta-doc button[onclick^="ctaDocGuardar("]'], t:'💾 Guardar', x:'Tocá «💾 Guardar N°» y listo: sale de tu «Para hacer».' } ]; } },
+  { k:'kommo', rol:'vend', t:'unir una venta de Kommo que ya cargaste', ic:'🔗',
+    datos:function(v){ var L=[]; try{ L=borrCargadasDe(borradoresDe(v)); }catch(e){}
+      var hizo=(STATE||[]).some(function(p){ return p && mismoVendedor(p.vendedor, v) && kleadDe(p) && String(p.id).indexOf(BORRADOR_PREF)!==0; });
+      return { n:L.length, nunca:!hizo, c:L[0] ? L[0].b : null, que:(L.length===1?'venta de Kommo que ya cargaste':'ventas de Kommo que ya cargaste') }; },
+    pasos:function(c, v, D){ return [
+      { abrir:function(){ showView('mis'); try{ renderMis(); }catch(e){} }, f:['.borr-unir', '#band-ord-btn', '#mis-borradores'], t:'🔗 Ya las cargaste a mano',
+        x:'Estas '+D.n+' ventas de Kommo ya las tenés cargadas (mismo celular). Tocá el botón que brilla y quedan unidas: una sola venta cada una.' } ]; } },
+  { k:'cierre', rol:'log', t:'el cierre de entregas', ic:'✅',
+    datos:function(){ var hoy=todayStr(), desde=isoDeTsBolivia(Date.now()-7*864e5);
+      var L=(STATE||[]).filter(function(p){ return cierreEntEntra(p) && p.fecha<=hoy && p.fecha>=desde && !esATC(p.oc); });
+      return { n:L.length, nunca:!(STATE||[]).some(function(p){ return !!cierreEntDe(p); }), c:L[0]||null, que:'entregas sin el ✅' }; },
+    pasos:function(){ return [
+      { abrir:function(){ showView('admin'); try{ if(typeof admSecPoner==='function') admSecPoner('her'); }catch(e){} }, f:['#view-admin .adm-tools [onclick="abrirCierreEntregas()"]', '#view-admin [onclick="abrirCierreEntregas()"]', '#admin-lock'], t:'✅ El cierre de entregas',
+        x:'En vez de tocar «Entregó» uno por uno: al final del día abrí el cierre de entregas.' },
+      { abrir:function(){ abrirCierreEntregas(); }, f:['#cie-ent-confirmar'], t:'Tildá y confirmá',
+        x:'Tildá lo que salió (lo que no, «📅 No salió · reprogramar») y tocá el botón que brilla: se guardan todos juntos.' } ]; } },
+  { k:'saldo', rol:'vend', t:'cobrar el saldo', ic:'💵',
+    datos:function(v){ var hoy=todayStr(), M=ensenaMios(v);
+      var L=M.filter(function(p){ return !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p) && p.fecha && p.fecha<=hoy && contaFaltaCobrar(p)>0.005; });
+      var hizo=M.some(function(p){ return cobrosReales(p).some(function(c){ return !c.anticipo && !esEnvio(c); }); });
+      return { n:L.length, nunca:!hizo, c:L[0]||null, que:(L.length===1?'venta entregada con saldo':'ventas entregadas con saldo') }; },
+    pasos:function(c){ return [
+      { abrir:function(){ showContaModal(String(c.id)); }, f:['#modal-box [onclick^="ctaRegistrarPago("]'], t:'💵 Cobrar el saldo',
+        x:'Cuando '+ensenaCli(c)+' te paga el saldo: elegí cómo pagó, poné el monto, subí la foto del comprobante y tocá «Registrar pago».' } ]; } }
+];
+function ensenaTarea(k){ return ENSENA_TAREAS.filter(function(x){ return x.k===k; })[0]||null; }
+/* Quién mira ahora y con qué rol. */
+function ensenaQuien(){
+  var r=''; try{ r=quienRol(); }catch(e){}
+  var vis=''; try{ vis=asisVista(); }catch(e){}
+  if(vis==='admin' && r==='logistica') return { rol:'log', v:quienEdita()||'Logística' };
+  if(vis==='mis'){ var v=''; try{ v=misVendedorSel(); }catch(e){} if(v && !(MIS_TODOS && UNLOCKED) && !esVendedorLite(v)) return { rol:'vend', v:v }; }
+  return null;
+}
+/* La primera tarea para ofrecer, o null. */
+function ensenaElegir(Q){
+  if(!Q) return null;
+  var ped=ensenaPedidos();
+  for(var i=0;i<ENSENA_TAREAS.length;i++){
+    var T=ENSENA_TAREAS[i]; if(T.rol!==Q.rol) continue;
+    var D=null; try{ D=T.datos(Q.v); }catch(e){ D=null; }
+    if(!D || !D.nunca || !D.c) continue;
+    var st=ensenaEstado(Q.v, T.k), pd=ped[T.k], pedido=!!(pd && Number(pd.t)>0 && (!st || Number(st.t)<Number(pd.t)));
+    if(pedido ? D.n<1 : (st || D.n<ENSENA_MIN)) continue;
+    return { T:T, D:D, pedido:pedido };
+  }
+  return null;
+}
+function ensenaMirar(){
+  if(!ensenaActivo() || ENSENA.ofrecio || ENSENA.P) return;
+  clearTimeout(ENSENA.T);
+  ENSENA.T=setTimeout(function(){
+    if(ENSENA.ofrecio || ENSENA.P || (typeof ASIS_TOUR!=='undefined' && ASIS_TOUR)) return;
+    var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return;
+    var Q=ensenaQuien(), E=ensenaElegir(Q); if(!E) return;
+    ENSENA.ofrecio=true; ensenaPoner(Q.v, E.T.k, 'ofrecido');
+    ensenaCard('<small>🎓 Te muestro cómo · 1 minuto</small><b>'+esc(E.T.ic+' '+E.T.t.charAt(0).toUpperCase()+E.T.t.slice(1))+'</b>'+
+      '<span>Tenés <b>'+E.D.n+'</b> '+esc(E.D.que)+' y todavía no '+(E.T.rol==='log'?'usaste esto':'lo hiciste nunca')+'. '+(E.pedido?'Administración pidió que te lo muestre. ':'')+'Te muestro con '+(E.T.k==='cierre'?'el de hoy':'la primera')+', paso a paso.</span>'+
+      '<div class="asis-acc"><button type="button" class="asis-b si" onclick="ensenaEmpezar(\''+E.T.k+'\')">Sí, mostrame</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaCerrar()">Ahora no</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaYaSe(\''+E.T.k+'\')">Ya sé, no me muestres más</button></div>');
+  }, ENSENA_ESPERA_MS);
+}
+function ensenaCard(h){
+  var c=document.getElementById('ensena');
+  if(!c){ c=document.createElement('div'); c.id='ensena'; c.className='asis-tour ensena no-print'; c.setAttribute('role','dialog'); c.setAttribute('aria-label','Bloki te muestra cómo'); document.body.appendChild(c); }
+  c.innerHTML=h; c.hidden=false;
+  try{ blokiGesto('senala', 3000); }catch(e){}
+}
+function ensenaCerrar(){
+  var c=document.getElementById('ensena'); if(c) c.hidden=true;
+  ENSENA.P=null; ENSENA.k='';
+  if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
+}
+function ensenaYaSe(k){ var Q=ensenaQuien(); ensenaPoner(Q ? Q.v : (ENSENA.v||'?'), k, 'ya'); ensenaCerrar(); toast('Listo: no te lo vuelvo a mostrar.','ok'); }
+function ensenaEmpezar(k){
+  var T=ensenaTarea(k), Q=ensenaQuien() || (ENSENA.v ? { v:ENSENA.v, rol:T&&T.rol } : null); if(!T || !Q) { ensenaCerrar(); return; }
+  var D=T.datos(Q.v); if(!D || !D.c){ ensenaCerrar(); toast('Ya no tenés '+T.t+' pendiente ✓','ok'); return; }
+  ENSENA.k=k; ENSENA.v=Q.v; ENSENA.c=D.c; ENSENA.D=D; ENSENA.P=T.pasos(D.c, Q.v, D); ENSENA.i=0;
+  ensenaPaso(0);
+}
+function ensenaPaso(d){
+  if(!ENSENA.P) return;
+  ENSENA.i=Math.max(0, ENSENA.i+(d||0));
+  var P=ENSENA.P[ENSENA.i];
+  if(!P){ ensenaFin(); return; }
+  var abrir=P.abrir || (d<0 ? (function(){ for(var j=ENSENA.i-1;j>=0;j--){ if(ENSENA.P[j].abrir) return ENSENA.P[j].abrir; } return null; })() : null);
+  try{ if(abrir) abrir(); }catch(e){}
+  setTimeout(function(){
+    if(!ENSENA.P) return;
+    var el=asisPrimero(P.f); if(el) asisFoco(el, true);
+    var n=ENSENA.P.length, ult=ENSENA.i===n-1;
+    ensenaCard('<small>Te muestro cómo · paso '+(ENSENA.i+1)+' de '+n+'</small><b>'+esc(P.t)+'</b><span>'+esc(P.x)+'</span><div class="asis-acc">'+
+      (ENSENA.i ? '<button type="button" class="asis-b" onclick="ensenaPaso(-1)">‹ Atrás</button>' : '')+
+      '<button type="button" class="asis-b si" onclick="ensenaPaso(1)">'+(ult?'¡Listo! ✓':'Siguiente ›')+'</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaYaSe(\''+ENSENA.k+'\')">Ya sé, no me muestres más</button></div>');
+  }, abrir ? 350 : 120);
+}
+function ensenaFin(){
+  var T=ensenaTarea(ENSENA.k), D=null; try{ D=T.datos(ENSENA.v); }catch(e){}
+  ensenaPoner(ENSENA.v, ENSENA.k, 'hecho');
+  if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
+  ENSENA.P=null;
+  var q=D ? D.n : 0;
+  ensenaCard('<small>🎓 Te muestro cómo</small><b>¡Listo!</b><span>'+(q ? ('Te quedan <b>'+q+'</b> '+esc(D.que)+'. Seguí con la próxima igual: es lo mismo.') : 'Ya no te queda ninguna ✓')+'</span>'+
+    '<div class="asis-acc"><button type="button" class="asis-b si" onclick="ensenaCerrar()">Cerrar</button></div>');
+}
+/* 382: el dueño pide que Bloki la enseñe (para todos los aparatos). Relee la fila, junta y guarda. */
+function ensenaPedir(k){
+  if(!UNLOCKED){ toast('🔒 Con la contraseña de Administración.','err'); return Promise.resolve(false); }
+  if(!CONNECTED){ toast('Este aparato no está conectado a la planilla.','err'); return Promise.resolve(false); }
+  var escribir=function(srv){
+    var e={}; try{ var o=JSON.parse((srv && srv.observaciones)||'{}')||{}; if(o.e && typeof o.e==='object') e=o.e; }catch(x){}
+    e[k]={ t:Date.now(), por:quienEdita()||'Administración' };
+    var fila=filaSistema(ENSENA_ID, '🎓 LO QUE BLOKI ENSEÑA (no tocar: la lee el panel)', JSON.stringify({ v:1, e:e }));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[ENSENA_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(r && r.ok){ var g=(r.pedido && String(r.pedido.id)===ENSENA_ID) ? r.pedido : fila;
+        STATE=STATE.filter(function(p){ return String(p.id)!==ENSENA_ID; }); STATE.push(g); return true; }
+      if(r && r.actual && String(r.actual.id)===ENSENA_ID && !escribir.otra){ escribir.otra=1; return escribir(r.actual); }
+      throw new Error((r && (r.error||r.motivo)) || 'no_guardo');
+    });
+  };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('sin_lectura');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===ENSENA_ID) srv=p; });
+    return escribir(srv);
+  }).then(function(){ var T=ensenaTarea(k); toast('🎓 Listo: Bloki se lo va a mostrar a quien todavía no '+(T?('sabe '+T.t):'lo usa')+', la próxima vez que abra el panel.','ok',8000); return true; },
+    function(err){ toast('No se pudo guardar ('+(typeof motivoDeError==='function' ? motivoDeError(err) : String(err))+'). Probá de nuevo.','err',8000); return false; });
+}
+/* ============================================================================
+   📊 QUÉ PARTES DEL PANEL SE USAN Y CUÁLES NO (mejora 382, 16/11; dueño la eligió)
+   Con la planilla del 15/11: «🏬 Stock de las tiendas» nunca guardó un conteo, el «🔒 Cerrar» del Cierre comercial nunca se tocó, los tildes de
+   la Lista de carga y «🚚 Ya salió» no se usaban desde el 26/10, el camión se anotó en 0 de 32 entregas, «✅ Cierre de entregas» 1 vez contra 78
+   «Entregó». Nada decía qué herramientas se dejaron de usar.
+   · Administración → Herramientas → «📊 Uso del panel» (con la contraseña): una tabla, cada herramienta en verde (se usa), ámbar (poco) o gris
+     (nunca), con desde cuándo y quién. SOLO de lo que ya guarda la planilla (`usoDatos`: las filas del sistema, `__carga_chk__`, `eH`/`eT`,
+     el camión de cada pedido, los avisos de Contabilidad, `fdoc`, `klead`, los cobros tildados de los retiros, el historial de los Excel). Lo
+     que no deja nada en la planilla dice «no se puede medir». Sin rastreo nuevo: nadie es vigilado.
+   · Arriba, lo que más trabajo ahorraría si se usara (la que no está en verde con más trabajo hecho a mano o pendiente).
+   · En cada fila: «🎓 Que Bloki la enseñe» (las cinco de la mejora 381: queda en `__ensena__`, para todos los aparatos), «🙈 Sacarla de la
+     vista» (esconde su botón, `USO_OCULTA`) y «👍 Está bien así» (la deja en gris claro): estos dos, por aparato (`me_uso`), porque no hay
+     dónde guardarlos para todos y esconder un botón a todo el equipo es una decisión del dueño.
+   · Solo mira. En Playwright el botón no sale salvo `USO_PRUEBA`. `tests/test_uso_panel.js`.
+   ========================================================================== */
+var USO_LS='me_uso', USO_DIAS=30;
+/* el botón de cada herramienta que «🙈 Sacarla de la vista» esconde (solo las que tienen un botón propio) */
+var USO_OCULTA={ tst:'#stk-tst-btn', ccm:'#pry-cierre-btn', tal:'.cx-av-btn[onclick*="talAbrir"]', dest:'.clf-dest', cierre:'#view-admin [onclick="abrirCierreEntregas()"]', salio:'.cv-salio' };
+function usoVa(){ try{ return !navigator.webdriver || !!window.USO_PRUEBA; }catch(e){ return true; } }
+function usoLeer(){ try{ var o=JSON.parse(localStorage.getItem(USO_LS)||'{}'); return (o && typeof o==='object') ? { o:o.o||{}, b:o.b||{} } : { o:{}, b:{} }; }catch(e){ return { o:{}, b:{} }; } }
+function usoPoner(campo, k, on){ var U=usoLeer(); if(on) U[campo][k]=Date.now(); else delete U[campo][k]; try{ localStorage.setItem(USO_LS, JSON.stringify(U)); }catch(e){} usoAplicarOcultas(); }
+function usoAplicarOcultas(){
+  var U=usoLeer(), sel=Object.keys(U.o).map(function(k){ return USO_OCULTA[k]; }).filter(Boolean);
+  var st=document.getElementById('uso-oculta-st');
+  if(!st){ st=document.createElement('style'); st.id='uso-oculta-st'; document.head.appendChild(st); }
+  st.textContent=sel.length ? (sel.join(',')+'{display:none!important}') : '';
+}
+function usoBotonPintar(){
+  var g=document.querySelector('.adm-tools .at-aj .at-b'); if(!g) return;
+  var b=document.getElementById('uso-btn'), ve=usoVa() && UNLOCKED;
+  if(!ve){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='uso-btn'; b.className='btn btn-sm at-t'; b.style.setProperty('--c','#334155'); b.setAttribute('data-d','qué se usa y qué no');
+    b.title='Qué herramientas del panel se usan y cuáles no, de lo que ya guarda la planilla'; b.textContent='📊 Uso del panel'; b.onclick=function(){ usoAbrir(); }; g.insertBefore(b, g.firstChild); }
+}
+function usoDias(){ return isoDeTsBolivia(Date.now()-USO_DIAS*864e5); }
+function usoQuien(L){ var c={}; L.forEach(function(q){ q=String(q||'').trim(); if(q && q!=='?') c[q]=(c[q]||0)+1; }); return Object.keys(c).sort(function(a,b){ return c[b]-c[a]; }).slice(0,3).join(', '); }
+function usoEst(n, umbral){ return !(n>0) ? 'gris' : (n<umbral ? 'ambar' : 'verde'); }
+/* Las filas de la tabla: { k, ic, t, est:'verde'|'ambar'|'gris'|'nm', d (qué dice), q (quién), pesa (trabajo), en (k de 381) } */
+function usoDatos(){
+  var hoy=todayStr(), desde=usoDias(), L=[], P=(STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p); });
+  var enVentana=function(f){ f=String(f||'').slice(0,10); return f>=desde && f<=hoy; };
+  /* ✅ Cierre de entregas contra «Entregó» de a uno */
+  var diasCie={}, quienCie=[], unoAuno=0, quienUno=[];
+  P.forEach(function(p){ var c=cierreEntDe(p); if(c && c.t && enVentana(isoDeTsBolivia(c.t))){ diasCie[isoDeTsBolivia(c.t)]=1; quienCie.push(c.q); }
+    entHistDe(p).forEach(function(e){ if(e && Number(e.v) && enVentana(isoDeTsBolivia(e.t)) && !/cierre/i.test(String(e.d||''))){ unoAuno++; quienUno.push(e.q); } }); });
+  var nCie=Object.keys(diasCie).length;
+  L.push({ k:'cierre', ic:'✅', t:'Cierre de entregas', est:usoEst(nCie, 10), en:'cierre', pesa:nCie<10 ? unoAuno : 0,
+    d:(nCie ? (nCie+' día'+(nCie===1?'':'s')+' con cierre en '+USO_DIAS+' días') : 'nunca en '+USO_DIAS+' días')+(unoAuno ? (' · el ✅ se puso de a uno '+unoAuno+' veces') : ''), q:usoQuien(quienCie.length?quienCie:quienUno) });
+  /* Tildes de la Lista de carga y «🚚 Ya salió» */
+  var diasT={}, diasS={}, ultT='', ultS='';
+  Object.keys(CARGA_CHK||{}).forEach(function(k){ var f=String(k).slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
+    var s=String(k).indexOf(CARGA_SALIO)>=0; if(s){ if(f>ultS) ultS=f; if(enVentana(f)) diasS[f]=1; } else { if(f>ultT) ultT=f; if(enVentana(f)) diasT[f]=1; } });
+  var nT=Object.keys(diasT).length, nS=Object.keys(diasS).length;
+  L.push({ k:'carga', ic:'📦', t:'Tildes de la Lista de carga', est:usoEst(nT, 10), pesa:0, d:(nT ? (nT+' día'+(nT===1?'':'s')+' con tildes en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultT ? (' · el último el '+fmtFechaCorta(ultT)) : ' · nunca') });
+  L.push({ k:'salio', ic:'🚚', t:'«Ya salió» del camión (a mano)', est:usoEst(nS, 10), pesa:0, d:(nS ? (nS+' día'+(nS===1?'':'s')+' en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultS ? (' · el último el '+fmtFechaCorta(ultS)) : ' · nunca')+' (el GPS lo marca solo)' });
+  /* 🚚 El camión anotado en las entregas de los últimos 14 días */
+  var d14=isoDeTsBolivia(Date.now()-14*864e5), ent=P.filter(function(p){ return p.fecha && p.fecha>=d14 && p.fecha<=hoy && !esVentaTienda(p) && !esATC(p.oc) && !(typeof fichaRetira==='function' && fichaRetira(p)); });
+  var conCam=ent.filter(function(p){ return !!String(p.vehiculo||'').trim(); }).length, pc=ent.length ? conCam/ent.length : 0;
+  L.push({ k:'camion', ic:'🚚', t:'El camión anotado en el pedido', est:!ent.length ? 'nm' : (pc>=0.7 ? 'verde' : (conCam ? 'ambar' : 'gris')), pesa:ent.length-conCam,
+    d:ent.length ? (conCam+' de '+ent.length+' entregas de los últimos 14 días') : 'sin entregas en 14 días' });
+  /* 🏬 Stock de las tiendas · 🔒 Cerrar el cierre comercial · Talonario «ya lo vi» · 📌 Guardar este lugar */
+  var tst=tstLeer(), nTst=Object.keys(tst.s||{}).filter(function(n){ return tst.s[n] && tst.s[n].f; }).length;
+  L.push({ k:'tst', ic:'🏬', t:'Stock de las tiendas', est:usoEst(nTst, 3), pesa:0, d:nTst ? (nTst+' tienda'+(nTst===1?'':'s')+' con conteo') : 'nunca se guardó un conteo' });
+  var ccm=ccmLeer(), nCcm=Object.keys(ccm.m||{}).filter(function(ym){ return ccm.m[ym] && ccm.m[ym].c; }).length;
+  L.push({ k:'ccm', ic:'🔒', t:'«Cerrar» del Cierre comercial', est:usoEst(nCcm, 1), pesa:0, d:nCcm ? (nCcm+' mes'+(nCcm===1?'':'es')+' cerrado'+(nCcm===1?'':'s')) : 'nunca se tocó' });
+  var nTal=0; try{ nTal=Object.keys(talSet()).length; }catch(e){}
+  L.push({ k:'tal', ic:'🔢', t:'Talonario: «Anulado / ya lo vi»', est:usoEst(nTal, 3), pesa:0, d:nTal ? (nTal+' anotado'+(nTal===1?'':'s')) : 'nunca' });
+  var nDest=0; try{ nDest=Object.keys(destSet()).filter(function(k){ return destSet()[k]; }).length; }catch(e){}
+  L.push({ k:'dest', ic:'📌', t:'«Guardar este lugar» de un cliente', est:usoEst(nDest, 3), pesa:0, d:nDest ? (nDest+' lugar'+(nDest===1?'':'es')+' guardado'+(nDest===1?'':'s')) : 'nunca' });
+  /* 📣 «Ya lo corregí» de los avisos de Contabilidad, por vendedora */
+  var AV={}; try{ ctaAvLeer().forEach(function(a){ if(!a || a.qt) return; var v=String(a.vend||'?').split(' ').slice(0,2).join(' '), o=AV[v]||(AV[v]={ ok:0, n:0 }); o.n++; if(a.ok && !a.au) o.ok++; }); }catch(e){}
+  var avV=Object.keys(AV), avOk=0, avN=0, avPend=0; avV.forEach(function(v){ avOk+=AV[v].ok; avN+=AV[v].n; avPend+=AV[v].n-AV[v].ok; });
+  L.push({ k:'aviso', ic:'📣', t:'«Ya lo corregí» de los avisos de Contabilidad', est:!avN ? 'nm' : (avOk*2>=avN ? 'verde' : (avOk ? 'ambar' : 'gris')), en:'aviso', pesa:avPend,
+    d:avN ? avV.sort(function(a,b){ return (AV[b].n-AV[b].ok)-(AV[a].n-AV[a].ok); }).map(function(v){ return v.split(' ')[0]+' '+AV[v].ok+'/'+AV[v].n; }).join(' · ') : 'sin avisos' });
+  /* 🧾 La factura o remisión anotada (ventas de este mes que la piden) */
+  var mes=hoy.slice(0,7), req=P.filter(function(p){ return docVentaRequerida(p) && contaFecha(p).slice(0,7)===mes; }), conDoc=req.filter(function(p){ return !docVentaFalta(p); }).length;
+  L.push({ k:'factura', ic:'🧾', t:'N° de factura o remisión', est:!req.length ? 'nm' : (conDoc/req.length>=0.8 ? 'verde' : (conDoc ? 'ambar' : 'gris')), en:'factura', pesa:req.length-conDoc,
+    d:req.length ? (conDoc+' de '+req.length+' ventas de '+mesNombre(mes).replace(/ de \d{4}$/,'')) : 'sin ventas este mes' });
+  /* 🔗 Unir las ventas de Kommo ya cargadas */
+  var car=[], unidas=0; try{ car=borrCargadasDe(BORRADORES); }catch(e){}
+  P.forEach(function(p){ if(kleadDe(p) && String(p.id).indexOf(BORRADOR_PREF)!==0 && enVentana(contaFecha(p))) unidas++; });
+  L.push({ k:'kommo', ic:'🔗', t:'«Unir» las ventas de Kommo ya cargadas', est:!car.length ? 'verde' : (unidas ? 'ambar' : 'gris'), en:'kommo', pesa:car.length,
+    d:(car.length ? (car.length+' esperando en las bandejas') : 'ninguna esperando')+(unidas ? (' · '+unidas+' unidas en '+USO_DIAS+' días') : '') });
+  /* 💵 Los cobros tildados al cargar un retiro */
+  var rets=(typeof RETIROS!=='undefined' ? RETIROS : []).filter(function(r){ return r && enVentana(String(r.fecha||'')||contaFecha(r)); }), conT=rets.filter(function(r){ return retTicksDe(r.garantia).length>0; }).length;
+  L.push({ k:'retiro', ic:'💵', t:'Retiros con los cobros tildados', est:!rets.length ? 'nm' : (conT/rets.length>=0.7 ? 'verde' : (conT ? 'ambar' : 'gris')), pesa:0, d:rets.length ? (conT+' de '+rets.length+' retiros en '+USO_DIAS+' días') : 'sin retiros en '+USO_DIAS+' días' });
+  /* 📥 El Excel del día */
+  var d3=isoDeTsBolivia(Date.now()-2*864e5), hx=((typeof STOCK!=='undefined' && STOCK && STOCK.h) || []).filter(function(h){ return h && String(h.f||'')>=d3; });
+  var hHoy=hx.filter(function(h){ return String(h.f||'')===hoy; }).length;
+  L.push({ k:'excel', ic:'📥', t:'El Excel de los almacenes', est:hHoy ? 'verde' : (hx.length ? 'ambar' : 'gris'), pesa:0, d:hx.length ? (hx.length+' en los últimos 3 días · hoy '+hHoy) : 'ninguno en 3 días' });
+  /* lo que no deja rastro */
+  [['buscar','🔎','Quién vendió qué'], ['mapa','🗺️','Mapa de entregas'], ['parte','📋','Parte del día']].forEach(function(x){
+    L.push({ k:x[0], ic:x[1], t:x[2], est:'nm', pesa:0, d:'no se puede medir: no deja nada en la planilla' }); });
+  return L;
+}
+function usoAbrir(){
+  if(!UNLOCKED){ toast('🔒 Con la contraseña de Administración.','err'); return; }
+  var L=usoDatos(), U=usoLeer(), n={ verde:0, ambar:0, gris:0 };
+  L.forEach(function(r){ if(n[r.est]!=null) n[r.est]++; });
+  var top=L.filter(function(r){ return r.est!=='verde' && r.est!=='nm' && r.pesa>0; }).sort(function(a,b){ return b.pesa-a.pesa; })[0];
+  var est={ verde:'se usa', ambar:'poco', gris:'nunca', nm:'no se mide' };
+  var fila=function(r){
+    var ok=!!U.b[r.k], oc=!!U.o[r.k];
+    var bts=(r.est==='verde' || r.est==='nm') ? '' :
+      ((r.en ? '<button type="button" class="btn btn-sm uso-ens" data-k="'+r.en+'" onclick="ensenaPedir(this.dataset.k)">🎓 Que Bloki la enseñe</button>' : '')+
+       (USO_OCULTA[r.k] ? ('<button type="button" class="btn btn-ghost btn-sm" data-k="'+r.k+'" onclick="usoPoner(\'o\', this.dataset.k, '+(oc?'false':'true')+');usoAbrir()">'+(oc?'↩️ Volver a mostrarla':'🙈 Sacarla de la vista')+'</button>') : '')+
+       '<button type="button" class="btn btn-ghost btn-sm" data-k="'+r.k+'" onclick="usoPoner(\'b\', this.dataset.k, '+(ok?'false':'true')+');usoAbrir()">'+(ok?'↩️ Volver a mirarla':'👍 Está bien así')+'</button>');
+    return '<tr class="uso-'+r.est+(ok?' uso-ok':'')+'" data-k="'+r.k+'"><td class="uso-n"><span class="uso-e" title="'+est[r.est]+'"></span><b>'+r.ic+' '+esc(r.t)+'</b>'+
+      '<span class="uso-q">'+esc(est[r.est])+(ok?' · 👍 está bien así (en este aparato)':'')+(oc?' · 🙈 escondida en este aparato':'')+'</span></td>'+
+      '<td class="uso-d">'+esc(r.d)+(r.q?('<span class="uso-q">quién: '+esc(r.q)+'</span>'):'')+'</td><td><div class="uso-b">'+bts+'</div></td></tr>';
+  };
+  var orden={ gris:0, ambar:1, verde:2, nm:3 };
+  var V=L.slice().sort(function(a,b){ return (orden[a.est]-orden[b.est]) || ((U.b[a.k]?1:0)-(U.b[b.k]?1:0)); });
+  openModal('<div class="modal-h"><h3>📊 Uso del panel · '+esc(mesNombre(todayStr().slice(0,7)))+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b" id="uso-ov"><p class="uso-sub">Sale de lo que ya guarda la planilla (los últimos '+USO_DIAS+' días). Nadie es vigilado: solo dice qué se usa. '+
+      '🟢 '+n.verde+' se usan · 🟡 '+n.ambar+' poco · ⚪ '+n.gris+' nunca.</p>'+
+    (top ? ('<div class="uso-top" id="uso-top">💡 Lo que más trabajo ahorraría si se usara: <b>'+top.ic+' '+esc(top.t)+'</b> — '+esc(top.d)+'.</div>') : '')+
+    '<table class="uso-t"><tbody>'+V.map(fila).join('')+'</tbody></table>'+
+    '<p class="uso-sub" style="margin-top:9px">«🎓 Que Bloki la enseñe» le llega a quien todavía no la usa, en su aparato. «🙈 Sacarla de la vista» y «👍 Está bien así» quedan en ESTE aparato.</p></div>', true);
+}
+try{ setTimeout(usoAplicarOcultas, 0); }catch(e){}
 /* La oferta, una sola vez por aparato: la llama quienElegir cuando una vendedora elige su nombre.
    🎬 (26/10, §4mv; dueño: «que Bloki enseñe y lleve al enlace») Primero el VIDEO de cómo cargar un pedido (`me_asis_video`, una vez por
    aparato, también a quien ya vio el recorrido); el recorrido, la próxima vez que elija su nombre. */
