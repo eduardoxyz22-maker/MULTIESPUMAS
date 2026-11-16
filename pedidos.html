@@ -2509,6 +2509,12 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .ctanav{display:flex;align-items:center;gap:6px;background:#e3f7f6;border-radius:10px;padding:4px 6px;margin-bottom:10px;font-weight:700;color:#00807a;font-size:.84rem}
 .ctanav button{border:0;background:#fff;border-radius:8px;min-width:40px;height:34px;font-size:1rem;cursor:pointer;color:#00807a;font-weight:800}
 .ctanav button:disabled{opacity:.35;cursor:default}
+/* 🧾 (mejora 379) la cajita del N° al marcar la venta cargada al sistema */
+.regdoc{background:#f0fbfa;border:1.5px solid #00B5AD;border-radius:12px;padding:11px 13px;margin-top:12px;color:#0f3b39}
+.regdoc-t{font-weight:800;font-size:.9rem;margin-bottom:7px}
+.regdoc-f,.regdoc-b{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.regdoc-b{margin-top:8px}
+.regdoc small{display:block;color:#4b6b69;font-size:.74rem;margin-top:6px;line-height:1.35}
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -21086,6 +21092,7 @@ function showContaModal(id){
       row('Observaciones', esc(p.observaciones))+
       formPago+
       ctaEditHtml(p)+
+      ((CTA_REG_DOC && CTA_REG_DOC.id===String(p.id) && !reg) ? ctaRegDocHtml(p) : '')+   // 🧾 (mejora 379) el N° al marcarla cargada
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
         '<button class="btn btn-sm wa-btn" style="min-width:150px" onclick="'+esc("ctaWhatsappVenta('"+String(p.id)+"')")+'" title="Volver a pasar esta venta al grupo">📲 Reenviar la venta</button>'+
@@ -21741,6 +21748,9 @@ function ctaToggleRegistrado(id){
   var p=findById(id); if(!p) return;
   ctaPagoRecordar();                 // §4fy: marcar ✅ con un pago a medio cargar no se lo borra
   var on=!regEnSistema(p);
+  /* 🧾 (mejora 379) Al marcarla CARGADA sin N° de factura o remisión: primero la cajita para anotarlo (opcional), en el mismo guardado. */
+  if(on && regDocPide(p) && !(CTA_REG_DOC && CTA_REG_DOC.id===String(id))){ CTA_REG_DOC={ id:String(id), t:'', n:'' }; showContaModal(id); regDocFoco(); return; }
+  if(on && CTA_REG_DOC && CTA_REG_DOC.id===String(id)){ ctaRegDocGuardar(id, true); return; }
   p.metodoPago=conMarcaReg(p.metodoPago, on);
   persistPedido(p);
   toast(on?'Marcado como registrado en el sistema ✓':'Ya no figura como registrado','ok');
@@ -29397,6 +29407,75 @@ function ctaDocGuardar(id){
   setDocVenta(p, t, num); ctaDocOlvidar();
   persistPedido(p);
   toast('🧾 '+(t==='F'?'Factura':'Nota de remisión')+' N° '+num+' anotada ✓','ok');
+  showContaModal(id);
+  try{ renderConta(); }catch(x){}
+}
+/* ============================================================================
+   🧾 (mejora 379, 16/11; dueño la eligió) EL N° DE FACTURA O REMISIÓN SE ANOTA AL CARGARLA AL SISTEMA.
+   En noviembre 69 de 154 ventas no tenían su N°, y 35 de esas ya estaban «✅ cargadas» por Contabilidad: el número sale del sistema contable
+   en el momento de cargarla y después lo tenía que tipear otra persona, otro día (o nadie).
+   · Al tocar «✅ Pago registrado en sistema» en una venta que lo pide (`docVentaFalta`) se abre ahí mismo una cajita: «🧾 Factura · 📄
+     Remisión» + el N°, con «Guardar las dos cosas» (la marca y el documento en UN guardado, `persistPedido`) o «Solo marcar cargada»
+     (como antes: la vendedora lo anota después). Vacío = como antes.
+   · El documento se anota con `setDocVenta` (deja `fdocT`, el día en que se anotó: el dashboard cuenta esa venta como cierre ese día).
+   · Si el mismo N° (y tipo) ya está en otra venta, lo dice y pregunta (`docNumOtraVenta`); nunca frena sin preguntar.
+   · En Playwright apagado salvo `REG_DOC_PRUEBA` (las pruebas de siempre marcan «cargada» de un toque). `tests/test_factura_al_cargar.js`.
+   ========================================================================== */
+var CTA_REG_DOC=null;   // { id, t:'F'|'R'|'', n:'' } mientras la cajita está abierta
+function regDocActivo(){ try{ return !navigator.webdriver || !!window.REG_DOC_PRUEBA; }catch(e){ return true; } }
+function regDocPide(p){ return regDocActivo() && !!p && !esATC(p.oc) && !esRPT(p.oc) && docVentaFalta(p); }
+function regDocFoco(){ setTimeout(function(){ var e=document.getElementById('cta-regdoc'); if(e) try{ e.scrollIntoView({ block:'nearest' }); }catch(x){} }, 60); }
+/* Otra venta con el MISMO tipo y N° (las del equipo; ATC/RPT no tienen documento). */
+function docNumOtraVenta(p, t, num){
+  var k=String(num||'').replace(/\s+/g,'').toUpperCase(); if(!k || (t!=='F' && t!=='R')) return null;
+  for(var i=0;i<(STATE||[]).length;i++){ var q=STATE[i];
+    if(!q || String(q.id)===String(p&&p.id) || esFilaSistema(q) || esATC(q.oc) || esRPT(q.oc)) continue;
+    if(docVentaDe(q)===t && String(docNumDe(q)).replace(/\s+/g,'').toUpperCase()===k) return q; }
+  return null;
+}
+function ctaRegDocHtml(p){
+  var o=CTA_REG_DOC||{}, mio=(CTA_DOC.id===p.id), t=o.t || (mio && CTA_DOC.t) || docVentaDe(p), n=(o.n!=null && o.n!=='') ? o.n : ((mio && CTA_DOC.n!=null) ? CTA_DOC.n : docNumDe(p)), id=esc(String(p.id));
+  var b=function(v){ return '<button type="button" class="btn btn-sm'+(t===v?' btn-primary':'')+'" style="width:auto;'+(t===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaRegDocTipo(\''+id+'\',\''+v+'\')">'+(v==='F'?'🧾 Factura':'📄 Remisión')+'</button>'; };
+  return '<div id="cta-regdoc" class="regdoc" role="group" aria-label="El N° de la factura o remisión">'+
+    '<div class="regdoc-t">🧾 ¿Qué número le dio el sistema a esta venta?</div>'+
+    '<div class="regdoc-f">'+b('F')+b('R')+
+      '<input type="text" id="cta-regdoc-num" value="'+esc(n||'')+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:120px" '+
+        'oninput="if(CTA_REG_DOC) CTA_REG_DOC.n=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaRegDocGuardar(\''+id+'\');}"></div>'+
+    '<div class="regdoc-b"><button type="button" class="btn btn-sm" id="cta-regdoc-ok" style="width:auto;background:var(--green);color:#fff" onclick="ctaRegDocGuardar(\''+id+'\')">✅ Guardar las dos cosas</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" id="cta-regdoc-solo" style="width:auto" onclick="ctaRegDocGuardar(\''+id+'\', true)">Solo marcar cargada</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="CTA_REG_DOC=null;showContaModal(\''+id+'\')">Cancelar</button></div>'+
+    '<small>Opcional. Si lo dejás vacío queda como antes y '+esc(String(p.vendedor||'la vendedora').split(' ')[0])+' lo anota después. Si el número ya está en otra venta, te aviso.</small></div>';
+}
+function ctaRegDocTipo(id, v){
+  if(!CTA_REG_DOC || CTA_REG_DOC.id!==String(id)) CTA_REG_DOC={ id:String(id), t:'', n:'' };
+  var e=document.getElementById('cta-regdoc-num'); if(e) CTA_REG_DOC.n=e.value;
+  CTA_REG_DOC.t=v;
+  var w=document.getElementById('cta-regdoc'); if(w) [].forEach.call(w.querySelectorAll('button[data-v]'), function(x){ var on=x.getAttribute('data-v')===v; x.classList.toggle('btn-primary', on);
+    x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
+  if(e) e.focus();
+}
+/* `solo` = «Solo marcar cargada» (o el botón verde de abajo con la cajita abierta): si no se escribió ningún N°, la marca sola, como antes. */
+function ctaRegDocGuardar(id, solo){
+  var p=findById(id); if(!p){ CTA_REG_DOC=null; return; }
+  var o=CTA_REG_DOC||{ t:'', n:'' }, e=document.getElementById('cta-regdoc-num');
+  var num=String((e ? e.value : o.n)||'').replace(/\s+/g,' ').trim().slice(0,40), t=o.t || ((CTA_DOC.id===p.id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p));
+  if(solo && !num) t='';
+  if(num && t!=='F' && t!=='R'){ toast('🧾 Elegí si es FACTURA o NOTA DE REMISIÓN (o tocá «Solo marcar cargada»).','err',6000); return; }
+  if(!num && !solo){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° (o tocá «Solo marcar cargada»).','err'); return; }
+  if(num){
+    var otra=docNumOtraVenta(p, t, num);
+    if(otra && !confirm('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
+       [ocEtiq(otra.oc||''), otra.cliente||'', otra.vendedor||''].filter(Boolean).join(' · ')+'.\n\n¿La anoto igual en esta?')) return;
+  }
+  try{ ctaPagoRecordar(); }catch(x){}
+  try{ if(typeof rcResolver==='function') rcResolver(p); }catch(x){}   // 🔁 (mejora 380) volver a marcarla cierra «cambió después de cargarla»
+  if(num) setDocVenta(p, t, num);
+  p.metodoPago=conMarcaReg(p.metodoPago, true);
+  CTA_REG_DOC=null; ctaDocOlvidar();
+  persistPedido(p);
+  var v=String(p.vendedor||''), quedan=num ? (STATE||[]).filter(function(q){ return q && mismoVendedor(q.vendedor, v) && docVentaFalta(q); }).length : 0;
+  toast(num ? ('✅ Cargada al sistema y '+(t==='F'?'🧾 factura':'📄 nota de remisión')+' N° '+num+' anotada ✓ · '+(v.split(' ')[0]||'La vendedora')+' ya no la ve en «Anotá la factura»'+(quedan?(' (le quedan '+quedan+')'):''))
+            : 'Marcado como registrado en el sistema ✓','ok',7000);
   showContaModal(id);
   try{ renderConta(); }catch(x){}
 }
@@ -53428,6 +53507,7 @@ function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
   if(estaba) try{ naceCerrar(document.getElementById('modal-box')); }catch(e){}   // 🪄 (§4pj, 168) antes de esconderla: hace falta su lugar
   try{ ctaDocOlvidar(); }catch(e){}   // 🧾 (06/11) la factura o remisión elegida y sin guardar no queda para la próxima vez
+  CTA_REG_DOC=null;                   // 🧾 (mejora 379) …ni la cajita del N° al marcarla cargada
   ov.classList.remove('on');
   if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
   try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
