@@ -8484,6 +8484,34 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .vd-flota-prev{font-size:.78rem;color:#5b7480;margin-top:2px}
 @media (max-width:700px){ .vd-flota-gr{grid-template-columns:1fr} .vd-ad-g{grid-template-columns:minmax(90px,1fr) repeat(5,minmax(34px,1fr)) 44px} }
 </style>
+<style id="mej390-logi">
+/* 🎨 (16/11, mejoras 402-414 de LOGÍSTICA; dueño: «me gustan todas… menos la 403»). Solo presentación: cada bloque dice su número. */
+/* 402 · la ficha de logística: «¿de dónde sale?» en una barra (Hay en · No hay · A fábrica), lo que propone el stock brilla */
+.fl-prod.fb{flex-wrap:wrap;row-gap:4px}
+.fl-prod.fb > .fl-pn{order:1;flex:1 1 230px}
+.fl-prod.fb > .fl-q, .fl-prod.fb > .pico{order:0}
+.fb-bar{order:4;flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:2px 0 4px}
+.fb-g{display:flex;align-items:center;flex-wrap:wrap;gap:2px;background:#f3f8f8;border:1px solid #dfeaea;border-radius:11px;padding:3px 4px 3px 7px}
+.fb-g > i{font-style:normal;font-size:.58rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5f7b7a;margin-right:2px;white-space:nowrap}
+.fb-g.no{background:#fff5f5;border-color:#f4d7d9;padding-left:4px}
+.fb-g.fab{background:#fffbea;border-color:#f1e3a9}.fb-g.fab > i{color:#8a6a00}
+.fb-bar .chkbtn{width:auto;height:30px;min-height:30px;padding:0 6px;font-size:.74rem;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.fb-n{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#12302e;color:#fff;font-size:.62rem;font-weight:800}
+.fb-n.cero{background:#d9e2e2;color:#6c7f7f}
+.chkbtn.ok .fb-n, .chkbtn.no .fb-n, .chkbtn.tda .fb-n{background:rgba(255,255,255,.92);color:#12302e}
+.fb-bar .chkbtn.fb-sug{background:#fff3c4;border-color:#e3a400;color:#6b4300;box-shadow:0 0 0 3px rgba(255,196,0,.35),0 4px 14px rgba(227,164,0,.35);animation:fbLate 1.6s ease-in-out infinite}
+.fb-bar .chkbtn.fb-sug::before{content:'💡';font-size:.8rem;margin-right:1px}
+.fb-bar .chkbtn.fb-sug.fb-sug-o{animation:none;border-style:dashed;box-shadow:0 0 0 2px rgba(255,196,0,.25)}
+@keyframes fbLate{0%,100%{box-shadow:0 0 0 3px rgba(255,196,0,.35),0 4px 14px rgba(227,164,0,.35)}50%{box-shadow:0 0 0 5px rgba(255,196,0,.18),0 4px 18px rgba(227,164,0,.5)}}
+@media (prefers-reduced-motion:reduce){ .fb-bar .chkbtn.fb-sug{animation:none} }
+.fb-sr{display:inline-flex;align-items:center;gap:4px;padding:1px 8px;border-radius:999px;background:#eef2f2;color:#56696a;font-size:.68rem;font-weight:800}
+.fb-chip{display:inline-flex;align-items:center;gap:4px;padding:1px 9px;border-radius:999px;font-size:.7rem;font-weight:800;white-space:nowrap}
+.fb-chip.falta{background:#fde7e9;color:#9b1c25;border:1px solid #f5bcc1}
+.fb-chip.prog{background:#e6f0fd;color:#1d4fb8;border:1px solid #c7dcf7}
+.fl-hay.fb-hay{margin-top:0}
+.fb-ley{display:flex;align-items:center;gap:6px;margin:4px 0 6px;font-size:.7rem;color:#7a5a00;font-weight:700;line-height:1.3}
+.fb-ley b{flex:none;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;padding:1px 8px;border-radius:999px;background:#fff3c4;border:1px solid #e3a400;color:#6b4300}
+</style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
 <script src="escritorio.js?v=20261116a" defer></script>
@@ -56883,7 +56911,8 @@ function fichaProdsHtml(p, N, S){
   var pr=(p&&p.productos)||[];
   if(!pr.length) return '<div class="fl-vacio">Sin productos</div>';
   var C=N ? fichaCambiosProd(p) : { nuevo:{}, cant:{}, quitados:[] };
-  return pr.map(function(x, ix){
+  var barra=!!N && fichaBarraVa(), brilla=0;   // 🎨 (mejora 402) la barra «Hay en · No hay · A fábrica»
+  var html=pr.map(function(x, ix){
     // 🛍️ (24/10, dueño: «si ya lo aclarás, ¿para qué lo volvés a poner?») lo de tienda ya va en la línea de los bultos, con su medida
     if(N && deTiendaNoViaja(p, x) && N.noLlevar.indexOf(ix)<0) return '';
     var no=N && N.noLlevar.indexOf(ix)>=0, k=prodCorto(x), esp=false;
@@ -56891,11 +56920,18 @@ function fichaProdsHtml(p, N, S){
     var cam=C.nuevo[k] ? '<span class="fl-cam">🆕 NUEVO</span>' : (C.cant[k] ? ('<span class="fl-cam">🔢 antes '+esc(C.cant[k].de)+', ahora '+esc(C.cant[k].a)+'</span>') : '');
     var med=N ? ((x.medida?('<span class="fl-med'+(esp?' esp':'')+'">'+(esp?'📐 ESPECIAL ':'')+esc(String(x.medida).replace(/x/gi,'×'))+'</span>'):'')+(x.codigo?('<span class="fl-cod">'+esc(x.codigo)+'</span>'):''))
               : ('<small>'+esc(x.medida||'')+(x.codigo?((x.medida?' · ':'')+esc(x.codigo)):'')+'</small>');
+    if(barra && !no){
+      var l=S && S.por[ix], F=fichaBarraHtml(p, x, ix, l);
+      if(F.brilla) brilla++;
+      return '<div class="fl-prod fb'+(cam?' fl-prod-cam':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div>'+prodIcoHtml(x)+'<div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
+        '<div class="fl-mc">'+med+cam+F.chips+'</div></div>'+F.bar+F.hay+'</div>';
+    }
     return '<div class="fl-prod'+(cam?' fl-prod-cam':'')+(no?' fl-prod-no':'')+'"><div class="fl-q">'+esc(String(x.cant||0))+'</div>'+prodIcoHtml(x)+'<div class="fl-pn"><span class="fl-pnn">'+esc(x.desc||'—')+'</span>'+
       (N?('<div class="fl-mc">'+med+cam+'</div>'):med)+(no?'<small class="fl-no-t">✂️ No se lleva: la nota dice que '+esc((N.noLlevarPor&&N.noLlevarPor[ix])||'ya se entregó')+'</small>':'')+'</div><div class="fl-pls">'+(no?'':fichaLugarHtml(x, p))+'</div>'+
       (N && !no ? ('<div class="prod-rev fl-prbtns">'+prodBtnsHtml(p, x, ix, true)+'</div>') : '')+
       (S && !no && S.por[ix] ? fichaHayHtml(p, S.por[ix]) : '')+'</div>';   // 👆 (24/10) logística elige dónde sale: los botones A LA VISTA
   }).join('')+C.quitados.map(function(t){ return '<div class="fl-prod fl-prod-quit"><div class="fl-q">✕</div><div class="fl-pn"><span class="fl-pnn">'+esc(t)+'</span><small>➖ LO QUITARON del pedido: no se carga</small></div></div>'; }).join('');
+  return (brilla ? '<div class="fb-ley"><b>💡 brilla</b><span>lo que dice el stock (tocalo y queda marcado) · el número = cuántos de este pedido hay en ese depósito</span></div>' : '')+html;
 }
 function fichaHayHtml(p, l){
   var txt=fichaHayTxt(l); if(!txt) return '';
@@ -56903,6 +56939,64 @@ function fichaHayHtml(p, l){
   var sug=(l.cambia && !l.sinContar) ? ('<button type="button" class="fl-hay-b'+(fichaSugAuto(l)?'':' fl-hay-o')+'" onclick="fichaSugUsarStock(\''+pid+'\','+l.i+')" title="La 🤖 Revisión automática: reparte por fecha de entrega, PTF → Banzer → IM">'+
       '💡 Marcar '+esc(fichaSugEtq(l))+'</button>') : '';
   return '<div class="fl-hay'+(l.ahora==='no'?' no':'')+'"><span>📊 '+txt+'</span>'+sug+'</div>';
+}
+/* 🎨 (16/11, mejora 402; dueño: «me gustan todas… menos la 403») «¿DE DÓNDE SALE?» EN UNA BARRA QUE SE LEE. En la ficha de logística los
+   botones de cada producto van en tres grupos con nombre: «HAY EN» (PTF, Banzer, IM, Tienda; cada depósito con cuántos de ESTE pedido hay
+   ahí, el número de «📊 Stock para este pedido»), «No hay» y «A FÁBRICA» (Moreno, Multi). El que propone el stock brilla en ámbar con 💡:
+   tocarlo es lo mismo que el «💡 Marcar…» de siempre (`fichaSugUsarStock`). «Sin revisar», «faltan N → fabricar» y lo que ya viene en
+   camino pasan al lado del nombre. Si la propuesta se reparte en dos lugares (PTF + Banzer) queda el «💡 Marcar…» de siempre.
+   Solo presentación: los MISMOS botones (`prodBtnsPartes`) y las MISMAS cuentas (`fichaSugStock` → la 🤖 Revisión automática). Los botones
+   siguen A LA VISTA (regla del dueño). En Playwright como antes salvo `window.FICHA_BARRA_PRUEBA`. `tests/test_v402_ficha_barra.js`. */
+function fichaBarraVa(){ try{ return vdVa('FICHA_BARRA_PRUEBA'); }catch(e){ return false; } }
+function fichaBarraCuenta(l, tipo, A){   // cuántos de este pedido hay en ese lugar; null = no se sabe (sin Excel)
+  if(!l || l.sinContar) return null;
+  if(tipo==='aca') return Number(l.hayDep)||0;
+  var s=0;
+  (l.hayIMPor||[]).forEach(function(e){ if(!!e.sale===(tipo==='sale') && recogerMismo(e.de!=null?e.de:e.alm, A.v)) s+=Number(e.u)||0; });
+  return s;
+}
+function fichaBarraSug(l, B){   // el botón que propone el stock; null = ninguno o se reparte en dos lugares
+  if(!l || !l.cambia || l.sinContar) return null;
+  if(l.ahora==='no') return B.no;
+  var por=(l.almPor||[]).filter(function(e){ return (Number(e.u)||0)>0; });
+  var sale=por.filter(function(e){ return e.sale; }), trae=por.filter(function(e){ return !e.sale; });
+  var uno=function(lista, botones){
+    var nombres=recogerNombresDe(lista); if(nombres.length!==1) return null;
+    return botones.filter(function(b){ return recogerMismo(nombres[0], b.A.v); })[0]||null;
+  };
+  if(l.ahora==='im'){
+    if(l.deDep>0 || sale.length) return null;
+    return trae.length ? uno(trae, B.trae) : (B.trae[0]||null);   // sin desglose: «recoger de IM» (como `fichaSugEtq`)
+  }
+  if(l.deDep>0) return sale.length ? null : B.aca;
+  return sale.length ? uno(sale, B.sale) : B.aca;
+}
+function fichaBarraHtml(p, x, i, l){
+  var B=prodBtnsPartes(p, x, i, true), sug=fichaBarraSug(l, B), pid=String(p.id).replace(/'/g,"\\'");
+  var n=function(v){ return v==null ? '' : '<span class="fb-n'+(v?'':' cero')+'">'+v+'</span>'; };
+  var btn=function(b, txt){
+    if(b!==sug) return prodBtnHtml(b, txt);
+    return '<button class="'+b.cls+(b.on?b.onc:'')+' fb-sug'+(fichaSugAuto(l)?'':' fb-sug-o')+(b===B.no?' fb-sug-no':'')+'" onclick="fichaSugUsarStock(\''+pid+'\','+i+')" '+
+      'title="💡 Lo que dice el stock (la 🤖 Revisión automática: reparte por fecha de entrega, PTF → Banzer → IM). Tocalo y queda marcado así.">'+txt+'</button>';
+  };
+  var cap=function(t){ t=String(t||''); return t.charAt(0)+t.slice(1).toLowerCase(); };
+  var hay=btn(B.aca, B.aca.txt.replace('✔ ','✔&nbsp;')+n(fichaBarraCuenta(l,'aca')))+
+    B.sale.map(function(b){ return btn(b, b.txt.replace('✔ ','✔&nbsp;')+n(fichaBarraCuenta(l,'sale',b.A))); }).join('')+
+    B.trae.map(function(b){ return btn(b, b.txt+n(fichaBarraCuenta(l,'trae',b.A))); }).join('')+
+    tiendaBtnHtml(p, x, i);
+  var fab=B.fab.map(function(b){ return btn(b, '🏭 '+cap(b.L.corto)+(b.lleg?' ✓':'')); }).join('')+(B.fabRaro||'');
+  var bar='<div class="fb-bar">'+
+      '<div class="fb-g"><i>Hay en</i>'+hay+'</div>'+
+      '<div class="fb-g no">'+btn(B.no, '✗ No hay')+'</div>'+
+      '<div class="fb-g fab"><i>A fábrica</i>'+fab+'</div>'+
+    '</div>'+tiendaElegirHtml(p, x, i);
+  var lug=fichaLugarHtml(x, p), chips=/>Sin revisar</.test(lug) ? '<span class="fb-sr">⬜ sin revisar</span>' : lug;
+  if(l && !l.sinContar && l.prog>0) chips+='<span class="fb-chip prog">🚚 '+l.prog+' ya en camino</span>';
+  if(l && !l.sinContar && l.falta>0) chips+='<span class="fb-chip falta">⚠️ faltan '+l.falta+(l.descont?' · ya no se fabrica':' → fabricar')+'</span>';
+  /* sin Excel: el texto de siempre («No está en los Excel de hoy…»); propuesta repartida: el «💡 Marcar…» de siempre */
+  var hayH=!l ? '' : l.sinContar ? fichaHayHtml(p, l) : (l.cambia && !sug) ?
+    ('<div class="fl-hay fb-hay"><button type="button" class="fl-hay-b'+(fichaSugAuto(l)?'':' fl-hay-o')+'" onclick="fichaSugUsarStock(\''+pid+'\','+i+')" title="La 🤖 Revisión automática: reparte por fecha de entrega, PTF → Banzer → IM">💡 Marcar '+esc(fichaSugEtq(l))+'</button></div>') : '';
+  return { bar:bar, chips:chips, hay:hayH, brilla:!!sug };
 }
 function fichaIngresoTxt(p){
   var ts=Number(p&&p.ts); if(!(ts>0)) return '—';
@@ -59904,54 +59998,70 @@ function prodRevList(p){
   }).join('');
 }
 /* La tira de botones de cada producto (✔ / ✔ Banzer / ✗ / 📥 / 🏬 / 🏭). (24/10) Sacada de `prodRevList` para que la ficha compacta de
-   logística la ponga A LA VISTA debajo de cada producto (dueño: «es logística el que elige dónde se carga»); `ptf` = el ✔ dice «✔ PTF». */
+   logística la ponga A LA VISTA debajo de cada producto (dueño: «es logística el que elige dónde se carga»); `ptf` = el ✔ dice «✔ PTF».
+   🎨 (16/11, mejora 402) Los botones salen de `prodBtnsPartes` (qué hace cada uno y si está prendido): la tira de siempre los pone en fila
+   y la barra de la ficha (`fichaBarraHtml`) los agrupa; los dos tocan lo MISMO. */
+function prodBtnsPartes(p, x, i, ptf){
+  var B={ aca:null, sale:[], no:null, trae:[], fab:[], fabRaro:null };
+  B.aca={ on:(prodHay(x) && prodPartes(x).some(function(e){ return e.tipo==='aca'; })), cls:'chkbtn'+(ptf?' wide':''), onc:' ok',
+    click:'setProdChk(\''+p.id+'\','+i+',\'ok\')', title:'Hay stock acá en fábrica (PTF)', txt:(ptf?'✔ PTF':'✔') };
+  /* 🚚 (26/09) «✔ Banzer»: hay, y se carga en Banzer —de ahí también sale el camión—, sin ir a
+     buscar nada. Un botón por depósito de salida (`salidaLista`), con el nombre corto como el 📥. */
+  B.sale=salidaLista().map(function(A){
+    var on=prodHay(x) && prodSaleDe(x).some(function(e){ return recogerMismo(e.de, A.v); });
+    var arg=JSON.stringify(String(A.v)).replace(/"/g,'&quot;');
+    var etq=A.corto.length>12 ? (A.corto.slice(0,11)+'…') : A.corto;
+    return { A:A, on:on, cls:'chkbtn wide', onc:' ok', click:'setProdChk(\''+p.id+'\','+i+',\'ok\','+arg+')', title:'Hay stock en '+esc(A.corto)+': de ahí también sale el camión, se carga ahí', txt:'✔ '+esc(etq) };
+  });
+  B.no={ on:x.chk==='no', cls:'chkbtn', onc:' no', click:'setProdChk(\''+p.id+'\','+i+',\'no\')', title:'No hay stock', txt:'✗' };
+  /* Un botón por almacén de donde se puede ir a buscar (§4ey). El nombre va como texto
+     JSON escapado: un almacén del Excel se llama «01-05-004 BANZER» y romper el onclick
+     con un espacio o un guion dejaría el botón mudo. */
+  B.trae=recogerLista().map(function(A){
+    /* Encendido = la línea se recoge de ESE lugar, aunque el nombre esté escrito de
+       otra manera (`recogerMismo`). Si quedó repartida entre dos, se encienden los dos. */
+    var on=esRecoger(x) && recogerPartes(x).some(function(e){ return recogerMismo(e.de, A.v); });
+    var arg=JSON.stringify(String(A.v)).replace(/"/g,'&quot;');
+    /* El nombre del botón va CORTO: con un tercer almacén de nombre largo la tira se
+       sale de la tarjeta en un celular de 360 px y recorta los 🏭 del final. El nombre
+       entero queda en el `title` y en el renglón de ayuda de abajo. */
+    var etq=A.corto.length>12 ? (A.corto.slice(0,11)+'…') : A.corto;
+    return { A:A, on:on, cls:'chkbtn wide', onc:' im', click:'setProdChk(\''+p.id+'\','+i+',\'im\','+arg+')', title:'Sí hay, pero hay que recogerlo del almacén '+esc(A.corto), txt:'📥 '+esc(etq) };
+  });
+  B.fab=PROD_LUGARES.map(function(L){
+    /* 🏭 (30/10, propuesta 75) Encendido = pedido y TODAVÍA sin llegar. Lo que llegó (`prodR`) se ve apagado, con «✓». */
+    var es=(prodDondeSePide(x)===L.v), on=es && enProduccionPendiente(x), lleg=es && enProduccion(x) && !!x.prodR;
+    return { L:L, on:on, lleg:lleg, cls:'chkbtn wide', onc:' prodon', click:'setProdProduccion(\''+p.id+'\','+i+',\''+L.v+'\')', title:
+      (on ? ('Pedido a fábrica '+L.v+(x.prodF?(' el '+fmtFechaCorta(x.prodF)):'')+'. Cuando llegue, tocalo para anotar la llegada.')
+          : lleg ? ('Llegó de fábrica '+L.v+' el '+fmtFechaCorta(x.prodR)+'. Tocalo para volver a pedirlo.')
+                 : ('Ya se pidió a fábrica '+L.v+' (se puede marcar junto con ✗ no hay)')), txt:'🏭 '+L.corto+(lleg?' ✓':'') };
+  });
+  /* Producto marcado en producción con el botón VIEJO, que no preguntaba la fábrica.
+     Sin este botón el estado no se ve resaltado en ninguna parte y, peor, no hay forma
+     de desmarcarlo: quedaba trabado diciendo "sin marcar dónde" para siempre. */
+  if(enProduccion(x) && !prodDondeSePide(x))
+    B.fabRaro='<button class="chkbtn wide prodon" style="border-style:dashed" onclick="setProdProduccion(\''+p.id+'\','+i+',\'\')" title="Está marcado como pedido a fábrica pero no se dijo a cuál. Elegí MORENO o MULTI, o tocá acá para desmarcarlo.">🏭 ¿?</button>';
+  return B;
+}
+function prodBtnHtml(b, txt, extraCls, click){
+  return '<button class="'+b.cls+(b.on?b.onc:'')+(extraCls||'')+'" onclick="'+(click||b.click)+'" title="'+b.title+'">'+(txt!=null?txt:b.txt)+'</button>';
+}
 function prodBtnsHtml(p, x, i, ptf){
+  var B=prodBtnsPartes(p, x, i, ptf);
   return ''+
       /* ⚠️ `flex:none` hacía que la tira de botones tomara SIEMPRE el ancho de todos juntos:
          con seis (dos almacenes y dos fábricas) se iba fuera de la pantalla del celular y
          🏭 MORENO y 🏭 MULTI quedaban sin tocar (§4ey). Con un ancho tope y `wrap` bajan
          solos a la línea de abajo. */
       '<span style="display:flex;gap:5px;flex:0 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end">'+
-        '<button class="chkbtn'+(ptf?' wide':'')+((prodHay(x) && prodPartes(x).some(function(e){ return e.tipo==='aca'; }))?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá en fábrica (PTF)">'+(ptf?'✔ PTF':'✔')+'</button>'+
-        /* 🚚 (26/09) «✔ Banzer»: hay, y se carga en Banzer —de ahí también sale el camión—, sin ir a
-           buscar nada. Un botón por depósito de salida (`salidaLista`), con el nombre corto como el 📥. */
-        salidaLista().map(function(A){
-          var on=prodHay(x) && prodSaleDe(x).some(function(e){ return recogerMismo(e.de, A.v); });
-          var arg=JSON.stringify(String(A.v)).replace(/"/g,'&quot;');
-          var etq=A.corto.length>12 ? (A.corto.slice(0,11)+'…') : A.corto;
-          return '<button class="chkbtn wide'+(on?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\','+arg+')" title="Hay stock en '+esc(A.corto)+': de ahí también sale el camión, se carga ahí">✔ '+esc(etq)+'</button>';
-        }).join('')+
-        '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
-        /* Un botón por almacén de donde se puede ir a buscar (§4ey). El nombre va como texto
-           JSON escapado: un almacén del Excel se llama «01-05-004 BANZER» y romper el onclick
-           con un espacio o un guion dejaría el botón mudo. */
-        recogerLista().map(function(A){
-          /* Encendido = la línea se recoge de ESE lugar, aunque el nombre esté escrito de
-             otra manera (`recogerMismo`). Si quedó repartida entre dos, se encienden los dos. */
-          var on=esRecoger(x) && recogerPartes(x).some(function(e){ return recogerMismo(e.de, A.v); });
-          var arg=JSON.stringify(String(A.v)).replace(/"/g,'&quot;');
-          /* El nombre del botón va CORTO: con un tercer almacén de nombre largo la tira se
-             sale de la tarjeta en un celular de 360 px y recorta los 🏭 del final. El nombre
-             entero queda en el `title` y en el renglón de ayuda de abajo. */
-          var etq=A.corto.length>12 ? (A.corto.slice(0,11)+'…') : A.corto;
-          return '<button class="chkbtn wide'+(on?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\','+arg+')" title="Sí hay, pero hay que recogerlo del almacén '+esc(A.corto)+'">📥 '+esc(etq)+'</button>';
-        }).join('')+
+        prodBtnHtml(B.aca)+
+        B.sale.map(function(b){ return prodBtnHtml(b); }).join('')+
+        prodBtnHtml(B.no)+
+        B.trae.map(function(b){ return prodBtnHtml(b); }).join('')+
         tiendaBtnHtml(p, x, i)+                                   // 🏬 (13/10) recoger de una tienda
         '<span class="chk-sep"></span>'+
-        PROD_LUGARES.map(function(L){
-          /* 🏭 (30/10, propuesta 75) Encendido = pedido y TODAVÍA sin llegar. Lo que llegó (`prodR`) se ve apagado, con «✓». */
-          var es=(prodDondeSePide(x)===L.v), on=es && enProduccionPendiente(x), lleg=es && enProduccion(x) && !!x.prodR;
-          return '<button class="chkbtn wide'+(on?' prodon':'')+'" onclick="setProdProduccion(\''+p.id+'\','+i+',\''+L.v+'\')" title="'+
-            (on ? ('Pedido a fábrica '+L.v+(x.prodF?(' el '+fmtFechaCorta(x.prodF)):'')+'. Cuando llegue, tocalo para anotar la llegada.')
-                : lleg ? ('Llegó de fábrica '+L.v+' el '+fmtFechaCorta(x.prodR)+'. Tocalo para volver a pedirlo.')
-                       : ('Ya se pidió a fábrica '+L.v+' (se puede marcar junto con ✗ no hay)'))+'">🏭 '+L.corto+(lleg?' ✓':'')+'</button>';
-        }).join('')+
-        /* Producto marcado en producción con el botón VIEJO, que no preguntaba la fábrica.
-           Sin este botón el estado no se ve resaltado en ninguna parte y, peor, no hay forma
-           de desmarcarlo: quedaba trabado diciendo "sin marcar dónde" para siempre. */
-        (enProduccion(x) && !prodDondeSePide(x)
-          ? '<button class="chkbtn wide prodon" style="border-style:dashed" onclick="setProdProduccion(\''+p.id+'\','+i+',\'\')" title="Está marcado como pedido a fábrica pero no se dijo a cuál. Elegí MORENO o MULTI, o tocá acá para desmarcarlo.">🏭 ¿?</button>'
-          : '')+
+        B.fab.map(function(b){ return prodBtnHtml(b); }).join('')+
+        (B.fabRaro||'')+
       '</span>'+tiendaElegirHtml(p, x, i);
 }
 /* 🏬 (13/10) El botón «Tienda» abre, debajo del producto, las sucursales para elegir de cuál se recoge (la del vendedor primero). Tocar
