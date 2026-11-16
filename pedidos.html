@@ -8500,6 +8500,23 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .p395-res{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:.74rem;font-weight:900;border-radius:999px;padding:2px 10px}
 .p395-res.si{background:#dcfce7;color:#166534}.p395-res.casi{background:#fff3d6;color:#8a5a00}
 @media (max-width:900px){ .kx-f.p395{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "c" "t" "b"} .p395-c{grid-template-columns:70px minmax(0,1fr) 26px minmax(0,1fr)} }
+/* 396 · «Tu panel al día» en casilleros con palabras */
+.vd-ad-yo.p396{display:block;background:#fff;border:1px solid #d5ecea;border-radius:14px;padding:10px 12px 12px;margin:0 0 12px}
+.p396-top{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.p396-top > b:first-child{font-size:.9rem;color:#0f3b39;white-space:nowrap}
+.p396-bar{flex:1;height:9px;border-radius:9px;background:#eef2f2;overflow:hidden}
+.p396-bar i{display:block;height:100%;border-radius:9px}
+.vd-ad-yo.p396 b.p396-pc{margin-left:0;font-weight:900;font-size:.95rem;font-variant-numeric:tabular-nums}
+.p396-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.p396-c{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid;border-radius:11px;padding:7px 9px;font:inherit;cursor:pointer;min-width:0}
+.p396-c .t{display:flex;align-items:center;gap:5px;font-size:.74rem;font-weight:900;white-space:nowrap;min-width:0}
+.p396-c .t .n{margin-left:auto;font-size:.95rem}
+.p396-c small{font-size:.68rem;font-weight:700;line-height:1.25;opacity:.9;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.p396-c.v{background:#ecfdf5;border-color:#a7e3c4;color:#065f46}
+.p396-c.a{background:#fff8e6;border-color:#f3cf7a;color:#7c4b00}
+.p396-c.r{background:#fff1f2;border-color:#f5a8b0;color:#9f1239}
+.p396-c:hover{filter:brightness(.97)}
+@media (max-width:900px){ .p396-g{grid-template-columns:repeat(2,minmax(0,1fr))} }
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -42439,6 +42456,31 @@ function misProdsHtml(p){
     return '<div class="p394-l"><span class="p394-dot '+E.c+'" title="'+esc(T[E.c])+'"></span><span class="p394-q">'+esc(x.cant||1)+'</span>'+prodIcoHtml(x)+
       '<span class="nm">'+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(E.t?(' <span class="es '+E.c+'">· '+esc(E.t)+'</span>'):'')+'</span></div>';
   }).join('');
+}
+/* 🎨 (16/11, mejora 396; dueño: «Tu panel al día con palabras, no solo íconos») La tira de «✅ Tu panel al día» arriba de «Para hacer» eran
+   íconos con números en circulitos («🧾 7 · 📣 2 · 📍 3 · 📥 35 · 💵 ✓ · 20 %»): qué era cada uno se leía solo pasando el mouse. Ahora son
+   cinco casilleros con su ícono, su NOMBRE y qué falta en palabras («🧾 Facturas 7 · 7 sin N° de factura o remisión»), en verde, ámbar o
+   rojo como antes, y arriba una barra con el %. Cada casillero se sigue tocando (`alDiaTocar`, lo mismo de siempre). Los datos son los MISMOS
+   de `alDiaDatos`/`alDiaCalcular` (`D[].n`, `.sev`, `.s`): no se cuenta nada aparte (la foto del lunes del bono no cambia). Solo dibujo.
+   En Playwright como antes salvo `window.AL_DIA_PALABRAS_PRUEBA` (y `AL_DIA_PRUEBA`, que prende la tira). `tests/test_v391_mis_tarjetas.js` §396. */
+function alDiaPalabrasVa(){ try{ return vdVa('AL_DIA_PALABRAS_PRUEBA'); }catch(e){ return false; } }
+var AL_DIA_NOM={ fac:'Facturas', av:'Avisos', ub:'Ubicaciones', ko:'Kommo', ef:'Efectivo' };
+function alDiaCorto(d){
+  if(d.sev==='v') return ({ fac:'todas con su N°', av:'sin avisos', ub:'todas con pin', ko:'nada pendiente', ef:'todo entregado' })[d.k] || 'al día';
+  if(d.k==='fac') return d.n+' sin N° de factura o remisión';
+  if(d.k==='av') return d.n+' aviso'+(d.n===1?'':'s')+' de Contabilidad';
+  if(d.k==='ub') return d.n+' entrega'+(d.n===1?'':'s')+' sin ubicación';
+  if(d.k==='ko') return d.n+' venta'+(d.n===1?'':'s')+' para completar';
+  if(d.k==='ef') return fmtBs0(d.bs)+' sin entregar · '+(d.dias>0 ? (d.dias+' día'+(d.dias===1?'':'s')) : 'de hoy');
+  return d.s;
+}
+function alDiaCasillerosHtml(v){
+  var R=alDiaDatos(v), col=alDiaColor(R.pct);
+  return '<div class="vd-ad-yo p396" id="vd-al-dia-yo"><div class="p396-top"><b>✅ Tu panel al día</b><div class="p396-bar"><i style="width:'+R.pct+'%;background:'+col+'"></i></div>'+
+      '<b class="vd-ad-pc p396-pc" style="color:'+col+'">'+R.pct+' %</b></div><div class="p396-g">'+
+    R.D.map(function(d){ var n=d.sev==='v' ? '✓' : (d.k==='ef' ? '' : String(d.n));
+      return '<button type="button" class="p396-c '+d.sev+'" data-v="'+esc(v)+'" data-k="'+d.k+'" onclick="alDiaTocar(this)" title="'+esc(d.ic+' '+d.s)+'" aria-label="'+esc((AL_DIA_NOM[d.k]||d.t)+': '+d.s)+'">'+
+        '<span class="t">'+d.ic+' '+esc(AL_DIA_NOM[d.k]||d.t)+(n?('<span class="n">'+esc(n)+'</span>'):'')+'</span><small>'+esc(alDiaCorto(d))+'</small></button>'; }).join('')+'</div></div>';
 }
 /* 🧾 (§4ip, 09/10; dueño: «lo demás aplica» — muestra 1) Cómo está el pedido, para el color del borde de su tarjeta:
    entregado (✅ marcado) · falta stock (una línea «✗ no hay») · debe plata (saldo y no es ATC/RPT) · va bien. Solo mira. */
@@ -77535,6 +77577,7 @@ function alDiaTablaHtml(vends){
 }
 function alDiaFilaHtml(v){
   if(!alDiaVa() || !v || contaExcluido(v)) return '';
+  if(alDiaPalabrasVa()) return alDiaCasillerosHtml(v);   // 🎨 (16/11, mejora 396) con palabras, en casilleros
   var R=alDiaDatos(v);
   return '<div class="vd-ad-yo" id="vd-al-dia-yo"><span>✅ <b>Tu panel al día</b></span>'+R.D.map(function(d){ return '<span title="'+esc(d.s)+'">'+d.ic+'</span>'+alDiaPunto(d, v); }).join('')+
     '<b class="vd-ad-pc" style="color:'+alDiaColor(R.pct)+'">'+R.pct+' %</b></div>';

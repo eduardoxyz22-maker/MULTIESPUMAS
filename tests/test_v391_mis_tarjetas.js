@@ -14,6 +14,9 @@
    395 · «✋ Parecen ya cargadas»: sin `KX_LADO_PRUEBA`, el renglón de siempre. Con la bandera: la tablita «📥 Kommo | 🧾 Tu venta en el
          panel» (cliente, celular, monto, fecha) con ✓ lo que coincide, ≠ lo que no y «·» lo que Kommo no trae, y «⚠️ El monto no coincide ·
          N de M» o «✓ Coinciden N de N». Los mismos botones. Una «✅ ya está cargada» no lleva tabla.
+   396 · «✅ Tu panel al día» (con `AL_DIA_PRUEBA`): sin `AL_DIA_PALABRAS_PRUEBA`, la tira de íconos de siempre. Con la bandera: cinco
+         casilleros con su nombre y qué falta en palabras, del color de siempre, la barra con el %, y cada uno se toca como antes. Los
+         números son los de `alDiaDatos`.
    Datos SINTÉTICOS. Reloj clavado el lunes 16/11/2026 10:00. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_v391_mis_tarjetas.js */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -153,6 +156,26 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('395f todo igual: «✓ Coinciden 4 de 4»', r.res==='✓ Coinciden 4 de 4' && r.filas.every(f=>f[2]==='✓'), r);
   r = await fila({ monto:3000, cargada:true });
   chk('395g una «✅ ya está cargada» no lleva tabla', !r.p395 && r.filas.length===0, r);
+
+  console.log('\n── 396. Tu panel al día con palabras ──');
+  const alDia = () => ev(() => { window.AL_DIA_PRUEBA=1;
+    var d=document.createElement('div'); d.id='__ad'; d.innerHTML=alDiaFilaHtml('Carola Chavez'); document.body.appendChild(d);
+    var R=alDiaDatos('Carola Chavez');
+    var out={ viejo:d.querySelectorAll('.vd-ad-d').length, cas:[].map.call(d.querySelectorAll('.p396-c'), function(c){ return [c.getAttribute('data-k'), c.className.replace('p396-c ',''), c.innerText.replace(/\s+/g,' ').trim()]; }),
+      pc:(d.querySelector('.vd-ad-pc')||{}).textContent||'', bar:((d.querySelector('.p396-bar i')||{}).style||{}).width||'', D:R.D.map(function(x){ return [x.k, x.sev, x.n]; }), pct:R.pct };
+    return out; });
+  r = await alDia();
+  chk('396a sin la bandera: la tira de íconos de siempre', r.viejo===5 && r.cas.length===0, r);
+  await ev(() => { document.getElementById('__ad').remove(); window.AL_DIA_PALABRAS_PRUEBA=1; });
+  r = await alDia();
+  chk('396b cinco casilleros con su nombre: Facturas, Avisos, Ubicaciones, Kommo, Efectivo', r.cas.map(c=>c[2].split(' ')[1]).join('|')==='Facturas|Avisos|Ubicaciones|Kommo|Efectivo', r.cas);
+  chk('396c el color de cada uno es el de `alDiaDatos` (verde/ámbar/rojo)', r.cas.every((c,i)=>c[1]===r.D[i][1]), [r.cas.map(c=>c[1]), r.D]);
+  const ub=r.cas.filter(c=>c[0]==='ub')[0];
+  chk('396d «📍 Ubicaciones 1 · 1 entrega sin ubicación» (la que se entrega el miércoles sin pin)', ub && /📍 Ubicaciones \d+ \d+ entregas? sin ubicación/.test(ub[2]), ub);
+  chk('396e lo que está al día dice su palabra en verde («sin avisos», «todo entregado»…)', r.cas.filter(c=>c[1]==='v').every(c=>/✓/.test(c[2]) && /(todas con su N°|sin avisos|todas con pin|nada pendiente|todo entregado)/.test(c[2])), r.cas);
+  chk('396f arriba la barra con el % (el mismo de siempre)', r.pc===r.pct+' %' && r.bar===r.pct+'%', [r.pc, r.bar, r.pct]);
+  r = await ev(() => { document.querySelector('#__ad .p396-c[data-k="ub"]').click(); var m=document.getElementById('modal'), o={ ab:m.classList.contains('on') }; try{ closeModal(); }catch(e){} document.getElementById('__ad').remove(); return o; });
+  chk('396g tocar un casillero hace lo mismo que antes (abre la lista)', r.ab===true, r);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
