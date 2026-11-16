@@ -18929,3 +18929,6 @@ todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
   clave esté puesta se puede meter así esté lleno»*: `cargar_pedidos.py` guarda en el primer día con lugar y en el acto mueve al día pedido con `forzar`
   (el bot junta «nuevo + cambio» en un aviso de pedido nuevo). Las «OCs del nuevo requerimiento» de Flavia Ordoñez (ROHO) son pedidos: 11-208 (T3, OC
   260013347, martes 17/11) y 11-209 (T1, OC 260013346, miércoles 18/11), los dos en un día lleno. La tarea programada busca también a fordonez@.
+  ⚠️ Corrección del dueño, el mismo día: *«solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»*. Forzar un día lleno va
+  SOLO con `"dia_del_dueno": true` en el JSON (lo pongo yo cuando él dice el día); las vueltas automáticas siguen al primer día con cupo. La 11-207
+  (Multicenter, OC 33658) queda el jueves 19/11.

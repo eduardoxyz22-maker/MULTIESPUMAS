@@ -10,12 +10,13 @@ Eduardo Añez. Antes de cada uno relee la planilla:
     NO lo carga (ya está);
   · la OC del panel es la siguiente del mes (como `nextOcMes`) y el N° del día el siguiente de esa fecha (`nextNroDia`);
   · el total es SIEMPRE Σ cantidad × precio unitario (si el PDF trae otro total, se anota y no se usa);
-  · 🎟️ (16/11, dueño: «no importa si sale lleno el panel, Eduardo y Ernesto pueden meter pedidos por más que salga lleno… cuando
-    la clave esté puesta se puede meter así esté lleno») si el día pedido está LLENO, el pedido queda EN ESE DÍA igual: el servidor no
-    deja crear uno nuevo en un turno lleno, así que se guarda en el primer día con lugar y en el acto se MUEVE al día pedido con
-    `forzar` (lo mismo que hace Administración con la clave; sin PANEL_KEY no pide nada más). El bot junta «nuevo + cambio» en UN
-    aviso de pedido nuevo con el día final. Si el día está cerrado, es feriado o domingo, sigue pasando al siguiente día hábil (en el
-    mismo turno; el sábado solo AM) y lo anota en las observaciones.
+  · si el servidor dice que el día está lleno, cerrado o es feriado, prueba el siguiente día hábil (sin domingos) en el
+    mismo turno (el sábado solo AM) y lo anota en las observaciones: va para cuando haya cupo.
+  · 🎟️ SOLO si el dueño dijo el día (16/11: «solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»): el
+    pedido lleva `"dia_del_dueno": true` en el JSON y, si ese día sale LLENO, queda EN ESE DÍA igual: el servidor no deja crear uno
+    nuevo en un turno lleno, así que se guarda en el primer día con lugar y en el acto se MUEVE al día pedido con `forzar` (lo mismo que
+    hace Administración con la clave). El bot junta «nuevo + cambio» en UN aviso de pedido nuevo con el día final. Cerrado, feriado o
+    domingo no se fuerzan nunca.
   · cada guardado va con `tr4:1` (08/11, dueño: «por cada pedido que generes en el panel… un mensaje únicamente a mí… y recordarme
     que lo debo subir al TR4»): desde el servidor 2026-11-07-f, a los ~2 minutos el bot le manda `pedido_correo_tr4` al PRIMERO de
     WA_DUENO con los datos del pedido. Un servidor anterior lo ignora.
@@ -253,7 +254,7 @@ def main():
                 break
             if res.get('error') not in REINTENTA:
                 break
-            if intento == 0 and res.get('error') == 'cupos_llenos':
+            if intento == 0 and res.get('error') == 'cupos_llenos' and d.get('dia_del_dueno') is True:
                 lleno = {"usados": res.get('usados'), "cupos": res.get('cupos')}
             f2 = siguiente_habil(rec['fecha'])
             if datetime.date.fromisoformat(f2).weekday() == 5 and rec['turno'] == 'PM':
@@ -269,7 +270,7 @@ def main():
             g = dict(res.get('pedido') or rec)
             g['fecha'] = pedida
             g['turno'] = turno0
-            g['observaciones'] = obs_base + (' · El %s %s estaba lleno (%s de %s): se cargó igual en ese día (dueño, 16/11: «no importa si sale lleno»).'
+            g['observaciones'] = obs_base + (' · El %s %s estaba lleno (%s de %s): se cargó igual en ese día porque el dueño pidió ese día.'
                                              % (pedida, turno0, lleno.get('usados'), lleno.get('cupos')))
             r2 = post({"action": "save", "pedido": g, "forzar": True, "av": 1})
             if r2.get('ok'):
