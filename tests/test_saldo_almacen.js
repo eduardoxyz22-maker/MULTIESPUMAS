@@ -434,7 +434,7 @@ function INIT_DOS(vend){
   page.__dialogos.length=0; page.__respuestas=[];
   r = await ev(async () => {
     var out={}; if(document.getElementById('modal').classList.contains('on')) closeModal();
-    await _escenario(_stock({ aca:{ ORO:0 } }), [ _P({ id:'ed1', fecha:'2026-09-28', cliente:'VENTA REVISADA', direccion:'Calle vieja', productos:[_linea('ORO',1)] }) ]);
+    await _escenario(_stock({ aca:{ ORO:0 } }), [ _P({ id:'ed1', fecha:'2026-09-25', cliente:'VENTA REVISADA', direccion:'Calle vieja', productos:[_linea('ORO',1)] }) ]);
     var n0=_saves.length;
     editPedido('ed1'); await _esperar(600); out.caja=_caja(0);
     document.getElementById('f-direccion').value='Calle nueva 123'; await _guardar(); await _esperar(300);

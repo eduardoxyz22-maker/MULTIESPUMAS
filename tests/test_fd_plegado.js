@@ -116,6 +116,18 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await ev(() => { var R=fdPlgResumen(fdLista()); return R; });
   chk('7 el resumen sale de fdLista: 18 unidades, 4 productos, 2 atrasados, 15 días, un reclamo', r.nU===18 && r.nP===4 && r.nA===2 && r.viejo===15 && r.recl.length===1, r);
 
+  console.log('\n── 8. 368 b: el Plan arriba de «Hoy» (16/11, el dueño) ──');
+  r = await ev(async () => { var orden=function(){ var ids=['fd-caja','stk-plan','stk-cinta'].map(function(i){ return document.getElementById(i); });
+      if(ids.some(function(x){ return !x; })) return 'falta:'+ids.map(function(x){ return x ? 1 : 0; }).join('');
+      var pos=function(a, b){ return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) ? 'antes' : 'despues'; };
+      return 'fd '+pos(ids[0], ids[1])+' del plan · cinta '+(pos(ids[2], ids[1])==='antes' ? 'antes' : 'despues')+' del plan'; };
+    try{ abrirStock(); }catch(e){} await new Promise(function(x){ setTimeout(x, 400); });
+    window.FD_PLEGADO_PRUEBA=1; renderStock(); await new Promise(function(x){ setTimeout(x, 200); }); var con=orden();
+    window.FD_PLEGADO_PRUEBA=0; renderStock(); await new Promise(function(x){ setTimeout(x, 200); }); var sin=orden();
+    window.FD_PLEGADO_PRUEBA=1; try{ cerrarStock(); }catch(e){} return { con:con, sin:sin }; });
+  chk('8 con la 368: fábrica → Plan → «Hoy» (la cinta DEBAJO del Plan); sin la bandera, «Hoy» antes del Plan como siempre',
+    r.con==='fd antes del plan · cinta despues del plan' && r.sin==='fd antes del plan · cinta antes del plan', r);
+
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

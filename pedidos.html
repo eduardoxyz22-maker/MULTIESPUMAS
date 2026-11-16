@@ -49618,7 +49618,13 @@ function saldoPreguntaDatos(prev, isEdit, deBorrador){
   filas.forEach(function(r){
     var f=r.f, v, t='';
     try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
-    if(r.cambia && (v.sinLibre || v.tipo==='codigo')) t=saldoAlertaTxt(v);
+    /* 🔁 (16/11, el dueño, con la pregunta en la mano: «si programé para jueves cumpliendo los plazos, ¿por qué me sale la alerta?») Con una
+       FECHA que ya cumple el plazo (🏭 mandar a producir, ⏳ en producción, 📐 medida especial, 📥 Moreno o 🚚 la recogida, sin «no llega» ni
+       «sin cupo»), guardar NO pregunta: la vendedora ya programó contando la espera, el cuadrito lo sigue diciendo y logística lo ve en
+       «Semana» y en el WhatsApp de las 16:00. Sigue preguntando sin fecha, con la fecha corta, lo que ya no se fabrica, un código de otro
+       producto y lo que no se reconoce. */
+    var cumple=!!(fecha && !v.fechaCorta && !v.sinCupo && ['pedir','prod','especial','moreno','recogida'].indexOf(v.tipo)>=0);
+    if(r.cambia && (v.sinLibre || v.tipo==='codigo') && !cumple) t=saldoAlertaTxt(v);
     /* ❓ (18/10, §4ls, corrector, VI-1) «No reconozco» también se pregunta: antes de VI-1 esto salía como «hay que mandar a producir» y,
        con el cuadrito nuevo, guardar no decía nada (el Plan igual lo pide como un producto aparte). */
     else if(r.cambia && v.noRec) t='❓ no reconozco este producto: ni la lista de precios ni el Excel de los almacenes lo tienen con este nombre. Revisá el nombre o el código'+((v.cand&&v.cand.length)?(' (¿es '+v.cand.map(function(c){ return c.nombre||c.k||''; }).filter(Boolean).slice(0,2).join(' o ')+'?)'):'')+'; si es un producto nuevo, avisá a logística.';
@@ -50146,15 +50152,19 @@ function renderStockAhora(){
   };
   /* (05/10) Con algo escrito en el buscador de la barra de arriba, los cuadros grandes (hoy, revisión, qué producir, tiendas)
      se esconden: lo buscado tiene que verse al instante, no tres pantallas más abajo. Se borra la búsqueda y vuelven. */
+  /* 📋 (16/11, mejora 368 b; el dueño vio que la primera pantalla seguía igual —«no veo diferencia»— y eligió «Plan arriba de Hoy»): con la
+     368 prendida (`fdPlgVa`), el orden es «Lo que nos debe la fábrica» (dos renglones plegados) → «📋 Plan de stock» → la cinta «Hoy». */
+  var _planPrimero=false; try{ _planPrimero=fdPlgVa(); }catch(e){ _planPrimero=false; }
   if(stockNorm(STOCK_FILTRO.q)){
     html+='<div id="stk-buscando" style="background:#f6fbfa;border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:10px;font-size:.84rem">🔎 Buscando <b>«'+esc(STOCK_FILTRO.q)+'»</b>: se muestra solo lo que coincide, también lo que no se vendió en '+STOCK_VENTANA+' días. '+
       '<a style="cursor:pointer;color:#0f766e;font-weight:700" onclick="stockFiltroLimpiar()">Borrar la búsqueda</a> para volver a ver los cuadros de hoy, la revisión y qué producir.</div>';
-  }else{
+  }else if(!_planPrimero){
     html+=stockCintaHtml(d);      // 🛤️ (§4iv) qué hacer hoy, en la cinta
   }
   try{ stkTopPintar(d); }catch(e){}   // ✨ (§4mg, V3) las cuatro fichas grandes de la barra
   if(!stockNorm(STOCK_FILTRO.q)){ try{ html+=fdHtml('stock'); }catch(e){} }   // 🏭 (30/10, propuesta 75) lo que la fábrica nos debe, arriba del Plan
   html+=stockPlanHtml(d, conMov); // 📋 (§4iv) una fila por producto: la MISMA cuenta en todo
+  if(_planPrimero && !stockNorm(STOCK_FILTRO.q)) html+=stockCintaHtml(d);   // 🛤️ 368 b: la cinta «Hoy» va DEBAJO del Plan
   STOCK_PLAN_ULT={ d:d, lista:conMov, memo:STOCK_DIBUJO, st:STOCK, state:STATE, n:STATE.length, gen:SALDO_GEN, hoy:todayStr(), t:Date.now() };   // ⚡ (§4ls PA-4)
   /* 👁️ (§4iv) Todo lo demás, plegado: está para quien lo quiera mirar, pero no compite con el plan. */
   /* ⚡ (18/10, §4ls textos, VB-4) Lo de «Más vistas» (revisión automática, Qué producir, galpones, ranking, fichas, termómetro, catálogo y
@@ -65431,6 +65441,8 @@ function fdFabSecHtml(g){
    y `atcFabEsperan` (cuántas y la más vieja); «Ver» los abre ahí mismo, enteros como antes, y cada compu recuerda si los dejó abiertos
    (`visPref` 'fdPlg' / 'fdAtcPlg'). «📋 Reclamo …» copia el MISMO reclamo de siempre (`fdCopiarReclamo`). No cambia ninguna cuenta.
    Solo en Stock («Pedido a producción» sigue igual). En Playwright como antes salvo `window.FD_PLEGADO_PRUEBA`. `tests/test_fd_plegado.js`.
+   · 368 b (16/11, el dueño: «Plan arriba de Hoy»): con la 368 prendida la cinta «Hoy» va DEBAJO del Plan (`renderStock`, `_planPrimero`):
+     así el Plan queda en la primera pantalla de una compu de 1366 × 768.
    ========================================================================== */
 function fdPlgVa(){ try{ return vdVa('FD_PLEGADO_PRUEBA'); }catch(e){ return false; } }
 function fdPlgResumen(L){
