@@ -543,6 +543,50 @@ th.sortable:hover{color:var(--teal-dk)}
 /* 📥 La ventana de importar ROHO muestra una tabla de 8 columnas: con los 540 px de una
    ficha normal los textos se aplastaban hasta montarse unos sobre otros. */
 .modal.ancha{max-width:min(1180px,calc(96vw / var(--vz,1)))}
+/* 🧾 366 · la ficha ancha de Contabilidad y de Mis pedidos (`ctaAnchaHtml`, `misAnchaFichaHtml`) */
+.modal.cta-ancha{max-width:min(1100px,calc(96vw / var(--vz,1)))}
+.cta-anc{padding:14px 20px 16px}
+.cta-k3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.cta-k3 > div{border:1px solid #d9ecea;border-radius:12px;padding:5px 12px 6px;background:#f8fcfc;min-width:0}
+.cta-k3 i{display:block;font-style:normal;font-size:.64rem;font-weight:800;letter-spacing:.05em;color:#5b7472;text-transform:uppercase}
+.cta-k3 b{display:block;font-size:1.2rem;line-height:1.2;font-weight:900;font-variant-numeric:tabular-nums;color:#17302f;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cta-k3 .k-ok b{color:#0c8a5a} .cta-k3 .k-debe{background:#fff6f6;border-color:#f6d0d3} .cta-k3 .k-debe b{color:#c62a35}
+.cta-k3 .k-sm{background:#fffaf0;border-color:#f3dfb3} .cta-k3 .k-gris{color:var(--muted)!important;font-size:1rem}
+.cta-k3 .badge{margin-top:4px}
+.cta-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.cta-c1,.cta-c2{min-width:0}
+.cta-t{font-size:.68rem;font-weight:800;color:#00A09A;letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px}
+.cta-c1 > .cta-t:first-child,.cta-c2 > .cta-t:first-child{margin-top:0}
+.cta-prods{border:1px solid #e3eeed;border-radius:10px;padding:7px 10px;font-size:.82rem;background:#fff}
+.cta-prods.mis-prods{line-height:1.6}
+.cta-anc .cta-dl .dl-row{padding:5px 0;font-size:.82rem;gap:10px}
+.cta-anc .cta-dl .dl-k{width:78px;font-size:.62rem}
+.cta-dl2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:16px}
+.cta-anc .cta-dl2 .dl-row{display:block;padding:4px 0 5px;min-width:0}
+.cta-anc .cta-dl2 .dl-k{width:auto;margin-bottom:1px}
+.cta-dl2 .dl-row.cta-w{grid-column:1 / -1}
+.cta-clf .btn{margin:0 0 0 4px;padding:3px 10px;font-size:.74rem;vertical-align:1px}
+.modal.cta-ancha .modal-h{padding:11px 20px}
+.cta-anc .cta-c2 input[type="text"], .cta-anc .cta-c2 input[type="date"], .cta-anc .cta-c1 input[type="text"]{height:38px;padding:6px 10px}
+.cta-anc .cta-c2 .lb{margin-bottom:3px}
+.cta-sub{font-size:.76rem;color:var(--muted);margin-top:2px}
+.cta-pagos{font-size:.84rem}
+.cta-pagos .fotos .foto img{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.cta-c2 > div[style^="background:var(--gray-lt)"]{margin-top:10px !important;border:2px solid #00B5AD;background:#fbfffe !important}
+.cta-mas{margin-top:12px;border-top:1px dashed var(--gray-md);padding-top:9px}
+.cta-mas > summary{cursor:pointer;font-size:.8rem;color:var(--muted);list-style:none;padding:4px 0}
+.cta-mas > summary::-webkit-details-marker{display:none}
+.cta-mas > summary::before{content:'▸';display:inline-block;margin-right:6px;color:var(--teal-dk);transition:transform .15s}
+.cta-mas[open] > summary::before{transform:rotate(90deg)}
+.cta-mas > summary b{color:var(--teal-dk)}
+.cta-mas[open] > summary b{color:var(--text)}
+.cta-mas > summary:hover{color:var(--text)}
+.cta-mas-b{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:20px;align-items:start}
+.cta-mas-b > #cta-edit{grid-column:1;grid-row:1 / span 2;margin-top:6px !important}
+.cta-mas-b > :not(#cta-edit){grid-column:2}
+.cta-mas-b > .modal-actions{margin-top:6px !important}
+@media (max-width:899px){ .cta-mas-b{grid-template-columns:minmax(0,1fr)} .cta-mas-b > #cta-edit, .cta-mas-b > :not(#cta-edit){grid-column:1;grid-row:auto} }
+@media (max-width:899px){ .cta-g{grid-template-columns:minmax(0,1fr)} .cta-k3 b{font-size:1.02rem} .cta-k3{gap:6px} }
 .roho-tabla{width:100%;min-width:1040px;border-collapse:collapse;font-size:.78rem;table-layout:fixed}
 /* ⚠️ `white-space:normal` es lo que de verdad arregla el amontonamiento: la regla global
    `table{white-space:nowrap}` (la que hace que la tabla de Administración no se parta) la
@@ -20426,7 +20470,7 @@ var CTA_TIPO='pago';
 var CTA_FORM_ENV=false;
 function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; CTA_PAGO_V=null; showContaModal(id); }
 /* Venta SIN MONTO ANOTADO (26/09): el total va primero, en «Corregir precios y montos». */
-function ctaIrAMontos(){ var e=document.getElementById('cta-saldo'); if(!e) return; try{ e.scrollIntoView({block:'center'}); }catch(x){} e.focus(); }
+function ctaIrAMontos(){ var e=document.getElementById('cta-saldo'); if(!e) return; var d=e.closest('details'); if(d && !d.open){ d.open=true; CTA_MAS_AB=(d.getAttribute('data-id')||''); } try{ e.scrollIntoView({block:'center'}); }catch(x){} e.focus(); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
    Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
@@ -21076,6 +21120,57 @@ var CTA_ULTIMA='';
    sin tocar «Registrar pago» la tiraba (quedaba huérfana en Drive). Ahora cada venta guarda
    lo suyo y al volver sigue ahí. */
 var CTA_PAGO_POR_ID={};
+/* 🧾 (16/11, mejora 366; dueño: «espero no se vea feo, como pasó antes») LA FICHA DE CONTABILIDAD ANCHA: EL PAGO A LA VISTA. La ficha de cada
+   venta se abría en 540 px (el 60 % de una pantalla de 1.366 vacío) y medía 2.076 px: «Registrar un pago» empezaba a 1.134 px y su botón a
+   1.547, dos pantallas abajo (del 01 al 15/11, 170 pagos registrados y 69 ventas pidiendo el N° de factura o remisión: cada uno es abrir esta
+   ficha y bajar). Ahora se abre ancha (hasta 1.100 px): arriba tres números grandes (Total · Cobrado · Falta cobrar); a la izquierda lo que
+   compró (con su dibujito, 211), la factura o remisión y los datos; a la derecha los pagos (con la miniatura de su comprobante) y «Registrar un
+   pago» ya abierto. «Corregir precios y montos», «Pago en sistema», «Reenviar» y «Eliminar» van en «▸ Más» abajo (se recuerda abierto).
+   · SOLO REORDENA los MISMOS bloques de `showContaModal` (mismos ids, campos y botones: `ctaRegistrarPago`, `ctaDocGuardar`, `ctaPagoRecordar`,
+     `ctaEditHtml`… siguen iguales). No toca ninguna cuenta de plata. La ficha de Mis pedidos (`showMisModal`) toma la misma forma.
+   · Desde 900 px de ancho; más angosta, una columna. En Playwright, apagada salvo `window.CTA_ANCHA_PRUEBA` (test_conta_alta, test_rev30_plata
+     y otras leen esta ficha). */
+var CTA_MAS_AB='';
+function ctaAnchaVe(){ return vdVa('CTA_ANCHA_PRUEBA'); }
+function ctaK3Html(p, falta){
+  var tot=ventaTotal(p), cob=contaCobrado(p), sm=sinMontoAnotado(p) && !noSeCobra(p);
+  var f = noSeCobra(p) ? '<b class="k-gris">No se cobra</b>'
+        : (falta>0.005 ? ('<b>'+fmtBs(falta)+'</b>') : (sm ? badgeSinMonto() : '<b>✅ Pagado</b>'));
+  return '<div class="cta-k3"><div><i>Total de la venta</i><b>'+fmtBs(tot)+'</b></div>'+
+    '<div class="k-ok"><i>Cobrado</i><b>'+fmtBs(cob)+'</b></div>'+
+    '<div class="'+(falta>0.005 ? 'k-debe' : (sm ? 'k-sm' : 'k-ok'))+'"><i>Falta cobrar</i>'+f+'</div></div>';
+}
+function ctaMasHtml(id, resumen, cuerpo, abierto){
+  var ab=abierto || CTA_MAS_AB===String(id);
+  return '<details class="cta-mas" id="cta-mas" data-id="'+esc(String(id))+'"'+(ab ? ' open' : '')+' ontoggle="CTA_MAS_AB=this.open ? this.getAttribute(\'data-id\') : \'\'">'+
+    '<summary>'+resumen+'</summary><div class="cta-mas-b">'+cuerpo+'</div></details>';
+}
+/* Un dato de la ficha ancha: el MISMO renglón «etiqueta: valor» de siempre (`dl-row`), en una grilla de dos; `ancho` = toda la fila. */
+function ctaAnchaRow(k, v, ancho){ return (v!=null && v!=='') ? ('<div class="dl-row'+(ancho ? ' cta-w' : '')+'"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>') : ''; }
+function ctaAnchaHtml(p, o){
+  var rw=ctaAnchaRow, reg=regEnSistema(p);
+  var izq='<div class="cta-t">🛏️ Qué compró</div><div class="cta-prods">'+contaProdHtml(p.productos)+'</div>'+
+    ((esATC(p.oc) || esRPT(p.oc)) ? '' : ('<div class="cta-t">🧾 Factura o remisión</div>'+ctaDocHtml(p)))+
+    ((ventaMesPuede(p) || ventaMesMarca(p)) ? ('<div class="cta-t">📅 Mes de la venta</div>'+ctaVentaMesHtml(p)) : '')+
+    '<div class="cta-t">📋 Datos</div><div class="cta-dl cta-dl2">'+
+      rw('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
+      rw('N° Nota', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
+      rw(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
+      rw('Vendedor', esc(p.vendedor))+
+      rw('Cliente', '<b>'+esc(p.cliente)+'</b>'+(function(){ var b=clfBotonHtml(p, 'conta'); return b ? (' <span class="cta-clf">'+b+'</span>') : ''; })(), true)+
+      rw('Celular', esc(p.celular))+
+      rw('Entrega', tipoVentaHtml(p)+(p.fecha ? ('<div class="cta-sub">'+esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):'')+'</div>') : ''))+
+      rw('Facturar a', esc(p.facturarA)||'—')+
+      rw('NIT', esc(p.nit)||'—')+
+      rw('Observaciones', esc(p.observaciones), true)+
+      rw('🚚 Recargo por entrega', envioResumenHtml(p, true), true)+
+    '</div>';
+  var der='<div class="cta-t">💵 Pagos</div><div class="cta-pagos">'+contaPagosHtml(p)+'</div>'+o.formPago;
+  var mas=ctaMasHtml(p.id, '<b>Más:</b> ✏️ corregir precios y montos · '+(reg ? '↺ quitar de registrado' : '✅ pago registrado en sistema')+' · 📲 reenviar · 🗑 eliminar',
+    ctaEditHtml(p)+o.acciones, !!(CTA_MONTOS_V && CTA_MONTOS_V.id===String(p.id)));
+  return o.cab+'<div class="modal-b cta-anc">'+o.arriba+ctaK3Html(p, o.falta)+
+    '<div class="cta-g"><section class="cta-c1">'+izq+'</section><section class="cta-c2">'+der+'</section></div>'+mas+'</div>';
+}
 function showContaModal(id){
   var p=findById(id); if(!p) return;
   /* ⏳ (06/10, §4hr) «← Volver a la lista» solo si esta venta se abrió desde la lista de lo que falta cobrar y la ventana
@@ -21164,8 +21259,8 @@ function showContaModal(id){
          '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.005?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
-  var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+
+  var cab='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>';
+  var arriba=
       ctaNavHtml(p.id)+   // ◀ ▶ (297)
       clfVolverHtml(p.id)+(POR_COBRAR_VOLVER ? (POR_COBRAR_VOLVER.origen==='mis' ? misCobrarVolverHtml()   // 💵 (295)
           : POR_COBRAR_VOLVER.origen==='efe'
@@ -21177,7 +21272,21 @@ function showContaModal(id){
           : POR_COBRAR_VOLVER.origen==='caja'
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cajaVolver()">← Volver a la caja de '+esc(cajaNombre(CAJA.t))+'</button>')   // 🏬 (254)
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
-      (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
+      (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'');
+  var acciones=
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
+        '<button class="btn btn-sm wa-btn" style="min-width:150px" onclick="'+esc("ctaWhatsappVenta('"+String(p.id)+"')")+'" title="Volver a pasar esta venta al grupo">📲 Reenviar la venta</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+      '<div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--gray-md);text-align:center">'+
+        '<button class="btn btn-borrar btn-sm" onclick="'+esc("ctaEliminarVenta('"+String(p.id)+"')")+'" '+
+          'title="Para una venta cargada dos veces, o que nunca existió">🗑 Eliminar esta venta</button>'+
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:5px">Para una venta <b>duplicada</b> o cargada por error. No se puede deshacer.</div>'+
+      '</div>';
+  var _ancha=ctaAnchaVe();   // 🧾 (16/11, mejora 366) la ficha ancha: los MISMOS bloques, otro orden
+  var html=_ancha ? ctaAnchaHtml(p, { cab:cab, arriba:arriba, row:row, falta:falta, prods:prods, formPago:formPago, acciones:acciones }) : (cab+
+    '<div class="modal-b">'+arriba+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
       row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
@@ -21201,18 +21310,10 @@ function showContaModal(id){
       row('Observaciones', esc(p.observaciones))+
       formPago+
       ctaEditHtml(p)+
-      '<div class="modal-actions" style="margin-top:14px">'+
-        '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
-        '<button class="btn btn-sm wa-btn" style="min-width:150px" onclick="'+esc("ctaWhatsappVenta('"+String(p.id)+"')")+'" title="Volver a pasar esta venta al grupo">📲 Reenviar la venta</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
-      '</div>'+
-      '<div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--gray-md);text-align:center">'+
-        '<button class="btn btn-borrar btn-sm" onclick="'+esc("ctaEliminarVenta('"+String(p.id)+"')")+'" '+
-          'title="Para una venta cargada dos veces, o que nunca existió">🗑 Eliminar esta venta</button>'+
-        '<div style="font-size:.72rem;color:var(--muted);margin-top:5px">Para una venta <b>duplicada</b> o cargada por error. No se puede deshacer.</div>'+
-      '</div>'+
-    '</div>';
+      acciones+
+    '</div>');
   openModal(html);
+  if(_ancha) document.getElementById('modal-box').classList.add('cta-ancha');
   ctaRecalc();                      // pinta los subtotales y el aviso apenas abre
   try{ iasPintarConta(); }catch(e){}   // 🔎 (§78) lo que dice la foto del pago que se está por registrar
 }
@@ -39751,6 +39852,43 @@ function misPreciosTotalHtml(p){
   return '<div class="mis-precios-tot" style="margin-top:6px;font-weight:800;color:var(--teal-dk)">Suman '+fmtBs(prodTotal(p))+
     (falta?(' <span style="color:var(--amber);font-weight:700">· '+falta+' sin precio</span>'):'')+'</div>';
 }
+/* 🧾 (16/11, mejora 366) La ficha de Mis pedidos con la forma de la de Contabilidad: los MISMOS renglones de `showMisModal`, en dos columnas
+   (lo que compró y los datos a la izquierda; el cobro, la entrega, el stock, el chofer, las fotos y la ubicación a la derecha). */
+function misAnchaFichaHtml(p, o){
+  var row=o.row;
+  var rw=ctaAnchaRow;
+  var izq='<div class="cta-t">🛏️ Qué compró</div><div class="cta-prods mis-prods">'+o.prod+misPreciosTotalHtml(p)+'</div>'+
+    '<div class="cta-t">📋 Datos</div><div class="cta-dl cta-dl2">'+
+      (esVentaTienda(p) ? rw('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))
+        : entregaAConfirmar(p) ? rw('Fecha de entrega', avisaBadge(p)+'<br><span style="font-size:.8rem;color:var(--muted)">Cuando el cliente elija: ✏️ Editar, sacá «📦 El cliente avisa cuándo» y poné el día.</span>', true)
+        : rw('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
+      rw('Vendedor', o.vendCell)+
+      rw('Cliente', '<b>'+esc(p.cliente)+'</b>', true)+rw('Celular', esc(p.celular))+
+      rw('Zona', esc(p.zona))+rw('Dirección', esc(p.direccion), true)+
+    '</div>';
+  var der='<div class="cta-t">🚚 Entrega y cobro</div><div class="cta-dl cta-dl2">'+
+      rw('Cobro', o.cobro, true)+
+      (envioTotal(p)>0 ? rw('🚚 Recargo por entrega', envioResumenHtml(p), true) : '')+
+      rw('Entrega', o.entrega, true)+rw('Stock', estadoStockBadge(p))+rw('Chofer', o.choferVal)+
+      rw('Fotos de la entrega', fotosHtml(p, false), true)+
+      (atcFotos(p).length ? rw('📷 Fotos del producto', atcFotosTiraHtml(p), true) : '')+
+    '</div>'+o.fleteSec+o.ubicSec;
+  return '<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
+      ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+
+    '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b cta-anc">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+o.alertas+
+      (noSeCobra(p) ? '' : ctaK3Html(p, contaFaltaCobrar(p)))+
+      '<div class="cta-g"><section class="cta-c1">'+izq+'</section><section class="cta-c2">'+der+'</section></div>'+
+      entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+certBloqueHtml(p)+
+      '<div class="modal-actions" style="margin-top:16px">'+
+        misCobrarBtnHtml(p, 'btn btn-sm', 'ficha')+
+        '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
+        '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
+        (misVeRepetir() ? repetirBtnHtml(p, 'btn btn-sm btn-ghost') : '')+
+        '<button class="btn btn-primary btn-sm" onclick="closeModal()">✓ Listo</button>'+
+      '</div>'+
+    '</div>';
+}
 function showMisModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='mis';
@@ -39810,6 +39948,8 @@ function showMisModal(id){
       ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'+ubicWaTag(p.maps)+'<button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
+  if(ctaAnchaVe()){ openModal(misAnchaFichaHtml(p, { row:row, prod:prod, cobro:cobro, entrega:entrega, choferVal:choferVal, vendCell:vendCell, alertas:alertas, fleteSec:fleteSec, ubicSec:ubicSec }));
+    document.getElementById('modal-box').classList.add('cta-ancha'); return; }   // 🧾 (16/11, mejora 366) la misma forma que la de Contabilidad
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -53658,6 +53798,7 @@ function openModal(html, ancha){
   box.classList.toggle('ancha', !!ancha);
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
   box.classList.remove('clf-box');   // 👤 (§4nr) la ficha del cliente la vuelve a poner
+  box.classList.remove('cta-ancha');   // 🧾 (366) la ficha ancha de Contabilidad y de Mis pedidos la vuelven a poner
   document.body.classList.remove('ficha-costado');   // (§4ni, 3) …y lo mismo el costado: cualquier otra ventana va al medio
   ov.classList.add('on');
   box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('tabindex','-1');
