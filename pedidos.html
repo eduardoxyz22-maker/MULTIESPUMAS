@@ -3398,6 +3398,25 @@ html.af-peg-on.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #adm-fichas .af-g
 .wz-hechas + .wz-grid{ margin-top:10px; }
 html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(.wz-tit, .wz-hechas), html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.wz-tit, .wz-hechas){ color:#fafaf9; }
 html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .wz-tit small, html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .wz-tit small{ color:#d6d3d1; }
+/* 433 · El pedido que se está guardando se ve en su ficha de Administración: guardando (turquesa que late, con la franja que corre), guardado
+   (verde, 3 s) o sin enviar (ámbar, hasta que sale). En la tabla, el renglón con el borde del mismo color. */
+#adm-fichas .af-f.pg-ir{ animation:pg-late 1.2s ease-in-out infinite; }
+@keyframes pg-late{ 0%,100%{ box-shadow:0 0 0 2px #00B5AD, 0 0 0 0 rgba(0,181,173,0); } 50%{ box-shadow:0 0 0 3px #00B5AD, 0 0 0 8px rgba(0,181,173,.22); } }
+#adm-fichas .af-f.pg-ok{ box-shadow:0 0 0 3px #22c55e, 0 10px 26px -12px rgba(34,197,94,.7) !important; }
+#adm-fichas .af-f.pg-cola{ box-shadow:0 0 0 3px #f59e0b !important; }
+.af-f > .pg-chip{ display:flex; align-items:center; justify-content:center; gap:7px; font-size:.76rem; font-weight:800; padding:6px 10px; letter-spacing:.01em; line-height:1.25; text-align:center; }
+.af-f.pg-ir > .pg-chip{ color:#e6fffd; background:linear-gradient(90deg,#0f766e 0%,#14b8a6 40%,#0f766e 80%) 0 0/250% 100%; animation:pg-corre 1.3s linear infinite; }
+@keyframes pg-corre{ to{ background-position:-250% 0; } }
+.af-f.pg-ir > .pg-chip i{ display:inline-block; flex:none; width:11px; height:11px; border-radius:50%; border:2px solid #fff; border-right-color:transparent; animation:pg-rueda .8s linear infinite; }
+@keyframes pg-rueda{ to{ transform:rotate(360deg); } }
+.af-f.pg-ok > .pg-chip{ background:#16a34a; color:#fff; }
+.af-f.pg-cola > .pg-chip{ background:#fef3c7; color:#92400e; border-bottom:1px solid #f59e0b; }
+#tbl-pedidos tr.pg-ir > td:first-child{ box-shadow:inset 4px 0 0 #00B5AD; }
+#tbl-pedidos tr.pg-ok > td:first-child{ box-shadow:inset 4px 0 0 #22c55e; }
+#tbl-pedidos tr.pg-cola > td:first-child{ box-shadow:inset 4px 0 0 #f59e0b; }
+#tbl-pedidos tr > td:first-child .pg-tag{ display:block; margin-top:3px; font-size:.68rem; font-weight:800; white-space:nowrap; }
+#tbl-pedidos tr.pg-ir .pg-tag{ color:#0f766e; } #tbl-pedidos tr.pg-ok .pg-tag{ color:#15803d; } #tbl-pedidos tr.pg-cola .pg-tag{ color:#92400e; }
+@media(prefers-reduced-motion:reduce){ #adm-fichas .af-f.pg-ir, .af-f.pg-ir > .pg-chip, .af-f.pg-ir > .pg-chip i{ animation:none; } }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3560,6 +3579,66 @@ function wzHtml(lista, quien, kPleg, hechas){
   return '<div class="wa-resp wz-caja">'+
     '<div class="wz-tit">'+(kPleg?misPlegarBtn(kPleg):'')+tit+(quien?(' · '+esc(quien)):'')+'</div>'+
     (pl ? '' : ((n ? '<div class="wz-grid">'+orden.map(wzCard).join('')+'</div>' : '')+pie))+'</div>';
+}
+
+/* 🎨 (16/11, mejora 433; dueño: elegida de la página de ideas 390-440) EL PEDIDO QUE SE ESTÁ GUARDANDO SE VE EN SU FICHA. Al tocar «Entregó»,
+   «A tarde», «Reprog.» o «Listo» en una ficha de Administración, la ficha cambia en el acto y la planilla se entera después; si Google tardaba o
+   no había señal, la ficha no lo decía (solo un aviso abajo que se va). Ahora la ficha tocada dice cómo va su guardado:
+   · «⏳ Guardando en la planilla…» (borde turquesa que late) mientras el guardado de ESE pedido está en camino o esperando turno
+     (`SAVE_EN_VUELO` / `SAVE_EN_ESPERA`, o uno forzado que sigue en camino);
+   · «✓ Guardado · 10:02» en verde por 3 s (`PG_OK_MS`) cuando la planilla dijo que sí (`res.ok`);
+   · «📴 Sin enviar · sale solo al volver la señal» (ámbar) mientras quede en la cola de este aparato (`colaEsperando()`).
+   En la tabla, el renglón lleva el borde del mismo color y la palabra. Es lo que el panel YA sabe: no guarda nada distinto ni cambia cuándo
+   se manda. `apiSave` avisa (`pgSeguir`), `renderAdmin` vuelve a ponerlo después de dibujar y `updateFooter` lo repinta cuando cambia la cola.
+   En Playwright apagado salvo `window.PG_PRUEBA`. `tests/test_v433_guardando_ficha.js`. */
+var PG={ ir:{}, ok:{}, raf:0, okT:null }, PG_OK_MS=3000;
+function pgVa(){ try{ return vdVa('PG_PRUEBA'); }catch(e){ return false; } }
+function pgSeguir(id, p){
+  if(!id || !p || typeof p.then!=='function' || !pgVa()) return p;
+  id=String(id); PG.ir[id]=(PG.ir[id]||0)+1; delete PG.ok[id]; pgLuego();
+  var fin=function(res){
+    PG.ir[id]=(PG.ir[id]||1)-1; if(PG.ir[id]<=0) delete PG.ir[id];
+    if(!PG.ir[id] && res && res.ok){ PG.ok[id]=Date.now(); setTimeout(pgLuego, PG_OK_MS+60); }
+    pgLuego();
+  };
+  p.then(fin, function(){ fin(null); });
+  return p;
+}
+function pgEstado(id, cola){
+  id=String(id);
+  if(PG.ir[id] || SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id]) return 'ir';
+  if(cola && cola[id]) return 'cola';
+  if(PG.ok[id] && Date.now()-PG.ok[id]<PG_OK_MS) return 'ok';
+  if(PG.ok[id]) delete PG.ok[id];
+  return '';
+}
+function pgLuego(){ if(PG.raf || !pgVa()) return; PG.raf=requestAnimationFrame(function(){ PG.raf=0; try{ pgPintar(); }catch(e){} }); }
+function pgTexto(e){
+  return e==='ir' ? '<i aria-hidden="true"></i>Guardando en la planilla…'
+       : e==='ok' ? ('✓ Guardado · '+esc(hhmmBolivia()))
+       : e==='cola' ? '📴 Sin enviar · sale solo al volver la señal' : '';
+}
+function pgPintar(){
+  if(!pgVa()) return;
+  var cola={}; try{ colaEsperando().forEach(function(q){ if(q && q.id) cola[String(q.id)]=1; }); }catch(e){}
+  [].forEach.call(document.querySelectorAll('#adm-fichas .af-f[data-pid]'), function(f){
+    var e=pgEstado(f.getAttribute('data-pid'), cola), ch=f.querySelector(':scope > .pg-chip'), antes=f.getAttribute('data-pg')||'';
+    if(e===antes && (!e || ch)) return;
+    f.classList.remove('pg-ir','pg-ok','pg-cola'); f.setAttribute('data-pg', e);
+    if(!e){ if(ch) ch.remove(); return; }
+    f.classList.add('pg-'+e);
+    if(!ch){ ch=document.createElement('div'); ch.className='pg-chip'; ch.setAttribute('role','status'); f.insertBefore(ch, f.firstChild); }
+    ch.innerHTML=pgTexto(e);
+  });
+  [].forEach.call(document.querySelectorAll('#tbl-pedidos tbody tr[onclick^="showPedidoModal("]'), function(tr){
+    var m=/showPedidoModal\('([^']+)'\)/.exec(tr.getAttribute('onclick')||''); if(!m) return;
+    var e=pgEstado(m[1], cola), td=tr.cells[0], tg=td && td.querySelector('.pg-tag');
+    tr.classList.remove('pg-ir','pg-ok','pg-cola');
+    if(!e){ if(tg) tg.remove(); return; }
+    tr.classList.add('pg-'+e);
+    if(td && !tg){ tg=document.createElement('span'); tg.className='pg-tag'; td.appendChild(tg); }
+    if(tg) tg.textContent=e==='ir' ? '⏳ Guardando…' : e==='ok' ? '✓ Guardado' : '📴 Sin enviar';
+  });
 }
 </script>
 
@@ -10075,7 +10154,7 @@ function apiSave(rec, opts){
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
-  if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
+  if(!id || (opts&&opts.forzar)) return pgSeguir(id, apiSaveAhora(rec, opts));   // 🎨 (16/11, mejora 433) la ficha dice «Guardando…»
   if(!SAVE_EN_VUELO[id]){
     var p=apiSaveAhora(rec, opts);
     SAVE_EN_VUELO[id]=p;
@@ -10085,7 +10164,7 @@ function apiSave(rec, opts){
     try{ updateFooter(); }catch(e){}
     var fin=function(){ if(SAVE_EN_VUELO[id]===p) delete SAVE_EN_VUELO[id]; try{ updateFooter(); }catch(e){} };
     p.then(fin, fin);
-    return p;
+    return pgSeguir(id, p);   // 🎨 (16/11, mejora 433)
   }
   if(SAVE_EN_ESPERA[id]) return SAVE_EN_ESPERA[id];
   var run=function(){
@@ -30013,6 +30092,7 @@ function updateFooter(){
   document.getElementById('footer').innerHTML = (pend
     ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="misReintentarCola()">reintentar</a>')
     : base) + autoSelloHtml();
+  try{ pgLuego(); }catch(e){}   // 🎨 (16/11, mejora 433) la cola cambió: la ficha lo dice
 }
 
 /* ============================================================================
@@ -34289,6 +34369,7 @@ function renderAdmin(){
   if(admVista()==='fichas'){   // 🃏 (24/10) con las fichas, la tabla ni se arma (se arma al volver a «Ver como tabla»)
     if(deMas) list=list.slice(0, ADM_TOPE);
     admFichasPintar(list, dn); admMasPintar(deMas);
+    try{ pgPintar(); }catch(e){}   // 🎨 (16/11, mejora 433) cómo va el guardado de cada ficha
     admVacioPintar(list.length);
     try{ tblBarPintar('admin'); }catch(e){}   // 🗂️ (§4nr, 33) con las fichas, la barra de columnas no va
     return;
@@ -34337,6 +34418,7 @@ function renderAdmin(){
   }).join('');
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   admFichasPintar(list, dn);
+  try{ pgPintar(); }catch(e){}   // 🎨 (16/11, mejora 433) cómo va el guardado de cada ficha
   admVacioPintar(list.length);
   document.getElementById('tbl-pedidos').style.display=list.length?'table':'none';
   admMasPintar(deMas);
