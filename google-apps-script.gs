@@ -3032,7 +3032,14 @@ var IAC_MIMES = { 'image/jpeg':'image', 'image/jpg':'image', 'image/png':'image'
    (`pos_banco` → `pb`). La página (Cuadre «💳 Tarjeta por POS y lote», el aviso al subir el voucher) los compara; acá solo se leen. Un voucher
    leído con la pregunta 3 NO se vuelve a leer solo (sería pagar otra vez por lo mismo): `forzar` lo relee si Contabilidad lo pide. `iacReleer_`
    sigue releyendo solo lo que una pregunta de ANTES de la 3 marcó «no es un comprobante» (IAC_RELEER_ANTES_DE). */
-var IAC_PREGUNTA_V = 4;
+/* 🧾 (2026-11-16-a, mejora 353; versión 5 de la pregunta) De la NOTA DE VENTA, además, sus RENGLONES: producto, medida, cantidad y precio
+   unitario (`nota_renglones` → `nl`: [{d, m, c, p}]), y si los leyó TODOS sin dudas (`nota_renglones_seguro`): sin esa seguridad, `nl` no
+   va (la página no dice nada, dueño: «si Claude no está seguro, no dice nada»). La página los compara con los precios cargados («La nota
+   dice Bs 3.830 y cargaste Bs 4.830»). Una nota leída con una pregunta anterior NO se vuelve a leer sola: solo cuando la página lo pide
+   para comparar los precios (`renglones:1`, lo que se sube en el formulario o en «Registrar pago»), y una vez (`iacReleer_`). */
+var IAC_PREGUNTA_V = 5;
+var IAC_RENGLONES_DESDE = 5;   // (mejora 353) desde esta pregunta la nota de venta trae sus renglones
+var IAC_RENGLONES_MAX = 12;
 var IAC_RELEER_ANTES_DE = 3;   // §4ok-E3: se releen (una vez) las «no es comprobante» leídas con una pregunta anterior a esta
 var IAC_ESQUEMA = { type:'object', additionalProperties:false,
   properties:{ es_comprobante:{ type:'boolean' }, legible:{ type:'boolean' }, monto:{ type:'number' }, moneda:{ type:'string' },
@@ -3041,10 +3048,14 @@ var IAC_ESQUEMA = { type:'object', additionalProperties:false,
                tipo:{ type:'string', enum:IAC_TIPOS }, nota:{ type:'string' },
                es_nota_venta:{ type:'boolean' }, nota_total:{ type:'number' }, nota_efectivo:{ type:'number' }, nota_qr:{ type:'number' },
                nota_tarjeta:{ type:'number' }, nota_transferencia:{ type:'number' }, tarjeta_ultimos4:{ type:'string' },
-               tarjeta_lote:{ type:'string' }, tarjeta_autorizacion:{ type:'string' }, pos_banco:{ type:'string' } },
+               tarjeta_lote:{ type:'string' }, tarjeta_autorizacion:{ type:'string' }, pos_banco:{ type:'string' },
+               nota_renglones:{ type:'array', items:{ type:'object', additionalProperties:false,   // 🧾 (2026-11-16-a, mejora 353)
+                 properties:{ desc:{ type:'string' }, medida:{ type:'string' }, cant:{ type:'number' }, precio:{ type:'number' } },
+                 required:['desc', 'medida', 'cant', 'precio'] } },
+               nota_renglones_seguro:{ type:'boolean' } },
   required:['es_comprobante', 'legible', 'monto', 'moneda', 'fecha', 'hora', 'banco_origen', 'banco_destino', 'destinatario',
             'ordenante', 'referencia', 'tipo', 'nota', 'es_nota_venta', 'nota_total', 'nota_efectivo', 'nota_qr', 'nota_tarjeta',
-            'nota_transferencia', 'tarjeta_ultimos4', 'tarjeta_lote', 'tarjeta_autorizacion', 'pos_banco'] };
+            'nota_transferencia', 'tarjeta_ultimos4', 'tarjeta_lote', 'tarjeta_autorizacion', 'pos_banco', 'nota_renglones', 'nota_renglones_seguro'] };
 var IAC_SISTEMA = 'Sos el lector de comprobantes de pago de Multiespumas, una fábrica de colchones de Santa Cruz, Bolivia (marcas Heaven y Sueña). ' +
   'Te llega la foto o la captura que un cliente mandó como prueba de pago: QR interoperable, transferencia, depósito o voucher de tarjeta de un banco ' +
   'o billetera de Bolivia (el voucher de tarjeta es el papelito que imprime la máquina POS, a veces pegado o abrochado a la nota de venta); a veces es la nota de venta de la tienda (papel con el total y cómo pagó el cliente). Leé solo lo que se ve. Si un dato no se ve o no estás seguro, dejalo vacío (y el monto en 0): no lo adivines ni lo completes ' +
@@ -3072,7 +3083,14 @@ var IAC_PIDE = 'Leé este comprobante y completá:\n' +
   '- es_nota_venta: true si la imagen es la NOTA DE VENTA, factura o recibo de la tienda (no un comprobante del banco). En ese caso es_comprobante=false ' +
   '(salvo que tenga el voucher de la tarjeta pegado o al lado: entonces es_comprobante=true con los datos del voucher) y ' +
   'completá nota_total (el total de la venta) y cuánto dice que se pagó con cada medio: nota_efectivo, nota_qr, nota_tarjeta, nota_transferencia ' +
-  '(0 si no lo dice; un «a cuenta» o «saldo» no es un medio de pago). Si no es una nota de venta: es_nota_venta=false y esos cinco en 0.';
+  '(0 si no lo dice; un «a cuenta» o «saldo» no es un medio de pago). Si no es una nota de venta: es_nota_venta=false y esos cinco en 0.\n' +
+  /* 🧾 (2026-11-16-a, mejora 353) los renglones de la nota, para compararlos con los precios cargados */
+  '- nota_renglones: si es la nota de venta, un renglón por cada producto escrito: desc (el producto en MAYÚSCULAS, sin la medida), medida ' +
+  '(ancho x largo en centímetros, como 140x190; en plazas: 1 = 90x190, 1½ = 105x190, 2 = 140x190, 2½ = 160x190, 3 = 180x190; vacía si no dice), ' +
+  'cant (1 si no dice) y precio (el precio UNITARIO en bolivianos: si la nota da el importe del renglón, dividilo por la cantidad). No pongas ' +
+  'como renglón el a cuenta, el saldo, el transporte ni un descuento. Si no es una nota de venta, una lista vacía.\n' +
+  '- nota_renglones_seguro: true SOLO si leíste todos los renglones con su precio sin ninguna duda; si alguno está borroso, tachado, cortado o ' +
+  'no se entiende, false.';
 function iacHoja_(crear) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(IAC_HOJA);
   if (!sh && crear) {
@@ -3129,11 +3147,33 @@ function iacNormal_(j, modelo) {
     var n2 = function (v) { var x = Math.round((Number(v) || 0) * 100) / 100; return x > 0 ? x : 0; };
     /* §4ok-E3 La nota de venta con el voucher de la tarjeta pegado ES comprobante (el del voucher); sin voucher, como siempre: no lo es. */
     o.nv = 1; o.cp = (j.es_comprobante === true && String(j.tipo) === 'tarjeta'); o.nt = n2(j.nota_total); o.ne = n2(j.nota_efectivo); o.nq = n2(j.nota_qr); o.nj = n2(j.nota_tarjeta); o.nr = n2(j.nota_transferencia);
+    /* 🧾 (2026-11-16-a, mejora 353) sus renglones, SOLO si Claude los leyó todos sin dudas y cada uno tiene su precio: si no, nada */
+    var nl = iacRenglones_(j);
+    if (nl) o.nl = nl;
   }
   return o;
 }
+/** 🧾 (mejora 353) Los renglones de la nota de venta → [{d, m, c, p}] (d en mayúsculas, p unitario > 0); null si no son seguros o falta algo. */
+function iacRenglones_(j) {
+  if (!j || j.nota_renglones_seguro !== true || !Array.isArray(j.nota_renglones) || !j.nota_renglones.length) return null;
+  var out = [], mal = false;
+  j.nota_renglones.forEach(function (x) {
+    if (mal || !x || typeof x !== 'object') return;
+    var d = iacTexto_(x.desc, 60).toUpperCase(), c = Math.round(Number(x.cant) || 0), p = Math.round((Number(x.precio) || 0) * 100) / 100;
+    if (!d || !(p > 0) || p >= 1000000) { mal = true; return; }
+    if (!(c >= 1)) c = 1; if (c > 99) c = 99;
+    out.push({ d:d, m:iacTexto_(x.medida, 20), c:c, p:p });
+  });
+  return (mal || !out.length || out.length > IAC_RENGLONES_MAX) ? null : out;
+}
 /** §4ok-E3 ¿Se vuelve a leer con la pregunta de ahora? Solo lo que una pregunta anterior marcó «no es un comprobante» (sin error), una vez. */
-function iacReleer_(o) { return !!o && !o.err && o.cp === false && !(Number(o.pv) >= IAC_RELEER_ANTES_DE); }
+function iacReleer_(o, renglones) {
+  if (!o || o.err) return false;
+  if (o.cp === false && !(Number(o.pv) >= IAC_RELEER_ANTES_DE)) return true;
+  /* 🧾 (2026-11-16-a, mejora 353) una nota de venta leída antes de que se pidieran sus renglones: SOLO si la página los pide (`renglones`,
+     lo que se sube en el formulario o en «Registrar pago»), y una vez (la relectura queda con la pregunta de ahora). */
+  return !!renglones && !!o.nv && !(Number(o.pv) >= IAC_RENGLONES_DESDE);
+}
 function iacAnotar_(sh, id, o) {
   try { sh.appendRow([id, waBo_(o.t || Date.now()).txt, o.m || '', o.bd || '', o.f || '', o.ref || '', JSON.stringify(o), o.md || '']); } catch (e) {}
 }
@@ -3208,7 +3248,7 @@ function iaComprobantes_(body) {
   (Array.isArray(body && body.forzar) ? body.forzar : []).forEach(function (x) { forzar[String(x == null ? '' : x)] = 1; });
   var cache = iacCache_(), res = {}, faltan = [], releer = [];
   ids.forEach(function (id) {
-    if (cache[id] && !forzar[id] && !iacReleer_(cache[id])) res[id] = cache[id];
+    if (cache[id] && !forzar[id] && !iacReleer_(cache[id], !!(body && body.renglones))) res[id] = cache[id];
     else { faltan.push(id); if (cache[id] && !forzar[id]) releer.push(id); }
   });
   var out = { ok:true, version:SCRIPT_VERSION, res:res, faltan:faltan, pendientes:[], leidas:0, usd:0, dia:iacDia_(), estado:iacEstado_() };

@@ -10560,6 +10560,7 @@ function pintarProdRpt(){
 function pintarTotalProds(){
   var cja=document.getElementById('f-prods-total'); if(!cja) return;
   try{ totalAutoPoner(); }catch(e){}   // 🧮 (06/11) primero el monto, después la caja que lo dice
+  try{ nvpTrasPrecios(); }catch(e){}   // 🧾 (16/11, 353) el aviso de la nota de venta sigue a los precios que se escriben
   var t=0, con=0, sin=0;
   var cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
@@ -66968,7 +66969,9 @@ function iasMandar(){
   var t=IAS.cola.splice(0, 8); if(!t.length) return;
   IAS.enVuelo=true;
   var reintentar=false;
-  conTopeDuro(apiPost({ action:'iaComprobantes', fotos:t }), IAS_TOPE_MS, 'tardo_ia').then(function(r){
+  /* 🧾 (16/11, mejora 353) `renglones`: si una de estas fotos es una nota de venta leída antes de que se pidieran sus renglones, el servidor
+     2026-11-16-a la vuelve a leer UNA vez (para comparar los precios); uno anterior no lo mira. */
+  conTopeDuro(apiPost({ action:'iaComprobantes', fotos:t, renglones:1 }), IAS_TOPE_MS, 'tardo_ia').then(function(r){
     if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
     iacTomar(r);
     /* tope, sin crédito, sin clave, apagado, pausa: no se muestra nada y se deja de pedir un rato */
@@ -67099,6 +67102,7 @@ function iasPintarForm(){
     try{ var c=iasEvaluar(iasFormX(+k));
       if(c && tvFotoFechaProponer(c)) c=iasEvaluar(iasFormX(+k));   // 📅 §4ok-93 la venta de tienda toma el día de la foto
       if(c) h=iasHtml(c, iasCtxForm(+k))+tjVoucherHtml(iasFormX(+k), c)+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
+    if(k==='1'){ try{ h+=nvpFormHtml(); }catch(e){} }   // 🧾 (16/11, 353) la nota de venta contra los precios cargados
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -67106,7 +67110,8 @@ function iasPintarConta(){
   var box=document.getElementById('ias-cta'); if(!box) return;
   var h='';
   try{ var p=findById(box.getAttribute('data-id')), x=iasContaX(p), c=iasEvaluar(x);
-    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, c); }catch(e){ h=''; }
+    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, c);
+    h+=nvpContaHtml(p, x); }catch(e){ h=''; }   // 🧾 (16/11, 353) la nota de venta contra los precios del pedido
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
 }
 function iasRepintar(){ iasPintarForm(); iasPintarConta(); iasPintarPeg(); }
@@ -67218,6 +67223,83 @@ function iasFechaVenta(f){
   try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){}
   iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
 }
+/* ============================================================================
+   🧾 (16/11, mejora 353; el dueño la eligió) LA NOTA DE VENTA CONTRA LOS PRECIOS QUE CARGASTE.
+   De 143 ventas pagadas de noviembre con precio en cada renglón, en 3 la suma de los precios no da lo cobrado (Bs 1.000, 380 y 140 de
+   diferencia) y en otra los 3 productos van a Bs 1.000 cada uno, repartidos para que dé el total: esos precios alimentan «precio típico»,
+   «🏷️ Qué ofertar» y lo que Bloki dice que se cobra.
+   · La foto del pago que se sube (formulario y «Registrar pago») ya la lee Claude (§78, `iasSubida`). Si es la NOTA DE VENTA, el servidor
+     2026-11-16-a (pregunta 5) trae también sus renglones (`nl`: producto, medida, cantidad, precio unitario) SOLO si los leyó todos sin dudas.
+   · `nvpComparar` busca cada renglón de la nota entre lo cargado (misma medida, mismo tipo —colchón/somier—, palabras en común; con dos
+     candidatos parejos no elige) y dice los precios distintos: «🧾 La nota dice Bs 3.830 por … y cargaste Bs 4.830» con «Poner como en la
+     nota» (en el formulario: el precio de ESE renglón, como lo escribiría la persona) y «Está bien así» (no lo vuelve a decir para esa foto).
+     Con todo emparejado, también el total. Lo que no se puede emparejar no se dice (si no está seguro, no dice nada).
+   · En «Registrar pago» de Contabilidad el pedido ya está guardado: dice lo mismo y que se corrige en «✏️ Corregir precios y montos».
+   · Solo con el servidor 2026-11-16-a. En Playwright, como la lectura al subir: con `window.IAC_SUBIR_PRUEBA`.
+   ========================================================================== */
+var NVP={ ok:{} }, NVP_COMUNES={ COLCHON:1, COLCHONES:1, SOMIER:1, SOMMIER:1, CON:1, PARA:1, DEL:1, LAS:1, LOS:1, PLAZA:1, PLAZAS:1, HEAVEN:1, SUENA:1, UNA:1, UNO:1 };
+function nvpVa(){ return iasActivo() && servidorTiene(OBS_IA_SERVIDOR); }
+function nvpPal(t){ return sinTildes(t).toUpperCase().replace(/\d+\s*[X×]\s*\d+/g,' ').replace(/[^A-Z0-9Ñ]+/g,' ').split(/\s+/).filter(function(w){ return w.length>=3 && !NVP_COMUNES[w] && !/^\d+$/.test(w); }); }
+function nvpTipo(desc, medida, codigo){ try{ return pryTipoProd({ desc:desc, medida:medida||'', codigo:codigo||'' })||''; }catch(e){ return ''; } }
+/* Las notas de venta leídas (con renglones) entre estas fotos, sin las que la persona ya dio por buenas. */
+function nvpNotas(fids){
+  var out=[], v={};
+  (fids||[]).forEach(function(f){ f=String(f||''); var o=IAC.res[f]; if(v[f] || !o || o.err || !o.nv || !Array.isArray(o.nl) || !o.nl.length || NVP.ok[f]) return; v[f]=1; out.push({ f:f, o:o }); });
+  return out;
+}
+/* Los renglones de la nota contra lo cargado ([{desc, medida, codigo, cant, precio}]) → { filas:[{n, ix, np, cp}], todo, totN, totC } o null. */
+function nvpComparar(nl, carg){
+  var C=(carg||[]).map(function(x, ix){ return { ix:ix, x:x, pal:nvpPal(x.desc), med:normMedida(x.medida), tipo:nvpTipo(x.desc, x.medida, x.codigo) }; }), usado={}, filas=[], todos=true;
+  (nl||[]).forEach(function(r){
+    var pal=nvpPal(r.d), med=normMedida(r.m), tipo=nvpTipo(r.d, r.m, ''), best=0, second=0, bc=null;
+    C.forEach(function(c){
+      if(usado[c.ix]) return;
+      if(med && c.med && med!==c.med) return;
+      if(tipo && c.tipo && tipo!==c.tipo) return;
+      var s=pal.filter(function(w){ return c.pal.indexOf(w)>=0; }).length; if(!s) return;
+      if(s>best){ second=best; best=s; bc=c; } else if(s>second) second=s;
+    });
+    if(!bc || best===second){ todos=false; return; }   // nadie, o dos parejos: de este renglón no se dice nada
+    usado[bc.ix]=1;
+    filas.push({ n:r, ix:bc.ix, x:bc.x, np:r2(Number(r.p)||0), cp:r2(Number(bc.x.precio)||0) });
+  });
+  if(!filas.length) return null;
+  var todo=todos && filas.length===C.length, totN=0, totC=0;
+  filas.forEach(function(f){ totN=r2(totN+f.np*(Number(f.n.c)||1)); totC=r2(totC+f.cp*(Number(f.x.cant)||1)); });
+  return { filas:filas, difs:filas.filter(function(f){ return Math.abs(f.np-f.cp)>=0.005; }), todo:todo, totN:totN, totC:totC };
+}
+/* El aviso, debajo del pago. `form`: con «Poner como en la nota» (el formulario); si no, la ficha de Contabilidad. */
+function nvpHtml(fids, carg, form){
+  if(!nvpVa()) return '';
+  var N=nvpNotas(fids); if(!N.length) return '';
+  var nota=N[0], K=nvpComparar(nota.o.nl, carg); if(!K || !K.difs.length) return '';
+  var nom=function(f){ return String(f.x.desc||'')+(f.x.medida?(' '+f.x.medida):''); }, fq=String(nota.f).replace(/'/g,'');
+  var h=K.difs.slice(0, 4).map(function(f){
+    return iasLinea('ias-am nvp', '🧾 La nota de venta dice <b>'+iasBs(f.np)+'</b> por '+esc(nom(f))+(f.cp>0 ? (' y cargaste <b>'+iasNum(f.cp)+'</b>.') : ' y no le pusiste precio.'),
+      form ? iasBtn('Poner '+iasBs(f.np)+' como en la nota', 'nvpPoner('+f.ix+','+f.np+')', true) : '');
+  }).join('');
+  if(K.todo && Math.abs(K.totN-K.totC)>=0.005) h+=iasLinea('ias-gris nvp', 'Total de la nota: <b>'+iasBs(K.totN)+'</b> · cargado: <b>'+iasBs(K.totC)+'</b>.');
+  h+=iasLinea('ias-gris nvp', (form ? '' : 'Se corrige en <b>✏️ Corregir precios y montos</b>. ')+'<small>Lo leyó Claude de la foto: si la nota está bien cargada, tocá «Está bien así».</small>', iasBtn('Está bien así', 'nvpOk(\''+fq+'\')'));
+  return h;
+}
+function nvpFormHtml(){
+  if(!nvpVa() || VENTA_TIENDA) return '';
+  var f=compsArr(FORM_COMPS).concat(compsArr(FORM_COMPS2)).filter(function(x){ return IAS.mias[x]; });
+  return f.length ? nvpHtml(f, getProductos(), true) : '';
+}
+function nvpContaHtml(p, x){ return (p && x && x.comps) ? nvpHtml(x.comps.filter(function(f){ return IAS.mias[f]; }), p.productos||[], false) : ''; }
+/* «Poner como en la nota»: el precio de ESE renglón del formulario, como lo escribiría la persona. */
+function nvpPoner(ix, precio){
+  var c=obsIaCards()[ix], e=c && c.querySelector('.prod-precio'); precio=r2(precio); if(!e || !(precio>0)) return;
+  e.value=String(precio); e.classList.remove('err');
+  try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+  try{ pintarTotalProds(); }catch(x){}
+  toast('✓ '+String((c.querySelector('.prod-desc')||{}).value||'El producto')+': '+iasBs(precio)+', como en la nota.','ok');
+  iasRepintar();
+}
+function nvpOk(fid){ NVP.ok[String(fid)]=1; iasRepintar(); }
+function nvpTrasPrecios(){ if(nvpVa() && nvpNotas(compsArr(FORM_COMPS).concat(compsArr(FORM_COMPS2))).length) iasPintarForm(); }
+// 🧾 mejora 353 fin =======================================================================
 // §4ok-93 ============================================================================
 /* 🏪 (05/11, plan del jueves, 93; dueño: «Me encanta todo») LAS VENTAS DE TIENDA EN TANDA. Charcas carga en tandas semanales (42 ventas
    en 128 min en octubre): después de cada una el panel saltaba a Contabilidad y había que volver y elegir la tienda otra vez; y 20 de las 26

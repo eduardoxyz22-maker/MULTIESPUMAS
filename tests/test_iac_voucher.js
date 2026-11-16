@@ -71,7 +71,7 @@ console.log('\n── 1. La pregunta ──');
 {
   const a = cargar([], {});
   const C = a.ctx;
-  chk('⚠️ a. la pregunta pasó a la versión 3 (para releer lo de la 2) y desde la 2026-11-15-a a la 4 (el lote del voucher, mejora 331); se releen solas las de antes de la 3', C.IAC_PREGUNTA_V === 4 && C.IAC_RELEER_ANTES_DE === 3, [C.IAC_PREGUNTA_V, C.IAC_RELEER_ANTES_DE]);
+  chk('⚠️ a. la pregunta pasó a la versión 3 (para releer lo de la 2) y desde la 2026-11-15-a a la 4 (el lote del voucher, mejora 331; desde la 2026-11-16-a la 5, los renglones de la nota, mejora 353); se releen solas las de antes de la 3', C.IAC_PREGUNTA_V >= 4 && C.IAC_RELEER_ANTES_DE === 3, [C.IAC_PREGUNTA_V, C.IAC_RELEER_ANTES_DE]);
   chk('⚠️ b. nombra el voucher de POS / tarjeta como comprobante, también pegado a la nota de venta',
     /VOUCHER DE TARJETA/.test(C.IAC_PIDE) && /POS/.test(C.IAC_PIDE) && /pegado/.test(C.IAC_PIDE) && /es_comprobante=true, tipo=tarjeta/.test(C.IAC_PIDE));
   chk('c. la nota de venta con el voucher pegado: es_comprobante=true (lo dice la pregunta)', /salvo que tenga el voucher de la tarjeta/.test(C.IAC_PIDE));

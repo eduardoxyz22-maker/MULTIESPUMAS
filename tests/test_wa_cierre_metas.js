@@ -426,14 +426,14 @@ const txt = (body) => ({ type: 'text', text: { body } });
 
   seccion('8. 331 · el voucher de la tarjeta: lote, autorización y banco del POS', () => {
     const S = servidor(ON), C = S.ctx;
-    chk('8a la pregunta va por la versión 4 y el esquema pide (obligatorio) el lote, la autorización y el banco del POS',
-        C.IAC_PREGUNTA_V === 4 && ['tarjeta_lote', 'tarjeta_autorizacion', 'pos_banco'].every(k => C.IAC_ESQUEMA.properties[k] && C.IAC_ESQUEMA.properties[k].type === 'string' && C.IAC_ESQUEMA.required.indexOf(k) >= 0));
+    chk('8a la pregunta va por la versión 4 o más (la 5 desde la 2026-11-16-a, mejora 353) y el esquema pide (obligatorio) el lote, la autorización y el banco del POS',
+        C.IAC_PREGUNTA_V >= 4 && ['tarjeta_lote', 'tarjeta_autorizacion', 'pos_banco'].every(k => C.IAC_ESQUEMA.properties[k] && C.IAC_ESQUEMA.properties[k].type === 'string' && C.IAC_ESQUEMA.required.indexOf(k) >= 0));
     chk('8b la pregunta explica el lote y que el banco del POS NO es el de la tarjeta del cliente', /tarjeta_lote: .*LOTE/.test(C.IAC_PIDE) && /pos_banco: .*NO el de la tarjeta del cliente/.test(C.IAC_PIDE));
     const base = { es_comprobante: true, legible: true, monto: 6330, moneda: 'BOB', fecha: '2026-11-14', hora: '15:05', banco_origen: '', banco_destino: '', destinatario: '', ordenante: '',
       referencia: '', tipo: 'tarjeta', nota: '', es_nota_venta: false, nota_total: 0, nota_efectivo: 0, nota_qr: 0, nota_tarjeta: 0, nota_transferencia: 0,
       tarjeta_ultimos4: '1234', tarjeta_lote: ' 000112 ', tarjeta_autorizacion: '845 210', pos_banco: 'BISA' };
     const v = C.iacNormal_(base, 'm');
-    chk('8c un voucher: el lote, la autorización (sin espacios; y como referencia si no había) y el banco del POS', v.lo === '000112' && v.au === '845210' && v.ref === '845210' && v.pb === 'BISA' && v.u4 === '1234' && v.pv === 4, JSON.stringify(v));
+    chk('8c un voucher: el lote, la autorización (sin espacios; y como referencia si no había) y el banco del POS', v.lo === '000112' && v.au === '845210' && v.ref === '845210' && v.pb === 'BISA' && v.u4 === '1234' && v.pv === C.IAC_PREGUNTA_V, JSON.stringify(v));
     const q = C.iacNormal_(Object.assign({}, base, { tipo: 'qr', tarjeta_ultimos4: '' }), 'm');
     chk('8d un QR: nada de lote ni POS (sería ruido)', !q.lo && !q.au && !q.pb, JSON.stringify(q));
     const r = C.iacNormal_(Object.assign({}, base, { referencia: '777' }), 'm');
