@@ -86,35 +86,35 @@ const RES = {
   await ev(() => { UNLOCKED = true; renderAtc(); });
   chk('d. con la contraseña aparece, antes de leer: cuántas ATC y el botón para leerlas', await visible());
   let r = await ev(() => document.getElementById('atc-ia').innerText);
-  chk('e. dice las 4 ATC de septiembre a noviembre y «🧠 Leer las 4 ATC»', /4\s*ATC que entraron entre septiembre a noviembre 2026/.test(r) && /Leer las 4 ATC/.test(r), r);
+  chk('e. (16/11, el dueño: «por mes») dice las 2 ATC de noviembre (el mes de la pestaña) y «🧠 Leer las 2 ATC»', /2\s*ATC que entraron en noviembre 2026/.test(r) && /Leer las 2 ATC/.test(r), r);
   chk('f. no le preguntó nada a Claude todavía (la lectura sola la frenamos con ATC_IA.auto)', (await ev(() => __S.posts.length)) === 0);
 
   console.log('\n── 2. Lo que va a Claude ──');
   r = await ev(() => { var L = atcIaLista(); return { L: L, txt: JSON.stringify(L) }; });
   const L = r.L || [];
-  chk('a. las 4 de septiembre a noviembre, la más nueva primero (ni la de agosto ni la venta común)', L.map(x => x.a).join() === 'ATC 11-002,ATC 11-001,ATC 10-001,ATC 09-001', L.map(x => x.a));
+  chk('a. las 2 de noviembre, la más nueva primero (ni las de otros meses ni la venta común)', L.map(x => x.a).join() === 'ATC 11-002,ATC 11-001', L.map(x => x.a));
   chk('b. SIN cliente ni celular: solo a, p, m, mot, det, meses, tipo', L.every(x => Object.keys(x).sort().join() === 'a,det,m,meses,mot,p,tipo') && !/PRUEBA|INVENTADA|FALSO|FICTICIA|70011/.test(r.txt), r.txt.slice(0, 300));
   const a2 = L.filter(x => x.a === 'ATC 11-002')[0] || {};
   chk('c. el detalle sin el nombre del cliente ni el número que escribió la vendedora', !/Ana\b/.test(a2.det) && !/76543210/.test(a2.det) && /más duro que el de la tienda/.test(a2.det), a2.det);
   chk('d. producto, medida, motivo, meses desde la compra y el tipo', a2.p === 'ORO ANATOMICO VISCOLASTICO' && a2.m === '200x200' && a2.mot === 'Otro' && a2.meses === 0 && a2.tipo === 'gar' &&
-    (L.filter(x => x.a === 'ATC 11-001')[0] || {}).meses === 25 && (L.filter(x => x.a === 'ATC 09-001')[0] || {}).meses === null, L);
+    (L.filter(x => x.a === 'ATC 11-001')[0] || {}).meses === 25, L);
 
   console.log('\n── 3. Una vez por mes, sola ──');
   await ev(() => { ATC_IA.auto = ''; renderAtc(); });
   await espera(600);
   r = await ev(() => ({ posts: __S.posts.filter(b => b.action === 'iaAtc'), listas: __S.listas, g: __S.guardados.map(x => x.id), fila: __S.fila }));
   const p0 = (r.posts || [])[0] || {};
-  chk('a. leyó UNA vez, con la clave del mes y el período, después de releer la planilla', r.posts.length === 1 && p0.clave === '2026-11' && p0.periodo === 'septiembre a noviembre 2026' && p0.lista.length === 4 && p0.forzar === false && r.listas >= 2, { n: r.posts.length, c: p0.clave, l: r.listas });
+  chk('a. leyó UNA vez, con la clave del mes y el período, después de releer la planilla', r.posts.length === 1 && p0.clave === '2026-11' && p0.periodo === 'noviembre 2026' && p0.lista.length === 2 && p0.forzar === false && r.listas >= 2, { n: r.posts.length, c: p0.clave, l: r.listas });
   chk('b. guardó SOLO la fila del sistema `__atc_ia__` (con fecha vacía), ningún pedido', r.g.length === 1 && r.g[0] === '__atc_ia__' && r.fila && r.fila.fecha === '', r.g);
   const fo = JSON.parse((r.fila || {}).observaciones || '{}');
-  chk('c. la fila: {v:1, L:{2026-11:{t, n:4, txt, res}}}', fo.v === 1 && fo.L && fo.L['2026-11'] && fo.L['2026-11'].n === 4 && fo.L['2026-11'].txt === 'septiembre a noviembre 2026' && fo.L['2026-11'].res.grupos.length === 3, fo);
+  chk('c. la fila: {v:1, L:{2026-11:{t, n:2, txt, res}}}', fo.v === 1 && fo.L && fo.L['2026-11'] && fo.L['2026-11'].n === 2 && fo.L['2026-11'].txt === 'noviembre 2026' && fo.L['2026-11'].res.grupos.length === 3, fo);
   await ev(() => { renderAtc(); });
   await espera(300);
   chk('d. al volver a dibujar no lee otra vez', (await ev(() => __S.posts.filter(b => b.action === 'iaAtc').length)) === 1);
   r = await ev(() => document.getElementById('atc-ia').innerText);
   chk('e. se ve: las causas con su número, «era «Otro»», lo que se repite y «Para hablar con la fábrica»',
     /Hundimiento[\s\S]*2/.test(r) && /Se siente distinto al de la tienda/.test(r) && /era «Otro»/.test(r) && /2 de las 4 son 200x200/.test(r) && /Para hablar con la fábrica/.test(r) && /Firmeza del 200x200/.test(r) &&
-    /4 ATC leídas por Claude el 16\/11/.test(r) && /el motivo guardado de cada ATC no cambia/.test(r), r.slice(0, 600));
+    /2 ATC leídas por Claude el 16\/11/.test(r) && /el motivo guardado de cada ATC no cambia/.test(r), r.slice(0, 600));
   chk('f. los tres botones: Sumar al Informe PDF, Copiar para la fábrica, Volver a leer', /Sumar al Informe PDF/.test(r) && /Copiar para la fábrica/.test(r) && /Volver a leer/.test(r));
   r = await ev(() => { var b = document.querySelectorAll('#atc-ia .aia-rb')[0]; b.click(); return [].slice.call(document.querySelectorAll('#atc-ia .aia-at')).map(function (x) { return x.textContent; }); });
   chk('g. tocar «Hundimiento» muestra sus ATC (cada una abre su ficha)', r.length === 2 && /ATC 11-001 · Hundimiento/.test(r[0]) && /ATC 10-001/.test(r[1]), r);
@@ -150,6 +150,19 @@ const RES = {
   await ev(() => { __S.modo = 'red'; });
   r = await ev(() => atcIaLeer(true).then(function () { return document.getElementById('atc-ia').innerText; }));
   chk('c. sin conexión: «Sin conexión con el servidor»', /Sin conexión con el servidor/.test(r), r.slice(0, 200));
+
+  console.log('\n── 5b. Por mes (16/11, el dueño: «por mes, creo») ──');
+  await ev(() => { __S.modo = 'ok'; ATC_IA.err = ''; var m = document.getElementById('atc-mes'); m.value = '2026-10'; renderAtc(); });
+  await espera(400);
+  r = await ev(() => ({ txt: document.getElementById('atc-ia').innerText, V: atcIaVentana(), R: !!atcIaLectura(), n: atcIaLista().length, posts: __S.posts.filter(b => b.action === 'iaAtc').length }));
+  chk('a. con octubre elegido en la pestaña: la lectura es de octubre (1 ATC), no muestra la de noviembre y NO lee sola (no es el mes en curso)',
+    r.V.clave === '2026-10' && !r.R && r.n === 1 && /1\s*ATC que entraron en octubre 2026/.test(r.txt) && /Leer las 1 ATC de octubre 2026/.test(r.txt), r);
+  const pAntes = r.posts;
+  await espera(300);
+  chk('b. …y no gastó nada sola', (await ev(() => __S.posts.filter(b => b.action === 'iaAtc').length)) === pAntes);
+  r = await ev(() => { try { localStorage.setItem('me_atc_ia_pdf', '1'); } catch (e) {} var a = atciHojas(atciDatos('2026-10')).filter(h => /Lo que dicen las ATC/.test(h)).length, b = atciHojas(atciDatos('2026-11')).filter(h => /Lo que dicen las ATC/.test(h)).length; return { oct: a, nov: b }; });
+  chk('c. el Informe PDF suma la hoja del MES del informe: noviembre sí, octubre (sin lectura) no', r.nov === 1 && r.oct === 0, r);
+  await ev(() => { document.getElementById('atc-mes').value = '2026-11'; renderAtc(); });
 
   console.log('\n── 6. La fila del sistema ──');
   r = await ev(() => { var f = STATE.filter(p => p.id === '__atc_ia__')[0]; return { sis: esFilaSistema(f), atc: esATC(f.oc), conta: fueraDeConta(f, 'tienda') }; });

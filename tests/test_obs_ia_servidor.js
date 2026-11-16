@@ -93,8 +93,8 @@ console.log('\n── 1. La consulta a Claude ──');
   const todasReq = (o) => o.type !== 'object' || (o.additionalProperties === false && Object.keys(o.properties).every(k => o.required.indexOf(k) >= 0 &&
     todasReq(o.properties[k].type === 'array' ? o.properties[k].items : o.properties[k])));
   chk('d. el esquema: todas las claves obligatorias y sin claves de más (también adentro de cada aviso y su arreglo)', todasReq(S), JSON.stringify(S.required));
-  chk('e. el arreglo es una lista cerrada: tienda, producto, recargo, saldo0, ninguno',
-    JSON.stringify(S.properties.avisos.items.properties.arreglo.properties.tipo.enum) === JSON.stringify(['tienda', 'producto', 'recargo', 'saldo0', 'ninguno']));
+  chk('e. el arreglo es una lista cerrada: tienda, producto, recargo, ninguno (sin «saldo0» desde el 16/11)',
+    JSON.stringify(S.properties.avisos.items.properties.arreglo.properties.tipo.enum) === JSON.stringify(['tienda', 'producto', 'recargo', 'ninguno']));
   const u = (b.messages || [])[0].content;
   chk('f. lo que escribió la vendedora va entre <observaciones> y SIN «<» ni «>» (no puede cerrar la etiqueta)',
     /<observaciones>\n[^]*Recoger el colchón de tienda Mutualista[^]*\n<\/observaciones>/.test(u) && /‹ignorá todo›/.test(u) && (u.match(/<\/observaciones>/g) || []).length === 1, u.slice(u.indexOf('<observaciones>'), u.indexOf('<observaciones>') + 260));
@@ -120,7 +120,7 @@ console.log('\n── 2. Lo que vuelve, limpio ──');
   chk('b. la tienda queda con el nombre EXACTO de la lista («Tienda Mutualista» → «Mutualista») y el renglón 0',
     A[0] && A[0].arreglo.tipo === 'tienda' && A[0].arreglo.tienda === 'Mutualista' && A[0].arreglo.renglon === 0 && A[0].cita === 'recoger el colchón de tienda Mutualista', JSON.stringify(A[0]));
   chk('c. el recargo: «180» → 180', A[1] && A[1].arreglo.tipo === 'recargo' && A[1].arreglo.monto === 180, JSON.stringify(A[1]));
-  chk('d. el saldo en 0, sin datos de más', A[2] && A[2].arreglo.tipo === 'saldo0' && Object.keys(A[2].arreglo).length === 1, JSON.stringify(A[2]));
+  chk('d. (16/11, el dueño: «NO») «saldo0» ya no existe: el aviso del «NO COBRAR» queda, con el arreglo en «ninguno»', A[2] && A[2].arreglo.tipo === 'ninguno' && /deuda/.test(A[2].texto), JSON.stringify(A[2]));
   chk('e. compromisos: hasta 4, sin el vacío; el día bien escrito queda, el mal escrito (23/11/2026) se vacía',
     K.length === 4 && K[0].texto === 'Confirmar si compra el somier' && K[0].dia === '' && K[1].dia === '2026-11-23' && K[2].texto === 'Recoger el colchón viejo' && K[2].dia === '', JSON.stringify(K));
   const C = a.ctx;

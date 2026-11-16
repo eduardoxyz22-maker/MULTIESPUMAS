@@ -574,6 +574,12 @@ th.sortable:hover{color:var(--teal-dk)}
 .cta-pagos .fotos .foto img{width:64px;height:64px;object-fit:cover;border-radius:8px}
 .cta-c2 > div[style^="background:var(--gray-lt)"]{margin-top:10px !important;border:2px solid #00B5AD;background:#fbfffe !important}
 .cta-mas{margin-top:12px;border-top:1px dashed var(--gray-md);padding-top:9px}
+/* 🔁 pregunta 9 (16/11): la venta sin registrar en el sistema, a la vista y presionando */
+.cta-reg-pend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border-radius:12px;background:linear-gradient(90deg,#fff4dc,#fffaf0);border:1px solid #f3c96b;border-left:5px solid #e8a317;color:#6b4500}
+.cta-reg-pend .cta-reg-t{display:flex;flex-direction:column;gap:1px;flex:1 1 220px;min-width:0;font-size:.8rem;line-height:1.3}
+.cta-reg-pend .cta-reg-t b{color:#4a2f00;font-size:.86rem}
+.cta-reg-pend .cta-reg-btn{flex:none;width:auto;background:var(--green);color:#fff;font-weight:800;padding:8px 14px;box-shadow:0 2px 0 #0a6b4733}
+.cta-reg-pend .regdoc{flex:1 1 100%;margin:4px 0 0}
 .cta-mas > summary{cursor:pointer;font-size:.8rem;color:var(--muted);list-style:none;padding:4px 0}
 .cta-mas > summary::-webkit-details-marker{display:none}
 .cta-mas > summary::before{content:'▸';display:inline-block;margin-right:6px;color:var(--teal-dk);transition:transform .15s}
@@ -21693,9 +21699,20 @@ function ctaMasHtml(id, resumen, cuerpo, abierto){
 }
 /* Un dato de la ficha ancha: el MISMO renglón «etiqueta: valor» de siempre (`dl-row`), en una grilla de dos; `ancho` = toda la fila. */
 function ctaAnchaRow(k, v, ancho){ return (v!=null && v!=='') ? ('<div class="dl-row'+(ancho ? ' cta-w' : '')+'"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>') : ''; }
+/* «Cobrada hace 3 días» / «Cargada hace 5 días»: cuánto lleva sin registrar (para la franja de la pregunta 9). */
+function ctaRegDiasTxt(p){
+  try{
+    var hoy=diaNegocio(), f='', pg=contaPagos ? contaPagos(p) : [];
+    (pg||[]).forEach(function(c){ var d=String((c && (c.f||c.fecha))||''); if(/^\d{4}-\d{2}-\d{2}$/.test(d) && (!f || d>f)) f=d; });
+    var q=f ? 'Cobrada' : 'Cargada'; if(!f) f=contaFecha(p)||'';
+    if(!f) return '';
+    var n=Math.round((new Date(hoy+'T12:00:00')-new Date(f+'T12:00:00'))/864e5);
+    return n<=0 ? (q+' hoy') : (q+' hace '+n+(n===1 ? ' día' : ' días'));
+  }catch(e){ return ''; }
+}
 function ctaAnchaHtml(p, o){
   var rw=ctaAnchaRow, reg=regEnSistema(p);
-  var izq='<div class="cta-t">🛏️ Qué compró</div><div class="cta-prods">'+contaProdHtml(p.productos)+'</div>'+
+  var izq='@@REG@@<div class="cta-t">🛏️ Qué compró</div><div class="cta-prods">'+contaProdHtml(p.productos)+'</div>'+
     ((esATC(p.oc) || esRPT(p.oc)) ? '' : ('<div class="cta-t">🧾 Factura o remisión</div>'+ctaDocHtml(p)))+
     ((ventaMesPuede(p) || ventaMesMarca(p)) ? ('<div class="cta-t">📅 Mes de la venta</div>'+ctaVentaMesHtml(p)) : '')+
     '<div class="cta-t">📋 Datos</div><div class="cta-dl cta-dl2">'+
@@ -21711,9 +21728,20 @@ function ctaAnchaHtml(p, o){
       rw('Observaciones', esc(p.observaciones), true)+
       rw('🚚 Recargo por entrega', envioResumenHtml(p, true), true)+
     '</div>';
+  /* 🔁 (16/11, el dueño, pregunta 9: «debe más bien presionar que lo hagan») «Pago registrado en sistema» NO va escondido en «Más»: si la
+     venta todavía no está registrada, arriba de «Qué compró» sale una franja ámbar «⚠️ Todavía NO está registrada en el sistema contable» con el
+     botón grande «✅ Ya la registré en el sistema» (el MISMO `ctaToggleRegistrado`) y, si pide el N° de factura o remisión (379), su cajita
+     ahí mismo. «↺ Quitar de registrado» sigue en «Más». */
+  var regPide=false; try{ regPide=!reg && !esATC(p.oc) && !esRPT(p.oc) && porCargarSistema(p); }catch(e){ regPide=false; }   // las ventas que carga cada tienda (383), no
+  var regBox=(regPide && CTA_REG_DOC && CTA_REG_DOC.id===String(p.id)) ? ctaRegDocHtml(p) : '';
+  var acc=regBox ? o.acciones.split(regBox).join('') : o.acciones;
+  var regH=regPide ? ('<div class="cta-reg-pend" id="cta-reg-pend"><div class="cta-reg-t"><b>⚠️ Todavía NO está registrada en el sistema contable</b>'+
+      '<span>'+(ctaRegDiasTxt(p)||'Cargala en el sistema y marcala acá')+': mientras no la marques, sigue en «📥 Por cargar».</span></div>'+
+      (regBox || ('<button type="button" class="btn btn-sm cta-reg-btn" onclick="ctaToggleRegistrado(\''+esc(String(p.id))+'\')">✅ Ya la registré en el sistema</button>'))+'</div>') : '';
   var der='<div class="cta-t">💵 Pagos</div><div class="cta-pagos">'+contaPagosHtml(p)+'</div>'+o.formPago;
-  var mas=ctaMasHtml(p.id, '<b>Más:</b> ✏️ corregir precios y montos · '+(reg ? '↺ quitar de registrado' : '✅ pago registrado en sistema')+' · 📲 reenviar · 🗑 eliminar',
-    ctaEditHtml(p)+o.acciones, !!(CTA_MONTOS_V && CTA_MONTOS_V.id===String(p.id)));
+  izq=izq.replace('@@REG@@', regH);   // arriba de la columna de la izquierda: «Registrar pago» (derecha) sigue a la vista en 1366 × 768
+  var mas=ctaMasHtml(p.id, '<b>Más:</b> ✏️ corregir precios y montos · '+(reg ? '↺ quitar de registrado · ' : '')+'📲 reenviar · 🗑 eliminar',
+    ctaEditHtml(p)+acc, !!(CTA_MONTOS_V && CTA_MONTOS_V.id===String(p.id)));
   return o.cab+'<div class="modal-b cta-anc">'+o.arriba+ctaK3Html(p, o.falta)+
     '<div class="cta-g"><section class="cta-c1">'+izq+'</section><section class="cta-c2">'+der+'</section></div>'+mas+'</div>';
 }
@@ -23448,7 +23476,8 @@ function obsRevIr(x){
      en «🤖 Leyendo las observaciones…». Si contesta a tiempo, sus avisos (hasta 3, sin repetir lo que ya dijo la regla) van en la MISMA
      ventana ámbar «⚠️ Antes de guardar, revisá», cada uno con su arreglo de un toque: «🏬 Marcar Tienda X» (la marca de siempre: «📥
      recoger» con `chkDe` = «Tienda X», §4kr), «➕ Agregar 2 BOLSA…» (un renglón, `addProdRow`), «🚚 Anotar recargo Bs 180» (el campo del
-     recargo, pactado) y «💵 Dejar el saldo en 0». Los arreglos tocan el FORMULARIO como lo haría la persona; «💾 Guardar con los
+     recargo, pactado). (🔁 16/11, el dueño: «NO» a «💵 Dejar el saldo en 0»: bajaba el total como un descuento; el «NO COBRAR» queda como
+     aviso sin botón y la vendedora lo aclara.) Los arreglos tocan el FORMULARIO como lo haría la persona; «💾 Guardar con los
      arreglos» vuelve a pasar por `submitPedido` entero (todas las reglas de siempre) sin volver a preguntar (`OBS_IA.pasar`). «Corregir»
      no guarda; «Guardar igual», como siempre. Nunca frena.
    · Si Claude tarda más, el pedido se guarda como hoy y, cuando contesta, lo que dijo queda ADENTRO del pedido (`oia` en los productos:
@@ -23457,8 +23486,8 @@ function obsRevIr(x){
    · 📌 Los COMPROMISOS (349) salen de la misma lectura y van adentro de los productos (`cmp`: [{id, t, d, c, a, e, q, f}], como `fH`/`eH`;
      `heredarMarcas` los pasa): «📋 Para hacer» de esa vendedora («📌 Lo que prometiste», con «✓ Hecho» / «Ya no va») y, mientras estén
      abiertos, arriba de la ficha de logística en amarillo (`fichaAvisos`). Nada se cambia solo.
-   · Solo pedidos con observaciones: OC y RPT (ni ATC, ni venta de tienda, ni cotización, ni lo ya entregado). Editando, solo si la nota
-     cambió. Con el servidor de antes, sin conexión o con Claude apagado (o el tope del día: 15 min sin pedir), todo sigue como hoy.
+   · Solo pedidos con observaciones: OC y RPT (ni ATC, ni venta de tienda, ni cotización, ni lo ya entregado). Editando, solo si cambió la
+     nota, los productos o la plata (`obsIaFirma`; 16/11, el dueño: «OK»; antes, solo la nota). Con el servidor de antes, sin conexión o con Claude apagado (o el tope del día: 15 min sin pedir), todo sigue como hoy.
    · En Playwright apagado salvo `window.OBS_IA_PRUEBA`.
    ========================================================================== */
 var OBS_IA_SERVIDOR='2026-11-16-a', OBS_IA_ESPERA_MS=4000, OBS_IA_TOPE_MS=45000, OBS_IA_PASAR_MS=120000, OBS_IA_PAUSA_MS=15*60000;
@@ -23494,8 +23523,16 @@ function obsIaVa(rec, prev, tipo){
   if(OBS_IA.parado && Date.now()-OBS_IA.parado<OBS_IA_PAUSA_MS) return false;   // tope del día, apagado o sin clave: un rato sin pedir
   if(VENTA_TIENDA || tipo==='ATC' || tipo==='COT' || esATC(rec.oc) || esVentaTienda(rec) || rec.entregado || esFilaSistema(rec)) return false;
   var obs=String(rec.observaciones||'').trim(); if(!obs) return false;
-  if(prev && String(prev.observaciones||'').trim()===obs) return false;   // editando: solo si la nota cambió (la de antes ya se leyó)
+  if(prev && obsIaFirma(prev)===obsIaFirma(rec)) return false;   // editando: solo si cambió la nota, los productos o la plata (lo de antes ya se leyó)
   return true;
+}
+/* 🔁 (16/11, el dueño: «OK») Lo que Claude mira para volver a leer al editar: la nota, los PRODUCTOS (qué, medida, código, cuántos, precio) y
+   la PLATA (a cuenta, saldo, pagado, recargo). Antes, solo la nota. */
+function obsIaFirma(p){
+  if(!p) return '';
+  var pr=(p.productos||[]).map(function(x){ return [String(x.desc||'').trim().toUpperCase(), String(x.medida||'').trim(), String(x.codigo||'').trim().toUpperCase(), Number(x.cant)||0, r2(Number(x.precio)||0)].join('~'); }).sort();
+  var env=0; try{ env=envioTotal(p); }catch(e){}
+  return JSON.stringify([String(p.observaciones||'').trim(), pr, r2(Number(p.acuenta)||0), r2(Number(p.saldo)||0), !!p.pagado, r2(Number(env)||0)]);
 }
 /* De dónde sale cada renglón, en palabras (lo que Claude compara con «recoger de la tienda…»). */
 function obsIaLugar(x){
@@ -23550,7 +23587,7 @@ function obsIaFiltrar(R, rec, L){
       else if(x.chk) sale.arreglo={ tipo:'ninguno' };   // logística ya le puso otra marca: se avisa, no se pisa
     }
     else if(r.tipo==='recargo'){ var ya=0; try{ ya=envioTotal(rec); }catch(e){} if(esRPT(rec.oc) || ya>=Number(r.monto)-0.005) return; }
-    else if(r.tipo==='saldo0'){ if(esRPT(rec.oc) || rec.pagado || !((Number(rec.saldo)||0)>0.005)) return; }
+    else if(r.tipo==='saldo0'){ if(esRPT(rec.oc) || rec.pagado || !((Number(rec.saldo)||0)>0.005)) return; sale.arreglo={ tipo:'ninguno' }; }   // 🔁 (16/11, el dueño: «NO») el aviso queda, el botón no: bajar el saldo a 0 bajaba el total como un descuento
     av.push(sale);
   });
   var tiene={}; cmpDe(rec).forEach(function(c){ tiene[obsIaNormTxt(c.t)]=1; });
@@ -32877,7 +32914,7 @@ function iagCuandoTxt(t){ return t ? fmtFechaCorta(isoDeTsBolivia(t)) : ''; }
    🧠 359 · LO QUE DICEN LAS ATC: LA CAUSA DE FONDO, PARA HABLAR CON LA FÁBRICA. Del 01/09 al 14/11 entraron 42 ATC: 10 «Otro» (24 %) que
    nadie leía junto (4 «se siente distinto al de la tienda», 3 de tela o costura, olor y humedad…). Pestaña ATC, solo gerencia
    (`atcVeInforme`) → «🧠 Lo que dicen las ATC» (`#atc-ia`): una vez por mes (la primera vez que gerencia abre la pestaña ese mes) o con
-   «🔄 Volver a leer», Claude lee las ATC que ENTRARON en los últimos ATC_IA_MESES meses —producto, medida, motivo elegido, lo que escribió
+   «🔄 Volver a leer», Claude lee las ATC que ENTRARON en el MES elegido (16/11: «por mes»; antes, los últimos 3) —producto, medida, motivo elegido, lo que escribió
    la vendedora (sin el nombre ni números del cliente: `atcIaDet`), meses desde la compra y si es garantía o STC— y devuelve las causas de
    fondo, las que eran «Otro» y son otra cosa, lo que se repite y 3 cosas para hablar con la fábrica, cada una con sus casos.
    · Barras por causa (tocar = las ATC de esa causa, cada una abre su ficha), «📄 Sumar al Informe PDF» (una hoja más en el informe:
@@ -32885,15 +32922,23 @@ function iagCuandoTxt(t){ return t ? fmtFechaCorta(isoDeTsBolivia(t)) : ''; }
    · Queda en la fila del sistema `__atc_ia__` ({v:1, L:{'AAAA-MM':{t, por, desde, hasta, txt, n, res}}}, las últimas ATC_IA_GUARDA).
    · El motivo guardado de cada ATC NO cambia. En Playwright apagado salvo `window.ATC_IA_PRUEBA`. `tests/test_atc_ia.js`.
    --------------------------------------------------------------------------- */
-var ATC_IA_MESES=3, ATC_IA_MAX=120, ATC_IA_DET=300, ATC_IA_GUARDA=4, ATC_IA_TOPE_LETRAS=40000, ATC_IA_LS_PDF='me_atc_ia_pdf';
+/* 🔁 (16/11, el dueño, pregunta 12: «por mes») La lectura es de UN MES: el que está elegido en la pestaña ATC («Ver por: Mes»), o este mes.
+   Sola, solo la del mes en curso (una vez); la de un mes anterior, con «🧠 Leer las N ATC de <mes>». Cada mes queda guardado aparte (`L[ym]`)
+   y el Informe PDF suma la hoja del MES del informe (con «Todas» no va). */
+var ATC_IA_MESES=1, ATC_IA_MAX=120, ATC_IA_DET=300, ATC_IA_GUARDA=4, ATC_IA_TOPE_LETRAS=40000, ATC_IA_LS_PDF='me_atc_ia_pdf';
 var ATC_IA={ corre:false, err:'', abierta:'', auto:'' };
 function atcIaActivo(){ try{ return !(navigator.webdriver && !window.ATC_IA_PRUEBA); }catch(e){ return true; } }
 function atcIaVe(){ return atcIaActivo() && atcVeInforme() && iagServidor(); }
-/* Este mes y los ATC_IA_MESES-1 de antes, por el mes en que ENTRÓ cada ATC. */
-function atcIaVentana(hoy){
-  var ym=String(hoy||todayStr()).slice(0,7), desde=atciMesMas(ym, -(ATC_IA_MESES-1));
-  var a=MESES_ES[+desde.slice(5,7)-1], b=MESES_ES[+ym.slice(5,7)-1];
-  return { clave:ym, desde:desde, hasta:ym, txt:(a===b ? b : a+' a '+b)+' '+ym.slice(0,4) };
+/* El mes de la lectura: el de la pestaña ATC (si está en «Mes»), si no este mes. */
+function atcIaMesSel(){
+  try{ if(segVal('atc-mode')==='mes'){ var m=String((document.getElementById('atc-mes')||{}).value||''); if(/^\d{4}-\d{2}$/.test(m)) return m; } }catch(e){}
+  return String(todayStr()).slice(0,7);
+}
+/* UN mes (`ym`, o el elegido), por el mes en que ENTRÓ cada ATC. */
+function atcIaVentana(ym){
+  ym=/^\d{4}-\d{2}/.test(String(ym||'')) ? String(ym).slice(0,7) : atcIaMesSel();
+  var desde=atciMesMas(ym, -(ATC_IA_MESES-1)), a=MESES_ES[+desde.slice(5,7)-1], b=MESES_ES[+ym.slice(5,7)-1];
+  return { clave:ym, desde:desde, hasta:ym, txt:(a===b ? b : a+' a '+b)+' '+ym.slice(0,4), actual:ym===String(todayStr()).slice(0,7) };
 }
 /* Lo que escribió la vendedora, sin el nombre del cliente ni números de teléfono o CI (a veces los anota ahí). */
 function atcIaDet(p){
@@ -32917,11 +32962,10 @@ function atcIaLista(V){
     }).filter(function(x){ return x.a; });
 }
 function atcIaFila(){ return iagFilaObj(iagFilaDe(ATC_IA_ID)); }
-/* La lectura de este mes; si no hay, la más nueva (que dice de cuándo es). */
-function atcIaLectura(){
-  var L=atcIaFila().L||{}, V=atcIaVentana();
-  if(L[V.clave]) return L[V.clave];
-  var ks=Object.keys(L).sort(); return ks.length ? L[ks[ks.length-1]] : null;
+/* La lectura de ESE mes (`ym`, o el elegido en la pestaña); si no hay, ninguna (por mes, 16/11). */
+function atcIaLectura(ym){
+  var L=atcIaFila().L||{}, V=atcIaVentana(ym);
+  return L[V.clave]||null;
 }
 function atcIaMapaOc(){ var M={}; (STATE||[]).forEach(function(p){ if(p && esATC(p.oc)) M[String(p.oc).trim()]=p; }); return M; }
 /* Cuántas de las ATC de una causa tienen guardado «Otro» o ningún motivo. */
@@ -32929,7 +32973,7 @@ function atcIaEranOtro(g, M){ var n=0; (g.atc||[]).forEach(function(a){ var p=M[
 function atcIaLeer(forzar){
   if(ATC_IA.corre || !atcIaVe()) return Promise.resolve(null);
   var V=atcIaVentana(), lista=atcIaLista(V);
-  if(!lista.length){ ATC_IA.err='No entró ninguna ATC entre '+V.txt+'.'; atcIaPintar(); return Promise.resolve(null); }
+  if(!lista.length){ ATC_IA.err='No entró ninguna ATC en '+V.txt+'.'; atcIaPintar(); return Promise.resolve(null); }
   ATC_IA.corre=true; ATC_IA.err=''; atcIaPintar();
   var fin=function(x){ ATC_IA.corre=false; atcIaPintar(); return x; };
   /* Primero se relee: si otro aparato ya la leyó este mes, no se paga de nuevo. */
@@ -32958,16 +33002,16 @@ function atcIaPintar(){
   box.hidden=false;
   var V=atcIaVentana(), L=atcIaFila().L||{}, R=atcIaLectura(), n=atcIaLista(V).length;
   /* una vez por mes, solo: la primera vez que gerencia abre la pestaña con la planilla leída */
-  if(!L[V.clave] && !ATC_IA.corre && !ATC_IA.err && ATC_IA.auto!==V.clave && CONNECTED && n){ ATC_IA.auto=V.clave; setTimeout(function(){ atcIaLeer(false); }, 60); }
+  if(V.actual && !L[V.clave] && !ATC_IA.corre && !ATC_IA.err && ATC_IA.auto!==V.clave && CONNECTED && n){ ATC_IA.auto=V.clave; setTimeout(function(){ atcIaLeer(false); }, 60); }
   box.innerHTML=atcIaHtml(R, V, n);
 }
 function atcIaHtml(R, V, n){
   var h='<div class="aia-c"><div class="aia-t">🧠 Lo que dicen las ATC'+(R ? (' · '+esc(R.txt||'')) : '')+'</div>';
   if(ATC_IA.corre) return h+'<div class="aia-st" role="status">⏳ Claude está leyendo '+n+' ATC (el motivo y lo que escribió la vendedora)…</div></div>';
   if(!R){
-    return h+'<div class="aia-st">Claude lee el motivo y el detalle de las <b>'+n+'</b> ATC que entraron entre '+esc(V.txt)+' (sin nombres ni celulares de clientes), junta las causas de fondo y propone qué revisar con la fábrica. Una vez por mes.</div>'+
+    return h+'<div class="aia-st">Claude lee el motivo y el detalle de las <b>'+n+'</b> ATC que entraron en '+esc(V.txt)+' (sin nombres ni celulares de clientes), junta las causas de fondo y propone qué revisar con la fábrica. Una vez por mes; para otro mes, elegilo arriba en «Mes».</div>'+
       (ATC_IA.err ? '<div class="aia-err" role="alert">⚠️ '+esc(ATC_IA.err)+'</div>' : '')+
-      (n ? '<div class="aia-k"><button type="button" class="btn btn-sm aia-y" onclick="atcIaLeer(true)">🧠 Leer las '+n+' ATC</button></div>' : '')+'</div>';
+      (n ? '<div class="aia-k"><button type="button" class="btn btn-sm aia-y" onclick="atcIaLeer(true)">🧠 Leer las '+n+' ATC'+(V.actual ? '' : (' de '+esc(V.txt)))+'</button></div>' : '')+'</div>';
   }
   var res=R.res||{}, G=res.grupos||[], max=1, M=atcIaMapaOc();
   G.forEach(function(g){ if((g.atc||[]).length>max) max=g.atc.length; });
@@ -33010,14 +33054,19 @@ function atciIaEn(){ try{ return localStorage.getItem(ATC_IA_LS_PDF)==='1'; }cat
 function atciIaCambiar(si){ try{ localStorage.setItem(ATC_IA_LS_PDF, si ? '1' : '0'); }catch(e){} try{ atciPintar(); }catch(e){} }
 function atcIaAlInforme(){ try{ localStorage.setItem(ATC_IA_LS_PDF, '1'); }catch(e){} abrirInformeAtc(); }
 /* La casilla de la barra del informe: solo si hay una lectura. */
+function atciIaMes(){
+  if(((document.getElementById('atci-alc')||{}).value||'mes')==='todas') return '';
+  return String((document.getElementById('atci-mes')||{}).value||'').slice(0,7) || String(todayStr()).slice(0,7);
+}
 function atciIaBarra(){
   var w=document.getElementById('atci-ia-w'), c=document.getElementById('atci-ia'); if(!w) return;
-  var hay=atcIaActivo() && !!atcIaLectura(); w.hidden=!hay; if(c) c.checked=hay && atciIaEn();
+  var ym=atciIaMes(), hay=atcIaActivo() && !!ym && !!atcIaLectura(ym); w.hidden=!hay; if(c) c.checked=hay && atciIaEn();
 }
 /* La hoja del informe (A4 apaisada, las piezas `ai-*` de siempre). '' si no se tildó o no hay lectura. */
-function atciIaHoja(){
+function atciIaHoja(D){
   if(!atcIaActivo() || !atciIaEn()) return '';
-  var R=atcIaLectura(), res=(R && R.res)||{}, G=res.grupos||[]; if(!G.length) return '';
+  var ym=(D && D.mes && !D.todas) ? String(D.mes).slice(0,7) : (D && D.todas ? '' : atciIaMes()); if(!ym) return '';
+  var R=atcIaLectura(ym), res=(R && R.res)||{}, G=res.grupos||[]; if(!G.length) return '';
   var M=atcIaMapaOc(), max=1; G.forEach(function(g){ if(g.atc.length>max) max=g.atc.length; });
   var filas=G.slice(0, 10).map(function(g){
     var otro=atcIaEranOtro(g, M), no=/no era una atc/i.test(g.causa||'');

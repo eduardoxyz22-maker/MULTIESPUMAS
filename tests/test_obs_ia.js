@@ -4,7 +4,7 @@
       sin tocar la nota → no le pregunta nada a Claude y guarda como siempre.
    2. Al guardar, UNA consulta con el pedido entero (renglones, de dónde sale cada uno, plata, las tiendas y lo que ya dijo la regla).
    3. Con avisos: la ventana «⚠️ Antes de guardar, revisá» con cada aviso y su arreglo de un toque; los arreglos tocan el FORMULARIO
-      («🏬 Marcar Tienda X» → la marca en el renglón; «🚚 Anotar recargo» → el campo del recargo; «💵 Dejar el saldo en 0»; «➕ Agregar…»
+      («🏬 Marcar Tienda X» → la marca en el renglón; «🚚 Anotar recargo» → el campo del recargo; «➕ Agregar…» (16/11: «💵 Dejar el saldo en 0» se sacó, el dueño dijo «NO»)
       → un renglón); «💾 Guardar con los arreglos» guarda UNA vez sin volver a preguntar y el pedido queda marcado; «Corregir» no guarda;
       «Guardar igual» guarda tal cual. No repite lo que ya dijo la regla.
    4. Los compromisos van adentro de los productos (`cmp`), salen en «📋 Para hacer» («📌 Lo que prometiste») con «✓ Hecho» / «Ya no va»,
@@ -171,11 +171,11 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     { cita: 'NO COBRAR – autorizada por gerencia', texto: 'Quedó con saldo: en Contabilidad va a figurar como deuda.', arreglo: { tipo: 'saldo0' } } ], compromisos: [] }; });
   await llenar({ obs: 'Son 2 almohadas. NO COBRAR – autorizada por gerencia.' });
   r = await guardar();
-  chk('a. lo de la regla («2 almohadas») va en su lista y Claude NO lo repite; su aviso de la plata, sí', r.modal && r.regla.length === 1 && /2 almohadas/.test(r.regla[0]) && r.ia.length === 1 && /deuda/.test(r.ia[0]) && r.botones[0] === '💵 Dejar el saldo en 0', r);
-  const s0 = await ev(async () => { document.querySelector('#oia-lista .oia-arr').click(); await new Promise(r => setTimeout(r, 50));
+  chk('a. lo de la regla («2 almohadas») va en su lista y Claude NO lo repite; su aviso de la plata, sí, y (16/11, el dueño: «NO») SIN el botón «Dejar el saldo en 0»', r.modal && r.regla.length === 1 && /2 almohadas/.test(r.regla[0]) && r.ia.length === 1 && /deuda/.test(r.ia[0]) && !r.botones.some(b => /saldo en 0/.test(b)), r);
+  const s0 = await ev(async () => { var hay = !!document.querySelector('#oia-lista .oia-arr');
     var n0 = __S.saves.length; document.getElementById('obsrev-igual').click(); await new Promise(r => setTimeout(r, 900));
-    var u = __S.saves[__S.saves.length - 1]; return { guardo: __S.saves.length - n0, saldo: u && u.saldo, pagado: u && u.pagado }; });
-  chk('b. «💵 Dejar el saldo en 0» y guardar: la venta queda sin saldo', s0.guardo === 1 && s0.saldo === 0, s0);
+    var u = __S.saves[__S.saves.length - 1]; return { hay: hay, guardo: __S.saves.length - n0, saldo: u && u.saldo, pagado: u && u.pagado }; });
+  chk('b. «Guardar igual»: la venta queda con su saldo (el total no baja como un descuento)', !s0.hay && s0.guardo === 1 && s0.saldo > 0, s0);
   await ev(() => { window.OBS_REV_PRUEBA = 0; });
   await ev(() => { __S.resp = { ok: true, avisos: [{ cita: 'x', texto: 'Algo sin arreglo.', arreglo: { tipo: 'ninguno' } }], compromisos: [{ texto: 'Pasar por su última pieza', dia: '2026-11-23', cita: 'pasar el lunes' }] }; });
   await llenar({ obs: 'Pasar el lunes por su última pieza. x' });
@@ -220,7 +220,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     return { guardo: __S.saves.length - n0, v: u && u.productos[0].oia && u.productos[0].oia.v, quedan: misHacerDatos(v, mine).filter(function (x) { return /Claude/.test(x.t); }).length }; }, id7);
   chk('f. «Ya está bien» lo cierra (se guarda) y sale de «Para hacer»', visto.guardo === 1 && visto.v === 1 && visto.quedan === 0, visto);
 
-  console.log('\n── 8. Editar: solo si la nota cambió ──');
+  console.log('\n── 8. Editar: solo si cambió la nota, los productos o la plata ──');
   await ev(() => { OBS_IA_ESPERA_MS = 4000; __S.resp = { ok: true, avisos: [], compromisos: [] }; });
   const ed = await ev(async (id) => { closeModal(); var q0 = __S.obs.length, n0 = __S.saves.length; editPedido(id); await new Promise(r => setTimeout(r, 200));
     document.getElementById('f-direccion').value = 'OTRA CALLE INVENTADA'; submitPedido(); await new Promise(r => setTimeout(r, 900));
@@ -230,6 +230,11 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     document.getElementById('f-obs').value = 'Cobrar transporte Bs 200 (ya anotado). GPS pendiente. Llamar antes.'; submitPedido(); await new Promise(r => setTimeout(r, 900));
     var u = __S.saves[__S.saves.length - 1]; return { pidio: __S.obs.length - q0, oia: u && u.productos[0].oia, cmp: u && u.productos[0].cmp }; }, id7);
   chk('b. con la nota cambiada pregunta de nuevo y lo que Claude había dicho tarde (de la nota vieja) se va; lo prometido queda', ed2.pidio === 1 && !ed2.oia && ed2.cmp && ed2.cmp.length === 1, ed2);
+  const ed3 = await ev(async (id) => { closeModal(); var q0 = __S.obs.length; editPedido(id); await new Promise(r => setTimeout(r, 200));
+    var c = document.querySelector('#f-productos .prod-card .prod-cant'); c.value = String((Number(c.value) || 1) + 1); c.dispatchEvent(new Event('input', { bubbles: true }));
+    submitPedido(); await new Promise(r => setTimeout(r, 900));
+    return { pidio: __S.obs.length - q0 }; }, id7);
+  chk('c. (16/11, el dueño: «OK») con la misma nota pero OTRA cantidad en un producto, también pregunta', ed3.pidio === 1, ed3);
 
   console.log('\n── 9. Errores: guarda como siempre ──');
   await ev(() => { __S.resp = { ok: false, error: 'ia_apagada' }; });

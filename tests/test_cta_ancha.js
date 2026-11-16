@@ -101,6 +101,13 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
     closeModal(); await _esp(30); showMisModal('a1'); await _esp(80); o.atcK=document.querySelectorAll('#modal-box .cta-k3').length; o.atcAncha=document.getElementById('modal-box').classList.contains('cta-ancha'); closeModal(); return o; });
   chk('6a. la ficha de Mis pedidos: ancha, con los tres números y sus botones de siempre', r.ancha && r.w===1100 && r.k===3 && r.bt===4, r);
   chk('6b. en una ATC (no se cobra) la ficha ancha va sin los números', r.atcAncha && r.atcK===0, r);
+  r = await page.evaluate(async () => { CTA_ULTIMA=''; showContaModal('c2'); await _esp(80); var b=document.getElementById('modal-box'), f=document.getElementById('cta-reg-pend'), rr=f ? f.getBoundingClientRect() : null;
+    var o={ hay:!!f, txt:f ? f.textContent : '', top:rr ? Math.round(rr.top) : null, ih:innerHeight, enIzq:!!(f && f.closest('.cta-c1')), mas:(document.querySelector('#cta-mas > summary')||{}).textContent||'' };
+    f.querySelector('.cta-reg-btn').click(); await _esp(250);
+    o.reg=regEnSistema(findById('c2')); o.despues=!!document.getElementById('cta-reg-pend'); closeModal(); await _esp(30);
+    showContaModal('a1'); await _esp(80); o.atc=!!document.getElementById('cta-reg-pend'); closeModal(); return o; });
+  chk('6c. (16/11, pregunta 9: «presionar que lo hagan») sin registrar: arriba de la ficha, a la vista, «⚠️ Todavía NO está registrada en el sistema contable» con «✅ Ya la registré en el sistema»; «Más» ya no lo lista', r.hay && /NO está registrada/.test(r.txt) && /Ya la registré/.test(r.txt) && r.enIzq && r.top!=null && r.top<r.ih && !/pago registrado/i.test(r.mas), r);
+  chk('6d. tocarlo la marca registrada (el mismo `ctaToggleRegistrado`) y la franja se va; en una ATC no sale', r.reg && !r.despues && !r.atc, r);
   await page._ctx.close();
 
   console.log('\n── 7. iPad parado ──');
