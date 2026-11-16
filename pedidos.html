@@ -31802,8 +31802,7 @@ function avisoQuitar(el, ya){
    la bandera hace el `confirm(texto)` de SIEMPRE, sincrónico y con el mismo texto (las pruebas contestan diálogos); con la bandera, la
    ventana nueva y sigue con `siFn`/`noFn` cuando se contesta.
    Pasadas en esta tanda (las que más salen): el saldo antes de guardar, el pedido/número repetido, borrar un pedido, borrar un pago y
-   «¿salió igual?» del camión. Las que están en el medio de `submitPedido` (ATC/precio/celular heredados, «sin monto», día cerrado,
-   pagos que se borran al guardar…) siguen con la del navegador: pasarlas exige cortar el guardado en dos y volver a empezarlo.
+   «¿salió igual?» del camión. (16/11) Las del medio de `submitPedido` y todas las demás pasaron después con `preguntaYa` (abajo).
    En Playwright, la del navegador salvo `window.PREG_PRUEBA`. */
 function pregActivo(){ try{ return !navigator.webdriver || !!window.PREG_PRUEBA; }catch(e){ return true; } }
 function pregunta(texto, o, siFn, noFn){
@@ -31838,7 +31837,10 @@ function preguntar(o){
     document.addEventListener('keydown', kd, true);
     if(bNo) bNo.addEventListener('click', function(){ fin(false); });
     bSi.addEventListener('click', function(){ fin(true); });
-    ov.addEventListener('click', function(e){ if(e.target===ov) fin(false); });
+    // (16/11) Un doble clic en el botón que abrió la pregunta (p. ej. «Guardar») dejaba el 2º clic en el fondo = «no» callado: en el primer
+    // medio segundo, tocar el fondo no contesta nada.
+    var t0=relojMs();
+    ov.addEventListener('click', function(e){ if(e.target===ov && relojMs()-t0>500) fin(false); });
     // El foco va al botón SEGURO (Enter = el seguro); con un campo, al campo; con un solo botón, a ese.
     setTimeout(function(){ try{ (inp || bNo || bSi).focus(); if(inp) inp.select(); }catch(e){} }, 0);
   });

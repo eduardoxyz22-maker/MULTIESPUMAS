@@ -82,6 +82,11 @@ function PREPARAR(){
   r = await page.evaluate(() => ({ ov:!!document.querySelector('.preg-ov'), b:window._borrados.slice() }));
   chk('2c Esc cierra sin borrar', !r.ov && r.b.length===0, r);
   await page.evaluate(() => { deletePedido('p1'); }); await page.waitForTimeout(80);
+  // (16/11) en el primer medio segundo tocar el fondo no contesta (el 2º clic de un doble clic): se prueba eso y después el toque de verdad.
+  await page.mouse.click(15, 15); await page.waitForTimeout(60);
+  r = await page.evaluate(() => ({ ov:!!document.querySelector('.preg-ov'), b:window._borrados.slice() }));
+  chk('2d0 un toque al fondo enseguida (doble clic) no contesta nada', r.ov && r.b.length===0, r);
+  await page.waitForTimeout(500);
   await page.mouse.click(15, 15); await page.waitForTimeout(80);
   r = await page.evaluate(() => ({ ov:!!document.querySelector('.preg-ov'), b:window._borrados.slice() }));
   chk('2d tocar afuera cierra sin borrar', !r.ov && r.b.length===0, r);
