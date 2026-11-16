@@ -3033,6 +3033,21 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   EV.forEach(function(ev){ document.addEventListener(ev, tocar, true); });
 })();
 </script>
+<script>
+/* 🎨 (16/11, mejoras 431, 435, 438 y 440; el dueño eligió todas las visuales 390-440 menos la 403) Lo que es SOLO CSS se prende con una marca en
+   <html>, puesta acá arriba (antes de dibujar, sin parpadeo): `v-noche-dic` (431, el fondo de noche de Navidad y Año Nuevo), `v-osc-franjas`
+   (435, la meta y los filtros sin franjas blancas en los temas oscuros), `v-barras` (438, barra, casillas y lo marcado con los colores del
+   panel) y `v-tinte` (440, la tarjeta grande con el color de su pestaña). En Playwright apagadas salvo su bandera (`NOCHE_DIC_PRUEBA`,
+   `META_OSC_PRUEBA`, `BARRAS_PRUEBA`, `TINTE_PRUEBA`, puestas antes de abrir con `addInitScript`, o después llamando a `v390Marcas()`). */
+window.v390Marcas=function(){ try{
+  var h=document.documentElement, va=function(b){ return !(navigator.webdriver && !window[b]); };
+  h.classList.toggle('v-noche-dic', va('NOCHE_DIC_PRUEBA'));
+  h.classList.toggle('v-osc-franjas', va('META_OSC_PRUEBA'));
+  h.classList.toggle('v-barras', va('BARRAS_PRUEBA'));
+  h.classList.toggle('v-tinte', va('TINTE_PRUEBA'));
+}catch(e){} };
+window.v390Marcas();
+</script>
 </head>
 <body>
 <div id="bienv" class="bienv no-print" hidden aria-hidden="true"><div class="bienv-in"><svg viewBox="0 0 300 356"><path d="M150 0 C140 60 175 100 230 140 C280 176 300 230 296 282 C280 230 240 205 190 180 C130 150 115 90 150 0 Z" fill="#f6c437"/><path d="M62 78 C70 140 120 165 180 190 C240 215 280 255 296 318 C262 275 220 262 160 252 C90 240 52 180 62 78 Z" fill="#f08a24"/><path d="M0 168 C22 230 80 248 140 256 C200 264 262 290 296 352 C250 318 200 318 140 322 C70 326 18 270 0 168 Z" fill="#e9609a"/></svg><b>MultiEspumas</b><small>PEDIDOS</small></div></div>
@@ -3225,6 +3240,105 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
        Escondida hasta entonces (`botTabPintar`). -->
   <button id="tab-bot" hidden onclick="showView('bot')"><span class="t-ic">🤖</span><span class="t-lb">Bot</span><span class="t-cr">Bot</span></button>
 </div>
+<!-- 🎨 (16/11, mejoras visuales 429-440 de «todo el panel»; el dueño eligió todas las de la página 390-440 menos la 403) El CSS y lo que se
+     dibuja de cada una: solo presentación (ninguna cuenta cambia, nada se guarda distinto, nada se mueve solo). Cada una apagada en
+     Playwright salvo su bandera. -->
+<style id="v390g-css">
+/* 429 · Al bajar, las pestañas te acompañan arriba: en el encabezado chico (`body.hdr-chico`) las MISMAS pestañas en pastillas chicas con su
+   dibujito; la del lugar donde estás con su color y ⬆. Se esconden el día y los cupos de texto (los anillos quedan) y «Buscar» queda como
+   lupa. Solo compu (≥ 701 px). Si no entran, las que no son la elegida quedan sin el nombre (`ht-c1`) y, si igual no entran, todas (`ht-c2`). */
+.hdr-tabs{ display:none; }
+@media(min-width:701px){
+  html.v-tabs-hdr body.hdr-chico .hdr-tabs{ display:flex; align-items:center; gap:6px; flex:1 1 auto; min-width:0; margin-left:2px; animation:ht-baja .32s cubic-bezier(.2,.8,.2,1) both; }
+  html.v-tabs-hdr body.hdr-chico .header-in{ flex-wrap:nowrap; }
+  html.v-tabs-hdr body.hdr-chico .header-in > :is(.htitle, .hdr-meta-mini, .hdr-cuenta){ display:none !important; }
+  html.v-tabs-hdr body.hdr-chico .header-in > .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; margin-left:0; }
+  html.v-tabs-hdr body.hdr-chico .header-in > .pal-btn :is(.pal-btn-t, .pal-kbd){ display:none; }
+}
+@keyframes ht-baja{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+.hdr-tabs .ht-b{ position:relative; display:inline-flex; align-items:center; gap:6px; flex:none; height:36px; padding:0 11px 0 5px; border-radius:999px; border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.1); color:#fff; font:700 .8rem var(--font-sans, Inter, sans-serif); white-space:nowrap; cursor:pointer;
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); transition:background .15s, transform .15s; }
+.hdr-tabs .ht-b:hover{ background:rgba(255,255,255,.22); }
+.hdr-tabs .ht-b:active{ transform:scale(.96); }
+.hdr-tabs .ht-b:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+.hdr-tabs .ht-ic{ width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.14); flex:none; font-size:.85rem; line-height:1; }
+.hdr-tabs .ht-ic .ico-b{ width:22px; height:22px; background:none; box-shadow:none; margin:0; }
+.hdr-tabs .ht-ic .ico-b svg{ width:16px; height:16px; stroke:#fff; }
+.hdr-tabs .ht-b.on{ background:linear-gradient(135deg, var(--c1), var(--c2)); border-color:transparent; box-shadow:0 6px 16px -6px var(--c2); }
+.hdr-tabs .ht-b.on .ht-ic{ background:rgba(255,255,255,.25); }
+.hdr-tabs .ht-b.on::after{ content:'⬆'; font-size:.72rem; margin-left:1px; opacity:.9; }
+.hdr-tabs .ht-n{ min-width:18px; height:18px; border-radius:9px; background:#CE2939; color:#fff; font-size:.66rem; font-weight:900; display:inline-grid; place-items:center; padding:0 4px; }
+.hdr-tabs .ht-n.nx-tb-nar{ background:#f08a24; } .hdr-tabs .ht-n.nx-tb-oro{ background:#e8a317; }
+.hdr-tabs.ht-c1 .ht-b:not(.on) .ht-lb{ display:none; } .hdr-tabs.ht-c1 .ht-b:not(.on){ padding-right:5px; }
+.hdr-tabs.ht-c2 .ht-b .ht-lb{ display:none; } .hdr-tabs.ht-c2 .ht-b{ padding-right:5px; }
+.hdr-tabs.ht-c1 .ht-b:not(.on) .ht-n, .hdr-tabs.ht-c2 .ht-n{ position:absolute; top:-6px; right:-6px; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-tabs .ht-b:not(.on){ border-color:rgba(250,204,21,.4); background:rgba(12,12,14,.45); }
+html.tema-black-friday .hdr-tabs .ht-b:not(.on) .ico-b svg{ stroke:#facc15; }
+@media(prefers-reduced-motion:reduce){ html.v-tabs-hdr body.hdr-chico .hdr-tabs{ animation:none; } }
+@media print{ .hdr-tabs{ display:none !important; } }
+</style>
+<script>
+/* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
+   mide casi 8 pantallas y Administración con «Hoy», 4: estando abajo, para cambiar de pestaña había que subir todo. Cuando el encabezado se
+   achica al bajar (`hdrScroll` → `body.hdr-chico`, §4mo) aparecen en él las MISMAS pestañas (`#hdr-tabs`, armado con los botones de `.nav`:
+   su nombre, su dibujito, su color `--c1/--c2` y su número). Tocar una = el `click` de esa pestaña (y la página arriba); tocar la del lugar
+   donde estás (con ⬆) te lleva arriba. Se rearma solo cuando cambia algo de `.nav` (la elegida, el número, la del Bot que aparece). Solo
+   compu (≥ 701 px: en el celular las pestañas ya van fijas abajo). Convive con la 378 (`html.hdr-bajo`): con el encabezado chico se esconden
+   el día, los cupos de texto y la meta chica. En Playwright apagado salvo `window.HDR_TABS_PRUEBA`. `tests/test_v429_pestanas_arriba.js`. */
+var HTAB={ el:null, firma:'', raf:0, chico:false };
+function htabVa(){ try{ return vdVa('HDR_TABS_PRUEBA'); }catch(e){ return false; } }
+function htabArmar(){
+  if(HTAB.el) return true;
+  if(!htabVa()) return false;
+  var hi=document.querySelector('.header-in'), nav=document.querySelector('.nav'); if(!hi || !nav) return false;
+  var m=document.createElement('nav'); m.id='hdr-tabs'; m.className='hdr-tabs no-print'; m.setAttribute('aria-label','Pestañas');
+  var ht=hi.querySelector('.htitle'); hi.insertBefore(m, ht ? ht.nextSibling : hi.firstChild);
+  HTAB.el=m; document.documentElement.classList.add('v-tabs-hdr');
+  try{ new MutationObserver(htabLuego).observe(nav, { subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['class','hidden'] }); }catch(e){}
+  try{ new MutationObserver(function(){ var c=document.body.classList.contains('hdr-chico'); if(c!==HTAB.chico){ HTAB.chico=c; if(c) htabLuego(); } }).observe(document.body, { attributes:true, attributeFilter:['class'] }); }catch(e){}
+  window.addEventListener('resize', htabLuego);
+  htabPintar(); return true;
+}
+function htabLuego(){ if(HTAB.raf) return; HTAB.raf=requestAnimationFrame(function(){ HTAB.raf=0; htabPintar(); }); }
+/* Lo que muestra cada pestaña, leído de `.nav` (no se cuenta nada acá). */
+function htabDatos(){
+  return [].map.call(document.querySelectorAll('.nav > button[id]'), function(b){
+    if(b.hidden) return null;
+    var cs=getComputedStyle(b), lb=(b.querySelector('.t-lb')||b).textContent.trim(), ic=b.querySelector('.t-ic'), n=b.querySelector('.nx-tb');
+    return { id:b.id, lb:lb, on:b.classList.contains('active'), c1:cs.getPropertyValue('--c1').trim()||'#2dd4bf', c2:cs.getPropertyValue('--c2').trim()||'#0f766e',
+      ic:ic ? ic.innerHTML.replace(/\s*ico-vivo/g,'') : '', n:(n && /\d/.test(n.textContent)) ? n.textContent.trim() : '', nc:n ? (String(n.className).match(/nx-tb-(nar|oro|rojo)/)||[''])[0] : '', nt:n ? (n.title||'') : '' };
+  }).filter(Boolean);
+}
+function htabPintar(){
+  var m=HTAB.el; if(!m) return;
+  var L=htabDatos(), f=JSON.stringify(L);
+  if(f!==HTAB.firma){
+    HTAB.firma=f;
+    m.innerHTML=L.map(function(t){
+      return '<button type="button" class="ht-b'+(t.on?' on':'')+'" data-tab="'+esc(t.id)+'" style="--c1:'+esc(t.c1)+';--c2:'+esc(t.c2)+'" onclick="htabTocar(\''+esc(t.id)+'\')"'+
+        (t.on ? ' aria-current="page" title="Estás en '+esc(t.lb)+': tocá para volver arriba"' : ' title="Ir a '+esc(t.lb)+'"')+'>'+
+        '<span class="ht-ic" aria-hidden="true">'+t.ic+'</span><span class="ht-lb">'+esc(t.lb)+'</span>'+
+        (t.n ? '<span class="ht-n '+esc(t.nc)+'"'+(t.nt?(' title="'+esc(t.nt)+'"'):'')+'>'+esc(t.n)+'</span>' : '')+'</button>';
+    }).join('');
+  }
+  htabAcomodar();
+}
+/* Si no entran (compu angosta, seis pestañas con el Bot): primero sin el nombre las que no son la elegida, después todas. */
+function htabAcomodar(){
+  var m=HTAB.el; if(!m || !document.body.classList.contains('hdr-chico') || getComputedStyle(m).display==='none') return;
+  m.classList.remove('ht-c1','ht-c2');
+  if(m.scrollWidth>m.clientWidth+1) m.classList.add('ht-c1');
+  if(m.scrollWidth>m.clientWidth+1){ m.classList.remove('ht-c1'); m.classList.add('ht-c2'); }
+}
+function htabTocar(id){
+  var b=document.getElementById(id); if(!b) return;
+  if(b.classList.contains('active')){ try{ window.scrollTo({ top:0, behavior:visQuieto() ? 'auto' : 'smooth' }); }catch(e){ window.scrollTo(0, 0); } return; }
+  b.click();
+  try{ window.scrollTo(0, 0); }catch(e){}   // la otra pestaña, desde su principio
+}
+document.addEventListener('DOMContentLoaded', function(){ try{ htabArmar(); }catch(e){} });
+</script>
 
 <div class="wrap">
   <!-- ⏳ Cómo viene la planilla: cargando / no se pudo (con el motivo) / nada. Se ve en todas
