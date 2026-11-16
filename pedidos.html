@@ -2920,7 +2920,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   window.practicaUrlAfuera=function(u){ return /(^|\/\/)(wa\.me|api\.whatsapp\.com|web\.whatsapp\.com|mail\.google\.com|outlook\.)|^\s*(whatsapp|mailto|tel|sms):/i.test(String(u||'')); };
   var WO=window.open;
   window.open=function(u){
-    if(window.practicaUrlAfuera(u)){ try{ if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else alert('🧪 Modo práctica: no se abre WhatsApp ni el correo.'); }catch(e){} return null; }
+    if(window.practicaUrlAfuera(u)){ try{ if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else if(typeof window.avisoVentana==='function') window.avisoVentana('🧪 Modo práctica: no se abre WhatsApp ni el correo.'); else alert('🧪 Modo práctica: no se abre WhatsApp ni el correo.'); }catch(e){} return null; }
     return WO.apply(this, arguments);
   };
   /* 📲 (revisión del 14/11) La hoja de COMPARTIR del celular (`navigator.share`: «💬 Mandar por WhatsApp» de una cotización o de un
@@ -2932,7 +2932,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
       var cancelado=function(){ try{ return new DOMException('🧪 Modo práctica: no se comparte nada', 'AbortError'); }catch(e){ var x=new Error('🧪 Modo práctica: no se comparte nada'); x.name='AbortError'; return x; } };
       Object.defineProperty(navigator, 'share', { configurable:true, writable:true, value:function(d){
         var t=''; try{ t=[d && d.title, d && d.text, d && d.url].filter(function(x){ return x; }).map(String).join('\n'); }catch(e){}
-        try{ var u='https://wa.me/?text='+encodeURIComponent(t); if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else alert('🧪 Modo práctica: no se comparte nada.'); }catch(e){}
+        try{ var u='https://wa.me/?text='+encodeURIComponent(t); if(typeof window.practicaUrlFrena==='function') window.practicaUrlFrena(u); else if(typeof window.avisoVentana==='function') window.avisoVentana('🧪 Modo práctica: no se comparte nada.'); else alert('🧪 Modo práctica: no se comparte nada.'); }catch(e){}
         return Promise.reject(cancelado());
       } });
       Object.defineProperty(navigator, 'canShare', { configurable:true, writable:true, value:function(){ return false; } });
@@ -11967,7 +11967,13 @@ function showView(v){
     var sinPegar=imagenesSinPegar();
     if(sinPegar.length){
       var una=sinPegar.length===1;
-      if(!confirm('⚠️ Tenés '+(una?'1 imagen subida':(sinPegar.length+' imágenes subidas'))+' y el pedido SIN GUARDAR.\n\nSi salís, '+(una?'esa imagen se borra y no queda':'esas imágenes se borran y no quedan')+' en ningún pedido.\n\n¿Salir igual?')) return;
+      /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel; al contestar vuelve a correr (solo leyó qué imágenes quedan) */
+      if(!preguntaYa('⚠️ Tenés '+(una?'1 imagen subida':(sinPegar.length+' imágenes subidas'))+' y el pedido SIN GUARDAR.\n\nSi salís, '+(una?'esa imagen se borra y no queda':'esas imágenes se borran y no quedan')+' en ningún pedido.\n\n¿Salir igual?',
+        { titulo:'¿Salir sin guardar el pedido?', icono:'⚠️', peligro:true,
+          lineas:[ 'Tenés '+(una?'1 imagen subida':(sinPegar.length+' imágenes subidas'))+' y el pedido todavía no se guardó.',
+                   'Si salís, '+(una?'esa imagen se borra y no queda':'esas imágenes se borran y no quedan')+' en ningún pedido.' ],
+          no:'✏️ Quedarme en el pedido', si:'🗑 Salir y borrar '+(una?'la imagen':'las imágenes') },
+        function(){ showView(v); })) return;
       descartarImagenesSinPegar();
     }
   }
@@ -12238,23 +12244,38 @@ function renderConnEstadoBase(){
    turno lleno): si el servidor tiene la puerta con llave, también va a pedir la clave de
    administración. Se pide ACÁ, antes de guardar, para no perder el formulario en un
    rechazo. Con la puerta abierta el servidor no pide nada y esto no molesta. */
-function asegurarClaveAdmin(){
+/* ❓ (16/11, la 282 en todo el panel) La clave se pide en la ventana del panel (`preguntaTextoYa`). `otraVez` (opcional) = lo que pidió
+   la clave, para volver a correrlo con la clave ya puesta (quien llama desde una tarea que pregunta, la pasa); sin ella, la clave se
+   guarda y la persona vuelve a tocar lo que estaba haciendo. Mientras la ventana espera, `asegurarClaveAdmin` corta SIN el aviso rojo
+   (ese aviso es para cuando la persona cancela). Fuera de la bandera, el `prompt` de siempre y todo sincrónico, como antes. */
+function asegurarClaveAdmin(otraVez){
   if(!CONNECTED || SERVER_AUTH!=='clave') return true;
-  if(!ADMIN_KEY_LOCAL) pedirClaveAdmin();
+  var _esp=false;
+  if(!ADMIN_KEY_LOCAL) _esp=(pedirClaveAdmin(otraVez || function(){ asegurarClaveAdmin(); })==='espera');
   if(!ADMIN_KEY_LOCAL){
+    if(_esp) return false;
     toast('Para forzar un día cerrado o un turno lleno hace falta la clave de administración del servidor. Si no la tenés, reabrí el día desde 🔒 Cerrar día.','err',8000);
     return false;
   }
   return true;
 }
-function pedirClaveAdmin(){
-  var c=prompt('Clave de administración del servidor (ADMIN_KEY):',''); if(c==null) return;
+function pedirClaveAdmin(otraVez){
+  var _n0=PREG_ABIERTAS;
+  var c=preguntaTextoYa('Clave de administración del servidor (ADMIN_KEY):','',
+    { titulo:'Clave de administración del servidor', icono:'🛡️', lineas:['Es la que exige el servidor para forzar un pedido a un día cerrado o a un turno lleno (ADMIN_KEY).', 'Se guarda en este dispositivo.'],
+      campoAyuda:'La clave de administración', no:'Cancelar', si:'💾 Guardar la clave' },
+    (typeof otraVez==='function') ? otraVez : function(){ pedirClaveAdmin(); });
+  if(c==null) return (PREG_ABIERTAS>_n0) ? 'espera' : undefined;
   c=c.trim(); if(!c) return;
   ADMIN_KEY_LOCAL=c; try{ localStorage.setItem(LS_ADMIN_KEY,c); }catch(e){}
   toast('Clave de administración guardada en este dispositivo.','ok');
 }
 function pedirClaveEquipo(){
-  var c=prompt('Clave del equipo (te la da el administrador):',''); if(c==null) return;
+  var c=preguntaTextoYa('Clave del equipo (te la da el administrador):','',
+    { titulo:'Clave del equipo', icono:'🔐', lineas:['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'],
+      campoAyuda:'La clave del equipo', no:'Cancelar', si:'💾 Guardar y probar' },
+    function(){ pedirClaveEquipo(); });
+  if(c==null) return;
   c=c.trim(); if(!c){ toast('Sin clave no se puede.','err'); return; }
   CLAVE_EQUIPO=c; try{ localStorage.setItem(LS_CLAVE,c); }catch(e){}
   CLAVE_RECHAZADA=false; renderConnEstado();
@@ -14963,7 +14984,12 @@ function cbzPagoRegistrar(){
   /* (revisión de Fable 8) solo las que todavía deben: una tildada que ya pagaron desde su ficha no se cuenta en la pregunta */
   var L=ids.map(findById).filter(function(p){ return !!p && contaFaltaCobrar(p)>0.005; }), tot=0; L.forEach(function(p){ tot=r2(tot+contaFaltaCobrar(p)); });
   if(!L.length){ CBZ.sel={}; cbzPintar(); toast('Las OC tildadas ya no deben nada.','ok'); return; }
-  if(!confirm('¿Registrar el pago de '+L.length+' OC por '+fmtBs(tot)+'?\n\n'+(P.metodo==='QR'?('Transferencia / QR · '+P.banco):P.metodo)+' · '+fmtFecha(fecha)+' · N° '+nota+'\n\nCada OC queda pagada por su saldo entero.')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr: hasta acá solo leyó lo tipeado y calculó */
+  if(!preguntaYa('¿Registrar el pago de '+L.length+' OC por '+fmtBs(tot)+'?\n\n'+(P.metodo==='QR'?('Transferencia / QR · '+P.banco):P.metodo)+' · '+fmtFecha(fecha)+' · N° '+nota+'\n\nCada OC queda pagada por su saldo entero.',
+      { titulo:'¿Registrar el pago de '+L.length+' OC por '+fmtBs(tot)+'?', icono:'💵',
+        lineas:[ (P.metodo==='QR'?('Transferencia / QR · '+P.banco):P.metodo)+' · '+fmtFecha(fecha)+' · N° '+nota, 'Cada OC queda pagada por su saldo entero.' ],
+        no:'No, todavía no', si:'✅ Sí, registrar el pago' },
+      function(){ cbzPagoRegistrar(); })) return;
   /* (revisión de Fable 3) Todas se anotan YA, en memoria (cada `aplicarCobros` deja su copia durable en el aparato antes de mandarla):
      un guardado que no contesta ya no deja el lote a medias ni el botón trabado. Después se espera a la planilla para decir cuántas
      entraron y cuántas quedaron en la cola. Antes de cada una se vuelve a mirar su saldo (si alguien la pagó, se saltea). */
@@ -17181,7 +17207,13 @@ function ccmAbrir(ym){
 function ccmCerrarVentana(){ var ov=document.getElementById('ccm-ov'); if(ov) ov.style.display='none'; CCM.ed=null; }
 function ccmElegirMes(v){
   if(!/^\d{4}-\d{2}$/.test(String(v||''))) return;
-  if(CCM.ed && !confirm('Lo que escribiste en las metas y la escala de '+ccmMes(CCM.ym)+' no se guardó. ¿Cambiar de mes igual?')){ var m=document.getElementById('ccm-mes'); if(m) m.value=CCM.ym; return; }
+  /* ❓ (16/11, la 282 en todo el panel) mientras la ventana espera, el selector vuelve al mes de antes (como si cancelara); «Sí» lo pone
+     en el mes que eligió la persona y cambia */
+  if(CCM.ed && !preguntaYa('Lo que escribiste en las metas y la escala de '+ccmMes(CCM.ym)+' no se guardó. ¿Cambiar de mes igual?',
+      { titulo:'¿Cambiar de mes sin guardar?', icono:'✏️', aviso:true,
+        lineas:[ 'Lo que escribiste en las metas y la escala de '+ccmMes(CCM.ym)+' no se guardó.', 'Si cambiás de mes, se pierde.' ],
+        no:'✏️ Quedarme y guardar', si:'Cambiar de mes igual' },
+      function(){ var m2=document.getElementById('ccm-mes'); if(m2) m2.value=v; ccmElegirMes(v); })){ var m=document.getElementById('ccm-mes'); if(m) m.value=CCM.ym; return; }
   CCM.ym=v; CCM.ed=null; CCM.verVentas=false; CCM.verAntes=false; ccmPintar();
 }
 function ccmPintar(){
@@ -17388,8 +17420,15 @@ function ccmCerrarMes(){
   var av=[];
   if(R.cal==='curso') av.push('El mes todavía no terminó: lo que se cargue después va como ajuste al mes siguiente.');
   if(R.rev.n) av.push('Quedan '+R.rev.n+' cosa'+(R.rev.n===1 ? '' : 's')+' en «Para revisar».');
-  if(!confirm('🔒 ¿Cerrar '+mesNombre(ym)+'?\n\nSe congelan las '+R.tot.n+' ventas ('+fmtBs(R.tot.bs)+') y lo que se paga: '+fmtBs(R.tot.to)+'. Una venta que ya entró no vuelve a contar en otro mes; lo que cambie después va como ajuste al mes siguiente. Se puede reabrir con la contraseña.'+
-    (av.length ? ('\n\n⚠️ '+av.join('\n⚠️ ')) : ''))) return Promise.resolve(null);
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr: hasta acá solo calculó */
+  if(!preguntaYa('🔒 ¿Cerrar '+mesNombre(ym)+'?\n\nSe congelan las '+R.tot.n+' ventas ('+fmtBs(R.tot.bs)+') y lo que se paga: '+fmtBs(R.tot.to)+'. Una venta que ya entró no vuelve a contar en otro mes; lo que cambie después va como ajuste al mes siguiente. Se puede reabrir con la contraseña.'+
+    (av.length ? ('\n\n⚠️ '+av.join('\n⚠️ ')) : ''),
+    { titulo:'¿Cerrar '+mesNombre(ym)+'?', icono:'🔒', aviso:!!av.length,
+      lineas:[ 'Se congelan las '+R.tot.n+' ventas ('+fmtBs(R.tot.bs)+') y lo que se paga: '+fmtBs(R.tot.to)+'.',
+               'Una venta que ya entró no vuelve a contar en otro mes; lo que cambie después va como ajuste al mes siguiente.',
+               'Se puede reabrir con la contraseña.' ].concat(av.map(function(x){ return '⚠️ '+x; })),
+      no:'No, todavía no', si:'🔒 Sí, cerrar '+ccmMes(ym) },
+    function(){ ccmCerrarMes(); })) return Promise.resolve(null);
   CCM.env=1; ccmPintar();
   return refrescarEstadoYa().then(function(ok){
     if(!ok){ CCM.env=0; ccmPintar(); toast('❌ No se pudo leer la planilla: no se cerró. Probá de nuevo.','err',8000); return null; }
@@ -17401,8 +17440,9 @@ function ccmCerrarMes(){
     }, '🔒 '+ccmCap(mesNombre(ym))+' cerrado: '+R2.tot.n+' ventas, '+fmtBs(R2.tot.to)+' a pagar', true);
   });
 }
-function ccmClaveOk(txt){
-  var c=prompt(txt,''); if(c==null) return null;
+function ccmClaveOk(txt, otraVez, o){
+  /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel: null mientras espera o si cancela; al contestar vuelve a correr `otraVez` */
+  var c=preguntaTextoYa(txt,'', o, otraVez); if(c==null) return null;
   var guardada=null; try{ guardada=localStorage.getItem(LS_ADMIN); }catch(e){}
   return sha256(String(c))===(guardada||DEFAULT_HASH);
 }
@@ -17410,7 +17450,9 @@ function ccmReabrir(){
   var ym=CCM.ym, D=ccmLeer(); if(CCM.env || !ccmCerrado(D, ym)) return Promise.resolve(null);
   var desp=Object.keys(D.m).filter(function(k){ return k>ym && ccmCerrado(D, k); }).sort();
   if(desp.length){ toast('Primero reabrí '+mesNombre(desp[desp.length-1])+': se cerró después y ya cuenta con este.','err',8000); return Promise.resolve(null); }
-  var ok=ccmClaveOk('🔓 Para reabrir '+mesNombre(ym)+' escribí la contraseña de Administración.\nLos números vuelven a calcularse con la planilla de hoy.');
+  var ok=ccmClaveOk('🔓 Para reabrir '+mesNombre(ym)+' escribí la contraseña de Administración.\nLos números vuelven a calcularse con la planilla de hoy.', function(){ ccmReabrir(); },
+    { titulo:'¿Reabrir '+mesNombre(ym)+'?', icono:'🔓', lineas:['Escribí la contraseña de Administración.', 'Los números vuelven a calcularse con la planilla de hoy.'],
+      campoAyuda:'La contraseña de Administración', no:'No, dejarlo cerrado', si:'🔓 Reabrir' });
   if(ok==null) return Promise.resolve(null);
   if(!ok){ toast('❌ Contraseña equivocada: '+mesNombre(ym)+' sigue cerrado.','err',6000); return Promise.resolve(null); }
   return ccmGuardar(function(D){
@@ -20663,7 +20705,11 @@ function borrarRetiro(id){
   var f=null; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)){ f=RETIROS[k]; break; }
   if(!f) return;
   var r=retiroDe(f);
-  if(!confirm('¿Borrar el retiro de '+fmtBs(r.monto)+' de '+(r.entrega||'—')+' del '+fmtFecha(r.fecha)+'?\n\nEsto no se puede deshacer.')) return;
+  /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel; al contestar vuelve a correr (solo buscó el retiro) */
+  if(!preguntaYa('¿Borrar el retiro de '+fmtBs(r.monto)+' de '+(r.entrega||'—')+' del '+fmtFecha(r.fecha)+'?\n\nEsto no se puede deshacer.',
+      { titulo:'¿Borrar el retiro de '+fmtBs(r.monto)+'?', icono:'🗑️', peligro:true, sub:(r.entrega||'—')+' · '+fmtFecha(r.fecha),
+        lineas:[ 'Esto no se puede deshacer.' ], no:'No, dejarlo', si:'🗑 Sí, borrar el retiro' },
+      function(){ borrarRetiro(id); })) return;
   RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(id); });
   saveRetirosMirror();
   /* ⚠️ Se mira la respuesta (§4ew): antes decía «Retiro borrado» sin esperar al servidor, y
@@ -20943,7 +20989,14 @@ function guardarRetiroAmbos(r){
   var tickF=T.F.k.slice(), tickR=T.R.k.concat(T.X.k);
   var sF=0; tickF.forEach(function(t){ sF=r2(sF+t.m); }); var sR=0; tickR.forEach(function(t){ sR=r2(sR+t.m); });
   if((Math.abs(sF-mf)>0.005 || Math.abs(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
-     !confirm('💵 Lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+' de lo facturado; lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+' de lo no facturado.\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)')) return false;
+     /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr «Registrar retiro» entero: hasta acá solo leyó el formulario */
+     !preguntaYa('💵 Lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+' de lo facturado; lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+' de lo no facturado.\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)',
+       { titulo:'Lo tildado no da justo con los dos recibos', icono:'💵', aviso:true,
+         lineas:[ 'Lo facturado: lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+'.',
+                  'Lo no facturado: lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+'.',
+                  'Si lo guardás así, lo que no da justo se reparte con la regla.' ],
+         no:'✏️ Volver y corregir', si:'💾 Guardar igual' },
+       function(){ guardarRetiroForm(); })) return false;
   var base=String(r.obs||'');
   var mk=function(tipo, m, notas, tick, otro){ return filaDeRetiro({ id:RETIRO_PREF+uid()+'__', fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:m, notas:notas, tipo:tipo,
       fotos:r.fotos, obs:(base?(base+' · '):'')+'retiro en dos recibos: el otro es el '+otro.join(', '), tick:tick }); };
@@ -21019,9 +21072,16 @@ function guardarRetiroForm(){
   /* 💵☑️ (07/11) los cobros que entrega: lo tildado (o lo que tildó la regla). Si no da justo con el monto, se pregunta. */
   var _D=retCobrosDatos(r), _tick=_D ? _D.tick.slice() : [];
   if(_D && _D.sim.pend.length && Math.abs(r2(_D.suma-monto))>0.005 && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
-     !confirm('💵 El retiro es de '+fmtBs(monto)+' y los cobros tildados suman '+fmtBs(_D.suma)+'.\n\n'+
+     /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr: hasta acá solo leyó el formulario y calculó */
+     !preguntaYa('💵 El retiro es de '+fmtBs(monto)+' y los cobros tildados suman '+fmtBs(_D.suma)+'.\n\n'+
               (_D.suma<monto ? ('Faltan '+fmtBs(r2(monto-_D.suma))+' por explicar: si es plata de un mes anterior, poné la fecha del día en que se entregó. ') : ('Sobran '+fmtBs(r2(_D.suma-monto))+': destildá lo que no entregó. '))+
-              '\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)')) return false;
+              '\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)',
+       { titulo:'Los cobros tildados no dan justo con el retiro', icono:'💵', aviso:true,
+         lineas:[ 'El retiro es de '+fmtBs(monto)+' y los cobros tildados suman '+fmtBs(_D.suma)+'.',
+                  _D.suma<monto ? ('Faltan '+fmtBs(r2(monto-_D.suma))+' por explicar: si es plata de un mes anterior, poné la fecha del día en que se entregó.') : ('Sobran '+fmtBs(r2(_D.suma-monto))+': destildá lo que no entregó.'),
+                  'Si lo guardás así, lo que no da justo se reparte con la regla.' ],
+         no:'✏️ Volver y corregir', si:'💾 Guardar igual' },
+       function(){ guardarRetiroForm(); })) return false;
   /* ⚠️ EL MISMO RETIRO DOS VECES (§4ek). Mirian cargó dos retiros de agosto el 16/09; la
      ventana abre en el mes actual, no los vio y los volvió a cargar: Bs 3.050 de más en el
      cuadre. Misma vendedora, mismo monto y alguna nota en común = casi seguro el mismo. */
@@ -21033,9 +21093,15 @@ function guardarRetiroForm(){
       return mismoVendedor(x.entrega, r.entrega) && r2(x.monto)===r2(monto) &&
              x.notas.some(function(n){ return r.notas.indexOf(n)>=0; });
     })[0];
-    if(dup && !confirm('⚠️ YA HAY UN RETIRO IGUAL cargado: '+fmtBs(dup.monto)+' de '+dup.entrega+' del '+fmtFecha(dup.fecha)+' (nota '+dup.notas.join(', ')+').\n\n'+
-                       'Si es el mismo, NO lo cargues de nuevo: la ventana está mostrando '+(((document.getElementById('ret-mes')||{}).value)?('el mes '+mesNombreCorto(document.getElementById('ret-mes').value)):'otro período')+' y por eso no lo ves.\n\n'+
-                       '¿Cargarlo igual, como un retiro DISTINTO?')) return false;
+    /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel; «no» = el seguro (no cargarlo dos veces) */
+    if(dup){ var _verR=(((document.getElementById('ret-mes')||{}).value)?('el mes '+mesNombreCorto(document.getElementById('ret-mes').value)):'otro período');
+      if(!preguntaYa('⚠️ YA HAY UN RETIRO IGUAL cargado: '+fmtBs(dup.monto)+' de '+dup.entrega+' del '+fmtFecha(dup.fecha)+' (nota '+dup.notas.join(', ')+').\n\n'+
+                       'Si es el mismo, NO lo cargues de nuevo: la ventana está mostrando '+_verR+' y por eso no lo ves.\n\n'+
+                       '¿Cargarlo igual, como un retiro DISTINTO?',
+        { titulo:'Ya hay un retiro igual cargado', icono:'⚠️', aviso:true, sub:fmtBs(dup.monto)+' de '+dup.entrega+' del '+fmtFecha(dup.fecha)+' · nota '+dup.notas.join(', '),
+          lineas:[ 'Si es el mismo, NO lo cargues de nuevo: la ventana está mostrando '+_verR+' y por eso no lo ves.' ],
+          no:'No, es el mismo', si:'Es otro: cargarlo igual' },
+        function(){ guardarRetiroForm(); })) return false; }
   }
   var fila=filaDeRetiro({ id: r.id || (RETIRO_PREF+uid()+'__'), fecha:r.fecha, entrega:r.entrega,
                           retira:r.retira, monto:monto, notas:r.notas, tipo:r.tipo, fotos:r.fotos, obs:r.obs, tick:_tick });
@@ -21606,16 +21672,20 @@ function retDocPasar(id){
   var f=retDocFila(id); if(!f) return;
   var r=retiroDe(f), o=retDocDeRetiro(r); if(!o || o.est!=='pasar'){ renderCuadreSiActivo(); return; }
   var nuevo = r.tipo==='Facturado' ? 'No facturado' : 'Facturado';
-  if(!confirm('¿Pasar el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') a «'+nuevo+'»?\n\nLo que tapa es de '+o.otras.map(retDocVentaTxt).join('; ')+'.')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr (solo leyó el retiro) */
+  if(!preguntaYa('¿Pasar el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') a «'+nuevo+'»?\n\nLo que tapa es de '+o.otras.map(retDocVentaTxt).join('; ')+'.',
+      { titulo:'¿Pasar el retiro a «'+nuevo+'»?', icono:'🧾', sub:fmtFechaCorta(r.fecha)+' · '+r.entrega+' · '+fmtBs(r.monto),
+        lineas:[ 'Lo que tapa es de '+o.otras.map(retDocVentaTxt).join('; ')+'.' ], no:'No, dejarlo así', si:'Sí, pasarlo a «'+nuevo+'»' },
+      function(){ retDocPasar(id); })) return;
   var G=retDocGuardar(f, r, { tipo:nuevo });
   renderRetirosSiActivo(); renderCuadreSiActivo();
   return G.prom.then(function(res){ retDocAviso(res, 'Retiro pasado a «'+nuevo+'»'); renderRetirosSiActivo(); renderCuadreSiActivo(); return res; });
 }
-function retDocPartir(id, btn){
+function retDocPartir(id, btn, recYa){
   var f=retDocFila(id); if(!f) return;
   var r=retiroDe(f), o=retDocDeRetiro(r); if(!o || o.est!=='partir'){ renderCuadreSiActivo(); return; }
   var box=btn && btn.closest ? btn.closest('.rdc-ret') : null, inp=box ? box.querySelector('.rdc-rec') : null;
-  var rec=inp ? limpiaNota(inp.value) : '';
+  var rec=(recYa!=null) ? recYa : (inp ? limpiaNota(inp.value) : '');   // ❓ (16/11) al volver a correr, el N° que se escribió antes de preguntar
   if(!rec){ if(inp){ inp.classList.add('err'); inp.focus(); } toast('Anotá el N° del otro recibo (el que firma por la otra parte)','err'); return; }
   if(r.notas.indexOf(rec)>=0){ if(inp) inp.focus(); toast('El recibo '+rec+' ya es el de este retiro: cada recibo va en uno solo','err'); return; }
   var nuevo = r.tipo==='Facturado' ? 'No facturado' : 'Facturado', mueve=o.malBs, queda=r2(r.monto-mueve);
@@ -21624,8 +21694,13 @@ function retDocPartir(id, btn){
   var pasa=function(t){ return r.tipo==='Facturado' ? t.d!=='F' : t.d==='F'; };
   var tk=function(t){ return { id:t.c.id, f:t.c.f, m:r2(t.c.m) }; };
   var tickN=o.tapa.filter(pasa).map(tk), tickV=o.tapa.filter(function(t){ return !pasa(t); }).map(tk);
-  if(!confirm('¿Partir el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') en dos recibos?\n\n'+
-              '· «'+r.tipo+'» '+fmtBs(queda)+' (recibo '+(r.notas.join(', ')||'—')+')\n· «'+nuevo+'» '+fmtBs(mueve)+' (recibo '+rec+')')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr con el mismo N° de recibo (hasta acá solo leyó y calculó) */
+  if(!preguntaYa('¿Partir el retiro del '+fmtFechaCorta(r.fecha)+' de '+r.entrega+' ('+fmtBs(r.monto)+') en dos recibos?\n\n'+
+              '· «'+r.tipo+'» '+fmtBs(queda)+' (recibo '+(r.notas.join(', ')||'—')+')\n· «'+nuevo+'» '+fmtBs(mueve)+' (recibo '+rec+')',
+      { titulo:'¿Partir el retiro en dos recibos?', icono:'🧾', sub:fmtFechaCorta(r.fecha)+' · '+r.entrega+' · '+fmtBs(r.monto),
+        lineas:[ '«'+r.tipo+'» '+fmtBs(queda)+' (recibo '+(r.notas.join(', ')||'—')+')', '«'+nuevo+'» '+fmtBs(mueve)+' (recibo '+rec+')' ],
+        no:'No, dejarlo así', si:'🧾+📄 Sí, partirlo' },
+      function(){ retDocPartir(id, btn, rec); })) return;
   var base=String(r.obs||''), nota=function(otro){ return (base ? (base+' · ') : '')+'retiro en dos recibos: el otro es el '+otro; };
   var G1=retDocGuardar(f, r, { monto:queda, tick:tickV, obs:nota(rec) });
   var x={ id:RETIRO_PREF+uid()+'__', fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:mueve, notas:[rec], tipo:nuevo, fotos:r.fotos, obs:nota(r.notas.join(', ')||'—'), tick:tickN };
@@ -22747,7 +22822,12 @@ function ctaQuitarComp(id, idx, k){
   if(!cs.length) return;
   var fuera = (k==null) ? cs.slice() : cs.slice(k, k+1);
   if(!fuera.length) return;
-  if(!confirm(fuera.length>1 ? '¿Quitar las imágenes de este pago?' : '¿Quitar esta imagen del pago?')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr (solo leyó el pago) */
+  if(!preguntaYa(fuera.length>1 ? '¿Quitar las imágenes de este pago?' : '¿Quitar esta imagen del pago?',
+      { titulo:fuera.length>1 ? '¿Quitar las '+fuera.length+' imágenes de este pago?' : '¿Quitar esta imagen del pago?', icono:'🗑️', peligro:true,
+        lineas:[ 'Va'+(fuera.length>1?'n':'')+' a la papelera si ningún otro pago la'+(fuera.length>1?'s':'')+' usa.' ],
+        no:'No, dejarla'+(fuera.length>1?'s':''), si:'🗑 Sí, quitarla'+(fuera.length>1?'s':'') },
+      function(){ ctaQuitarComp(id, idx, k); })) return;
   c.comps = cs.filter(function(x){ return fuera.indexOf(x)<0; });
   c.comp  = c.comps[0]||'';
   aplicarCobros(p, arr);
@@ -22875,7 +22955,8 @@ function ctaGuardarPago(id, i, igual){
     return;
   }
   /* 🚚 §4ok-112 un chofer de OTRO camión ese día: se pregunta (solo si cambió quién la tiene) */
-  if(recibio && recibio!==limpiaRecibio(c.recibio)){ var _cxG=ctaChoferCruce(p, f, recibio); if(_cxG && !confirm(_cxG)) return; }
+  if(recibio && recibio!==limpiaRecibio(c.recibio)){ var _cxG=ctaChoferCruce(p, f, recibio);
+    if(_cxG && !preguntaYa(_cxG, ctaChoferCruceO(_cxG, recibio), function(){ ctaGuardarPago(id, i, igual); })) return; }   // ❓ (16/11) en la ventana del panel
 
   /* 🔢 LA NOTA DE LA VENTA ES EL RECIBO DEL PRIMER PAGO (§4ei). Isabel corrigió el N° del
      pago (17478 → 1748) y la ficha siguió titulada «Nota 17478»: la venta tiene su propio
@@ -23022,7 +23103,11 @@ function ctaEnvioQuitarComp(id, e, k){
   e=Number(e)||0; if(e<0 || e>=ae.length) return;          // §4fe: el renglón, no siempre el primero
   var cs=compsArr(ae[e].comps!=null?ae[e].comps:ae[e].comp);
   var fid=cs[k]; if(!fid) return;
-  if(!confirm('¿Quitar esta imagen del recargo por entrega?')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr (solo leyó el recargo) */
+  if(!preguntaYa('¿Quitar esta imagen del recargo por entrega?',
+      { titulo:'¿Quitar esta imagen del recargo por entrega?', icono:'🗑️', peligro:true, lineas:[ 'Va a la papelera si ningún otro pago la usa.' ],
+        no:'No, dejarla', si:'🗑 Sí, quitarla' },
+      function(){ ctaEnvioQuitarComp(id, e, k); })) return;
   ae[e].comps=cs.filter(function(x){ return x!==fid; });
   ae[e].comp=ae[e].comps[0]||'';
   aplicarEnvios(p, ae);
@@ -23038,7 +23123,12 @@ function ctaBorrarEnvio(id){
      solo borraba de Drive la foto de `ae[0]`: la otra quedaba huérfana. */
   var tot=r2(envioTotal(p));
   var det=(ae.length>1) ? ('\n\nSon '+ae.length+' renglones: '+ae.map(function(c){ return fmtBs(c.monto)+(envioYaCobrado(c)?(' '+(c.metodo||'')):' (pactado)'); }).join(' + ')) : '';
-  if(!confirm('¿Quitar el recargo por entrega de '+fmtBs(tot)+'?'+det+'\n\nEl resto de la venta no se toca.')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr (solo leyó los recargos) */
+  if(!preguntaYa('¿Quitar el recargo por entrega de '+fmtBs(tot)+'?'+det+'\n\nEl resto de la venta no se toca.',
+      { titulo:'¿Quitar el recargo por entrega de '+fmtBs(tot)+'?', icono:'🗑️', peligro:true,
+        lineas:[ det ? det.replace(/^\n\n/, '') : '', 'El resto de la venta no se toca.' ],
+        no:'No, dejarlo', si:'🗑 Sí, quitar el recargo' },
+      function(){ ctaBorrarEnvio(id); })) return;
   var fotos=[];
   ae.forEach(function(c){ compsArr(c.comps!=null?c.comps:c.comp).forEach(function(f){ if(fotos.indexOf(f)<0) fotos.push(f); }); });
   aplicarEnvios(p, []);
@@ -23142,7 +23232,8 @@ function ctaEnvioAPago(id, e){
   var c=ae[e], monto=r2(Number(c.monto)||0); if(!(monto>0)) return;
   var saldoAntes=r2(Number(p.saldo)||0), saldoDesp=r2(saldoAntes-monto);
   var n=limpiaNota(c.nota), rec=limpiaRecibio(c.recibio), cs=compsArr(c.comps!=null?c.comps:c.comp);
-  if(!confirm('↩️ ¿Este cobro era un PAGO DE LA VENTA y no un recargo por entrega?\n\n'+
+  /* ❓ (16/11, la 282 en todo el panel) la ventana se arma del mismo texto (cada párrafo, un renglón); al contestar vuelve a correr */
+  if(!preguntaYa('↩️ ¿Este cobro era un PAGO DE LA VENTA y no un recargo por entrega?\n\n'+
       cobroMetodoTxt(c)+' '+fmtBs(monto)+(c.fecha?(' · '+fmtFecha(c.fecha)):'')+(n?(' · nota '+n):'')+(rec?(' · recibió '+rec):'')+
       (cs.length?(' · '+cs.length+(cs.length===1?' foto':' fotos')):'')+'\n\n'+
       'Pasa a los pagos de la venta tal cual: la misma fecha, nota, método'+(rec?', quién la recibió':'')+' y fotos. '+
@@ -23151,7 +23242,10 @@ function ctaEnvioAPago(id, e){
                         : 'La venta ya figuraba pagada.')+
       (saldoDesp<-0.009 ? ('\n\n⚠️ La venta queda cobrada de MÁS por '+fmtBs(-saldoDesp)+': el total de la venta estaba corto. '+
                            'Corregilo después en «✏️ Corregir precios y montos».') : '')+
-      (regEnSistema(p) ? '\n\n🧾 Esta venta ya está registrada en el sistema contable: avisale a Contabilidad del cambio.' : ''))) return;
+      (regEnSistema(p) ? '\n\n🧾 Esta venta ya está registrada en el sistema contable: avisale a Contabilidad del cambio.' : ''),
+      { titulo:'¿Era un pago de la venta y no un recargo por entrega?', aviso:saldoDesp<-0.009,
+        no:'No, es un recargo', si:'↩️ Sí, pasarlo a los pagos' },
+      function(){ ctaEnvioAPago(id, e); })) return;
   ctaPagoRecordar();                               // §4fy: un pago a medio cargar no se pierde con el repintado
   CTA_EDIT_I=-1; CTA_EDIT_V=null;                  // los renglones cambian de lugar: que no quede abierto el editor de otro
   var objetivo=objetivoCobro(p);                   // lo que la venta tenía que cobrar: no cambia
@@ -23233,7 +23327,11 @@ function ctaQuitarCompEdit(id, i, k){
   if(!c.anticipo)  return ctaQuitarComp(id, ctaIdxCobro(p, i, c), k);
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   if(k==null || k<0 || k>=cs.length) return;
-  if(!confirm('¿Quitar esta imagen del pago?')) return;
+  /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr (lo de antes solo lee y recuerda lo tipeado) */
+  if(!preguntaYa('¿Quitar esta imagen del pago?',
+      { titulo:'¿Quitar esta imagen del adelanto?', icono:'🗑️', peligro:true, lineas:[ 'Va a la papelera si ningún otro pago la usa.' ],
+        no:'No, dejarla', si:'🗑 Sí, quitarla' },
+      function(){ ctaQuitarCompEdit(id, i, k); })) return;
   var fuera=cs[k];
   aplicarCompsAnticipo(p, cs.filter(function(x,j){ return j!==k; }));
   borrarFotoSiNadieLaUsa(fuera);                     // §4fy: el flete puede estar usando la misma
@@ -23275,8 +23373,13 @@ function ctaAnotarMonto(id, idx){
   var arr=cobrosDe(p).slice();
   if(idx<0 || idx>=arr.length) return;
   var c=arr[idx];
-  var txt=prompt('💵 ¿Cuánto se cobró?\n\n'+(p.cliente||'—')+(p.nota?('  ·  nota '+p.nota):'')+'\n\n'+
-    'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '');
+  /* ❓ (16/11, la 282 en todo el panel) en la ventana del panel; al contestar vuelve a correr con lo escrito */
+  var txt=preguntaTextoYa('💵 ¿Cuánto se cobró?\n\n'+(p.cliente||'—')+(p.nota?('  ·  nota '+p.nota):'')+'\n\n'+
+    'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '',
+    { titulo:'¿Cuánto se cobró?', icono:'💵', sub:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''),
+      lineas:[ 'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.', 'Escribí cuánto entró (en Bs).' ],
+      campoTipo:'decimal', campoAyuda:'Ej. 1750', no:'Cancelar', si:'💵 Anotar el monto' },
+    function(){ ctaAnotarMonto(id, idx); });
   if(txt==null) return;
   // 26/09: `parseMonto` saca el signo y «-1500» se anotaba como un pago de Bs 1.500. El menos FRENA (§4gb).
   // (26/09, revisión de Codex) y todo lo mal escrito: «−1500», «Bs -1500», «1e3», «12abc», «.50»…
@@ -23658,13 +23761,23 @@ function ctaGuardarMontos(id){
   var _compsAnt=_antAct?compsArr(_antAct.comps!=null?_antAct.comps:_antAct.comp).length:0;
   if(_montoAnt>0.005 && acu<_montoAnt-0.005){
     var _pierde = acu<=0.005;
-    if(!confirm('⚠️ '+(_pierde?'SE VA A BORRAR EL PAGO YA REGISTRADO':'SE VA A BAJAR EL PAGO YA REGISTRADO')+'\n\n'+
+    /* ❓ (16/11, la 282 en todo el panel) null = la ventana espera: no se hace nada (ni guardar ni volver «A cuenta» atrás); al contestar
+       vuelve a correr (lo de antes solo lee y marca en rojo lo mal escrito) y llega acá con el «sí» o con el «no» de siempre */
+    var _siBaja=preguntaYa('⚠️ '+(_pierde?'SE VA A BORRAR EL PAGO YA REGISTRADO':'SE VA A BAJAR EL PAGO YA REGISTRADO')+'\n\n'+
         'Hoy figura cobrado: '+fmtBs(_montoAnt)+
         (_compsAnt?('  ('+_compsAnt+(_compsAnt===1?' comprobante adjunto':' comprobantes adjuntos')+')'):'')+'\n'+
         'Vos estás poniendo:  '+fmtBs(acu)+'\n\n'+
         (_pierde ? 'Ese pago y su respaldo se borran y la venta vuelve a quedar por cobrar.\n\n'
                  : 'Se reescribe el pago con el monto nuevo.\n\n')+
-        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')){
+        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?',
+      { titulo:_pierde ? '¿Borrar el pago ya registrado?' : '¿Bajar el pago ya registrado?', icono:'⚠️', peligro:true,
+        lineas:[ 'Hoy figura cobrado: '+fmtBs(_montoAnt)+(_compsAnt?(' ('+_compsAnt+(_compsAnt===1?' comprobante adjunto':' comprobantes adjuntos')+')'):'')+'. Vos estás poniendo: '+fmtBs(acu)+'.',
+                 _pierde ? 'Ese pago y su respaldo se borran y la venta vuelve a quedar por cobrar.' : 'Se reescribe el pago con el monto nuevo.',
+                 'Si solo querías corregir un precio, tocá «Volver» y cambiá únicamente el precio.' ],
+        no:'✏️ Volver: dejar «A cuenta» como estaba', si:_pierde ? '🗑 Guardar y borrar el pago' : '💾 Guardar igual' },
+      function(){ ctaGuardarMontos(id); });
+    if(_siBaja===null) return;
+    if(!_siBaja){
       /* (26/09) Cancelar deja «A cuenta» como estaba. El aviso dice «cancelá y tocá únicamente el precio»,
          pero el campo seguía con lo que bajaba el pago: guardar el precio volvía a preguntar. Y desde que
          lo tipeado sobrevive al repintado (`ctaMontosRecordar`), ni siquiera volver a abrir la venta lo limpiaba. */
@@ -23772,12 +23885,20 @@ function ctaEliminarVenta(id){
   if(regEnSistema(p)) txt+='⚠️ Ya está CARGADA en el sistema contable: allá hay que anularla aparte.\n\n';
   if(p.entregado) txt+='⚠️ Este pedido figura como YA ENTREGADO.\n\n';
   txt+=(deshVa() ? 'Se borra de la planilla: tenés 5 segundos para deshacerlo y después ya no se puede.' : 'Se borra de la planilla y NO se puede deshacer.')+'\n\n¿Eliminarla?';
-  if(!confirm(txt)) return;
+  /* ❓ (16/11, la 282 en todo el panel) las dos preguntas en la ventana del panel, de a una; al contestar vuelve a correr (lo de antes
+     solo lee la venta) y con las dos en «sí» borra UNA vez */
+  var _otraE=function(){ ctaEliminarVenta(id); };
+  if(!preguntaYa(txt, { titulo:'¿Eliminar esta venta?', icono:'🗑️', peligro:true, sub:quien,
+      lineas:txt.split('\n').map(function(x){ return x.trim(); }).filter(Boolean).slice(2, -1),   // sin el título, el cliente (va arriba) ni «¿Eliminarla?»
+      no:'No, dejarla', si:'🗑 Sí, eliminar la venta' }, _otraE)) return;
   /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
      lo que más duele si el clic fue por error. */
   if((plata>0.005 || pagSinMonto || regEnSistema(p) || p.entregado) &&
-     !confirm('Última confirmación.\n\nSe van a borrar '+
-              (plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
+     !preguntaYa('Última confirmación.\n\nSe van a borrar '+
+              (plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?',
+       { titulo:'Última confirmación: ¿seguro?', icono:'🗑️', peligro:true,
+         lineas:[ 'Se van a borrar '+(plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.' ],
+         no:'No, dejarla', si:'🗑 Sí, borrarla' }, _otraE)) return;
   closeModal();
   borrarConDeshacer(id);                         // ↩️ (§4ni, 7) 5 s para arrepentirse
 }
@@ -23875,6 +23996,11 @@ function ctaChoferCruce(p, fecha, ch){
   var deRef=(ref===vehiculoDe(p) && String(p.chofer||'').trim()) || (VEHICULOS[ref]||[]).join(' o ');
   return '⚠️ ¿'+ch+' recibió esta plata?\n\nEse día el pedido lo llevó el '+ref+(deRef?(' ('+deRef+')'):'')+(ll && ll.veh ? ' — el GPS lo vio en la casa del cliente' : '')+
     ', y '+ch+' es del '+vc+'.\n\nSi la recibió '+ch+', tocá Aceptar. Si no, Cancelar y elegí al chofer que la cobró.';
+}
+/* ❓ (16/11, la 282 en todo el panel) La misma pregunta en la ventana del panel, con botones que dicen lo que hacen (en vez de «tocá Aceptar»). */
+function ctaChoferCruceO(txt, ch){
+  ch=limpiaRecibio(ch); var L=String(txt||'').split('\n\n');
+  return { titulo:'¿'+ch+' recibió esta plata?', icono:'⚠️', aviso:true, lineas:[ L[1]||'' ], no:'✏️ No, elijo al chofer que la cobró', si:'✅ Sí, la recibió '+ch };
 }
 /* Lo pone en el pago nuevo mientras nadie eligió; en «Corregir» no cambia nada (solo devuelve la sugerencia, para la pista). */
 function ctaRecibioAutoPoner(p, opts){
@@ -23980,8 +24106,11 @@ function ctaRegistrarPago(id){
     toast('💵 Tocá QUIÉN RECIBIÓ la plata: '+(nombreCanonico(p.vendedor)||'la vendedora')+' o el chofer que la cobró en la puerta. El Cuadre se la pide a esa persona.','err',9000);
     return;
   }
+  /* ❓ (16/11, la 282 en todo el panel) las preguntas de «Registrar pago» en la ventana del panel, de a una; al contestar vuelve a correr
+     (hasta la última pregunta solo lee y valida) y con todas contestadas registra UNA vez */
+  var _otraP=function(){ ctaRegistrarPago(id); };
   if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
-  else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !confirm(_cxR)) return; }
+  else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !preguntaYa(_cxR, ctaChoferCruceO(_cxR, CTA_PAGO.recibio), _otraP)) return; }
   var falta=Number(p.saldo)||0;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
@@ -24005,13 +24134,21 @@ function ctaRegistrarPago(id){
      día, método, banco y N° de recibo, se pregunta antes de anotarlo otra vez (el saldo bajaría dos veces). Solo pregunta: puede
      haber dos pagos iguales de verdad. Si se anotó por error, «🗑 Borrar este pago» (§4hk). */
   var _rep=pagoRepetido(p, linea);
-  if(_rep && !confirm('⚠️ Ya hay un pago IGUAL registrado en esta venta:\n\n'+
+  if(_rep && !preguntaYa('⚠️ Ya hay un pago IGUAL registrado en esta venta:\n\n'+
       contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota)+'\n\n'+
-      '¿Anotarlo IGUAL otra vez? (si es el mismo pago, tocá Cancelar: si no, el saldo baja dos veces)')) return;
+      '¿Anotarlo IGUAL otra vez? (si es el mismo pago, tocá Cancelar: si no, el saldo baja dos veces)',
+      { titulo:'Ya hay un pago igual registrado', icono:'⚠️', aviso:true,
+        sub:contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota),
+        lineas:[ 'Si es el mismo pago, no lo anotes otra vez: el saldo bajaría dos veces.' ],
+        no:'No, es el mismo', si:'Es otro pago: anotarlo' }, _otraP)) return;
   if(!_env && falta<=0.005){
-    if(!confirm('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
+    if(!preguntaYa('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
                 '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
-                'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.')) return;
+                'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.',
+        { titulo:'Esta venta ya está pagada', icono:'⚠️', aviso:true,
+          lineas:[ 'No le falta nada por cobrar.', '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?',
+                   'Si en realidad es el flete, tocá «No» y usá el botón 🚚 Recargo por entrega.' ],
+          no:'No, no anotarlo', si:'Anotarlo como cobro de más' }, _otraP)) return;
   }
   if(_env){
     /* Si había un flete PACTADO sin cobrar, este cobro lo reemplaza (no se suma encima):
@@ -24041,7 +24178,10 @@ function ctaRegistrarPago(id){
     return;
   }
   // Con saldo 0 ya se preguntó arriba (§4fk): no se pregunta dos veces lo mismo.
-  if(falta>0.005 && monto>falta+0.005 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
+  if(falta>0.005 && monto>falta+0.005 && !preguntaYa('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?',
+      { titulo:'El pago es mayor que el saldo', icono:'⚠️', aviso:true,
+        lineas:[ 'El pago es de '+fmtBs(monto)+' y lo que falta cobrar es '+fmtBs(falta)+'.', 'Si lo registrás así, la venta queda cobrada de más.' ],
+        no:'✏️ Volver y corregir', si:'💾 Registrarlo igual' }, _otraP)) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
   CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
