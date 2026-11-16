@@ -31918,7 +31918,7 @@ function preguntar(o){
     ov.innerHTML='<div class="preg-c'+(o.peligro?' preg-pel':'')+(o.aviso?' preg-av':'')+'">'+
       '<div class="preg-h"><div class="preg-i" aria-hidden="true">'+esc(o.icono||'❓')+'</div><div class="preg-ht"><h4 id="preg-tit">'+esc(o.titulo||'¿Seguro?')+'</h4>'+(o.sub?('<small>'+esc(o.sub)+'</small>'):'')+'</div></div>'+
       (L.length ? ('<ul class="preg-b">'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>') : '')+
-      (o.campo ? ('<div class="preg-cp"><input type="text" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'"></div>') : '')+
+      (o.campo ? ('<div class="preg-cp"><input type="'+(o.campoClave?'password':'text')+'" autocomplete="off" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'"></div>') : '')+
       '<div class="preg-a">'+(o.solo?'':('<button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button>'))+'<button type="button" class="preg-si">'+esc(o.si||(o.solo?'Entendido':'Sí'))+'</button></div></div>';
     document.body.appendChild(ov);
     PREG_ABIERTAS++;
@@ -31955,7 +31955,7 @@ function preguntar(o){
      sin efecto (leer el formulario, calcular), y un lugar que antes de preguntar ya guardó o mandó algo no puede usarla así.
    · `preguntaTextoYa(texto, valor, o, otraVez)` = el `prompt`: null mientras espera o si cancela; el texto escrito si acepta.
    · `avisoVentana(texto, o)` = el `alert`: la ventana con un solo botón «Entendido»; no frena nada (lo de después sigue).
-   `o` (opcional) = {titulo, sub, lineas, si, no, icono, peligro, aviso}; sin `o`, la ventana se arma del texto (`pregDeTexto`: el primer
+   `o` (opcional) = {titulo, sub, lineas, si, no, icono, peligro, aviso; en el de texto también campoAyuda y campoClave (tapa lo escrito)}; sin `o`, la ventana se arma del texto (`pregDeTexto`: el primer
    renglón es el título y el emoji del principio el dibujo).
    Fuera de la bandera (Playwright sin `PREG_PRUEBA`) las tres hacen lo del navegador de SIEMPRE, con el mismo texto (las pruebas viejas
    contestan diálogos). */
@@ -32035,9 +32035,9 @@ function admAbrirSesion(recuerdo){
 /* ❓ (16/11) Las dos preguntas y los dos avisos en la ventana del panel (al contestar la primera, vuelve a correr y pide la segunda). */
 function changePass(){
   var a=preguntaTextoYa('Nueva contraseña (mínimo 4 caracteres):', '', { icono:'🔑', titulo:'Nueva contraseña', sub:'Mínimo 4 caracteres · queda en este dispositivo',
-    campoAyuda:'mínimo 4 caracteres', no:'Cancelar', si:'Seguir' }, changePass); if(a==null) return;
+    campoAyuda:'mínimo 4 caracteres', campoClave:true, no:'Cancelar', si:'Seguir' }, changePass); if(a==null) return;
   if(a.length<4){ avisoVentana('Muy corta.', { icono:'⚠️', aviso:true, titulo:'Muy corta', lineas:['La contraseña tiene que tener 4 caracteres o más. Tocá «🔑 Cambiar contraseña» otra vez.'] }); return; }
-  var b=preguntaTextoYa('Repetí la nueva contraseña:', '', { icono:'🔑', titulo:'Repetí la nueva contraseña', sub:'Para estar seguros de que la escribiste bien',
+  var b=preguntaTextoYa('Repetí la nueva contraseña:', '', { icono:'🔑', titulo:'Repetí la nueva contraseña', sub:'Para estar seguros de que la escribiste bien', campoClave:true,
     no:'Cancelar', si:'💾 Cambiar la contraseña' }, changePass); if(b==null) return;
   if(a!==b){ avisoVentana('No coinciden.', { icono:'⚠️', aviso:true, titulo:'No coinciden', lineas:['Las dos contraseñas tienen que ser iguales. Tocá «🔑 Cambiar contraseña» otra vez.'] }); return; }
   localStorage.setItem(LS_ADMIN,sha256(a));
