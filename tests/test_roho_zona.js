@@ -38,8 +38,8 @@ const chk = (l, c, e) => { if (e && e.error) c = false; c ? PASS++ : FAIL++; con
     var d = new Date(); d.setDate(d.getDate() + 3);
     var serial = Math.round((d - new Date(Date.UTC(1899, 11, 30))) / 86400000);
     window._filas = function () {
-      var hdr = { A: 'FECHA PROGRAMADA', B: '# NOTA DE VENTA', C: 'DESCRIPCION', D: 'CANTIDAD', E: 'NOMBRE CLIENTE', F: 'DIRECCION', G: 'STATUS' };
-      var f = function (n, dir) { return { A: String(serial), B: n, C: 'COLCHON ECO FLEX 2 PLAZAS 140X190CM', D: '1', E: 'CLIENTE ' + n, F: dir, G: 'PAGADA' }; };
+      var hdr = { A: 'FECHA PROGRAMADA', B: '# NOTA DE VENTA', C: 'DESCRIPCION', D: 'CANTIDAD', E: 'NOMBRE CLIENTE', F: 'DIRECCION', G: 'STATUS', H: 'TELEFONO' };   // (16/11) el teléfono es obligatorio
+      var f = function (n, dir) { return { A: String(serial), B: n, C: 'COLCHON ECO FLEX 2 PLAZAS 140X190CM', D: '1', E: 'CLIENTE ' + n, F: dir, G: 'PAGADA', H: '+59171234567' }; };
       return [hdr, f('R1', 'Av. Banzer 6to anillo, Barrio Las Palmas, calle 3'), f('R2', 'Calle 5 casa 22, ZONA SUR'), f('R3', 'Barrio Mezcla calle 9'), f('R4', 'Calle 5 casa 22, a media cuadra del surtidor')];
     };
   });

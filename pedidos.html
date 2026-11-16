@@ -9441,7 +9441,7 @@ var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
 /* 🗑 `borrado` (28/09, .gs 2026-09-28-a): se guardó con sello una fila que ya no está — la borraron desde otro lado. Es un «no»
    definitivo: reintentarlo no la trae de vuelta, y volver a crearla es un pedido nuevo, a propósito. */
-var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1, feriado:1};   // (30/09) `feriado`: el portero del .gs 2026-09-30-a
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1, feriado:1, falta_cliente:1};   // 🧾 (16/11) `falta_cliente`: .gs 2026-11-16-a   // (30/09) `feriado`: el portero del .gs 2026-09-30-a
 /* «El servidor estaba ocupado» NO es un guardado perdido: al no estar en `RECHAZOS_FIRMES`,
    el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
    anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
@@ -29477,6 +29477,7 @@ function motivoDelServidor(err){
   if(m==='borrado') return 'ese pedido ya no está en la planilla: lo borraron desde otro equipo (o en la hoja) y el servidor no lo vuelve a crear';
   if(m==='celda_llena') return 'no entra en la planilla: una celda de Google aguanta 50.000 letras y esto las pasa. Quedó en la cola de este dispositivo (no se perdió). Avisá a administración para achicarlo';
   if(m==='feriado') return 'ese día es feriado y el camión no sale: elegí otra fecha';
+  if(m==='falta_cliente') return 'el pedido no tiene el nombre del cliente: el servidor no crea un pedido sin nombre';   // 🧾 (16/11, .gs 2026-11-16-a)
   return 'el servidor contestó: '+m.slice(0,80);
 }
 /* 🧾 (27/09) La lectura que está en camino: el cuadrito del saldo la espera en vez de pedir otra (`saldoLeer`, §4gj). */
@@ -55771,9 +55772,14 @@ function xlsxUno(nombre, metodo, crudo, out){
   return new Response(new Blob([crudo]).stream().pipeThrough(new DecompressionStream('deflate-raw')))
     .arrayBuffer().then(function(b){ out[nombre]=new TextDecoder().decode(new Uint8Array(b)); });
 }
+/* 🧾 (16/11) También las entidades en HEXADECIMAL («&#xa;» = salto de línea, «&#xa0;» = espacio duro): el Excel de ROHO las
+   usa y quedaban escritas tal cual en el nombre del cliente y en las observaciones («NATALIA&#xa;CEL.6270…»), y un enlace de
+   Maps de la referencia salía cortado por un «&#xa;». */
 function xmlDes(s){
+  var cp=function(n, crudo){ try{ return (n>0 && n<=0x10FFFF) ? String.fromCodePoint(n) : crudo; }catch(e){ return crudo; } };
   return String(s==null?'':s).replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
-    .replace(/&apos;/g,"'").replace(/&#(\d+);/g,function(_,n){ return String.fromCharCode(+n); })
+    .replace(/&apos;/g,"'").replace(/&#(\d+);/g,function(m,n){ return cp(+n, m); })
+    .replace(/&#[xX]([0-9a-fA-F]+);/g,function(m,h){ return cp(parseInt(h,16), m); })
     .replace(/&amp;/g,'&');
 }
 function xmlTextos(frag){ return (String(frag).match(/<t[^>]*>([\s\S]*?)<\/t>/g)||[]).map(function(t){ return xmlDes(t.replace(/<[^>]*>/g,'')); }).join(''); }
@@ -55963,6 +55969,8 @@ function rohoPartirCombo(desc){
 var ROHO_IMP=null;   // lo leído del Excel, esperando que alguien confirme
 var ROHO_TURNO='AM';
 var ROHO_VIEJOS=false;
+var ROHO_CREANDO=false;      // 🧾 (16/11) «📥 Crear» no corre dos veces a la vez (un doble toque armaba dos tandas en paralelo)
+var ROHO_COMPLETANDO=false;
 
 function abrirImportRoho(){
   var el=document.getElementById('roho-input'); if(!el) return;
@@ -55974,8 +55982,8 @@ function onRohoArchivo(ev){
   f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
     var filas=xlsxHoja(archivos);
     var r=rohoArmarPedidos(filas);
-    if(r.error){ toast('❌ '+r.error,'err',8000); return; }
-    ROHO_IMP=r; ROHO_TURNO='AM'; ROHO_VIEJOS=false;
+    if(r.error){ toast('❌ '+r.error,'err',15000); return; }
+    ROHO_IMP=r; ROHO_TURNO='AM'; ROHO_VIEJOS=false; ROHO_CREANDO=false;
     renderImportRoho();
   }).catch(function(e){
     toast('❌ No se pudo leer el archivo: '+(e&&e.message?e.message:'error'),'err',8000);
@@ -55991,29 +55999,23 @@ function rohoArmarPedidos(filas){
     if(junto.join('|').indexOf('NOTA DE VENTA')>=0){ hdr=filas[i]; iHdr=i; break; }
   }
   if(!hdr) return {error:'No encontré la fila de títulos. ¿Es el reporte «DETALLE NOTA DE VENTA PARA PROVEEDOR»?'};
-  var col={};
-  for(var k in hdr){
-    var t=String(hdr[k]||'').toUpperCase().replace(/[*.]/g,'').replace(/\s+/g,' ').trim();
-    if(/NOTA DE VENTA/.test(t)){ if(!col.nota) col.nota=k; }
-    else if(/FECHA PROGRAMADA/.test(t)) col.fecha=k;
-    else if(/^C[ÓO]DIGO$/.test(t)) col.cod=k;
-    else if(/^DESCRIPCION$/.test(t)) col.desc=k;
-    else if(/^CANTIDAD$/.test(t)) col.cant=k;
-    else if(/NOMBRE CLIENTE/.test(t)) col.cliente=k;
-    else if(/^TELEFONO$/.test(t)) col.tel=k;
-    else if(/WHATSAPP/.test(t)) col.wa=k;
-    else if(/^DIRECCION$/.test(t)) col.dir=k;
-    else if(/DESCRIPCION DE DOMICILIO/.test(t)) col.ref=k;
-    else if(/QUIEN RECIBE/.test(t)) col.recibe=k;
-    else if(/CI ?\/ ?NIT/.test(t)) col.nit=k;
-    else if(/^STATUS$/.test(t)) col.status=k;
-  }
+  var col=rohoColumnas(hdr);
+  /* 🧾 (16/11, dueño: «algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos»)
+     LAS COLUMNAS DEL CLIENTE SON OBLIGATORIAS. Antes solo se exigían nota, fecha y producto: un Excel sin «NOMBRE CLIENTE»
+     (o con el título cambiado) se importaba ENTERO con el cliente, el celular y la dirección vacíos, sin avisar — así
+     entraron 18 pedidos el sábado 15/11 a la noche. Ahora, si falta una de estas columnas, no se importa NADA y se dice cuál. */
   var faltan=[];
   if(!col.nota) faltan.push('N° NOTA DE VENTA');
   if(!col.fecha) faltan.push('FECHA PROGRAMADA');
   if(!col.desc) faltan.push('DESCRIPCION');
-  if(faltan.length) return {error:'Al Excel le faltan columnas: '+faltan.join(', ')+'.'};
+  if(!col.cliente) faltan.push('NOMBRE CLIENTE');
+  if(!col.tel && !col.wa) faltan.push('TELEFONO o WHATSAPP');
+  if(!col.dir && !col.ref) faltan.push('DIRECCION');
+  if(faltan.length) return {error:'Al Excel le faltan columnas: '+faltan.join(', ')+'. No importé nada, para no cargar pedidos sin los datos del cliente. ¿Es el reporte «DETALLE NOTA DE VENTA PARA PROVEEDOR» completo?', faltanCols:faltan};
 
+  var txt=function(f,k){ return k ? String(f[k]==null?'':f[k]).replace(/\s+/g,' ').trim() : ''; };
+  /* 🧩 UNA NOTA, VARIAS FILAS: los datos del cliente se juntan de TODAS. Antes se tomaban solo de la primera fila de la
+     nota: si esa venía con el nombre (o el celular, o la dirección) vacío y la segunda lo traía, el pedido salía sin él. */
   var porNota={}, orden=[];
   for(var r=iHdr+1;r<filas.length;r++){
     var f=filas[r];
@@ -56021,36 +56023,22 @@ function rohoArmarPedidos(filas){
     var desc=String(f[col.desc]==null?'':f[col.desc]).trim();
     if(!oc || !desc) continue;
     if(!porNota[oc]){
-      var dir=String((col.dir?f[col.dir]:'')||'').replace(/\s*,\s*(santa cruz de la sierra|bolivia)\s*/gi,' ').replace(/\s+/g,' ').trim();
-      var ref=String((col.ref?f[col.ref]:'')||'').replace(/\s+/g,' ').trim();
-      var recibe=String((col.recibe?f[col.recibe]:'')||'').replace(/\s+/g,' ').trim();
-      var cliente=String((col.cliente?f[col.cliente]:'')||'').replace(/\s+/g,' ').trim();
-      var tel=rohoCel(col.tel?f[col.tel]:''), wa=rohoCel(col.wa?f[col.wa]:'');
-      var obs=[];
-      if(ref) obs.push('📍 '+ref);
-      /* La columna «NOTAS / QUIEN RECIBE» del Excel va SIEMPRE a las observaciones —pedido
-         del dueño—. A veces es solo el nombre del cliente, pero otras dice quién más puede
-         recibir («… O MICAELA GUZMAN») o qué le tienen que entregar, y eso el chofer lo
-         necesita en la mano. */
-      if(recibe) obs.push('Recibe: '+recibe);
-      if(tel && wa && tel!==wa) obs.push('WhatsApp: '+wa);
-      obs.push('Importado del Excel de ROHO');
-      porNota[oc]={
-        oc:oc, fecha:xlsxFecha(f[col.fecha]), cliente:cliente,
-        celular: tel || wa,
-        direccion: dir || ref, zona: rohoZona(dir+' '+ref), zonaPor:'',
-        nit: String((col.nit?f[col.nit]:'')||'').replace(/\s+/g,' ').trim(),
-        pagado: rohoPagado(col.status?f[col.status]:''),
-        estadoRaro: !rohoEstadoConocido(col.status?f[col.status]:''),
-        estadoTxt: String((col.status?f[col.status]:'')||'').trim(),
-        obs: obs.join(' · '), productos:[], combos:0, malo:''
-      };
+      porNota[oc]={ oc:oc, d:{ fecha:'', cliente:'', tel:'', wa:'', dir:'', ref:'', recibe:'', nit:'', status:'' },
+                    productos:[], combos:0, malo:'', nombres:[] };
       orden.push(oc);
-      /* 🗺️ (mejora 384) sin zona en la dirección: el barrio escrito, si los pedidos del equipo con ese barrio dicen casi siempre la misma */
-      if(!porNota[oc].zona && rohoZonaActiva()){ var _zb=rohoZonaBarrio(dir+' '+ref); if(_zb){ porNota[oc].zona=_zb.zona; porNota[oc].zonaPor='barrio'; porNota[oc].zonaB=_zb.b;
-        porNota[oc].obs=porNota[oc].obs.replace(/Importado del Excel de ROHO$/, '🗺️ zona ≈ '+_zb.zona+' por el barrio escrito ('+_zb.b+') · Importado del Excel de ROHO'); } }
     }
-    var p=porNota[oc];
+    var p=porNota[oc], d=p.d;
+    var fFila=xlsxFecha(f[col.fecha]); if(!d.fecha && fFila) d.fecha=fFila;
+    var cli=txt(f,col.cliente);
+    if(cli && p.nombres.indexOf(cli)<0) p.nombres.push(cli);
+    if(!d.cliente && cli) d.cliente=cli;
+    if(!d.tel) d.tel=rohoCel(col.tel?f[col.tel]:'');
+    if(!d.wa) d.wa=rohoCel(col.wa?f[col.wa]:'');
+    if(!d.dir) d.dir=txt(f,col.dir).replace(/\s*,\s*(santa cruz de la sierra|bolivia)\s*/gi,' ').replace(/\s+/g,' ').trim();
+    if(!d.ref) d.ref=txt(f,col.ref);
+    if(!d.recibe) d.recibe=txt(f,col.recibe);
+    if(!d.nit) d.nit=txt(f,col.nit);
+    if(!d.status) d.status=String((col.status?f[col.status]:'')||'').trim();
     var cant=rohoCant(f[col.cant]);
     if(cant===null){
       // No se inventa un 1: se marca la nota entera y no se importa (ver `rohoCant`).
@@ -56069,6 +56057,7 @@ function rohoArmarPedidos(filas){
                          codigo:(hit&&hit.code)?hit.code:(partes.length>1?'':codRoho), cant:cant });
     });
   }
+  orden.forEach(function(oc){ rohoArmarNota(porNota[oc]); });
   /* 📅 SE IMPORTAN LAS ENTREGAS FUTURAS: de MAÑANA en adelante.
      Regla del dueño: «si hoy es 05 de septiembre, agendar los del 06 en adelante». El
      camión de hoy ya está armado y salió — meterle una entrega más no la hace llegar.
@@ -56076,19 +56065,170 @@ function rohoArmarPedidos(filas){
      alguien decide traerla igual.
      ⚠️ Y ANTES QUE NADA: si esa nota YA está cargada, no se toca. Se compara por N° de
      nota (en ROHO es el N° de OC) sin importar la fecha, así importar el mismo Excel todas
-     las semanas solo agrega lo nuevo. */
-  var desde=tomorrowStr(), nuevos=[], viejos=[], yaEstan=[], sinFecha=[], malos=[];
+     las semanas solo agrega lo nuevo.
+     🩹 (16/11) …salvo para COMPLETAR lo que le falta: una nota ya cargada con el cliente, el celular o la dirección vacíos
+     y que este Excel sí trae va a `completar` (botón aparte; solo llena lo vacío, nunca pisa lo escrito). */
+  var desde=tomorrowStr(), nuevos=[], viejos=[], yaEstan=[], sinFecha=[], malos=[], completar=[];
   orden.forEach(function(oc){
     var p=porNota[oc];
     var dup=ocRepetidaRoho(p.oc, null);
-    if(dup){ p.dup=dup; yaEstan.push(p); }
-    else if(p.malo) malos.push(p);              // dato ilegible: no se importa (§4cl)
+    if(dup){ p.dup=dup; yaEstan.push(p);
+      /* Se ofrece completar si le falta el cliente, el celular o la dirección, o si todavía no se entregó (una entrega de agosto
+         ya hecha no necesita la referencia que le faltaba). */
+      var cmp=rohoQueCompletar(dup, p), clave=cmp.some(function(k){ return k==='cliente'||k==='celular'||k==='direccion'; });
+      var pend=!dup.entregado && (!dup.fecha || dup.fecha>=todayStr());
+      if(cmp.length && (clave||pend)){ p.completa=cmp; completar.push(p); } }
+    else if(p.malo) malos.push(p);              // dato ilegible o sin nombre del cliente: no se importa (§4cl, 16/11)
     else if(!p.fecha) sinFecha.push(p);
     else if(p.fecha<desde) viejos.push(p);
     else nuevos.push(p);
   });
-  return { nuevos:nuevos, viejos:viejos, yaEstan:yaEstan, sinFecha:sinFecha, malos:malos,
-           filas:filas.length-iHdr-1 };
+  return { nuevos:nuevos, viejos:viejos, yaEstan:yaEstan, sinFecha:sinFecha, malos:malos, completar:completar,
+           cols:col, filas:filas.length-iHdr-1 };
+}
+/* 🧾 (16/11) Qué columna es cada dato. Los títulos se comparan sin tildes, sin «*» ni puntos y con los espacios juntados
+   (ROHO escribe «WHATSAPP *», «DIRECCION *», «*DESCRIPCION DE DOMICILIO»); acepta también las variantes obvias
+   («NOMBRE DEL CLIENTE», «CELULAR», «DIRECCIÓN») para que un cambio chico del reporte no deje una columna sin leer. */
+function rohoColumnas(hdr){
+  var col={};
+  for(var k in hdr){
+    var t=sinTildes(hdr[k]).toUpperCase().replace(/[*.:]/g,' ').replace(/\s+/g,' ').trim();
+    if(!t) continue;
+    if(/NOTA DE VENTA/.test(t) && !/FECHA/.test(t)){ if(!col.nota) col.nota=k; }
+    else if(/FECHA PROGRAMADA|FECHA DE ENTREGA/.test(t)){ if(!col.fecha) col.fecha=k; }
+    else if(/^COD(IGO)?$/.test(t)){ if(!col.cod) col.cod=k; }
+    else if(/^DESCRIPCION( DEL PRODUCTO)?$|^PRODUCTO$/.test(t)){ if(!col.desc) col.desc=k; }
+    else if(/^CANTIDAD$|^CANT$/.test(t)){ if(!col.cant) col.cant=k; }
+    else if(/^NOMBRE (DEL )?CLIENTE$|^CLIENTE$|^NOMBRE$/.test(t)){ if(!col.cliente) col.cliente=k; }
+    else if(/^(TELEFONO|CELULAR|TEL|CEL)$/.test(t)){ if(!col.tel) col.tel=k; }
+    else if(/WHATSAPP/.test(t)){ if(!col.wa) col.wa=k; }
+    else if(/^DIRECCION( DE ENTREGA)?$/.test(t)){ if(!col.dir) col.dir=k; }
+    else if(/DESCRIPCION DE DOMICILIO|REFERENCIA/.test(t)){ if(!col.ref) col.ref=k; }
+    else if(/QUIEN RECIBE/.test(t)){ if(!col.recibe) col.recibe=k; }
+    else if(/^CI ?\/ ?NIT$|^NIT$|^CI$/.test(t)){ if(!col.nit) col.nit=k; }
+    else if(/^STATUS$|^ESTADO$/.test(t)){ if(!col.status) col.status=k; }
+  }
+  return col;
+}
+/* 🗺️ (16/11) Un enlace de Google Maps escrito en la dirección o en la referencia: es el pin que mandó el cliente. */
+function rohoMapsDe(t){
+  var m=String(t||'').match(/https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+)[^\s,;]*/i);
+  return m ? m[0].replace(/[).]+$/,'') : '';
+}
+/* Arma el pedido de una nota con lo juntado de todas sus filas. */
+function rohoArmarNota(p){
+  var d=p.d, dir=d.dir, ref=d.ref, recibe=d.recibe;
+  var obs=[];
+  if(ref) obs.push('📍 '+ref);
+  /* La columna «NOTAS / QUIEN RECIBE» del Excel va SIEMPRE a las observaciones —pedido
+     del dueño—. A veces es solo el nombre del cliente, pero otras dice quién más puede
+     recibir («… O MICAELA GUZMAN») o qué le tienen que entregar, y eso el chofer lo
+     necesita en la mano. */
+  if(recibe) obs.push('Recibe: '+recibe);
+  if(d.tel && d.wa && d.tel!==d.wa) obs.push('WhatsApp: '+d.wa);
+  if(p.nombres.length>1) obs.push('⚠️ El Excel trae otro nombre en la misma nota: '+p.nombres.slice(1).join(' / '));
+  obs.push('Importado del Excel de ROHO');
+  p.fecha=d.fecha; p.cliente=d.cliente;
+  p.celular=d.tel || d.wa;
+  p.direccion=dir || ref; p.maps=rohoMapsDe(dir+' '+ref);
+  p.zona=rohoZona(dir+' '+ref); p.zonaPor='';
+  p.nit=d.nit;
+  p.pagado=rohoPagado(d.status); p.estadoRaro=!rohoEstadoConocido(d.status); p.estadoTxt=d.status;
+  p.obs=obs.join(' · ');
+  /* 🗺️ (mejora 384) sin zona en la dirección: el barrio escrito, si los pedidos del equipo con ese barrio dicen casi siempre la misma */
+  if(!p.zona && rohoZonaActiva()){ var _zb=rohoZonaBarrio(dir+' '+ref); if(_zb){ p.zona=_zb.zona; p.zonaPor='barrio'; p.zonaB=_zb.b;
+    p.obs=p.obs.replace(/Importado del Excel de ROHO$/, '🗺️ zona ≈ '+_zb.zona+' por el barrio escrito ('+_zb.b+') · Importado del Excel de ROHO'); } }
+  /* 🧾 (16/11) SIN EL NOMBRE DEL CLIENTE NO SE CREA. Ni con la columna presente: si ninguna fila de la nota lo trae, la nota va
+     a «no se pueden» con el motivo, como una cantidad ilegible. Un pedido sin nombre no se puede entregar ni cobrar. */
+  if(!p.malo && !p.cliente) p.malo='el Excel no trae el NOMBRE DEL CLIENTE de esta nota';
+  return p;
+}
+/* 🩹 (16/11) Lo que una nota YA cargada tiene vacío y este Excel sí trae. Solo lo vacío: lo que alguien escribió no se toca. */
+function rohoQueCompletar(dup, p){
+  if(!dup || !p) return [];
+  var vacio=function(v){ return !String(v==null?'':v).trim(); }, q=[];
+  if(vacio(dup.cliente) && p.cliente) q.push('cliente');
+  if(vacio(dup.celular) && p.celular) q.push('celular');
+  if(vacio(dup.direccion) && p.direccion) q.push('direccion');
+  if(vacio(dup.zona) && p.zona) q.push('zona');
+  if(vacio(dup.nit) && p.nit) q.push('nit');
+  if(vacio(dup.maps) && p.maps) q.push('maps');
+  if(rohoObsFaltan(dup.observaciones, p.obs).length) q.push('observaciones');
+  return q;
+}
+/* Los pedazos de las observaciones del Excel (referencia, «Recibe:», WhatsApp) que la nota cargada no tiene. */
+function rohoObsFaltan(obsCargada, obsExcel){
+  /* Se compara sin mayúsculas, con los espacios juntados y con las entidades ya traducidas: una nota cargada antes del 16/11
+     guarda «Recibe: NATALIA&#xa;CEL…» y es lo MISMO que «Recibe: NATALIA CEL…»; no se repite. */
+  var norm=function(t){ return xmlDes(t).replace(/\s+/g,' ').trim().toLowerCase(); };
+  var ya=norm(obsCargada);
+  return String(obsExcel||'').split(' · ').filter(function(t){
+    t=String(t||'').trim();
+    return t && !/^Importado del Excel de ROHO$/.test(t) && !/^🗺️ zona ≈/.test(t) && ya.indexOf(norm(t))<0;
+  });
+}
+/* 🧾 (16/11) Qué columnas del cliente se leyeron: a la vista en la vista previa, para que un reporte cambiado no pase callado. */
+function rohoColumnasHtml(R){
+  var c=(R&&R.cols)||{};
+  var it=[['cliente','Nombre'],['tel','Teléfono'],['wa','WhatsApp'],['dir','Dirección'],['ref','Referencia'],['recibe','Quién recibe'],['nit','CI / NIT']];
+  return '<div class="roho-cols" style="font-size:.76rem;color:var(--muted);margin-top:9px">🧾 Columnas del cliente que leí del Excel: '+
+    it.map(function(x){ return c[x[0]] ? ('<span style="color:#0f766e">✓ '+x[1]+'</span>') : ('<b style="color:#a15c00">✗ '+x[1]+' (no está)</b>'); }).join(' · ')+'</div>';
+}
+var ROHO_CAMPO_TXT={ cliente:'cliente', celular:'celular', direccion:'dirección', zona:'zona', nit:'CI/NIT', maps:'ubicación', observaciones:'referencia / quién recibe' };
+/* 🩹 (16/11) Las notas YA cargadas a las que este Excel les puede completar lo vacío. */
+function rohoCompletarHtml(R){
+  var L=(R&&R.completar)||[]; if(!L.length) return '';
+  var sinNom=L.filter(function(p){ return p.completa.indexOf('cliente')>=0; }).length;
+  return '<div id="roho-completar" style="background:#ecfdf5;border:1px solid #99e2c8;border-left:4px solid #0f766e;border-radius:10px;padding:10px 13px;margin-top:11px;font-size:.83rem;color:#0b4f45">'+
+    '🩹 <b>'+L.length+'</b> pedido'+(L.length===1?'':'s')+' que ya estaba'+(L.length===1?'':'n')+' cargado'+(L.length===1?'':'s')+' tiene'+(L.length===1?'':'n')+' datos vacíos que este Excel sí trae'+
+    (sinNom?(' — <b style="color:#8a1c24">'+sinNom+' sin el nombre del cliente</b>'):'')+'. '+
+    'Completarlos solo llena lo que está vacío: no cambia la fecha, el turno, los productos ni nada que alguien haya escrito.<br>'+
+    L.slice(0,8).map(function(p){ return '· Nota <b>'+esc(p.oc)+'</b>'+(p.dup&&p.dup.fecha?(' (entrega '+esc(fmtFecha(p.dup.fecha))+')'):'')+' → '+esc(p.cliente||'')+': '+
+      esc(p.completa.map(function(k){ return ROHO_CAMPO_TXT[k]||k; }).join(', ')); }).join('<br>')+
+    (L.length>8?('<br>… y '+(L.length-8)+' más'):'')+
+    '<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      '<button type="button" id="roho-completar-btn" class="btn btn-sm" style="background:#0f766e;color:#fff" onclick="rohoCompletar()">🩹 Completar '+(L.length===1?'el pedido':('los '+L.length))+'</button>'+
+      '<span id="roho-completar-prog"></span></div></div>';
+}
+function rohoCompletar(){
+  var R=ROHO_IMP; if(!R || !R.completar || !R.completar.length) return;
+  if(ROHO_COMPLETANDO){ toast('⏳ Ya se están completando: esperá a que termine.','err'); return; }
+  ROHO_COMPLETANDO=true;
+  var btn=document.getElementById('roho-completar-btn'); if(btn){ btn.disabled=true; btn.style.opacity='.55'; }
+  var pinta=function(h){ var e=document.getElementById('roho-completar-prog'); if(e) e.innerHTML=h; };
+  var lista=R.completar.slice(), hechos=[], cola=[], nada=[], fallos=[], i=0;
+  var uno=function(){
+    if(i>=lista.length){
+      ROHO_COMPLETANDO=false;
+      R.completar=lista.filter(function(p){ return fallos.some(function(f){ return f.oc===p.oc; }); });
+      pinta((hechos.length?('✅ <b>'+hechos.length+'</b> completado'+(hechos.length===1?'':'s')+' en la planilla: '+esc(hechos.join(', '))):'')+
+        (cola.length?('<br>⏳ <b>'+cola.length+'</b> quedaron en este aparato sin enviar (sin conexión): se mandan solos — '+esc(cola.join(', '))):'')+
+        (nada.length?('<br>↩️ '+nada.length+' ya estaban completos: '+esc(nada.join(', '))):'')+
+        (fallos.length?('<br><b style="color:#8a1c24">❌ '+fallos.length+' no:</b> '+esc(fallos.map(function(f){ return f.oc+' ('+f.motivo+')'; }).join(' · '))+' — volvé a subir el Excel para reintentar.'):''));
+      toast(fallos.length?('🩹 Completados '+hechos.length+' · '+fallos.length+' no'):('🩹 '+(hechos.length+cola.length)+' pedido'+((hechos.length+cola.length)===1?'':'s')+' de ROHO completado'+((hechos.length+cola.length)===1?'':'s')), fallos.length?'err':'ok', 7000);
+      return;
+    }
+    var p=lista[i++];
+    pinta('<span class="spin"></span> Completando '+i+' de '+lista.length+'… (nota '+esc(p.oc)+')');
+    var cur=null; for(var j=0;j<STATE.length;j++){ if(p.dup && STATE[j].id===p.dup.id){ cur=STATE[j]; break; } }
+    if(!cur){ fallos.push({oc:p.oc, motivo:'ya no está en la planilla'}); setTimeout(uno,0); return; }
+    var q=rohoQueCompletar(cur, p);
+    if(!q.length){ nada.push(p.oc); setTimeout(uno,0); return; }
+    var rec=JSON.parse(JSON.stringify(cur));
+    q.forEach(function(k){
+      if(k==='observaciones'){
+        var add=rohoObsFaltan(cur.observaciones, p.obs);
+        rec.observaciones=add.join(' · ')+(String(cur.observaciones||'').trim()?(' · '+String(cur.observaciones).trim()):'');
+      } else rec[k]=p[k];
+    });
+    persistPedido(rec).then(function(res){
+      if(res && res.ok) hechos.push(p.oc);
+      else if(res && res.local) cola.push(p.oc);
+      else fallos.push({oc:p.oc, motivo:(res&&res.error==='conflicto')?'otra persona lo cambió recién':(res&&(res.error||res.motivo))||'el servidor no lo aceptó'});
+      setTimeout(uno,0);
+    }, function(e){ fallos.push({oc:p.oc, motivo:String(e&&e.message||e||'error')}); setTimeout(uno,0); });
+  };
+  uno();
 }
 /* Los que se van a crear con lo que está elegido ahora. */
 function rohoElegidos(){
@@ -56162,6 +56302,8 @@ function renderImportRoho(){
         'No se inventa nada: corregilo en ROHO y volvé a subir el archivo.<br>'+
         R.malos.slice(0,6).map(function(p){ return '· Nota <b>'+esc(p.oc)+'</b> ('+esc(p.cliente||'sin cliente')+'): '+esc(p.malo); }).join('<br>')+
         (R.malos.length>6?('<br>… y '+(R.malos.length-6)+' más'):'')+'</div>'):'')+
+      rohoCompletarHtml(R)+
+      rohoColumnasHtml(R)+
       (R.viejos.length?('<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.82rem;cursor:pointer">'+
         '<input type="checkbox" '+(ROHO_VIEJOS?'checked':'')+' onchange="rohoToggleViejos()" style="margin-top:3px">'+
         '<span>Traer también las <b>'+R.viejos.length+'</b> de hoy o de antes (la más vieja: '+esc(fmtFecha(R.viejos.map(function(p){return p.fecha;}).sort()[0]))+'). '+
@@ -56179,7 +56321,7 @@ function renderImportRoho(){
       '</div>'):'')+
       tabla+
       '<div class="modal-actions" style="margin-top:14px">'+
-        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:190px;background:#6d28d9'+(elegidos.length?'':';opacity:.5')+'" onclick="confirmarImportRoho()">📥 Crear '+elegidos.length+' pedido'+(elegidos.length===1?'':'s')+'</button>'+
+        '<button class="btn btn-primary btn-sm roho-crear" style="flex:1;min-width:190px;background:#6d28d9'+(elegidos.length?'':';opacity:.5')+'" onclick="confirmarImportRoho()">📥 Crear '+elegidos.length+' pedido'+(elegidos.length===1?'':'s')+'</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
       '</div>'+
       '<div id="roho-progreso" style="margin-top:10px;font-size:.82rem"></div>'+
@@ -56190,6 +56332,9 @@ function renderImportRoho(){
 function confirmarImportRoho(){
   var lista=rohoElegidos();
   if(!lista.length){ toast('No hay nada para importar.','err'); return; }
+  if(ROHO_CREANDO){ toast('⏳ Ya se están creando los pedidos: esperá a que termine.','err'); return; }
+  ROHO_CREANDO=true;
+  try{ var _bc=document.querySelector('#modal-box .roho-crear'); if(_bc){ _bc.disabled=true; _bc.style.opacity='.5'; } }catch(e){}
   var prog=document.getElementById('roho-progreso');
   var fallos=[], creados=[], pendientes=[], i=0;
   /* ⚖️ REPARTIR: se llena el AM de cada día hasta el tope y recién ahí se pasa a PM.
@@ -56211,6 +56356,7 @@ function confirmarImportRoho(){
   var pintar=function(txt){ if(prog) prog.innerHTML=txt; };
   var uno=function(){
     if(i>=lista.length){
+      ROHO_CREANDO=false;
       saveMirror(); updateStats(); renderAdmin(); refreshCarga(); updateFooter();
       renderImportRohoFin(creados, pendientes, fallos);
       var malas=fallos.length+pendientes.length;
@@ -56220,11 +56366,13 @@ function confirmarImportRoho(){
       return;
     }
     var p=lista[i++];
+    /* 🧾 (16/11) Última barrera: un pedido sin el nombre del cliente NO se crea, venga de donde venga la lista. */
+    if(!String(p.cliente||'').trim()){ fallos.push({oc:p.oc, motivo:'no tiene el nombre del cliente: no se creó'}); setTimeout(uno,0); return; }
     pintar('Creando '+i+' de '+lista.length+'… (nota '+esc(p.oc)+')');
     var rec={
       id: uid(), fecha:p.fecha, nota:'', oc:p.oc, vendedor:'ROHO',
       cliente:p.cliente, productos:p.productos.slice(),
-      celular:p.celular, turno:turnoDe(p), zona:p.zona, direccion:p.direccion, maps:'',
+      celular:p.celular, turno:turnoDe(p), zona:p.zona, direccion:p.direccion, maps:p.maps||'',
       pagado:!!p.pagado, metodoPago:'', cobradoBs:0, acuenta:0, saldo:0,
       observaciones:p.obs, garantia:'', facturarA:'', nit:p.nit,
       estado:'', entregado:false, verificado:false, vehiculo:'', chofer:'',
@@ -56246,6 +56394,7 @@ function confirmarImportRoho(){
           e==='dia_cerrado'  ? ('el '+fmtFecha(p.fecha)+' está cerrado') :
           e==='feriado'      ? ('el '+fmtFecha(p.fecha)+' es feriado'+(res.nombre?(' ('+res.nombre+')'):'')+' y el camión no sale: cargalo con otra fecha') :   // (30/09) portero del .gs 2026-09-30-a
           e==='oc_repetida'  ? ('esa nota ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')) :
+          e==='falta_cliente'? 'no tiene el nombre del cliente' :
           (e||'el servidor no lo aceptó')});
       }
       setTimeout(uno,0);

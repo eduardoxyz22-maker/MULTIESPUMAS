@@ -18905,3 +18905,16 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - `test_atc_lista_arriba` cambió a conciencia: la caja `atc-ia` (359) no cuenta en el orden de la 375. `test_actualizar_espera` 4c/5a falla igual con `main`: no es de esto.
 - Ideas visuales 390-440 (4 agentes, fotos de antes y después): https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183.
 
+
+
+### §4qc — ROHO: pedidos sin nombre de cliente (16/11)
+El dueño subió `DETALLE_NOTA_DE_VENTA_PARA_PROVEEDO_7.xlsx`: *«algunos pedidos salen sin nombre de cliente siendo que están… eso es gravísimo si no tomas
+todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
+- **Lo que pasó**: 18 pedidos de ROHO (notas 195621-195980, entregas 17-28/11) creados el sábado 15/11 entre 21:37 y 21:47 con TODAS las columnas del
+  cliente vacías (nombre, celular, dirección, NIT, quién recibe), solo nota/fecha/productos/pagado. Con el mismo Excel, el importador publicado (también
+  achicado) y el de la rama leen las 54 notas con nombre. Los 18 se crearon de a dos, intercalados y sin esperar la respuesta del anterior (el botón crea de
+  a uno en el orden del Excel): no salieron del botón con ese archivo (otro archivo u otro programa usando la página). La carga de las 08:12 del 16/11 salió bien.
+- **El agujero**: el importador solo exigía nota, fecha y producto; sin la columna del cliente (o con el título cambiado: «NOMBRE DEL CLIENTE»,
+  «DIRECCIÓN», «TELÉFONO») importaba igual, en silencio. Además tomaba el nombre SOLO de la primera fila de la nota y no traducía `&#xa;`/`&#xa0;`
+  (1 nombre y 9 observaciones de la planilla los tienen escritos tal cual).
+- **Hecho**: ver CLAUDE.md «🧾 ROHO: ningún pedido sin el nombre del cliente». Servidor 16-a con `falta_cliente`. Volver a subir el Excel completa los 18.

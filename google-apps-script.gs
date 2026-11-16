@@ -1465,7 +1465,7 @@ function getCacheOlvidar_() {
    ========================================================================== */
 var RECHAZOS_HOJA = 'Rechazos';
 var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
-var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1, borrado:1, feriado:1 };
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1, borrado:1, feriado:1, falta_cliente:1 };
 var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
 var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
 
@@ -1490,6 +1490,7 @@ function rechazoDetalle_(body, o) {
   if (o.error === 'oc_repetida' && o.otro) d.push('la tiene ' + (o.otro.cliente || 'otro pedido'));
   if (o.error === 'cupos_llenos' && o.turno) d.push('turno ' + o.turno + ' lleno');
   if (o.error === 'feriado') d.push('feriado' + (o.nombre ? (': ' + o.nombre) : '') + ' (el camión no sale)');
+  if (o.error === 'falta_cliente') d.push('pedido nuevo SIN el nombre del cliente: no se creó');
   if (o.error === 'actualizar') d.push('panel viejo (de antes del ' + SCRIPT_VERSION + '): esa computadora tiene que recargar la página');
   if (o.motivo) d.push(String(o.motivo));
   if (String(p.id || '').indexOf('__ret_') === 0) d.push('RETIRO DE EFECTIVO ' + (p.acuenta != null ? ('Bs ' + p.acuenta) : ''));
@@ -2576,6 +2577,13 @@ function cuposBaseGs_(fecha, turno) {
 /* 🎟️ (2026-11-14-b, mejora 267) `aparto` = el id del lugar que la vendedora apartó mientras cobraba (`apartarCupo_`): el portero no lo cuenta
    como de otro y, guardado bien, se suelta. (revisión del 14/11) `aparato` = el aparato que guarda (el texto que manda `apartarCupo`): si el
    guardado llega SIN `aparto` (la cola, un reintento), un apartado de ese aparato para ese día y turno tampoco lo frena, y se suelta igual. */
+/** 🧾 (2026-11-16-a) ¿Es un pedido (no una fila del sistema ni un borrador de Kommo) sin el nombre del cliente? */
+function pedidoSinCliente_(p) {
+  var id = String((p && p.id) || '');
+  if (!id || id.indexOf('__') === 0 || id.indexOf('kommo-') === 0) return false;
+  if (String((p && p.estado) || '').toLowerCase().indexOf('borrador') >= 0) return false;
+  return !String((p && p.cliente) || '').replace(/\s+/g, ' ').trim();
+}
 function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa, tr4, aparto, aparato) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
@@ -2646,6 +2654,14 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa, tr4,
      · Las filas fijas del sistema (`filaFijaSistema_`) pueden volver a nacer. Los retiros no: son plata. */
   if (foundRow < 0 && (Number(p.rev) || 0) > 0 && !filaFijaSistema_(p.id)) {
     return jsonOut({ ok:false, error:'borrado', version:SCRIPT_VERSION, id:String(p.id), ahora: Date.now() });
+  }
+  /* 🧾 (2026-11-16-a; dueño, 16/11: «algunos pedidos salen sin nombre de cliente siendo que están… es gravísimo») UN PEDIDO NUEVO
+     SIN EL NOMBRE DEL CLIENTE NO ENTRA, lo mande quien lo mande (el formulario, el importador de ROHO, la cola de un aparato u otro
+     programa). El sábado 15/11 entraron 18 pedidos de ROHO con el cliente, el celular y la dirección vacíos. Solo frena una fila
+     NUEVA: corregir o completar una que ya está pasa como siempre (así se arreglan esas 18). Quedan afuera las filas del sistema
+     (`__…`, también los retiros) y los borradores de Kommo, que nacen sin todo a propósito. */
+  if (foundRow < 0 && pedidoSinCliente_(p)) {
+    return jsonOut({ ok:false, error:'falta_cliente', version:SCRIPT_VERSION, id:String(p.id), oc:ocTexto_(p.oc) });
   }
   /* 📦 (2026-10-30-a) UNA PÁGINA SIN F5 NO LE PONE DÍA A UNA VENTA QUE «AVISA CUÁNDO». La página de antes no conoce la casilla: abre esa
      venta con la fecha de HOY, no deja guardar sin elegir un día (desde mañana) y la vendedora pondría uno cualquiera para corregir otra

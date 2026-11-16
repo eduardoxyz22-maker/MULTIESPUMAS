@@ -982,6 +982,18 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
 - ⏸️ `mayoristas_vencido` (181) APAGADO desde la 16-a (dueño: «A»): `WA_MV_ACTIVO=1` lo prende (`prenderMayoristasVencido`).
 - Página de las ideas visuales 390-440 con fotos de antes y después: https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183 (nada programado).
 
+## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; EN LA RAMA, sin publicar)
+El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
+Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón
+(los pedidos se crearon de a dos, intercalados; el botón crea de a uno). El agujero del panel: solo exigía nota, fecha y producto.
+- `rohoArmarPedidos` → `rohoColumnas` (títulos sin tildes ni «*», variantes «NOMBRE DEL CLIENTE», «CELULAR», «DIRECCIÓN»): sin NOMBRE CLIENTE, sin
+  TELEFONO/WHATSAPP o sin DIRECCION/REFERENCIA **no importa nada** y lo dice. Una nota en varias filas junta los datos de TODAS (`rohoArmarNota`); sin
+  nombre en ninguna va a «no se pueden». `xmlDes` traduce las entidades hex (`&#xa;`, `&#xa0;`); el enlace de Maps de la referencia va a `maps` (`rohoMapsDe`).
+- «📥 Crear» no corre dos veces (`ROHO_CREANDO`) y no crea uno sin nombre. 🩹 Volver a subir el Excel ofrece **Completar** las notas ya cargadas
+  (`rohoQueCompletar`, `rohoCompletar`): solo lo vacío; solo si falta cliente/celular/dirección o todavía no se entregó; nunca fecha, turno ni productos.
+- Servidor **2026-11-16-a**: `pedidoSinCliente_` → `falta_cliente` para una fila NUEVA sin cliente (no sistema, no retiro, no borrador de Kommo); en
+  `RECHAZOS_FIRMES` y `motivoDelServidor`. ⚠️ Un camino nuevo que cree pedidos tiene que mandar `cliente`. `tests/test_roho_cliente.js` (40; 37 rojas contra lo de antes).
+
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio
