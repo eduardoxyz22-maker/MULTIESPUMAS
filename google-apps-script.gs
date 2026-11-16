@@ -7687,7 +7687,7 @@ function waRepasoBot_() {
     } else {
       res.errores++;
       if (m.k === 'rec') recHechos.push(m.id);
-      if (m.k === 'cs' && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0) csFalta.push(m.cot);   // 🧾 Meta todavía no la aprobó: que salga cuando la aprueben
+      if (m.k === 'cs' && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0 && WA_PLANTILLA_LARGA.indexOf(r.ec) < 0) csFalta.push(m.cot);   // 🧾 Meta todavía no la aprobó: que salga cuando la aprueben (16-a: «demasiado largo» no es eso: va a error)
       else if (m.k === 'cs') csErr.push({ id:m.cot, detalle:r.detalle });   // 🧾 (revisión del 14/11) otro error: no salió y no se reintenta a ciegas (`bot = 'error'`)
       filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
     }
