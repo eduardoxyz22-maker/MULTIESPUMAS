@@ -5185,6 +5185,7 @@ a.rev-ped{ display:inline-block; padding:6px 4px; min-height:28px; box-sizing:bo
 .fd-plg-sum::-webkit-details-marker{ display:none; }
 .fd-plg-t{ flex:1 1 auto; min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; }
 .fd-plg-t > b{ font-size:.98rem; color:#1b2a2b; } .fd-plg-t > span{ color:var(--muted); font-size:.8rem; }
+.fd-sum .fd-plg-t .fd-rojo{ color:#b4182b; font-size:inherit; }
 .fd-plg-bt{ flex:none; display:flex; align-items:center; gap:6px; }
 .fd-plg-bt .fd-copiar{ margin-left:0; min-height:32px; padding:3px 10px; font-size:.76rem; white-space:nowrap; }
 .fd-plg-ver{ display:inline-flex; align-items:center; min-height:32px; padding:3px 11px; border-radius:8px; border:1px solid var(--teal-border,#9fd9d4); background:#f2fbfa; color:#0f766e; font-weight:800; font-size:.78rem; white-space:nowrap; }
@@ -6106,6 +6107,8 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .pix-s:not(.pix-cerr) > .pix-h{ margin-bottom:10px; }
 .pix-cerr > .pix-b{ display:none; }
 .pix-dim .pix-h{ background:#f8fbfb; }
+/* el renglón de la sección ya es su título: el de adentro de la caja (el mismo, con el mes) no se repite */
+.pix-s:is([data-k="vend"],[data-k="plata"],[data-k="altura"],[data-k="carrera"],[data-k="calor"],[data-k="prueba"],[data-k="hist"],[data-k="patron"],[data-k="como"]) > .pix-b .cua-box > .cua-t:first-child{ display:none; }
 .pix-grupo{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin:22px 2px 10px; padding-top:12px; border-top:2px dashed rgba(15,118,110,.25); }
 .pix-grupo b{ font-size:1rem; color:#134e4a; } .pix-grupo span{ font-size:.8rem; color:var(--muted); }
 html.tema-black-friday .pix-grupo b{ color:#fde68a; } html.tema-black-friday .pix-grupo span{ color:#d6d3d1; } html.tema-black-friday .pix-grupo{ border-top-color:rgba(250,204,21,.35); }

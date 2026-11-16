@@ -56,7 +56,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     var ord=[].map.call(pane.querySelectorAll(ids.map(function(i){ return '#'+i; }).join(',')), function(e){ return e.id; });
     return { bar:!!document.getElementById('pry-ix'), secs:pane.querySelectorAll('.pix-s').length, metas:!!document.querySelector('#cta-pane-proy > .filters #pry-metas-btn'),
       ord:ord, padre:ids.every(function(id){ return document.getElementById(id).parentElement===pane; }),
-      vend:document.getElementById('pry-vendedores').innerText.replace(/\s+/g,' ').slice(0,120) };
+      vend:document.getElementById('pry-vendedores').textContent.replace(/\s+/g,' ').slice(0,200) };
   }, CAJAS);
   chk('1 sin la bandera: ni barra ni secciones, los botones en su fila y las cajas sueltas como siempre', !antes.bar && antes.secs===0 && antes.metas && antes.padre, antes);
   await page._ctx.close();
@@ -84,7 +84,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
 
   r = await page.evaluate(() => {
     var R=proyeccionMes('2026-11'), k=function(id){ var e=document.querySelector('#pix-s-'+id+' .pix-k'); return e ? e.textContent : null; };
-    var vend=document.getElementById('pry-vendedores').innerText.replace(/\s+/g,' ').slice(0,120);
+    var vend=document.getElementById('pry-vendedores').textContent.replace(/\s+/g,' ').slice(0,200);
     return { res:k('resumen'), vend:k('vend'), alt:k('altura'), tienda:k('tiendas'), E:{ v:fmtBs0(R.equipo.vendido), p:fmtBs0(R.equipo.proy) }, vendTxt:vend };
   });
   chk('4a Resumen: «— vendido Bs … · 📈 Bs …» del equipo (los números de la ficha)', r.res==='— vendido '+r.E.v+' · 📈 '+r.E.p, r);
