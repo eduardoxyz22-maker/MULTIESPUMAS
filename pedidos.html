@@ -38769,6 +38769,28 @@ function misVerLista(k){
       return '<div class="t2-f" onclick="'+abre+'"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
       esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+cob+'</div>'; }).join('')+'</div>');
 }
+/* ============================================================================
+   📍 (mejora 387, 16/11; dueño la eligió) «PASÓ SU TURNO» CON LO QUE VIO EL GPS.
+   El 14/11 a las 19:00, 5 vendedoras tenían en rojo «⏰ Pasaron su turno sin entregar» (8 pedidos): casi siempre se entregó y falta el ✅ de
+   logística, pero la vendedora no lo sabe y llama al cliente o a logística. Si HOY el GPS vio un camión parado en la puerta de ese pedido
+   (`gpsLlegadaDe`, la misma regla de la ficha y del cierre de entregas), el pedido sale aparte, en gris: «📍 El Carry estuvo en la puerta a las
+   11:20 · falta el ✅ de logística», y no cuenta como rojo. Rojo queda lo que el GPS no vio (o sin GPS). El GPS por pedido vale solo el día
+   de hoy (no queda guardado): un atrasado de ayer sigue en rojo. Solo mira: nada se marca ✅ (dueño, 12/10). `tests/test_turno_gps.js`.
+   ========================================================================== */
+function atrGpsPartir(atr){
+  var R={ rojo:[], gps:[], hayGps:false };
+  try{ R.hayGps=gpsDiaHay(); }catch(e){}
+  (atr||[]).forEach(function(p){ var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){} if(ll) R.gps.push({ p:p, ll:ll }); else R.rojo.push(p); });
+  return R;
+}
+function atrGpsTxt(o){ return 'el '+(o.ll.veh||'camión')+' '+(o.ll.abierta ? ('está en la puerta desde las '+gpsHoraTxt(o.ll.t0)) : ('estuvo en la puerta a las '+gpsHoraTxt(o.ll.t0))); }
+function atrGpsItem(G, k, nom){
+  if(!G || !G.length) return null;
+  var L=G.map(function(o){ return o.p; });
+  MIS_LISTAS[k]={ t:'📍 Pasaron su turno, pero el GPS vio el camión en la puerta', s:'Casi seguro se entregó: falta que logística ponga el ✅. No hace falta llamar.',
+    L:L, m:function(p){ var o=G.filter(function(x){ return x.p===p; })[0]; return o ? ('📍 '+esc(atrGpsTxt(o))) : ''; } };
+  return { sev:'i', ic:'📍', n:L.length, t:'El camión estuvo en la puerta · falta el ✅ de logística', s:(G.length===1 ? (misNom2(L)+': '+atrGpsTxt(G[0])) : nom(L))+' · casi seguro se entregó', b:'Ver', fn:"misVerLista('"+k+"')" };
+}
 function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello'); }
 function misHacerDatos(v, mine){
   var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
@@ -38784,7 +38806,10 @@ function misHacerDatos(v, mine){
     add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn }); }catch(e){}
   add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
   var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
-  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  /* 📍 (mejora 387) los que el GPS vio con el camión en la puerta: casi seguro se entregaron, falta el ✅ de logística (no van en rojo) */
+  var _ag=atrGpsPartir(atr); atr=_ag.rojo;
+  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr)+(_ag.hayGps && atr.length ? ' · el GPS no vio el camión en la puerta: llamá a logística' : ''), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  try{ add(atrGpsItem(_ag.gps, 'atrGps', function(L){ return misNom2(L); })); }catch(e){}
   var M=nxM1Datos(v, false);
   add({ sev:(M.tarde?'r':'a'), ic:'🔔', n:M.faltan, t:'Avisar a los clientes de '+(M.dia===tomorrowStr()?'mañana':nxDiaTxt(M.dia)), s:misNom2(M.L.filter(function(p){ return !nxM1Avisado(p); })), b:'🔔 Avisar', p:1, fn:"NX_M1_ABIERTA=true;renderMis();misIrA('nx-m1')", ok:'Clientes del próximo día avisados' });
   /* 🧾 (06/11, dueño: lo anota la vendedora, después de cargar el pedido, cuando ya sabe el número) La factura o nota de remisión: la
@@ -39255,7 +39280,9 @@ function misEqHacerDatos(T){
   MIS_LISTAS.eqSin={ t:'🔴 Productos que no hay', s:'Las vendedoras tienen que avisarle al cliente que hay que esperar.', L:sin, m:function(p){ return esc(nombreCanonico(p.vendedor||'')); } };
   add({ sev:'r', ic:'🔴', n:sin.length, t:'Productos que no hay', s:misEqQuienes(sin, pv), b:'Ver', p:1, fn:"misVerLista('eqSin')", ok:'Todos los productos tienen stock' });
   var atr=T.filter(function(p){ return minutosAtraso(p)>0; });
+  var _ag=atrGpsPartir(atr); atr=_ag.rojo;   // 📍 (mejora 387)
   add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misEqQuienes(atr, pv), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  try{ add(atrGpsItem(_ag.gps, 'eqAtrGps', function(L){ return misEqQuienes(L, pv); })); }catch(e){}
   try{ add(avisaHacerItem(T, 'eqAvisa', function(L){ return misEqQuienes(L, pv); })); }catch(e){}   // 📦 (propuesta 76)
   var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
   MIS_LISTAS.eqFlete={ t:'🚚 Recargo por entrega sin reportar', s:'Lo reporta la vendedora desde el pedido: «Cobré el flete».', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
