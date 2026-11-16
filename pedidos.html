@@ -3438,6 +3438,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
 
       <div class="field">
         <label class="lb">Productos <span class="req">*</span> <span class="hint" id="f-prods-hint">producto · medida · código · cantidad · precio</span></label>
+        <div id="ps-franja" class="no-print" hidden></div>   <!-- 🎨 (16/11, mejora 390) los avisos del saldo, una vez para todos -->
         <div id="f-productos"></div>
         <div id="f-prods-total" style="display:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:var(--r-md);padding:9px 13px;margin:2px 0 10px;font-size:.82rem;color:var(--teal-dk)"></div>
         <datalist id="dl-productos"></datalist>
@@ -3626,6 +3627,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <div id="fx-mes" class="fx-mes no-print no-cot" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
+        <div id="p392-sr" role="status" aria-live="polite"></div>   <!-- 🎨 (16/11, mejora 392) «Falta: …» para lectores de pantalla -->
         <!-- 🏪 §4ok-93 (05/11) En una venta de tienda NUEVA: guarda y vuelve al formulario de tienda con la misma tienda (las tandas de Charcas). -->
         <button class="btn btn-ghost" id="f-submit-prox" type="button" hidden onclick="tvGuardarProxima()" style="width:100%;margin-top:8px">💾 Guardar y cargar la próxima</button>
       </div>
@@ -8937,6 +8939,216 @@ function m416Poner(R){
 .td-reco-l small{color:#6b5310;font-weight:700;white-space:nowrap}
 .td-reco-n{color:#6b6b6b}
 </style>
+<style id="v390-vend">
+/* 🎨 (16/11) Las mejoras visuales para VENDEDORAS 390-401 y la 367 (el dueño eligió la página «Mejoras visuales 390-440»). Cada bloque dice
+   su número. Clases propias `ps390-*`, `p391-*`, … (no reusar nombres del panel). Solo dibujo. */
+/* 390 · la franja de los saldos arriba de los productos y el cuadrito con fichitas */
+#ps-franja{margin:0 0 12px}
+.ps390-f{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #bfe9e6;border-left:5px solid #00A09A;border-radius:12px;background:linear-gradient(90deg,#ecfbf9,#f7fdfc);color:#0f4c4a;font-size:.8rem;line-height:1.35}
+.ps390-f.mal{border-color:#f1c873;border-left-color:#e8a317;background:linear-gradient(90deg,#fff6df,#fffaf0);color:#6b4500}
+.ps390-f .ic{font-size:1.25rem;flex:none}
+.ps390-f .tx{flex:1;min-width:0}
+.ps390-f b{color:#0f3b39}.ps390-f.mal b{color:#4a2f00}
+.ps390-al{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.ps390-al span{background:#fff;border:1px solid #bfe9e6;border-radius:999px;padding:2px 9px;font-size:.72rem;font-weight:700;color:#0f766e}
+.ps390-al span.v{border-color:#f1d9a6;color:#7c4b00}
+.ps390-con{margin-top:5px;font-weight:700;color:#8a1c24}
+.ps390-f .ps-act{flex:none;margin-left:auto;padding:7px 12px;min-height:32px;border:1px solid #e3c27a;border-radius:999px;background:#fff;font:inherit;font-size:.74rem;font-weight:800;color:#0f766e;cursor:pointer}
+.ps390-f.ok .ps-act{border-color:#9fdcd7}
+.prod-saldo.ps390{padding:9px 12px}
+.prod-saldo.ps390 .fx-saldo .fx-esc{width:70px;height:38px}
+.prod-saldo.ps390 .ps-t{font-size:.86rem}
+.prod-saldo.ps390 .ps390-n{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.prod-saldo.ps390 .ps390-n span{display:inline-flex;align-items:baseline;gap:4px;flex-wrap:wrap;background:#fff;border:1px solid rgba(15,23,42,.10);border-radius:999px;padding:2px 8px;font-size:.7rem;color:#475569}
+.prod-saldo.ps390 .ps390-n span b{font-size:.9rem;color:#0f172a}
+.prod-saldo.ps390 .ps390-n span small{font-size:.66rem;color:#8a1c24;font-weight:600}
+.prod-saldo.ps390 .ps390-n span.lib{border-color:#86d7b0;background:#ecfdf5}.prod-saldo.ps390 .ps390-n span.lib b{color:#047857}
+.prod-saldo.ps390 .ps390-n span.fal{border-color:#f5b4b7;background:#fff1f2;border-radius:10px}.prod-saldo.ps390 .ps390-n span.fal b{color:#be123c}
+.prod-saldo.ps390 .ps390-donde{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:#64748b}
+.prod-saldo.ps390 .ps390-donde i{font-style:normal;background:rgba(15,23,42,.05);border-radius:6px;padding:1px 7px}
+.prod-saldo.ps390 .ps390-donde i.si{background:#e0f2f1;color:#0f766e;font-weight:800}
+.prod-saldo.ps390 .ps-f{margin-top:6px}
+@media (max-width:560px){ .ps390-f{flex-wrap:wrap} .ps390-f .ps-act{margin-left:0} }
+/* 392 · lo que falta, debajo de cada campo; el paso con «!» en la barra */
+.p392-mal{border-color:#e11d48!important;box-shadow:0 0 0 3px rgba(225,29,72,.16)!important}
+.p392-falta{display:flex;align-items:center;gap:7px;margin-top:6px;padding:6px 10px;border-radius:9px;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;font-size:.76rem;font-weight:800;line-height:1.3;animation:p392in .25s ease-out}
+.p392-falta i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#e11d48;color:#fff;display:grid;place-items:center;font-size:.72rem;flex:none}
+.fp-barra .fp-b.p392-b{color:#be123c!important}
+.fp-barra .fp-b.p392-b > span:first-child{background:#e11d48!important;color:#fff!important;border-color:#e11d48!important}
+#fx-der .fx-chk .p392-r{background:#ffe4e6!important;color:#be123c!important;border-color:#fda4af!important}
+#fx-der .p392-n{color:#be123c}
+#p392-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes p392in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ .p392-falta{animation:none} }
+/* 393 · la agenda dice desde qué día llega el pedido */
+.fx-agd.p393-no{background:repeating-linear-gradient(135deg,#fff 0 7px,#fdecee 7px 14px);border-color:#f2a7ad}
+.fx-agd.p393-no .fx-tur{opacity:.55}
+.fx-agd.p393-no.sel{border-color:#e11d48;box-shadow:0 0 0 3px rgba(225,29,72,.18)}
+.fx-agd.p393-si{border-color:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.16);background:linear-gradient(180deg,#f0fdf6,#fff)}
+.fx-agd .p393-tag{grid-column:1/-1;display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin:2px -2px 0;padding:4px 8px;border-radius:8px;font-size:.68rem;font-weight:800;line-height:1.25}
+.fx-agd.p393-no .p393-tag{background:#fff;border:1px solid #f2a7ad;color:#9f1239}
+.fx-agd.p393-no .p393-tag .p393-por{font-weight:600}
+.fx-agd.p393-si .p393-tag{background:#22a06b;color:#fff}
+.fx-agd .p393-ok{display:block;margin-top:1px;font-size:.6rem;font-weight:800;color:#15803d}
+/* 394 · cada producto de la tarjeta de Mis pedidos con su punto y su cantidad */
+.cho-card.mis-c .p394-l{display:flex;align-items:center;gap:8px;line-height:1.35;padding:2px 0}
+.cho-card.mis-c .p394-q{flex:none;min-width:30px;text-align:center;font-weight:900;font-size:.8rem;color:#0f3b39;background:#e6f7f6;border:1px solid #bfe9e6;border-radius:999px;padding:1px 7px}
+.cho-card.mis-c .p394-dot{flex:none;width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+.cho-card.mis-c .p394-dot.v{background:#22a06b}.cho-card.mis-c .p394-dot.a{background:#e8a317}.cho-card.mis-c .p394-dot.r{background:#e11d48}.cho-card.mis-c .p394-dot.g{background:#cbd5e1}
+.cho-card.mis-c .p394-l .nm{min-width:0}
+.cho-card.mis-c .p394-l .es{font-size:.74rem;font-weight:800;margin-left:2px}
+.cho-card.mis-c .p394-l .es.a{color:#a16207}.cho-card.mis-c .p394-l .es.r{color:#be123c}.cho-card.mis-c .p394-l .es.g{color:#64748b}
+/* 400 · los botones de cada tarjeta de Mis pedidos en una fila (en la compu) */
+@media (min-width:701px){
+  .cho-card.mis-c .cho-links.p400{flex-wrap:wrap;gap:6px;margin-top:10px}
+  .cho-card.mis-c .cho-links.p400 .cho-link{flex:1 1 0!important;min-width:max-content;padding:7px 9px!important;font-size:.76rem!important;border-radius:10px;white-space:nowrap;justify-content:center}
+  .cho-card.mis-c .cho-links.p400 .cho-link.mcb-btn{flex:1.5 1 0!important}
+}
+.cho-card.mis-c .cho-links.p400 .cho-link.p400-cel{font-variant-numeric:tabular-nums;letter-spacing:.01em;background:#fff;border-style:dashed}
+/* 395 · Kommo y la venta del panel lado a lado */
+.kx-f.p395{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n b" "c c" "t t"}
+.kx-f.p395 .kx-n{grid-area:n}.kx-f.p395 .kx-b{grid-area:b}.kx-f.p395 .kx-tags{grid-area:t}.kx-f.p395 .kx-tags:empty{display:none}
+.kx-f.p395 .kx-tags .kx-gem{display:none}
+.p395-c{grid-area:c;max-width:860px;display:grid;grid-template-columns:86px minmax(0,1fr) 30px minmax(0,1fr);border:1px solid #efe2c8;border-radius:11px;overflow:hidden;background:#fff;font-size:.78rem}
+.p395-c > div{padding:5px 10px;border-bottom:1px solid #f5ecdb;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p395-c > div:nth-last-child(-n+4){border-bottom:0}
+.p395-c .h{background:#fbf5e9;font-weight:900;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:#7c5a1c}
+.p395-c .k{color:#6b7f7e;font-weight:800}
+.p395-c .m{text-align:center;font-weight:900;padding:5px 0}
+.p395-c .m.na{color:#94a3b8}.p395-c .m.si{color:#15803d;background:#ecfdf3}.p395-c .m.no{color:#b45309;background:#fff7e6}
+.p395-c .v{font-weight:700;color:#1f2f2e}
+.p395-res{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:.74rem;font-weight:900;border-radius:999px;padding:2px 10px}
+.p395-res.si{background:#dcfce7;color:#166534}.p395-res.casi{background:#fff3d6;color:#8a5a00}
+@media (max-width:900px){ .kx-f.p395{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "c" "t" "b"} .p395-c{grid-template-columns:70px minmax(0,1fr) 26px minmax(0,1fr)} }
+/* 396 · «Tu panel al día» en casilleros con palabras */
+.vd-ad-yo.p396{display:block;background:#fff;border:1px solid #d5ecea;border-radius:14px;padding:10px 12px 12px;margin:0 0 12px}
+.p396-top{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.p396-top > b:first-child{font-size:.9rem;color:#0f3b39;white-space:nowrap}
+.p396-bar{flex:1;height:9px;border-radius:9px;background:#eef2f2;overflow:hidden}
+.p396-bar i{display:block;height:100%;border-radius:9px}
+.vd-ad-yo.p396 b.p396-pc{margin-left:0;font-weight:900;font-size:.95rem;font-variant-numeric:tabular-nums}
+.p396-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.p396-c{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid;border-radius:11px;padding:7px 9px;font:inherit;cursor:pointer;min-width:0}
+.p396-c .t{display:flex;align-items:center;gap:5px;font-size:.74rem;font-weight:900;white-space:nowrap;min-width:0}
+.p396-c .t .n{margin-left:auto;font-size:.95rem}
+.p396-c small{font-size:.68rem;font-weight:700;line-height:1.25;opacity:.9;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.p396-c.v{background:#ecfdf5;border-color:#a7e3c4;color:#065f46}
+.p396-c.a{background:#fff8e6;border-color:#f3cf7a;color:#7c4b00}
+.p396-c.r{background:#fff1f2;border-color:#f5a8b0;color:#9f1239}
+.p396-c:hover{filter:brightness(.97)}
+@media (max-width:900px){ .p396-g{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* 397 · «Pedido guardado» ancho, con el mensaje del cliente como en WhatsApp */
+#modal-box.p397{width:min(1040px,94vw)!important;max-width:none!important}
+.p397-g{display:grid;grid-template-columns:1fr 1.08fr;gap:16px;align-items:stretch}
+.p397-top{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,#e8faf8,#f5fffe);border:1px solid #bfeee9}
+.p397-top .ok{width:40px;height:40px;border-radius:50%;background:#00B5AD;color:#fff;display:grid;place-items:center;font-size:1.3rem;font-weight:900;flex:none;box-shadow:0 0 0 6px rgba(0,181,173,.15)}
+.p397-top .tx{min-width:0}.p397-top b{font-size:1rem;color:#0f3b39}.p397-top small{display:block;color:#4b6b69;font-size:.78rem;margin-top:1px}
+.p397-top .tot{margin-left:auto;text-align:right;font-weight:900;color:#0f3b39;font-size:1.05rem;white-space:nowrap}
+.p397-top .tot small{font-weight:700;color:#15803d;margin:0}.p397-top .tot small.no{color:#b91c1c}
+.p397-col{display:flex;flex-direction:column;border:1px solid #e3eceb;border-radius:16px;overflow:hidden;background:#fff;min-width:0}
+.p397-col h4{margin:0;padding:10px 14px;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;color:#5b7473;background:#f6faf9;border-bottom:1px solid #e3eceb;display:flex;align-items:center;gap:6px}
+.p397-eq{padding:12px 14px;font-size:.8rem;line-height:1.5;color:#1f2937;flex:1;overflow-wrap:anywhere}
+.p397-eq b{color:#0f172a}
+.p397-acc{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #eef3f2;background:#fbfdfd;flex-wrap:wrap}
+.p397-acc .btn{flex:1;width:auto}
+.p397-acc .p397-big{background:#25d366;border-color:#25d366;color:#fff;font-weight:900;flex:1.6}
+.p397-sin{font-size:.78rem;color:#7c4b00;font-weight:700}
+.p397-bot{padding:7px 14px;font-size:.74rem;font-weight:700;color:#0f766e;background:#ecfbf9;border-bottom:1px solid #d5efec}
+.p397-wa{display:flex;flex-direction:column;flex:1}
+.p397-wa .cab{display:flex;align-items:center;gap:10px;padding:9px 14px;background:#075e54;color:#fff}
+.p397-wa .cab .av{width:34px;height:34px;border-radius:50%;background:#dcf8c6;color:#075e54;display:grid;place-items:center;font-weight:900;flex:none}
+.p397-wa .cab b{font-size:.9rem}.p397-wa .cab small{display:block;font-size:.7rem;opacity:.85}
+.p397-wa .chat{flex:1;padding:14px 14px 12px;background:#efe7dd;background-image:radial-gradient(rgba(0,0,0,.035) 1.2px,transparent 1.3px);background-size:14px 14px;display:flex;flex-direction:column;align-items:flex-end}
+.p397-wa .bub{position:relative;max-width:92%;background:#d9fdd3;color:#111b21;border-radius:10px 0 10px 10px;padding:9px 11px 18px;font-size:.82rem;line-height:1.45;box-shadow:0 1px 1px rgba(0,0,0,.12);overflow-wrap:anywhere}
+.p397-wa .bub:before{content:'';position:absolute;right:-8px;top:0;border:8px solid transparent;border-top-color:#d9fdd3;border-left-color:#d9fdd3;border-right:0;border-bottom:0}
+.p397-wa .bub .hr{position:absolute;right:9px;bottom:4px;font-size:.66rem;color:#667781}.p397-wa .bub .hr i{font-style:normal;color:#53bdeb}
+.p397-wa #nx-wa-cli{display:none;width:100%;min-height:150px;margin:0}
+.p397-col.edita .p397-wa .bub{display:none}.p397-col.edita .p397-wa #nx-wa-cli{display:block}
+.p397-wa .edit{align-self:flex-start;margin-top:10px;background:#fff;border:1px solid #d8d0c6;border-radius:999px;padding:5px 12px;font:inherit;font-size:.74rem;font-weight:800;color:#075e54;cursor:pointer}
+#modal-box.p397 .modal-actions{justify-content:flex-end;margin-top:12px}
+#modal-box.p397 #wa-text{display:none}
+#modal-box.p397 .p397-col.nx-cli-msg{margin:0}
+#modal-box.p397 .modal-actions .btn{width:auto}
+/* 398 · cada documento con su color (ATC fucsia, RPT café, venta de tienda celeste) */
+#view-form.p398-atc{--doc:#D946EF;--doc-dk:#A21CAF;--doc-lt:#FDF0FC}
+#view-form.p398-rpt{--doc:#9a5b2c;--doc-dk:#7b4a24;--doc-lt:#f6ece2}
+#view-form.p398-tienda{--doc:#0ea5e9;--doc-dk:#0369a1;--doc-lt:#e0f2fe}
+#view-form.p398-on .form-card{border-top:7px solid var(--doc)!important}
+#view-form.p398-on #fh{box-shadow:inset 6px 0 0 var(--doc)}
+#view-form.p398-on #fh h3 .p398-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--doc);margin-right:8px;vertical-align:middle;box-shadow:0 0 0 3px rgba(255,255,255,.18)}
+#view-form.p398-on .fp-paso:not(.fp-ok) .fp-n{background:var(--doc)!important;color:#fff!important;border-color:var(--doc)!important}
+#view-form.p398-on #fx-der{border-top:7px solid var(--doc)!important}
+#view-form.p398-on #fx-der > .fx-lt:first-child{color:var(--doc-dk)}
+#view-form.p398-on #fx-der .fx-cab .av{background:var(--doc)!important;font-size:1.25rem}
+#view-form.p398-on #fx-der .fx-cab .sb b{color:var(--doc-dk)}
+.p398-cinta{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 14px;border-radius:12px;background:var(--doc-lt,#e6fbf9);border:1.5px solid var(--doc,#00B5AD);color:var(--doc-dk,#00A09A);font-size:.84rem;font-weight:700;line-height:1.3}
+.p398-cinta[hidden]{display:none}
+.p398-cinta .ic{width:34px;height:34px;border-radius:10px;background:var(--doc,#00B5AD);color:#fff;display:grid;place-items:center;font-size:1.15rem;flex:none}
+.p398-cinta b{font-size:.98rem;font-weight:900;letter-spacing:.01em}
+.p398-cinta small{display:block;font-weight:600;color:#475569;font-size:.74rem}
+/* 399 · los botones del turno con la hora y los lugares */
+.field.p399-campo{grid-column:1/-1}
+#f-turno.p399{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;border:0!important;background:transparent!important;overflow:visible!important;width:100%;box-shadow:none!important}
+#f-turno.p399 button{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:10px;row-gap:3px;align-items:center;text-align:left;padding:10px 13px!important;border:1.5px solid #dbe5e4!important;border-radius:14px!important;background:#fff!important;color:#1f2f2e!important;font-weight:600;min-height:0;height:auto}
+#f-turno.p399 button .ic{grid-row:1/3;font-size:1.5rem;line-height:1}
+#f-turno.p399 button b{font-size:.95rem;font-weight:900}
+#f-turno.p399 button small{font-size:.74rem;color:#5b7473;font-weight:700}
+#f-turno.p399 button .bar{grid-column:1/-1;height:7px;border-radius:7px;background:#eef2f2;overflow:hidden;margin-top:4px}
+#f-turno.p399 button .bar i{display:block;height:100%;border-radius:7px}
+#f-turno.p399 button .lib{grid-column:1/-1;font-size:.76rem;font-weight:900}
+#f-turno.p399 button.active{border-color:#00B5AD!important;background:#e9fbf9!important;box-shadow:0 0 0 3px rgba(0,181,173,.2)}
+#f-turno.p399 button.active::after{content:'✓ elegido';position:absolute;right:10px;top:10px;font-size:.7rem;color:#fff;background:#00B5AD;border-radius:999px;padding:2px 8px;font-weight:900}
+#f-turno.p399.seg-err{box-shadow:0 0 0 3px var(--red-lt)!important;border-radius:16px}
+.p399-dia{font-weight:600;color:var(--muted)}
+@media (max-width:420px){ #f-turno.p399{grid-template-columns:1fr} }
+/* 401 · lo entregado y pagado, en una tarjeta por mes (los renglones siguen siendo hermanos en la grilla: se juntan con márgenes negativos) */
+#mis-lista .p401-mh{grid-column:1/-1;display:flex;align-items:baseline;gap:10px;padding:10px 16px;margin:6px 0 -12px;background:linear-gradient(90deg,#ecfaf2,#f7fdfa);border:1px solid #d7efe2;border-radius:16px 16px 0 0}
+#mis-lista .p401-mh b{font-size:.98rem;color:#0a5c3d}
+#mis-lista .p401-mh span{color:#3f7d63;font-size:.8rem;font-weight:700}
+#mis-lista .p401-mh .t{margin-left:auto;font-size:.95rem;font-weight:900;color:#0a5c3d;font-variant-numeric:tabular-nums}
+#mis-lista .mis-cf.p401{border-radius:0;border-width:0 1px 1px 1px;border-style:solid;border-color:#e3eaea;border-left:1px solid #e3eaea;margin-bottom:-12px;min-height:38px}
+#mis-lista .mis-cf.p401.p401-ult{border-radius:0 0 16px 16px;margin-bottom:0}
+#mis-lista .mis-cf.p401 .pico{flex:none}
+#mis-lista .mis-cf.p401 .p401-bs{flex:none;width:96px;text-align:right;font-weight:800;color:#132626;font-variant-numeric:tabular-nums}
+#mis-lista .mis-cf.p401 .mis-cf-pag{flex:none;width:86px;text-align:center}
+@media (max-width:700px){ #mis-lista .mis-cf.p401 .p401-bs{width:auto} #mis-lista .mis-cf.p401 .mis-cf-pag{width:auto} }
+/* 367 · el cartel de arriba del pedido en una línea, con la agenda al costado (desde 1.120 px) */
+.p367{display:none}
+@media (min-width:1120px){
+  #fh.p367-on .fh-top, #fh.p367-on .fh-dia, #fh.p367-on .fh-turnos, #fh.p367-on .fh-murc, #fh.p367-on .fh-luna{display:none!important}
+  #fh.p367-on{container:p367/inline-size;padding:0!important;margin-bottom:12px!important;background:none!important;box-shadow:none!important;border:0!important;min-height:0!important;overflow:visible!important;animation:none!important}
+  #fh.p367-on::before, #fh.p367-on::after{display:none!important}
+  #fh.p367-on .p367{display:flex;align-items:center;gap:4px;white-space:nowrap;background:linear-gradient(90deg,#00A09A,#0f8f8a);color:#fff;border-radius:12px;padding:0 8px 0 11px;height:42px;box-sizing:border-box;font:700 .8rem/1 Inter,system-ui,sans-serif;box-shadow:0 6px 18px -10px rgba(0,80,78,.6);overflow:hidden}
+  #view-form.p398-on #fh.p367-on .p367{background:linear-gradient(90deg,var(--doc-dk),var(--doc))}
+  #fh.p367-on .p367 .t{font-weight:900;margin-right:2px}
+  #fh.p367-on .p367 .c{background:rgba(255,255,255,.2);border-radius:8px;padding:5px 6px}
+  #fh.p367-on .p367 .c.sel{background:#fff;color:#00796f}
+  #fh.p367-on .p367 .c.full{background:#fee2e2;color:#991b1b}
+  #fh.p367-on .p367 .v{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:5px 7px;font:inherit;font-size:.74rem;cursor:pointer;flex:none}
+  #fh.p367-on .p367 .fh-ic{height:28px;padding:0 9px 0 4px;font-size:.74rem;flex:none}
+  #fh.p367-on .p367 .fh-ic .q{width:20px;height:20px;font-size:.72rem}
+  #fh.p367-on .p367 .fh-ic.p367-nov{padding:0 4px}
+  #fh.p367-on .p367 .fh-ic.p367-nov .tx{display:none}
+  /* donde no entra todo (1.366 px: la columna del medio mide ~510), «Guía» queda en su «?» (con su título): nunca cortado con «…» */
+  @container p367 (max-width:579px){ #fh.p367-on .p367 .fh-ic:not(.fh-cot):not(.p367-nov){padding:0 4px} #fh.p367-on .p367 .fh-ic:not(.fh-cot):not(.p367-nov) .tx{display:none} }
+  #fh.p367-on .p367 .sp{flex:1}
+  #fh.p367-on .p367 .vivo{display:inline-flex;align-items:center;flex:none;padding:0 3px}
+  #fh.p367-on .p367 .vivo i{width:8px;height:8px;border-radius:50%;background:#86efac;box-shadow:0 0 0 3px rgba(134,239,172,.25)}
+  #fh.p367-on .p367 .vivo.off i{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.3)}
+  #fh.p367-on .fh-alerta{margin:6px 0 0}
+  #fh.p367-on .fh-cerrado{margin-top:6px}
+  #view-form.p367-tipos #f-doc-tipo, #view-form.p367-tipos #f-doc-tipo.seg-4{display:grid!important;grid-template-columns:repeat(4,auto);width:100%!important;box-sizing:border-box}
+  #view-form.p367-tipos #f-doc-tipo > button{min-width:0!important;padding:8px 2px!important;white-space:nowrap;font-size:.8rem!important;letter-spacing:-.01em}
+}
+/* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
+.cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
+.cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
+.cho-card.mis-c .p391-b.p391-al{background:#e11d48;color:#fff}
+.cho-card.mis-c .p391-b.p391-hoy{background:#00B5AD;color:#fff}
+.cho-card.mis-c .p391-b.p391-man{background:#ccf3f0;color:#065f5b}
+.cho-card.mis-c .p391-b.p391-sem{background:#eef2f7;color:#334155}
+.cho-card.mis-c .p391-b.p391-lej{background:#f8fafc;color:#64748b}
+</style>
 <style>
 /* 🧑‍💼 (15/11) Las mejoras para vendedoras 304-311: clases `vd-*` (no reusar nombres del panel). Tema claro, colores del panel. */
 .vd-pill{display:inline-block;background:#fff;border:1px solid #cfe7e5;border-radius:999px;padding:3px 10px;font-weight:700;font-size:.78rem;margin:2px 4px 2px 0;color:#14313a}
@@ -12641,7 +12853,8 @@ var PAGO_NO_VISTO=null;
    escupía a la pantalla del candado pidiéndoles la contraseña — y sin confirmación:
    parecía que el cambio no se había guardado. Ahora se vuelve a donde estaban. */
 var EDIT_DESDE='admin';
-function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
+function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err');
+  try{ if(FALTA_INTENTO || document.querySelector('.p392-falta')){ FALTA_INTENTO=false; faltaCampoLimpiar(); } }catch(e){} }   // 🎨 (16/11, mejora 392)
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 /* Los nombres de lo marcado en rojo, en el orden del formulario (para el aviso «Falta: …») y el primero a la vista con el foco. */
 var FORM_NOMBRES={ 'f-vendedor':'vendedor', 'f-cliente':'cliente', 'f-celular':'celular', 'f-nota':'nota de venta', 'f-zona':'zona', 'f-oc':'N° de OC',
@@ -24774,7 +24987,10 @@ function submitPedido(){
   var faltaMotivo=faltaAtc.length>0;
   var faltaSuc = _rpt && !cliente;
   if(!ok){
-    toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
+    /* 🎨 (16/11, mejora 392) lo que falta, dicho debajo de cada campo y todo a la vez; el aviso de la esquina queda para lo especial */
+    var _fc392=0; if(faltaCampoVa()){ try{ _fc392=faltaCampoPintar(); }catch(e){ _fc392=0; } }
+    if(_fc392 && !faltaOcRoho && !faltaMotivo && !faltaSuc){ var _sr=document.getElementById('p392-sr'); if(_sr) _sr.textContent='Falta: '+formFaltanNombres().join(', ')+'. Está dicho debajo de cada campo.'; }
+    else toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
         : faltaMotivo ? ((okSinAtc ? '' : 'Completá los campos marcados en rojo (*). ')+'🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
         : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
         : ('Falta: '+formFaltanNombres().join(', ')+'. Está marcado en rojo (*).'),'err');
@@ -26369,6 +26585,44 @@ function fmovAvisaAplicar(p, fNueva){
   p.fecha=''; p.turno=''; p.nroDia=0; p.vehiculo=''; p.chofer='';
   return persistPedido(p, {});
 }
+/* 🎨 (16/11, mejora 398; dueño: «Cada documento con su color: ATC, RPT, venta de tienda») Del 1 al 15/11 se cargaron ~68 ventas de tienda, 21
+   RPT y 10 ATC, y las tres se veían igual que un pedido (mismo título «Nuevo pedido», mismo turquesa): lo único distinto era el botón
+   elegido y un cartelito. Ahora el formulario lleva el color del documento en el borde, el título («Nueva ATC», «Nueva reposición», «Venta
+   de tienda»), el número de cada paso y «Tu ATC / Tu reposición / Tu venta de tienda» a la derecha con su ícono: ATC fucsia (el de la
+   pestaña ATC), RPT café (el de Administración), venta de tienda celeste; el pedido común queda turquesa. Una cinta «Estás cargando una ATC
+   · no es una venta…» (en la venta de tienda ya está su recuadro), y en la venta de tienda el paso «Entrega» dice «Se lo lleva». Solo CSS
+   y textos: el tipo sale de lo de siempre (`docTipoSel`, `VENTA_TIENDA`). En Playwright como antes salvo `window.DOC_COLOR_PRUEBA`.
+   `tests/test_v398_doc_color.js`. */
+function docColorVa(){ try{ return vdVa('DOC_COLOR_PRUEBA'); }catch(e){ return false; } }
+var DOC_COLOR={
+  atc:{ ic:'🎧', t:'Estás cargando una ATC', s:'Reclamo de un cliente: no es una venta, no se cobra y no va a Contabilidad.', tit:'Nueva ATC', cor:'Corregir ATC', der:'🎧 Tu ATC', sb:'ATC' },
+  rpt:{ ic:'📦', t:'Estás cargando una reposición (RPT)', s:'Lo que pide tu tienda: no es una venta, va a la sucursal elegida.', tit:'Nueva reposición', cor:'Corregir reposición', der:'📦 Tu reposición', sb:'Reposición' },
+  tienda:{ ic:'🛍️', t:'Venta de tienda', s:'El cliente se lo lleva del local: sin fecha, sin turno y sin camión.', tit:'Venta de tienda', cor:'Corregir venta de tienda', der:'🛍️ Tu venta de tienda', sb:'Venta de tienda' }
+};
+function docColorTipo(){
+  if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA) return 'tienda';
+  var t=''; try{ t=docTipoSel(); }catch(e){}
+  return t==='ATC' ? 'atc' : (t==='RPT' ? 'rpt' : '');
+}
+function docColorTitulo(def){
+  var D=DOC_COLOR[docColorVa() ? docColorTipo() : ''];
+  if(!D) return def;
+  return '<span class="p398-dot" aria-hidden="true"></span>'+esc(EDIT_ID ? D.cor : D.tit);
+}
+function docColorPintar(){
+  var vf=document.getElementById('view-form'); if(!vf) return;
+  var k=docColorVa() ? docColorTipo() : '', D=DOC_COLOR[k];
+  ['atc','rpt','tienda'].forEach(function(x){ vf.classList.toggle('p398-'+x, x===k); });
+  vf.classList.toggle('p398-on', !!D);
+  var c=document.getElementById('p398-cinta'), fh=document.getElementById('fh');
+  if(!c && fh && D){ c=document.createElement('div'); c.id='p398-cinta'; c.className='p398-cinta no-print'; fh.parentNode.insertBefore(c, fh.nextSibling); }
+  if(c){
+    var ve=!!D && k!=='tienda';   // la venta de tienda ya tiene su recuadro
+    var h=ve ? ('<span class="ic">'+D.ic+'</span><div><b>'+esc(D.t)+'</b><small>'+esc(D.s)+'</small></div>') : '';
+    if(c._h!==h){ c.innerHTML=h; c._h=h; } c.hidden=!ve;
+  }
+  try{ fhPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){} try{ fpPintar(); }catch(e){}
+}
 function pintarModoTienda(){
   try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) una venta de tienda no ocupa cupo: lo apartado se suelta
   var view=document.getElementById('view-form');
@@ -26382,6 +26636,7 @@ function pintarModoTienda(){
   try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) ni en la venta de tienda ni editando
+  try{ docColorPintar(); }catch(e){}         // 🎨 (16/11, mejora 398) celeste
 }
 function abrirVentaTienda(conCot){
   /* 🧾 (mejora 251) Venía de «✓ Compró» de una cotización (la venta NUEVA con lo de la cotización): `resetForm` se llevaba la cotización y
@@ -26483,6 +26738,7 @@ function pintarDocTipo(limpiar){
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) «Leer la nota» es solo de 📄 OC
   try{ cotFormPintar(limpiar); }catch(e){}   // 🧾 (mejora 251) la cotización: su bloque, el botón y lo que se esconde
   try{ fhPintar(); }catch(e){}
+  try{ docColorPintar(); }catch(e){}         // 🎨 (16/11, mejora 398) el color del documento
 }
 /* ============================================================================
    🧾 COTIZAR (14/11, mejora 251; el dueño aprobó la 251 «🧾 COTIZAR» y la 274 «el bot le escribe a las 48 h»)
@@ -29018,6 +29274,38 @@ function ajustarTurnoSeg(fecha){
   pm.disabled=sab; pm.style.opacity=sab?'.4':''; pm.style.cursor=sab?'not-allowed':'';
   pm.title=sab?'Los sábados solo hay turno AM':'';
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
+  try{ turnoCardsPintar(fecha); }catch(e){}   // 🎨 (16/11, mejora 399) los botones dicen los lugares y la hora
+}
+/* 🎨 (16/11, mejora 399; dueño: «Los botones del turno dicen los lugares y la hora») «Turno de entrega» eran dos botoncitos «🌅 AM» «🌆 PM»: los
+   lugares que quedan estaban arriba de todo o en la agenda (lejos de este campo) y la hora que se le promete al cliente no aparecía en el
+   formulario. Ahora son dos tarjetas a lo ancho: «🌅 Mañana · llega de 9:00 a 12:00 · 8 libres de 12» y «🌆 Tarde · llega de 14:30 a 18:30 ·
+   10 libres de 13», con su barrita verde/ámbar/roja como la agenda y «✓ elegido» en la tocada. Un turno lleno dice «Lleno (12 de 12)» en rojo
+   (se puede tocar igual, como siempre: avisa). El sábado la tarde queda apagada, como siempre. Los MISMOS botones (`data-val`, `.active`,
+   `initSeg`): solo cambia lo que dicen. Los lugares son `cuposUsadosTurno`/`limTurno` (los de la agenda) y las horas, las del mensaje al
+   cliente (`NX_RANGO`). En Playwright como antes salvo `window.TURNO_CARDS_PRUEBA`. `tests/test_v399_turno_cards.js`. */
+function turnoCardsVa(){ try{ return vdVa('TURNO_CARDS_PRUEBA'); }catch(e){ return false; } }
+function turnoCardsPintar(fecha){
+  var seg=document.getElementById('f-turno'); if(!seg) return;
+  var fld=seg.closest('.field'), va=turnoCardsVa();
+  if(!va){ if(seg.classList.contains('p399')){ seg.classList.remove('p399'); if(fld) fld.classList.remove('p399-campo');
+      [].forEach.call(seg.querySelectorAll('button'), function(b){ b.innerHTML=(b.getAttribute('data-val')==='PM') ? '🌆 PM' : '🌅 AM'; }); }
+    return; }
+  seg.classList.add('p399'); if(fld) fld.classList.add('p399-campo');
+  fecha=fecha || (document.getElementById('f-fecha')||{}).value || todayStr();
+  var avisa=false; try{ avisa=avisaFormOn(); }catch(e){}
+  var N={ AM:['🌅','Mañana'], PM:['🌆','Tarde'] };
+  [].forEach.call(seg.querySelectorAll('button'), function(b){
+    var t=b.getAttribute('data-val'), lim=limTurno(fecha, t), u=cuposUsadosTurno(fecha, t), lib=Math.max(0, lim-u), R=NX_RANGO[t]||[];
+    var col=lib<=0 ? '#e11d48' : (lib<=3 ? '#d97706' : '#16a34a'), pct=lim>0 ? Math.min(100, Math.round(100*u/lim)) : 0;
+    var h='<span class="ic">'+N[t][0]+'</span><b>'+N[t][1]+'</b><small>'+(R[1] ? ('llega de '+R[1]+' a '+R[2]) : '')+'</small>';
+    if(avisa) h+='<span class="lib" style="color:#64748b">sin día: el cliente avisa</span>';
+    else if(!(lim>0)) h+='<span class="lib" style="color:#64748b">'+((t==='PM' && diaSabado(fecha)) ? 'el sábado no hay camión a la tarde' : 'ese día no hay camión')+'</span>';
+    else h+='<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></div><span class="lib" style="color:'+col+'">'+(lib<=0 ? ('Lleno ('+u+' de '+lim+')') : (lib+(lib===1?' libre':' libres')+' de '+lim))+'</span>';
+    if(b._p399!==h){ b.innerHTML=h; b._p399=h; }
+  });
+  var lab=fld && fld.querySelector('label'), d=lab && lab.querySelector('.p399-dia');
+  if(lab && !d){ d=document.createElement('span'); d.className='p399-dia'; lab.insertBefore(d, lab.querySelector('.hint')); }
+  if(d){ var dt=(fecha && !avisa) ? (' · '+(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha)) : ''; if(d.textContent!==dt) d.textContent=dt; }
 }
 /* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
 function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} try{ notaLeerPintar(); }catch(e){} fxFormPintar(); try{ apartoMirar(); }catch(e){} }   // 🧾 (mejora 216) el botón «Leer la nota» aparece cuando se sabe la versión del servidor · ⏳ (267) el lugar apartado sigue al día y al turno elegidos
@@ -29091,7 +29379,41 @@ function renderCupoFormBase(){
 var NOVEDADES_V='2026-10-27', LS_NOV='me_novedades_visto';
 function fhVa(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
 function fhNovedadVista(){ try{ localStorage.setItem(LS_NOV, NOVEDADES_V); }catch(e){} setTimeout(function(){ try{ fhPintar(); }catch(e){} }, 60); }
+/* 🎨 (16/11, mejora 367; dueño: «Nuevo pedido: los campos a la vista al abrir») En una compu de 1.366 × 768 el primer campo (Fecha de entrega)
+   empezaba a 737 px: al abrir no se veía ninguno de los 21 campos. El cartel de arriba («Camión del martes 17/11 · Mañana 8 libres · Tarde 10
+   libres») medía 254 px y repetía lo que ya dicen la agenda de la izquierda y «Tu pedido» de la derecha; y el selector OC · ATC · RPT ·
+   Cotización se partía. Ahora, desde 1.120 px de ancho (cuando la agenda está al costado), el cartel es UNA línea de ~42 px: «🚚 Mar 17/11 ·
+   🌅 8 libres · 🌆 10 libres · 👀 Ver · 🧾 Cotizar · ❓ Guía», y OC · ATC · RPT · Cotización van en una fila. Los avisos de una línea (lleno,
+   sin conexión, cerrado) siguen debajo. Los MISMOS datos de `fhPintar` (cupos, `verCuposTurno`, los mismos botones); en pantallas angostas
+   (sin agenda) el cartel grande queda como siempre. En Playwright como antes salvo `window.FH_CORTO_PRUEBA` (con `FH_PRUEBA`).
+   `tests/test_v367_fh_corto.js`. */
+function fhCortoVa(){ try{ return vdVa('FH_CORTO_PRUEBA'); }catch(e){ return false; } }
+function fhCortoHtml(o){
+  var f=o.fecha, dia=String(DIAS_SEM[dowDe(f)]||'').slice(0,3)+' '+fmtFechaCorta(f); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
+  var tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA), tit='';
+  try{ var k=docColorVa() ? docColorTipo() : ''; if(k && DOC_COLOR[k]) tit=DOC_COLOR[k].ic+' '+(EDIT_ID ? DOC_COLOR[k].cor : DOC_COLOR[k].tit); }catch(e){}
+  if(!tit && EDIT_ID) tit='✏️ Corregir pedido';
+  if(!tit && tienda) tit='🛍️ Venta de tienda';
+  var hayCupos=!(o.cot || tienda || o.avisa || o.cerr);   // con los cupos a la vista no entra el título: el color y la cinta de la 398 dicen qué es
+  var h=(tit && !hayCupos) ? ('<span class="t">'+esc(tit)+'</span>') : '';
+  if(o.cot) h+='<span class="c">🧾 Cotización · no ocupa cupo del camión</span>';
+  else if(tienda) h+='<span class="c">se lo lleva del local · sin camión</span>';
+  else if(o.avisa) h+='<span class="c">📦 El cliente avisa cuándo · no ocupa cupo</span>';
+  else if(o.cerr) h+='<span>🚚 '+esc(dia)+'</span><span class="c full">sin camión ese día</span>';
+  else{
+    var c=function(t){ var l=limTurno(f,t); if(!(l>0)) return ''; var r=Math.max(0, l-cuposUsadosTurno(f,t));
+      return '<span class="c'+(t===o.turno?' sel':'')+(r<=0?' full':'')+'" title="'+r+' libres de '+l+'">'+(t==='AM'?'🌅 ':'🌆 ')+(r<=0 ? 'lleno' : (r+(r===1?' libre':' libres')))+'</span>'; };
+    var n=cuposPedidosTurno(f,'AM')+cuposPedidosTurno(f,'PM'), tv=(o.turno && limTurno(f,o.turno)>0) ? o.turno : (cuposPedidosTurno(f,'AM') ? 'AM' : 'PM');
+    h+='<span>🚚 '+esc(dia)+'</span>'+c('AM')+c('PM')+
+       (n ? ('<button type="button" class="v" onclick="verCuposTurno(\''+esc(f)+'\',\''+tv+'\')" title="Ver los pedidos de ese día">👀 Ver</button>') : '');
+  }
+  h+='<span class="sp"></span><span class="vivo'+o.pill[0]+'" title="'+esc(o.pill[1])+'"><i></i></span>'+(o.cotB||'')+
+     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
+     (o.nov===NOVEDADES_V ? '' : '<a class="fh-ic p367-nov" href="guia-vendedor.html" target="_blank" rel="noopener" title="Hay novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span><span class="pt" aria-label="hay novedades"></span></a>');   // solo si hay algo nuevo
+  return '<div class="p367" role="group" aria-label="El camión del día y la ayuda">'+h+'</div>';
+}
 function fhPintar(){
+  try{ if(turnoCardsVa()) turnoCardsPintar(); }catch(e){}   // 🎨 (399) los lugares de las tarjetas del turno, con lo último de la planilla
   var box=document.getElementById('fh'); if(!box) return;
   var card=box.closest('.form-card'), va=fhVa();
   box.hidden=!va; if(card) card.classList.toggle('fh-on', va);
@@ -29109,7 +29431,7 @@ function fhPintar(){
   var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
   var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), ed=EDIT_ID ? ' ✏️ Estás corrigiendo: se puede guardar igual.' : '';
   var h='<span class="fh-murc" aria-hidden="true"><i></i><i></i><i></i></span><span class="fh-luna" aria-hidden="true"></span>'+   // 🎃 (§4nk) solo se ven en octubre
-    '<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : (cot ? 'Nueva cotización' : 'Nuevo pedido'))+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+cotB+
+    '<div class="fh-top"><h3>'+docColorTitulo(EDIT_ID ? 'Corregir pedido' : (cot ? 'Nueva cotización' : 'Nuevo pedido'))+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+cotB+
     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
     '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
       (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
@@ -29153,6 +29475,10 @@ function fhPintar(){
   if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
   var viejo=cot ? '' : cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
   h+=avisos.map(function(a){ return '<div class="fh-alerta '+a[0]+'">'+a[1]+'</div>'; }).join('');
+  /* 🎨 (16/11, mejora 367) con la agenda al costado, el cartel en UNA línea (la grande se esconde con CSS desde 1.120 px) */
+  var _c367=fhCortoVa(); box.classList.toggle('p367-on', _c367);
+  var _vf367=document.getElementById('view-form'); if(_vf367) _vf367.classList.toggle('p367-tipos', _c367);
+  if(_c367){ try{ h=fhCortoHtml({ fecha:fecha, turno:turno, cot:cot, avisa:avisa, cerr:cerr, pill:pill, nov:nov, cotB:cotB })+h; }catch(e){} }
   if(box._h===h) return;   // lo mismo de antes: no rearmar (los murciélagos y el «En línea» no vuelven a empezar)
   box._h=h; box.innerHTML=h;
 }
@@ -29289,16 +29615,18 @@ function fxIzqPintar(){
   var el=document.getElementById('fx-izq'); if(!el || !fxAncho()) return;
   var fsel=(document.getElementById('f-fecha')||{}).value||'', tsel=normTurno(segVal('f-turno')||''), v=((document.getElementById('f-vendedor')||{}).value||'');
   var desde=esVendedorLite(v)?todayStr():tomorrowStr(), filas='';
+  var LL=agLlegaDatos(desde);   // 🎨 (16/11, mejora 393) desde qué día llega todo el pedido (los cuadritos del saldo)
   for(var i=0;i<FX_DIAS_N;i++){
-    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), sel=(f===fsel);
+    var f=stockSumarDias(desde,i), L=fxDiaLibre(f), sel=(f===fsel), ll=(LL && !L.cerrado) ? (f<LL.desde ? 'no' : (f===LL.desde ? 'si' : 'ok')) : '';
     var tur=['AM','PM'].filter(function(t){ return limTurno(f,t)>0 && !diaCerrado(f); }).map(function(t){
       var lim=limTurno(f,t), u=cuposUsadosTurno(f,t), lib=Math.max(0,lim-u), pct=Math.min(100,Math.round(100*u/lim));
       var col=lib<=0?'var(--red)':(lib<=3?'var(--amber)':'var(--green)');
       return '<div class="fx-tr'+(sel&&tsel===t?' sel':'')+'" data-t="'+t+'"><span>'+(t==='AM'?'🌅':'🌆')+'</span><div class="b"><i style="width:'+pct+'%;background:'+col+'"></i></div><span class="q" style="color:'+col+'" title="'+u+' de '+lim+' ocupados">'+(lib<=0?'lleno':(lib+' libre'+(lib===1?'':'s')))+'</span></div>';
     }).join('');
-    filas+='<button type="button" class="fx-agd'+(L.cerrado?' off':'')+(sel?' sel':'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'), event)"')+'>'+
-      '<div><div class="d">'+FX_DIAS_NOM[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'/'+f.slice(5,7)+'</div></div>'+
-      (L.cerrado ? '<div class="fx-agc">'+(L.cerrado==='feriado'?('🎉 feriado'+(feriadoDe(f)?(': '+esc(feriadoDe(f))):'')):'🚫 '+L.cerrado)+'</div>' : '<div class="fx-tur">'+tur+'</div>')+'</button>';
+    filas+='<button type="button" class="fx-agd'+(L.cerrado?' off':'')+(sel?' sel':'')+(ll?(' p393-'+ll):'')+'" data-f="'+f+'"'+(L.cerrado?' disabled':' onclick="fxElegirDia(this.getAttribute(\'data-f\'), event)"')+'>'+
+      '<div><div class="d">'+FX_DIAS_NOM[dowDe(f)]+'</div><div class="n">'+f.slice(8,10)+'/'+f.slice(5,7)+'</div>'+(ll==='ok'?'<span class="p393-ok">✓ llega todo</span>':'')+'</div>'+
+      (L.cerrado ? '<div class="fx-agc">'+(L.cerrado==='feriado'?('🎉 feriado'+(feriadoDe(f)?(': '+esc(feriadoDe(f))):'')):'🚫 '+L.cerrado)+'</div>' : '<div class="fx-tur">'+tur+'</div>')+
+      (ll==='no' ? ('<div class="p393-tag">⛔ No llega: '+LL.no+'</div>') : (ll==='si' ? '<div class="p393-tag">✅ Desde acá llega todo · tocá para elegirlo</div>' : ''))+'</button>';
   }
   var nVer=(fsel && tsel) ? cuposUsadosTurno(fsel,tsel) : 0;
   var h='<div class="fx-lt">📅 Agenda de entregas</div><div class="fx-sub">Tocá un día (o su turno) para elegirlo. Lo libre de cada camión.</div>'+
@@ -29306,6 +29634,35 @@ function fxIzqPintar(){
     (nVer ? '<button type="button" class="btn btn-ghost btn-sm fx-ver" onclick="verCuposTurno(\''+esc(fsel)+'\',\''+esc(tsel)+'\')">👀 Ver '+(nVer===1?'el pedido':('los '+nVer+' pedidos'))+' del turno '+esc(tsel)+'</button>' : '');
   if(el._h!==h){ var cam=document.getElementById('fx-izq-cam'), firma=cam&&cam._firma, html=cam&&cam.innerHTML; el.innerHTML=h; el._h=h;
     var nuevo=document.getElementById('fx-izq-cam'); if(nuevo && firma){ nuevo._firma=firma; nuevo.innerHTML=html; nuevo.hidden=false; } }
+}
+/* 🎨 (16/11, mejora 393; dueño: «La agenda dice desde qué día llega tu pedido») Con un colchón que solo está en Moreno, la agenda seguía
+   marcando mañana con «8 libres» como si estuviera todo bien: que no llegaba lo decía solo el cuadrito del producto, más abajo, y la
+   pregunta al guardar. Ahora los días en que el pedido NO llega van rayados en rojo con «⛔ No llega: <producto> (está en Moreno)», el
+   primer día en que llega todo en verde con «✅ Desde acá llega todo · tocá para elegirlo» y los siguientes con «✓ llega todo». El día
+   sale de lo que YA calculó el cuadrito de cada producto (`box._v.minimo`/`desde` de `saldoVeredicto`): el más tarde de todos. Los cupos
+   de cada día siguen siendo los de siempre (un día sin lugar sigue diciendo «lleno»). Tocar un día lo elige, como siempre. Solo dibujo.
+   En Playwright como antes salvo `window.AG_LLEGA_PRUEBA`. `tests/test_v393_agenda_llega.js`. */
+function agLlegaVa(){ try{ return vdVa('AG_LLEGA_PRUEBA'); }catch(e){ return false; } }
+var AG_LLEGA_POR={ moreno:'está en Moreno', recogida:'viene de Moreno', prod:'en producción', pedir:'hay que producirlo', especial:'medida especial', fabcli:'se fabrica para este pedido' };
+function agLlegaNombre(t){
+  var n=String(t||'').toLowerCase().replace(/(^|[\s(])([a-záéíóúñ])/g, function(m, a, b){ return a+b.toUpperCase(); });
+  return n.replace(/^Colchon\b/, 'Colchón');
+}
+/* { desde: el primer día en que llega todo, no: el HTML de «qué no llega» } o null si llega todo desde el primer día de la agenda. */
+function agLlegaDatos(primer){
+  if(!agLlegaVa()) return null;
+  var V=[];
+  [].forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(c){
+    var b=c.querySelector('.prod-saldo'), v=b && !b.hidden ? b._v : null; if(!v) return;
+    var d=v.minimo || v.desde; if(!d || !/^\d{4}-\d{2}-\d{2}$/.test(String(d))) return;
+    V.push({ d:String(d), tipo:v.tipo, n:String((c.querySelector('.prod-desc')||{}).value||'').trim() });
+  });
+  var desde=V.reduce(function(m, x){ return x.d>m ? x.d : m; }, '');
+  if(!desde || desde<=primer) return null;
+  var tarde=V.filter(function(x){ return x.d===desde; });
+  var no=tarde.slice(0,2).map(function(x){ return esc(agLlegaNombre(x.n)||'un producto')+(AG_LLEGA_POR[x.tipo] ? (' <span class="p393-por">('+esc(AG_LLEGA_POR[x.tipo])+')</span>') : ''); }).join(', ')+
+         (tarde.length>2 ? (' y '+(tarde.length-2)+' más') : '');
+  return { desde:desde, no:no };
 }
 /* Tocar el turno de un día de la agenda elige el día Y el turno. */
 function fxElegirDia(f, ev){
@@ -29317,6 +29674,29 @@ function fxElegirDia(f, ev){
 var FX_SALDO_ICO={ hay:['✅','var(--green)','Disponible'], moreno:['📥','var(--amber)','Hay en Moreno'], recogida:['🚚','var(--amber)','Viene de Moreno'],
   prod:['⏳','var(--blue,#1d4ed8)','En producción'], pedir:['🏭','var(--red)','Hay que producir'], especial:['📐','#1d4ed8','Medida especial'],
   fabcli:['🏭','#1d4ed8','Se fabrica para este pedido'], nofab:['🛑','var(--red)','Ya no se fabrica'], codigo:['🏷️','var(--amber)','Revisá el código'] };
+/* 🎨 (16/11, mejora 392) Lo que lista «Para guardar» de «Tu pedido» (`fxDerPintar`), sacado tal cual a su función: [nombre, listo]. */
+function paraGuardarChk(){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var v=val('f-vendedor'), cli=val('f-cliente'), cel=val('f-celular'), zona=val('f-zona'), f=val('f-fecha'), tipo=docTipoSel();
+  if(tipo==='RPT') cli=val('f-rpt-suc') ? ('🏪 '+val('f-rpt-suc')) : '';
+  var lite=esVendedorLite(v), tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA), cotF=(tipo==='COT');
+  var prods={ length:[].filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){ return !!String((c.querySelector('.prod-desc')||{}).value||'').trim(); }).length };
+  var chk=cotF ? [['Vendedor',!!v],['Celular',!!celPartes(cel).cel],['Productos',prods.length>0]] : [['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
+  if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
+  if(cotF) chk.push(['Vale hasta', !!fxPasosEstado()[2]]);
+  if(!tienda && !cotF){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
+  if(!tienda && !cotF && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
+  if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
+  if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
+    var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
+    if(!lite) chk.push(['Celular',!!cel]);
+    chk.push(['Garantía o STC',!_fa['f-atc-tipo']]);
+    chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
+    chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
+  }
+  return chk;
+}
 function fxDerPintar(){
   var el=document.getElementById('fx-der'); if(!el || !fxAncho()) return;
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
@@ -29333,9 +29713,10 @@ function fxDerPintar(){
   });
   var acu=montoForm('f-acuenta'), sal=montoForm('f-saldo'), pagado=segVal('f-pagado')==='SI';
   var ini=(v||'?').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase();
-  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':(tipo==='COT'?'🧾 Tu cotización':'🧾 Tu pedido'))+'</div><div class="fx-dp">'+
-    '<div class="fx-cab"><div class="av">'+esc(ini)+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
-      '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':(tipo==='COT'?'🧾 Cotización':'🏪 Reposición')))+(v?(' · '+esc(v)):'')+'</div></div></div>';
+  var _DC=DOC_COLOR[docColorVa() ? docColorTipo() : ''];   // 🎨 (16/11, mejora 398) «Tu ATC / Tu reposición / Tu venta de tienda» con su color
+  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':(_DC ? _DC.der : (tipo==='COT'?'🧾 Tu cotización':'🧾 Tu pedido')))+'</div><div class="fx-dp">'+
+    '<div class="fx-cab"><div class="av">'+(_DC ? _DC.ic : esc(ini))+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
+      '<div class="sb">'+(_DC ? ('<b>'+esc(_DC.sb)+'</b>') : esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':(tipo==='COT'?'🧾 Cotización':'🏪 Reposición'))))+(v?(' · '+esc(v)):'')+'</div></div></div>';
   var avOn=avisaFormOn();   // 📦 (propuesta 76) la fecha es la de volver a llamar
   var cotF=(tipo==='COT');   // 🧾 (mejora 251) sin entrega ni cobro: hasta cuándo vale y desde cuándo se entrega
   if(cotF){ var _cv=val('f-cot-vence'), _cd=''; try{ _cd=cotEntregaDesde(); }catch(eC){}
@@ -29351,24 +29732,13 @@ function fxDerPintar(){
   if(cotF && tot>0) h+='<div class="fx-tot"><span>Total de la cotización</span><b>'+fmtBs(r2(tot))+'</b></div>';   // 🧾 (251)
   if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
       (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
-  var chk=cotF ? [['Vendedor',!!v],['Celular',!!celPartes(cel).cel],['Productos',prods.length>0]] : [['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
-  if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
-  if(cotF) chk.push(['Vale hasta', !!fxPasosEstado()[2]]);
-  if(!tienda && !cotF){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
-  if(!tienda && !cotF && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
-  if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
-  if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
-    var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
-    if(!lite) chk.push(['Celular',!!cel]);
-    chk.push(['Garantía o STC',!_fa['f-atc-tipo']]);
-    chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
-    chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
-  }
+  var chk=paraGuardarChk();   // 🎨 (16/11, mejora 392) la misma lista, en su función: la usan también las frases de «lo que falta»
   var _gl=gladoVe();   // 💾 (16/11, mejora 372) lo que falta se toca y lleva a su campo; abajo, el MISMO «Guardar pedido»
-  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){
-      if(_gl && !c[1]) return '<button type="button" class="no glado-chip" onclick="gladoIr(\''+esc(c[0])+'\')" title="Llevame a «'+esc(c[0])+'»">○ '+esc(c[0])+'</button>';
-      return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
+  var _r392=FALTA_INTENTO && faltaCampoVa(), _n392=chk.filter(function(c){ return !c[1]; }).length;   // 🎨 (16/11, mejora 392) después de un Guardar que frenó, en rojo
+  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar'+((_r392 && _n392) ? (' · <span class="p392-n">'+(_n392===1?'falta 1':('faltan '+_n392))+'</span>') : '')+'</div><div class="fx-chk">'+chk.map(function(c){
+      var _o=(_r392 && !c[1]) ? '× ' : '○ ', _c=(_r392 && !c[1]) ? ' p392-r' : '';
+      if(_gl && !c[1]) return '<button type="button" class="no glado-chip'+_c+'" onclick="gladoIr(\''+esc(c[0])+'\')" title="Llevame a «'+esc(c[0])+'»">'+_o+esc(c[0])+'</button>';
+      return '<span class="'+(c[1]?'ok':'no')+_c+'">'+(c[1]?'✓ ':_o)+esc(c[0])+'</span>'; }).join('')+'</div>';
   if(_gl) h+=gladoHtml(chk, tipo, tienda);
   /* 📝 (idea 119) lo que Guardar va a preguntar de las observaciones, adelantado en una línea (la MISMA cuenta: `obsRevAvisos`) */
   var _orv=[]; try{ if(!tienda && tipo!=='ATC' && tipo!=='COT') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
@@ -29429,6 +29799,81 @@ function gladoIr(k){
   setTimeout(function(){ marca.classList.remove('glado-ojo'); }, 1800);
   if(e===vis && typeof e.focus==='function' && /^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) setTimeout(function(){ try{ e.focus({ preventScroll:true }); }catch(x){ e.focus(); } }, 420);
 }
+/* 🎨 (16/11, mejora 392; dueño: «Al guardar, lo que falta se marca en el mismo campo») Al tocar Guardar con algo sin llenar, el aviso salía
+   abajo a la IZQUIERDA (encima de la agenda, lejos del formulario), decía solo lo primero y se iba solo; el campo tenía un borde rojo finito y
+   «con qué pagó» aparecía recién en el segundo intento. Ahora debajo de CADA campo que falta sale una frase roja con qué poner, todo a la vez,
+   y en la barra de pasos el paso que tiene algo pendiente lleva un «!» rojo. Lo que falta es la MISMA lista de «Para guardar»
+   (`paraGuardarChk`, lo que pide Guardar) y el campo, el de `gladoCampo` (372). Cada frase se va sola cuando ese dato queda listo. SOLO
+   DIBUJO: Guardar sigue frenando lo mismo (`submitPedido`). Sin el aviso de la esquina (queda el texto para lectores de pantalla). En
+   Playwright como antes salvo `window.FALTA_CAMPO_PRUEBA`. `tests/test_v392_falta_campo.js`. */
+var FALTA_INTENTO=false, FALTA_T=null;
+function faltaCampoVa(){ try{ return vdVa('FALTA_CAMPO_PRUEBA'); }catch(e){ return false; } }
+function faltaCampoTxt(k){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  switch(k){
+    case 'Vendedor': return 'Falta quién vende: elegí tu nombre';
+    case 'Cliente': return docTipoSel()==='RPT' ? 'Falta a qué sucursal va la reposición' : 'Falta el nombre del cliente';
+    case 'Productos': return 'Falta el producto: escribí el nombre o el código y la cantidad (1 o más)';
+    case 'Precios': return 'Falta el precio de venta (c/u) de este producto';
+    case 'Vale hasta': return 'Falta hasta cuándo vale la cotización';
+    case 'Fecha': return 'Falta la fecha de entrega';
+    case 'Zona': return 'Falta la zona: escribila o pegá la ubicación y se pone sola';
+    case 'Ubicación': return 'La ubicación no se entiende o queda fuera de Santa Cruz: pegá el enlace de Google Maps de nuevo';
+    case 'Celular': return val('f-celular') ? 'El celular tiene que ser de WhatsApp: 8 números que empiezan con 6 o 7 (ej. 71234567)' : 'Falta el celular del cliente (8 números, ej. 71234567)';
+    case 'Nota': return 'Falta el N° de la nota de venta';
+    case 'Saldo o pagado':
+      if(segVal('f-pagado')==='SI') return segVal('f-metodo') ? 'Falta el monto total cobrado' : 'Falta con qué pagó: tocá Efectivo, QR o Tarjeta';
+      return segVal('f-pagado')==='NO' ? 'Falta el saldo por cobrar (lo que falta pagar)' : 'Falta decir si ya pagó: tocá «SÍ, pagado» o poné el saldo por cobrar';
+    case 'Quién recibió el efectivo': return 'Falta quién recibió el efectivo: tocá tu nombre o el del chofer que lo cobró';
+  }
+  return 'Falta: '+String(k||'').toLowerCase();
+}
+/* Dónde va la frase: debajo del campo (en su `.field`, o adentro del renglón del producto). */
+function faltaCampoCaja(el){
+  if(!el) return null;
+  var pc=el.closest && el.closest('.prod-card'); if(pc) return pc;
+  return (el.closest && el.closest('.field')) || el.parentNode;
+}
+function faltaCampoLimpiar(){
+  [].forEach.call(document.querySelectorAll('#view-form .p392-falta'), function(x){ x.remove(); });
+  [].forEach.call(document.querySelectorAll('#view-form .p392-mal'), function(x){ x.classList.remove('p392-mal'); });
+}
+function faltaCampoPintar(){
+  faltaCampoLimpiar();
+  var chk=[]; try{ chk=paraGuardarChk(); }catch(e){ chk=[]; }
+  var n=0;
+  chk.forEach(function(c){
+    if(c[1]) return;
+    var el=null; try{ el=gladoCampo(c[0]); }catch(e){}
+    if(!el || el.offsetParent===null) return;
+    var caja=faltaCampoCaja(el); if(!caja) return;
+    el.classList.add('p392-mal');
+    var d=document.createElement('div'); d.className='p392-falta'; d.setAttribute('data-k', c[0]);
+    d.innerHTML='<i aria-hidden="true">!</i><span>'+esc(faltaCampoTxt(c[0]))+'</span>';
+    caja.appendChild(d); n++;
+  });
+  FALTA_INTENTO=n>0;
+  try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){}
+  return n;
+}
+/* Al escribir o tocar algo: cada frase cuyo dato ya quedó listo se va (y el «!» de su paso). */
+function faltaCampoRevisar(){
+  FALTA_T=null;
+  if(!document.querySelector('#view-form .p392-falta')){ if(FALTA_INTENTO){ FALTA_INTENTO=false; try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){} } return; }
+  var ok={}; try{ paraGuardarChk().forEach(function(c){ ok[c[0]]=!!c[1]; }); }catch(e){ return; }
+  [].forEach.call(document.querySelectorAll('#view-form .p392-falta'), function(d){
+    var k=d.getAttribute('data-k'); if(ok[k]===false){ var sp=d.querySelector('span'), tx=faltaCampoTxt(k); if(sp && sp.textContent!==tx) sp.textContent=tx; return; }
+    var caja=d.parentNode; d.remove();
+    if(caja && !caja.querySelector('.p392-falta')) [].forEach.call(caja.querySelectorAll('.p392-mal'), function(x){ x.classList.remove('p392-mal'); });
+  });
+  if(!document.querySelector("#view-form .p392-falta")) FALTA_INTENTO=false;
+  try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){}
+}
+function faltaCampoLuego(){ if(FALTA_T || !faltaCampoVa()) return; FALTA_T=setTimeout(faltaCampoRevisar, 140); }
+document.addEventListener('DOMContentLoaded', function(){
+  var vf=document.getElementById('view-form'); if(!vf) return;
+  ['input','change','click'].forEach(function(t){ vf.addEventListener(t, faltaCampoLuego, true); });
+});
 function gladoGuardar(){
   var b=document.getElementById('f-submit'); if(!b) return;
   if(b.disabled){ toast('Ya se está guardando: esperá el resultado.', 'err', 4000); return; }
@@ -29444,7 +29889,7 @@ function gladoHtml(chk, tipo, tienda){
     '<div class="glado-n">Es el mismo botón de abajo: pregunta lo mismo antes de guardar.</div>';
 }
 var FX_LADOS_T=null;
-function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()) fxDerPintar(); }catch(e){} }, 150); }
+function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()){ fxDerPintar(); if(agLlegaVa()) fxIzqPintar(); } }catch(e){} }, 150); }   // 🎨 (393) la agenda, con lo del saldo
 /* 3 · El dibujo del cuadrito del saldo. */
 function fxEscenaSaldo(tipo){
   if(tipo==='hay') return '<svg class="fx-esc" viewBox="0 0 118 64" aria-hidden="true"><rect x="6" y="56" width="106" height="5" rx="2" fill="#94a3b8"/>'+
@@ -29981,8 +30426,10 @@ function fpPintar(){
       el.querySelector('.fp-n').textContent=ok[i]?'✓':o.n; el.querySelector('.fp-est').textContent=ok[i]?'Listo':(i===act?'Ahora':'Falta'); }
   });
   var bar=document.getElementById('fp-barra'), k=0;
-  var h=FP_PASOS.map(function(o,i){ if(!vis[i]) return ''; k++; var est=ok[i]?'ok':(i===act?'ya':'no');
-    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+'" onclick="fpIr('+o.n+')"><span>'+(ok[i]?'✓':k)+'</span>'+o.bar+'</button>'; }).join('')+
+  var _f392=FALTA_INTENTO && faltaCampoVa();   // 🎨 (16/11, mejora 392) después de un Guardar que frenó: el paso con algo pendiente, con «!»
+  var h=FP_PASOS.map(function(o,i){ if(!vis[i]) return ''; k++; var est=ok[i]?'ok':(i===act?'ya':'no'), f392=_f392 && !ok[i];
+    var bar=(o.n===3 && VENTA_TIENDA && docColorVa()) ? 'Se lo lleva' : o.bar;   // 🎨 (16/11, mejora 398) en la venta de tienda no hay entrega
+    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+(f392?' p392-b':'')+'" onclick="fpIr('+o.n+')"'+(f392?' title="Falta algo en este paso"':'')+'><span>'+(ok[i]?'✓':(f392?'!':k))+'</span>'+bar+'</button>'; }).join('')+
     '<span class="fp-av"><b>'+nOk+' de '+nV+'</b> '+(nOk===nV?'¡listo para guardar!':'listo')+'</span>';
   if(bar && bar._h!==h){ bar.innerHTML=h; bar._h=h; }
   if(bar) bar.style.top='';   // (§4mo) lo pega el CSS debajo del encabezado (`--hdr-h`), que se achica al bajar
@@ -42740,13 +43187,41 @@ function borrFilaHtml(p, conDuena){
   else if(gem) tags.push('<span class="kx-t kx-gem">✋ parece la misma que '+esc(String(gem.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+(gem.nota?(' · nota '+esc(gem.nota)):'')+'</span>');
   if(!(p.productos||[]).some(function(x){ return String(x.desc||x.codigo||'').trim(); })) tags.push('<span class="kx-t kx-am">sin productos</span>');
   try{ revisarBorrador(p).forEach(function(r){ tags.push('<span class="kx-t '+(r.n==='alto'?'kx-mal':'kx-am')+'" title="'+esc(String(r.t).replace(/<[^>]+>/g,''))+'">'+esc(String(r.t).replace(/<[^>]+>/g,'').split(/[.:](?:\s|$)/)[0].slice(0,48))+'</span>'); }); }catch(e){}
-  return '<div class="kx-f"><div class="kx-n"><b>'+esc(p.cliente||'(sin nombre)')+'</b><small>'+[conDuena&&p.vendedor?('👤 '+esc(p.vendedor)):'', p.celular?('📱 '+esc(p.celular)):'', monto?fmtBs0(monto):'', d<=0?'llegó hoy':(d===1?'desde ayer':('hace '+d+' días'))].filter(Boolean).join(' · ')+'</small></div>'+
-    '<div class="kx-tags">'+tags.join('')+'</div><div class="kx-b">'+
+  var K395=(gem && !(G && G.cargada) && kxLadoVa()) ? kxLadoDatos(p, gem) : null;   // 🎨 (16/11, mejora 395) las dos ventas lado a lado
+  return '<div class="kx-f'+(K395?' p395':'')+'"><div class="kx-n"><b>'+esc(p.cliente||'(sin nombre)')+'</b><small>'+[conDuena&&p.vendedor?('👤 '+esc(p.vendedor)):'', p.celular?('📱 '+esc(p.celular)):'', monto?fmtBs0(monto):'', d<=0?'llegó hoy':(d===1?'desde ayer':('hace '+d+' días'))].filter(Boolean).join(' · ')+'</small>'+(K395?K395.res:'')+'</div>'+
+    '<div class="kx-tags">'+tags.join('')+'</div>'+(K395?K395.tabla:'')+'<div class="kx-b">'+
     (gem ? ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("borrEsLaMisma('"+id+"','"+String(gem.id)+"')")+'">Sí, es la misma</button>'+
             '<button type="button" class="ah-go" onclick="'+esc("verFichaGemela('"+String(gem.id)+"')")+'">Ver la mía</button>'+
             '<button type="button" class="ah-go" onclick="'+esc("completarBorrador('"+id+"')")+'">Es otra</button>')
          : ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("completarBorrador('"+id+"')")+'">Completar</button>'))+
     '<button type="button" class="ah-go kx-x" title="Descartar" onclick="'+esc("descartarBorrador('"+id+"')")+'">✕</button></div></div>';
+}
+/* 🎨 (16/11, mejora 395; dueño: «¿Es la misma?: Kommo y tu venta lado a lado») El renglón decía «✋ parece la misma que ELENA SOLIZ · nota
+   2491» y para comparar había que tocar «Ver la mía» (otra ventana). De las que hoy «parecen», ninguna tenía el mismo monto ni el mismo
+   celular: coincidían solo en el nombre, y «Sí, es la misma» es el botón grande. Ahora, debajo de cada una, una tablita «📥 Kommo | 🧾 Tu
+   venta en el panel» con cliente, celular, monto y fecha: ✓ verde lo que coincide, ≠ ámbar lo que no y «·» gris lo que Kommo no trae; al
+   lado del nombre, «✓ Coinciden 4 de 4» o «⚠️ El monto no coincide · 2 de 4». Las dos ventas son las de siempre (el borrador y
+   `borrGemelo(p).p`), el monto de la venta es `ventaTotal`. Los botones no cambian. Solo mira. En Playwright como antes salvo
+   `window.KX_LADO_PRUEBA`. `tests/test_v391_mis_tarjetas.js` §395. */
+function kxLadoVa(){ try{ return vdVa('KX_LADO_PRUEBA'); }catch(e){ return false; } }
+function kxLadoDatos(b, g){
+  var cel=function(x){ return String(x||'').replace(/\D/g,'').slice(-8); }, nom=function(x){ return normNombre(String(x||'')); };
+  var mb=Number(b.saldo)||Number(b.acuenta)||0, mg=Number(ventaTotal(g))||0;
+  var dk=b.ts ? isoDeTsBolivia(b.ts) : '', dg=g.ts ? isoDeTsBolivia(g.ts) : '';
+  var nb=nom(b.cliente), ng=nom(g.cliente);
+  var F=[
+    ['Cliente', b.cliente||'—', g.cliente||'—', !!nb && !!ng && (nb===ng || ng.indexOf(nb)===0 || nb.indexOf(ng)===0)],
+    ['Celular', cel(b.celular) ? b.celular : 'Kommo no lo trae', g.celular||'—', !cel(b.celular) ? null : cel(b.celular)===cel(g.celular)],
+    ['Monto', mb ? fmtBs0(mb) : 'Kommo no lo trae', mg ? fmtBs0(mg) : '—', !(mb>0) ? null : Math.abs(mb-mg)<=1],
+    ['Fecha', dk ? fmtFechaCorta(dk) : '—', (dg ? fmtFechaCorta(dg) : '—')+(g.oc ? (' · '+ocEtiq(g.oc)) : ''), !!dk && !!dg && Math.abs(Date.parse(dk+'T12:00:00')-Date.parse(dg+'T12:00:00'))<=7*864e5]
+  ];
+  var ok=F.filter(function(x){ return x[3]===true; }).length, tot=F.filter(function(x){ return x[3]!==null; }).length, mOk=F[2][3];
+  var res = (ok===tot && mOk!==false) ? ('<span class="p395-res si">✓ Coinciden '+ok+' de '+tot+'</span>')
+          : (mOk===false ? ('<span class="p395-res casi">⚠️ El monto no coincide · '+ok+' de '+tot+'</span>') : ('<span class="p395-res casi">Coinciden '+ok+' de '+tot+'</span>'));
+  var tabla='<div class="p395-c" role="table" aria-label="Kommo y tu venta lado a lado"><div class="h"></div><div class="h">📥 Kommo</div><div class="h"></div><div class="h">🧾 Tu venta en el panel</div>'+
+    F.map(function(x){ var m=x[3]===null ? 'na' : (x[3] ? 'si' : 'no');
+      return '<div class="k">'+x[0]+'</div><div class="v" title="'+esc(x[1])+'">'+esc(x[1])+'</div><div class="m '+m+'">'+(x[3]===null ? '·' : (x[3] ? '✓' : '≠'))+'</div><div class="v" title="'+esc(x[2])+'">'+esc(x[2])+'</div>'; }).join('')+'</div>';
+  return { res:res, tabla:tabla, ok:ok, tot:tot };
 }
 var MIS_KX_MAS={ gem:false, nue:false, car:false };
 function borrBandejaCompacta(lista, todos){
@@ -42831,6 +43306,7 @@ function renderMis(){
   }
   // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
   if(MIS_FILTER==='atras') lista.sort(function(a,b){ return minutosAtraso(b)-minutosAtraso(a); });
+  else if(misOrdenVa()) lista.sort(misOrdenCmp);   // 🎨 (16/11, mejora 391) lo atrasado y lo de hoy primero
   if(!lista.length){
     tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
     vacioPoner(empty, MIS_FILTER, MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
@@ -42851,6 +43327,7 @@ function renderMis(){
   if(misCompactoActivo()){
     var _cf=lista.filter(misEsCompacta);
     if(_cf.length){ lista=lista.filter(function(x){ return !misEsCompacta(x); }).concat(_cf); MIS_CF_N=_cf.length; MIS_CF_PRIMERO=String(_cf[0].id); }
+    misMesArmar(_cf);   // 🎨 (16/11, mejora 401) lo entregado y pagado, por mes
   }
   var _tope=trozosActivo() ? lista.length : MIS_TOPE;   // ⚡ (§4oa, H4) de a partes, el «Ver más» del trozo es el único; sin trozos (las pruebas), el corte de 120
   tbl.innerHTML=trozosHtml('mis', lista.slice(0,_tope), function(p,i){ return misCardHtml(p, i+1, todos, verNota); }, { primero:30 })+   // ⚡ (§4oa, 87)
@@ -42911,13 +43388,40 @@ function misCfSepHtml(n){
 }
 function misCfFilaHtml(p, n){
   var pr=(p.productos||[]).filter(function(x){ return String(x.desc||'').trim(); }), x0=pr[0];
+  var M=MIS_P401[String(p.id)];   // 🎨 (16/11, mejora 401) en la tarjeta de su mes, con el dibujito y lo que vale
   var prod=x0 ? (String(x0.desc||'').trim()+(x0.medida?(' '+String(x0.medida).trim()):'')+((Number(x0.cant)||1)>1?(' ×'+x0.cant):'')) : '—';
   var dia='', f=fechaSalida(p); try{ dia=(['dom','lun','mar','mié','jue','vie','sáb'][dowDe(f)]||'')+' '+fmtFechaCorta(f); }catch(e){ dia=f||''; }
-  return '<div class="mis-cf" data-id="'+esc(String(p.id))+'" data-n="'+esc(String(n))+'" role="button" tabindex="0" onclick="misCompactaAbrir(this.getAttribute(\'data-id\'))" title="Tocá para ver la tarjeta entera">'+
+  return '<div class="mis-cf'+(M?(' p401'+(M.ult?' p401-ult':'')):'')+'" data-id="'+esc(String(p.id))+'" data-n="'+esc(String(n))+'" role="button" tabindex="0" onclick="misCompactaAbrir(this.getAttribute(\'data-id\'))" title="Tocá para ver la tarjeta entera">'+
     '<span class="mis-cf-ok" aria-hidden="true">✓</span><span class="mis-cf-n">'+esc(String(n))+'</span><span class="mis-cf-d">'+esc(dia)+'</span>'+
     '<b class="mis-cf-cli">'+esc(p.cliente||'—')+'</b>'+
+    ((M && x0) ? prodIcoHtml(x0) : '')+
     '<span class="mis-cf-p">'+esc(prod)+(pr.length>1?(' <i>+'+(pr.length-1)+'</i>'):'')+(p.oc?(' <em>· '+esc(ocEtiq(p.oc))+'</em>'):'')+'</span>'+
+    (M ? ('<span class="p401-bs">'+(M.bs>0.005 ? fmtBs0(M.bs) : '—')+'</span>') : '')+
     '<span class="mis-cf-pag">'+(noSeCobra(p)?'no se cobra':'pagado')+'</span><span class="mis-cf-v" aria-hidden="true">▾</span></div>';
+}
+/* 🎨 (16/11, mejora 401; dueño: «Lo entregado y pagado, por mes y con lo que vale») Los renglones de «✅ Entregados y pagados» eran sueltos (113
+   para Carola, 40 px con 12 px entre cada uno), sin la plata de cada venta ni dónde empezaba cada mes. Ahora van juntos en una tarjeta por
+   mes con su título («Noviembre · 13 entregas · Bs 46.090»), el dibujito del producto y el total de cada venta a la derecha (las ATC y RPT
+   dicen «—» y «no se cobra»). Tocar un renglón sigue abriendo la tarjeta entera. El monto es `ventaTotal` (el de Contabilidad) y el mes, el de
+   `fechaSalida`. Son los MISMOS renglones (siguen llegando de a partes): el título va delante del primero de cada mes y la tarjeta se arma
+   con CSS. En Playwright como antes salvo `window.MIS_MES_PRUEBA` (con `MIS_COMPACTO_PRUEBA`). `tests/test_v391_mis_tarjetas.js` §401. */
+var MIS_P401={}, MIS_MES_NOM=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+function misMesVa(){ try{ return vdVa('MIS_MES_PRUEBA'); }catch(e){ return false; } }
+function misMesArmar(cf){
+  MIS_P401={};
+  if(!misMesVa() || !cf || !cf.length) return;
+  var runs=[], cur=null, anio=diaNegocio().slice(0,4);
+  cf.forEach(function(p){
+    var k=String(fechaSalida(p)||'').slice(0,7), bs=noSeCobra(p) ? 0 : (Number(ventaTotal(p))||0);
+    if(!cur || cur.k!==k){ cur={ k:k, ids:[], n:0, bs:0 }; runs.push(cur); }
+    cur.ids.push(String(p.id)); cur.n++; cur.bs+=bs;
+    MIS_P401[String(p.id)]={ bs:bs };
+  });
+  runs.forEach(function(r){
+    var m=+r.k.slice(5,7), y=r.k.slice(0,4), nom=m ? (MIS_MES_NOM[m-1]+(y!==anio?(' '+y):'')) : 'Sin fecha';
+    MIS_P401[r.ids[0]].cab='<div class="p401-mh" data-mes="'+esc(r.k)+'"><b>'+esc(nom)+'</b><span>'+r.n+(r.n===1?' entrega':' entregas')+'</span><span class="t">'+fmtBs0(r.bs)+'</span></div>';
+    MIS_P401[r.ids[r.ids.length-1]].ult=true;
+  });
 }
 function misCompactaAbrir(id){
   id=String(id); MIS_CF_ABIERTAS[id]=1;
@@ -42927,12 +43431,15 @@ function misCompactaAbrir(id){
 function misCardHtml(p, n, todos, verNota){
   if(!misCompactoActivo()) return misCardHtmlBase(p, n, todos, verNota);
   var sep=(MIS_CF_PRIMERO!=null && String(p.id)===MIS_CF_PRIMERO) ? misCfSepHtml(MIS_CF_N) : '';
+  var _M=MIS_P401[String(p.id)]; if(_M && _M.cab) sep+=_M.cab;   // 🎨 (16/11, mejora 401) el título del mes
   if(misEsCompacta(p) && !MIS_CF_ABIERTAS[String(p.id)]) return sep+misCfFilaHtml(p, n);
   return sep+misCardHtmlBase(p, n, todos, verNota);
 }
 function misCardHtmlBase(p, n, todos, verNota){
   if(verNota===undefined) verNota=misVeNota();
-  var prod=(p.productos||[]).map(function(x){
+  var _t394=misTarjVa();   // 🎨 (16/11, mejora 394) cada producto con su punto de color y la cantidad en una fichita
+  var _b400=misBotonesVa();   // 🎨 (16/11, mejora 400) los botones en una fila
+  var prod=_t394 ? misProdsHtml(p) : (p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no' && entregaAConfirmar(p)) t=t+' <span style="color:var(--muted)">— sin stock por ahora</span>';   // 📦 (propuesta 76) sin día no es una alarma
     else if(x.chk==='no')  t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
@@ -42955,6 +43462,7 @@ function misCardHtmlBase(p, n, todos, verNota){
                     : sinMontoAnotado(p) ? badgeSinMonto() : '<span class="badge b-gray">Sin saldo</span>'));
   var _est=misEstadoCard(p, falta);   // 🧾 (§4ip) el borde dice cómo está: va bien / debe plata / falta stock / entregado
   return '<div class="cho-card mis-c mis-est-'+_est+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
+    (misOrdenVa() ? misCuandoHtml(p) : '')+   // 🎨 (16/11, mejora 391) cuándo se entrega, en una franja de color arriba
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+clfNombre(p, p.cliente||'—', 'mis')+'</div>'+
@@ -42972,23 +43480,126 @@ function misCardHtmlBase(p, n, todos, verNota){
     /* 🧾 (§4ip) Íconos en vez de «PRODUCTOS / DIRECCIÓN / COBRO / CHOFER»: el título queda para quien lo pase por arriba. */
     '<div class="mis-ico">'+
       '<span class="mi" title="Productos">🛏️</span><div class="cho-row">'+prod+'</div>'+
-      (p.estado?('<span class="mi" title="Stock">📦</span><div class="cho-row">'+estadoBadge(p.estado)+'</div>'):'')+
+      ((p.estado && !_t394)?('<span class="mi" title="Stock">📦</span><div class="cho-row">'+estadoBadge(p.estado)+'</div>'):'')+   // 🎨 (394) el stock ya va en cada producto
       (p.direccion?('<span class="mi" title="Dirección">📍</span><div class="cho-row">'+esc(p.direccion)+'</div>'):'')+
       '<span class="mi" title="Cobro">💵</span><div class="cho-row">'+cobro+'</div>'+
-      '<span class="mi" title="Chofer">🚚</span><div class="cho-row">'+choferTexto(p)+'</div>'+
+      ((_t394 && !String(p.chofer||'').trim()) ? '' : ('<span class="mi" title="Chofer">🚚</span><div class="cho-row">'+choferTexto(p)+'</div>'))+   // 🎨 (394) recién con chofer
     '</div>'+
     fotosHtml(p, false)+
     (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">ENTREGADO</div>':'')+
-    '<div class="cho-links">'+
+    '<div class="cho-links'+(_b400?' p400':'')+'">'+   // 🎨 (16/11, mejora 400) en una fila, con el número a la vista
       misCobrarBtnHtml(p, 'cho-link', 'tarjeta')+   // 💵 (295) cobrar el saldo sin ir a Contabilidad
       '<button class="cho-link ico" onclick="event.stopPropagation();editarDesdeMis(\''+p.id+'\')">✏️ Editar</button>'+
       (p.maps?('<a class="cho-link ico" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ubicación</a>')
-             :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
-      (p.celular?('<a class="cho-link ico" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>'):'')+
+             :(p.entregado?'':'<button class="cho-link'+(_b400?' p400-ub':'')+'" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')"'+(_b400?' title="Falta la ubicación: tocá para cargarla"':'')+'>'+(_b400?'⚠️ Sin ubicación':'⚠️ Falta ubicación — cargar')+'</button>'))+
+      (p.celular?(_b400 ? misTelBtnHtml(p.celular) : ('<a class="cho-link ico" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>')):'')+
       (misWaCliente(p.celular)?('<a class="cho-link ico" href="'+esc(misWaCliente(p.celular))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir el chat de WhatsApp con el cliente">💬 WhatsApp</a>'):'')+
       (misVeRepetir() ? repetirBtnHtml(p, 'cho-link ico') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
     '</div>'+
   '</div>';
+}
+/* 🎨 (16/11, mejora 391; dueño: «Mis pedidos: primero lo más cercano, con su día arriba») Las tarjetas iban de la entrega MÁS LEJANA a la
+   más cercana: en «⏳ No entregados» la primera era la del 05/12 y la que ya pasó su día quedaba al final, con la fecha en gris chiquito.
+   Ahora lo que falta entregar va del día más cercano al más lejano (lo atrasado y lo de hoy primero; lo que «avisa cuándo», al final de
+   eso) y después lo entregado, del más nuevo al más viejo, como siempre. Cada tarjeta sin entregar lleva arriba una franja de color que
+   dice CUÁNDO: «⏰ Ya pasó su día» rojo, «📅 Hoy» turquesa, «🚚 Mañana» turquesa claro, «Esta semana» y «Más adelante» en gris. Solo el
+   orden y el dibujo: los filtros, los números y lo que abre cada tarjeta no cambian. «⏰ Atrasados» sigue con el que más espera arriba.
+   En Playwright como antes salvo `window.MIS_ORDEN_PRUEBA`. `tests/test_v391_mis_orden.js`. */
+function misOrdenVa(){ try{ return vdVa('MIS_ORDEN_PRUEBA'); }catch(e){ return false; } }
+function misOrdenCmp(a, b){
+  var ea=!!a.entregado, eb=!!b.entregado;
+  if(ea!==eb) return ea ? 1 : -1;
+  var fa=(!ea && entregaAConfirmar(a)) ? '9999' : (fechaSalida(a)||''), fb=(!eb && entregaAConfirmar(b)) ? '9999' : (fechaSalida(b)||'');
+  if(!ea){ if(fa!==fb) return fa<fb ? -1 : 1; return (a.ts||0)-(b.ts||0); }
+  if(fa!==fb) return fa<fb ? 1 : -1;
+  return (b.ts||0)-(a.ts||0);
+}
+var MIS_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function misCuandoDatos(p){
+  if(!p || p.entregado) return null;
+  if(entregaAConfirmar(p)) return { c:'lej', t:'📦 Sin día', d:'el cliente avisa cuándo' };
+  var f=fechaSalida(p); if(!f) return null;
+  var hoy=todayStr(), dow=dowDe(hoy), dd=(MIS_DIA_SEM[dowDe(f)]||'')+' '+fmtFechaCorta(f);
+  if(f<hoy){ var n=Math.max(1, Math.round((Date.parse(hoy+'T12:00:00')-Date.parse(f+'T12:00:00'))/864e5));
+    return { c:'al', t:'⏰ Ya pasó su día', d:'era el '+dd+' · hace '+n+' día'+(n===1?'':'s') }; }
+  if(f===hoy) return { c:'hoy', t:'📅 Hoy', d:dd };
+  if(f===tomorrowStr()) return { c:'man', t:'🚚 Mañana', d:dd };
+  if(f<=stockSumarDias(hoy, dow===0 ? 0 : (7-dow))) return { c:'sem', t:'Esta semana', d:dd };
+  return { c:'lej', t:'Más adelante', d:dd };
+}
+function misCuandoHtml(p){
+  var D=misCuandoDatos(p); if(!D) return '';
+  return '<div class="p391-b p391-'+D.c+'"><span>'+esc(D.t)+'</span><span class="d">'+esc(D.d)+'</span></div>';
+}
+/* 🎨 (16/11, mejora 394; dueño: «La tarjeta del pedido con lo que importa para vender») Cada producto de la tarjeta de Mis pedidos llevaba
+   «(cargar en Banzer)» en azul (dato de logística), todas las tarjetas sin camión decían «🚚 Sin asignar todavía» (27 de 27 en noviembre) y
+   «📦 En stock / En producción» repetía lo que ya dice el viaje de arriba. Ahora cada producto va en su renglón con un punto de color (verde
+   hay · ámbar se trae de Moreno o está en producción · rojo no hay · gris sin revisar), la cantidad en una fichita y su dibujito, sin el
+   «cargar en…»; el renglón del chofer aparece recién cuando hay chofer y el del stock se va. Las marcas son las de siempre (`x.chk`,
+   `enProduccion`, `esRecoger`, `prodHay`); la ficha entera (`showMisModal`) no cambia. En Playwright como antes salvo `window.MIS_TARJ_PRUEBA`.
+   `tests/test_v391_mis_tarjetas.js` §394. */
+function misTarjVa(){ try{ return vdVa('MIS_TARJ_PRUEBA'); }catch(e){ return false; } }
+/* 🎨 (16/11, mejora 400; dueño: «Los botones de cada pedido en una fila, con el número») Editar · Ubicación · Llamar · WhatsApp iban en una
+   grilla de 2 × 2 con botones de 40 px (≈100 px de cada tarjeta) y «📞 Llamar» en la compu no llama: no se veía el número. Ahora van en una
+   fila más baja (en la compu; en el celular, como siempre), «💵 Cobrar» sigue primero y en turquesa, y el de llamar muestra el número
+   («📞 712 34567»): en el celular llama, en la compu (mouse) lo copia. Los mismos botones y los mismos destinos. En Playwright como antes
+   salvo `window.MIS_BOTONES_PRUEBA`. `tests/test_v391_mis_tarjetas.js` §400. */
+function misBotonesVa(){ try{ return vdVa('MIS_BOTONES_PRUEBA'); }catch(e){ return false; } }
+function misTelTxt(cel){
+  var d=String(cel||'').replace(/[^0-9+]/g,'');
+  return /^[67]\d{7}$/.test(d) ? (d.slice(0,3)+' '+d.slice(3)) : String(cel||'').trim();
+}
+function misTelBtnHtml(cel){
+  var d=String(cel||'').replace(/[^0-9+]/g,'');
+  return '<a class="cho-link ico p400-cel" href="tel:'+esc(d)+'" data-cel="'+esc(d)+'" onclick="event.stopPropagation();misTelTocar(event, this)" title="En el celular llama; en la compu, tocá para copiar el número">📞 '+esc(misTelTxt(cel))+'</a>';
+}
+function misTelTocar(ev, a){
+  var compu=false; try{ compu=!!(window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches); }catch(e){}
+  if(!compu) return;   // en el celular, el enlace `tel:` llama como siempre
+  if(ev) ev.preventDefault();
+  copyText(a.getAttribute('data-cel')||'');
+  toast('📋 Copiado el '+(a.textContent||'').replace(/^📞\s*/,''), 'ok', 2500);
+}
+function misProdEstado(p, x){
+  if(x.chk==='no' && entregaAConfirmar(p)) return { c:'g', t:'sin stock por ahora' };   // 📦 (propuesta 76) sin día no es una alarma
+  if(x.chk==='no') return { c:'r', t:'no hay'+(enProduccion(x) ? (' · 🏭 en producción'+prodLugarTxt(x)) : '') };
+  if(enProduccion(x)) return { c:'a', t:'en producción'+prodLugarTxt(x) };
+  if(esRecoger(x)) return { c:'a', t:'se trae de '+recogerCorto(x) };
+  if(prodHay(x)) return { c:'v', t:'' };
+  return { c:'g', t:'' };
+}
+function misProdsHtml(p){
+  var T={ v:'hay', a:'se trae o se fabrica', r:'no hay', g:'sin revisar' };
+  return (p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).map(function(x){
+    var E=misProdEstado(p, x);
+    return '<div class="p394-l"><span class="p394-dot '+E.c+'" title="'+esc(T[E.c])+'"></span><span class="p394-q">'+esc(x.cant||1)+'</span>'+prodIcoHtml(x)+
+      '<span class="nm">'+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(E.t?(' <span class="es '+E.c+'">· '+esc(E.t)+'</span>'):'')+'</span></div>';
+  }).join('');
+}
+/* 🎨 (16/11, mejora 396; dueño: «Tu panel al día con palabras, no solo íconos») La tira de «✅ Tu panel al día» arriba de «Para hacer» eran
+   íconos con números en circulitos («🧾 7 · 📣 2 · 📍 3 · 📥 35 · 💵 ✓ · 20 %»): qué era cada uno se leía solo pasando el mouse. Ahora son
+   cinco casilleros con su ícono, su NOMBRE y qué falta en palabras («🧾 Facturas 7 · 7 sin N° de factura o remisión»), en verde, ámbar o
+   rojo como antes, y arriba una barra con el %. Cada casillero se sigue tocando (`alDiaTocar`, lo mismo de siempre). Los datos son los MISMOS
+   de `alDiaDatos`/`alDiaCalcular` (`D[].n`, `.sev`, `.s`): no se cuenta nada aparte (la foto del lunes del bono no cambia). Solo dibujo.
+   En Playwright como antes salvo `window.AL_DIA_PALABRAS_PRUEBA` (y `AL_DIA_PRUEBA`, que prende la tira). `tests/test_v391_mis_tarjetas.js` §396. */
+function alDiaPalabrasVa(){ try{ return vdVa('AL_DIA_PALABRAS_PRUEBA'); }catch(e){ return false; } }
+var AL_DIA_NOM={ fac:'Facturas', av:'Avisos', ub:'Ubicaciones', ko:'Kommo', ef:'Efectivo' };
+function alDiaCorto(d){
+  if(d.sev==='v') return ({ fac:'todas con su N°', av:'sin avisos', ub:'todas con pin', ko:'nada pendiente', ef:'todo entregado' })[d.k] || 'al día';
+  if(d.k==='fac') return d.n+' sin N° de factura o remisión';
+  if(d.k==='av') return d.n+' aviso'+(d.n===1?'':'s')+' de Contabilidad';
+  if(d.k==='ub') return d.n+' entrega'+(d.n===1?'':'s')+' sin ubicación';
+  if(d.k==='ko') return d.n+' venta'+(d.n===1?'':'s')+' para completar';
+  if(d.k==='ef') return fmtBs0(d.bs)+' sin entregar · '+(d.dias>0 ? (d.dias+' día'+(d.dias===1?'':'s')) : 'de hoy');
+  return d.s;
+}
+function alDiaCasillerosHtml(v){
+  var R=alDiaDatos(v), col=alDiaColor(R.pct);
+  return '<div class="vd-ad-yo p396" id="vd-al-dia-yo"><div class="p396-top"><b>✅ Tu panel al día</b><div class="p396-bar"><i style="width:'+R.pct+'%;background:'+col+'"></i></div>'+
+      '<b class="vd-ad-pc p396-pc" style="color:'+col+'">'+R.pct+' %</b></div><div class="p396-g">'+
+    R.D.map(function(d){ var n=d.sev==='v' ? '✓' : (d.k==='ef' ? '' : String(d.n));
+      return '<button type="button" class="p396-c '+d.sev+'" data-v="'+esc(v)+'" data-k="'+d.k+'" onclick="alDiaTocar(this)" title="'+esc(d.ic+' '+d.s)+'" aria-label="'+esc((AL_DIA_NOM[d.k]||d.t)+': '+d.s)+'">'+
+        '<span class="t">'+d.ic+' '+esc(AL_DIA_NOM[d.k]||d.t)+(n?('<span class="n">'+esc(n)+'</span>'):'')+'</span><small>'+esc(alDiaCorto(d))+'</small></button>'; }).join('')+'</div></div>';
 }
 /* 🧾 (§4ip, 09/10; dueño: «lo demás aplica» — muestra 1) Cómo está el pedido, para el color del borde de su tarjeta:
    entregado (✅ marcado) · falta stock (una línea «✗ no hay») · debe plata (saldo y no es ATC/RPT) · va bien. Solo mira. */
@@ -50136,7 +50747,9 @@ function saldoFaltanCuentaTxt(v){
   partes.push(stockUnid(v.cant)+' de este pedido');
   return '('+partes.join(' + ')+' − '+stockUnid(v.alm)+' en almacén)';
 }
-function saldoNumerosHtml(v){
+function saldoNumerosHtml(v){ return saldoNumerosPartes(v).join(' · '); }
+/* 🎨 (16/11, mejora 390) Los mismos pedazos de `saldoNumerosHtml`, sueltos: la franja de la 390 los dibuja en fichitas. */
+function saldoNumerosPartes(v){
   var h=[], aF=saldoAlaFechaTxt(v, 'para el');
   if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
   if(v.pend!=null){
@@ -50152,7 +50765,7 @@ function saldoNumerosHtml(v){
   }
   if(v.prod>0) h.push('En producción <b>'+stockUnid(v.prod)+'</b>');
   if(v.nRen>1) h.push('este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)');
-  return h.join(' · ');
+  return h;
 }
 /* 📅 (§4ls) La segunda línea: «Pendiente en total: 34 (30 para después del 20/10)». Solo cuando hay algo para después. */
 function saldoTotalHtml(v){
@@ -50224,6 +50837,11 @@ function saldoAvisos(){
   /* ✏️ (18/10, §4ls textos, VF8) «que suba el de del 17/10» → «el del 17/10», y en domingo o feriado se dice que hoy no trabajan. */
   stockCortesViejos().forEach(function(x){ if(x.nm) out.push('⚠️ El Excel de '+x.nombre+' es del '+fmtFechaCorta(x.f)+': '+(ultH===hoy ? 'pedile a logística que suba el de hoy'
       : ('falta el del '+fmtFechaCorta(ultH)+' (hoy '+(feriadoDe(hoy)?'es feriado':'es domingo')+' y logística no trabaja)'))); });
+  return out.concat(saldoAvisosConexion());
+}
+/* 🎨 (16/11, mejora 390) Los avisos de la conexión, sueltos (los mismos de siempre, al final de `saldoAvisos`): la franja los dice aparte. */
+function saldoAvisosConexion(){
+  var out=[];
   if(CONNECTED){
     var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR), ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : null;
     if(falla) out.push('⚠️ Sin conexión'+(ms==null ? ' con la planilla' : (' desde hace '+saldoHaceTxt(ms)))+': el saldo puede no estar al día');
@@ -50254,11 +50872,13 @@ function saldoCajaHtml(v){
     if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
     return h;
   }
-  var n=saldoNumerosHtml(v); if(n) h+='<div class="ps-n">'+n+'</div>';
+  var fr=psFranjaVa();                                                     // 🎨 (16/11, mejora 390) los números en fichitas
+  var n=fr ? psNumerosChips(v) : saldoNumerosHtml(v); if(n) h+='<div class="ps-n'+(fr?' ps390-n':'')+'">'+n+'</div>';
   var tl=saldoTotalHtml(v); if(tl) h+='<div class="ps-n ps-tot">'+tl+'</div>';                 // 📅 (§4ls) el total, aparte
   var dp=saldoDespuesTxt(v); if(dp) h+='<div class="ps-w ps-desp">'+esc(dp)+'</div>';          // 📅 (§4ls) lo de después no alcanza
   if(v.desconocido) h+='<div class="ps-n">'+saldoNoRecHtml(v)+'</div>';   // ❓ (§4ls VI-1)
   if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
+  if(fr) return h+psDondeHtml(v);   // 🎨 (16/11, mejora 390) los avisos de todos, el corte y el 🔄 van UNA vez en la franja de arriba
   saldoAvisos().forEach(function(a){ h+='<div class="ps-w">'+esc(a)+'</div>'; });
   h+='<div class="ps-c"><span title="PTF = productos terminados fábrica (de ahí salen los camiones)">'+esc(saldoDetalleTxt(v))+'</span>'+
      (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
@@ -50266,7 +50886,7 @@ function saldoCajaHtml(v){
 }
 /* Solo se toca el cuadrito (nunca un campo ni el foco), y solo si cambió lo que dice. */
 function saldoCajaPintar(box, v){
-  var cls='prod-saldo ps-'+(v.color||'gris'), html=saldoCajaHtml(v), dib=fxEscenaSaldo(v.tipo);   // ✨ (§4if) el dibujo
+  var cls='prod-saldo ps-'+(v.color||'gris')+(psFranjaVa()?' ps390':''), html=saldoCajaHtml(v), dib=fxEscenaSaldo(v.tipo);   // ✨ (§4if) el dibujo · 🎨 (390)
   if(dib) html='<div class="fx-saldo">'+dib+'<div class="fx-saldo-t">'+html+'</div></div>';
   if(box.hidden) box.hidden=false;
   if(box.className!==cls) box.className=cls;
@@ -50277,6 +50897,69 @@ function saldoCajaOcultar(box){
   if(!box.hidden) box.hidden=true;
   if(box._html){ box.innerHTML=''; box._html=''; }
   box._v=null; box._firma='';
+}
+/* 🎨 (16/11, mejora 390; dueño: «El cuadrito del stock, sin el mismo aviso tres veces») Un lunes con los Excel del sábado, CADA producto
+   repetía «El último corte es del 14/11…», lo mismo de Banzer y de Moreno, su propio 🔄 y «Saldo al corte…»: con 3 productos, 9 avisos
+   iguales y lo que importa («Hay en Moreno · programá desde…») perdido entre ellos. Ahora lo que vale para TODOS (de qué día es el Excel
+   de cada almacén, la conexión, el corte y el 🔄) sale UNA vez en la franja `#ps-franja` arriba de los productos, y cada cuadrito queda
+   con lo suyo: el título, los números en fichitas (Libres en verde, Faltan en rojo), la línea roja de «no llega» y «Está en: PTF · Banzer
+   · Moreno» con lo que hay en turquesa. SOLO DIBUJO: los textos y las cuentas son los de siempre (`saldoAvisos`, `stockCortesViejos`,
+   `saldoNumerosPartes`, `saldoCorteTxt`). En Playwright como antes salvo `window.PS_FRANJA_PRUEBA`. `tests/test_v390_saldo_franja.js`. */
+function psFranjaVa(){ try{ return vdVa('PS_FRANJA_PRUEBA'); }catch(e){ return false; } }
+function psNumerosChips(v){
+  return saldoNumerosPartes(v).map(function(x){
+    var c=/^Libres/.test(x) ? 'lib' : (/^Faltan/.test(x) ? 'fal' : ''), m=x.match(/^(Faltan.*?<\/b>)\s*(\(.*\))$/);
+    return '<span class="'+c+'">'+(m ? (m[1]+' <small>'+m[2]+'</small>') : x)+'</span>';
+  }).join('');
+}
+function psDondeHtml(v){
+  if(!v || v.alm==null) return '';
+  var it=function(nom, n, falta){ var si=(typeof n==='number' && n>0); return '<i class="'+(si?'si':'')+'">'+esc(nom)+' '+(falta || stockUnid(n))+'</i>'; };
+  var h=it('PTF', v.aca, v.aca==null ? 'sin contar' : '')+
+        it('Banzer', v.banzer, (v.hayBanzer||v.banzer) ? '' : '—')+
+        it(v.variosMoreno ? 'Moreno y otros' : 'Moreno', v.moreno, (v.hayMoreno||v.moreno) ? '' : '—');
+  if(v.recogida>0) h+='<i class="si">+'+esc(stockUnid(v.recogida))+' en camino de Moreno</i>';
+  return '<div class="ps390-donde" title="PTF = productos terminados fábrica (de ahí salen los camiones)">Está en: '+h+'</div>';
+}
+/* De qué día es el Excel de cada almacén que suma en el saldo (PTF primero), con la MISMA regla de «viejo» que `stockCortesViejos`. */
+function psFranjaAlmacenes(){
+  var ultH=stockUltimoHabil(), out=[], c=STOCK.c||{};
+  if(c.f) out.push({ nombre:'PTF', f:c.f, viejo:c.f<ultH });
+  Object.keys(STOCK.g||{}).forEach(function(nm){
+    var g=STOCK.g[nm]||{}; if(!g.f || !Object.keys(g.u||{}).length || stockEsLog(nm)) return;
+    out.push({ nombre:(almEsSalida(nm) ? saleNombre(nm) : stockAlmCorto(nm)), f:g.f, viejo:g.f<ultH });
+  });
+  return out;
+}
+function psFranjaHtml(){
+  var c=STOCK.c||{}, hoy=todayStr(), ultH=stockUltimoHabil(), A=psFranjaAlmacenes(), V=A.filter(function(a){ return a.viejo; });
+  var con=saldoAvisosConexion(), mal=V.length>0 || con.length>0, t='';
+  var diaDe=function(f){ return f===hoy ? 'hoy' : (f===stockSumarDias(hoy,-1) ? 'ayer' : fmtFechaCorta(f)); };
+  if(V.length){
+    var ptfV=(c.f && c.f<ultH), h=String(c.hora||'').slice(0,5), viej=V.reduce(function(m,a){ return a.f<m ? a.f : m; }, V[0].f);
+    t='<b>'+(ptfV ? ('Los saldos son del '+esc(saldoDiaTxt(c.f))+(h ? (' a las '+esc(h)) : '')+'.')
+                  : ('El Excel de '+esc(V.map(function(a){ return a.nombre; }).join(' y '))+' es del '+esc(saldoDiaTxt(viej))+'.'))+'</b> '+
+      (ultH===hoy ? ('Logística todavía no subió '+(V.length>1 ? 'los Excel' : 'el Excel')+' de hoy; cuando '+(V.length>1 ? 'los suba, se actualizan solos.' : 'lo suba, se actualiza solo.'))
+                  : ('Falta el del '+esc(fmtFechaCorta(ultH))+' (hoy '+(feriadoDe(hoy) ? 'es feriado' : 'es domingo')+' y logística no trabaja).'));
+  } else {
+    var ct=saldoCorteTxt(), q=saldoConsultadoTxt();
+    t='<b>'+esc(ct || 'Saldo de los almacenes')+'</b>'+(q ? (' · '+esc(q)) : '');
+  }
+  var al=A.length ? ('<div class="ps390-al">'+A.map(function(a){ return '<span class="'+(a.viejo?'v':'ok')+'">'+esc(a.nombre)+' · '+esc(diaDe(a.f))+'</span>'; }).join('')+'</div>') : '';
+  var cn=con.map(function(a){ return '<div class="ps390-con">'+esc(a)+'</div>'; }).join('');
+  return '<div class="ps390-f '+(mal?'mal':'ok')+'"><span class="ic">'+(mal?'🕗':'📦')+'</span><div class="tx">'+t+al+cn+'</div>'+
+         (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
+}
+function psFranjaPintar(){
+  var el=document.getElementById('ps-franja'); if(!el) return;
+  var hay=false;
+  if(psFranjaVa()) document.querySelectorAll('#f-productos .prod-saldo').forEach(function(b){
+    var v=b._v; if(!b.hidden && v && (v.alm!=null || v.tipo==='leyendo' || v.tipo==='cargando')) hay=true;
+  });
+  if(!hay){ if(!el.hidden) el.hidden=true; if(el._html){ el.innerHTML=''; el._html=''; } return; }
+  var html=psFranjaHtml();
+  if(el._html!==html){ el.innerHTML=html; el._html=html; }
+  if(el.hidden) el.hidden=false;
 }
 
 /* ---- Cuándo se pinta y cuándo se lee ---- */
@@ -50309,6 +50992,7 @@ function saldoAvisosPintar(){
   if(nuevas.length && saldoHayQueLeer()){
     saldoAvisosPintarYa(filas.filter(function(f){ return nuevas.indexOf(f)<0; }));
     nuevas.forEach(function(f){ saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); });
+    try{ psFranjaPintar(); }catch(e){}   // 🎨 (390)
     saldoLeer(false).then(function(){ saldoAvisosPintarYa(); });
     return;
   }
@@ -50324,6 +51008,7 @@ function saldoAvisosPintarYa(filas){
       f.box._firma=f.g+'|'+f.total;
     });
     try{ cotDesdePintar(); }catch(e){}   // 🧾 (mejora 251) «Entrega desde» de la cotización = la misma cuenta
+    try{ psFranjaPintar(); }catch(e){}   // 🎨 (16/11, mejora 390) la franja de los saldos, una vez
     fxLadosProgramar();   // 🖥️ (§4ig) los íconos del pedido en vivo
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
@@ -50342,6 +51027,7 @@ function saldoActualizar(){
     return Promise.resolve(false);
   }
   try{ saldoFilasForm().forEach(function(f){ if(saldoDelAlmacen(f)) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
+  try{ psFranjaPintar(); }catch(e){}   // 🎨 (390)
   return saldoLeer(true).then(function(){ saldoAvisosPintarYa(); });
 }
 /* Lo llama `refrescarEstado` con cada lectura (buena o no): con el formulario a la vista, se repintan SOLO los cuadritos. */
@@ -57399,6 +58085,7 @@ function openModal(html, ancha){
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
   box.classList.remove('clf-box');   // 👤 (§4nr) la ficha del cliente la vuelve a poner
   box.classList.remove('cta-ancha');   // 🧾 (366) la ficha ancha de Contabilidad y de Mis pedidos la vuelven a poner
+  box.classList.remove('p397');   // 🎨 (16/11, mejora 397) «Pedido guardado» ancho la vuelve a poner
   document.body.classList.remove('ficha-costado');   // (§4ni, 3) …y lo mismo el costado: cualquier otra ventana va al medio
   ov.classList.add('on');
   box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('tabindex','-1');
@@ -57523,6 +58210,7 @@ function modalFondo(){
 /* `volverA` = qué hacer al salir. Sin él cierra, como siempre (recién guardado). Desde una
    ficha se le pasa cómo volver a ella, para no dejar a la vendedora en el aire. */
 function showWhatsappModal(rec, volverA, reenvio){
+  if(!reenvio && guardadoAnchoVa() && guardadoAnchoEntra(rec)){ guardadoAnchoAbrir(rec, volverA); return; }   // 🎨 (16/11, mejora 397)
   var text=pedidoText(rec);
   var salir = esc(volverA || 'closeModal()');
   var _rpt=esRPT(rec&&rec.oc), _atc=esATC(rec&&rec.oc), _rid=String((rec&&rec.id)||'').replace(/'/g,'');
@@ -57558,6 +58246,62 @@ function showWhatsappModal(rec, volverA, reenvio){
   openModal(html);
   try{ if(_atc && !reenvio) atfPedir(rec.id, false, rec); }catch(e){}   // 🎧🤖 (16/11, 347) una ATC nueva con fotos: Claude las mira (callado si no puede)
   try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
+}
+/* 🎨 (16/11, mejora 397; dueño: «Pedido guardado ancho, con el mensaje como en WhatsApp») La ventana «✅ Pedido guardado» medía 540 × 749 px
+   en una pantalla de 768 (llegaba al borde de abajo) con dos cajas de texto una debajo de la otra, y el mensaje del cliente necesitaba su
+   barra para leerse entero. Ahora, en un pedido NUEVO a domicilio (una 📄 OC con día: `nxClienteVale`), la ventana va a ~1.000 px: arriba
+   «✓ Quedó guardado: OC · cliente · día · turno · Bs …»; a la izquierda el mensaje para el grupo del equipo; a la derecha el del cliente
+   como una burbuja verde de WhatsApp (con «✏️ Corregir el mensaje», que muestra la caja de texto de siempre) y el botón grande «💬 Abrir el
+   WhatsApp de …». Los MISMOS textos (`pedidoText`, `nxMsgCliente`) en los MISMOS campos (`#wa-text`, `#nx-wa-cli`) y los mismos botones.
+   ATC, RPT, venta de tienda, «Reenviar la venta» y la pantalla angosta (menos de 900 px), como siempre. En Playwright como antes salvo
+   `window.GUARDADO_ANCHO_PRUEBA`. `tests/test_v397_guardado_ancho.js`. */
+function guardadoAnchoVa(){ try{ return vdVa('GUARDADO_ANCHO_PRUEBA'); }catch(e){ return false; } }
+function guardadoAnchoEntra(rec){
+  if(!rec || esATC(rec.oc) || esRPT(rec.oc) || !nxClienteVale(rec)) return false;
+  try{ if(window.matchMedia && !matchMedia('(min-width:900px)').matches) return false; }catch(e){}
+  return true;
+}
+function guardadoWaFmt(t){ return esc(String(t||'')).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|[\s(])_([^_\n]+)_/g,'$1<i>$2</i>').replace(/\n/g,'<br>'); }
+function guardadoAnchoAbrir(rec, volverA){
+  var text=pedidoText(rec), salir=esc(volverA || 'closeModal()'), cliTxt=nxMsgCliente(rec, 'nuevo'), nom=nxNombreCorto(rec.cliente)||'el cliente', cel=misWaCliente(rec.celular);
+  var dia=rec.fecha ? (['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(rec.fecha)]+' '+fmtFechaCorta(rec.fecha)) : '';
+  var nP=(rec.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).length, tot=0; try{ tot=Number(ventaTotal(rec))||0; }catch(e){}
+  var sal=Number(rec.saldo)||0, tur=normTurno(rec.turno||'');
+  var hr=(function(){ try{ return hhmmBolivia(); }catch(e){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); } })();
+  var html='<div class="modal-h"><h3>✅ Pedido guardado</h3><button class="modal-x" onclick="'+salir+'">✕</button></div>'+
+    '<div class="modal-b p397-b"><div class="p397-g">'+
+      '<div class="p397-top"><span class="ok">✓</span><div class="tx"><b>Quedó guardado: '+esc(ocEtiq(rec.oc)||'')+(rec.cliente?(' · '+esc(rec.cliente)):'')+'</b>'+
+        '<small>'+[dia, tur?('turno '+esc(tur)):'', nP?(nP+(nP===1?' producto':' productos')):'', 'ya está en la planilla del equipo'].filter(Boolean).join(' · ')+'</small></div>'+
+        (tot>0 ? ('<div class="tot">'+fmtBs0(tot)+'<small class="'+(rec.pagado?'si':'no')+'">'+(rec.pagado ? '✅ pagado' : (sal>0.005 ? (fmtBs0(sal)+' por cobrar') : ''))+'</small></div>') : '')+'</div>'+
+      '<div class="p397-col"><h4>📦 Para el grupo del equipo</h4><div class="p397-eq">'+guardadoWaFmt(text)+'</div>'+
+        '<textarea class="wa-text" id="wa-text" readonly hidden>'+esc(text)+'</textarea>'+
+        '<div class="p397-acc"><button class="btn btn-primary btn-sm" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar el mensaje</button>'+
+          '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button></div></div>'+
+      '<div class="p397-col nx-cli-msg" id="p397-cli"><h4>💬 Para '+esc(nom)+' — así le llega</h4>'+
+        (nxBotManda(rec) ? '<div class="p397-bot">🤖 El bot de WhatsApp se lo manda solo, en unos 2 minutos: no hace falta mandarlo a mano.</div>' : '')+
+        '<div class="p397-wa"><div class="cab"><span class="av">'+esc(nom.charAt(0)||'?')+'</span><div><b>'+esc(nom)+'</b><small>'+esc(rec.celular||'')+'</small></div></div>'+
+          '<div class="chat"><div class="bub" id="p397-bub">'+guardadoWaFmt(cliTxt)+'<span class="hr">'+esc(hr)+' <i>✓✓</i></span></div>'+
+          '<textarea class="wa-text nx-wa-text" id="nx-wa-cli" rows="7" oninput="guardadoBurbuja()">'+esc(cliTxt)+'</textarea>'+
+          '<button type="button" class="edit" onclick="guardadoCorregir(this)">✏️ Corregir el mensaje</button></div></div>'+
+        '<div class="p397-acc"><button type="button" class="btn btn-ghost btn-sm" onclick="copyText(document.getElementById(\'nx-wa-cli\').value)">📋 Copiar</button>'+
+          (cel ? ('<button type="button" class="btn btn-sm p397-big" onclick="nxAbrirWaCliente(\''+esc(String(rec.celular||'').replace(/'/g,''))+'\')">💬 Abrir el WhatsApp de '+esc(nom)+'</button>')
+               : '<span class="p397-sin">⚠️ No tiene un celular de WhatsApp anotado: copiá el mensaje y mandalo a mano.</span>')+'</div></div>'+
+    '</div>'+
+    certBloqueHtml(rec)+
+    '<div class="modal-actions"><button class="btn btn-ghost btn-sm" onclick="'+salir+'">Cerrar</button></div></div>';
+  openModal(html);
+  var box=document.getElementById('modal-box'); if(box) box.classList.add('p397');
+  try{ if(window.PRACTICA) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271)
+}
+function guardadoBurbuja(){
+  var t=document.getElementById('nx-wa-cli'), b=document.getElementById('p397-bub'); if(!t || !b) return;
+  var hr=b.querySelector('.hr'); b.innerHTML=guardadoWaFmt(t.value)+(hr ? hr.outerHTML : '');
+}
+function guardadoCorregir(btn){
+  var c=document.getElementById('p397-cli'); if(!c) return;
+  var on=!c.classList.contains('edita'); c.classList.toggle('edita', on);
+  if(btn) btn.textContent=on ? '✓ Listo, ver cómo queda' : '✏️ Corregir el mensaje';
+  if(on){ var t=document.getElementById('nx-wa-cli'); if(t) try{ t.focus(); }catch(e){} } else guardadoBurbuja();
 }
 /* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
    (Mis pedidos, Lista de carga y Administración ya lo tenían). Se notó con las ventas de
@@ -78325,6 +79069,7 @@ function alDiaTablaHtml(vends){
 }
 function alDiaFilaHtml(v){
   if(!alDiaVa() || !v || contaExcluido(v)) return '';
+  if(alDiaPalabrasVa()) return alDiaCasillerosHtml(v);   // 🎨 (16/11, mejora 396) con palabras, en casilleros
   var R=alDiaDatos(v);
   return '<div class="vd-ad-yo" id="vd-al-dia-yo"><span>✅ <b>Tu panel al día</b></span>'+R.D.map(function(d){ return '<span title="'+esc(d.s)+'">'+d.ic+'</span>'+alDiaPunto(d, v); }).join('')+
     '<b class="vd-ad-pc" style="color:'+alDiaColor(R.pct)+'">'+R.pct+' %</b></div>';
