@@ -18932,3 +18932,30 @@ todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
   ⚠️ Corrección del dueño, el mismo día: *«solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»*. Forzar un día lleno va
   SOLO con `"dia_del_dueno": true` en el JSON (lo pongo yo cuando él dice el día); las vueltas automáticas siguen al primer día con cupo. La 11-207
   (Multicenter, OC 33658) queda el jueves 19/11.
+
+### §4qd — 🎨❓🧾✅ Las visuales 367 y 390-440, ninguna ventanita del navegador, la nota para Eduardo y lo entregado en Proyección (16/11)
+El dueño: *«¿y por qué no se implementaron las mejoras visuales si habíamos dado el ok? ¿qué pasó, Claudio?»* (las 390-440 quedaron en `mej390-junta`
+y no entraron en la 16-a), con la captura de «…github.io dice: ¿Prender el MODO PRÁCTICA…?» *«¿no que mis alertas no salían ya esas feas?»*, con la ficha
+del 11-207 *«eduardo necesita ver el nro de nota de venta»* y *«ok avisame y publica»*. Después, con la captura de Proyección: *«ahí debería mostrar lo ya
+entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGADO ES FACTURADO… eso confunde»*.
+- **Visuales 367 y 390-440 (menos 403)**: las juntó `mej390-junta` (4 agentes); dos regresiones de verdad arregladas al juntar (`pix-s-bf` buscado por id
+  → `[data-k="bf"]`; el `94vw` de la 397 → `calc(… / var(--vz,1))`). Fotos: https://claude.ai/artifact/4iCAAgc9LX6uo6GAk82GFD.
+- **Preguntas**: pieza común (`preguntaYa`/`preguntaTextoYa`/`avisoVentana`) + 4 agentes por lotes (`preg-lA`…`preg-lD`), juntados en `preg-todas` con
+  los arreglos de los cruces entre lotes (fmov dentro de `submitPedido`, `confirmarReemplazoForm` con `otraVez`, `asegurarClaveAdmin` en todos los
+  lugares, claves tapadas con `campoClave`, «Usar los tres» que sigue después de una pregunta, el 2º clic de un doble clic que no contesta). Detalle en
+  CLAUDE.md §4qd.
+- **La nota de venta en «📋 Datos»** (`misNotaFila`), solo con Eduardo elegido.
+- **Proyección → Por vendedor**: «✅ Entregado o facturado» y «⏳ Pendiente» en el hueco del medio (`pryEntDatos`). La primera versión partía en tres
+  (entregado / por entregar / por facturar): el dueño la corrigió, quedó en dos con la regla de cierre de la 335.
+- **11-210** (16/11, el dueño por el chat): CH1075 COLCHON ESPECIAL JUNIOR 105x190 ×3, Multicenter Parque Industrial, martes 17/11 PM. Falta el N° de OC y
+  el precio (los pasa el dueño). La vuelta de las 17:47 del correo no trajo nada nuevo.
+- **🔎 Maria Flores: el dashboard de Kommo no coincide con el panel** (dueño: *«Y LOS DATOS del kommo no me coinciden con el panel… EJEMPLO maria
+  flores»*). Dashboard: 18 cierres Bs 100.443 = 10 fichas de Kommo en Compradores con «Fecha contrato» de noviembre (Bs 55.630, el monto de Kommo) + 8
+  ventas del panel sin ficha ya entregadas o facturadas (Bs 44.813: 09-064, 09-237, 10-337, 10-394, 11-091, 11-101, 11-143, 11-188; reproducido EXACTO
+  con `ventas_panel_sin_ficha` sobre la planilla). Panel: 18 ventas Bs 95.363 = lo que se ENTREGA en noviembre (9 cargadas en ago-oct; 4 por entregar
+  Bs 23.770 que el dashboard deja en pipeline). Causa principal: Maria tiene **36 ventas de Kommo en la bandeja** (14 de noviembre, Bs 64.920; las demás
+  vendedoras 0, Mirian 2) y las volvió a cargar a mano; el dashboard empareja por celular (+ vendedora, ≤45 días) y no puede con 10-337 (Bs 12.740, la
+  ficha de Kommo sin celular), 11-091 (Bs 6.770, otro celular) ni, casi seguro, 09-237 (Bs 5.690, cargada el 19/09): ~Bs 25.000 contados dos veces.
+  Además el 03/11 pasó a Compradores ventas de fines de octubre (09-318, 10-382…), que Kommo cuenta en noviembre; y 10-391 es 14.630 en el panel y 14.360
+  en Kommo. Se le propuso: Maria limpia la bandeja con «Sí, es la misma» y corrige la «Fecha contrato» de las de octubre; y, si quiere, que el dashboard
+  empareje también por vendedora + mismo monto cuando el celular no coincide (espera su respuesta).
