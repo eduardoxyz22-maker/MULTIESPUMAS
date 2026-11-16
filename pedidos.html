@@ -3432,6 +3432,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
 
       <div class="field">
         <label class="lb">Productos <span class="req">*</span> <span class="hint" id="f-prods-hint">producto · medida · código · cantidad · precio</span></label>
+        <div id="ps-franja" class="no-print" hidden></div>   <!-- 🎨 (16/11, mejora 390) los avisos del saldo, una vez para todos -->
         <div id="f-productos"></div>
         <div id="f-prods-total" style="display:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:var(--r-md);padding:9px 13px;margin:2px 0 10px;font-size:.82rem;color:var(--teal-dk)"></div>
         <datalist id="dl-productos"></datalist>
@@ -8416,6 +8417,37 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .td-reco-l em{font-style:normal;color:#0f766e;font-weight:900}
 .td-reco-l small{color:#6b5310;font-weight:700;white-space:nowrap}
 .td-reco-n{color:#6b6b6b}
+</style>
+<style id="v390-vend">
+/* 🎨 (16/11) Las mejoras visuales para VENDEDORAS 390-401 y la 367 (el dueño eligió la página «Mejoras visuales 390-440»). Cada bloque dice
+   su número. Clases propias `ps390-*`, `p391-*`, … (no reusar nombres del panel). Solo dibujo. */
+/* 390 · la franja de los saldos arriba de los productos y el cuadrito con fichitas */
+#ps-franja{margin:0 0 12px}
+.ps390-f{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid #bfe9e6;border-left:5px solid #00A09A;border-radius:12px;background:linear-gradient(90deg,#ecfbf9,#f7fdfc);color:#0f4c4a;font-size:.8rem;line-height:1.35}
+.ps390-f.mal{border-color:#f1c873;border-left-color:#e8a317;background:linear-gradient(90deg,#fff6df,#fffaf0);color:#6b4500}
+.ps390-f .ic{font-size:1.25rem;flex:none}
+.ps390-f .tx{flex:1;min-width:0}
+.ps390-f b{color:#0f3b39}.ps390-f.mal b{color:#4a2f00}
+.ps390-al{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.ps390-al span{background:#fff;border:1px solid #bfe9e6;border-radius:999px;padding:2px 9px;font-size:.72rem;font-weight:700;color:#0f766e}
+.ps390-al span.v{border-color:#f1d9a6;color:#7c4b00}
+.ps390-con{margin-top:5px;font-weight:700;color:#8a1c24}
+.ps390-f .ps-act{flex:none;margin-left:auto;padding:7px 12px;min-height:32px;border:1px solid #e3c27a;border-radius:999px;background:#fff;font:inherit;font-size:.74rem;font-weight:800;color:#0f766e;cursor:pointer}
+.ps390-f.ok .ps-act{border-color:#9fdcd7}
+.prod-saldo.ps390{padding:9px 12px}
+.prod-saldo.ps390 .fx-saldo .fx-esc{width:70px;height:38px}
+.prod-saldo.ps390 .ps-t{font-size:.86rem}
+.prod-saldo.ps390 .ps390-n{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.prod-saldo.ps390 .ps390-n span{display:inline-flex;align-items:baseline;gap:4px;flex-wrap:wrap;background:#fff;border:1px solid rgba(15,23,42,.10);border-radius:999px;padding:2px 8px;font-size:.7rem;color:#475569}
+.prod-saldo.ps390 .ps390-n span b{font-size:.9rem;color:#0f172a}
+.prod-saldo.ps390 .ps390-n span small{font-size:.66rem;color:#8a1c24;font-weight:600}
+.prod-saldo.ps390 .ps390-n span.lib{border-color:#86d7b0;background:#ecfdf5}.prod-saldo.ps390 .ps390-n span.lib b{color:#047857}
+.prod-saldo.ps390 .ps390-n span.fal{border-color:#f5b4b7;background:#fff1f2;border-radius:10px}.prod-saldo.ps390 .ps390-n span.fal b{color:#be123c}
+.prod-saldo.ps390 .ps390-donde{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.7rem;color:#64748b}
+.prod-saldo.ps390 .ps390-donde i{font-style:normal;background:rgba(15,23,42,.05);border-radius:6px;padding:1px 7px}
+.prod-saldo.ps390 .ps390-donde i.si{background:#e0f2f1;color:#0f766e;font-weight:800}
+.prod-saldo.ps390 .ps-f{margin-top:6px}
+@media (max-width:560px){ .ps390-f{flex-wrap:wrap} .ps390-f .ps-act{margin-left:0} }
 </style>
 <style>
 /* 🧑‍💼 (15/11) Las mejoras para vendedoras 304-311: clases `vd-*` (no reusar nombres del panel). Tema claro, colores del panel. */
@@ -49260,7 +49292,9 @@ function saldoFaltanCuentaTxt(v){
   partes.push(stockUnid(v.cant)+' de este pedido');
   return '('+partes.join(' + ')+' − '+stockUnid(v.alm)+' en almacén)';
 }
-function saldoNumerosHtml(v){
+function saldoNumerosHtml(v){ return saldoNumerosPartes(v).join(' · '); }
+/* 🎨 (16/11, mejora 390) Los mismos pedazos de `saldoNumerosHtml`, sueltos: la franja de la 390 los dibuja en fichitas. */
+function saldoNumerosPartes(v){
   var h=[], aF=saldoAlaFechaTxt(v, 'para el');
   if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
   if(v.pend!=null){
@@ -49276,7 +49310,7 @@ function saldoNumerosHtml(v){
   }
   if(v.prod>0) h.push('En producción <b>'+stockUnid(v.prod)+'</b>');
   if(v.nRen>1) h.push('este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)');
-  return h.join(' · ');
+  return h;
 }
 /* 📅 (§4ls) La segunda línea: «Pendiente en total: 34 (30 para después del 20/10)». Solo cuando hay algo para después. */
 function saldoTotalHtml(v){
@@ -49348,6 +49382,11 @@ function saldoAvisos(){
   /* ✏️ (18/10, §4ls textos, VF8) «que suba el de del 17/10» → «el del 17/10», y en domingo o feriado se dice que hoy no trabajan. */
   stockCortesViejos().forEach(function(x){ if(x.nm) out.push('⚠️ El Excel de '+x.nombre+' es del '+fmtFechaCorta(x.f)+': '+(ultH===hoy ? 'pedile a logística que suba el de hoy'
       : ('falta el del '+fmtFechaCorta(ultH)+' (hoy '+(feriadoDe(hoy)?'es feriado':'es domingo')+' y logística no trabaja)'))); });
+  return out.concat(saldoAvisosConexion());
+}
+/* 🎨 (16/11, mejora 390) Los avisos de la conexión, sueltos (los mismos de siempre, al final de `saldoAvisos`): la franja los dice aparte. */
+function saldoAvisosConexion(){
+  var out=[];
   if(CONNECTED){
     var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR), ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : null;
     if(falla) out.push('⚠️ Sin conexión'+(ms==null ? ' con la planilla' : (' desde hace '+saldoHaceTxt(ms)))+': el saldo puede no estar al día');
@@ -49378,11 +49417,13 @@ function saldoCajaHtml(v){
     if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
     return h;
   }
-  var n=saldoNumerosHtml(v); if(n) h+='<div class="ps-n">'+n+'</div>';
+  var fr=psFranjaVa();                                                     // 🎨 (16/11, mejora 390) los números en fichitas
+  var n=fr ? psNumerosChips(v) : saldoNumerosHtml(v); if(n) h+='<div class="ps-n'+(fr?' ps390-n':'')+'">'+n+'</div>';
   var tl=saldoTotalHtml(v); if(tl) h+='<div class="ps-n ps-tot">'+tl+'</div>';                 // 📅 (§4ls) el total, aparte
   var dp=saldoDespuesTxt(v); if(dp) h+='<div class="ps-w ps-desp">'+esc(dp)+'</div>';          // 📅 (§4ls) lo de después no alcanza
   if(v.desconocido) h+='<div class="ps-n">'+saldoNoRecHtml(v)+'</div>';   // ❓ (§4ls VI-1)
   if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
+  if(fr) return h+psDondeHtml(v);   // 🎨 (16/11, mejora 390) los avisos de todos, el corte y el 🔄 van UNA vez en la franja de arriba
   saldoAvisos().forEach(function(a){ h+='<div class="ps-w">'+esc(a)+'</div>'; });
   h+='<div class="ps-c"><span title="PTF = productos terminados fábrica (de ahí salen los camiones)">'+esc(saldoDetalleTxt(v))+'</span>'+
      (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
@@ -49390,7 +49431,7 @@ function saldoCajaHtml(v){
 }
 /* Solo se toca el cuadrito (nunca un campo ni el foco), y solo si cambió lo que dice. */
 function saldoCajaPintar(box, v){
-  var cls='prod-saldo ps-'+(v.color||'gris'), html=saldoCajaHtml(v), dib=fxEscenaSaldo(v.tipo);   // ✨ (§4if) el dibujo
+  var cls='prod-saldo ps-'+(v.color||'gris')+(psFranjaVa()?' ps390':''), html=saldoCajaHtml(v), dib=fxEscenaSaldo(v.tipo);   // ✨ (§4if) el dibujo · 🎨 (390)
   if(dib) html='<div class="fx-saldo">'+dib+'<div class="fx-saldo-t">'+html+'</div></div>';
   if(box.hidden) box.hidden=false;
   if(box.className!==cls) box.className=cls;
@@ -49401,6 +49442,69 @@ function saldoCajaOcultar(box){
   if(!box.hidden) box.hidden=true;
   if(box._html){ box.innerHTML=''; box._html=''; }
   box._v=null; box._firma='';
+}
+/* 🎨 (16/11, mejora 390; dueño: «El cuadrito del stock, sin el mismo aviso tres veces») Un lunes con los Excel del sábado, CADA producto
+   repetía «El último corte es del 14/11…», lo mismo de Banzer y de Moreno, su propio 🔄 y «Saldo al corte…»: con 3 productos, 9 avisos
+   iguales y lo que importa («Hay en Moreno · programá desde…») perdido entre ellos. Ahora lo que vale para TODOS (de qué día es el Excel
+   de cada almacén, la conexión, el corte y el 🔄) sale UNA vez en la franja `#ps-franja` arriba de los productos, y cada cuadrito queda
+   con lo suyo: el título, los números en fichitas (Libres en verde, Faltan en rojo), la línea roja de «no llega» y «Está en: PTF · Banzer
+   · Moreno» con lo que hay en turquesa. SOLO DIBUJO: los textos y las cuentas son los de siempre (`saldoAvisos`, `stockCortesViejos`,
+   `saldoNumerosPartes`, `saldoCorteTxt`). En Playwright como antes salvo `window.PS_FRANJA_PRUEBA`. `tests/test_v390_saldo_franja.js`. */
+function psFranjaVa(){ try{ return vdVa('PS_FRANJA_PRUEBA'); }catch(e){ return false; } }
+function psNumerosChips(v){
+  return saldoNumerosPartes(v).map(function(x){
+    var c=/^Libres/.test(x) ? 'lib' : (/^Faltan/.test(x) ? 'fal' : ''), m=x.match(/^(Faltan.*?<\/b>)\s*(\(.*\))$/);
+    return '<span class="'+c+'">'+(m ? (m[1]+' <small>'+m[2]+'</small>') : x)+'</span>';
+  }).join('');
+}
+function psDondeHtml(v){
+  if(!v || v.alm==null) return '';
+  var it=function(nom, n, falta){ var si=(typeof n==='number' && n>0); return '<i class="'+(si?'si':'')+'">'+esc(nom)+' '+(falta || stockUnid(n))+'</i>'; };
+  var h=it('PTF', v.aca, v.aca==null ? 'sin contar' : '')+
+        it('Banzer', v.banzer, (v.hayBanzer||v.banzer) ? '' : '—')+
+        it(v.variosMoreno ? 'Moreno y otros' : 'Moreno', v.moreno, (v.hayMoreno||v.moreno) ? '' : '—');
+  if(v.recogida>0) h+='<i class="si">+'+esc(stockUnid(v.recogida))+' en camino de Moreno</i>';
+  return '<div class="ps390-donde" title="PTF = productos terminados fábrica (de ahí salen los camiones)">Está en: '+h+'</div>';
+}
+/* De qué día es el Excel de cada almacén que suma en el saldo (PTF primero), con la MISMA regla de «viejo» que `stockCortesViejos`. */
+function psFranjaAlmacenes(){
+  var ultH=stockUltimoHabil(), out=[], c=STOCK.c||{};
+  if(c.f) out.push({ nombre:'PTF', f:c.f, viejo:c.f<ultH });
+  Object.keys(STOCK.g||{}).forEach(function(nm){
+    var g=STOCK.g[nm]||{}; if(!g.f || !Object.keys(g.u||{}).length || stockEsLog(nm)) return;
+    out.push({ nombre:(almEsSalida(nm) ? saleNombre(nm) : stockAlmCorto(nm)), f:g.f, viejo:g.f<ultH });
+  });
+  return out;
+}
+function psFranjaHtml(){
+  var c=STOCK.c||{}, hoy=todayStr(), ultH=stockUltimoHabil(), A=psFranjaAlmacenes(), V=A.filter(function(a){ return a.viejo; });
+  var con=saldoAvisosConexion(), mal=V.length>0 || con.length>0, t='';
+  var diaDe=function(f){ return f===hoy ? 'hoy' : (f===stockSumarDias(hoy,-1) ? 'ayer' : fmtFechaCorta(f)); };
+  if(V.length){
+    var ptfV=(c.f && c.f<ultH), h=String(c.hora||'').slice(0,5), viej=V.reduce(function(m,a){ return a.f<m ? a.f : m; }, V[0].f);
+    t='<b>'+(ptfV ? ('Los saldos son del '+esc(saldoDiaTxt(c.f))+(h ? (' a las '+esc(h)) : '')+'.')
+                  : ('El Excel de '+esc(V.map(function(a){ return a.nombre; }).join(' y '))+' es del '+esc(saldoDiaTxt(viej))+'.'))+'</b> '+
+      (ultH===hoy ? ('Logística todavía no subió '+(V.length>1 ? 'los Excel' : 'el Excel')+' de hoy; cuando '+(V.length>1 ? 'los suba, se actualizan solos.' : 'lo suba, se actualiza solo.'))
+                  : ('Falta el del '+esc(fmtFechaCorta(ultH))+' (hoy '+(feriadoDe(hoy) ? 'es feriado' : 'es domingo')+' y logística no trabaja).'));
+  } else {
+    var ct=saldoCorteTxt(), q=saldoConsultadoTxt();
+    t='<b>'+esc(ct || 'Saldo de los almacenes')+'</b>'+(q ? (' · '+esc(q)) : '');
+  }
+  var al=A.length ? ('<div class="ps390-al">'+A.map(function(a){ return '<span class="'+(a.viejo?'v':'ok')+'">'+esc(a.nombre)+' · '+esc(diaDe(a.f))+'</span>'; }).join('')+'</div>') : '';
+  var cn=con.map(function(a){ return '<div class="ps390-con">'+esc(a)+'</div>'; }).join('');
+  return '<div class="ps390-f '+(mal?'mal':'ok')+'"><span class="ic">'+(mal?'🕗':'📦')+'</span><div class="tx">'+t+al+cn+'</div>'+
+         (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
+}
+function psFranjaPintar(){
+  var el=document.getElementById('ps-franja'); if(!el) return;
+  var hay=false;
+  if(psFranjaVa()) document.querySelectorAll('#f-productos .prod-saldo').forEach(function(b){
+    var v=b._v; if(!b.hidden && v && (v.alm!=null || v.tipo==='leyendo' || v.tipo==='cargando')) hay=true;
+  });
+  if(!hay){ if(!el.hidden) el.hidden=true; if(el._html){ el.innerHTML=''; el._html=''; } return; }
+  var html=psFranjaHtml();
+  if(el._html!==html){ el.innerHTML=html; el._html=html; }
+  if(el.hidden) el.hidden=false;
 }
 
 /* ---- Cuándo se pinta y cuándo se lee ---- */
@@ -49433,6 +49537,7 @@ function saldoAvisosPintar(){
   if(nuevas.length && saldoHayQueLeer()){
     saldoAvisosPintarYa(filas.filter(function(f){ return nuevas.indexOf(f)<0; }));
     nuevas.forEach(function(f){ saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); });
+    try{ psFranjaPintar(); }catch(e){}   // 🎨 (390)
     saldoLeer(false).then(function(){ saldoAvisosPintarYa(); });
     return;
   }
@@ -49448,6 +49553,7 @@ function saldoAvisosPintarYa(filas){
       f.box._firma=f.g+'|'+f.total;
     });
     try{ cotDesdePintar(); }catch(e){}   // 🧾 (mejora 251) «Entrega desde» de la cotización = la misma cuenta
+    try{ psFranjaPintar(); }catch(e){}   // 🎨 (16/11, mejora 390) la franja de los saldos, una vez
     fxLadosProgramar();   // 🖥️ (§4ig) los íconos del pedido en vivo
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
@@ -49466,6 +49572,7 @@ function saldoActualizar(){
     return Promise.resolve(false);
   }
   try{ saldoFilasForm().forEach(function(f){ if(saldoDelAlmacen(f)) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
+  try{ psFranjaPintar(); }catch(e){}   // 🎨 (390)
   return saldoLeer(true).then(function(){ saldoAvisosPintarYa(); });
 }
 /* Lo llama `refrescarEstado` con cada lectura (buena o no): con el formulario a la vista, se repintan SOLO los cuadritos. */
