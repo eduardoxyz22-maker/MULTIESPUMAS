@@ -128,10 +128,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('400b el de llamar muestra el número («📞 712 34567») y sigue siendo un enlace para llamar', tel.t==='📞 712 34567' && tel.href==='tel:71234567', tel);
   chk('400c «⚠️ Sin ubicación» (corto)', r.bs.some(b=>b.t==='⚠️ Sin ubicación'), r.bs.map(b=>b.t));
   chk('400d en la compu, los cuatro en UNA fila y más bajos que antes (40 px)', /p400/.test(r.cls) && r.bs.length===4 && new Set(r.bs.map(b=>b.top)).size===1 && r.bs.every(b=>b.h<40), r.bs);
-  r = await ev(async () => { window.__cop=[]; var cp=copyText; copyText=function(t){ window.__cop.push(t); };
+  r = await ev(async () => { for(var i=0;i<3;i++){ try{ closeModal(); }catch(e){} }   // que no quede abierta otra ventana de antes
+    window.__cop=[]; var cp=copyText; copyText=function(t){ window.__cop.push(t); };
     var mm=window.matchMedia; window.matchMedia=function(q){ return /pointer:fine/.test(q) ? { matches:true } : mm.call(window, q); };
     var a=document.querySelector('#mis-lista .cho-card[onclick*="b400"] .p400-cel'), ev2=new MouseEvent('click',{bubbles:true,cancelable:true}); a.dispatchEvent(ev2);
-    copyText=cp; window.matchMedia=mm; return { cop:window.__cop, evitado:ev2.defaultPrevented, abrioFicha:document.getElementById('modal').classList.contains('on') }; });
+    copyText=cp; window.matchMedia=mm; return { cop:window.__cop, evitado:ev2.defaultPrevented, abrioFicha:document.getElementById('modal').classList.contains('on'), cual:((document.querySelector('#modal h3')||{}).textContent||'').slice(0,80) }; });
   chk('400e en la compu, tocar el número lo copia (no llama ni abre la ficha)', r.cop.join()==='71234567' && r.evitado && !r.abrioFicha, r);
   await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='b400'; }); });
 
