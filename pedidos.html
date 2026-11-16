@@ -8446,6 +8446,98 @@ html.tema-black-friday .bfn .m425-p.n{background:rgba(245,197,24,.16);color:#f5c
 .m426-k small{font-size:.74rem;color:#5d7473;font-weight:700}
 .m426-k b{font-size:1.25rem;font-weight:900;color:#0f2e2c;font-variant-numeric:tabular-nums}
 .m426-k span{font-size:.76rem;color:#24413f}
+/* 418 · «Para hacer» de Contabilidad con cuánto va hecho */
+#cx-top .ah-it .ah-tx .m418{display:flex;align-items:center;gap:8px;margin-top:6px}
+.m418-b{flex:1;height:6px;border-radius:4px;background:rgba(15,40,40,.09);overflow:hidden;max-width:330px;min-width:60px}
+.m418-b i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#00B5AD,#10b981);transform-origin:left;animation:m418 .9s cubic-bezier(.2,.8,.2,1) both}
+#cx-top .ah-it .ah-tx .m418 small{display:inline-block;-webkit-line-clamp:unset;overflow:visible;font-size:.7rem;font-weight:700;color:#0f766e;white-space:nowrap;margin:0}
+@keyframes m418{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){ .m418-b i{animation:none} }
+
+/* 419 · Ventas: si pagó o debe, a la vista en cada fila (la franja y la pastilla de las tarjetas, `cxEstadoVenta`) */
+#tbl-conta tbody tr.m419 td:first-child{box-shadow:inset 5px 0 0 var(--m419c,#94a3b8)}
+#tbl-conta tbody tr.m419.st-ok{--m419c:#22A06B} #tbl-conta tbody tr.m419.st-sal{--m419c:#D97706} #tbl-conta tbody tr.m419.st-gris{--m419c:#94a3b8}
+#tbl-conta tbody tr.m419.st-sal td{background:#fffaf0}
+.m419-st{display:inline-block;margin-top:6px;font-size:.7rem;font-weight:800;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.m419-st.st-ok{background:#dcfce7;color:#15803d} .m419-st.st-sal{background:#fef3c7;color:#b45309} .m419-st.st-gris{background:#eef2f2;color:#5d7473}
+
+/* 420 · Ventas: los filtros en dos renglones con su nombre (la línea gris que repetía los números, escondida) */
+#cta-resumen.m420-off{display:none}
+.cx-chips.m420{flex-direction:column;flex-wrap:nowrap;gap:8px;margin:2px 0 14px}
+.m420-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.m420-lb{flex:0 0 112px;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+html.tema-black-friday .m420-lb{color:#d4c08a}
+.m420-row .cx-chip{margin:0}
+.m420-row .cx-chip small.m420-bs{font-weight:700;opacity:.8;margin-left:2px;font-size:.72rem}
+.m420-sp{flex:1}
+.m420-tot{font-size:.76rem;color:#5d7473;white-space:nowrap;background:rgba(255,255,255,.92);border:1px solid #e3eeee;border-radius:999px;padding:6px 12px}
+.m420-tot b{color:#0f2e2c}
+@media (max-width:700px){ .m420-lb{flex-basis:100%} .m420-sp{display:none} }
+
+/* 421 · Cuadre: el semáforo adentro de la tabla del cierre */
+#cx-semaforo.m421-off{display:none}
+.m421-cab{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.m421-res{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.m421-res span{font-size:.72rem;font-weight:800;border-radius:999px;padding:4px 10px;letter-spacing:0;text-transform:none}
+.m421-res .ok{background:#dcfce7;color:#15803d} .m421-res .mal{background:#fee2e2;color:#b91c1c} .m421-res .pend{background:#fef3c7;color:#b45309}
+.m421 table.mini td{vertical-align:middle}
+.m421 table.mini tbody tr[class^="m421-"]{cursor:pointer}
+.m421 table.mini tbody tr.m421-ok td{background:#f0fdf4}
+.m421 table.mini tbody tr.m421-mal td{background:#fff1f2}
+.m421 table.mini tbody tr.m421-pend td:first-child{box-shadow:inset 3px 0 0 #f59e0b}
+.m421 table.mini tbody tr.m421-ok td:first-child{box-shadow:inset 3px 0 0 #22c55e}
+.m421 table.mini tbody tr.m421-mal td:first-child{box-shadow:inset 3px 0 0 #ef4444}
+.m421-est{display:inline-flex;align-items:center;gap:8px;font-size:.8rem;font-weight:800;white-space:nowrap}
+.m421-est i{width:11px;height:11px;border-radius:50%;flex:none}
+.m421-ok .m421-est{color:#15803d} .m421-ok .m421-est i{background:#22c55e;box-shadow:0 0 8px #22c55e}
+.m421-mal .m421-est{color:#b91c1c} .m421-mal .m421-est i{background:#ef4444;box-shadow:0 0 8px #ef4444}
+.m421-pend .m421-est{color:#b45309} .m421-pend .m421-est i{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+@media (prefers-reduced-motion:no-preference){ .m421-pend .m421-est i{animation:cx-luz 1.4s ease-in-out infinite} }
+
+/* 422 · Detalle de los pagos, día por día */
+#cua-detalle tr.m422-dia td{background:#e9f7f6!important;border-top:2px solid #b9e6e3;padding:9px 12px;font-size:.8rem;color:#0f3b39;cursor:default}
+#cua-detalle tr.m422-dia td b.d{font-size:.86rem;font-weight:800;color:#0b5f5a;margin-right:10px}
+#cua-detalle tr.m422-dia .ch{display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #d6ecea;border-radius:999px;padding:2px 9px;margin:2px 6px 2px 0;font-weight:700;font-size:.74rem;color:#24413f;white-space:nowrap}
+#cua-detalle tr.m422-dia td.t{text-align:right;font-weight:800;font-size:.86rem;color:#0b5f5a;white-space:nowrap}
+#cua-detalle tr.m422-dia td.n{color:#5d7473;font-weight:700;white-space:nowrap;text-align:right}
+
+/* 428 · Cuadre: «Por cobrar» pegada al costado al bajar (con las dos columnas) */
+@media (min-width:1101px){
+  .cua-2col.m428-2col{align-items:start}
+  #cua-pendientes.m428{position:sticky;top:calc(var(--hdr-h,0px) + 12px);align-self:start}
+  #cua-pendientes.m428 > .cua-box{max-height:calc(calc(100vh / var(--vz,1)) - var(--hdr-h,0px) - 24px);overflow:auto;scrollbar-width:thin}
+}
+
+/* 423 · «Falta cobrar»: la barrita de lo que ya pagó */
+.m423-th{min-width:170px}
+.m423{display:flex;align-items:center;gap:8px;min-width:150px}
+td.m .m423{margin-top:4px;justify-content:flex-end}
+.m423-b{flex:1;height:9px;border-radius:5px;background:#fde2e1;overflow:hidden;min-width:90px}
+.m423-b i{display:block;height:100%;background:linear-gradient(90deg,#10b981,#34d399);border-radius:5px}
+.m423 small{font-size:.72rem;font-weight:800;color:#047857;white-space:nowrap;min-width:34px;text-align:right}
+.m423.cero small{color:#b91c1c}
+.m423.casi .m423-b i{background:linear-gradient(90deg,#059669,#10b981)}
+
+/* 424 · Mayoristas: cada cliente con su barra roja y verde (las cajitas, escondidas) */
+.cbz-cli.m424{position:relative;overflow:hidden}
+.cbz-cli.m424::before{content:'';position:absolute;left:0;right:0;top:0;height:4px;background:#10b981}
+.cbz-cli.m424.m424-v::before{background:#dc2626}
+.cbz .cbz-cli.m424 .cbz-cts{display:none}
+.m424-w{display:block;width:100%}
+.m424-b{display:flex;height:10px;border-radius:6px;overflow:hidden;background:#eef2f2;margin:8px 0 6px;width:100%}
+.m424-b i{display:block;height:100%}
+.m424-b i.v{background:linear-gradient(90deg,#dc2626,#ef4444)} .m424-b i.p{background:linear-gradient(90deg,#10b981,#34d399)}
+.m424-l{display:flex;justify-content:space-between;gap:8px;font-size:.74rem;font-weight:800;width:100%}
+.m424-l > span{display:flex;flex-direction:column;gap:1px}
+.m424-l small{font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.m424-l b{font-size:.86rem;font-weight:900;white-space:nowrap}
+.m424-l .v b{color:#b91c1c} .m424-l .p b{color:#047857} .m424-l .z b{color:#b6c3c2;font-weight:600}
+
+/* 427 · Los ceros en gris: el texto queda («Bs 0,00»), se ve una rayita gris */
+.m427-c{font-size:0!important;letter-spacing:0!important}
+.m427-c::after{content:'—';font-size:.82rem;font-weight:400;color:#b6c3c2;letter-spacing:normal}
+td.m427-g{color:#b6c3c2!important;font-weight:400}
+
 @media (max-width:700px){ .m426-w .pcal.m426{grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.6fr);gap:3px} .pcal .m426-wk{padding:4px} .pcal .m426-wk small{display:none} .m426-s{max-width:none} }
 </style>
 <script>
@@ -8605,6 +8697,138 @@ function m426Pintar(G, C, q){
     (S.dia ? Q('⭐ El mejor día', esc(pryCalorTxt(q, S.diaV)), esc(pryDiaTxt(S.dia))) : '')+
     (S.hab ? Q('📊 Promedio por día hábil', esc(q==='e' ? ((Math.round(S.tot/S.hab*10)/10).toLocaleString('es-BO')+' pedidos') : fmtBs0(S.tot/S.hab)),
               S.hab+' día'+(S.hab===1?'':'s')+' hábil'+(S.hab===1?'':'es')+' '+S.cuando+' · '+esc(pryCalorTxt(q, S.tot))+' en total') : '');
+}
+/* 📋 418 · «Para hacer» de Contabilidad con cuánto va hecho (Ventas, arriba: `cxTopPintar`). Debajo de cada renglón que tiene un total, una
+   barrita verde con lo ya hecho y «85 de 154 ya tienen su N° · 55 %»; el número grande de lo que falta queda igual. Los totales son los de
+   siempre: las ventas que piden factura o remisión (`docVentaRequerida`), las fichas «Pagadas» y «Ya en el sistema» de la tabla, y los pagos
+   del mes que mira «Pagos sin terminar» (`nxPstLista`: el mismo recorrido, contando todos). Bandera: `CX_AVANCE_PRUEBA`. */
+function m418Avances(list, R){
+  try{ if(!vdVa('CX_AVANCE_PRUEBA')) return null; }catch(e){ return null; }
+  list=list||[]; var M=CX_TOP_M||{};
+  var req=list.filter(docVentaRequerida).length, sdoc=list.filter(docVentaFalta).length;
+  var pag=list.filter(function(p){ return !!p.pagado; }).length;
+  var nReg=Number(M.nReg)||0, nCarg=(M.nCarg!=null) ? Number(M.nCarg)||0 : Math.max(0, (M.n||0)-nReg);
+  var pst=0; try{ pst=nxPstLista().length; }catch(e){}
+  return { pst:{ h:Math.max(0, m418PagosMes()-pst), t:m418PagosMes(), txt:'pagos completos' },
+           sdoc:{ h:Math.max(0, req-sdoc), t:req, txt:'ya tienen su N°' },
+           debe:{ h:pag, t:list.length, txt:'pagadas' },
+           carg:{ h:nReg, t:nReg+nCarg, txt:'ya cargadas' } };
+}
+/* Cuántos pagos mira «Pagos sin terminar»: el MISMO recorrido de `nxPstLista` (la vendedora elegida, del 1 del mes), contando todos. */
+function m418PagosMes(){
+  var desde=NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01'), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), n=0;
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    contaPagos(p).forEach(function(c){ var f=c.fecha||contaFecha(p); if(f<desde) return; if((Number(c.monto)||0)>0 || c.sinMonto) n++; });
+  });
+  return n;
+}
+function m418Html(A, o){
+  var k = o.fn==='nxPstAbrir()' ? 'pst' : (o.fn==="cxTopFiltro('sdoc')" ? 'sdoc' : (o.fn==="cxTopFiltro('carg')" ? 'carg' : ((o.fn==="abrirPorCobrar('ventas')" && o.ic==='⏳') ? 'debe' : '')));
+  var x=k && A[k]; if(!x || !(x.t>0)) return '';
+  var h=Math.min(x.h, x.t), pc=Math.round(h/x.t*100);
+  return '<div class="m418"><span class="m418-b" role="img" aria-label="'+pc+' por ciento hecho"><i style="width:'+pc+'%"></i></span><small>'+h+' de '+x.t+' '+esc(x.txt)+' · '+pc+' %</small></div>';
+}
+/* 🗂️ 420 · Ventas: los filtros en dos renglones, sin repetir números (`cxChipsPintar`). «ESTADO» (Todas, Pagadas, Con saldo · Bs …, Por cargar,
+   Ya en el sistema, Con recargo, Dos veces) y «CÓMO PAGARON» (Efectivo, QR …, Tarjeta), y a la derecha lo único que la línea gris decía y las
+   fichas no: «A cuenta Bs … · recargos Bs …» (los mismos totales de `renderConta`). La línea gris (`#cta-resumen`) se sigue armando, escondida
+   (la leen pruebas y Copiar). Las MISMAS fichas y el mismo `cxFiltro`. Bandera: `CX_CHIPS2_PRUEBA`. */
+function m420Va(){ try{ return vdVa('CX_CHIPS2_PRUEBA'); }catch(e){ return false; } }
+function m420Html(h, tot){
+  var t=document.createElement('template'); t.innerHTML=h;
+  var est=[], met=[];
+  [].forEach.call(t.content.querySelectorAll('.cx-chip'), function(b){
+    if(/cxFiltro\('debe'\)/.test(b.getAttribute('onclick')||'') && tot.saldo>0.005) b.insertAdjacentHTML('beforeend', '<small class="m420-bs">· '+fmtBs0(tot.saldo)+'</small>');
+    (b.classList.contains('k-met') ? met : est).push(b.outerHTML);
+  });
+  var extra=[]; if(tot.aCuenta>0.005) extra.push('A cuenta <b>'+fmtBs0(tot.aCuenta)+'</b>'); if(tot.envios>0.005) extra.push('recargos <b>'+fmtBs0(tot.envios)+'</b>');
+  return '<div class="m420-row"><span class="m420-lb">Estado</span>'+est.join('')+'</div>'+
+    (met.length || extra.length ? ('<div class="m420-row"><span class="m420-lb">Cómo pagaron</span>'+met.join('')+
+      (extra.length ? ('<span class="m420-sp"></span><span class="m420-tot">'+extra.join(' · ')+'</span>') : '')+'</div>') : '');
+}
+/* ➖ 427 · Los ceros en gris en las tablas de plata (Cuadre, Cobranza, Ventas, el Cierre comercial…). En una celda de tabla, un monto 0
+   («Bs 0,00» o «Bs 0») se VE como una rayita gris clara «—», y las «—» que ya había, en el mismo gris. ⚠️ SOLO A LA VISTA: el texto de la
+   celda sigue siendo «Bs 0,00» (`innerText`/`textContent` iguales: Excel, Copiar, WhatsApp y las pruebas no se enteran); la rayita es un
+   `::after`. Las fichas grandes y los avisos no son celdas: siguen con «0». Lo llaman `plataEnNodo` (al terminar) y el Cierre comercial.
+   Bandera: `CERO_GRIS_PRUEBA`. */
+function m427Va(){ try{ return vdVa('CERO_GRIS_PRUEBA'); }catch(e){ return false; } }
+var M427_RE=/^Bs\s?0(,00)?$/;
+function m427Ceros(root){
+  if(!root || !root.querySelectorAll || !m427Va()) return 0;
+  var n=0, txt=function(e){ return e.textContent.replace(/\s+/g,' ').trim(); };
+  [].forEach.call(root.querySelectorAll('td'), function(td){
+    if(td.querySelector('input,select,textarea,button')) return;
+    var t=txt(td);
+    if(t==='—'){ td.classList.add('m427-g'); return; }
+    var hay=false;
+    [].forEach.call(td.querySelectorAll('x-pl'), function(x){ if(M427_RE.test(txt(x))){ x.classList.add('m427-c'); n++; hay=true; } });
+    if(hay) return;
+    /* sin el dibujo de la plata (el Cierre comercial): la etiqueta más chica que tiene SOLO el cero */
+    var hojas=td.children.length ? [].filter.call(td.querySelectorAll('b, span, strong, em, small'), function(e){ return !e.children.length && M427_RE.test(txt(e)); }) : (M427_RE.test(t) ? [td] : []);
+    hojas.forEach(function(e){ e.classList.add('m427-c'); n++; });
+  });
+  return n;
+}
+/* 🚦 421 · Cuadre: el semáforo adentro de la tabla del cierre (`renderCuadre` → «Cierre por forma de pago»). Eran dos cajas que decían lo mismo
+   (las 6 tarjetas del semáforo y la tabla): queda la tabla, con la luz de cada forma de pago (verde cuadra, rojo con diferencia, ámbar falta
+   contar: la MISMA regla de `cxSemaforoPintar`), «Diferencia · estado» y arriba «✅ 1 cuadra · ⚠️ 1 con diferencia · ✍️ 4 faltan contar».
+   Tocar la fila lleva al campo (`cxIrArqueo`). El semáforo se sigue armando, escondido. Bandera: `SEM_TABLA_PRUEBA`. */
+function m421Va(){ try{ return vdVa('SEM_TABLA_PRUEBA'); }catch(e){ return false; } }
+function m421Luz(f, arqueoOn){ if(!arqueoOn) return ''; if(f.arqueo==null) return 'pend'; return f.dif===0 ? 'ok' : 'mal'; }
+function m421Cuenta(CIE, arqueoOn){ var n={ ok:0, mal:0, pend:0 }; (CIE.filas||[]).forEach(function(f){ var l=m421Luz(f, arqueoOn); if(l) n[l]++; }); return n; }
+function m421Resumen(n){
+  if(!n || !(n.ok+n.mal+n.pend)) return '';
+  return '<span class="m421-res">'+(n.ok ? ('<span class="ok">✅ '+n.ok+' cuadra'+(n.ok>1?'n':'')+'</span>') : '')+(n.mal ? ('<span class="mal">⚠️ '+n.mal+' con diferencia</span>') : '')+
+    (n.pend ? ('<span class="pend">✍️ '+n.pend+' falta'+(n.pend>1?'n':'')+' contar</span>') : '')+'</span>';
+}
+function m421Est(l, html){ if(!l) return html; return '<span class="m421-est"><i aria-hidden="true"></i>'+(l==='pend' ? '✍️ falta contar' : html)+'</span>'; }
+function m421Tocar(ev, tr){ if(ev && ev.target && ev.target.closest && ev.target.closest('input, button, a')) return; try{ cxIrArqueo(tr.getAttribute('data-forma')); }catch(e){} }
+/* 📅 422 · Detalle de los pagos, día por día con su total (Cuadre → «📄 Detalle de los pagos»). Al empezar cada día, un renglón turquesa:
+   «📅 Martes 03/11 · 💳 Tarjeta Bs 6.330 · 💵 Efectivo Bs 5.230 · 📱 QR Bs 850 — 7 pagos — Bs 12.410», para comparar con el extracto del
+   banco, que viene por día. Suma los pagos que la tabla ya muestra (`cuadrePagos` filtrado por el buscador); la tabla, lo que se toca, el
+   Excel y Copiar no cambian. Bandera: `CUA_DIA_PRUEBA`. */
+function m422Va(){ try{ return vdVa('CUA_DIA_PRUEBA'); }catch(e){ return false; } }
+function m422Forma(c){
+  var f=cuadreForma(c);
+  if(/^Efectivo/i.test(f)) return '💵 Efectivo'; if(/^QR/i.test(f)) return '📱 QR'; if(/^Tarjeta/i.test(f)) return '💳 Tarjeta';
+  if(!c.metodo) return '❔ Sin método'; return '🏦 '+String(c.metodo);
+}
+function m422Dias(pagos){
+  var D={};
+  (pagos||[]).forEach(function(c){
+    var k=c.fecha||'', o=D[k]||(D[k]={ f:k, n:0, tot:0, por:{} }), m=Number(c.monto)||0, fo=m422Forma(c);
+    o.n++; o.tot=r2(o.tot+m); o.por[fo]=r2((o.por[fo]||0)+m);
+  });
+  return D;
+}
+function m422Fila(o){
+  if(!o) return '';
+  var w=o.f ? dowDe(o.f) : -1, dia=o.f ? ((w>=0 ? (DIAS_SEM[w].charAt(0).toUpperCase()+DIAS_SEM[w].slice(1)+' ') : '')+fmtFechaCorta(o.f)) : 'Sin fecha';
+  var chips=Object.keys(o.por).sort(function(a,b){ return o.por[b]-o.por[a]; }).map(function(k){ return '<span class="ch">'+esc(k)+' '+fmtBs0(o.por[k])+'</span>'; }).join('');
+  return '<tr class="m422-dia"><td colspan="4"><b class="d">📅 '+esc(dia)+'</b>'+chips+'</td><td class="n" colspan="2">'+o.n+' pago'+(o.n===1?'':'s')+'</td><td class="t">'+fmtBs0(o.tot)+'</td><td colspan="2"></td></tr>';
+}
+/* 📌 428 · Cuadre: «⏳ Por cobrar» acompaña al bajar. «Revisar antes de cerrar» mide ~1.100 px y su vecina «Por cobrar» ~450: al bajar quedaba
+   un hueco a la derecha y la lista de deudores se iba de la pantalla. Ahora queda pegada arriba, al costado (debajo del encabezado, `--hdr-h`),
+   y si es más alta que la pantalla baja sola por dentro. Solo CSS (`.m428`), con las dos columnas (más de 1.100 px). Bandera: `CUA_PEGADO_PRUEBA`. */
+function m428Va(){ try{ return vdVa('CUA_PEGADO_PRUEBA'); }catch(e){ return false; } }
+/* 💳 423 · «Falta cobrar»: la barrita de lo que ya pagó («Ver quiénes» de Ventas con saldo, `abrirPorCobrar`, y Cobranza → «Lo que va a
+   entrar»). Una columna «Pagado» con una barrita verde sobre rosado y el %: «98 %», «32 %» o «nada» en rojo. Pagado = venta − saldo (el saldo
+   es `contaFaltaCobrar`, la misma cuenta de la lista). Solo dibujo; Copiar y el Excel no cambian. Bandera: `PC_BARRA_PRUEBA`. */
+function m423Va(){ try{ return vdVa('PC_BARRA_PRUEBA'); }catch(e){ return false; } }
+function m423Html(venta, saldo){
+  venta=Number(venta)||0; var pa=Math.max(0, r2(venta-(Number(saldo)||0))), pc=venta>0.005 ? Math.max(0, Math.min(100, Math.round(pa/venta*100))) : 0, nada=!(pa>0.005);
+  return '<span class="m423'+(nada ? ' cero' : (pc>=90 ? ' casi' : ''))+'" title="'+esc('pagó '+fmtBs(pa)+' de '+fmtBs(venta))+'"><span class="m423-b"><i style="width:'+pc+'%"></i></span><small>'+(nada ? 'nada' : (pc+' %'))+'</small></span>';
+}
+/* 🏭 424 · Mayoristas: cada cliente con su barra roja y verde (Cobranza → «🏭 Por cliente», `cbzCliListaHtml`). El borde de arriba rojo si tiene
+   algo vencido o verde si no, y UNA barra partida: rojo lo vencido, verde lo por vencer, con los dos montos debajo («—» si es cero). Los mismos
+   vencido / por vencer de `cbzMayDatos` (con `cbzConPlazo`). Las cajitas de siempre se siguen armando, escondidas. Bandera: `CBZ_BARRA_PRUEBA`. */
+function m424Va(){ try{ return vdVa('CBZ_BARRA_PRUEBA'); }catch(e){ return false; } }
+function m424Html(v, p){
+  v=Math.max(0, Number(v)||0); p=Math.max(0, Number(p)||0); var t=v+p, w=function(x){ return t>0 ? (x/t*100).toFixed(1)+'%' : '0%'; };
+  return '<span class="m424-w"><span class="m424-b" role="img" aria-label="'+esc('vencido '+fmtBs0(v)+', por vencer '+fmtBs0(p))+'"><i class="v" style="width:'+w(v)+'"></i><i class="p" style="width:'+w(p)+'"></i></span>'+
+    '<span class="m424-l"><span class="'+(v>0.005 ? 'v' : 'z')+'"><small>Vencido</small><b>'+(v>0.005 ? fmtBs0(v) : '—')+'</b></span>'+
+    '<span class="'+(p>0.005 ? 'p' : 'z')+'" style="text-align:right"><small>Por vencer</small><b>'+(p>0.005 ? fmtBs0(p) : '—')+'</b></span></span></span>';
 }
 function m416Poner(R){
   var box=document.getElementById('pry-metrics'), nota=document.getElementById('pry-nota'); if(!box || !nota) return;
@@ -13178,6 +13402,7 @@ function abrirPorCobrar(origen){
   origen=(origen==='cuadre') ? 'cuadre' : 'ventas';
   POR_COBRAR_VOLVER=null;
   var D=porCobrarDatos(origen), it=D.items, tot=cuadreSuma(it), n=it.length, ant=D.ant||[], antTot=cuadreSuma(ant);   // §4ok-E7: `ant` aparte
+  var b3=m423Va();   // 🎨 (16/11, mejora 423) la barrita de lo que ya pagó
   var fila=function(x){
     var p=x.p, col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
     var ref=[p.nota?('nota '+p.nota):'', p.oc?(ocEtiq(p.oc)||''):'', p.celular||''].filter(Boolean).join(' · ');
@@ -13186,11 +13411,12 @@ function abrirPorCobrar(origen){
       '<td>'+esc(p.vendedor||'—')+'</td>'+
       '<td><span style="color:'+col+'">'+esc(x.sinF ? 'sin fecha' : (fmtFechaCorta(x.desde)+' · '+deudaEdadTxt(x)))+'</span></td>'+
       '<td style="text-align:right;white-space:nowrap">'+fmtBs(ventaTotal(p))+'</td>'+
+      (b3 ? ('<td class="m423-td">'+m423Html(ventaTotal(p), x.saldo)+'</td>') : '')+
       '<td style="text-align:right;white-space:nowrap"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
   };
   var filas=it.map(fila).join('');
   var tabla=function(f){ return '<div class="tw" style="max-height:calc(60vh / var(--vz,1));overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Vendedor</th><th>Desde</th>'+
-            '<th style="text-align:right">Venta</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+f+'</tbody></table></div>'; };
+            '<th style="text-align:right">Venta</th>'+(b3 ? '<th class="m423-th">Pagado</th>' : '')+'<th style="text-align:right">Saldo</th></tr></thead><tbody>'+f+'</tbody></table></div>'; };
   var mesTxt=mesNombre(diaNegocio().slice(0,7)).replace(/ de \d{4}$/, '');
   var antHtml=ant.length ? ('<div class="pc-ant" style="margin-top:14px"><div style="font-size:.9rem;font-weight:800;color:#b45309;margin-bottom:4px">🗓️ De meses anteriores · '+fmtBs(antTot)+'</div>'+
       '<div style="font-size:.78rem;color:var(--muted);margin-bottom:8px"><b>'+ant.length+'</b> venta'+(ant.length===1?'':'s')+' ya entregada'+(ant.length===1?'':'s')+' antes de '+esc(mesTxt)+
@@ -13391,7 +13617,7 @@ function cbzFila(x, modo){
     '<td>'+esc(nombreCanonico(p.vendedor||'')||'—')+'</td>'+
     '<td style="color:'+col+';white-space:nowrap">'+cuando+'</td>'+
     '<td class="m">'+fmtBs(ventaTotal(p))+'</td>'+
-    '<td class="m">'+fmtBs(contaCobrado(p))+'</td>'+
+    '<td class="m">'+fmtBs(contaCobrado(p))+((modo==='viene' && m423Va()) ? m423Html(ventaTotal(p), x.saldo) : '')+'</td>'+   // 🎨 (16/11, mejora 423)
     '<td class="m"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
 }
 function cbzTabla(L, modo){
@@ -13515,13 +13741,15 @@ function cbzMayDatos(){
 function cbzCliListaHtml(){
   var L=cbzMayDatos(), con=L.filter(function(c){ return c.debe>0.005 || c.viene>0.005 || c.nSin>0; }), tot=0;
   con.forEach(function(c){ tot=r2(tot+c.debe); });
+  var b4=m424Va();   // 🎨 (16/11, mejora 424) cada cliente con su barra roja y verde
   var ficha=function(c){
     var tr=function(lbl, v, col){ return '<span class="cbz-ct" style="border-color:'+col+'"><small>'+lbl+'</small><b style="color:'+col+'">'+fmtBs(v)+'</b></span>'; };
-    return '<button type="button" class="cbz-cli" data-k="'+esc(c.k)+'" onclick="cbzCliAbrir(this.getAttribute(\'data-k\'))">'+
+    var m4=(b4 && c.debe>0.005);
+    return '<button type="button" class="cbz-cli'+(m4 ? (' m424 '+(c.venc>0.005 ? 'm424-v' : 'm424-p')) : '')+'" data-k="'+esc(c.k)+'" onclick="cbzCliAbrir(this.getAttribute(\'data-k\'))">'+
       '<span class="cbz-cn">'+esc(c.k)+'</span>'+
       '<span class="cbz-cd"><b>'+(c.debe>0.005?fmtBs(c.debe):c.nSin?'⚠️ Sin monto':'✅ Al día')+'</b><small>'+(c.n?(c.n+' OC entregada'+(c.n===1?'':'s')+' sin pago'):'nada entregado sin pago')+'</small></span>'+
       '<span class="cbz-cv">⏳ Paga '+esc(cbzPlazoTxt(c.plazo))+'</span>'+
-      (c.debe>0.005 ? '<span class="cbz-cts">'+tr('Vencido', c.venc, c.venc>0.005?(c.v60m>0.005?'#b42318':'#b45309'):'#64748b')+tr('Por vencer', c.pv, '#0f766e')+'</span>'+
+      (c.debe>0.005 ? '<span class="cbz-cts">'+tr('Vencido', c.venc, c.venc>0.005?(c.v60m>0.005?'#b42318':'#b45309'):'#64748b')+tr('Por vencer', c.pv, '#0f766e')+'</span>'+(m4 ? m424Html(c.venc, c.pv) : '')+
         (c.v60m>0.005 ? '<span class="cbz-cv cbz-sinm">Vencido hace más de 60 días: '+fmtBs(c.v60m)+'</span>' : '')+
         (c.prox && c.pv>0.005 ? '<span class="cbz-cv">Próximo vencimiento: '+fmtFechaCorta(c.prox)+'</span>' : '') : '')+
       (c.viene>0.005 ? '<span class="cbz-cv">+ '+fmtBs(c.viene)+' por entregar ('+c.nV+')</span>' : '')+
@@ -13921,7 +14149,8 @@ function cxTopPintar(list, vSel, R){
   CX_HACER_ULT=I;   // 💬 (idea 9) Bloki contesta «¿qué me falta hacer?» con el último que se dibujó
   setTimeout(function(){ plataEnIds(['cx-top']); }, 0);   // 💵 (15/11, mejora 291) cuando ya se dibujó
   phAnotar('conta', I.length, 'Contabilidad');   // 🔴 (15/11, mejora 287) el número en la pestaña del navegador
-  var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
+  var _AV=null; try{ _AV=m418Avances(list, R); }catch(e){ _AV=null; }   // 🎨 (16/11, mejora 418) cuánto va hecho de cada renglón
+  var fila=function(o,i){ return '<div class="ah-it ah-'+o.sev+'" style="animation-delay:'+Math.min(i,8)*45+'ms"><span class="ah-n">'+esc(String(o.n))+'</span><div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+(_AV ? m418Html(_AV, o) : '')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>'; };
   var izq='<div class="ah-card"><div class="ah-cab"><span class="ah-ico">📋</span><h4>Para hacer</h4>'+(I.length?('<span class="ah-badge'+(rojos?'':' ah-badge-a')+'">'+I.length+'</span>'):'')+'<span class="ah-sp"></span><small>'+(I.length?'antes del cierre del mes':'')+'</small></div>'+
     (I.length ? ('<div class="ah-lista">'+(CX_HACER_MAS?I:V).map(fila).join('')+'</div>'+
@@ -14078,7 +14307,7 @@ function renderConta(){
      tabla muestra lo que el chip elegido deja pasar (`cxFiltrar`); las fichas, el resumen y el Excel siguen siendo de todo. */
   try{ cxBotonesPintar(list, nDebe, saldo); }catch(e){}
   try{ cxDupPintar(); }catch(e){}
-  try{ cxChipsPintar(list, porMet); }catch(e){}
+  try{ cxChipsPintar(list, porMet, { saldo:saldo, aCuenta:aCuenta, envios:envios }); }catch(e){}   // 🎨 (mejora 420) lo que decía la línea gris
   try{ cxTopPintar(list, vSel, { nDebe:nDebe, saldo:saldo, nSinMonto:nSinMonto, nSinMarcar:nSinMarcar, enviosFalta:enviosFalta }); }catch(e){}   // ✨ (§4mg)
   var vac=document.getElementById('cta-empty');
   vac.style.display=(list.length || (cxTopActivo() && esqCargando()))?'none':'block';
@@ -14096,15 +14325,16 @@ function renderConta(){
   var _todas=list; list=ctaOrdenar(cxFiltrar(list));   // 🗂️ (§4nr, 33) con el orden elegido en esta compu
   CTA_VISTA_IDS=list.map(function(p){ return String(p.id); });   // ◀ ▶ (297) la ficha sigue la tabla como se ve
   var _abre=ctaNavVa() ? 'ctaAbrirDeLista' : 'showContaModal', _cpl=ctaProdVe();
+  var _est=false; try{ _est=vdVa('CTA_ESTADO_PRUEBA'); }catch(e){}   // 🎨 (16/11, mejora 419) si pagó o debe, a la vista en cada fila
   try{ cxCardsPintar(list, _todas); }catch(e){}
   var head='<thead><tr>'+ctaTh('ing','Ingresado')+ctaTh('ent','Entrega agendada')+ctaTh('nota','N° Nota')+ctaTh('vend','Vendedor')+ctaTh('cli','Cliente')+ctaTh('tipo','Entrega')+ctaTh('cel','Celular')+
            '<th>Productos</th>'+ctaTh('fact','Facturar a')+ctaTh('nit','NIT')+ctaTh('pago','Pago')+'<th>Pagos recibidos</th>'+ctaTh('env','Recargo entrega')+'<th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+trozosHtml('conta', list, function(p){
-    var reg=regEnSistema(p);
-    return '<tr onclick="'+_abre+'(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
+    var reg=regEnSistema(p), E5=_est ? cxEstadoVenta(p) : null;
+    return '<tr'+(E5 ? (' class="m419 '+E5.cls+'"') : '')+' onclick="'+_abre+'(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
       '<td style="white-space:nowrap">'+entregaFechaHtml(p)+'</td>'+
-      '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">'+esc(ocEtiq(p.oc))+'</span>'):'')+'</td>'+
+      '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">'+esc(ocEtiq(p.oc))+'</span>'):'')+(E5 ? ('<div><span class="m419-st '+E5.cls+'">'+esc(E5.txt)+'</span></div>') : '')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
       '<td><b>'+clfNombre(p, p.cliente||'—', 'conta')+'</b>'+dupChip(p)+'</td>'+
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
@@ -14432,8 +14662,9 @@ function cxChipDef(F){
   return CX_CHIPS.filter(function(c){ return c.k===F.k; })[0]||null;
 }
 function cxFiltrar(list){ var d=cxChipDef(CX_FILTRO); return d ? (list||[]).filter(d.f) : (list||[]); }
-function cxChipsPintar(list, porMet){
+function cxChipsPintar(list, porMet, tot){
   var box=document.getElementById('cx-chips'); if(!box) return;
+  var c2=m420Va(), rs=document.getElementById('cta-resumen'); if(rs) rs.classList.toggle('m420-off', c2 && !!list.length);   // 🎨 (16/11, mejora 420)
   if(!list.length){ box.innerHTML=''; return; }
   var act=cxChipDef(CX_FILTRO);
   if(act && !list.some(act.f)){ CX_FILTRO=null; act=null; }
@@ -14449,7 +14680,8 @@ function cxChipsPintar(list, porMet){
   });
   var vis=act ? list.filter(act.f).length : list.length;
   var ang=cxAngosto();
-  box.innerHTML='<div class="cx-chips">'+h+'</div>'+
+  if(c2) h=m420Html(h, tot||{});   // 🎨 (16/11, mejora 420) «Estado» y «Cómo pagaron», cada uno en su renglón
+  box.innerHTML='<div class="cx-chips'+(c2 ? ' m420' : '')+'">'+h+'</div>'+
     ((act || ang) ? ('<div class="cx-chips-pie">'+
       (act ? ('Mostrando <b>'+vis+'</b> de '+list.length+' en la '+(cxModoTarjetas()?'lista':'tabla')+' · <a onclick="cxFiltro(null)">✕ ver todas</a>') : '')+
       (ang ? ('<button type="button" class="btn btn-ghost btn-sm cx-vista-btn" onclick="cxVistaCambiar()">'+(cxModoTarjetas()?'📋 Ver como tabla':'🃏 Ver en tarjetas')+'</button>') : '')+
@@ -15859,6 +16091,7 @@ function ccmPintar(){
   var baj=document.getElementById('ccm-bajar'); if(baj) baj.disabled=!R.tot.n && !R.ventas.length;
   body.innerHTML = CCM.ed ? ccmEdHtml(R) : ccmHtml(R);
   if(CCM.ed) ccmEdProbar();
+  else try{ m427Ceros(body); }catch(e){}   // 🎨 (16/11, mejora 427) los ceros de las tablas, en gris
 }
 function ccmOc(x){ return x && x.oc ? (ocEtiq(x.oc)||x.oc) : 'sin OC'; }
 function ccmHtml(R){
@@ -18867,14 +19100,15 @@ function renderCuadre(){
     cie.innerHTML='<div class="cua-box"><div class="cua-t">🧮 Cierre por forma de pago</div>'+
       '<div class="empty" style="padding:18px 0">No entró plata en '+esc(cuadrePeriodoTxt())+'.</div></div>';
   } else {
-    cie.innerHTML='<div class="cua-box">'+
-      '<div class="cua-t">🧮 Cierre por forma de pago — '+esc(cuadrePeriodoTxt())+(vendSel?(' · '+esc(vendSel)):'')+'</div>'+
+    var s4=m421Va(), S4=s4 ? m421Cuenta(CIE, arqueoOn) : null;   // 🎨 (16/11, mejora 421) el semáforo adentro de la tabla
+    cie.innerHTML='<div class="cua-box'+(s4 ? ' m421' : '')+'">'+
+      '<div class="cua-t'+(s4 ? ' m421-cab' : '')+'">'+(s4 ? '🚦' : '🧮')+' Cierre por forma de pago — '+esc(cuadrePeriodoTxt())+(vendSel?(' · '+esc(vendSel)):'')+(s4 ? m421Resumen(S4) : '')+'</div>'+
       '<div class="tw"><table class="mini"><thead><tr>'+
         '<th>Forma de pago</th><th style="text-align:right">Pagos</th><th style="text-align:right">Según el panel</th>'+
-        '<th style="text-align:right">Contado / extracto</th><th style="text-align:right">Diferencia</th></tr></thead><tbody>'+
+        '<th style="text-align:right">Contado / extracto</th><th style="text-align:right">'+(s4 ? 'Diferencia · estado' : 'Diferencia')+'</th></tr></thead><tbody>'+
       CIE.filas.map(function(f){
-        var a=f.arqueo, dif=f.dif;
-        return '<tr'+(f.huerfano?' style="background:var(--amber-bg,#fff7e6)"':'')+'><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b>'+
+        var a=f.arqueo, dif=f.dif, l4=s4 ? m421Luz(f, arqueoOn) : '';
+        return '<tr'+(f.huerfano?' style="background:var(--amber-bg,#fff7e6)"':'')+(l4 ? (' class="m421-'+l4+'" data-forma="'+esc(f.forma)+'" onclick="m421Tocar(event, this)" title="Anotar lo contado de '+esc(f.forma)+'"') : '')+'><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b>'+
           (f.huerfano?'<div style="font-size:.7rem;color:#7c4b00">⚠️ contado a mano, sin ningún pago de esta forma en el período</div>':'')+'</td>'+
           '<td style="text-align:right">'+f.n+'</td>'+
           '<td style="text-align:right"><b>'+fmtBs(f.monto)+'</b></td>'+
@@ -18884,9 +19118,9 @@ function renderCuadre(){
           '<td style="text-align:right">'+(arqueoOn
              ? ('<input class="cua-arqueo" type="text" inputmode="decimal" autocomplete="off" data-forma="'+esc(f.forma)+'" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
              : '<span style="color:var(--muted);font-size:.78rem">—</span>')+'</td>'+
-          '<td style="text-align:right">'+(dif==null?'<span style="color:var(--muted)">—</span>'
+          '<td style="text-align:right">'+m421Est(l4, (dif==null?'<span style="color:var(--muted)">—</span>'
              :(dif===0?'<span class="cua-dif-ok">✅ cuadra</span>'
-               :'<span class="cua-dif-mal">'+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))+'</span>'))+'</td></tr>';
+               :'<span class="cua-dif-mal">'+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))+'</span>')))+'</td></tr>';
       }).join('')+
       '<tr style="border-top:2px solid var(--gray-md)"><td><b>TOTAL</b></td><td style="text-align:right"><b>'+pagos.length+'</b></td>'+
         '<td style="text-align:right"><b>'+fmtBs(total)+'</b></td><td></td>'+
@@ -18906,6 +19140,7 @@ function renderCuadre(){
   try{ tjPosPintar(); }catch(e){}    // 💳 (15/11, mejora 331) la tarjeta por POS y lote
   /* ✨ (§4jw) G semáforo, J día por día y H quién tiene el efectivo: leen lo mismo que la tabla del cierre y la de retiros. */
   try{ cxSemaforoPintar(CIE); }catch(e){}
+  try{ var _sm=document.getElementById('cx-semaforo'); if(_sm) _sm.classList.toggle('m421-off', m421Va() && !!CIE.filas.length); }catch(e){}   // 🎨 (mejora 421) ya está en la tabla
   try{ cxTiempoPintar(pagos); }catch(e){}
   try{ cxManoPintar(); }catch(e){}
 
@@ -18933,6 +19168,7 @@ function renderCuadre(){
           '<a style="cursor:pointer;color:#b45309;font-weight:700" onclick="abrirPorCobrar(\'cuadre\')">Ver las '+pend.length+' ›</a></div>'):'')
       : '<div class="empty" style="padding:16px 0">✅ No queda nada por cobrar.</div>')+
     '</div>';
+  try{ var _p8=m428Va(); pe.classList.toggle('m428', _p8); if(pe.parentNode) pe.parentNode.classList.toggle('m428-2col', _p8); }catch(e){}   // 🎨 (16/11, mejora 428) «Por cobrar» acompaña al bajar
 
   // ---- alertas
   var al=cuadreAlertas(pagos), av=document.getElementById('cua-alertas');
@@ -18972,8 +19208,10 @@ function renderCuadre(){
     '</div>'+
     (vistos.length
       ? '<div class="tw tw-tall"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Entrega</th><th>N° nota del pago</th><th>Vendedor</th><th>Forma de pago</th><th style="text-align:right">Monto</th><th>Venta</th><th>Sistema</th></tr></thead><tbody>'+
-        vistos.map(function(c){
-          return '<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
+        (function(){ var D4=m422Va() ? m422Dias(vistos) : null, ult=null;   // 🎨 (16/11, mejora 422) un renglón por día con su total
+        return vistos.map(function(c){
+          var cab=''; if(D4 && c.fecha!==ult){ ult=c.fecha; cab=m422Fila(D4[c.fecha||'']); }
+          return cab+'<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
             '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.fecha))+'</td>'+
             '<td><b>'+esc(c.p.cliente||'—')+'</b></td>'+
             '<td style="white-space:nowrap">'+tipoVentaHtml(c.p)+'</td>'+
@@ -18985,7 +19223,7 @@ function renderCuadre(){
             '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
             '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
             '<td>'+(regEnSistema(c.p)?'<span class="badge b-green">✅</span>':'<span class="badge b-amber">falta</span>')+'</td></tr>';
-        }).join('')+'</tbody></table></div>'
+        }).join(''); })()+'</tbody></table></div>'
       : (CUA_BUSCA
           ? '<div class="empty" style="padding:16px 0">Ningún pago coincide con «'+esc(CUA_BUSCA)+'».</div>'
           : '<div class="empty" style="padding:16px 0">No hay pagos con fecha en '+esc(cuadrePeriodoTxt())+'.</div>'))+
@@ -45373,6 +45611,7 @@ function plataEnNodo(root){
       if(hay && !otro) ths[c].classList.add('pl-col');
     }
   });
+  try{ m427Ceros(root); }catch(e){}   // 🎨 (16/11, mejora 427) los ceros de las tablas, en gris (el texto no cambia)
   return hechos;
 }
 function plataEnIds(ids){ if(!plataActiva()) return; ids.forEach(function(id){ var e=document.getElementById(id); if(e) try{ plataEnNodo(e); }catch(_){} }); }
