@@ -42,7 +42,10 @@ var TIPOS=[
   { k:'conta',   ic:'🧾', t:'Contabilidad me avisa de un pago',          s:'un pago que Contabilidad te pide revisar o corregir' },
   { k:'kommo',   ic:'📥', t:'Me entró una venta de Kommo',               s:'una venta de Kommo para completar en el panel' },
   { k:'excel',   ic:'📦', t:'Falta el Excel de hoy (logística)',         s:'desde las 10:00, si todavía no se subió el Excel del depósito de hoy' },
-  { k:'anuncio', ic:'📢', t:'Un anuncio nuevo de Administración',        s:'lo que Administración le dice a todo el equipo' }
+  { k:'anuncio', ic:'📢', t:'Un anuncio nuevo de Administración',        s:'lo que Administración le dice a todo el equipo' },
+  /* 💬 (16/11, mejora 344) el chat del equipo (`chat.js`, `chatPendientes`): lo privado, lo de Logística o Contabilidad y lo del grupo que te
+     nombra («@Mirian») o escribe Eduardo. El último de cada conversación reemplaza al anterior en la esquina. Lo 🔴 urgente queda fijo. */
+  { k:'chat',    ic:'🗨️', t:'Me escribieron en el chat',                 s:'por privado, de Logística o Contabilidad, o con mi @nombre en el grupo' }
 ];
 var ESC={ instalar:null, reg:null, sembrado:false, ultLectura:0, leyendo:false, timer:null, t0:Date.now(), qk:null, perm:null, pend:null, pendT:0, pendTimer:null };
 window.ESC=ESC; window.ESC_TIPOS=TIPOS;
@@ -179,7 +182,9 @@ window.escGuia=guiaAbrir; window.escYaInstale=escYaInstale; window.escAparato=ap
 
 /* ---------- 26 · avisos ---------- */
 function permiso(){ try{ return ('Notification' in window) ? Notification.permission : 'nohay'; }catch(e){ return 'nohay'; } }
-function tipos(){ var o=lsJson(LS_TIPOS, null); if(!o){ o={}; TIPOS.forEach(function(t){ o[t.k]=1; }); } return o; }
+/* (16/11, mejora 344) Un tipo NUEVO arranca prendido también para quien ya había elegido los suyos (antes quedaba apagado sin que nadie lo
+   eligiera): lo que la persona apagó a mano sigue apagado. */
+function tipos(){ var o=lsJson(LS_TIPOS, null); if(!o){ o={}; TIPOS.forEach(function(t){ o[t.k]=1; }); } else TIPOS.forEach(function(t){ if(o[t.k]==null) o[t.k]=1; }); return o; }
 function tipoOn(k){ return !!tipos()[k]; }
 function escTipo(k, si, el){
   var o=tipos(); o[k]=si?1:0; lsSet(LS_TIPOS, JSON.stringify(o));
@@ -264,6 +269,8 @@ function pendientes(){
     var an=(typeof anuncioLeer==='function') ? anuncioLeer() : null;
     if(an && an.ts && Date.now()-an.ts<864e5) L.push({ k:'anuncio|'+an.ts, tipo:'anuncio', t:'📢 Anuncio'+(an.por?(' de '+nombre(an.por)):''), b:corto(an.t, 160) });
   }catch(e){}
+  // 💬 (mejora 344) el chat del equipo: lo que te escribieron y no viste
+  try{ if(typeof window.chatPendientes==='function') window.chatPendientes().forEach(function(x){ L.push(x); }); }catch(e){}
   return L.filter(function(x){ return tipoOn(x.tipo); });
 }
 function listo(){ try{ return typeof STATE!=='undefined' && Array.isArray(STATE) && (typeof ULTIMO_REFRESCO==='undefined' || ULTIMO_REFRESCO>0); }catch(e){ return false; } }
@@ -300,6 +307,7 @@ function mostrar(x, siempre){
   /* sin `badge`: es el dibujito de la barra de Android y tiene que ser de un solo color; en Windows no se usa */
   var tag=x.tag||x.k;
   var op={ body:x.b, tag:tag, icon:'iconos/hojas-192.png', data:{ tipo:x.tipo, id:x.id||'', k:x.k }, renotify:tag!==x.k };
+  if(x.fijo) op.requireInteraction=true;   // 💬 (mejora 344) lo 🔴 urgente del chat queda en la esquina hasta que lo toquen
   if(ESC.reg && ESC.reg.showNotification){ ESC.reg.showNotification(x.t, op).catch(function(){ mostrarDirecto(x, op); }); return; }
   mostrarDirecto(x, op);
 }
@@ -318,6 +326,7 @@ function ir(d){
       var an=(typeof anuncioLeer==='function') ? anuncioLeer() : null;
       if(an && typeof anuncioRecordar==='function') anuncioRecordar(an);
     }
+    else if(d.tipo==='chat'){ if(typeof window.chatAbrir==='function') window.chatAbrir(d.id||''); }   // 💬 (mejora 344) la conversación del aviso
   }catch(e){}
 }
 window.escIr=ir;
