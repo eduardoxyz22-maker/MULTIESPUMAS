@@ -8592,6 +8592,32 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 #mis-lista .mis-cf.p401 .p401-bs{flex:none;width:96px;text-align:right;font-weight:800;color:#132626;font-variant-numeric:tabular-nums}
 #mis-lista .mis-cf.p401 .mis-cf-pag{flex:none;width:86px;text-align:center}
 @media (max-width:700px){ #mis-lista .mis-cf.p401 .p401-bs{width:auto} #mis-lista .mis-cf.p401 .mis-cf-pag{width:auto} }
+/* 367 · el cartel de arriba del pedido en una línea, con la agenda al costado (desde 1.120 px) */
+.p367{display:none}
+@media (min-width:1120px){
+  #fh.p367-on .fh-top, #fh.p367-on .fh-dia, #fh.p367-on .fh-turnos, #fh.p367-on .fh-murc, #fh.p367-on .fh-luna{display:none!important}
+  #fh.p367-on{padding:0!important;margin-bottom:12px!important;background:none!important;box-shadow:none!important;border:0!important;min-height:0!important;overflow:visible!important;animation:none!important}
+  #fh.p367-on::before, #fh.p367-on::after{display:none!important}
+  #fh.p367-on .p367{display:flex;align-items:center;gap:6px;white-space:nowrap;background:linear-gradient(90deg,#00A09A,#0f8f8a);color:#fff;border-radius:12px;padding:0 8px 0 11px;height:42px;box-sizing:border-box;font:700 .8rem/1 Inter,system-ui,sans-serif;box-shadow:0 6px 18px -10px rgba(0,80,78,.6);overflow:hidden}
+  #view-form.p398-on #fh.p367-on .p367{background:linear-gradient(90deg,var(--doc-dk),var(--doc))}
+  #fh.p367-on .p367 .t{font-weight:900;margin-right:2px}
+  #fh.p367-on .p367 .c{background:rgba(255,255,255,.2);border-radius:8px;padding:5px 7px}
+  #fh.p367-on .p367 .c.sel{background:#fff;color:#00796f}
+  #fh.p367-on .p367 .c.full{background:#fee2e2;color:#991b1b}
+  #fh.p367-on .p367 .v{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:5px 7px;font:inherit;font-size:.74rem;cursor:pointer;flex:none}
+  #fh.p367-on .p367 .fh-ic{height:28px;padding:0 9px 0 4px;font-size:.74rem;flex:none}
+  #fh.p367-on .p367 .fh-ic .q{width:20px;height:20px;font-size:.72rem}
+  #fh.p367-on .p367 .fh-ic.p367-nov{padding:0 4px}
+  #fh.p367-on .p367 .fh-ic.p367-nov .tx{display:none}
+  #fh.p367-on .p367 .sp{flex:1}
+  #fh.p367-on .p367 .vivo{display:inline-flex;align-items:center;flex:none;padding:0 3px}
+  #fh.p367-on .p367 .vivo i{width:8px;height:8px;border-radius:50%;background:#86efac;box-shadow:0 0 0 3px rgba(134,239,172,.25)}
+  #fh.p367-on .p367 .vivo.off i{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.3)}
+  #fh.p367-on .fh-alerta{margin:6px 0 0}
+  #fh.p367-on .fh-cerrado{margin-top:6px}
+  #view-form.p367-tipos #f-doc-tipo, #view-form.p367-tipos #f-doc-tipo.seg-4{display:grid!important;grid-template-columns:auto auto auto 1fr;width:100%!important;box-sizing:border-box}
+  #view-form.p367-tipos #f-doc-tipo > button{min-width:0!important;padding:8px 2px!important;white-space:nowrap;font-size:.8rem!important;letter-spacing:-.01em}
+}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -28600,7 +28626,42 @@ function renderCupoFormBase(){
 var NOVEDADES_V='2026-10-27', LS_NOV='me_novedades_visto';
 function fhVa(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
 function fhNovedadVista(){ try{ localStorage.setItem(LS_NOV, NOVEDADES_V); }catch(e){} setTimeout(function(){ try{ fhPintar(); }catch(e){} }, 60); }
+/* 🎨 (16/11, mejora 367; dueño: «Nuevo pedido: los campos a la vista al abrir») En una compu de 1.366 × 768 el primer campo (Fecha de entrega)
+   empezaba a 737 px: al abrir no se veía ninguno de los 21 campos. El cartel de arriba («Camión del martes 17/11 · Mañana 8 libres · Tarde 10
+   libres») medía 254 px y repetía lo que ya dicen la agenda de la izquierda y «Tu pedido» de la derecha; y el selector OC · ATC · RPT ·
+   Cotización se partía. Ahora, desde 1.120 px de ancho (cuando la agenda está al costado), el cartel es UNA línea de ~42 px: «🚚 Mar 17/11 ·
+   🌅 8 libres · 🌆 10 libres · 👀 Ver · 🧾 Cotizar · ❓ Guía», y OC · ATC · RPT · Cotización van en una fila. Los avisos de una línea (lleno,
+   sin conexión, cerrado) siguen debajo. Los MISMOS datos de `fhPintar` (cupos, `verCuposTurno`, los mismos botones); en pantallas angostas
+   (sin agenda) el cartel grande queda como siempre. En Playwright como antes salvo `window.FH_CORTO_PRUEBA` (con `FH_PRUEBA`).
+   `tests/test_v367_fh_corto.js`. */
+function fhCortoVa(){ try{ return vdVa('FH_CORTO_PRUEBA'); }catch(e){ return false; } }
+function fhCortoHtml(o){
+  var f=o.fecha, dia=String(DIAS_SEM[dowDe(f)]||'').slice(0,3)+' '+fmtFechaCorta(f); dia=dia.charAt(0).toUpperCase()+dia.slice(1);
+  var tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA), tit='';
+  try{ var k=docColorVa() ? docColorTipo() : ''; if(k && DOC_COLOR[k]) tit=DOC_COLOR[k].ic+' '+(EDIT_ID ? DOC_COLOR[k].cor : DOC_COLOR[k].tit); }catch(e){}
+  if(!tit && EDIT_ID) tit='✏️ Corregir pedido';
+  if(!tit && tienda) tit='🛍️ Venta de tienda';
+  var hayCupos=!(o.cot || tienda || o.avisa || o.cerr);   // con los cupos a la vista no entra el título: el color y la cinta de la 398 dicen qué es
+  var h=(tit && !hayCupos) ? ('<span class="t">'+esc(tit)+'</span>') : '';
+  if(o.cot) h+='<span class="c">🧾 Cotización · no ocupa cupo del camión</span>';
+  else if(tienda) h+='<span class="c">se lo lleva del local · sin camión</span>';
+  else if(o.avisa) h+='<span class="c">📦 El cliente avisa cuándo · no ocupa cupo</span>';
+  else if(o.cerr) h+='<span>🚚 '+esc(dia)+'</span><span class="c full">sin camión ese día</span>';
+  else{
+    var c=function(t){ var l=limTurno(f,t); if(!(l>0)) return ''; var r=Math.max(0, l-cuposUsadosTurno(f,t));
+      return '<span class="c'+(t===o.turno?' sel':'')+(r<=0?' full':'')+'" title="'+r+' libres de '+l+'">'+(t==='AM'?'🌅 ':'🌆 ')+(r<=0 ? 'lleno' : (r+(r===1?' libre':' libres')))+'</span>'; };
+    var n=cuposPedidosTurno(f,'AM')+cuposPedidosTurno(f,'PM'), tv=(o.turno && limTurno(f,o.turno)>0) ? o.turno : (cuposPedidosTurno(f,'AM') ? 'AM' : 'PM');
+    h+='<span>🚚 '+esc(dia)+'</span>'+c('AM')+c('PM')+
+       (n ? ('<button type="button" class="v" onclick="verCuposTurno(\''+esc(f)+'\',\''+tv+'\')" title="Ver los pedidos de ese día">👀 Ver</button>') : '');
+  }
+  h+='<span class="sp"></span><span class="vivo'+o.pill[0]+'" title="'+esc(o.pill[1])+'"><i></i></span>'+(o.cotB||'')+
+     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
+     '<a class="fh-ic p367-nov" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
+       (o.nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a>';
+  return '<div class="p367" role="group" aria-label="El camión del día y la ayuda">'+h+'</div>';
+}
 function fhPintar(){
+  try{ if(turnoCardsVa()) turnoCardsPintar(); }catch(e){}   // 🎨 (399) los lugares de las tarjetas del turno, con lo último de la planilla
   var box=document.getElementById('fh'); if(!box) return;
   var card=box.closest('.form-card'), va=fhVa();
   box.hidden=!va; if(card) card.classList.toggle('fh-on', va);
@@ -28662,6 +28723,10 @@ function fhPintar(){
   if(!on && connTxt) avisos.unshift(['k-off', '📡 '+connTxt]);
   var viejo=cot ? '' : cupoViejoAviso(); if(viejo) avisos.push(['k-off', viejo.replace(/^<br>/, '')]);
   h+=avisos.map(function(a){ return '<div class="fh-alerta '+a[0]+'">'+a[1]+'</div>'; }).join('');
+  /* 🎨 (16/11, mejora 367) con la agenda al costado, el cartel en UNA línea (la grande se esconde con CSS desde 1.120 px) */
+  var _c367=fhCortoVa(); box.classList.toggle('p367-on', _c367);
+  var _vf367=document.getElementById('view-form'); if(_vf367) _vf367.classList.toggle('p367-tipos', _c367);
+  if(_c367){ try{ h=fhCortoHtml({ fecha:fecha, turno:turno, cot:cot, avisa:avisa, cerr:cerr, pill:pill, nov:nov, cotB:cotB })+h; }catch(e){} }
   if(box._h===h) return;   // lo mismo de antes: no rearmar (los murciélagos y el «En línea» no vuelven a empezar)
   box._h=h; box.innerHTML=h;
 }
