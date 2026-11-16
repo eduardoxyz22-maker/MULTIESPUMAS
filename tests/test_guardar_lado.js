@@ -78,7 +78,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   chk('2c. tocar el gris NO guarda (no toca el de abajo) y lleva al primero que falta, con el foco', r.clicks===0 && r.saves===0 && r.foco==='f-cliente', r);
   r = await page.evaluate(async () => { _llenar({ sinZona:true }); window.scrollTo(0,0); await new Promise(x=>setTimeout(x, 100));
     var c=[].filter.call(document.querySelectorAll('#fx-der .fx-chk button'), function(b){ return /Zona/.test(b.textContent); })[0]; if(c) c.click();
-    await new Promise(x=>setTimeout(x, 1600)); var a=document.activeElement, z=document.getElementById("f-zona").getBoundingClientRect();
+    var vista=function(){ var q=document.getElementById("f-zona").getBoundingClientRect(); return document.activeElement && document.activeElement.id==='f-zona' && q.top>=0 && q.bottom<=innerHeight; };
+    await new Promise(x=>setTimeout(x, 1600)); for(var i=0;i<30 && !vista();i++) await new Promise(x=>setTimeout(x, 100)); var a=document.activeElement, z=document.getElementById("f-zona").getBoundingClientRect();
     return { hay:!!c, foco:a ? a.id : "", enPantalla:z.top>=0 && z.bottom<=innerHeight, top:Math.round(z.top), y:Math.round(scrollY), marca:!!document.querySelector(".glado-ojo") }; });
   chk('3a. tocar «○ Zona» lleva al campo Zona: a la vista y con el foco', r.hay && r.foco==='f-zona' && r.enPantalla, r);
   r = await page.evaluate(async () => { _llenar(); return _der(); });
