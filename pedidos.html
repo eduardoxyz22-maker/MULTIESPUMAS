@@ -3509,6 +3509,19 @@ html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webk
 html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-thumb:hover, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-thumb:hover{ background:#facc15; }
 html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(input[type=checkbox], input[type=radio]), html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(input[type=checkbox], input[type=radio]){ accent-color:#d4a50a; }
 html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) ::selection, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) ::selection{ background:rgba(250,204,21,.42); color:#111; }
+/* 439 · El globo de Bloki con su piquito hacia él, una rayita turquesa abajo que se acorta (cuánto le queda) y «Tocá para ver ›»; con el mouse
+   encima la rayita se frena y el globo espera. Solo con `.gl-v` (la pone `asisGlobo` con la bandera). */
+.asis-globo.gl-v{ position:relative; overflow:visible; padding-bottom:16px; }
+.asis-globo.gl-v::after{ content:''; position:absolute; right:-12px; bottom:22px; width:0; height:0; border-left:12px solid #fff; border-top:9px solid transparent; border-bottom:9px solid transparent;
+  filter:drop-shadow(1px 0 0 #d6e2e2); pointer-events:none; }
+.asis-globo.gl-v.asis-anuncio::after{ border-left-color:#fff; }
+.asis-globo.gl-v::before{ content:''; position:absolute; left:14px; right:14px; bottom:6px; height:3px; border-radius:2px; background:linear-gradient(90deg,#00B5AD,#7fdcd6);
+  transform-origin:left center; animation:gl-tiempo var(--gl-ms,7000ms) linear forwards; pointer-events:none; }
+.asis-globo.gl-v.asis-anuncio::before{ background:linear-gradient(90deg,#c2410c,#fdba74); }
+.asis-globo.gl-v:hover::before, .asis-globo.gl-v.gl-quieto::before{ animation-play-state:paused; }
+@keyframes gl-tiempo{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+.asis-globo.gl-v .gl-ver{ display:inline-flex; align-items:center; gap:4px; margin-top:7px; font-size:.72rem; font-weight:800; color:#00A09A; }
+.asis-globo.gl-v .gl-ver::after{ content:'›'; font-size:1rem; line-height:0; }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3860,6 +3873,37 @@ document.addEventListener('DOMContentLoaded', function(){
       try{ new MutationObserver(function(){ ceroChips(b); }).observe(b, { childList:true }); }catch(e){} ceroChips(b); });
   }catch(e){}
 });
+
+/* 🎨 (16/11, mejora 439; dueño: elegida de la página de ideas 390-440) EL GLOBO DE BLOKI: CON SU PIQUITO Y CUÁNTO LE QUEDA. El globo aparecía al
+   costado de Bloki sin nada que lo uniera a él y se iba solo a los 7 s, sin aviso, a veces a mitad de leerlo. Ahora (`asisGlobo` → `glPoner`):
+   · lleva un piquito hacia Bloki (`.gl-v::after`) y abajo una rayita turquesa que se va acortando en el MISMO tiempo que dura (`a.ms`, 7 s);
+   · dice «Tocá para ver ›» (o «Tocá para ver cuáles ›» si abre la lista) cuando tocarlo abre los avisos;
+   · con el mouse encima la rayita se frena y el globo espera; al sacarlo, sigue con lo que le quedaba (el `setTimeout` de `ASIS_GLOBO_T` se
+     corta y se vuelve a poner con el resto).
+   No cambia qué dice Bloki ni cuándo avisa; el dibujo de Bloki es el mismo. En Playwright apagado salvo `window.GLOBO_PRUEBA`.
+   `tests/test_v439_globo_bloki.js`. */
+var GL={ ms:0, t0:0, resto:0, quieto:false };
+function glVa(){ try{ return vdVa('GLOBO_PRUEBA'); }catch(e){ return false; } }
+function glPoner(gl, a, solo){
+  var ms=a.ms||7000;
+  if(!solo) gl.insertAdjacentHTML('beforeend', '<span class="gl-ver">'+(a.lista ? 'Tocá para ver cuáles' : 'Tocá para ver')+'</span>');
+  gl.style.setProperty('--gl-ms', ms+'ms');
+  gl.classList.remove('gl-v', 'gl-quieto'); void gl.offsetWidth; gl.classList.add('gl-v');   // la rayita arranca de nuevo
+  if(!gl._gl){ gl._gl=1; gl.addEventListener('mouseenter', glPausa); gl.addEventListener('mouseleave', glSigue); }
+  GL.ms=ms; GL.resto=ms; GL.quieto=false; GL.t0=Date.now();
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, ms);
+  try{ if(gl.matches(':hover')) glPausa(); }catch(e){}
+}
+function glPausa(){
+  var gl=document.getElementById('asis-globo'); if(!gl || gl.hidden || !gl.classList.contains('gl-v') || GL.quieto) return;
+  GL.quieto=true; GL.resto=Math.max(800, GL.resto-(Date.now()-GL.t0));
+  clearTimeout(ASIS_GLOBO_T); gl.classList.add('gl-quieto');
+}
+function glSigue(){
+  var gl=document.getElementById('asis-globo'); if(!gl || gl.hidden || !gl.classList.contains('gl-v') || !GL.quieto) return;
+  GL.quieto=false; GL.t0=Date.now(); gl.classList.remove('gl-quieto');
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, GL.resto);
+}
 </script>
 
 <div class="wrap">
@@ -73424,7 +73468,9 @@ function asisGlobo(a, calladito, solo){
   ASIS.anuncioFig=!!a.anuncio; blokiPoner();   // 🧽 el anuncio lo dice Bloki con el megáfono
   if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
   if(!calladito) asisPop();
-  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, a.ms||7000);
+  clearTimeout(ASIS_GLOBO_T);
+  if(typeof glVa==='function' && glVa()) glPoner(gl, a, solo);   // 🎨 (16/11, mejora 439) el piquito, la rayita del tiempo y la pausa con el mouse
+  else ASIS_GLOBO_T=setTimeout(asisGloboOcultar, a.ms||7000);
 }
 function asisGloboOcultar(){
   var gl=document.getElementById('asis-globo'); if(gl) gl.hidden=true;
