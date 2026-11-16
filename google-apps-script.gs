@@ -6361,8 +6361,10 @@ function waCcmFilas_(ventas, ajustes, mt, es) {
 /* 🏆 (2026-11-16-a, mejora 376 b; regla del dueño del 16/11, «1A, 2B») EL BONO TITANIO CON LA FOTO DEL LUNES. La vendedora cobra el bono
    Titanio de un mes solo si (a) llega a su MÍNIMA y (b) tuvo el panel al día —nada en ROJO; el ámbar se perdona— en TODAS las fotos de los
    lunes de ese mes. Las fotos las saca la PÁGINA (el primer aparato con la planilla al día, los lunes desde las 08:00) en la fila del sistema
-   `__al_dia_sem__`: `{v:1, s:{'<lunes>':{t, f, por:{'<vendedora>':{r:0|1, d:'lo que estaba en rojo'}}}}}`. Rige desde el lunes 23/11/2026; un
-   lunes sin foto no castiga. Solo meses ABIERTOS (un mes cerrado en el Cierre comercial queda como se guardó).
+   `__al_dia_sem__`: `{v:1, s:{'<lunes>':{t, f, por:{'<vendedora>':{r:0|1, d:'lo que estaba en rojo'}}}}}`. Rige en los meses con algún lunes
+   desde el 23/11/2026 (noviembre y de diciembre en adelante); un lunes sin foto no castiga. Solo meses ABIERTOS (un mes cerrado en el Cierre
+   comercial queda como se guardó). 🔁 (16/11, el dueño: *«sin mínimo ni panel al día» no hay bono*): SIN MÍNIMA (0) NO HAY BONO, y la
+   condición de la mínima vale para todo noviembre (antes esperaba al 23/11).
    ⚠️ Es una COPIA de `alDiaBonoCumple` / `alDiaSemLunesDelMes` / `ccmBonoRegla` de la página: `tests/test_bono_al_dia_gs.js` compara las dos.
    Si cambia la regla en la página, cambia acá. */
 var WA_AL_DIA_SEM_ID = '__al_dia_sem__', WA_AL_DIA_BONO_DESDE = '2026-11-23';
@@ -6379,15 +6381,16 @@ function waAlDiaLunesDelMes_(ym) {
   for (; f.slice(0, 7) === ym; f = waMasDias_(f, 7)) L.push(f);
   return L;
 }
-/** LA REGLA (pura). fotos = el `s` de `__al_dia_sem__`; mi = la mínima (0 = sin mínima: la condición (a) se da por cumplida); hoy = 'AAAA-MM-DD'.
-    Devuelve { rige, ok, min, rojo:{lun,d}|null, semanas:[{lun, foto, r, d}], sinFoto:[lunes], razon }. Si no rige, ok = true (el bono como siempre). */
+/** LA REGLA (pura). fotos = el `s` de `__al_dia_sem__`; mi = la mínima (0 = sin mínima: SIN BONO); hoy = 'AAAA-MM-DD'.
+    Devuelve { rige, ok, min, sinMin, rojo:{lun,d}|null, semanas:[{lun, foto, r, d}], sinFoto:[lunes], razon }. Si no rige (un mes sin ningún
+    lunes desde el 23/11/2026), ok = true (el bono como siempre). */
 function waAlDiaBonoCumple_(fotos, v, ym, bs, mi, hoy) {
-  var o = { rige:false, ok:true, min:true, rojo:null, semanas:[], sinFoto:[], razon:'' };
-  if (!(String(hoy || '') >= WA_AL_DIA_BONO_DESDE)) return o;
+  var o = { rige:false, ok:true, min:true, sinMin:false, rojo:null, semanas:[], sinFoto:[], razon:'' };
   var lunes = waAlDiaLunesDelMes_(ym).filter(function (l) { return l >= WA_AL_DIA_BONO_DESDE; });
   if (!lunes.length) return o;
   o.rige = true;
-  o.min = !(Number(mi) > 0) || (Number(bs) || 0) >= Number(mi) - 0.005;
+  o.sinMin = !(Number(mi) > 0);
+  o.min = !o.sinMin && (Number(bs) || 0) >= Number(mi) - 0.005;
   var k = waEfeNorm_(v);
   lunes.forEach(function (l) {
     if (l > hoy) return;                              // un lunes que todavía no llegó
@@ -6398,7 +6401,7 @@ function waAlDiaBonoCumple_(fotos, v, ym, bs, mi, hoy) {
     else if (Number(e.r) && !o.rojo) o.rojo = { lun:l, d:String(e.d || '') };
   });
   o.ok = o.min && !o.rojo;
-  o.razon = !o.min ? ('no llegó a su mínima (' + waBs_(Math.round(Number(mi) || 0)) + ')')
+  o.razon = o.sinMin ? 'no tiene mínima cargada' : !o.min ? ('no llegó a su mínima (' + waBs_(Math.round(Number(mi) || 0)) + ')')
           : (o.rojo ? ('🔴 el lunes ' + o.rojo.lun.slice(8, 10) + '/' + o.rojo.lun.slice(5, 7) + ' tenía en rojo: ' + (o.rojo.d || 'algo del panel')) : '');
   return o;
 }

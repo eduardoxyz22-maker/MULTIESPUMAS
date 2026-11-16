@@ -4882,6 +4882,8 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .td-com-l{font-size:.8rem;line-height:1.35;padding:4px 0 2px;border-top:1px dashed #d4ebe0}
 .td-com-l b{font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap}
 .td-com-l.td-com-ok b{color:#15803d}
+.td-com-l.td-com-av{color:#92400e;font-weight:700}
+.td-com-l.td-com-mal{color:#991b1b;font-weight:700}
 .td-com-pie{font-size:.7rem;color:#7b8b8a;margin-top:3px}
 /* 🪜 376 · «Tu comisión» como una escalera (`comEscHtml`) */
 .cesc{margin:6px 2px 2px}
@@ -15491,7 +15493,7 @@ function ccmSigueDatos(ym, K, R){
     var p=pr[normNombre(r.v)], mas=p ? Math.max(0, r2(p.proy-p.vendido)) : 0, bs=r2(r.bs+mas), fac=r.bs>0.005 ? bs/r.bs : 1;
     var em=K.es && K.es.esc ? K.es.esc[r.g] : null, q=(em && !r.sinMetas) ? ccmPctDe(em, bs, r.mi, r.pr) : { pct:0, t:null };
     var co=r2(bs*q.pct/100), bo=r2(r2(r.ti*fac)*(r.bp||0)/100);
-    if(r.boRegla && r.boRegla.rige && (r.boRegla.rojo || (r.mi>0 && bs<r.mi-0.005))) bo=0;   // 🏆 (16/11) sin la mínima o con un lunes en rojo, sin bono
+    if(r.boRegla && r.boRegla.rige && (r.boRegla.rojo || !(r.mi>0) || bs<r.mi-0.005)) bo=0;   // 🏆 (16/11) sin mínima, sin llegar a ella o con un lunes en rojo, sin bono
     var to=r2(co+bo+(r.ajCom||0)+(r.ajBono||0));
     var sig=(em && !r.sinMetas) ? ccmTramoSig(em, bs, r.mi, r.pr) : null;
     var borde=!!(sig && sig.falta>0.005 && sig.falta<=CCM_SIGUE_BORDE);
@@ -41319,6 +41321,7 @@ function misComisionHtml(v){
   if(!o.escOk) sub+=' · la escala todavía no está confirmada';
   var h='<div class="td-com" id="mis-com" data-to="'+o.to+'"><div class="td-com-cab"><span>💰 Tu comisión de '+mes+(o.cerrado ? '' : ', hasta hoy')+'</span><b>'+B(o.to)+'</b></div>'+
     '<div class="td-com-sub">'+esc(sub)+'</div>';
+  if(o.boR && o.boR.rige && !o.cerrado){ var bL=comEscBonoTxt(o); if(bL[0]) h+='<div class="td-com-l '+(bL[1]==='cesc-bono-r' ? 'td-com-mal' : (bL[1] ? 'td-com-av' : 'td-com-ok'))+'" data-k="bono">'+esc(bL[0])+'</div>'; }   // 🏆 (16/11) el bono, solo si cumple
   if(o.cerrado) return h+'<div class="td-com-l">🔒 '+esc(ccmCap(mes))+' ya está cerrado: tu comisión quedó así. Lo que cambie después va como ajuste al mes siguiente.</div></div>';
   if(o.sig){
     var d=o.sig.desde, q = Math.abs(d-o.mi)<0.01 ? 'tu mínima' : (Math.abs(d-o.pr)<0.01 ? 'tu presupuesto'
@@ -41342,8 +41345,8 @@ function misComisionHtml(v){
    · LOS MISMOS NÚMEROS de siempre: `misComisionDatos` (= la fila del 🏁 cierre comercial, `ccmCuenta`), los escalones con `ccmPctDe` sobre
      la escala de `__metas__` (`m[ym].esc`), el siguiente con `ccmTramoSig` y «si sigue así» con `ccmSigueDatos` (la 338 de Proyección →
      «💰 Comisiones»). Nada se calcula aparte ni se guarda.
-   · 🏆 El bono Titanio va como hoy (`o.bo`). ⚠️ El dueño agregó una regla nueva para el bono (panel al día cada semana + llegar a la mínima)
-     que todavía NO está definida: cuando esté, va en `comEscBonoTxt` (el lugar en la escalera ya existe, `data-k="bono"`).
+   · 🏆 El bono Titanio: `comEscBonoTxt` (`data-k="bono"`), con la regla del dueño (`alDiaBonoCumple`: la mínima y el panel al día cada lunes;
+     sin mínima no hay bono; el monto solo se muestra cuando cumple, si no el aviso «⚠️ Perdés el bono Titanio si…»).
    · Mes cerrado: la caja de antes (🔒). En Playwright, con `MIS_TOP_PRUEBA` como hoy y además `window.COM_ESCALERA_PRUEBA`. */
 function comEscVe(){ return vdVa('COM_ESCALERA_PRUEBA'); }
 var COM_ESC_SIGUE={};
@@ -41365,18 +41368,30 @@ function comEscPasos(em, mi, pr){
   M.forEach(function(m){ var q=ccmPctDe(em, m, mi, pr); if(Math.abs(q.pct-S[S.length-1].pct)>1e-9) S.push({ desde:m, pct:q.pct, t:q.t }); });
   return S;
 }
-/* 🏆 El bono Titanio. Desde el 23/11/2026, con la regla del dueño (`alDiaBonoCumple`: la mínima y el panel al día cada lunes); antes, como
-   siempre. Devuelve [texto, clase] ('' = no se dice nada). */
+/* 🏆 El bono Titanio en «Tu comisión» (escalera y caja de antes). Regla del dueño (16/11): *«SOLO DEBE DARLES Y MOSTRARLE SI TIENEN EL
+   PANEL AL DÍA Y LLEGAN AL MÍNIMO… más bien que alerte: perderás tu bono»*. Con la regla vigente (`alDiaBonoCumple`, `o.boR.rige`):
+   · cumple (llegó a su mínima y ningún lunes en rojo) → el MONTO («🏆 Bono Titanio: Bs 450 · ✅ panel al día el lunes»);
+   · no cumple → NUNCA el monto, sino el aviso: «⚠️ Perdés el bono Titanio si no llegás a tu mínima (Bs …) y no tenés el panel al día cada
+     lunes: te faltan Bs …»; sin mínima cargada, que se la pida a Eduardo; un lunes en rojo, «🔴 Perdiste el bono Titanio de <mes>…».
+   · además, si HOY tiene algo en rojo (`alDiaDatos`, lo mismo que mira la foto del lunes): «Hoy tenés en rojo: … Si el lunes sigue así,
+     perdés el bono».
+   Sin la regla (meses de antes) como siempre. Devuelve [texto, clase] ('' = no se dice nada). */
+function comBonoRojoHoy(v){
+  try{ var R=alDiaDatos(v); return (R.D||[]).filter(function(d){ return d.sev==='r'; }).map(function(d){ return (AL_DIA_SEM_NOM[d.k]||d.t)+' ('+d.s+')'; }).join(' · '); }catch(e){ return ''; }
+}
 function comEscBonoTxt(o){
   var B=o.boR;
   if(!B || !B.rige) return o.bo>0.005 ? ['🏆 Bono Titanio: '+fmtBs0(o.bo)+' (ya está sumado arriba)', ''] : ['', ''];
-  var sin=B.sinFoto.length ? (' · '+(B.sinFoto.length===1 ? ('el lunes '+fmtFechaCorta(B.sinFoto[0])+' sin foto') : (B.sinFoto.length+' lunes sin foto'))) : '';
-  var nF=B.semanas.length-B.sinFoto.length;
-  if(B.ok) return o.bo>0.005 ? ['🏆 Bono Titanio: '+fmtBs0(o.bo)+' · '+(nF ? ('✅ panel al día '+(nF===1 ? 'el lunes' : ('los '+nF+' lunes'))) : 'con el panel al día cada lunes')+sin, '']
-                             : ['🏆 Bono Titanio: se cobra con la mínima y el panel al día cada lunes'+(nF ? (' (✅ '+(nF===1 ? 'el lunes' : ('los '+nF+' lunes'))+')') : ''), ''];
-  var cuanto=(o.boSin>0.005) ? (' ('+fmtBs0(o.boSin)+')') : '';
-  if(B.rojo) return ['⚠️ Sin bono Titanio'+cuanto+': el lunes '+fmtFechaCorta(B.rojo.lun)+' tenías en rojo: '+(B.rojo.d||'algo del panel'), 'cesc-bono-r'];
-  return ['⚠️ Bono Titanio'+cuanto+': se cobra cuando llegues a tu mínima ('+fmtBs0(o.mi)+')'+(nF ? (' · ✅ panel al día '+(nF===1 ? 'el lunes' : ('los '+nF+' lunes'))) : ''), 'cesc-bono-a'];
+  var mes=mesNombre(o.ym).replace(/ de \d{4}$/,'');
+  if(B.rojo) return ['🔴 Perdiste el bono Titanio de '+mes+': el lunes '+fmtFechaCorta(B.rojo.lun)+' tenías en rojo '+(B.rojo.d||'algo del panel')+'. El mes que viene, el panel al día cada lunes.', 'cesc-bono-r'];
+  var rh=comBonoRojoHoy(o.v), hoyTxt=rh ? (' Hoy tenés en rojo: '+rh+': si el lunes sigue así, también lo perdés.') : '';
+  if(B.sinMin) return ['⚠️ Sin mínima no hay bono Titanio: todavía no tenés tu mínima de '+mes+' cargada (pedísela a Eduardo).'+hoyTxt, 'cesc-bono-a'];
+  if(!B.min) return ['⚠️ Perdés el bono Titanio si no llegás a tu mínima ('+fmtBs0(o.mi)+') y no tenés el panel al día cada lunes: te faltan '+
+    fmtBs0(Math.ceil(Math.max(0, o.mi-o.bs)-1e-9))+'.'+hoyTxt, 'cesc-bono-a'];
+  var nF=B.semanas.length-B.sinFoto.length, al=nF ? (' · ✅ panel al día '+(nF===1 ? 'el lunes' : ('los '+nF+' lunes'))) : '';
+  if(rh) return [(o.bo>0.005 ? ('🏆 Bono Titanio: '+fmtBs0(o.bo)+'.') : '🏆 Llegaste a tu mínima.')+' ⚠️ Hoy tenés en rojo: '+rh+': si el lunes sigue así, perdés el bono.', 'cesc-bono-a'];
+  return o.bo>0.005 ? ['🏆 Bono Titanio: '+fmtBs0(o.bo)+al+' (ya está sumado arriba)', '']
+                    : ['🏆 Llegaste a tu mínima'+al+': cada colchón Titanio que vendas suma al bono.', ''];
 }
 function comEscHtml(o){
   var K=misComisionCuenta(o.ym), em=K.es && K.es.esc ? K.es.esc[o.g] : null; if(!em) return null;
@@ -77159,8 +77174,14 @@ function alDiaTocar(el){
      `__al_dia_sem__` (`AL_DIA_SEM_ID`, en `esFilaSistema`): JSON `{v:1, s:{'<lunes>':{t, f:'<día de la foto>', por:{'<vendedora>':{r:0|1,
      d:'lo que estaba en rojo'}}}}}`. Relee la fila antes de guardar y NUNCA pisa una foto ya guardada de ese lunes (gana la primera). Un lunes
      feriado: la foto se saca el primer día hábil de esa semana (queda con la fecha del lunes).
-   · Rige DESDE el lunes `AL_DIA_BONO_DESDE` (23/11/2026): antes de esa fecha, el bono como hoy. Para noviembre cuentan las fotos del 23/11 y
-     del 30/11; desde diciembre, todos los lunes del mes. Un lunes SIN foto (nadie abrió el panel) no castiga: cuenta lo que hay y se dice.
+   · Rige para los meses que tienen algún lunes desde `AL_DIA_BONO_DESDE` (23/11/2026): noviembre (con las fotos del 23/11 y del 30/11) y
+     de diciembre en adelante (todos los lunes del mes). Un lunes SIN foto (nadie abrió el panel) no castiga: cuenta lo que hay y se dice.
+   · 🔁 (16/11, el dueño, con la página de las 390-440: *«el bono TITANIO SOLO DEBE DARLES Y MOSTRARLE SI TIENEN EL PANEL AL DÍA Y LLEGAN AL
+     MÍNIMO»* y *«sin mínimo ni panel al día [no hay bono], más bien que alerte perderás tu bono»*): (1) **SIN MÍNIMA NO HAY BONO**: una
+     vendedora con la mínima en 0 (o sin metas) no cobra el bono (antes contaba como que llegó); (2) la condición de la mínima vale para todo
+     noviembre YA, desde hoy (antes esperaba al 23/11); (3) la vendedora ve el monto del bono SOLO cuando cumple las dos cosas; si no, en
+     «Tu comisión» ve «⚠️ Perdés el bono Titanio si…» con lo que le falta (la mínima, o lo que tiene en rojo HOY para que el lunes no salga en
+     la foto). El cierre comercial (lo ve el dueño) sigue diciendo cuánto habría sido y por qué no se paga.
    · Dónde se ve: `ccmCuenta` (🏁 cierre comercial y «💰 Comisiones»: bono 0 si no cumple, con la razón), la escalera de «Tu comisión» (376) y
      «Tu día» de esa vendedora de lunes a domingo («Esta semana: ✅ panel al día» o lo que estaba en rojo).
    · ⚠️ El servidor (.gs: el cierre del mes del día 1) también calcula el bono: la regla es `alDiaBonoCumple` (pura; mismas entradas).
@@ -77188,16 +77209,16 @@ function alDiaSemLunesDelMes(ym){
 }
 /* 🏆 LA REGLA (pura: solo sus entradas; es la que se copia igual al .gs).
    fotos = el objeto `s` de `__al_dia_sem__`; v = la vendedora; ym = 'AAAA-MM'; bs = lo vendido que cuenta en el cierre; mi = su mínima (0 = sin
-   mínima: la condición (a) se da por cumplida); hoy = 'AAAA-MM-DD'.
-   Devuelve { rige, ok, min, rojo:{lun,d}|null, semanas:[{lun, foto, r, d}], sinFoto:[lunes], razon }. Si no rige (hoy antes del 23/11/2026, o un
-   mes sin lunes desde esa fecha), ok = true: el bono como siempre. */
+   mínima: SIN BONO, dueño 16/11); hoy = 'AAAA-MM-DD'.
+   Devuelve { rige, ok, min, sinMin, rojo:{lun,d}|null, semanas:[{lun, foto, r, d}], sinFoto:[lunes], razon }. Si no rige (un mes sin ningún
+   lunes desde el 23/11/2026: octubre y antes), ok = true: el bono como siempre. Los lunes que todavía no llegaron no cuentan. */
 function alDiaBonoCumple(fotos, v, ym, bs, mi, hoy){
-  var o={ rige:false, ok:true, min:true, rojo:null, semanas:[], sinFoto:[], razon:'' };
-  if(!(String(hoy||'')>=AL_DIA_BONO_DESDE)) return o;
+  var o={ rige:false, ok:true, min:true, sinMin:false, rojo:null, semanas:[], sinFoto:[], razon:'' };
   var lunes=alDiaSemLunesDelMes(ym).filter(function(l){ return l>=AL_DIA_BONO_DESDE; });
   if(!lunes.length) return o;
   o.rige=true;
-  o.min = !(Number(mi)>0) || (Number(bs)||0) >= Number(mi)-0.005;
+  o.sinMin = !(Number(mi)>0);
+  o.min = !o.sinMin && (Number(bs)||0) >= Number(mi)-0.005;
   var k=normNombre(v);
   lunes.forEach(function(l){
     if(l>hoy) return;                              // un lunes que todavía no llegó
@@ -77208,7 +77229,7 @@ function alDiaBonoCumple(fotos, v, ym, bs, mi, hoy){
     else if(Number(e.r) && !o.rojo) o.rojo={ lun:l, d:String(e.d||'') };
   });
   o.ok = o.min && !o.rojo;
-  o.razon = !o.min ? ('no llegó a su mínima ('+fmtBs0(mi)+')') : (o.rojo ? ('🔴 el lunes '+fmtFechaCorta(o.rojo.lun)+' tenía en rojo: '+(o.rojo.d||'algo del panel')) : '');
+  o.razon = o.sinMin ? 'no tiene mínima cargada' : !o.min ? ('no llegó a su mínima ('+fmtBs0(mi)+')') : (o.rojo ? ('🔴 el lunes '+fmtFechaCorta(o.rojo.lun)+' tenía en rojo: '+(o.rojo.d||'algo del panel')) : '');
   return o;
 }
 /* Las vendedoras de la foto: las del equipo (sin Eduardo, ROHO ni internos: `contaExcluido`) con ventas en los últimos 62 días o con metas este mes. */

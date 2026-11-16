@@ -4,7 +4,7 @@
    del día 1 (`waAlDiaBonoCumple_`, `waAlDiaLunesDelMes_`, `waCcmBonoRegla_`). Esta prueba corre las dos con los MISMOS casos (fotos SINTÉTICAS)
    y compara lo que deciden: si rige, si cobra, si llegó a la mínima, qué lunes estaba en rojo, qué lunes no tienen foto.
    1. Los lunes de cada mes (nov/2026 a dic/2027) dan igual.
-   2. 30 casos: antes del 23/11, noviembre con 2 lunes, diciembre con 4, en rojo, ámbar (no cuenta), sin foto, sin mínima, mínima justa (el
+   2. 30 casos: antes del 23/11 (noviembre ya rige: la mínima), noviembre con 2 lunes, diciembre con 4, en rojo, ámbar (no cuenta), sin foto, sin mínima (16/11: SIN BONO), mínima justa (el
       centavo), el nombre con y sin tildes, un lunes que todavía no llegó.
    3. `waCcmBonoRegla_` pone el bono en 0 con la razón y el total baja lo mismo; sin foto en rojo no toca nada; un mes que no rige no toca nada.
    Se corre:  node tests/test_bono_al_dia_gs.js   (GS=<otro .gs> o PEDIDOS=<otra página> para probar contra otras) */
@@ -35,7 +35,7 @@ const CASOS = [];
     ['2026-11', '2026-12'].forEach(ym => { if (ym <= hoy.slice(0, 7)) CASOS.push({ v, ym, bs, mi, hoy }); });
   });
 });
-const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas: o.semanas, sinFoto: o.sinFoto });
+const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, sinMin: o.sinMin, rojo: o.rojo, semanas: o.semanas, sinFoto: o.sinFoto });
 
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
@@ -54,7 +54,7 @@ const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas:
   chk('1b. noviembre de 2026: 2, 9, 16, 23 y 30', JSON.stringify(lunesSrv[0]) === JSON.stringify(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30']), lunesSrv[0]);
 
   console.log('\n── 2. La regla, caso por caso ──');
-  const pag = await page.evaluate(({ C, FO }) => C.map(c => { const o = alDiaBonoCumple(FO, c.v, c.ym, c.bs, c.mi, c.hoy); return { rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas: o.semanas, sinFoto: o.sinFoto }; }), { C: CASOS, FO: FOTOS });
+  const pag = await page.evaluate(({ C, FO }) => C.map(c => { const o = alDiaBonoCumple(FO, c.v, c.ym, c.bs, c.mi, c.hoy); return { rige: o.rige, ok: o.ok, min: o.min, sinMin: o.sinMin, rojo: o.rojo, semanas: o.semanas, sinFoto: o.sinFoto }; }), { C: CASOS, FO: FOTOS });
   let distintos = [];
   CASOS.forEach((c, i) => {
     const s = corta(JSON.parse(JSON.stringify(ctx.waAlDiaBonoCumple_(FOTOS, c.v, c.ym, c.bs, c.mi, c.hoy))));
@@ -63,13 +63,17 @@ const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas:
   chk('2a. los ' + CASOS.length + ' casos dan lo mismo en la página y en el servidor', !distintos.length, distintos.slice(0, 2));
   const S = (v, ym, bs, mi, hoy) => JSON.parse(JSON.stringify(ctx.waAlDiaBonoCumple_(FOTOS, v, ym, bs, mi, hoy)));
   let o = S('Isabel Robledo', '2026-11', 130000, 120000, '2026-11-20');
-  chk('2b. antes del 23/11 no rige: cobra como siempre', !o.rige && o.ok, o);
+  chk('2b. (16/11, el dueño) noviembre ya rige antes del 23/11: con la mínima cobra, todavía sin ninguna foto', o.rige && o.ok && o.min && !o.semanas.length, o);
+  o = S('Jonathan Monje', '2026-11', 90000, 125000, '2026-11-20');
+  chk('2b2. antes del 23/11 sin llegar a la mínima: sin bono, con la razón', o.rige && !o.ok && !o.min && /mínima/.test(o.razon), o);
+  o = S('Isabel Robledo', '2026-10', 130000, 120000, '2026-11-20');
+  chk('2b3. octubre (ningún lunes desde el 23/11) no rige: el bono como siempre', !o.rige && o.ok, o);
   o = S('Jonathan Monje', '2026-11', 130000, 125000, '2026-12-01');
   chk('2c. Jonathan en noviembre: llegó a la mínima pero el 23/11 estaba en rojo → sin bono, con la razón', o.rige && !o.ok && o.min && o.rojo && o.rojo.lun === '2026-11-23' && /23\/11/.test(o.razon), o);
   o = S('Isabel Robledo', '2026-11', 130000, 120000, '2026-12-01');
   chk('2d. Isabel en noviembre: las dos fotos al día y la mínima → cobra', o.rige && o.ok && o.semanas.length === 2, o);
   o = S('carola chavez', '2026-11', 50000, 0, '2026-12-01');
-  chk('2e. Carola: el nombre sin tildes encuentra «Carola Chávez»; sin mínima (0) cuenta como que llegó; el 30/11 sin foto no castiga', o.ok && o.min && o.sinFoto.join() === '2026-11-30', o);
+  chk('2e. Carola: el nombre sin tildes encuentra «Carola Chávez»; el 30/11 sin foto no castiga; (16/11, el dueño) SIN MÍNIMA (0) NO HAY BONO', !o.ok && !o.min && o.sinMin && /mínima/.test(o.razon) && o.sinFoto.join() === '2026-11-30' && !o.rojo, o);
   o = S('Maria Flores', '2026-11', 100000, 100000.004, '2026-12-01');
   chk('2f. la mínima justa (al centavo) cuenta como que llegó; el 30/11 en rojo saca el bono', o.min && !o.ok && o.rojo.lun === '2026-11-30', o);
   o = S('Isabel Robledo', '2026-12', 130000, 120000, '2026-12-10');
@@ -82,11 +86,12 @@ const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas:
   const filas = () => [
     { v: 'Jonathan Monje', bs: 130000, mi: 125000, co: 2600, bo: 300, ajCom: 0, ajBono: 0, to: 2900 },
     { v: 'Isabel Robledo', bs: 130000, mi: 120000, co: 2600, bo: 200, ajCom: 0, ajBono: 0, to: 2800 },
-    { v: 'Carola Chavez', bs: 50000, mi: 0, co: 0, bo: 0, ajCom: 0, ajBono: 0, to: 0 },
+    { v: 'Carola Chavez', bs: 50000, mi: 0, co: 0, bo: 150, ajCom: 0, ajBono: 0, to: 150 },
   ];
   let R = filas(); ctx.waCcmBonoRegla_(R, fila, '2026-11', '2026-12-01'); R = JSON.parse(JSON.stringify(R));
   chk('3a. Jonathan: bono 0, el total baja lo mismo (2.900 → 2.600) y queda lo que habría sido y por qué', R[0].bo === 0 && R[0].to === 2600 && R[0].boSin === 300 && /rojo/.test(R[0].boRazon), R[0]);
   chk('3b. Isabel: el bono queda (200) y el total igual', R[1].bo === 200 && R[1].to === 2800 && !R[1].boSin, R[1]);
+  chk('3b2. Carola sin mínima: bono 0 (150 → 0) con la razón', R[2].bo === 0 && R[2].to === 0 && R[2].boSin === 150 && /mínima/.test(R[2].boRazon), R[2]);
   const Pg = await page.evaluate(({ FO }) => {
     window.AL_DIA_BONO_PRUEBA = 1;
     STATE = (STATE || []).filter(p => String(p.id) !== '__al_dia_sem__');
@@ -94,7 +99,7 @@ const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas:
     const R = [
       { v: 'Jonathan Monje', bs: 130000, mi: 125000, co: 2600, bo: 300, ajCom: 0, ajBono: 0, to: 2900 },
       { v: 'Isabel Robledo', bs: 130000, mi: 120000, co: 2600, bo: 200, ajCom: 0, ajBono: 0, to: 2800 },
-      { v: 'Carola Chavez', bs: 50000, mi: 0, co: 0, bo: 0, ajCom: 0, ajBono: 0, to: 0 },
+      { v: 'Carola Chavez', bs: 50000, mi: 0, co: 0, bo: 150, ajCom: 0, ajBono: 0, to: 150 },
     ];
     ccmBonoRegla(R, '2026-11', '2026-12-01');
     return R.map(r => ({ bo: r.bo, to: r.to, boSin: r.boSin || 0 }));
@@ -103,7 +108,7 @@ const corta = o => ({ rige: o.rige, ok: o.ok, min: o.min, rojo: o.rojo, semanas:
   R = filas(); ctx.waCcmBonoRegla_(R, fila, '2026-10', '2026-12-01'); R = JSON.parse(JSON.stringify(R));
   chk('3d. un mes que no rige (octubre) no toca nada', R[0].bo === 300 && R[0].to === 2900 && !R[0].boRegla, R[0]);
   R = filas(); ctx.waCcmBonoRegla_(R, null, '2026-11', '2026-12-01'); R = JSON.parse(JSON.stringify(R));
-  chk('3e. sin ninguna foto: rige, pero un lunes sin foto no castiga (los bonos quedan)', R[0].bo === 300 && R[1].bo === 200 && R[0].boRegla && R[0].boRegla.sinFoto.length === 2, R[0].boRegla);
+  chk('3e. sin ninguna foto: rige, pero un lunes sin foto no castiga (los bonos quedan; Carola sin mínima, no)', R[0].bo === 300 && R[1].bo === 200 && R[2].bo === 0 && R[0].boRegla && R[0].boRegla.sinFoto.length === 2, R);
 
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
