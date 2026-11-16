@@ -3359,6 +3359,45 @@ html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo{ border-top-colo
 html.af-peg-on.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #adm-fichas .af-gr > .af-g{ background:rgba(10,20,18,.9); box-shadow:0 8px 18px -12px rgba(0,0,0,.7); }
 @media(prefers-reduced-motion:reduce){ html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) body::after, html.v-noche-dic.tema-navidad::after{ animation:none !important; } }
 @media print{ html.v-noche-dic.tema-navidad::after{ display:none; } }
+/* 432 · Bot: cada cliente que contestó, como una conversación de WhatsApp (`.wz`): su nombre e iniciales arriba en verde, lo que escribió en
+   globos blancos a la izquierda con la hora, el resumen de Claude en el medio y lo que le contestó el bot en globo verde a la derecha (✓✓);
+   abajo el pedido en etiquetas y «✓ Ya lo atendí» grande. Las urgentes con borde rojo, primero. En la compu, lado a lado. */
+#wa-resp-adm .wa-resp.wz-caja{ border:0; background:transparent; padding:0; margin:0 0 10px; }
+.wz-tit{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:2px 0 12px; font-weight:800; font-size:1rem; color:var(--text); }
+.wz-tit .wz-n{ background:#ef4444; color:#fff; border-radius:999px; padding:2px 10px; font-size:.8rem; }
+.wz-tit small{ font-weight:600; color:var(--muted); font-size:.8rem; }
+.wz-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(380px, 100%), 1fr)); gap:14px; align-items:start; }
+.wz{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 14px 30px -18px rgba(0,0,0,.6); display:flex; flex-direction:column; border:2px solid #d1f2e0; min-width:0; }
+.wz.urg{ border-color:#ef4444; }
+.wz.hecha{ opacity:.82; }
+.wz-cab{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:#075e54; color:#fff; }
+.wz-av{ width:38px; height:38px; border-radius:50%; background:#dcf8c6; color:#075e54; display:grid; place-items:center; font-weight:900; font-size:.85rem; flex:none; }
+.wz-q{ min-width:0; flex:1; line-height:1.2; }
+.wz-q b{ display:block; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wz-q small{ display:block; font-size:.72rem; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wz-cat{ flex:none; font-size:.7rem; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,.18); white-space:nowrap; max-width:46%; overflow:hidden; text-overflow:ellipsis; }
+.wz.urg .wz-cat{ background:#ef4444; }
+.wz-chat{ flex:1; padding:12px 12px 10px; display:flex; flex-direction:column; gap:6px; min-height:120px;
+  background:#efeae2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%23d9d2c5' stroke-width='1.2'%3E%3Ccircle cx='12' cy='14' r='4'/%3E%3Cpath d='M38 10l6 6m0-6l-6 6'/%3E%3Cpath d='M20 44c4-4 8 4 12 0'/%3E%3Crect x='42' y='38' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E"); }
+.wz-b{ max-width:84%; padding:6px 9px 4px; border-radius:10px; font-size:.86rem; line-height:1.35; box-shadow:0 1px 1px rgba(0,0,0,.12); white-space:pre-wrap; overflow-wrap:anywhere; color:#111b21; }
+.wz-b i{ display:block; text-align:right; font-style:normal; font-size:.64rem; color:#667781; margin-top:1px; }
+.wz-in{ align-self:flex-start; background:#fff; border-top-left-radius:2px; }
+.wz-out{ align-self:flex-end; background:#d9fdd3; border-top-right-radius:2px; }
+.wz-out i::after{ content:' ✓✓'; color:#53bdeb; font-weight:700; }
+.wz-res{ align-self:center; font-size:.72rem; color:#3b4a54; background:rgba(255,255,255,.85); border-radius:8px; padding:3px 9px; text-align:center; max-width:94%; }
+.wz-chat .wa-resp-ubi{ align-self:stretch; margin:0; font-size:.76rem; }
+.wz-pie{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px; border-top:1px solid #e9edef; background:#fff; }
+.wz-ped{ font-size:.78rem; color:#3b4a54; display:flex; flex-wrap:wrap; gap:6px; }
+.wz-ped span{ background:#f0f2f5; border-radius:8px; padding:3px 8px; font-weight:600; }
+.wz-bt{ display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
+.wz-bt .btn{ margin:0; min-height:40px; justify-content:center; width:auto; }
+.wz-bt a.btn{ text-decoration:none; }
+.wz-bt .wz-ok{ flex:1 1 100px; background:#25d366 !important; color:#05361d !important; font-weight:800 !important; border:0 !important; }
+.wz-bt .wa-resp-at{ flex:1 1 100px; align-self:center; text-align:center; }
+.wz-hechas{ margin-top:12px; color:var(--muted); font-size:.82rem; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.wz-hechas + .wz-grid{ margin-top:10px; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(.wz-tit, .wz-hechas), html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.wz-tit, .wz-hechas){ color:#fafaf9; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .wz-tit small, html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .wz-tit small{ color:#d6d3d1; }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3463,6 +3502,64 @@ function mpieAplicar(){
 function mpieFin(){
   var box=document.getElementById('modal-box'), b=box && box.querySelector(':scope > .modal-b'); if(!b) return;
   box.classList.toggle('mp-fin', b.scrollTop+b.clientHeight >= b.scrollHeight-8);
+}
+
+/* 🎨 (16/11, mejora 432; dueño: elegida de la página de ideas 390-440) BOT: LA RESPUESTA DEL CLIENTE COMO EN WHATSAPP. En la pestaña 🤖 Bot, cada
+   respuesta era una tarjeta a lo ancho con el mensaje entre comillas y renglones grises (~350 px cada una): con tres clientes esperando había
+   que bajar, y costaba ver quién dijo qué. Ahora cada cliente es una conversación (`wzCard`): su nombre e iniciales arriba en verde con lo que
+   quiere, lo que escribió en globos blancos a la izquierda con la hora, el resumen de Claude en el medio y lo que le contestó en globo verde a
+   la derecha (✓✓); abajo el pedido en etiquetas (OC, día y turno, vendedora) y «✓ Ya lo atendí» grande. Las urgentes con borde rojo, primero.
+   Son los MISMOS datos (`WA_RESP`: `waRespPend`, `waRespIaHechas`, `waRespPed`, `waRespHora`, `WA_RESP_CAT`) y los MISMOS botones
+   (`showPedidoModal`, wa.me, `waRespAtender`, la ubicación que mandó `waRespUbicHtml`): solo cambia el dibujo. Mis pedidos sigue con las tarjetas
+   de siempre. En Playwright apagado salvo `window.WZ_PRUEBA` (lo llama `waRespHtml` para la pestaña Bot). `tests/test_v432_bot_whatsapp.js`. */
+function wzVa(){ try{ return vdVa('WZ_PRUEBA'); }catch(e){ return false; } }
+function wzIniciales(n){ var p=String(n||'').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g,' ').trim().split(/\s+/).filter(Boolean); return (p.length ? p.slice(0,2).map(function(x){ return x.charAt(0); }).join('') : '?').toUpperCase(); }
+function wzHora(t){ var h=waRespHora(t), m=/(\d{1,2}:\d{2})\s*$/.exec(String(h)); return m ? m[1] : String(h||''); }
+function wzCard(r){
+  var p=waRespPed(r), quien=r.nom || (p && p.cliente) || r.num || 'Cliente', wa=r.num ? ('https://wa.me/'+String(r.num).replace(/[^0-9]/g,'')) : '';
+  var hora=wzHora(r.t), ia=String(r.ia||''), urg=!!(r.urg && !r.at);
+  var cat=(r.cat && !/^(⏳|⏭️|—)/.test(ia)) ? ((WA_RESP_CAT[r.cat]||'💬 Consulta')+(r.urg?' · urgente':'')) : '';
+  var nota=function(t){ return '<div class="wz-res">'+t+'</div>'; };
+  var chat=(r.antes||[]).map(function(x){ return '<div class="wz-b wz-in">'+esc(x)+'<i>'+esc(hora)+'</i></div>'; }).join('')+
+    '<div class="wz-b wz-in">'+esc(r.txt||'')+'<i>'+esc(hora)+'</i></div>'+waRespUbicHtml(r);
+  if(ia.charAt(0)==='⏳') chat+=nota('⏳ Claude lo está leyendo: en un minuto le contesta.');
+  else if(/^⏭️/.test(ia)) chat+=nota('🤖 Le llegó la respuesta automática de siempre ('+esc(ia.replace(/^⏭️\s*/,''))+').');
+  else if(/^—/.test(ia)) chat+=nota(esc(ia.replace(/^—\s*/,'')));
+  else {
+    if(r.res) chat+=nota('🧠 '+esc(r.res));
+    if(r.resp) chat+='<div class="wz-b wz-out">🤖 '+esc(r.resp)+'<i>'+esc(hora)+'</i></div>';
+    else if(/no hacía falta/.test(ia)) chat+=nota('🤖 No hacía falta contestarle.');
+    if(/^❌/.test(ia)) chat+=nota(esc(ia));
+  }
+  var ped=p ? ((p.oc ? '<span>📦 OC '+esc(p.oc)+'</span>' : '')+(p.fecha ? '<span>🚚 '+esc(fmtFechaCorta(p.fecha))+(p.turno ? (' '+esc(normTurno(p.turno))) : '')+'</span>' : '')+(p.vendedor ? '<span>👤 '+esc(p.vendedor)+'</span>' : ''))
+            : '<span>'+(r.oc ? ('📦 OC '+esc(r.oc)) : 'No sé de qué pedido es')+'</span>';
+  return '<div class="wz'+(urg?' urg':'')+(r.at?' hecha':'')+'">'+
+    '<div class="wz-cab"><span class="wz-av" aria-hidden="true">'+esc(wzIniciales(quien))+'</span><span class="wz-q"><b>'+esc(quien)+'</b><small>'+esc(waRespHora(r.t))+(r.num?(' · +'+esc(r.num)):'')+'</small></span>'+
+      (cat ? '<span class="wz-cat" title="'+esc(cat)+'">'+esc(cat)+'</span>' : '')+'</div>'+
+    '<div class="wz-chat">'+chat+'</div>'+
+    '<div class="wz-pie"><div class="wz-ped">'+ped+'</div><div class="wz-bt">'+
+      (p ? '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(p.id)+'\')">📋 Abrir el pedido</button>' : '')+
+      (wa ? '<a class="btn btn-ghost btn-sm" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 Escribirle</a>' : '')+
+      (r.at ? '<span class="wa-resp-at">✓ '+esc(r.at)+'</span>'
+            : '<button type="button" class="btn btn-sm wz-ok" onclick="waRespAtender(\''+esc(r.w)+'\')">✓ Ya lo atendí</button>')+
+    '</div></div></div>';
+}
+/* El mismo contenido que `waRespHtml` (título, plegar, lo que resolvió Claude con «Ver cuáles»), con las conversaciones lado a lado. */
+function wzHtml(lista, quien, kPleg, hechas){
+  hechas=hechas||[];
+  if(!lista.length && !hechas.length) return '';
+  var pl=!!kPleg && misPlegado(kPleg), conIa=lista.some(function(r){ return !!r.ia; });
+  var orden=lista.map(function(r, i){ return { r:r, i:i }; }).sort(function(a, b){ return ((b.r.urg && !b.r.at)?1:0)-((a.r.urg && !a.r.at)?1:0) || a.i-b.i; }).map(function(o){ return o.r; });
+  var n=lista.length;
+  var tit=n ? ('<span class="wz-n">'+n+'</span> '+(conIa ? ('cliente'+(n===1?' espera':'s esperan')+' una respuesta de una persona <small>· Claude ya '+(n===1?'le':'les')+' contestó lo que podía</small>')
+                                                   : ('cliente'+(n===1?'':'s')+' le respondi'+(n===1?'ó':'eron')+' al bot de WhatsApp <small>· escribile'+(n===1?'':'s')+' y tocá «✓ Ya lo atendí»</small>')))
+            : ('🤖 Claude atendió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' de clientes');
+  var pie=hechas.length ? ('<div class="wz-hechas">🤖 En los últimos 7 días Claude resolvió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' (cuándo llega, el saldo, confirmaciones): no hace falta hacer nada.'+
+    ' <button type="button" class="btn btn-ghost btn-sm" onclick="WA_RESP_VER_IA=!WA_RESP_VER_IA; waRespPintar()">'+(WA_RESP_VER_IA?'Ocultar':'Ver cuáles')+'</button></div>'+
+    (WA_RESP_VER_IA ? '<div class="wz-grid">'+hechas.map(wzCard).join('')+'</div>' : '')) : '';
+  return '<div class="wa-resp wz-caja">'+
+    '<div class="wz-tit">'+(kPleg?misPlegarBtn(kPleg):'')+tit+(quien?(' · '+esc(quien)):'')+'</div>'+
+    (pl ? '' : ((n ? '<div class="wz-grid">'+orden.map(wzCard).join('')+'</div>' : '')+pie))+'</div>';
 }
 </script>
 
@@ -67456,6 +67553,7 @@ function waRespUsarUbic(w){
   try{ waRespPintar(); }catch(e){}
 }
 function waRespHtml(lista, quien, kPleg, hechas){
+  if(kPleg==='wa-adm' && typeof wzVa==='function' && wzVa()) return wzHtml(lista, quien, kPleg, hechas);   // 🎨 (16/11, mejora 432) en la pestaña Bot, como WhatsApp
   hechas=hechas||[];
   if(!lista.length && !hechas.length) return '';
   var pl=!!kPleg && misPlegado(kPleg);   // 🙈 (13/10) se pliega: en Mis pedidos (dueño) y en Administración (dueño: «lo mismo en administración»)
