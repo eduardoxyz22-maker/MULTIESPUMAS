@@ -3492,6 +3492,23 @@ html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .
 .qchips .qchip.q-cero:not(.active):hover{ opacity:.85; }
 /* El viaje de las ATC ya los apagaba con `opacity`, pero su animación de entrada la pisa: además, sin color. */
 html.v-ceros .atv-paso.cero{ filter:saturate(.15) opacity(.6); }
+/* 438 · Barras, casillas y lo marcado con los colores del panel (`html.v-barras`, la pone el <head>): la barra para bajar fina y redondeada,
+   turquesa clara sobre fondo claro (dorada sobre los temas oscuros: en Black Friday era una franja blanca a la derecha de toda la pantalla);
+   las casillas tildadas en turquesa (doradas en los temas oscuros) y lo marcado con el mouse en turquesa suave (dorado). Las cajas que ya
+   tienen su barra propia (`#cx-tw`, `#atv-tw`, las de `scrollbar-width`) quedan como están. */
+html.v-barras::-webkit-scrollbar, html.v-barras ::-webkit-scrollbar{ width:12px; height:12px; }
+html.v-barras::-webkit-scrollbar-track, html.v-barras ::-webkit-scrollbar-track{ background:#eef5f5; }
+html.v-barras::-webkit-scrollbar-thumb, html.v-barras ::-webkit-scrollbar-thumb{ background:#9fd9d5; border-radius:10px; border:3px solid #eef5f5; }
+html.v-barras::-webkit-scrollbar-thumb:hover, html.v-barras ::-webkit-scrollbar-thumb:hover{ background:#00A09A; }
+html.v-barras::-webkit-scrollbar-corner, html.v-barras ::-webkit-scrollbar-corner{ background:transparent; }
+html.v-barras :is(input[type=checkbox], input[type=radio], input[type=range], progress){ accent-color:#00A09A; }
+html.v-barras ::selection{ background:rgba(0,181,173,.30); color:inherit; }
+/* En los temas oscuros, la barra de la página (la de afuera) en negro con dorado; las de adentro van sobre recuadros blancos: turquesa. */
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-track, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-track{ background:#0e0e10; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-thumb, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-thumb{ background:#8a7315; border-color:#0e0e10; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-thumb:hover, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-thumb:hover{ background:#facc15; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(input[type=checkbox], input[type=radio]), html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(input[type=checkbox], input[type=radio]){ accent-color:#d4a50a; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) ::selection, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) ::selection{ background:rgba(250,204,21,.42); color:#111; }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
