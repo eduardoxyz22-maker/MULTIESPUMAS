@@ -1944,6 +1944,8 @@ body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
 .preg-a{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; padding:14px 20px 18px; }
 .preg-a button{ font:inherit; font-weight:800; font-size:.88rem; border-radius:12px; padding:11px 16px; cursor:pointer; border:1.5px solid #99DDD9; background:#fff; color:#00706b; min-height:44px; }
 .preg-a .preg-si{ background:#00A09A; border-color:#00A09A; color:#fff; }
+.preg-cp{ padding:8px 20px 0 78px; } .preg-in{ width:100%; box-sizing:border-box; font:inherit; font-size:.95rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; color:#132626; background:#fff; min-height:44px; } .preg-in:focus{ outline:3px solid #00B5AD; outline-offset:1px; }
+@media (max-width:520px){ .preg-cp{ padding-left:20px; } }
 .preg-pel .preg-a .preg-si{ background:#CE2939; border-color:#CE2939; }
 .preg-a button:focus-visible{ outline:3px solid #00B5AD; outline-offset:2px; }
 @keyframes pregEntra{ from{ opacity:0; transform:translateY(10px) scale(.97); } }
@@ -31818,21 +31820,86 @@ function preguntar(o){
     ov.innerHTML='<div class="preg-c'+(o.peligro?' preg-pel':'')+(o.aviso?' preg-av':'')+'">'+
       '<div class="preg-h"><div class="preg-i" aria-hidden="true">'+esc(o.icono||'❓')+'</div><div class="preg-ht"><h4 id="preg-tit">'+esc(o.titulo||'¿Seguro?')+'</h4>'+(o.sub?('<small>'+esc(o.sub)+'</small>'):'')+'</div></div>'+
       (L.length ? ('<ul class="preg-b">'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>') : '')+
-      '<div class="preg-a"><button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button><button type="button" class="preg-si">'+esc(o.si||'Sí')+'</button></div></div>';
+      (o.campo ? ('<div class="preg-cp"><input type="text" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'"></div>') : '')+
+      '<div class="preg-a">'+(o.solo?'':('<button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button>'))+'<button type="button" class="preg-si">'+esc(o.si||(o.solo?'Entendido':'Sí'))+'</button></div></div>';
     document.body.appendChild(ov);
-    var bNo=ov.querySelector('.preg-no'), bSi=ov.querySelector('.preg-si'), hecho=false;
-    var fin=function(v){ if(hecho) return; hecho=true; document.removeEventListener('keydown', kd, true); ov.remove(); try{ if(antes && antes.focus && antes.isConnected) antes.focus(); }catch(e){} res(!!v); };
+    PREG_ABIERTAS++;
+    var bNo=ov.querySelector('.preg-no'), bSi=ov.querySelector('.preg-si'), inp=ov.querySelector('.preg-in'), hecho=false;
+    if(inp && o.campoValor!=null) inp.value=String(o.campoValor);
+    var fin=function(v){ if(hecho) return; hecho=true; PREG_ABIERTAS=Math.max(0,PREG_ABIERTAS-1); document.removeEventListener('keydown', kd, true); ov.remove(); try{ if(antes && antes.focus && antes.isConnected) antes.focus(); }catch(e){}
+      res(o.campo ? (v ? inp.value : null) : (o.solo ? true : !!v)); };
+    var foc=[inp, bNo, bSi].filter(Boolean);
     var kd=function(e){
       if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fin(false); return; }
-      if(e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation(); (document.activeElement===bNo ? bSi : bNo).focus(); return; }
+      if(e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation(); var i=foc.indexOf(document.activeElement); foc[(i+(e.shiftKey?foc.length-1:1))%foc.length].focus(); return; }
+      if(e.key==='Enter' && inp && e.target===inp){ e.preventDefault(); e.stopImmediatePropagation(); fin(true); return; }
       if(!ov.contains(e.target)) { e.stopImmediatePropagation(); }   // las teclas no se van a lo de atrás
     };
     document.addEventListener('keydown', kd, true);
-    bNo.addEventListener('click', function(){ fin(false); });
+    if(bNo) bNo.addEventListener('click', function(){ fin(false); });
     bSi.addEventListener('click', function(){ fin(true); });
     ov.addEventListener('click', function(e){ if(e.target===ov) fin(false); });
-    setTimeout(function(){ try{ bNo.focus(); }catch(e){} }, 0);
+    // El foco va al botón SEGURO (Enter = el seguro); con un campo, al campo; con un solo botón, a ese.
+    setTimeout(function(){ try{ (inp || bNo || bSi).focus(); if(inp) inp.select(); }catch(e){} }, 0);
   });
+}
+/* ============================================================================
+   ❓ (16/11, la 282 en TODO el panel; dueño, con la captura del «¿Prender el MODO PRÁCTICA…?»: «¿no que mis alertas no salían ya esas
+   feas?»). La 282 pasó solo las 5 preguntas que más salen; quedaban ~115 con la ventanita gris del navegador («…github.io dice»). Ahora
+   TODAS salen en la ventana del panel. Tres piezas para los lugares que preguntan en el medio de algo (sincrónicos):
+   · `preguntaYa(texto, o, otraVez)` = el `confirm` de antes. La primera vez abre la ventana y devuelve null («todavía no contestó»: el
+     lugar corta ahí, SIN hacer nada); al contestar, vuelve a correr `otraVez()` desde el principio y, en el mismo lugar, esta vez devuelve
+     la respuesta (true/false). Las respuestas de una misma tanda se recuerdan mientras dura (`PREG_MEMO`): un guardado que pregunta tres
+     cosas pregunta las tres de a una y sigue. ⚠️ `otraVez` vuelve a correr TODO lo de antes de la pregunta: eso tiene que poder repetirse
+     sin efecto (leer el formulario, calcular), y un lugar que antes de preguntar ya guardó o mandó algo no puede usarla así.
+   · `preguntaTextoYa(texto, valor, o, otraVez)` = el `prompt`: null mientras espera o si cancela; el texto escrito si acepta.
+   · `avisoVentana(texto, o)` = el `alert`: la ventana con un solo botón «Entendido»; no frena nada (lo de después sigue).
+   `o` (opcional) = {titulo, sub, lineas, si, no, icono, peligro, aviso}; sin `o`, la ventana se arma del texto (`pregDeTexto`: el primer
+   renglón es el título y el emoji del principio el dibujo).
+   Fuera de la bandera (Playwright sin `PREG_PRUEBA`) las tres hacen lo del navegador de SIEMPRE, con el mismo texto (las pruebas viejas
+   contestan diálogos). */
+var PREG_MEMO=null, PREG_ABIERTAS=0;
+function pregDeTexto(texto, o){
+  o=o||{};
+  var t=String(texto==null?'':texto).replace(/\r/g,'');
+  var ren=t.split('\n').map(function(x){ return x.trim(); }).filter(Boolean);
+  var tit=ren.shift()||'¿Seguro?', ic='';
+  var m=tit.match(/^((?:\p{Extended_Pictographic}|\uFE0F|\u200D)+)\s*/u);
+  if(m){ ic=m[1]; tit=tit.slice(m[0].length); }
+  var r={ titulo:tit, lineas:ren.map(function(x){ return x.replace(/^[•·\-–]\s*/,''); }), icono:ic||'❓' };
+  for(var k in o){ if(Object.prototype.hasOwnProperty.call(o,k) && o[k]!=null) r[k]=o[k]; }
+  return r;
+}
+function preguntaYa(texto, o, otraVez){
+  if(!pregActivo()) return confirm(texto);
+  var k='c|'+String(texto);
+  if(PREG_MEMO && Object.prototype.hasOwnProperty.call(PREG_MEMO,k)) return PREG_MEMO[k];
+  var memo=PREG_MEMO ? Object.assign({}, PREG_MEMO) : {};
+  preguntar(pregDeTexto(texto, o)).then(function(si){ pregSeguir(memo, k, !!si, otraVez); });
+  return null;
+}
+function preguntaTextoYa(texto, valor, o, otraVez){
+  if(!pregActivo()) return prompt(texto, valor==null?'':valor);
+  var k='p|'+String(texto);
+  if(PREG_MEMO && Object.prototype.hasOwnProperty.call(PREG_MEMO,k)) return PREG_MEMO[k];
+  var memo=PREG_MEMO ? Object.assign({}, PREG_MEMO) : {};
+  var oo=pregDeTexto(texto, o); oo.campo=true; oo.campoValor=(valor==null?'':valor); if(!oo.si) oo.si='Listo';
+  preguntar(oo).then(function(v){ pregSeguir(memo, k, v, otraVez); });
+  return null;
+}
+/* Con la respuesta en la memoria de la tanda, vuelve a correr lo que preguntó. Un «no»/«cancelar» también vuelve a correr: hay lugares
+   que con el «no» hacen otra cosa (si no hacen nada, cortan solos). */
+function pregSeguir(memo, k, v, otraVez){
+  memo[k]=v;
+  if(typeof otraVez!=='function') return;
+  var antes=PREG_MEMO; PREG_MEMO=memo;
+  try{ otraVez(v); }catch(e){ try{ console.error(e); }catch(_){} }
+  finally{ PREG_MEMO=antes; }
+}
+function avisoVentana(texto, o){
+  if(!pregActivo()){ alert(texto); return; }
+  var oo=pregDeTexto(texto, o); oo.solo=true; if(!o || !o.icono) oo.icono=oo.icono==='❓'?'ℹ️':oo.icono;
+  preguntar(oo);
 }
 function toastMs(msg){ return Math.min(12000, Math.max(2800, String(msg==null?'':msg).length*50)); }
 
@@ -41125,12 +41192,16 @@ function practicaColaReal(leer){
 function practicaColaEsperaTxt(n){ return 'Hay '+n+' guardado'+(n===1?'':'s')+' de VERDAD esperando para llegar a la planilla'; }
 function practicaEntrar(){
   if(window.PRACTICA){ practicaEjercicios(); return; }
-  if(!confirm('🧪 ¿Prender el MODO PRÁCTICA en esta pestaña?\n\n'+
+  if(!preguntaYa('🧪 ¿Prender el MODO PRÁCTICA en esta pestaña?\n\n'+
     '• Podés cargar ventas, cobros, ATC, reposiciones, reprogramar… de mentira: NADA va a la planilla y al cliente NO le llega nada (ni el bot, ni Kommo, ni WhatsApp).\n'+
     '• Ves el stock, los cupos y los clientes de verdad.\n'+
     '• Bloki te explica cada paso.\n'+
     '• Al salir se borra todo lo que cargaste.\n\n'+
-    'El panel se vuelve a abrir: si tenés algo a medio cargar, guardalo antes.')) return;
+    'El panel se vuelve a abrir: si tenés algo a medio cargar, guardalo antes.',
+    { titulo:'¿Prender el modo práctica en esta pestaña?', sub:'El panel se vuelve a abrir: si tenés algo a medio cargar, guardalo antes.',
+      lineas:['Cargás ventas, cobros, ATC, reposiciones… de mentira: NADA va a la planilla y al cliente no le llega nada.',
+              'Ves el stock, los cupos y los clientes de verdad.', 'Bloki te explica cada paso.', 'Al salir se borra todo lo que cargaste.'],
+      no:'No, seguir normal', si:'🧪 Prender la práctica' }, practicaEntrar)) return;
   var ir=function(){
     try{ sessionStorage.setItem('me_practica', '1'); }catch(e){ toast('Este navegador no deja prender el modo práctica en esta pestaña.', 'err', 6000); return; }
     location.reload();
