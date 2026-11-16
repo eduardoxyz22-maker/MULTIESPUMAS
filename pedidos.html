@@ -3828,6 +3828,8 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <div id="atc-por-motivo"></div>
       <!-- 📉🔁⏳ (13/11, mejoras 178-180) Cada 100 vendidos, los que volvieron a reclamar y a cuántos meses de la compra falla: solo miran (`atcqPintar`). -->
       <div id="atc-calidad"></div>
+      <!-- 🧠 (16/11, mejora 359) Lo que dicen las ATC: la causa de fondo, leída por Claude una vez por mes. Solo gerencia (`atcIaPintar`). -->
+      <div id="atc-ia" hidden></div>
       <div id="atv-cards" class="atv-cards"></div>
       <div class="tw tw-tall" id="atv-tw"><table id="tbl-atc"></table></div>
       <div id="atc-empty" class="empty" style="display:none">No hay ATC para este filtro.</div>
@@ -4990,6 +4992,57 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .pnr-r{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;padding:6px 0;border-top:1px solid #e2e8f0;font-size:.84rem}
 .pnr-q{flex:1;min-width:240px}.pnr-q small{display:block;color:#64748b;font-size:.74rem}.pnr-q em{font-style:normal;color:#9a4b00;font-size:.74rem}
 .pnr-r .btn{width:auto;background:#fff}.pnr-dar{border-color:#9a4b00!important;color:#9a4b00!important;font-weight:700}
+/* 🧠 (16/11, mejora 359) «Lo que dicen las ATC»: recuadro blanco con letra oscura (se ve igual con los temas del mes) */
+#atc-ia[hidden],#atci-ia-w[hidden]{display:none!important}
+#atc-ia{margin:0 0 16px}
+.aia-c{background:#fff;border:1px solid var(--gray-lt);border-left:5px solid #00B5AD;border-radius:14px;padding:12px 14px;color:#123;max-width:980px}
+.aia-t{font-weight:800;font-size:.92rem;color:#0f2a3d}
+.aia-st{font-size:.78rem;color:#567;margin:3px 0 8px;line-height:1.4}
+.aia-res{font-size:.84rem;color:#1e293b;margin:0 0 8px;line-height:1.4}
+.aia-r{border-top:1px solid #e3eeee}
+.aia-rb{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(90px,180px) 30px;gap:10px;align-items:center;padding:7px 2px;cursor:pointer;font-size:.84rem;color:#123}
+.aia-rb:focus-visible{outline:2px solid #00A09A;outline-offset:2px;border-radius:6px}
+.aia-rb b{text-align:right;font-size:.95rem}
+.aia-n small{display:block;color:#678;font-size:.74rem;font-weight:400;line-height:1.3}
+.aia-b{display:block;height:10px;border-radius:5px;background:#eef4f4;overflow:hidden}.aia-b i{display:block;height:100%;border-radius:5px;background:#00B5AD}
+.aia-new{background:#fde7f3;color:#9d174d;border-radius:6px;padding:0 5px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.aia-l{display:flex;flex-wrap:wrap;gap:5px;padding:0 0 9px}
+.aia-at{border:1px solid #cfe9e7;background:#f7fbfb;color:#0f3d3a;border-radius:8px;padding:4px 8px;font:inherit;font-size:.75rem;cursor:pointer}
+.aia-x{background:#fff7e6;border-left:4px solid #f59e0b;border-radius:8px;padding:8px 10px;font-size:.8rem;margin:10px 0;color:#5b3b00;line-height:1.45}
+.aia-f{background:#e6f7f6;border-left:4px solid #00A09A;border-radius:8px;padding:8px 10px;font-size:.82rem;color:#0f3d3a;line-height:1.4}
+.aia-f ol{margin:4px 0 0 18px;padding:0}.aia-f li{margin:3px 0}.aia-f small{color:#3d6b67}
+.aia-err{background:#fff4d6;border:1px solid #f0d264;border-radius:8px;padding:7px 10px;font-size:.8rem;color:#7c4b00;margin:8px 0}
+.aia-k{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.aia-k .btn{width:auto}
+.aia-y{background:#00B5AD!important;border-color:#00B5AD!important;color:#fff!important;font-weight:700}
+/* 🧠 (16/11, mejora 360) Los productos escritos a mano, debajo de «❓ Revisá el nombre» */
+.iap-caja{margin:10px 0;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #cfe9e7;border-left:5px solid #00B5AD;color:#1f2d3d}
+.iap-cab{font-size:.88rem}.iap-cab span{color:#64748b;font-size:.8rem}.iap-ley{margin:4px 0 6px;font-size:.78rem;color:#475569}
+.iap-r{display:grid;grid-template-columns:minmax(180px,1fr) 18px minmax(200px,1.3fr);gap:6px 8px;align-items:center;padding:7px 0;border-top:1px solid #e3eeee;font-size:.84rem}
+.iap-a{color:#7a4b00;background:#fff7e6;border-radius:6px;padding:4px 7px;font-family:ui-monospace,Menlo,monospace;font-size:.8rem;min-width:0;overflow-wrap:anywhere}
+.iap-a small{display:block;font-family:Inter,system-ui,sans-serif;color:#64748b;font-size:.72rem}
+.iap-fl{color:#94a3b8;text-align:center}
+.iap-b{min-width:0}.iap-b b{display:block;color:#0f2a3d}.iap-b small{color:#64748b;font-size:.74rem}
+.iap-gris{color:#64748b!important;font-weight:600}
+.iap-ok{font-style:normal;color:#047857;font-weight:700}.iap-dd{font-style:normal;color:#b45309;font-weight:700}.iap-no{font-style:normal;color:#b91c1c;font-weight:700}
+.iap-k{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}.iap-k .btn{width:auto;background:#fff}
+.iap-y{background:#00B5AD!important;border-color:#00B5AD!important;color:#fff!important;font-weight:700}
+.iap-pie{margin-top:8px;font-size:.8rem;color:#475569}.iap-pie .btn{width:auto}.iap-err{color:#7c4b00}
+.iap-form{margin:4px 0 2px;padding:6px 9px;border-radius:8px;background:#e6f7f6;border:1px solid #9fd6d2;color:#0f3d3a;font-size:.8rem;line-height:1.5}
+.iap-form[hidden]{display:none}.iap-form .btn{width:auto;padding:3px 9px;margin-left:4px}.iap-form small{color:#3d6b67}
+@media (max-width:640px){ .iap-r{grid-template-columns:1fr} .iap-fl{display:none} }
+/* 🔎 (16/11, mejora 364) «Lo que el stock gana o pierde sin explicar» (`#iss-ov`, `.adm-ov`) */
+#iss-body{flex:1;overflow:auto;padding:14px;color:#123}
+.iss{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.iss-caja{background:#fff;border:1px solid var(--gray-md,#dce3e6);border-radius:14px;padding:12px 14px;font-size:.84rem;line-height:1.5;color:#1e293b}
+.iss-caja .btn{width:auto;margin-left:6px}.iss-gris{color:#64748b}.iss-bien{border-left:5px solid #16a34a}
+.iss-res{background:#e6f7f6;border-left:4px solid #00A09A;border-radius:10px;padding:9px 12px;font-size:.86rem;color:#0f3d3a}
+.iss-err{background:#fff4d6;border:1px solid #f0d264;border-radius:10px;padding:9px 12px;font-size:.84rem;color:#7c4b00}
+.iss-i{background:#fff;border:1px solid var(--gray-md,#dce3e6);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;font-size:.84rem}
+.iss-ic{font-size:1.15rem}.iss-i b{color:#0f2a3d}.iss-tp{color:#64748b;font-size:.74rem}
+.iss-qp{display:block;color:#475569;margin-top:3px}.iss-q{display:block;color:#0f766e;font-weight:700;margin-top:3px}
+.iss-d{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.iss-d i{font-style:normal;font-size:.72rem;border-radius:5px;padding:1px 6px;background:#f1f7f7;color:#334155}
+.iss-d i.m{background:#fee2e2;color:#b91c1c}.iss-d i.p{background:#dcfce7;color:#047857}
+.iss-k{display:flex;flex-wrap:wrap;gap:6px}.iss-k .btn{width:auto}
 /* ✓ (15/11, mejora 313) «¿Lo mandaste?» en «Pedido a producción» */
 #pap-overlay .pap-mande{margin:8px 14px 10px;padding:10px 12px;border-radius:12px;background:#e6f7f6;border:2px solid #00B5AD;color:#0f3d3a;font-size:.86rem}
 #pap-overlay .pap-mande.ok{background:#dcfce7;border-color:#86efac;color:#14532d}
@@ -7452,7 +7505,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 @media (max-width:700px){ #ccm-body{ padding:10px !important; } .ccm-box{ padding:12px; } .ccm-ed-tab input{ width:100px; } }
 </style>
 <!-- 📄 (15/10, §4le) Informe de ATC del mes: hojas A4 apaisadas que se ven achicadas y se bajan como PDF. -->
-<div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><select id="atci-alc" onchange="atciPintar()" aria-label="Qué ATC entran en el informe"><option value="mes">📅 Un mes</option><option value="todas">🗂️ Todas, desde el inicio</option></select><select id="atci-tipo" onchange="atciPintar()" aria-label="Garantía o contra costo"><option value="">🎧 Garantía y contra costo</option><option value="gar">🛡️ Solo garantía</option><option value="stc">🔧 Solo contra costo (STC)</option><option value="sin">❓ Solo sin marcar</option></select><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
+<div id="atci-ov" class="adm-ov" style="display:none;position:fixed;inset:0;z-index:3000;background:#e7ecef;flex-direction:column"><div class="no-print atci-bar"><b style="font-size:.95rem">📄 Informe de ATC</b><select id="atci-alc" onchange="atciPintar()" aria-label="Qué ATC entran en el informe"><option value="mes">📅 Un mes</option><option value="todas">🗂️ Todas, desde el inicio</option></select><select id="atci-tipo" onchange="atciPintar()" aria-label="Garantía o contra costo"><option value="">🎧 Garantía y contra costo</option><option value="gar">🛡️ Solo garantía</option><option value="stc">🔧 Solo contra costo (STC)</option><option value="sin">❓ Solo sin marcar</option></select><input type="month" id="atci-mes" onchange="atciPintar()" aria-label="Mes del informe"><label id="atci-ia-w" hidden style="font-size:.8rem;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer" title="Suma la hoja «🧠 Lo que dicen las ATC» (lo que leyó Claude: las causas de fondo y qué hablar con la fábrica)"><input type="checkbox" id="atci-ia" onchange="atciIaCambiar(this.checked)">🧠 Con lo que leyó Claude</label><span id="atci-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="atci-pdf" style="margin-left:auto;background:#fff;color:#86198f;font-weight:800" onclick="atciPdf()">⬇️ Descargar PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciImprimir()" title="La ventana de imprimir del navegador: ahí también se puede elegir «Guardar como PDF»">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="atciCerrar()">✕ Cerrar</button></div>
 <div class="no-print atci-ayuda" id="atci-estado">Las ATC que <b>entraron</b> en el mes elegido. Lo de «dónde están» es como están <b>hoy</b>.</div>
 <div id="atci-body"><div id="atci-hojas"></div></div></div>
 <!-- 📄 (07/11, idea 120) El informe del mes: Contabilidad → Proyección, solo con la contraseña. Las mismas hojas A4 apaisadas del de ATC. -->
@@ -10337,7 +10390,7 @@ function prodCodigoAuto(card){
     if(code){ c.value=code; card.setAttribute('data-cod-auto', code); } else { card.removeAttribute('data-cod-auto'); }
     if(nota){ nota.textContent=txt||''; nota.hidden=!txt; }
   };
-  if(cod && cod!==auto){ if(nota) nota.hidden=true; return; }               // lo escribió o lo eligió ella
+  if(cod && cod!==auto){ if(nota) nota.hidden=true; try{ iapFormQuizas(card, true); }catch(e){} return; }               // lo escribió o lo eligió ella (🧠 360: sin la propuesta de Claude)
   if(card.getAttribute('data-orig') && card.getAttribute('data-orig')===(desc+'|'+med)){ if(nota) nota.hidden=true; return; }
   var hit=null;
   if(desc && med && !esCodigoCombo(desc)){
@@ -10348,6 +10401,7 @@ function prodCodigoAuto(card){
   }
   if(hit) poner(hit.code, '✓ Lo reconocí: '+nombreVenta(hit.d, hit.code)+' '+hit.m+' · código '+hit.code+' (si no es ese, borrá el código)');
   else { if(auto) c.value=''; poner('', ''); }
+  try{ iapFormQuizas(card, hit); }catch(e){}   // 🧠 (16/11, mejora 360) si no lo reconoce, Claude propone cuál es (nunca lo pone solo)
   saldoAvisosProgramar();
 }
 /* ⚠️ En hora de BOLIVIA, no la del dispositivo (26/09): `ts` es un instante guardado, y el filtro del mes
@@ -28875,7 +28929,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
@@ -31104,6 +31158,8 @@ function admHacerDatos(){
   try{ add(ubfHacer()); }catch(e){}
   // 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» con un toque
   try{ add(rdHacer()); }catch(e){}
+  // 🧠 (16/11, mejora 360) lo escrito a mano que el stock no reconoce, con lo que propone Claude
+  try{ add(iapHacer()); }catch(e){}
   // ✅ cierre de entregas
   var C=ADM_AV.cierre||{};
   if(C.pend) add({ k:'cie-p', sev:'r', ic:'⏳', n:C.pend, t:'Cierre de entregas sin sincronizar', s:'se aplica solo con la próxima lectura de la planilla', b:'🔄 Intentar', fn:'refrescarEstado()', tag:'cierre sin sincronizar' });
@@ -31484,6 +31540,656 @@ function planNombreDarVuelta(k){
   return Promise.all(prs);
 }
 /* fin mejora 316 */
+/* ============================================================================
+   🧠 CLAUDE LEE PARA GERENCIA Y LOGÍSTICA (16/11, mejoras 359, 360 y 364; dueño: «359», «360», «364»). Lo de la PÁGINA; el servidor
+   (`iaAtc`, `iaProductos`, `iaStockSemana`, .gs 2026-11-16-a) lo prueba tests/test_ia_gestion_servidor.js.
+   Lo común a las tres: solo con el servidor que tiene las acciones (`iagServidor`); lo que contesta Claude queda en una FILA DEL SISTEMA
+   (sin sello: se relee la planilla justo antes y se junta, como `__pry_hist__`) para que ningún otro aparato vuelva a pagar lo mismo; si
+   Claude no contesta (apagado, tope, sin conexión) el panel sigue como siempre y lo dice. Claude PROPONE: nada se guarda ni cambia solo.
+   ========================================================================== */
+var IAG_SERVIDOR='2026-11-16-a', IAG_TOPE_MS=120000;
+var ATC_IA_ID='__atc_ia__', PROD_IA_ID='__prod_ia__', STOCK_IA_ID='__stock_ia__';
+function esFilaIag(p){ var i=String((p&&p.id)||''); return i===ATC_IA_ID || i===PROD_IA_ID || i===STOCK_IA_ID; }
+function iagServidor(){ try{ return servidorTiene(IAG_SERVIDOR); }catch(e){ return false; } }
+function iagFilaDe(id, lista){ var r=null; (lista||STATE||[]).forEach(function(p){ if(p && String(p.id)===id) r=p; }); return r; }
+function iagFilaObj(fila){ try{ var o=JSON.parse((fila && fila.observaciones)||'{}'); return (o && typeof o==='object' && !Array.isArray(o)) ? o : {}; }catch(e){ return {}; } }
+function iagPoner(fila){ var id=String(fila.id); STATE=STATE.filter(function(p){ return String(p.id)!==id; }); STATE.push(fila); }
+function iagLeerLista(){
+  return conTopeDuro(Promise.resolve().then(function(){ return apiList(); }), 20000, 'tardo_datos')
+    .then(function(res){ return (res && res.ok && Array.isArray(res.pedidos)) ? res.pedidos : null; }, function(){ return null; });
+}
+/* Lo que dice la planilla AHORA de la fila `id` (y la deja en STATE). null sin lectura. */
+function iagReleerFila(id){
+  return iagLeerLista().then(function(L){
+    if(!L) return null;
+    var srv=iagFilaDe(id, L); if(srv) iagPoner(srv);
+    return iagFilaObj(srv);
+  });
+}
+/* Relee, junta (`juntar(lo de la planilla)` → el objeto nuevo) y guarda. Sin lectura junta con lo de este aparato y lo deja a la vista
+   (no se guarda: la próxima vez se intenta de nuevo). */
+function iagFilaGuardar(id, titulo, juntar){
+  return iagLeerLista().then(function(L){
+    var srv=L ? iagFilaDe(id, L) : iagFilaDe(id), obj=juntar(iagFilaObj(srv));
+    var fila=filaSistema(id, titulo, JSON.stringify(obj));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[id])||0); if(rv) fila.rev=rv;
+    if(!L){ iagPoner(fila); return null; }
+    return Promise.resolve().then(function(){ return apiSave(fila); }).then(function(r){
+      iagPoner((r && r.ok && r.pedido && String(r.pedido.id)===id) ? r.pedido : fila);
+      return r;
+    }, function(){ iagPoner(fila); return null; });
+  });
+}
+function iagPost(body){ return conTopeDuro(Promise.resolve().then(function(){ return apiPost(body); }), IAG_TOPE_MS, 'tardo_ia'); }
+function iagErrorTxt(r, e){
+  var c=(r && r.error)||'';
+  if(c==='tope') return 'Hoy ya se usó todo lo que se le puede preguntar a Claude para esto ('+(r.tope||'?')+' por día): probá mañana.';
+  if(c==='ia_apagada') return 'Claude está apagado en el servidor: el panel sigue como siempre.';
+  if(c==='sin_clave') return 'Falta la clave de Claude en el servidor.';
+  if(c==='ocupado') return 'Claude está ocupado ahora: probá en un rato.';
+  if(c==='sin_historial') return 'La hoja «Historial stock» todavía no tiene dos Excel para comparar en estos días.';
+  if(c==='vacio') return 'No hay nada para leer.';
+  if(c==='muy_largo') return 'Es demasiado para una sola lectura.';
+  if(c==='ia_error') return 'Claude no pudo contestar'+(r.detalle?(' ('+String(r.detalle).slice(0,120)+')'):'')+'.';
+  if(e || !r) return 'Sin conexión con el servidor: probá de nuevo en un rato.';
+  return 'No se pudo leer ahora.';
+}
+function iagCuandoTxt(t){ return t ? fmtFechaCorta(isoDeTsBolivia(t)) : ''; }
+
+/* ---------------------------------------------------------------------------
+   🧠 359 · LO QUE DICEN LAS ATC: LA CAUSA DE FONDO, PARA HABLAR CON LA FÁBRICA. Del 01/09 al 14/11 entraron 42 ATC: 10 «Otro» (24 %) que
+   nadie leía junto (4 «se siente distinto al de la tienda», 3 de tela o costura, olor y humedad…). Pestaña ATC, solo gerencia
+   (`atcVeInforme`) → «🧠 Lo que dicen las ATC» (`#atc-ia`): una vez por mes (la primera vez que gerencia abre la pestaña ese mes) o con
+   «🔄 Volver a leer», Claude lee las ATC que ENTRARON en los últimos ATC_IA_MESES meses —producto, medida, motivo elegido, lo que escribió
+   la vendedora (sin el nombre ni números del cliente: `atcIaDet`), meses desde la compra y si es garantía o STC— y devuelve las causas de
+   fondo, las que eran «Otro» y son otra cosa, lo que se repite y 3 cosas para hablar con la fábrica, cada una con sus casos.
+   · Barras por causa (tocar = las ATC de esa causa, cada una abre su ficha), «📄 Sumar al Informe PDF» (una hoja más en el informe:
+     `atciIaHoja`, solo si se tilda ahí «🧠 Con lo que leyó Claude», `me_atc_ia_pdf`) y «📋 Copiar para la fábrica» (sin clientes).
+   · Queda en la fila del sistema `__atc_ia__` ({v:1, L:{'AAAA-MM':{t, por, desde, hasta, txt, n, res}}}, las últimas ATC_IA_GUARDA).
+   · El motivo guardado de cada ATC NO cambia. En Playwright apagado salvo `window.ATC_IA_PRUEBA`. `tests/test_atc_ia.js`.
+   --------------------------------------------------------------------------- */
+var ATC_IA_MESES=3, ATC_IA_MAX=120, ATC_IA_DET=300, ATC_IA_GUARDA=4, ATC_IA_TOPE_LETRAS=40000, ATC_IA_LS_PDF='me_atc_ia_pdf';
+var ATC_IA={ corre:false, err:'', abierta:'', auto:'' };
+function atcIaActivo(){ try{ return !(navigator.webdriver && !window.ATC_IA_PRUEBA); }catch(e){ return true; } }
+function atcIaVe(){ return atcIaActivo() && atcVeInforme() && iagServidor(); }
+/* Este mes y los ATC_IA_MESES-1 de antes, por el mes en que ENTRÓ cada ATC. */
+function atcIaVentana(hoy){
+  var ym=String(hoy||todayStr()).slice(0,7), desde=atciMesMas(ym, -(ATC_IA_MESES-1));
+  var a=MESES_ES[+desde.slice(5,7)-1], b=MESES_ES[+ym.slice(5,7)-1];
+  return { clave:ym, desde:desde, hasta:ym, txt:(a===b ? b : a+' a '+b)+' '+ym.slice(0,4) };
+}
+/* Lo que escribió la vendedora, sin el nombre del cliente ni números de teléfono o CI (a veces los anota ahí). */
+function atcIaDet(p){
+  var t=String(atcDetalle(p)||'').replace(/\s+/g,' ').trim().replace(/\+?\d[\d\s\-.]{5,}\d/g, '…');
+  String((p && p.cliente)||'').split(/\s+/).forEach(function(w){
+    w=w.replace(/[^A-Za-zÁÉÍÓÚÑÜáéíóúñü]/g,''); if(w.length<3) return;
+    t=t.replace(new RegExp('(^|[^A-Za-zÁÉÍÓÚÑÜáéíóúñü])'+w+'(?![A-Za-zÁÉÍÓÚÑÜáéíóúñü])','gi'), '$1…');
+  });
+  return t.slice(0, ATC_IA_DET);
+}
+/* Lo que se le manda a Claude: SIN cliente ni celular. Las más nuevas primero, ATC_IA_MAX como mucho. */
+function atcIaLista(V){
+  V=V||atcIaVentana();
+  return (STATE||[]).filter(function(p){ if(!p || !esATC(p.oc) || esFilaSistema(p)) return false; var e=atcEntro(p).slice(0,7); return !!e && e>=V.desde && e<=V.hasta; })
+    .sort(function(a,b){ var x=atcEntro(a), y=atcEntro(b); return x<y ? 1 : (x>y ? -1 : 0); }).slice(0, ATC_IA_MAX)
+    .map(function(p){
+      var pr=(p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }), c=null;
+      try{ c=atciCompra(p, null); }catch(e){ c=null; }
+      return { a:String(p.oc||'').trim(), p:pr.map(function(x){ return String(x.desc).trim(); }).join(' + ').slice(0,80), m:String((pr[0]||{}).medida||'').trim(),
+               mot:atcMotivo(p)||'', det:atcIaDet(p), meses:c ? atcqMeses(c.f, atcEntro(p)) : null, tipo:atcTipo(p) };
+    }).filter(function(x){ return x.a; });
+}
+function atcIaFila(){ return iagFilaObj(iagFilaDe(ATC_IA_ID)); }
+/* La lectura de este mes; si no hay, la más nueva (que dice de cuándo es). */
+function atcIaLectura(){
+  var L=atcIaFila().L||{}, V=atcIaVentana();
+  if(L[V.clave]) return L[V.clave];
+  var ks=Object.keys(L).sort(); return ks.length ? L[ks[ks.length-1]] : null;
+}
+function atcIaMapaOc(){ var M={}; (STATE||[]).forEach(function(p){ if(p && esATC(p.oc)) M[String(p.oc).trim()]=p; }); return M; }
+/* Cuántas de las ATC de una causa tienen guardado «Otro» o ningún motivo. */
+function atcIaEranOtro(g, M){ var n=0; (g.atc||[]).forEach(function(a){ var p=M[a]; if(p){ var m=atcMotivo(p); if(!m || m==='Otro') n++; } }); return n; }
+function atcIaLeer(forzar){
+  if(ATC_IA.corre || !atcIaVe()) return Promise.resolve(null);
+  var V=atcIaVentana(), lista=atcIaLista(V);
+  if(!lista.length){ ATC_IA.err='No entró ninguna ATC entre '+V.txt+'.'; atcIaPintar(); return Promise.resolve(null); }
+  ATC_IA.corre=true; ATC_IA.err=''; atcIaPintar();
+  var fin=function(x){ ATC_IA.corre=false; atcIaPintar(); return x; };
+  /* Primero se relee: si otro aparato ya la leyó este mes, no se paga de nuevo. */
+  return (forzar ? Promise.resolve(null) : iagReleerFila(ATC_IA_ID)).then(function(o){
+    if(o && o.L && o.L[V.clave]) return fin(o.L[V.clave]);
+    return iagPost({ action:'iaAtc', clave:V.clave, periodo:V.txt, lista:lista, forzar:!!forzar }).then(function(r){
+      if(!(r && r.ok && r.res)){ ATC_IA.err=iagErrorTxt(r); return fin(null); }
+      var lec={ t:Number(r.t)||Date.now(), por:quienEdita()||'', desde:V.desde, hasta:V.hasta, txt:V.txt, n:lista.length, res:r.res };
+      return iagFilaGuardar(ATC_IA_ID, '🧠 LO QUE DICEN LAS ATC (no tocar: la lee el panel)', function(v){
+        var L=(v && v.L && typeof v.L==='object') ? v.L : {}; L[V.clave]=lec;
+        var ks=Object.keys(L).sort(); while(ks.length>ATC_IA_GUARDA) delete L[ks.shift()];
+        var o={ v:1, L:L }; while(JSON.stringify(o).length>ATC_IA_TOPE_LETRAS && ks.length>1) delete L[ks.shift()];
+        return o;
+      }).then(function(){ return fin(lec); }, function(){ return fin(lec); });
+    }, function(e){ ATC_IA.err=iagErrorTxt(null, e); return fin(null); });
+  });
+}
+function atcIaReleer(){
+  if(!confirm('🔄 ¿Volver a leer las ATC con Claude?\n\nCuesta unos centavos de dólar. Hacelo si entraron ATC nuevas o se corrigieron los motivos.')) return;
+  atcIaLeer(true);
+}
+function atcIaAbrir(i){ ATC_IA.abierta=(ATC_IA.abierta===String(i)) ? '' : String(i); atcIaPintar(); }
+function atcIaPintar(){
+  var box=document.getElementById('atc-ia'); if(!box) return;
+  if(!atcIaVe()){ box.innerHTML=''; box.hidden=true; return; }
+  box.hidden=false;
+  var V=atcIaVentana(), L=atcIaFila().L||{}, R=atcIaLectura(), n=atcIaLista(V).length;
+  /* una vez por mes, solo: la primera vez que gerencia abre la pestaña con la planilla leída */
+  if(!L[V.clave] && !ATC_IA.corre && !ATC_IA.err && ATC_IA.auto!==V.clave && CONNECTED && n){ ATC_IA.auto=V.clave; setTimeout(function(){ atcIaLeer(false); }, 60); }
+  box.innerHTML=atcIaHtml(R, V, n);
+}
+function atcIaHtml(R, V, n){
+  var h='<div class="aia-c"><div class="aia-t">🧠 Lo que dicen las ATC'+(R ? (' · '+esc(R.txt||'')) : '')+'</div>';
+  if(ATC_IA.corre) return h+'<div class="aia-st" role="status">⏳ Claude está leyendo '+n+' ATC (el motivo y lo que escribió la vendedora)…</div></div>';
+  if(!R){
+    return h+'<div class="aia-st">Claude lee el motivo y el detalle de las <b>'+n+'</b> ATC que entraron entre '+esc(V.txt)+' (sin nombres ni celulares de clientes), junta las causas de fondo y propone qué revisar con la fábrica. Una vez por mes.</div>'+
+      (ATC_IA.err ? '<div class="aia-err" role="alert">⚠️ '+esc(ATC_IA.err)+'</div>' : '')+
+      (n ? '<div class="aia-k"><button type="button" class="btn btn-sm aia-y" onclick="atcIaLeer(true)">🧠 Leer las '+n+' ATC</button></div>' : '')+'</div>';
+  }
+  var res=R.res||{}, G=res.grupos||[], max=1, M=atcIaMapaOc();
+  G.forEach(function(g){ if((g.atc||[]).length>max) max=g.atc.length; });
+  h+='<div class="aia-st">'+(R.n||0)+' ATC leídas por Claude el '+esc(iagCuandoTxt(R.t))+(R.por ? (' ('+esc(R.por)+')') : '')+': el motivo elegido y lo que escribió la vendedora. Solo lee: el motivo guardado de cada ATC no cambia.</div>';
+  if(R.hasta && R.hasta<V.clave) h+='<div class="aia-err">Es la lectura de '+esc(R.txt||'')+'. Tocá «🔄 Volver a leer» para la de este mes.</div>';
+  if(res.resumen) h+='<div class="aia-res">'+esc(res.resumen)+'</div>';
+  h+=G.map(function(g, i){
+    var otro=atcIaEranOtro(g, M), ab=ATC_IA.abierta===String(i), no=/no era una atc/i.test(g.causa||''), k=(g.atc||[]).length;
+    return '<div class="aia-r'+(ab ? ' on' : '')+'"><button type="button" class="aia-rb" data-i="'+i+'" onclick="atcIaAbrir(this.dataset.i)" aria-expanded="'+(ab ? 'true' : 'false')+'">'+
+        '<span class="aia-n">'+esc(g.causa)+(otro ? ' <span class="aia-new">'+(otro===k ? 'era «Otro»' : (otro+' eran «Otro»'))+'</span>' : '')+(g.que_es ? '<small>'+esc(g.que_es)+'</small>' : '')+'</span>'+
+        '<span class="aia-b"><i style="width:'+Math.max(4, Math.round(k/max*100))+'%'+(no ? ';background:#c9d6d6' : '')+'"></i></span><b>'+k+'</b></button>'+
+      (ab ? '<div class="aia-l">'+g.atc.map(function(a){ var p=M[a]; return p ? '<button type="button" class="aia-at" data-id="'+esc(String(p.id))+'" onclick="verAtc(this.dataset.id)">'+esc(a)+' · '+esc(atcMotivo(p)||'sin motivo')+'</button>' : '<span class="aia-at">'+esc(a)+'</span>'; }).join('')+'</div>' : '')+
+    '</div>';
+  }).join('');
+  if((res.patrones||[]).length) h+='<div class="aia-x">'+res.patrones.map(function(s){ return '📐 '+esc(s); }).join('<br>')+'</div>';
+  if((res.para_fabrica||[]).length) h+='<div class="aia-f"><b>Para hablar con la fábrica</b><ol>'+res.para_fabrica.map(function(f){
+    return '<li><b>'+esc(f.titulo)+'</b>'+(f.detalle ? (': '+esc(f.detalle)) : '')+((f.atc||[]).length ? (' <small>('+f.atc.length+' caso'+(f.atc.length===1 ? '' : 's')+')</small>') : '')+'</li>'; }).join('')+'</ol></div>';
+  if(ATC_IA.err) h+='<div class="aia-err" role="alert">⚠️ '+esc(ATC_IA.err)+'</div>';
+  h+='<div class="aia-k"><button type="button" class="btn btn-sm" onclick="atcIaAlInforme()">📄 Sumar al Informe PDF</button><button type="button" class="btn btn-sm" onclick="atcIaCopiar()">📋 Copiar para la fábrica</button>'+
+     '<button type="button" class="btn btn-sm btn-ghost" onclick="atcIaReleer()">🔄 Volver a leer</button></div>';
+  return h+'</div>';
+}
+/* «📋 Copiar para la fábrica»: lo que hay que revisar, las causas y lo que se repite. Solo N° de ATC: ningún cliente. */
+function atcIaTexto(R){
+  R=R||atcIaLectura(); if(!R) return '';
+  var res=R.res||{}, L=['🧠 Lo que dicen las ATC · '+(R.txt||'')+' ('+(R.n||0)+' ATC, leídas por Claude el '+iagCuandoTxt(R.t)+')', ''];
+  if((res.para_fabrica||[]).length){
+    L.push('Para revisar con la fábrica:');
+    res.para_fabrica.forEach(function(f, i){ L.push((i+1)+'. '+f.titulo+(f.detalle ? (': '+f.detalle) : '')+((f.atc||[]).length ? (' (casos: '+f.atc.join(', ')+')') : '')); });
+    L.push('');
+  }
+  L.push('Las causas:');
+  (res.grupos||[]).forEach(function(g){ L.push('· '+g.causa+': '+(g.atc||[]).length+(g.que_es ? (' — '+g.que_es) : '')); });
+  if((res.patrones||[]).length){ L.push(''); L.push('Lo que se repite:'); res.patrones.forEach(function(s){ L.push('· '+s); }); }
+  return L.join('\n');
+}
+function atcIaCopiar(){ var t=atcIaTexto(); if(!t){ toast('Todavía no hay una lectura de Claude.','err'); return; } copyText(t); }
+/* «📄 Sumar al Informe PDF»: tilda la hoja y abre el informe. */
+function atciIaEn(){ try{ return localStorage.getItem(ATC_IA_LS_PDF)==='1'; }catch(e){ return false; } }
+function atciIaCambiar(si){ try{ localStorage.setItem(ATC_IA_LS_PDF, si ? '1' : '0'); }catch(e){} try{ atciPintar(); }catch(e){} }
+function atcIaAlInforme(){ try{ localStorage.setItem(ATC_IA_LS_PDF, '1'); }catch(e){} abrirInformeAtc(); }
+/* La casilla de la barra del informe: solo si hay una lectura. */
+function atciIaBarra(){
+  var w=document.getElementById('atci-ia-w'), c=document.getElementById('atci-ia'); if(!w) return;
+  var hay=atcIaActivo() && !!atcIaLectura(); w.hidden=!hay; if(c) c.checked=hay && atciIaEn();
+}
+/* La hoja del informe (A4 apaisada, las piezas `ai-*` de siempre). '' si no se tildó o no hay lectura. */
+function atciIaHoja(){
+  if(!atcIaActivo() || !atciIaEn()) return '';
+  var R=atcIaLectura(), res=(R && R.res)||{}, G=res.grupos||[]; if(!G.length) return '';
+  var M=atcIaMapaOc(), max=1; G.forEach(function(g){ if(g.atc.length>max) max=g.atc.length; });
+  var filas=G.slice(0, 10).map(function(g){
+    var otro=atcIaEranOtro(g, M), no=/no era una atc/i.test(g.causa||'');
+    return '<div style="display:grid;grid-template-columns:270px 1fr 36px;gap:10px;align-items:center;margin:7px 0;font-size:13px">'+
+      '<div><b style="color:#0f2a3d">'+esc(g.causa)+'</b>'+(otro ? ' <span style="background:#fde7f3;color:#9d174d;border-radius:6px;padding:0 5px;font-size:10.5px;font-weight:700">'+(otro===g.atc.length ? 'era «Otro»' : otro+' eran «Otro»')+'</span>' : '')+
+        (g.que_es ? '<div style="font-size:11px;color:#64748b;line-height:1.3">'+esc(atciCorta(g.que_es, 90))+'</div>' : '')+'</div>'+
+      '<div style="height:12px;background:#eef2f5;border-radius:6px"><i style="display:block;height:12px;border-radius:6px;width:'+Math.max(4, Math.round(g.atc.length/max*100))+'%;background:'+(no ? '#c9d6d6' : '#00B5AD')+'"></i></div>'+
+      '<b style="text-align:right;font-size:15px;color:#0f2a3d">'+g.atc.length+'</b></div>';
+  }).join('');
+  var fab=(res.para_fabrica||[]).map(function(f){ return '<li style="margin:6px 0"><b>'+esc(f.titulo)+'</b>'+(f.detalle ? ': '+esc(atciCorta(f.detalle, 200)) : '')+((f.atc||[]).length ? ' <span style="color:#64748b">('+f.atc.length+' caso'+(f.atc.length===1 ? '' : 's')+')</span>' : '')+'</li>'; }).join('');
+  var pat=(res.patrones||[]).map(function(s){ return '<div style="margin:4px 0">📐 '+esc(atciCorta(s, 180))+'</div>'; }).join('');
+  var izq='<div class="ai-caja"><h3>Las causas, leyendo lo que escribió la vendedora <small>'+(R.n||0)+' ATC</small></h3>'+filas+'</div>';
+  var der='<div>'+(fab ? '<div class="ai-caja" style="border-left:5px solid #00A09A"><h3>Para hablar con la fábrica</h3><ol style="margin:4px 0 0 18px;padding:0;font-size:13px;color:#1e293b;line-height:1.35">'+fab+'</ol></div>' : '')+
+    (pat ? '<div class="ai-caja" style="margin-top:14px;border-left:5px solid #f59e0b"><h3>Lo que se repite</h3><div style="font-size:12.5px;color:#334155;line-height:1.35">'+pat+'</div></div>' : '')+'</div>';
+  return atciHoja('Causas de fondo', '🧠 Lo que dicen las ATC', esc(R.txt||'')+' · leídas por Claude el '+esc(iagCuandoTxt(R.t))+' · el motivo guardado de cada ATC no cambia',
+    '<div class="ai-g2" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px">'+izq+der+'</div>');
+}
+
+/* ---------------------------------------------------------------------------
+   🧠 360 · EL PRODUCTO ESCRITO A MANO, RECONOCIDO POR CLAUDE. De los 404 renglones de noviembre que cuentan para el stock, 28 el panel no
+   los reconoce («ice 90x190», «somieres 140x190», «COLCHON SEMIORTOP. 180x105», «OC 260200619»): no suman en el stock, en «Qué producir»
+   ni en las unidades de Proyección, y el bloque gris de la 316 solo dice «revisá el nombre».
+   · Los renglones (`iapRenglones`): de los pedidos pendientes o cargados en los últimos IAP_DIAS días que cuentan para el stock, lo que ni
+     el código, ni la lista de precios, ni los Excel de los almacenes, ni el histórico reconocen (`iapNoReconoce`: la MISMA identidad del
+     stock, `stockInfo`; sin lo de tienda ni la medida especial de un producto de la lista). Se juntan por lo escrito y la medida
+     (`iapLlave`): el mismo «ice 90x190» en tres pedidos es UN renglón.
+   · Los candidatos (`iapCandidatos`, IAP_CANDS como mucho): la lista de precios (`stockCatalogo`) y los códigos de los Excel que la lista
+     no tiene (`blokiCodIdx().alm`), por palabras en común (abreviaturas y plurales también), la familia y la medida (también al revés).
+   · Una vez por día (el primer aparato con la contraseña, de Administración, Contabilidad o logística que abre Stock: `iapQuizas`) los que
+     todavía no tienen propuesta van a Claude en UN lote (`iaProductos`, IAP_LOTE como mucho); lo que contesta queda en la fila del sistema
+     `__prod_ia__` ({v:1, d:día del último lote, r:{llave:{t, c, s, m, op}}}, IAP_GUARDA_DIAS días): nadie vuelve a pagar lo mismo.
+   · Se ve en el Plan de stock, debajo de «❓ Revisá el nombre» (`#iap-caja`), y en «Para hacer» de Administración (`iapHacer`). «✓ Es ese»
+     (solo lo «seguro») o una de las opciones de lo «dudoso» pone el código, el nombre y la medida de la lista en ESOS pedidos (pregunta
+     antes), cada uno por el guardado de siempre (`persistPedido` → `guardarDurable`): el renglón es el MISMO objeto, así que las marcas de
+     logística (✔/✗/📥/🏭, de dónde sale, el cierre, la historia) quedan como estaban —lo que `heredarMarcas` hace con un renglón que no
+     cambió—. Lo «dudoso» NO trae «Es ese»; lo que no es un producto trae «📂 Abrir el pedido».
+   · En el formulario: si la vendedora escribe el producto a mano y `prodCodigoAuto` no lo reconoce, al salir del campo Claude le propone el
+     código AHÍ (`iapFormQuizas`, un renglón; lo ya leído se reusa sin preguntar); nunca lo pone solo: «Usar ese».
+   En Playwright apagado salvo `window.IAP_PRUEBA`. `tests/test_iap_productos.js`.
+   --------------------------------------------------------------------------- */
+var IAP_DIAS=10, IAP_LOTE=30, IAP_CANDS=8, IAP_GUARDA_DIAS=45, IAP_TOPE_LETRAS=40000;
+var IAP={ corre:false, err:'', auto:'', form:{}, formEn:{} };
+function iapActivo(){ try{ return !(navigator.webdriver && !window.IAP_PRUEBA); }catch(e){ return true; } }
+function iapPuede(){ return iapActivo() && iagServidor(); }
+/* Quién dispara el lote y toca «Es ese»: la contraseña, Administración, Contabilidad o logística. */
+function iapQuien(){ var r=''; try{ r=quienRol(); }catch(e){} return !!UNLOCKED || r==='logistica' || r==='admin' || r==='conta'; }
+function iapLlave(x){ return stockNorm((x && x.desc)||'')+'|'+normMedida((x && x.medida)||''); }
+/* ¿El stock NO reconoce este renglón? (lo que no tiene código de la lista, ni está en un Excel, ni en el histórico, ni la lista lo encuentra) */
+function iapNoReconoce(x){
+  if(!x || !String(x.desc||'').trim() || esProdDeTienda(x) || esCodigoCombo(x.codigo) || esCodigoCombo(x.desc)) return false;
+  var cod=String(x.codigo||'').trim().toUpperCase();
+  if(cod && CODIGOS[cod]) return false;
+  try{ if(cod && productoDeAlmacen(cod)) return false; }catch(e){}
+  var i=null; try{ i=stockInfo(x); }catch(e){ return false; }
+  if(!i || i.cat) return false;
+  try{ if(stockHayEnInventario(i.k) || stockCodigoDelSistema(cod)) return false; }catch(e){ return false; }
+  /* 📐 la medida especial de un producto de la lista se fabrica a pedido: no es un nombre que falte (la medida al revés, sí) */
+  var me=normMedida(x.medida||''), mr=me ? stockMedidaReves(me) : '';
+  if(me && !esMedidaConocida(me) && !(mr && esMedidaConocida(mr))){ try{ if(stockEnCatalogo({ desc:x.desc, medida:'', codigo:'' })) return false; }catch(e){} }
+  return true;
+}
+function iapRenglones(){
+  var hoy=todayStr(), desde=stockSumarDias(hoy, -IAP_DIAS), G={}, L=[];
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || !stockCuenta(p)) return;
+    var vivo=(!p.entregado && (!p.fecha || p.fecha>=desde)) || contaFecha(p)>=desde;
+    if(!vivo) return;
+    (p.productos||[]).forEach(function(x){
+      if(!iapNoReconoce(x)) return;
+      var ll=iapLlave(x), g=G[ll];
+      if(!g){ g=G[ll]={ ll:ll, desc:String(x.desc||'').trim(), medida:String(x.medida||'').trim(), cant:0, peds:[], k:'' }; try{ g.k=stockInfo(x).k; }catch(e){} L.push(g); }
+      g.cant+=Number(x.cant)||0;
+      if(g.peds.indexOf(p)<0) g.peds.push(p);
+    });
+  });
+  return L;
+}
+/* Las palabras, en singular: «SOMIERES» → SOMIER. */
+function iapPalabras(t){ var s={}; Object.keys(stockTokens(t).set).forEach(function(w){ s[blokiSing(w)]=1; s[w]=1; }); return s; }
+function iapPuntaje(ws, toks, me, mr, cm, famW, famC){
+  var sc=0, alguna=false;
+  Object.keys(ws).forEach(function(w){
+    if(toks[w]){ sc+=2; alguna=true; return; }
+    if(w.length<3) return;
+    for(var t in toks){ if(t.length>=3 && (t.indexOf(w)===0 || w.indexOf(t)===0)){ sc+=1.5; alguna=true; return; } }
+  });
+  if(!alguna) return 0;
+  if(me){ if(cm===me) sc+=3; else if(mr && cm===mr) sc+=2.5; else if(cm) sc-=2; }
+  if(famW!==famC) sc-=1.5;
+  return sc;
+}
+function iapCandidatos(desc, medida){
+  var ws=iapPalabras(desc); if(!Object.keys(ws).length) return [];
+  var me=normMedida(medida||'')||normMedida(medidaDeTexto(desc)), mr=me ? normMedida(stockMedidaReves(me)) : '', famW=stockFamilia(ws), C=[], vis={};
+  stockCatalogo().forEach(function(c){
+    var sc=iapPuntaje(ws, c.toks, me, mr, c.nm, famW, c.fam); if(!(sc>0) || vis[c.code]) return; vis[c.code]=1;
+    C.push({ c:c.code, n:nombreVenta(c.d, c.code), m:c.m||'', de:'lista', sc:sc });
+  });
+  var I=null; try{ I=blokiCodIdx(); }catch(e){ I=null; }
+  ((I && I.alm && I.alm.L)||[]).forEach(function(e){
+    var x=e.x||{}; if(!x.code || vis[x.code]) return;
+    var tk=stockTokens(x.d).set, sc=iapPuntaje(ws, tk, me, mr, normMedida(x.m||''), famW, stockFamilia(tk)); if(!(sc>0)) return; vis[x.code]=1;
+    C.push({ c:x.code, n:x.d, m:x.m||'', de:'excel', sc:sc-0.25 });
+  });
+  C.sort(function(a,b){ return (b.sc-a.sc) || (a.n<b.n ? -1 : (a.n>b.n ? 1 : 0)); });
+  return C.slice(0, IAP_CANDS).map(function(c){ return { c:c.c, n:c.n, m:c.m, de:c.de }; });
+}
+/* El nombre y la medida de un código (la lista o los Excel). */
+function iapProdDe(code){
+  code=String(code||'').toUpperCase();
+  if(CODIGOS[code]) return { code:code, d:CODIGOS[code].d, m:CODIGOS[code].m||'', n:nombreVenta(CODIGOS[code].d, code), de:'lista' };
+  var a=null; try{ a=productoDeAlmacen(code); }catch(e){ a=null; }
+  return a ? { code:code, d:a.d, m:a.m||'', n:a.d, de:'excel' } : null;
+}
+function iapFila(){ return iagFilaObj(iagFilaDe(PROD_IA_ID)); }
+function iapProp(ll){ return (iapFila().r||{})[ll] || IAP.form[ll] || null; }
+/* Los renglones con lo que propuso Claude (o sin leer todavía). */
+function iapDatos(){
+  var R=iapFila().r||{};
+  return iapRenglones().map(function(g){ g.prop=R[g.ll]||null; return g; });
+}
+/* El lote del día: los que no tienen propuesta, de una vez. Primero se relee (otro aparato quizá ya lo hizo hoy). */
+function iapLote(forzar){
+  if(IAP.corre || !iapPuede()) return Promise.resolve(null);
+  var hoy=todayStr();
+  IAP.corre=true; IAP.err=''; iapRepintar();
+  var fin=function(x){ IAP.corre=false; iapRepintar(); return x; };
+  return iagReleerFila(PROD_IA_ID).then(function(o){
+    o=o||iapFila();
+    if(!forzar && o.d===hoy) return fin(null);
+    var R=o.r||{}, falta=iapRenglones().filter(function(g){ return !R[g.ll]; }).slice(0, IAP_LOTE), envio=[];
+    falta.forEach(function(g){
+      var C=iapCandidatos(g.desc, g.medida); if(!C.length) return;
+      var p0=g.peds[0]||{};
+      envio.push({ r:g.ll, desc:g.desc, medida:g.medida, cant:g.cant, quien:String(p0.vendedor||'').slice(0,30), cands:C });
+    });
+    if(!envio.length) return fin(null);
+    return iagPost({ action:'iaProductos', renglones:envio, forzar:!!forzar }).then(function(r){
+      if(!(r && r.ok && r.res)){ IAP.err=iagErrorTxt(r); return fin(null); }
+      var t=Number(r.t)||Date.now(), nuevos={};
+      (r.res.renglones||[]).forEach(function(x){ if(x && x.r) nuevos[x.r]={ t:t, c:x.codigo||'', s:x.seguridad, m:x.motivo||'', op:x.opciones||[] }; });
+      return iagFilaGuardar(PROD_IA_ID, '🧠 PRODUCTOS ESCRITOS A MANO (no tocar: la lee el panel)', function(v){
+        var rr=(v && v.r && typeof v.r==='object') ? v.r : {}, lim=Date.now()-IAP_GUARDA_DIAS*86400000;
+        Object.keys(nuevos).forEach(function(k){ rr[k]=nuevos[k]; });
+        Object.keys(rr).forEach(function(k){ if(!(Number(rr[k] && rr[k].t)>lim)) delete rr[k]; });
+        var o2={ v:1, d:hoy, r:rr }, ks=Object.keys(rr).sort(function(a,b){ return (rr[a].t||0)-(rr[b].t||0); });
+        while(JSON.stringify(o2).length>IAP_TOPE_LETRAS && ks.length) delete rr[ks.shift()];
+        return o2;
+      }).then(function(){ return fin(nuevos); }, function(){ return fin(nuevos); });
+    }, function(e){ IAP.err=iagErrorTxt(null, e); return fin(null); });
+  });
+}
+/* Una vez por día, sola, al abrir Stock (con la planilla leída). */
+function iapQuizas(){
+  if(!iapPuede() || !iapQuien() || IAP.corre || !CONNECTED || !ULTIMO_REFRESCO) return false;
+  var hoy=todayStr(); if(IAP.auto===hoy || iapFila().d===hoy) return false;
+  var R=iapFila().r||{};
+  if(!iapRenglones().some(function(g){ return !R[g.ll]; })) return false;
+  IAP.auto=hoy; setTimeout(function(){ iapLote(false); }, 400);
+  return true;
+}
+function iapRepintar(){ try{ var c=document.getElementById('iap-caja'); if(c) c.outerHTML=iapHtml() || '<div id="iap-caja" hidden></div>'; }catch(e){} }
+function iapSegTxt(s){ return s==='seguro' ? '<i class="iap-ok">seguro</i>' : (s==='dudoso' ? '<i class="iap-dd">dudoso</i>' : '<i class="iap-no">'+(s==='no_es_producto' ? 'no es un producto' : 'no lo reconoce')+'</i>'); }
+function iapHtml(){
+  if(!iapPuede()) return '';
+  var D=iapDatos(); if(!D.length) return '';
+  var puede=iapQuien(), sinLeer=D.filter(function(g){ return !g.prop; }).length;
+  var h='<div class="iap-caja" id="iap-caja"><div class="iap-cab"><b>🧠 Productos escritos a mano</b> · '+D.length+' para revisar <span>(así no cuentan en el stock, en «Qué producir» ni en las unidades)</span></div>'+
+    '<p class="iap-ley">Claude propone cuál es; nada cambia hasta que tocás «✓ Es ese». Lo «dudoso» se elige entre las opciones.</p>';
+  h+=D.map(function(g){
+    var P=g.prop, ped=g.peds[0], b='', k='';
+    var abrir=ped ? '<button type="button" class="btn btn-sm btn-ghost" data-id="'+esc(String(ped.id))+'" data-k="'+esc(g.k)+'" onclick="stockAbrirPedidoDesdeLista(this.dataset.id, this.dataset.k)">📂 Abrir '+esc(ocEtiq(ped.oc)||'el pedido')+'</button>' : '';
+    if(!P) b='<b class="iap-gris">Todavía sin leer</b><small>Claude lo mira con el próximo lote</small>';
+    else if(P.s==='seguro' && iapProdDe(P.c)){
+      var x=iapProdDe(P.c);
+      b='<b>'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</b><small>'+esc(x.code)+' · '+(x.de==='lista' ? 'de la lista de precios' : 'del Excel de un almacén')+' · '+iapSegTxt('seguro')+(P.m ? (' · '+esc(P.m)) : '')+'</small>';
+      if(puede) k='<button type="button" class="btn btn-sm iap-y" data-ll="'+esc(g.ll)+'" data-c="'+esc(x.code)+'" onclick="iapAplicar(this.dataset.ll, this.dataset.c)">✓ Es ese</button>';
+    } else if(P.s==='dudoso' && (P.op||[]).length){
+      var ops=P.op.map(iapProdDe).filter(Boolean);
+      b='<b>¿'+ops.map(function(x){ return esc(x.n+(x.m ? ' '+x.m : '')); }).join(' o ')+'?</b><small>'+esc(P.m||'no dice cuál')+' · '+iapSegTxt('dudoso')+'</small>';
+      if(puede) k=ops.map(function(x){ return '<button type="button" class="btn btn-sm" data-ll="'+esc(g.ll)+'" data-c="'+esc(x.code)+'" onclick="iapAplicar(this.dataset.ll, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join('');
+    } else b='<b>'+(P.s==='no_es_producto' ? 'No es un producto' : 'Claude no lo reconoce')+'</b><small>'+esc(P.m||'')+(P.m ? ' · ' : '')+iapSegTxt(P.s)+' · abrí el pedido y corregilo a mano</small>';
+    return '<div class="iap-r"><span class="iap-a">«'+esc(g.desc)+'»'+(g.medida ? (' '+esc(g.medida)) : '')+' × '+esc(stockUnid(g.cant))+
+        '<small>'+g.peds.slice(0,3).map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.vendedor||'sin vendedora'); }).join(' · ')+(g.peds.length>3 ? (' y '+(g.peds.length-3)+' más') : '')+'</small></span>'+
+      '<span class="iap-fl" aria-hidden="true">→</span><span class="iap-b">'+b+'</span><div class="iap-k">'+k+abrir+'</div></div>';
+  }).join('');
+  if(IAP.corre) h+='<div class="iap-pie" role="status">⏳ Claude está mirando los productos escritos a mano…</div>';
+  else if(IAP.err) h+='<div class="iap-pie iap-err" role="alert">⚠️ '+esc(IAP.err)+'</div>';
+  if(!IAP.corre && sinLeer && puede) h+='<div class="iap-pie"><button type="button" class="btn btn-sm" onclick="iapLote(true)">🧠 Que Claude proponga ('+sinLeer+')</button></div>';
+  return h+'</div>';
+}
+/* «✓ Es ese» / una opción de lo dudoso: el código, el nombre y la medida de la lista en los pedidos de ese renglón. */
+function iapAplicar(ll, code){
+  var x=iapProdDe(code); if(!x){ toast('Ese código ya no está en la lista ni en los Excel.','err'); return Promise.resolve([]); }
+  var g=iapRenglones().filter(function(r){ return r.ll===ll; })[0];
+  if(!g || !g.peds.length){ toast('Ese renglón ya está corregido.','ok'); iapRepintar(); return Promise.resolve([]); }
+  var nom=x.n+(x.m ? (' '+x.m) : '');
+  if(!confirm('✓ ¿Es '+nom+' ('+x.code+')?\n\n«'+g.desc+'»'+(g.medida ? (' '+g.medida) : '')+' pasa a '+nom+' en:\n'+
+    g.peds.map(function(p){ return '   • '+(ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).join('\n')+
+    '\n\nLas marcas de logística (de dónde sale, el stock revisado) quedan como estaban.')) return Promise.resolve([]);
+  var prs=[];
+  g.peds.forEach(function(p0){
+    var q=findById(p0.id); if(!q) return; var cambio=false;
+    (q.productos||[]).forEach(function(r){
+      if(!r || iapLlave(r)!==ll || !iapNoReconoce(r)) return;
+      r.codigo=x.code; r.desc=x.n; if(x.m) r.medida=x.m;      // el MISMO renglón: sus marcas quedan
+      cambio=true;
+    });
+    if(cambio) prs.push(persistPedido(q));
+  });
+  try{ stockOlvidarIndice(); }catch(e){}
+  toast('✓ '+nom+' en '+prs.length+' pedido'+(prs.length===1 ? '' : 's')+'.','ok',5000);
+  try{ renderStock(); }catch(e){}
+  try{ if(typeof renderAdmin==='function') renderAdmin(); }catch(e){}
+  return Promise.all(prs);
+}
+/* «Para hacer» de Administración: los que tienen una propuesta para tocar. */
+function iapHacer(){
+  if(!iapPuede() || !iapQuien()) return null;
+  var D=iapDatos(), con=D.filter(function(g){ return g.prop && (g.prop.s==='seguro' || g.prop.s==='dudoso'); }), n=D.length;
+  if(!n) return null;
+  return { k:'iap', sev:'a', ic:'🧠', n:n, t:'Productos escritos a mano que el stock no reconoce', s:(con.length ? (con.length+' con propuesta de Claude · ') : '')+D.slice(0,2).map(function(g){ return '«'+g.desc+'»'; }).join(', ')+(n>2 ? (' y '+(n-2)+' más') : ''),
+           b:'🧠 Ver', fn:'iapIrAlPlan()', tag:'productos escritos a mano' };
+}
+function iapIrAlPlan(){
+  try{ abrirStock(); }catch(e){}
+  setTimeout(function(){ var c=document.getElementById('iap-caja'); if(c){ try{ c.scrollIntoView({ block:'center' }); }catch(e){} } }, 350);
+}
+/* En el formulario: Claude propone el código del renglón escrito a mano que el panel no reconoce (nunca lo pone solo). */
+function iapFormQuizas(card, hit){
+  if(!card) return;
+  var box=card.querySelector('.iap-form');
+  var quitar=function(){ if(box) box.remove(); };
+  if(hit || !iapPuede()){ quitar(); return; }
+  var d=card.querySelector('.prod-desc'), c=card.querySelector('.prod-codigo'), ms=card.querySelector('.prod-medida'), ot=card.querySelector('.prod-medida-otro'), q=card.querySelector('.prod-cant');
+  if(!d || !c || !ms) return;
+  var desc=String(d.value||'').trim(), med=ms.value==='Otros' ? String((ot && ot.value)||'').trim() : String(ms.value||'');
+  var x={ desc:desc, medida:med, codigo:String(c.value||'').trim() };
+  if(desc.length<3 || !med || x.codigo || !iapNoReconoce(x)){ quitar(); return; }
+  var ll=iapLlave(x), P=iapProp(ll);
+  var pintar=function(P, txt){
+    if(String(d.value||'').trim()!==desc){ return; }                      // cambió mientras Claude leía: se tira
+    if(!box){ box=document.createElement('div'); box.className='iap-form'; var reco=card.querySelector('.prod-reco'); if(reco && reco.parentNode===card) reco.after(box); else card.appendChild(box); }
+    box.innerHTML=txt || iapFormHtml(P, ll);
+    box.hidden=!box.innerHTML;
+  };
+  if(P){ pintar(P); return; }
+  if(IAP.formEn[ll]) return;
+  var C=iapCandidatos(desc, med); if(!C.length){ quitar(); return; }
+  IAP.formEn[ll]=1; pintar(null, '🧠 Buscando cuál es en la lista…');
+  iagPost({ action:'iaProductos', uno:true, renglones:[{ r:ll, desc:desc, medida:med, cant:Number(q && q.value)||1, quien:String((document.getElementById('f-vendedor')||{}).value||'').slice(0,30), cands:C }] }).then(function(r){
+    delete IAP.formEn[ll];
+    var x0=r && r.ok && r.res && (r.res.renglones||[])[0];
+    if(!x0){ pintar(null, ''); return; }
+    var P2={ t:Number(r.t)||Date.now(), c:x0.codigo||'', s:x0.seguridad, m:x0.motivo||'', op:x0.opciones||[] };
+    IAP.form[ll]=P2; pintar(P2);
+  }, function(){ delete IAP.formEn[ll]; pintar(null, ''); });
+}
+function iapFormHtml(P, ll){
+  if(!P) return '';
+  if(P.s==='seguro' && iapProdDe(P.c)){ var x=iapProdDe(P.c);
+    return '🧠 ¿Es <b>'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</b> ('+esc(x.code)+')?'+(P.m ? (' <small>'+esc(P.m)+'</small>') : '')+' <button type="button" class="btn btn-sm iap-y" data-c="'+esc(x.code)+'" onclick="iapFormUsar(this, this.dataset.c)">Usar ese</button>'; }
+  if(P.s==='dudoso' && (P.op||[]).length){ var ops=P.op.map(iapProdDe).filter(Boolean); if(!ops.length) return '';
+    return '🧠 Puede ser'+(P.m ? (' <small>('+esc(P.m)+')</small>') : '')+': '+ops.map(function(x){ return '<button type="button" class="btn btn-sm" data-c="'+esc(x.code)+'" onclick="iapFormUsar(this, this.dataset.c)">'+esc(x.n)+(x.m ? (' '+esc(x.m)) : '')+'</button>'; }).join(' '); }
+  if(P.s==='no_es_producto') return '🧠 Esto no parece un producto'+(P.m ? (' ('+esc(P.m)+')') : '')+': escribí el producto de la lista.';
+  return '';
+}
+/* «Usar ese»: lo mismo que elegirlo de la lista (código, nombre y medida). */
+function iapFormUsar(btn, code){
+  var card=btn && btn.closest ? btn.closest('.prod-card') : null, x=iapProdDe(code); if(!card || !x) return;
+  var d=card.querySelector('.prod-desc'), c=card.querySelector('.prod-codigo'), ms=card.querySelector('.prod-medida'), ot=card.querySelector('.prod-medida-otro'), reco=card.querySelector('.prod-reco'), box=card.querySelector('.iap-form');
+  c.value=x.code; d.value=x.n; card.removeAttribute('data-cod-auto');
+  var m=String(x.m||'').trim();
+  if(m){ if(MEDIDAS.indexOf(m)>=0){ ms.value=m; if(ot){ ot.style.display='none'; ot.value=''; } } else { ms.value='Otros'; if(ot){ ot.style.display='block'; ot.value=m; } } }
+  if(reco){ reco.textContent='✓ Lo propuso Claude: '+x.n+(m ? (' '+m) : '')+' · código '+x.code+' (si no es ese, borrá el código)'; reco.hidden=false; }
+  if(box) box.remove();
+  try{ pintarTotalProds(); }catch(e){} try{ saldoAvisosProgramar(); }catch(e){}
+}
+
+/* ---------------------------------------------------------------------------
+   🔎 364 · LO QUE EL STOCK GANA O PIERDE SIN EXPLICAR. Los Excel del 12 y 13/11 trajeron 24 entradas sin explicar (83 unidades en 21
+   productos) y la celda del stock guarda solo 3 días: un producto que pierde 1 por día o un traspaso PTF → Banzer se ven igual que una
+   llegada. Stock → «🔎 Lo que no cierra» (`#iss-ov`, solo gerencia y logística: `asisVeAdm`): cada semana (la primera vez que alguien de
+   ellos abre Stock desde el lunes) o al tocar «🔄 Volver a leer», el servidor lee los Excel de los últimos ISS_DIAS días de la hoja
+   «Historial stock» y los cruza con los movimientos que el panel le manda (`issMovimientos`: entregas por depósito con el día real del
+   cierre, reposiciones, ventas de tienda, llegadas de fábrica y recogidas anotadas, salidas anotadas a mano); Claude separa lo que se
+   repite —lo que baja sin entrega, lo que sube sin pedido, los traspasos, los saltos raros—, cada uno con los días y qué preguntar.
+   · Queda en la fila del sistema `__stock_ia__` ({v:1, L:{'<lunes>':{t, por, semana, res}}}, las últimas ISS_GUARDA semanas).
+   · NADA toca el stock. En Playwright apagado salvo `window.ISS_PRUEBA`. `tests/test_iss_stock.js`.
+   --------------------------------------------------------------------------- */
+var ISS_DIAS=14, ISS_GUARDA=8, ISS_TOPE_LETRAS=40000;
+var ISS={ corre:false, err:'', auto:'' };
+var ISS_ICO={ baja_sin_entrega:'📉', sube_sin_pedido:'📈', traspaso:'🔁', salto_raro:'⚠️', otro:'🔎' };
+var ISS_TIPO_TXT={ baja_sin_entrega:'baja sin entrega', sube_sin_pedido:'sube sin pedido', traspaso:'traspaso entre depósitos', salto_raro:'salto raro', otro:'para mirar' };
+function issActivo(){ try{ return !(navigator.webdriver && !window.ISS_PRUEBA); }catch(e){ return true; } }
+function issVe(){ var v=false; try{ v=asisVeAdm(); }catch(e){ v=!!UNLOCKED; } return issActivo() && iagServidor() && v; }
+/* El lunes de la semana de `hoy`. */
+function issLunes(hoy){ hoy=hoy||todayStr(); var d=new Date(hoy+'T12:00:00Z').getUTCDay(); return stockSumarDias(hoy, -((d+6)%7)); }
+function issFila(){ return iagFilaObj(iagFilaDe(STOCK_IA_ID)); }
+function issLectura(){ var L=issFila().L||{}, k=issLunes(); if(L[k]) return L[k]; var ks=Object.keys(L).sort(); return ks.length ? L[ks[ks.length-1]] : null; }
+/* Los movimientos que conoce el panel, por día y producto (lo que el servidor resta de lo que dijo cada Excel). Solo números. */
+function issMovimientos(desde, hasta){
+  var M={}, sumar=function(dia, k, campo, alm, n){
+    n=Number(n)||0; if(!n || !k || !dia || dia<desde || dia>hasta) return;
+    var o=(M[dia]=M[dia]||{})[k]||(M[dia][k]={});
+    if(alm==null) o[campo]=(o[campo]||0)+n; else { var m=o[campo]||(o[campo]={}); m[alm]=(m[alm]||0)+n; }
+  };
+  (STATE||[]).forEach(function(p){
+    if(!p || !stockCuenta(p)) return;
+    if(esVentaTienda(p)){   // no sale de PTF (sale del stock de la tienda): va aparte, para que Claude lo sepa
+      var fv=contaFecha(p);
+      (p.productos||[]).forEach(function(x){ if(x && !esProdDeTienda(x)) sumar(fv, stockClave(x), 't', null, x.cant); });
+      return;
+    }
+    var f0=fechaSalida(p), rpt=esRPT(p.oc);
+    (p.productos||[]).forEach(function(x){
+      if(!x || !stockSalio(p, x) || esProdDeTienda(x) || x.chk==='no' || recogeDeTienda(x)) return;
+      var f=x.eF||f0, k=stockClave(x);
+      if(enProduccion(x)){ sumar(f, k, rpt ? 'r' : 'e', 'PTF', prodUnidEnConteo(x)); return; }
+      prodPartesCarga(x).forEach(function(e){
+        var alm=e.tipo==='sale' ? almEnStock(e.de) : 'PTF';     // lo traído de Moreno salió de acá
+        if(alm) sumar(f, k, rpt ? 'r' : 'e', alm, e.u);
+      });
+    });
+  });
+  (STOCK.p||[]).forEach(function(q){
+    if(!q || !q.k) return;
+    var recs=Array.isArray(q.recs) ? q.recs : ((Number(q.ru)||0)>0 ? [{ u:q.ru, f:q.r }] : []);
+    recs.forEach(function(r){ if(!r || r.an) return; if(q.tipo==='recogida') sumar(String(r.f||''), q.k, 'g', String(q.de||'IM'), r.u); else sumar(String(r.f||''), q.k, 'l', null, r.u); });
+  });
+  (STOCK.sm||[]).forEach(function(s){ if(s && !s.an && s.k) sumar(String(s.f||''), s.k, 's', String(s.alm||'') || 'PTF', s.u); });
+  return M;
+}
+/* Qué es cada almacén de la hoja: de salida (PTF y Banzer) o no (la fábrica). */
+function issAlms(){
+  var o={};
+  Object.keys(STOCK.g||{}).forEach(function(nm){ if(stockEsLog(nm)) return; var s=false; try{ s=almEsSalida(nm); }catch(e){} o[nm]={ rol:s ? 'sale' : 'fab', corto:s ? saleNombre(nm) : stockAlmCorto(nm) }; });
+  return o;
+}
+function issLeer(forzar){
+  if(ISS.corre || !issVe()) return Promise.resolve(null);
+  var hoy=todayStr(), lun=issLunes(hoy), desde=stockSumarDias(hoy, -ISS_DIAS);
+  ISS.corre=true; ISS.err=''; issPintar();
+  var fin=function(x){ ISS.corre=false; issPintar(); return x; };
+  return (forzar ? Promise.resolve(null) : iagReleerFila(STOCK_IA_ID)).then(function(o){
+    if(o && o.L && o.L[lun]) return fin(o.L[lun]);
+    return iagPost({ action:'iaStockSemana', semana:lun, desde:desde, hasta:hoy, mov:issMovimientos(desde, hoy), alms:issAlms(), forzar:!!forzar }).then(function(r){
+      if(!(r && r.ok && r.res)){ ISS.err=iagErrorTxt(r); return fin(null); }
+      var lec={ t:Number(r.t)||Date.now(), por:quienEdita()||'', semana:lun, res:r.res };
+      return iagFilaGuardar(STOCK_IA_ID, '🔎 LO QUE EL STOCK GANA O PIERDE SIN EXPLICAR (no tocar: la lee el panel)', function(v){
+        var L=(v && v.L && typeof v.L==='object') ? v.L : {}; L[lun]=lec;
+        var ks=Object.keys(L).sort(); while(ks.length>ISS_GUARDA) delete L[ks.shift()];
+        var o2={ v:1, L:L }; while(JSON.stringify(o2).length>ISS_TOPE_LETRAS && ks.length>1) delete L[ks.shift()];
+        return o2;
+      }).then(function(){ return fin(lec); }, function(){ return fin(lec); });
+    }, function(e){ ISS.err=iagErrorTxt(null, e); return fin(null); });
+  });
+}
+/* Una vez por semana, sola: la primera vez que gerencia o logística abre Stock desde el lunes (con la planilla y el stock leídos). */
+function issQuizas(){
+  if(!issVe() || ISS.corre || !CONNECTED || !ULTIMO_REFRESCO || (typeof STOCK_CARGADO!=='undefined' && !STOCK_CARGADO)) return false;
+  var lun=issLunes(); if(ISS.auto===lun || (issFila().L||{})[lun]) return false;
+  ISS.auto=lun; setTimeout(function(){ issLeer(false); }, 1500);
+  return true;
+}
+/* El botón en la fila de botones de Stock, con cuántas cosas encontró esta semana. */
+function issBotonPintar(){
+  var acc=document.querySelector('#stock-overlay .stk-acc'); if(!acc) return;
+  var b=document.getElementById('stk-iss-btn');
+  if(!issVe()){ if(b) b.style.display='none'; return; }
+  if(!b){
+    b=document.createElement('button'); b.type='button'; b.id='stk-iss-btn'; b.className='btn btn-sm';
+    b.style.cssText='background:#e6f7f6;color:#0f5f5a;border:1px solid #00A09A;font-weight:800';
+    b.title='Lo que los Excel de las últimas 2 semanas suben o bajan sin que lo explique una entrega, una reposición, una llegada o una recogida: lo lee Claude cada semana.';
+    b.onclick=function(){ issAbrir(); };
+    acc.appendChild(b);
+  }
+  b.style.display='';
+  var R=issLectura(), n=(R && R.semana===issLunes() && R.res) ? (R.res.hallazgos||[]).length : 0;
+  b.textContent='🔎 Lo que no cierra'+(n ? (' · '+n) : '');
+}
+function issVentana(){
+  var ov=document.getElementById('iss-ov'); if(ov) return ov;
+  ov=document.createElement('div');
+  ov.id='iss-ov'; ov.className='adm-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','iss-tit');
+  ov.setAttribute('style','display:none;position:fixed;inset:0;z-index:3100;background:#f4f6f7;flex-direction:column');
+  ov.innerHTML='<div class="no-print" style="padding:9px 12px;background:#00A09A;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="iss-tit" style="font-size:.95rem">🔎 Lo que el stock gana o pierde sin explicar</b><span id="iss-info" style="font-size:.78rem;opacity:.92"></span>'+
+    '<button type="button" class="btn btn-sm" id="iss-cerrar" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="issCerrar()">✕ Cerrar</button></div><div id="iss-body"></div>';
+  ov.addEventListener('keydown', function(e){ if(e.key==='Escape'){ e.preventDefault(); issCerrar(); } });
+  document.body.appendChild(ov);
+  return ov;
+}
+function issAbrir(){
+  if(!issVe()){ toast('🔎 «Lo que no cierra» es para gerencia y logística.','err'); return; }
+  var ov=issVentana(); ov.style.display='flex'; issPintar();
+  try{ document.getElementById('iss-cerrar').focus({ preventScroll:true }); }catch(e){}
+  var L=issFila().L||{}; if(!L[issLunes()] && !ISS.corre && !ISS.err) issLeer(false);
+}
+function issCerrar(){ var ov=document.getElementById('iss-ov'); if(ov) ov.style.display='none'; }
+function issAbierto(){ var ov=document.getElementById('iss-ov'); return !!(ov && ov.style.display!=='none'); }
+function issDiaTxt(f){ try{ return sfDiaTxt(f); }catch(e){ return fmtFechaCorta(f); } }
+function issPintar(){
+  try{ issBotonPintar(); }catch(e){}
+  var el=document.getElementById('iss-body'); if(!el) return;
+  var R=issLectura(), res=(R && R.res)||null, lun=issLunes(), h='<div class="iss">';
+  var info=document.getElementById('iss-info');
+  if(info) info.textContent=res ? ('Excel del '+fmtFechaCorta(res.desde||'')+' al '+fmtFechaCorta(res.hasta||'')+' · leído por Claude el '+iagCuandoTxt(R.t)) : '';
+  h+='<div class="iss-caja">Claude lee los Excel de las últimas 2 semanas (la hoja «Historial stock») contra las entregas, las reposiciones, las ventas de tienda, las llegadas de fábrica y las recogidas anotadas, y separa lo que <b>se repite</b> sin explicación. <span class="iss-gris">Solo mira: no toca el stock.</span></div>';
+  if(ISS.corre) h+='<div class="iss-caja" role="status">⏳ Claude está leyendo los Excel de las últimas 2 semanas…</div>';
+  else if(!res) h+='<div class="iss-caja">Todavía no hay una lectura de esta semana.'+(ISS.err ? '' : ' <button type="button" class="btn btn-sm" onclick="issLeer(true)">🔎 Leer ahora</button>')+'</div>';
+  if(ISS.err) h+='<div class="iss-err" role="alert">⚠️ '+esc(ISS.err)+'</div>';
+  if(res && !ISS.corre){
+    if(R.semana && R.semana<lun) h+='<div class="iss-err">Es la lectura de la semana del '+esc(fmtFechaCorta(R.semana))+'. Tocá «🔄 Volver a leer» para la de esta semana.</div>';
+    if(res.resumen) h+='<div class="iss-res">'+esc(res.resumen)+'</div>';
+    var H=res.hallazgos||[];
+    if(!H.length) h+='<div class="iss-caja iss-bien">✅ Nada que se repita: lo que subió o bajó tiene su explicación.</div>';
+    h+=H.map(function(x){
+      return '<div class="iss-i"><span class="iss-ic" aria-hidden="true">'+(ISS_ICO[x.tipo]||'🔎')+'</span><div><b>'+esc(x.producto)+(x.almacen ? (' · '+esc(x.almacen)) : '')+'</b> <small class="iss-tp">'+esc(ISS_TIPO_TXT[x.tipo]||'')+'</small>'+
+        ((x.dias||[]).length ? '<div class="iss-d">'+x.dias.map(function(d){ return '<i class="'+(d.u<0 ? 'm' : (d.u>0 ? 'p' : ''))+'">'+esc(issDiaTxt(d.dia))+' '+(d.u>0 ? '+' : (d.u<0 ? '−' : ''))+Math.abs(d.u)+'</i>'; }).join('')+'</div>' : '')+
+        (x.que_pasa ? '<small class="iss-qp">'+esc(x.que_pasa)+'</small>' : '')+(x.preguntar ? '<span class="iss-q">→ '+esc(x.preguntar)+'</span>' : '')+'</div></div>';
+    }).join('');
+    h+='<div class="iss-k"><button type="button" class="btn btn-sm" onclick="issCopiar()">📋 Copiar</button><button type="button" class="btn btn-sm btn-ghost" onclick="issReleer()">🔄 Volver a leer</button></div>';
+  }
+  el.innerHTML=h+'</div>';
+}
+function issReleer(){
+  if(!confirm('🔄 ¿Volver a leer los Excel de las últimas 2 semanas con Claude?\n\nCuesta unos centavos de dólar. Hacelo si se subieron Excel nuevos o se anotaron llegadas.')) return;
+  issLeer(true);
+}
+function issTexto(R){
+  R=R||issLectura(); var res=R && R.res; if(!res) return '';
+  var L=['🔎 Lo que el stock gana o pierde sin explicar · Excel del '+fmtFechaCorta(res.desde||'')+' al '+fmtFechaCorta(res.hasta||'')+' (leído por Claude el '+iagCuandoTxt(R.t)+')', ''];
+  if(res.resumen) L.push(res.resumen, '');
+  (res.hallazgos||[]).forEach(function(x){
+    L.push((ISS_ICO[x.tipo]||'🔎')+' '+x.producto+(x.almacen ? (' · '+x.almacen) : '')+' ('+(ISS_TIPO_TXT[x.tipo]||'')+')');
+    if((x.dias||[]).length) L.push('   '+x.dias.map(function(d){ return fmtFechaCorta(d.dia)+' '+(d.u>0 ? '+' : (d.u<0 ? '−' : ''))+Math.abs(d.u); }).join(' · '));
+    if(x.que_pasa) L.push('   '+x.que_pasa);
+    if(x.preguntar) L.push('   → '+x.preguntar);
+  });
+  return L.join('\n');
+}
+function issCopiar(){ var t=issTexto(); if(!t){ toast('Todavía no hay una lectura de Claude.','err'); return; } copyText(t); }
+/* Desde la fila de Stock: el botón y, una vez por día / por semana, lo que corre solo. */
+function iagStockPintar(){
+  try{ issBotonPintar(); }catch(e){}
+  try{ issQuizas(); }catch(e){}
+  try{ iapQuizas(); }catch(e){}
+}
+/* fin 🧠 (16/11, mejoras 359, 360 y 364) */
 /* ============================================================================
    ✓ «LO MANDÉ»: EL PEDIDO A PRODUCCIÓN QUEDA ANOTADO (15/11, mejora 313; dueño: «313»).
    Desde el 27/10 no se anotó ningún «Ya pedí» (del 9 al 27/10 fueron 36): logística manda su pedido por Excel y correo, el panel no se
@@ -33886,6 +34592,7 @@ function renderAtc(){
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
   try{ atvPintar(list, mesSel); }catch(e){ console.error(e); }
   try{ atcqPintar(list); }catch(e){ console.error(e); }   // 📉🔁⏳ (178-180)
+  try{ atcIaPintar(); }catch(e){ console.error(e); }       // 🧠 (16/11, mejora 359) lo que dicen las ATC
 }
 /* ==========================================================================
    🎧 ATC CON EL ESTILO NUEVO (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo»). Solo presentación: las cuentas
@@ -34933,7 +35640,9 @@ function atciDetalle(D){
 function atciHojas(D){
   var H=[atciPortada(D)];
   if(D.n){
-    H.push(atciResumen(D), atciMotivos(D), atciProductos(D)); H=H.concat(atciProductosResto(D), atciLineasHojas(D));
+    H.push(atciResumen(D), atciMotivos(D));
+    var _ia=''; try{ _ia=atciIaHoja(D); }catch(e){ _ia=''; } if(_ia) H.push(_ia);   // 🧠 (16/11, mejora 359) solo si se tildó «Con lo que leyó Claude»
+    H.push(atciProductos(D)); H=H.concat(atciProductosResto(D), atciLineasHojas(D));
     H=H.concat(atciCalidadHojas(D)); var _mh=atciMesesHoja(D); if(_mh) H.push(_mh);   // 📉🔁⏳ (13/11, 178-180)
     H.push(atciDonde(D)); H=H.concat(atciAbiertasResto(D));
     H.push(atciTiempos(D), atciTendencia(D)); H=H.concat(atciDetalle(D));
@@ -34988,6 +35697,7 @@ function abrirInformeAtc(){
 }
 function atciPintar(){
   var inp=document.getElementById('atci-mes'), box=document.getElementById('atci-hojas'); if(!box) return;
+  try{ atciIaBarra(); }catch(e){}   // 🧠 (16/11, mejora 359) la casilla «Con lo que leyó Claude»
   var alc=document.getElementById('atci-alc'), TT=!!(alc && alc.value==='todas');
   if(inp) inp.hidden=TT;
   var D=atciDatos(TT ? 'todas' : ((inp && inp.value) || todayStr().slice(0,7)), (document.getElementById('atci-tipo')||{}).value||''), H=atciHojas(D);
@@ -61661,6 +62371,7 @@ function stkTopActivo(){ return !navigator.webdriver || !!window.STK_TOP_PRUEBA;
 function stkTopPintar(d){
   var el=document.getElementById('stk-top'), ov=document.getElementById('stock-overlay'); if(!el || !ov) return;
   try{ ofertaBotonPintar(); }catch(e){}   // 🏷️ (13/11, mejora 193) «Qué ofertar» en la fila de siempre, solo con la contraseña
+  try{ iagStockPintar(); }catch(e){}     // 🧠🔎 (16/11, mejoras 360 y 364) «Lo que no cierra» y, una vez por día / por semana, lo que corre solo
   var on=stkTopActivo(); ov.classList.toggle('s3-on', on); el.hidden=!on;
   if(!on){ el.innerHTML=''; el._h=''; return; }
   var por=stockCintaGrupos(d), c=STOCK.c||{}, viejos=stockCortesViejos(), ultH=stockUltimoHabil(), hoy=todayStr();
@@ -61780,6 +62491,7 @@ function stockPlanHtml(d, lista){
       '<th>Pedir<small>7 días</small></th><th>Pedir<small>15 días · incluye los 7</small></th><th>Pedir<small>'+esc(MS.nombre)+' · además de 15 días</small></th></tr></thead><tbody>'+
       (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
     planNombreHtml(d, 'plan')+   // ❓ (15/11, mejora 316)
+    iapHtml()+   // 🧠 (16/11, mejora 360) lo escrito a mano, con lo que propone Claude
     '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;planRepintar()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
