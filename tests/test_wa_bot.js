@@ -443,7 +443,8 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
                      efectivo_del_dia_boton: 5,
                      mayoristas_vencido: 6,
                      venta_grande: 4,
-                     cotizacion_seguimiento: 7, vendedora_llamar_cliente: 3, cotizacion_sin_llamar: 4 };   // 🧾🤖 (2026-11-14-b, mejora 274) las cotizaciones a las 48 h   // 💰 (2026-11-14-b, mejora 277) al dueño, la venta grande   // 🏭⏳ (2026-11-13-b, mejora 181) a Contabilidad, los lunes: lo vencido de los mayoristas   // 💵✅ (2026-11-07-f) a Contabilidad, con «Ya lo recibí»   // 📥 (2026-11-07-f) al dueño, el pedido que cargó la revisión de correos (subirlo al TR4)   // 📍📉 (2026-11-07-f) la ubicación 2 días antes y «cómo va cada vendedor» de los lunes
+                     cotizacion_seguimiento: 7, vendedora_llamar_cliente: 3, cotizacion_sin_llamar: 4,
+                     porque_semana: 4 };   // 🧠 (2026-11-16-a, mejora 356) el porqué de la semana, los lunes al dueño   // 🧾🤖 (2026-11-14-b, mejora 274) las cotizaciones a las 48 h   // 💰 (2026-11-14-b, mejora 277) al dueño, la venta grande   // 🏭⏳ (2026-11-13-b, mejora 181) a Contabilidad, los lunes: lo vencido de los mayoristas   // 💵✅ (2026-11-07-f) a Contabilidad, con «Ya lo recibí»   // 📥 (2026-11-07-f) al dueño, el pedido que cargó la revisión de correos (subirlo al TR4)   // 📍📉 (2026-11-07-f) la ubicación 2 días antes y «cómo va cada vendedor» de los lunes
   chk('cada una tiene tantos {{n}} como datos arma waArmar_, y un ejemplo por cada uno', T.every(x => nVars(x.t) === esperado[x.n] && x.e.length === esperado[x.n]), T.map(x => x.n + ':' + nVars(x.t) + '/' + x.e.length));
   chk('ninguna empieza ni termina con un {{n}} ni tiene dos pegados (Meta las rechaza)', T.every(x => !/^\{\{/.test(x.t) && !/\}\}$/.test(x.t.trim()) && !/\}\}\s*\{\{/.test(x.t)));
   S.meta.responder = (b, n) => n === 2 ? { code: 400, body: { error: { code: 100, error_subcode: 2388024, message: 'Content in this language already exists' } } } : { code: 200, body: { id: 'tpl' + n, status: 'PENDING', category: 'UTILITY' } };
@@ -463,7 +464,9 @@ console.log('\n── Las plantillas: crearPlantillasWhatsApp / verPlantillasWha
       ['cierre_del_dia_v3', 'cierre_del_dia_bf'].every(n => { const c = ll.find(x => x.body.name === n); return !!c && JSON.stringify(c.body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver qué vendió cada uno' }]); }) &&
       !!ll.find(c => c.body.name === 'cierre_del_mes') && JSON.stringify(ll.find(c => c.body.name === 'cierre_del_mes').body.components[1].buttons) ===
         JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver por vendedora' }, { type: 'QUICK_REPLY', text: 'Ver por tienda' }]) &&
-      ll.filter(c => c.body.components.length > 1).length === 7, v2 && v2.body.components);
+      /* 🧠 (2026-11-16-a, mejora 356) + el porqué de la semana con «Ver el detalle por tienda» */
+      !!ll.find(c => c.body.name === 'porque_semana') && JSON.stringify(ll.find(c => c.body.name === 'porque_semana').body.components[1].buttons) === JSON.stringify([{ type: 'QUICK_REPLY', text: 'Ver el detalle por tienda' }]) &&
+      ll.filter(c => c.body.components.length > 1).length === 8, v2 && v2.body.components);
   chk('la que ya existía queda como estaba y no es un error', r.ok && r.plantillas.filter(x => x.ya).length === 1 && r.plantillas.filter(x => /creada/.test(x.txt)).length === T.length - 1, r);
   chk('crear no toca pedidos ni la cola del bot', !S.P.WA_COLA && !S.hoja().length);
   S.limpiar(); S.meta.responder = () => ({ code: 401, body: { error: { code: 190, message: 'Session has expired' } } });
