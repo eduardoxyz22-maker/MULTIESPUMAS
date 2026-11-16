@@ -4703,6 +4703,24 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ias-lee .ias-tx::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;border:2px solid #9fb8cc;border-top-color:#2b4a63;vertical-align:-1px;animation:ias-gira .9s linear infinite}
 @keyframes ias-gira{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.ias-lee .ias-tx::before{animation:none}}
+/* 🎧🤖 (16/11, 347) lo que Claude ve en las fotos de la ATC */
+.atf-box:empty{ display:none; }
+.atf-ficha{ margin-top:12px; } .atf-ficha .atf-btn{ width:auto; background:#fff; border:1px solid #00B5AD; color:#00726c; font-weight:700; }
+.atf{ margin:0 0 14px; background:#fff; border:1px solid #cdebe9; border-left:5px solid #00B5AD; border-radius:12px; padding:11px 13px; color:#14403d; font-size:.86rem; }
+.atf-ficha .atf{ margin-top:8px; }
+.atf-h{ font-weight:800; color:#00726c; margin-bottom:6px; }
+.atf-r{ display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; margin:4px 0; } .atf-r .btn{ width:auto; margin-left:4px; }
+.atf-l{ flex:none; min-width:74px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#5d7473; }
+.atf-v{ color:var(--muted); font-style:italic; } .atf-okm{ font-size:.78rem; font-weight:700; color:#15803d; }
+.atf-nc{ margin:8px 0; background:#fff8ec; border:1px solid #f6d7a8; border-radius:9px; padding:7px 10px; color:#7c4b00; }
+.atf-fab{ margin:8px 0; } .atf-fab div{ background:#f4f8f8; border-radius:9px; padding:8px 10px; line-height:1.45; white-space:pre-wrap; }
+.atf-foto{ margin:8px 0; background:#f4f8fb; border:1px solid #d7e3ee; border-radius:9px; padding:7px 10px; color:#2b4a63; }
+.atf-b{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .atf-b .btn{ width:auto; }
+.atf-correo{ background:#00B5AD; color:#fff; border:0; font-weight:700; }
+.atf-pie{ margin-top:8px; font-size:.74rem; color:#6b8584; }
+.atf-lee, .atf-gris{ color:#55706f; background:#f5f7f7; border-color:#e3e9e9; border-left-color:#9fb8cc; }
+.atf-gira{ display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:50%; border:2px solid #9fb8cc; border-top-color:#2b4a63; vertical-align:-1px; animation:ias-gira .9s linear infinite; }
+@media (prefers-reduced-motion:reduce){ .atf-gira{ animation:none; } }
 /* 📄 el PDF «Pagos para revisar» (A4 parado 794×1123; sin color-mix ni sombras: html2canvas) */
 .icp-pag{width:794px;height:1123px;box-sizing:border-box;padding:40px 44px 34px;background:#fff;color:#13302e;font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden;margin:0 0 12px}
 .icp-cab{display:flex;align-items:center;gap:10px;border-bottom:3px solid #00B5AD;padding-bottom:10px;margin-bottom:14px}.icp-cab b{display:block;font-size:22px;font-weight:900}.icp-cab span{font-size:13px;color:#55706f}
@@ -7358,6 +7376,31 @@ html.tema-todos-santos .cx-kt b{ color:#fcd34d; } html.tema-todos-santos .cx-kt 
 .obsrev-mover{ margin-top:10px; display:flex; flex-direction:column; gap:5px; }
 .obsrev-mover .btn{ width:100%; }
 .obsrev-mover small{ font-size:.78rem; line-height:1.35; color:#5b4214; }
+/* 🤖📌 (16/11, 345 y 349) lo que leyó Claude en la ventana, lo prometido y la marca de tienda en el renglón */
+.oia{ margin-top:10px; background:#fff; border:1px solid #cdebe9; border-left:5px solid #00B5AD; border-radius:12px; padding:10px 13px; color:#14403d; }
+.obsrev + .oia{ margin-top:10px; }
+.oia-s{ font-weight:800; font-size:.86rem; color:#00726c; margin-bottom:2px; } .oia-s small{ font-weight:600; color:#5d7473; margin-left:4px; }
+.oia-it{ padding:8px 0; border-top:1px dashed #d6ecea; } .oia-it:first-of-type{ border-top:0; }
+.oia-c{ font-size:.78rem; color:#5d7473; font-style:italic; } .oia-t{ font-size:.9rem; line-height:1.45; margin-top:2px; }
+.oia-b{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; } .oia-b .btn{ width:auto; }
+.oia-arr{ background:#00B5AD; color:#fff; font-weight:700; border:0; } .oia-arr:hover{ background:#00A09A; }
+.oia-arr.oia-ok{ background:#e9f9f1; color:#15803d; border:1px solid #bfe9d1; }
+.oia-cmp{ margin-top:10px; background:#fffdf5; border:1px dashed #f3cf95; border-radius:12px; padding:9px 12px; color:#5b4214; }
+.oia-cmp .oia-s{ color:#8a5a00; } .oia-cmp ul{ margin:4px 0 0 18px; padding:0; } .oia-cmp li{ margin:3px 0; font-size:.86rem; }
+.oia-pie{ margin-top:8px; font-size:.74rem; color:#6b8584; }
+.oia-tarde{ margin:0 0 10px; }
+.oia-marca{ margin-top:6px; display:inline-flex; align-items:center; gap:6px; font-size:.78rem; font-weight:700; color:#7c3d00; background:#fff4e5; border:1px solid #f6d7a8; border-radius:20px; padding:3px 6px 3px 10px; }
+.oia-marca-x{ border:0; background:transparent; color:#7c3d00; cursor:pointer; font-size:.8rem; padding:0 4px; }
+.cmp-s{ font-size:.84rem; color:var(--muted); margin-bottom:10px; }
+.cmp-r{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fffdf5; border:1px solid #f3e2bf; border-left:4px solid var(--amber); border-radius:10px; padding:8px 10px; margin-bottom:8px; }
+.cmp-r.cmp-urge{ border-left-color:var(--red); background:#fff7f7; }
+.cmp-d{ flex:none; min-width:92px; font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#8a5a00; }
+.cmp-urge .cmp-d{ color:#9f1d2c; }
+.cmp-x{ flex:1; min-width:180px; } .cmp-x b{ display:block; font-size:.9rem; color:#2b2b2b; } .cmp-x small{ font-size:.76rem; color:var(--muted); }
+.cmp-b{ display:flex; gap:6px; flex:none; } .cmp-b .btn{ width:auto; }
+.cmp-hecho{ background:#15803d; color:#fff; border:0; font-weight:700; }
+.cmp-ficha{ background:#fffaf0; border:1px solid #f3cf95; border-radius:10px; padding:9px 11px 3px; margin-bottom:10px; }
+.cmp-ficha .oia-s{ color:#8a5a00; margin-bottom:6px; }
 .fx-der .fx-mes{ display:block !important; margin:0; }
 .fx-hoy{ display:flex; align-items:center; gap:10px; background:linear-gradient(135deg,#0b1730,#1e3a5f); color:#fff; border-radius:12px; padding:10px 12px; }
 .fx-hoy .g{ font-size:1.5rem; font-weight:900; line-height:1; } .fx-hoy .s{ font-size:.72rem; opacity:.85; }
@@ -10645,6 +10688,7 @@ function pintarProdRpt(){
 function pintarTotalProds(){
   var cja=document.getElementById('f-prods-total'); if(!cja) return;
   try{ totalAutoPoner(); }catch(e){}   // 🧮 (06/11) primero el monto, después la caja que lo dice
+  try{ nvpTrasPrecios(); }catch(e){}   // 🧾 (16/11, 353) el aviso de la nota de venta sigue a los precios que se escriben
   var t=0, con=0, sin=0;
   var cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
@@ -10991,8 +11035,11 @@ function heredarMarcas(nuevos, viejos){
   /* 🔁💵 (mejoras 380 y 386) …y lo que cambió después de cargarla al sistema (`rc`) y quién corrigió cada pago (`pH`): son del pedido. */
   var rcV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.rc) && x.rc.length){ rcV=x.rc; return true; } return false; });
   var pHV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.pH) && x.pH.length){ pHV=x.pH; return true; } return false; });
+  /* 🤖📌 (16/11, mejoras 345 y 349) …y lo que quedó «para después» en la nota (`cmp`) y lo que Claude dijo tarde (`oia`): son del pedido. */
+  var cmpV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.cmp) && x.cmp.length){ cmpV=x.cmp; return true; } return false; });
+  var oiaV=null; (viejos||[]).some(function(x){ if(x && x.oia && Array.isArray(x.oia.a)){ oiaV=x.oia; return true; } return false; });
   var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
-    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); return x; };
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -23048,6 +23095,393 @@ function obsRevIr(x){
   el.classList.add('obsrev-mira'); setTimeout(function(){ el.classList.remove('obsrev-mira'); }, 2500);
 }
 
+/* ============================================================================
+   🤖📌 (16/11, mejoras 345 y 349; el dueño las eligió) CLAUDE LEE TUS OBSERVACIONES ANTES DE GUARDAR + «LO QUE PROMETISTE».
+   Del 01 al 14/11 entraron 82 pedidos a domicilio y RPT con observaciones: la regla de arriba (`obsRevisar`, palabras exactas) avisó 3
+   veces y se le pasaron 7 cosas: «recoger de la tienda» sin la marca 🏬 (el stock lo descontó de la fábrica), «NO COBRAR – autorizada por
+   gerencia» con saldo, «cobrar transporte Bs 180» sin el recargo anotado, bolsas pedidas solo en la nota de una RPT. Y 5 cosas que
+   quedaron «para después» que nadie siguió («pasar el lunes por su última pieza», «somier por confirmar»…).
+   · Al tocar «Guardar», DESPUÉS de la regla de siempre, el panel le pasa a Claude el pedido entero (productos, de dónde sale cada uno, día,
+     turno, plata, recargo) y las observaciones (acción `obsIa` del servidor 2026-11-16-a) y espera `OBS_IA_ESPERA_MS` (4 s) con el botón
+     en «🤖 Leyendo las observaciones…». Si contesta a tiempo, sus avisos (hasta 3, sin repetir lo que ya dijo la regla) van en la MISMA
+     ventana ámbar «⚠️ Antes de guardar, revisá», cada uno con su arreglo de un toque: «🏬 Marcar Tienda X» (la marca de siempre: «📥
+     recoger» con `chkDe` = «Tienda X», §4kr), «➕ Agregar 2 BOLSA…» (un renglón, `addProdRow`), «🚚 Anotar recargo Bs 180» (el campo del
+     recargo, pactado) y «💵 Dejar el saldo en 0». Los arreglos tocan el FORMULARIO como lo haría la persona; «💾 Guardar con los
+     arreglos» vuelve a pasar por `submitPedido` entero (todas las reglas de siempre) sin volver a preguntar (`OBS_IA.pasar`). «Corregir»
+     no guarda; «Guardar igual», como siempre. Nunca frena.
+   · Si Claude tarda más, el pedido se guarda como hoy y, cuando contesta, lo que dijo queda ADENTRO del pedido (`oia` en los productos:
+     {t, a:[{c, t}], v}) con un guardado aparte (`guardarDurable`, nada del pedido cambia): sale en «📋 Para hacer» de la vendedora
+     («🤖 Claude vio algo en tus observaciones», con «✏️ Corregir» / «Ya está bien») y en la ficha.
+   · 📌 Los COMPROMISOS (349) salen de la misma lectura y van adentro de los productos (`cmp`: [{id, t, d, c, a, e, q, f}], como `fH`/`eH`;
+     `heredarMarcas` los pasa): «📋 Para hacer» de esa vendedora («📌 Lo que prometiste», con «✓ Hecho» / «Ya no va») y, mientras estén
+     abiertos, arriba de la ficha de logística en amarillo (`fichaAvisos`). Nada se cambia solo.
+   · Solo pedidos con observaciones: OC y RPT (ni ATC, ni venta de tienda, ni cotización, ni lo ya entregado). Editando, solo si la nota
+     cambió. Con el servidor de antes, sin conexión o con Claude apagado (o el tope del día: 15 min sin pedir), todo sigue como hoy.
+   · En Playwright apagado salvo `window.OBS_IA_PRUEBA`.
+   ========================================================================== */
+var OBS_IA_SERVIDOR='2026-11-16-a', OBS_IA_ESPERA_MS=4000, OBS_IA_TOPE_MS=45000, OBS_IA_PASAR_MS=120000, OBS_IA_PAUSA_MS=15*60000;
+var OBS_IA_TARDE_INTENTOS=40, OBS_IA_TARDE_CADA_MS=3000, OBS_IA_CMP_MAX=8;
+var OBS_IA={ cache:{}, cacheK:[], pasar:0, esperando:false, parado:0, form:{ cmp:[], marcas:[] }, modal:null };
+function obsIaActivo(){ return !(navigator.webdriver && !window.OBS_IA_PRUEBA); }
+function obsIaServidorOk(){ return servidorTiene(OBS_IA_SERVIDOR); }
+function obsIaFormOlvidar(){ OBS_IA.form={ cmp:[], marcas:[] }; OBS_IA.pasar=0; }
+function obsIaNormTxt(t){ return sinTildes(String(t==null?'':t)).replace(/[^a-z0-9ñ]+/g,' ').trim(); }
+function obsIaHuella(s){ s=String(s||''); var h=0x811c9dc5; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; } return ('0000000'+h.toString(16)).slice(-8); }
+/* Los compromisos y los avisos que llegaron tarde viven en TODOS los renglones (como `fH`): si se borra uno, no se pierden. */
+function cmpDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].cmp)) return pr[i].cmp; return []; }
+function cmpAbiertos(p){ return cmpDe(p).filter(function(c){ return c && c.t && !c.e; }); }
+function cmpPoner(p, L){ (p.productos||[]).forEach(function(x){ if(!x) return; if(L && L.length) x.cmp=L.map(function(c){ return Object.assign({}, c); }); else delete x.cmp; }); }
+function oiaDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && pr[i].oia && Array.isArray(pr[i].oia.a)) return pr[i].oia; return null; }
+function oiaAbiertos(p){ var o=oiaDe(p); return (o && !o.v && p && !p.entregado) ? o.a : []; }
+function oiaPoner(p, o){ (p.productos||[]).forEach(function(x){ if(!x) return; if(o) x.oia={ t:o.t, a:o.a.map(function(z){ return { c:String(z.c||''), t:String(z.t||'') }; }), v:o.v?1:0 }; else delete x.oia; }); }
+/* Suma compromisos nuevos a los que ya tiene el pedido, sin repetir el mismo texto (los cerrados quedan como estaban). */
+function obsIaCmpAgregar(p, L){
+  var ya=cmpDe(p).map(function(c){ return Object.assign({}, c); }), vistos={};
+  ya.forEach(function(c){ vistos[obsIaNormTxt(c.t)]=1; });
+  (L||[]).forEach(function(c){
+    var t=String(c.texto||c.t||'').trim(), d=String(c.dia||c.d||''), k=obsIaNormTxt(t);
+    if(!t || vistos[k]) return; vistos[k]=1;
+    ya.push({ id:'c'+obsIaHuella(t+'|'+d), t:t.slice(0,160), d:/^\d{4}-\d{2}-\d{2}$/.test(d) ? d : '', c:String(c.cita||c.c||'').slice(0,140), a:Date.now(), e:'' });
+  });
+  if(ya.length>OBS_IA_CMP_MAX) ya=ya.slice(-OBS_IA_CMP_MAX);
+  cmpPoner(p, ya);
+}
+/* ¿Se le pregunta a Claude por este pedido? */
+function obsIaVa(rec, prev, tipo){
+  if(!obsIaActivo() || !obsIaServidorOk() || !CONNECTED || !rec) return false;
+  if(OBS_IA.parado && Date.now()-OBS_IA.parado<OBS_IA_PAUSA_MS) return false;   // tope del día, apagado o sin clave: un rato sin pedir
+  if(VENTA_TIENDA || tipo==='ATC' || tipo==='COT' || esATC(rec.oc) || esVentaTienda(rec) || rec.entregado || esFilaSistema(rec)) return false;
+  var obs=String(rec.observaciones||'').trim(); if(!obs) return false;
+  if(prev && String(prev.observaciones||'').trim()===obs) return false;   // editando: solo si la nota cambió (la de antes ya se leyó)
+  return true;
+}
+/* De dónde sale cada renglón, en palabras (lo que Claude compara con «recoger de la tienda…»). */
+function obsIaLugar(x){
+  try{
+    var t=recogeDeTienda(x); if(t) return 'recoger de '+tiendaConPref(t);
+    if(x.chk==='no') return 'no hay (marcado ✗)';
+    if(enProduccion(x)) return 'en producción en la fábrica';
+    if(esRecoger(x)) return 'recoger de '+recogerCorto(x);
+    if(prodHay(x)) return 'hay en el depósito';
+  }catch(e){}
+  return '';
+}
+function obsIaArmar(rec, tipo, L){
+  var pl={ pagado:!!rec.pagado, total:0, acuenta:Number(rec.acuenta)||0, saldo:Number(rec.saldo)||0, recargo:0, recargoCob:false };
+  try{ pl.total=ventaTotal(rec); }catch(e){}
+  try{ pl.recargo=envioTotal(rec); pl.recargoCob=pl.recargo>0.005 && envioPorCobrar(rec)<0.005; }catch(e){}
+  var suc=''; try{ suc=sucursalDeVendedor(rec.vendedor)||''; }catch(e){}
+  return { action:'obsIa', obs:String(rec.observaciones||'').trim(), tipo:(tipo==='RPT' || esRPT(rec.oc)) ? 'RPT' : 'OC', fecha:rec.fecha||'',
+    turno:normTurno(rec.turno)||'', vendedor:rec.vendedor||'', tienda:suc,
+    prods:(rec.productos||[]).map(function(x){ return { d:String(x.desc||'')+(x.medida?(' '+x.medida):''), n:Number(x.cant)||1, p:Number(x.precio)||0, l:obsIaLugar(x) }; }),
+    plata:pl, tiendas:recogerTiendas(), ya:(L||[]).map(function(x){ return x.t; }) };
+}
+function obsIaCacheGuardar(k, R){ if(!OBS_IA.cache[k]) OBS_IA.cacheK.push(k); OBS_IA.cache[k]=R; while(OBS_IA.cacheK.length>20) delete OBS_IA.cache[OBS_IA.cacheK.shift()]; }
+/* En `submitPedido`, con `rec` armado y lo de la regla (`L`): null = no se pregunta; {pasar} = se vuelve de «Guardar con los arreglos»;
+   {R} = ya se leyó esto mismo; {prom} = la lectura en camino. */
+function obsIaAntes(rec, prev, tipo, L){
+  if(OBS_IA.pasar && Date.now()-OBS_IA.pasar<OBS_IA_PASAR_MS){ OBS_IA.pasar=0; return { pasar:true }; }
+  OBS_IA.pasar=0;
+  if(!obsIaVa(rec, prev, tipo)) return null;
+  var q=obsIaArmar(rec, tipo, L), firma=JSON.stringify(q);
+  if(OBS_IA.cache[firma]) return { firma:firma, R:OBS_IA.cache[firma] };
+  var J={ firma:firma, q:q };
+  J.prom=conTopeDuro(apiPost(q), OBS_IA_TOPE_MS, 'tardo_ia').then(function(r){
+    if(r && r.ok){ var R={ av:Array.isArray(r.avisos)?r.avisos:[], cmp:Array.isArray(r.compromisos)?r.compromisos:[] }; obsIaCacheGuardar(firma, R); return R; }
+    if(r && /^(tope|ia_apagada|sin_clave)$/.test(String(r.error||''))) OBS_IA.parado=Date.now();
+    return null;
+  }, function(){ return null; });
+  return J;
+}
+/* Lo que se muestra de lo que dijo Claude: sin repetir la regla, solo arreglos que tienen sentido en ESTE pedido, hasta 3. */
+function obsIaFiltrar(R, rec, L){
+  var reglas=(L||[]).map(function(x){ return obsIaNormTxt(x.t); }), pr=rec.productos||[], av=[];
+  (R && R.av || []).forEach(function(a){
+    if(!a || !String(a.texto||'').trim() || av.length>=3) return;
+    var ci=obsIaNormTxt(a.cita);
+    if(ci && reglas.some(function(t){ return t.indexOf(ci)>=0 || (ci.indexOf(t)>=0 && t.length>12); })) return;   // ya lo dijo la regla
+    var r=Object.assign({ tipo:'ninguno' }, a.arreglo||{}), sale=Object.assign({}, a, { arreglo:r });
+    if(r.tipo==='tienda'){
+      var x=pr[r.renglon];
+      if(!x || !r.tienda) sale.arreglo={ tipo:'ninguno' };
+      else if(recogeDeTienda(x) && normNombre(recogeDeTienda(x))===normNombre(recogeTiendaDe(tiendaConPref(r.tienda))||r.tienda)) return;   // ya está marcado así
+      else if(x.chk) sale.arreglo={ tipo:'ninguno' };   // logística ya le puso otra marca: se avisa, no se pisa
+    }
+    else if(r.tipo==='recargo'){ var ya=0; try{ ya=envioTotal(rec); }catch(e){} if(esRPT(rec.oc) || ya>=Number(r.monto)-0.005) return; }
+    else if(r.tipo==='saldo0'){ if(esRPT(rec.oc) || rec.pagado || !((Number(rec.saldo)||0)>0.005)) return; }
+    av.push(sale);
+  });
+  var tiene={}; cmpDe(rec).forEach(function(c){ tiene[obsIaNormTxt(c.t)]=1; });
+  var cmp=(R && R.cmp || []).filter(function(c){ return c && String(c.texto||'').trim() && !tiene[obsIaNormTxt(c.texto)]; }).slice(0,4);
+  return { av:av, cmp:cmp };
+}
+/* En `submitPedido`, recién armado `rec`: lo que se arregló desde la ventana (la marca de tienda: el formulario no tiene dónde mostrarla)
+   y los compromisos que ya se leyeron de ESTA nota. Una nota que cambió se lleva lo que Claude había dicho tarde. */
+function obsIaFormAplicar(rec, prev){
+  if(!rec) return;
+  if(prev && oiaDe(rec) && String(prev.observaciones||'').trim()!==String(rec.observaciones||'').trim()) oiaPoner(rec, null);
+  var F=OBS_IA.form;
+  F.marcas.forEach(function(m){ (rec.productos||[]).forEach(function(x){ if(x && !x.chk && prodClave(x)===m.k){ x.chk='im'; x.chkDe=m.de; delete x.chkDes; } }); });
+  if(F.cmp.length){
+    var obs=obsIaNormTxt(rec.observaciones);
+    var vale=F.cmp.filter(function(c){ var ci=obsIaNormTxt(c.cita); return !ci || obs.indexOf(ci)>=0; });
+    if(vale.length) obsIaCmpAgregar(rec, vale);
+  }
+}
+function obsIaBoton(on){
+  setSubmitting(on);
+  if(on){ var b=document.getElementById('f-submit'); if(b) b.innerHTML='<span class="spin"></span> 🤖 Leyendo las observaciones…'; }
+}
+/* Espera a Claude (4 s como mucho) y sigue: con sus avisos, la ventana; sin nada, lo de siempre; si tarda, lo de siempre y lo suyo después. */
+function obsIaEsperar(J, rec, L, seguir){
+  var fin=false, t=null;
+  var sigue=function(){ if(L.length && obsRevPreguntar(L, rec, seguir)) return; seguir(); };
+  var listo=function(R){
+    if(fin) return; fin=true; if(t) clearTimeout(t);
+    if(OBS_IA.esperando){ OBS_IA.esperando=false; obsIaBoton(false); }
+    var A=R ? obsIaFiltrar(R, rec, L) : { av:[], cmp:[] };
+    if(R) R.usado=true;
+    if(A.cmp.length){ obsIaCmpAgregar(rec, A.cmp); OBS_IA.form.cmp=OBS_IA.form.cmp.concat(A.cmp.map(function(c){ return { texto:c.texto, dia:c.dia, cita:c.cita }; })); }
+    if(A.av.length){ obsIaPreguntar(L, A.av, cmpAbiertos(rec), rec, seguir); return; }
+    sigue();
+  };
+  if(J.R){ listo(J.R); return; }
+  OBS_IA.esperando=true; obsIaBoton(true);
+  t=setTimeout(function(){
+    if(fin) return; fin=true; OBS_IA.esperando=false; obsIaBoton(false);
+    obsIaTarde(J, rec);
+    sigue();
+  }, OBS_IA_ESPERA_MS);
+  J.prom.then(listo, function(){ listo(null); });
+}
+/* Claude contestó cuando el pedido ya iba por su camino: lo que dijo se guarda ADENTRO del pedido ya guardado (con la nota que leyó). */
+function obsIaTarde(J, rec){
+  var id=String(rec.id), obs=String(rec.observaciones||'').trim(), n=0;
+  J.prom.then(function(R){
+    if(!R) return;
+    var intento=function(){
+      if(R.usado) return;                       // otro «Guardar» con esta misma nota ya lo mostró
+      var p=findById(id);
+      if(!p || String(p.observaciones||'').trim()!==obs || enColaLocal(id)){ if(++n<OBS_IA_TARDE_INTENTOS) setTimeout(intento, OBS_IA_TARDE_CADA_MS); return; }
+      R.usado=true;
+      obsIaGuardarTarde(p, R);
+    };
+    intento();
+  });
+}
+function obsIaGuardarTarde(p, R){
+  var L=[]; try{ L=obsRevisar(p, { rel:false, tipo:esRPT(p.oc) ? 'RPT' : 'OC' }); }catch(e){}
+  var A=obsIaFiltrar(R, p, L), hay=false;
+  if(A.cmp.length){ var n0=cmpDe(p).length; obsIaCmpAgregar(p, A.cmp); hay=cmpDe(p).length!==n0; }
+  if(A.av.length && !p.entregado){ oiaPoner(p, { t:Date.now(), a:A.av.map(function(a){ return { c:a.cita||'', t:a.texto }; }), v:0 }); hay=true; }
+  if(!hay) return false;
+  upsert(p); saveMirror();
+  try{ guardarDurable(p); }catch(e){}
+  try{ if((document.getElementById('view-mis')||{}).classList && document.getElementById('view-mis').classList.contains('active')) renderMis(); }catch(e){}
+  toast('🤖 Claude leyó las observaciones de '+(p.cliente||'tu pedido')+': '+(A.av.length ? ('mirá '+(A.av.length===1?'lo que dijo':'lo que dijo')+' en «📋 Para hacer».') : 'lo que quedó para después está en «📋 Para hacer».'),'ok',9000);
+  return true;
+}
+/* El texto del botón de cada arreglo. */
+function obsIaArregloTxt(r){
+  if(!r) return '';
+  if(r.tipo==='tienda') return '🏬 Marcar «'+tiendaConPref(r.tienda)+'»';
+  if(r.tipo==='producto') return '➕ Agregar '+(Number(r.cant)||1)+' '+String(r.producto||'');
+  if(r.tipo==='recargo') return '🚚 Anotar recargo '+fmtBs0(Number(r.monto)||0);
+  if(r.tipo==='saldo0') return '💵 Dejar el saldo en 0';
+  return '';
+}
+/* Los renglones del formulario que tienen producto, en el MISMO orden que `getProductos` (el `renglon` que dijo Claude). */
+function obsIaCards(){ return [].filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){ var d=c.querySelector('.prod-desc'); return d && String(d.value||'').trim(); }); }
+function obsIaCardProd(c){
+  var ms=c.querySelector('.prod-medida'), ot=c.querySelector('.prod-medida-otro');
+  return { desc:String((c.querySelector('.prod-desc')||{}).value||'').trim(), medida:(ms && ms.value==='Otros') ? String((ot&&ot.value)||'').trim() : String((ms&&ms.value)||''),
+           codigo:String((c.querySelector('.prod-codigo')||{}).value||'').trim() };
+}
+function obsIaMarcaPintar(c, de){
+  var v=c.querySelector('.oia-marca'); if(v) v.remove();
+  if(!de) return;
+  var d=document.createElement('div'); d.className='oia-marca';
+  d.innerHTML='🏬 Se recoge de <b>'+esc(de)+'</b> <button type="button" class="oia-marca-x" title="Sacar la marca">✕</button>';
+  d.querySelector('button').onclick=function(){ var k=prodClave(obsIaCardProd(c)); OBS_IA.form.marcas=OBS_IA.form.marcas.filter(function(m){ return m.k!==k; }); d.remove(); };
+  c.appendChild(d);
+}
+/* Un arreglo de un toque: cambia el FORMULARIO como lo haría la persona (no guarda). true si se pudo. */
+function obsIaArreglar(r){
+  r=r||{};
+  if(r.tipo==='tienda'){
+    var c=obsIaCards()[r.renglon]; if(!c || !r.tienda) return false;
+    var x=obsIaCardProd(c), k=prodClave(x), de=tiendaConPref(r.tienda);
+    OBS_IA.form.marcas=OBS_IA.form.marcas.filter(function(m){ return m.k!==k; }).concat([{ k:k, de:de }]);
+    obsIaMarcaPintar(c, de);
+    toast('🏬 '+(x.desc||'El producto')+': se recoge de '+de+' (no sale del stock de la fábrica).','ok',6000);
+    return true;
+  }
+  if(r.tipo==='producto'){
+    if(!String(r.producto||'').trim()) return false;
+    addProdRow(String(r.producto), '', '', Number(r.cant)||1, '');
+    try{ refreshDelButtons(); }catch(e){} try{ pintarTotalProds(); }catch(e){} try{ fpPintarLuego(); fxFormPintar(); }catch(e){}
+    toast('➕ Agregué '+(Number(r.cant)||1)+' '+r.producto+(docTipoSel()==='OC' ? ': ponele el precio.' : '.'),'ok',6000);
+    return true;
+  }
+  if(r.tipo==='recargo'){
+    var e=document.getElementById('f-envio'), m=r2(Number(r.monto)||0); if(!e || !(m>0)) return false;
+    e.value=String(m); e.classList.remove('err');
+    try{ segSet('f-envio-cob','NO'); pintarEnvioCobrado(); }catch(x2){}
+    toast('🚚 Recargo por entrega: '+fmtBs(m)+' (se cobra al entregar).','ok',6000);
+    return true;
+  }
+  if(r.tipo==='saldo0'){
+    if(segVal('f-pagado')==='SI') return false;
+    var s=document.getElementById('f-saldo'); if(!s) return false;
+    s.value='0'; s._mano=true; s.classList.remove('err');
+    try{ s.dispatchEvent(new Event('input', { bubbles:true })); }catch(x3){}
+    try{ updateMetodoVisibility(); }catch(x4){} try{ pintarTotalProds(); }catch(x5){}
+    toast('💵 Saldo en 0: la venta queda sin nada por cobrar.','ok',6000);
+    return true;
+  }
+  return false;
+}
+function obsIaDiaTxt(d, p){
+  if(!d) return (p && !p.entregado && !esVentaTienda(p)) ? 'antes de entregar' : 'sin día';
+  var hoy=diaNegocio(); return d===hoy ? 'hoy' : (d<hoy ? ('desde el '+fmtFechaCorta(d)) : nxDiaTxt(d));
+}
+/* La ventana «⚠️ Antes de guardar, revisá» con lo de la regla (`L`) Y lo de Claude (`AV`), y lo que queda para después (`CMP`). */
+function obsIaPreguntar(L, AV, CMP, rec, seguir){
+  var obs=String((rec&&rec.observaciones)||'').trim(), mv=null;
+  (L||[]).forEach(function(x){ if(!mv && x.mover) mv=x.mover; });
+  var mvH='';
+  if(mv){
+    var lim=limTurno(mv.f, 'PM'), us=cuposUsadosTurno(mv.f, 'PM'), lib=lim-us;
+    mvH='<div class="obsrev-mover"><button type="button" class="btn btn-primary" id="obsrev-mover">📅 Pasarlo al '+esc(nxDiaTxt(mv.f))+' a la tarde</button>'+
+      '<small>'+(lib>0 ? ('Cambia la fecha y el turno del pedido (esa tarde quedan '+lib+' lugar'+(lib===1?'':'es')+'). No guarda: después tocá «Guardar».')
+                       : ('Cambia la fecha y el turno del pedido. ⚠️ Esa tarde ya está llena ('+us+' de '+lim+'): al guardar te lo va a decir.'))+'</small></div>';
+  }
+  OBS_IA.modal={ av:AV, hechos:0 };
+  openModal('<div class="modal-h" style="background:var(--amber)"><h3>⚠️ Antes de guardar, revisá</h3></div>'+
+    '<div class="modal-b obsrev-b">'+
+      ((L&&L.length) ? ('<div class="obsrev" id="obsrev-lista"><div class="obsrev-s">Las observaciones dicen otra cosa que lo que cargaste:</div>'+
+        '<ul>'+L.map(function(x){ return '<li>'+esc(x.t)+'</li>'; }).join('')+'</ul></div>') : '')+
+      '<div class="oia" id="oia-lista"><div class="oia-s">🤖 Claude leyó tus observaciones</div>'+
+        AV.map(function(a, i){
+          var bt=obsIaArregloTxt(a.arreglo);
+          return '<div class="oia-it" data-i="'+i+'">'+(a.cita ? ('<div class="oia-c">Escribiste: «'+esc(a.cita)+'»</div>') : '')+
+            '<div class="oia-t">'+esc(a.texto)+'</div>'+(bt ? ('<div class="oia-b"><button type="button" class="btn btn-sm oia-arr" data-i="'+i+'">'+esc(bt)+'</button></div>') : '')+'</div>';
+        }).join('')+
+      '</div>'+
+      ((CMP&&CMP.length) ? ('<div class="oia-cmp"><div class="oia-s">📌 Queda para después <small>va a tu «📋 Para hacer»</small></div><ul>'+
+        CMP.map(function(c){ return '<li>'+esc(c.t)+(c.d?(' <small>('+esc(obsIaDiaTxt(c.d, rec))+')</small>'):'')+'</li>'; }).join('')+'</ul></div>') : '')+
+      mvH+
+      '<div class="obsrev-nota"><b>📝 Observaciones:</b> '+esc(obs.length>400 ? (obs.slice(0, 400)+'…') : obs)+'</div>'+
+      '<div class="oia-pie">Claude solo propone: nada cambia hasta que tocás un botón, y nunca te frena.</div>'+
+      '<div class="modal-actions">'+
+        '<button type="button" class="btn btn-primary" id="obsrev-corregir" style="flex:1;min-width:140px">✏️ Corregir</button>'+
+        '<button type="button" class="btn btn-ghost" id="obsrev-igual" style="flex:1;min-width:140px">Guardar igual</button>'+
+      '</div>'+
+    '</div>');
+  var hecho=false;
+  [].forEach.call(document.querySelectorAll('#oia-lista .oia-arr'), function(b){
+    b.onclick=function(){
+      if(hecho || b.disabled) return;
+      var a=AV[+b.getAttribute('data-i')]; if(!a || !obsIaArreglar(a.arreglo)) return;
+      b.disabled=true; b.textContent='✓ Listo'; b.classList.add('oia-ok');
+      OBS_IA.modal.hechos++;
+      var g=document.getElementById('obsrev-igual'); if(g){ g.textContent='💾 Guardar con '+(OBS_IA.modal.hechos===1?'el arreglo':'los arreglos'); g.className='btn btn-primary'; }
+      var cr=document.getElementById('obsrev-corregir'); if(cr){ cr.className='btn btn-ghost'; }
+    };
+  });
+  document.getElementById('obsrev-corregir').onclick=function(){ if(hecho) return; hecho=true; closeModal(); obsRevIr((L&&L[0]) || {}); };
+  document.getElementById('obsrev-igual').onclick=function(){
+    if(hecho) return; hecho=true; closeModal();
+    if(OBS_IA.modal && OBS_IA.modal.hechos){ OBS_IA.pasar=Date.now(); OBS_REV_OK=''; setTimeout(submitPedido, 0); return; }   // otra vuelta por todas las reglas, sin volver a preguntar
+    seguir();
+  };
+  var bm=document.getElementById('obsrev-mover');
+  if(bm) bm.onclick=function(){ if(hecho) return; hecho=true; closeModal(); obsRevMoverAplicar(mv, rec); };
+  try{ document.getElementById('obsrev-corregir').focus(); }catch(e){}
+  return true;
+}
+/* ---- 📌 «Lo que prometiste» y 🤖 lo que Claude dijo tarde: «Para hacer», la ficha de la vendedora y la de logística ---- */
+function cmpDeVend(mine){
+  var L=[];
+  (mine||[]).forEach(function(p){ if(!p || esFilaSistema(p) || esATC(p.oc)) return; cmpAbiertos(p).forEach(function(c){ L.push({ p:p, c:c }); }); });
+  return L.sort(function(a, b){ var x=a.c.d||a.p.fecha||'9999', y=b.c.d||b.p.fecha||'9999'; return x<y?-1:(x>y?1:0); });
+}
+function cmpUrge(z){ var hoy=diaNegocio(); return z.c.d ? z.c.d<=hoy : (!!z.p.fecha && !z.p.entregado && z.p.fecha<=proximoDiaEntrega()); }
+function obsIaHacerItems(v, mine){
+  var out=[], vq=esc(String(v||'').replace(/'/g,'')), L=cmpDeVend(mine);
+  if(L.length) out.push({ sev:L.some(cmpUrge)?'r':'a', ic:'📌', n:L.length, t:'Lo que prometiste', s:L.slice(0,2).map(function(z){ return z.c.t; }).join(' · ')+(L.length>2?' y más':''),
+    b:'Ver', p:1, fn:"cmpVerLista('"+vq+"')" });
+  var O=(mine||[]).filter(function(p){ return p && !esFilaSistema(p) && oiaAbiertos(p).length; });
+  if(O.length) out.push({ sev:'a', ic:'🤖', n:O.length, t:'Claude vio algo en tus observaciones', s:misNom2(O)+' · revisalo y corregí si hace falta', b:'Ver', fn:"oiaVerLista('"+vq+"')" });
+  return out;
+}
+function cmpFilaHtml(z, desde){
+  var pid=String(z.p.id).replace(/'/g,''), cid=String(z.c.id).replace(/'/g,''), ds=String(desde||'').replace(/'/g,'');
+  return '<div class="cmp-r'+(cmpUrge(z)?' cmp-urge':'')+'"><span class="cmp-d">'+esc(obsIaDiaTxt(z.c.d, z.p))+'</span>'+
+    '<div class="cmp-x"><b>'+esc(z.c.t)+'</b><small>'+esc([ocEtiq(z.p.oc||''), z.p.cliente||''].filter(Boolean).join(' · '))+(z.c.c?(' · «'+esc(z.c.c)+'»'):'')+'</small></div>'+
+    '<div class="cmp-b"><button type="button" class="btn btn-sm cmp-hecho" onclick="cmpMarcar(\''+pid+'\',\''+cid+'\',\'h\',\''+ds+'\')">✓ Hecho</button>'+
+    '<button type="button" class="btn btn-sm btn-ghost cmp-nova" onclick="cmpMarcar(\''+pid+'\',\''+cid+'\',\'n\',\''+ds+'\')">Ya no va</button></div></div>';
+}
+function cmpVerLista(v){
+  var mine=(STATE||[]).filter(function(p){ return p && mismoVendedor(p.vendedor, v); }), L=cmpDeVend(mine);
+  if(!L.length){ closeModal(); toast('✅ No queda nada prometido pendiente.','ok'); try{ renderMis(); }catch(e){} return; }
+  openModal('<div class="modal-h"><h3>📌 Lo que prometiste</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
+    '<div class="cmp-s">Lo que quedó «para después» en tus observaciones. Tocá <b>✓ Hecho</b> cuando lo hagas o <b>Ya no va</b> si ya no corresponde.</div>'+
+    '<div class="cmp-l">'+L.map(function(z){ return cmpFilaHtml(z, 'l:'+String(v||'')); }).join('')+'</div></div>');
+}
+function cmpMarcar(pid, cid, e, desde){
+  var p=findById(pid); if(!p) return;
+  var cambio=false, L=cmpDe(p).map(function(c){ c=Object.assign({}, c); if(c.id===cid && !c.e){ c.e=(e==='n')?'n':'h'; c.q=quienEdita()||''; c.f=Date.now(); cambio=true; } return c; });
+  if(!cambio) return;
+  cmpPoner(p, L); upsert(p); saveMirror();
+  try{ guardarDurable(p); }catch(x){}
+  toast(e==='n' ? 'Listo: ya no va.' : '✓ Hecho.','ok');
+  desde=String(desde||'');
+  if(desde.indexOf('l:')===0) cmpVerLista(desde.slice(2));
+  else if(desde==='mis') showMisModal(pid);
+  else if(desde==='admin') reabrirFicha(pid);
+  try{ if(document.getElementById('view-mis') && document.getElementById('view-mis').classList.contains('active')) renderMis(); }catch(x){}
+}
+function oiaVerLista(v){
+  var L=(STATE||[]).filter(function(p){ return p && mismoVendedor(p.vendedor, v) && !esFilaSistema(p) && oiaAbiertos(p).length; });
+  if(!L.length){ closeModal(); try{ renderMis(); }catch(e){} return; }
+  openModal('<div class="modal-h"><h3>🤖 Claude vio algo en tus observaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
+    '<div class="cmp-s">Lo leyó cuando el pedido ya se estaba guardando. Si hay que arreglar algo, tocá <b>✏️ Corregir</b>; si está bien, <b>Ya está bien</b>.</div>'+
+    L.map(function(p){ return oiaBloqueHtml(p, 'l:'+String(v||'')); }).join('')+'</div>');
+}
+function oiaBloqueHtml(p, desde){
+  var A=oiaAbiertos(p); if(!A.length) return '';
+  var pid=String(p.id).replace(/'/g,''), ds=String(desde||'').replace(/'/g,'');
+  return '<div class="oia oia-tarde"><div class="oia-s">🤖 '+esc([ocEtiq(p.oc||''), p.cliente||'', p.fecha?nxDiaTxt(p.fecha):''].filter(Boolean).join(' · '))+'</div>'+
+    A.map(function(a){ return '<div class="oia-it">'+(a.c?('<div class="oia-c">Escribiste: «'+esc(a.c)+'»</div>'):'')+'<div class="oia-t">'+esc(a.t)+'</div></div>'; }).join('')+
+    '<div class="oia-b"><button type="button" class="btn btn-sm btn-primary" onclick="closeModal();editarDesdeMis(\''+pid+'\')">✏️ Corregir</button>'+
+    '<button type="button" class="btn btn-sm btn-ghost" onclick="oiaVisto(\''+pid+'\',\''+ds+'\')">Ya está bien</button></div></div>';
+}
+function oiaVisto(pid, desde){
+  var p=findById(pid), o=p && oiaDe(p); if(!o || o.v) return;
+  oiaPoner(p, Object.assign({}, o, { v:1 })); upsert(p); saveMirror();
+  try{ guardarDurable(p); }catch(x){}
+  desde=String(desde||'');
+  if(desde.indexOf('l:')===0) oiaVerLista(desde.slice(2));
+  else if(desde==='mis') showMisModal(pid);
+  try{ if(document.getElementById('view-mis') && document.getElementById('view-mis').classList.contains('active')) renderMis(); }catch(x){}
+}
+/* La ficha de Mis pedidos: lo prometido (con sus botones) y lo que Claude dijo tarde. */
+function obsIaFichaHtml(p){
+  if(!p || esFilaSistema(p)) return '';
+  var C=cmpAbiertos(p).map(function(c){ return { p:p, c:c }; }), h='';
+  if(C.length) h+='<div class="cmp-ficha"><div class="oia-s">📌 Lo que prometiste</div>'+C.map(function(z){ return cmpFilaHtml(z, 'mis'); }).join('')+'</div>';
+  return h+oiaBloqueHtml(p, 'mis');
+}
+/* La ficha de logística (`fichaAvisos`): en amarillo, mientras esté abierto. */
+function obsIaFichaAvisos(p){
+  var a=[], quien=String((p&&p.vendedor)||'').trim().split(/\s+/)[0]||'la vendedora';
+  cmpAbiertos(p).forEach(function(c){ a.push('📌 Pendiente de '+quien+': '+c.t+(c.d?(' ('+obsIaDiaTxt(c.d, p)+')'):'')+'.'); });
+  oiaAbiertos(p).forEach(function(z){ a.push('🤖 Claude leyó la nota'+(z.c?(' («'+z.c+'»)'):'')+': '+z.t); });
+  return a;
+}
+// 🤖📌 mejoras 345 y 349 fin =============================================================
+
 /* ⚡ 218 · FRASES RÁPIDAS EN LAS OBSERVACIONES (14/11; el dueño aprobó la 218: «Botones arriba del campo de observaciones con lo que
    más se escribe. Un toque y queda escrito igual siempre, así la ficha de logística lo marca como etiqueta sin errores de tipeo. Se
    puede seguir escribiendo a mano»). En 632 pedidos de octubre y noviembre, 100 dicen «llamar antes», 53 piso o edificio, 27 «paga al
@@ -24153,8 +24587,15 @@ function submitPedido(){
      antes de la última lectura de la planilla: la ventana ámbar «⚠️ Antes de guardar, revisá» (`obsRevPreguntar`). «Corregir» no guarda;
      «Guardar igual» sigue por `seguirAlGuardar`, el MISMO camino de siempre (lectura, ¿repetido?, saldo, N° de OC, `guardarYa`), sin
      volver a pasar por las preguntas de arriba. Sin nada que decir, sigue derecho. */
+  /* 🤖📌 (16/11, mejoras 345 y 349) Lo que se arregló desde la ventana de Claude (la marca de tienda) y lo que ya se leyó «para después»
+     de ESTA nota, en `rec`; y después de la regla, Claude lee el pedido entero (4 s como mucho, `obsIaEsperar`): sus avisos van en la MISMA
+     ventana; sin nada que decir (o si tarda), sigue como siempre. Mientras espera, otro «Guardar» no hace nada. */
+  if(OBS_IA.esperando) return;
+  try{ obsIaFormAplicar(rec, (isEdit && !_deBorrador) ? prev : null); }catch(eI){ console.error(eI); }
   var _obsRev=[]; try{ _obsRev=obsRevAvisos(rec, (isEdit && !_deBorrador) ? prev : null, docTipoSel()); }catch(eO){ console.error(eO); _obsRev=[]; }
-  if(_obsRev.length && obsRevPreguntar(_obsRev, rec, seguirAlGuardar)) return;
+  var _oia=null; try{ _oia=obsIaAntes(rec, (isEdit && !_deBorrador) ? prev : null, docTipoSel(), _obsRev); }catch(eI2){ console.error(eI2); _oia=null; }
+  if(_oia && !_oia.pasar){ obsIaEsperar(_oia, rec, _obsRev, seguirAlGuardar); return; }
+  if(!_oia && _obsRev.length && obsRevPreguntar(_obsRev, rec, seguirAlGuardar)) return;
   seguirAlGuardar();
 
   function seguirAlGuardar(){
@@ -26268,6 +26709,7 @@ function resetForm(){
   REPETIR_DE='';                               // 🔁 (§4ok-101)
   COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251) la venta de una cotización era la de antes
   OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
+  try{ obsIaFormOlvidar(); }catch(e){}         // 🤖📌 (16/11, 345/349) lo arreglado y lo prometido eran de ese pedido
   totalAutoOlvidar();                          // 🧮 (06/11) el total que se completa solo empieza de cero
   try{ notaLeerOlvidar(); }catch(e){}          // 🧾 (mejora 216) lo leído de una nota era del pedido de antes
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
@@ -26342,6 +26784,7 @@ function editPedido(id){
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
   COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251)
   totalAutoOlvidar();   // 🧮 (06/11) abrir para editar no cambia ningún monto: solo lo que la persona toque después
+  try{ obsIaFormOlvidar(); }catch(e){}   // 🤖📌 (16/11, 345/349) lo arreglado desde la ventana de Claude era del pedido de antes
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
@@ -38086,6 +38529,9 @@ function verAtc(id){
       /* 📷 (15/10, §4lh) las fotos del producto que subió la vendedora; tocar una abre el visor */
       '<div style="margin-top:12px"><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">📷 Fotos del producto</div>'+
         (atcFotos(p).length ? atcFotosTiraHtml(p) : '<div style="font-size:.8rem;color:var(--muted)">sin fotos — se pueden agregar con ✏️ Editar</div>')+'</div>'+
+      /* 🎧🤖 (16/11, mejora 347) Claude mira las fotos y propone el motivo y el párrafo para la fábrica (lo toca una persona) */
+      (atfVa(p) ? ('<div class="atf-ficha">'+(atfDe(p) ? '' : '<button type="button" class="btn btn-sm atf-btn" onclick="this.hidden=true;atfPedir(\''+esc(String(p.id).replace(/\'/g,''))+'\', true)">🤖 Mirar las fotos</button>')+
+        atfBoxHtml(p, 'ficha')+'</div>') : '')+
       texto('Qué se hizo', atcQueSeHizo(p))+
       /* 🔗 (15/10, §4lf) la tarjeta de Trello de donde se completaron datos */
       ((atcDe(p)||{}).tre && /^https:\/\/trello\.com\//.test((atcDe(p)||{}).tre) ? ('<div style="margin-top:10px;font-size:.8rem"><a href="'+esc((atcDe(p)||{}).tre)+'" target="_blank" rel="noopener" style="color:#0079bf;font-weight:700">🗂️ Ver su tarjeta en Trello</a></div>') : '')+
@@ -39735,6 +40181,7 @@ function misHacerDatos(v, mine){
   add({ sev:'a', ic:'📥', n:br.length, t:'Ventas de Kommo para completar', s:misNom2(br)+' · '+(!brP ? 'falta la fecha de entrega' : brP===br.length ? 'parecen ya cargadas: confirmalas' : (brP+(brP===1?' parece ya cargada':' parecen ya cargadas')+'; a las otras les falta la fecha')),
     b:'Completar ↓', p:1, fn:"misIrA('mis-borradores')", ok:'Sin ventas de Kommo pendientes' });
   try{ add(avisaHacerItem(mine, 'avisa', function(L){ return misNom2(L); })); }catch(e){}   // 📦 (propuesta 76) «📞 Llamá a N clientes con entrega a confirmar»
+  try{ obsIaHacerItems(v, mine).forEach(add); }catch(e){}   // 📌🤖 (16/11, 349 y 345) «Lo que prometiste» y lo que Claude vio tarde en la nota
   _cot.resto.forEach(add); if(_cot.ok) OK.push(_cot.ok);   // 🧾 (251) «📞 Llamar a N cotizaciones», las vencidas y «dice que ya compró»
   /* el saldo del mes: lo MISMO que la ficha «Por cobrar» de siempre (fecha de entrega de este mes, sin pagar); (§4nl, Astra A08) con el
      mes de Bolivia, como Tu día */
@@ -40719,6 +41166,7 @@ function showMisModal(id){
   // (26/09) Ni a la venta de TIENDA (no hay entrega) ni a lo ya entregado: la ficha le pedía el GPS igual.
   if(!p.maps && !p.entregado && !esVentaTienda(p)) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
+  try{ alertas+=obsIaFichaHtml(p); }catch(e){}   // 📌🤖 (16/11, 349 y 345) lo prometido en la nota (✓ Hecho / Ya no va) y lo que Claude vio tarde
   var choferVal = choferTexto(p);
   /* El vendedor va SIEMPRE, aunque la vendedora esté mirando lo suyo: con "Ver todos"
      puesto, administración abre una ficha cualquiera y necesita saber de quién es. */
@@ -42898,6 +43346,8 @@ function atcCorreoTexto(p){
     L.push('', 'FOTOS DEL PRODUCTO');
     fot.forEach(function(f, i){ L.push('   Foto '+(i+1)+': '+fotoVer(fidLimpio(f))); });
   }
+  var _iaFab=''; try{ _iaFab=atfCorreoTxt(p); }catch(e){}   // 🎧🤖 (16/11, 347) el párrafo para la fábrica, si la vendedora tocó «📧 Pasar al correo»
+  if(_iaFab) L.push('', _iaFab);
   L.push('', 'Saludos,', (p.vendedor||''));
   return L.join('\n');
 }
@@ -42950,6 +43400,116 @@ function atcCorreoVer(id){
     '<div class="modal-b">'+atcCorreoHtml(p)+
       '<div class="modal-actions"><button class="btn btn-ghost btn-sm" onclick="verAtc(\''+esc(String(p.id).replace(/'/g,''))+'\')">← Volver a la ficha</button></div></div>');
 }
+/* ============================================================================
+   🎧🤖 (16/11, mejora 347; el dueño la eligió) LA ATC CON FOTOS: CLAUDE PROPONE EL MOTIVO Y EL RECLAMO.
+   En octubre y noviembre entraron 21 ATC: 7 con motivo «Otro» (2 de las de noviembre eran de un motivo de la lista), 2 hablan de humedad
+   y mal olor (que el certificado pone en «no cubre») marcadas como garantía, y 7 de cada 10 traen fotos que nadie mira hasta que el colchón
+   llega a la fábrica.
+   · Al guardar una ATC NUEVA con fotos («✅ ATC guardada») y con «🤖 Mirar las fotos» en su ficha (`verAtc`), el panel le pide al servidor
+     (acción `atcFotos`, 2026-11-16-a) que Claude mire las fotos (hasta 2, las del producto: `atcFotos`) con el detalle, el producto y la fecha de
+     compra. Vuelve: el motivo de la lista (`ATC_MOTIVOS`: la página manda la lista, UNA sola), qué se ve en una línea, si se ve algo de lo que
+     el certificado NO cubre (`CERT_TEXTO.noCubre`), un párrafo para la fábrica y, si la foto no muestra el problema, qué foto pedir.
+   · «Usar este motivo» (lo toca una persona: guarda la ATC con ese motivo por `guardarDurable`), «📧 Pasar al correo» (el párrafo entra al
+     mensaje del correo de la ATC: `atcCorreoTexto`) y «💬 Pedirle otra foto» (el WhatsApp del cliente con el pedido escrito: lo manda la
+     vendedora). NUNCA cambia garantía/STC: lo decide gerencia, y la caja lo dice.
+   · Lo leído queda en esta página (`ATF.res`, por fotos + detalle) y el servidor lo recuerda 6 h: volver a abrir no gasta. Errores
+     (servidor viejo, sin conexión, Claude apagado, el tope): al guardar no se muestra nada; en la ficha se dice en una línea.
+   · En Playwright apagado salvo `window.ATF_PRUEBA`.
+   ========================================================================== */
+var ATF={ res:{}, vuelo:{}, err:{}, pidio:{}, alCorreo:{} }, ATF_TOPE_MS=75000;
+function atfActivo(){ return !(navigator.webdriver && !window.ATF_PRUEBA); }
+function atfVa(p){ return atfActivo() && servidorTiene(OBS_IA_SERVIDOR) && !!p && esATC(p.oc) && atcFotos(p).length>0; }
+function atfFotos(p){ return atcFotos(p).map(fidLimpio).filter(Boolean).slice(0, 2); }
+function atfLlave(p){ return JSON.stringify([atfFotos(p), atcDetalle(p)]); }
+function atfDe(p){ var r=p && ATF.res[String(p.id)]; return (r && r.k===atfLlave(p)) ? r.ia : null; }
+/* `manual`: lo pidió una persona desde la ficha (los errores se dicen); si no, es el de «ATC guardada» (callado si falla). */
+function atfPedir(id, manual, pDado){
+  var p=findById(id)||pDado; if(!atfVa(p)) return;
+  id=String(p.id); if(manual) ATF.pidio[id]=1;
+  var k=atfLlave(p);
+  if(atfDe(p) || ATF.vuelo[id]===k){ atfPintar(id, p); return; }
+  ATF.vuelo[id]=k; delete ATF.err[id]; atfPintar(id, p);
+  var pr=(p.productos||[])[0]||{};
+  conTopeDuro(apiPost({ action:'atcFotos', fotos:atfFotos(p), det:atcDetalle(p), mot:atcMotivo(p), prod:((pr.desc||'')+(pr.medida?(' '+pr.medida):'')).trim(),
+                        fcom:atcFechaCompra(p)||'', motivos:ATC_MOTIVOS.slice(), noCubre:(CERT_TEXTO.noCubre||[]).slice() }), ATF_TOPE_MS, 'tardo_ia')
+    .then(function(r){ if(r && r.ok && r.ia) ATF.res[id]={ k:k, ia:r.ia }; else ATF.err[id]=(r && r.error) || 'sin_respuesta'; },
+          function(){ ATF.err[id]='red'; })
+    .then(function(){ if(ATF.vuelo[id]===k) delete ATF.vuelo[id]; atfPintar(id, p); });
+}
+var ATF_ERR={ tope:'Hoy ya se llegó al tope de ATC que mira Claude: mañana sigue.', ia_apagada:'Claude no está prendido en el servidor para mirar fotos.',
+  sin_clave:'Claude no está prendido en el servidor para mirar fotos.', sin_foto:'No pude abrir las fotos de esta ATC.', no_se_lee:'Claude no pudo abrir las fotos.',
+  ocupado:'Claude está ocupado: probá en un rato.', red:'Sin conexión con el servidor: probá en un rato.' };
+function atfInner(p, modo){
+  if(!p) return '';
+  var id=String(p.id), ia=atfDe(p), n=atfFotos(p).length;
+  if(!ia && ATF.vuelo[id]) return '<div class="atf atf-lee"><span class="atf-gira"></span>🔎 Claude está mirando '+(n===1?'la foto':'las '+n+' fotos')+'… <small>tarda unos segundos</small></div>';
+  if(!ia){
+    var e=ATF.err[id];
+    return (e && (modo==='ficha' || ATF.pidio[id])) ? ('<div class="atf atf-gris">🤖 '+esc(ATF_ERR[e]||'Claude no pudo mirar las fotos ahora.')+'</div>') : '';
+  }
+  var pid=id.replace(/'/g,''), mot=atcMotivo(p), nc=(CERT_TEXTO.noCubre||[])[0]||'';
+  var motH=!ia.motivo ? '<span class="atf-v">no se puede saber por las fotos</span>'
+    : (ia.motivo===mot ? ('<b>'+esc(ia.motivo)+'</b> <span class="atf-okm">✓ el que elegiste</span>')
+       : ((mot ? ('<s>'+esc(mot)+'</s> → ') : '')+'<b>'+esc(ia.motivo)+'</b> <button type="button" class="btn btn-sm btn-primary atf-usar" onclick="atfUsarMotivo(\''+pid+'\')">Usar este motivo</button>'));
+  var waUrl=(ia.pedir && p.celular) ? misWaCliente(p.celular) : '';
+  return '<div class="atf">'+
+    '<div class="atf-h">🤖 Claude miró '+(ia.fotos===1?'la foto':'las '+(ia.fotos||n)+' fotos')+'</div>'+
+    '<div class="atf-r"><span class="atf-l">Motivo</span><span>'+motH+'</span></div>'+
+    (ia.seVe ? ('<div class="atf-r"><span class="atf-l">Se ve</span><span>'+esc(ia.seVe)+'</span></div>') : '')+
+    (ia.noCubre ? ('<div class="atf-nc">⚠️ '+esc(ia.noCubrePor||'Se ve algo que el certificado no cubre.')+' El certificado dice que no cubre: «'+esc(nc)+'» '+
+      '<b>Solo es un aviso: lo decide gerencia.</b></div>') : '')+
+    (ia.fab ? ('<div class="atf-fab"><span class="atf-l">Para la fábrica</span><div>'+esc(ia.fab)+'</div></div>') : '')+
+    ((!ia.muestra || ia.pedir) ? ('<div class="atf-foto">📷 '+(ia.muestra ? '' : 'La foto no muestra bien el problema. ')+(ia.pedir ? ('Pedile al cliente: <b>'+esc(ia.pedir)+'</b>') : 'Pedile al cliente otra foto, de cerca y con luz.')+'</div>') : '')+
+    '<div class="atf-b">'+
+      (ia.fab ? ('<button type="button" class="btn btn-sm atf-correo" onclick="atfAlCorreo(\''+pid+'\')">'+(ATF.alCorreo[id] ? '✓ En el correo' : '📧 Pasar al correo')+'</button>') : '')+
+      (waUrl ? ('<a class="btn btn-sm btn-ghost atf-wa" target="_blank" rel="noopener" href="'+esc(waUrl+'?text='+encodeURIComponent(atfPedirTxt(p, ia)))+'">💬 Pedirle otra foto</a>') : '')+
+    '</div>'+
+    '<div class="atf-pie">Claude solo propone: nada cambia hasta que tocás un botón. <b>Garantía o contra costo (STC) lo decide gerencia.</b></div>'+
+  '</div>';
+}
+function atfPedirTxt(p, ia){
+  var n=String((p&&p.cliente)||'').trim().split(/\s+/)[0]||'';
+  return 'Hola'+(n?(' '+n):'')+', para revisar tu reclamo necesitamos '+String(ia.pedir||'una foto de cerca del problema, con luz').replace(/^una?\s/i, function(s){ return s.toLowerCase(); }).replace(/\.$/,'')+'. ¡Gracias!';
+}
+function atfBoxHtml(p, modo){ return '<div class="atf-box" aria-live="polite" data-id="'+esc(String(p.id))+'" data-modo="'+(modo||'')+'">'+atfInner(p, modo)+'</div>'; }
+function atfPintar(id, pDado){
+  var p=findById(id)||pDado; if(!p) return;
+  [].forEach.call(document.querySelectorAll('.atf-box'), function(b){
+    if(b.getAttribute('data-id')!==String(id)) return;
+    var h=atfInner(p, b.getAttribute('data-modo')||''); if(b._h!==h){ b.innerHTML=h; b._h=h; }
+  });
+}
+/* «Usar este motivo»: la ATC se guarda con el motivo que propuso Claude (lo toca la persona). El tipo (garantía/STC) no se toca. */
+function atfUsarMotivo(id){
+  var p=findById(id), ia=atfDe(p); if(!p || !ia || !ia.motivo || ATC_MOTIVOS.indexOf(ia.motivo)<0) return;
+  var a=Object.assign({}, atcDe(p)||{}); a.mot=ia.motivo;
+  setAtcDatos(p, a); upsert(p); saveMirror();
+  try{ guardarDurable(p); }catch(e){}
+  var tx=document.getElementById('atc-correo-texto'); if(tx) tx.value=String(tx.value||'').replace(/^Motivo: .*$/m, 'Motivo: '+ia.motivo);
+  var as=document.getElementById('atc-correo-asunto'); if(as) as.value=atcCorreoAsunto(p);
+  toast('✓ Motivo de la ATC: '+ia.motivo+'.','ok');
+  if(document.querySelector('.atf-box[data-modo="ficha"][data-id="'+String(p.id).replace(/"/g,'')+'"]')){ verAtc(p.id); return; }
+  atfPintar(p.id, p);
+}
+/* «📧 Pasar al correo»: el párrafo para la fábrica, en el mensaje del correo de la ATC (el de la ventana, o el de «📧 Correo de la ATC»). */
+function atfCorreoTxt(p){
+  var ia=p && ATF.alCorreo[String(p.id)] ? atfDe(p) : null;
+  return (ia && ia.fab) ? ('PARA LA FÁBRICA (lo que se ve en las fotos)\n'+ia.fab) : '';
+}
+function atfAlCorreo(id){
+  var p=findById(id); if(!p || !atfDe(p)) return;
+  ATF.alCorreo[String(p.id)]=1;
+  var tx=document.getElementById('atc-correo-texto'), bloque=atfCorreoTxt(p);
+  if(tx){
+    var v=String(tx.value||'');
+    if(v.indexOf(bloque)<0){ var i=v.lastIndexOf('\nSaludos,'); tx.value=(i>=0) ? (v.slice(0, i)+'\n'+bloque+'\n'+v.slice(i)) : (v+'\n\n'+bloque); }
+    toast('📧 Listo: el párrafo para la fábrica quedó en el mensaje del correo.','ok');
+    atfPintar(p.id, p);
+    return;
+  }
+  atcCorreoVer(p.id);
+}
+// 🎧🤖 mejora 347 fin =====================================================================
 /* ============================================================================
    📄 EL FORMULARIO DE LA ATC EN EXCEL (06/11) — dueño: *«habíamos quedado que se generaba el Excel, aparecía el botón de descargar
    Excel y se juntaba eso directamente al correo… te subí el formato… ese era el Excel que se tenía que crear»* (ATC_MODELO.xlsx).
@@ -54798,7 +55358,7 @@ function showWhatsappModal(rec, volverA, reenvio){
        '<p style="font-size:.78rem;color:var(--muted);margin:9px 0 14px;text-align:center">Se baja como <b>'+esc(nombreArchivoRpt(rec))+'</b>. Adjuntalo al correo tal cual.</p>')
     : '';
   /* 📧 (§4li) En una ATC, el CORREO va primero (como el Excel de la RPT): es lo que la vendedora tiene que mandar. */
-  var _correo = _atc ? atcCorreoHtml(rec) : '';
+  var _correo = _atc ? ((reenvio ? '' : atfBoxHtml(rec, 'auto'))+atcCorreoHtml(rec)) : '';   // 🎧🤖 (16/11, 347) arriba del correo, lo que Claude ve en las fotos
   var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':(_rpt?'✅ Reposición guardada':(_atc?'✅ ATC guardada':'✅ Pedido guardado')))+'</h3>'+
       '<button class="modal-x" onclick="'+salir+'">✕</button></div>'+
     '<div class="modal-b">'+
@@ -54817,6 +55377,7 @@ function showWhatsappModal(rec, volverA, reenvio){
       (reenvio ? '' : certBloqueHtml(rec))+             // 🛡️ (14/11, 264) y el certificado de garantía (por ahora, solo con la contraseña o ?cert=1)
     '</div>';
   openModal(html);
+  try{ if(_atc && !reenvio) atfPedir(rec.id, false, rec); }catch(e){}   // 🎧🤖 (16/11, 347) una ATC nueva con fotos: Claude las mira (callado si no puede)
   try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
 }
 /* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
@@ -55182,6 +55743,7 @@ function fichaAvisos(p, ret, chips){
   if(nNo && f && diasEntre(hoy, f)<=2) a.push('✗ '+nNo+' producto'+(nNo===1?'':'s')+' sin stock y la entrega es '+(f<hoy?'de un día que ya pasó':f===hoy?'hoy':('el '+nxDiaTxt(f)))+': reprogramá o pedilo a fábrica.');
   else if(nNo && p.verificado) a.push('✗ Está «Listo para cargar» y '+nNo+' producto'+(nNo===1?' no tiene':'s no tienen')+' stock.');
   if(nSin && p.verificado) a.push('⬜ Está «Listo para cargar» y '+nSin+' producto'+(nSin===1?' está':'s están')+' sin revisar.');
+  try{ a=a.concat(obsIaFichaAvisos(p)); }catch(e){}   // 📌🤖 (16/11, 349 y 345) lo prometido en la nota y lo que Claude vio, mientras esté abierto
   return a;
 }
 /* D · El camión sugerido: la MISMA cuenta de «Sin camión» (A1, `nxSugDatos`). «✓ Usar este» = el «Aceptar» de siempre. */
@@ -67724,7 +68286,9 @@ function iasMandar(){
   var t=IAS.cola.splice(0, 8); if(!t.length) return;
   IAS.enVuelo=true;
   var reintentar=false;
-  conTopeDuro(apiPost({ action:'iaComprobantes', fotos:t }), IAS_TOPE_MS, 'tardo_ia').then(function(r){
+  /* 🧾 (16/11, mejora 353) `renglones`: si una de estas fotos es una nota de venta leída antes de que se pidieran sus renglones, el servidor
+     2026-11-16-a la vuelve a leer UNA vez (para comparar los precios); uno anterior no lo mira. */
+  conTopeDuro(apiPost({ action:'iaComprobantes', fotos:t, renglones:1 }), IAS_TOPE_MS, 'tardo_ia').then(function(r){
     if(!r || !r.ok) throw new Error((r && r.error) || 'sin_respuesta');
     iacTomar(r);
     /* tope, sin crédito, sin clave, apagado, pausa: no se muestra nada y se deja de pedir un rato */
@@ -67855,6 +68419,7 @@ function iasPintarForm(){
     try{ var c=iasEvaluar(iasFormX(+k));
       if(c && tvFotoFechaProponer(c)) c=iasEvaluar(iasFormX(+k));   // 📅 §4ok-93 la venta de tienda toma el día de la foto
       if(c) h=iasHtml(c, iasCtxForm(+k))+tjVoucherHtml(iasFormX(+k), c)+(k==='1' ? tvFotoFechaNotaHtml() : ''); }catch(e){ h=''; }
+    if(k==='1'){ try{ h+=nvpFormHtml(); }catch(e){} }   // 🧾 (16/11, 353) la nota de venta contra los precios cargados
     if(box._h!==h){ box.innerHTML=h; box._h=h; }
   });
 }
@@ -67862,7 +68427,8 @@ function iasPintarConta(){
   var box=document.getElementById('ias-cta'); if(!box) return;
   var h='';
   try{ var p=findById(box.getAttribute('data-id')), x=iasContaX(p), c=iasEvaluar(x);
-    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, c); }catch(e){ h=''; }
+    if(c) h=iasHtml(c, { donde:'cta', ef:false, cor:true, tienda:false, sinFecha:false, met:x.met, ban:x.ban })+tjVoucherHtml(x, c);
+    h+=nvpContaHtml(p, x); }catch(e){ h=''; }   // 🧾 (16/11, 353) la nota de venta contra los precios del pedido
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
 }
 function iasRepintar(){ iasPintarForm(); iasPintarConta(); iasPintarPeg(); }
@@ -67974,6 +68540,83 @@ function iasFechaVenta(f){
   try{ e.dispatchEvent(new Event('change', { bubbles:true })); }catch(x){}
   iasRepintar(); toast('📅 Fecha de la venta: '+fmtFecha(f)+'.','ok');
 }
+/* ============================================================================
+   🧾 (16/11, mejora 353; el dueño la eligió) LA NOTA DE VENTA CONTRA LOS PRECIOS QUE CARGASTE.
+   De 143 ventas pagadas de noviembre con precio en cada renglón, en 3 la suma de los precios no da lo cobrado (Bs 1.000, 380 y 140 de
+   diferencia) y en otra los 3 productos van a Bs 1.000 cada uno, repartidos para que dé el total: esos precios alimentan «precio típico»,
+   «🏷️ Qué ofertar» y lo que Bloki dice que se cobra.
+   · La foto del pago que se sube (formulario y «Registrar pago») ya la lee Claude (§78, `iasSubida`). Si es la NOTA DE VENTA, el servidor
+     2026-11-16-a (pregunta 5) trae también sus renglones (`nl`: producto, medida, cantidad, precio unitario) SOLO si los leyó todos sin dudas.
+   · `nvpComparar` busca cada renglón de la nota entre lo cargado (misma medida, mismo tipo —colchón/somier—, palabras en común; con dos
+     candidatos parejos no elige) y dice los precios distintos: «🧾 La nota dice Bs 3.830 por … y cargaste Bs 4.830» con «Poner como en la
+     nota» (en el formulario: el precio de ESE renglón, como lo escribiría la persona) y «Está bien así» (no lo vuelve a decir para esa foto).
+     Con todo emparejado, también el total. Lo que no se puede emparejar no se dice (si no está seguro, no dice nada).
+   · En «Registrar pago» de Contabilidad el pedido ya está guardado: dice lo mismo y que se corrige en «✏️ Corregir precios y montos».
+   · Solo con el servidor 2026-11-16-a. En Playwright, como la lectura al subir: con `window.IAC_SUBIR_PRUEBA`.
+   ========================================================================== */
+var NVP={ ok:{} }, NVP_COMUNES={ COLCHON:1, COLCHONES:1, SOMIER:1, SOMMIER:1, CON:1, PARA:1, DEL:1, LAS:1, LOS:1, PLAZA:1, PLAZAS:1, HEAVEN:1, SUENA:1, UNA:1, UNO:1 };
+function nvpVa(){ return iasActivo() && servidorTiene(OBS_IA_SERVIDOR); }
+function nvpPal(t){ return sinTildes(t).toUpperCase().replace(/\d+\s*[X×]\s*\d+/g,' ').replace(/[^A-Z0-9Ñ]+/g,' ').split(/\s+/).filter(function(w){ return w.length>=3 && !NVP_COMUNES[w] && !/^\d+$/.test(w); }); }
+function nvpTipo(desc, medida, codigo){ try{ return pryTipoProd({ desc:desc, medida:medida||'', codigo:codigo||'' })||''; }catch(e){ return ''; } }
+/* Las notas de venta leídas (con renglones) entre estas fotos, sin las que la persona ya dio por buenas. */
+function nvpNotas(fids){
+  var out=[], v={};
+  (fids||[]).forEach(function(f){ f=String(f||''); var o=IAC.res[f]; if(v[f] || !o || o.err || !o.nv || !Array.isArray(o.nl) || !o.nl.length || NVP.ok[f]) return; v[f]=1; out.push({ f:f, o:o }); });
+  return out;
+}
+/* Los renglones de la nota contra lo cargado ([{desc, medida, codigo, cant, precio}]) → { filas:[{n, ix, np, cp}], todo, totN, totC } o null. */
+function nvpComparar(nl, carg){
+  var C=(carg||[]).map(function(x, ix){ return { ix:ix, x:x, pal:nvpPal(x.desc), med:normMedida(x.medida), tipo:nvpTipo(x.desc, x.medida, x.codigo) }; }), usado={}, filas=[], todos=true;
+  (nl||[]).forEach(function(r){
+    var pal=nvpPal(r.d), med=normMedida(r.m), tipo=nvpTipo(r.d, r.m, ''), best=0, second=0, bc=null;
+    C.forEach(function(c){
+      if(usado[c.ix]) return;
+      if(med && c.med && med!==c.med) return;
+      if(tipo && c.tipo && tipo!==c.tipo) return;
+      var s=pal.filter(function(w){ return c.pal.indexOf(w)>=0; }).length; if(!s) return;
+      if(s>best){ second=best; best=s; bc=c; } else if(s>second) second=s;
+    });
+    if(!bc || best===second){ todos=false; return; }   // nadie, o dos parejos: de este renglón no se dice nada
+    usado[bc.ix]=1;
+    filas.push({ n:r, ix:bc.ix, x:bc.x, np:r2(Number(r.p)||0), cp:r2(Number(bc.x.precio)||0) });
+  });
+  if(!filas.length) return null;
+  var todo=todos && filas.length===C.length, totN=0, totC=0;
+  filas.forEach(function(f){ totN=r2(totN+f.np*(Number(f.n.c)||1)); totC=r2(totC+f.cp*(Number(f.x.cant)||1)); });
+  return { filas:filas, difs:filas.filter(function(f){ return Math.abs(f.np-f.cp)>=0.005; }), todo:todo, totN:totN, totC:totC };
+}
+/* El aviso, debajo del pago. `form`: con «Poner como en la nota» (el formulario); si no, la ficha de Contabilidad. */
+function nvpHtml(fids, carg, form){
+  if(!nvpVa()) return '';
+  var N=nvpNotas(fids); if(!N.length) return '';
+  var nota=N[0], K=nvpComparar(nota.o.nl, carg); if(!K || !K.difs.length) return '';
+  var nom=function(f){ return String(f.x.desc||'')+(f.x.medida?(' '+f.x.medida):''); }, fq=String(nota.f).replace(/'/g,'');
+  var h=K.difs.slice(0, 4).map(function(f){
+    return iasLinea('ias-am nvp', '🧾 La nota de venta dice <b>'+iasBs(f.np)+'</b> por '+esc(nom(f))+(f.cp>0 ? (' y cargaste <b>'+iasNum(f.cp)+'</b>.') : ' y no le pusiste precio.'),
+      form ? iasBtn('Poner '+iasBs(f.np)+' como en la nota', 'nvpPoner('+f.ix+','+f.np+')', true) : '');
+  }).join('');
+  if(K.todo && Math.abs(K.totN-K.totC)>=0.005) h+=iasLinea('ias-gris nvp', 'Total de la nota: <b>'+iasBs(K.totN)+'</b> · cargado: <b>'+iasBs(K.totC)+'</b>.');
+  h+=iasLinea('ias-gris nvp', (form ? '' : 'Se corrige en <b>✏️ Corregir precios y montos</b>. ')+'<small>Lo leyó Claude de la foto: si la nota está bien cargada, tocá «Está bien así».</small>', iasBtn('Está bien así', 'nvpOk(\''+fq+'\')'));
+  return h;
+}
+function nvpFormHtml(){
+  if(!nvpVa() || VENTA_TIENDA) return '';
+  var f=compsArr(FORM_COMPS).concat(compsArr(FORM_COMPS2)).filter(function(x){ return IAS.mias[x]; });
+  return f.length ? nvpHtml(f, getProductos(), true) : '';
+}
+function nvpContaHtml(p, x){ return (p && x && x.comps) ? nvpHtml(x.comps.filter(function(f){ return IAS.mias[f]; }), p.productos||[], false) : ''; }
+/* «Poner como en la nota»: el precio de ESE renglón del formulario, como lo escribiría la persona. */
+function nvpPoner(ix, precio){
+  var c=obsIaCards()[ix], e=c && c.querySelector('.prod-precio'); precio=r2(precio); if(!e || !(precio>0)) return;
+  e.value=String(precio); e.classList.remove('err');
+  try{ e.dispatchEvent(new Event('input', { bubbles:true })); }catch(x){}
+  try{ pintarTotalProds(); }catch(x){}
+  toast('✓ '+String((c.querySelector('.prod-desc')||{}).value||'El producto')+': '+iasBs(precio)+', como en la nota.','ok');
+  iasRepintar();
+}
+function nvpOk(fid){ NVP.ok[String(fid)]=1; iasRepintar(); }
+function nvpTrasPrecios(){ if(nvpVa() && nvpNotas(compsArr(FORM_COMPS).concat(compsArr(FORM_COMPS2))).length) iasPintarForm(); }
+// 🧾 mejora 353 fin =======================================================================
 // §4ok-93 ============================================================================
 /* 🏪 (05/11, plan del jueves, 93; dueño: «Me encanta todo») LAS VENTAS DE TIENDA EN TANDA. Charcas carga en tandas semanales (42 ventas
    en 128 min en octubre): después de cada una el panel saltaba a Contabilidad y había que volver y elegir la tienda otra vez; y 20 de las 26
