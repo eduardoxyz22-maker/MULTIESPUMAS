@@ -8517,6 +8517,38 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .p396-c.r{background:#fff1f2;border-color:#f5a8b0;color:#9f1239}
 .p396-c:hover{filter:brightness(.97)}
 @media (max-width:900px){ .p396-g{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* 397 · «Pedido guardado» ancho, con el mensaje del cliente como en WhatsApp */
+#modal-box.p397{width:min(1040px,94vw)!important;max-width:none!important}
+.p397-g{display:grid;grid-template-columns:1fr 1.08fr;gap:16px;align-items:stretch}
+.p397-top{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:14px;background:linear-gradient(90deg,#e8faf8,#f5fffe);border:1px solid #bfeee9}
+.p397-top .ok{width:40px;height:40px;border-radius:50%;background:#00B5AD;color:#fff;display:grid;place-items:center;font-size:1.3rem;font-weight:900;flex:none;box-shadow:0 0 0 6px rgba(0,181,173,.15)}
+.p397-top .tx{min-width:0}.p397-top b{font-size:1rem;color:#0f3b39}.p397-top small{display:block;color:#4b6b69;font-size:.78rem;margin-top:1px}
+.p397-top .tot{margin-left:auto;text-align:right;font-weight:900;color:#0f3b39;font-size:1.05rem;white-space:nowrap}
+.p397-top .tot small{font-weight:700;color:#15803d;margin:0}.p397-top .tot small.no{color:#b91c1c}
+.p397-col{display:flex;flex-direction:column;border:1px solid #e3eceb;border-radius:16px;overflow:hidden;background:#fff;min-width:0}
+.p397-col h4{margin:0;padding:10px 14px;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase;color:#5b7473;background:#f6faf9;border-bottom:1px solid #e3eceb;display:flex;align-items:center;gap:6px}
+.p397-eq{padding:12px 14px;font-size:.8rem;line-height:1.5;color:#1f2937;flex:1;overflow-wrap:anywhere}
+.p397-eq b{color:#0f172a}
+.p397-acc{display:flex;gap:8px;padding:10px 14px;border-top:1px solid #eef3f2;background:#fbfdfd;flex-wrap:wrap}
+.p397-acc .btn{flex:1;width:auto}
+.p397-acc .p397-big{background:#25d366;border-color:#25d366;color:#fff;font-weight:900;flex:1.6}
+.p397-sin{font-size:.78rem;color:#7c4b00;font-weight:700}
+.p397-bot{padding:7px 14px;font-size:.74rem;font-weight:700;color:#0f766e;background:#ecfbf9;border-bottom:1px solid #d5efec}
+.p397-wa{display:flex;flex-direction:column;flex:1}
+.p397-wa .cab{display:flex;align-items:center;gap:10px;padding:9px 14px;background:#075e54;color:#fff}
+.p397-wa .cab .av{width:34px;height:34px;border-radius:50%;background:#dcf8c6;color:#075e54;display:grid;place-items:center;font-weight:900;flex:none}
+.p397-wa .cab b{font-size:.9rem}.p397-wa .cab small{display:block;font-size:.7rem;opacity:.85}
+.p397-wa .chat{flex:1;padding:14px 14px 12px;background:#efe7dd;background-image:radial-gradient(rgba(0,0,0,.035) 1.2px,transparent 1.3px);background-size:14px 14px;display:flex;flex-direction:column;align-items:flex-end}
+.p397-wa .bub{position:relative;max-width:92%;background:#d9fdd3;color:#111b21;border-radius:10px 0 10px 10px;padding:9px 11px 18px;font-size:.82rem;line-height:1.45;box-shadow:0 1px 1px rgba(0,0,0,.12);overflow-wrap:anywhere}
+.p397-wa .bub:before{content:'';position:absolute;right:-8px;top:0;border:8px solid transparent;border-top-color:#d9fdd3;border-left-color:#d9fdd3;border-right:0;border-bottom:0}
+.p397-wa .bub .hr{position:absolute;right:9px;bottom:4px;font-size:.66rem;color:#667781}.p397-wa .bub .hr i{font-style:normal;color:#53bdeb}
+.p397-wa #nx-wa-cli{display:none;width:100%;min-height:150px;margin:0}
+.p397-col.edita .p397-wa .bub{display:none}.p397-col.edita .p397-wa #nx-wa-cli{display:block}
+.p397-wa .edit{align-self:flex-start;margin-top:10px;background:#fff;border:1px solid #d8d0c6;border-radius:999px;padding:5px 12px;font:inherit;font-size:.74rem;font-weight:800;color:#075e54;cursor:pointer}
+#modal-box.p397 .modal-actions{justify-content:flex-end;margin-top:12px}
+#modal-box.p397 #wa-text{display:none}
+#modal-box.p397 .p397-col.nx-cli-msg{margin:0}
+#modal-box.p397 .modal-actions .btn{width:auto}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -56955,6 +56987,7 @@ function openModal(html, ancha){
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
   box.classList.remove('clf-box');   // 👤 (§4nr) la ficha del cliente la vuelve a poner
   box.classList.remove('cta-ancha');   // 🧾 (366) la ficha ancha de Contabilidad y de Mis pedidos la vuelven a poner
+  box.classList.remove('p397');   // 🎨 (16/11, mejora 397) «Pedido guardado» ancho la vuelve a poner
   document.body.classList.remove('ficha-costado');   // (§4ni, 3) …y lo mismo el costado: cualquier otra ventana va al medio
   ov.classList.add('on');
   box.setAttribute('role','dialog'); box.setAttribute('aria-modal','true'); box.setAttribute('tabindex','-1');
@@ -57079,6 +57112,7 @@ function modalFondo(){
 /* `volverA` = qué hacer al salir. Sin él cierra, como siempre (recién guardado). Desde una
    ficha se le pasa cómo volver a ella, para no dejar a la vendedora en el aire. */
 function showWhatsappModal(rec, volverA, reenvio){
+  if(!reenvio && guardadoAnchoVa() && guardadoAnchoEntra(rec)){ guardadoAnchoAbrir(rec, volverA); return; }   // 🎨 (16/11, mejora 397)
   var text=pedidoText(rec);
   var salir = esc(volverA || 'closeModal()');
   var _rpt=esRPT(rec&&rec.oc), _atc=esATC(rec&&rec.oc), _rid=String((rec&&rec.id)||'').replace(/'/g,'');
@@ -57114,6 +57148,62 @@ function showWhatsappModal(rec, volverA, reenvio){
   openModal(html);
   try{ if(_atc && !reenvio) atfPedir(rec.id, false, rec); }catch(e){}   // 🎧🤖 (16/11, 347) una ATC nueva con fotos: Claude las mira (callado si no puede)
   try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
+}
+/* 🎨 (16/11, mejora 397; dueño: «Pedido guardado ancho, con el mensaje como en WhatsApp») La ventana «✅ Pedido guardado» medía 540 × 749 px
+   en una pantalla de 768 (llegaba al borde de abajo) con dos cajas de texto una debajo de la otra, y el mensaje del cliente necesitaba su
+   barra para leerse entero. Ahora, en un pedido NUEVO a domicilio (una 📄 OC con día: `nxClienteVale`), la ventana va a ~1.000 px: arriba
+   «✓ Quedó guardado: OC · cliente · día · turno · Bs …»; a la izquierda el mensaje para el grupo del equipo; a la derecha el del cliente
+   como una burbuja verde de WhatsApp (con «✏️ Corregir el mensaje», que muestra la caja de texto de siempre) y el botón grande «💬 Abrir el
+   WhatsApp de …». Los MISMOS textos (`pedidoText`, `nxMsgCliente`) en los MISMOS campos (`#wa-text`, `#nx-wa-cli`) y los mismos botones.
+   ATC, RPT, venta de tienda, «Reenviar la venta» y la pantalla angosta (menos de 900 px), como siempre. En Playwright como antes salvo
+   `window.GUARDADO_ANCHO_PRUEBA`. `tests/test_v397_guardado_ancho.js`. */
+function guardadoAnchoVa(){ try{ return vdVa('GUARDADO_ANCHO_PRUEBA'); }catch(e){ return false; } }
+function guardadoAnchoEntra(rec){
+  if(!rec || esATC(rec.oc) || esRPT(rec.oc) || !nxClienteVale(rec)) return false;
+  try{ if(window.matchMedia && !matchMedia('(min-width:900px)').matches) return false; }catch(e){}
+  return true;
+}
+function guardadoWaFmt(t){ return esc(String(t||'')).replace(/\*([^*\n]+)\*/g,'<b>$1</b>').replace(/(^|[\s(])_([^_\n]+)_/g,'$1<i>$2</i>').replace(/\n/g,'<br>'); }
+function guardadoAnchoAbrir(rec, volverA){
+  var text=pedidoText(rec), salir=esc(volverA || 'closeModal()'), cliTxt=nxMsgCliente(rec, 'nuevo'), nom=nxNombreCorto(rec.cliente)||'el cliente', cel=misWaCliente(rec.celular);
+  var dia=rec.fecha ? (['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][dowDe(rec.fecha)]+' '+fmtFechaCorta(rec.fecha)) : '';
+  var nP=(rec.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); }).length, tot=0; try{ tot=Number(ventaTotal(rec))||0; }catch(e){}
+  var sal=Number(rec.saldo)||0, tur=normTurno(rec.turno||'');
+  var hr=(function(){ try{ return hhmmBolivia(); }catch(e){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); } })();
+  var html='<div class="modal-h"><h3>✅ Pedido guardado</h3><button class="modal-x" onclick="'+salir+'">✕</button></div>'+
+    '<div class="modal-b p397-b"><div class="p397-g">'+
+      '<div class="p397-top"><span class="ok">✓</span><div class="tx"><b>Quedó guardado: '+esc(ocEtiq(rec.oc)||'')+(rec.cliente?(' · '+esc(rec.cliente)):'')+'</b>'+
+        '<small>'+[dia, tur?('turno '+esc(tur)):'', nP?(nP+(nP===1?' producto':' productos')):'', 'ya está en la planilla del equipo'].filter(Boolean).join(' · ')+'</small></div>'+
+        (tot>0 ? ('<div class="tot">'+fmtBs0(tot)+'<small class="'+(rec.pagado?'si':'no')+'">'+(rec.pagado ? '✅ pagado' : (sal>0.005 ? (fmtBs0(sal)+' por cobrar') : ''))+'</small></div>') : '')+'</div>'+
+      '<div class="p397-col"><h4>📦 Para el grupo del equipo</h4><div class="p397-eq">'+guardadoWaFmt(text)+'</div>'+
+        '<textarea class="wa-text" id="wa-text" readonly hidden>'+esc(text)+'</textarea>'+
+        '<div class="p397-acc"><button class="btn btn-primary btn-sm" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar el mensaje</button>'+
+          '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button></div></div>'+
+      '<div class="p397-col nx-cli-msg" id="p397-cli"><h4>💬 Para '+esc(nom)+' — así le llega</h4>'+
+        (nxBotManda(rec) ? '<div class="p397-bot">🤖 El bot de WhatsApp se lo manda solo, en unos 2 minutos: no hace falta mandarlo a mano.</div>' : '')+
+        '<div class="p397-wa"><div class="cab"><span class="av">'+esc(nom.charAt(0)||'?')+'</span><div><b>'+esc(nom)+'</b><small>'+esc(rec.celular||'')+'</small></div></div>'+
+          '<div class="chat"><div class="bub" id="p397-bub">'+guardadoWaFmt(cliTxt)+'<span class="hr">'+esc(hr)+' <i>✓✓</i></span></div>'+
+          '<textarea class="wa-text nx-wa-text" id="nx-wa-cli" rows="7" oninput="guardadoBurbuja()">'+esc(cliTxt)+'</textarea>'+
+          '<button type="button" class="edit" onclick="guardadoCorregir(this)">✏️ Corregir el mensaje</button></div></div>'+
+        '<div class="p397-acc"><button type="button" class="btn btn-ghost btn-sm" onclick="copyText(document.getElementById(\'nx-wa-cli\').value)">📋 Copiar</button>'+
+          (cel ? ('<button type="button" class="btn btn-sm p397-big" onclick="nxAbrirWaCliente(\''+esc(String(rec.celular||'').replace(/'/g,''))+'\')">💬 Abrir el WhatsApp de '+esc(nom)+'</button>')
+               : '<span class="p397-sin">⚠️ No tiene un celular de WhatsApp anotado: copiá el mensaje y mandalo a mano.</span>')+'</div></div>'+
+    '</div>'+
+    certBloqueHtml(rec)+
+    '<div class="modal-actions"><button class="btn btn-ghost btn-sm" onclick="'+salir+'">Cerrar</button></div></div>';
+  openModal(html);
+  var box=document.getElementById('modal-box'); if(box) box.classList.add('p397');
+  try{ if(window.PRACTICA) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271)
+}
+function guardadoBurbuja(){
+  var t=document.getElementById('nx-wa-cli'), b=document.getElementById('p397-bub'); if(!t || !b) return;
+  var hr=b.querySelector('.hr'); b.innerHTML=guardadoWaFmt(t.value)+(hr ? hr.outerHTML : '');
+}
+function guardadoCorregir(btn){
+  var c=document.getElementById('p397-cli'); if(!c) return;
+  var on=!c.classList.contains('edita'); c.classList.toggle('edita', on);
+  if(btn) btn.textContent=on ? '✓ Listo, ver cómo queda' : '✏️ Corregir el mensaje';
+  if(on){ var t=document.getElementById('nx-wa-cli'); if(t) try{ t.focus(); }catch(e){} } else guardadoBurbuja();
 }
 /* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
    (Mis pedidos, Lista de carga y Administración ya lo tenían). Se notó con las ventas de
