@@ -44567,6 +44567,13 @@ function misPrecioHtml(x, p){
   var pr=prodPrecio(x), ct=Number(x && x.cant)||1; if(!(pr>0)) return '';
   return ' <span class="mis-precio" style="color:var(--teal-dk);font-weight:700;white-space:nowrap">· '+fmtBs(pr)+(ct>1?(' c/u = '+fmtBs(r2(pr*ct))):'')+'</span>';
 }
+/* 🧾 (16/11; dueño, con la ficha del 11-207: «eduardo necesita ver el nro de nota de venta») El N° de la nota de venta también en «📋 Datos»,
+   grande y primero (arriba solo iba en el título oscuro). Misma regla de siempre (§4hu): solo con Eduardo elegido (`misVeNota`), solo en
+   una venta (no ATC ni RPT) y si tiene nota. */
+function misNotaFila(p){
+  if(!(misVeNota() && p && p.nota && !esATC(p.oc) && !esRPT(p.oc))) return '';
+  return '<span class="mis-nota-dato" style="font-size:1.08rem;font-weight:800;letter-spacing:.02em">'+esc(p.nota)+'</span>';
+}
 function misPreciosTotalHtml(p){
   if(noSeCobra(p) || !tienePrecios(p)) return '';
   var falta=((p.productos)||[]).filter(function(x){ return x && prodPrecio(x)<=0; }).length;
@@ -44580,6 +44587,7 @@ function misAnchaFichaHtml(p, o){
   var rw=ctaAnchaRow;
   var izq='<div class="cta-t">🛏️ Qué compró</div><div class="cta-prods mis-prods">'+o.prod+misPreciosTotalHtml(p)+'</div>'+
     '<div class="cta-t">📋 Datos</div><div class="cta-dl cta-dl2">'+
+      (misNotaFila(p) ? rw('N° de nota de venta', misNotaFila(p)) : '')+
       (esVentaTienda(p) ? rw('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))
         : entregaAConfirmar(p) ? rw('Fecha de entrega', avisaBadge(p)+'<br><span style="font-size:.8rem;color:var(--muted)">Cuando el cliente elija: ✏️ Editar, sacá «📦 El cliente avisa cuándo» y poné el día.</span>', true)
         : rw('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
@@ -44645,7 +44653,8 @@ function showMisModal(id){
   var vendCell = p.vendedor
     ? '<span class="badge b-gray">👤 '+esc(nombreCanonico(p.vendedor)||p.vendedor)+'</span>'
     : '<span class="badge b-red">⚠️ sin vendedor</span>';
-  var body=(esVentaTienda(p) ? row('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))   // (26/09) decía «Fecha de entrega» vacía
+  var body=row('N° de nota de venta', misNotaFila(p))+   // 🧾 (16/11) solo con Eduardo elegido
+    (esVentaTienda(p) ? row('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))   // (26/09) decía «Fecha de entrega» vacía
            : entregaAConfirmar(p) ? row('Fecha de entrega', avisaBadge(p)+'<br><span style="font-size:.8rem;color:var(--muted)">Cuando el cliente elija: ✏️ Editar, sacá «📦 El cliente avisa cuándo» y poné el día.</span>')   // 📦 (propuesta 76)
                              : row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
     row('Vendedor', vendCell)+
