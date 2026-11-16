@@ -8596,12 +8596,12 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .p367{display:none}
 @media (min-width:1120px){
   #fh.p367-on .fh-top, #fh.p367-on .fh-dia, #fh.p367-on .fh-turnos, #fh.p367-on .fh-murc, #fh.p367-on .fh-luna{display:none!important}
-  #fh.p367-on{padding:0!important;margin-bottom:12px!important;background:none!important;box-shadow:none!important;border:0!important;min-height:0!important;overflow:visible!important;animation:none!important}
+  #fh.p367-on{container:p367/inline-size;padding:0!important;margin-bottom:12px!important;background:none!important;box-shadow:none!important;border:0!important;min-height:0!important;overflow:visible!important;animation:none!important}
   #fh.p367-on::before, #fh.p367-on::after{display:none!important}
-  #fh.p367-on .p367{display:flex;align-items:center;gap:6px;white-space:nowrap;background:linear-gradient(90deg,#00A09A,#0f8f8a);color:#fff;border-radius:12px;padding:0 8px 0 11px;height:42px;box-sizing:border-box;font:700 .8rem/1 Inter,system-ui,sans-serif;box-shadow:0 6px 18px -10px rgba(0,80,78,.6);overflow:hidden}
+  #fh.p367-on .p367{display:flex;align-items:center;gap:4px;white-space:nowrap;background:linear-gradient(90deg,#00A09A,#0f8f8a);color:#fff;border-radius:12px;padding:0 8px 0 11px;height:42px;box-sizing:border-box;font:700 .8rem/1 Inter,system-ui,sans-serif;box-shadow:0 6px 18px -10px rgba(0,80,78,.6);overflow:hidden}
   #view-form.p398-on #fh.p367-on .p367{background:linear-gradient(90deg,var(--doc-dk),var(--doc))}
   #fh.p367-on .p367 .t{font-weight:900;margin-right:2px}
-  #fh.p367-on .p367 .c{background:rgba(255,255,255,.2);border-radius:8px;padding:5px 7px}
+  #fh.p367-on .p367 .c{background:rgba(255,255,255,.2);border-radius:8px;padding:5px 6px}
   #fh.p367-on .p367 .c.sel{background:#fff;color:#00796f}
   #fh.p367-on .p367 .c.full{background:#fee2e2;color:#991b1b}
   #fh.p367-on .p367 .v{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.32);border-radius:8px;padding:5px 7px;font:inherit;font-size:.74rem;cursor:pointer;flex:none}
@@ -8609,6 +8609,8 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
   #fh.p367-on .p367 .fh-ic .q{width:20px;height:20px;font-size:.72rem}
   #fh.p367-on .p367 .fh-ic.p367-nov{padding:0 4px}
   #fh.p367-on .p367 .fh-ic.p367-nov .tx{display:none}
+  /* donde no entra todo (1.366 px: la columna del medio mide ~510), «Guía» queda en su «?» (con su título): nunca cortado con «…» */
+  @container p367 (max-width:579px){ #fh.p367-on .p367 .fh-ic:not(.fh-cot):not(.p367-nov){padding:0 4px} #fh.p367-on .p367 .fh-ic:not(.fh-cot):not(.p367-nov) .tx{display:none} }
   #fh.p367-on .p367 .sp{flex:1}
   #fh.p367-on .p367 .vivo{display:inline-flex;align-items:center;flex:none;padding:0 3px}
   #fh.p367-on .p367 .vivo i{width:8px;height:8px;border-radius:50%;background:#86efac;box-shadow:0 0 0 3px rgba(134,239,172,.25)}
@@ -28656,8 +28658,7 @@ function fhCortoHtml(o){
   }
   h+='<span class="sp"></span><span class="vivo'+o.pill[0]+'" title="'+esc(o.pill[1])+'"><i></i></span>'+(o.cotB||'')+
      '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
-     '<a class="fh-ic p367-nov" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
-       (o.nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a>';
+     (o.nov===NOVEDADES_V ? '' : '<a class="fh-ic p367-nov" href="guia-vendedor.html" target="_blank" rel="noopener" title="Hay novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span><span class="pt" aria-label="hay novedades"></span></a>');   // solo si hay algo nuevo
   return '<div class="p367" role="group" aria-label="El camión del día y la ayuda">'+h+'</div>';
 }
 function fhPintar(){

@@ -3,8 +3,8 @@
 
    ⚠️ LO QUE ESTE TEST CUIDA (lo lee `#fh`, como test_arriba_pedido):
    1. Sin `FH_CORTO_PRUEBA` (Playwright, con FH_PRUEBA): el cartel grande de siempre.
-   2. Con la bandera y 1.366 px: UNA línea (~42 px) «🚚 Mar 17/11 · 🌅 N libres · 🌆 N libres · 👀 Ver · Cotizar · Guía», con los MISMOS
-      números de `cuposUsadosTurno`; lo grande, escondido; la fecha de entrega se ve al abrir.
+   2. Con la bandera y 1.366 px: UNA línea (~42 px) «🚚 Mar 17/11 · 🌅 N libres · 🌆 N libres · 👀 Ver · Cotizar · ?», con los MISMOS
+      números de `cuposUsadosTurno`, entera (sin nada cortado); lo grande, escondido; la fecha de entrega se ve al abrir.
    3. OC · ATC · RPT · Cotización en una fila.
    4. «👀 Ver» abre los pedidos del turno (`verCuposTurno`).
    5. Con el turno lleno, el aviso de una línea sigue debajo.
@@ -37,7 +37,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     window.__mirar=function(){ var fh=document.getElementById('fh'), r=fh.getBoundingClientRect(), l=fh.querySelector('.p367'), vis=function(e){ return !!(e && getComputedStyle(e).display!=='none' && e.getBoundingClientRect().height>0); };
       var fe=document.getElementById('f-fecha').getBoundingClientRect(), tipos=[].map.call(document.querySelectorAll('#f-doc-tipo > button'), function(b){ return Math.round(b.getBoundingClientRect().top); });
       return { alto:Math.round(r.height), linea:vis(l) ? l.innerText.replace(/\s+/g,' ').trim() : '', grande:vis(fh.querySelector('.fh-turnos')), top:vis(fh.querySelector('.fh-top')),
-        fechaVisible:fe.top>0 && fe.bottom<innerHeight, tipos:tipos, alerta:[].map.call(fh.querySelectorAll('.fh-alerta'), function(a){ return vis(a) ? a.textContent : ''; }).filter(Boolean) }; };
+        fechaVisible:fe.top>0 && fe.bottom<innerHeight, tipos:tipos, guia:!!(l && l.querySelector('a[href="tutorial.html"]')), entra:!!(l && l.scrollWidth<=l.clientWidth+1), alerta:[].map.call(fh.querySelectorAll('.fh-alerta'), function(a){ return vis(a) ? a.textContent : ''; }).filter(Boolean) }; };
   });
   await page.waitForTimeout(300);
 
@@ -48,7 +48,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   console.log('\n── 2-3. Con la bandera, 1.366 px ──');
   r = await ev(() => { window.FH_CORTO_PRUEBA=1; renderCupoForm(); scrollTo(0,0); var o=__mirar(); o.u=[cuposUsadosTurno('2026-11-17','AM'), cuposUsadosTurno('2026-11-17','PM')]; return o; });
   chk('2a una línea de ~42 px', r.alto>=38 && r.alto<=50 && !r.grande && !r.top, [r.alto, r.grande, r.top]);
-  chk('2b «🚚 Mar 17/11 · 🌅 8 libres · 🌆 10 libres · 👀 Ver · Cotizar · Guía»', /^🚚 Mar 17\/11 🌅 8 libres 🌆 10 libres 👀 Ver/.test(r.linea) && /Guía/.test(r.linea) && r.u.join(',')==='4,3', [r.linea, r.u]);
+  chk('2b «🚚 Mar 17/11 · 🌅 8 libres · 🌆 10 libres · 👀 Ver · Cotizar · ?» (la guía en su «?»: en 1.366 px no entra la palabra)', /^🚚 Mar 17\/11 🌅 8 libres 🌆 10 libres 👀 Ver/.test(r.linea) && r.guia && r.u.join(',')==='4,3', [r.linea, r.guia, r.u]);
+  chk('2b2 la línea entra entera, sin nada cortado', r.entra, r.entra);
   chk('2c la fecha de entrega se ve al abrir', r.fechaVisible, r.fechaVisible);
   chk('3 OC · ATC · RPT · Cotización en una fila', r.tipos.length>=3 && new Set(r.tipos).size===1, r.tipos);
 
