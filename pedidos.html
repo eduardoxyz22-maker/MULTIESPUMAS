@@ -4430,6 +4430,22 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .mis-nuevo #mis-ubic-aviso,.mis-nuevo #mis-izq{display:none}
 .mis-nuevo #mis-arriba:not(.con-dep){display:none}
 @media (min-width:1000px){ .mis-nuevo #mis-arriba.con-dep{grid-template-columns:minmax(0,1fr)} }
+/* 🖥️ 371 · «Tu día» al costado y los pedidos arriba (`misAnchaVe`): dos columnas desde 1.300 px. Lo que dice cada caja no cambia: #mis-top
+   pasa a `display:contents`, así «Para hacer» (.ah-card) va a la izquierda con su alto justo, arriba de los filtros y las tarjetas, y «Tu día»
+   (.td) a la derecha, pegado mientras se baja (con su propio scroll si no entra). La última fila (1fr) se lleva el alto que sobre de «Tu día»:
+   así no aparecen huecos entre las cajas de la izquierda cuando la lista es corta. */
+@media (min-width:1300px){
+  #view-mis .card.mis-ancha{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-rows:repeat(24,auto) 1fr;column-gap:16px;row-gap:0;align-items:start}
+  #view-mis .card.mis-ancha > *, #view-mis .card.mis-ancha > #mis-top > *{grid-column:1;min-width:0}
+  #view-mis .card.mis-ancha > .filters{grid-column:1 / -1}
+  #view-mis .card.mis-ancha > #mis-top:not([hidden]){display:contents}
+  #view-mis .card.mis-ancha > #mis-top > .ah-card{margin-bottom:12px}
+  #view-mis .card.mis-ancha > #mis-top > .t2-det{grid-column:1 !important;margin-bottom:12px}
+  #view-mis .card.mis-ancha > #mis-top > .td{grid-column:2;grid-row:2 / -1;align-self:start;display:block;position:sticky;top:calc(var(--hdr-h,0px) + 10px);
+    max-height:calc(calc(100vh / var(--vz,1)) - var(--hdr-h,0px) - 20px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#9fd8d4 transparent}
+  #view-mis .card.mis-ancha > #mis-top > .td .td-filas{grid-template-columns:1fr 1fr;column-gap:16px;padding:2px 16px}
+  #view-mis .card.mis-ancha #mis-lista{grid-template-columns:repeat(auto-fill,minmax(min(400px,100%),1fr))}
+}
 /* ✨ (§4mg) Contabilidad → Ventas arriba: «Para hacer» + el libro del período. Una sola caja por tarjeta: adentro, filas y separadores. */
 #cx-top{margin:2px 0 12px;align-items:stretch}
 .cx-nuevo #cx-grupos,.cx-nuevo #cta-metrics,.cx-nuevo #cta-marcas,.cx-nuevo #cx-vivo,.cx-nuevo #cx-dup{display:none}
@@ -38636,6 +38652,13 @@ function vacioPoner(el, k, txt, n){
   el.innerHTML=VACIO_SVG[dib]+'<b>'+esc(txt)+'</b>'+(sub?('<small>'+esc(sub)+'</small>'):'')+(bot.length?('<div class="u7-b">'+bot.join('')+'</div>'):'');
 }
 function misTopActivo(){ return !navigator.webdriver || !!window.MIS_TOP_PRUEBA; }
+/* 🖥️ (16/11, mejora 371; dueño: «me gusta») MIS PEDIDOS: «TU DÍA» AL COSTADO Y LOS PEDIDOS ARRIBA. Con una vendedora elegida, «Para hacer» se
+   estiraba hasta el alto de «Tu día» (509 px en blanco en el caso de Carola) y la lista de sus pedidos empezaba a 1.521 px: dos pantallas abajo,
+   y al bajar «Tu día» se iba. En la compu (1.300 px o más): dos columnas, a la izquierda «Para hacer» con su alto justo, los filtros y las
+   tarjetas (de a dos en 1.366); a la derecha «Tu día», pegado al costado mientras se baja. Solo CSS (`.mis-ancha`, ver arriba): no se mueve
+   ningún nodo, así que cada repintado sigue igual. Con «👑 Ver todos» queda como estaba. En Playwright, con `MIS_TOP_PRUEBA` como hoy y
+   además `window.MIS_ANCHA_PRUEBA`. */
+function misAnchaVe(){ return misTopActivo() && vdVa('MIS_ANCHA_PRUEBA'); }
 function misNom2(L, n){ n=n||3; return L.slice(0,n).map(function(p){ return String((p&&p.cliente)||'—').trim().split(/\s+/).slice(0,2).join(' '); }).join(', ')+(L.length>n?(' y '+(L.length-n)+' más'):''); }
 var MIS_LISTAS={};
 function misVerLista(k){
@@ -39392,7 +39415,7 @@ function renderMis(){
   /* ✨ (§4mf) arriba: «Para hacer» + «Tu día», con un vendedor elegido */
   var _nuevo=misTopActivo() && !!v && !todos, _card=mv.closest('.card'), _top=document.getElementById('mis-top');
   var _eq=misTopActivo() && todos;                  // 👑 (§4nn) «Ver todos» con el diseño nuevo
-  if(_card){ _card.classList.toggle('mis-nuevo', _nuevo || _eq); _card.classList.toggle('mis-eq', _eq); }
+  if(_card){ _card.classList.toggle('mis-nuevo', _nuevo || _eq); _card.classList.toggle('mis-eq', _eq); _card.classList.toggle('mis-ancha', _nuevo && misAnchaVe()); }   // 🖥️ (371)
   if(_top) _top.hidden=!(_nuevo || _eq);
   misBuscaLugar(_nuevo || _eq);
   /* ⏳ (§4mg, V6) En una compu nueva, mientras llega la planilla: la forma de lo que viene, no «todo en 0». */
