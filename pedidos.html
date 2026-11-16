@@ -7251,6 +7251,20 @@ html.tema-todos-santos .cx-kt b{ color:#fcd34d; } html.tema-todos-santos .cx-kt 
 .fx-chk{ display:flex; flex-wrap:wrap; gap:5px; }
 .fx-chk span{ font-size:.7rem; font-weight:800; border-radius:20px; padding:3px 9px; background:var(--gray-lt); color:var(--muted); }
 .fx-chk span.ok{ background:var(--green-lt); color:var(--green); } .fx-chk span.no{ background:var(--amber-lt); color:var(--amber); }
+/* 💾 372 · «Guardar pedido» en «Tu pedido» (`gladoHtml`) */
+.fx-chk button.glado-chip{ font:inherit; font-size:.7rem; font-weight:800; border-radius:20px; padding:3px 9px; background:var(--amber-lt); color:var(--amber); border:1px solid transparent; cursor:pointer; }
+.fx-chk button.glado-chip:hover{ border-color:var(--amber); } .fx-chk button.glado-chip:focus-visible{ outline:2px solid var(--amber); outline-offset:1px; }
+.glado{ display:block; width:100%; margin-top:10px; border:0; border-radius:12px; padding:11px 12px; font:inherit; font-size:.9rem; font-weight:800; cursor:pointer; text-align:center; line-height:1.25; }
+.glado-no{ background:#e8eeee; color:#5b706e; border:1px dashed #b9c9c8; }
+.glado-no:hover{ background:#e0e8e8; color:#3f5755; }
+.glado-t{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.glado-ok{ background:linear-gradient(135deg,#00B5AD,#00A09A); color:#fff; box-shadow:0 6px 16px -6px rgba(0,160,154,.65); animation:glado-pr .5s cubic-bezier(.34,1.56,.64,1); }
+.glado-ok:hover{ filter:brightness(1.06); } .glado:focus-visible{ outline:3px solid #0f766e; outline-offset:2px; }
+@keyframes glado-pr{ 0%{ transform:scale(.94); } 100%{ transform:none; } }
+.glado-n{ font-size:.68rem; color:var(--muted); margin-top:5px; line-height:1.3; }
+.glado-ojo{ animation:glado-ojo 1.6s ease-out; border-radius:10px; }
+@keyframes glado-ojo{ 0%,40%{ box-shadow:0 0 0 3px rgba(0,181,173,.55); } 100%{ box-shadow:0 0 0 0 rgba(0,181,173,0); } }
+@media (prefers-reduced-motion:reduce){ .glado-ok, .glado-ojo{ animation:none; } }
 /* 📝 (idea 119) las observaciones que dicen otra cosa: la línea de «Para guardar» y la ventana «⚠️ Antes de guardar, revisá» */
 .fx-obsrev{ margin-top:6px; font-size:.72rem; font-weight:800; color:#7c4b00; background:var(--amber-lt); border:1px solid var(--amber-border); border-radius:10px; padding:5px 9px; cursor:help; }
 .obsrev{ background:var(--amber-lt); border:1px solid var(--amber-border); border-left:5px solid var(--amber); border-radius:12px; padding:12px 14px; color:#4a2c00; }
@@ -27473,7 +27487,11 @@ function fxDerPintar(){
     chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
     chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
   }
-  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){ return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
+  var _gl=gladoVe();   // 💾 (16/11, mejora 372) lo que falta se toca y lleva a su campo; abajo, el MISMO «Guardar pedido»
+  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){
+      if(_gl && !c[1]) return '<button type="button" class="no glado-chip" onclick="gladoIr(\''+esc(c[0])+'\')" title="Llevame a «'+esc(c[0])+'»">○ '+esc(c[0])+'</button>';
+      return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
+  if(_gl) h+=gladoHtml(chk, tipo, tienda);
   /* 📝 (idea 119) lo que Guardar va a preguntar de las observaciones, adelantado en una línea (la MISMA cuenta: `obsRevAvisos`) */
   var _orv=[]; try{ if(!tienda && tipo!=='ATC' && tipo!=='COT') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
   if(_orv.length) h+='<div class="fx-obsrev" title="'+esc(_orv.map(function(x){ return x.t; }).join('\n'))+'">⚠️ Las observaciones dicen otra cosa</div>';
@@ -27487,6 +27505,65 @@ function fxDerPintar(){
   }
   h+='</div>';
   if(el._h!==h){ var sc=el.scrollTop; el.innerHTML=h; el._h=h; el.scrollTop=sc; }
+}
+/* 💾 (16/11, mejora 372; dueño: «quisiera verlo, espero no se vea feo») «GUARDAR PEDIDO» SIEMPRE A MANO, EN «TU PEDIDO». El botón de guardar
+   está solo al final del formulario (a 2.571 px de arriba en una compu de 1.366: 3,3 pantallas) y al corregir algo de arriba había que bajar
+   todo. Ahora, debajo de los puntitos de «Para guardar» de la columna de la derecha (pantalla de 1.120 px o más), un botón grande:
+   · gris «Faltan 2: Zona, Celular» mientras falte algo (sale de la MISMA lista de «Para guardar»: lo que pide Guardar); tocarlo lleva al
+     primero que falta, y cada «○ …» lleva a su campo (`gladoIr`);
+   · turquesa «💾 Guardar pedido» (o «Guardar cambios», «Registrar venta de tienda», «Guardar cotización») cuando está todo: es EL MISMO botón
+     de abajo (`f-submit.click()`): hace lo mismo y pregunta lo mismo; las validaciones siguen todas en `submitPedido`. Nunca guarda por otro
+     camino. En Playwright, apagado salvo `window.GUARDAR_LADO_PRUEBA`. */
+function gladoVe(){ return vdVa('GUARDAR_LADO_PRUEBA'); }
+function gladoCampo(k){
+  var g=function(id){ return document.getElementById(id); }, cards=[].slice.call(document.querySelectorAll('#f-productos .prod-card'));
+  var vacio=function(e){ return e && !String(e.value||'').trim(); };
+  switch(k){
+    case 'Vendedor': return g('f-vendedor');
+    case 'Cliente': return docTipoSel()==='RPT' ? g('f-rpt-suc') : g('f-cliente');
+    case 'Productos': { for(var i=0;i<cards.length;i++){ var d=cards[i].querySelector('.prod-desc'), q=cards[i].querySelector('.prod-cant');
+        if(vacio(d)) return d; if(q && !(parseInt(q.value,10)>=1)) return q; } return cards.length ? cards[0].querySelector('.prod-desc') : g('f-productos'); }
+    case 'Precios': { for(var j=0;j<cards.length;j++){ var dd=cards[j].querySelector('.prod-desc'), pr=cards[j].querySelector('.prod-precio');
+        if(dd && String(dd.value||'').trim() && pr && !(montoForm(pr)>0)) return pr; } return g('f-productos'); }
+    case 'Vale hasta': return g('f-cot-vence');
+    case 'Fecha': return g('f-fecha');
+    case 'Zona': return g('f-zona');
+    case 'Ubicación': return g('f-maps');
+    case 'Celular': return g('f-celular');
+    case 'Nota': return g('f-nota');
+    case 'Saldo o pagado': return segVal('f-pagado')==='NO' ? g('f-saldo') : (segVal('f-pagado')==='SI' ? (g('f-metodo')||g('f-pagado')) : g('f-pagado'));
+    case 'Quién recibió el efectivo': return g('f-recibio-box');
+    case 'Garantía o STC': return g('f-atc-tipo');
+    case 'Motivo': return g('f-atc-motivo');
+    case 'Detalle': return g('f-atc-detalle');
+    case 'Fecha de compra': return g('f-atc-compra');
+    case 'Qué se recoge': return g('f-atc-piezas');
+  }
+  return null;
+}
+function gladoIr(k){
+  var e=gladoCampo(k); if(!e) return;
+  var vis=e; while(vis && vis.offsetParent===null && vis.parentElement) vis=vis.parentElement;   // escondido: su caja a la vista
+  if(!vis || vis===document.body) return;
+  var bar=document.getElementById('fp-barra'), dest=vis.getBoundingClientRect().top+window.scrollY;
+  window.scrollTo({ top:Math.max(0, dest-hdrAltoEn(dest)-(bar && bar.offsetParent ? bar.offsetHeight*zoomPag() : 0)-28), behavior:'smooth' });
+  var marca=vis.closest('.field')||vis; marca.classList.remove('glado-ojo'); void marca.offsetWidth; marca.classList.add('glado-ojo');
+  setTimeout(function(){ marca.classList.remove('glado-ojo'); }, 1800);
+  if(e===vis && typeof e.focus==='function' && /^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) setTimeout(function(){ try{ e.focus({ preventScroll:true }); }catch(x){ e.focus(); } }, 420);
+}
+function gladoGuardar(){
+  var b=document.getElementById('f-submit'); if(!b) return;
+  if(b.disabled){ toast('Ya se está guardando: esperá el resultado.', 'err', 4000); return; }
+  b.click();
+}
+function gladoHtml(chk, tipo, tienda){
+  var falta=chk.filter(function(c){ return !c[1]; }).map(function(c){ return c[0]; });
+  if(falta.length) return '<button type="button" class="glado glado-no" onclick="gladoIr(\''+esc(falta[0])+'\')" title="Te llevo a lo que falta: '+esc(falta.join(', '))+'">'+
+      '<span class="glado-t">'+(falta.length===1 ? 'Falta 1: ' : ('Faltan '+falta.length+': '))+esc(falta.join(', '))+'</span></button>'+
+    '<div class="glado-n">Tocá lo que falta y te lleva al campo. Con todo listo, el botón se prende.</div>';
+  var txt = tipo==='COT' ? 'Guardar cotización' : (tienda ? 'Registrar venta de tienda' : (EDIT_ID ? 'Guardar cambios' : 'Guardar pedido'));
+  return '<button type="button" class="glado glado-ok" onclick="gladoGuardar()" title="Es el mismo botón de abajo: hace lo mismo y pregunta lo mismo">💾 '+esc(txt)+'</button>'+
+    '<div class="glado-n">Es el mismo botón de abajo: pregunta lo mismo antes de guardar.</div>';
 }
 var FX_LADOS_T=null;
 function fxLadosProgramar(){ clearTimeout(FX_LADOS_T); FX_LADOS_T=setTimeout(function(){ try{ fxDupPintar(); fxPasosPintar(); if(fxAncho()) fxDerPintar(); }catch(e){} }, 150); }
