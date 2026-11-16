@@ -3522,6 +3522,30 @@ html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) ::sele
 @keyframes gl-tiempo{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
 .asis-globo.gl-v .gl-ver{ display:inline-flex; align-items:center; gap:4px; margin-top:7px; font-size:.72rem; font-weight:800; color:#00A09A; }
 .asis-globo.gl-v .gl-ver::after{ content:'›'; font-size:1rem; line-height:0; }
+/* 440 · Cada pestaña tiñe su tarjeta (`html.v-tinte`, la pone el <head>): la tarjeta grande de Mis pedidos, Contabilidad, ATC, Bot y
+   Administración toma el color de SU pestaña (los mismos `--c1/--c2` de `#tab-*`): una franja de 4 px arriba, un brillo suave que baja
+   (va en el fondo de la tarjeta, debajo de las letras: nada tapa nada) y, en la compu, un piquito que une la pestaña elegida con la tarjeta.
+   En los temas oscuros la tarjeta sigue siendo de vidrio: la franja va arriba del borde dorado y el brillo apenas la tiñe. */
+html.v-tinte #view-mis{ --sec:#1d4ed8; --sec1:#60a5fa; }
+html.v-tinte #view-conta{ --sec:#d97706; --sec1:#fbbf24; }
+html.v-tinte #view-atc{ --sec:#be185d; --sec1:#f472b6; }
+html.v-tinte #view-bot{ --sec:#475569; --sec1:#94a3b8; }
+html.v-tinte #view-admin{ --sec:#6d28d9; --sec1:#a78bfa; }
+html.v-tinte :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card, html.v-tinte #admin-content > .card{
+  border-top:4px solid var(--sec);
+  background-image:linear-gradient(180deg, color-mix(in srgb, var(--sec1) 22%, transparent) 0, transparent 90px); background-repeat:no-repeat; }
+/* en los temas oscuros el brillo un poco más fuerte (sobre el vidrio negro el 22 % casi no se ve) */
+html.v-tinte:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card,
+html.v-tinte:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) #admin-content > .card,
+html.v-tinte.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card,
+html.v-tinte.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #admin-content > .card{
+  border-top:4px solid var(--sec);   /* el vidrio de diciembre (431) pone su borde dorado con más peso: la franja va igual arriba */
+  background-image:linear-gradient(180deg, color-mix(in srgb, var(--sec1) 28%, transparent) 0, transparent 90px); }
+@media(min-width:701px){
+  html.v-tinte .nav :is(#tab-mis, #tab-conta, #tab-atc, #tab-bot, #tab-admin).active::before{ content:''; position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
+    width:0; height:0; border-left:11px solid transparent; border-right:11px solid transparent; border-top:11px solid var(--c2); z-index:3; pointer-events:none; }
+  html.v-tinte .nav button.nav-llega::before{ display:none; }   /* mientras la marca se desliza (§4ni), sin piquito */
+}
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
