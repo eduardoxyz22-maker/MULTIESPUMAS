@@ -9,8 +9,9 @@
  *   1. Copiar el código del enlace raw de GitHub FIJO A UN COMMIT, nunca desde el chat (corta
  *      los archivos largos: pasó el 23/09). En Extensiones > Apps Script, a la izquierda tiene
  *      que haber UN solo archivo .gs: clic en el código, Ctrl+A, Supr (tiene que quedar
- *      VACÍO), pegar, Ctrl+S. Sin mensaje rojo, y la última línea es la que dice el
- *      procedimiento («}», con «return borrador;» justo antes).
+ *      VACÍO), pegar, Ctrl+S. Sin mensaje rojo, y la ÚLTIMA línea del archivo tiene que ser
+ *      «var FIN_DEL_ARCHIVO = '<la SCRIPT_VERSION>';» (desde la 2026-11-16-a; antes era «}» con
+ *      «return borrador;»: ya no, el archivo sigue mucho después de borradorDeLead_).
  *   2. En la lista de al lado de ▶ Ejecutar elegir «probarAntesDeImplementar» → Ejecutar.
  *      Abajo tiene que terminar en «✅ Se puede implementar». Con una ❌, o si la función ni
  *      aparece en la lista: NO implementar, y volver a pegar el código de la versión anotada.
@@ -274,13 +275,21 @@ function probarAntesDeImplementar() {
     waPvVentas_: typeof waPvVentas_, waMetaMarcas_: typeof waMetaMarcas_, waTiendasHoy_: typeof waTiendasHoy_, waBfDatos_: typeof waBfDatos_, waPryMov_: typeof waPryMov_,
     waCmDatos_: typeof waCmDatos_, waCcmCuenta_: typeof waCcmCuenta_, waCmDetalle_: typeof waCmDetalle_, waPregTiendasTxt_: typeof waPregTiendasTxt_, waPregMayoristasTxt_: typeof waPregMayoristasTxt_,
     waPregMetaTxt_: typeof waPregMetaTxt_, waExcelTarde_: typeof waExcelTarde_, probarBotI_: typeof probarBotI_,   // (2026-11-15-a, mejoras 321, 332, 336, 339, 340 y 341)
-    borradorDeLead_: typeof borradorDeLead_
+    borradorDeLead_: typeof borradorDeLead_,
+    iagAccion_: typeof iagAccion_, wpElegir_: typeof wpElegir_, chatAccion_: typeof chatAccion_, chatPodar: typeof chatPodar,   // (2026-11-16-a) lo que va DESPUÉS de borradorDeLead_
+    obsIaLeer_: typeof obsIaLeer_, atfLeer_: typeof atfLeer_, probarIaObsAtc_: typeof probarIaObsAtc_
   };
   var faltan = [], n;
   for (n in fns) if (fns[n] !== 'function') faltan.push(n);
   if (faltan.length) mal('Faltan funciones: ' + faltan.join(', ') + '. El código quedó CORTADO o mal pegado: ' +
-                         'volvé a copiarlo entero (la última línea es «}» y justo antes dice «return borrador;»).');
-  else bien('El código está entero: ' + Object.keys(fns).length + ' funciones clave, hasta la última del archivo.');
+                         'volvé a copiarlo entero (la última línea es «var FIN_DEL_ARCHIVO = \'' + ESTA_VERSION + '\';»).');
+  /* 🧷 (2026-11-16-a, revisión de Fable, punto 4) El CENTINELA: la última línea del archivo. La lista de funciones de arriba llegaba
+     hasta borradorDeLead_ y el archivo sigue mucho después (IA de gestión, el porqué de la semana, el chat, observaciones y ATC):
+     un pegado cortado justo ahí daba «✅ código entero». Sin esta línea, o con la de otra versión, el código está cortado. */
+  else if (typeof FIN_DEL_ARCHIVO === 'undefined' || FIN_DEL_ARCHIVO !== ESTA_VERSION)
+    mal('El código quedó CORTADO: no llegó la última línea del archivo («var FIN_DEL_ARCHIVO = \'' + ESTA_VERSION + '\';»). ' +
+        'Volvé a copiarlo ENTERO desde el enlace de GitHub (Ctrl+A, Supr, pegar) y Ctrl+S.');
+  else bien('El código está entero: ' + Object.keys(fns).length + ' funciones clave y la última línea del archivo.');
 
   /* 2. La planilla, leída como la lee el panel (`list`). Sin `getSheet()`, que agrega los
         encabezados si faltan: esta prueba no escribe. */
@@ -463,7 +472,7 @@ function probarAntesDeImplementar() {
       else if (mW && mW.ts) bien('Meta avisa lo que pasó con cada mensaje: ' + mW.n + ' aviso(s), el último el ' + horaBolivia(Date.parse(mW.ts)) + '.');
       else if (vW && vW.ok === false) ojo('Meta intentó verificar el webhook con un token que no es el de WA_HOOK_KEY: copialo igual en los dos lados.');
       else bien('WA_HOOK_KEY está puesta; Meta todavía no mandó ningún aviso' + (vW && vW.ok ? ' (la dirección ya se verificó)' : '') + '.');
-      var rW = waJsonProp_('WA_HOOK_MAL', null);   // (2026-10-12-b)
+      var rW = waHookMalLeer_();   // (2026-10-12-b) · 🛡️ (16-a) en la caché, las últimas 6 h
       if (rW && rW.n && (!mW || !mW.ts || Date.parse(rW.ts) > Date.parse(mW.ts))) ojo('Llegaron ' + rW.n + ' aviso(s) de Meta con OTRA clave en la dirección (el último el ' + horaBolivia(Date.parse(rW.ts)) + '): en Meta, lo que va después de «?wa=» tiene que ser igual a WA_HOOK_KEY.');
       if (mW && mW.fallos && mW.fallos.length) ojo('Meta avisó que NO entregó ' + mW.fallos.length + ' mensaje(s); el último: ' + mW.fallos[mW.fallos.length - 1].t + ' · ' + mW.fallos[mW.fallos.length - 1].e);
     }
@@ -1238,8 +1247,8 @@ function histLeer_(body) {
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
-  if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
-  if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
+  if (obj && obj.auth == null) obj.auth = authTxt_(panelKey_());          // 🔐 (16-a) sin poder leer, «?» (no «abierto»)
+  if (obj && obj.adminAuth == null) obj.adminAuth = authTxt_(adminKey_());
   if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -1247,16 +1256,49 @@ function jsonOut(obj) {
 }
 
 /* ── 🔐 La clave del equipo ──────────────────────────────────────────────── */
+function authTxt_(k) { return k === null ? '?' : (k ? 'clave' : 'abierto'); }
 function prop_(k) {
   try { return String(PropertiesService.getScriptProperties().getProperty(k) || '').trim(); }
   catch (e) { return ''; }
 }
-function panelKey_() { return prop_('PANEL_KEY'); }
-function adminKey_() { return prop_('ADMIN_KEY'); }
-/** ¿Esta llamada trae la clave correcta? Sin clave configurada, pasa todo (ver cabecera). */
+/* 🔐 (2026-11-16-a, revisión de Fable, punto 1) LA PUERTA SE CIERRA ANTE UN ERROR, NO SE ABRE. `prop_` devuelve '' si Google no
+   deja leer las Propiedades (una falla pasajera, o el cupo diario de propiedades agotado: 50.000 operaciones en una cuenta gmail, y
+   los disparadores ya gastan ~22.000), y `claveOk_` leía ese '' como «no hay clave configurada»: el panel quedaba abierto para
+   cualquiera el resto del día. Ahora la clave del equipo, la de Administración y GET_CERRADO salen de UNA lectura de toda la
+   configuración por ejecución (`getProperties`: una operación en vez de una por clave) y, si esa lectura falla, `cfgLeer_` da
+   null: la clave «no se pudo leer» → la llamada se rechaza con `busy` (el panel reintenta solo, como sin red), nunca pasa.
+   ⚠️ Solo CONFIGURACIÓN (la pone una persona, no cambia en la ejecución). El ESTADO (colas, WA_HECHO, contadores) se sigue leyendo
+   fresco con `prop_`/`waJsonProp_`, adentro de su candado. */
+var CFG_EJEC_ = null;
+function cfgLeer_() {
+  if (CFG_EJEC_) return CFG_EJEC_;
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    if (typeof sp.getProperties !== 'function') return { _uno:sp };   // (las Propiedades de mentira de las pruebas: de a una, sin guardar)
+    CFG_EJEC_ = sp.getProperties() || {};
+  } catch (e) { return null; }
+  return CFG_EJEC_;
+}
+/** El valor de una propiedad de CONFIGURACIÓN ('' = no está) o null si no se pudo leer. */
+function cfgProp_(k) {
+  var c = cfgLeer_();
+  if (!c) return null;
+  if (c._uno) { try { return String(c._uno.getProperty(k) || '').trim(); } catch (e) { return null; } }
+  return String(c[k] == null ? '' : c[k]).trim();
+}
+/** Cada llamada de afuera (doPost, doGet) lee la configuración de nuevo: en Google cada ejecución arranca de cero igual; esto es por las pruebas. */
+function cfgOlvidar_() { CFG_EJEC_ = null; }
+function panelKey_() { return cfgProp_('PANEL_KEY'); }   // '' = sin clave configurada · null = no se pudo leer
+function adminKey_() { return cfgProp_('ADMIN_KEY'); }
+/** ¿Esta llamada trae la clave correcta? Sin clave configurada, pasa todo (ver cabecera). Sin poder leer la configuración, NO pasa. */
 function claveOk_(recibida) {
   var k = panelKey_();
+  if (k === null) return false;
   return !k || String(recibida || '') === k;
+}
+/** El «no» de la clave: `clave` si la clave no coincide, `busy` si no se pudo leer la configuración (el panel reintenta solo). */
+function claveNo_() {
+  return jsonOut({ ok:false, error:(panelKey_() === null ? 'busy' : 'clave'), motivo:(panelKey_() === null ? 'propiedades' : undefined), version:SCRIPT_VERSION });
 }
 /* 🛡️ ¿Puede FORZAR (meter un pedido en un día cerrado o un turno lleno)? (§4cg)
    La clave del equipo dice «sos del equipo», no «sos administración»: la contraseña de
@@ -1266,8 +1308,11 @@ function claveOk_(recibida) {
    forzar sigue como siempre. Con PANEL_KEY puesta y sin ADMIN_KEY, nadie puede forzar —
    se reabre el día desde «Cerrar día», o se configura ADMIN_KEY. */
 function forzarOk_(body) {
-  if (!panelKey_()) return { ok:true };
+  var pk = panelKey_();
+  if (pk === null) return { ok:false, motivo:'propiedades' };   // 🔐 (16-a) sin poder leer la configuración, no se fuerza nada
+  if (!pk) return { ok:true };
   var ak = adminKey_();
+  if (ak === null) return { ok:false, motivo:'propiedades' };
   if (!ak) return { ok:false, motivo:'sin_clave' };
   return String(body.adminKey || '') === ak ? { ok:true } : { ok:false, motivo:'clave_mal' };
 }
@@ -1309,9 +1354,10 @@ var GET_LOG_FIRMAS_MAX = 15;         // firmas distintas como mucho; el resto ca
 var GET_LOG_SEG = 6 * 3600;          // vida del registro en la caché (tope de CacheService); cada GET la renueva
 var GET_LOG_PROP_SEG = 60;           // cada cuánto, como mucho, se copia el resumen a las Propiedades del script
 function doGet(e) {
+  cfgOlvidar_();   // 🔐 (16-a)
   /* 📬 (2026-10-12-a) Meta verifica la dirección del webhook del bot con un GET: va ANTES de la clave y del GET_CERRADO. */
   var vMeta = waHookVerificar_(e); if (vMeta) return vMeta;
-  if (!claveOk_(e && e.parameter && e.parameter.k)) { getRegistrar_(e, 'clave'); return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION }); }
+  if (!claveOk_(e && e.parameter && e.parameter.k)) { getRegistrar_(e, 'clave'); return claveNo_(); }
   if (getCerrado_()) { getRegistrar_(e, 'cerrado'); return jsonOut({ ok:false, error:'get_cerrado', version:SCRIPT_VERSION }); }
   var txt = getCacheLeer_();
   getRegistrar_(e, txt ? 'cache' : 'hoja');
@@ -1324,7 +1370,11 @@ function doGet(e) {
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
 }
 /* 🚪 Propiedades del script → GET_CERRADO = 1 (cualquier cosa que no sea vacío, 0 o no). */
-function getCerrado_() { var v = prop_('GET_CERRADO').toLowerCase(); return !!v && v !== '0' && v !== 'no'; }
+function getCerrado_() {
+  var v = cfgProp_('GET_CERRADO');
+  if (v === null) return true;   // 🔐 (16-a) sin poder leer la configuración, la puerta GET queda cerrada (el panel no la usa)
+  v = v.toLowerCase(); return !!v && v !== '0' && v !== 'no';
+}
 /* Solo los NOMBRES de los parámetros: `k` puede ser una clave y no va al registro. */
 function getRegistrar_(e, como) {
   var f = null;
@@ -1417,8 +1467,8 @@ function getLogInforme_() {
   return out;
 }
 function jsonTexto_(obj) {
-  if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
-  if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
+  if (obj && obj.auth == null) obj.auth = authTxt_(panelKey_());          // 🔐 (16-a) sin poder leer, «?» (no «abierto»)
+  if (obj && obj.adminAuth == null) obj.adminAuth = authTxt_(adminKey_());
   if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
   return JSON.stringify(obj);
 }
@@ -1508,12 +1558,33 @@ function rechazoAnotar_(body, action, o) {
     var p = (body && body.pedido) || {};
     var id = String(p.id || (body && body.id) || '');
     var sh = getSheetRechazos_();
-    sh.appendRow([new Date(), String(action || ''), String(o.error || ''), id,
-                  String(p.cliente || ''), String(p.vendedor || ''), String((body && body.quien) || ''),
-                  rechazoDetalle_(body, o), dispositivoDe_(body)]);
+    /* 🛡️ (16-a, punto 3) Texto que empieza con =, +, - o @ no entra como fórmula (`mallCelda_`: un «'» adelante). */
+    sh.appendRow([new Date(), mallCelda_(String(action || '').slice(0, 30)), mallCelda_(String(o.error || '')), mallCelda_(id.slice(0, 80)),
+                  mallCelda_(String(p.cliente || '').slice(0, 120)), mallCelda_(String(p.vendedor || '').slice(0, 60)), mallCelda_(String((body && body.quien) || '').slice(0, 60)),
+                  mallCelda_(rechazoDetalle_(body, o)), dispositivoDe_(body)]);
     var n = sh.getLastRow() - 1;
     if (n > RECHAZOS_MAX) sh.deleteRow(2);            // la más vieja
     try { var pr = PropertiesService.getScriptProperties(); pr.setProperty('RECHAZOS_N', String((Number(pr.getProperty('RECHAZOS_N')) || 0) + 1)); } catch (e2) {}
+  } catch (e) {}
+}
+/* 🛡️ (2026-11-16-a, revisión de Fable, punto 2) UN «NO» QUE PUDO MANDAR CUALQUIERA. La dirección /exec está en la página pública:
+   un guardado sin la clave del equipo, un cuerpo que no es JSON o una llamada cuando no se pudo leer la configuración no prueban que
+   venga del equipo. Antes se anotaba en «Rechazos» con el id, el cliente, el vendedor y «quién» TAL CUAL llegaban: cualquiera podía
+   llenar la hoja (a las 2.000 filas se borran los rechazos de verdad) o meter fórmulas («=IMPORTDATA(…)») en la planilla. Ahora:
+   solo la hora, la acción (letras y números), el motivo y el dispositivo (ya saneado), y como mucho RECHAZOS_AJENOS_MIN filas por
+   minuto, contadas en la caché (no en Propiedades: no gasta el cupo). No suma a RECHAZOS_N. */
+var RECHAZOS_AJENOS_MIN = 6;
+function rechazoAjeno_(body, action, o) {
+  try {
+    var c = CacheService.getScriptCache(), k = 'rech_ajeno_' + Math.floor(Date.now() / 60000);
+    var n = Number(c.get(k)) || 0;
+    if (n >= RECHAZOS_AJENOS_MIN) return;
+    c.put(k, String(n + 1), 120);
+    var acc = String(action || '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 24);
+    var sh = getSheetRechazos_();
+    sh.appendRow([new Date(), acc, String(o.error || '').replace(/[^A-Za-z0-9_ ]/g, ''), '', '', '', '',
+                  'sin la clave del equipo (o sin poder leer la configuración): no se anota nada de lo que traía', dispositivoDe_(body)]);
+    if (sh.getLastRow() - 1 > RECHAZOS_MAX) sh.deleteRow(2);
   } catch (e) {}
 }
 /** Los últimos rechazos, del más nuevo al más viejo. */
@@ -1558,6 +1629,7 @@ function rechazosInforme_() {
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano.
     Envuelve al cuerpo real para anotar cada «no» (§4el). */
 function doPost(e) {
+  cfgOlvidar_();   // 🔐 (16-a) la configuración, una lectura por llamada
   /* 📬 (2026-10-12-a) Los avisos de Meta del bot (`?wa=`): ni JSON del panel ni «Rechazos». */
   if (e && e.parameter && e.parameter[WA_HOOK_PARAM]) return waHook_(e);
   /* 📥 El aviso de Kommo NO se anota en «Rechazos» (§4et): un `busy` del webhook quedaba
@@ -1585,7 +1657,10 @@ function doPost(e) {
       /* Una clave que falta en un `list` es un dispositivo que todavía no la ingresó y
          refresca cada 2 minutos: anotarlo llenaría la hoja sin decir nada nuevo. La clave
          que falta al GUARDAR sí importa: es un guardado que se quedó en una cola. */
-      if (!(o.error === 'clave' && action !== 'save' && action !== 'delete' && action !== 'foto')) rechazoAnotar_(body, action, o);
+      /* 🛡️ (16-a, revisión de Fable, punto 2) Sin la clave del equipo (o un cuerpo que no es JSON, o la configuración que no se pudo
+         leer) lo pudo mandar CUALQUIERA: no se copia nada de lo que trae, y con tope por minuto (`rechazoAjeno_`). */
+      if (o.error === 'clave' || o.error === 'bad json' || o.motivo === 'propiedades') { if (!(o.error === 'clave' && action !== 'save' && action !== 'delete' && action !== 'foto')) rechazoAjeno_(body, action, o); }
+      else rechazoAnotar_(body, action, o);
     }
   } catch (err2) {}
   return out;
@@ -1610,7 +1685,7 @@ function doPostCuerpo_(e) {
   /* 🔐 De acá para abajo, TODO exige la clave del equipo (§4ce): leer la lista es leer
      nombres, celulares y direcciones de clientes; guardar y borrar, ni hablar. El panel
      trata este "no" como si no hubiera red: encola y reintenta cuando le den la clave. */
-  if (!claveOk_(body.key)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
+  if (!claveOk_(body.key)) return claveNo_();   // 🔐 (16-a) `busy` si no se pudo leer la configuración
   if (body.forzar) {
     var fz = forzarOk_(body);
     if (!fz.ok) return jsonOut({ ok:false, error:'admin', motivo:fz.motivo, version:SCRIPT_VERSION });
@@ -2057,7 +2132,7 @@ function getGeoCache() {
   var sh = ss.getSheetByName('Geo');
   if (!sh) { sh = ss.insertSheet('Geo'); sh.getRange(1, 1, 1, 4).setValues([['link', 'lat', 'lng', 'aprox']]); return {}; }
   var vals = sh.getDataRange().getValues(); var c = {};
-  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[String(vals[i][0])] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]), aprox: !!vals[i][3] }; }
+  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[celdaLeer_(String(vals[i][0]))] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]), aprox: !!vals[i][3] }; }
   return c;
 }
 
@@ -2066,7 +2141,8 @@ function saveGeoCache(rows) {
   var sh = ss.getSheetByName('Geo') || ss.insertSheet('Geo');
   if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, 4).setValues([['link', 'lat', 'lng', 'aprox']]);
   if (sh.getLastColumn() < 4) sh.getRange(1, 4).setValue('aprox');   // hojas viejas de 3 columnas
-  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
+  /* 🧾 (2026-11-16-a) El enlace (lo pegó una persona), como texto (ver `celdaTexto_`); las coordenadas, números, tal cual. */
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows.map(function (r) { var o = r.slice(); o[0] = celdaTexto_(o[0]); return o; }));
 }
 
 /* ✍️ (2026-09-30-a) UNA CORRECCIÓN A MANO EN LA HOJA «Pedidos» TAMBIÉN CAMBIA EL SELLO (revisión de §4he).
@@ -2348,8 +2424,8 @@ function borradoAnotar_(id, fila, body, ms) {
     var hb = hojaBorrados_();
     if (!hb) return;
     var f = fila || [];
-    hb.appendRow([new Date(ms), String(id), String(f[4] || ''), String(f[3] || ''), fmtDate(f[1]), ocTexto_(f[2]),
-                  String((body && body.quien) || ''), dispositivoDe_(body), ms]);
+    hb.appendRow(filaTexto_([new Date(ms), String(id), celdaLeer_(String(f[4] || '')), celdaLeer_(String(f[3] || '')), fmtDate(f[1]), ocTexto_(f[2]),
+                  String((body && body.quien) || ''), dispositivoDe_(body), ms]));   // 🧾 (2026-11-16-a) como texto: ver `celdaTexto_`
     if (hb.getLastRow() - 1 > BORRADOS_HOJA_MAX) hb.deleteRow(2);     // la más vieja
   } catch (e2) {}
 }
@@ -2368,32 +2444,35 @@ function hojaBorrados_() {
 
 /** Una fila de la hoja -> el pedido como lo entiende el panel. */
 function rowToRec_(r) {
+  /* 🧾 (2026-11-16-a) `L` = `celdaLeer_`: el «'» que `recToRow` pone adelante de un texto que Google tomaría por fórmula. En la planilla
+     de verdad Google no lo devuelve y esto no hace nada; una hoja con formato de texto o una planilla de prueba sí lo devuelven. */
+  var L = celdaLeer_;
   return {
       id: String(r[0]),
       fecha: fmtDate(r[1]),
       oc: String(r[2] == null ? '' : r[2]),
-      vendedor: String(r[3] || ''),
-      cliente: String(r[4] || ''),
-      productos: parseProd(r[14], r[5]),
+      vendedor: L(String(r[3] || '')),
+      cliente: L(String(r[4] || '')),
+      productos: parseProd(r[14], L(r[5])),
       celular: String(r[6] == null ? '' : r[6]).replace(/^'/, ''),   // §4ok-95: el «'» que pone `celTexto_` (Google no lo devuelve; una planilla de prueba sí)
-      turno: String(r[7] || ''),
-      zona: String(r[8] || ''),
-      direccion: String(r[9] || ''),
-      maps: String(r[10] || ''),
+      turno: L(String(r[7] || '')),
+      zona: L(String(r[8] || '')),
+      direccion: L(String(r[9] || '')),
+      maps: L(String(r[10] || '')),
       pagado: (String(r[11]).toUpperCase().charAt(0) === 'S'),
       saldo: Number(r[12]) || 0,
       ts: Number(r[13]) || 0,
-      metodoPago: String(r[15] || ''),
-      observaciones: fmtDate(r[16]),  // fmtDate: si Sheets convirtio la celda en Fecha, vuelve como yyyy-MM-dd; un texto pasa tal cual
-      estado: String(r[17] || ''),
+      metodoPago: L(String(r[15] || '')),
+      observaciones: L(fmtDate(r[16])),  // fmtDate: si Sheets convirtio la celda en Fecha, vuelve como yyyy-MM-dd; un texto pasa tal cual
+      estado: L(String(r[17] || '')),
       entregado: (String(r[18]).toUpperCase().charAt(0) === 'S'),
-      vehiculo: String(r[19] || ''),
-      chofer: String(r[20] || ''),
-      garantia: String(r[21] || ''),
-      nota: String(r[22] == null ? '' : r[22]),
+      vehiculo: L(String(r[19] || '')),
+      chofer: L(String(r[20] || '')),
+      garantia: L(String(r[21] || '')),
+      nota: L(String(r[22] == null ? '' : r[22])),
       acuenta: Number(r[23]) || 0,
-      facturarA: String(r[24] || ''),
-      nit: String(r[25] == null ? '' : r[25]),
+      facturarA: L(String(r[24] || '')),
+      nit: L(String(r[25] == null ? '' : r[25])),
       nroDia: Number(r[26]) || 0,
       verificado: (String(r[27]).toUpperCase().charAt(0) === 'S'),
       fotos: String(r[28] || '').split(/[\s|]+/).filter(function (x) { return x; }),
@@ -2444,7 +2523,7 @@ function ocRepetidaGs_(sh, last, oc, ts, excluir) {
     var a2 = anioDeTs_(tss[i][0]);
     if (anio && a2 && anio !== a2) continue;               // misma OC, otro año: no es repetida
     var f = sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0];
-    return { fila: i + 2, id: String(f[0]), cliente: String(f[4] || ''), fecha: fmtDate(f[1]) };
+    return { fila: i + 2, id: String(f[0]), cliente: celdaLeer_(String(f[4] || '')), fecha: fmtDate(f[1]) };
   }
   return null;
 }
@@ -2721,6 +2800,7 @@ function doSave(p, forzar, juntar, reserva, formato, adelanto, conoceAvisa, tr4,
   }
   getCacheOlvidar_();
   celColumnaTexto_(sh);   // §4ok-95 la columna «Celular» como texto (una vez)
+  txtColumnasTexto_(sh);  // 🧾 (2026-11-16-a) y las otras columnas de texto (una vez)
   /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
      panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.
      Ahora se vuelve a leer la fila recién escrita y se devuelve ESO. */
@@ -2791,15 +2871,16 @@ function doDelete(id, rev, body) {
 }
 
 function recToRow(p) {
+  var t = celdaTexto_;   // 🧾 (2026-11-16-a) los textos libres, sin que Google los tome por fórmula (ver `celdaTexto_`)
   return [
-    p.id, p.fecha || '', p.oc || '', p.vendedor || '', p.cliente || '',
-    prodText(p.productos), celTexto_(p.celular), p.turno || '', p.zona || '',
-    p.direccion || '', p.maps || '', p.pagado ? 'SÍ' : 'NO',
+    p.id, p.fecha || '', p.oc || '', t(p.vendedor || ''), t(p.cliente || ''),
+    t(prodText(p.productos)), celTexto_(p.celular), t(p.turno || ''), t(p.zona || ''),
+    t(p.direccion || ''), t(p.maps || ''), p.pagado ? 'SÍ' : 'NO',
     Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
-    p.metodoPago || '', p.observaciones || '',
-    p.estado || '', p.entregado ? 'SÍ' : 'NO',
-    p.vehiculo || '', p.chofer || '', p.garantia || '',
-    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0,
+    t(p.metodoPago || ''), t(p.observaciones || ''),
+    t(p.estado || ''), p.entregado ? 'SÍ' : 'NO',
+    t(p.vehiculo || ''), t(p.chofer || ''), t(p.garantia || ''),
+    t(p.nota || ''), Number(p.acuenta) || 0, t(p.facturarA || ''), t(p.nit || ''), Number(p.nroDia) || 0,
     p.verificado ? 'SÍ' : 'NO',
     (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : '',
     Number(p.rev) || 0
@@ -2814,8 +2895,7 @@ function recToRow(p) {
    · y lo que empieza con «=», «+», «-» o «@» (lo que Google toma como fórmula) va con un «'» adelante: es la marca de «esto es
      texto» y Google, al leer, devuelve el número SIN el «'». La lectura (`rowToRec_`) lo saca igual, por si alguna vez quedara. */
 function celTexto_(v) {
-  var s = String(v == null ? '' : v);
-  return /^[=+\-@]/.test(s) ? "'" + s : s;
+  return celdaTexto_(String(v == null ? '' : v));
 }
 function celColumnaTexto_(sh) {
   if (prop_('CEL_TEXTO') === '1') return;
@@ -2823,6 +2903,46 @@ function celColumnaTexto_(sh) {
     var col = HEADERS.indexOf('Celular') + 1, L = String.fromCharCode(64 + col);
     sh.getRange(L + ':' + L).setNumberFormat('@');
     PropertiesService.getScriptProperties().setProperty('CEL_TEXTO', '1');
+  } catch (e) {}
+}
+/* 🧾 (2026-11-16-a, revisión de Fable) TEXTO SEGURO EN TODAS LAS CELDAS, no solo en el celular. Google toma como FÓRMULA lo que se
+   escribe en una celda y empieza con «=», «+», «-» o «@»: queda «#ERROR!» (una observación «- llamar antes», un cliente «+ 2 almohadas»)
+   o, peor, una fórmula de verdad («=IMPORTDATA(…)» escrita por un cliente al bot). Lo mismo que ya hacían `celTexto_` y `mallCelda_`, en
+   UN lugar:
+   · `celdaTexto_(v)`: un texto que empieza con «=», «+», «-», «@» o «'» va con un «'» adelante (la marca de «esto es texto»: con formato
+     automático Google la guarda aparte y NO la devuelve al leer; en una columna con formato de texto puede quedar escrita, y `celdaLeer_`
+     la saca). El «'» de adelante también se marca: si no, Google se comería el que escribió la persona.
+     Un número, un booleano o una fecha pasan sin tocar (solo los primeros caracteres de un TEXTO: nada de «parece un número»).
+   · `celdaLeer_(v)`: la inversa, por si la marca vuelve (una hoja con formato de texto la conserva; las planillas de las pruebas, también):
+     un «'» seguido de «=», «+», «-», «@» o «'» se saca. En la planilla de verdad, con formato automático, no hace nada.
+   · `filaTexto_(fila)` / `filaLeer_(fila)`: lo mismo para una fila entera (solo los textos). Todo lo que escribe en una hoja un texto que
+     viene de AFUERA (lo que escribe un cliente al bot, su nombre de perfil, lo que manda Kommo, lo que tipea alguien en el panel o lo que
+     contesta Claude) pasa por acá. ⚠️ Una hoja o una escritura nueva con texto de afuera, igual. */
+function celdaTexto_(v) {
+  if (typeof v !== 'string') return v;
+  return /^[=+\-@']/.test(v) ? "'" + v : v;
+}
+function celdaLeer_(v) {
+  if (typeof v !== 'string') return v;
+  return /^'[=+\-@']/.test(v) ? v.slice(1) : v;
+}
+function filaTexto_(fila) { return (fila || []).map(celdaTexto_); }
+function filaLeer_(fila) { return (fila || []).map(celdaLeer_); }
+/* Las columnas de TEXTO de «Pedidos», con formato de texto (`@`) una vez (queda anotado en TXT_COLS), como «Celular»: así una nota
+   «11-12» no se vuelve fecha y un NIT no pierde el 0 de adelante. Nunca la fecha, el sello, la plata, el N° del día, las marcas SÍ/NO ni
+   el JSON de los productos. */
+var TXT_COLUMNAS = ['N° OC', 'Vendedor', 'Cliente', 'Productos', 'Turno', 'Zona', 'Dirección', 'Link Maps', 'Método pago', 'Observaciones',
+                    'Estado stock', 'Vehículo', 'Chofer', 'Garantía (a nombre de)', 'Nota de venta', 'Facturar a', 'NIT'];
+function txtColumnasTexto_(sh) {
+  if (prop_('TXT_COLS') === '1') return;
+  try {
+    for (var i = 0; i < TXT_COLUMNAS.length; i++) {
+      var col = HEADERS.indexOf(TXT_COLUMNAS[i]) + 1;
+      if (col < 1 || col > 26) continue;                  // una letra sola (A-Z): todas lo son
+      var L = String.fromCharCode(64 + col);
+      sh.getRange(L + ':' + L).setNumberFormat('@');
+    }
+    PropertiesService.getScriptProperties().setProperty('TXT_COLS', '1');
   } catch (e) {}
 }
 
@@ -3139,7 +3259,7 @@ function iacCache_() {
   var sh = iacHoja_(false), out = {};
   if (!sh || sh.getLastRow() < 2) return out;
   sh.getDataRange().getValues().forEach(function (r, i) {
-    var id = String((r && r[0]) || '');
+    var id = celdaLeer_(String((r && r[0]) || ''));   // 🧾 (2026-11-16-a) un id de Drive puede empezar con «-»: va con «'» (ver `celdaTexto_`)
     if (!i || !id) return;
     try { var o = JSON.parse(String(r[6] || '')); if (o && typeof o === 'object') out[id] = o; } catch (e) {}
   });
@@ -3209,7 +3329,8 @@ function iacReleer_(o, renglones) {
   return !!renglones && !!o.nv && !(Number(o.pv) >= IAC_RENGLONES_DESDE);
 }
 function iacAnotar_(sh, id, o) {
-  try { sh.appendRow([id, waBo_(o.t || Date.now()).txt, o.m || '', o.bd || '', o.f || '', o.ref || '', JSON.stringify(o), o.md || '']); } catch (e) {}
+  /* 🧾 (2026-11-16-a) El banco, la fecha y la referencia los leyó Claude de una foto: como texto (ver `celdaTexto_`). El monto, número. */
+  try { sh.appendRow(filaTexto_([id, waBo_(o.t || Date.now()).txt, o.m || '', o.bd || '', o.f || '', o.ref || '', JSON.stringify(o), o.md || ''])); } catch (e) {}
 }
 /** Los bytes de las fotos, mirando que sean de la carpeta del panel. {id: {data, kind, mime} | {err}} */
 function iacBytes_(tok, ids, fotosId) {
@@ -3589,8 +3710,12 @@ var WA_TIPOS = {
      la semana): lo vencido de los mayoristas y lo que vence en 7 días (`waMvDatos_`). Sin respaldo: mientras Meta no la apruebe, no sale. */
   mv:  { plantilla:'mayoristas_vencido', txt:'Contabilidad: lo vencido de los mayoristas' }
 };
-/* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada. */
-var WA_PLANTILLA_FALTA = [132001, 132015, 132016];
+/* Meta contesta así cuando la plantilla no existe en ese idioma, está en revisión, pausada o desactivada.
+   📏 (2026-11-16-a, revisión de Fable) Y 132005 («el texto ya rellenado es demasiado largo»): también se prueba el respaldo (las de antes
+   llevan menos datos). El cuerpo ya se deja en WA_CUERPO_TOPE antes de mandar (`waCuerpoTopeTodas_`); esto es por si Meta cuenta distinto.
+   `WA_PLANTILLA_LARGA` = solo ese, para quien lo quiera distinguir (una cotización con 132005 no espera a que «la aprueben»). */
+var WA_PLANTILLA_LARGA = [132005];
+var WA_PLANTILLA_FALTA = [132001, 132015, 132016].concat(WA_PLANTILLA_LARGA);
 
 function waActivo_() { var v = prop_('WA_ACTIVO').toLowerCase(); return v === '1' || v === 'si' || v === 'sí' || v === 'true'; }
 function waNorm_(t) {
@@ -3701,8 +3826,8 @@ function waFletePendiente_(mp) {
   var t = 0;
   String(mp || '').split('+').forEach(function (s) {
     s = s.trim(); if (s.charAt(0) !== '^') return;
-    var m = s.slice(1).trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*[A-Za-zÁÉÍÓÚáéíóúÑñ]+)?\s*([\d.]+)/);
-    if (m && !m[1]) t += Number(m[2]) || 0;
+    var m = s.slice(1).trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*[A-Za-zÁÉÍÓÚáéíóúÑñ]+)?\s*([\d.,]+)/);
+    if (m && !m[1]) t += waEfeMonto_(m[2]);   // 🧾 (2026-11-16-a, revisión de Fable) «1.500» = 1500, como `parseMonto` (con Number daba 1,5)
   });
   return Math.round(t * 100) / 100;
 }
@@ -3734,6 +3859,61 @@ function waParam_(t) {
   t = String(t == null ? '' : t).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
   if (t.length > 250) t = t.slice(0, 247) + '…';
   return t || '—';
+}
+/* 📏 (2026-11-16-a, revisión de Fable) EL MENSAJE ENTERO TAMBIÉN TIENE TOPE. Cada dato va hasta 250 letras (`waParam_`), pero Meta acepta
+   como mucho 1.024 en el cuerpo YA RELLENADO de la plantilla: `cierre_del_dia_v3` tiene ~215 de texto fijo y 9 datos, y con 7-8 vendedoras
+   y «por qué se movió» se pasaba. Meta contestaba el error 132005 y ese día el cierre no salía. Ahora, antes de mandar, el cuerpo (texto fijo
+   + datos) se deja en WA_CUERPO_TOPE (1.000: margen para lo que Meta cuente distinto; un emoji acá cuenta 2): se recortan PAREJO los datos
+   más largos (todos los que pasan de un mismo largo), cortando por « · » o «, » si se puede y con «…» al final. Vale para la plantilla y
+   para cada respaldo (que manda los primeros datos de la misma lista). Una plantilla que no está en WA_PLANTILLAS no se toca. */
+var WA_CUERPO_TOPE = 1000;
+var WA_PARAM_MIN = 40;          // un dato no se recorta a menos de esto (si igual no entra, va lo más corto posible)
+/** El largo del texto fijo de la plantilla (sin los {{n}}); -1 si no está en WA_PLANTILLAS. */
+function waPlantillaFijo_(nombre) {
+  for (var i = 0; i < WA_PLANTILLAS.length; i++) if (WA_PLANTILLAS[i].n === nombre) return String(WA_PLANTILLAS[i].t || '').replace(/\{\{\d+\}\}/g, '').length;
+  return -1;
+}
+/** `s` en `n` letras como mucho, con «…» al final: por « · », «, », « — » o «; » si así se pierde poco (el corte en el último 40 %); si no,
+    entre dos palabras; si tampoco, donde caiga (sin partir un emoji). */
+function waRecorte_(s, n) {
+  s = String(s == null ? '' : s);
+  if (s.length <= n) return s;
+  if (n < 2) return '…';
+  var cab = iaCorte_(s, n - 1), mejor = -1, piso = Math.floor(n * 0.6);
+  [' · ', ', ', ' — ', '; '].forEach(function (c) { var k = cab.lastIndexOf(c); if (k > mejor) mejor = k; });
+  if (mejor >= piso) cab = cab.slice(0, mejor);
+  else if (cab.lastIndexOf(' ') >= piso) cab = cab.slice(0, cab.lastIndexOf(' '));
+  cab = cab.replace(/[\s·,;—]+$/, '');
+  return (cab || iaCorte_(s, n - 1)) + '…';
+}
+/** Los datos recortados para que `fijo` + la suma de sus largos quede en `tope`. Recorta parejo: busca el largo L más grande con el que
+    entran todos (cada dato que pasa de L, recortado a L con `waRecorte_`) y corta solo los que pasan. */
+function waCuerpoTope_(fijo, params, tope) {
+  var P = (params || []).map(function (x) { return String(x == null ? '' : x); });
+  tope = tope || WA_CUERPO_TOPE;
+  var lugar = tope - (Number(fijo) || 0), max = 0;
+  var corta = function (L) { return P.map(function (x) { return x.length > L ? waRecorte_(x, L) : x; }); };
+  var suma = function (A) { var t = 0; A.forEach(function (x) { t += x.length; }); return t; };
+  P.forEach(function (x) { if (x.length > max) max = x.length; });
+  if (suma(P) <= lugar) return P;
+  var cabe = function (L) { return suma(corta(L)) <= lugar; };
+  var lo = WA_PARAM_MIN, hi = max;                     // el L más grande que entra (si ni con el mínimo entra, el mínimo)
+  if (!cabe(lo)) hi = lo;
+  else while (lo < hi) { var mid = Math.ceil((lo + hi) / 2); if (cabe(mid)) lo = mid; else hi = mid - 1; }
+  var L = Math.max(WA_PARAM_MIN, lo), R = corta(L);
+  while (suma(R) > lugar && L > WA_PARAM_MIN) { L--; R = corta(L); }   // por si un corte por « · » no es parejo
+  return R;
+}
+/** Lo mismo para la plantilla y sus respaldos: `cands` = [[plantilla, cuántos datos manda]]. */
+function waCuerpoTopeTodas_(cands, params) {
+  var P = (params || []).slice();
+  (cands || []).forEach(function (c) {
+    if (!c || !c[0]) return;
+    var fijo = waPlantillaFijo_(c[0]); if (fijo < 0) return;
+    var n = Math.min(Number(c[1]) || P.length, P.length), parte = waCuerpoTope_(fijo, P.slice(0, n), WA_CUERPO_TOPE);
+    for (var i = 0; i < n; i++) P[i] = parte[i];
+  });
+  return P;
 }
 /** ¿Es una ENTREGA? (para logística): con fecha, sin entregar, no del sistema, ni borrador de Kommo, ni venta de tienda. */
 function waEsEntrega_(p) {
@@ -4263,7 +4443,7 @@ function waUbicGuardar_(de, loc, ped) {
       out.r = (d != null && d <= WA_UBIC_MISMA_M) ? 'igual' : 'distinta';
       return out;
     }
-    sh.getRange(fila, HEADERS.indexOf('Link Maps') + 1).setValue(link);
+    sh.getRange(fila, HEADERS.indexOf('Link Maps') + 1).setValue(celdaTexto_(String(link)));   // 🧾 (2026-11-16-a) como `recToRow`
     var ahora = Date.now();
     sh.getRange(fila, REV_COL).setValue(Math.max((Number(row[REV_COL - 1]) || 0) + 1, ahora));
     try { getCacheOlvidar_(); recientesAnotar_('r', out.id, ahora); } catch (e) {}
@@ -4297,7 +4477,7 @@ function waUbicResponder_(sh, de, ub, nom) {
      : 'Recibimos tu ubicación para tu pedido' + oc + '. Como ya tenía otra anotada, se la pasamos a tu vendedora para que la confirme.');
   if (cfg.prueba) de = cfg.prueba;
   var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:txt, preview_url:false } });
-  sh.appendRow([waBo_(Date.now()).txt, ub.id || '', ub.oc || '', 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now()]);
+  sh.appendRow(filaTexto_([waBo_(Date.now()).txt, ub.id || '', ub.oc || '', 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now()]));
 }
 
 /* §4ok-E (2026-11-05-a) La parte del bot del jueves en `probarAntesDeImplementar` (al final). Solo lee. */
@@ -5031,15 +5211,15 @@ function waCdPide_(m, de, cfg) {
 }
 /** Le contesta al dueño con el detalle (texto libre) y lo anota en «Bot WhatsApp» (el pedido con su wamid: Meta a veces avisa dos veces). */
 function waCdResponder_(sh, de, dia, m, cfg) {
-  sh.appendRow([waHookHora_(m.timestamp), '', '', '🌙 Dueño pidió qué vendió cada uno', String(m._nom || ''), de, '', '💬 pedido', String(m.id || ''),
-                iaCorte_(waHookTxtMsg_(m), 200) + ' → ' + waDiaTxt_(dia)]);
+  sh.appendRow(filaTexto_([waHookHora_(m.timestamp), '', '', '🌙 Dueño pidió qué vendió cada uno', String(m._nom || ''), de, '', '💬 pedido', String(m.id || ''),
+                iaCorte_(waHookTxtMsg_(m), 200) + ' → ' + waDiaTxt_(dia)]));
   var lista = [];
   try { lista = readAll(); } catch (e) { lista = null; }
   var msgs = lista ? waCdDetalle_(lista, dia) : ['🛏️ No pude leer la planilla en este momento. Probá de nuevo en un rato.'];
   var B = waBo_(Date.now());
   msgs.forEach(function (t) {
     var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:t, preview_url:false } });
-    sh.appendRow([B.txt, '', '', '🌙 Dueño: qué vendió cada uno', String(m._nom || ''), de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]);
+    sh.appendRow(filaTexto_([B.txt, '', '', '🌙 Dueño: qué vendió cada uno', String(m._nom || ''), de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle]));
   });
 }
 /** ▶ Desde el editor: lo que dirían AHORA el «Buen día» (a cada vendedora) y el cierre del día. Lee Kommo (solo lee); no manda nada. */
@@ -5606,8 +5786,8 @@ function waPregHist_(sh, de, wActual) {
     filas.forEach(function (r) {
       if (String(r[5] || '') !== String(de) || !(Number(r[11]) >= lim) || String(r[8] || '') === String(wActual || '')) return;
       var tipo = String(r[3] || '');
-      if (tipo === '🧠 Dueño preguntó') out.push('dueño: ' + blokiSinEtiquetas_(r[9], 300));
-      else if (tipo.indexOf('🧠 Dueño: respuesta') === 0) out.push('asistente: ' + blokiSinEtiquetas_(r[15], 400));
+      if (tipo === '🧠 Dueño preguntó') out.push('dueño: ' + blokiSinEtiquetas_(celdaLeer_(r[9]), 300));   // 🧾 (2026-11-16-a) sin el «'» de `celdaTexto_`
+      else if (tipo.indexOf('🧠 Dueño: respuesta') === 0) out.push('asistente: ' + blokiSinEtiquetas_(celdaLeer_(r[15]), 400));
     });
   } catch (er) {}
   return out.slice(-6);
@@ -5666,7 +5846,7 @@ function waPregTexto_(Q, lista, B, quien, cfg, sh, de, wActual) {
 /** El webhook: anota la pregunta (con su wamid: Meta a veces avisa dos veces) y le contesta con texto libre. */
 function waPregResponder_(sh, de, m, quien, cfg) {
   var Q = waPregQue_(m), ms0 = (Number(m.timestamp) * 1000) || Date.now(), nom = String(m._nom || (quien && quien.nombre) || '');
-  sh.appendRow([waHookHora_(m.timestamp), '', '', '🧠 Dueño preguntó', nom, de, '', '💬 ' + Q.t, String(m.id || ''), iaCorte_(waHookTxtMsg_(m), 300), '', ms0]);
+  sh.appendRow(filaTexto_([waHookHora_(m.timestamp), '', '', '🧠 Dueño preguntó', nom, de, '', '💬 ' + Q.t, String(m.id || ''), iaCorte_(waHookTxtMsg_(m), 300), '', ms0]));
   if (Q.t === 'nada' || !waActivo_() || !cfg || !cfg.ok) return;
   var lista = null; try { lista = readAll(); } catch (er) { lista = null; }
   var B = waBo_(Date.now()), R;
@@ -5676,7 +5856,7 @@ function waPregResponder_(sh, de, m, quien, cfg) {
     t = iaUnicode_(String(t || '')); if (!t) return;
     if (t.length > 4000) t = iaCorte_(t, 3997) + '…';
     var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:t, preview_url:false } });
-    sh.appendRow([waBo_(Date.now()).txt, '', '', '🧠 Dueño: respuesta (' + R.via + ')', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(t, 1500)]);
+    sh.appendRow(filaTexto_([waBo_(Date.now()).txt, '', '', '🧠 Dueño: respuesta (' + R.via + ')', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(t, 1500)]));
   });
 }
 /** ▶ Desde el editor: lo que harían AHORA la 13, la 26 y las palabras del menú (no manda nada ni le pregunta a Claude). */
@@ -7006,7 +7186,7 @@ function waErResponder_(sh, de, m, quien, cfg) {
                (Q.t === 'deshacer' && s.hechos.length > 0);
   if (!conta && !deEsto) return false;
   var nom = String(m._nom || (conta ? 'Contabilidad' : 'prueba')), por = conta ? 'Contabilidad' : 'El número de prueba';
-  sh.appendRow([waHookHora_(m.timestamp), '', '', '💵 Contabilidad: ' + Q.t, nom, de, '', '💬 recibí', String(m.id || ''), iaCorte_(waHookTxtMsg_(m), 300), '', (Number(m.timestamp) * 1000) || Date.now()]);
+  sh.appendRow(filaTexto_([waHookHora_(m.timestamp), '', '', '💵 Contabilidad: ' + Q.t, nom, de, '', '💬 recibí', String(m.id || ''), iaCorte_(waHookTxtMsg_(m), 300), '', (Number(m.timestamp) * 1000) || Date.now()]));
   if (Q.t === 'nada' || (Q.t === 'si' && !paso && Q.de !== 'boton')) return true;   // un «ok» suelto: no se contesta
   if (!waActivo_() || !cfg || !cfg.ok) return true;
   /* (Revisión del 08/11, B1/B2) Un botón vale solo si es de la pregunta ABIERTA: uno de una lista vieja (o de un mensaje de la mañana) no carga
@@ -7067,7 +7247,7 @@ function waErResponder_(sh, de, m, quien, cfg) {
   if (s._cambio) waErEstPoner_(de, s);   // una pregunta nueva (o un «no»); lo cargado y lo borrado ya se guardaron adentro del candado
   if (!R) R = { txt:waErAyuda_(false) };
   var r = waErMandar_(cfg, de, R);
-  sh.appendRow([waBo_(Date.now()).txt, '', '', '💵 Contabilidad: respuesta', nom, de, r.como, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(R.txt, 1500)]);
+  sh.appendRow(filaTexto_([waBo_(Date.now()).txt, '', '', '💵 Contabilidad: respuesta', nom, de, r.como, r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(R.txt, 1500)]));
   return true;
 }
 function waArmar_(m, recs, cfg, B) {
@@ -7162,10 +7342,15 @@ function waArmar_(m, recs, cfg, B) {
       if (!DC.ventas.n && !DC.ent.total) return { saltar:'hoy no hubo ventas cargadas ni entregas', anotar:false };
       /* 🎯🏬🛍️ (2026-11-15-a, mejoras 332 y 339) + la meta y lo de hoy por tienda; en Black Friday, + la campaña (otra plantilla). El envío de las
          15:00 (el viernes de Black Friday y el último día) dice la hora y cuenta hoy entre los días que quedan. */
-      var XC = waCdMas_(lisD, B, medio);
-      out.params = waCdParams_(DC, B, waKmLeer_(cfg), waKmNuevosHoy_(cfg, B), recs[WA_PRY_HIST_ID], Date.now()).concat([XC.meta, XC.tiendas]);
+      /* 🧾 (2026-11-16-a, revisión de Fable) Si lo nuevo (la meta, las tiendas, Black Friday) falla, el cierre sale igual con los 7 datos
+         de siempre en la v2 (y la primera de respaldo): antes se caía el cierre entero. */
+      var XC = null;
+      try { XC = waCdMas_(lisD, B, medio); } catch (eXc) { XC = null; }
+      out.params = waCdParams_(DC, B, waKmLeer_(cfg), waKmNuevosHoy_(cfg, B), recs[WA_PRY_HIST_ID], Date.now());
+      if (XC) out.params = out.params.concat([XC.meta, XC.tiendas]);
+      else { out.plantilla = T.vieja; out.alts = [[T.vieja2, T.nv2]]; }
       if (medio) out.params[0] = waDiaTxt_(B.hoy) + ', a las ' + B.txt.slice(6);
-      if (XC.bf) { out.params.push(XC.bf); out.plantilla = T.bf; out.alts = [[T.plantilla, 9], [T.vieja, T.nv], [T.vieja2, T.nv2]]; }
+      if (XC && XC.bf) { out.params.push(XC.bf); out.plantilla = T.bf; out.alts = [[T.plantilla, 9], [T.vieja, T.nv], [T.vieja2, T.nv2]]; }
       out.botones = ['cd|' + B.hoy];   // 🛏️ (2026-11-07-d) «Ver qué vendió cada uno» de ESTE día (aunque lo toque mañana)
     }
   } else if (m.k === 'cm') {
@@ -7222,6 +7407,14 @@ function waArmar_(m, recs, cfg, B) {
   out.params = out.params.map(N);
   /* 📍 §4ok-108 Sin pin exacto, la confirmación y el recordatorio le piden la ubicación (si Meta no aprobó esa, la de siempre). */
   if (T.ubic && p && waSinPin_(p.maps) && !waRetira_(p)) { out.plantilla = T.ubic; out.alts = [[T.plantilla, out.params.length], [T.vieja, T.nv]]; }
+  /* 📏 (2026-11-16-a, revisión de Fable) El cuerpo entero en WA_CUERPO_TOPE, para la plantilla y para cada respaldo (los mismos que prueba
+     `waRepasoBot_`: `out.alts` o, si no, la vieja y la vieja2). Sobre todo el cierre del día (v3 / Black Friday) y el del mes. */
+  var altsT = out.alts || [[T.vieja, T.nv], [T.vieja2, T.nv2]];
+  if (out.viejos === undefined) out.params = waCuerpoTopeTodas_([[out.plantilla, out.params.length]].concat(altsT), out.params);
+  else {                                                 // §4ok-97: el respaldo va con OTROS datos (`viejos`), o sin respaldo (null)
+    out.params = waCuerpoTopeTodas_([[out.plantilla, out.params.length]], out.params);
+    if (out.viejos) out.viejos = waCuerpoTopeTodas_(altsT, out.viejos);
+  }
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -7266,7 +7459,7 @@ function waAnotar_(filas) {
     var sh = waHoja_();
     /* (2026-10-14-b) De a una con appendRow: con «getLastRow + setValues», lo que el webhook anotaba en el medio (lo que escribió un
        cliente) quedaba pisado y nadie lo veía. */
-    filas.forEach(function (f) { sh.appendRow(f); });
+    filas.forEach(function (f) { sh.appendRow(filaTexto_(f)); });
     var last = sh.getLastRow();
     if (last > WA_HOJA_MAX + 500) sh.deleteRows(2, last - WA_HOJA_MAX);
   } catch (e) {}
@@ -7315,6 +7508,9 @@ function waRepasoBot_() {
     sal.forEach(function (m) { if (t0 >= (Number(m.prox) || 0)) msgs.push(m); else salQueda.push(m); });
     waSalidaGuardar_(salQueda);
     var hecho = waJsonProp_('WA_HECHO', {}), cambio = false, prox = waProximoDia_(B.hoy);
+    /* 🛡️ (16-a, revisión de Fable, punto 5) La cola y la salida YA se guardaron vaciadas arriba: si algo de lo que sigue revienta, lo
+       tomado tiene que salir igual (está en `msgs`) y lo marcado del día se guarda (`cambio`). */
+    try {
     /* 🌅 §4ok-97 08:45 a logística, los días que se trabaja (no el domingo ni un feriado): lo de HOY sin camión y sin revisar. La lista de
        las 16:00 (los del próximo día sin camión) ya no sale. */
     if (B.hora >= WA_HORA_SC && B.hora < WA_HORA_SC + WA_VENTANA_H && hecho.sc !== B.hoy && waPhHabil_(B.hoy)) {
@@ -7375,7 +7571,9 @@ function waRepasoBot_() {
     if (B.hora >= WA_HORA_UB && B.hora < WA_HORA_UB + WA_VENTANA_H && hecho.ub !== B.hoy) { ubDias = waUbDias_(B.hoy); hecho.ub = B.hoy; cambio = true; }
     /* 🧠 (2026-11-16-a, mejora 356) Lunes 08:00 el porqué de la semana y el día 1 a las 10:00 el del mes (después del mes cerrado), a todos los de
        WA_DUENO. Va ANTES que «cómo va cada vendedor» (los dos a las 08:00 del lunes): uno detrás del otro. */
-    cambio = wpElegir_(cfg, B, t0, hecho, msgs) || cambio;
+    /* 🧷 (16-a, revisión de Fable, punto 4) Con `try`: la cola ya se guardó vaciada arriba; si esto revienta sin `try`, la vuelta
+       entera se cae y las confirmaciones que tomó se pierden (cada 5 minutos). */
+    try { cambio = wpElegir_(cfg, B, t0, hecho, msgs) || cambio; } catch (eWp) { res.error = 'porqué de la semana: ' + String((eWp && eWp.message) || eWp).slice(0, 120); }
     /* 📉 (2026-11-07-f, idea 26 A) Lunes 08:00, desde el día WA_VB_DIA_MIN: «cómo va cada vendedor» a todos los de WA_DUENO. Si nadie bajó,
        `waArmar_` no lo manda. `ms` = la altura de la cuenta (la misma para todos y para el botón). */
     if (cfg.dueno.length && waDow_(B.hoy) === 1 && Number(B.hoy.slice(8, 10)) >= WA_VB_DIA_MIN && B.hora >= WA_HORA_VB && B.hora < WA_HORA_VB + WA_VENTANA_H && hecho.vb !== B.hoy) {
@@ -7404,6 +7602,7 @@ function waRepasoBot_() {
        o pasó de PM a AM entre las 17 y las 19). Cada pedido lo recibe UNA vez (WA_REC). */
     if (B.hora >= WA_HORA_RECORDATORIO && B.hora < WA_HORA_RECORDATORIO + WA_VENTANA_H && hecho.rec !== B.hoy) { recDia = prox; recSoloAM = true; hecho.rec = B.hoy; cambio = true; }
     if (B.hora >= WA_HORA_REC_PM && B.hora < WA_HORA_REC_PM + WA_VENTANA_H && hecho.recPm !== B.hoy) { recDia = prox; recSoloAM = false; hecho.recPm = B.hoy; cambio = true; }
+    } catch (eEl) { res.error = 'al elegir los avisos: ' + String((eEl && eEl.message) || eEl).slice(0, 150); }
     if (cambio) PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hecho));
   } finally { lock.releaseLock(); }
   var recs = null;
@@ -7411,6 +7610,14 @@ function waRepasoBot_() {
     if (recs) return recs;
     recs = {}; readAll().forEach(function (p) { recs[p.id] = p; }); return recs;
   };
+  /* 🛡️ (2026-11-16-a, revisión de Fable, punto 5) LO TOMADO NO SE PIERDE. Al soltar el candado, los mensajes de esta vuelta viven
+     SOLO en memoria (la cola y la salida ya se guardaron sin ellos). Antes, cualquier excepción de acá para abajo —`readAll`, un
+     `waArmar_` que ahora habla con Kommo, con Claude y con la hoja de cotizaciones— cortaba la vuelta: se perdía lo que faltaba
+     mandar y no se anotaba lo ya enviado (ni las filas, ni WA_REC, ni WA_CONF_HOY). Ahora: un `try` por mensaje (si falla al
+     armarse o al mandarse, vuelve a la salida con `n`+1, como un error de red, hasta WA_REINT_MAX) y uno general (lo que todavía no
+     se probó vuelve entero a la salida); lo de abajo (anotar, WA_REC, WA_CONF_HOY, la salida) corre SIEMPRE. */
+  var filas = [], reint = [], recHechos = [], parar = '', rfListo = false, ubHechos = [], csFalta = [], csErr = [], hasta = 0, vacio = false;
+  try {
   /* 📉 §4ok-102 El vigía de leads: una vez por hora de 8 a 22, AFUERA del candado (le pregunta a Kommo). */
   try { waLeadsVigia_(cfg, B, t0).forEach(function (m) { msgs.push(m); }); } catch (eV) {}
   /* 🧾🤖 (2026-11-14-b, mejora 274) Las cotizaciones de hace 48 horas (y el aviso de las 2 horas), APAGADO salvo COT_BOT. Con la planilla de
@@ -7438,11 +7645,14 @@ function waRepasoBot_() {
       if (waUbToca_(Ru[idu], B.hoy, ubDias, yaUb)) msgs.push({ id:idu, k:'ub', a:'cliente', dia:String(Ru[idu].fecha), n:0 });
     }
   }
-  if (!msgs.length) { guardarRes(); return res; }
-  var R2 = planilla(), filas = [], reint = [], recHechos = [], parar = '', rfListo = false, ubHechos = [], csFalta = [], csErr = [];
+  if (!msgs.length) vacio = true;
+  else {
+  var R2 = planilla();
   for (var i = 0; i < msgs.length; i++) {
+    hasta = i + 1;
     var m = msgs[i], T = WA_TIPOS[m.k] || { txt:m.k, plantilla:'' };
     if (parar || Date.now() - t0 > WA_CORRIDA_MS) { reint.push(m); continue; }   // lo que no llegó a salir, a la próxima
+    try {
     var a = waArmar_(m, R2, cfg, B), p = a.p || (m.id ? R2[m.id] : null);
     if (m.k === 'rf' && !a.rfEspera) rfListo = true;   // 🏭 §4ok-105 salió, o no había nada: hoy ya está
     var base = [B.txt, m.id || '', p ? String(p.oc || '') : (a.num || ''), T.txt];   // 🧾 (2026-11-14-b) una cotización: su número en «N° OC»
@@ -7477,11 +7687,28 @@ function waRepasoBot_() {
     } else {
       res.errores++;
       if (m.k === 'rec') recHechos.push(m.id);
-      if (m.k === 'cs' && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0) csFalta.push(m.cot);   // 🧾 Meta todavía no la aprobó: que salga cuando la aprueben
+      if (m.k === 'cs' && WA_PLANTILLA_FALTA.indexOf(r.ec) >= 0 && WA_PLANTILLA_LARGA.indexOf(r.ec) < 0) csFalta.push(m.cot);   // 🧾 Meta todavía no la aprobó: que salga cuando la aprueben (16-a: «demasiado largo» no es eso: va a error)
       else if (m.k === 'cs') csErr.push({ id:m.cot, detalle:r.detalle });   // 🧾 (revisión del 14/11) otro error: no salió y no se reintenta a ciegas (`bot = 'error'`)
       filas.push(base.concat([a.para, a.numero, a.plantilla, '❌ error', r.detalle]));
     }
+    } catch (eM) {
+      /* 🛡️ (16-a) Falló al ARMARSE o al mandarse (no un «no» de Meta): vuelve a la salida como un error de red, hasta WA_REINT_MAX. */
+      var nM = (Number(m.n) || 0) + 1, otraVez = nM < WA_REINT_MAX;
+      if (otraVez) { m.n = nM; m.prox = Date.now() + WA_REINT_MS; reint.push(m); res.reintentos++; } else res.errores++;
+      filas.push([B.txt, m.id || '', '', T.txt, m.a || '', '', T.plantilla || '', otraVez ? ('🔁 falló al armarlo, se reintenta (' + nM + ')') : '❌ falló al armarlo',
+                  String((eM && eM.message) || eM).slice(0, 200)]);
+    }
   }
+  }
+  } catch (eG) {
+    /* 🛡️ (16-a) Falló algo que no es de un mensaje (leer la planilla, armar la lista del recordatorio): lo que todavía no se probó vuelve
+       ENTERO a la salida (sin sumarle `n`: no llegó a intentarse) y sale en la próxima vuelta. */
+    for (var jG = hasta; jG < msgs.length; jG++) reint.push(msgs[jG]);
+    vacio = false;
+    res.error = 'falló la vuelta (vuelve a intentarse): ' + String((eG && eG.message) || eG).slice(0, 150);
+  }
+  if (vacio) { guardarRes(); return res; }
+  if (!confHoy || confHoy.d !== B.hoy) { try { confHoy = waJsonProp_('WA_CONF_HOY', {}); } catch (eCh) { confHoy = {}; } if (!confHoy || confHoy.d !== B.hoy) confHoy = { d:B.hoy, ids:[] }; }
   if (csFalta.length) { try { cotBotDevolver_(csFalta, B.hoy); } catch (eCf) {} }
   if (csErr.length) { try { cotBotError_(csErr); } catch (eCe) {} }
   if (recDia || recHechos.length) {
@@ -7494,7 +7721,7 @@ function waRepasoBot_() {
     var l3 = LockService.getScriptLock();
     try { l3.waitLock(20000); var hRf = waJsonProp_('WA_HECHO', {}); hRf.rf = B.hoy; PropertiesService.getScriptProperties().setProperty('WA_HECHO', JSON.stringify(hRf)); } catch (e) {} finally { try { l3.releaseLock(); } catch (e3) {} }
   }
-  if (ubHechos.length) waUbAnotar_(ubHechos, B.hoy);
+  if (ubHechos.length) { try { waUbAnotar_(ubHechos, B.hoy); } catch (eUb) {} }
   if (confHoy.ids.length > 300) confHoy.ids = confHoy.ids.slice(-300);
   try { PropertiesService.getScriptProperties().setProperty('WA_CONF_HOY', JSON.stringify(confHoy)); } catch (e) {}
   if (reint.length) {
@@ -7503,7 +7730,7 @@ function waRepasoBot_() {
   }
   res.quedan = reint.length;
   if (parar) res.error = parar;
-  waAnotar_(filas);
+  try { waAnotar_(filas); } catch (eAn) {}
   guardarRes();
   return res;
 }
@@ -7514,7 +7741,7 @@ function estadoBotWhatsApp() {
             logisticaMal:c.mal, pedirHoy:c.pedirHoy.map(function (L) { return L.nombre; }), pedirHoyMal:c.malPh, prueba:!!c.prueba, enCola:waColaLeer_().length, reintentos:waSalidaLeer_().length,
             ultimo:waJsonProp_('WA_ULTIMO', null), hecho:waJsonProp_('WA_HECHO', {}), repasoInstalado:kTriggersDe_('waRepaso').length > 0,
             metaAvisa:!!prop_('WA_HOOK_KEY'), metaVerifico:waJsonProp_('WA_HOOK_VERIF', null), meta:waJsonProp_('WA_META', null),
-            metaRechazados:waJsonProp_('WA_HOOK_MAL', null),
+            metaRechazados:waHookMalLeer_(),   // 🛡️ (16-a) en la caché
             dueno:c.dueno.map(function (L) { return L.nombre; }), duenoMal:c.malDu, leads:waJsonProp_('WA_LEADS', null) };   // §4ok-E   // (2026-10-12-b) avisos con otra clave en la dirección   // (2026-10-12-a)
   try { s.claude = iaEstado_(); } catch (e) {}   // 🧠 (2026-10-14-b)
   try { s.buenDia = waBdEquipo_().map(function (V) { return V.nombre; }); s.bloki = blokiUsoHoy_(); s.blokiTope = blokiTope_(); } catch (e) {}   // ☀️🧽 (2026-11-07-a)
@@ -7544,6 +7771,8 @@ var WA_HOOK_FILAS = 1500;
 var WA_META_COL = 10;                   // columna «Meta dice» de la hoja (después de las 9 de WA_HOJA_ENC)
 var WA_META_RANGO = { sent:1, delivered:2, read:3, failed:4 };
 var WA_META_TXT = { sent:'📤 enviado', delivered:'✓✓ entregado', read:'👁️ leído', failed:'❌ falló' };
+/** Cuántos avisos llegaron con otra clave en la dirección (las últimas 6 h) y el último cuándo; null si ninguno. */
+function waHookMalLeer_() { try { var t = CacheService.getScriptCache().get('wa_hook_mal'); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
 function waHookClaveOk_(v) { var k = prop_('WA_HOOK_KEY'); return !!k && String(v || '') === k; }
 /** GET de Meta para verificar la dirección: contesta `hub.challenge` solo con el token correcto. null = no es de Meta. */
 function waHookVerificar_(e) {
@@ -7560,8 +7789,10 @@ function waHook_(e) {
   if (!waHookClaveOk_(e && e.parameter && e.parameter[WA_HOOK_PARAM])) {
     /* (2026-10-12-b) El 12/10 la dirección quedó con `?wa=TUCLAVE` y Meta mandó avisos que se tiraron sin dejar rastro. Ahora
        se cuentan (cuántos y cuándo, NUNCA el valor que vino: podría ser una clave) y probar/estado lo dicen. */
-    try { var mal = waJsonProp_('WA_HOOK_MAL', {}) || {}; mal.n = (Number(mal.n) || 0) + 1; mal.ts = new Date().toISOString();
-          PropertiesService.getScriptProperties().setProperty('WA_HOOK_MAL', JSON.stringify(mal)); } catch (er) {}
+    /* 🛡️ (16-a, revisión de Fable) Contados en la CACHÉ (6 h), no en Propiedades: cada POST de afuera a `?wa=loquesea` gastaba
+       3 operaciones del cupo diario de Propiedades, y con el cupo agotado se caen el bot, el GPS y Kommo. */
+    try { var mal = waHookMalLeer_() || {}; mal.n = (Number(mal.n) || 0) + 1; mal.ts = new Date().toISOString();
+          CacheService.getScriptCache().put('wa_hook_mal', JSON.stringify(mal), 21600); } catch (er) {}
     return out;
   }
   var b = {}; try { b = JSON.parse(e.postData.contents); } catch (er) { return out; }
@@ -7616,12 +7847,20 @@ function waHookAnotar_(est, resp) {
     var f = fila[String(s.id || '')];
     if (!f) {
       if (st !== 'failed') return;   // de un mensaje que la hoja ya no tiene (o de antes de la ventana): solo importa si falló
-      sh.appendRow([waHookHora_(s.timestamp), '', '', 'Aviso de Meta', '', String(s.recipient_id || ''), '', '❌ falló', String(s.id || ''), txt]);
+      sh.appendRow(filaTexto_([waHookHora_(s.timestamp), '', '', 'Aviso de Meta', '', String(s.recipient_id || ''), '', '❌ falló', String(s.id || ''), txt]));
       fila[String(s.id || '')] = sh.getLastRow(); return;
+    }
+    /* 🧾 (2026-11-16-a, revisión de Fable) La fila se buscó al empezar: si mientras tanto `waAnotar_` recortó la hoja (borra las más
+       viejas), ese número ya es OTRA fila. Se mira que siga siendo la de este mensaje (columna I); si no, se busca de nuevo, y si ya no
+       está, no se escribe. */
+    if (String(sh.getRange(f, 9).getValue() || '') !== String(s.id || '')) {
+      var otra = iaFilas_(sh, String(s.id || ''));
+      if (!otra.length) return;
+      f = otra[otra.length - 1];   // (el mapa `fila` no se toca: va con `datos`, la foto del principio)
     }
     var c = sh.getRange(f, WA_META_COL), ya = String(c.getValue() || ''), rYa = 0;
     for (var k in WA_META_TXT) if (ya.indexOf(WA_META_TXT[k]) === 0) rYa = WA_META_RANGO[k];
-    if (r > rYa) c.setValue(txt);   // nunca para atrás (Meta puede mandar «entregado» después de «leído»)
+    if (r > rYa) c.setValue(celdaTexto_(txt));   // nunca para atrás (Meta puede mandar «entregado» después de «leído»)
   });
   if (resp.length) waHookEncabezados_(sh);
   var cfgIa = null, hayIa = false, numsIa = [];
@@ -7656,8 +7895,8 @@ function waHookAnotar_(est, resp) {
     var eqQ = null;
     try { cfgIa = cfgIa || waConfig_(); eqQ = waEquipoQuien_(String(m.from || ''), cfgIa); } catch (er) { eqQ = null; }
     if (eqQ) {
-      sh.appendRow([waHookHora_(m.timestamp), '', '', WA_EQUIPO_FILA, String(m._nom || eqQ.nombre || ''), String(m.from || ''), '', '💬 mensaje', w,
-                    iaCorte_(waHookTxtMsg_(m), 500), '', (Number(m.timestamp) * 1000) || Date.now(), '— del equipo (' + eqQ.rol + '): no se contesta']);
+      sh.appendRow(filaTexto_([waHookHora_(m.timestamp), '', '', WA_EQUIPO_FILA, String(m._nom || eqQ.nombre || ''), String(m.from || ''), '', '💬 mensaje', w,
+                    iaCorte_(waHookTxtMsg_(m), 500), '', (Number(m.timestamp) * 1000) || Date.now(), '— del equipo (' + eqQ.rol + '): no se contesta']));
       fila[w] = sh.getLastRow(); return;
     }
     var de = String(m.from || ''), ped = waHookPedidoDe_(datos, fila, m, de, desde), ms = (Number(m.timestamp) * 1000) || Date.now();
@@ -7672,9 +7911,9 @@ function waHookAnotar_(est, resp) {
     try { loc = waUbicDeMsg_(m); if (loc) { ub = waUbicGuardar_(de, loc, ped); if (ub.id) ped = { id:String(ub.id), oc:String(ub.oc || '') }; } } catch (er) { ub = null; }
     var txtM = ub ? iaCorte_(waHookTxtMsg_(m), 400) + ' · ' + waUbicTxt_(ub) : iaCorte_(waHookTxtMsg_(m), 500);
     var colM = conIa ? (reac ? '— reacción: no se contesta' : (ub ? '— ubicación: le contestó el bot' : '⏳')) : '';
-    sh.appendRow([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, txtM,
+    sh.appendRow(filaTexto_([waHookHora_(m.timestamp), ped.id, ped.oc, '💬 Respondió', String(m._nom || ''), de, '', '💬 mensaje', w, txtM,
                   conIa && (reac || ub) ? '🤖 ' + (ub ? 'ubicación' : 'reacción') + ' · ' + waBo_(Date.now()).txt : '', ms, colM, '', '', '',
-                  ub ? waUbicCol_(ub) : '']);
+                  ub ? waUbicCol_(ub) : '']));
     fila[w] = sh.getLastRow();
     if (ub) { try { waUbicResponder_(sh, de, ub, m._nom); } catch (er) {} return; }
     if (conIa) { if (!reac) { hayIa = true; if (numsIa.indexOf(de) < 0) numsIa.push(de); } return; }
@@ -7735,7 +7974,7 @@ function waAutoResponder_(sh, de, ped, nom) {
   ya[de] = ahora;
   var claves = Object.keys(ya); if (claves.length > 300) claves.slice(0, claves.length - 300).forEach(function (c) { delete ya[c]; });
   try { PropertiesService.getScriptProperties().setProperty('WA_AUTO', JSON.stringify(ya)); } catch (er) {}
-  sh.appendRow([waBo_(ahora).txt, ped.id, ped.oc, 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', ahora]);
+  sh.appendRow(filaTexto_([waBo_(ahora).txt, ped.id, ped.oc, 'Respuesta automática', nom || '', de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', ahora]));
 }
 /** Para el panel: lo que contestaron los clientes en los últimos WA_RESP_DIAS días, lo más nuevo primero. */
 function waRespuestasLeer_() {
@@ -7745,6 +7984,7 @@ function waRespuestasLeer_() {
   var equipo = {}; try { equipo = waEquipoCels_(waConfig_()); } catch (er) { equipo = {}; }   // 👥 (2026-11-09-a) también lo de antes (el saludo de Isabel del 09/11)
   for (var i = filas.length - 1; i >= 0 && out.length < WA_RESP_MAX; i--) {
     var r = filas[i]; if (String(r[3] || '') !== '💬 Respondió') continue;
+    r = filaLeer_(r);   // 🧾 (2026-11-16-a) lo que escribió el cliente, sin el «'» de `celdaTexto_`
     if (equipo[String(r[5] || '')]) continue;
     var ms = Number(r[11]) || 0; if (ms && ms < lim) continue;
     /* 🧠 (2026-10-14-b) Lo que Claude contestó junto con el mensaje siguiente va adentro de ese (`antes`), no como otra tarjeta. Se
@@ -7768,7 +8008,7 @@ function waRespAtendida_(body) {
   var last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 9, last - 1, 1).getValues() : [];
   for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]) === w) {
     var val = body.deshacer ? '' : (String(body.quien || 'alguien').slice(0, 40) + ' · ' + waBo_(Date.now()).txt);
-    sh.getRange(i + 2, 11).setValue(val);
+    sh.getRange(i + 2, 11).setValue(celdaTexto_(val));   // 🧾 (2026-11-16-a) quién, como lo escribió (ver `celdaTexto_`)
     return jsonOut({ ok:true, at:val, version:SCRIPT_VERSION });
   }
   return jsonOut({ ok:false, error:'no está', version:SCRIPT_VERSION });
@@ -7986,7 +8226,7 @@ function iaRepaso(limite, mirar, op) {
       if (!por[de]) { por[de] = { de:de, filas:[], extra:[], vistos:{}, n:0, ultMs:0 }; orden.push(de); }
       if (w && por[de].vistos[w]) { por[de].extra.push(desde + i); continue; }   // el mismo mensaje dos veces: se toma, se contesta una
       por[de].vistos[w] = 1;
-      por[de].filas.push({ fila:desde + i, w:w, ms:ms, txt:String(r[9] || ''), id:String(r[1] || ''), oc:String(r[2] || ''), nom:String(r[4] || '') });
+      por[de].filas.push({ fila:desde + i, w:w, ms:ms, txt:celdaLeer_(String(r[9] || '')), id:String(r[1] || ''), oc:String(r[2] || ''), nom:celdaLeer_(String(r[4] || '')) });
       por[de].n = Math.max(por[de].n, n); por[de].ultMs = Math.max(por[de].ultMs, ms);
     }
     orden.forEach(function (d) {
@@ -8128,9 +8368,9 @@ function iaContexto_(g, ped, hoja, B) {
   (hoja || []).forEach(function (r) {
     if (String(r[5] || '') !== g.de || propias[String(r[8] || '')]) return;
     var tipo = String(r[3] || ''), ms = Number(r[11]) || 0, hora = ms ? waBo_(ms).txt : '';
-    if (tipo === '💬 Respondió') { if (ms >= lim) conv.push(hora + ' · cliente: ' + iaCorte_(iaSinEtiquetas_(r[9]), 400)); }
+    if (tipo === '💬 Respondió') { if (ms >= lim) conv.push(hora + ' · cliente: ' + iaCorte_(iaSinEtiquetas_(celdaLeer_(r[9])), 400)); }   // 🧾 (2026-11-16-a) sin el «'» de `celdaTexto_`
     /* Lo que contestó Claude va en la P: la J («Meta dice») la pisa el «entregado / leído» de Meta. */
-    else if (tipo === '🤖 Respuesta IA') { if (ms >= lim) conv.push(hora + ' · asistente: ' + iaCorte_(iaSinEtiquetas_(String(r[15] || r[9] || '').replace(/^🤖 _[^_]*_\s*/, '')), 400)); }
+    else if (tipo === '🤖 Respuesta IA') { if (ms >= lim) conv.push(hora + ' · asistente: ' + iaCorte_(iaSinEtiquetas_(celdaLeer_(String(r[15] || r[9] || '')).replace(/^🤖 _[^_]*_\s*/, '')), 400)); }
     else if (tipo === 'Respuesta automática') { if (ms >= lim) conv.push(hora + ' · respuesta automática fija: «este número no lee, escribile a tu vendedor/a»'); }
     else if (String(r[7] || '').indexOf('enviado') >= 0 && tipo.indexOf('Logística') < 0 && tipo.indexOf('IA →') < 0) avisos.push(tipo);
   });
@@ -8292,8 +8532,8 @@ function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
     }
     if (envio.botones) { try { rdOfreceAnotar_(ped.p, g.de, rdOps, B); } catch (eRo) {} cuerpo = envio.txt || cuerpo; }
     /* Lo que se le mandó va en la P: la J («Meta dice») la pisa el «enviado / entregado / leído» de Meta. */
-    sh.appendRow([B.txt, ped.id || '', ped.oc || '', '🤖 Respuesta IA', ult.nom || '', g.de, envio.botones ? '(botones)' : '(texto)', envio.ok ? '✅ enviado' : '❌ error',
-                  envio.ok ? (envio.id || '') : envio.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
+    sh.appendRow(filaTexto_([B.txt, ped.id || '', ped.oc || '', '🤖 Respuesta IA', ult.nom || '', g.de, envio.botones ? '(botones)' : '(texto)', envio.ok ? '✅ enviado' : '❌ error',
+                  envio.ok ? (envio.id || '') : envio.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]));
     if (envio.ok) { res.contestados++; var uu = iaUsoHoy_(); uu.r++; try { PropertiesService.getScriptProperties().setProperty('IA_USO', JSON.stringify(uu)); } catch (e) {} }
     else res.error = 'no se pudo mandar la respuesta de Claude: ' + String(envio.detalle || '').slice(0, 120);
   } else res.sinRespuesta++;
@@ -8305,7 +8545,7 @@ function iaContestarGrupo_(sh, g, cfg, recs, hoja, B, res) {
   g.filas.forEach(function (f, i) {
     var esUlt = i === g.filas.length - 1;
     iaFilas_(sh, f.w).forEach(function (row) {
-      sh.getRange(row, IA_COL, 1, 4).setValues([[esUlt ? estado : '🤖 ↓ junto con el mensaje siguiente', esUlt ? o.categoria : '', esUlt ? o.resumen : '', esUlt && mando ? txt : '']]);
+      sh.getRange(row, IA_COL, 1, 4).setValues([filaTexto_([esUlt ? estado : '🤖 ↓ junto con el mensaje siguiente', esUlt ? o.categoria : '', esUlt ? o.resumen : '', esUlt && mando ? txt : ''])]);   // 🧾 (2026-11-16-a) lo que escribió Claude, como texto
       if (atendida && !String(sh.getRange(row, 11).getValue() || '')) sh.getRange(row, 11).setValue(atendida);
     });
   });
@@ -8557,8 +8797,8 @@ function rdElegido_(sh, de, m, q, cfg) {
   var tenia = p && p.fecha ? rdCuandoTxt_(p.fecha, turnoNorm_(p.turno)) : '';
   var est = motivo && motivo !== 'ya' ? '⚠️ no se anotó' : (dup ? '📅 repetido' : (motivo === 'ya' ? '📅 ya estaba' : '📅 eligió'));
   var col = motivo === 'ya' ? '— ya estaba para ese día' : (motivo ? '— no se anotó: ' + motivo : (dup ? '— ya se lo había pedido a logística' : '— eligió por los botones: falta que logística lo mueva en el panel'));
-  sh.appendRow([waHookHora_(m.timestamp), q.id, p ? String(p.oc || '') : '', '📅 Pidió otro día', nom, de, '', est, w,
-                'Pidió otro día: ' + quiere + (tenia ? ' (tenía: ' + tenia + ')' : ''), '', ms, col]);
+  sh.appendRow(filaTexto_([waHookHora_(m.timestamp), q.id, p ? String(p.oc || '') : '', '📅 Pidió otro día', nom, de, '', est, w,
+                'Pidió otro día: ' + quiere + (tenia ? ' (tenía: ' + tenia + ')' : ''), '', ms, col]));
   if (!waActivo_() || !cfg || !cfg.ok) return;
   var txt;
   if (nuevo || dup) txt = (dup ? 'Ya se lo pedimos a logística: pasar' : 'Listo ✅ Le pedimos a logística pasar') + ' tu entrega al *' + quiere + '*. Te confirmamos por acá 😊';
@@ -8567,8 +8807,8 @@ function rdElegido_(sh, de, m, q, cfg) {
   else txt = 'Ese día ya no se puede elegir desde acá 🙏 ' + (p ? 'Escribile a ' + waContactoVend_(p.vendedor) + ' y lo vemos.' : 'Escribile a tu vendedor/a por el WhatsApp de siempre.');
   var cuerpo = '🤖 _Asistente automático · ' + (p ? waMarca_(p.vendedor) : 'Multiespumas') + '_\n\n' + txt;
   var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:cuerpo, preview_url:false } });
-  sh.appendRow([B.txt, q.id, p ? String(p.oc || '') : '', '📅 Otro día → cliente', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle,
-                '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
+  sh.appendRow(filaTexto_([B.txt, q.id, p ? String(p.oc || '') : '', '📅 Otro día → cliente', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle,
+                '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]));
   if (nuevo) rdAvisarLogistica_(cfg, p, q, B);
 }
 /** A cada uno de logística, con la plantilla del cambio de entrega de siempre (la v2; si Meta no la tiene, la de antes). */
@@ -8922,8 +9162,8 @@ var MALL_CANDADO_MS = 8000;       // el candado propio (del documento) para escr
 /** Un texto del mostrador: sin saltos ni espacios de más, a lo sumo MALL_TXT letras. */
 function mallTxt_(v) { return String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MALL_TXT); }
 /* Lo que Google tomaría como fórmula («=…», «+…», «-…», «@…») va con «'» adelante (como `celTexto_`); al leer se saca. */
-function mallCelda_(s) { s = String(s == null ? '' : s); return /^[=+\-@]/.test(s) ? "'" + s : s; }
-function mallDeCelda_(v) { return String(v == null ? '' : v).replace(/^'(?=[=+\-@])/, ''); }
+function mallCelda_(s) { return celdaTexto_(String(s == null ? '' : s)); }   // 🧾 (2026-11-16-a) la misma regla de todo el archivo
+function mallDeCelda_(v) { return celdaLeer_(String(v == null ? '' : v)); }
 function mallHoja_(crear) {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(MALL_HOJA);
   if (!sh && crear) {
@@ -9838,7 +10078,7 @@ function cotArmar_(m, cfg, B) {
     out.para = L.nombre; out.numero = L.cel;
     out.params = [c.vendedor, String(c.cliente || 'sin nombre'), cotLoCotizado_(c), waBo_(c.botT).txt];
   }
-  out.params = out.params.map(waParam_);
+  out.params = waCuerpoTopeTodas_([[out.plantilla, out.params.length]], out.params.map(waParam_));   // 📏 (2026-11-16-a) el cuerpo entero ≤ WA_CUERPO_TOPE
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -9866,8 +10106,8 @@ function cotBotonTocado_(sh, de, m, q, cfg) {
   }, true);
   if (!c) motivo = motivo || 'no se pudo anotar (la cotización ya no está o la hoja estaba ocupada)';
   var txtRes = { llamar:'📞 Que me llamen', compre:'✅ Ya compré', no:'🙅 No, gracias' }[q.res];
-  sh.appendRow([waHookHora_(m.timestamp), '', c ? c.num : '', '🧾 Cotización: tocó un botón', nom, de, '', motivo ? '⚠️ no se anotó' : '🧾 ' + q.res, w,
-                txtRes + (motivo ? ' — ' + motivo : ''), '', (Number(m.timestamp) * 1000) || ahora, motivo ? '— ' + motivo : '— lo anotó el bot en la cotización']);
+  sh.appendRow(filaTexto_([waHookHora_(m.timestamp), '', c ? c.num : '', '🧾 Cotización: tocó un botón', nom, de, '', motivo ? '⚠️ no se anotó' : '🧾 ' + q.res, w,
+                txtRes + (motivo ? ' — ' + motivo : ''), '', (Number(m.timestamp) * 1000) || ahora, motivo ? '— ' + motivo : '— lo anotó el bot en la cotización']));
   if (motivo || !c || !waActivo_() || !cfg || !cfg.ok) return;
   var vend = waNombre_(c.vendedor), txt;
   if (q.res === 'llamar') txt = '¡Listo! ' + (vend || waTuVend_(c.vendedor)) + ' te va a llamar ' + cotCuandoLlama_(B) + ' 😊';   // (revisión del 14/11) el próximo día HÁBIL
@@ -9875,7 +10115,7 @@ function cotBotonTocado_(sh, de, m, q, cfg) {
   else txt = 'Gracias, no te vamos a escribir más 😊';
   var cuerpo = '🤖 _Asistente automático · ' + waMarca_(c.vendedor) + '_\n\n' + txt;
   var r = waPost_(cfg, { messaging_product:'whatsapp', to:de, type:'text', text:{ body:cuerpo, preview_url:false } });
-  sh.appendRow([B.txt, '', c.num, '🧾 Cotización → cliente', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]);
+  sh.appendRow(filaTexto_([B.txt, '', c.num, '🧾 Cotización → cliente', nom, de, '(texto)', r.ok ? '✅ enviado' : '❌ error', r.ok ? (r.id || '') : r.detalle, '', '', Date.now(), '', '', '', iaCorte_(cuerpo, 1200)]));
   if (q.res === 'llamar') {
     var a = cotArmar_({ k:'vl', a:c.vendedor, cot:c.id }, { prueba:cfg.prueba, _cots:(function () { var o = {}; o[c.id] = c; return o; })() }, B), filaV;
     if (a.saltar) filaV = [B.txt, '', c.num, WA_TIPOS.vl.txt, c.vendedor, '', WA_TIPOS.vl.plantilla, '⏭️ no se manda', a.saltar];
@@ -10487,7 +10727,7 @@ function kSnapshot_(sh, conBorradores) {
     if (id.indexOf(BORRADOR_PREF) === 0) {
       var lead = id.slice(BORRADOR_PREF.length);
       out.cargados[lead] = 1;
-      if (conBorradores && !out.borr[lead]) out.borr[lead] = { fila: i + 2, cliente: String(clis[i][0] || '').trim(), estado: String(ests[i][0] || '') };
+      if (conBorradores && !out.borr[lead]) out.borr[lead] = { fila: i + 2, cliente: celdaLeer_(String(clis[i][0] || '')).trim(), estado: celdaLeer_(String(ests[i][0] || '')) };
     }
     /* La marca `klead`, igual que antes: sin espacios y con el id entre comillas. El indexOf de antes evita pasar la expresión
        por las miles de filas que no la tienen. */
@@ -10567,10 +10807,13 @@ function kommoProcesarObj_(ids, origen) {
    Ese título llegaba tal cual al panel y la vendedora veía un número en vez de su cliente
    (reportado con la venta de Erwin). El nombre de verdad está en el CONTACTO. */
 function nombreGenerico_(t) {
-  var s = String(t || '').trim();
+  var s = String(celdaLeer_(String(t || ''))).trim();
   if (!s) return true;
   // «Lead #39357288», «Negocio 123», «#123», «39357288»
   if (/^(lead|deal|trato|negocio|venta|prospecto|oportunidad|cliente)?\s*#?\s*\d{3,}$/i.test(s)) return true;
+  /* 🧾 (2026-11-16-a, revisión de Fable) Un nombre que es SOLO un teléfono («+591 7012 3456», «(591) 70-123-456»): Kommo pone el número
+     cuando el contacto no tiene nombre. No es el cliente (y escrito tal cual, Google lo tomaba por fórmula). */
+  if (/^\+?[\d\s().\-]+$/.test(s) && s.replace(/\D/g, '').length >= 7) return true;
   if (/^(sin nombre|sin titulo|sin título|nuevo lead|new lead|unsorted|sin clasificar|desconocido)$/i.test(s)) return true;
   return false;
 }
@@ -10620,8 +10863,8 @@ function borradorGenerico_(sh, leadId) {
   for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === buscado) { fila = i + 2; break; }
   if (fila < 0) return null;
   var colCli = HEADERS.indexOf('Cliente') + 1, colEst = HEADERS.indexOf('Estado stock') + 1;
-  if (String(sh.getRange(fila, colEst).getValue() || '') !== BORRADOR_EST) return null;   // ya lo completaron
-  var actual = String(sh.getRange(fila, colCli).getValue() || '').trim();
+  if (celdaLeer_(String(sh.getRange(fila, colEst).getValue() || '')) !== BORRADOR_EST) return null;   // ya lo completaron
+  var actual = celdaLeer_(String(sh.getRange(fila, colCli).getValue() || '')).trim();
   if (!nombreGenerico_(actual)) return null;                                              // ya tiene nombre propio
   return { fila: fila, actual: actual };
 }
@@ -10647,7 +10890,7 @@ function repararNombrePrep_(sh, leadId, snap) {
 function repararNombreAplicar_(sh, rep) {
   var b = borradorGenerico_(sh, rep.id);
   if (!b || rep.nombre === b.actual) return false;
-  sh.getRange(b.fila, HEADERS.indexOf('Cliente') + 1).setValue(rep.nombre);
+  sh.getRange(b.fila, HEADERS.indexOf('Cliente') + 1).setValue(celdaTexto_(String(rep.nombre)));   // 🧾 (2026-11-16-a) lo que manda Kommo, como texto
   /* ✍️ (2026-09-30-a) El sello no cambia (ver arriba), así que se anota que la fila cambió: la lectura de lo cambiado la manda
      igual y el panel ve el nombre bueno en la próxima vuelta (revisión de §4he: si no, la vendedora completaba el borrador
      con «Lead #…» y quedaba así para siempre). */
@@ -11953,6 +12196,7 @@ function wpArmar_(m, recs, cfg, B) {
   }
   if (!R.item) return { saltar:R.motivo === 'sin_ventas' ? 'sin ventas del equipo en esos días' : 'Claude la estaba armando (sale en el próximo repaso)', anotar:R.motivo === 'sin_ventas' };
   var out = { plantilla:'porque_semana', para:L.nombre, numero:L.cel, params:wpParams_(R.item).map(waParam_), botones:['wp|' + R.item.k], texto:wpTextoLibre_(R.item) };
+  out.params = waCuerpoTopeTodas_([[out.plantilla, out.params.length]], out.params);   // 📏 (2026-11-16-a) el cuerpo entero ≤ WA_CUERPO_TOPE (si no, el texto libre)
   if (cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }
   return out;
 }
@@ -12215,15 +12459,15 @@ function chatValidar_(x) {
 }
 function chatFila_(m) {
   var b = waBo_(m.t);
-  return [mallCelda_(m.i), m.t, b.hoy, b.txt.slice(6), m.c, mallCelda_(m.d), m.r, mallCelda_(m.n), mallCelda_(m.x), (m.f || []).join(' '), (m.p || []).join(';'),
-          m.q || '', (m.bt ? 'x' + m.bt : (m.u ? 'u' : '')), mallCelda_(m.ap || ''), mallCelda_(m.b || '')];
+  return [mallCelda_(m.i), m.t, b.hoy, b.txt.slice(6), m.c, mallCelda_(m.d), m.r, mallCelda_(m.n), mallCelda_(m.x), mallCelda_((m.f || []).join(' ')), mallCelda_((m.p || []).join(';')),
+          mallCelda_(m.q || ''), (m.bt ? 'x' + m.bt : (m.u ? 'u' : '')), mallCelda_(m.ap || ''), mallCelda_(m.b || '')];   // 🧾 (2026-11-16-a) un id que empieza con «-», como texto
 }
 /** Una fila de la hoja → el mensaje como lo recibe la página ({i, t, c, d, r, n, x, f, p, q, u?, b?, bt?}). null si no es un mensaje. */
 function chatDeFila_(r) {
   var id = mallDeCelda_(r[0]).trim(), ts = Number(r[1]) || 0, conv = String(r[4] || '');
   if (!id || !(ts > 0) || !conv) return null;
   var mk = String(r[12] || ''), m = { i:id, t:ts, c:conv, d:mallDeCelda_(r[5]), r:String(r[6] || ''), n:mallDeCelda_(r[7]), x:mallDeCelda_(r[8]),
-    f:String(r[9] || '').split(/\s+/).filter(Boolean), p:String(r[10] || '').split(';').filter(Boolean), q:String(r[11] || '') };
+    f:mallDeCelda_(r[9]).split(/\s+/).filter(Boolean), p:mallDeCelda_(r[10]).split(';').filter(Boolean), q:mallDeCelda_(r[11]) };
   if (mk === 'u') m.u = 1;
   if (/^x\d+$/.test(mk)) { m.bt = Number(mk.slice(1)); m.x = ''; m.f = []; }
   var por = mallDeCelda_(r[14]); if (por) m.b = por;
@@ -12891,3 +13135,7 @@ function probarIaObsAtc_(bien, ojo) {
   bien('🎧 Claude mira las fotos de las ATC' + (String(prop_('IA_ATC_FOTOS') || '') === '0' ? ' (APAGADO: IA_ATC_FOTOS = 0)' : '') + ': hoy ' + ua.n + ' de ' + atfTope_() +
        ' (ATC_FOTOS_TOPE_DIA)' + (ua.tot && ua.tot.n ? '; desde el ' + ua.tot.desde + ': ' + ua.tot.n + ', unos USD ' + iaCostoUsd_(ua.tot).toFixed(2) : '') + '.');
 }
+
+/* 🧷 (2026-11-16-a, revisión de Fable, punto 4) ÚLTIMA LÍNEA DEL ARCHIVO, a propósito: si el pegado quedó cortado, no está, y
+   «probarAntesDeImplementar» lo dice con una ❌. Va igual a SCRIPT_VERSION (tests/test_gs_fable.js §4 lo compara). No agregar nada DEBAJO. */
+var FIN_DEL_ARCHIVO = '2026-11-16-a';

@@ -981,6 +981,14 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   sus ventas propias»; `talCargaAfuera`).
 - ⏸️ `mayoristas_vencido` (181) APAGADO desde la 16-a (dueño: «A»): `WA_MV_ACTIVO=1` lo prende (`prenderMayoristasVencido`).
 - Página de las ideas visuales 390-440 con fotos de antes y después: https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183 (nada programado).
+- 🔐 **Revisión de Fable del `.gs` 16-a (16/11, ANTES de implementar)**: la clave del equipo se CIERRA ante un error (`cfgLeer_`/`cfgProp_`: una
+  `getProperties` por llamada; sin poder leer → `busy`, nunca pasa; GET_CERRADO → cerrado); «Rechazos» sin nada de lo que trae un pedido sin la
+  clave (`rechazoAjeno_`, 6 por minuto en la caché); WA_HOOK_MAL en la caché; texto libre con «'» si empieza con = + - @ ' (`celdaTexto_`/`celdaLeer_`,
+  `filaTexto_` en «Bot WhatsApp», «Borrados», «Geo», «IA comprobantes»; formato `@` en 17 columnas, marca TXT_COLS); el cuerpo de una plantilla ≤ 1.000
+  letras (`waCuerpoTope_`, 132005 = `WA_PLANTILLA_LARGA` baja al respaldo); `waRepasoBot_` no pierde lo tomado (try por mensaje + general).
+  🧷 **La ÚLTIMA línea del `.gs` es `var FIN_DEL_ARCHIVO = '<SCRIPT_VERSION>';`** (probar da ❌ CORTADO sin ella): al dar el enlace al dueño, decir
+  esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
+  `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
 
 ## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; EN LA RAMA, sin publicar)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).

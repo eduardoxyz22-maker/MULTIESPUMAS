@@ -824,7 +824,10 @@ if (typeof cargar([HDR], {}).ctx.rechazosInforme_ !== 'function') {
   a.post({ action:'list' }); a.post({ action:'list' });
   chk('un list sin clave no llena la hoja de rechazos', a.shR._datos.length<=1, a.shR._datos.length);
   const r = a.post({ action:'save', pedido:{ id:'q1', cliente:'SIN CLAVE', vendedor:'Mirian Salazar', ts:AHORA }, quien:'Mirian Salazar' });
-  chk('⚠️ un guardado sin clave sí queda anotado (es una venta que se quedó en la cola de alguien)', r.error==='clave' && a.shR._datos.length===2 && a.shR._datos[1][2]==='clave' && a.shR._datos[1][4]==='SIN CLAVE', JSON.stringify(a.shR._datos[1]||[]).slice(0,120));
+  /* 🛡️ (16-a, revisión de Fable, punto 2, a conciencia) Queda anotado que hubo un guardado sin la clave, pero SIN nada de lo que trajo
+     (ni el cliente): sin la clave lo pudo mandar cualquiera, y lo copiado entraba a la planilla (fórmulas, o la hoja llena). La venta que
+     quedó en la cola de alguien se ve en los latidos (cola por dispositivo). */
+  chk('⚠️ un guardado sin clave queda anotado, pero sin nada de lo que trajo (ni el cliente)', r.error==='clave' && a.shR._datos.length===2 && a.shR._datos[1][2]==='clave' && !a.shR._datos[1][4] && !/SIN CLAVE|Mirian/.test(a.shR._datos[1].join('|')), JSON.stringify(a.shR._datos[1]||[]).slice(0,160));
 }
 {
   // los latidos: la cola de cada dispositivo
