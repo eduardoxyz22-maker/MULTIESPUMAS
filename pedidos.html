@@ -6073,7 +6073,53 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .ay-globo.ay-on{ opacity:1; transform:none; }
 .ay-globo[hidden]{ display:none; }
 .ay-globo .ay-n{ display:block; color:#007c76; font-weight:800; margin-bottom:2px; }
-@media (prefers-reduced-motion:reduce){ .ay-globo{ transition:none; transform:none; } } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
+@media (prefers-reduced-motion:reduce){ .ay-globo{ transition:none; transform:none; } }
+/* 🧭 (16/11, mejora 369) Proyección: la barra del índice pegada arriba y cada caja en una sección plegable con su renglón de título. */
+.pix-bar{ position:sticky; top:var(--hdr-h,0px); z-index:7; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #d9e9e7; border-radius:14px;
+  padding:6px 6px 6px 8px; margin:0 0 14px; box-shadow:0 6px 18px -12px rgba(0,80,78,.45); }
+.pix-chips{ flex:1; min-width:0; display:flex; gap:5px; overflow-x:auto; scrollbar-width:none; -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); padding-right:22px; }
+.pix-chips::-webkit-scrollbar{ display:none; }
+.pix-c{ flex:none; white-space:nowrap; font:inherit; font-size:.78rem; font-weight:700; border:1px solid #d5e6e5; background:#f6fbfb; color:#2b4a48; border-radius:999px; padding:6px 11px; min-height:34px; cursor:pointer; }
+.pix-c:hover{ border-color:#00B5AD; }
+.pix-c.on{ background:#00B5AD; border-color:#00B5AD; color:#fff; }
+.pix-c[hidden]{ display:none; }
+.pix-her{ position:relative; flex:none; }
+.pix-her[hidden]{ display:none; }
+.pix-her-b{ font:inherit; font-size:.78rem; font-weight:800; border:1px dashed #9fd2cd; background:#fff; color:#0f766e; border-radius:999px; padding:6px 12px; min-height:34px; cursor:pointer; white-space:nowrap; }
+.pix-her-b[aria-expanded="true"]{ border-style:solid; background:#e8f8f6; }
+.pix-her-m{ position:absolute; right:0; top:calc(100% + 8px); z-index:20; width:min(330px, calc(90vw / var(--vz,1))); background:#fff; border:1px solid #d7e6e5; border-radius:14px;
+  box-shadow:0 14px 36px rgba(16,40,44,.24); padding:10px; display:grid; gap:6px; }
+.pix-her-m[hidden]{ display:none; }
+.pix-her-m .field{ margin:0; } .pix-her-m .field[hidden]{ display:none; }
+.pix-her-m .btn{ width:100%; justify-content:flex-start; text-align:left; min-height:38px; }
+.pix-s{ margin:0 0 12px; }
+.pix-s[hidden], .pix-grupo[hidden]{ display:none; }
+.pix-h{ width:100%; display:flex; align-items:center; gap:10px; text-align:left; font:inherit; cursor:pointer; background:#fff; border:1px solid #d9e9e7; border-radius:12px;
+  padding:9px 13px; min-height:44px; color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.pix-h:hover{ border-color:#9fd2cd; }
+.pix-t{ flex:1; min-width:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; }
+.pix-t > b{ font-size:.95rem; color:#134e4a; }
+.pix-k{ font-size:.82rem; color:#4b6361; font-weight:600; }
+.pix-v{ flex:none; font-weight:800; font-size:.76rem; color:#0f766e; white-space:nowrap; }
+.pix-v::after{ content:'Ocultar ▴'; }
+.pix-cerr .pix-v::after{ content:'Ver ▾'; }
+.pix-s:not(.pix-cerr) > .pix-h{ margin-bottom:10px; }
+.pix-cerr > .pix-b{ display:none; }
+.pix-dim .pix-h{ background:#f8fbfb; }
+.pix-grupo{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 10px; margin:22px 2px 10px; padding-top:12px; border-top:2px dashed rgba(15,118,110,.25); }
+.pix-grupo b{ font-size:1rem; color:#134e4a; } .pix-grupo span{ font-size:.8rem; color:var(--muted); }
+html.tema-black-friday .pix-grupo b{ color:#fde68a; } html.tema-black-friday .pix-grupo span{ color:#d6d3d1; } html.tema-black-friday .pix-grupo{ border-top-color:rgba(250,204,21,.35); }
+@media (max-width:700px){ .pix-her-b{ padding:6px 9px; } .pix-k{ font-size:.76rem; } }
+/* ⓘ (16/11, mejora 377) Las explicaciones largas, plegadas en «ⓘ Cómo funciona» (el mismo texto adentro). */
+details.como{ display:block; margin:6px 0 8px; min-width:0; }
+details.como > summary{ list-style:none; display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:.74rem; font-weight:700; color:#007c76;
+  background:#e8f8f6; border:1px solid #bfe5e1; border-radius:999px; padding:2px 10px; min-height:26px; user-select:none; }
+details.como > summary::-webkit-details-marker{ display:none; }
+details.como > summary:hover{ border-color:#00B5AD; }
+details.como[open] > summary{ background:#fff; }
+details.como > .como-x{ margin-top:6px; background:#f6fbfb; border-left:3px solid #00B5AD; border-radius:7px; padding:6px 10px; color:#3b5654; }
+details.como > .como-x > *{ margin:0 !important; }
+details.como > .como-x > * + *{ margin-top:6px !important; } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
 .sem-cab{ display:flex; align-items:center; gap:10px; min-width:0; }
 .sem-cab > div{ min-width:0; }
 .sem-ic{ font-size:1.25rem; width:38px; height:38px; display:grid; place-items:center; background:var(--teal-lt); border-radius:12px; flex:none; }
@@ -15948,6 +15994,7 @@ function pryPlata(ym){
 }
 function pryPlataHtml(ym){
   var G=pryPlata(ym), mes=mesNombre(ym), cols=[];
+  PRY_PLATA_ULT={ ym:ym, G:G };   // 🧭 (16/11, mejora 369) el renglón de la sección lee estos mismos números
   MARCAS.forEach(function(m){ if(G[m.k] && (G[m.k].vendido>0.009 || G[m.k].caja>0.009)) cols.push({ k:m.k, t:m.ico+' '+m.lbl }); });
   if(G.sin && (G.sin.vendido>0.009 || G.sin.caja>0.009)) cols.push({ k:'sin', t:'⚠️ Sin marca' });
   cols.push({ k:'equipo', t:'Equipo' });
@@ -16862,8 +16909,9 @@ function renderProyeccion(){
     '• No entran las ATC ni las reposiciones de tienda (no son ventas). Los mayoristas van aparte. <b>ROHO</b> también va aparte y en unidades (sus pedidos no traen precio), sin lo que manda a sus tiendas.<br>'+
     '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
     '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta ahora, contra lo que otro mes tenía cargado al mismo día y a la misma hora (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
-    '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
+    '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó aotro mes no está en la curva del mes de antes.'+
     '</div></div>';
+  try{ pixPintar(R, _A); }catch(e){ console.error(e); }   // 🧭 (16/11, mejora 369) el índice y el renglón de cada sección
 }
 /* Con qué se proyectó el equipo, en una línea (la ficha «📈 Proyección al cierre»). Si todo va con el ritmo, el texto de
    siempre (§4gt). */
@@ -32456,6 +32504,210 @@ function ayUbicar(el, b){
   }catch(e){}
 })();
 /* fin mejora 373 */
+/* ============================================================================
+   🧭 PROYECCIÓN CON UN ÍNDICE ARRIBA Y SECCIONES PLEGABLES (16/11, mejora 369; el dueño la eligió).
+   La pestaña medía ~13.600 px en una compu de 1.366 (18 pantallas) y ~15.500 en el iPad parado: 18 cajas una debajo de la otra. Para llegar a
+   «Por vendedor» había que bajar 8 pantallas, y arriba 8 botones ocupaban dos renglones.
+   · Una barra queda pegada arriba al bajar (`top:var(--hdr-h)`, también en el iPad): «📊 Resumen · 🎯 Metas · 💰 Comisiones · 🛍️ Black Friday ·
+     🏬 Tiendas · 📈 A esta altura · 👤 Vendedores · 🟩 Calendario · 🔬 Para mirar despacio»; tocar una lleva ahí (y la abre si estaba plegada) y
+     se marca la que estás viendo. Los botones de arriba (Metas, Cierre comercial, Informe, Dónde se vende…) pasan a «🧰 Herramientas ▾» en la
+     misma barra: son los MISMOS botones, movidos (uno nuevo que se agregue a esa fila entra solo).
+   · Cada caja va en una sección con un renglón de título y su número clave, sacado de lo que esa caja ya calculó (`R`, `PRY_MOM_CTX.A`,
+     `BFN`, `PRY_PLATA_ULT`, lo que muestra la caja): ninguna cuenta nueva. Se abre o se pliega con un toque y cada compu lo recuerda (`visPref`).
+     La prueba, lo que dijo cada día, cómo se viene vendiendo y cómo se cuenta arrancan plegadas, bajo «🔬 Para mirar despacio».
+   · Las cajas son las mismas (mismos ids): `renderProyeccion` las sigue llenando como siempre; solo se mueven adentro de su sección una vez.
+   En Playwright todo como antes salvo `window.PRY_INDICE_PRUEBA`. `tests/test_pry_indice.js`.
+   ========================================================================== */
+var PRY_PLATA_ULT=null, PIX={ hecho:false, activa:'', tic:null };
+var PIX_SECS=[
+  { k:'resumen', ix:'📊 Resumen',       t:'📊 Resumen',                     ids:['pry-nota','pry-metrics','pry-mov'] },
+  { k:'metas',   ix:'🎯 Metas',         t:'🎯 Metas',                       ids:['pry-metas'] },
+  { k:'com',     ix:'💰 Comisiones',    t:'💰 Comisiones',                  ids:['pry-com'] },
+  { k:'bf',      ix:'🛍️ Black Friday',  t:'🛍️ Black Friday',                ids:['pry-bf'] },
+  { k:'tiendas', ix:'🏬 Tiendas',       t:'🏬 Cada marca y cada tienda',     ids:['cx-pry'] },
+  { k:'altura',  ix:'📈 A esta altura', t:'📈 A esta altura',               ids:['pry-altura'] },
+  { k:'plata',   ix:'',                 t:'💵 De dónde sale lo vendido',     ids:['pry-plata'] },
+  { k:'vend',    ix:'👤 Vendedores',    t:'👤 Por vendedor',                ids:['pry-vendedores'] },
+  { k:'carrera', ix:'',                 t:'🏁 La carrera del mes',          ids:['pry-carrera'] },
+  { k:'calor',   ix:'🟩 Calendario',    t:'🟩 Calendario de calor',         ids:['pry-calor'] },
+  { k:'pub',     ix:'',                 t:'📣 Lo que vende cada Bs de publicidad', ids:['pry-pub'] },
+  { k:'prueba',  ix:'', grupo:1, cerr:1, t:'🧪 ¿Qué tan bien proyecta?',     ids:['pry-prueba'] },
+  { k:'hist',    ix:'', grupo:1, cerr:1, t:'📒 Lo que dijo la proyección cada día', ids:['pry-hist'] },
+  { k:'patron',  ix:'', grupo:1, cerr:1, t:'📅 Cómo se viene vendiendo',     ids:['pry-patron'] },
+  { k:'como',    ix:'', grupo:1, cerr:1, t:'❓ Cómo se cuenta',              ids:['pry-como'] }
+];
+function pixVa(){ try{ return vdVa('PRY_INDICE_PRUEBA'); }catch(e){ return false; } }
+function pixAbierta(s){ return !!visPref('pry_'+s.k, !s.cerr); }
+/* Se arma UNA vez: la barra, las secciones (moviendo las cajas de siempre) y «🧰 Herramientas». */
+function pixArmar(){
+  var pane=document.getElementById('cta-pane-proy'); if(!pane || PIX.hecho) return !!PIX.hecho;
+  var fil=pane.querySelector(':scope > .filters'); if(!fil) return false;
+  var bar=document.createElement('div'); bar.id='pry-ix'; bar.className='pix-bar';
+  var chips=PIX_SECS.filter(function(s){ return s.ix; }).map(function(s){ return '<button type="button" class="pix-c" data-k="'+s.k+'">'+s.ix+'</button>'; }).join('')+
+            '<button type="button" class="pix-c" data-k="despacio">🔬 Para mirar despacio</button>';
+  bar.innerHTML='<nav class="pix-chips" aria-label="Ir a una sección de la proyección">'+chips+'</nav>'+
+    '<div class="pix-her"><button type="button" class="pix-her-b" aria-haspopup="true" aria-expanded="false">🧰 Herramientas ▾</button><div class="pix-her-m" id="pix-her-m" hidden></div></div>';
+  fil.parentNode.insertBefore(bar, fil.nextSibling);
+  /* los botones de la fila de arriba (todo menos el mes y «Actualizar») van a «🧰 Herramientas» */
+  var menu=bar.querySelector('.pix-her-m');
+  [].slice.call(fil.querySelectorAll(':scope > .field')).forEach(function(f){
+    if(f.querySelector('#pry-mes') || f.querySelector('[onclick*="refreshConta"]')) return;
+    if(!f.querySelector('button')) return;
+    menu.appendChild(f);
+  });
+  if(!menu.children.length) bar.querySelector('.pix-her').hidden=true;
+  /* las secciones, en el orden de las cajas */
+  var ancla=bar, grupoHecho=false;
+  PIX_SECS.forEach(function(s){
+    var cajas=s.ids.map(function(id){ return document.getElementById(id); }).filter(Boolean);
+    if(!cajas.length) return;
+    if(s.grupo && !grupoHecho){
+      var g=document.createElement('div'); g.className='pix-grupo'; g.id='pix-s-despacio';
+      g.innerHTML='<b>🔬 Para mirar despacio</b><span>la prueba, lo que dijo cada día, cómo se viene vendiendo y cómo se cuenta</span>';
+      ancla.parentNode.insertBefore(g, ancla.nextSibling); ancla=g; grupoHecho=true;
+    }
+    var sec=document.createElement('section'); sec.className='pix-s'+(s.grupo?' pix-dim':''); sec.id='pix-s-'+s.k; sec.setAttribute('data-k', s.k);
+    sec.innerHTML='<button type="button" class="pix-h" aria-expanded="true"><span class="pix-t"><b>'+s.t+'</b><span class="pix-k"></span></span><span class="pix-v" aria-hidden="true"></span></button><div class="pix-b"></div>';
+    var cuerpo=sec.querySelector('.pix-b');
+    cajas[0].parentNode.insertBefore(sec, cajas[0]);
+    cajas.forEach(function(c){ cuerpo.appendChild(c); });
+    if(!pixAbierta(s)) sec.classList.add('pix-cerr');
+    sec.querySelector('.pix-h').setAttribute('aria-expanded', String(!sec.classList.contains('pix-cerr')));
+    ancla=sec;
+  });
+  bar.addEventListener('click', pixClick);
+  document.addEventListener('pointerdown', function(e){ var m=document.getElementById('pix-her-m'); if(m && !m.hidden && !e.target.closest('.pix-her')) pixHer(false); }, true);
+  document.addEventListener('keydown', function(e){ var m=document.getElementById('pix-her-m'); if(e.key==='Escape' && m && !m.hidden){ e.preventDefault(); e.stopPropagation(); pixHer(false, true); } }, true);
+  pane.addEventListener('click', function(e){ var h=e.target.closest && e.target.closest('.pix-h'); if(h && pane.contains(h)) pixPlegar(h.parentNode); });
+  window.addEventListener('scroll', pixScroll, { passive:true });
+  window.addEventListener('resize', pixScroll);
+  PIX.hecho=true;
+  return true;
+}
+function pixClick(e){
+  var c=e.target.closest('.pix-c'), hb=e.target.closest('.pix-her-b'), mb=e.target.closest('.pix-her-m button');
+  if(c){ pixIr(c.getAttribute('data-k'), e.detail===0); return; }
+  if(hb){ var m=document.getElementById('pix-her-m'); pixHer(m && m.hidden, false, e.detail===0); return; }
+  if(mb){ setTimeout(function(){ pixHer(false); }, 0); }
+}
+function pixHer(abrir, volver, foco){
+  var m=document.getElementById('pix-her-m'), b=document.querySelector('#pry-ix .pix-her-b'); if(!m || !b) return;
+  m.hidden=!abrir; b.setAttribute('aria-expanded', String(!!abrir));
+  if(abrir && foco){ var f=m.querySelector('button'); if(f) try{ f.focus({ preventScroll:true }); }catch(x){} }
+  else if(volver) try{ b.focus(); }catch(x){}
+}
+function pixPlegar(sec, abrir){
+  if(!sec) return;
+  var k=sec.getAttribute('data-k'), cerr=(abrir==null) ? !sec.classList.contains('pix-cerr') : !abrir;
+  sec.classList.toggle('pix-cerr', cerr);
+  sec.querySelector('.pix-h').setAttribute('aria-expanded', String(!cerr));
+  visPrefSet('pry_'+k, !cerr);
+  if(!cerr){ try{ acomodarFichas(); }catch(x){} try{ window.dispatchEvent(new Event('resize')); }catch(x){} }   // lo que se mide al dibujar, se vuelve a medir
+  pixScroll();
+}
+/* Lleva a una sección (abriéndola si estaba plegada), debajo del encabezado y de la barra. */
+function pixIr(k, teclado){
+  var el=document.getElementById('pix-s-'+k); if(!el) return;
+  if(k==='despacio'){ var p=document.getElementById('pix-s-prueba'); if(p && p.classList.contains('pix-cerr')) pixPlegar(p, true); }
+  else if(el.classList.contains('pix-cerr')) pixPlegar(el, true);
+  var bar=document.getElementById('pry-ix'), z=zoomPag(), dest=el.getBoundingClientRect().top+window.scrollY;
+  var top=Math.max(0, dest-hdrAltoEn(dest)-(bar ? bar.offsetHeight*z : 0)-10);
+  try{ window.scrollTo({ top:top, behavior:visQuieto() ? 'auto' : 'smooth' }); }catch(x){ window.scrollTo(0, top); }
+  PIX.activa=k; pixMarcar(k);
+  if(teclado){ var h=el.querySelector('.pix-h'); if(h) try{ h.focus({ preventScroll:true }); }catch(x){} }   // con el teclado, el foco sigue ahí
+}
+function pixMarcar(k){
+  [].forEach.call(document.querySelectorAll('#pry-ix .pix-c'), function(c){ var on=c.getAttribute('data-k')===k; c.classList.toggle('on', on); if(on) c.setAttribute('aria-current','true'); else c.removeAttribute('aria-current'); });
+  var on=document.querySelector('#pry-ix .pix-c.on'), sc=document.querySelector('#pry-ix .pix-chips');
+  if(on && sc){ var a=on.offsetLeft, b=a+on.offsetWidth; if(a<sc.scrollLeft || b>sc.scrollLeft+sc.clientWidth) sc.scrollLeft=Math.max(0, a-24); }
+}
+/* La que estás viendo: la última sección (con chip) cuyo título ya pasó debajo de la barra. */
+function pixScroll(){
+  if(PIX.tic) return;
+  PIX.tic=requestAnimationFrame(function(){
+    PIX.tic=null;
+    var bar=document.getElementById('pry-ix'); if(!bar || !bar.getClientRects().length) return;
+    var linea=bar.getBoundingClientRect().bottom+24, k='resumen';
+    var L=PIX_SECS.filter(function(s){ return s.ix; }).map(function(s){ return s.k; }).concat(['despacio']);
+    L.forEach(function(x){ var e=document.getElementById('pix-s-'+x); if(e && !e.hidden && e.getClientRects().length && e.getBoundingClientRect().top<=linea) k=x; });
+    if(k!==PIX.activa){ PIX.activa=k; pixMarcar(k); }
+  });
+}
+/* El número clave de cada sección: lo que esa caja ya calculó. */
+function pixClave(k, R, A){
+  var E=R.equipo, curso=(R.estado==='curso'), conProy=(R.estado!=='cerrado'), q=function(sel){ var e=document.querySelector(sel); return e ? e.textContent.trim() : ''; };
+  if(k==='resumen') return 'vendido '+fmtBs0(E.vendido)+(conProy ? (' · 📈 '+fmtBs0(E.proy)) : ' · el mes cerró');
+  if(k==='metas'){ var P=[]; R.marcas.forEach(function(m){ var mt=metaDe(R.ym, m.g.k); if(mt) P.push(m.g.lbl+' '+metaPct(m.tot.vendido, mt)+' %'+(conProy ? (' → '+metaPct(m.tot.proy, mt)+' %') : '')); });
+    return P.length ? P.join(' · ') : 'sin metas cargadas para el mes'; }
+  if(k==='com'){ var hoy=q('#pry-com .csg-k > div:first-child b'), sig=q('#pry-com .csg-k .csg-p b'), bo=q('#pry-com .csg-k > div:nth-child(3) b');
+    return hoy ? ('hoy '+hoy+(sig ? (' → si siguen así '+sig) : '')+(bo && bo!=='0' ? (' · '+bo+' al borde de un escalón') : '')) : ''; }
+  if(k==='bf'){ var D=(typeof BFN!=='undefined') ? BFN : null; if(!D) return '';
+    return (D.curso ? 'campaña hasta ahora ' : 'campaña ')+fmtBs0(D.camp.bs)+' · '+bfnPctTxt(D.camp.bs, D.antes.bs)+' contra los días de antes'; }
+  if(k==='tiendas'){ var T=[]; R.marcas.forEach(function(m){ if(m.tot.n) T.push(m.g.lbl+(conProy ? (' 📈 '+fmtBs0(m.tot.proy)) : (' '+fmtBs0(m.tot.vendido)))); });
+    var nt=document.querySelectorAll('#cx-pry .cx-kf-t').length; return T.join(' · ')+(nt ? (' · '+nt+' tienda'+(nt===1?'':'s')) : ''); }
+  if(k==='altura'){ if(!A || !A.cmp) return ''; return 'el equipo '+pryVaTxt(A.act.equipo.bs, A.ant.equipo.bs)+' en plata · '+pryVaTxt(A.act.equipo.u, A.ant.equipo.u)+' en unidades, contra '+pryMesCorto(A.cmp); }
+  if(k==='plata'){ var G=PRY_PLATA_ULT && PRY_PLATA_ULT.ym===R.ym ? PRY_PLATA_ULT.G.equipo : null; if(!G) return '';
+    var cob=(G.mes||0)+(G.antes||0)+(G.despues||0)+(G.sinF||0), fal=(G.faltaMes||0)+(G.faltaAntes||0);
+    return '✓ cobrado '+fmtBs0(cob)+' · ⏳ falta '+fmtBs0(fal); }
+  if(k==='vend'){ var top=null, n=0; R.marcas.forEach(function(m){ m.filas.forEach(function(r){ n++; if(!top || r.vendido>top.vendido) top=r; }); });
+    return top ? (n+' vendedores · adelante '+top.vendedor+' ('+fmtBs0(top.vendido)+')') : ''; }
+  if(k==='carrera') return 'cada vendedora, día por día';
+  if(k==='calor') return 'lo vendido, las entregas y lo cobrado, día por día';
+  if(k==='pub') return 'el gasto contra los leads y las ventas de cada canal';
+  if(k==='prueba'){ var Pr=[]; R.marcas.forEach(function(m){ var mt=R.metodos[m.g.k]; if(mt && mt.err && mt.err.n>=PRY_MIN_PARES) Pr.push(m.g.lbl+': el ritmo se equivocó '+Math.round(mt.err.r*100)+' %, la curva '+Math.round(mt.err.c*100)+' %'); });
+    return Pr.length ? Pr.join(' · ') : 'con los meses que ya pasaron'; }
+  if(k==='hist') return 'una foto por día y cuánto se movió';
+  if(k==='patron') return 'lo de cada día y qué días se vende más';
+  if(k==='como') return 'qué cuenta, qué no y cómo se proyecta';
+  return '';
+}
+function pixPintar(R, A){
+  if(!pixVa()) return;
+  if(!pixArmar()) return;
+  PIX_SECS.forEach(function(s){
+    var sec=document.getElementById('pix-s-'+s.k); if(!sec) return;
+    var vacia=s.ids.every(function(id){ var e=document.getElementById(id); return !e || !e.innerHTML.trim(); });
+    sec.hidden=vacia;
+    var c=document.querySelector('#pry-ix .pix-c[data-k="'+s.k+'"]'); if(c) c.hidden=vacia;
+    var t=''; try{ t=pixClave(s.k, R, A); }catch(e){ t=''; }
+    var kEl=sec.querySelector('.pix-k'); if(kEl) kEl.textContent=t ? ('— '+t) : '';
+  });
+  var g=document.getElementById('pix-s-despacio'), vis=PIX_SECS.some(function(s){ var e=document.getElementById('pix-s-'+s.k); return s.grupo && e && !e.hidden; });
+  if(g) g.hidden=!vis;
+  var cg=document.querySelector('#pry-ix .pix-c[data-k="despacio"]'); if(cg) cg.hidden=!vis;
+  pixScroll();
+}
+/* fin mejora 369 */
+/* ============================================================================
+   ⓘ LAS EXPLICACIONES LARGAS, EN «ⓘ CÓMO FUNCIONA» (16/11, mejora 377; el dueño la eligió).
+   Cada mejora trajo su explicación en un párrafo fijo (letra chica y gris): ~70 en Proyección, Stock, el Cuadre y ATC. Se leen una vez y
+   después empujan lo importante hacia abajo. Ahora cada una queda adentro de un botoncito «ⓘ Cómo funciona» que la abre ahí mismo con el
+   MISMO texto (no se saca nada: solo se pliega). La primera vez en cada compu se ve abierta; después, plegada; y si la abrís o la cerrás,
+   la compu lo recuerda (`visPref` 'como_<id>').
+   · `ayudaComo(id, html)` envuelve el párrafo que ya existe; sin la bandera devuelve el mismo html (las pruebas leen esos textos).
+   · Puesto en: Stock (lo que debe la fábrica, la leyenda del Plan, la revisión automática, las tiendas, lo que sobra, lo que se carga en
+     Banzer), Proyección (metas, comisiones, Black Friday, a esta altura, de dónde sale lo vendido, por vendedor, el calendario, lo que dijo
+     cada día, la publicidad), el Cuadre (el arqueo, quién tiene el efectivo, lo que le queda en la mano, los retiros) y ATC (cada 100 vendidos
+     y a cuántos meses falla).
+   En Playwright como siempre salvo `window.COMO_PRUEBA`. `tests/test_como_funciona.js`.
+   ========================================================================== */
+var COMO_SES={};   // las que se ven abiertas por ser la primera vez, mientras dure esta visita (al redibujar no se pliegan solas)
+function comoVa(){ try{ return vdVa('COMO_PRUEBA'); }catch(e){ return false; } }
+function ayudaComo(id, html){
+  if(!comoVa() || !html) return html;
+  var v=visPref('como_'+id, null), ab;
+  if(v===null){ ab=true; COMO_SES[id]=1; visPrefSet('como_'+id, false); }   // la primera vez se ve; la próxima, plegada
+  else ab=(v===true) || !!COMO_SES[id];
+  return '<details class="como" data-como="'+esc(id)+'" data-ab="'+(ab?1:0)+'"'+(ab?' open':'')+' ontoggle="comoToggle(this)"><summary>ⓘ Cómo funciona</summary><div class="como-x">'+html+'</div></details>';
+}
+/* Solo cuenta lo que toca la persona: el `toggle` que dispara el navegador al dibujarla abierta no cambia nada. */
+function comoToggle(d){
+  var id=d.getAttribute('data-como'), antes=(d.getAttribute('data-ab')==='1');
+  if(d.open===antes) return;
+  d.setAttribute('data-ab', d.open ? '1' : '0');
+  delete COMO_SES[id]; visPrefSet('como_'+id, d.open);
+}
+/* fin mejora 377 */
 function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } tblOrdenGuardar('admin', SORT_KEY, SORT_DIR); renderAdmin(); }
 /* ==========================================================================
    🗂️ TABLAS A TU GUSTO (§4nr, 29/10; dueño, del muestrario 24-33: «33 tb»)
