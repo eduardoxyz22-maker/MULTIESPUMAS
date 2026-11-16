@@ -4738,6 +4738,34 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .td-com-l b{font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap}
 .td-com-l.td-com-ok b{color:#15803d}
 .td-com-pie{font-size:.7rem;color:#7b8b8a;margin-top:3px}
+/* 🪜 376 · «Tu comisión» como una escalera (`comEscHtml`) */
+.cesc{margin:6px 2px 2px}
+.cesc-ls{position:relative;height:31px}
+.cesc-l{position:absolute;top:0;text-align:center;font-size:.64rem;line-height:1.15;color:#5d7473;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;box-sizing:border-box}
+.cesc-l b{display:block;font-size:.78rem;font-weight:800;color:#355352}
+.cesc-l span{display:block;overflow:hidden;text-overflow:ellipsis}
+.cesc-l.cesc-l-on b{color:#0f766e}
+.cesc-bar{position:relative;height:12px;margin:3px 0 4px;border-radius:6px;background:#eef3f3}
+.cesc-seg{position:absolute;top:0;bottom:0}
+.cesc-tk{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#17302f;opacity:.35;border-radius:1px}
+.cesc-yo{position:absolute;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;background:#00B5AD;border:3px solid #fff;box-sizing:border-box;box-shadow:0 2px 6px rgba(0,80,78,.4);animation:cesc-late 2s ease-in-out infinite;z-index:2}
+@keyframes cesc-late{50%{box-shadow:0 2px 6px rgba(0,80,78,.4),0 0 0 6px rgba(0,181,173,.2)}}
+.cesc-gh{position:absolute;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;border:2px dashed #7c3aed;background:#f5f3ff;box-sizing:border-box;z-index:1}
+.cesc-ley{display:flex;flex-wrap:wrap;gap:3px 12px;font-size:.72rem;color:#355352;margin-top:6px}
+.cesc-ley b{font-variant-numeric:tabular-nums;color:#13302e;white-space:nowrap}
+.cesc-ley i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:-1px;box-sizing:border-box}
+.cesc-ly i{background:#00B5AD}
+.cesc-lg{color:#5b21b6} .cesc-lg b{color:#4c1d95} .cesc-lg i{border:1.5px dashed #7c3aed;background:#f5f3ff}
+.cesc-bono{font-size:.74rem;font-weight:700;color:#7a5a00;background:#fff7e0;border:1px solid #f6e3a6;border-radius:9px;padding:4px 9px;margin-top:6px}
+.cesc-bono[hidden]{display:none}
+.cesc-xs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.cesc-x{border-radius:10px;padding:6px 9px;font-size:.74rem;line-height:1.35;background:#e8f8f6;color:#0b5c57}
+.cesc-x b{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cesc-x2{background:#f5f3ff;color:#4c1d95}
+.cesc-x.cesc-ok{background:#e9f9ef;color:#166534}
+.cesc-xs > .cesc-x:only-child{grid-column:1/-1}
+@media (max-width:420px){ .cesc-xs{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ .cesc-yo{animation:none} }
 .td-acc{display:flex;gap:6px;flex-wrap:wrap;padding:10px 18px 14px}
 /* 🎯 (14/11, mejora 256) La meta de hoy en «Tu día»: el turquesa del encabezado y la barra amarilla de la muestra del dueño */
 .mdd{margin:8px 18px 0;padding:10px 13px;border-radius:12px;background:linear-gradient(120deg,#00837d,#00B5AD 60%,#14b8a6);color:#fff;min-width:0;overflow-wrap:anywhere}
@@ -38781,6 +38809,7 @@ function misComisionDatos(v, ym){
 function misComisionHtml(v){
   var o=null; try{ o=misComisionDatos(v); }catch(e){ o=null; }
   if(!o) return '';
+  if(comEscVe() && !o.cerrado){ var hE=null; try{ hE=comEscHtml(o); }catch(e){ hE=null; } if(hE) return hE; }   // 🪜 (16/11, mejora 376)
   /* «Bs 30.000» y «2,75 %» no se parten en dos renglones (en el celular quedaba «2,75» arriba y «%» abajo) */
   var B=function(n){ return fmtBs0(n).replace(' ', '\u00a0'); }, P=function(n){ return ccmPcTxt(n).replace(' ', '\u00a0'); };
   var mes=esc(mesNombre(o.ym).replace(/ de \d{4}$/,'')), arriba=function(n){ return B(Math.ceil((Number(n)||0)-1e-9)); };
@@ -38805,6 +38834,100 @@ function misComisionHtml(v){
   h+='<div class="td-com-pie">Como el 🏁 cierre comercial: lo vendido con entrega en '+mes+', también la venta de tienda'+
     (o.nFuera ? ('; sin '+(o.nFuera===1 ? '1 venta que no entra' : (o.nFuera+' ventas que no entran'))+' en este cierre ('+B(o.fuera)+(o.nFuera===1 ? ', ya pagada antes)' : ', ya pagadas antes)')) : '')+'.</div>';
   return h+'</div>';
+}
+/* 🪜 (16/11, mejora 376; dueño: «me gusta») «TU COMISIÓN» COMO UNA ESCALERA, NO COMO UN PÁRRAFO. La caja de la 190 eran 4 frases y 438 letras;
+   ahora una barra con los escalones de SU escala («sin %» hasta la mínima, «2 %» desde Bs 110.000, «2,75 %» desde Bs 135.000…), un punto
+   turquesa que late donde está ella («Vos») y un círculo punteado donde llega «si sigue así»; debajo, dos fichitas (lo que falta para el
+   escalón que sigue y cuánto pasa a ser la comisión; lo que falta por día para su meta) y una línea chica de que incluye la venta de tienda
+   (por eso puede dar más que «Vendido para <mes>» de arriba, que es solo lo que se entrega).
+   · LOS MISMOS NÚMEROS de siempre: `misComisionDatos` (= la fila del 🏁 cierre comercial, `ccmCuenta`), los escalones con `ccmPctDe` sobre
+     la escala de `__metas__` (`m[ym].esc`), el siguiente con `ccmTramoSig` y «si sigue así» con `ccmSigueDatos` (la 338 de Proyección →
+     «💰 Comisiones»). Nada se calcula aparte ni se guarda.
+   · 🏆 El bono Titanio va como hoy (`o.bo`). ⚠️ El dueño agregó una regla nueva para el bono (panel al día cada semana + llegar a la mínima)
+     que todavía NO está definida: cuando esté, va en `comEscBonoTxt` (el lugar en la escalera ya existe, `data-k="bono"`).
+   · Mes cerrado: la caja de antes (🔒). En Playwright, con `MIS_TOP_PRUEBA` como hoy y además `window.COM_ESCALERA_PRUEBA`. */
+function comEscVe(){ return vdVa('COM_ESCALERA_PRUEBA'); }
+var COM_ESC_SIGUE={};
+function comEscSigue(ym, v){
+  var n=(STATE||[]).length, dia=diaNegocio(), M=COM_ESC_SIGUE, S;
+  if(M.st===STATE && M.gen===STATE_GEN && M.n===n && M.ym===ym && M.dia===dia) S=M.S;
+  else { try{ S=ccmSigueDatos(ym, misComisionCuenta(ym)); }catch(e){ S=null; } COM_ESC_SIGUE={ st:STATE, gen:STATE_GEN, n:n, ym:ym, dia:dia, S:S }; }
+  if(!S) return null;
+  var k=normNombre(v), f=null; S.filas.forEach(function(x){ if(!f && normNombre(x.v)===k) f=x; });
+  return f;
+}
+/* Los escalones de su escala: dónde cambia el % (la mínima también es escalón, como en `ccmTramoSig`). */
+function comEscPasos(em, mi, pr){
+  var M=[], poner=function(m){ m=r2(m); if(m>0.005 && M.indexOf(m)<0) M.push(m); };
+  if(mi>0) poner(mi);
+  ((em && em.t)||[]).forEach(function(t){ var base=t[0]==='pres' ? pr : mi; if(base>0) poner(base*(Number(t[1])||0)/100); });
+  M.sort(function(a,b){ return a-b; });
+  var S=[{ desde:0, pct:ccmPctDe(em, 0, mi, pr).pct }];
+  M.forEach(function(m){ var q=ccmPctDe(em, m, mi, pr); if(Math.abs(q.pct-S[S.length-1].pct)>1e-9) S.push({ desde:m, pct:q.pct, t:q.t }); });
+  return S;
+}
+/* 🏆 El bono Titanio, como se calcula hoy. Acá va la regla nueva del dueño cuando esté definida. */
+function comEscBonoTxt(o){ return o.bo>0.005 ? ('🏆 Bono Titanio: '+fmtBs0(o.bo)+' (ya está sumado arriba)') : ''; }
+function comEscHtml(o){
+  var K=misComisionCuenta(o.ym), em=K.es && K.es.esc ? K.es.esc[o.g] : null; if(!em) return null;
+  var P=comEscPasos(em, o.mi, o.pr), S=comEscSigue(o.ym, o.v);
+  var B=function(n){ return fmtBs0(n).replace(' ', ' '); }, Pc=function(n){ return ccmPcTxt(n).replace(' ', ' '); };
+  var Nk=function(n){ n=Number(n)||0; return n>=1000 ? ((Math.round(n/100)/10).toLocaleString('es-BO')+' mil') : String(Math.round(n)); };   // «110 mil»: entra en el escalón
+  var arriba=function(n){ return B(Math.ceil((Number(n)||0)-1e-9)); };
+  var mes=esc(mesNombre(o.ym).replace(/ de \d{4}$/,''));
+  var ult=P[P.length-1].desde, sigBs=S ? S.bs : 0;
+  var max=Math.max(ult>0 ? ult*1.2 : 0, o.bs*1.06, sigBs*1.05, 1);
+  /* Escalera, no regla: cada escalón ocupa el mismo ancho (así se leen el % y desde cuánto aunque dos escalones estén cerca) y adentro de
+     cada uno la posición es proporcional. */
+  var nP=P.length, X=function(n){ n=Number(n)||0; for(var i=nP-1;i>=0;i--){ if(n>=P[i].desde-0.005 || i===0){ var a=P[i].desde, b=i<nP-1 ? P[i+1].desde : max;
+      var fr=b>a ? Math.max(0, Math.min(1, (n-a)/(b-a))) : 0; return Math.max(0, Math.min(100, (i+fr)*100/nP)); } } return 0; };
+  var cols=['#c9f0ec','#8fdcd5','#4cc5bc','#14a99f','#0b857d','#06645e'], ci=0;
+  var segs='', lbs='', ticks='';
+  P.forEach(function(p, i){
+    var a=X(p.desde), b=i<P.length-1 ? X(P[i+1].desde) : 100, w=Math.max(0, b-a), cero=!(p.pct>0);
+    var col=cero ? '#e3eaea' : cols[Math.min(cols.length-1, ci++)];
+    var rad=(i===0 ? '6px ' : '0 ')+(i===P.length-1 ? '6px 6px ' : '0 0 ')+(i===0 ? '6px' : '0');
+    segs+='<i class="cesc-seg" style="left:'+a.toFixed(2)+'%;width:'+w.toFixed(2)+'%;background:'+col+';border-radius:'+rad+'"></i>';
+    if(i>0) ticks+='<i class="cesc-tk" style="left:'+a.toFixed(2)+'%"></i>';
+    var tit=cero ? 'sin %' : Pc(p.pct), sub=i===0 ? ((cero && nP>1) ? ('hasta '+Nk(P[1].desde)) : '') : ('desde '+Nk(p.desde));
+    var tt=tit+(i===0 ? ((cero && nP>1) ? (' · hasta '+B(P[1].desde)) : '') : (' · desde '+B(p.desde)));
+    var on=o.bs>=p.desde-0.005 && (i===P.length-1 || o.bs<P[i+1].desde-0.005);
+    lbs+='<div class="cesc-l'+(on ? ' cesc-l-on' : '')+'" style="left:'+a.toFixed(2)+'%;width:'+w.toFixed(2)+'%"'+
+      ' title="'+esc(tt)+'"><b>'+esc(tit)+'</b>'+(sub ? ('<span>'+esc(sub)+'</span>') : '')+'</div>';
+  });
+  var yo=X(o.bs), gh=S ? X(S.bs) : null;
+  var h='<div class="td-com cesc-box" id="mis-com" data-to="'+o.to+'"><div class="td-com-cab"><span>💰 Tu comisión de '+mes+', hasta hoy</span><b>'+B(o.to)+'</b></div>'+
+    '<div class="cesc" role="img" aria-label="'+esc('Vendiste '+fmtBs0(o.bs)+(o.pc>0 ? (', vas al '+ccmPcTxt(o.pc)) : ', todavía sin comisión')+(S ? ('. Si sigue así, '+fmtBs0(S.bs)) : ''))+'">'+
+      '<div class="cesc-ls">'+lbs+'</div>'+
+      '<div class="cesc-bar">'+segs+ticks+
+        (gh!=null && Math.abs(gh-yo)>0.8 ? '<i class="cesc-gh" style="left:'+gh.toFixed(2)+'%" title="Si sigue así"></i>' : '')+
+        '<i class="cesc-yo" style="left:'+yo.toFixed(2)+'%" title="Vos"></i></div>'+
+      '<div class="cesc-ley"><span class="cesc-ly"><i></i>Vos: <b>'+B(o.bs)+'</b>'+(o.pc>0 ? (' · '+esc(Pc(o.pc))) : '')+'</span>'+
+        (S ? ('<span class="cesc-lg"><i></i>si sigue así: <b>'+B(S.bs)+'</b>'+(S.to>0.005 ? (' → comisión '+B(S.to)) : '')+'</span>') : '')+'</div>'+
+    '</div>';
+  var bono=comEscBonoTxt(o);
+  h+='<div class="cesc-bono" data-k="bono"'+(bono ? '' : ' hidden')+'>'+esc(bono)+'</div>';
+  var fx='';
+  if(o.sig){
+    var d=o.sig.desde, esMin=Math.abs(d-o.mi)<0.01;
+    fx+='<div class="cesc-x cesc-x1" data-k="sig">📈 Te faltan <b>'+arriba(o.sig.falta)+'</b> para '+(esMin ? ('tu mínima y el '+esc(Pc(o.sig.pct))) : ('el '+esc(Pc(o.sig.pct))))+
+      ': la comisión pasa a <b>'+B(o.sig.to)+'</b></div>';
+  }else if(o.ultimo) fx+='<div class="cesc-x cesc-x1 cesc-ok" data-k="sig">🏆 Ya estás en el escalón más alto (<b>'+esc(Pc(o.pc))+'</b>): todo lo que sumes va al '+esc(Pc(o.pc))+'</div>';
+  var mq=o.metaQue==='pres' ? 'tu presupuesto' : 'tu mínima';
+  if(o.llego) fx+='<div class="cesc-x cesc-x2 cesc-ok" data-k="meta">✅ Llegaste a '+mq+' ('+B(o.meta)+')'+(o.deMas>=0.5 ? (' · <b>'+B(o.deMas)+'</b> de más') : '')+'</div>';
+  else fx+='<div class="cesc-x cesc-x2" data-k="meta">🎯 Para '+mq+' ('+B(o.meta)+'): '+
+    (o.dias>0 ? ('<b>'+B(o.porDia)+' por día</b> · '+(o.dias===1 ? '1 día hábil' : (o.dias+' días hábiles'))+(o.conHoy ? ' con hoy' : ' desde mañana'))
+              : ('te faltan <b>'+arriba(o.falta)+'</b> · ya no quedan días hábiles'))+'</div>';
+  h+='<div class="cesc-xs">'+fx+'</div>';
+  var tie=0, kv=normNombre(o.v);
+  (K.ventas||[]).forEach(function(x){ if(x.est!=='cuenta' || normNombre(x.v)!==kv) return; var p=(K.T && K.T.P) ? K.T.P[x.id] : null; if(p && esVentaTienda(p)) tie=r2(tie+(Number(x.bs)||0)); });
+  var pie=[];
+  if(tie>0.005) pie.push('Incluye '+fmtBs0(tie)+' de venta de tienda (por eso es más que «Vendido para '+mes+'» de arriba)');
+  else pie.push('Como el 🏁 cierre comercial: lo vendido con entrega en '+mes);
+  if(o.nFuera) pie.push('sin '+(o.nFuera===1 ? '1 venta ya pagada antes' : (o.nFuera+' ventas ya pagadas antes'))+' ('+fmtBs0(o.fuera)+')');
+  if(Math.abs(o.aj)>0.005) pie.push('con ajustes de meses cerrados: '+fmtBs0(o.aj));
+  if(!o.escOk) pie.push('la escala todavía no está confirmada');
+  return h+'<div class="td-com-pie">'+pie.join(' · ')+'.</div></div>';
 }
 /* 🎯 (14/11, mejora 256; el dueño la aprobó con la muestra https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc) LA META DEL DÍA. Para TODOS los
    vendedores con las metas del mes GUARDADAS (no solo los del mall):
