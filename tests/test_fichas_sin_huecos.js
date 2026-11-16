@@ -10,6 +10,7 @@
    3. Una ficha sigue abriendo su pedido al tocarla.
    4. Un grupo de una sola fila no se toca.
    5. Al cambiar el ancho de la ventana se rearma con las columnas que entran (y el orden vuelve a empezar por el N° del día).
+   6. (16/11) También al cambiar el ancho de la LISTA sin cambiar la ventana: la ficha al costado (antes, 4 columnas de 102 px).
    Datos SINTÉTICOS. Reloj clavado: jueves 22/10/2026, 09:10 de Bolivia.   Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_fichas_sin_huecos.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs');
@@ -91,6 +92,16 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   await page.setViewportSize({ width:1366, height:900 }); await page.waitForTimeout(500);
   r = await medir(page);
   chk('5b de vuelta a 1366: 4 columnas otra vez, 1-2-3-4 arriba', r.cols===4 && r.porCol.map(c=>c[0]).join(',')==='1,2,3,4' && r.n===12, r.porCol);
+
+  /* 6 (16/11) la ficha al costado achica la LISTA sin cambiar la ventana: las columnas se rehacen igual (antes quedaban 4 de 102 px) */
+  const angosta = () => page.evaluate(() => { var F=[].slice.call(document.querySelectorAll('#adm-fichas .af-cg')[0].querySelectorAll('.af-f'));
+    return { min:Math.round(Math.min.apply(null, F.map(function(f){ return f.getBoundingClientRect().width; }))), lista:document.getElementById('adm-fichas').clientWidth, costado:document.body.classList.contains('ficha-costado') }; });
+  await page.evaluate(() => { window.FICHA_COSTADO_PRUEBA=1; showPedidoModal('a5'); }); await page.waitForTimeout(700);
+  r = await medir(page); let w = await angosta();
+  chk('6a con la ficha al costado la lista se achica y las fichas no quedan angostas (una columna, ninguna de menos de 280 px)', w.costado && w.lista<700 && w.min>=280 && r.cols<=1 && r.n===12, [w, r.cols]);
+  await page.evaluate(() => { closeModal(); }); await page.waitForTimeout(700);
+  r = await medir(page); w = await angosta();
+  chk('6b al cerrarla vuelven las 4 columnas, 1-2-3-4 arriba', !w.costado && r.cols===4 && r.porCol.map(c=>c[0]).join(',')==='1,2,3,4' && r.n===12, [w, r.porCol]);
   await page._ctx.close();
 
   chk('sin errores de la página', errs.length===0, errs.slice(0,3));
