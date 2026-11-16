@@ -2545,6 +2545,8 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .bo-q{font-size:.84rem;color:#334;margin:4px 0 8px}
 .bo-av{font-size:.84rem;color:#0f5c58;font-weight:700;margin-bottom:6px}
 .rz-por{display:block;color:#7a6a3c;font-size:.72rem}   /* 🗺️ (mejora 384) */
+.tnd-ficha{background:#eefaf6;border:1px solid #bfe7d8;border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem}   /* 🏬 (mejora 383) */
+.tnd-ficha small{display:block;font-weight:400;color:#3f6b5d;font-size:.76rem;margin-top:3px}
 /* 🎓 (mejora 381) la tarjeta de «Te muestro cómo» (el mismo diseño del recorrido) */
 .asis-tour.ensena{ border-color:#f59e0b; }
 .asis-tour.ensena[hidden]{ display:none!important; }
@@ -11279,7 +11281,7 @@ function pagHistAnotar(rec){
       pagPonerEn(rec, 'pH', Hp.concat([e]).slice(-PH_MAX));
     }
   }
-  if(rcActivo() && base.reg){
+  if(rcActivo() && base.reg && !(tiendasCarganActivo() && talCargaAfuera(rec))){   // 🏬 (mejora 383) una venta de tienda la carga su tienda
     var C=rcCambios(base.f, F);
     if(C.length){
       if(reg){ rec.metodoPago=conMarcaReg(rec.metodoPago, false); reg=false;
@@ -12237,20 +12239,55 @@ function talAnulado(v, n, S){ return !!(S||talSet())[talClaveAnul(v, n)]; }
 function talTiendasAfuera(S){ S=S||talSet(); return Object.keys(S).filter(function(k){ return k.indexOf('t|')===0; }).map(function(k){ return k.slice(2); }); }
 /* De qué tienda es una venta: la venta de tienda dice su sucursal; si no, la de quien vendió. */
 function talTiendaDe(p){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p && p.vendedor, p && contaFecha(p)) || ''; }
-function talCargaAfuera(p, S){ var t=talTiendaDe(p); return (t && (S||talSet())['t|'+t]) ? t : ''; }
+/* 🏬 (mejora 383, 16/11; dueño: «Cada tienda carga al sistema sus ventas propias») TODA venta de una TIENDA (la venta de tienda dice su
+   sucursal; si no, la tienda de quien vendió ESE día, `sucursalDeVendedor(v, fecha)`, con el cambio de sucursales del 01/11) la carga la
+   tienda: NO cuenta como «📥 Por cargar al sistema» de Contabilidad. Si tiene su N° de factura o remisión cuenta como cargada y se ve aparte
+   con el N° («🏬 La cargó la tienda · F 1234», chip «🏬 Las carga la tienda»); si no, se lo sigue pidiendo a la vendedora (`docVentaFalta`,
+   como siempre) sin volver a la lista de Contabilidad. Lo que NO es de una tienda (los mayoristas de Eduardo, ROHO, lo sin sucursal) sigue
+   en la lista de Contabilidad como antes. La lista de tiendas a mano del talonario (propuesta 82, `t|…`) queda de más: sigue valiendo.
+   · Una sola cuenta (`porCargarSistema` → `talCargaAfuera`): las tarjetas, el chip, «Revisar antes de cerrar», el control del cierre del
+     mes (`nxCierreControl`) y los Excel dan lo mismo.
+   · La 380 («cambió después de cargarla al sistema») no se anota en una venta de tienda: la marca de Contabilidad no es la que la carga.
+   · En Playwright apagado salvo `TIENDAS_CARGAN_PRUEBA` (las pruebas de siempre cuentan las ventas de tienda como «por cargar»).
+   `tests/test_tiendas_cargan.js`. */
+function tiendasCarganActivo(){ try{ return !(navigator.webdriver && !window.TIENDAS_CARGAN_PRUEBA); }catch(e){ return true; } }
+function talCargaAfuera(p, S){
+  var t=talTiendaDe(p); if(!t) return '';
+  if(tiendasCarganActivo() && t!=='Tiendas Roho' && !esATC(p && p.oc) && !esRPT(p && p.oc)) return t;
+  return (S||talSet())['t|'+t] ? t : '';
+}
+/* La venta la cargó (o la carga) su tienda: con el N° a la vista. '' si no es de una tienda o ya figura cargada por Contabilidad. */
+function tndCargaTxt(p){
+  if(!tiendasCarganActivo() || !p || regEnSistema(p)) return '';
+  var t=talCargaAfuera(p); if(!t) return '';
+  var d=docVentaDe(p), n=docNumDe(p);
+  return (d && n) ? ('🏬 La cargó la tienda · '+d+' '+n) : ('🏬 La carga la tienda ('+t+') · falta el N°');
+}
+function tndChip(p){
+  var t=tndCargaTxt(p); if(!t) return '';
+  var ok=!!(docVentaDe(p) && docNumDe(p));
+  return '<span class="badge '+(ok?'b-green':'b-gray')+' tnd-chip" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Cada tienda carga sus ventas al sistema contable (dueño, 16/11)">'+esc(t)+'</span>';
+}
 /* ¿Hay que cargarla al sistema contable? La ÚNICA cuenta de «por cargar al sistema» (tarjetas, chip, Revisar antes de cerrar, el
    control del cierre). Una venta de una tienda tildada en «se cargan en otro lado» no cuenta. */
 function porCargarSistema(p, S){ return !regEnSistema(p) && !talCargaAfuera(p, S); }
-/* «38 de Buenos Aires y 65 de Mutualista no se cuentan: se cargan en otro lado» (solo las que no están marcadas en el sistema). */
+/* «38 de Buenos Aires y 65 de Mutualista no se cuentan: se cargan en otro lado» (solo las que no están marcadas en el sistema).
+   🏬 (mejora 383) con la regla del dueño: «… no se cuentan: las carga cada tienda (N todavía sin N° de factura o remisión: lo pide la vendedora)». */
 function talAfueraTxt(list, S){
-  S=S||talSet(); var por={}, n=0;
-  (list||[]).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(t){ por[t]=(por[t]||0)+1; n++; } });
+  S=S||talSet(); var por={}, n=0, sinN=0, cada=tiendasCarganActivo();
+  (list||[]).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(t){ por[t]=(por[t]||0)+1; n++; if(cada && !(docVentaDe(p) && docNumDe(p))) sinN++; } });
   if(!n) return '';
   var ks=Object.keys(por).sort(function(a,b){ return por[b]-por[a]; }), partes=ks.map(function(t){ return por[t]+' de '+t; });
-  return (partes.length>1 ? (partes.slice(0,-1).join(', ')+' y '+partes[partes.length-1]) : partes[0])+' no se cuenta'+(n===1?'':'n')+': se carga'+(n===1?'':'n')+' en otro lado';
+  return (partes.length>1 ? (partes.slice(0,-1).join(', ')+' y '+partes[partes.length-1]) : partes[0])+' no se cuenta'+(n===1?'':'n')+': '+
+    (cada ? ('las carga cada tienda'+(sinN ? (' ('+sinN+' todavía sin N° de factura o remisión: lo pide la vendedora)') : '')) : ('se carga'+(n===1?'':'n')+' en otro lado'));
 }
-/* «SÍ» / «NO» / «EN OTRO LADO», para la columna «EN SISTEMA» de los Excel. */
-function talEnSistemaTxt(p, S){ return regEnSistema(p) ? 'SÍ' : (talCargaAfuera(p, S) ? 'EN OTRO LADO' : 'NO'); }
+/* «SÍ» / «NO» / «EN OTRO LADO», para la columna «EN SISTEMA» de los Excel. 🏬 (mejora 383) «LA CARGÓ LA TIENDA (F 1234)» / «LA CARGA LA TIENDA (FALTA EL N°)». */
+function talEnSistemaTxt(p, S){
+  if(regEnSistema(p)) return 'SÍ';
+  if(!talCargaAfuera(p, S)) return 'NO';
+  if(!tiendasCarganActivo()) return 'EN OTRO LADO';
+  return (docVentaDe(p) && docNumDe(p)) ? ('LA CARGÓ LA TIENDA ('+docVentaDe(p)+' '+docNumDe(p)+')') : 'LA CARGA LA TIENDA (FALTA EL N°)';
+}
 /* Las ventas del período del Cuadre (la MISMA lista que arma `cuadreAlertas`). */
 function talEnPeriodo(pe, vend){
   pe=pe||cuadrePeriodo(); if(vend==null) vend=cuadreVendedor();
@@ -13394,7 +13431,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
-      '<td>'+(function(){ var c=docVentaChip(p); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+
+      '<td>'+(function(){ var tc=tndChip(p), c=(tc && docVentaDe(p) && docNumDe(p)) ? tc : (tc+docVentaChip(p)); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+   // 🏬 (mejora 383)
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
@@ -13701,6 +13738,7 @@ var CX_CHIPS=[
   { k:'smon', ico:'❓', lbl:'Sin monto anotado',   cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && sinMontoAnotado(p); } },
   { k:'smar', ico:'⚪', lbl:'Cobradas sin marcar', cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && !sinMontoAnotado(p); } },
   { k:'carg', ico:'📥', lbl:'Por cargar al sistema', cls:'k-car', f:function(p){ return porCargarSistema(p); } },   // 🔢 (30/10, propuesta 82) sin las tiendas que se cargan en otro lado
+  { k:'tnd',  ico:'🏬', lbl:'Las carga la tienda', cls:'k-gris', f:function(p){ return !!tndCargaTxt(p); } },   // 🏬 (mejora 383) aparte, con el N° a la vista
   { k:'reg',  ico:'🧾', lbl:'Ya en el sistema',    cls:'k-ok',  f:function(p){ return regEnSistema(p); } },
   { k:'env',  ico:'🚚', lbl:'Con recargo',         cls:'k-env', f:function(p){ return envioTotal(p)>0; } },
   { k:'dup',  ico:'👯', lbl:'Dos veces',           cls:'k-sal', f:function(p){ return !!DUP_IDX.marca[p.id]; } }
@@ -21329,6 +21367,8 @@ function showContaModal(id){
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       rcFichaHtml(p)+   // 🔁 (mejora 380) cambió después de cargarla al sistema
+      (function(){ var t=tndCargaTxt(p); return t ? ('<div class="tnd-ficha" id="cta-tnd">'+esc(t)+'<small>Cada tienda carga sus ventas al sistema contable: esta no está en «📥 Por cargar» de Contabilidad.'+
+        ((docVentaDe(p) && docNumDe(p)) ? '' : ' Cuando la vendedora anote el N° de factura o remisión, cuenta como cargada.')+'</small></div>') : ''; })()+   // 🏬 (mejora 383)
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
       row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
@@ -67455,6 +67495,14 @@ function talPintar(){
   var puede=talTiendasPuede();
   var tiendas=SUCURSALES.filter(function(s){ return s.n!=='Tiendas Roho'; }).map(function(s){ return s.n; });
   Object.keys(afuera).forEach(function(t){ if(tiendas.indexOf(t)<0) tiendas.push(t); });   // una que ya no está en la lista, igual se puede destildar
+  if(tiendasCarganActivo()){   // 🏬 (mejora 383) la regla del dueño: todas las tiendas cargan sus ventas
+    var conN={}, sinN={}; talEnPeriodo(pe, vend).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(!t) return; if(docVentaDe(p) && docNumDe(p)) conN[t]=(conN[t]||0)+1; else sinN[t]=(sinN[t]||0)+1; });
+    var ts=Object.keys(conN).concat(Object.keys(sinN)).filter(function(t, i, a){ return a.indexOf(t)===i; }).sort();
+    html+='<div class="tal-sec" id="tal-tiendas">🏬 Las ventas de las tiendas las carga cada tienda</div>'+
+      '<p class="tal-nota">Regla del dueño (16/11): <b>cada tienda carga al sistema sus ventas propias</b>. No cuentan como «por cargar al sistema» de Contabilidad. Las que tienen su N° de factura o remisión cuentan como cargadas; a las que no, se lo pide la vendedora. Lo que no es de una tienda (mayoristas, ROHO, sin sucursal) sigue en la lista de Contabilidad.</p>'+
+      (ts.length ? ('<div class="tal-tiendas">'+ts.map(function(t){ return '<label class="on"><span><b>'+esc(t)+'</b><br><small>'+(conN[t]||0)+' con N° · '+(sinN[t]||0)+' sin N° en '+esc(per)+'</small></span></label>'; }).join('')+'</div>') : '');
+    box.innerHTML=html; return;
+  }
   html+='<div class="tal-sec" id="tal-tiendas">🏪 Tiendas que se cargan al sistema en otro lado</div>'+
     '<p class="tal-nota">Tildá una tienda SOLO si sus ventas se cargan al sistema contable en otro lado (y por eso nadie las marca acá): dejan de contar como «sin cargar al sistema» y el aviso dice cuántas no se cuentan. Si no estás seguro, no tildes nada y preguntale al dueño.</p>'+
     (puede ? '' : ('<div class="tal-nota" style="color:#7c4b00">🔑 Cambiar esta lista pide la contraseña de Administración. '+
