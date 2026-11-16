@@ -9,6 +9,8 @@
    394 · Sin `MIS_TARJ_PRUEBA`: los renglones de siempre («× 2», «(cargar en Banzer)», «Sin asignar todavía», «📦 Stock»). Con la bandera:
          cada producto con su punto (verde hay · ámbar se trae de Moreno o en producción · rojo no hay · gris sin revisar), la cantidad en
          una fichita y su dibujito, sin «cargar en…»; el renglón del chofer solo con chofer y sin el del stock.
+   400 · Sin `MIS_BOTONES_PRUEBA`: «📞 Llamar» y «⚠️ Falta ubicación — cargar» de siempre. Con la bandera: los botones en una fila (en la
+         compu), el de llamar con el número («📞 712 34567», en la compu lo copia) y «⚠️ Sin ubicación»; los mismos destinos.
    Datos SINTÉTICOS. Reloj clavado el lunes 16/11/2026 10:00. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_v391_mis_tarjetas.js */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -101,6 +103,28 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('394e sin chofer no hay renglón de chofer, y el del stock se fue', r.tit.indexOf('Chofer')<0 && r.tit.indexOf('Stock')<0 && !/Sin asignar todavía/.test(r.txt), r.tit);
   chk('394f con chofer, el renglón aparece', r.tit2.indexOf('Chofer')>=0 && /Omar/.test(r.cho2), r.tit2);
   await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='t394' && p.id!=='t394c'; }); });
+
+  console.log('\n── 400. Los botones en una fila, con el número ──');
+  const botones = () => ev(() => { STATE=STATE.filter(function(p){ return p.id!=='b400'; });
+    STATE.push(__P({ id:'b400', oc:'11-030', cliente:'BOTONES', fecha:'2026-11-18', celular:'71234567', maps:'' }));
+    MIS_FILTER='todos'; renderMis();
+    var c=document.querySelector('#mis-lista .cho-card[onclick*="b400"]'), L=c.querySelector('.cho-links');
+    var bs=[].map.call(L.querySelectorAll('.cho-link'), function(b){ var r=b.getBoundingClientRect(); return { t:b.textContent.trim(), top:Math.round(r.top), h:Math.round(r.height), href:b.getAttribute('href')||'' }; });
+    return { cls:L.className, bs:bs }; });
+  r = await botones();
+  chk('400a sin la bandera: «📞 Llamar» y «⚠️ Falta ubicación — cargar» de siempre', r.bs.some(b=>b.t==='📞 Llamar') && r.bs.some(b=>/Falta ubicación — cargar/.test(b.t)) && !/p400/.test(r.cls), r.bs.map(b=>b.t));
+  await ev(() => { window.MIS_BOTONES_PRUEBA=1; });
+  r = await botones();
+  const tel=r.bs.filter(b=>/^📞/.test(b.t))[0]||{};
+  chk('400b el de llamar muestra el número («📞 712 34567») y sigue siendo un enlace para llamar', tel.t==='📞 712 34567' && tel.href==='tel:71234567', tel);
+  chk('400c «⚠️ Sin ubicación» (corto)', r.bs.some(b=>b.t==='⚠️ Sin ubicación'), r.bs.map(b=>b.t));
+  chk('400d en la compu, los cuatro en UNA fila y más bajos que antes (40 px)', /p400/.test(r.cls) && r.bs.length===4 && new Set(r.bs.map(b=>b.top)).size===1 && r.bs.every(b=>b.h<40), r.bs);
+  r = await ev(async () => { window.__cop=[]; var cp=copyText; copyText=function(t){ window.__cop.push(t); };
+    var mm=window.matchMedia; window.matchMedia=function(q){ return /pointer:fine/.test(q) ? { matches:true } : mm.call(window, q); };
+    var a=document.querySelector('#mis-lista .cho-card[onclick*="b400"] .p400-cel'), ev2=new MouseEvent('click',{bubbles:true,cancelable:true}); a.dispatchEvent(ev2);
+    copyText=cp; window.matchMedia=mm; return { cop:window.__cop, evitado:ev2.defaultPrevented, abrioFicha:document.getElementById('modal').classList.contains('on') }; });
+  chk('400e en la compu, tocar el número lo copia (no llama ni abre la ficha)', r.cop.join()==='71234567' && r.evitado && !r.abrioFicha, r);
+  await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='b400'; }); });
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

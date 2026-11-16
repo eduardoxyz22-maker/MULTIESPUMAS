@@ -8478,6 +8478,13 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .cho-card.mis-c .p394-l .nm{min-width:0}
 .cho-card.mis-c .p394-l .es{font-size:.74rem;font-weight:800;margin-left:2px}
 .cho-card.mis-c .p394-l .es.a{color:#a16207}.cho-card.mis-c .p394-l .es.r{color:#be123c}.cho-card.mis-c .p394-l .es.g{color:#64748b}
+/* 400 · los botones de cada tarjeta de Mis pedidos en una fila (en la compu) */
+@media (min-width:701px){
+  .cho-card.mis-c .cho-links.p400{flex-wrap:wrap;gap:6px;margin-top:10px}
+  .cho-card.mis-c .cho-links.p400 .cho-link{flex:1 1 0!important;min-width:max-content;padding:7px 9px!important;font-size:.76rem!important;border-radius:10px;white-space:nowrap;justify-content:center}
+  .cho-card.mis-c .cho-links.p400 .cho-link.mcb-btn{flex:1.5 1 0!important}
+}
+.cho-card.mis-c .cho-links.p400 .cho-link.p400-cel{font-variant-numeric:tabular-nums;letter-spacing:.01em;background:#fff;border-style:dashed}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -42252,6 +42259,7 @@ function misCardHtml(p, n, todos, verNota){
 function misCardHtmlBase(p, n, todos, verNota){
   if(verNota===undefined) verNota=misVeNota();
   var _t394=misTarjVa();   // 🎨 (16/11, mejora 394) cada producto con su punto de color y la cantidad en una fichita
+  var _b400=misBotonesVa();   // 🎨 (16/11, mejora 400) los botones en una fila
   var prod=_t394 ? misProdsHtml(p) : (p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no' && entregaAConfirmar(p)) t=t+' <span style="color:var(--muted)">— sin stock por ahora</span>';   // 📦 (propuesta 76) sin día no es una alarma
@@ -42300,12 +42308,12 @@ function misCardHtmlBase(p, n, todos, verNota){
     '</div>'+
     fotosHtml(p, false)+
     (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">ENTREGADO</div>':'')+
-    '<div class="cho-links">'+
+    '<div class="cho-links'+(_b400?' p400':'')+'">'+   // 🎨 (16/11, mejora 400) en una fila, con el número a la vista
       misCobrarBtnHtml(p, 'cho-link', 'tarjeta')+   // 💵 (295) cobrar el saldo sin ir a Contabilidad
       '<button class="cho-link ico" onclick="event.stopPropagation();editarDesdeMis(\''+p.id+'\')">✏️ Editar</button>'+
       (p.maps?('<a class="cho-link ico" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ubicación</a>')
-             :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
-      (p.celular?('<a class="cho-link ico" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>'):'')+
+             :(p.entregado?'':'<button class="cho-link'+(_b400?' p400-ub':'')+'" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')"'+(_b400?' title="Falta la ubicación: tocá para cargarla"':'')+'>'+(_b400?'⚠️ Sin ubicación':'⚠️ Falta ubicación — cargar')+'</button>'))+
+      (p.celular?(_b400 ? misTelBtnHtml(p.celular) : ('<a class="cho-link ico" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>')):'')+
       (misWaCliente(p.celular)?('<a class="cho-link ico" href="'+esc(misWaCliente(p.celular))+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Abrir el chat de WhatsApp con el cliente">💬 WhatsApp</a>'):'')+
       (misVeRepetir() ? repetirBtnHtml(p, 'cho-link ico') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
     '</div>'+
@@ -42352,6 +42360,27 @@ function misCuandoHtml(p){
    `enProduccion`, `esRecoger`, `prodHay`); la ficha entera (`showMisModal`) no cambia. En Playwright como antes salvo `window.MIS_TARJ_PRUEBA`.
    `tests/test_v391_mis_tarjetas.js` §394. */
 function misTarjVa(){ try{ return vdVa('MIS_TARJ_PRUEBA'); }catch(e){ return false; } }
+/* 🎨 (16/11, mejora 400; dueño: «Los botones de cada pedido en una fila, con el número») Editar · Ubicación · Llamar · WhatsApp iban en una
+   grilla de 2 × 2 con botones de 40 px (≈100 px de cada tarjeta) y «📞 Llamar» en la compu no llama: no se veía el número. Ahora van en una
+   fila más baja (en la compu; en el celular, como siempre), «💵 Cobrar» sigue primero y en turquesa, y el de llamar muestra el número
+   («📞 712 34567»): en el celular llama, en la compu (mouse) lo copia. Los mismos botones y los mismos destinos. En Playwright como antes
+   salvo `window.MIS_BOTONES_PRUEBA`. `tests/test_v391_mis_tarjetas.js` §400. */
+function misBotonesVa(){ try{ return vdVa('MIS_BOTONES_PRUEBA'); }catch(e){ return false; } }
+function misTelTxt(cel){
+  var d=String(cel||'').replace(/[^0-9+]/g,'');
+  return /^[67]\d{7}$/.test(d) ? (d.slice(0,3)+' '+d.slice(3)) : String(cel||'').trim();
+}
+function misTelBtnHtml(cel){
+  var d=String(cel||'').replace(/[^0-9+]/g,'');
+  return '<a class="cho-link ico p400-cel" href="tel:'+esc(d)+'" data-cel="'+esc(d)+'" onclick="event.stopPropagation();misTelTocar(event, this)" title="En el celular llama; en la compu, tocá para copiar el número">📞 '+esc(misTelTxt(cel))+'</a>';
+}
+function misTelTocar(ev, a){
+  var compu=false; try{ compu=!!(window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches); }catch(e){}
+  if(!compu) return;   // en el celular, el enlace `tel:` llama como siempre
+  if(ev) ev.preventDefault();
+  copyText(a.getAttribute('data-cel')||'');
+  toast('📋 Copiado el '+(a.textContent||'').replace(/^📞\s*/,''), 'ok', 2500);
+}
 function misProdEstado(p, x){
   if(x.chk==='no' && entregaAConfirmar(p)) return { c:'g', t:'sin stock por ahora' };   // 📦 (propuesta 76) sin día no es una alarma
   if(x.chk==='no') return { c:'r', t:'no hay'+(enProduccion(x) ? (' · 🏭 en producción'+prodLugarTxt(x)) : '') };
