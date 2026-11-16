@@ -25631,6 +25631,14 @@ function submitPedido(){
   clearErr();
   if(docTipoSel()==='COT'){ cotSubmit(); return; }   // 🧾 (mejora 251) la cotización no es una fila de «Pedidos»: va por `cotGuardar`
   var _prox=(TV_PROXIMA && VENTA_TIENDA && !EDIT_ID) ? TV_PROXIMA : null; TV_PROXIMA=null;   // 🏪 §4ok-93 «Guardar y cargar la próxima»
+  /* ❓ (16/11, la 282 en TODO el panel) Las 12 preguntas de este guardado (ATC/precio/celular heredados, «sin monto», el mes de la venta
+     de tienda, los pagos ya registrados, el flete cobrado, el día cerrado y el ✅ que se mueve) salen en la ventana del panel con
+     `preguntaYa`: la primera vez el guardado CORTA ahí sin hacer nada, y al contestar vuelve a empezar ENTERO (`_otraVez`) con las
+     respuestas recordadas, así que todas las reglas de antes de cada pregunta se vuelven a mirar con lo de ese momento. Todo lo de
+     antes de la última de ellas se puede repetir sin efecto: lee el formulario, calcula y marca en rojo; nada se guarda, se encola, se
+     manda ni toma el botón antes de `seguirAlGuardar` (`setSubmitting` va recién ahí). Lo único que se toma y se borra al empezar es la
+     marca de «Guardar y cargar la próxima» (`TV_PROXIMA`): la vuelta la repone, como el botón. */
+  var _otraVez=function(){ TV_PROXIMA=_prox; submitPedido(); TV_PROXIMA=null; };
   /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
      guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
   try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
@@ -25684,8 +25692,14 @@ function submitPedido(){
     var _prevAtc=EDIT_ID ? findById(EDIT_ID) : null;
     faltaAtc=atcFaltan(_prevAtc);
     /* 🔑 Con la clave de Administración, una ATC vieja a la que YA le faltaba eso se puede guardar igual, preguntando. */
-    if(faltaAtc.length && UNLOCKED && atcFaltanHeredados(faltaAtc, _prevAtc).length===faltaAtc.length &&
-       confirm('🎧 Esta ATC ya estaba guardada sin: '+atcFaltanTxt(faltaAtc)+'.\n\nUn vendedor NO puede guardarla así. Vos tenés la clave de Administración.\n\nAceptar: guardarla igual, sin completarlo.\nCancelar: completarlo ahora.')) faltaAtc=[];
+    if(faltaAtc.length && UNLOCKED && atcFaltanHeredados(faltaAtc, _prevAtc).length===faltaAtc.length){
+      var _rAtc=preguntaYa('🎧 Esta ATC ya estaba guardada sin: '+atcFaltanTxt(faltaAtc)+'.\n\nUn vendedor NO puede guardarla así. Vos tenés la clave de Administración.\n\nAceptar: guardarla igual, sin completarlo.\nCancelar: completarlo ahora.',
+        { icono:'🎧', aviso:true, titulo:'Esta ATC ya estaba guardada incompleta',
+          lineas:['Le falta: '+atcFaltanTxt(faltaAtc)+'.', 'Un vendedor NO puede guardarla así. Vos tenés la clave de Administración.'],
+          no:'✏️ Completarlo ahora', si:'💾 Guardar igual, sin completarlo' }, _otraVez);
+      if(_rAtc===null) return;   // ❓ esperando la respuesta: el guardado vuelve a empezar al contestar
+      if(_rAtc) faltaAtc=[];
+    }
     faltaAtc.forEach(function(x){ markErr(x.id); });
     if(faltaAtc.length) ok=false;
   }
@@ -25749,9 +25763,15 @@ function submitPedido(){
   /* (31/10, revisión de Fable 2.2) Con la clave, lo NUEVO sin precio se marca primero y solo eso (antes se pintaban también los renglones
      que ya venían sin precio, y la cuenta los sumaba); lo heredado se pregunta después, con el `confirm`. */
   if(UNLOCKED && _sinPre.some(function(x){ return !x.her; })) _sinPre=_sinPre.filter(function(x){ return !x.her; });
-  else if(_sinPre.length && UNLOCKED && _sinPre.every(function(x){ return x.her; }) &&
-     confirm('💵 Este pedido ya estaba guardado SIN el precio de: '+_sinPre.map(function(x){ return x.n; }).join(', ')+'.\n\n'+
-             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, sin precio.\nCancelar: ponerle el precio.')) _sinPre=[];
+  else if(_sinPre.length && UNLOCKED && _sinPre.every(function(x){ return x.her; })){
+    var _rPre=preguntaYa('💵 Este pedido ya estaba guardado SIN el precio de: '+_sinPre.map(function(x){ return x.n; }).join(', ')+'.\n\n'+
+             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, sin precio.\nCancelar: ponerle el precio.',
+      { icono:'💵', aviso:true, titulo:'Este pedido ya estaba guardado sin el precio',
+        lineas:['Sin precio: '+_sinPre.map(function(x){ return x.n; }).join(', ')+'.', 'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.'],
+        no:'✏️ Ponerle el precio', si:'💾 Guardar igual, sin precio' }, _otraVez);
+    if(_rPre===null) return;   // ❓ esperando la respuesta
+    if(_rPre) _sinPre=[];
+  }
   if(_sinPre.length){
     _sinPre.forEach(function(x){ x.e.classList.add('err'); });
     toast('💵 Poné el PRECIO de venta (c/u) de '+(_sinPre.length===1 ? ('«'+_sinPre[0].n+'»') : ('los '+_sinPre.length+' productos marcados en rojo'))+
@@ -25760,10 +25780,16 @@ function submitPedido(){
     return;
   }
   /* 📱 (§4ok-95) Una venta a domicilio sin un celular de WhatsApp no se guarda, salvo con «📵 El cliente no tiene WhatsApp». */
-  var _celE=celFormEstado(vendedor);
-  if(_celE.falta && !(_celE.her && UNLOCKED &&
-     confirm('📱 Este pedido ya estaba guardado con el celular «'+_celE.t+'», que no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país).\n\n'+
-             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, con ese número.\nCancelar: corregirlo.'))){
+  var _celE=celFormEstado(vendedor), _celIgual=false;
+  if(_celE.falta && _celE.her && UNLOCKED){
+    _celIgual=preguntaYa('📱 Este pedido ya estaba guardado con el celular «'+_celE.t+'», que no es un celular de WhatsApp (8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país).\n\n'+
+             'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.\n\nAceptar: guardarlo igual, con ese número.\nCancelar: corregirlo.',
+      { icono:'📱', aviso:true, titulo:'«'+_celE.t+'» no es un celular de WhatsApp', sub:'Este pedido ya estaba guardado con ese número',
+        lineas:['Un celular de WhatsApp son 8 números que empiezan con 6 o 7, o uno de otro país con «+» y el código del país.', 'Un vendedor NO puede guardarlo así. Vos tenés la clave de Administración.'],
+        no:'✏️ Corregirlo', si:'💾 Guardar igual, con ese número' }, _otraVez);
+    if(_celIgual===null) return;   // ❓ esperando la respuesta
+  }
+  if(_celE.falta && !_celIgual){
     markErr('f-celular'); celFormPintar();
     toast('📱 El celular «'+_celE.t+'» no es de WhatsApp: tienen que ser 8 números que empiezan con 6 o 7 (sin +591), o uno de otro país con «+» y el código del país (+54 9 11 2345 6789). Corregilo, o tildá «📵 El cliente no tiene WhatsApp».','err',9000);
     var _fcE=document.getElementById('f-celular'); if(_fcE){ try{ _fcE.focus(); _fcE.scrollIntoView({block:'center'}); }catch(e){} }
@@ -25822,9 +25848,15 @@ function submitPedido(){
     if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0 && !(_cobAparte>0.009)){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
     /* 💵 (26/10, el dueño) Una venta sin ningún monto no se guarda (`cobroSinMonto`); la que ya estaba guardada así, pregunta. */
     if(saldoObligActivo() && cobroSinMonto(vendedor, _cobAparte)){
-      var _pSM=EDIT_ID ? findById(EDIT_ID) : null;
-      if(!(_pSM && ventaGuardadaSinMonto(_pSM) &&
-           confirm('💵 Esta venta ya estaba guardada SIN MONTO (ni saldo por cobrar ni pago).\n\nAceptar: guardarla igual así.\nCancelar: poner ahora el saldo por cobrar o marcar «SÍ, pagado».'))){
+      var _pSM=EDIT_ID ? findById(EDIT_ID) : null, _smIgual=false;
+      if(_pSM && ventaGuardadaSinMonto(_pSM)){
+        _smIgual=preguntaYa('💵 Esta venta ya estaba guardada SIN MONTO (ni saldo por cobrar ni pago).\n\nAceptar: guardarla igual así.\nCancelar: poner ahora el saldo por cobrar o marcar «SÍ, pagado».',
+          { icono:'💵', aviso:true, titulo:'Esta venta ya estaba guardada sin monto', sub:'Ni saldo por cobrar ni pago',
+            lineas:['Si sabés cuánto es, poné el saldo por cobrar o marcá «SÍ, pagado».', 'Si no, se guarda igual así, sin monto.'],
+            no:'✏️ Poner el monto', si:'💾 Guardar igual así' }, _otraVez);
+        if(_smIgual===null) return;   // ❓ esperando la respuesta
+      }
+      if(!_smIgual){
         markErr('f-saldo');
         toast('💵 Poné el SALDO POR COBRAR (lo que falta pagar) o marcá «SÍ, pagado» con lo que pagó: una venta no se guarda sin monto.','err',8000);
         var _fsSM=document.getElementById('f-saldo'); if(_fsSM){ try{ _fsSM.focus(); _fsSM.scrollIntoView({block:'center'}); }catch(e){} }
@@ -25950,9 +25982,13 @@ function submitPedido(){
       var _antes=isoDeTsBolivia(_base);
       if(isEdit && prev && _fv.slice(0,7)!==_antes.slice(0,7)){
         var _conFecha=parseCobros(prev.metodoPago).filter(function(c){ return c.fecha && c.fecha!==_antes && !esEnvio(c); });
-        if(!confirm('📅 Esta venta va a contar en '+mesNombre(_fv)+' en Contabilidad y Proyección (antes: '+mesNombre(_antes)+').'+
-          (_conFecha.length ? ('\n\n'+(_conFecha.length===1 ? 'Un pago tiene' : (_conFecha.length+' pagos tienen'))+' otra fecha y '+(_conFecha.length===1 ? 'queda' : 'quedan')+
-            ' en su día. Si también fue el '+fmtFecha(_fv)+', corregilo en Contabilidad → ✏️ Corregir este pago.') : '')+'\n\n¿Seguro?')) return;
+        var _pagosFv=_conFecha.length ? ((_conFecha.length===1 ? 'Un pago tiene' : (_conFecha.length+' pagos tienen'))+' otra fecha y '+(_conFecha.length===1 ? 'queda' : 'quedan')+
+            ' en su día. Si también fue el '+fmtFecha(_fv)+', corregilo en Contabilidad → ✏️ Corregir este pago.') : '';
+        if(!preguntaYa('📅 Esta venta va a contar en '+mesNombre(_fv)+' en Contabilidad y Proyección (antes: '+mesNombre(_antes)+').'+
+          (_pagosFv ? ('\n\n'+_pagosFv) : '')+'\n\n¿Seguro?',
+          { icono:'📅', titulo:'¿La venta pasa a '+mesNombre(_fv)+'?',
+            lineas:['Va a contar en '+mesNombre(_fv)+' en Contabilidad y Proyección (antes: '+mesNombre(_antes)+').', _pagosFv],
+            no:'✏️ Volver sin guardar', si:'📅 Sí, que cuente en '+mesNombre(_fv) }, _otraVez)) return;   // ❓ null = esperando la respuesta
       }
       _tsVenta=tsVentaEnDia(_base, _fv);   // la misma hora de Bolivia (§4ok-92: la MISMA cuenta que el arreglo de los avisos)
       _fvAntes=_antes; _fvNueva=isoDeTsBolivia(_tsVenta);
@@ -26054,12 +26090,17 @@ function submitPedido(){
         (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
         (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
   var _lineaPago=function(c){ return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c); };
+  var _lineaPagoV=function(c){ return _lineaPago(c).replace(/^\s*•\s*/, ''); };   // ❓ el mismo renglón, en la ventana del panel (sin la viñeta)
   if(_tocoPago &&
-     !confirm('💵 Los pagos de esta venta ya están registrados:\n\n'+
+     !preguntaYa('💵 Los pagos de esta venta ya están registrados:\n\n'+
               contaPagos(prev).map(_lineaPago).join('\n')+
               '\n\nEl monto y el método de un pago ya registrado NO se cambian desde este formulario (se perdería su fecha, su recibo y quién tiene la plata). '+
               'Si alguno está mal, corregilo en Contabilidad → ✏️ Corregir este pago.\n\n'+
-              '¿Guardar igual lo demás del pedido? Los pagos quedan como están.')) return;
+              '¿Guardar igual lo demás del pedido? Los pagos quedan como están.',
+       { icono:'💵', aviso:true, titulo:'Los pagos de esta venta ya están registrados',
+         sub:'El monto y el método de un pago registrado no se cambian desde acá: se perdería su fecha, su recibo y quién tiene la plata',
+         lineas:contaPagos(prev).map(_lineaPagoV).concat(['Si alguno está mal, corregilo en Contabilidad → ✏️ Corregir este pago.', 'Si guardás, se guarda lo demás del pedido y los pagos quedan como están.']),
+         no:'✏️ Volver sin guardar', si:'💾 Guardar lo demás' }, _otraVez)) return;   // ❓ null = esperando la respuesta
   /* B con el adelanto pagado con dos métodos: el bloque del 2° método MUESTRA ese pago, ya registrado. Tocarlo acá no dice si se
      quiso corregir el adelanto o repartir lo que falta, y ninguna de las dos cosas se adivina con plata. */
   if(_rb && _rb.mx && _mixCambio){
@@ -26077,9 +26118,13 @@ function submitPedido(){
     return;
   }
   if(_rb && _faltaB<-0.009 &&
-     !confirm('⚠️ Por esta venta ya entraron '+fmtBs(_rb.ya)+' y el total que pusiste es '+fmtBs(_cobVal)+':\n\n'+
+     !preguntaYa('⚠️ Por esta venta ya entraron '+fmtBs(_rb.ya)+' y el total que pusiste es '+fmtBs(_cobVal)+':\n\n'+
               contaPagos(prev).filter(function(c){ return !esEnvio(c); }).map(_lineaPago).join('\n')+
-              '\n\nLos pagos registrados NO se tocan: la venta queda cobrada de MÁS por '+fmtBs(-_faltaB)+' y eso hay que verlo en Contabilidad.\n\n¿Guardar igual?')) return;
+              '\n\nLos pagos registrados NO se tocan: la venta queda cobrada de MÁS por '+fmtBs(-_faltaB)+' y eso hay que verlo en Contabilidad.\n\n¿Guardar igual?',
+       { icono:'⚠️', aviso:true, titulo:'Quedaría cobrada de más por '+fmtBs(-_faltaB),
+         sub:'Ya entraron '+fmtBs(_rb.ya)+' y el total que pusiste es '+fmtBs(_cobVal),
+         lineas:contaPagos(prev).filter(function(c){ return !esEnvio(c); }).map(_lineaPagoV).concat(['Los pagos registrados NO se tocan: lo de más hay que verlo en Contabilidad.']),
+         no:'✏️ Volver y corregir', si:'💾 Guardar igual' }, _otraVez)) return;   // ❓ null = esperando la respuesta
   /* Lo que el adelanto rehecho SÍ borra —el adelanto entero si «A cuenta» queda en 0, o el renglón del 2° método si se lo
      quitó—: eso se pregunta, con lo que se va. Corregir un monto no borra nada y no se pregunta. */
   var _cobPrevR = prev ? cobrosReales(prev) : [];
@@ -26098,16 +26143,23 @@ function submitPedido(){
     if(_mxPrevR && !(_acuVal>0 && _mixOn)) _seBorran.push(_mxPrevR);
   }
   if(_seBorran.length &&
-     !confirm('⚠️ Se va a BORRAR '+(_seBorran.length===1?'este pago ya registrado':'estos pagos ya registrados')+':\n\n'+
+     !preguntaYa('⚠️ Se va a BORRAR '+(_seBorran.length===1?'este pago ya registrado':'estos pagos ya registrados')+':\n\n'+
               _seBorran.map(_lineaPago).join('\n')+
-              (_cobOtros.length?'\n\nLos otros pagos quedan como están.':'')+'\n\n¿Guardar igual?')) return;
+              (_cobOtros.length?'\n\nLos otros pagos quedan como están.':'')+'\n\n¿Guardar igual?',
+       { icono:'🗑', peligro:true, titulo:'Se va a borrar '+(_seBorran.length===1?'un pago ya registrado':(_seBorran.length+' pagos ya registrados')),
+         lineas:_seBorran.map(_lineaPagoV).concat([_cobOtros.length?'Los otros pagos quedan como están.':'']),
+         no:'No, volver sin guardar', si:'🗑 Guardar y borrar '+(_seBorran.length===1?'el pago':'los pagos') }, _otraVez)) return;   // ❓ null = esperando la respuesta
   /* Lo que queda del camino de antes: una venta YA pagada a la que se le cambia el reparto del pago mixto. Ahí el formulario
      rehace el pago entero, y se avisa. */
   var _rehaceTodo = _tieneHist && !_plataIgual && !_soloPrecio && !_rehaceAdel && !_rb;
   if(_rehaceTodo &&
-     !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
+     !preguntaYa('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
               contaPagos(prev).map(_lineaPago).join('\n')+
-              '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
+              '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?',
+       { icono:'🗑', peligro:true, titulo:'Al cambiar los montos se borra el historial de pagos',
+         sub:'Este pedido ya tiene pagos registrados en Contabilidad',
+         lineas:contaPagos(prev).map(_lineaPagoV),
+         no:'No, volver sin guardar', si:'🗑 Guardar y borrar el historial' }, _otraVez)) return;   // ❓ null = esperando la respuesta
   var _metodoPago, _pagadoFin=null, _acuFin=null, _saldoFin=null, _avisoPlata='';
   var _sumaM=function(l){ var t=0; (l||[]).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); };
   if(_plataIgual || _soloPrecio){
@@ -26254,9 +26306,13 @@ function submitPedido(){
         /* Lo cobrado no se BAJA desde acá (no se sabe de cuál de los renglones): si alguien puso
            menos, se le dice en vez de ignorarlo callado, y puede no guardar. */
         if(monto<envioCobrado(prev)-0.005 &&
-           !confirm('🚚 El recargo por entrega ya tiene '+fmtBs(envioCobrado(prev))+' COBRADOS y pusiste '+fmtBs(monto)+'.\n\n'+
+           !preguntaYa('🚚 El recargo por entrega ya tiene '+fmtBs(envioCobrado(prev))+' COBRADOS y pusiste '+fmtBs(monto)+'.\n\n'+
                     'Lo cobrado no se baja desde el formulario: si un cobro está mal, corregilo en Contabilidad → ✏️ Corregir ese pago.\n\n'+
-                    '¿Guardar igual el resto del pedido (el flete queda en '+fmtBs(envioCobrado(prev))+')?')){ _cancelarEnvio=true; return; }
+                    '¿Guardar igual el resto del pedido (el flete queda en '+fmtBs(envioCobrado(prev))+')?',
+             { icono:'🚚', aviso:true, titulo:'El recargo por entrega ya tiene '+fmtBs(envioCobrado(prev))+' cobrados', sub:'Pusiste '+fmtBs(monto),
+               lineas:['Lo cobrado no se baja desde el formulario: si un cobro está mal, corregilo en Contabilidad → ✏️ Corregir ese pago.',
+                       'Si guardás, se guarda el resto del pedido y el flete queda en '+fmtBs(envioCobrado(prev))+'.'],
+               no:'✏️ Volver sin guardar', si:'💾 Guardar el resto' }, _otraVez)){ _cancelarEnvio=true; return; }   // ❓ null también corta (esperando la respuesta)
         var pend=r2(monto-envioCobrado(prev));
         if(pend>0.005){
           var pl=pactados[0] || { metodo:'', banco:'', fecha:'', nota:'', recibio:'', comps:[] };
@@ -26370,7 +26426,9 @@ function submitPedido(){
       renderCupoForm();
       return;
     }
-    if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Mover igual el pedido a ese día?')) return;
+    if(!preguntaYa('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Mover igual el pedido a ese día?',
+         { icono:'🔒', aviso:true, titulo:'El '+fmtFecha(fechaSel)+' está cerrado', lineas:['Ese camión ya está armado.', '¿Mover igual el pedido a ese día?'],
+           no:'✏️ Elegir otro día', si:'🔒 Mover igual a ese día' }, _otraVez)) return;   // ❓ null = esperando la respuesta
   }
   /* (30/09, R1-4) Un pedido que ya estaba en un feriado o un domingo y se le cambia SOLO el turno: el «lleno (0/0), probá el otro
      turno» mandaba a probar un turno que tampoco existe. Lo que hay que hacer es cambiarle el día. */
@@ -26571,7 +26629,10 @@ function submitPedido(){
      (ver `entregadoSeMueve`). Cancelar deja el formulario como está, sin guardar. Y un pedido que no está entregado no lleva el
      registro del cierre (`eF`, que manda en las salidas del stock, quedaba de un ✅ destildado). */
   if(isEdit && prev && entregadoSeMueve(rec, rec.fecha, prev.fecha)){
-    if(!confirm(entregadoMueveTxt(prev, rec.fecha))) return;
+    if(!preguntaYa(entregadoMueveTxt(prev, rec.fecha),
+         { lineas:['Si lo pasás al '+fmtFecha(rec.fecha)+' es porque no se entregó: se le saca el ✅ y vuelve a «sin entregar».',
+                   'El chofer lo ve, entra al cierre de ese día y el bot le avisa el día nuevo al cliente, como en cualquier cambio.'],
+           no:'No, volver sin guardar', si:'📅 No se entregó: moverlo' }, _otraVez)) return;   // ❓ null = esperando la respuesta (el título y el dibujo, del texto)
     entregadoDeshacer(rec);
   }
   if(!rec.entregado) entregaRegistroBorrar(rec);
