@@ -8598,6 +8598,40 @@ html.tema-black-friday .cam-ley b{color:#fde68a}
 .ex3 > span.ex3-no{background:#fff1f2;border-color:#f6c3c7;color:#a3242e}.ex3 > span.ex3-no i{background:#e5484d}
 .ex3 > span em{font-style:normal;font-weight:600;opacity:.85;color:inherit}
 .s3-t.ex3-t .s3-tx{flex:1;min-width:0}
+/* 410 · el calendario con los cupos de la mañana y la tarde */
+.cal-dia.calc-d{background:#fff;color:#16302f;display:flex;flex-direction:column;align-items:stretch;gap:4px;border:1px solid #dbe7e6;padding:7px 9px}
+.cal-dia.calc-d b{display:flex;align-items:baseline;justify-content:space-between;gap:6px}
+.cal-dia.calc-d b small{font-size:.66rem;font-weight:700;color:#5b6b7a}
+.cal-dia.calc-d.hoy{outline:3px solid #00A09A;outline-offset:-3px}
+.cal-dia.calc-d span::after{content:none}
+.cal-dia.calc-d .calc-t{display:grid;grid-template-columns:16px minmax(0,1fr) auto;align-items:center;gap:5px;font-size:.64rem;font-weight:800;color:#3b5856;line-height:1;white-space:nowrap}
+.cal-dia.calc-d .calc-t > i{font-style:normal}
+.cal-dia.calc-d .calc-br{display:block;height:7px;border-radius:999px;background:#e8eeee;overflow:hidden;position:relative}
+.cal-dia.calc-d .calc-br i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:#22c55e}
+.cal-dia.calc-d .calc-t.poco .calc-br i{background:#f59e0b}.cal-dia.calc-d .calc-t.lleno .calc-br i{background:#e5484d}
+.cal-dia.calc-d .calc-t.lleno{color:#b4232f}.cal-dia.calc-d .calc-t.poco{color:#9a5b00}
+.cal-dia.calc-d .calc-t em{font-style:normal;font-variant-numeric:tabular-nums}
+.cal-dia.calc-pas .calc-t{filter:grayscale(1);opacity:.55}
+.calc-ley{display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:.72rem;color:#4b5f5e;margin:0 0 6px 2px}
+.calc-ley span{display:inline-flex;align-items:center;gap:5px}.calc-ley i{width:16px;height:7px;border-radius:999px;display:inline-block}
+/* 411 · «Para hacer»: lo que sigue, en pastillas de color */
+.ahp-w{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin:6px 2px 0}
+.ahp-w > b{font-size:.76rem;color:#4b5f5e;margin-right:2px}
+.ahp{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 4px;font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;border:1px solid;transition:transform .12s}
+.ahp:hover{transform:translateY(-1px)}
+.ahp i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;color:#fff;font-size:.7rem}
+.ahp-r{background:#fff1f2;border-color:#f6c3c7;color:#9b1c25}.ahp-r i{background:#e5484d}
+.ahp-a{background:#fff8eb;border-color:#f5d7a1;color:#8a5200}.ahp-a i{background:#f59e0b;color:#2b1700}
+.ahp-i{background:#eef6ff;border-color:#c7dcf7;color:#1d4f91}.ahp-i i{background:#3b82f6}
+.ahp-todos{border:0;background:none;color:#00877f;font:inherit;font-size:.76rem;font-weight:800;cursor:pointer;padding:3px 6px}
+@media (prefers-reduced-motion:reduce){ .ahp{transition:none} .ahp:hover{transform:none} }
+/* 412 · «Semana»: el aviso rojo en un renglón (la regla en el «i») */
+.sem-r1{padding:7px 12px}
+.sem-r1 > div{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.sem-r1-x{font-size:.78rem;font-weight:700;opacity:.85}
+.sem-i{width:20px;height:20px;flex:none;border-radius:50%;background:#fff;border:1px solid currentColor;color:inherit;font:inherit;font-size:.7rem;font-weight:800;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;opacity:.8}
+.sem-r1 small.sem-r1-ex{display:none;flex-basis:100%;margin:0}
+.sem-r1.sem-r1-ab small.sem-r1-ex{display:block}
 </style>
 <script src="productos-mes.js?v=20261108a"></script>
 <!-- 🖥️🔔 (§4ns, 25 y 26) instalar el panel y los avisos de Windows. `defer`: corre cuando ya está todo el panel. Al cambiarlo, subir el ?v=. -->
@@ -31693,6 +31727,21 @@ function admVerSemana(v){
   admTopeReset(); renderAdmin();
   try{ admIrA('adm-chips'); }catch(e){}
 }
+/* 🎨 (16/11, mejora 412; dueño: «me gustan todas… menos la 403») «SEMANA»: EL AVISO ROJO EN UN RENGLÓN. Arriba de las tarjetas de los 5 días
+   había un recuadro rojo de 196 px con TODOS los productos sin revisar en una sola frase y un párrafo de la regla de las 48 h (lo mismo que
+   dicen, ordenado, las tarjetas de cada día y la lista de abajo). Ahora un renglón: «🔴 20 productos sin revisar el stock · el primero: hoy
+   lunes 16/11 · 9 sin revisar · ⓘ [Ver solo esos] [🤖 Revisión automática]» y otro para lo que puede no llegar. La regla va en el «i» (y la
+   lista entera al pasar el mouse por el título). Mismos botones y cuentas (`semanaDatos`, `semanaAlertaFrase`, `semanaAlertaTxt`).
+   En Playwright como antes salvo `window.SEM_RENGLON_PRUEBA`. `tests/test_v410_412_adm.js`. */
+function semRenglonVa(){ try{ return vdVa('SEM_RENGLON_PRUEBA'); }catch(e){ return false; } }
+function semR1Primero(S){
+  var o=(S.dias||[]).filter(function(d){ return d.alerta; })[0]; if(!o) return '';
+  var p=[]; if(o.rev) p.push(o.rev+' sin revisar'); if(o.nohay) p.push(o.nohay+' no hay');
+  return '<span class="sem-r1-x">el primero: '+(o.hoy?'hoy ':(o.man?'mañana ':''))+esc(nxDiaTxt(o.f))+(p.length?(' · '+esc(p.join(' · '))):'')+'</span>';
+}
+function semR1Info(txt){
+  return '<button type="button" class="sem-i" aria-label="Por qué" title="'+esc(txt)+'" onclick="event.stopPropagation();var c=this.closest(\'.sem-r1\'); if(c) c.classList.toggle(\'sem-r1-ab\')">i</button><small class="sem-r1-ex">'+esc(txt)+'</small>';
+}
 function semanaPintar(){
   var el=document.getElementById('adm-semana'); if(!el) return;
   if(QUICK_FILTER!=='semana'){ if(!el.hidden || el.innerHTML){ el.hidden=true; el.innerHTML=''; el._h=''; } return; }
@@ -31701,11 +31750,19 @@ function semanaPintar(){
   var etq=function(e, n){ var E=SEMANA_EST[e]; return '<span class="sem-k sem-k-'+e+'">'+E.ic+' <b>'+n+'</b> '+E.t+'</span>'; };
   var h='<div class="sem-cab"><span class="sem-ic" aria-hidden="true">🗓️</span><div><b>El stock de los próximos '+S.dias.length+' días hábiles</b>'+
       '<small>'+(S.desde?(esc(nxDiaTxt(S.desde))+' → '+esc(nxDiaTxt(S.hasta))):'')+' · desde hoy hacia adelante · ¿se revisó el stock?, ¿se pidió a producción?, ¿llegó?</small></div></div>';
-  if(T.alerta) h+='<div class="sem-alerta"><i class="late-dot"></i><div><b>🔴 '+esc(semanaAlertaFrase(T))+'</b><span class="sem-al-l">'+esc(semanaAlertaTxt(S, 3))+'</span>'+
+  var r1=semRenglonVa();   // 🎨 (mejora 412) el aviso en un renglón
+  if(T.alerta && r1) h+='<div class="sem-alerta sem-r1"><i class="late-dot"></i><div><b title="'+esc(semanaAlertaTxt(S))+'">🔴 '+esc(semanaAlertaFrase(T))+'</b>'+semR1Primero(S)+
+      semR1Info(semanaPlazoTxt()+' Revisalos ahora, no el día antes de entregar.')+'</div>'+
+      '<span class="sem-al-b"><button type="button" class="ah-go ah-go-r" onclick="semanaVer(\'alerta\')">'+(SEMANA_VER==='alerta'?'Ver todo':'Ver solo esos')+'</button>'+
+      '<button type="button" class="ah-go" onclick="abrirStock();abrirStockRevisar()" title="La revisión automática propone la marca de cada producto según el Excel del día">🤖 Revisión automática</button></span></div>';
+  else if(T.alerta) h+='<div class="sem-alerta"><i class="late-dot"></i><div><b>🔴 '+esc(semanaAlertaFrase(T))+'</b><span class="sem-al-l">'+esc(semanaAlertaTxt(S, 3))+'</span>'+
       '<small>'+esc(semanaPlazoTxt())+' Revisalos ahora, no el día antes de entregar.</small></div>'+
       '<span class="sem-al-b"><button type="button" class="ah-go ah-go-r" onclick="semanaVer(\'alerta\')">'+(SEMANA_VER==='alerta'?'Ver todo':'Ver solo esos')+'</button>'+
       '<button type="button" class="ah-go" onclick="abrirStock();abrirStockRevisar()" title="La revisión automática propone la marca de cada producto según el Excel del día">🤖 Revisión automática</button></span></div>';
-  if(T.tarde) h+='<div class="sem-tarde"><span aria-hidden="true">⚠️</span><div><b>'+T.tarde+' pedido'+(T.tarde===1?'':'s')+' a producción '+(T.tarde===1?'puede':'pueden')+' no llegar a tiempo</b>'+
+  if(T.tarde && r1) h+='<div class="sem-tarde sem-r1"><span aria-hidden="true">⚠️</span><div><b>'+T.tarde+' pedido'+(T.tarde===1?'':'s')+' a producción '+(T.tarde===1?'puede':'pueden')+' no llegar a tiempo</b>'+
+      semR1Info('Con '+(DIAS_PRODUCCION*24)+' h de producción desde que se pidi'+(T.tarde===1?'ó':'eron')+' y el día de recogerlo, llega'+(T.tarde===1?'':'n')+' después de la entrega (o ya debía'+(T.tarde===1?'':'n')+' haber salido de fábrica). Avisale a producción o al cliente.')+'</div>'+
+      '<button type="button" class="ah-go ah-go-a" onclick="semanaVer(\'tarde\')">'+(SEMANA_VER==='tarde'?'Ver todo':'Ver cuáles')+'</button></div>';
+  else if(T.tarde) h+='<div class="sem-tarde"><span aria-hidden="true">⚠️</span><div><b>'+T.tarde+' pedido'+(T.tarde===1?'':'s')+' a producción '+(T.tarde===1?'puede':'pueden')+' no llegar a tiempo</b>'+
       '<small>Con '+(DIAS_PRODUCCION*24)+' h de producción desde que se pidi'+(T.tarde===1?'ó':'eron')+' y el día de recogerlo, llega'+(T.tarde===1?'':'n')+' después de la entrega (o ya debía'+(T.tarde===1?'':'n')+' haber salido de fábrica). Avisale a producción o al cliente.</small></div>'+
       '<button type="button" class="ah-go ah-go-a" onclick="semanaVer(\'tarde\')">'+(SEMANA_VER==='tarde'?'Ver todo':'Ver cuáles')+'</button></div>';
   h+='<div class="sem-dias">'+S.dias.map(function(o){
@@ -33975,6 +34032,18 @@ function admHacerFila(o, i){
     '<div class="ah-tx"><b>'+esc(o.ic)+' '+esc(o.t)+'</b>'+(o.s?('<small>'+esc(o.s)+'</small>'):'')+'</div>'+
     '<button type="button" class="'+ahBotonCls(o)+'" onclick="'+o.fn+'">'+esc(o.b)+'</button></div>';
 }
+/* 🎨 (16/11, mejora 411; dueño: «me gustan todas… menos la 403») «PARA HACER»: LO QUE SIGUE, EN PASTILLAS DE COLOR. Debajo de los 3 primeros
+   avisos había una frase-enlace de dos renglones («▾ Ver 10 más: ubicaciones (2) · sin camión (7) · …»): se leía como texto y no se veía cuál
+   era grave. Ahora «Y además:» y una pastilla por aviso, con el número en un círculo y el color de su gravedad (el mismo de la fila: rojo,
+   ámbar, azul); tocar una pastilla hace lo MISMO que el botón de ese aviso (`o.fn`), y «▾ Ver todos» abre la lista entera como antes.
+   Mismos `admHacerDatos()`. En Playwright como antes salvo `window.HACER_PILLS_PRUEBA`. `tests/test_v410_412_adm.js`. */
+function hacerPillsVa(){ try{ return vdVa('HACER_PILLS_PRUEBA'); }catch(e){ return false; } }
+function hacerPillsHtml(resto){
+  return '<div class="ahp-w"><b>Y además:</b>'+resto.map(function(o){
+      var s=o.sev==='r' ? 'r' : o.sev==='a' ? 'a' : 'i';
+      return '<button type="button" class="ahp ahp-'+s+'" data-k="'+esc(o.k||'')+'" onclick="'+o.fn+'" title="'+esc(o.ic+' '+o.t+(o.s?(' · '+o.s):''))+'"><i>'+esc(o.nTxt||String(o.n))+'</i>'+esc(o.tag||o.t)+'</button>';
+    }).join('')+'<button type="button" class="ahp-todos" onclick="ADM_HACER_MAS=true;admHacerPintar()">▾ Ver todos</button></div>';
+}
 function admHacerPintar(){
   var el=document.getElementById('adm-hacer'); if(!el || !admTabsActivas()) return;
   var I=admHacerDatos(), V=ADM_HACER_MAS ? I : I.slice(0,3), resto=I.slice(3);
@@ -33984,7 +34053,8 @@ function admHacerPintar(){
       '<span class="ah-sp"></span><small>'+(I.length?'lo más urgente primero':'')+'</small>'+
       '<button type="button" class="ah-link" onclick="admAvisosAbrir('+(ADM_AVISOS_OPEN?'false':'true')+')">'+(ADM_AVISOS_OPEN?'▴ Cerrar<span class="ah-largo"> los avisos completos</span>':'📄 Avisos<span class="ah-largo"> completos</span>')+'</button></div>'+
     (I.length ? ('<div class="ah-lista">'+V.map(admHacerFila).join('')+'</div>'+
-      (resto.length ? ('<button type="button" class="ah-mas" onclick="ADM_HACER_MAS=!ADM_HACER_MAS;admHacerPintar()">'+
+      ((resto.length && !ADM_HACER_MAS && hacerPillsVa()) ? hacerPillsHtml(resto) :   // 🎨 (mejora 411) lo que sigue, en pastillas
+      resto.length ? ('<button type="button" class="ah-mas" onclick="ADM_HACER_MAS=!ADM_HACER_MAS;admHacerPintar()">'+
         (ADM_HACER_MAS ? '▴ Ver menos' : ('▾ Ver '+resto.length+' más: '+esc(resto.map(function(o){ return o.tag+' ('+(o.nTxt||o.n)+')'; }).join(' · '))))+'</button>') : ''))
       : '<div class="ah-vacio"><span>✅</span><div><b>Todo en orden</b><small>No hay nada pendiente ahora: ni pedidos sin camión, ni faltantes, ni avisos de stock.</small></div></div>');
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
@@ -64642,18 +64712,36 @@ function admCalDatos(ym){
   return { D:D, mx:mx };
 }
 function admCalFeriado(f){ try{ return (typeof feriadoDe==='function' && feriadoDe(f)) || ''; }catch(e){ return ''; } }
+/* 🎨 (16/11, mejora 410; dueño: «me gustan todas… menos la 403») EL CALENDARIO DICE LOS CUPOS DE LA MAÑANA Y LA TARDE. Cada día decía «22
+   pedidos» y se pintaba más oscuro cuanto más pedidos tenía: no decía si lo lleno era la mañana o la tarde, que es lo que importa al prometer
+   o mover un pedido. Ahora cada día lleva dos barritas, 🌅 12/12 y 🌆 10/13: verde con lugar, ámbar con 3 o menos, rojo lleno, «+1 de más» si
+   se forzó. El fondo pasa a blanco (los números ya lo dicen), hoy con borde, lo que pasó en gris. Domingos, feriados y días cerrados como
+   siempre. Mismos números del detalle del día (`admCalDatos` → AM/PM, `limTurno`). En Playwright como antes salvo `window.CAL_CUPOS_PRUEBA`.
+   `tests/test_v410_412_adm.js`. */
+function calCuposVa(){ try{ return vdVa('CAL_CUPOS_PRUEBA'); }catch(e){ return false; } }
+function calCupoFila(ic, us, lim){
+  if(!(lim>0)) return '';
+  var lib=lim-us, k=lib<=0 ? 'lleno' : lib<=3 ? 'poco' : '';
+  return '<span class="calc-t'+(k?(' '+k):'')+'"><i>'+ic+'</i><span class="calc-br"><i style="width:'+Math.min(100, Math.round(100*us/lim))+'%"></i></span><em>'+(us>lim ? ('+'+(us-lim)+' de más') : (us+'/'+lim))+'</em></span>';
+}
 function admCalHtml(){
-  var ym=ADM_CAL_MES||todayStr().slice(0,7), C=admCalDatos(ym), hoy=todayStr();
+  var ym=ADM_CAL_MES||todayStr().slice(0,7), C=admCalDatos(ym), hoy=todayStr(), cc=calCuposVa();   // 🎨 (mejora 410)
   var y=+ym.slice(0,4), m=+ym.slice(5,7), dias=new Date(y,m,0).getDate(), pri=(new Date(y,m-1,1).getDay()+6)%7;   // lunes = 0
   var h='<div class="cal-cab"><button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="admCalMes(-1)">◀</button><b>'+esc(mesNombre(ym))+'</b>'+
-    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="admCalMes(1)">▶</button><span class="vis-sub">cuanto más oscuro, más pedidos salen ese día · tocá un día</span></div>'+
-    '<div class="cal">'+['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(function(d){ return '<div class="cal-hd">'+d+'</div>'; }).join('');
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="admCalMes(1)">▶</button><span class="vis-sub">'+(cc ? 'cada día: cuántos lugares quedan a la mañana 🌅 y a la tarde 🌆 · tocá un día' : 'cuanto más oscuro, más pedidos salen ese día · tocá un día')+'</span></div>'+
+    (cc ? '<div class="calc-ley"><span><i style="background:#22c55e"></i>hay lugar</span><span><i style="background:#f59e0b"></i>quedan 3 o menos</span><span><i style="background:#e5484d"></i>lleno (+N = forzado)</span></div>' : '')+
+    '<div class="cal'+(cc?' calc':'')+'">'+['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'].map(function(d){ return '<div class="cal-hd">'+d+'</div>'; }).join('');
   for(var v=0;v<pri;v++) h+='<div></div>';
   for(var d=1; d<=dias; d++){
     var f=ym+'-'+(d<10?'0':'')+d, x=C.D[f], lim=limTurno(f,'AM')+limTurno(f,'PM'), n=x?x.n:0;
     var cerrado=(lim===0), lleno=(lim>0 && n>=lim), fer=cerrado?admCalFeriado(f):'';   // (§4io) el feriado se nombra: lo decía «Ocupación de cupos»
     var st='';
-    if(!cerrado && n>0){ var pc=Math.round(15+Math.min(1,n/Math.max(C.mx,1))*85); st=' style="background:color-mix(in srgb, #0f766e '+pc+'%, #e6f6f4)'+(pc>60?';color:#fff':'')+'"'; }
+    if(!cerrado && n>0 && !cc){ var pc=Math.round(15+Math.min(1,n/Math.max(C.mx,1))*85); st=' style="background:color-mix(in srgb, #0f766e '+pc+'%, #e6f6f4)'+(pc>60?';color:#fff':'')+'"'; }
+    if(cc && !cerrado){   // 🎨 (mejora 410) la mañana y la tarde, cada una con su barrita
+      h+='<button type="button" class="cal-dia calc-d'+(f<hoy?' calc-pas':'')+(f===hoy?' hoy':'')+(f===ADM_CAL_DIA?' sel':'')+(lleno?' lleno':'')+'" data-f="'+f+'" onclick="admCalVer(this.dataset.f)" title="'+esc(fmtFecha(f)+' · '+n+' pedido'+(n===1?'':'s'))+'">'+
+        '<b>'+d+(n?('<small>'+n+' ped.</small>'):'')+'</b>'+calCupoFila('🌅', (x&&x.AM)||0, limTurno(f,'AM'))+calCupoFila('🌆', (x&&x.PM)||0, limTurno(f,'PM'))+'</button>';
+      continue;
+    }
     h+='<button type="button" class="cal-dia'+(cerrado?' cerrado':'')+(f===hoy?' hoy':'')+(f===ADM_CAL_DIA?' sel':'')+(lleno?' lleno':'')+'" data-f="'+f+'"'+(fer?(' title="Feriado — '+esc(fer)+'"'):'')+' onclick="admCalVer(this.dataset.f)"'+st+'>'+
       '<b>'+d+'</b><span>'+(cerrado?(n?(n+' ⚠️'):(fer?'🚫 feriado':'sin camión')):(n?(n+' pedido'+(n===1?'':'s')):'—'))+'</span></button>';
   }
