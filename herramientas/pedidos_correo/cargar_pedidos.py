@@ -15,6 +15,11 @@ Eduardo Añez. Antes de cada uno relee la planilla:
   · cada guardado va con `tr4:1` (08/11, dueño: «por cada pedido que generes en el panel… un mensaje únicamente a mí… y recordarme
     que lo debo subir al TR4»): desde el servidor 2026-11-07-f, a los ~2 minutos el bot le manda `pedido_correo_tr4` al PRIMERO de
     WA_DUENO con los datos del pedido. Un servidor anterior lo ignora.
+  · 📌 (mejora 384, 16/11) EL LUGAR GUARDADO: si en el panel alguien guardó el lugar de entrega de ese cliente con Eduardo («📌 Guardar
+    como su lugar de entrega» en la ficha del cliente: la fila del sistema `__destinos__`), el pedido lo toma —el enlace (pin), y la zona
+    y la dirección si vienen vacías— con «📌 lugar guardado» en las observaciones. La misma regla del formulario (`destParaForm`): solo si
+    el pedido no trae su propio enlace y no trae OTRA dirección escrita (a domicilio: no se le pone el pin de la bodega). Nada se inventa:
+    sin lugar guardado, queda como antes.
 
 Uso:  python3 -I cargar_pedidos.py <pedidos.json>            (solo muestra lo que haría)
       python3 -I cargar_pedidos.py <pedidos.json> --guardar  (guarda)
@@ -110,6 +115,59 @@ def ya_esta(P, clave, nota):
     return None
 
 
+# 📌 (mejora 384) Los lugares de entrega guardados en el panel (`__destinos__`, §4ok-110). Las mismas cuentas que la página:
+# `normNombre` (sin tildes, minúsculas, un espacio), `talVendKey` (el vendedor así) y `CLF_GENERICO` (nombres que no alcanzan).
+DEST_ID = '__destinos__'
+CLF_GENERICO = re.compile(r'^(cliente|clientes|consumidor final|sin nombre|s n|sn|varios|nn|x|na|n a|tienda|\d+)$')
+
+
+def norm_nombre(v):
+    t = re.sub(r'\s+', ' ', str(v if v is not None else '')).strip()
+    t = unicodedata.normalize('NFD', t)
+    t = ''.join(c for c in t if not ('\u0300' <= c <= '\u036f'))
+    return t.lower()
+
+
+def lugares_guardados(P):
+    """cliente|vendedor -> el lugar más nuevo: {'m': enlace, 'z': zona, 'd': dirección, 't': cuándo, 'n': nombre}."""
+    fila = next((p for p in P if str(p.get('id')) == DEST_ID), None)
+    M = {}
+    if not fila:
+        return M
+    try:
+        claves = (json.loads(fila.get('observaciones') or '{}') or {}).get('k') or []
+    except Exception:
+        return M
+    for k in claves:
+        try:
+            a = json.loads(k)
+        except Exception:
+            continue
+        if not isinstance(a, list) or len(a) < 5 or a[0] != 'd' or not a[1] or not a[2] or not a[4]:
+            continue
+        e = {'k': k, 'c': str(a[1]), 'v': str(a[2]), 't': float(a[3] or 0), 'm': str(a[4]),
+             'z': str(a[5] if len(a) > 5 and a[5] else ''), 'd': str(a[6] if len(a) > 6 and a[6] else ''), 'n': str(a[7] if len(a) > 7 and a[7] else '')}
+        idk = e['c'] + '|' + e['v']
+        o = M.get(idk)
+        if o is None or e['t'] > o['t'] or (e['t'] == o['t'] and e['k'] > o['k']):
+            M[idk] = e
+    return M
+
+
+def lugar_para(P, d, vendedor=VENDEDOR):
+    """El lugar guardado que toma este pedido, o None (sin lugar, con enlace propio, o con otra dirección escrita)."""
+    c = norm_nombre(d.get('cliente'))
+    if not c or CLF_GENERICO.match(c) or str(d.get('maps') or '').strip():
+        return None
+    e = lugares_guardados(P).get(c + '|' + norm_nombre(vendedor))
+    if not e:
+        return None
+    dir_ = str(d.get('direccion') or '').strip()
+    if dir_ and norm_nombre(dir_) != norm_nombre(e['d']):
+        return None
+    return e
+
+
 def siguiente_habil(f):
     d = datetime.date.fromisoformat(f) + datetime.timedelta(days=1)
     while d.weekday() == 6:  # domingo
@@ -139,9 +197,16 @@ def armar(d, P):
         nueva = siguiente_habil(hoy_bo().isoformat())
         obs += ' · La fecha pedida (%s) ya pasó: quedó el %s.' % (fecha, nueva)
         fecha = nueva
+    zona, direccion, maps = d.get('zona') or '', d.get('direccion') or '', str(d.get('maps') or '').strip()
+    lug = lugar_para(P, d)
+    if lug:
+        maps = lug['m']
+        zona = zona or lug['z']
+        direccion = direccion or lug['d']
+        obs += ' · 📌 lugar guardado (%s)' % (' · '.join(x for x in (lug['z'], lug['d']) if x) or 'el pin guardado')
     rec = {"id": uid(), "fecha": fecha, "oc": next_oc(P), "vendedor": VENDEDOR, "cliente": d['cliente'],
            "productos": prods, "celular": str(d.get('celular') or ''), "turno": d.get('turno') or 'AM',
-           "zona": d.get('zona') or '', "direccion": d.get('direccion') or '', "maps": "", "pagado": False,
+           "zona": zona, "direccion": direccion, "maps": maps, "pagado": False,
            "saldo": suma, "ts": int(time.time() * 1000), "metodoPago": "",
            "observaciones": (obs + ' · Cargado automáticamente desde el correo.').strip(' ·'),
            "estado": "", "entregado": False, "vehiculo": "", "chofer": "", "garantia": "", "nota": d.get('nota') or '',
@@ -171,7 +236,7 @@ def main():
             continue
         if not guardar:
             resumen.append({"clave": clave, "resultado": "se cargaría", "oc": rec['oc'], "fecha": rec['fecha'],
-                            "turno": rec['turno'], "total": rec['saldo']})
+                            "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps'])})
             continue
         pedida = rec['fecha']
         obs_base = rec['observaciones']
@@ -195,7 +260,7 @@ def main():
             g = res.get('pedido') or {}
             resumen.append({"clave": clave, "resultado": "CARGADO", "oc": g.get('oc') or rec['oc'], "fecha": rec['fecha'],
                             "turno": rec['turno'], "nroDia": g.get('nroDia') or rec['nroDia'], "total": rec['saldo'],
-                            "pedida": pedida})
+                            "pedida": pedida, "lugar_guardado": bool(rec['maps'])})
         else:
             resumen.append({"clave": clave, "resultado": "NO cargado", "error": (res or {}).get('error'), "detalle": res})
         time.sleep(2)

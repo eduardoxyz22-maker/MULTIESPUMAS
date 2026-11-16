@@ -2544,6 +2544,7 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .bo-mas{color:#64748b}
 .bo-q{font-size:.84rem;color:#334;margin:4px 0 8px}
 .bo-av{font-size:.84rem;color:#0f5c58;font-weight:700;margin-bottom:6px}
+.rz-por{display:block;color:#7a6a3c;font-size:.72rem}   /* 🗺️ (mejora 384) */
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -53376,6 +53377,64 @@ function rohoZona(dir){
    una sola. Los que dicen «+SOMIER» se parten por ahí; los que NO lo dicen igual
    llevan somier (confirmado por el dueño el 05/09/2026), así que se le arma.
    La medida vive al final del nombre y vale para las dos piezas. */
+/* ============================================================================
+   🗺️ (mejora 384, 16/11; dueño la eligió) LOS PEDIDOS DE ROHO SIN ZONA: EL BARRIO ESCRITO O EL SECTOR DEL PIN.
+   De los 67 pedidos del Excel de ROHO de noviembre, 35 entraron sin zona: el reparto por zona los dejaba aparte. `rohoZona` sigue mandando
+   (la zona que dice la dirección con todas las letras, o una zona del equipo como tramo entero). Sin eso:
+   · el BARRIO escrito («Barrio Las Palmas», «B/ …», «Urb. …», «Villa …», «Plan 3000», «UV 160»): si los pedidos del equipo que nombran ese
+     barrio dicen casi siempre la misma zona (≥ `ROHO_BARRIO_MIN` y ≥ 4/5 de los que lo nombran), esa (`rohoZonaBarrio`). Medido con la
+     planilla del 15/11 (dejando cada pedido afuera): acierta 14, se equivoca 3 (zonas escritas de otra forma), no dice nada en el resto;
+   · y si tampoco, después de ubicarlo en el mapa por la dirección (`ubicarImportadosRoho`), la del pin: los pedidos de al lado o hacia dónde
+     queda de la plaza (`zonaCercaDe`, la misma regla del formulario; `rohoZonaDePin`).
+   Lo puesto se ve con «≈» en la vista previa y en el resultado del importador, y queda en las observaciones («🗺️ zona ≈ …»): se cambia desde
+   la ficha. Nada pisa una zona que ya venía. ⚠️ No se inventan pines: el pin sigue siendo el de la dirección escrita (§4dh, aproximado); las
+   tiendas Roho no tienen pin a propósito (§4dn). En Playwright apagado salvo `ROHO_ZONA_PRUEBA`. `tests/test_roho_zona.js`.
+   ========================================================================== */
+var ROHO_BARRIO_MIN=2, ROHO_BARRIO_MEMO={ k:'', m:null };
+function rohoZonaActiva(){ try{ return !(navigator.webdriver && !window.ROHO_ZONA_PRUEBA); }catch(e){ return true; } }
+var ROHO_BARRIO_RE=/(?:^|[\s,;(])(?:(BARRIO|BRIO\.?|BARR\.?|B\/|URBANIZACION|URB\.?|CONDOMINIO|COND\.?)\s*[:.]?\s*|(VILLA|PLAN|UV|U\.V\.?)\s+)([A-Z0-9][A-Z0-9 ]{1,28}?)(?=\s*(?:[,;.#()\-]|\bCALLE\b|\bC\/|\bAV\b|\bAVENIDA\b|\bMZ|\bMANZANO\b|\bCASA\b|\bNRO\b|\bN°|\bNUMERO\b|\bUV\b|\bZONA\b|$))/g;
+function rohoBarrios(txt){
+  var s=sinTildes(String(txt||'')).toUpperCase().replace(/\s+/g,' '), out=[], m;
+  ROHO_BARRIO_RE.lastIndex=0;
+  while((m=ROHO_BARRIO_RE.exec(s))){
+    var nom=String(m[3]||'').trim(), pre=m[2] ? String(m[2]).replace(/\./g,'').replace(/^U V$/,'UV') : '';
+    if(pre==='UV' || pre==='U V') pre='UV';
+    var b=(pre ? (pre+' ') : '')+nom;
+    if(nom.length>=2 && out.indexOf(b)<0) out.push(b);
+  }
+  return out;
+}
+function rohoBarrioMapa(){
+  var k=(STATE||[]).length+'|'+(typeof SALDO_GEN!=='undefined' ? SALDO_GEN : 0);
+  if(ROHO_BARRIO_MEMO.k===k && ROHO_BARRIO_MEMO.m) return ROHO_BARRIO_MEMO.m;
+  var M={};
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esRPT(p.oc) || esVentaTienda(p)) return;
+    var z=String(p.zona||'').replace(/\s+/g,' ').trim(), kz=normNombre(z); if(!kz || kz==='tienda') return;
+    rohoBarrios(p.direccion).forEach(function(b){ var g=M[b]||(M[b]={ n:0, z:{} }); g.n++; g.z[kz]=(g.z[kz]||0)+1; });
+  });
+  ROHO_BARRIO_MEMO={ k:k, m:M }; return M;
+}
+/* {zona, b} o null */
+function rohoZonaBarrio(txt){
+  var M=rohoBarrioMapa(), B=rohoBarrios(txt);
+  for(var i=0;i<B.length;i++){
+    var g=M[B[i]]; if(!g) continue;
+    var top=Object.keys(g.z).sort(function(a,b){ return g.z[b]-g.z[a]; })[0], n=g.z[top];
+    if(n>=ROHO_BARRIO_MIN && n*5>=g.n*4) return { zona:zonaCanonica(top), b:B[i].toLowerCase().replace(/(^|\s)(\S)/g, function(m, a, c){ return a+c.toUpperCase(); }) };
+  }
+  return null;
+}
+/* Al ubicarlo por la dirección: si sigue sin zona, la del pin (vecinos o la plaza). Devuelve la zona puesta, o ''. */
+function rohoZonaDePin(p, g){
+  if(!rohoZonaActiva() || !p || String(p.zona||'').trim() || !g) return '';
+  var R=null; try{ R=zonaCercaDe({ lat:Number(g.lat), lng:Number(g.lng) }, p.id); }catch(e){}
+  if(!R || !R.zona) return '';
+  p.zona=R.zona;
+  p.observaciones=String(p.observaciones||'').replace(/Importado del Excel de ROHO/, '🗺️ zona ≈ '+R.zona+' por el pin aproximado · Importado del Excel de ROHO');
+  if(p.observaciones.indexOf('🗺️ zona ≈')<0) p.observaciones=(p.observaciones?(p.observaciones+' · '):'')+'🗺️ zona ≈ '+R.zona+' por el pin aproximado';
+  return R.zona;
+}
 function rohoPartirCombo(desc){
   var s=String(desc||'').trim();
   if(!/^\s*combo\b/i.test(s)) return [s.replace(/\s+/g,' ')];
@@ -53468,7 +53527,7 @@ function rohoArmarPedidos(filas){
       porNota[oc]={
         oc:oc, fecha:xlsxFecha(f[col.fecha]), cliente:cliente,
         celular: tel || wa,
-        direccion: dir || ref, zona: rohoZona(dir+' '+ref),
+        direccion: dir || ref, zona: rohoZona(dir+' '+ref), zonaPor:'',
         nit: String((col.nit?f[col.nit]:'')||'').replace(/\s+/g,' ').trim(),
         pagado: rohoPagado(col.status?f[col.status]:''),
         estadoRaro: !rohoEstadoConocido(col.status?f[col.status]:''),
@@ -53476,6 +53535,9 @@ function rohoArmarPedidos(filas){
         obs: obs.join(' · '), productos:[], combos:0, malo:''
       };
       orden.push(oc);
+      /* 🗺️ (mejora 384) sin zona en la dirección: el barrio escrito, si los pedidos del equipo con ese barrio dicen casi siempre la misma */
+      if(!porNota[oc].zona && rohoZonaActiva()){ var _zb=rohoZonaBarrio(dir+' '+ref); if(_zb){ porNota[oc].zona=_zb.zona; porNota[oc].zonaPor='barrio'; porNota[oc].zonaB=_zb.b;
+        porNota[oc].obs=porNota[oc].obs.replace(/Importado del Excel de ROHO$/, '🗺️ zona ≈ '+_zb.zona+' por el barrio escrito ('+_zb.b+') · Importado del Excel de ROHO'); } }
     }
     var p=porNota[oc];
     var cant=rohoCant(f[col.cant]);
@@ -53562,7 +53624,7 @@ function renderImportRoho(){
         '<td>'+esc(fmtFecha(p.fecha))+'</td>'+
         '<td>'+esc(p.cliente||'—')+'</td>'+
         '<td>'+(p.celular?esc(p.celular):falta('falta'))+'</td>'+
-        '<td>'+(p.zona?esc(p.zona):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
+        '<td>'+(p.zona?(esc(p.zona)+(p.zonaPor==='barrio'?('<small class="rz-por">≈ por el barrio escrito ('+esc(p.zonaB||'')+')</small>'):'')):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
         '<td>'+(p.direccion?esc(p.direccion):falta('falta'))+'</td>'+
         '<td>'+p.productos.map(function(x){ return esc(x.desc)+' <b>×'+esc(String(x.cant))+'</b>'; }).join('<br>')+'</td>'+
         '<td style="color:var(--muted)">'+esc(p.obs)+'</td>'+
@@ -53598,7 +53660,8 @@ function renderImportRoho(){
         '<div style="font-size:.76rem;color:var(--muted);margin-top:5px">El Excel de ROHO no dice el turno. Se puede cambiar después, pedido por pedido.</div></div>'+
       ((sinZona||sinCel||sinDir||combos||avisosDia.length)?('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:10px 13px;margin-top:11px;font-size:.82rem;color:#7a5b00">'+
         (combos?lin('🛏️ <b>'+combos+'</b> combo'+(combos===1?'':'s')+' partido'+(combos===1?'':'s')+' en colchón + somier — el panel no acepta un combo en una sola línea'):'')+
-        (sinZona?lin('📍 <b>'+sinZona+'</b> sin zona: la dirección no la dice. Completala desde la ficha para que entren en la ruta'):'')+
+        (sinZona?lin('📍 <b>'+sinZona+'</b> sin zona: la dirección no la dice'+(rohoZonaActiva()?'. Si se ubican en el mapa, les pongo la zona del pin (≈)':'. Completala desde la ficha para que entren en la ruta')):'')+
+        (function(){ var nb=elegidos.filter(function(p){ return p.zonaPor==='barrio'; }).length; return nb ? lin('🗺️ <b>'+nb+'</b> con la zona puesta por el barrio escrito (≈): se puede cambiar desde la ficha') : ''; })()+
         (sinCel?lin('📱 <b>'+sinCel+'</b> sin celular válido'):'')+
         (sinDir?lin('🏠 <b>'+sinDir+'</b> sin dirección'):'')+
         avisosDia.map(function(a){ return lin('🚚 '+a); }).join('')+
@@ -58827,7 +58890,7 @@ function guardarEnFila(lista, cb){
     apiSave(p).then(function(r){ if(!(r&&r.ok)) queuePending(p); sig(); }, function(){ queuePending(p); sig(); });
   })();
 }
-function ubicarPorDireccion(lista, onFin, onProgreso){
+function ubicarPorDireccion(lista, onFin, onProgreso, alUbicar){
   var pend=ubicables(lista);
   if(!pend.length){ if(onFin) onFin({n:0, de:0, sin:[]}); return; }
   if(!CONNECTED){ toast('Para ubicar por la dirección hace falta conexión al servidor.','err'); if(onFin) onFin({n:0, de:pend.length, sin:pend.slice(), sinConexion:true}); return; }
@@ -58852,7 +58915,7 @@ function ubicarPorDireccion(lista, onFin, onProgreso){
       var guardar=[];
       grupo.forEach(function(p){
         var g=porLink[ubicConsulta(p)];
-        if(g){ p.maps=linkAprox(g.lat,g.lng); MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:true}; upsert(p); guardar.push(p); n++; }
+        if(g){ p.maps=linkAprox(g.lat,g.lng); MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:true}; if(alUbicar){ try{ alUbicar(p, g); }catch(e){} } upsert(p); guardar.push(p); n++; }
         else sin.push(p);
       });
       guardarEnFila(guardar, paso);
@@ -58893,10 +58956,13 @@ function ubicarImportadosRoho(creados){
   if(!cand.length){ pinta(creados.length?'📍 Ninguno trae una dirección que se pueda buscar: cargales la ubicación desde la ficha.':''); return; }
   if(!CONNECTED){ pinta('📍 Sin conexión: cuando vuelva la señal, en el mapa tocá «📍 Ubicar por dirección».'); return; }
   pinta('<span class="spin"></span> 📍 Ubicando en el mapa '+cand.length+' direccion'+(cand.length===1?'':'es')+'… (puede tardar un minuto)');
+  var zonas=[];   // 🗺️ (mejora 384) los que no traían zona y la tomaron del pin
   ubicarPorDireccion(cand, function(r){
     pinta((r.n?('📍 <b>'+r.n+' de '+r.de+'</b> quedaron en el mapa por su dirección escrita (≈ aproximados: es la cuadra, no la puerta).'):('📍 No se pudo ubicar ninguna de las '+r.de+' direcciones.'))+
+      (zonas.length?('<br>🗺️ <b>'+zonas.length+'</b> sin zona quedaron con la zona del pin (≈): '+esc(zonas.slice(0,8).map(function(z){ return z.oc+' → '+z.zona; }).join(', '))+(zonas.length>8?(' y '+(zonas.length-8)+' más'):'')+'. Se puede cambiar desde la ficha.'):'')+
       (r.sin.length?('<br>Sin ubicar: '+esc(r.sin.map(function(p){ return p.oc||p.cliente||''; }).join(', '))+' — cargales el link desde la ficha.'):''));
-  }, function(hecho,total){ pinta('<span class="spin"></span> 📍 Ubicando… '+hecho+' de '+total); });
+  }, function(hecho,total){ pinta('<span class="spin"></span> 📍 Ubicando… '+hecho+' de '+total); },
+  function(p, g){ var z=rohoZonaDePin(p, g); if(z) zonas.push({ oc:String(p.oc||p.cliente||''), zona:z }); });
 }
 
 function revUbicDatos(){
