@@ -2743,7 +2743,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
 (function(){
   var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
   /* Las lecturas puras que pueden ir a la planilla de verdad (todo lo demás, también lo que no tiene `action` —para el servidor es «save»—, NO) */
-  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones */
+  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1, iaSemana:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones · iaSemana (16-a): el porqué y la mano guardados */
   window.PRACTICA=false;
   if(!SP) return;
   var G=SP.getItem, S=SP.setItem, R=SP.removeItem;
@@ -3884,11 +3884,21 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
           <div class="field">
             <button class="btn btn-sm mviv-btn" id="pry-envivo-btn" onclick="mvivAbrir()">📡 El mall en vivo</button>
           </div>
+          <!-- 🧠🤝 (16/11, mejoras 356 y 362) El porqué de la semana y «Quién necesita una mano»: llevan a su tarjeta (`pqsPintar` los muestra con el servidor 2026-11-16-a). -->
+          <div class="field" id="pry-porque-w" hidden>
+            <button class="btn btn-sm imes-btn" id="pry-porque-btn" onclick="pqsIr('pry-porque')">🧠 El porqué de la semana</button>
+          </div>
+          <div class="field" id="pry-mano-w" hidden>
+            <button class="btn btn-sm imes-btn" id="pry-mano-btn" onclick="pqsIr('pry-mano')">🤝 Quién necesita una mano</button>
+          </div>
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
         <!-- 📈 (15/11, mejora 340) Por qué se movió la proyección desde la foto de ayer: ventas nuevas o la cuenta (`pryMovPintar`). Solo mira. -->
         <div id="pry-mov"></div>
+        <!-- 🧠🤝 (16/11, mejoras 356 y 362) Lo que escribió Claude: el porqué de la semana y quién necesita una mano (`pqsPintar`). Solo miran. -->
+        <div id="pry-porque"></div>
+        <div id="pry-mano"></div>
         <div id="pry-metas"></div>
         <!-- 💰 (15/11, mejora 338) Las comisiones del mes si siguen así y quién está al borde de un escalón (`ccmSiguePintar`). No se guarda. -->
         <div id="pry-com"></div>
@@ -16680,6 +16690,7 @@ function renderProyeccion(){
   box.innerHTML=h;
   try{ cxFichasVivas(box, 'cxPryF'); }catch(e){}
   try{ pryMovPintar(R); }catch(e){}  // 📈 (15/11, mejora 340) por qué se movió la proyección desde ayer
+  try{ pqsPintar(); }catch(e){}      // 🧠🤝 (16/11, mejoras 356 y 362) el porqué de la semana y quién necesita una mano
   try{ metasPintar(R); }catch(e){}   // 🎯 (§4nb) cómo va cada marca contra su meta
   try{ ccmSiguePintar(R); }catch(e){} // 💰 (15/11, mejora 338) las comisiones del mes, si siguen así
   try{ bfnPintar(R); }catch(e){}     // 🛍️ (13/11, mejora 177) Black Friday en números, solo durante la campaña
@@ -36269,7 +36280,7 @@ function practicaEs(p){ return !!(window.PRACTICA && p && p.id!=null && practica
 function practicaMarca(p){ return practicaEs(p) ? '<span class="pr-chip" title="Cargado o cambiado en el modo práctica: no está en la planilla">🧪</span>' : ''; }
 function practicaEsLectura(payload){ var a=String((payload && payload.action) || 'save'); return !!(window.PRACTICA_LECTURAS && window.PRACTICA_LECTURAS[a]); }
 /* Lo que contesta «el servidor» en práctica. Nada sale a la red. */
-var PR_SIN_IA={ bloki:1, leerNota:1, iaComprobantes:1, compsCarpeta:1, kommoCierre:1 };   // lo que gasta crédito o escribe afuera: un «no» claro
+var PR_SIN_IA={ bloki:1, leerNota:1, iaComprobantes:1, compsCarpeta:1, kommoCierre:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1 };   // lo que gasta crédito o escribe afuera: un «no» claro
 var PR_CONTADOR={};
 function practicaResponder(payload){
   var act=String((payload && payload.action) || 'save'), r;
@@ -73643,6 +73654,277 @@ function vdIniciar(){
   var vf=document.getElementById('view-form');
   if(vf){ var t=function(){ setTimeout(function(){ if(hay('pcobPintar')) en(pcobPintar); if(hay('flotaPintar')) en(function(){ flotaPintar(false); }); }, 0); };
     vf.addEventListener('click', t); vf.addEventListener('input', t); vf.addEventListener('change', t); t(); }
+}
+</script>
+<style>
+/* 🧠🤝 (16/11, mejoras 356 y 362) El porqué de la semana y «Quién necesita una mano», en Proyección (con la contraseña). Tarjetas claras, como «📣 publicidad». */
+.pqs, .mno{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:4px 0 14px; color:var(--text); }
+.pqs{ border-top:4px solid #00B5AD; }
+.mno{ border-top:4px solid #0f766e; }
+.pqs-h, .mno-h{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-weight:800; font-size:.95rem; }
+.pqs-s, .mno-s{ font-size:.76rem; color:var(--muted); margin:3px 0 10px; line-height:1.4; }
+.pqs-res{ font-size:.92rem; font-weight:700; color:#0f4c4a; background:#f0fdfa; border-radius:10px; padding:8px 11px; margin:0 0 10px; line-height:1.45; }
+.pqs-g{ margin:8px 0 4px; font-size:.74rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#0f766e; }
+.pqs-f{ font-size:.85rem; line-height:1.45; margin:3px 0; padding-left:14px; position:relative; }
+.pqs-f::before{ content:'·'; position:absolute; left:3px; font-weight:800; color:#00A09A; }
+.pqs-de{ display:inline-flex; gap:3px; margin-left:4px; vertical-align:1px; }
+.pqs-de span{ font-size:.66rem; font-weight:700; color:#0f766e; background:#e6fbf9; border:1px solid #b9ece7; border-radius:6px; padding:0 4px; cursor:help; }
+.pqs-nums, .pqs-ant{ margin-top:10px; font-size:.8rem; }
+.pqs-nums summary, .pqs-ant summary{ cursor:pointer; font-weight:700; color:#0f766e; }
+.pqs-nums ul{ margin:6px 0 0; padding-left:18px; color:#334155; line-height:1.45; }
+.pqs-it{ border:1px solid #e2e8f0; border-radius:10px; padding:7px 10px; margin:6px 0; }
+.pqs-it b{ color:#0f4c4a; }
+.pqs-pie{ font-size:.72rem; color:var(--muted); margin-top:8px; }
+.pqs-av{ font-size:.82rem; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:10px; padding:9px 12px; margin:4px 0; }
+.pqs-av.pqs-mal{ background:#fffbeb; border-color:#fcd34d; color:#7c4b00; }
+.mno-v{ border:1px solid #d7e8e8; border-radius:12px; padding:9px 12px; margin:8px 0; font-size:.84rem; }
+.mno-v h4{ margin:0 0 5px; font-size:.9rem; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+.mno-v h4 small{ font-weight:500; color:var(--muted); }
+.mno-l{ display:grid; grid-template-columns:100px 1fr; gap:6px; margin:3px 0; line-height:1.4; }
+.mno-l b{ font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; padding-top:2px; }
+.mno-bien{ color:#047857; } .mno-cuesta{ color:#b45309; } .mno-ayuda{ color:#0f766e; }
+.mno-k{ display:flex; gap:6px; justify-content:flex-end; flex-wrap:wrap; margin-top:6px; }
+.mno-k .btn, .pqs-h .btn, .pqs-av .btn{ width:auto; flex:none; }
+.mno-hab{ opacity:.6; }
+.mno-n{ font-size:.78rem; color:var(--muted); margin-top:6px; }
+@media (max-width:560px){ .mno-l{ grid-template-columns:1fr; gap:1px; } }
+</style>
+<script>
+/* ---------------------------------------------------------------------------
+   🧠 356 · EL PORQUÉ DE LA SEMANA, ESCRITO POR CLAUDE  ·  🤝 362 · QUIÉN NECESITA UNA MANO ESTA SEMANA (SIN CULPAR)
+   (16/11; el dueño las eligió en la página «Mejoras 344 a 389»). Solo en Proyección, con la contraseña, y con el servidor 2026-11-16-a.
+   · 🧠 La tarjeta muestra la lectura que el servidor guardó en la hoja «IA semanal» (la misma que le llega al dueño y a su jefe por WhatsApp los
+     lunes a las 08:00; el día 1, la del mes): cuánto se vendió, por qué subió o bajó y 2 cosas para mirar, cada frase con los códigos de los
+     números de donde sale (pasando el mouse se lee el número) y «📊 Los números»; debajo, las semanas y meses anteriores. Si la de la semana
+     pasada todavía no está, «🧠 Armarla ahora» (`iaPorque`: el servidor arma los números y le pregunta a Claude UNA vez; queda guardada).
+   · 🤝 La página arma por vendedora del equipo lo que ya cuenta (`mnoDatos`: sus 4 semanas de `pryVentas`, la venta cruzada, `docVentaFalta`,
+     `ctaAvAbiertos` por tipo, `alDiaDatos`, `fmovDe`, sus ATC) SIN clientes, celulares ni OC, y lo manda con `iaEquipo`. Claude devuelve por
+     persona «le va bien», «le cuesta», «cómo ayudarla» y el video de Bloki que le sirve (`VIDEOS`). Por NOMBRE, nunca por un ranking; el resto,
+     «nada que pida ayuda». Una vez por semana (el lunes se pide sola al abrir Proyección, una vez; después, «🔄 Pedirla de nuevo»).
+     «✓ Ya hablé con ella» (`iaEquipoHable`) queda en el servidor: en todos los aparatos, hasta la semana siguiente.
+   · Nada se guarda en los pedidos ni se manda a nadie: solo miran. En Playwright apagadas salvo PORQUE_PRUEBA / MANO_PRUEBA.
+   --------------------------------------------------------------------------- */
+var PQS_DESDE='2026-11-16-a', PQS_LEER_MS=10*60000, PQS_TOPE_MS=20000, PQS_CLAUDE_MS=120000;
+var PQS={ items:null, t:0, cargando:false, err:'', ia:'', armando:false, msg:'' };
+var MNO={ pidiendo:false, msg:'', auto:'' };
+var MNO_HOMBRES=/^(juan|fernando|mauricio|jonathan|fabian|eduardo|pedro|luis|carlos|jose|marco|miguel|diego|daniel)\b/;
+function porqueVa(){ return vdVa('PORQUE_PRUEBA'); }
+function manoVa(){ return vdVa('MANO_PRUEBA'); }
+function pqsVe(){ return !!(UNLOCKED && servidorTiene(PQS_DESDE)); }
+function pqsLunes(f){ var w=dowDe(f); return stockSumarDias(f, -((w+6)%7)); }
+function pqsSemanaPasada(){ return stockSumarDias(pqsLunes(diaNegocio()), -7); }
+function pqsRango(d, h){ return d.slice(5,7)===h.slice(5,7) ? (d.slice(8,10)+' al '+fmtFechaCorta(h)) : (fmtFechaCorta(d)+' al '+fmtFechaCorta(h)); }
+/* Lo guardado: {porque:[…], equipo:[…]} de la hoja «IA semanal» (sin candado, sin Claude). */
+function pqsCargar(forzar){
+  if(PQS.cargando || !pqsVe() || (!porqueVa() && !manoVa())) return Promise.resolve();
+  if(!forzar && PQS.items && Date.now()-PQS.t<PQS_LEER_MS) return Promise.resolve();
+  PQS.cargando=true; PQS.err='';
+  return conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'iaSemana', tipos:['porque','equipo'], n:8 }); }), PQS_TOPE_MS, 'tardo_ia_semana')
+    .then(function(r){
+      if(r && r.ok && r.items){ PQS.items={ porque:r.items.porque||[], equipo:r.items.equipo||[] }; PQS.ia=String(r.ia||''); PQS.t=Date.now(); if(forzar){ PQS.msg=''; MNO.msg=''; } }
+      else PQS.err=(r && (r.error||r.detalle)) || 'sin respuesta';
+    })
+    .catch(function(e){ PQS.err=String((e && e.message) || e); })
+    .then(function(){ PQS.cargando=false; pqsRepintar(); try{ mnoQuizasAuto(); }catch(e){} });
+}
+function pqsPoner(tipo, it){
+  if(!it || !it.k) return;
+  if(!PQS.items) PQS.items={ porque:[], equipo:[] };
+  var L=(PQS.items[tipo]||[]).filter(function(x){ return x && x.k!==it.k; }); L.unshift(it);
+  L.sort(function(a,b){ return String(b.d||b.semana||'').localeCompare(String(a.d||a.semana||'')); });
+  PQS.items[tipo]=L;
+}
+/* Desde `renderProyeccion` (y al terminar de leer o de armar): las dos tarjetas y sus botones de la barra. */
+function pqsPintar(){
+  var ve=pqsVe();
+  var b1=document.getElementById('pry-porque-w'), b2=document.getElementById('pry-mano-w');
+  if(b1) b1.hidden=!(ve && porqueVa()); if(b2) b2.hidden=!(ve && manoVa());
+  var e1=document.getElementById('pry-porque'), e2=document.getElementById('pry-mano');
+  if(!ve){ if(e1) e1.innerHTML=''; if(e2) e2.innerHTML=''; return; }
+  if(e1) e1.innerHTML=porqueVa() ? pqsHtml() : '';
+  if(e2) e2.innerHTML=manoVa() ? mnoHtml() : '';
+  if(!PQS.items || Date.now()-PQS.t>=PQS_LEER_MS) pqsCargar(false);
+}
+function pqsRepintar(){ try{ pqsPintar(); }catch(e){} }
+function pqsIr(id){
+  var el=document.getElementById(id); if(!el) return;
+  if(id==='pry-porque' && !PQS.items) pqsCargar(true);
+  try{ var y=el.getBoundingClientRect().top+window.scrollY-(typeof hdrAltoEn==='function' ? hdrAltoEn(el) : 80)-10; window.scrollTo({ top:y, behavior:'smooth' }); }catch(e){ el.scrollIntoView(); }
+}
+/* ── 🧠 la tarjeta del porqué ── */
+function pqsFraseHtml(x, H){
+  var porId={}; (H||[]).forEach(function(h){ porId[h.id]=h.t; });
+  var de=(x.de||[]).filter(function(id){ return porId[id]; }).map(function(id){ return '<span title="'+esc(porId[id])+'">'+esc(id)+'</span>'; }).join('');
+  return esc(x.txt)+(de ? '<span class="pqs-de" aria-label="De dónde sale">'+de+'</span>' : '');
+}
+function pqsItemHtml(it){
+  var h='<div class="pqs-res">🛒 '+pqsFraseHtml(it.resumen||{ txt:'' }, it.H)+'</div>';
+  h+='<div class="pqs-g">❓ Por qué</div>'+(it.porque||[]).map(function(x){ return '<div class="pqs-f">'+pqsFraseHtml(x, it.H)+'</div>'; }).join('');
+  if((it.mirar||[]).length) h+='<div class="pqs-g">👀 Para mirar</div>'+it.mirar.map(function(x){ return '<div class="pqs-f">'+pqsFraseHtml(x, it.H)+'</div>'; }).join('');
+  if((it.H||[]).length) h+='<details class="pqs-nums"><summary>📊 Los números de donde sale cada frase ('+it.H.length+')</summary><ul>'+
+    it.H.map(function(x){ return '<li><b>'+esc(x.id)+'</b> '+esc(x.t)+'</li>'; }).join('')+'</ul></details>';
+  return h;
+}
+function pqsQuien(it){ return it.via==='reglas' ? ('armado con reglas, sin Claude'+(it.motivo ? (' ('+it.motivo+')') : '')) : 'lo escribió Claude'; }
+function pqsHtml(){
+  var sem=pqsSemanaPasada(), hasta=stockSumarDias(sem, 6);
+  var h='<div class="pqs" id="pry-porque-box"><div class="pqs-h"><span>🧠 El porqué de la semana</span>';
+  var L=(PQS.items && PQS.items.porque) || [], ult=L.filter(function(x){ return x.k==='s'+sem; })[0] || null;
+  if(ult) h+='<button type="button" class="btn btn-ghost btn-sm" id="pqs-otra" onclick="pqsArmar(true)"'+(PQS.armando?' disabled':'')+'>'+(PQS.armando ? '⏳ Armando…' : '🔄 Armarla de nuevo')+'</button>';
+  h+='</div><div class="pqs-s">Los lunes a las 08:00 le llega a vos y a tu jefe por WhatsApp (el día 1, la del mes). Los números los arma el panel; Claude solo los ordena y dice de dónde sale cada frase (pasá el mouse por el código).</div>';
+  if(!PQS.items){
+    return h+(PQS.cargando ? '<div class="pqs-av">⏳ Leyendo lo guardado…</div>' : ('<div class="pqs-av pqs-mal">No se pudo leer lo guardado'+(PQS.err ? (' ('+esc(PQS.err)+')') : '')+'. <button type="button" class="btn btn-ghost btn-sm" onclick="pqsCargar(true)">🔄 Probar de nuevo</button></div>'))+'</div>';
+  }
+  if(PQS.msg) h+='<div class="pqs-av pqs-mal">'+esc(PQS.msg)+'</div>';
+  if(ult){
+    h+='<div class="pqs-s" style="margin-top:-4px"><b>'+esc(ult.tit)+'</b> · contra '+esc(ult.cmp)+' · '+esc(pqsQuien(ult))+' el '+esc(ult.hTxt||'')+'</div>'+pqsItemHtml(ult);
+  }else{
+    h+='<div class="pqs-av">Todavía no está la de la semana del '+esc(pqsRango(sem, hasta))+': sale los lunes a las 08:00. '+
+       '<button type="button" class="btn btn-sm btn-primary" id="pqs-armar" onclick="pqsArmar(false)"'+(PQS.armando?' disabled':'')+'>'+(PQS.armando ? '⏳ Armando… (hasta un minuto)' : '🧠 Armarla ahora')+'</button></div>';
+  }
+  /* La del mes (el día 1), a la vista la primera semana del mes siguiente */
+  var mes=L.filter(function(x){ return String(x.k).charAt(0)==='m' && Date.now()-(Number(x.hecho)||0)<7*864e5; })[0] || null;
+  if(mes) h+='<div class="pqs-g" style="margin-top:14px;font-size:.8rem;text-transform:none;letter-spacing:0">📅 '+esc(mes.tit)+' · contra '+esc(mes.cmp)+' · '+esc(pqsQuien(mes))+' el '+esc(mes.hTxt||'')+'</div>'+pqsItemHtml(mes);
+  var ant=L.filter(function(x){ return x!==ult && x!==mes; });
+  if(ant.length) h+='<details class="pqs-ant"><summary>Las anteriores ('+ant.length+')</summary>'+ant.map(function(it){
+      return '<details class="pqs-it"><summary><b>'+esc(it.tit)+'</b> · '+esc(it.resumen ? it.resumen.txt : '')+'</summary>'+
+             '<div class="pqs-s">Contra '+esc(it.cmp)+' · '+esc(pqsQuien(it))+' el '+esc(it.hTxt||'')+'</div>'+pqsItemHtml(it)+'</details>';
+    }).join('')+'</details>';
+  return h+'</div>';
+}
+function pqsArmar(otra){
+  if(PQS.armando || !pqsVe()) return;
+  if(otra && !confirm('Claude la vuelve a armar con los números de ahora (cuesta unos centavos de dólar). ¿Seguimos?')) return;
+  PQS.armando=true; PQS.msg=''; pqsRepintar();
+  conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'iaPorque', otra:otra ? 1 : 0 }); }), PQS_CLAUDE_MS, 'tardo_claude')
+    .then(function(r){
+      if(r && r.ok && r.item){ pqsPoner('porque', r.item); return; }
+      var e=(r && r.error) || '';
+      PQS.msg=e==='practica' ? 'En el modo práctica no se le pregunta a Claude.' : e==='ocupado' ? 'Ya la está armando (otro aparato o el WhatsApp de las 08:00): en un minuto tocá «🔄 Actualizar».'
+            : (e==='sin_ventas' ? 'Esa semana no tiene ventas del equipo cargadas.' : ('No se pudo armar ('+(e||'sin respuesta')+(r && r.detalle ? (': '+r.detalle) : '')+').'));
+    })
+    .catch(function(e){ PQS.msg='No se pudo armar ('+String((e && e.message) || e)+'). Probá de nuevo en un rato.'; })
+    .then(function(){ PQS.armando=false; pqsRepintar(); });
+}
+/* ── 🤝 lo que se le manda a Claude de cada persona: SOLO lo que ya cuenta el panel, sin clientes ── */
+function mnoEquipo(lunes){
+  var desde=stockSumarDias(lunes, -28), L=[];
+  (VENDEDORES||[]).forEach(function(v){ if(v && !contaExcluido(v) && !esVendedorLite(v) && !L.some(function(x){ return mismoVendedor(x, v); })) L.push(v); });
+  try{ pryVentas().forEach(function(x){ if(x.amb==='tienda' && x.reg>=desde && x.reg<lunes && x.v && !contaExcluido(x.v) && !L.some(function(y){ return mismoVendedor(y, x.v); })) L.push(x.v); }); }catch(e){}
+  return L;
+}
+var MNO_ALM=/\b(ALMOHAD\w*|ALM|PROTECTOR(ES)?|PROTETOR(ES)?)\b/;
+function mnoDatos(lunes){
+  var hoy=diaNegocio(), desde=stockSumarDias(lunes, -28), ym=hoy.slice(0,7), ventas=[];
+  try{ ventas=pryVentas().filter(function(x){ return x.amb==='tienda'; }); }catch(e){ ventas=[]; }
+  var porId={}; (STATE||[]).forEach(function(p){ if(p) porId[String(p.id)]=p; });
+  return mnoEquipo(lunes).map(function(v){
+    var o={ vend:v, marca:({ heaven:'Heaven', suena:'Sueña' })[marcaDe(v)] || 'sin marca', tienda:sucursalDeVendedor(v, hoy) || '' };
+    var mias=ventas.filter(function(x){ return mismoVendedor(x.v, v) && x.reg>=desde && x.reg<lunes; });
+    o.semanas=[0,1,2,3].map(function(i){ var d=stockSumarDias(desde, i*7), h=stockSumarDias(d, 6), w=mias.filter(function(x){ return x.reg>=d && x.reg<=h; });
+      return { semana:'del '+fmtFechaCorta(d)+' al '+fmtFechaCorta(h), ventas:w.length, bs:Math.round(w.reduce(function(a,x){ return a+(Number(x.bs)||0); }, 0)) }; });
+    var bs4=mias.reduce(function(a,x){ return a+(Number(x.bs)||0); }, 0);
+    o.ventas4semanas=mias.length; o.ventaPromedio=mias.length ? Math.round(bs4/mias.length) : 0;
+    /* venta cruzada: de sus ventas con colchón o somier, cuántas llevaron almohada o protector */
+    var conC=0, conA=0;
+    mias.forEach(function(x){ var p=porId[String(x.id)]; if(!p) return;
+      var pr=p.productos||[], c=pr.some(function(y){ var t=pryTipoProd(y); return t==='colchon' || t==='combo' || t==='somier'; }), a=pr.some(function(y){ return MNO_ALM.test(sinTildes(String((y && y.desc)||'')).toUpperCase()); });
+      if(c){ conC++; if(a) conA++; } });
+    o.ventaCruzada={ ventasConColchonOSomier:conC, deEsasConAlmohadaOProtector:conA };
+    var mine=(STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v); });
+    var fac=mine.filter(function(p){ try{ return docVentaFalta(p); }catch(e){ return false; } });
+    var ventasMes=mine.filter(function(p){ try{ return !fueraDeConta(p, 'tienda') && contaFecha(p).slice(0,7)===ym; }catch(e){ return false; } });
+    o.facturaORemision={ sinNumero:fac.length, ventasDelMes:ventasMes.length, sinNumeroDelMes:fac.filter(function(p){ return contaFecha(p).slice(0,7)===ym; }).length,
+      laMasViejaHaceDias:fac.reduce(function(m,p){ return Math.max(m, diasEntre(contaFecha(p), hoy)); }, 0) };
+    var av=[]; try{ av=ctaAvAbiertos(v); }catch(e){ av=[]; }
+    var tipos={};
+    av.forEach(function(a){
+      var ks=(Array.isArray(a.ks) && a.ks.length) ? a.ks : [ (function(){ try{ return ctaAvSoloFecha(a) ? 'dia' : 'otro'; }catch(e){ return 'otro'; } })() ];
+      ks.forEach(function(k){ var n={ dia:'fechaDeLaFoto', menos:'montoDistinto', mas:'montoDistinto', monto:'montoDistinto', banco:'otroBanco', rep:'comprobanteRepetido' }[k] || 'otro'; tipos[n]=(tipos[n]||0)+1; });
+    });
+    o.avisosDeContabilidadAbiertos={ total:av.length, porTipo:tipos, elMasViejoHaceDias:av.reduce(function(m,a){ return Math.max(m, a.t ? diasEntre(isoDeTsBolivia(a.t), hoy) : 0); }, 0) };
+    try{ var R=alDiaDatos(v), d=function(k){ return R.D.filter(function(x){ return x.k===k; })[0] || {}; };
+      o.panelAlDiaPorcentaje=R.pct; o.entregasProximasSinUbicacion=d('ub').n||0; o.ventasDeKommoSinCompletar=d('ko').n||0;
+      o.efectivoSinEntregar={ bs:Math.round(Number(d('ef').bs)||0), dias:Number(d('ef').dias)||0 };
+    }catch(e){}
+    var mov=mine.filter(function(p){ return contaFecha(p)>=desde; }).map(function(p){ return fmovDe(p); });
+    o.cambiosDeFecha={ ventasConFechaCambiada:mov.filter(function(n){ return n>=1; }).length, ventasCambiadasDosVecesOMas:mov.filter(function(n){ return n>=2; }).length };
+    var atc=(STATE||[]).filter(function(p){ return p && esATC(p.oc) && mismoVendedor(p.vendedor, v) && atcEntro(p)>=stockSumarDias(hoy, -30); }), mot={};
+    atc.forEach(function(p){ var m=String(atcMotivo(p)||'sin motivo').trim().toLowerCase(); mot[m]=(mot[m]||0)+1; });
+    o.atcDeSusVentas30dias={ total:atc.length, porMotivo:mot };
+    return o;
+  });
+}
+function mnoVideos(){ return Object.keys(VIDEOS||{}).map(function(k){ return { k:k, t:VIDEOS[k].t }; }); }
+function mnoEl(v){ return MNO_HOMBRES.test(normNombre(v).toLowerCase()) ? 'él' : 'ella'; }
+function mnoSemana(){ return pqsLunes(diaNegocio()); }
+function mnoItem(){ var s=mnoSemana(); return ((PQS.items && PQS.items.equipo) || []).filter(function(x){ return x.semana===s; })[0] || null; }
+function mnoHtml(){
+  var sem=mnoSemana(), it=mnoItem();
+  var h='<div class="mno" id="pry-mano-box"><div class="mno-h"><span>🤝 Quién necesita una mano esta semana</span>'+
+    (it ? '<button type="button" class="btn btn-ghost btn-sm" id="mno-otra" onclick="mnoPedir(true)"'+(MNO.pidiendo?' disabled':'')+'>'+(MNO.pidiendo ? '⏳ Pidiendo…' : '🔄 Pedirla de nuevo')+'</button>' : '')+'</div>'+
+    '<div class="mno-s">Solo para vos (con la contraseña). Claude lee lo que ya cuenta el panel de cada persona, sin clientes, y no compara a nadie con nadie: van por nombre.</div>';
+  if(!PQS.items) return h+'<div class="pqs-av">'+(PQS.cargando ? '⏳ Leyendo lo guardado…' : 'No se pudo leer lo guardado.')+'</div></div>';
+  if(MNO.msg) h+='<div class="pqs-av pqs-mal">'+esc(MNO.msg)+'</div>';
+  if(!it) return h+'<div class="pqs-av">Todavía no está la de la semana del '+esc(fmtFechaCorta(sem))+'. '+
+    '<button type="button" class="btn btn-sm btn-primary" id="mno-pedir" onclick="mnoPedir(false)"'+(MNO.pidiendo?' disabled':'')+'>'+(MNO.pidiendo ? '⏳ Preguntándole a Claude… (hasta un minuto)' : '🤝 Pedirle a Claude la de esta semana')+'</button></div></div>';
+  var hab=it.hab||{}, ya=function(v){ return !!hab[normNombre(v).toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()]; };
+  var pend=(it.personas||[]).filter(function(p){ return !ya(p.vend); }), hechos=(it.personas||[]).filter(function(p){ return ya(p.vend); });
+  var fila=function(p, hecho){
+    var v=VIDEOS && VIDEOS[p.video], e=mnoEl(p.vend), suc=sucursalDeVendedor(p.vend, diaNegocio()), mk=({ heaven:'Heaven', suena:'Sueña' })[marcaDe(p.vend)] || '';
+    return '<div class="mno-v'+(hecho?' mno-hab':'')+'" data-vend="'+esc(p.vend)+'"><h4><span>'+esc(p.vend)+'</span><small>'+esc([mk, suc].filter(Boolean).join(' · '))+'</small></h4>'+
+      (p.bien ? '<div class="mno-l"><b class="mno-bien">Le va bien</b><span>'+esc(p.bien)+'</span></div>' : '')+
+      (p.cuesta ? '<div class="mno-l"><b class="mno-cuesta">Le cuesta</b><span>'+esc(p.cuesta)+'</span></div>' : '')+
+      (p.ayuda ? '<div class="mno-l"><b class="mno-ayuda">Cómo ayudar</b><span>'+esc(p.ayuda)+'</span></div>' : '')+
+      '<div class="mno-k">'+
+        (v ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="verVideo(\''+esc(p.video)+'\')">🎬 Ver el video: '+esc(v.t)+'</button>'+
+              '<button type="button" class="btn btn-ghost btn-sm" onclick="copyText(videoUrl(\''+esc(p.video)+'\'))">📋 Copiar el enlace del video</button>') : '')+
+        (hecho ? '<button type="button" class="btn btn-ghost btn-sm mno-hable" onclick="mnoHable(this.closest(\'.mno-v\').getAttribute(\'data-vend\'), false)">↩️ Deshacer «Ya hablé»</button>'
+               : '<button type="button" class="btn btn-sm btn-primary mno-hable" onclick="mnoHable(this.closest(\'.mno-v\').getAttribute(\'data-vend\'), true)">✓ Ya hablé con '+e+'</button>')+
+      '</div></div>';
+  };
+  h+='<div class="mno-s" style="margin-top:-4px">Semana del '+esc(fmtFechaCorta(it.semana))+' · Claude, el '+esc(it.hTxt||'')+'</div>';
+  if(!pend.length && !hechos.length) h+='<div class="pqs-av">✅ Nadie pide ayuda esta semana.</div>';
+  else if(!pend.length) h+='<div class="pqs-av">✅ Ya hablaste con todos los que lo necesitaban.</div>';
+  h+=pend.map(function(p){ return fila(p, false); }).join('');
+  var resto=(it.resto||[]);
+  if(resto.length) h+='<div class="mno-n">'+(resto.length===1 ? ('La otra persona ('+esc(resto[0])+'): nada que pida ayuda esta semana.') : ('Las otras '+resto.length+' personas: nada que pida ayuda esta semana ('+esc(resto.join(', '))+').'))+'</div>';
+  if(hechos.length) h+='<details class="pqs-ant"><summary>✓ Ya hablaste con '+hechos.length+' (hasta la semana que viene)</summary>'+hechos.map(function(p){ return fila(p, true); }).join('')+'</details>';
+  return h+'</div>';
+}
+function mnoPedir(otra){
+  if(MNO.pidiendo || !pqsVe()) return;
+  if(otra && !confirm('Claude la vuelve a armar con lo de ahora (cuesta unos centavos de dólar). Lo que marcaste «Ya hablé» se conserva. ¿Seguimos?')) return;
+  var sem=mnoSemana(), datos=[];
+  try{ datos=mnoDatos(sem); }catch(e){ MNO.msg='No se pudo juntar lo de cada persona ('+String((e && e.message) || e)+').'; pqsRepintar(); return; }
+  if(!datos.length){ MNO.msg='No hay vendedoras del equipo para mirar.'; pqsRepintar(); return; }
+  MNO.pidiendo=true; MNO.msg=''; pqsRepintar();
+  conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'iaEquipo', semana:sem, datos:datos, videos:mnoVideos(), otra:otra ? 1 : 0 }); }), PQS_CLAUDE_MS, 'tardo_claude')
+    .then(function(r){
+      if(r && r.ok && r.item){ pqsPoner('equipo', r.item); return; }
+      var e=(r && r.error) || '';
+      MNO.msg={ practica:'En el modo práctica no se le pregunta a Claude.', tope:'Ya se usaron las consultas a Claude de hoy: mañana se puede de nuevo.', ia_apagada:'Claude está apagado (IA_ACTIVA): sin él no se arma.', sin_clave:'Falta la clave de Claude en el servidor.',
+                ocupado:'Ya la está armando otro aparato: en un minuto tocá «🔄 Actualizar».' }[e] || ('No se pudo armar ('+(e||'sin respuesta')+(r && r.detalle ? (': '+r.detalle) : '')+').');
+    })
+    .catch(function(e){ MNO.msg='No se pudo armar ('+String((e && e.message) || e)+'). Probá de nuevo en un rato.'; })
+    .then(function(){ MNO.pidiendo=false; pqsRepintar(); });
+}
+/* El lunes se pide sola UNA vez al abrir Proyección (si todavía no está la de esta semana y Claude puede): el servidor la guarda y no se paga dos veces. */
+function mnoQuizasAuto(){
+  var hoy=diaNegocio();
+  if(!manoVa() || !pqsVe() || !PQS.items || MNO.pidiendo || MNO.auto===hoy || dowDe(hoy)!==1 || PQS.ia || mnoItem()) return;
+  var pane=document.getElementById('cta-pane-proy'); if(!pane || pane.style.display==='none') return;
+  MNO.auto=hoy; mnoPedir(false);
+}
+function mnoHable(v, si){
+  var it=mnoItem(); if(!it || !v) return;
+  var k=normNombre(v).toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim(), antes=JSON.stringify(it.hab||{});
+  it.hab=it.hab||{}; if(si) it.hab[k]=Date.now(); else delete it.hab[k];
+  pqsRepintar();
+  conTopeDuro(Promise.resolve().then(function(){ return apiPost({ action:'iaEquipoHable', semana:it.semana, vend:v, si:!!si }); }), PQS_TOPE_MS, 'tardo_ia_semana')
+    .then(function(r){ if(r && r.ok && r.hab){ it.hab=r.hab; } else { it.hab=JSON.parse(antes); toast('❌ No se guardó «Ya hablé» ('+((r && r.error) || 'sin respuesta')+').','err'); } })
+    .catch(function(e){ it.hab=JSON.parse(antes); toast('❌ No se guardó «Ya hablé»: sin conexión.','err'); })
+    .then(function(){ pqsRepintar(); });
 }
 </script>
 </body>

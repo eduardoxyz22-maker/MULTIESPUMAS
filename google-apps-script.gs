@@ -11193,7 +11193,7 @@ function wpHechos_(lista, k, B) {
                                   : 'Tres semanas: ' + wpRango_(prev2.d, prev2.h) + ' ' + wpBs_(A2.eq.bs) + ' (' + A2.eq.n + ') · ' + wpRango_(prev.d, prev.h) + ' ' + wpBs_(Ap.eq.bs) + ' (' + Ap.eq.n + ') · ' + wpRango_(cur.d, cur.h)) +
                           ' ' + wpBs_(A.eq.bs) + ' (' + A.eq.n + ')');
   var tk = function (x) { return x.n ? x.bs / x.n : 0; };
-  if (A.eq.n && Ap.eq.n) poner('E', 'Venta promedio: ' + wpBs_(tk(A.eq)) + ' (' + prevTxt + ', ' + wpBs_(tk(Ap.eq)) + ')');
+  if (A.eq.n && Ap.eq.n) poner('E', 'Venta promedio: ' + wpBs_(tk(A.eq)) + ' (' + (mes ? waMesNom_(prev.ym) : 'la anterior') + ', ' + wpBs_(tk(Ap.eq)) + ')');
   /* Cada tienda y cada vendedora: lo que más se movió primero. */
   var orden = function (a, b) { return function (x, y) { return Math.abs(((a[y] || {}).bs || 0) - ((b[y] || {}).bs || 0)) - Math.abs(((a[x] || {}).bs || 0) - ((b[x] || {}).bs || 0)) || (x < y ? -1 : 1); }; };
   var claves = function (a, b) { var o = {}; Object.keys(a).forEach(function (x) { o[x] = 1; }); Object.keys(b).forEach(function (x) { o[x] = 1; }); return Object.keys(o); };
