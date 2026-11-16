@@ -3855,7 +3855,7 @@ function hcTocar(){
   var D=hcDatos(); if(!D || D.k!=='bf' || !UNLOCKED) return;
   try{
     showView('conta'); segSet('cta-tab','proy'); setContaTab('proy');
-    var ir=function(){ if(document.getElementById('pix-s-bf') && typeof pixIr==='function'){ pixIr('bf'); return; }
+    var ir=function(){ if(document.querySelector('.pix-s[data-k="bf"]') && typeof pixIr==='function'){ pixIr('bf'); return; }   // la sección del índice de Proyección (se arma al vuelo)
       var b=document.getElementById('pry-bf'); if(!b) return; var dest=b.getBoundingClientRect().top+window.scrollY; window.scrollTo(0, Math.max(0, dest-hdrAltoEn(dest)-10)); };
     setTimeout(ir, 350);
   }catch(e){}
