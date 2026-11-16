@@ -8566,6 +8566,21 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .p398-cinta .ic{width:34px;height:34px;border-radius:10px;background:var(--doc,#00B5AD);color:#fff;display:grid;place-items:center;font-size:1.15rem;flex:none}
 .p398-cinta b{font-size:.98rem;font-weight:900;letter-spacing:.01em}
 .p398-cinta small{display:block;font-weight:600;color:#475569;font-size:.74rem}
+/* 399 · los botones del turno con la hora y los lugares */
+.field.p399-campo{grid-column:1/-1}
+#f-turno.p399{display:grid!important;grid-template-columns:1fr 1fr;gap:10px;border:0!important;background:transparent!important;overflow:visible!important;width:100%;box-shadow:none!important}
+#f-turno.p399 button{position:relative;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:10px;row-gap:3px;align-items:center;text-align:left;padding:10px 13px!important;border:1.5px solid #dbe5e4!important;border-radius:14px!important;background:#fff!important;color:#1f2f2e!important;font-weight:600;min-height:0;height:auto}
+#f-turno.p399 button .ic{grid-row:1/3;font-size:1.5rem;line-height:1}
+#f-turno.p399 button b{font-size:.95rem;font-weight:900}
+#f-turno.p399 button small{font-size:.74rem;color:#5b7473;font-weight:700}
+#f-turno.p399 button .bar{grid-column:1/-1;height:7px;border-radius:7px;background:#eef2f2;overflow:hidden;margin-top:4px}
+#f-turno.p399 button .bar i{display:block;height:100%;border-radius:7px}
+#f-turno.p399 button .lib{grid-column:1/-1;font-size:.76rem;font-weight:900}
+#f-turno.p399 button.active{border-color:#00B5AD!important;background:#e9fbf9!important;box-shadow:0 0 0 3px rgba(0,181,173,.2)}
+#f-turno.p399 button.active::after{content:'✓ elegido';position:absolute;right:10px;top:10px;font-size:.7rem;color:#fff;background:#00B5AD;border-radius:999px;padding:2px 8px;font-weight:900}
+#f-turno.p399.seg-err{box-shadow:0 0 0 3px var(--red-lt)!important;border-radius:16px}
+.p399-dia{font-weight:600;color:var(--muted)}
+@media (max-width:420px){ #f-turno.p399{grid-template-columns:1fr} }
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -28469,6 +28484,38 @@ function ajustarTurnoSeg(fecha){
   pm.disabled=sab; pm.style.opacity=sab?'.4':''; pm.style.cursor=sab?'not-allowed':'';
   pm.title=sab?'Los sábados solo hay turno AM':'';
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
+  try{ turnoCardsPintar(fecha); }catch(e){}   // 🎨 (16/11, mejora 399) los botones dicen los lugares y la hora
+}
+/* 🎨 (16/11, mejora 399; dueño: «Los botones del turno dicen los lugares y la hora») «Turno de entrega» eran dos botoncitos «🌅 AM» «🌆 PM»: los
+   lugares que quedan estaban arriba de todo o en la agenda (lejos de este campo) y la hora que se le promete al cliente no aparecía en el
+   formulario. Ahora son dos tarjetas a lo ancho: «🌅 Mañana · llega de 9:00 a 12:00 · 8 libres de 12» y «🌆 Tarde · llega de 14:30 a 18:30 ·
+   10 libres de 13», con su barrita verde/ámbar/roja como la agenda y «✓ elegido» en la tocada. Un turno lleno dice «Lleno (12 de 12)» en rojo
+   (se puede tocar igual, como siempre: avisa). El sábado la tarde queda apagada, como siempre. Los MISMOS botones (`data-val`, `.active`,
+   `initSeg`): solo cambia lo que dicen. Los lugares son `cuposUsadosTurno`/`limTurno` (los de la agenda) y las horas, las del mensaje al
+   cliente (`NX_RANGO`). En Playwright como antes salvo `window.TURNO_CARDS_PRUEBA`. `tests/test_v399_turno_cards.js`. */
+function turnoCardsVa(){ try{ return vdVa('TURNO_CARDS_PRUEBA'); }catch(e){ return false; } }
+function turnoCardsPintar(fecha){
+  var seg=document.getElementById('f-turno'); if(!seg) return;
+  var fld=seg.closest('.field'), va=turnoCardsVa();
+  if(!va){ if(seg.classList.contains('p399')){ seg.classList.remove('p399'); if(fld) fld.classList.remove('p399-campo');
+      [].forEach.call(seg.querySelectorAll('button'), function(b){ b.innerHTML=(b.getAttribute('data-val')==='PM') ? '🌆 PM' : '🌅 AM'; }); }
+    return; }
+  seg.classList.add('p399'); if(fld) fld.classList.add('p399-campo');
+  fecha=fecha || (document.getElementById('f-fecha')||{}).value || todayStr();
+  var avisa=false; try{ avisa=avisaFormOn(); }catch(e){}
+  var N={ AM:['🌅','Mañana'], PM:['🌆','Tarde'] };
+  [].forEach.call(seg.querySelectorAll('button'), function(b){
+    var t=b.getAttribute('data-val'), lim=limTurno(fecha, t), u=cuposUsadosTurno(fecha, t), lib=Math.max(0, lim-u), R=NX_RANGO[t]||[];
+    var col=lib<=0 ? '#e11d48' : (lib<=3 ? '#d97706' : '#16a34a'), pct=lim>0 ? Math.min(100, Math.round(100*u/lim)) : 0;
+    var h='<span class="ic">'+N[t][0]+'</span><b>'+N[t][1]+'</b><small>'+(R[1] ? ('llega de '+R[1]+' a '+R[2]) : '')+'</small>';
+    if(avisa) h+='<span class="lib" style="color:#64748b">sin día: el cliente avisa</span>';
+    else if(!(lim>0)) h+='<span class="lib" style="color:#64748b">'+((t==='PM' && diaSabado(fecha)) ? 'el sábado no hay camión a la tarde' : 'ese día no hay camión')+'</span>';
+    else h+='<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></div><span class="lib" style="color:'+col+'">'+(lib<=0 ? ('Lleno ('+u+' de '+lim+')') : (lib+(lib===1?' libre':' libres')+' de '+lim))+'</span>';
+    if(b._p399!==h){ b.innerHTML=h; b._p399=h; }
+  });
+  var lab=fld && fld.querySelector('label'), d=lab && lab.querySelector('.p399-dia');
+  if(lab && !d){ d=document.createElement('span'); d.className='p399-dia'; lab.insertBefore(d, lab.querySelector('.hint')); }
+  if(d){ var dt=(fecha && !avisa) ? (' · '+(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha)) : ''; if(d.textContent!==dt) d.textContent=dt; }
 }
 /* ✨ (§4if) Todo lo que repinta los cupos repinta también las escenas del formulario (días, camión y el mes). */
 function renderCupoForm(){ renderCupoFormBase(); try{ fhPintar(); }catch(e){} try{ notaLeerPintar(); }catch(e){} fxFormPintar(); try{ apartoMirar(); }catch(e){} }   // 🧾 (mejora 216) el botón «Leer la nota» aparece cuando se sabe la versión del servidor · ⏳ (267) el lugar apartado sigue al día y al turno elegidos
