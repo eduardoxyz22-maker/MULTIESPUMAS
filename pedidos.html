@@ -3452,6 +3452,27 @@ html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .wz-tit small, 
 html.hdr-bajo .hdr-cuenta{ padding-top:5px; padding-bottom:5px; }
 @media(prefers-reduced-motion:reduce){ .hdr-cuenta, .hdr-cuenta::after{ animation:none !important; } }
 @media print{ .hdr-cuenta{ display:none !important; } }
+/* 435 · Black Friday (y los otros temas oscuros) sin franjas blancas: la barrita de la meta debajo del encabezado (342) y la banda de los filtros
+   de Administración (pegada arriba al bajar) pasan a vidrio oscuro con borde dorado, y la leyenda de colores va sobre su cajita oscura.
+   `html.v-osc-franjas` (la pone el <head>); Navidad y Año Nuevo solo con su fondo de noche (431). */
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta{
+  background:linear-gradient(180deg,rgba(18,18,20,.96),rgba(10,10,12,.96)); color:#fafaf9; border-top:1px solid rgba(250,204,21,.45); border-bottom:1px solid rgba(250,204,21,.18); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta:hover, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta:hover{ background:rgba(28,25,23,.98); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-x, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-x{ color:#d6d3d1; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bar, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bar{ background:rgba(255,255,255,.12); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-cerca{ background:linear-gradient(90deg,#f59e0b,#facc15); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-cerca{ background:rgba(250,204,21,.28); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-cerca{ background:#facc15; color:#1c1917; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-ok{ background:#2dd4bf; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-ok{ background:rgba(45,212,191,.3); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-ok{ background:#2dd4bf; color:#042f2e; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-mal{ background:#f87171; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-mal{ background:rgba(248,113,113,.3); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-mal{ background:#f87171; color:#450a0a; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .qchips-tabla, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .qchips-tabla{
+  background:rgba(14,14,16,.88); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border:1px solid rgba(250,204,21,.28); border-radius:16px; padding:10px 12px 12px; box-shadow:0 12px 26px -18px rgba(0,0,0,.9); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .af-ley, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .af-ley{
+  background:rgba(14,14,16,.6); border-radius:12px; padding:6px 12px; align-self:flex-start; width:fit-content; max-width:100%; }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
