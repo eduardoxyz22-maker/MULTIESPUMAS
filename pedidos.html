@@ -27333,14 +27333,22 @@ function fmovDiaLlamar(fNueva){
   var tope=stockSumarDias(todayStr(), AVISA_MAX_DIAS);
   return String(fNueva)>tope ? tope : String(fNueva);
 }
-/* La pregunta. true = el cliente todavía no sabe → «avisa cuándo». Cancelar recuerda la respuesta para ese día. */
-function fmovPreguntar(p, fNueva){
+/* La pregunta. true = el cliente todavía no sabe → «avisa cuándo». Cancelar recuerda la respuesta para ese día.
+   ❓ (16/11, la 282 en todo el panel) Con `otraVez` (lo que preguntó, para volver a correrlo), la ventana del panel: devuelve null mientras
+   espera la respuesta (el que llama corta ahí). Sin `otraVez` (✏️ Editar dentro de `submitPedido`), la del navegador, como antes. */
+function fmovPreguntar(p, fNueva, otraVez){
   var por=fmovPorque(p, fNueva); if(!por) return false;
   var fl=fmovDiaLlamar(fNueva);
-  var si=confirm('📅 ¿El cliente todavía no sabe el día?\n\n'+por+'\n\n'+
+  var _t='📅 ¿El cliente todavía no sabe el día?\n\n'+por+'\n\n'+
     'Si todavía no eligió, no le pongas un día de relleno: el bot le manda esa fecha al cliente, a logística le llega el cambio y ocupa cupo del camión.\n\n'+
     '• Aceptar: todavía no sabe → «📦 El cliente avisa cuándo» (sin día de entrega; volver a llamar el '+fmtFecha(fl)+').\n'+
-    '• Cancelar: ya eligió el '+fmtFecha(fNueva)+' → moverlo a ese día.');
+    '• Cancelar: ya eligió el '+fmtFecha(fNueva)+' → moverlo a ese día.';
+  var si=(typeof otraVez==='function') ? preguntaYa(_t, { icono:'📅', aviso:true, titulo:'¿El cliente todavía no sabe el día?', sub:por,
+      lineas:['Si todavía no eligió, no le pongas un día de relleno: el bot le manda esa fecha al cliente, a logística le llega el cambio y ocupa cupo del camión.',
+              'Todavía no sabe: queda «📦 El cliente avisa cuándo», sin día de entrega, y lo volvés a llamar el '+fmtFecha(fl)+'.',
+              'Ya eligió el '+fmtFecha(fNueva)+': se mueve a ese día.'],
+      no:'📅 Ya eligió: moverlo al '+fmtFechaCorta(fNueva), si:'📦 Todavía no sabe' }, otraVez) : confirm(_t);
+  if(si===null) return null;
   if(!si) FMOV_YA[String(p.id)+'|'+String(fNueva)]=1;
   return si;
 }
@@ -27412,8 +27420,12 @@ function abrirVentaTienda(conCot){
   var F=null;
   if(COT_VENTA && COT_VENTA.id && !EDIT_ID){
     var c0=cotDe(COT_VENTA.id), q='la cotización '+(COT_VENTA.num||'')+(c0 ? (' de '+cotQuien(c0)) : '');
-    if(conCot===true || confirm('🧾 Estabas cargando la venta de '+q+'.\n\n• Aceptar: esta venta de tienda ES esa: pasa con el cliente y los productos, y al guardarla la cotización queda «compró».\n• Cancelar: es OTRA venta de tienda, nueva y vacía.'))
-      F=cotVentaFoto();
+    var _esa=(conCot===true) ? true : preguntaYa('🧾 Estabas cargando la venta de '+q+'.\n\n• Aceptar: esta venta de tienda ES esa: pasa con el cliente y los productos, y al guardarla la cotización queda «compró».\n• Cancelar: es OTRA venta de tienda, nueva y vacía.',
+      { icono:'🧾', titulo:'¿Esta venta de tienda es la de '+q+'?', sub:'Estabas cargando la venta de '+q,
+        lineas:['Es esa: pasa con el cliente y los productos, y al guardarla la cotización queda «compró».', 'Es otra: se abre una venta de tienda nueva y vacía.'],
+        no:'Es otra: una venta nueva', si:'🧾 Sí, es esa' }, function(){ abrirVentaTienda(conCot); });   // ❓ (16/11) la ventana del panel
+    if(_esa===null) return;
+    if(_esa) F=cotVentaFoto();
   }
   EDIT_ID=null;
   showView('form'); resetForm();      // resetForm apaga el modo: se prende después
@@ -27746,7 +27758,7 @@ function cotEmpezar(){
   if(EDIT_ID){ toast('✏️ Estás corrigiendo un pedido: guardalo o tocá «Cancelar edición», y después «🧾 Cotizar».','err',8000); showView('form'); return false; }
   showView('form');
   if(docTipoSel()!=='COT' || DOC_TIPO_PINTADO!=='COT'){
-    if(!cotConfirmarPasar()) return false;   // un pedido a medio cargar: Cancelar = no cambia nada
+    if(!cotConfirmarPasar(cotEmpezar)) return false;   // un pedido a medio cargar: Cancelar = no cambia nada (❓ esperando la respuesta, tampoco)
     COT_PASAR_YA=true;
     try{
       if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }   // una cotización no es una venta de tienda
@@ -27764,7 +27776,8 @@ var COT_PASAR_YA=false;   // `cotEmpezar` ya preguntó: el `setDocTipo` que llam
 function cotPuedeEmpezar(){
   if(!cotServidorOk()){ cotFaltaServidor(); return false; }
   if(EDIT_ID){ toast('🧾 Una cotización se arma en un formulario nuevo: guardá este pedido o tocá «Cancelar edición».','err',8000); return false; }
-  if(!COT_PASAR_YA && !cotConfirmarPasar()) return false;
+  /* ❓ (16/11) Esperando la respuesta, el botón vuelve al tipo que estaba (`setDocTipo`, como con «Cancelar»); con «sí», se lo vuelve a poner en 🧾. */
+  if(!COT_PASAR_YA && !cotConfirmarPasar(function(si){ if(si){ segSet('f-doc-tipo','COT'); setDocTipo(); } })) return false;
   if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA){ VENTA_TIENDA=false; pintarModoTienda(); }
   return true;
 }
@@ -27793,13 +27806,19 @@ function cotFormMedio(){
     return lim(formNuevoHuella())!==lim(FORM_NUEVO_BASE);
   }catch(e){ return false; }
 }
-function cotConfirmarPasar(){
+/* ❓ (16/11) La ventana del panel: devuelve null mientras espera (quien llama corta ahí y no cambia nada) y `otraVez` vuelve a correr lo
+   que preguntó con la respuesta. */
+function cotConfirmarPasar(otraVez){
   if(EDIT_ID) return true;   // editando no se llega: `cotPuedeEmpezar` lo frena antes
   var L=cotLoQueSeBorra();
   if(!L.length && !cotFormMedio()) return true;
-  return confirm('🧾 Tenés un pedido a medio cargar y SIN GUARDAR.\n\nAl pasarlo a cotización se quedan el cliente, el celular y los productos'+
+  return preguntaYa('🧾 Tenés un pedido a medio cargar y SIN GUARDAR.\n\nAl pasarlo a cotización se quedan el cliente, el celular y los productos'+
     (L.length ? (', pero se BORRA '+L.join(', ')+'.') : '.')+
-    ' Lo de la entrega (fecha, turno, zona, dirección, ubicación, observaciones) no va en la cotización.\n\n• Aceptar: pasarlo a cotización.\n• Cancelar: seguir con el pedido como está.');
+    ' Lo de la entrega (fecha, turno, zona, dirección, ubicación, observaciones) no va en la cotización.\n\n• Aceptar: pasarlo a cotización.\n• Cancelar: seguir con el pedido como está.',
+    { icono:'🧾', aviso:true, titulo:'¿Pasar este pedido a cotización?', sub:'Tenés un pedido a medio cargar y SIN GUARDAR',
+      lineas:['Se quedan el cliente, el celular y los productos.'].concat(L.length ? ['Se BORRA '+L.join(', ')+'.'] : [])
+        .concat(['Lo de la entrega (fecha, turno, zona, dirección, ubicación, observaciones) no va en la cotización.']),
+      no:'Seguir con el pedido', si:'🧾 Pasarlo a cotización', peligro:L.length>0 }, otraVez);
 }
 function cotFormPintar(limpiar){
   var view=document.getElementById('view-form'), cot=(docTipoSel()==='COT');
@@ -28094,8 +28113,13 @@ function cotComproAbrir(id){
   if(EDIT_ID){
     var q=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
     var quien=q ? ((q.cliente||'sin nombre')+(q.oc?(' ('+ocEtiq(q.oc)+')'):'')) : 'otro pedido';
-    if(!confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n• Aceptar: ese pedido queda como estaba y se abre la venta NUEVA de la cotización.\n• Cancelar: volvés a esa edición.')){ closeModal(); showView('form'); return; }
-  } else if(!confirmarReemplazoForm()) return;
+    var _sigo=preguntaYa('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n• Aceptar: ese pedido queda como estaba y se abre la venta NUEVA de la cotización.\n• Cancelar: volvés a esa edición.',
+      { icono:'✏️', aviso:true, titulo:'¿Abrir la venta de la cotización sin guardar la edición?', sub:'Estabas editando el pedido de '+quien+' y NO lo guardaste',
+        lineas:['Ese pedido queda como estaba y se abre la venta NUEVA de la cotización.', 'Si no, volvés a esa edición.'],
+        no:'✏️ Volver a la edición', si:'🧾 Abrir la venta nueva' }, function(){ cotComproAbrir(id); });   // ❓ (16/11) la ventana del panel
+    if(_sigo===null) return;
+    if(!_sigo){ closeModal(); showView('form'); return; }
+  } else if(!confirmarReemplazoForm(function(){ cotComproAbrir(id); })) return;
   closeModal(); showView('form'); resetForm();
   COT_VENTA={ id:String(c.id), num:c.num||'', total:Number(c.total)||0, dia:c.dia||'' };
   var pon=function(fid, v){ var e=document.getElementById(fid); if(e) e.value=String(v==null?'':v).trim(); };
@@ -28803,14 +28827,21 @@ function formNuevoHuella(){
   });
   return JSON.stringify([campos, VENTA_TIENDA, docTipoSel(), segVal('f-pagado'), segVal('f-turno'), FORM_COMPS, FORM_COMPS2, FORM_ATC_FOTOS]);
 }
-function confirmarReemplazoForm(){
+/* ❓ (16/11) Con `otraVez` (lo que preguntó, para volver a correrlo), la ventana del panel: devuelve null mientras espera la respuesta
+   (quien llama corta ahí, sin abrir nada). Sin `otraVez`, la del navegador, como antes. */
+function confirmarReemplazoForm(otraVez){
   var b=document.getElementById('f-submit');
   if(b && b.disabled){
     toast('Hay un pedido enviándose. Esperá el resultado antes de abrir otra edición.','err',7000);
     showViewAhora('form'); return false;
   }
   if(EDIT_ID || !FORM_NUEVO_BASE || formNuevoHuella()===FORM_NUEVO_BASE) return true;
-  if(!confirm('Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: descartar lo escrito y las imágenes sin guardar para abrir la otra venta.\nCancelar: volver al pedido nuevo y conservarlo.')){
+  var _t='Tenés un pedido NUEVO a medio llenar y SIN GUARDAR.\n\nAceptar: descartar lo escrito y las imágenes sin guardar para abrir la otra venta.\nCancelar: volver al pedido nuevo y conservarlo.';
+  var _si=(typeof otraVez==='function') ? preguntaYa(_t, { icono:'📝', aviso:true, titulo:'¿Descartar el pedido nuevo que estás llenando?', sub:'Tenés un pedido NUEVO a medio llenar y SIN GUARDAR',
+      lineas:['Se descarta lo escrito y las imágenes sin guardar, y se abre la otra venta.', 'Si no, volvés al pedido nuevo y queda como está.'],
+      no:'📝 Volver al pedido nuevo', si:'🗑 Descartarlo y abrir la otra', peligro:true }, otraVez) : confirm(_t);
+  if(_si===null) return null;
+  if(!_si){
     showViewAhora('form'); return false;
   }
   descartarImagenesSinPegar();
@@ -28893,7 +28924,7 @@ function resetForm(){
 function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
-  if(!confirmarReemplazoForm()) return;
+  if(!confirmarReemplazoForm(function(){ editPedido(id); })) return;   // ❓ (16/11) la ventana del panel: al contestar, vuelve a abrir
   try{ apartoOlvidar(); }catch(e){}   // ⏳ (14/11, 267) se deja el pedido nuevo para corregir otro: lo apartado se suelta
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null; REPETIR_DE='';   // 🔁 (§4ok-101)
   COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251)
@@ -29031,9 +29062,14 @@ function tabNuevoPedido(){
   if(EDIT_ID && !enForm){
     var p=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
     var quien=p ? ((p.cliente||'sin nombre')+(p.oc?(' ('+ocEtiq(p.oc)+')'):'')) : 'otro pedido';
-    if(confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
+    var _nuevo=preguntaYa('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
                '• Aceptar: ese pedido queda como estaba y empezás un pedido NUEVO.\n'+
-               '• Cancelar: volvés a esa edición.')){
+               '• Cancelar: volvés a esa edición.',
+      { icono:'✏️', aviso:true, titulo:'¿Empezar un pedido nuevo sin guardar la edición?', sub:'Estabas editando el pedido de '+quien+' y NO lo guardaste',
+        lineas:['Ese pedido queda como estaba y empezás un pedido NUEVO.', 'Si no, volvés a esa edición.'],
+        no:'✏️ Volver a la edición', si:'＋ Empezar uno nuevo' }, tabNuevoPedido);   // ❓ (16/11) la ventana del panel
+    if(_nuevo===null) return;
+    if(_nuevo){
       showView('form'); resetForm(); window.scrollTo(0,0);
       return;
     }
@@ -31994,11 +32030,14 @@ function admAbrirSesion(recuerdo){
     nxLS(LS_ADM_DEV, 1); nxBadges();   // 🔔 (§4js, A3) este dispositivo es de administración: la pestaña muestra los sin camión
     setTimeout(function(){ try{ saludDelDia(); }catch(e){} }, 400);   // 🌅 (§4im) una vez por mañana, solo acá (con la clave)
 }
+/* ❓ (16/11) Las dos preguntas y los dos avisos en la ventana del panel (al contestar la primera, vuelve a correr y pide la segunda). */
 function changePass(){
-  var a=prompt('Nueva contraseña (mínimo 4 caracteres):'); if(a==null) return;
-  if(a.length<4){ alert('Muy corta.'); return; }
-  var b=prompt('Repetí la nueva contraseña:'); if(b==null) return;
-  if(a!==b){ alert('No coinciden.'); return; }
+  var a=preguntaTextoYa('Nueva contraseña (mínimo 4 caracteres):', '', { icono:'🔑', titulo:'Nueva contraseña', sub:'Mínimo 4 caracteres · queda en este dispositivo',
+    campoAyuda:'mínimo 4 caracteres', no:'Cancelar', si:'Seguir' }, changePass); if(a==null) return;
+  if(a.length<4){ avisoVentana('Muy corta.', { icono:'⚠️', aviso:true, titulo:'Muy corta', lineas:['La contraseña tiene que tener 4 caracteres o más. Tocá «🔑 Cambiar contraseña» otra vez.'] }); return; }
+  var b=preguntaTextoYa('Repetí la nueva contraseña:', '', { icono:'🔑', titulo:'Repetí la nueva contraseña', sub:'Para estar seguros de que la escribiste bien',
+    no:'Cancelar', si:'💾 Cambiar la contraseña' }, changePass); if(b==null) return;
+  if(a!==b){ avisoVentana('No coinciden.', { icono:'⚠️', aviso:true, titulo:'No coinciden', lineas:['Las dos contraseñas tienen que ser iguales. Tocá «🔑 Cambiar contraseña» otra vez.'] }); return; }
   localStorage.setItem(LS_ADMIN,sha256(a));
   try{ admDiaOlvidar(); }catch(e){}   // 🔓 (302) la recordada del día era de la contraseña de antes
   toast('Contraseña actualizada ✓ (en este dispositivo)','ok');
@@ -32748,8 +32787,11 @@ function ctaRegDocGuardar(id, solo){
   if(!num && !solo){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° (o tocá «Solo marcar cargada»).','err'); return; }
   if(num){
     var otra=docNumOtraVenta(p, t, num);
-    if(otra && !confirm('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
-       [ocEtiq(otra.oc||''), otra.cliente||'', otra.vendedor||''].filter(Boolean).join(' · ')+'.\n\n¿La anoto igual en esta?')) return;
+    if(otra && !preguntaYa('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
+       [ocEtiq(otra.oc||''), otra.cliente||'', otra.vendedor||''].filter(Boolean).join(' · ')+'.\n\n¿La anoto igual en esta?',
+       { icono:'🧾', aviso:true, titulo:'¿Anotar la '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' igual?', sub:'Ya está anotada en otra venta',
+         lineas:[[ocEtiq(otra.oc||''), otra.cliente||'', otra.vendedor||''].filter(Boolean).join(' · '), 'Si te equivocaste de número, volvé y corregilo.'],
+         no:'✏️ Volver y corregir', si:'💾 Anotarla igual' }, function(){ ctaRegDocGuardar(id, solo); })) return;   // ❓ (16/11) la ventana del panel
   }
   try{ ctaPagoRecordar(); }catch(x){}
   try{ if(typeof rcResolver==='function') rcResolver(p); }catch(x){}   // 🔁 (mejora 380) volver a marcarla cierra «cambió después de cargarla»
@@ -33027,9 +33069,13 @@ function borrUnirCargadas(todos){
   var L=borrCargadasDe(lista);
   if(!L.length){ toast('No hay ventas de Kommo ya cargadas para unir.','ok'); return; }
   if(!CONNECTED){ toast('Este aparato no está conectado a la planilla: conectate para unirlas.','err', 7000); return; }
-  if(!confirm('🔗 ¿Unir '+(L.length===1?'la venta de Kommo que ya está cargada':('las '+L.length+' ventas de Kommo que ya están cargadas'))+'?\n\n'+
+  if(!preguntaYa('🔗 ¿Unir '+(L.length===1?'la venta de Kommo que ya está cargada':('las '+L.length+' ventas de Kommo que ya están cargadas'))+'?\n\n'+
     L.slice(0, 12).map(function(o){ return '• '+String(o.b.cliente||'(sin nombre)').trim()+' → '+borrOcDia(o.g.p); }).join('\n')+(L.length>12?('\n… y '+(L.length-12)+' más'):'')+
-    '\n\nCada una queda como UNA sola venta: la que ya está en el panel, con la marca de Kommo. La tarjeta se va de la bandeja.')) return;
+    '\n\nCada una queda como UNA sola venta: la que ya está en el panel, con la marca de Kommo. La tarjeta se va de la bandeja.',
+    { icono:'🔗', titulo:'¿Unir '+(L.length===1?'la venta de Kommo que ya está cargada':('las '+L.length+' ventas de Kommo que ya están cargadas'))+'?',
+      sub:'Cada una queda como UNA sola venta: la que ya está en el panel, con la marca de Kommo. La tarjeta se va de la bandeja.',
+      lineas:L.slice(0, 12).map(function(o){ return String(o.b.cliente||'(sin nombre)').trim()+' → '+borrOcDia(o.g.p); }).concat(L.length>12 ? ['… y '+(L.length-12)+' más'] : []),
+      no:'No, dejarlas', si:(L.length===1 ? '🔗 Sí, unirla' : ('🔗 Sí, unir las '+L.length)) }, function(){ borrUnirCargadas(todos); })) return;   // ❓ (16/11) la ventana del panel
   var R={ ok:0, mal:0 };
   BORR_UNIENDO={ i:0, n:L.length }; renderBorrSiActivo();
   var paso=function(k){
@@ -34194,7 +34240,9 @@ function admTurnoPuede(p){
 function admTurnoCambiar(id){
   var p=findById(id); if(!p) return;
   var a=normTurno(p.turno)==='PM'?'AM':'PM';
-  if(!confirm('¿Pasar el pedido de '+(p.cliente||'')+' al turno de la '+(a==='PM'?'TARDE':'MAÑANA')+' ('+fmtFecha(p.fecha)+')?')) return;
+  if(!preguntaYa('¿Pasar el pedido de '+(p.cliente||'')+' al turno de la '+(a==='PM'?'TARDE':'MAÑANA')+' ('+fmtFecha(p.fecha)+')?',
+    { icono:(a==='PM'?'🌆':'🌅'), titulo:'¿Pasarlo al turno de la '+(a==='PM'?'tarde':'mañana')+'?', sub:(p.cliente||'')+' · '+fmtFecha(p.fecha),
+      no:'No, dejarlo', si:(a==='PM'?'🌆 Pasar a la tarde':'🌅 Pasar a la mañana') }, function(){ admTurnoCambiar(id); })) return;   // ❓ (16/11) la ventana del panel
   var abierta=document.getElementById('modal').classList.contains('on');
   cambiarTurno(id, a);
   if(!abierta) closeModal();   // `cambiarTurno` reabre la ficha (lo usa la ficha grande): desde la ficha chica no hace falta
@@ -34803,9 +34851,14 @@ function rptTiendasJuntar(s){
   var msg='📅 ¿Mandar las reposiciones de '+s+' el mismo día?\n\nPasan al '+fmtFecha(f)+' · turno '+t+' (el de '+(ocEtiq(base.oc)||'la primera')+'):\n'+
     mover.map(function(p){ return '   • '+(ocEtiq(p.oc)||'RPT')+' · hoy para el '+rptDiaTxt(p); }).join('\n')+
     (av.length ? ('\n\n⚠️ Ojo:\n   • '+av.join('\n   • ')) : '')+'\n\n¿Seguir?';
-  if(!confirm(msg)) return Promise.resolve([]);
-  for(var i=0;i<mover.length;i++){ if(!reproStockConfirmar(mover[i], f, t)) return Promise.resolve([]); }
-  if(av.length && !asegurarClaveAdmin()) return Promise.resolve([]);
+  /* ❓ (16/11) Las preguntas en la ventana del panel: al contestar cada una vuelve a correr y sigue con la próxima. */
+  var _otra=function(){ rptTiendasJuntar(s); };
+  if(!preguntaYa(msg, { icono:'📅', aviso:av.length>0, titulo:'¿Mandar las reposiciones de '+s+' el mismo día?',
+      sub:'Pasan al '+fmtFecha(f)+' · turno '+t+' (el de '+(ocEtiq(base.oc)||'la primera')+')',
+      lineas:mover.map(function(p){ return (ocEtiq(p.oc)||'RPT')+' · hoy para el '+rptDiaTxt(p); }).concat(av.map(function(a){ return '⚠️ '+a; })),
+      no:'No, dejarlas', si:'📅 Mandarlas juntas' }, _otra)) return Promise.resolve([]);
+  for(var i=0;i<mover.length;i++){ if(!reproStockConfirmar(mover[i], f, t, _otra)) return Promise.resolve([]); }
+  if(av.length && !asegurarClaveAdmin(_otra)) return Promise.resolve([]);   // ❓ (16/11) con la clave en la ventana, sigue solo
   var hechos=[];
   return mover.reduce(function(pr, p){ return pr.then(function(){
     var q=findById(p.id); if(!q || q.entregado) return;
@@ -34888,8 +34941,11 @@ function planNombreDarVuelta(k){
   var nueva=o ? stockMedidaReves(o.medida) : ''; if(!o || !nueva){ toast('Ese renglón ya no tiene la medida al revés.','ok'); try{ renderStock(); }catch(e){} return Promise.resolve([]); }
   var X=planNombreDatos({ lista:[o] })[0], peds=X ? X.peds : [];
   if(!peds.length){ toast('No hay pedidos pendientes con esa medida.','ok'); return Promise.resolve([]); }
-  if(!confirm('↔️ ¿Dar vuelta la medida?\n\n«'+(o.desc||'')+'» '+o.medida+' pasa a '+nueva+' en:\n'+peds.map(function(p){ return '   • '+(ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).join('\n')+
-    '\n\nSi no es eso, cancelá y abrí el pedido para corregirlo a mano.')) return Promise.resolve([]);
+  if(!preguntaYa('↔️ ¿Dar vuelta la medida?\n\n«'+(o.desc||'')+'» '+o.medida+' pasa a '+nueva+' en:\n'+peds.map(function(p){ return '   • '+(ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).join('\n')+
+    '\n\nSi no es eso, cancelá y abrí el pedido para corregirlo a mano.',
+    { icono:'↔️', titulo:'¿Dar vuelta la medida a '+nueva+'?', sub:'«'+(o.desc||'')+'» '+o.medida+' pasa a '+nueva+' en:',
+      lineas:peds.map(function(p){ return (ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).concat(['Si no es eso, abrí el pedido y corregilo a mano.']),
+      no:'No, dejarla', si:'↔️ Dar vuelta' }, function(){ planNombreDarVuelta(k); })) return Promise.resolve([]);   // ❓ (16/11) la ventana del panel
   var prs=[];
   peds.forEach(function(p){
     var q=findById(p.id); if(!q) return; var cambio=false;
@@ -35041,7 +35097,9 @@ function atcIaLeer(forzar){
   });
 }
 function atcIaReleer(){
-  if(!confirm('🔄 ¿Volver a leer las ATC con Claude?\n\nCuesta unos centavos de dólar. Hacelo si entraron ATC nuevas o se corrigieron los motivos.')) return;
+  if(!preguntaYa('🔄 ¿Volver a leer las ATC con Claude?\n\nCuesta unos centavos de dólar. Hacelo si entraron ATC nuevas o se corrigieron los motivos.',
+    { icono:'🔄', titulo:'¿Volver a leer las ATC con Claude?', sub:'Cuesta unos centavos de dólar',
+      lineas:['Hacelo si entraron ATC nuevas o se corrigieron los motivos.'], no:'No, dejarlo', si:'🔄 Volver a leer' }, atcIaReleer)) return;   // ❓ (16/11) la ventana del panel
   atcIaLeer(true);
 }
 function atcIaAbrir(i){ ATC_IA.abierta=(ATC_IA.abierta===String(i)) ? '' : String(i); atcIaPintar(); }
@@ -35334,9 +35392,13 @@ function iapAplicar(ll, code){
   var g=iapRenglones().filter(function(r){ return r.ll===ll; })[0];
   if(!g || !g.peds.length){ toast('Ese renglón ya está corregido.','ok'); iapRepintar(); return Promise.resolve([]); }
   var nom=x.n+(x.m ? (' '+x.m) : '');
-  if(!confirm('✓ ¿Es '+nom+' ('+x.code+')?\n\n«'+g.desc+'»'+(g.medida ? (' '+g.medida) : '')+' pasa a '+nom+' en:\n'+
+  if(!preguntaYa('✓ ¿Es '+nom+' ('+x.code+')?\n\n«'+g.desc+'»'+(g.medida ? (' '+g.medida) : '')+' pasa a '+nom+' en:\n'+
     g.peds.map(function(p){ return '   • '+(ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; }).join('\n')+
-    '\n\nLas marcas de logística (de dónde sale, el stock revisado) quedan como estaban.')) return Promise.resolve([]);
+    '\n\nLas marcas de logística (de dónde sale, el stock revisado) quedan como estaban.',
+    { icono:'🧠', titulo:'¿Es '+nom+' ('+x.code+')?', sub:'«'+g.desc+'»'+(g.medida ? (' '+g.medida) : '')+' pasa a '+nom+' en:',
+      lineas:g.peds.map(function(p){ return (ocEtiq(p.oc)||'—')+' · '+(p.cliente||'')+' ('+(p.vendedor||'')+')'; })
+        .concat(['Las marcas de logística (de dónde sale, el stock revisado) quedan como estaban.']),
+      no:'No, dejarlo', si:'✓ Sí, es ese' }, function(){ iapAplicar(ll, code); })) return Promise.resolve([]);   // ❓ (16/11) la ventana del panel
   var prs=[];
   g.peds.forEach(function(p0){
     var q=findById(p0.id); if(!q) return; var cambio=false;
@@ -35563,7 +35625,9 @@ function issPintar(){
   el.innerHTML=h+'</div>';
 }
 function issReleer(){
-  if(!confirm('🔄 ¿Volver a leer los Excel de las últimas 2 semanas con Claude?\n\nCuesta unos centavos de dólar. Hacelo si se subieron Excel nuevos o se anotaron llegadas.')) return;
+  if(!preguntaYa('🔄 ¿Volver a leer los Excel de las últimas 2 semanas con Claude?\n\nCuesta unos centavos de dólar. Hacelo si se subieron Excel nuevos o se anotaron llegadas.',
+    { icono:'🔄', titulo:'¿Volver a leer los Excel de las últimas 2 semanas con Claude?', sub:'Cuesta unos centavos de dólar',
+      lineas:['Hacelo si se subieron Excel nuevos o se anotaron llegadas.'], no:'No, dejarlo', si:'🔄 Volver a leer' }, issReleer)) return;   // ❓ (16/11) la ventana del panel
   issLeer(true);
 }
 function issTexto(R){
@@ -37051,10 +37115,16 @@ function reproStockAvisos(p, fNueva, tNueva){
   }catch(e){ return out; }
   return out;
 }
-function reproStockConfirmar(p, f, t){
+/* ❓ (16/11) Con `otraVez` (lo que preguntó, para volver a correrlo), la ventana del panel: devuelve null mientras espera (`!null` corta
+   igual que «Cancelar»). Sin `otraVez`, la del navegador, como antes. */
+function reproStockConfirmar(p, f, t, otraVez){
   var st=reproStockAvisos(p, f, t); if(!st.length) return true;
-  return confirm('📦 Ojo con el stock (la reserva por fecha del cuadrito) al adelantar este pedido al '+fmtFecha(f)+':\n\n   • '+st.join('\n   • ')+
-                 '\n\nAvisá a los vendedores y a logística (o mandá a producir).\n\n• Aceptar: reprogramar igual.\n• Cancelar: no mover nada.');
+  var _t='📦 Ojo con el stock (la reserva por fecha del cuadrito) al adelantar este pedido al '+fmtFecha(f)+':\n\n   • '+st.join('\n   • ')+
+                 '\n\nAvisá a los vendedores y a logística (o mandá a producir).\n\n• Aceptar: reprogramar igual.\n• Cancelar: no mover nada.';
+  if(typeof otraVez!=='function') return confirm(_t);
+  return preguntaYa(_t, { icono:'📦', aviso:true, titulo:'Ojo con el stock al adelantar '+(ocEtiq(p.oc)||'este pedido')+' al '+fmtFecha(f),
+    sub:'La reserva por fecha del cuadrito', lineas:st.concat(['Avisá a los vendedores y a logística (o mandá a producir).']),
+    no:'No mover nada', si:'📅 Reprogramar igual' }, otraVez);
 }
 function showReproModal(){
   var p=findById(REPRO.id); if(!p) return;
@@ -37094,8 +37164,13 @@ function reproConfirmar(){
   var f=REPRO.fecha, t=REPRO.turno;
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí la nueva fecha','err'); return; }
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
+  /* ❓ (16/11) Las preguntas de acá van en la ventana del panel: mientras se espera la respuesta no se mueve nada, y al contestar vuelve a
+     correr (con lo ya contestado) hasta llegar al final. */
+  var _otra=function(){ reproConfirmar(); };
   /* 📅 (§4ok-96) ¿Otra fecha de relleno? Un toque lo pasa a «el cliente avisa cuándo». */
-  if(fmovPreguntar(p, f)){
+  var _fm=fmovPreguntar(p, f, _otra);
+  if(_fm===null) return;
+  if(_fm){
     var _fl=fmovDiaLlamar(f);
     fhDonde('📅 Reprogramar («todavía no sabe»)');   // 📅 (mejora 212) quién le cambió el día
     fmovAvisaAplicar(p, f);
@@ -37105,10 +37180,18 @@ function reproConfirmar(){
   }
   var avisos=reproAvisos(p,f,t);
   var _saleEnt=entregadoSeMueve(p, f);
-  if(_saleEnt && !confirm(entregadoMueveTxt(p, f))) return;   // ✅ (16/10, §4lo)
-  if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
-  if(!reproStockConfirmar(p, f, t)) return;              // 📦 (19/10, §4ls CR-1) el stock: solo avisa
-  if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
+  if(_saleEnt){   // ✅ (16/10, §4lo)
+    var _ce=cierreEntDe(p);
+    if(!preguntaYa(entregadoMueveTxt(p, f), { icono:'✅', aviso:true, titulo:'Este pedido figura ENTREGADO: ¿pasarlo al '+fmtFecha(f)+'?',
+        sub:(_ce && _ce.q) ? ('Lo confirmó '+_ce.q) : '',
+        lineas:['Si lo pasás a otro día es porque no se entregó: se le saca el ✅ y vuelve a «sin entregar».',
+                'El chofer lo ve, entra al cierre de ese día y el bot le avisa el día nuevo al cliente, como en cualquier cambio.'],
+        no:'No, dejarlo', si:'📅 No se entregó: moverlo' }, _otra)) return;
+  }
+  if(avisos.length && !preguntaYa('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?',
+      { icono:'⚠️', aviso:true, titulo:'¿Reprogramar igual?', lineas:avisos, no:'No, dejarlo', si:'📅 Reprogramar igual' }, _otra)) return;
+  if(!reproStockConfirmar(p, f, t, _otra)) return;              // 📦 (19/10, §4ls CR-1) el stock: solo avisa
+  if(avisos.length && !asegurarClaveAdmin(_otra)) return;   // 🛡️ el servidor la va a pedir (§4cg) · ❓ (16/11) con la clave en la ventana, sigue solo
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
   fhDonde('📅 Reprogramar');                        // 📅 (mejora 212) quién le cambió el día
@@ -37655,7 +37738,9 @@ function camionSalioMarcar(veh, on, opts){
     _sale();
   }else{
     if(!k) return;
-    if(!confirm('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.')) return;
+    if(!preguntaYa('¿Deshacer «salió» del '+veh+'? Vuelve a figurar en el andén.',
+      { icono:'🚚', titulo:'¿Deshacer «salió» del '+veh+'?', lineas:['Vuelve a figurar en el andén.'], no:'No, dejarlo', si:'↩️ Sí, deshacer' },
+      function(){ camionSalioMarcar(veh, on, opts); })) return;   // ❓ (16/11) la ventana del panel
     Object.keys(CARGA_CHK).forEach(function(x){ if(x.indexOf(cargaChkKey(f, veh, CARGA_SALIO)+'|')===0) setCargaChk(x, false); });
   }
   try{ renderCargaSiActiva(); }catch(e){} try{ cargaVivaPintar(); }catch(e){}
@@ -37775,7 +37860,9 @@ function adelantoRevisarGps(){
   }, function(){ ADELANTO_EN_CURSO=false; });
 }
 function limpiarCargaChk(){
-  if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
+  if(!preguntaYa('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.',
+    { icono:'🧹', aviso:true, titulo:'¿Destildar todo lo cargado de esta vista?', lineas:['Se destilda para TODO el equipo, no solo en esta computadora.'],
+      no:'No, dejarlo', si:'🧹 Destildar todo', peligro:true }, limpiarCargaChk)) return;   // ❓ (16/11) la ventana del panel
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
   Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]){ delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=false; } });
   guardarCargaChk();
@@ -40724,12 +40811,17 @@ function atctTraidasHtml(){
 }
 function atctSacar(id){
   var p=findById(id); if(!p || String(id).indexOf('atc-tre-')!==0) return;
-  if(!confirm('¿Sacar del panel la '+(p.oc||'ATC')+' de '+(p.cliente||'')+' (traída de Trello)?')) return;
+  if(!preguntaYa('¿Sacar del panel la '+(p.oc||'ATC')+' de '+(p.cliente||'')+' (traída de Trello)?',
+    { icono:'🗑', titulo:'¿Sacar del panel la '+(p.oc||'ATC')+' de '+(p.cliente||'')+'?', sub:'Traída de Trello',
+      no:'No, dejarla', si:'🗑 Sí, sacarla', peligro:true }, function(){ atctSacar(id); })) return;   // ❓ (16/11) la ventana del panel
   Promise.resolve(realDelete(id)).then(function(){ try{ renderAtc(); }catch(e){} atctPintar(); });
 }
 function atctSacarMalas(){
   var M=atctTraidas().filter(function(x){ return x.por; }); if(!M.length) return;
-  if(!confirm('¿Sacar del panel estas '+M.length+' ATC traídas de Trello?\n\n'+M.map(function(x){ return '· '+(x.p.oc||'')+' '+(x.p.cliente||'')+' — '+x.por; }).join('\n'))) return;
+  if(!preguntaYa('¿Sacar del panel estas '+M.length+' ATC traídas de Trello?\n\n'+M.map(function(x){ return '· '+(x.p.oc||'')+' '+(x.p.cliente||'')+' — '+x.por; }).join('\n'),
+    { icono:'🗑', titulo:'¿Sacar del panel estas '+M.length+' ATC traídas de Trello?',
+      lineas:M.map(function(x){ return (x.p.oc||'')+' '+(x.p.cliente||'')+' — '+x.por; }),
+      no:'No, dejarlas', si:'🗑 Sí, sacarlas', peligro:true }, atctSacarMalas)) return;   // ❓ (16/11) la ventana del panel
   var k=0, una=function(){ if(k>=M.length) return Promise.resolve(); var id=M[k++].p.id; return Promise.resolve(realDelete(id)).then(una, una); };
   una().then(function(){ try{ renderAtc(); }catch(e){} atctPintar(); });
 }
@@ -40766,7 +40858,9 @@ function atctTraer(){
   if(ATCT.ocupado) return;
   var L=atctFueraTildadas();
   if(!L.length){ toast('No hay ninguna tarjeta tildada', 'err'); return; }
-  if(!confirm('Se van a cargar '+L.length+' ATC de Trello en el panel, con sus días y sin día de viaje (no ocupan cupo ni le avisan a nadie). ¿Seguimos?')) return;
+  if(!preguntaYa('Se van a cargar '+L.length+' ATC de Trello en el panel, con sus días y sin día de viaje (no ocupan cupo ni le avisan a nadie). ¿Seguimos?',
+    { icono:'📥', titulo:'¿Cargar '+L.length+' ATC de Trello en el panel?', lineas:['Con sus días y sin día de viaje: no ocupan cupo ni le avisan a nadie.'],
+      no:'No, todavía no', si:'📥 Sí, traerlas' }, atctTraer)) return;   // ❓ (16/11) la ventana del panel
   ATCT.ocupado=true; atctFueraContar(); atctContar();
   [].forEach.call(document.querySelectorAll('#atct-body input[data-fu]'), function(cb){ cb.disabled=true; });
   /* de la más vieja a la más nueva: así el N° de cada mes sale en orden */
@@ -41285,8 +41379,11 @@ var PRACTICA_SALIR_T=0;   // cuándo se pidió salir (si el navegador no navegó
 function practicaSalir(){
   if(!window.PRACTICA) return;
   var P=practicaDatos(), n=Object.keys(P.filas).filter(function(id){ return id.indexOf('__')!==0; }).length;
-  if(!confirm('🧪 ¿Salir del modo práctica?\n\nSe borra todo lo que cargaste de práctica'+(n ? (' ('+n+' pedido'+(n===1?'':'s')+')') : '')+
-    ' y el panel vuelve a leer la planilla de verdad.')) return;
+  if(!preguntaYa('🧪 ¿Salir del modo práctica?\n\nSe borra todo lo que cargaste de práctica'+(n ? (' ('+n+' pedido'+(n===1?'':'s')+')') : '')+
+    ' y el panel vuelve a leer la planilla de verdad.',
+    { icono:'🧪', titulo:'¿Salir del modo práctica?',
+      lineas:['Se borra todo lo que cargaste de práctica'+(n ? (' ('+n+' pedido'+(n===1?'':'s')+')') : '')+'.', 'El panel vuelve a leer la planilla de verdad.'],
+      no:'No, seguir practicando', si:'🧪 Salir de la práctica', peligro:n>0 }, practicaSalir)) return;   // ❓ (16/11) la ventana del panel
   window.PRACTICA_SALIENDO=true; PRACTICA_SALIR_T=Date.now();
   try{ window.PRACTICA_CAPA.salir(); }catch(e){}
   /* (revisión del 14/11) Las direcciones «blob:» de las fotos de práctica NO se sueltan acá: se van solas con la página. Si el navegador
@@ -41561,14 +41658,19 @@ function guardarProgramarDevAtc(id){
      lo tildó puede que todavía no haya ido: programar muda la ATC al día de la devolución y el
      viaje de HOY a buscarlo sale de su lista y de la carga. Se pregunta antes. */
   var _a0=atcDe(p)||{};
+  var _otra=function(){ guardarProgramarDevAtc(id); };   // ❓ (16/11) las dos preguntas en la ventana del panel; al contestar, vuelve a correr
   if(!_a0.pdev && !p.entregado && (p.fecha||'')>=todayStr() &&
-     !confirm('⚠️ El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅.\n\nSi programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.\n\n¿Ya lo recogieron?')) return;
+     !preguntaYa('⚠️ El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅.\n\nSi programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.\n\n¿Ya lo recogieron?',
+       { icono:'⚠️', aviso:true, titulo:'¿Ya lo recogieron?', sub:'El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅',
+         lineas:['Si programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.'],
+         no:'No, todavía no', si:'Sí, ya lo recogieron' }, _otra)) return;
   /* (25/09) Ocupa un cupo como cualquier entrega: domingo, sábado PM, día cerrado o turno lleno
      AVISAN y se confirman, igual que en 📅 Reprogramar. Antes decía «✓ programada» y el portero
      del servidor la rechazaba después como «turno lleno» (también el domingo). */
   var _avisos=reproAvisos(p, f, t);
-  if(_avisos.length && !confirm('⚠️ Ojo:\n\n   • '+_avisos.join('\n   • ')+'\n\n¿Programar la devolución igual?')) return;
-  if(_avisos.length && !asegurarClaveAdmin()) return;
+  if(_avisos.length && !preguntaYa('⚠️ Ojo:\n\n   • '+_avisos.join('\n   • ')+'\n\n¿Programar la devolución igual?',
+      { icono:'⚠️', aviso:true, titulo:'¿Programar la devolución igual?', lineas:_avisos, no:'No, dejarlo', si:'🔁 Programarla igual' }, _otra)) return;
+  if(_avisos.length && !asegurarClaveAdmin(_otra)) return;   // ❓ (16/11) con la clave en la ventana, sigue solo
   var a=atcDe(p)||{};
   /* El día del recojo —y su turno, `rturno` (26/09)— se guardan antes de mover la fecha. Si ya vive en su
      devolución («Cambiar devolución») se conservan: `p.fecha`/`p.turno` ya son los de la devolución. */
@@ -42098,7 +42200,7 @@ function renderBorradoresHuerfanos(){
    así el pedido sigue atado a su lead y el robot no lo vuelve a crear. */
 function completarBorrador(id){
   var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
-  if(!confirmarReemplazoForm()) return;
+  if(!confirmarReemplazoForm(function(){ completarBorrador(id); })) return;   // ❓ (16/11) la ventana del panel
   /* (26/09) Al guardar se vuelve a donde se tocó «Completar»: el «sin vendedora» vive en Administración
      y terminaba en Mis pedidos. Reabierto por un choque (ya en el formulario), sigue a donde iba. */
   var _vf=document.getElementById('view-form'), _va=document.getElementById('view-admin');
@@ -42157,7 +42259,9 @@ function completarBorrador(id){
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;
   if(!borradorEnColaComoPedido(id) &&
-     !confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
+     !preguntaYa('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.',
+       { icono:'📥', titulo:'¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?', lineas:['No se borra nada en Kommo: solo deja de aparecer acá.'],
+         no:'No, dejarla', si:'🗑 Sí, descartarla', peligro:true }, function(){ descartarBorrador(id); })) return;   // ❓ (16/11) la ventana del panel
   descartarBorradorHacer(id, false);
 }
 /* 🧹 (mejora 389) El descarte de siempre, sin preguntar; `callado` (para «Ordenar mi bandeja») no avisa cada uno. Devuelve la promesa con
@@ -42944,7 +43048,10 @@ function quitarFoto(id, idx){
      misma columna pero no se muestran ni se borran desde acá. */
   var vis=fotosEntregaDe(p);
   if(idx<0||idx>=vis.length) return;
-  if(!confirm('¿Borrar esta foto de la entrega?')) return;
+  /* ❓ (16/11) La ventana del panel; al contestar vuelve a correr con ESA foto (si mientras tanto la lista cambió, por su lugar nuevo). */
+  var _fid0=vis[idx];
+  if(!preguntaYa('¿Borrar esta foto de la entrega?', { icono:'📷', titulo:'¿Borrar esta foto de la entrega?', no:'No, dejarla', si:'🗑 Sí, borrarla', peligro:true },
+      function(){ var q=findById(id), j0=q ? fotosEntregaDe(q).indexOf(_fid0) : -1; if(j0>=0) quitarFoto(id, j0); })) return;
   var fid=vis[idx], arr=fotosDe(p).slice(), j=arr.indexOf(fid);
   if(j<0) return;
   arr.splice(j,1); p.fotos=arr;
