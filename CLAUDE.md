@@ -26,7 +26,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     NUEVA es esencial salvo que se diga lo contrario. 👥 La vendedora del mes anterior sin nada este mes entra al FINAL del equipo con 0,
     `soloPrev` y meta 0 si no está en `VENDOR_CFG` (CRM-03). `tests/test_generar_integridad.py` (Kommo de mentira, carpeta temporal).
   - 🛒 **Las ventas del panel SIN ficha en Kommo entran** (mejora 335, 15/11; dueño: *«cerrado si ya se entregó… si no estaremos a la espera de que
-    el vendedor anote»*; en la rama, sin publicar): con la MISMA lectura del panel de las metas (`panel_leer`, no esencial), `ventas_panel_sin_ficha`
+    el vendedor anote»*; PUBLICADO 16/11 con la página 2026-11-16-a): con la MISMA lectura del panel de las metas (`panel_leer`, no esencial), `ventas_panel_sin_ficha`
     toma las ventas del equipo de Heaven (`VENDOR_CFG` + `PANEL_HEAVEN` = `MARCAS` heaven) sin ATC/RPT/sistema/borradores/`CONTA_EXCLUIR`, por el
     día en que se CARGARON (`ts`, = «Fecha contrato» que escribe la 91). Entregada (✅, fecha ya pasada o venta de tienda) = cierre + cerrado +
     pipeline; sin entregar = solo pipeline. Monto = `venta_total` (= `ventaTotal`; `parseMonto`, `r2` de JavaScript). No se suman: con `klead` o id
@@ -954,7 +954,7 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   🚫 **Sin botón «🕐 Horario…»** (dueño, 14/11: *«no me convence ya que no tenemos horas específicas»*): no volver a ponerlo sin que lo pida; la hora escrita
   a mano la sigue leyendo la ficha (`fichaNota`), como antes. `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (57).
 
-## 💬🤖🧠🏆 Las mejoras 344-389 (§4qb, 16/11; dueño: «286. Añádelo / 344: 3C,5B / 345,347,349,353,356,359,360,362,364,365…389» y «1A, 2B» para el bono; EN LA RAMA, sin publicar; servidor `2026-11-16-a`, lo implementa el dueño)
+## 💬🤖🧠🏆 Las mejoras 344-389 (§4qb, 16/11; dueño: «286. Añádelo / 344: 3C,5B / 345,347,349,353,356,359,360,362,364,365…389» y «1A, 2B» para el bono; PUBLICADO 16/11, versión 2026-11-16-a, con todo lo de la 14-b y la 15-a; servidor `2026-11-16-a` IMPLEMENTADO 16/11 por el dueño (probar ✅, contesta `2026-11-16-a`; enlace fijo `263f43d…`, 13.141 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 14-a de `f22f45b…`, 8.941 líneas))
 Siete ramas de agentes juntadas (`mej-ia1/ia2/ia3/vis1/vis2/fun/chat`). Todo lo nuevo de la página va APAGADO en Playwright salvo su bandera, y lo que
 habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
 - **💬 344 Chat del equipo** (`chat.js`, archivo aparte, `CHAT_PRUEBA`; `.gs`: hojas «Chat»/«Chat vistos», `chatEnviar/chatLeer/chatBorrar/chatFoto` SIN el candado
@@ -990,7 +990,7 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
   `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
 
-## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; EN LA RAMA, sin publicar)
+## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
 Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón
 (los pedidos se crearon de a dos, intercalados; el botón crea de a uno). El agujero del panel: solo exigía nota, fecha y producto.
