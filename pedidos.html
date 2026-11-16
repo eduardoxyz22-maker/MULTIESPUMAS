@@ -8549,6 +8549,23 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 #modal-box.p397 #wa-text{display:none}
 #modal-box.p397 .p397-col.nx-cli-msg{margin:0}
 #modal-box.p397 .modal-actions .btn{width:auto}
+/* 398 · cada documento con su color (ATC fucsia, RPT café, venta de tienda celeste) */
+#view-form.p398-atc{--doc:#D946EF;--doc-dk:#A21CAF;--doc-lt:#FDF0FC}
+#view-form.p398-rpt{--doc:#9a5b2c;--doc-dk:#7b4a24;--doc-lt:#f6ece2}
+#view-form.p398-tienda{--doc:#0ea5e9;--doc-dk:#0369a1;--doc-lt:#e0f2fe}
+#view-form.p398-on .form-card{border-top:7px solid var(--doc)!important}
+#view-form.p398-on #fh{box-shadow:inset 6px 0 0 var(--doc)}
+#view-form.p398-on #fh h3 .p398-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--doc);margin-right:8px;vertical-align:middle;box-shadow:0 0 0 3px rgba(255,255,255,.18)}
+#view-form.p398-on .fp-paso:not(.fp-ok) .fp-n{background:var(--doc)!important;color:#fff!important;border-color:var(--doc)!important}
+#view-form.p398-on #fx-der{border-top:7px solid var(--doc)!important}
+#view-form.p398-on #fx-der > .fx-lt:first-child{color:var(--doc-dk)}
+#view-form.p398-on #fx-der .fx-cab .av{background:var(--doc)!important;font-size:1.25rem}
+#view-form.p398-on #fx-der .fx-cab .sb b{color:var(--doc-dk)}
+.p398-cinta{display:flex;align-items:center;gap:10px;margin:0 0 12px;padding:9px 14px;border-radius:12px;background:var(--doc-lt,#e6fbf9);border:1.5px solid var(--doc,#00B5AD);color:var(--doc-dk,#00A09A);font-size:.84rem;font-weight:700;line-height:1.3}
+.p398-cinta[hidden]{display:none}
+.p398-cinta .ic{width:34px;height:34px;border-radius:10px;background:var(--doc,#00B5AD);color:#fff;display:grid;place-items:center;font-size:1.15rem;flex:none}
+.p398-cinta b{font-size:.98rem;font-weight:900;letter-spacing:.01em}
+.p398-cinta small{display:block;font-weight:600;color:#475569;font-size:.74rem}
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -25763,6 +25780,44 @@ function fmovAvisaAplicar(p, fNueva){
   p.fecha=''; p.turno=''; p.nroDia=0; p.vehiculo=''; p.chofer='';
   return persistPedido(p, {});
 }
+/* 🎨 (16/11, mejora 398; dueño: «Cada documento con su color: ATC, RPT, venta de tienda») Del 1 al 15/11 se cargaron ~68 ventas de tienda, 21
+   RPT y 10 ATC, y las tres se veían igual que un pedido (mismo título «Nuevo pedido», mismo turquesa): lo único distinto era el botón
+   elegido y un cartelito. Ahora el formulario lleva el color del documento en el borde, el título («Nueva ATC», «Nueva reposición», «Venta
+   de tienda»), el número de cada paso y «Tu ATC / Tu reposición / Tu venta de tienda» a la derecha con su ícono: ATC fucsia (el de la
+   pestaña ATC), RPT café (el de Administración), venta de tienda celeste; el pedido común queda turquesa. Una cinta «Estás cargando una ATC
+   · no es una venta…» (en la venta de tienda ya está su recuadro), y en la venta de tienda el paso «Entrega» dice «Se lo lleva». Solo CSS
+   y textos: el tipo sale de lo de siempre (`docTipoSel`, `VENTA_TIENDA`). En Playwright como antes salvo `window.DOC_COLOR_PRUEBA`.
+   `tests/test_v398_doc_color.js`. */
+function docColorVa(){ try{ return vdVa('DOC_COLOR_PRUEBA'); }catch(e){ return false; } }
+var DOC_COLOR={
+  atc:{ ic:'🎧', t:'Estás cargando una ATC', s:'Reclamo de un cliente: no es una venta, no se cobra y no va a Contabilidad.', tit:'Nueva ATC', cor:'Corregir ATC', der:'🎧 Tu ATC', sb:'ATC' },
+  rpt:{ ic:'📦', t:'Estás cargando una reposición (RPT)', s:'Lo que pide tu tienda: no es una venta, va a la sucursal elegida.', tit:'Nueva reposición', cor:'Corregir reposición', der:'📦 Tu reposición', sb:'Reposición' },
+  tienda:{ ic:'🛍️', t:'Venta de tienda', s:'El cliente se lo lleva del local: sin fecha, sin turno y sin camión.', tit:'Venta de tienda', cor:'Corregir venta de tienda', der:'🛍️ Tu venta de tienda', sb:'Venta de tienda' }
+};
+function docColorTipo(){
+  if(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA) return 'tienda';
+  var t=''; try{ t=docTipoSel(); }catch(e){}
+  return t==='ATC' ? 'atc' : (t==='RPT' ? 'rpt' : '');
+}
+function docColorTitulo(def){
+  var D=DOC_COLOR[docColorVa() ? docColorTipo() : ''];
+  if(!D) return def;
+  return '<span class="p398-dot" aria-hidden="true"></span>'+esc(EDIT_ID ? D.cor : D.tit);
+}
+function docColorPintar(){
+  var vf=document.getElementById('view-form'); if(!vf) return;
+  var k=docColorVa() ? docColorTipo() : '', D=DOC_COLOR[k];
+  ['atc','rpt','tienda'].forEach(function(x){ vf.classList.toggle('p398-'+x, x===k); });
+  vf.classList.toggle('p398-on', !!D);
+  var c=document.getElementById('p398-cinta'), fh=document.getElementById('fh');
+  if(!c && fh && D){ c=document.createElement('div'); c.id='p398-cinta'; c.className='p398-cinta no-print'; fh.parentNode.insertBefore(c, fh.nextSibling); }
+  if(c){
+    var ve=!!D && k!=='tienda';   // la venta de tienda ya tiene su recuadro
+    var h=ve ? ('<span class="ic">'+D.ic+'</span><div><b>'+esc(D.t)+'</b><small>'+esc(D.s)+'</small></div>') : '';
+    if(c._h!==h){ c.innerHTML=h; c._h=h; } c.hidden=!ve;
+  }
+  try{ fhPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){} try{ fpPintar(); }catch(e){}
+}
 function pintarModoTienda(){
   try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) una venta de tienda no ocupa cupo: lo apartado se suelta
   var view=document.getElementById('view-form');
@@ -25776,6 +25831,7 @@ function pintarModoTienda(){
   try{ avisaFormPintar(); }catch(e){}         // 📦 (propuesta 76) la venta de tienda no lleva la casilla
   saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) ni en la venta de tienda ni editando
+  try{ docColorPintar(); }catch(e){}         // 🎨 (16/11, mejora 398) celeste
 }
 function abrirVentaTienda(conCot){
   /* 🧾 (mejora 251) Venía de «✓ Compró» de una cotización (la venta NUEVA con lo de la cotización): `resetForm` se llevaba la cotización y
@@ -25877,6 +25933,7 @@ function pintarDocTipo(limpiar){
   try{ notaLeerPintar(); }catch(e){}         // 🧾 (mejora 216) «Leer la nota» es solo de 📄 OC
   try{ cotFormPintar(limpiar); }catch(e){}   // 🧾 (mejora 251) la cotización: su bloque, el botón y lo que se esconde
   try{ fhPintar(); }catch(e){}
+  try{ docColorPintar(); }catch(e){}         // 🎨 (16/11, mejora 398) el color del documento
 }
 /* ============================================================================
    🧾 COTIZAR (14/11, mejora 251; el dueño aprobó la 251 «🧾 COTIZAR» y la 274 «el bot le escribe a las 48 h»)
@@ -28503,7 +28560,7 @@ function fhPintar(){
   var nov=''; try{ nov=localStorage.getItem(LS_NOV)||''; }catch(e){}
   var dia=(DIAS_SEM[dowDe(fecha)]||'')+' '+fmtFechaCorta(fecha), ed=EDIT_ID ? ' ✏️ Estás corrigiendo: se puede guardar igual.' : '';
   var h='<span class="fh-murc" aria-hidden="true"><i></i><i></i><i></i></span><span class="fh-luna" aria-hidden="true"></span>'+   // 🎃 (§4nk) solo se ven en octubre
-    '<div class="fh-top"><h3>'+(EDIT_ID ? 'Corregir pedido' : (cot ? 'Nueva cotización' : 'Nuevo pedido'))+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+cotB+
+    '<div class="fh-top"><h3>'+docColorTitulo(EDIT_ID ? 'Corregir pedido' : (cot ? 'Nueva cotización' : 'Nuevo pedido'))+'</h3><span class="fh-vivo'+pill[0]+'"><i></i>'+pill[1]+'</span><span class="fh-sp"></span>'+cotB+
     '<a class="fh-ic" href="tutorial.html" target="_blank" rel="noopener" title="¿Cómo llenar el pedido? Ver la guía"><span class="q">?</span><span class="tx">Guía</span></a>'+
     '<a class="fh-ic" href="guia-vendedor.html" target="_blank" rel="noopener" title="Novedades: guía rápida" onclick="fhNovedadVista()"><span class="q">✦</span><span class="tx">Novedades</span>'+
       (nov===NOVEDADES_V ? '' : '<span class="pt" aria-label="hay novedades"></span>')+'</a></div>'+
@@ -28781,9 +28838,10 @@ function fxDerPintar(){
   });
   var acu=montoForm('f-acuenta'), sal=montoForm('f-saldo'), pagado=segVal('f-pagado')==='SI';
   var ini=(v||'?').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w[0]; }).join('').toUpperCase();
-  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':(tipo==='COT'?'🧾 Tu cotización':'🧾 Tu pedido'))+'</div><div class="fx-dp">'+
-    '<div class="fx-cab"><div class="av">'+esc(ini)+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
-      '<div class="sb">'+esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':(tipo==='COT'?'🧾 Cotización':'🏪 Reposición')))+(v?(' · '+esc(v)):'')+'</div></div></div>';
+  var _DC=DOC_COLOR[docColorVa() ? docColorTipo() : ''];   // 🎨 (16/11, mejora 398) «Tu ATC / Tu reposición / Tu venta de tienda» con su color
+  var h='<div class="fx-lt">'+(EDIT_ID?'✏️ Editando':(_DC ? _DC.der : (tipo==='COT'?'🧾 Tu cotización':'🧾 Tu pedido')))+'</div><div class="fx-dp">'+
+    '<div class="fx-cab"><div class="av">'+(_DC ? _DC.ic : esc(ini))+'</div><div><div class="nm">'+(cli?esc(cli):'<span style="color:#b5b5b5">Cliente sin escribir</span>')+'</div>'+
+      '<div class="sb">'+(_DC ? ('<b>'+esc(_DC.sb)+'</b>') : esc(tipo==='OC'?'Pedido':(tipo==='ATC'?'🎧 ATC':(tipo==='COT'?'🧾 Cotización':'🏪 Reposición'))))+(v?(' · '+esc(v)):'')+'</div></div></div>';
   var avOn=avisaFormOn();   // 📦 (propuesta 76) la fecha es la de volver a llamar
   var cotF=(tipo==='COT');   // 🧾 (mejora 251) sin entrega ni cobro: hasta cuándo vale y desde cuándo se entrega
   if(cotF){ var _cv=val('f-cot-vence'), _cd=''; try{ _cd=cotEntregaDesde(); }catch(eC){}
@@ -29495,7 +29553,8 @@ function fpPintar(){
   var bar=document.getElementById('fp-barra'), k=0;
   var _f392=FALTA_INTENTO && faltaCampoVa();   // 🎨 (16/11, mejora 392) después de un Guardar que frenó: el paso con algo pendiente, con «!»
   var h=FP_PASOS.map(function(o,i){ if(!vis[i]) return ''; k++; var est=ok[i]?'ok':(i===act?'ya':'no'), f392=_f392 && !ok[i];
-    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+(f392?' p392-b':'')+'" onclick="fpIr('+o.n+')"'+(f392?' title="Falta algo en este paso"':'')+'><span>'+(ok[i]?'✓':(f392?'!':k))+'</span>'+o.bar+'</button>'; }).join('')+
+    var bar=(o.n===3 && VENTA_TIENDA && docColorVa()) ? 'Se lo lleva' : o.bar;   // 🎨 (16/11, mejora 398) en la venta de tienda no hay entrega
+    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+(f392?' p392-b':'')+'" onclick="fpIr('+o.n+')"'+(f392?' title="Falta algo en este paso"':'')+'><span>'+(ok[i]?'✓':(f392?'!':k))+'</span>'+bar+'</button>'; }).join('')+
     '<span class="fp-av"><b>'+nOk+' de '+nV+'</b> '+(nOk===nV?'¡listo para guardar!':'listo')+'</span>';
   if(bar && bar._h!==h){ bar.innerHTML=h; bar._h=h; }
   if(bar) bar.style.top='';   // (§4mo) lo pega el CSS debajo del encabezado (`--hdr-h`), que se achica al bajar
