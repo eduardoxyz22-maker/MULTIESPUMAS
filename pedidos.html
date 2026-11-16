@@ -3621,6 +3621,7 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
       <div id="fx-mes" class="fx-mes no-print no-cot" hidden></div>
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
+        <div id="p392-sr" role="status" aria-live="polite"></div>   <!-- 🎨 (16/11, mejora 392) «Falta: …» para lectores de pantalla -->
         <!-- 🏪 §4ok-93 (05/11) En una venta de tienda NUEVA: guarda y vuelve al formulario de tienda con la misma tienda (las tandas de Charcas). -->
         <button class="btn btn-ghost" id="f-submit-prox" type="button" hidden onclick="tvGuardarProxima()" style="width:100%;margin-top:8px">💾 Guardar y cargar la próxima</button>
       </div>
@@ -8448,6 +8449,17 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .prod-saldo.ps390 .ps390-donde i.si{background:#e0f2f1;color:#0f766e;font-weight:800}
 .prod-saldo.ps390 .ps-f{margin-top:6px}
 @media (max-width:560px){ .ps390-f{flex-wrap:wrap} .ps390-f .ps-act{margin-left:0} }
+/* 392 · lo que falta, debajo de cada campo; el paso con «!» en la barra */
+.p392-mal{border-color:#e11d48!important;box-shadow:0 0 0 3px rgba(225,29,72,.16)!important}
+.p392-falta{display:flex;align-items:center;gap:7px;margin-top:6px;padding:6px 10px;border-radius:9px;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239;font-size:.76rem;font-weight:800;line-height:1.3;animation:p392in .25s ease-out}
+.p392-falta i{font-style:normal;width:20px;height:20px;border-radius:50%;background:#e11d48;color:#fff;display:grid;place-items:center;font-size:.72rem;flex:none}
+.fp-barra .fp-b.p392-b{color:#be123c!important}
+.fp-barra .fp-b.p392-b > span:first-child{background:#e11d48!important;color:#fff!important;border-color:#e11d48!important}
+#fx-der .fx-chk .p392-r{background:#ffe4e6!important;color:#be123c!important;border-color:#fda4af!important}
+#fx-der .p392-n{color:#be123c}
+#p392-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@keyframes p392in{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){ .p392-falta{animation:none} }
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -11988,7 +12000,8 @@ var PAGO_NO_VISTO=null;
    escupía a la pantalla del candado pidiéndoles la contraseña — y sin confirmación:
    parecía que el cambio no se había guardado. Ahora se vuelve a donde estaban. */
 var EDIT_DESDE='admin';
-function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
+function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err');
+  try{ if(FALTA_INTENTO || document.querySelector('.p392-falta')){ FALTA_INTENTO=false; faltaCampoLimpiar(); } }catch(e){} }   // 🎨 (16/11, mejora 392)
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 /* Los nombres de lo marcado en rojo, en el orden del formulario (para el aviso «Falta: …») y el primero a la vista con el foco. */
 var FORM_NOMBRES={ 'f-vendedor':'vendedor', 'f-cliente':'cliente', 'f-celular':'celular', 'f-nota':'nota de venta', 'f-zona':'zona', 'f-oc':'N° de OC',
@@ -24063,7 +24076,10 @@ function submitPedido(){
   var faltaMotivo=faltaAtc.length>0;
   var faltaSuc = _rpt && !cliente;
   if(!ok){
-    toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
+    /* 🎨 (16/11, mejora 392) lo que falta, dicho debajo de cada campo y todo a la vez; el aviso de la esquina queda para lo especial */
+    var _fc392=0; if(faltaCampoVa()){ try{ _fc392=faltaCampoPintar(); }catch(e){ _fc392=0; } }
+    if(_fc392 && !faltaOcRoho && !faltaMotivo && !faltaSuc){ var _sr=document.getElementById('p392-sr'); if(_sr) _sr.textContent='Falta: '+formFaltanNombres().join(', ')+'. Está dicho debajo de cada campo.'; }
+    else toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
         : faltaMotivo ? ((okSinAtc ? '' : 'Completá los campos marcados en rojo (*). ')+'🎧 No se puede guardar la ATC: falta '+atcFaltanTxt(faltaAtc)+'.')
         : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
         : ('Falta: '+formFaltanNombres().join(', ')+'. Está marcado en rojo (*).'),'err');
@@ -28606,6 +28622,29 @@ function fxElegirDia(f, ev){
 var FX_SALDO_ICO={ hay:['✅','var(--green)','Disponible'], moreno:['📥','var(--amber)','Hay en Moreno'], recogida:['🚚','var(--amber)','Viene de Moreno'],
   prod:['⏳','var(--blue,#1d4ed8)','En producción'], pedir:['🏭','var(--red)','Hay que producir'], especial:['📐','#1d4ed8','Medida especial'],
   fabcli:['🏭','#1d4ed8','Se fabrica para este pedido'], nofab:['🛑','var(--red)','Ya no se fabrica'], codigo:['🏷️','var(--amber)','Revisá el código'] };
+/* 🎨 (16/11, mejora 392) Lo que lista «Para guardar» de «Tu pedido» (`fxDerPintar`), sacado tal cual a su función: [nombre, listo]. */
+function paraGuardarChk(){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  var v=val('f-vendedor'), cli=val('f-cliente'), cel=val('f-celular'), zona=val('f-zona'), f=val('f-fecha'), tipo=docTipoSel();
+  if(tipo==='RPT') cli=val('f-rpt-suc') ? ('🏪 '+val('f-rpt-suc')) : '';
+  var lite=esVendedorLite(v), tienda=(typeof VENTA_TIENDA!=='undefined' && VENTA_TIENDA), cotF=(tipo==='COT');
+  var prods={ length:[].filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){ return !!String((c.querySelector('.prod-desc')||{}).value||'').trim(); }).length };
+  var chk=cotF ? [['Vendedor',!!v],['Celular',!!celPartes(cel).cel],['Productos',prods.length>0]] : [['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
+  if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
+  if(cotF) chk.push(['Vale hasta', !!fxPasosEstado()[2]]);
+  if(!tienda && !cotF){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
+  if(!tienda && !cotF && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
+  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
+  if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
+  if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
+    var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
+    if(!lite) chk.push(['Celular',!!cel]);
+    chk.push(['Garantía o STC',!_fa['f-atc-tipo']]);
+    chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
+    chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
+  }
+  return chk;
+}
 function fxDerPintar(){
   var el=document.getElementById('fx-der'); if(!el || !fxAncho()) return;
   var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
@@ -28640,24 +28679,13 @@ function fxDerPintar(){
   if(cotF && tot>0) h+='<div class="fx-tot"><span>Total de la cotización</span><b>'+fmtBs(r2(tot))+'</b></div>';   // 🧾 (251)
   if(tipo==='OC' && (tot>0 || acu>0 || sal>0)) h+='<div class="fx-tot">'+(tot>0?('<span>Los ítems suman</span><b>'+fmtBs(r2(tot))+'</b>'):'')+
       (pagado ? '<span>Pago</span><b style="color:var(--green)">✅ pagado</b>' : ('<span>A cuenta</span><b>'+fmtBs(acu)+'</b><span>Saldo por cobrar</span><span class="gr">'+fmtBs(sal)+'</span>'))+'</div>';
-  var chk=cotF ? [['Vendedor',!!v],['Celular',!!celPartes(cel).cel],['Productos',prods.length>0]] : [['Vendedor',!!v],['Cliente',!!cli],['Productos',prods.length>0]];
-  if(prods.length && precioObligatorio(v)) chk.push(['Precios', !preciosFaltan(v).some(function(x){ return !(x.her && UNLOCKED); })]);   // 💵 (31/10)
-  if(cotF) chk.push(['Vale hasta', !!fxPasosEstado()[2]]);
-  if(!tienda && !cotF){ chk.push(['Fecha',!!f]); if(tipo!=='RPT') chk.push(['Zona',!!zona]); }
-  if(!tienda && !cotF && fxUbicMal()) chk.push(['Ubicación', false]);   // §4ok-E5: solo cuando Guardar la frena
-  if(tipo==='OC' && !lite){ chk.push(['Celular',!!cel && !celFormFalta(v)]); chk.push(['Nota',!!val('f-nota')]); if(!cliEsInterno(v)) chk.push(['Saldo o pagado', !!fxPasosEstado(true)[3]]); }
-  if(recibioFormHace(v)) chk.push(['Quién recibió el efectivo', !recibioFormFalta(v)]);   // 💵 (07/11) lo mismo que Guardar   // 📱 (§4ok-95) el celular, con WhatsApp como pide Guardar
-  if(tipo==='ATC'){                                     // 🎧 (§4lh) lo obligatorio de la ATC, la misma cuenta que `submitPedido`
-    var _fa={}; atcFaltan(EDIT_ID ? findById(EDIT_ID) : null).forEach(function(x){ _fa[x.id]=1; });
-    if(!lite) chk.push(['Celular',!!cel]);
-    chk.push(['Garantía o STC',!_fa['f-atc-tipo']]);
-    chk.push(['Motivo',!_fa['f-atc-motivo']]); chk.push(['Detalle',!_fa['f-atc-detalle']]);
-    chk.push(['Fecha de compra',!_fa['f-atc-compra']]); chk.push(['Qué se recoge',!_fa['f-atc-piezas']]);
-  }
+  var chk=paraGuardarChk();   // 🎨 (16/11, mejora 392) la misma lista, en su función: la usan también las frases de «lo que falta»
   var _gl=gladoVe();   // 💾 (16/11, mejora 372) lo que falta se toca y lleva a su campo; abajo, el MISMO «Guardar pedido»
-  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar</div><div class="fx-chk">'+chk.map(function(c){
-      if(_gl && !c[1]) return '<button type="button" class="no glado-chip" onclick="gladoIr(\''+esc(c[0])+'\')" title="Llevame a «'+esc(c[0])+'»">○ '+esc(c[0])+'</button>';
-      return '<span class="'+(c[1]?'ok':'no')+'">'+(c[1]?'✓ ':'○ ')+esc(c[0])+'</span>'; }).join('')+'</div>';
+  var _r392=FALTA_INTENTO && faltaCampoVa(), _n392=chk.filter(function(c){ return !c[1]; }).length;   // 🎨 (16/11, mejora 392) después de un Guardar que frenó, en rojo
+  h+='<div><div class="fx-lt" style="margin-top:2px">Para guardar'+((_r392 && _n392) ? (' · <span class="p392-n">'+(_n392===1?'falta 1':('faltan '+_n392))+'</span>') : '')+'</div><div class="fx-chk">'+chk.map(function(c){
+      var _o=(_r392 && !c[1]) ? '× ' : '○ ', _c=(_r392 && !c[1]) ? ' p392-r' : '';
+      if(_gl && !c[1]) return '<button type="button" class="no glado-chip'+_c+'" onclick="gladoIr(\''+esc(c[0])+'\')" title="Llevame a «'+esc(c[0])+'»">'+_o+esc(c[0])+'</button>';
+      return '<span class="'+(c[1]?'ok':'no')+_c+'">'+(c[1]?'✓ ':_o)+esc(c[0])+'</span>'; }).join('')+'</div>';
   if(_gl) h+=gladoHtml(chk, tipo, tienda);
   /* 📝 (idea 119) lo que Guardar va a preguntar de las observaciones, adelantado en una línea (la MISMA cuenta: `obsRevAvisos`) */
   var _orv=[]; try{ if(!tienda && tipo!=='ATC' && tipo!=='COT') _orv=obsRevAvisos(obsRevRecForm(), EDIT_ID ? findById(EDIT_ID) : null, tipo); }catch(eO){ _orv=[]; }
@@ -28718,6 +28746,81 @@ function gladoIr(k){
   setTimeout(function(){ marca.classList.remove('glado-ojo'); }, 1800);
   if(e===vis && typeof e.focus==='function' && /^(INPUT|SELECT|TEXTAREA)$/.test(e.tagName)) setTimeout(function(){ try{ e.focus({ preventScroll:true }); }catch(x){ e.focus(); } }, 420);
 }
+/* 🎨 (16/11, mejora 392; dueño: «Al guardar, lo que falta se marca en el mismo campo») Al tocar Guardar con algo sin llenar, el aviso salía
+   abajo a la IZQUIERDA (encima de la agenda, lejos del formulario), decía solo lo primero y se iba solo; el campo tenía un borde rojo finito y
+   «con qué pagó» aparecía recién en el segundo intento. Ahora debajo de CADA campo que falta sale una frase roja con qué poner, todo a la vez,
+   y en la barra de pasos el paso que tiene algo pendiente lleva un «!» rojo. Lo que falta es la MISMA lista de «Para guardar»
+   (`paraGuardarChk`, lo que pide Guardar) y el campo, el de `gladoCampo` (372). Cada frase se va sola cuando ese dato queda listo. SOLO
+   DIBUJO: Guardar sigue frenando lo mismo (`submitPedido`). Sin el aviso de la esquina (queda el texto para lectores de pantalla). En
+   Playwright como antes salvo `window.FALTA_CAMPO_PRUEBA`. `tests/test_v392_falta_campo.js`. */
+var FALTA_INTENTO=false, FALTA_T=null;
+function faltaCampoVa(){ try{ return vdVa('FALTA_CAMPO_PRUEBA'); }catch(e){ return false; } }
+function faltaCampoTxt(k){
+  var val=function(id){ return String((document.getElementById(id)||{}).value||'').trim(); };
+  switch(k){
+    case 'Vendedor': return 'Falta quién vende: elegí tu nombre';
+    case 'Cliente': return docTipoSel()==='RPT' ? 'Falta a qué sucursal va la reposición' : 'Falta el nombre del cliente';
+    case 'Productos': return 'Falta el producto: escribí el nombre o el código y la cantidad (1 o más)';
+    case 'Precios': return 'Falta el precio de venta (c/u) de este producto';
+    case 'Vale hasta': return 'Falta hasta cuándo vale la cotización';
+    case 'Fecha': return 'Falta la fecha de entrega';
+    case 'Zona': return 'Falta la zona: escribila o pegá la ubicación y se pone sola';
+    case 'Ubicación': return 'La ubicación no se entiende o queda fuera de Santa Cruz: pegá el enlace de Google Maps de nuevo';
+    case 'Celular': return val('f-celular') ? 'El celular tiene que ser de WhatsApp: 8 números que empiezan con 6 o 7 (ej. 71234567)' : 'Falta el celular del cliente (8 números, ej. 71234567)';
+    case 'Nota': return 'Falta el N° de la nota de venta';
+    case 'Saldo o pagado':
+      if(segVal('f-pagado')==='SI') return segVal('f-metodo') ? 'Falta el monto total cobrado' : 'Falta con qué pagó: tocá Efectivo, QR o Tarjeta';
+      return segVal('f-pagado')==='NO' ? 'Falta el saldo por cobrar (lo que falta pagar)' : 'Falta decir si ya pagó: tocá «SÍ, pagado» o poné el saldo por cobrar';
+    case 'Quién recibió el efectivo': return 'Falta quién recibió el efectivo: tocá tu nombre o el del chofer que lo cobró';
+  }
+  return 'Falta: '+String(k||'').toLowerCase();
+}
+/* Dónde va la frase: debajo del campo (en su `.field`, o adentro del renglón del producto). */
+function faltaCampoCaja(el){
+  if(!el) return null;
+  var pc=el.closest && el.closest('.prod-card'); if(pc) return pc;
+  return (el.closest && el.closest('.field')) || el.parentNode;
+}
+function faltaCampoLimpiar(){
+  [].forEach.call(document.querySelectorAll('#view-form .p392-falta'), function(x){ x.remove(); });
+  [].forEach.call(document.querySelectorAll('#view-form .p392-mal'), function(x){ x.classList.remove('p392-mal'); });
+}
+function faltaCampoPintar(){
+  faltaCampoLimpiar();
+  var chk=[]; try{ chk=paraGuardarChk(); }catch(e){ chk=[]; }
+  var n=0;
+  chk.forEach(function(c){
+    if(c[1]) return;
+    var el=null; try{ el=gladoCampo(c[0]); }catch(e){}
+    if(!el || el.offsetParent===null) return;
+    var caja=faltaCampoCaja(el); if(!caja) return;
+    el.classList.add('p392-mal');
+    var d=document.createElement('div'); d.className='p392-falta'; d.setAttribute('data-k', c[0]);
+    d.innerHTML='<i aria-hidden="true">!</i><span>'+esc(faltaCampoTxt(c[0]))+'</span>';
+    caja.appendChild(d); n++;
+  });
+  FALTA_INTENTO=n>0;
+  try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){}
+  return n;
+}
+/* Al escribir o tocar algo: cada frase cuyo dato ya quedó listo se va (y el «!» de su paso). */
+function faltaCampoRevisar(){
+  FALTA_T=null;
+  if(!document.querySelector('#view-form .p392-falta')){ if(FALTA_INTENTO){ FALTA_INTENTO=false; try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){} } return; }
+  var ok={}; try{ paraGuardarChk().forEach(function(c){ ok[c[0]]=!!c[1]; }); }catch(e){ return; }
+  [].forEach.call(document.querySelectorAll('#view-form .p392-falta'), function(d){
+    var k=d.getAttribute('data-k'); if(ok[k]===false){ var sp=d.querySelector('span'), tx=faltaCampoTxt(k); if(sp && sp.textContent!==tx) sp.textContent=tx; return; }
+    var caja=d.parentNode; d.remove();
+    if(caja && !caja.querySelector('.p392-falta')) [].forEach.call(caja.querySelectorAll('.p392-mal'), function(x){ x.classList.remove('p392-mal'); });
+  });
+  if(!document.querySelector("#view-form .p392-falta")) FALTA_INTENTO=false;
+  try{ fpPintar(); }catch(e){} try{ if(fxAncho()) fxDerPintar(); }catch(e){}
+}
+function faltaCampoLuego(){ if(FALTA_T || !faltaCampoVa()) return; FALTA_T=setTimeout(faltaCampoRevisar, 140); }
+document.addEventListener('DOMContentLoaded', function(){
+  var vf=document.getElementById('view-form'); if(!vf) return;
+  ['input','change','click'].forEach(function(t){ vf.addEventListener(t, faltaCampoLuego, true); });
+});
 function gladoGuardar(){
   var b=document.getElementById('f-submit'); if(!b) return;
   if(b.disabled){ toast('Ya se está guardando: esperá el resultado.', 'err', 4000); return; }
@@ -29270,8 +29373,9 @@ function fpPintar(){
       el.querySelector('.fp-n').textContent=ok[i]?'✓':o.n; el.querySelector('.fp-est').textContent=ok[i]?'Listo':(i===act?'Ahora':'Falta'); }
   });
   var bar=document.getElementById('fp-barra'), k=0;
-  var h=FP_PASOS.map(function(o,i){ if(!vis[i]) return ''; k++; var est=ok[i]?'ok':(i===act?'ya':'no');
-    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+'" onclick="fpIr('+o.n+')"><span>'+(ok[i]?'✓':k)+'</span>'+o.bar+'</button>'; }).join('')+
+  var _f392=FALTA_INTENTO && faltaCampoVa();   // 🎨 (16/11, mejora 392) después de un Guardar que frenó: el paso con algo pendiente, con «!»
+  var h=FP_PASOS.map(function(o,i){ if(!vis[i]) return ''; k++; var est=ok[i]?'ok':(i===act?'ya':'no'), f392=_f392 && !ok[i];
+    return (k>1?'<i></i>':'')+'<button type="button" class="fp-b fp-'+est+(f392?' p392-b':'')+'" onclick="fpIr('+o.n+')"'+(f392?' title="Falta algo en este paso"':'')+'><span>'+(ok[i]?'✓':(f392?'!':k))+'</span>'+o.bar+'</button>'; }).join('')+
     '<span class="fp-av"><b>'+nOk+' de '+nV+'</b> '+(nOk===nV?'¡listo para guardar!':'listo')+'</span>';
   if(bar && bar._h!==h){ bar.innerHTML=h; bar._h=h; }
   if(bar) bar.style.top='';   // (§4mo) lo pega el CSS debajo del encabezado (`--hdr-h`), que se achica al bajar
