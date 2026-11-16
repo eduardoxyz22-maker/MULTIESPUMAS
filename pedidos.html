@@ -4636,6 +4636,24 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ias-lee .ias-tx::before{content:"";display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;border:2px solid #9fb8cc;border-top-color:#2b4a63;vertical-align:-1px;animation:ias-gira .9s linear infinite}
 @keyframes ias-gira{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.ias-lee .ias-tx::before{animation:none}}
+/* 🎧🤖 (16/11, 347) lo que Claude ve en las fotos de la ATC */
+.atf-box:empty{ display:none; }
+.atf-ficha{ margin-top:12px; } .atf-ficha .atf-btn{ width:auto; background:#fff; border:1px solid #00B5AD; color:#00726c; font-weight:700; }
+.atf{ margin:0 0 14px; background:#fff; border:1px solid #cdebe9; border-left:5px solid #00B5AD; border-radius:12px; padding:11px 13px; color:#14403d; font-size:.86rem; }
+.atf-ficha .atf{ margin-top:8px; }
+.atf-h{ font-weight:800; color:#00726c; margin-bottom:6px; }
+.atf-r{ display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; margin:4px 0; } .atf-r .btn{ width:auto; margin-left:4px; }
+.atf-l{ flex:none; min-width:74px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#5d7473; }
+.atf-v{ color:var(--muted); font-style:italic; } .atf-okm{ font-size:.78rem; font-weight:700; color:#15803d; }
+.atf-nc{ margin:8px 0; background:#fff8ec; border:1px solid #f6d7a8; border-radius:9px; padding:7px 10px; color:#7c4b00; }
+.atf-fab{ margin:8px 0; } .atf-fab div{ background:#f4f8f8; border-radius:9px; padding:8px 10px; line-height:1.45; white-space:pre-wrap; }
+.atf-foto{ margin:8px 0; background:#f4f8fb; border:1px solid #d7e3ee; border-radius:9px; padding:7px 10px; color:#2b4a63; }
+.atf-b{ display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .atf-b .btn{ width:auto; }
+.atf-correo{ background:#00B5AD; color:#fff; border:0; font-weight:700; }
+.atf-pie{ margin-top:8px; font-size:.74rem; color:#6b8584; }
+.atf-lee, .atf-gris{ color:#55706f; background:#f5f7f7; border-color:#e3e9e9; border-left-color:#9fb8cc; }
+.atf-gira{ display:inline-block; width:10px; height:10px; margin-right:6px; border-radius:50%; border:2px solid #9fb8cc; border-top-color:#2b4a63; vertical-align:-1px; animation:ias-gira .9s linear infinite; }
+@media (prefers-reduced-motion:reduce){ .atf-gira{ animation:none; } }
 /* 📄 el PDF «Pagos para revisar» (A4 parado 794×1123; sin color-mix ni sombras: html2canvas) */
 .icp-pag{width:794px;height:1123px;box-sizing:border-box;padding:40px 44px 34px;background:#fff;color:#13302e;font-family:Inter,system-ui,sans-serif;position:relative;overflow:hidden;margin:0 0 12px}
 .icp-cab{display:flex;align-items:center;gap:10px;border-bottom:3px solid #00B5AD;padding-bottom:10px;margin-bottom:14px}.icp-cab b{display:block;font-size:22px;font-weight:900}.icp-cab span{font-size:13px;color:#55706f}
@@ -37380,6 +37398,9 @@ function verAtc(id){
       /* 📷 (15/10, §4lh) las fotos del producto que subió la vendedora; tocar una abre el visor */
       '<div style="margin-top:12px"><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">📷 Fotos del producto</div>'+
         (atcFotos(p).length ? atcFotosTiraHtml(p) : '<div style="font-size:.8rem;color:var(--muted)">sin fotos — se pueden agregar con ✏️ Editar</div>')+'</div>'+
+      /* 🎧🤖 (16/11, mejora 347) Claude mira las fotos y propone el motivo y el párrafo para la fábrica (lo toca una persona) */
+      (atfVa(p) ? ('<div class="atf-ficha">'+(atfDe(p) ? '' : '<button type="button" class="btn btn-sm atf-btn" onclick="this.hidden=true;atfPedir(\''+esc(String(p.id).replace(/\'/g,''))+'\', true)">🤖 Mirar las fotos</button>')+
+        atfBoxHtml(p, 'ficha')+'</div>') : '')+
       texto('Qué se hizo', atcQueSeHizo(p))+
       /* 🔗 (15/10, §4lf) la tarjeta de Trello de donde se completaron datos */
       ((atcDe(p)||{}).tre && /^https:\/\/trello\.com\//.test((atcDe(p)||{}).tre) ? ('<div style="margin-top:10px;font-size:.8rem"><a href="'+esc((atcDe(p)||{}).tre)+'" target="_blank" rel="noopener" style="color:#0079bf;font-weight:700">🗂️ Ver su tarjeta en Trello</a></div>') : '')+
@@ -42075,6 +42096,8 @@ function atcCorreoTexto(p){
     L.push('', 'FOTOS DEL PRODUCTO');
     fot.forEach(function(f, i){ L.push('   Foto '+(i+1)+': '+fotoVer(fidLimpio(f))); });
   }
+  var _iaFab=''; try{ _iaFab=atfCorreoTxt(p); }catch(e){}   // 🎧🤖 (16/11, 347) el párrafo para la fábrica, si la vendedora tocó «📧 Pasar al correo»
+  if(_iaFab) L.push('', _iaFab);
   L.push('', 'Saludos,', (p.vendedor||''));
   return L.join('\n');
 }
@@ -42127,6 +42150,116 @@ function atcCorreoVer(id){
     '<div class="modal-b">'+atcCorreoHtml(p)+
       '<div class="modal-actions"><button class="btn btn-ghost btn-sm" onclick="verAtc(\''+esc(String(p.id).replace(/'/g,''))+'\')">← Volver a la ficha</button></div></div>');
 }
+/* ============================================================================
+   🎧🤖 (16/11, mejora 347; el dueño la eligió) LA ATC CON FOTOS: CLAUDE PROPONE EL MOTIVO Y EL RECLAMO.
+   En octubre y noviembre entraron 21 ATC: 7 con motivo «Otro» (2 de las de noviembre eran de un motivo de la lista), 2 hablan de humedad
+   y mal olor (que el certificado pone en «no cubre») marcadas como garantía, y 7 de cada 10 traen fotos que nadie mira hasta que el colchón
+   llega a la fábrica.
+   · Al guardar una ATC NUEVA con fotos («✅ ATC guardada») y con «🤖 Mirar las fotos» en su ficha (`verAtc`), el panel le pide al servidor
+     (acción `atcFotos`, 2026-11-16-a) que Claude mire las fotos (hasta 2, las del producto: `atcFotos`) con el detalle, el producto y la fecha de
+     compra. Vuelve: el motivo de la lista (`ATC_MOTIVOS`: la página manda la lista, UNA sola), qué se ve en una línea, si se ve algo de lo que
+     el certificado NO cubre (`CERT_TEXTO.noCubre`), un párrafo para la fábrica y, si la foto no muestra el problema, qué foto pedir.
+   · «Usar este motivo» (lo toca una persona: guarda la ATC con ese motivo por `guardarDurable`), «📧 Pasar al correo» (el párrafo entra al
+     mensaje del correo de la ATC: `atcCorreoTexto`) y «💬 Pedirle otra foto» (el WhatsApp del cliente con el pedido escrito: lo manda la
+     vendedora). NUNCA cambia garantía/STC: lo decide gerencia, y la caja lo dice.
+   · Lo leído queda en esta página (`ATF.res`, por fotos + detalle) y el servidor lo recuerda 6 h: volver a abrir no gasta. Errores
+     (servidor viejo, sin conexión, Claude apagado, el tope): al guardar no se muestra nada; en la ficha se dice en una línea.
+   · En Playwright apagado salvo `window.ATF_PRUEBA`.
+   ========================================================================== */
+var ATF={ res:{}, vuelo:{}, err:{}, pidio:{}, alCorreo:{} }, ATF_TOPE_MS=75000;
+function atfActivo(){ return !(navigator.webdriver && !window.ATF_PRUEBA); }
+function atfVa(p){ return atfActivo() && servidorTiene(OBS_IA_SERVIDOR) && !!p && esATC(p.oc) && atcFotos(p).length>0; }
+function atfFotos(p){ return atcFotos(p).map(fidLimpio).filter(Boolean).slice(0, 2); }
+function atfLlave(p){ return JSON.stringify([atfFotos(p), atcDetalle(p)]); }
+function atfDe(p){ var r=p && ATF.res[String(p.id)]; return (r && r.k===atfLlave(p)) ? r.ia : null; }
+/* `manual`: lo pidió una persona desde la ficha (los errores se dicen); si no, es el de «ATC guardada» (callado si falla). */
+function atfPedir(id, manual, pDado){
+  var p=findById(id)||pDado; if(!atfVa(p)) return;
+  id=String(p.id); if(manual) ATF.pidio[id]=1;
+  var k=atfLlave(p);
+  if(atfDe(p) || ATF.vuelo[id]===k){ atfPintar(id, p); return; }
+  ATF.vuelo[id]=k; delete ATF.err[id]; atfPintar(id, p);
+  var pr=(p.productos||[])[0]||{};
+  conTopeDuro(apiPost({ action:'atcFotos', fotos:atfFotos(p), det:atcDetalle(p), mot:atcMotivo(p), prod:((pr.desc||'')+(pr.medida?(' '+pr.medida):'')).trim(),
+                        fcom:atcFechaCompra(p)||'', motivos:ATC_MOTIVOS.slice(), noCubre:(CERT_TEXTO.noCubre||[]).slice() }), ATF_TOPE_MS, 'tardo_ia')
+    .then(function(r){ if(r && r.ok && r.ia) ATF.res[id]={ k:k, ia:r.ia }; else ATF.err[id]=(r && r.error) || 'sin_respuesta'; },
+          function(){ ATF.err[id]='red'; })
+    .then(function(){ if(ATF.vuelo[id]===k) delete ATF.vuelo[id]; atfPintar(id, p); });
+}
+var ATF_ERR={ tope:'Hoy ya se llegó al tope de ATC que mira Claude: mañana sigue.', ia_apagada:'Claude no está prendido en el servidor para mirar fotos.',
+  sin_clave:'Claude no está prendido en el servidor para mirar fotos.', sin_foto:'No pude abrir las fotos de esta ATC.', no_se_lee:'Claude no pudo abrir las fotos.',
+  ocupado:'Claude está ocupado: probá en un rato.', red:'Sin conexión con el servidor: probá en un rato.' };
+function atfInner(p, modo){
+  if(!p) return '';
+  var id=String(p.id), ia=atfDe(p), n=atfFotos(p).length;
+  if(!ia && ATF.vuelo[id]) return '<div class="atf atf-lee"><span class="atf-gira"></span>🔎 Claude está mirando '+(n===1?'la foto':'las '+n+' fotos')+'… <small>tarda unos segundos</small></div>';
+  if(!ia){
+    var e=ATF.err[id];
+    return (e && (modo==='ficha' || ATF.pidio[id])) ? ('<div class="atf atf-gris">🤖 '+esc(ATF_ERR[e]||'Claude no pudo mirar las fotos ahora.')+'</div>') : '';
+  }
+  var pid=id.replace(/'/g,''), mot=atcMotivo(p), nc=(CERT_TEXTO.noCubre||[])[0]||'';
+  var motH=!ia.motivo ? '<span class="atf-v">no se puede saber por las fotos</span>'
+    : (ia.motivo===mot ? ('<b>'+esc(ia.motivo)+'</b> <span class="atf-okm">✓ el que elegiste</span>')
+       : ((mot ? ('<s>'+esc(mot)+'</s> → ') : '')+'<b>'+esc(ia.motivo)+'</b> <button type="button" class="btn btn-sm btn-primary atf-usar" onclick="atfUsarMotivo(\''+pid+'\')">Usar este motivo</button>'));
+  var waUrl=(ia.pedir && p.celular) ? misWaCliente(p.celular) : '';
+  return '<div class="atf">'+
+    '<div class="atf-h">🤖 Claude miró '+(ia.fotos===1?'la foto':'las '+(ia.fotos||n)+' fotos')+'</div>'+
+    '<div class="atf-r"><span class="atf-l">Motivo</span><span>'+motH+'</span></div>'+
+    (ia.seVe ? ('<div class="atf-r"><span class="atf-l">Se ve</span><span>'+esc(ia.seVe)+'</span></div>') : '')+
+    (ia.noCubre ? ('<div class="atf-nc">⚠️ '+esc(ia.noCubrePor||'Se ve algo que el certificado no cubre.')+' El certificado dice que no cubre: «'+esc(nc)+'» '+
+      '<b>Solo es un aviso: lo decide gerencia.</b></div>') : '')+
+    (ia.fab ? ('<div class="atf-fab"><span class="atf-l">Para la fábrica</span><div>'+esc(ia.fab)+'</div></div>') : '')+
+    ((!ia.muestra || ia.pedir) ? ('<div class="atf-foto">📷 '+(ia.muestra ? '' : 'La foto no muestra bien el problema. ')+(ia.pedir ? ('Pedile al cliente: <b>'+esc(ia.pedir)+'</b>') : 'Pedile al cliente otra foto, de cerca y con luz.')+'</div>') : '')+
+    '<div class="atf-b">'+
+      (ia.fab ? ('<button type="button" class="btn btn-sm atf-correo" onclick="atfAlCorreo(\''+pid+'\')">'+(ATF.alCorreo[id] ? '✓ En el correo' : '📧 Pasar al correo')+'</button>') : '')+
+      (waUrl ? ('<a class="btn btn-sm btn-ghost atf-wa" target="_blank" rel="noopener" href="'+esc(waUrl+'?text='+encodeURIComponent(atfPedirTxt(p, ia)))+'">💬 Pedirle otra foto</a>') : '')+
+    '</div>'+
+    '<div class="atf-pie">Claude solo propone: nada cambia hasta que tocás un botón. <b>Garantía o contra costo (STC) lo decide gerencia.</b></div>'+
+  '</div>';
+}
+function atfPedirTxt(p, ia){
+  var n=String((p&&p.cliente)||'').trim().split(/\s+/)[0]||'';
+  return 'Hola'+(n?(' '+n):'')+', para revisar tu reclamo necesitamos '+String(ia.pedir||'una foto de cerca del problema, con luz').replace(/^una?\s/i, function(s){ return s.toLowerCase(); }).replace(/\.$/,'')+'. ¡Gracias!';
+}
+function atfBoxHtml(p, modo){ return '<div class="atf-box" aria-live="polite" data-id="'+esc(String(p.id))+'" data-modo="'+(modo||'')+'">'+atfInner(p, modo)+'</div>'; }
+function atfPintar(id, pDado){
+  var p=findById(id)||pDado; if(!p) return;
+  [].forEach.call(document.querySelectorAll('.atf-box'), function(b){
+    if(b.getAttribute('data-id')!==String(id)) return;
+    var h=atfInner(p, b.getAttribute('data-modo')||''); if(b._h!==h){ b.innerHTML=h; b._h=h; }
+  });
+}
+/* «Usar este motivo»: la ATC se guarda con el motivo que propuso Claude (lo toca la persona). El tipo (garantía/STC) no se toca. */
+function atfUsarMotivo(id){
+  var p=findById(id), ia=atfDe(p); if(!p || !ia || !ia.motivo || ATC_MOTIVOS.indexOf(ia.motivo)<0) return;
+  var a=Object.assign({}, atcDe(p)||{}); a.mot=ia.motivo;
+  setAtcDatos(p, a); upsert(p); saveMirror();
+  try{ guardarDurable(p); }catch(e){}
+  var tx=document.getElementById('atc-correo-texto'); if(tx) tx.value=String(tx.value||'').replace(/^Motivo: .*$/m, 'Motivo: '+ia.motivo);
+  var as=document.getElementById('atc-correo-asunto'); if(as) as.value=atcCorreoAsunto(p);
+  toast('✓ Motivo de la ATC: '+ia.motivo+'.','ok');
+  if(document.querySelector('.atf-box[data-modo="ficha"][data-id="'+String(p.id).replace(/"/g,'')+'"]')){ verAtc(p.id); return; }
+  atfPintar(p.id, p);
+}
+/* «📧 Pasar al correo»: el párrafo para la fábrica, en el mensaje del correo de la ATC (el de la ventana, o el de «📧 Correo de la ATC»). */
+function atfCorreoTxt(p){
+  var ia=p && ATF.alCorreo[String(p.id)] ? atfDe(p) : null;
+  return (ia && ia.fab) ? ('PARA LA FÁBRICA (lo que se ve en las fotos)\n'+ia.fab) : '';
+}
+function atfAlCorreo(id){
+  var p=findById(id); if(!p || !atfDe(p)) return;
+  ATF.alCorreo[String(p.id)]=1;
+  var tx=document.getElementById('atc-correo-texto'), bloque=atfCorreoTxt(p);
+  if(tx){
+    var v=String(tx.value||'');
+    if(v.indexOf(bloque)<0){ var i=v.lastIndexOf('\nSaludos,'); tx.value=(i>=0) ? (v.slice(0, i)+'\n'+bloque+'\n'+v.slice(i)) : (v+'\n\n'+bloque); }
+    toast('📧 Listo: el párrafo para la fábrica quedó en el mensaje del correo.','ok');
+    atfPintar(p.id, p);
+    return;
+  }
+  atcCorreoVer(p.id);
+}
+// 🎧🤖 mejora 347 fin =====================================================================
 /* ============================================================================
    📄 EL FORMULARIO DE LA ATC EN EXCEL (06/11) — dueño: *«habíamos quedado que se generaba el Excel, aparecía el botón de descargar
    Excel y se juntaba eso directamente al correo… te subí el formato… ese era el Excel que se tenía que crear»* (ATC_MODELO.xlsx).
@@ -53912,7 +54045,7 @@ function showWhatsappModal(rec, volverA, reenvio){
        '<p style="font-size:.78rem;color:var(--muted);margin:9px 0 14px;text-align:center">Se baja como <b>'+esc(nombreArchivoRpt(rec))+'</b>. Adjuntalo al correo tal cual.</p>')
     : '';
   /* 📧 (§4li) En una ATC, el CORREO va primero (como el Excel de la RPT): es lo que la vendedora tiene que mandar. */
-  var _correo = _atc ? atcCorreoHtml(rec) : '';
+  var _correo = _atc ? ((reenvio ? '' : atfBoxHtml(rec, 'auto'))+atcCorreoHtml(rec)) : '';   // 🎧🤖 (16/11, 347) arriba del correo, lo que Claude ve en las fotos
   var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':(_rpt?'✅ Reposición guardada':(_atc?'✅ ATC guardada':'✅ Pedido guardado')))+'</h3>'+
       '<button class="modal-x" onclick="'+salir+'">✕</button></div>'+
     '<div class="modal-b">'+
@@ -53931,6 +54064,7 @@ function showWhatsappModal(rec, volverA, reenvio){
       (reenvio ? '' : certBloqueHtml(rec))+             // 🛡️ (14/11, 264) y el certificado de garantía (por ahora, solo con la contraseña o ?cert=1)
     '</div>';
   openModal(html);
+  try{ if(_atc && !reenvio) atfPedir(rec.id, false, rec); }catch(e){}   // 🎧🤖 (16/11, 347) una ATC nueva con fotos: Claude las mira (callado si no puede)
   try{ if(window.PRACTICA && !reenvio) practicaVestirGuardado(rec, false); }catch(e){}   // 🧪 (271) «de práctica» y lo que hubiera pasado
 }
 /* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
