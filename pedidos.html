@@ -2970,6 +2970,8 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1 id="hdr-dia">Registro de Pedidos</h1><p id="stat-hoy-l">Cupos mañana</p></div>
+    <!-- 🖥️ (16/11, mejora 378) En las compus de 768 de alto, la meta del mes sube acá, al lado del día (`hdrMetaMiniHtml`). -->
+    <span id="hdr-meta-mini" class="hdr-meta-mini no-print" role="button" tabindex="0" hidden onclick="hdrMetaAbrir()" title="Abrir Proyección"></span>
     <button type="button" id="pal-btn" class="pal-btn no-print" onclick="palAbrir()" title="Buscar un cliente, una OC, una nota, un celular o un producto, o ir a algo (Ctrl + K)" aria-label="Buscar (Ctrl + K)"><span aria-hidden="true">🔎</span><span class="pal-btn-t">Buscar</span><span class="pal-kbd" aria-hidden="true">Ctrl K</span></button>
     <button type="button" id="vivo-btn" class="vivo-btn no-print" hidden onclick="vivoAbrir()" aria-expanded="false" title="En vivo: lo último que pasó hoy" aria-label="Lo último que pasó">🔔<span class="vivo-n" id="vivo-n" hidden>0</span></button>
     <div class="hstat"><div class="hstat-v" id="stat-hoy" hidden>0</div><div class="h-anillos" id="h-anillos" role="img" aria-label="Cupos libres del próximo camión"></div></div>
@@ -6102,6 +6104,27 @@ i.pmv-v{ background:#00A09A; } i.pmv-k{ background:#9ca3af; }
 .hdr-meta{ display:flex; align-items:center; gap:6px 14px; flex-wrap:wrap; background:#fff; color:#1f2d2d; border-top:1px solid #dbe7e7; padding:6px 18px 7px; font-size:.78rem; line-height:1.35; cursor:pointer; position:relative; z-index:2; }
 .hdr-meta[hidden]{ display:none!important; }
 .hdr-meta:hover{ background:#f7fdfc; } .hdr-meta:focus-visible{ outline:2px solid var(--teal); outline-offset:-2px; }
+/* 🖥️ 378 · en las compus de 768 de alto (`html.hdr-bajo`, ver `hdrBajoAplicar`): la ciudad y el camión a la mitad y la meta al lado del día */
+.hdr-meta-mini{ display:none; }
+html.hdr-bajo .hdr-meta-mini:not([hidden]){ display:inline-flex; align-items:center; gap:8px; min-width:0; flex:0 1 auto; max-width:380px; padding:5px 12px; border-radius:20px;
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.3); color:#fff; font-size:.76rem; line-height:1.2; cursor:pointer; white-space:nowrap; }
+html.hdr-bajo .hdr-meta-mini:hover{ background:rgba(255,255,255,.22); } html.hdr-bajo .hdr-meta-mini:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+.hmm-e{ font-weight:800; } .hmm-x{ opacity:.85; }
+.hmm-bar{ position:relative; flex:0 1 90px; min-width:44px; height:8px; border-radius:4px; background:rgba(255,255,255,.22); overflow:hidden; }
+.hmm-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:4px; }
+.hmm-t b{ font-weight:800; } .hdr-meta-mini .hm-c{ padding:0 7px; }
+html.hdr-bajo #hdr-meta{ display:none!important; }
+html.hdr-bajo .header-in{ padding-top:9px; padding-bottom:9px; }
+html.hdr-bajo.tema-todos-santos .header-in{ padding-top:16px; } html.hdr-bajo.tema-patria .header-in, html.hdr-bajo.tema-santa-cruz .header-in{ padding-top:14px; }
+html.hdr-bajo .h-ruta{ height:34px; }
+html.hdr-bajo .h-lejos{ bottom:9px; height:20px; background-size:360px 20px; }
+html.hdr-bajo .h-cerca{ bottom:9px; height:23px; background-size:300px 23px; }
+html.hdr-bajo.tema-halloween .h-lejos{ height:21px; background-size:380px 21px; } html.hdr-bajo.tema-halloween .h-cerca{ background-size:320px 23px; }
+html.hdr-bajo .h-calle{ height:9px; background-size:100% 1.5px, 100% 1.5px, 100% 100%; background-position:0 0, 0 4px, 0 0; }
+html.hdr-bajo .h-camion{ bottom:1px; } html.hdr-bajo .h-camion svg{ width:70px; height:33px; }
+html.hdr-bajo .h-astro{ width:14px; height:14px; margin:-7px 0 0 -7px; }
+html.hdr-bajo.tema-halloween .h-luna{ width:13px; height:13px; top:3px; }
+html.hdr-bajo .nav{ margin-top:12px; }
 .hm-e{ white-space:nowrap; } .hm-t{ white-space:nowrap; } .hm-x{ color:#5b6b6b; }
 .hm-bar{ flex:1 1 140px; position:relative; height:10px; border-radius:5px; background:#eef2f2; overflow:hidden; min-width:110px; max-width:520px; }
 .hm-bar i{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; }
@@ -26307,9 +26330,10 @@ function zoomPag(){
   return z>0 ? z : 1;
 }
 function hdrArrancar(){
+  try{ hdrBajoAplicar(); }catch(e){}               // 🖥️ (378) en las compus de 768 de alto, más bajo
   hdrMedir();
   window.addEventListener('scroll', hdrScroll, { passive:true });
-  window.addEventListener('resize', function(){ hdrMedir(); });
+  window.addEventListener('resize', function(){ try{ hdrBajoAplicar(); }catch(e){} hdrMedir(); });
   /* (27/10, §4ni) Si el «terminó de esconderse» llega cuando ya se volvió a subir (con la máquina cargada pasa), la ciudad está volviendo a
      crecer desde 0: medir ahí dejaba el encabezado entero en 84 px. Se mide solo con la ciudad quieta (su propio fin de transición). */
   var r=document.querySelector('.header .h-ruta'); if(r) r.addEventListener('transitionend', function(e){ if(e.target!==r || e.propertyName!=='height' || HDR.chico) return; try{ if(r.getAnimations && r.getAnimations().length) return; }catch(x){} hdrMedir(); });
@@ -26370,18 +26394,47 @@ function hdrMetaHtml(D){
     '<span class="hm-t">vendido <b>'+D.pv+' %</b>'+(curso ? (' · si sigue así <span class="hm-c '+cls+'">'+D.pp+' %</span>') : '')+' de '+fmtBs0(D.M)+'</span>'+
     (dia ? '<span class="hm-x">'+esc(dia)+'</span>' : '');
 }
+/* 🖥️ (16/11, mejora 378; dueño: «me gustan») EN LAS COMPUS DE 768 DE ALTO, EL ENCABEZADO MÁS BAJO. En una notebook de 1.366 × 768, antes de la
+   primera tarjeta había 245 px de encabezado, meta y pestañas (el 32 % de la pantalla). Con 800 px de alto o menos (`HDR_BAJO_MQ`): la ciudad
+   y el camión van a la mitad de alto (mismo dibujo, mismos colores, la misma animación), la línea de la meta (342) sube al lado del día en una
+   versión chica (`#hdr-meta-mini`, la MISMA cuenta `HDR_META.D`) y las pestañas se acercan. Solo CSS con `html.hdr-bajo` (lo pone
+   `hdrBajoAplicar` al abrir y al cambiar el tamaño de la ventana) y `hdrMedir` vuelve a medir `--hdr-h`: todo lo pegajoso ya lo usa. En
+   pantallas más altas no cambia nada. En Playwright, apagado salvo `window.HDR_BAJO_PRUEBA`. */
+var HDR_BAJO_MQ='(max-height:800px) and (min-width:561px)';
+function hdrBajoVe(){ return vdVa('HDR_BAJO_PRUEBA') && !!(window.matchMedia && matchMedia(HDR_BAJO_MQ).matches); }
+function hdrBajoAplicar(){
+  var html=document.documentElement, on=hdrBajoVe(); if(html.classList.contains('hdr-bajo')===on) return false;
+  var r=document.querySelector('.header .h-ruta'), tr=r ? r.style.transition : '';
+  if(r) r.style.transition='none';                 // de una: sin la transición, `hdrMedir` mide el alto nuevo
+  html.classList.toggle('hdr-bajo', on);
+  if(r){ void r.offsetHeight; r.style.transition=tr; }
+  try{ hdrMetaPintar(); }catch(e){}
+  try{ hdrMedir(); }catch(e){}
+  return true;
+}
+function hdrMetaMiniHtml(D){
+  var mes=mesNombre(D.ym).replace(/ de \d{4}$/,''), Mes=mes.charAt(0).toUpperCase()+mes.slice(1);
+  if(!D.n) return '<span class="hmm-e">🎯 '+esc(Mes)+'</span><span class="hmm-x">sin metas</span>';
+  var cls={ llego:'hm-ok', va:'hm-ok', cerca:'hm-cerca', lejos:'hm-mal' }[D.est]||'', curso=(D.estado==='curso');
+  return '<span class="hmm-e">🎯 '+esc(Mes)+'</span>'+
+    '<span class="hmm-bar" aria-hidden="true">'+(curso ? '<i class="hm-bp '+cls+'" style="width:'+Math.min(100, D.pp)+'%"></i>' : '')+'<i class="hm-bv '+cls+'" style="width:'+Math.min(100, D.pv)+'%"></i></span>'+
+    '<span class="hmm-t"><b>'+D.pv+'\u00a0%</b>'+(curso ? (' → <span class="hm-c '+cls+'">'+D.pp+'\u00a0%</span>') : '')+'</span>';
+}
 function hdrMetaPintar(forzar){
   var el=document.getElementById('hdr-meta'); if(!el) return;
-  var antes=!el.hidden;
-  if(!hdrMetaVe()){ if(antes){ el.hidden=true; el.innerHTML=''; try{ hdrMedir(); }catch(e){} } return; }
+  var antes=!el.hidden, mini=document.getElementById('hdr-meta-mini');   // 🖥️ (378) la versión chica, al lado del día
+  if(!hdrMetaVe()){ if(mini && !mini.hidden){ mini.hidden=true; mini.innerHTML=''; mini._h=''; } if(antes){ el.hidden=true; el.innerHTML=''; try{ hdrMedir(); }catch(e){} } return; }
   var ym=diaNegocio().slice(0,7);
   if(forzar || !HDR_META.D || HDR_META.ym!==ym || Date.now()-HDR_META.t>=HDR_META_CADA){
     try{ HDR_META.D=hdrMetaDatos(ym); }catch(e){ HDR_META.D=null; }
     HDR_META.t=Date.now(); HDR_META.ym=ym;
   }
-  var D=HDR_META.D; if(!D){ el.hidden=true; return; }
+  var D=HDR_META.D; if(!D){ el.hidden=true; if(mini) mini.hidden=true; return; }
   var h=hdrMetaHtml(D);
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
+  if(mini){ var hm=hdrMetaMiniHtml(D); if(mini._h!==hm){ mini.innerHTML=hm; mini._h=hm; } mini.hidden=false;
+    mini.setAttribute('aria-label', 'Meta de '+mesNombre(ym)+(D.n ? (': vendido '+D.pv+' por ciento'+(D.estado==='curso' ? (', si sigue así '+D.pp+' por ciento') : '')) : ': sin metas')+'. Abrir Proyección');
+    mini.title=String(el.textContent||'').replace(/\s+/g,' ').trim()+' · tocá para abrir Proyección'; }
   el.setAttribute('aria-label', 'Meta de '+mesNombre(ym)+(D.n ? (': vendido '+D.pv+' por ciento'+(D.estado==='curso' ? (', si sigue así '+D.pp+' por ciento') : '')) : ': sin metas')+'. Abrir Proyección');
   el.hidden=false;
   if(!antes) try{ hdrMedir(); }catch(e){}
