@@ -6057,7 +6057,14 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .qc-menu button.on.al{ background:#c62f36; border-color:#c62f36; }
 .qc-menu button .n{ font-weight:800; opacity:.75; flex:none; }
 .qc-menu button small{ display:block; color:#c6262c; font-size:.68rem; font-weight:800; }
-.qc-menu button.on small{ color:#fff; } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
+.qc-menu button.on small{ color:#fff; }
+/* 📅 (16/11, mejora 385) La fecha en letras debajo de cada campo de fecha; en ámbar si parece que se dieron vuelta el día y el mes. */
+.fl-hint{ display:block; flex-basis:100%; font-size:.74rem; line-height:1.35; color:#4b6361; margin:3px 0 0; font-weight:600; }
+.fl-hint[hidden]{ display:none; }
+.fl-hint.fl-ojo{ background:#fffaf0; border:1px solid #f3dca5; border-radius:9px; padding:7px 10px; color:#5a4300; font-weight:500; margin-top:5px; white-space:normal; }
+.fl-hint .fl-bt{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.fl-hint .fl-bt button{ border:0; border-radius:7px; padding:6px 11px; min-height:32px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; background:#00B5AD; color:#fff; }
+.fl-hint .fl-bt button.fl-no{ background:#f1f5f5; color:#355; border:1px solid #d6e2e1; } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
 .sem-cab{ display:flex; align-items:center; gap:10px; min-width:0; }
 .sem-cab > div{ min-width:0; }
 .sem-ic{ font-size:1.25rem; width:38px; height:38px; display:grid; place-items:center; background:var(--teal-lt); border-radius:12px; flex:none; }
@@ -32226,6 +32233,118 @@ function qcTecla(ev){
   else if(ev.key==='Enter' || ev.key===' ') ev.stopPropagation();
 }
 /* fin mejora 370 */
+/* ============================================================================
+   📅 LA FECHA EN LETRAS AL LADO DE CADA FECHA (16/11, mejora 385; el dueño la eligió).
+   El 13/11 se corrigió la fecha de un QR de Bs 14.130 (pagado el 03/11) y quedó 11/03/2026: marzo. El cobro dejó de salir en el Cuadre de
+   noviembre y nada lo dijo (en una compu con Windows en inglés el campo se escribe mes/día).
+   · Debajo de cada campo de fecha, chiquito, el día en palabras: «lunes 16 de noviembre · mañana».
+   · Si la fecha queda a más de `FL_LEJOS` (30) días de la venta abierta (o de hoy) y dando vuelta día y mes queda una fecha cercana, en ámbar:
+     «Quedó miércoles 11 de marzo: 8 meses antes de la venta. ¿Quisiste decir martes 3 de noviembre?» con «Sí, poner 03/11» (pone esa
+     fecha como si se la hubiera escrito: corren los mismos `onchange`) y «No, es así» (no vuelve a preguntar por esa fecha en ese campo).
+   · Un solo manejador para todos los `input[type=date]` (al escribir, al elegir, al entrar) y un repaso liviano cada segundo para las fechas
+     que el panel pone solo (al abrir un pedido). NUNCA frena ni cambia nada solo. Los filtros de las barras (ver un día, desde/hasta) no llevan
+     nada; la fecha de compra de una ATC lleva el día en letras pero no la pregunta (es de meses o años atrás a propósito).
+   · El letrero va debajo del campo; si el campo está en un renglón (flex/grid) va debajo del renglón, para no empujar nada de costado.
+   En Playwright apagado salvo `window.FECHA_LETRAS_PRUEBA`. `tests/test_fecha_letras.js`.
+   ========================================================================== */
+var FL_LEJOS=30, FL_DIAS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'], FL_HINTS=[], FL_TIC=null;
+var FL_SIN=['efd-dia','mys-desde','cjt-dia','bus-desde','bus-hasta'];      // «ver ese día» / desde-hasta: no son fechas que se anotan
+var FL_SIN_PREGUNTA=['f-atc-compra'];                                       // la compra es de meses o años atrás a propósito
+function flVa(){ try{ return vdVa('FECHA_LETRAS_PRUEBA'); }catch(e){ return false; } }
+function flIso(v){ var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m) return ''; var d=new Date(+m[1], +m[2]-1, +m[3]); return (d.getFullYear()===+m[1] && d.getMonth()===+m[2]-1 && d.getDate()===+m[3]) ? v : ''; }
+function flDif(a, b){ var da=new Date(a+'T12:00:00'), db=new Date(b+'T12:00:00'); return Math.round((db-da)/86400000); }   // b − a, con signo
+function flLetras(v){ var m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/), hoy=todayStr();
+  return FL_DIAS[dowDe(v)]+' '+(+m[3])+' de '+MESES_ES[+m[2]-1]+(m[1]!==hoy.slice(0,4) ? (' de '+m[1]) : ''); }
+function flRelHoy(v){
+  var d=flDif(todayStr(), v);
+  if(d===0) return 'hoy'; if(d===1) return 'mañana'; if(d===-1) return 'ayer'; if(d===2) return 'pasado mañana'; if(d===-2) return 'anteayer';
+  if(d>0 && d<=14) return 'en '+d+' días'; if(d<0 && d>=-14) return 'hace '+(-d)+' días';
+  return '';
+}
+function flCuanto(n){ n=Math.abs(n); if(n<60) return n+' día'+(n===1?'':'s'); var m=Math.round(n/30.44); return m+' mes'+(m===1?'':'es'); }
+/* La venta abierta: la ficha de Contabilidad o el pedido que se está corrigiendo. */
+function flVenta(inp){
+  try{
+    var box=document.getElementById('modal-box'), ov=document.getElementById('modal');
+    if(box && box.contains(inp) && ov && ov.classList.contains('on') && MODAL_KIND==='conta' && CTA_ULTIMA){ var p=findById(CTA_ULTIMA); if(p) return contaFecha(p)||''; }
+    var vf=document.getElementById('view-form');
+    if(vf && vf.contains(inp) && EDIT_ID){ var q=findById(EDIT_ID); if(q) return contaFecha(q)||''; }
+  }catch(e){}
+  return '';
+}
+/* ¿Se dio vuelta el día y el mes? Solo si la fecha está lejos de la venta y de hoy, y la dada vuelta queda cerca de alguna. */
+function flVuelta(v, venta){
+  var m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/); if(!m || +m[3]>12 || m[2]===m[3]) return null;
+  var s=flIso(m[1]+'-'+m[3]+'-'+m[2]); if(!s) return null;
+  var refs=[todayStr()]; if(venta && flIso(venta)) refs.unshift(venta);
+  var lejos=refs.every(function(r){ return Math.abs(flDif(r, v))>FL_LEJOS; }); if(!lejos) return null;
+  var cerca=refs.some(function(r){ return Math.abs(flDif(r, s))<=FL_LEJOS; }); if(!cerca) return null;
+  var ref=refs[0], d=flDif(ref, v), esV=(ref===venta && !!venta);
+  var cuanto=flCuanto(d)+(esV ? (d<0 ? ' antes de la venta' : ' después de la venta') : (d<0 ? ' antes de hoy' : ' después de hoy'));
+  return { s:s, cuanto:cuanto };
+}
+function flSalta(inp){
+  if(!inp || inp.type!=='date' || inp.disabled || inp.hasAttribute('data-sin-letras')) return true;
+  if(FL_SIN.indexOf(inp.id)>=0) return true;
+  if(inp.closest && inp.closest('.filters')) return true;
+  return false;
+}
+/* Debajo del campo; si el campo está en un renglón (flex, grid) o adentro de una etiqueta en línea, debajo de eso. */
+function flAncla(inp){
+  var el=inp;
+  for(var i=0;i<3;i++){
+    var p=el.parentElement; if(!p || p===document.body) break;
+    var cs=getComputedStyle(p), d=cs.display;
+    var enRenglon=((d==='flex' || d==='inline-flex') && String(cs.flexDirection).indexOf('column')<0) || d==='grid' || d==='inline-grid' || (p.tagName==='LABEL' && d.indexOf('inline')===0);
+    if(!enRenglon) break;
+    el=p;
+  }
+  return el;
+}
+function flPintar(inp){
+  if(!flVa() || flSalta(inp)) return;
+  var v=flIso(inp.value), h=inp._flH;
+  var key=v+'|'+(inp._flNo||'');
+  if(h && h.isConnected && h._k===key) return;
+  if(!v){ if(h){ h.hidden=true; h._k=key; } return; }
+  if(!h || !h.isConnected){
+    h=document.createElement('div'); h.className='fl-hint'; h.setAttribute('aria-live','polite'); inp._flH=h; h._inp=inp;
+    var a=flAncla(inp); a.parentNode.insertBefore(h, a.nextSibling); FL_HINTS.push(h);
+  }
+  h._k=key; h.hidden=false;
+  var rel=flRelHoy(v), vu=(FL_SIN_PREGUNTA.indexOf(inp.id)<0 && !(inp.getAttribute('data-c')==='fcom') && inp._flNo!==v) ? flVuelta(v, flVenta(inp)) : null;
+  if(vu){
+    h.className='fl-hint fl-ojo';
+    h.innerHTML='⚠️ Quedó <b>'+esc(flLetras(v))+'</b>: '+esc(vu.cuanto)+'. ¿Quisiste decir <b>'+esc(flLetras(vu.s))+'</b>?'+
+      '<span class="fl-bt"><button type="button" class="fl-si">Sí, poner '+esc(fmtFechaCorta(vu.s))+'</button><button type="button" class="fl-no">No, es así</button></span>';
+    h.querySelector('.fl-si').onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); flPoner(inp, vu.s); };
+    h.querySelector('.fl-no').onclick=function(ev){ ev.preventDefault(); ev.stopPropagation(); inp._flNo=v; flPintar(inp); };
+  } else {
+    h.className='fl-hint';
+    h.textContent=flLetras(v)+(rel ? (' · '+rel) : '');
+  }
+}
+/* «Sí, poner …»: como si la persona la hubiera escrito (corren los `oninput`/`onchange` de ese campo). */
+function flPoner(inp, s){
+  inp.value=s;
+  try{ inp.dispatchEvent(new Event('input', { bubbles:true })); inp.dispatchEvent(new Event('change', { bubbles:true })); }catch(e){}
+  flPintar(inp);
+  try{ inp.focus({ preventScroll:true }); }catch(e){}
+}
+function flRepasar(){
+  if(!flVa() || document.hidden) return;
+  FL_HINTS=FL_HINTS.filter(function(h){ var i=h._inp; if(i && i.isConnected && h.isConnected) return true; try{ h.remove(); }catch(e){} return false; });
+  var L=document.querySelectorAll('input[type="date"]');
+  for(var i=0;i<L.length;i++){ var x=L[i]; if(x.getClientRects().length && !flSalta(x)) flPintar(x); }
+}
+function flEvento(ev){ var t=ev.target; if(t && t.tagName==='INPUT' && t.type==='date') flPintar(t); }
+(function(){
+  try{
+    document.addEventListener('input', flEvento, true); document.addEventListener('change', flEvento, true); document.addEventListener('focusin', flEvento, true);
+    if(flVa()) FL_TIC=setInterval(flRepasar, 1000);
+  }catch(e){}
+})();
+/* fin mejora 385 */
 function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } tblOrdenGuardar('admin', SORT_KEY, SORT_DIR); renderAdmin(); }
 /* ==========================================================================
    🗂️ TABLAS A TU GUSTO (§4nr, 29/10; dueño, del muestrario 24-33: «33 tb»)
