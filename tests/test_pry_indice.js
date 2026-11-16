@@ -29,7 +29,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   const browser = await chromium.launch();
   const errores=[];
   const abrir = async (flag, w, h) => {
-    const ctx = await browser.newContext({ viewport:{ width:w||1366, height:h||768 }, timezoneId:'America/La_Paz' });
+    const ctx = await browser.newContext({ viewport:{ width:w||1366, height:h||768 }, timezoneId:'America/La_Paz', reducedMotion:'reduce' });   // sin animación: el salto es inmediato
     await ctx.route(/^https?:/, r=>r.abort());
     await ctx.addInitScript((flag) => { try{ sessionStorage.setItem('me_quien_ok','1'); localStorage.setItem('me_asis_tour','1'); }catch(e){} if(flag) window.PRY_INDICE_PRUEBA=1; }, flag);
     const page = await ctx.newPage(); page.on('pageerror', e=>errores.push(e.message)); page.on('dialog', d=>d.accept());

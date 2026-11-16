@@ -13745,7 +13745,7 @@ function cxManoPintar(){
     '</div>';
   }).join('');
   box.innerHTML='<div class="cua-box cx-manos"><div class="cua-t">👛 Quién tiene el efectivo — '+esc(cuadrePeriodoTxt())+'</div>'+
-    (con.length ? ('<div class="cx-manos-in">'+cards+'</div><div class="cx-nota">«Retiro» abre el retiro de efectivo ya llenado con la persona y el monto: revisalo y agregá las notas antes de guardar. Los choferes rinden a Contabilidad.</div>')
+    (con.length ? ('<div class="cx-manos-in">'+cards+'</div>'+ayudaComo('cua-manos', '<div class="cx-nota">«Retiro» abre el retiro de efectivo ya llenado con la persona y el monto: revisalo y agregá las notas antes de guardar. Los choferes rinden a Contabilidad.</div>'))
                 : (fuera.length ? '' : '<div class="empty" style="padding:12px 0">✅ Todo el efectivo cobrado ya se recogió.</div>'))+fueraHtml+'</div>';
 }
 function cxRetiro(nombre, monto){
@@ -14245,7 +14245,7 @@ function pubHtml(ym){
   var e=pubDash(ym), mes=mesNombre(ym).replace(/ de \d{4}$/,'');
   var h='<div class="pub" id="pry-pub-box"><div class="pub-h"><span>📣 Lo que vende cada Bs de publicidad · '+esc(mes)+'</span>'+
     (PUB_EDITA ? '' : '<button type="button" class="btn btn-sm mt-btn" id="pub-editar" onclick="pubEditar(true)">✏️ Cargar el gasto</button>')+'</div>'+
-    '<div class="pub-s">El gasto lo escribís vos y queda solo en el panel (el dashboard es público: ahí no va). Leads, ventas y Bs vendidos, del dashboard de Kommo de ese mes.</div>';
+    ayudaComo('pry-pub', '<div class="pub-s">El gasto lo escribís vos y queda solo en el panel (el dashboard es público: ahí no va). Leads, ventas y Bs vendidos, del dashboard de Kommo de ese mes.</div>');
   if(PUB_EDITA) h+=pubEditHtml(ym, null);
   if(e.estado==='lee' && !e.D) return h+'<div class="pub-av">⏳ Leyendo el dashboard de Kommo…</div></div>';
   if(e.estado==='error' && !e.D) return h+'<div class="pub-av pub-av-r">No se pudo leer el dashboard de Kommo ('+esc(e.err||'sin respuesta')+'): sin eso no hay leads ni ventas por canal. Se lee del mismo sitio que el panel; probá «🔄 Actualizar» con internet.</div></div>';
@@ -14365,7 +14365,7 @@ function metasHtml(R){
       '<div class="mt-tres"><span>Vendido <b>'+fmtBs0(d.v)+'</b></span>'+(conP?('<span>📈 Proyección <b class="mt-ppx">'+fmtBs0(d.p)+'</b></span>'):'')+'<span>🎯 Meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
       nota+dia+'</div>';
   });
-  return h+'</div><div class="mt-ley">La barra entera es la meta: lo pintado es lo vendido'+(R.estado!=='cerrado'?'; lo claro, hasta dónde llegaría con la proyección':'')+'. Se mide como la proyección: lo vendido con entrega agendada en el mes, no lo cobrado.</div></div>';
+  return h+'</div>'+ayudaComo('pry-metas', '<div class="mt-ley">La barra entera es la meta: lo pintado es lo vendido'+(R.estado!=='cerrado'?'; lo claro, hasta dónde llegaría con la proyección':'')+'. Se mide como la proyección: lo vendido con entrega agendada en el mes, no lo cobrado.</div>')+'</div>';
 }
 function metasPintar(R){ var el=document.getElementById('pry-metas'); if(el) el.innerHTML=metasHtml(R); }
 /* ---- cargar las metas ---- */
@@ -14936,7 +14936,7 @@ function ccmSigueHtml(R, S){
     '<div class="csg-k"><div>Hoy, con lo vendido<b>'+fmtBs0(S.hoy)+'</b></div><div class="csg-p">Si siguen así, al '+esc(fin)+'<b>'+fmtBs0(S.sigue)+'</b></div>'+
       '<div>A menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón<b>'+S.borde+'</b></div></div>'+
     '<div class="ccm-scroll"><table class="csg-tab"><thead><tr><th>Vendedora</th><th class="r">Hoy</th><th class="r">Si sigue así</th><th>Tramo</th><th>Para mirar</th></tr></thead><tbody>'+filas+'</tbody></table></div>'+
-    '<div class="csg-n">La misma cuenta del 🏁 Cierre comercial (metas, escala, Titanio y ajustes), con lo vendido de cada una llevado a su proyección. En ámbar, quién está a menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón: a quién empujar esta semana.</div></div>';
+    ayudaComo('pry-com', '<div class="csg-n">La misma cuenta del 🏁 Cierre comercial (metas, escala, Titanio y ajustes), con lo vendido de cada una llevado a su proyección. En ámbar, quién está a menos de '+fmtBs0(CCM_SIGUE_BORDE)+' de un escalón: a quién empujar esta semana.</div>')+'</div>';
 }
 function ccmSiguePintar(R){
   var el=document.getElementById('pry-com'); if(!el) return;
@@ -15849,9 +15849,9 @@ function bfnHtml(D){
   if(D.prods.length)
     h+='<div class="bfn-sec" id="bfn-prods"><b class="bfn-tt">🛏️ Lo más vendido'+(D.curso ? ' hasta ahora' : '')+'</b><ol class="bfn-ol">'+
        D.prods.slice(0,5).map(function(o){ return '<li><span>'+esc(bfnProdNom(o))+'</span> <b>'+o.u+' u.</b></li>'; }).join('')+'</ol></div>';
-  h+='<div class="bfn-pie">Cuenta lo vendido por el día en que se CARGÓ cada venta (la campaña es de ventas, no de entregas): las mismas ventas de Proyección, del equipo de tiendas; '+
+  h+=ayudaComo('pry-bf', '<div class="bfn-pie">Cuenta lo vendido por el día en que se CARGÓ cada venta (la campaña es de ventas, no de entregas): las mismas ventas de Proyección, del equipo de tiendas; '+
      'sin ATC, reposiciones ni ROHO. Unidades = colchones y somieres. Se compara con los mismos días hábiles justo antes de la campaña'+(D.curso ? ' (a esta altura: tantos como van de la campaña)' : '')+
-     '; los domingos y feriados de cada tramo suman en los dos.</div></div>';
+     '; los domingos y feriados de cada tramo suman en los dos.</div>')+'</div>';
   return h;
 }
 /* Las barras, una por día de la campaña (Bs o unidades), y la línea punteada = lo de un día hábil de antes, en promedio (los días enteros). */
@@ -16006,8 +16006,8 @@ function pryPlataHtml(ym){
       return '<td>'+(v>0.009 ? ((signo||'')+fmtBs(v)+(nCampo && g[nCampo] ? (' <small>('+g[nCampo]+')</small>') : '')) : '—')+'</td>'; }).join('')+'</tr>';
   };
   var h='<div class="cua-box" id="pry-plata-box"><div class="cua-t">💵 De dónde sale lo vendido — '+esc(mes)+'</div>'+
-    '<div class="pry-intro" style="margin:-4px 0 10px">Lo vendido para '+esc(mes)+' (entrega agendada, lo de las fichas de arriba) partido en lo que ya se cobró, '+
-    'cuándo, y lo que falta. El Cuadre mira otra cosa: la plata que ENTRÓ en el mes, sea de la venta que sea.</div>'+
+    ayudaComo('pry-plata', '<div class="pry-intro" style="margin:-4px 0 10px">Lo vendido para '+esc(mes)+' (entrega agendada, lo de las fichas de arriba) partido en lo que ya se cobró, '+
+    'cuándo, y lo que falta. El Cuadre mira otra cosa: la plata que ENTRÓ en el mes, sea de la venta que sea.</div>')+
     '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th>'+cols.map(function(c){ return '<th>'+esc(c.t)+'</th>'; }).join('')+'</tr></thead><tbody>'+
     fila('<b>Vendido para '+esc(mes)+'</b>','vendido','pry-pl-tot','','n')+
     fila('✓ Cobrado en '+esc(mes),'mes')+
@@ -16578,8 +16578,8 @@ function pryAlturaHtml(R){
   };
   /* §4gy → (08/11, P1) el otro mes, a los mismos días hábiles y a la misma hora; si tenía menos días hábiles, entero, y se dice. */
   var cmpTxt = !A.curso ? ' entero' : pryCorteTxt(A.corte, A.hora);
-  var h='<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta '+(A.curso ? 'ahora' : 'el final (el mes entero)')+
-        ', contra lo que tenía '+esc(mesNombre(A.cmp))+cmpTxt+'.</div>'+sel+
+  var h=ayudaComo('pry-altura', '<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta '+(A.curso ? 'ahora' : 'el final (el mes entero)')+
+        ', contra lo que tenía '+esc(mesNombre(A.cmp))+cmpTxt+'.</div>')+sel+
         '<div class="pry-gana">'+['equipo'].concat(MARCAS.map(function(g){ return g.k; })).filter(function(k){ return A.act[k].n || A.ant[k].n; }).map(function(k){
           var g=MARCAS.filter(function(x){ return x.k===k; })[0];
           return '<div>'+(g ? (g.ico+' <b>'+esc(g.lbl)+'</b>') : '👥 <b>Todo el equipo</b>')+': '+esc(linea(k))+'</div>';
@@ -16881,8 +16881,8 @@ function renderProyeccion(){
   var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n)+' · '+nU(E.u))+'</small></div>'+
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
-    (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).'+
-      ((_A && _A.cmp) ? (' Tocá un vendedor para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs.') : '')+'</div>' : '')+
+    (conProy ? ayudaComo('pry-vend', '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).'+
+      ((_A && _A.cmp) ? (' Tocá un vendedor para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs.') : '')+'</div>') : '')+
     (E.n || R.mayor.filas.length
       ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m, m.g.k); }).join('')+
         grupo('⚠️','Sin marca','var(--amber)', R.sinMarca, 'sin')+total+
@@ -18005,7 +18005,7 @@ function renderCuadre(){
       '</tbody></table></div>'+
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">'+
         (arqueoOn
-          ? '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Queda guardado <b>en la planilla</b>, así que se ve desde cualquier computadora o celular.</span>'+
+          ? ayudaComo('cua-arqueo', '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Queda guardado <b>en la planilla</b>, así que se ve desde cualquier computadora o celular.</span>')+
             '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="limpiarArqueo()">↺ Borrar lo anotado</button>'
           : '<span style="font-size:.72rem;color:var(--amber)">👤 Estás viendo solo lo de <b>'+esc(vendSel)+'</b>. El arqueo se hace con <b>Todos</b>: la caja y el extracto son uno solo, no uno por vendedora.</span>')+
       '</div></div>';
@@ -18178,7 +18178,7 @@ function renderCuadreDetRetiros(){
           ' <span style="color:var(--muted);font-weight:400">🧾 facturado '+fmtBs(fac)+' · 📄 no facturado '+fmtBs(nofac)+'</span></td>'+
           '<td style="text-align:right"><b>'+fmtBs(tot)+'</b></td><td></td></tr>'+
         '</tbody></table></div>'+
-        '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Es la plata que SALIÓ de la mano de la vendedora. Tocá un renglón para verlo o corregirlo.</div>'
+        ayudaComo('cua-ret', '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Es la plata que SALIÓ de la mano de la vendedora. Tocá un renglón para verlo o corregirlo.</div>')
       : '<div class="empty" style="padding:16px 0">No se registró ningún retiro en '+esc(cuadrePeriodoTxt())+'.</div>')+
     '</div>';
 }
@@ -19257,12 +19257,12 @@ function renderCuadreRetiros(){
           '<td style="text-align:right">'+retCel(tot)+'</td>'+
           '<td style="text-align:right">'+enMano(tot)+'</td></tr>'+
         '</tbody></table></div>'+
-        '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 '+(E.pareo
+        ayudaComo('cua-efe', '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 '+(E.pareo
           ? ('«Le queda en la mano» = lo que cobró en efectivo en '+esc(mesTxt)+' y todavía no se retiró. Cada retiro se empareja con los cobros que tapa '+
              '(el mismo monto, o cobros seguidos que den justo; si no, del más viejo): un retiro de este período por plata de antes se marca con ↩️ y no deja '+
              '«retirado de más». 👆 Tocá un monto cobrado para ver qué clientes pagaron y cuánto. ')
           : '«Le queda en la mano» = lo que cobró en efectivo menos lo que ya se le retiró. En cero, se recogió todo. ')+
-          'Los <b>choferes</b> rinden a <b>Contabilidad</b>: ese retiro se anota con entrega = el chofer y retira = Contabilidad.</div>'
+          'Los <b>choferes</b> rinden a <b>Contabilidad</b>: ese retiro se anota con entrega = el chofer y retira = Contabilidad.</div>')
       : '<div class="empty" style="padding:18px 0">No hubo efectivo ni retiros en '+esc(mesTxt)+'.</div>')+
     notaFuera+
     '</div>';
@@ -34815,9 +34815,9 @@ function atcqTasaHtml(T){
     (T.marcas.length
       ? ('<div class="atq-tw"><table class="atq-t"><thead><tr><th>Línea</th><th class="n">ATC</th><th class="n">Vendidos</th><th class="n">Cada 100</th></tr></thead><tbody>'+cuerpo+'</tbody></table></div>')
       : '<div class="atq-gris">Todavía no hay ventas ni ATC en la ventana.</div>')+
-    '<div class="atq-nota">Aproximado: algunas ATC son de colchones vendidos antes de la ventana. En rojo, más de '+ATC_TASA_ALERTA+' cada 100 (con al menos '+ATCQ_MIN_VENDIDOS+' vendidos). '+
+    ayudaComo('atc-tasa', '<div class="atq-nota">Aproximado: algunas ATC son de colchones vendidos antes de la ventana. En rojo, más de '+ATC_TASA_ALERTA+' cada 100 (con al menos '+ATCQ_MIN_VENDIDOS+' vendidos). '+
       'Una ATC cuenta una vez por línea; los vendidos son colchones y somieres (un combo, dos)'+
-      (T.fuera ? '; '+T.fuera+' ATC de la ventana no son de un colchón o somier (almohadas, patas…) y no entran' : '')+'.</div></div>';
+      (T.fuera ? '; '+T.fuera+' ATC de la ventana no son de un colchón o somier (almohadas, patas…) y no entran' : '')+'.</div>')+'</div>';
 }
 function atcqEdadesHtml(E){
   var max=0; E.tot.forEach(function(n){ if(n>max) max=n; });
@@ -34836,7 +34836,7 @@ function atcqEdadesHtml(E){
     (E.n ? ('<div class="atq-bs">'+barras+'</div>'+
       '<div class="atq-seg" role="group" aria-label="Ver por"><button type="button" class="'+(ATCQ_POR==='lin' ? 'on' : '')+'" onclick="atcqPor(\'lin\')">Por línea</button>'+
         '<button type="button" class="'+(ATCQ_POR==='mot' ? 'on' : '')+'" onclick="atcqPor(\'mot\')">Por motivo</button></div>'+tabla+
-      '<div class="atq-nota">Meses desde la fecha de compra hasta que entró la ATC. Lo que falla en los primeros meses apunta a fábrica; lo de años, al uso. Sigue los filtros de arriba.</div>')
+      ayudaComo('atc-meses', '<div class="atq-nota">Meses desde la fecha de compra hasta que entró la ATC. Lo que falla en los primeros meses apunta a fábrica; lo de años, al uso. Sigue los filtros de arriba.</div>'))
       : '<div class="atq-gris">No hay ATC para este filtro.</div>')+'</div>';
 }
 function atcqRepHtml(list){
@@ -47971,7 +47971,7 @@ function renderStockAhora(){
       sob.slice(0,tope).map(function(o){ var ms=stockMesesSobra(o); return '<b>'+esc(stockNombre(o))+'</b> ('+stockUnid(stockHaySalir(o)||0)+' unid.'+(ms!=null?(', ~'+stockNum(ms,1)+' meses'):', sin entregas en '+STOCK_VENTANA+' días')+')'; }).join(' · ')+
       (sob.length>tope?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">y '+(sob.length-tope)+' más</button>')
                       :(STOCK_VER_SOBRA&&sob.length>8?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">mostrar menos</button>'):''))+
-      '<div style="color:var(--muted);margin-top:5px">Conviene no pedir más de estos y empujarlos en la venta. «Sin entregas» es sin salir por este panel: lo que se vende en tienda no se ve acá.</div></div>';
+      ayudaComo('stk-sobra', '<div style="color:var(--muted);margin-top:5px">Conviene no pedir más de estos y empujarlos en la venta. «Sin entregas» es sin salir por este panel: lo que se vende en tienda no se ve acá.</div>')+'</div>';
   }
   if(d.otrosAlm.length){
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px;font-size:.86rem">'+
@@ -47996,13 +47996,13 @@ function renderStockAhora(){
   }
   }   // ⚡ (§4ls VB-4) fin de lo que se arma solo abierto
   html+='</details>';   // 👁️ fin de «Más vistas» (§4iv)
-  html+='<div style="margin-top:12px;font-size:.8rem;color:var(--muted);line-height:1.6">'+
+  html+=ayudaComo('stk-ley', '<div style="margin-top:12px;font-size:.8rem;color:var(--muted);line-height:1.6">'+
     '🚨 <b>PEDIR YA</b> = se corta antes de que la fábrica pueda llegar. &nbsp; 🏭 <b>Pedir esta semana</b> = se corta dentro de lo que tarda la fábrica más el margen (2 días si la venta es pareja, hasta 5 si es a los saltos).<br>'+
     '🚚 <b>Traer de fábrica</b> = falta acá pero ya está fabricado en el otro almacén: mandá la camioneta en vez de pedir. &nbsp; '+
     '🚚 <b>Ya pedido</b> = quedó anotado de antes un pedido a fábrica que alcanza (el botón para anotarlos se sacó el 08/10: lo que llega se ve en el Excel del día). &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
     '«Vende por día» = lo que se entregó (o tenía que entregarse) en los últimos '+STOCK_VENTANA+' días ÷ '+STOCK_VENTANA+': el equipo, Eduardo y las almohadas que van a las tiendas; sin los mayoristas (Tienda Amiga, Copacaba, Luis Franco), los pedidos internos (FABRICA, ALBA, MORENO…), los puntuales ni las otras reposiciones de tienda. Con menos de '+STOCK_VENTAS_MIN+' entregas es 0 (pedido único). «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
-    'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
+    'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>');
   body.innerHTML=html;
   stockTiendasParteLuego();                                                        // 🏪 (19/10) cuánto del pedido es por las tiendas
   if(document.getElementById('rk') && !RANK_TIMER) stockRankingSemana(RANK_SEM);   // 🏆 (§4im)
@@ -48029,7 +48029,7 @@ function renderRevisionFija(){
   var ficha=function(col,n,txt){ return n?('<span style="display:inline-block;background:#fff;border-left:3px solid '+col+';border-radius:6px;padding:3px 9px;margin:0 6px 5px 0;font-size:.82rem"><b style="color:'+col+'">'+n+'</b> '+txt+'</span>'):''; };
   return '<div style="border:2px solid var(--teal);border-radius:11px;padding:12px 14px;margin-bottom:14px;background:#f5fbfa">'+
     '<div style="font-weight:800;font-size:.98rem;color:#0f766e;margin-bottom:5px">🤖 Revisión automática · '+listos+' de '+nPed+' pedido'+(nPed===1?'':'s')+' con todo para cargar</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Reparte lo que hay por fecha de entrega: el que entrega antes se lleva el stock. Se recalcula sola; los tildes se ponen recién cuando tocás Aplicar.</div>'+
+    ayudaComo('stk-rev', '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Reparte lo que hay por fecha de entrega: el que entrega antes se lleva el stock. Se recalcula sola; los tildes se ponen recién cuando tocás Aplicar.</div>')+
     '<div>'+
       ficha('var(--green)',A.tot.ok,'con stock para cargar (acá o Banzer)')+
       ficha('var(--red)',A.tot.sinResp,'marcados ✔ sin stock que los respalde')+
@@ -49656,9 +49656,9 @@ function renderTiendas(d, MS){
       '<div style="font-weight:800;font-size:.98rem;color:#155e75">🏪 Qué va a pedir cada tienda · próximos '+PRODUCIR_QUINCENA+' días y '+esc(MS.nombre)+'</div>'+
       '<span style="font-size:.78rem;color:var(--muted)">últimos 30 días: las tiendas vendieron <b>'+totV+'</b> y recibieron <b>'+totR+'</b> · van a pedir ~<b>'+tot15+'</b> en 15 días y ~<b>'+totM+'</b> en '+esc(MS.nombre)+'</span>'+
     '</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Por tienda: lo que vendió en 30 días (sus ventas de tienda), lo que le llegó (reposiciones que ya salieron) y lo que va a pedir, descontando lo que recibió y todavía no vendió. '+
+    ayudaComo('stk-tiendas', '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Por tienda: lo que vendió en 30 días (sus ventas de tienda), lo que le llegó (reposiciones que ya salieron) y lo que va a pedir, descontando lo que recibió y todavía no vendió. '+
       /* ✏️ (§4ls T4) */ '<b>No hay Excel de las tiendas</b>: «va a pedir» es una estimación por lo que venden, no sabe cuánto tiene cada tienda. '+
-      '<b>Esto no suma a «Qué producir»</b> —la venta de tienda ya está contada ahí—: dice a qué tienda va a ir y cómo rota cada reposición (<b>vendió / recibió</b>). Las ventas viejas sin tienda se asignan por la vendedora; las nuevas la traen en el formulario. Tocá una tienda para ver el detalle.</div>';
+      '<b>Esto no suma a «Qué producir»</b> —la venta de tienda ya está contada ahí—: dice a qué tienda va a ir y cómo rota cada reposición (<b>vendió / recibió</b>). Las ventas viejas sin tienda se asignan por la vendedora; las nuevas la traen en el formulario. Tocá una tienda para ver el detalle.</div>');
   L.forEach(function(t){
     var ab=!!TIENDAS_ABIERTAS[t.n];
     html+='<div style="border:1px solid var(--gray-md);border-left:4px solid #155e75;border-radius:9px;padding:8px 12px;margin-top:8px">'+
@@ -62442,7 +62442,7 @@ function stockPlanHtml(d, lista){
       '<th>Pedir<small>7 días</small></th><th>Pedir<small>15 días · incluye los 7</small></th><th>Pedir<small>'+esc(MS.nombre)+' · además de 15 días</small></th></tr></thead><tbody>'+
       (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
     planNombreHtml(d, 'plan')+   // ❓ (15/11, mejora 316)
-    '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>'+
+    ayudaComo('plan', '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>')+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;planRepintar()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
 }
@@ -62896,7 +62896,7 @@ function fdLeyHtml(){
       'entró en los tres almacenes juntos (PTF, Banzer y Moreno; un pase de un almacén a otro no cuenta) lo cierra solo, empezando por lo más viejo. '+
       'Con el primer Excel del día también repasa los días que no se miraron (la hoja «Historial stock»). '+
       'Tocá un producto para ver cada pedido.';
-  return '<p class="fd-ley">'+t+'</p>';
+  return ayudaComo('fd', '<p class="fd-ley">'+t+'</p>');   // ⓘ (mejora 377)
 }
 /* fin mejora 368 */
 function fdVerTodos(fab){ fab=String(fab||''); if(FD_TODOS[fab]) delete FD_TODOS[fab]; else FD_TODOS[fab]=1; fdRepintar(); }
