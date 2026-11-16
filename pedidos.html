@@ -3039,6 +3039,21 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
   EV.forEach(function(ev){ document.addEventListener(ev, tocar, true); });
 })();
 </script>
+<script>
+/* 🎨 (16/11, mejoras 431, 435, 438 y 440; el dueño eligió todas las visuales 390-440 menos la 403) Lo que es SOLO CSS se prende con una marca en
+   <html>, puesta acá arriba (antes de dibujar, sin parpadeo): `v-noche-dic` (431, el fondo de noche de Navidad y Año Nuevo), `v-osc-franjas`
+   (435, la meta y los filtros sin franjas blancas en los temas oscuros), `v-barras` (438, barra, casillas y lo marcado con los colores del
+   panel) y `v-tinte` (440, la tarjeta grande con el color de su pestaña). En Playwright apagadas salvo su bandera (`NOCHE_DIC_PRUEBA`,
+   `META_OSC_PRUEBA`, `BARRAS_PRUEBA`, `TINTE_PRUEBA`, puestas antes de abrir con `addInitScript`, o después llamando a `v390Marcas()`). */
+window.v390Marcas=function(){ try{
+  var h=document.documentElement, va=function(b){ return !(navigator.webdriver && !window[b]); };
+  h.classList.toggle('v-noche-dic', va('NOCHE_DIC_PRUEBA'));
+  h.classList.toggle('v-osc-franjas', va('META_OSC_PRUEBA'));
+  h.classList.toggle('v-barras', va('BARRAS_PRUEBA'));
+  h.classList.toggle('v-tinte', va('TINTE_PRUEBA'));
+}catch(e){} };
+window.v390Marcas();
+</script>
 </head>
 <body>
 <div id="bienv" class="bienv no-print" hidden aria-hidden="true"><div class="bienv-in"><svg viewBox="0 0 300 356"><path d="M150 0 C140 60 175 100 230 140 C280 176 300 230 296 282 C280 230 240 205 190 180 C130 150 115 90 150 0 Z" fill="#f6c437"/><path d="M62 78 C70 140 120 165 180 190 C240 215 280 255 296 318 C262 275 220 262 160 252 C90 240 52 180 62 78 Z" fill="#f08a24"/><path d="M0 168 C22 230 80 248 140 256 C200 264 262 290 296 352 C250 318 200 318 140 322 C70 326 18 270 0 168 Z" fill="#e9609a"/></svg><b>MultiEspumas</b><small>PEDIDOS</small></div></div>
@@ -3231,6 +3246,695 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
        Escondida hasta entonces (`botTabPintar`). -->
   <button id="tab-bot" hidden onclick="showView('bot')"><span class="t-ic">🤖</span><span class="t-lb">Bot</span><span class="t-cr">Bot</span></button>
 </div>
+<!-- 🎨 (16/11, mejoras visuales 429-440 de «todo el panel»; el dueño eligió todas las de la página 390-440 menos la 403) El CSS y lo que se
+     dibuja de cada una: solo presentación (ninguna cuenta cambia, nada se guarda distinto, nada se mueve solo). Cada una apagada en
+     Playwright salvo su bandera. -->
+<style id="v390g-css">
+/* 429 · Al bajar, las pestañas te acompañan arriba: en el encabezado chico (`body.hdr-chico`) las MISMAS pestañas en pastillas chicas con su
+   dibujito; la del lugar donde estás con su color y ⬆. Se esconden el día y los cupos de texto (los anillos quedan) y «Buscar» queda como
+   lupa. Solo compu (≥ 701 px). Si no entran, las que no son la elegida quedan sin el nombre (`ht-c1`) y, si igual no entran, todas (`ht-c2`). */
+.hdr-tabs{ display:none; }
+@media(min-width:701px){
+  html.v-tabs-hdr body.hdr-chico .hdr-tabs{ display:flex; align-items:center; gap:6px; flex:1 1 auto; min-width:0; margin-left:2px; animation:ht-baja .32s cubic-bezier(.2,.8,.2,1) both; }
+  html.v-tabs-hdr body.hdr-chico .header-in{ flex-wrap:nowrap; }
+  html.v-tabs-hdr body.hdr-chico .header-in > :is(.htitle, .hdr-meta-mini, .hdr-cuenta){ display:none !important; }
+  html.v-tabs-hdr body.hdr-chico .header-in > .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; margin-left:0; }
+  html.v-tabs-hdr body.hdr-chico .header-in > .pal-btn :is(.pal-btn-t, .pal-kbd){ display:none; }
+}
+@keyframes ht-baja{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:none; } }
+.hdr-tabs .ht-b{ position:relative; display:inline-flex; align-items:center; gap:6px; flex:none; height:36px; padding:0 11px 0 5px; border-radius:999px; border:1px solid rgba(255,255,255,.28);
+  background:rgba(255,255,255,.1); color:#fff; font:700 .8rem var(--font-sans, Inter, sans-serif); white-space:nowrap; cursor:pointer;
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); transition:background .15s, transform .15s; }
+.hdr-tabs .ht-b:hover{ background:rgba(255,255,255,.22); }
+.hdr-tabs .ht-b:active{ transform:scale(.96); }
+.hdr-tabs .ht-b:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+.hdr-tabs .ht-ic{ width:26px; height:26px; border-radius:50%; display:grid; place-items:center; background:rgba(255,255,255,.14); flex:none; font-size:.85rem; line-height:1; }
+.hdr-tabs .ht-ic .ico-b{ width:22px; height:22px; background:none; box-shadow:none; margin:0; }
+.hdr-tabs .ht-ic .ico-b svg{ width:16px; height:16px; stroke:#fff; }
+.hdr-tabs .ht-b.on{ background:linear-gradient(135deg, var(--c1), var(--c2)); border-color:transparent; box-shadow:0 6px 16px -6px var(--c2); }
+.hdr-tabs .ht-b.on .ht-ic{ background:rgba(255,255,255,.25); }
+.hdr-tabs .ht-b.on::after{ content:'⬆'; font-size:.72rem; margin-left:1px; opacity:.9; }
+.hdr-tabs .ht-n{ min-width:18px; height:18px; border-radius:9px; background:#CE2939; color:#fff; font-size:.66rem; font-weight:900; display:inline-grid; place-items:center; padding:0 4px; }
+.hdr-tabs .ht-n.nx-tb-nar{ background:#f08a24; } .hdr-tabs .ht-n.nx-tb-oro{ background:#e8a317; }
+.hdr-tabs.ht-c1 .ht-b:not(.on) .ht-lb{ display:none; } .hdr-tabs.ht-c1 .ht-b:not(.on){ padding-right:5px; }
+.hdr-tabs.ht-c2 .ht-b .ht-lb{ display:none; } .hdr-tabs.ht-c2 .ht-b{ padding-right:5px; }
+.hdr-tabs.ht-c1 .ht-b:not(.on) .ht-n, .hdr-tabs.ht-c2 .ht-n{ position:absolute; top:-6px; right:-6px; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-tabs .ht-b:not(.on){ border-color:rgba(250,204,21,.4); background:rgba(12,12,14,.45); }
+html.tema-black-friday .hdr-tabs .ht-b:not(.on) .ico-b svg{ stroke:#facc15; }
+@media(prefers-reduced-motion:reduce){ html.v-tabs-hdr body.hdr-chico .hdr-tabs{ animation:none; } }
+@media print{ .hdr-tabs{ display:none !important; } }
+/* 430 · Las ventanas largas: si la ventana no entra en la pantalla (`#modal-box.alta`), el título queda arriba, el medio se desplaza adentro
+   y la última fila de botones va pegada abajo (`.modal-pie`), en botones grandes, con «▾ hay más abajo» mientras falte. */
+#modal-box.alta{ display:flex; flex-direction:column; max-height:calc(calc(100vh / var(--vz,1)) - 40px); }
+#modal-box.alta > .modal-h{ flex:none; }
+#modal-box.alta > .modal-b{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+#modal-box.alta > .modal-pie{ flex:none; position:relative; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; padding:12px 20px 14px; background:#fff;
+  border-top:1px solid #e3eeee; box-shadow:0 -14px 22px -14px rgba(15,40,45,.35); }
+#modal-box.alta > .modal-pie > .modal-actions{ display:contents; }
+#modal-box.alta > .modal-pie .btn{ margin:0 !important; flex:1 1 auto; width:auto !important; min-height:44px; justify-content:center; white-space:nowrap; padding-left:16px; padding-right:16px; }
+#modal-box.alta > .modal-pie .btn-primary{ flex:1.6 1 150px; font-size:1rem; }
+#modal-box.alta > .modal-pie > .mp-mas{ position:absolute; right:20px; top:-38px; border:0; background:#0f3d3a; color:#fff; font:800 .72rem var(--font-sans, Inter, sans-serif);
+  padding:5px 12px; border-radius:999px; box-shadow:0 6px 14px -6px rgba(0,0,0,.5); cursor:pointer; transition:opacity .2s; }
+#modal-box.alta.mp-fin > .modal-pie > .mp-mas{ opacity:0; pointer-events:none; }
+@media(max-width:560px){ #modal-box.alta > .modal-pie{ padding:10px 12px 12px; } #modal-box.alta > .modal-pie .btn{ white-space:normal; } }
+@media print{ #modal-box.alta{ max-height:none; display:block; } #modal-box.alta > .modal-b{ overflow:visible; } .mp-mas{ display:none !important; } }
+/* 431 · Diciembre con su fondo de Navidad (y Año Nuevo): fondo de noche (verde pino con nieve suave, estrellitas, arbolitos y regalos apenas
+   dibujados, luz dorada abajo; el 31/12 al 2/1 noche azul con estrellas y fuegos), las tarjetas grandes en vidrio con borde dorado y las
+   pestañas oscuras: las MISMAS reglas del vidrio de Black Friday y Todos Santos (§4ob, §4oc, §4pr), con `html.v-noche-dic` (la pone el <head>).
+   El encabezado de cada tema no cambia (el de pino de Navidad, el azul de Año Nuevo); debajo va su reflejo, como en los otros temas oscuros.
+   La nieve (`html::after`) cae con `transform` (no repinta la página) y se queda quieta con «reducir movimiento».
+   ⚠️ Un texto NUEVO que vaya directo sobre la tarjeta grande o sobre el fondo necesita su color claro también con estos dos temas. */
+html.v-noche-dic.tema-navidad, html.v-noche-dic.tema-navidad body{ background:#06140f; }
+html.v-noche-dic.tema-anio-nuevo, html.v-noche-dic.tema-anio-nuevo body{ background:#070b1f; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) body{ background:transparent; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo){ --sh-card:0 10px 28px -14px rgba(0,0,0,.7); --sh-soft:0 18px 44px -20px rgba(0,0,0,.75); }
+html.v-noche-dic.tema-navidad body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+  url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'420'%20height%3D'420'%20viewBox%3D'0%200%20420%20420'%3E%0A%3Cg%20stroke%3D'%23e8f6ff'%20stroke-width%3D'1.4'%20stroke-linecap%3D'round'%20fill%3D'none'%20opacity%3D'.28'%3E%0A%20%3Cg%20transform%3D'translate(70%2080)'%3E%3Cpath%20d%3D'M0%20-11V11M-9.5%20-5.5L9.5%205.5M-9.5%205.5L9.5%20-5.5M-3%20-8L0%20-5L3%20-8M-3%208L0%205L3%208'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(300%2060)%20scale(.8)'%3E%3Cpath%20d%3D'M0%20-11V11M-9.5%20-5.5L9.5%205.5M-9.5%205.5L9.5%20-5.5M-3%20-8L0%20-5L3%20-8M-3%208L0%205L3%208'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(220%20250)%20scale(1.15)'%3E%3Cpath%20d%3D'M0%20-11V11M-9.5%20-5.5L9.5%205.5M-9.5%205.5L9.5%20-5.5M-3%20-8L0%20-5L3%20-8M-3%208L0%205L3%208'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(50%20320)%20scale(.9)'%3E%3Cpath%20d%3D'M0%20-11V11M-9.5%20-5.5L9.5%205.5M-9.5%205.5L9.5%20-5.5M-3%20-8L0%20-5L3%20-8M-3%208L0%205L3%208'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(370%20340)%20scale(.75)'%3E%3Cpath%20d%3D'M0%20-11V11M-9.5%20-5.5L9.5%205.5M-9.5%205.5L9.5%20-5.5M-3%20-8L0%20-5L3%20-8M-3%208L0%205L3%208'%2F%3E%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20opacity%3D'.22'%20fill%3D'none'%20stroke-width%3D'1.5'%3E%0A%20%3Cg%20transform%3D'translate(160%20150)%20rotate(-12)'%20stroke%3D'%23fde68a'%3E%3Cpath%20d%3D'M0%20-14L10%208H-10Z'%2F%3E%3Cpath%20d%3D'M0%20-6L7%2010H-7Z'%20opacity%3D'.7'%2F%3E%3Cpath%20d%3D'M0%2010V14'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(390%20200)%20rotate(10)'%20stroke%3D'%23f87171'%3E%3Ccircle%20r%3D'7'%2F%3E%3Cpath%20d%3D'M-2%20-9h4v3h-4z'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(110%20400)%20rotate(-6)'%20stroke%3D'%2386efac'%3E%3Crect%20x%3D'-9'%20y%3D'-7'%20width%3D'18'%20height%3D'14'%20rx%3D'2'%2F%3E%3Cpath%20d%3D'M0%20-7V7M-9%20-1H9'%2F%3E%3Cpath%20d%3D'M0%20-7c-4%20-6%20-9%20-2%200%200c9%20-2%204%20-6%200%200'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(320%20150)'%20stroke%3D'%23f87171'%3E%3Ccircle%20r%3D'5.5'%2F%3E%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D'%23fde68a'%3E%0A%20%3Cpath%20d%3D'M200%2030l1.4%203.6%203.6%201.4-3.6%201.4-1.4%203.6-1.4-3.6-3.6-1.4%203.6-1.4z'%20opacity%3D'.55'%2F%3E%0A%20%3Cpath%20d%3D'M30%20190l1.1%202.9%202.9%201.1-2.9%201.1-1.1%202.9-1.1-2.9-2.9-1.1%202.9-1.1z'%20opacity%3D'.45'%2F%3E%0A%20%3Cpath%20d%3D'M260%20380l1.3%203.2%203.2%201.3-3.2%201.3-1.3%203.2-1.3-3.2-3.2-1.3%203.2-1.3z'%20opacity%3D'.5'%2F%3E%0A%3C%2Fg%3E%0A%3Cg%20fill%3D'%23ffffff'%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'1.3'%20opacity%3D'.5'%2F%3E%3Ccircle%20cx%3D'140'%20cy%3D'20'%20r%3D'1'%20opacity%3D'.4'%2F%3E%3Ccircle%20cx%3D'260'%20cy%3D'120'%20r%3D'1.4'%20opacity%3D'.5'%2F%3E%0A%20%3Ccircle%20cx%3D'390'%20cy%3D'30'%20r%3D'1.1'%20opacity%3D'.45'%2F%3E%3Ccircle%20cx%3D'100'%20cy%3D'220'%20r%3D'1.2'%20opacity%3D'.4'%2F%3E%3Ccircle%20cx%3D'350'%20cy%3D'280'%20r%3D'1.3'%20opacity%3D'.45'%2F%3E%0A%20%3Ccircle%20cx%3D'180'%20cy%3D'330'%20r%3D'1'%20opacity%3D'.35'%2F%3E%3Ccircle%20cx%3D'20'%20cy%3D'260'%20r%3D'1.2'%20opacity%3D'.4'%2F%3E%3Ccircle%20cx%3D'300'%20cy%3D'410'%20r%3D'1'%20opacity%3D'.35'%2F%3E%3Ccircle%20cx%3D'410'%20cy%3D'120'%20r%3D'1.2'%20opacity%3D'.45'%2F%3E%3C%2Fg%3E%0A%3C%2Fsvg%3E") 0 0/420px 420px repeat,
+  radial-gradient(1200px 520px at 50% 112%, rgba(253,224,71,.16), rgba(0,0,0,0) 70%),
+  radial-gradient(900px 420px at 0% -10%, rgba(220,38,38,.18), rgba(0,0,0,0) 70%),
+  radial-gradient(800px 420px at 100% 10%, rgba(34,197,94,.14), rgba(0,0,0,0) 70%),
+  linear-gradient(180deg,#071a14 0%,#0a2119 55%,#10231b 100%); }
+html.v-noche-dic.tema-anio-nuevo body::before{ content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; background:
+  url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20width%3D'440'%20height%3D'440'%20viewBox%3D'0%200%20440%20440'%3E%0A%3Cg%20fill%3D'none'%20stroke-linecap%3D'round'%20stroke-width%3D'1.4'%20opacity%3D'.3'%3E%0A%20%3Cg%20transform%3D'translate(90%20100)'%20stroke%3D'%23fde68a'%3E%3Cpath%20d%3D'M0%20-16V-8M0%208V16M-16%200H-8M8%200H16M-11%20-11L-6%20-6M6%206L11%2011M-11%2011L-6%206M6%20-6L11%20-11'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(320%2090)%20scale(.8)'%20stroke%3D'%23c4b5fd'%3E%3Cpath%20d%3D'M0%20-16V-8M0%208V16M-16%200H-8M8%200H16M-11%20-11L-6%20-6M6%206L11%2011M-11%2011L-6%206M6%20-6L11%20-11'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(240%20280)%20scale(1.1)'%20stroke%3D'%2367e8f9'%3E%3Cpath%20d%3D'M0%20-16V-8M0%208V16M-16%200H-8M8%200H16M-11%20-11L-6%20-6M6%206L11%2011M-11%2011L-6%206M6%20-6L11%20-11'%2F%3E%3C%2Fg%3E%0A%20%3Cg%20transform%3D'translate(60%20350)%20scale(.75)'%20stroke%3D'%23f9a8d4'%3E%3Cpath%20d%3D'M0%20-16V-8M0%208V16M-16%200H-8M8%200H16M-11%20-11L-6%20-6M6%206L11%2011M-11%2011L-6%206M6%20-6L11%20-11'%2F%3E%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3Cg%20opacity%3D'.35'%3E%3Crect%20x%3D'160'%20y%3D'60'%20width%3D'6'%20height%3D'2.5'%20rx%3D'1'%20fill%3D'%23fde68a'%20transform%3D'rotate(30%20163%2061)'%2F%3E%3Crect%20x%3D'380'%20y%3D'230'%20width%3D'6'%20height%3D'2.5'%20rx%3D'1'%20fill%3D'%23c4b5fd'%20transform%3D'rotate(-20%20383%20231)'%2F%3E%0A%3Crect%20x%3D'130'%20y%3D'220'%20width%3D'6'%20height%3D'2.5'%20rx%3D'1'%20fill%3D'%2367e8f9'%20transform%3D'rotate(60%20133%20221)'%2F%3E%3Crect%20x%3D'300'%20y%3D'400'%20width%3D'6'%20height%3D'2.5'%20rx%3D'1'%20fill%3D'%23fde68a'%20transform%3D'rotate(-40%20303%20401)'%2F%3E%3C%2Fg%3E%0A%3Cg%20fill%3D'%23fde68a'%3E%3Ccircle%20cx%3D'30'%20cy%3D'30'%20r%3D'1.2'%20opacity%3D'.5'%2F%3E%3Ccircle%20cx%3D'200'%20cy%3D'20'%20r%3D'1'%20opacity%3D'.4'%2F%3E%3Ccircle%20cx%3D'400'%20cy%3D'60'%20r%3D'1.3'%20opacity%3D'.5'%2F%3E%3Ccircle%20cx%3D'20'%20cy%3D'240'%20r%3D'1'%20opacity%3D'.4'%2F%3E%0A%3Ccircle%20cx%3D'350'%20cy%3D'330'%20r%3D'1.2'%20opacity%3D'.45'%2F%3E%3Ccircle%20cx%3D'180'%20cy%3D'410'%20r%3D'1'%20opacity%3D'.4'%2F%3E%3Ccircle%20cx%3D'420'%20cy%3D'410'%20r%3D'1.1'%20opacity%3D'.4'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 0 0/440px 440px repeat,
+  radial-gradient(1200px 520px at 50% 112%, rgba(250,204,21,.18), rgba(0,0,0,0) 70%),
+  radial-gradient(900px 420px at 0% -10%, rgba(167,139,250,.18), rgba(0,0,0,0) 70%),
+  radial-gradient(800px 420px at 100% 10%, rgba(103,232,249,.12), rgba(0,0,0,0) 70%),
+  linear-gradient(180deg,#060a1c 0%,#0b1230 60%,#121638 100%); }
+/* El reflejo del encabezado (el mismo degradé dado vuelta, más oscuro, que se desvanece hacia la noche: como en los otros temas oscuros). */
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) body::after{ content:''; position:fixed; left:0; right:0; top:var(--hdr-h,0px); height:var(--hdr-h,0px); z-index:-1; pointer-events:none;
+  background:var(--grad-header); background-size:300% 300%; animation:grad-move 14s ease infinite; transform:scaleY(-1); filter:brightness(.62) saturate(1.05);
+  -webkit-mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); mask-image:linear-gradient(to top,#000 0%,rgba(0,0,0,.75) 35%,transparent 100%); }
+/* La nieve que cae despacio (3 capas de copitos; el dibujo se repite cada 720 px, lo que baja en un minuto). */
+html.v-noche-dic.tema-navidad::after{ content:''; position:fixed; left:0; right:0; top:-720px; bottom:0; z-index:-1; pointer-events:none; will-change:transform;
+  background:radial-gradient(circle at 20% 30%, rgba(255,255,255,.55) 0 1.4px, transparent 2px) 0 0/180px 180px,
+             radial-gradient(circle at 70% 60%, rgba(255,255,255,.4) 0 1.1px, transparent 1.6px) 0 0/240px 240px,
+             radial-gradient(circle at 40% 80%, rgba(255,255,255,.3) 0 2px, transparent 2.6px) 0 0/360px 360px;
+  animation:nv-cae-fondo 60s linear infinite; }
+@keyframes nv-cae-fondo{ from{ transform:translateY(0); } to{ transform:translateY(720px); } }
+html.v-noche-dic.tema-navidad .header{ box-shadow:0 8px 26px rgba(2,12,8,.55); }
+html.v-noche-dic.tema-anio-nuevo .header{ box-shadow:0 8px 26px rgba(2,4,18,.55); }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .footer{ color:#e7e5e4; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .footer a{ color:#fde68a; }
+@media(min-width:701px){
+  html.v-noche-dic.tema-navidad .nav button[id]:not(.active){ background:rgba(6,24,18,.6); border-color:rgba(253,230,138,.4); color:#f0fdf4; }
+  html.v-noche-dic.tema-anio-nuevo .nav button[id]:not(.active){ background:rgba(8,12,34,.6); border-color:rgba(250,204,21,.42); color:#eef2ff; }
+  html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .nav button[id]:not(.active) .ico-b{ background:rgba(255,255,255,.1); }
+  html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .nav button[id]:not(.active) .ico-b svg{ stroke:#fde68a; }
+  html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #tab-bot:not(.active) .t-ic{ background:rgba(255,255,255,.1); }
+  html.v-noche-dic.tema-navidad .nav button[id]:hover:not(.active){ background:rgba(16,48,36,.85); border-color:#fde68a; color:#fff; }
+  html.v-noche-dic.tema-anio-nuevo .nav button[id]:hover:not(.active){ background:rgba(22,30,70,.85); border-color:#fde68a; color:#fff; }
+}
+/* 🪟 Las tarjetas grandes en vidrio con el borde dorado; lo que va directo sobre ellas, en letra clara (las mismas que Black Friday). */
+html.v-noche-dic.tema-navidad :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chofer) > .card, html.v-noche-dic.tema-navidad #admin-content > .card{
+  background:rgba(6,24,18,.5); border-color:rgba(253,230,138,.32); box-shadow:0 18px 44px -24px rgba(0,0,0,.8); }
+html.v-noche-dic.tema-anio-nuevo :is(#view-mis, #view-conta, #view-atc, #view-bot, #view-chofer) > .card, html.v-noche-dic.tema-anio-nuevo #admin-content > .card{
+  background:rgba(8,12,34,.5); border-color:rgba(250,204,21,.32); box-shadow:0 18px 44px -24px rgba(0,0,0,.8); }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .af-g .af-gt{ color:#fde68a; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.af-g > i, #adm-mas > div > span){ color:#d6d3d1 !important; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .af-ley span{ color:#e7e5e4; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(#mis-borradores > div:not(.kx), #view-mis > .card > div:not(.u7) > b){ color:#e7e5e4 !important; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .tcol-tip{ color:#d6d3d1; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #view-atc :is(.atv-mot, .atc-tipos) .atv-t{ color:#fafaf9; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #view-atc :is(.atv-mot, .atc-tipos) .atv-t small{ color:#d6d3d1; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.adm-cam-tit b, .bot-cab b){ color:#fde68a; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.adm-cam-tit small, .adm-volver span, .bot-cab span){ color:#d6d3d1; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(#pedidos-empty, #mis-empty, #bot-vacio, #atc-empty, #cta-empty, #cho-empty):not(.u7){ color:#e7e5e4; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .cx-kt b{ color:#fde68a; } html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .cx-kt span{ color:#e7e5e4; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo b{ color:#fde68a; } html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo span{ color:#d6d3d1; }
+html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo{ border-top-color:rgba(253,230,138,.35); }
+html.af-peg-on.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #adm-fichas .af-gr > .af-g{ background:rgba(10,20,18,.9); box-shadow:0 8px 18px -12px rgba(0,0,0,.7); }
+@media(prefers-reduced-motion:reduce){ html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) body::after, html.v-noche-dic.tema-navidad::after{ animation:none !important; } }
+@media print{ html.v-noche-dic.tema-navidad::after{ display:none; } }
+/* 432 · Bot: cada cliente que contestó, como una conversación de WhatsApp (`.wz`): su nombre e iniciales arriba en verde, lo que escribió en
+   globos blancos a la izquierda con la hora, el resumen de Claude en el medio y lo que le contestó el bot en globo verde a la derecha (✓✓);
+   abajo el pedido en etiquetas y «✓ Ya lo atendí» grande. Las urgentes con borde rojo, primero. En la compu, lado a lado. */
+#wa-resp-adm .wa-resp.wz-caja{ border:0; background:transparent; padding:0; margin:0 0 10px; }
+.wz-tit{ display:flex; align-items:center; flex-wrap:wrap; gap:6px 10px; margin:2px 0 12px; font-weight:800; font-size:1rem; color:var(--text); }
+.wz-tit .wz-n{ background:#ef4444; color:#fff; border-radius:999px; padding:2px 10px; font-size:.8rem; }
+.wz-tit small{ font-weight:600; color:var(--muted); font-size:.8rem; }
+.wz-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(min(380px, 100%), 1fr)); gap:14px; align-items:start; }
+.wz{ background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 14px 30px -18px rgba(0,0,0,.6); display:flex; flex-direction:column; border:2px solid #d1f2e0; min-width:0; }
+.wz.urg{ border-color:#ef4444; }
+.wz.hecha{ opacity:.82; }
+.wz-cab{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:#075e54; color:#fff; }
+.wz-av{ width:38px; height:38px; border-radius:50%; background:#dcf8c6; color:#075e54; display:grid; place-items:center; font-weight:900; font-size:.85rem; flex:none; }
+.wz-q{ min-width:0; flex:1; line-height:1.2; }
+.wz-q b{ display:block; font-size:.92rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wz-q small{ display:block; font-size:.72rem; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wz-cat{ flex:none; font-size:.7rem; font-weight:800; padding:3px 9px; border-radius:999px; background:rgba(255,255,255,.18); white-space:nowrap; max-width:46%; overflow:hidden; text-overflow:ellipsis; }
+.wz.urg .wz-cat{ background:#ef4444; }
+.wz-chat{ flex:1; padding:12px 12px 10px; display:flex; flex-direction:column; gap:6px; min-height:120px;
+  background:#efeae2 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='none' stroke='%23d9d2c5' stroke-width='1.2'%3E%3Ccircle cx='12' cy='14' r='4'/%3E%3Cpath d='M38 10l6 6m0-6l-6 6'/%3E%3Cpath d='M20 44c4-4 8 4 12 0'/%3E%3Crect x='42' y='38' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E"); }
+.wz-b{ max-width:84%; padding:6px 9px 4px; border-radius:10px; font-size:.86rem; line-height:1.35; box-shadow:0 1px 1px rgba(0,0,0,.12); white-space:pre-wrap; overflow-wrap:anywhere; color:#111b21; }
+.wz-b i{ display:block; text-align:right; font-style:normal; font-size:.64rem; color:#667781; margin-top:1px; }
+.wz-in{ align-self:flex-start; background:#fff; border-top-left-radius:2px; }
+.wz-out{ align-self:flex-end; background:#d9fdd3; border-top-right-radius:2px; }
+.wz-out i::after{ content:' ✓✓'; color:#53bdeb; font-weight:700; }
+.wz-res{ align-self:center; font-size:.72rem; color:#3b4a54; background:rgba(255,255,255,.85); border-radius:8px; padding:3px 9px; text-align:center; max-width:94%; }
+.wz-chat .wa-resp-ubi{ align-self:stretch; margin:0; font-size:.76rem; }
+.wz-pie{ padding:10px 12px 12px; display:flex; flex-direction:column; gap:8px; border-top:1px solid #e9edef; background:#fff; }
+.wz-ped{ font-size:.78rem; color:#3b4a54; display:flex; flex-wrap:wrap; gap:6px; }
+.wz-ped span{ background:#f0f2f5; border-radius:8px; padding:3px 8px; font-weight:600; }
+.wz-bt{ display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; }
+.wz-bt .btn{ margin:0; min-height:40px; justify-content:center; width:auto; }
+.wz-bt a.btn{ text-decoration:none; }
+.wz-bt .wz-ok{ flex:1 1 100px; background:#25d366 !important; color:#05361d !important; font-weight:800 !important; border:0 !important; }
+.wz-bt .wa-resp-at{ flex:1 1 100px; align-self:center; text-align:center; }
+.wz-hechas{ margin-top:12px; color:var(--muted); font-size:.82rem; display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+.wz-hechas + .wz-grid{ margin-top:10px; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(.wz-tit, .wz-hechas), html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(.wz-tit, .wz-hechas){ color:#fafaf9; }
+html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .wz-tit small, html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .wz-tit small{ color:#d6d3d1; }
+/* 433 · El pedido que se está guardando se ve en su ficha de Administración: guardando (turquesa que late, con la franja que corre), guardado
+   (verde, 3 s) o sin enviar (ámbar, hasta que sale). En la tabla, el renglón con el borde del mismo color. */
+#adm-fichas .af-f.pg-ir{ animation:pg-late 1.2s ease-in-out infinite; }
+@keyframes pg-late{ 0%,100%{ box-shadow:0 0 0 2px #00B5AD, 0 0 0 0 rgba(0,181,173,0); } 50%{ box-shadow:0 0 0 3px #00B5AD, 0 0 0 8px rgba(0,181,173,.22); } }
+#adm-fichas .af-f.pg-ok{ box-shadow:0 0 0 3px #22c55e, 0 10px 26px -12px rgba(34,197,94,.7) !important; }
+#adm-fichas .af-f.pg-cola{ box-shadow:0 0 0 3px #f59e0b !important; }
+.af-f > .pg-chip{ display:flex; align-items:center; justify-content:center; gap:7px; font-size:.76rem; font-weight:800; padding:6px 10px; letter-spacing:.01em; line-height:1.25; text-align:center; }
+.af-f.pg-ir > .pg-chip{ color:#e6fffd; background:linear-gradient(90deg,#0f766e 0%,#14b8a6 40%,#0f766e 80%) 0 0/250% 100%; animation:pg-corre 1.3s linear infinite; }
+@keyframes pg-corre{ to{ background-position:-250% 0; } }
+.af-f.pg-ir > .pg-chip i{ display:inline-block; flex:none; width:11px; height:11px; border-radius:50%; border:2px solid #fff; border-right-color:transparent; animation:pg-rueda .8s linear infinite; }
+@keyframes pg-rueda{ to{ transform:rotate(360deg); } }
+.af-f.pg-ok > .pg-chip{ background:#16a34a; color:#fff; }
+.af-f.pg-cola > .pg-chip{ background:#fef3c7; color:#92400e; border-bottom:1px solid #f59e0b; }
+#tbl-pedidos tr.pg-ir > td:first-child{ box-shadow:inset 4px 0 0 #00B5AD; }
+#tbl-pedidos tr.pg-ok > td:first-child{ box-shadow:inset 4px 0 0 #22c55e; }
+#tbl-pedidos tr.pg-cola > td:first-child{ box-shadow:inset 4px 0 0 #f59e0b; }
+#tbl-pedidos tr > td:first-child .pg-tag{ display:block; margin-top:3px; font-size:.68rem; font-weight:800; white-space:nowrap; }
+#tbl-pedidos tr.pg-ir .pg-tag{ color:#0f766e; } #tbl-pedidos tr.pg-ok .pg-tag{ color:#15803d; } #tbl-pedidos tr.pg-cola .pg-tag{ color:#92400e; }
+@media(prefers-reduced-motion:reduce){ #adm-fichas .af-f.pg-ir, .af-f.pg-ir > .pg-chip, .af-f.pg-ir > .pg-chip i{ animation:none; } }
+/* 434 · La cuenta regresiva del tema en el encabezado, al lado de «Buscar»: una etiqueta dorada con forma de entrada en Black Friday («faltan 11
+   días · vie 27/11»; el día, «¡Black Friday!» que late despacito; después, «últimos N días») y roja en Navidad. Solo compu. Si el encabezado
+   no entra en un renglón, primero se va la fecha (`hc-chica`), después el título (`hc-mini`) y si igual no entra, no se ve (`hc-no`).
+   Quieta con «reducir movimiento». */
+.hdr-cuenta{ display:none; }
+@media(min-width:701px){ .hdr-cuenta.on{ display:inline-flex; } }
+.hdr-cuenta{ flex:none; margin-left:auto; align-items:center; gap:10px; position:relative; padding:7px 14px 7px 12px; border-radius:12px; overflow:hidden;
+  background:linear-gradient(135deg,#fde047 0%,#facc15 45%,#f59e0b 100%); color:#141007; box-shadow:0 6px 18px -6px rgba(250,204,21,.55), inset 0 0 0 1px rgba(255,255,255,.35);
+  -webkit-mask:radial-gradient(circle 6px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat;
+          mask:radial-gradient(circle 6px at 0 50%,#0000 98%,#000) left/51% 100% no-repeat, radial-gradient(circle 6px at 100% 50%,#0000 98%,#000) right/51% 100% no-repeat; }
+#hdr-cuenta{ margin:0 0 0 auto !important; }   /* (otra regla del encabezado le ponía margen a los dos lados y quedaba al medio) */
+.hdr-cuenta.on + .pal-btn{ margin-left:0; }
+.hdr-cuenta.toca{ cursor:pointer; }
+.hdr-cuenta.toca:focus-visible{ outline:2px solid #fff; outline-offset:2px; }
+.hdr-cuenta .hc-ic{ font-size:1.25rem; line-height:1; }
+.hdr-cuenta .hc-t{ display:flex; flex-direction:column; line-height:1.05; }
+.hdr-cuenta .hc-t small{ font-size:.6rem; font-weight:900; letter-spacing:.14em; opacity:.8; }
+.hdr-cuenta .hc-t b{ font-size:.86rem; font-weight:800; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+.hdr-cuenta .hc-n{ display:inline-grid; place-items:center; min-width:30px; height:26px; padding:0 5px; border-radius:7px; background:#141007; color:#fde047; font-size:1.05rem; font-weight:900;
+  box-shadow:inset 0 -13px 0 rgba(255,255,255,.06); font-variant-numeric:tabular-nums; }
+.hdr-cuenta .hc-f{ font-size:.7rem; font-weight:800; padding-left:10px; border-left:1.5px dashed rgba(20,16,7,.45); white-space:nowrap; }
+.hdr-cuenta::after{ content:''; position:absolute; top:0; bottom:0; width:40%; left:-60%; background:linear-gradient(100deg,transparent,rgba(255,255,255,.65),transparent); transform:skewX(-18deg); animation:hc-brillo 4.5s ease-in-out infinite; pointer-events:none; }
+@keyframes hc-brillo{ 0%,70%{ left:-60%; } 100%{ left:130%; } }
+.hdr-cuenta.hoy{ background:linear-gradient(135deg,#fef08a,#facc15 40%,#ef4444 140%); animation:hc-late 1.6s ease-in-out infinite; }
+.hdr-cuenta.hoy .hc-t b{ font-size:.95rem; }
+@keyframes hc-late{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.04); } }
+.hdr-cuenta.nav{ background:linear-gradient(135deg,#dc2626,#b91c1c 55%,#15803d 140%); color:#fff; box-shadow:0 6px 18px -6px rgba(220,38,38,.55), inset 0 0 0 1px rgba(255,255,255,.25); }
+.hdr-cuenta.nav .hc-n{ background:#fff; color:#b91c1c; }
+.hdr-cuenta.nav .hc-f{ border-left-color:rgba(255,255,255,.5); }
+.hdr-cuenta.hc-chica .hc-f{ display:none; }
+.hdr-cuenta.hc-mini{ padding:6px 10px; gap:6px; } .hdr-cuenta.hc-mini .hc-f, .hdr-cuenta.hc-mini .hc-t small{ display:none; }
+.hdr-cuenta.on.hc-no{ display:none; }
+html.hdr-bajo .hdr-cuenta{ padding-top:5px; padding-bottom:5px; }
+@media(prefers-reduced-motion:reduce){ .hdr-cuenta, .hdr-cuenta::after{ animation:none !important; } }
+@media print{ .hdr-cuenta{ display:none !important; } }
+/* 435 · Black Friday (y los otros temas oscuros) sin franjas blancas: la barrita de la meta debajo del encabezado (342) y la banda de los filtros
+   de Administración (pegada arriba al bajar) pasan a vidrio oscuro con borde dorado, y la leyenda de colores va sobre su cajita oscura.
+   `html.v-osc-franjas` (la pone el <head>); Navidad y Año Nuevo solo con su fondo de noche (431). */
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta{
+  background:linear-gradient(180deg,rgba(18,18,20,.96),rgba(10,10,12,.96)); color:#fafaf9; border-top:1px solid rgba(250,204,21,.45); border-bottom:1px solid rgba(250,204,21,.18); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta:hover, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta:hover{ background:rgba(28,25,23,.98); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-x, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-x{ color:#d6d3d1; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bar, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bar{ background:rgba(255,255,255,.12); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-cerca{ background:linear-gradient(90deg,#f59e0b,#facc15); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-cerca{ background:rgba(250,204,21,.28); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-cerca, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-cerca{ background:#facc15; color:#1c1917; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-ok{ background:#2dd4bf; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-ok{ background:rgba(45,212,191,.3); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-ok, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-ok{ background:#2dd4bf; color:#042f2e; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bv.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bv.hm-mal{ background:#f87171; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-bp.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-bp.hm-mal{ background:rgba(248,113,113,.3); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-meta .hm-c.hm-mal, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .hdr-meta .hm-c.hm-mal{ background:#f87171; color:#450a0a; }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .qchips-tabla, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .qchips-tabla{
+  background:rgba(14,14,16,.88); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border:1px solid rgba(250,204,21,.28); border-radius:16px; padding:10px 12px 12px; box-shadow:0 12px 26px -18px rgba(0,0,0,.9); }
+html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .af-ley, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .af-ley{
+  background:rgba(14,14,16,.6); border-radius:12px; padding:6px 12px; align-self:flex-start; width:fit-content; max-width:100%; }
+/* 436 · ATC: el caminito de cada ATC en la lista (Recoger · Fábrica · Lista · Vuelve · Entregada), debajo del estado. */
+.atc-cam{ margin:7px 0 1px; }
+.atc-cam-p{ display:flex; align-items:center; width:118px; }
+.atc-cam-p i{ flex:none; width:10px; height:10px; border-radius:50%; border:2px solid #cbd5e1; background:#fff; box-sizing:border-box; }
+.atc-cam-p b{ flex:1; height:3px; background:#e2e8f0; border-radius:2px; }
+.atc-cam-p i.h{ background:var(--c); border-color:var(--c); } .atc-cam-p b.h{ background:var(--c); }
+.atc-cam-p i.a{ width:18px; height:18px; border:3px solid #fff; background:var(--c); box-shadow:0 0 0 2px var(--c), 0 0 0 6px color-mix(in srgb, var(--c) 22%, transparent); }
+.atc-cam-t{ font-size:.66rem; font-weight:800; color:var(--c); letter-spacing:.02em; margin-top:4px; white-space:nowrap; }
+.atc-cam-t span{ color:#94a3b8; font-weight:700; }
+/* 437 · Lo que está en 0 se ve apagado: la ficha de arriba (ATC, Contabilidad, Mis pedidos…) cuyo número es 0, la casilla de «Hoy» de
+   Administración que es toda 0 y el filtro con 0 (nunca el elegido) quedan grises y sin su color, como ya hacía «🛤️ El viaje» (`.atv-paso.cero`). */
+.metrics .mc:has(> .mc-val.mc-v0){ opacity:.55; filter:saturate(.15); box-shadow:none !important; background:rgba(255,255,255,.82) !important; }
+.metrics .mc > .mc-val.mc-v0{ color:#94a3b8 !important; }
+#adm-hoy .ah-st.ah-st-cero{ opacity:.45; filter:saturate(.2); }
+.qchips .qchip.q-cero:not(.active){ opacity:.5; }
+.qchips .qchip.q-cero:not(.active) .n{ background:transparent !important; }
+.qchips .qchip.q-cero:not(.active):hover{ opacity:.85; }
+/* El viaje de las ATC ya los apagaba con `opacity`, pero su animación de entrada la pisa: además, sin color. */
+html.v-ceros .atv-paso.cero{ filter:saturate(.15) opacity(.6); }
+/* 438 · Barras, casillas y lo marcado con los colores del panel (`html.v-barras`, la pone el <head>): la barra para bajar fina y redondeada,
+   turquesa clara sobre fondo claro (dorada sobre los temas oscuros: en Black Friday era una franja blanca a la derecha de toda la pantalla);
+   las casillas tildadas en turquesa (doradas en los temas oscuros) y lo marcado con el mouse en turquesa suave (dorado). Las cajas que ya
+   tienen su barra propia (`#cx-tw`, `#atv-tw`, las de `scrollbar-width`) quedan como están. */
+html.v-barras::-webkit-scrollbar, html.v-barras ::-webkit-scrollbar{ width:12px; height:12px; }
+html.v-barras::-webkit-scrollbar-track, html.v-barras ::-webkit-scrollbar-track{ background:#eef5f5; }
+html.v-barras::-webkit-scrollbar-thumb, html.v-barras ::-webkit-scrollbar-thumb{ background:#9fd9d5; border-radius:10px; border:3px solid #eef5f5; }
+html.v-barras::-webkit-scrollbar-thumb:hover, html.v-barras ::-webkit-scrollbar-thumb:hover{ background:#00A09A; }
+html.v-barras::-webkit-scrollbar-corner, html.v-barras ::-webkit-scrollbar-corner{ background:transparent; }
+html.v-barras :is(input[type=checkbox], input[type=radio], input[type=range], progress){ accent-color:#00A09A; }
+html.v-barras ::selection{ background:rgba(0,181,173,.30); color:inherit; }
+/* En los temas oscuros, la barra de la página (la de afuera) en negro con dorado; las de adentro van sobre recuadros blancos: turquesa. */
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-track, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-track{ background:#0e0e10; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-thumb, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-thumb{ background:#8a7315; border-color:#0e0e10; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos)::-webkit-scrollbar-thumb:hover, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo)::-webkit-scrollbar-thumb:hover{ background:#facc15; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(input[type=checkbox], input[type=radio]), html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(input[type=checkbox], input[type=radio]){ accent-color:#d4a50a; }
+html.v-barras:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) ::selection, html.v-barras.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) ::selection{ background:rgba(250,204,21,.42); color:#111; }
+/* 439 · El globo de Bloki con su piquito hacia él, una rayita turquesa abajo que se acorta (cuánto le queda) y «Tocá para ver ›»; con el mouse
+   encima la rayita se frena y el globo espera. Solo con `.gl-v` (la pone `asisGlobo` con la bandera). */
+.asis-globo.gl-v{ position:relative; overflow:visible; padding-bottom:16px; }
+.asis-globo.gl-v::after{ content:''; position:absolute; right:-12px; bottom:22px; width:0; height:0; border-left:12px solid #fff; border-top:9px solid transparent; border-bottom:9px solid transparent;
+  filter:drop-shadow(1px 0 0 #d6e2e2); pointer-events:none; }
+.asis-globo.gl-v.asis-anuncio::after{ border-left-color:#fff; }
+.asis-globo.gl-v::before{ content:''; position:absolute; left:14px; right:14px; bottom:6px; height:3px; border-radius:2px; background:linear-gradient(90deg,#00B5AD,#7fdcd6);
+  transform-origin:left center; animation:gl-tiempo var(--gl-ms,7000ms) linear forwards; pointer-events:none; }
+.asis-globo.gl-v.asis-anuncio::before{ background:linear-gradient(90deg,#c2410c,#fdba74); }
+.asis-globo.gl-v:hover::before, .asis-globo.gl-v.gl-quieto::before{ animation-play-state:paused; }
+@keyframes gl-tiempo{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
+.asis-globo.gl-v .gl-ver{ display:inline-flex; align-items:center; gap:4px; margin-top:7px; font-size:.72rem; font-weight:800; color:#00A09A; }
+.asis-globo.gl-v .gl-ver::after{ content:'›'; font-size:1rem; line-height:0; }
+/* 440 · Cada pestaña tiñe su tarjeta (`html.v-tinte`, la pone el <head>): la tarjeta grande de Mis pedidos, Contabilidad, ATC, Bot y
+   Administración toma el color de SU pestaña (los mismos `--c1/--c2` de `#tab-*`): una franja de 4 px arriba, un brillo suave que baja
+   (va en el fondo de la tarjeta, debajo de las letras: nada tapa nada) y, en la compu, un piquito que une la pestaña elegida con la tarjeta.
+   En los temas oscuros la tarjeta sigue siendo de vidrio: la franja va arriba del borde dorado y el brillo apenas la tiñe. */
+html.v-tinte #view-mis{ --sec:#1d4ed8; --sec1:#60a5fa; }
+html.v-tinte #view-conta{ --sec:#d97706; --sec1:#fbbf24; }
+html.v-tinte #view-atc{ --sec:#be185d; --sec1:#f472b6; }
+html.v-tinte #view-bot{ --sec:#475569; --sec1:#94a3b8; }
+html.v-tinte #view-admin{ --sec:#6d28d9; --sec1:#a78bfa; }
+html.v-tinte :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card, html.v-tinte #admin-content > .card{
+  border-top:4px solid var(--sec);
+  background-image:linear-gradient(180deg, color-mix(in srgb, var(--sec1) 22%, transparent) 0, transparent 90px); background-repeat:no-repeat; }
+/* en los temas oscuros el brillo un poco más fuerte (sobre el vidrio negro el 22 % casi no se ve) */
+html.v-tinte:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card,
+html.v-tinte:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) #admin-content > .card,
+html.v-tinte.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) :is(#view-mis, #view-conta, #view-atc, #view-bot) > .card,
+html.v-tinte.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #admin-content > .card{
+  border-top:4px solid var(--sec);   /* el vidrio de diciembre (431) pone su borde dorado con más peso: la franja va igual arriba */
+  background-image:linear-gradient(180deg, color-mix(in srgb, var(--sec1) 28%, transparent) 0, transparent 90px); }
+@media(min-width:701px){
+  html.v-tinte .nav :is(#tab-mis, #tab-conta, #tab-atc, #tab-bot, #tab-admin).active::before{ content:''; position:absolute; left:50%; bottom:-15px; transform:translateX(-50%);
+    width:0; height:0; border-left:11px solid transparent; border-right:11px solid transparent; border-top:11px solid var(--c2); z-index:3; pointer-events:none; }
+  html.v-tinte .nav button.nav-llega::before{ display:none; }   /* mientras la marca se desliza (§4ni), sin piquito */
+}
+</style>
+<script>
+/* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
+   mide casi 8 pantallas y Administración con «Hoy», 4: estando abajo, para cambiar de pestaña había que subir todo. Cuando el encabezado se
+   achica al bajar (`hdrScroll` → `body.hdr-chico`, §4mo) aparecen en él las MISMAS pestañas (`#hdr-tabs`, armado con los botones de `.nav`:
+   su nombre, su dibujito, su color `--c1/--c2` y su número). Tocar una = el `click` de esa pestaña (y la página arriba); tocar la del lugar
+   donde estás (con ⬆) te lleva arriba. Se rearma solo cuando cambia algo de `.nav` (la elegida, el número, la del Bot que aparece). Solo
+   compu (≥ 701 px: en el celular las pestañas ya van fijas abajo). Convive con la 378 (`html.hdr-bajo`): con el encabezado chico se esconden
+   el día, los cupos de texto y la meta chica. En Playwright apagado salvo `window.HDR_TABS_PRUEBA`. `tests/test_v429_pestanas_arriba.js`. */
+var HTAB={ el:null, firma:'', raf:0, chico:false };
+function htabVa(){ try{ return vdVa('HDR_TABS_PRUEBA'); }catch(e){ return false; } }
+function htabArmar(){
+  if(HTAB.el) return true;
+  if(!htabVa()) return false;
+  var hi=document.querySelector('.header-in'), nav=document.querySelector('.nav'); if(!hi || !nav) return false;
+  var m=document.createElement('nav'); m.id='hdr-tabs'; m.className='hdr-tabs no-print'; m.setAttribute('aria-label','Pestañas');
+  var ht=hi.querySelector('.htitle'); hi.insertBefore(m, ht ? ht.nextSibling : hi.firstChild);
+  HTAB.el=m; document.documentElement.classList.add('v-tabs-hdr');
+  try{ new MutationObserver(htabLuego).observe(nav, { subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:['class','hidden'] }); }catch(e){}
+  try{ new MutationObserver(function(){ var c=document.body.classList.contains('hdr-chico'); if(c!==HTAB.chico){ HTAB.chico=c; if(c) htabLuego(); } }).observe(document.body, { attributes:true, attributeFilter:['class'] }); }catch(e){}
+  window.addEventListener('resize', htabLuego);
+  htabPintar(); return true;
+}
+function htabLuego(){ if(HTAB.raf) return; HTAB.raf=requestAnimationFrame(function(){ HTAB.raf=0; htabPintar(); }); }
+/* Lo que muestra cada pestaña, leído de `.nav` (no se cuenta nada acá). */
+function htabDatos(){
+  return [].map.call(document.querySelectorAll('.nav > button[id]'), function(b){
+    if(b.hidden) return null;
+    var cs=getComputedStyle(b), lb=(b.querySelector('.t-lb')||b).textContent.trim(), ic=b.querySelector('.t-ic'), n=b.querySelector('.nx-tb');
+    return { id:b.id, lb:lb, on:b.classList.contains('active'), c1:cs.getPropertyValue('--c1').trim()||'#2dd4bf', c2:cs.getPropertyValue('--c2').trim()||'#0f766e',
+      ic:ic ? ic.innerHTML.replace(/\s*ico-vivo/g,'') : '', n:(n && /\d/.test(n.textContent)) ? n.textContent.trim() : '', nc:n ? (String(n.className).match(/nx-tb-(nar|oro|rojo)/)||[''])[0] : '', nt:n ? (n.title||'') : '' };
+  }).filter(Boolean);
+}
+function htabPintar(){
+  var m=HTAB.el; if(!m) return;
+  var L=htabDatos(), f=JSON.stringify(L);
+  if(f!==HTAB.firma){
+    HTAB.firma=f;
+    m.innerHTML=L.map(function(t){
+      return '<button type="button" class="ht-b'+(t.on?' on':'')+'" data-tab="'+esc(t.id)+'" style="--c1:'+esc(t.c1)+';--c2:'+esc(t.c2)+'" onclick="htabTocar(\''+esc(t.id)+'\')"'+
+        (t.on ? ' aria-current="page" title="Estás en '+esc(t.lb)+': tocá para volver arriba"' : ' title="Ir a '+esc(t.lb)+'"')+'>'+
+        '<span class="ht-ic" aria-hidden="true">'+t.ic+'</span><span class="ht-lb">'+esc(t.lb)+'</span>'+
+        (t.n ? '<span class="ht-n '+esc(t.nc)+'"'+(t.nt?(' title="'+esc(t.nt)+'"'):'')+'>'+esc(t.n)+'</span>' : '')+'</button>';
+    }).join('');
+  }
+  htabAcomodar();
+}
+/* Si no entran (compu angosta, seis pestañas con el Bot): primero sin el nombre las que no son la elegida, después todas. */
+function htabAcomodar(){
+  var m=HTAB.el; if(!m || !document.body.classList.contains('hdr-chico') || getComputedStyle(m).display==='none') return;
+  m.classList.remove('ht-c1','ht-c2');
+  if(m.scrollWidth>m.clientWidth+1) m.classList.add('ht-c1');
+  if(m.scrollWidth>m.clientWidth+1){ m.classList.remove('ht-c1'); m.classList.add('ht-c2'); }
+}
+function htabTocar(id){
+  var b=document.getElementById(id); if(!b) return;
+  if(b.classList.contains('active')){ try{ window.scrollTo({ top:0, behavior:visQuieto() ? 'auto' : 'smooth' }); }catch(e){ window.scrollTo(0, 0); } return; }
+  b.click();
+  try{ window.scrollTo(0, 0); }catch(e){}   // la otra pestaña, desde su principio
+}
+document.addEventListener('DOMContentLoaded', function(){ try{ htabArmar(); }catch(e){} });
+
+/* 🎨 (16/11, mejora 430; dueño: elegida de la página de ideas 390-440) LAS VENTANAS LARGAS: LOS BOTONES SIEMPRE A LA VISTA. La ficha de un pedido
+   de Mis pedidos mide 1.141 px en una pantalla de 768: «Editar el pedido», «Copiar para WhatsApp» y «✓ Listo» quedaban fuera de la vista y al
+   bajar se iba el título. Ahora, si la ventana no entra (`openModal` → `mpieAgendar`, cuando ya terminó de armarse quien la abrió), el título
+   queda arriba, el medio se desplaza adentro y la ÚLTIMA fila de botones (la `.modal-actions` del final y el «✓ Listo») pasa a un pie pegado
+   abajo (`.modal-pie`). Son los MISMOS botones, movidos (no se copian): hacen lo de siempre. Las ventanas cortas quedan igual que hoy, y las que
+   ya tienen su propio pie o su forma (la ficha de Administración `fl-ficha`, la del cliente `clf-box`, el costado, la de cupos `.cupx`)
+   quedan afuera. Si la misma ventana se vuelve a dibujar, el medio sigue donde estaba. En Playwright apagado salvo
+   `window.MODAL_PIE_PRUEBA`. `tests/test_v430_ventana_pie.js`. */
+var MPIE={ sc:0, tit:null };
+function mpieVa(){ try{ return vdVa('MODAL_PIE_PRUEBA'); }catch(e){ return false; } }
+/* En `openModal`, ANTES de cambiar el contenido: dónde estaba el medio (para la misma ventana dibujada de nuevo). */
+function mpieAntes(box, abierta){
+  var b=(abierta && box && box.classList.contains('alta')) ? box.querySelector(':scope > .modal-b') : null;
+  MPIE.sc=b ? b.scrollTop : 0; MPIE.tit=b ? modalTitulo() : null;
+  if(box){ box.classList.remove('alta'); box.classList.remove('mp-fin'); }
+}
+function mpieAgendar(){ if(!mpieVa()) return; Promise.resolve().then(function(){ try{ mpieAplicar(); }catch(e){} }); }
+function mpieAplicar(){
+  var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
+  if(!ov || !box || !ov.classList.contains('on') || box.classList.contains('alta')) return false;
+  if(box.classList.contains('fl-ficha') || box.classList.contains('clf-box') || document.body.classList.contains('ficha-costado')) return false;
+  var hd=box.querySelector(':scope > .modal-h'), b=box.querySelector(':scope > .modal-b'); if(!hd || !b || box.querySelector('.cupx, .modal-pie')) return false;
+  var z=zoomPag()||1, r=box.getBoundingClientRect(); if(!(r.height > window.innerHeight-40*z+1)) return false;
+  /* La última fila de botones: el «✓ Listo» (o «Cerrar») suelto del final y la `.modal-actions` justo antes. Si después hay algo que se ve, no se toca. */
+  var vis=function(x){ return x.offsetWidth>0 || x.offsetHeight>0; };
+  var kids=[].filter.call(b.children, vis), fin=null, ult=null, k=kids.length-1;
+  if(k>=0 && kids[k].tagName==='BUTTON' && kids[k].classList.contains('btn-primary')){ fin=kids[k]; k--; }
+  if(k>=0 && kids[k].classList.contains('modal-actions')) ult=kids[k];
+  if(!fin && !ult) return false;
+  var pie=document.createElement('div'); pie.className='modal-pie';
+  var mas=document.createElement('button'); mas.type='button'; mas.className='mp-mas'; mas.textContent='▾ hay más abajo'; mas.setAttribute('aria-hidden','true'); mas.tabIndex=-1;
+  mas.onclick=function(){ try{ b.scrollBy({ top:Math.round(b.clientHeight*0.7), behavior:visQuieto() ? 'auto' : 'smooth' }); }catch(e){ b.scrollTop+=Math.round(b.clientHeight*0.7); } };
+  pie.appendChild(mas); if(ult) pie.appendChild(ult); if(fin) pie.appendChild(fin);
+  box.appendChild(pie); box.classList.add('alta');
+  if(MPIE.tit!==null && MPIE.tit===modalTitulo()) b.scrollTop=MPIE.sc;
+  MPIE.tit=null;
+  b.addEventListener('scroll', mpieFin, { passive:true }); mpieFin();
+  return true;
+}
+function mpieFin(){
+  var box=document.getElementById('modal-box'), b=box && box.querySelector(':scope > .modal-b'); if(!b) return;
+  box.classList.toggle('mp-fin', b.scrollTop+b.clientHeight >= b.scrollHeight-8);
+}
+
+/* 🎨 (16/11, mejora 432; dueño: elegida de la página de ideas 390-440) BOT: LA RESPUESTA DEL CLIENTE COMO EN WHATSAPP. En la pestaña 🤖 Bot, cada
+   respuesta era una tarjeta a lo ancho con el mensaje entre comillas y renglones grises (~350 px cada una): con tres clientes esperando había
+   que bajar, y costaba ver quién dijo qué. Ahora cada cliente es una conversación (`wzCard`): su nombre e iniciales arriba en verde con lo que
+   quiere, lo que escribió en globos blancos a la izquierda con la hora, el resumen de Claude en el medio y lo que le contestó en globo verde a
+   la derecha (✓✓); abajo el pedido en etiquetas (OC, día y turno, vendedora) y «✓ Ya lo atendí» grande. Las urgentes con borde rojo, primero.
+   Son los MISMOS datos (`WA_RESP`: `waRespPend`, `waRespIaHechas`, `waRespPed`, `waRespHora`, `WA_RESP_CAT`) y los MISMOS botones
+   (`showPedidoModal`, wa.me, `waRespAtender`, la ubicación que mandó `waRespUbicHtml`): solo cambia el dibujo. Mis pedidos sigue con las tarjetas
+   de siempre. En Playwright apagado salvo `window.WZ_PRUEBA` (lo llama `waRespHtml` para la pestaña Bot). `tests/test_v432_bot_whatsapp.js`. */
+function wzVa(){ try{ return vdVa('WZ_PRUEBA'); }catch(e){ return false; } }
+function wzIniciales(n){ var p=String(n||'').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g,' ').trim().split(/\s+/).filter(Boolean); return (p.length ? p.slice(0,2).map(function(x){ return x.charAt(0); }).join('') : '?').toUpperCase(); }
+function wzHora(t){ var h=waRespHora(t), m=/(\d{1,2}:\d{2})\s*$/.exec(String(h)); return m ? m[1] : String(h||''); }
+function wzCard(r){
+  var p=waRespPed(r), quien=r.nom || (p && p.cliente) || r.num || 'Cliente', wa=r.num ? ('https://wa.me/'+String(r.num).replace(/[^0-9]/g,'')) : '';
+  var hora=wzHora(r.t), ia=String(r.ia||''), urg=!!(r.urg && !r.at);
+  var cat=(r.cat && !/^(⏳|⏭️|—)/.test(ia)) ? ((WA_RESP_CAT[r.cat]||'💬 Consulta')+(r.urg?' · urgente':'')) : '';
+  var nota=function(t){ return '<div class="wz-res">'+t+'</div>'; };
+  var chat=(r.antes||[]).map(function(x){ return '<div class="wz-b wz-in">'+esc(x)+'<i>'+esc(hora)+'</i></div>'; }).join('')+
+    '<div class="wz-b wz-in">'+esc(r.txt||'')+'<i>'+esc(hora)+'</i></div>'+waRespUbicHtml(r);
+  if(ia.charAt(0)==='⏳') chat+=nota('⏳ Claude lo está leyendo: en un minuto le contesta.');
+  else if(/^⏭️/.test(ia)) chat+=nota('🤖 Le llegó la respuesta automática de siempre ('+esc(ia.replace(/^⏭️\s*/,''))+').');
+  else if(/^—/.test(ia)) chat+=nota(esc(ia.replace(/^—\s*/,'')));
+  else {
+    if(r.res) chat+=nota('🧠 '+esc(r.res));
+    if(r.resp) chat+='<div class="wz-b wz-out">🤖 '+esc(r.resp)+'<i>'+esc(hora)+'</i></div>';
+    else if(/no hacía falta/.test(ia)) chat+=nota('🤖 No hacía falta contestarle.');
+    if(/^❌/.test(ia)) chat+=nota(esc(ia));
+  }
+  var ped=p ? ((p.oc ? '<span>📦 OC '+esc(p.oc)+'</span>' : '')+(p.fecha ? '<span>🚚 '+esc(fmtFechaCorta(p.fecha))+(p.turno ? (' '+esc(normTurno(p.turno))) : '')+'</span>' : '')+(p.vendedor ? '<span>👤 '+esc(p.vendedor)+'</span>' : ''))
+            : '<span>'+(r.oc ? ('📦 OC '+esc(r.oc)) : 'No sé de qué pedido es')+'</span>';
+  return '<div class="wz'+(urg?' urg':'')+(r.at?' hecha':'')+'">'+
+    '<div class="wz-cab"><span class="wz-av" aria-hidden="true">'+esc(wzIniciales(quien))+'</span><span class="wz-q"><b>'+esc(quien)+'</b><small>'+esc(waRespHora(r.t))+(r.num?(' · +'+esc(r.num)):'')+'</small></span>'+
+      (cat ? '<span class="wz-cat" title="'+esc(cat)+'">'+esc(cat)+'</span>' : '')+'</div>'+
+    '<div class="wz-chat">'+chat+'</div>'+
+    '<div class="wz-pie"><div class="wz-ped">'+ped+'</div><div class="wz-bt">'+
+      (p ? '<button type="button" class="btn btn-ghost btn-sm" onclick="showPedidoModal(\''+esc(p.id)+'\')">📋 Abrir el pedido</button>' : '')+
+      (wa ? '<a class="btn btn-ghost btn-sm" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 Escribirle</a>' : '')+
+      (r.at ? '<span class="wa-resp-at">✓ '+esc(r.at)+'</span>'
+            : '<button type="button" class="btn btn-sm wz-ok" onclick="waRespAtender(\''+esc(r.w)+'\')">✓ Ya lo atendí</button>')+
+    '</div></div></div>';
+}
+/* El mismo contenido que `waRespHtml` (título, plegar, lo que resolvió Claude con «Ver cuáles»), con las conversaciones lado a lado. */
+function wzHtml(lista, quien, kPleg, hechas){
+  hechas=hechas||[];
+  if(!lista.length && !hechas.length) return '';
+  var pl=!!kPleg && misPlegado(kPleg), conIa=lista.some(function(r){ return !!r.ia; });
+  var orden=lista.map(function(r, i){ return { r:r, i:i }; }).sort(function(a, b){ return ((b.r.urg && !b.r.at)?1:0)-((a.r.urg && !a.r.at)?1:0) || a.i-b.i; }).map(function(o){ return o.r; });
+  var n=lista.length;
+  var tit=n ? ('<span class="wz-n">'+n+'</span> '+(conIa ? ('cliente'+(n===1?' espera':'s esperan')+' una respuesta de una persona <small>· Claude ya '+(n===1?'le':'les')+' contestó lo que podía</small>')
+                                                   : ('cliente'+(n===1?'':'s')+' le respondi'+(n===1?'ó':'eron')+' al bot de WhatsApp <small>· escribile'+(n===1?'':'s')+' y tocá «✓ Ya lo atendí»</small>')))
+            : ('🤖 Claude atendió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' de clientes');
+  var pie=hechas.length ? ('<div class="wz-hechas">🤖 En los últimos 7 días Claude resolvió solo '+hechas.length+' consulta'+(hechas.length===1?'':'s')+' (cuándo llega, el saldo, confirmaciones): no hace falta hacer nada.'+
+    ' <button type="button" class="btn btn-ghost btn-sm" onclick="WA_RESP_VER_IA=!WA_RESP_VER_IA; waRespPintar()">'+(WA_RESP_VER_IA?'Ocultar':'Ver cuáles')+'</button></div>'+
+    (WA_RESP_VER_IA ? '<div class="wz-grid">'+hechas.map(wzCard).join('')+'</div>' : '')) : '';
+  return '<div class="wa-resp wz-caja">'+
+    '<div class="wz-tit">'+(kPleg?misPlegarBtn(kPleg):'')+tit+(quien?(' · '+esc(quien)):'')+'</div>'+
+    (pl ? '' : ((n ? '<div class="wz-grid">'+orden.map(wzCard).join('')+'</div>' : '')+pie))+'</div>';
+}
+
+/* 🎨 (16/11, mejora 433; dueño: elegida de la página de ideas 390-440) EL PEDIDO QUE SE ESTÁ GUARDANDO SE VE EN SU FICHA. Al tocar «Entregó»,
+   «A tarde», «Reprog.» o «Listo» en una ficha de Administración, la ficha cambia en el acto y la planilla se entera después; si Google tardaba o
+   no había señal, la ficha no lo decía (solo un aviso abajo que se va). Ahora la ficha tocada dice cómo va su guardado:
+   · «⏳ Guardando en la planilla…» (borde turquesa que late) mientras el guardado de ESE pedido está en camino o esperando turno
+     (`SAVE_EN_VUELO` / `SAVE_EN_ESPERA`, o uno forzado que sigue en camino);
+   · «✓ Guardado · 10:02» en verde por 3 s (`PG_OK_MS`) cuando la planilla dijo que sí (`res.ok`);
+   · «📴 Sin enviar · sale solo al volver la señal» (ámbar) mientras quede en la cola de este aparato (`colaEsperando()`).
+   En la tabla, el renglón lleva el borde del mismo color y la palabra. Es lo que el panel YA sabe: no guarda nada distinto ni cambia cuándo
+   se manda. `apiSave` avisa (`pgSeguir`), `renderAdmin` vuelve a ponerlo después de dibujar y `updateFooter` lo repinta cuando cambia la cola.
+   En Playwright apagado salvo `window.PG_PRUEBA`. `tests/test_v433_guardando_ficha.js`. */
+var PG={ ir:{}, ok:{}, raf:0, okT:null }, PG_OK_MS=3000;
+function pgVa(){ try{ return vdVa('PG_PRUEBA'); }catch(e){ return false; } }
+function pgSeguir(id, p){
+  if(!id || !p || typeof p.then!=='function' || !pgVa()) return p;
+  id=String(id); PG.ir[id]=(PG.ir[id]||0)+1; delete PG.ok[id]; pgLuego();
+  var fin=function(res){
+    PG.ir[id]=(PG.ir[id]||1)-1; if(PG.ir[id]<=0) delete PG.ir[id];
+    if(!PG.ir[id] && res && res.ok){ PG.ok[id]=Date.now(); setTimeout(pgLuego, PG_OK_MS+60); }
+    pgLuego();
+  };
+  p.then(fin, function(){ fin(null); });
+  return p;
+}
+function pgEstado(id, cola){
+  id=String(id);
+  if(PG.ir[id] || SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id]) return 'ir';
+  if(cola && cola[id]) return 'cola';
+  if(PG.ok[id] && Date.now()-PG.ok[id]<PG_OK_MS) return 'ok';
+  if(PG.ok[id]) delete PG.ok[id];
+  return '';
+}
+function pgLuego(){ if(PG.raf || !pgVa()) return; PG.raf=requestAnimationFrame(function(){ PG.raf=0; try{ pgPintar(); }catch(e){} }); }
+function pgTexto(e){
+  return e==='ir' ? '<i aria-hidden="true"></i>Guardando en la planilla…'
+       : e==='ok' ? ('✓ Guardado · '+esc(hhmmBolivia()))
+       : e==='cola' ? '📴 Sin enviar · sale solo al volver la señal' : '';
+}
+function pgPintar(){
+  if(!pgVa()) return;
+  var cola={}; try{ colaEsperando().forEach(function(q){ if(q && q.id) cola[String(q.id)]=1; }); }catch(e){}
+  [].forEach.call(document.querySelectorAll('#adm-fichas .af-f[data-pid]'), function(f){
+    var e=pgEstado(f.getAttribute('data-pid'), cola), ch=f.querySelector(':scope > .pg-chip'), antes=f.getAttribute('data-pg')||'';
+    if(e===antes && (!e || ch)) return;
+    f.classList.remove('pg-ir','pg-ok','pg-cola'); f.setAttribute('data-pg', e);
+    if(!e){ if(ch) ch.remove(); return; }
+    f.classList.add('pg-'+e);
+    if(!ch){ ch=document.createElement('div'); ch.className='pg-chip'; ch.setAttribute('role','status'); f.insertBefore(ch, f.firstChild); }
+    ch.innerHTML=pgTexto(e);
+  });
+  [].forEach.call(document.querySelectorAll('#tbl-pedidos tbody tr[onclick^="showPedidoModal("]'), function(tr){
+    var m=/showPedidoModal\('([^']+)'\)/.exec(tr.getAttribute('onclick')||''); if(!m) return;
+    var e=pgEstado(m[1], cola), td=tr.cells[0], tg=td && td.querySelector('.pg-tag');
+    tr.classList.remove('pg-ir','pg-ok','pg-cola');
+    if(!e){ if(tg) tg.remove(); return; }
+    tr.classList.add('pg-'+e);
+    if(td && !tg){ tg=document.createElement('span'); tg.className='pg-tag'; td.appendChild(tg); }
+    if(tg) tg.textContent=e==='ir' ? '⏳ Guardando…' : e==='ok' ? '✓ Guardado' : '📴 Sin enviar';
+  });
+}
+
+/* 🎨 (16/11, mejora 434; dueño: elegida de la página de ideas 390-440) LA CUENTA REGRESIVA DEL TEMA EN EL ENCABEZADO. El tema de Black Friday va
+   del 13 al 30/11, pero en ningún lado decía cuánto faltaba para el viernes 27/11 ni que el día llegó. Al lado de «Buscar» (`#hdr-cuenta`,
+   antes de `#pal-btn`), una etiqueta con forma de entrada:
+   · Black Friday (`html.tema-black-friday`): «🛍️ BLACK FRIDAY · faltan 11 días · vie 27/11»; el viernes, «HOY ES ¡BLACK FRIDAY! · hasta el lun
+     30/11» (late despacito); del sábado al lunes, «últimos N días». Los días salen de `bfCampana(año)`, la MISMA cuenta del tema (`BF_DIAS`
+     del <head>); hoy es `diaNegocio()` (Bolivia). Pasada la campaña no se ve. Con la contraseña, tocarla abre «🛍️ Black Friday en números»
+     (Proyección); sin ella, no hace nada.
+   · Navidad (`html.tema-navidad`): roja, «🎄 NAVIDAD · faltan 10 días · jue 24/12»; el 24 y el 25, «¡Feliz Navidad!»; después, nada.
+   Se repinta cada 10 minutos (cambia el día). Solo compu (≥ 701 px); si el encabezado no entra en un renglón (la 378 pone la meta al lado del
+   día), primero se va la fecha, después el título y, si igual no entra, no se muestra. Con el encabezado chico de la 429 se esconde. En Playwright apagada salvo
+   `window.CUENTA_PRUEBA`. `tests/test_v434_cuenta_tema.js`. */
+var HC={ el:null, firma:'', tic:null };
+function hcVa(){ try{ return vdVa('CUENTA_PRUEBA'); }catch(e){ return false; } }
+function hcDias(desde, hasta){ return Math.round((Date.parse(hasta+'T12:00:00Z')-Date.parse(desde+'T12:00:00Z'))/864e5); }
+function hcDiaTxt(f){ var d=new Date(f+'T12:00:00Z'); return ['dom','lun','mar','mié','jue','vie','sáb'][d.getUTCDay()]+' '+f.slice(8,10)+'/'+f.slice(5,7); }
+/* Qué dice hoy: { k:'bf'|'nav', clase, small, b (con el número), f, tit } o null. */
+function hcDatos(hoy){
+  hoy=hoy||diaNegocio();
+  var html=document.documentElement, a=+hoy.slice(0,4);
+  if(html.classList.contains('tema-black-friday')){
+    var C=(typeof window.bfCampana==='function') ? window.bfCampana(a) : null; if(!C) return null;
+    var n=hcDias(hoy, C.viernes), q=hcDias(hoy, C.hasta)+1;
+    if(q<=0) return null;
+    if(n>0) return { k:'bf', clase:'', ic:'🛍️', small:'BLACK FRIDAY', b:'faltan <span class="hc-n">'+n+'</span> día'+(n===1?'':'s'), f:hcDiaTxt(C.viernes),
+      tit:'Black Friday: faltan '+n+' día'+(n===1?'':'s')+' (viernes '+fmtFechaCorta(C.viernes)+')' };
+    if(n===0) return { k:'bf', clase:'hoy', ic:'🛍️', small:'HOY ES', b:'¡BLACK FRIDAY!', f:'hasta el '+hcDiaTxt(C.hasta), tit:'Hoy es Black Friday (la campaña sigue hasta el '+fmtFechaCorta(C.hasta)+')' };
+    return { k:'bf', clase:'', ic:'🛍️', small:'BLACK FRIDAY', b:'últimos <span class="hc-n">'+q+'</span> día'+(q===1?'':'s'), f:'hasta el '+hcDiaTxt(C.hasta),
+      tit:'Black Friday: quedan '+q+' día'+(q===1?'':'s')+' de campaña (hasta el '+fmtFechaCorta(C.hasta)+')' };
+  }
+  if(html.classList.contains('tema-navidad')){
+    var nv=a+'-12-24', m=hcDias(hoy, nv);
+    if(m>0) return { k:'nav', clase:'nav', ic:'🎄', small:'NAVIDAD', b:'faltan <span class="hc-n">'+m+'</span> día'+(m===1?'':'s'), f:hcDiaTxt(nv), tit:'Navidad: faltan '+m+' día'+(m===1?'':'s') };
+    if(m>=-1) return { k:'nav', clase:'nav', ic:'🎄', small:'NAVIDAD', b:'¡Feliz Navidad!', f:hcDiaTxt(m===0 ? nv : (a+'-12-25')), tit:'¡Feliz Navidad!' };
+  }
+  return null;
+}
+function hcArmar(){
+  if(HC.el) return true;
+  if(!hcVa()) return false;
+  var pb=document.getElementById('pal-btn'); if(!pb) return false;
+  var el=document.createElement('div'); el.id='hdr-cuenta'; el.className='hdr-cuenta no-print';
+  el.onclick=hcTocar; el.onkeydown=function(e){ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); hcTocar(); } };
+  pb.parentNode.insertBefore(el, pb); HC.el=el;
+  window.addEventListener('resize', function(){ try{ hcAcomodar(); }catch(e){} });
+  HC.tic=setInterval(function(){ try{ hcPintar(); }catch(e){} }, 10*60000);
+  hcPintar(); return true;
+}
+function hcPintar(hoy){
+  var el=HC.el; if(!el) return;
+  var D=hcDatos(hoy), puede=!!(D && D.k==='bf' && UNLOCKED), mm=document.getElementById('hdr-meta-mini');
+  var f=D ? JSON.stringify([D, puede, !!(mm && !mm.hidden), document.documentElement.classList.contains('hdr-bajo')]) : '';
+  if(f===HC.firma) return;   // nada cambió: ni se vuelve a medir
+  HC.firma=f;
+  {
+    if(!D){ el.className='hdr-cuenta no-print'; el.innerHTML=''; el.removeAttribute('title'); el.removeAttribute('role'); el.removeAttribute('tabindex'); try{ hdrMedir(); }catch(e){} return; }
+    el.className='hdr-cuenta no-print on'+(D.clase?(' '+D.clase):'')+(puede?' toca':'');
+    el.innerHTML='<span class="hc-ic" aria-hidden="true">'+D.ic+'</span><span class="hc-t"><small>'+esc(D.small)+'</small><b>'+D.b+'</b></span><span class="hc-f">'+esc(D.f)+'</span>';
+    el.title=D.tit+(puede?' · tocá para ver Black Friday en números':'');
+    if(puede){ el.setAttribute('role','button'); el.setAttribute('tabindex','0'); } else { el.removeAttribute('role'); el.removeAttribute('tabindex'); }
+    el.setAttribute('aria-label', D.tit);
+  }
+  hcAcomodar();
+}
+/* ¿El encabezado quedó en un renglón? Si no, primero sin la fecha, después sin el título. */
+function hcAcomodar(){
+  var el=HC.el; if(!el || !el.classList.contains('on')) return;
+  var hi=el.parentNode, uno=function(){ var t=null, ok=true; [].forEach.call(hi.children, function(c){ if(!ok || !c.offsetWidth || getComputedStyle(c).position==='absolute') return; var y=c.offsetTop+c.offsetHeight/2; if(t===null) t=y; else if(Math.abs(y-t)>c.offsetHeight/2+8) ok=false; }); return ok; };
+  el.classList.remove('hc-chica','hc-mini','hc-no');
+  if(!uno()) el.classList.add('hc-chica');
+  if(!uno()){ el.classList.remove('hc-chica'); el.classList.add('hc-mini'); }
+  if(!uno()){ el.classList.remove('hc-mini'); el.classList.add('hc-no'); }   // ni así: mejor no está (el encabezado no se parte por ella)
+  try{ hdrMedir(); }catch(e){}
+}
+function hcTocar(){
+  var D=hcDatos(); if(!D || D.k!=='bf' || !UNLOCKED) return;
+  try{
+    showView('conta'); segSet('cta-tab','proy'); setContaTab('proy');
+    var ir=function(){ if(document.getElementById('pix-s-bf') && typeof pixIr==='function'){ pixIr('bf'); return; }
+      var b=document.getElementById('pry-bf'); if(!b) return; var dest=b.getBoundingClientRect().top+window.scrollY; window.scrollTo(0, Math.max(0, dest-hdrAltoEn(dest)-10)); };
+    setTimeout(ir, 350);
+  }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', function(){ try{ hcArmar(); }catch(e){} });
+
+/* 🎨 (16/11, mejora 436; dueño: elegida de la página de ideas 390-440) ATC: EL CAMINITO DE CADA ATC EN LA LISTA. Cada fila decía su estado con una
+   etiqueta de texto y había que leerlas una por una para saber cuánto le faltaba. Debajo del estado, en la columna «Estado» de `#tbl-atc`, cinco
+   puntitos unidos: Recoger · Fábrica · Lista · Vuelve · Entregada; los pasos hechos llenos, el de ahora grande con el color de su estado (el
+   MISMO de «🛤️ El viaje de las ATC», `atvColor`/`ATV_PASOS`) y los que faltan huecos; abajo «2 de 5 · Fábrica → Lista». La posición sale de
+   `atcEstado(p)` (sin recoger 0, fábrica 1, lista 2, recoger de fábrica o programada 3, cerrada 4): no se calcula nada nuevo, y la etiqueta, el
+   orden de las filas y lo demás de la tabla no cambian. Las tarjetas (iPad parado, celular) ya muestran el viaje con sus fechas. En Playwright
+   apagado salvo `window.ATC_CAMINO_PRUEBA`. `tests/test_v436_atc_camino.js`. */
+var ATC_CAMINO_POS={ sinrecoger:0, fabrica:1, lista:2, recogerfab:3, programada:3, cerrada:4 }, ATC_CAMINO_NOM=['Recoger','Fábrica','Lista','Vuelve','Entregada'];
+function atcCaminoVa(){ try{ return vdVa('ATC_CAMINO_PRUEBA'); }catch(e){ return false; } }
+function atcCaminoHtml(p){
+  if(!atcCaminoVa()) return '';
+  var k=atcEstado(p), n=ATC_CAMINO_POS[k]; if(n==null) return '';
+  var c=atvColor(k), h='';
+  for(var i=0;i<5;i++){ h+='<i class="'+(i<n?'h':(i===n?'a':''))+'"></i>'; if(i<4) h+='<b class="'+(i<n?'h':'')+'"></b>'; }
+  var t='Paso '+(n+1)+' de 5: '+ATC_CAMINO_NOM[n]+(n<4 ? ('; sigue '+ATC_CAMINO_NOM[n+1]) : '');
+  return '<div class="atc-cam" style="--c:'+c+'" title="'+esc(t)+'"><div class="atc-cam-p" role="img" aria-label="'+esc(t)+'">'+h+'</div>'+
+    '<div class="atc-cam-t">'+(n+1)+' de 5 · '+esc(ATC_CAMINO_NOM[n])+(n<4 ? (' <span>→ '+esc(ATC_CAMINO_NOM[n+1])+'</span>') : '')+'</div></div>';
+}
+
+/* 🎨 (16/11, mejora 437; dueño: elegida de la página de ideas 390-440) LO QUE ESTÁ EN 0 SE VE APAGADO. Un «0» se veía igual de fuerte que un «10»:
+   en ATC, 2 de 4 fichas decían 0 y competían con «10 en fábrica», que es lo importante. Ahora lo que dice 0 queda gris claro y sin su color:
+   · las fichas de arriba (`mc`): `mc()` le pone `mc-v0` al número cuando es 0 (también «Bs 0,00» o «0 %»), leído del MISMO valor que dibuja;
+   · las casillas de «Hoy» de Administración (`admHoyPintar`): la que es toda 0 («0», «0 de 0») lleva `ah-st-cero` («0 de 4 listos» no:
+     ahí el 0 dice algo);
+   · los filtros (`.qchip` de Administración, Mis pedidos y Chofer) con su número en 0 llevan `q-cero`; el elegido nunca se apaga.
+   Solo dibujo: los números y lo que hace cada cosa no cambian. En Playwright apagado salvo `window.CEROS_PRUEBA`. `tests/test_v437_ceros.js`. */
+function ceroVa(){ try{ return vdVa('CEROS_PRUEBA'); }catch(e){ return false; } }
+function ceroTxt(v){ return String(v==null ? '' : v).replace(/<[^>]*>/g, ' ').replace(/&nbsp;| /g, ' ').replace(/\s+/g, ' ').trim(); }
+/* El número de una ficha es 0: «0», «Bs 0,00», «0 %». */
+function ceroEs(v){ return /^(Bs\.?\s*)?0([.,]0+)?\s*%?$/.test(ceroTxt(v)); }
+/* Todos los números de una casilla son 0: «0», «0 de 0» (no «0 de 4»). */
+function ceroTodos(v){ var n=ceroTxt(v).match(/\d+([.,]\d+)?/g)||[]; return n.length>0 && n.every(function(x){ return parseFloat(x.replace(',','.'))===0; }); }
+function ceroChips(box){
+  if(!box || !ceroVa()) return;
+  [].forEach.call(box.querySelectorAll('.qchip'), function(q){ var n=q.querySelector('.n'); q.classList.toggle('q-cero', !q.classList.contains('active') && !!n && n.textContent.trim()==='0'); });
+}
+document.addEventListener('DOMContentLoaded', function(){
+  try{ if(!ceroVa()) return;
+    document.documentElement.classList.add('v-ceros');
+    ['adm-chips','mis-chips','cho-chips'].forEach(function(id){ var b=document.getElementById(id); if(!b) return;
+      try{ new MutationObserver(function(){ ceroChips(b); }).observe(b, { childList:true }); }catch(e){} ceroChips(b); });
+  }catch(e){}
+});
+
+/* 🎨 (16/11, mejora 439; dueño: elegida de la página de ideas 390-440) EL GLOBO DE BLOKI: CON SU PIQUITO Y CUÁNTO LE QUEDA. El globo aparecía al
+   costado de Bloki sin nada que lo uniera a él y se iba solo a los 7 s, sin aviso, a veces a mitad de leerlo. Ahora (`asisGlobo` → `glPoner`):
+   · lleva un piquito hacia Bloki (`.gl-v::after`) y abajo una rayita turquesa que se va acortando en el MISMO tiempo que dura (`a.ms`, 7 s);
+   · dice «Tocá para ver ›» (o «Tocá para ver cuáles ›» si abre la lista) cuando tocarlo abre los avisos;
+   · con el mouse encima la rayita se frena y el globo espera; al sacarlo, sigue con lo que le quedaba (el `setTimeout` de `ASIS_GLOBO_T` se
+     corta y se vuelve a poner con el resto).
+   No cambia qué dice Bloki ni cuándo avisa; el dibujo de Bloki es el mismo. En Playwright apagado salvo `window.GLOBO_PRUEBA`.
+   `tests/test_v439_globo_bloki.js`. */
+var GL={ ms:0, t0:0, resto:0, quieto:false };
+function glVa(){ try{ return vdVa('GLOBO_PRUEBA'); }catch(e){ return false; } }
+function glPoner(gl, a, solo){
+  var ms=a.ms||7000;
+  if(!solo) gl.insertAdjacentHTML('beforeend', '<span class="gl-ver">'+(a.lista ? 'Tocá para ver cuáles' : 'Tocá para ver')+'</span>');
+  gl.style.setProperty('--gl-ms', ms+'ms');
+  gl.classList.remove('gl-v', 'gl-quieto'); void gl.offsetWidth; gl.classList.add('gl-v');   // la rayita arranca de nuevo
+  if(!gl._gl){ gl._gl=1; gl.addEventListener('mouseenter', glPausa); gl.addEventListener('mouseleave', glSigue); }
+  GL.ms=ms; GL.resto=ms; GL.quieto=false; GL.t0=Date.now();
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, ms);
+  try{ if(gl.matches(':hover')) glPausa(); }catch(e){}
+}
+function glPausa(){
+  var gl=document.getElementById('asis-globo'); if(!gl || gl.hidden || !gl.classList.contains('gl-v') || GL.quieto) return;
+  GL.quieto=true; GL.resto=Math.max(800, GL.resto-(Date.now()-GL.t0));
+  clearTimeout(ASIS_GLOBO_T); gl.classList.add('gl-quieto');
+}
+function glSigue(){
+  var gl=document.getElementById('asis-globo'); if(!gl || gl.hidden || !gl.classList.contains('gl-v') || !GL.quieto) return;
+  GL.quieto=false; GL.t0=Date.now(); gl.classList.remove('gl-quieto');
+  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, GL.resto);
+}
+</script>
 
 <div class="wrap">
   <!-- ⏳ Cómo viene la planilla: cargando / no se pudo (con el motivo) / nada. Se ve en todas
@@ -10643,7 +11347,7 @@ function apiSave(rec, opts){
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
-  if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
+  if(!id || (opts&&opts.forzar)) return pgSeguir(id, apiSaveAhora(rec, opts));   // 🎨 (16/11, mejora 433) la ficha dice «Guardando…»
   if(!SAVE_EN_VUELO[id]){
     var p=apiSaveAhora(rec, opts);
     SAVE_EN_VUELO[id]=p;
@@ -10653,7 +11357,7 @@ function apiSave(rec, opts){
     try{ updateFooter(); }catch(e){}
     var fin=function(){ if(SAVE_EN_VUELO[id]===p) delete SAVE_EN_VUELO[id]; try{ updateFooter(); }catch(e){} };
     p.then(fin, fin);
-    return p;
+    return pgSeguir(id, p);   // 🎨 (16/11, mejora 433)
   }
   if(SAVE_EN_ESPERA[id]) return SAVE_EN_ESPERA[id];
   var run=function(){
@@ -28433,6 +29137,7 @@ function updateStats(o){
   if(typeof nxBadges==='function' && !(o && o.igual && Date.now()-NX_BADGES_T<55000)) nxBadges();   // ✨ (§4js) los números de las pestañas, con cada cambio
   try{ vivoPintar(); }catch(e){}                  // 🔔 (§4ni, 10) la campanita «En vivo»
   try{ hdrMetaPintar(); }catch(e){}               // 🎯 (15/11, mejora 342) la meta del mes arriba, solo con la contraseña
+  try{ hcPintar(); }catch(e){}                    // 🎨 (16/11, mejora 434) la cuenta regresiva del tema (y si se puede tocar)
 }
 
 /* 🚚 (§4iw, 09/10, dueño: «A») Arriba: el día de hoy y dos anillos con los cupos LIBRES del próximo camión (AM y PM).
@@ -30874,6 +31579,7 @@ function updateFooter(){
   document.getElementById('footer').innerHTML = (pend
     ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="misReintentarCola()">reintentar</a>')
     : base) + autoSelloHtml();
+  try{ pgLuego(); }catch(e){}   // 🎨 (16/11, mejora 433) la cola cambió: la ficha lo dice
 }
 
 /* ============================================================================
@@ -35153,7 +35859,8 @@ function admHoyPintar(H){
   var anillo='<svg viewBox="0 0 84 84" class="ah-anillo" aria-hidden="true"><circle cx="42" cy="42" r="'+R+'" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="9"/>'+
     '<circle cx="42" cy="42" r="'+R+'" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+L.toFixed(1)+'" stroke-dashoffset="'+(L*(1-pct)).toFixed(1)+'" transform="rotate(-90 42 42)"/></svg>';
   var cuando=H.sale ? '' : (' · <span class="ah-hoy-no">hoy no sale el camión: '+esc(nxDiaTxt(H.fecha))+'</span>');
-  var tile=function(ic, v, t, cls){ return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
+  var tile=function(ic, v, t, cls){ if(typeof ceroVa==='function' && ceroVa() && ceroTodos(v)) cls=(cls?(cls+' '):'')+'ah-st-cero';   // 🎨 (16/11, 437) toda 0: apagada
+    return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
   var h='<div class="ah-hoy-cab"><h4>☀️ Hoy, '+esc(dn)+' '+esc(fmtFechaCorta(H.hoy))+cuando+'</h4><small>'+hora+'</small></div>'+
     '<div class="ah-hoy-c">'+
       /* (26/10, el dueño: «se ve la letra en el fondo y el círculo delante») «con carga completa» no entraba en el hueco del anillo y quedaba
@@ -35231,6 +35938,7 @@ function renderAdmin(){
   if(admVista()==='fichas'){   // 🃏 (24/10) con las fichas, la tabla ni se arma (se arma al volver a «Ver como tabla»)
     if(deMas) list=list.slice(0, ADM_TOPE);
     admFichasPintar(list, dn); admMasPintar(deMas);
+    try{ pgPintar(); }catch(e){}   // 🎨 (16/11, mejora 433) cómo va el guardado de cada ficha
     admVacioPintar(list.length);
     try{ tblBarPintar('admin'); }catch(e){}   // 🗂️ (§4nr, 33) con las fichas, la barra de columnas no va
     return;
@@ -35279,6 +35987,7 @@ function renderAdmin(){
   }).join('');
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   admFichasPintar(list, dn);
+  try{ pgPintar(); }catch(e){}   // 🎨 (16/11, mejora 433) cómo va el guardado de cada ficha
   admVacioPintar(list.length);
   document.getElementById('tbl-pedidos').style.display=list.length?'table':'none';
   admMasPintar(deMas);
@@ -35329,7 +36038,7 @@ function admMasPintar(deMas){
 }
 /* `txt` es opcional: cuando el color del borde no sirve de texto (un amarillo sobre blanco
    no se lee) se pasa aparte el tono oscuro del número. Sin `txt` se comporta como siempre. */
-function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+(txt||color)+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
+function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val'+((typeof ceroVa==='function' && ceroVa() && ceroEs(val))?' mc-v0':'')+'" style="color:'+(txt||color)+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }   // 🎨 (16/11, 437) `mc-v0`: el 0, apagado
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ---- Filtros rápidos (chips) + orden de columnas ---- */
@@ -37694,7 +38403,8 @@ function renderAtc(){
         (atcRepNro(p)>1 ? '<br><span style="display:inline-block;margin-top:3px">'+atcRepChip(p)+'</span>' : '')+   // 🔁 (179)
         ((mesSel && atcEntro(p).slice(0,7)<mesSel) ? '<br><span class="badge b-amber" title="Entró en un mes anterior y sigue sin cerrar">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>' : '')+'</td>'+
       '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
-        (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
+        (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+
+        atcCaminoHtml(p)+'</td>'+   // 🎨 (16/11, mejora 436) el caminito de 5 pasos
       '<td style="white-space:nowrap;font-size:.8rem">'+esc(fmtFecha(atcEntro(p)))+'</td>'+
       '<td><b>'+(window.PRACTICA ? practicaMarca(p) : '')+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
       '<td style="font-size:.78rem">'+esc(prod)+'</td>'+
@@ -58080,6 +58790,7 @@ function openModal(html, ancha){
   var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
   var antes=ov.classList.contains('on') ? modalTitulo() : null;
   if(antes===null){ var a=document.activeElement; MODAL_FOCO_ANTES=(a && a!==document.body && !box.contains(a)) ? a : null; }
+  try{ mpieAntes(box, antes!==null); }catch(e){}   // 🎨 (16/11, mejora 430) la ventana larga con los botones abajo
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
@@ -58095,6 +58806,7 @@ function openModal(html, ancha){
   if(!box.contains(document.activeElement)){ try{ box.focus({ preventScroll:true }); }catch(e){} }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
   if(antes===null) try{ naceAbrir(box); }catch(e){}   // 🪄 (§4pj, 168) la ventana nace de lo que se tocó
+  try{ mpieAgendar(); }catch(e){}   // 🎨 (16/11, mejora 430) si no entra en la pantalla, los botones del final van pegados abajo
 }
 /* 🪄 (§4pj, 10/11, idea 168; dueño: «me gustan todas para publicar…») LAS VENTANAS NACEN DE LO QUE TOCÁS: la ventana crece desde la ficha,
    el renglón o el botón que se tocó, y al cerrarla un contorno vuelve a ese lugar. Solo dibujo (`Element.animate`: no deja estilos
@@ -69147,6 +69859,7 @@ function waRespUsarUbic(w){
   try{ waRespPintar(); }catch(e){}
 }
 function waRespHtml(lista, quien, kPleg, hechas){
+  if(kPleg==='wa-adm' && typeof wzVa==='function' && wzVa()) return wzHtml(lista, quien, kPleg, hechas);   // 🎨 (16/11, mejora 432) en la pestaña Bot, como WhatsApp
   hechas=hechas||[];
   if(!lista.length && !hechas.length) return '';
   var pl=!!kPleg && misPlegado(kPleg);   // 🙈 (13/10) se pliega: en Mis pedidos (dueño) y en Administración (dueño: «lo mismo en administración»)
@@ -74713,7 +75426,9 @@ function asisGlobo(a, calladito, solo){
   ASIS.anuncioFig=!!a.anuncio; blokiPoner();   // 🧽 el anuncio lo dice Bloki con el megáfono
   if(yo){ yo.classList.remove('asis-salta'); void yo.offsetWidth; yo.classList.add('asis-salta'); }
   if(!calladito) asisPop();
-  clearTimeout(ASIS_GLOBO_T); ASIS_GLOBO_T=setTimeout(asisGloboOcultar, a.ms||7000);
+  clearTimeout(ASIS_GLOBO_T);
+  if(typeof glVa==='function' && glVa()) glPoner(gl, a, solo);   // 🎨 (16/11, mejora 439) el piquito, la rayita del tiempo y la pausa con el mouse
+  else ASIS_GLOBO_T=setTimeout(asisGloboOcultar, a.ms||7000);
 }
 function asisGloboOcultar(){
   var gl=document.getElementById('asis-globo'); if(gl) gl.hidden=true;
