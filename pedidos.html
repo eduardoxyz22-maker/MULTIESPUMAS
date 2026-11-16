@@ -34505,7 +34505,7 @@ function pixPlegar(sec, abrir){
 /* Lleva a una sección (abriéndola si estaba plegada), debajo del encabezado y de la barra. */
 function pixIr(k, teclado){
   var el=document.getElementById('pix-s-'+k); if(!el) return;
-  if(k==='despacio'){ var p=document.getElementById('pix-s-prueba'); if(p && p.classList.contains('pix-cerr')) pixPlegar(p, true); }
+  if(k==='despacio'){ var p=document.querySelector('.pix-s[data-k="prueba"]'); if(p && p.classList.contains('pix-cerr')) pixPlegar(p, true); }
   else if(el.classList.contains('pix-cerr')) pixPlegar(el, true);
   var bar=document.getElementById('pry-ix'), z=zoomPag(), dest=el.getBoundingClientRect().top+window.scrollY;
   var top=Math.max(0, dest-hdrAltoEn(dest)-(bar ? bar.offsetHeight*z : 0)-10);

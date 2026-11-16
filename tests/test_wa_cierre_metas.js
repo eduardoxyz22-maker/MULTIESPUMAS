@@ -206,7 +206,7 @@ const txt = (body) => ({ type: 'text', text: { body } });
     chk('1g WA_TIPOS: cd = v3 (respaldo la v2 y la primera, con 7) y bf; cm = cierre_del_mes (sin respaldo); ext = logistica_excel_tarde (respaldo la del Excel de las 10:00, 3)',
         W.cd.plantilla === 'cierre_del_dia_v3' && W.cd.vieja === 'cierre_del_dia_v2' && W.cd.nv === 7 && W.cd.vieja2 === 'cierre_del_dia' && W.cd.nv2 === 7 && W.cd.bf === 'cierre_del_dia_bf' &&
         W.cm.plantilla === 'cierre_del_mes' && !W.cm.vieja && W.ext.plantilla === 'logistica_excel_tarde' && W.ext.vieja === 'logistica_excel_falta' && W.ext.nv === 3, [W.cd, W.cm, W.ext]);
-    chk('1h la versión es la 2026-11-15-a (y ESTA_VERSION igual)', S.ctx.SCRIPT_VERSION === '2026-11-15-a' && /var ESTA_VERSION = '2026-11-15-a'/.test(SRC));
+    chk('1h la versión es la 2026-11-15-a o una que la trae entera (16-a), y ESTA_VERSION igual', ['2026-11-15-a', '2026-11-16-a'].indexOf(S.ctx.SCRIPT_VERSION) >= 0 && new RegExp("var ESTA_VERSION = '" + S.ctx.SCRIPT_VERSION + "'").test(SRC));
   });
 
   seccion('2. 332 · el cierre del día con la meta y lo de hoy por tienda (jueves 12/11, 21:20)', () => {
