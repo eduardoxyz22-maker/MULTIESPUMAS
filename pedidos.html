@@ -6064,7 +6064,16 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .fl-hint.fl-ojo{ background:#fffaf0; border:1px solid #f3dca5; border-radius:9px; padding:7px 10px; color:#5a4300; font-weight:500; margin-top:5px; white-space:normal; }
 .fl-hint .fl-bt{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
 .fl-hint .fl-bt button{ border:0; border-radius:7px; padding:6px 11px; min-height:32px; font:inherit; font-size:.76rem; font-weight:700; cursor:pointer; background:#00B5AD; color:#fff; }
-.fl-hint .fl-bt button.fl-no{ background:#f1f5f5; color:#355; border:1px solid #d6e2e1; } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
+.fl-hint .fl-bt button.fl-no{ background:#f1f5f5; color:#355; border:1px solid #d6e2e1; }
+/* 💬 (16/11, mejora 373) El globito de las ayudas: tarjeta blanca, borde turquesa, el nombre en negrita, letra del panel. */
+.ay-globo{ position:fixed; z-index:10100; max-width:280px; background:#fff; color:#17302f; border:1px solid #cfe6e3; border-left:4px solid #00B5AD; border-radius:11px;
+  padding:8px 11px 9px; box-shadow:0 10px 26px rgba(0,60,58,.22); font:500 13px/1.4 Inter,system-ui,sans-serif; white-space:pre-line; overflow-wrap:anywhere;
+  pointer-events:none; opacity:0; transform:translateY(-3px); transition:opacity .16s ease, transform .16s ease; }
+.ay-globo.ay-arriba{ transform:translateY(3px); }
+.ay-globo.ay-on{ opacity:1; transform:none; }
+.ay-globo[hidden]{ display:none; }
+.ay-globo .ay-n{ display:block; color:#007c76; font-weight:800; margin-bottom:2px; }
+@media (prefers-reduced-motion:reduce){ .ay-globo{ transition:none; transform:none; } } border:1px solid var(--gray-md); border-radius:16px; padding:12px 14px; margin:10px 0 14px; display:flex; flex-direction:column; gap:10px; box-shadow:0 10px 24px -22px rgba(0,80,76,.5); }
 .sem-cab{ display:flex; align-items:center; gap:10px; min-width:0; }
 .sem-cab > div{ min-width:0; }
 .sem-ic{ font-size:1.25rem; width:38px; height:38px; display:grid; place-items:center; background:var(--teal-lt); border-radius:12px; flex:none; }
@@ -32183,7 +32192,7 @@ function qcAbrir(chip){
     var lbl=[].filter.call(b.childNodes, function(x){ return x.nodeType===3; }).map(function(x){ return x.textContent; }).join('').trim();
     var n=(b.querySelector('.n')||{}).textContent||'', qa=b.querySelector('.qa'), al=b.classList.contains('qchip-alerta');
     h+='<button type="button" role="menuitemradio" aria-checked="'+(b.classList.contains('active')?'true':'false')+'" class="'+(b.classList.contains('active')?'on':'')+(al?' al':'')+'" data-k="'+esc(b.getAttribute('data-k')||'')+'"'+
-       (b.getAttribute('title')?(' title="'+esc(b.getAttribute('title'))+'"'):'')+'><span>'+esc(lbl)+(qa?('<small>'+esc(qa.textContent.trim())+'</small>'):'')+'</span><span class="n">'+esc(n)+'</span></button>';
+       ((b.getAttribute('title')||b.getAttribute('data-ayuda'))?(' title="'+esc(b.getAttribute('title')||b.getAttribute('data-ayuda'))+'"'):'')+'><span>'+esc(lbl)+(qa?('<small>'+esc(qa.textContent.trim())+'</small>'):'')+'</span><span class="n">'+esc(n)+'</span></button>';
   });
   m.innerHTML=h;
   var w=Math.max(260, Math.min(r.width, 520));
@@ -32345,6 +32354,108 @@ function flEvento(ev){ var t=ev.target; if(t && t.tagName==='INPUT' && t.type===
   }catch(e){}
 })();
 /* fin mejora 385 */
+/* ============================================================================
+   💬 LAS AYUDAS AL PASAR EL MOUSE, EN UN GLOBITO DEL PANEL (16/11, mejora 373; el dueño la eligió).
+   El panel tiene ~370 explicaciones en `title` (botones, fichas, chips) y salían con el globo gris del navegador: tarda ~1 s, letra chiquita,
+   sin título, se va al mover el mouse y con el teclado no sale nunca. Ahora las MISMAS explicaciones salen en un globito del panel: tarjeta
+   blanca con borde turquesa, el nombre del botón en negrita (si la explicación no lo dice ya), letra del panel, máximo 280 px, pegada a lo
+   que se señala, en 0,3 s; también al llegar con Tab. Nunca se sale de la pantalla ni tapa a Bloki (si lo tapa, va arriba o al costado).
+   · Mientras se ve, el texto pasa de `title` a `data-ayuda` (así el navegador no saca el suyo encima) y el elemento apunta al globito con
+     `aria-describedby`; al salir vuelve todo como estaba (las pruebas y los lectores de pantalla siguen leyendo `title`). Si mientras tanto
+     el panel le puso otro `title`, se queda el nuevo.
+   · Solo con el mouse (en el celular y el iPad, con el dedo, nada cambia) o con el teclado. Se esconde al tocar, al bajar la página y con Esc.
+   · Un solo `<div>` fijo que se reubica; las medidas pasan por `zoomPag()` (el panel agrandado de 1.920). Con «reducir movimiento», sin animación.
+   En Playwright apagado salvo `window.AYUDA_PRUEBA`. `tests/test_ayuda_globo.js`.
+   ========================================================================== */
+var AY={ el:null, t:null, box:null, foco:false, desc:null };
+var AY_MS=300, AY_ANCHO=280;
+function ayVa(){ try{ return vdVa('AYUDA_PRUEBA'); }catch(e){ return false; } }
+function ayCaja(){
+  if(AY.box && AY.box.isConnected) return AY.box;
+  var b=document.createElement('div'); b.id='ayuda-globo'; b.className='ay-globo'; b.setAttribute('role','tooltip'); b.hidden=true;
+  document.body.appendChild(b); AY.box=b; return b;
+}
+function ayDe(t){ return t && t.closest ? t.closest('[title],[data-ayuda]') : null; }
+function ayTexto(el){ var t=el.getAttribute('data-ayuda'); if(t==null) t=el.getAttribute('title'); return String(t||'').trim(); }
+/* El nombre de lo señalado (el texto del botón): solo si es corto y la explicación no empieza diciéndolo. */
+function ayNombre(el, txt){
+  var n=String(el.getAttribute('aria-label')||el.textContent||'').replace(/\s+/g,' ').trim();
+  if(!n || n.length>48) return '';
+  var a=n.toLowerCase().replace(/[^\wáéíóúñü ]/g,'').trim(), b=txt.toLowerCase().replace(/[^\wáéíóúñü ]/g,'').trim();
+  if(!a || b.indexOf(a)===0) return '';
+  return n;
+}
+function ayEntrar(el, porFoco){
+  if(!el || el===AY.el) return;
+  aySalir();
+  var txt=ayTexto(el); if(!txt) return;
+  if(el.hasAttribute('title')){ el.setAttribute('data-ayuda', el.getAttribute('title')); el.removeAttribute('title'); }
+  AY.el=el; AY.foco=!!porFoco; AY.desc=el.getAttribute('aria-describedby');
+  el.setAttribute('aria-describedby', 'ayuda-globo');
+  AY.t=setTimeout(ayMostrar, AY_MS);
+}
+function aySalir(){
+  clearTimeout(AY.t); AY.t=null;
+  if(AY.box){ AY.box.hidden=true; AY.box.classList.remove('ay-on'); }
+  var el=AY.el; AY.el=null; AY.foco=false;
+  if(!el) return;
+  var t=el.getAttribute('data-ayuda');
+  if(t!=null){ if(!el.hasAttribute('title')) el.setAttribute('title', t); el.removeAttribute('data-ayuda'); }
+  if(AY.desc) el.setAttribute('aria-describedby', AY.desc); else el.removeAttribute('aria-describedby');
+  AY.desc=null;
+}
+function ayMostrar(){
+  var el=AY.el; if(!el || !el.isConnected || !el.getClientRects().length){ aySalir(); return; }
+  var txt=ayTexto(el); if(!txt){ aySalir(); return; }
+  var b=ayCaja(), nom=ayNombre(el, txt);
+  b.innerHTML=(nom ? '<b class="ay-n"></b>' : '')+'<span class="ay-t"></span>';
+  if(nom) b.querySelector('.ay-n').textContent=nom;
+  b.querySelector('.ay-t').textContent=txt;
+  b.classList.remove('ay-on'); b.hidden=false; b.style.left='0px'; b.style.top='-9999px';
+  ayUbicar(el, b);
+  void b.offsetWidth; b.classList.add('ay-on');
+}
+/* Debajo de lo señalado (o arriba si no entra), dentro de la pantalla y sin tapar a Bloki. Las cuentas en px de PANTALLA y se pasan con `zoomPag()`. */
+function ayUbicar(el, b){
+  var z=zoomPag(), r=el.getBoundingClientRect(), W=window.innerWidth, H=window.innerHeight;
+  var bw=b.offsetWidth*z, bh=b.offsetHeight*z, m=8;
+  var x=Math.max(m, Math.min(r.left, W-m-bw)), y=r.bottom+8, arriba=false;
+  if(y+bh>H-m){ y=r.top-8-bh; arriba=true; }
+  if(y<m) y=m;
+  var yo=document.getElementById('asis-yo'), br=(yo && yo.getClientRects().length) ? yo.getBoundingClientRect() : null;
+  var choca=function(){ return br && x<br.right && x+bw>br.left && y<br.bottom && y+bh>br.top; };
+  if(choca() && !arriba && r.top-8-bh>=m){ y=r.top-8-bh; arriba=true; }
+  if(choca()) x=Math.max(m, br.left-8-bw);
+  b.classList.toggle('ay-arriba', arriba);
+  b.style.left=(x/z)+'px'; b.style.top=(y/z)+'px';
+}
+(function(){
+  try{
+    document.addEventListener('pointerover', function(e){
+      if(!ayVa() || (e.pointerType && e.pointerType!=='mouse' && e.pointerType!=='pen')) return;
+      var el=ayDe(e.target);
+      if(el===AY.el) return;
+      if(el) ayEntrar(el, false); else if(AY.el && !AY.foco) aySalir();
+    }, true);
+    document.addEventListener('pointerout', function(e){
+      if(!AY.el || AY.foco) return;
+      var a=e.relatedTarget; if(a && AY.el.contains(a)) return;
+      if(!a || !ayDe(a)) aySalir();
+    }, true);
+    document.addEventListener('focusin', function(e){
+      if(!ayVa()) return;
+      var t=e.target, vis=false; try{ vis=t.matches(':focus-visible'); }catch(x){}
+      if(!vis){ if(AY.foco) aySalir(); return; }
+      var el=(t.hasAttribute && (t.hasAttribute('title') || t.hasAttribute('data-ayuda'))) ? t : null;
+      if(el) ayEntrar(el, true); else if(AY.el) aySalir();
+    }, true);
+    document.addEventListener('focusout', function(e){ if(AY.foco && AY.el===e.target) aySalir(); }, true);
+    document.addEventListener('pointerdown', function(){ if(AY.el && AY.box && !AY.box.hidden){ clearTimeout(AY.t); AY.box.hidden=true; } }, true);
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && AY.box && !AY.box.hidden){ AY.box.hidden=true; } }, true);
+    window.addEventListener('scroll', function(){ if(AY.el && !AY.foco) aySalir(); }, { passive:true, capture:true });
+  }catch(e){}
+})();
+/* fin mejora 373 */
 function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } tblOrdenGuardar('admin', SORT_KEY, SORT_DIR); renderAdmin(); }
 /* ==========================================================================
    🗂️ TABLAS A TU GUSTO (§4nr, 29/10; dueño, del muestrario 24-33: «33 tb»)
