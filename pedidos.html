@@ -2515,6 +2515,24 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .regdoc-f,.regdoc-b{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .regdoc-b{margin-top:8px}
 .regdoc small{display:block;color:#4b6b69;font-size:.74rem;margin-top:6px;line-height:1.35}
+/* 🔁 (mejora 380) lo que cambió después de cargarla al sistema · 💵 (386) lo que te corrigieron */
+.rc-box{background:#fff8e6;border:1px solid #f3d38b;border-left:4px solid #d97706;border-radius:12px;padding:10px 13px;margin-bottom:10px;color:#4a3400}
+.rc-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin-bottom:6px}
+.rc-cab small{flex-basis:100%;color:#6b5512;font-size:.78rem}
+.rc-n{background:#d97706;color:#fff;border-radius:20px;padding:0 8px;font-size:.78rem;font-weight:800}
+.rc-it{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;border:1px solid #f1e2b8;border-radius:10px;padding:8px 10px;margin-top:6px}
+.rc-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 260px;font-size:.84rem}
+.rc-tx span{color:#3b2c00}
+.rc-tx small{color:#7a6a3c;font-size:.74rem}
+.rc-bt{display:flex;gap:6px;flex-wrap:wrap}
+.rc-pie{font-size:.72rem;color:#7a6a3c;margin-top:7px}
+.rc-ficha{background:#fff8e6;border:1px solid #f3d38b;border-radius:10px;padding:9px 12px;margin-bottom:11px;font-size:.86rem;color:#4a3400;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rc-ficha small{color:#6b5512;font-size:.76rem}
+.ph-sem{background:#fff;border:1px solid #e5edf0;border-left:4px solid #00B5AD;border-radius:12px;padding:9px 11px;margin-top:9px;font-size:.84rem;color:#1e2b30}
+.ph-sem-t{margin-bottom:5px}
+.ph-sem-f{padding:5px 0;border-top:1px dashed #e2e8ea;cursor:pointer;display:flex;flex-direction:column}
+.ph-sem-f small{color:#64748b;font-size:.74rem}
+.ph-sem-c{margin-top:6px;background:#e3f7f6;border-radius:8px;padding:6px 9px;color:#0f5c58;font-size:.8rem}
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -8495,6 +8513,7 @@ function guardarDurable(rec, opts){
   delete NO_ENCOLAR[rec.id];
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) quién le cambió el día o el turno
+  try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) cambió después de cargarla al sistema · quién corrigió un pago
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
   if(esFilaRetiro(rec) && !(Number(rec.rev)>0)){
@@ -9320,6 +9339,7 @@ function apiSave(rec, opts){
   var id=rec&&rec.id;
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
+  try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
   if(!SAVE_EN_VUELO[id]){
@@ -9533,6 +9553,7 @@ function verificarEcoForm(srv, rec, prev){
    `localManda` lo compara con el `ahora` de cada lectura para saber si esa lectura ya lo tiene. */
 function aplicarSello(rec, srv, ahora){
   try{ entSrvAnotar(srv && srv.id!=null ? srv : rec); }catch(e){}   // 🧾 (10/11) lo que quedó en la planilla
+  try{ pagSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 🔁💵 (mejoras 380 y 386)
   try{ fhSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 📅 (mejora 212) …el día, el turno y su último renglón
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
@@ -9712,6 +9733,7 @@ function rechazoFirme(rec, res, colaTxt){
       actual.oc=cleanOC(actual.oc);
       try{ fhSrvAnotar(actual); }catch(e){}   // 📅 (mejora 212) la fila de la planilla es la que queda en pantalla: el próximo cambio de día sale de ahí
       try{ entSrvAnotar(actual); }catch(e){}   // 🧾 (14/11) …y su «Entregado»: si no, el ✅ que traía la planilla se le anotaba al que guarda después
+      try{ pagSrvAnotar(actual); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y sus pagos y la marca de «cargada al sistema»
       if(typeof esBorrador==='function' && esBorrador(actual)){
         STATE=STATE.filter(function(p){ return p.id!==actual.id; });
         BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(actual.id); }).concat([actual]);
@@ -10866,7 +10888,11 @@ function heredarMarcas(nuevos, viejos){
   var fH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.fH) && x.fH.length){ fH=x.fH; return true; } return false; });
   /* 🧾 (mejora 251) …y de qué cotización salió la venta (`cot`). */
   var cotV=''; (viejos||[]).some(function(x){ if(x && x.cot){ cotV=String(x.cot); return true; } return false; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV; return x; };
+  /* 🔁💵 (mejoras 380 y 386) …y lo que cambió después de cargarla al sistema (`rc`) y quién corrigió cada pago (`pH`): son del pedido. */
+  var rcV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.rc) && x.rc.length){ rcV=x.rc; return true; } return false; });
+  var pHV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.pH) && x.pH.length){ pHV=x.pH; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -11119,6 +11145,201 @@ function fhHistAnotar(rec){
   rec.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); });
   try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); }); }catch(err){}
 }
+/* ============================================================================
+   🔁 CAMBIÓ DESPUÉS DE CARGARLA AL SISTEMA: VUELVE A «SIN CARGAR» (mejora 380, 16/11; dueño la eligió)
+   💵 «LO QUE TE CORRIGIERON»: CADA PAGO GUARDA QUIÉN LO CAMBIÓ (mejora 386, 16/11; dueño la eligió)
+   Del 1 al 15/11, 6 ventas ya marcadas «✅ cargada al sistema» se corrigieron después y siguieron marcadas (un precio de 790 a 620, un QR de
+   4.830 a 3.830, el banco de un QR, la fecha de otro): el sistema contable quedó con el dato viejo y nadie se enteró. Y 21 pagos ya guardados
+   se corrigieron sin que quedara quién ni cuándo.
+   · Al GUARDAR (`guardarDurable` y `apiSave`, junto con `entHistAnotar`) se compara con lo último que dijo la planilla de ese pedido
+     (`PAG_SRV`: el texto de la fila, de `mergePending`, `aplicarSello` y la fila de un «conflicto»); si hay un renglón de acá en camino
+     (todavía no está en la planilla), con lo último que mandó este aparato (`PAG_LOC`), como `fH`. Sin lectura o un pedido nuevo: nada.
+   · 380: si la planilla la tenía «cargada al sistema» y cambió el precio, un producto o su cantidad, el cliente, el NIT, «Facturar a» o el
+     monto, la fecha o el método/banco de un pago (`rcCambios`), la venta vuelve a «📥 sin cargar» y queda adentro qué cambió (`rc` en los
+     productos, los últimos `RC_MAX`: {t, q, d, c:[…]}; «✓ Ya lo corregí en el sistema» le pone `ok`). Fotos, observaciones, camión y marcas
+     de logística no cuentan. Un pago NUEVO ya la sacaba (`registradoSigue`, §4hk): ahora además queda escrito cuál.
+     Arriba de Contabilidad «🔁 N cambiaron después de cargarlas» (`rcPintarConta`) y en la ficha de la venta (`rcFichaHtml`).
+   · 386: un pago que estaba en la planilla y cambió de monto, fecha, método o banco, o se borró, o se partió en dos, deja `pH` en los productos
+     (los últimos `PH_MAX`: {t, q, d, tp:'monto'|'banco'|'metodo'|'fecha'|'borrado'|'partido'|'varios', de:[…], a:[…]}). Sumar un pago o una
+     foto no es una corrección. Se ve en la 🕓 Historia del pedido y, el sábado, en «☀️ Tu día» de la vendedora (lo que le corrigió OTRA persona
+     esa semana, con un consejo: `phSemanaHtml`).
+   · `heredarMarcas` pasa los dos; `deshDevolver` los saltea. Lo que guarda una página sin F5 no deja renglón (no los conoce).
+   · En Playwright apagado salvo `RC_PRUEBA` (380) y `PAGO_HIST_PRUEBA` (386): las pruebas de siempre comparan los productos tal cual y
+     corrigen pagos de ventas cargadas. `tests/test_cargada_cambio.js`, `tests/test_pago_corrigieron.js`.
+   ========================================================================== */
+var PAG_SRV={}, PAG_LOC={}, PAG_DONDE=null, RC_MAX=4, PH_MAX=8;
+function rcActivo(){ try{ return !(navigator.webdriver && !window.RC_PRUEBA); }catch(e){ return true; } }
+function pagPhActivo(){ try{ return !(navigator.webdriver && !window.PAGO_HIST_PRUEBA); }catch(e){ return true; } }
+function pagHistActivo(){ return rcActivo() || pagPhActivo(); }
+function pagDonde(txt){ PAG_DONDE={ d:String(txt||''), t:Date.now() }; }
+function pagNoVa(p){
+  if(!p || typeof p!=='object' || !p.id) return true;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return true; }catch(e){ return true; }
+  return !Array.isArray(p.productos) || !p.productos.length;
+}
+function rcDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].rc) && pr[i].rc.length) return pr[i].rc; return []; }
+function phDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].pH) && pr[i].pH.length) return pr[i].pH; return []; }
+function pagPonerEn(rec, k, N){
+  (rec.productos||[]).forEach(function(x){ if(x && typeof x==='object') x[k]=JSON.parse(JSON.stringify(N)); });
+  try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x[k]=JSON.parse(JSON.stringify(N)); }); }catch(e){}
+}
+/* Lo que dijo la planilla (el texto: un objeto de STATE se cambia en el lugar al editar). */
+function pagSrvAnotar(x){
+  if(!x || x.id==null) return;
+  var id=String(x.id); if(pagNoVa(x)){ delete PAG_SRV[id]; return; }
+  try{ PAG_SRV[id]=JSON.stringify(x); }catch(e){ delete PAG_SRV[id]; }
+}
+/* Lo que mira Contabilidad de una venta (sin fotos, observaciones, camión ni marcas de logística). */
+function pagFirma(p){
+  var pr=[], pg=[];
+  (p.productos||[]).forEach(function(x){ if(!x || !(String(x.desc||'').trim() || String(x.codigo||'').trim())) return;
+    pr.push({ k:prodClave(x), c:Number(x.cant)||0, p:prodPrecio(x), d:String(x.desc||'').trim()+(String(x.medida||'').trim()?(' '+String(x.medida).trim()):'') }); });
+  try{ contaPagos(p).forEach(function(c){ if(!c || c.sinMonto) return; var m=r2(Number(c.monto)||0); if(!(m>0)) return;
+    pg.push({ k:[c.fecha||'', c.metodo||'', c.banco||'', m.toFixed(2)].join('|'), f:c.fecha||'', me:c.metodo||'', b:c.banco||'', m:m }); }); }catch(e){}
+  return { pr:pr, cli:normNombre(p.cliente), cliT:String(p.cliente||'').trim(), nit:String(p.nit||'').replace(/\s+/g,''), fa:normNombre(p.facturarA), faT:String(p.facturarA||'').trim(), pg:pg };
+}
+function pagTxt(c){ return (String((c.me||'')+(c.b?(' '+c.b):'')).trim()||'Pago')+' '+phxBs(c.m)+(c.f?(' del '+fmtFechaCorta(c.f)):''); }
+/* Los pagos que estaban y ya no (R) y los que aparecieron (A), contando repetidos. */
+function pagDiff(A0, B0){
+  var cnt={}, R=[], A=[];
+  (B0||[]).forEach(function(x){ cnt[x.k]=(cnt[x.k]||0)+1; });
+  (A0||[]).forEach(function(x){ if(cnt[x.k]>0) cnt[x.k]--; else R.push(x); });
+  var cnt2={}; (A0||[]).forEach(function(x){ cnt2[x.k]=(cnt2[x.k]||0)+1; });
+  (B0||[]).forEach(function(x){ if(cnt2[x.k]>0) cnt2[x.k]--; else A.push(x); });
+  var tp='';
+  if(R.length===1 && A.length===1){ var a=R[0], b=A[0]; tp=Math.abs(a.m-b.m)>0.005 ? 'monto' : (a.me!==b.me ? 'metodo' : (a.b!==b.b ? 'banco' : 'fecha')); }
+  else if(R.length && !A.length) tp='borrado';
+  else if(R.length===1 && A.length>1) tp='partido';
+  else if(R.length) tp='varios';
+  return { R:R, A:A, tp:tp };
+}
+/* 380: qué cambió, en criollo («precio COLCHON X 140x190 790 → 620»). */
+function rcCambios(a, b){
+  var out=[], mA={}, mB={}, sa=[], sb=[];
+  a.pr.forEach(function(x){ mA[x.k]=x; }); b.pr.forEach(function(x){ mB[x.k]=x; });
+  b.pr.forEach(function(x){ var v=mA[x.k]; if(!v){ sb.push(x); return; }
+    if(v.c!==x.c) out.push('cantidad '+x.d+' '+v.c+' → '+x.c);
+    if(Math.abs(v.p-x.p)>0.005) out.push('precio '+x.d+' '+phxBs(v.p)+' → '+phxBs(x.p)); });
+  a.pr.forEach(function(x){ if(!mB[x.k]) sa.push(x); });
+  if(sa.length===1 && sb.length===1){ out.push(sa[0].d+' → '+sb[0].d+(Math.abs(sa[0].p-sb[0].p)>0.005?(' · precio '+phxBs(sa[0].p)+' → '+phxBs(sb[0].p)):'')+(sa[0].c!==sb[0].c?(' · cantidad '+sa[0].c+' → '+sb[0].c):'')); }
+  else { sb.forEach(function(x){ out.push('➕ '+x.d+' × '+x.c); }); sa.forEach(function(x){ out.push('➖ '+x.d+' × '+x.c); }); }
+  if(a.cli!==b.cli) out.push('cliente '+(a.cliT||'—')+' → '+(b.cliT||'—'));
+  if(a.nit!==b.nit) out.push('NIT '+(a.nit||'—')+' → '+(b.nit||'—'));
+  if(a.fa!==b.fa) out.push('«Facturar a» '+(a.faT||'—')+' → '+(b.faT||'—'));
+  var D=pagDiff(a.pg, b.pg);
+  if(D.R.length || D.A.length) out.push(!D.R.length ? ('pago nuevo '+D.A.map(pagTxt).join(' + ')) : !D.A.length ? ('pago borrado '+D.R.map(pagTxt).join(' + '))
+    : ('pago '+D.R.map(pagTxt).join(' + ')+' → '+D.A.map(pagTxt).join(' + ')));
+  return out.slice(0, 6);
+}
+function pagHistAnotar(rec){
+  if(!pagHistActivo() || pagNoVa(rec)) return;
+  var id=String(rec.id), sj=PAG_SRV[id]; if(!sj) return;                 // sin lectura, o todavía no está en la planilla
+  var S=null; try{ S=JSON.parse(sj); }catch(e){ return; }
+  var tsDe=function(H){ return H.map(function(e){ return Number(e && e.t)||0; }); }, sRc=tsDe(rcDe(S)), sPh=tsDe(phDe(S));
+  var Hc=rcDe(rec), Hp=phDe(rec), lc=Hc[Hc.length-1], lp=Hp[Hp.length-1];
+  var enCamino=(lc && sRc.indexOf(Number(lc.t)||0)<0) || (lp && sPh.indexOf(Number(lp.t)||0)<0);
+  var L=PAG_LOC[id], base=enCamino ? L : { f:pagFirma(S), reg:regEnSistema(S) };
+  var F=pagFirma(rec), reg=regEnSistema(rec);
+  if(!base){ PAG_LOC[id]={ f:F, reg:reg }; return; }                      // un renglón en camino de antes de un F5: no se adivina
+  var ahora=Date.now(), q=quienEdita()||'?', d=(PAG_DONDE && ahora-PAG_DONDE.t<20000) ? PAG_DONDE.d : entVista(), k=(typeof UNLOCKED!=='undefined' && UNLOCKED) ? 1 : 0;
+  if(pagPhActivo()){
+    var D=pagDiff(base.f.pg, F.pg);
+    if(D.R.length){
+      var e={ t:ahora, q:q, d:d, tp:D.tp, de:D.R.map(pagTxt), a:D.A.map(pagTxt) }; if(k) e.k=1;
+      if(lp && e.t<=(Number(lp.t)||0)) e.t=(Number(lp.t)||0)+1;
+      pagPonerEn(rec, 'pH', Hp.concat([e]).slice(-PH_MAX));
+    }
+  }
+  if(rcActivo() && base.reg){
+    var C=rcCambios(base.f, F);
+    if(C.length){
+      if(reg){ rec.metodoPago=conMarcaReg(rec.metodoPago, false); reg=false;
+        try{ var en=findById(rec.id); if(en && en!==rec) en.metodoPago=conMarcaReg(en.metodoPago, false); }catch(x){}
+        toast('🔁 Esta venta ya estaba CARGADA en el sistema contable y cambió ('+C[0]+(C.length>1?(' y '+(C.length-1)+' más'):'')+'): vuelve a «📥 sin cargar» para corregirla allá también.','err',10000); }
+      var r={ t:ahora, q:q, d:d, c:C }; if(k) r.k=1;
+      if(lc && r.t<=(Number(lc.t)||0)) r.t=(Number(lc.t)||0)+1;
+      pagPonerEn(rec, 'rc', Hc.concat([r]).slice(-RC_MAX));
+    }
+  }
+  PAG_DONDE=null;
+  PAG_LOC[id]={ f:F, reg:reg };
+}
+/* ---------- 380: lo que ve Contabilidad ---------- */
+function rcPendiente(p){ if(!p || regEnSistema(p)) return null; var H=rcDe(p), u=H[H.length-1]; return (u && !u.ok) ? u : null; }
+/* Volver a marcarla «cargada» (con «✓ Ya lo corregí» o el botón de siempre) cierra el último cambio. */
+function rcResolver(p){
+  var H=rcDe(p), u=H[H.length-1]; if(!u || u.ok) return false;
+  var N=JSON.parse(JSON.stringify(H)); N[N.length-1].ok={ t:Date.now(), q:quienEdita()||'?' };
+  pagPonerEn(p, 'rc', N);
+  if(PAG_LOC[String(p.id)]) PAG_LOC[String(p.id)].reg=true;
+  return true;
+}
+function rcLista(){ return (STATE||[]).filter(function(p){ return !pagNoVa(p) && !!rcPendiente(p); }).sort(function(a,b){ return (Number(rcPendiente(b).t)||0)-(Number(rcPendiente(a).t)||0); }); }
+function rcQuienTxt(u){ var q=String(u.q||'?'); return (q==='?' ? 'alguien que no eligió su nombre' : q)+' · '+entTs(u.t); }
+function ctaRcCorregi(id){
+  var p=findById(id); if(!p) return;
+  try{ ctaPagoRecordar(); }catch(e){}
+  rcResolver(p);
+  p.metodoPago=conMarcaReg(p.metodoPago, true);
+  persistPedido(p);
+  toast('✓ Listo: vuelve a figurar cargada en el sistema contable.','ok');
+  try{ var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on') && MODAL_KIND==='conta') showContaModal(id); }catch(e){}
+  try{ renderConta(); }catch(e){}
+}
+function rcFichaHtml(p){
+  var u=rcVe() ? rcPendiente(p) : null; if(!u) return '';
+  return '<div class="rc-ficha" id="cta-rc-ficha">🔁 <b>Cambió después de cargarla al sistema:</b> '+esc((u.c||[]).join(' · '))+
+    '<small>'+esc(rcQuienTxt(u))+'. Corregila en el sistema contable y tocá:</small>'+
+    '<button type="button" class="btn btn-sm" style="width:auto;background:var(--green);color:#fff" onclick="ctaRcCorregi(\''+esc(String(p.id))+'\')">✓ Ya lo corregí en el sistema</button></div>';
+}
+function rcVe(){ return rcActivo(); }
+var RC_VER_MAS=false;
+function rcPintarConta(){
+  var el=document.getElementById('cta-rc');
+  var L=rcVe() ? rcLista() : [];
+  if(!L.length){ if(el) el.hidden=true; return; }
+  if(!el){ var ban=document.getElementById('cta-banner'); if(!ban || !ban.parentNode) return;
+    el=document.createElement('div'); el.id='cta-rc'; el.className='rc-box no-print'; el.setAttribute('role','status'); ban.parentNode.insertBefore(el, ban); }
+  var V=RC_VER_MAS ? L : L.slice(0, 4);
+  var h='<div class="rc-cab">🔁 <b>Cambiaron después de cargarlas al sistema</b> <span class="rc-n">'+L.length+'</span>'+
+    '<small>Volvieron a «📥 sin cargar». Corregilas en el sistema contable y tocá «Ya lo corregí».</small></div>'+
+    V.map(function(p){ var u=rcPendiente(p), suc=''; try{ suc=sucursalDeVendedor(p.vendedor, contaFecha(p))||''; }catch(e){}
+      return '<div class="rc-it"><div class="rc-tx"><b>'+esc([ocEtiq(p.oc||''), p.cliente||'—', suc].filter(Boolean).join(' · '))+'</b>'+
+        '<span>'+esc((u.c||[]).join(' · '))+'</span><small>'+esc(rcQuienTxt(u))+'</small></div>'+
+        '<div class="rc-bt"><button type="button" class="ah-go ah-go-p" onclick="ctaRcCorregi(\''+esc(String(p.id))+'\')">✓ Ya lo corregí en el sistema</button>'+
+        '<button type="button" class="ah-go" onclick="showContaModal(\''+esc(String(p.id))+'\')">👀 Abrir</button></div></div>'; }).join('')+
+    (L.length>4 ? ('<button type="button" class="ah-mas" onclick="RC_VER_MAS=!RC_VER_MAS;rcPintarConta()">'+(RC_VER_MAS?'▴ Ver menos':('▾ Ver las otras '+(L.length-4)))+'</button>') : '')+
+    '<div class="rc-pie">No cuentan: fotos, observaciones, camión ni marcas de logística.</div>';
+  el.hidden=false; if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* ---------- 386: la historia y «Tu día» ---------- */
+var PH_TIPO={ monto:'el monto', banco:'el banco', metodo:'cómo pagó', fecha:'la fecha', borrado:'lo borraron', partido:'lo partieron en dos', varios:'varios cambios' };
+var PH_CONSEJO={ banco:'mirá el logo del banco en la foto antes de elegir', monto:'revisá el monto de la foto antes de guardar: un cero de más cambia todo',
+  metodo:'si pagó con QR elegí QR; efectivo solo si recibiste los billetes', fecha:'el primer pago va con el día en que cargaste la venta; los demás, con el día en que entró la plata',
+  partido:'si el cliente pagó con dos cosas (QR y efectivo), anotá dos pagos', borrado:'antes de guardar un pago, fijate que no esté ya anotado', varios:'antes de guardar, mirá la foto: monto, banco y fecha' };
+function phLinea(e){ return (e.de||[]).join(' + ')+' → '+((e.a&&e.a.length)?e.a.join(' + '):'🗑 lo borraron'); }
+/* La semana (desde el lunes, día de Bolivia) de lo que OTRA persona le corrigió a esta vendedora. */
+function phSemanaDatos(v, mine){
+  var hoy=diaNegocio(), dw=dowDe(hoy), lun=hoy; for(var i=0;i<((dw+6)%7);i++) lun=fechaMenos1(lun);
+  var desde=Date.parse(lun+'T00:00:00-04:00'), L=[], por={};
+  (mine||[]).forEach(function(p){ if(pagNoVa(p) || !mismoVendedor(p.vendedor, v)) return;
+    phDe(p).forEach(function(e){ if(!e || !(Number(e.t)>=desde) || mismoVendedor(e.q, v)) return;
+      L.push({ p:p, e:e }); por[e.tp||'varios']=(por[e.tp||'varios']||0)+1; }); });
+  L.sort(function(a,b){ return (Number(b.e.t)||0)-(Number(a.e.t)||0); });
+  var top=Object.keys(por).sort(function(a,b){ return por[b]-por[a]; })[0]||'';
+  return { L:L, por:por, top:top, lun:lun };
+}
+function fechaMenos1(f){ var d=new Date(f+'T12:00:00-04:00'); d.setTime(d.getTime()-864e5); return isoDeTsBolivia(d.getTime()); }
+function phSemanaVe(){ return pagPhActivo() && dowDe(diaNegocio())===6; }
+function phSemanaHtml(v, mine){
+  if(!phSemanaVe() || !v) return '';
+  var D=phSemanaDatos(v, mine); if(!D.L.length) return '';
+  var por=Object.keys(D.por).sort(function(a,b){ return D.por[b]-D.por[a]; }).map(function(k){ return D.por[k]+' por '+(PH_TIPO[k]||k); }).join(', ');
+  return '<div class="ph-sem" id="ph-sem"><div class="ph-sem-t">💵 Esta semana te corrigieron <b>'+D.L.length+' pago'+(D.L.length===1?'':'s')+'</b>: '+esc(por)+'</div>'+
+    D.L.slice(0, 5).map(function(o){ return '<div class="ph-sem-f" onclick="showMisModal(\''+esc(String(o.p.id))+'\')">'+(o.e.tp==='banco'?'🏦':'💵')+' <b>'+esc(ocEtiq(o.p.oc||'')||o.p.cliente||'—')+'</b> · '+esc(phLinea(o.e))+
+      '<small>'+esc(String(o.e.q||'?')==='?' ? 'alguien' : String(o.e.q))+' · '+esc(entTs(o.e.t))+'</small></div>'; }).join('')+
+    (D.top && PH_CONSEJO[D.top] ? ('<div class="ph-sem-c">💡 '+(D.L.length>1 && D.por[D.top]>1 ? (D.por[D.top]+' de '+D.L.length+' fueron por '+(PH_TIPO[D.top]||D.top)+': ') : '')+esc(PH_CONSEJO[D.top])+'.</div>') : '')+'</div>';
+}
 /* «12/11 🌅» · «12/11 🌆» · «12/11» (sin turno) · «sin día» */
 function fhTxt(k){
   k=String(k||''); if(!k) return 'sin día';
@@ -11240,6 +11461,12 @@ function pedHistDatos(p){
       html:'El cliente le escribió al bot: «'+esc(String(r.txt||'').slice(0,160))+'»'+
         (r.resp ? (' · 🤖 le contestó: «'+esc(String(r.resp).slice(0,160))+'»') : '')+(r.at ? (' · ✓ '+esc(r.at)) : '') });
   });
+  /* 💵 (mejora 386) quién corrigió cada pago · 🔁 (mejora 380) lo que cambió después de cargarla al sistema */
+  try{ phDe(p).forEach(function(e){ if(!e) return;
+    poner({ t:Number(e.t), h:true, k:'pagoC', ico:'💵', html:'<b>'+esc(phxQuien(e.q))+'</b> corrigió un pago: '+esc(phLinea(e))+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') }); });
+    rcDe(p).forEach(function(e){ if(!e) return;
+      poner({ t:Number(e.t), h:true, k:'rc', ico:'🔁', html:'Cambió después de cargarla al sistema ('+esc((e.c||[]).join(' · '))+') · <b>'+esc(phxQuien(e.q))+'</b>'+
+        (e.ok ? (' · ✓ corregido en el sistema por '+esc(phxQuien(e.ok.q))+' el '+esc(entTs(e.ok.t))) : ' · volvió a «sin cargar»') }); }); }catch(e){}
   ev.sort(function(a, b){ return (a.t-b.t) || (a.n-b.n); });
   /* 8. Lo que quedó distinto de lo último anotado, al final y sin hora: lo cambió un aparato con el panel sin actualizar. */
   var fin=function(ico, html){ ev.push({ t:Infinity, sinHora:true, k:'raro', ico:ico, html:html, n:ev.length }); };
@@ -13053,6 +13280,7 @@ function renderConta(){
   try{ cajaBotonesPintar(); }catch(e){}   // 🏬 (14/11, mejora 254) «Caja de Ventura Sur»
   var list=contaLista();
   try{ ctaOtrosPintar(list); }catch(e){}   // 📅 (298) lo buscado que está en otros meses
+  try{ rcPintarConta(); }catch(e){}         // 🔁 (mejora 380) las que cambiaron después de cargarlas al sistema
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0, nCarg=0, _TS=talSet();
   list.forEach(function(p){
     envios=r2(envios+envioTotal(p));
@@ -20509,6 +20737,7 @@ function ctaEdVal(id, k){
   return (CTA_EDIT_V && CTA_EDIT_V[k]!=null) ? String(CTA_EDIT_V[k]) : null;
 }
 function ctaGuardarPago(id, i, igual){
+  try{ pagDonde('Contabilidad · ✏️ Corregir este pago'); }catch(e){}   // 💵 (mejora 386)
   var p=findById(id); if(!p) return;
   var _prG=null;   // §4ok-92 el guardado (para el arreglo de un toque de los avisos)
   var _vf=ctaEdVal('cta-ed-fecha','fecha'), _vm=ctaEdVal('cta-ed-monto','monto'),
@@ -20728,6 +20957,7 @@ function ctaBorrarEnvio(id){
    monto» o editar la venta como NO pagada. La marca ✅ REGISTRADO no se toca: si ese pago ya se cargó en el sistema
    contable, hay que corregirlo allá, y la pregunta lo dice. No se puede deshacer: habría que volver a registrarlo. */
 function ctaBorrarPago(id, i){
+  try{ pagDonde('Contabilidad · 🗑 Borrar este pago'); }catch(e){}   // 💵 (mejora 386)
   var p=findById(id); if(!p) return;
   var c=contaPagos(p)[i]; if(!c) return;
   if(c.sinMonto){ toast('Este pago no tiene monto anotado: no existe como renglón. Anotalo con «💵 Anotar el monto», o editá la venta y marcala NO pagada.','err',9000); return; }
@@ -21069,6 +21299,7 @@ function showContaModal(id){
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cajaVolver()">← Volver a la caja de '+esc(cajaNombre(CAJA.t))+'</button>')   // 🏬 (254)
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
+      rcFichaHtml(p)+   // 🔁 (mejora 380) cambió después de cargarla al sistema
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
       row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
@@ -21751,6 +21982,7 @@ function ctaToggleRegistrado(id){
   /* 🧾 (mejora 379) Al marcarla CARGADA sin N° de factura o remisión: primero la cajita para anotarlo (opcional), en el mismo guardado. */
   if(on && regDocPide(p) && !(CTA_REG_DOC && CTA_REG_DOC.id===String(id))){ CTA_REG_DOC={ id:String(id), t:'', n:'' }; showContaModal(id); regDocFoco(); return; }
   if(on && CTA_REG_DOC && CTA_REG_DOC.id===String(id)){ ctaRegDocGuardar(id, true); return; }
+  if(on){ try{ rcResolver(p); }catch(e){} }   // 🔁 (mejora 380) volver a marcarla cierra «cambió después de cargarla»
   p.metodoPago=conMarcaReg(p.metodoPago, on);
   persistPedido(p);
   toast(on?'Marcado como registrado en el sistema ✓':'Ya no figura como registrado','ok');
@@ -26842,7 +27074,7 @@ function deshDevolver(cur, antes, despues){
   var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
   [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
   Object.keys(claves).forEach(function(k){
-    if(k==='eH' || k==='fH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
+    if(k==='eH' || k==='fH' || k==='rc' || k==='pH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
     var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
     if(J(a)===J(d)) return;
     var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
@@ -28798,6 +29030,7 @@ function mergePending(serverList){
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   try{ serverList.forEach(function(p){ if(p) entSrvAnotar(p); }); }catch(e){}   // 🧾 (10/11) lo que dice la planilla del «Entregado» (`entHistAnotar`)
+  try{ if(pagHistActivo()) serverList.forEach(function(p){ if(p) pagSrvAnotar(p); }); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y de los pagos (`pagHistAnotar`)
   try{ serverList.forEach(function(p){ if(p) fhSrvAnotar(p); }); }catch(e){}    // 📅 (mejora 212) …y del día y el turno (`fhHistAnotar`)
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
@@ -38958,6 +39191,7 @@ function misTopPintar(v, mine){
     misRecoHtml(v)+                                    // 🏆 (14/11, 273) el vendedor del día y la mejor conversión
     misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
     metaDiaHtml(v)+                                    // 🎯 (14/11, mejora 256) la meta de hoy
+    phSemanaHtml(v, mine)+                             // 💵 (mejora 386) el sábado: lo que le corrigieron esta semana
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
