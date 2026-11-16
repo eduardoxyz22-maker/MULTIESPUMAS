@@ -3482,6 +3482,16 @@ html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .
 .atc-cam-p i.a{ width:18px; height:18px; border:3px solid #fff; background:var(--c); box-shadow:0 0 0 2px var(--c), 0 0 0 6px color-mix(in srgb, var(--c) 22%, transparent); }
 .atc-cam-t{ font-size:.66rem; font-weight:800; color:var(--c); letter-spacing:.02em; margin-top:4px; white-space:nowrap; }
 .atc-cam-t span{ color:#94a3b8; font-weight:700; }
+/* 437 · Lo que está en 0 se ve apagado: la ficha de arriba (ATC, Contabilidad, Mis pedidos…) cuyo número es 0, la casilla de «Hoy» de
+   Administración que es toda 0 y el filtro con 0 (nunca el elegido) quedan grises y sin su color, como ya hacía «🛤️ El viaje» (`.atv-paso.cero`). */
+.metrics .mc:has(> .mc-val.mc-v0){ opacity:.55; filter:saturate(.15); box-shadow:none !important; background:rgba(255,255,255,.82) !important; }
+.metrics .mc > .mc-val.mc-v0{ color:#94a3b8 !important; }
+#adm-hoy .ah-st.ah-st-cero{ opacity:.45; filter:saturate(.2); }
+.qchips .qchip.q-cero:not(.active){ opacity:.5; }
+.qchips .qchip.q-cero:not(.active) .n{ background:transparent !important; }
+.qchips .qchip.q-cero:not(.active):hover{ opacity:.85; }
+/* El viaje de las ATC ya los apagaba con `opacity`, pero su animación de entrada la pisa: además, sin color. */
+html.v-ceros .atv-paso.cero{ filter:saturate(.15) opacity(.6); }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3808,6 +3818,31 @@ function atcCaminoHtml(p){
   return '<div class="atc-cam" style="--c:'+c+'" title="'+esc(t)+'"><div class="atc-cam-p" role="img" aria-label="'+esc(t)+'">'+h+'</div>'+
     '<div class="atc-cam-t">'+(n+1)+' de 5 · '+esc(ATC_CAMINO_NOM[n])+(n<4 ? (' <span>→ '+esc(ATC_CAMINO_NOM[n+1])+'</span>') : '')+'</div></div>';
 }
+
+/* 🎨 (16/11, mejora 437; dueño: elegida de la página de ideas 390-440) LO QUE ESTÁ EN 0 SE VE APAGADO. Un «0» se veía igual de fuerte que un «10»:
+   en ATC, 2 de 4 fichas decían 0 y competían con «10 en fábrica», que es lo importante. Ahora lo que dice 0 queda gris claro y sin su color:
+   · las fichas de arriba (`mc`): `mc()` le pone `mc-v0` al número cuando es 0 (también «Bs 0,00» o «0 %»), leído del MISMO valor que dibuja;
+   · las casillas de «Hoy» de Administración (`admHoyPintar`): la que es toda 0 («0», «0 de 0») lleva `ah-st-cero` («0 de 4 listos» no:
+     ahí el 0 dice algo);
+   · los filtros (`.qchip` de Administración, Mis pedidos y Chofer) con su número en 0 llevan `q-cero`; el elegido nunca se apaga.
+   Solo dibujo: los números y lo que hace cada cosa no cambian. En Playwright apagado salvo `window.CEROS_PRUEBA`. `tests/test_v437_ceros.js`. */
+function ceroVa(){ try{ return vdVa('CEROS_PRUEBA'); }catch(e){ return false; } }
+function ceroTxt(v){ return String(v==null ? '' : v).replace(/<[^>]*>/g, ' ').replace(/&nbsp;| /g, ' ').replace(/\s+/g, ' ').trim(); }
+/* El número de una ficha es 0: «0», «Bs 0,00», «0 %». */
+function ceroEs(v){ return /^(Bs\.?\s*)?0([.,]0+)?\s*%?$/.test(ceroTxt(v)); }
+/* Todos los números de una casilla son 0: «0», «0 de 0» (no «0 de 4»). */
+function ceroTodos(v){ var n=ceroTxt(v).match(/\d+([.,]\d+)?/g)||[]; return n.length>0 && n.every(function(x){ return parseFloat(x.replace(',','.'))===0; }); }
+function ceroChips(box){
+  if(!box || !ceroVa()) return;
+  [].forEach.call(box.querySelectorAll('.qchip'), function(q){ var n=q.querySelector('.n'); q.classList.toggle('q-cero', !q.classList.contains('active') && !!n && n.textContent.trim()==='0'); });
+}
+document.addEventListener('DOMContentLoaded', function(){
+  try{ if(!ceroVa()) return;
+    document.documentElement.classList.add('v-ceros');
+    ['adm-chips','mis-chips','cho-chips'].forEach(function(id){ var b=document.getElementById(id); if(!b) return;
+      try{ new MutationObserver(function(){ ceroChips(b); }).observe(b, { childList:true }); }catch(e){} ceroChips(b); });
+  }catch(e){}
+});
 </script>
 
 <div class="wrap">
@@ -34462,7 +34497,8 @@ function admHoyPintar(H){
   var anillo='<svg viewBox="0 0 84 84" class="ah-anillo" aria-hidden="true"><circle cx="42" cy="42" r="'+R+'" fill="none" stroke="rgba(255,255,255,.2)" stroke-width="9"/>'+
     '<circle cx="42" cy="42" r="'+R+'" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+L.toFixed(1)+'" stroke-dashoffset="'+(L*(1-pct)).toFixed(1)+'" transform="rotate(-90 42 42)"/></svg>';
   var cuando=H.sale ? '' : (' · <span class="ah-hoy-no">hoy no sale el camión: '+esc(nxDiaTxt(H.fecha))+'</span>');
-  var tile=function(ic, v, t, cls){ return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
+  var tile=function(ic, v, t, cls){ if(typeof ceroVa==='function' && ceroVa() && ceroTodos(v)) cls=(cls?(cls+' '):'')+'ah-st-cero';   // 🎨 (16/11, 437) toda 0: apagada
+    return '<div class="ah-st'+(cls?(' '+cls):'')+'"><span class="ah-st-i">'+ic+'</span><b>'+v+'</b><small>'+t+'</small></div>'; };
   var h='<div class="ah-hoy-cab"><h4>☀️ Hoy, '+esc(dn)+' '+esc(fmtFechaCorta(H.hoy))+cuando+'</h4><small>'+hora+'</small></div>'+
     '<div class="ah-hoy-c">'+
       /* (26/10, el dueño: «se ve la letra en el fondo y el círculo delante») «con carga completa» no entraba en el hueco del anillo y quedaba
@@ -34638,7 +34674,7 @@ function admMasPintar(deMas){
 }
 /* `txt` es opcional: cuando el color del borde no sirve de texto (un amarillo sobre blanco
    no se lee) se pasa aparte el tono oscuro del número. Sin `txt` se comporta como siempre. */
-function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+(txt||color)+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
+function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val'+((typeof ceroVa==='function' && ceroVa() && ceroEs(val))?' mc-v0':'')+'" style="color:'+(txt||color)+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }   // 🎨 (16/11, 437) `mc-v0`: el 0, apagado
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ---- Filtros rápidos (chips) + orden de columnas ---- */
