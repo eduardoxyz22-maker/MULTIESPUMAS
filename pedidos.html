@@ -46240,7 +46240,7 @@ function repetirPedido(id){
                   no:'✏️ Volver a esa edición', si:'🔁 Abrir el pedido nuevo' }, function(){ repetirPedido(id); });
     if(_rp===null) return;                         // ❓ (16/11) espera la respuesta en la ventana del panel
     if(!_rp){ closeModal(); showView('form'); return; }
-  } else if(!confirmarReemplazoForm()) return;
+  } else if(!confirmarReemplazoForm(function(){ repetirPedido(id); })) return;   // ❓ (16/11) al contestar, repite solo
   closeModal(); showView('form'); resetForm();
   REPETIR_DE=String(p.id);
   var pon=function(id, v){ var e=document.getElementById(id); if(e) e.value=String(v==null?'':v).trim(); };
@@ -58337,14 +58337,14 @@ function renderImportExist(){
 /* 🚚 (26/09) ¿Se le puede ofrecer «de acá también salen camiones»? A todos menos al de fábrica (ya es el
    de salida, con su conteo aparte) y a IM / Industrias Moreno: «solo de Moreno hay que ir a traer». */
 function existPuedeSalir(nm){ return !!String(nm||'').trim() && !stockEsLog(nm) && stockAlmNombre(nm)!=='Industrias Moreno'; }
-function confirmarImportExist(){
+function confirmarImportExist(otraVez){
   var R=EXIST_IMP; if(!R){ closeModal(); return; }
   var noHoy=existNoEsDeHoy(R);                   // 📅 (06/10) solo el Excel del día (la vista previa ya no ofrece el botón)
   if(noHoy){ toast('⛔ '+noHoy.txt,'err',10000); return; }
   var rol=(document.getElementById('exist-rol')||{}).value||'otro';
   /* ⚠️ (26/09) Pasar a «depósito de fábrica» un almacén que NO lo es REEMPLAZA el conteo de «acá en fábrica»
      (de donde salen los camiones) por el suyo. Casi pasa con Banzer: se pregunta antes, nombrando los dos. */
-  var _otra=function(){ confirmarImportExist(); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr (lo de arriba solo lee)
+  var _otra=(typeof otraVez==='function') ? otraVez : function(){ confirmarImportExist(); };   // ❓ (16/11) al contestar en la ventana del panel, vuelve a correr (lo de arriba solo lee); «Usar los tres» pasa el suyo para seguir con los demás
   if(rol==='log' && !R.esLog && STOCK.c && STOCK.c.alm && normNombre(STOCK.c.alm)!==normNombre(R.almacen) &&
      !preguntaYa('⚠️ Vas a usar «'+R.almacen+'» como el DEPÓSITO DE FÁBRICA (de donde salen los camiones).\n\n'+
               'Su conteo REEMPLAZA al de «'+STOCK.c.alm+'»'+(STOCK.c.f?(' del '+fmtFecha(STOCK.c.f)):'')+', y el panel va a creer que eso está a mano para cargar.\n\n'+
@@ -59586,7 +59586,7 @@ function cambiarTurno(id, turno, sinDeshacer){
      panel decía «✓» y el servidor «❌ está cerrado» (§4ew). Se manda con `forzar`, que exige
      la clave de administración si el servidor tiene la del equipo puesta. */
   var _forzar=diaCerrado(p.fecha);
-  if(_forzar && !asegurarClaveAdmin()) return;
+  if(_forzar && !asegurarClaveAdmin(function(){ cambiarTurno(id, turno, sinDeshacer); })) return;   // ❓ (16/11) con la clave en la ventana, sigue solo
   var _enDev=atcViajeDevolucion(p);       // (25/09) la devolución de una ATC cambia de turno con el viaje — (26/09) también la YA entregada
   p.turno=turno;
   atcSeguirViaje(p, _enDev);
@@ -60970,7 +60970,7 @@ function cierreEntRpConfirmar(){
       { titulo:'¿Reprogramar igual?', icono:'⚠️', aviso:true, sub:(ocEtiq(p.oc)||p.cliente||'Pedido')+' → '+diaSemana(f)+' '+fmtFechaCorta(f)+' · '+t, lineas:av,
         no:'No, elegir otro día', si:'📅 Reprogramar igual' }, _otra)) return Promise.resolve(null);
   if(!reproStockConfirmar(p, f, t, _otra)) return Promise.resolve(null);   // 📦 (19/10, §4ls CR-1) el stock: solo avisa
-  if(av.length && !asegurarClaveAdmin()) return Promise.resolve(null);
+  if(av.length && !asegurarClaveAdmin(_otra)) return Promise.resolve(null);   // ❓ (16/11) con la clave en la ventana, sigue solo
   var antes={ f:p.fecha, t:normTurno(p.turno)||'' };
   delete CIERRE_ENT_SEL[String(p.id)]; delete CIERRE_ENT_DIA[String(p.id)];
   fhDonde('✅ Cierre de entregas («No salió · reprogramar»)');   // 📅 (mejora 212)
@@ -69777,8 +69777,9 @@ function exsUsarTres(btn){
     var R=EXIST_IMP; if(!R) return fin('');
     var mot=exsMotivoActual();
     if(mot) return fin(stockAlmCorto(R.almacen)+': '+mot+'. Quedó abierto para que lo revises.');
-    var antes=EXIST_IMP, nom=R.esLog?'PTF':stockAlmCorto(R.almacen), pr=null;
-    try{ pr=confirmarImportExist(); }catch(e){ fin(nom+': no se pudo usar ('+(e&&e.message||e)+')'); throw e; }
+    var antes=EXIST_IMP, nom=R.esLog?'PTF':stockAlmCorto(R.almacen), pr=null, n0=PREG_ABIERTAS;
+    try{ pr=confirmarImportExist(paso); }catch(e){ fin(nom+': no se pudo usar ('+(e&&e.message||e)+')'); throw e; }
+    if(EXIST_IMP===antes && PREG_ABIERTAS>n0) return;   // ❓ (16/11) espera la respuesta en la ventana del panel: al contestar sigue con este y los demás
     if(EXIST_IMP===antes) return fin(nom+': no se usó');
     hechos.push(nom); proms.push(Promise.resolve(pr).catch(function(){ return null; }));
     if(EXIST_IMP) setTimeout(paso, 120); else fin('');
@@ -70561,7 +70562,7 @@ function rdMover(k){
       { titulo:'¿Mover igual al '+fmtFecha(f)+' · '+t+'?', icono:'⚠️', aviso:true, sub:(p.cliente||''), lineas:avisos,
         no:'No, dejarlo', si:'📅 Mover igual' }, _otra)) return;
   if(!reproStockConfirmar(p, f, t, _otra)) return;              // 📦 solo si es antes del día que tenía (§4ls CR-1)
-  if(avisos.length && !asegurarClaveAdmin()) return;     // 🛡️ forzar pide la clave (§4cg)
+  if(avisos.length && !asegurarClaveAdmin(_otra)) return;     // 🛡️ forzar pide la clave (§4cg) · ❓ (16/11) con la clave en la ventana, sigue solo
   var antes=fmtFecha(p.fecha)+' · '+normTurno(p.turno), cli=p.cliente||'el cliente', pr;
   RD_HECHOS[k]=1; rdPintarTodo();
   try{ pr=reproAplicar(p, f, t, avisos.length>0); }
@@ -74327,7 +74328,7 @@ function cupxPuede(){ return !!UNLOCKED || CUPX_CLAVE_OK; }
 function cupxClave(otraVez){
   if(cupxPuede()) return true;
   var c=preguntaTextoYa('Abrir cupos pide la contraseña de Administración:','',
-    { titulo:'Abrir cupos pide la contraseña de Administración', icono:'🔑', campoAyuda:'La contraseña', no:'Cancelar', si:'🔓 Seguir' }, otraVez); if(c==null) return false;   // ❓ (16/11) `otraVez` = abrir de nuevo al contestar
+    { titulo:'Abrir cupos pide la contraseña de Administración', icono:'🔑', campoAyuda:'La contraseña', campoClave:true, no:'Cancelar', si:'🔓 Seguir' }, otraVez); if(c==null) return false;   // ❓ (16/11) `otraVez` = abrir de nuevo al contestar
   var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
   if(sha256(String(c||''))===stored){ CUPX_CLAVE_OK=true; return true; }
   toast('Esa no es la contraseña de Administración.','err'); return false;
