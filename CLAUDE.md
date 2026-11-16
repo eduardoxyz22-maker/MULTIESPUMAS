@@ -954,6 +954,34 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   🚫 **Sin botón «🕐 Horario…»** (dueño, 14/11: *«no me convence ya que no tenemos horas específicas»*): no volver a ponerlo sin que lo pida; la hora escrita
   a mano la sigue leyendo la ficha (`fichaNota`), como antes. `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (57).
 
+## 💬🤖🧠🏆 Las mejoras 344-389 (§4qb, 16/11; dueño: «286. Añádelo / 344: 3C,5B / 345,347,349,353,356,359,360,362,364,365…389» y «1A, 2B» para el bono; EN LA RAMA, sin publicar; servidor `2026-11-16-a`, lo implementa el dueño)
+Siete ramas de agentes juntadas (`mej-ia1/ia2/ia3/vis1/vis2/fun/chat`). Todo lo nuevo de la página va APAGADO en Playwright salvo su bandera, y lo que
+habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
+- **💬 344 Chat del equipo** (`chat.js`, archivo aparte, `CHAT_PRUEBA`; `.gs`: hojas «Chat»/«Chat vistos», `chatEnviar/chatLeer/chatBorrar/chatFoto` SIN el candado
+  de doPost —candado corto `mallCandado_`—, lo sin leer viaja en `list` como `chat:{v,n,t}`, 90 días con `chatPodar` 4 am): grupo, privado con Eduardo y entre
+  compañeras, ventanillas `b:log|…`/`b:conta|…`; @Bloki SIN IA (nunca plata en el grupo); `#11-188` abre la ficha; avisos de Windows (`escritorio.js` tipo «chat»),
+  Bloki y el número rojo; SIN WhatsApp (3C). ⚠️ `chatLeer` está en `PRACTICA_LECTURAS`. `test_chat` (76), `test_servidor_chat` (71).
+- **🤖 345/349** `obsIa` (Claude lee las observaciones al guardar, 4 s, `OBS_IA_PRUEBA`; lo prometido va a «Para hacer» en `cmp`, lo que dijo tarde en `oia`: los dos
+  pasan por `heredarMarcas`) · **347** `atcFotos` (motivo de `ATC_MOTIVOS`, prefijo `atf`, `ATF_PRUEBA`) · **353** la nota contra los precios (`IAC_PREGUNTA_V` 5,
+  `renglones:1`). Topes `OBS_IA_TOPE_DIA`/`ATC_FOTOS_TOPE_DIA`; `IA_OBS=0`/`IA_ATC_FOTOS=0` apagan.
+- **🧠 356** `porque_semana` lunes 08:00 y día 1 10:00 a WA_DUENO (hoja «IA semanal», sin Claude sale con reglas) y **362** «Quién necesita una mano» en Proyección
+  (`iaSemanalAccion_`, `PORQUE_PRUEBA`, `MANO_PRUEBA`) · **359/360/364** `iagAccion_` (`iaAtc`/`iaProductos`/`iaStockSemana`; filas `__atc_ia__`, `__prod_ia__`,
+  `__stock_ia__` en `esFilaSistema` vía `esFilaIag`; `IAG_TOPE_*`, `IA_GESTION=0` apaga).
+- **🏆 376 b el bono Titanio** (regla del dueño «1A, 2B»): cobra con la MÍNIMA y el panel al día (nada en rojo; el ámbar se perdona) en TODAS las fotos de los lunes
+  del mes; la foto la saca la página los lunes desde las 08:00 en `__al_dia_sem__` (nunca pisa una ya guardada); rige desde el 23/11/2026; un lunes sin foto no castiga.
+  ⚠️ La regla está DOS veces: `alDiaBonoCumple`/`ccmBonoRegla` (página) y `waAlDiaBonoCumple_`/`waCcmBonoRegla_` (`.gs`, en `waCcmCuenta_`): `tests/test_bono_al_dia_gs.js`
+  compara las dos. `AL_DIA_BONO_PRUEBA`.
+- **Visuales**: 366 ficha de Contabilidad ancha (`CTA_ANCHA_PRUEBA`; ⚠️ la ficha se arma por bloques `cab/arriba/row/prods/formPago/acciones`: algo nuevo de la ficha va
+  en su bloque, y `acciones` lleva la caja de la 379) · 368 Stock con el Plan primero · 369 Proyección con índice · 370 filtros en un renglón con la ficha al costado ·
+  371 «Tu día» al costado · 372 Guardar en «Tu pedido» · 373 globito de ayuda · 374 un renglón por producto en Contabilidad · 375 ATC con la lista arriba ·
+  376 la comisión en escalera · 377 «ⓘ Cómo funciona» (`ayudaComo`) · 378 encabezado bajo en 768 · 385 la fecha en letras. 367 quedó SOLO en fotos.
+- **Funcionales**: 379 factura/remisión al marcar «cargada» · 380 una venta cargada que cambia vuelve a «sin cargar» (`rc`) · 386 quién corrigió cada pago (`pH`) ·
+  387 lo atrasado que el GPS vio, aparte · 389 «🧹 Ordenar mi bandeja» · 384 el lugar guardado en los pedidos por correo (`cargar_pedidos.py` lee `__destinos__`) y
+  la zona de ROHO · 381/382 Bloki enseña y «📊 Uso del panel» (fila `__ensena__`) · 383 las ventas de tienda salen de «Por cargar» (dueño: «cada tienda carga al sistema
+  sus ventas propias»; `talCargaAfuera`).
+- ⏸️ `mayoristas_vencido` (181) APAGADO desde la 16-a (dueño: «A»): `WA_MV_ACTIVO=1` lo prende (`prenderMayoristasVencido`).
+- Página de las ideas visuales 390-440 con fotos de antes y después: https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183 (nada programado).
+
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
 etiquetas de precio que caen en `#hdr-fx` (efecto `etiquetas`), fondo negro con etiquetas apenas visibles (`body::before`) y las tarjetas grandes en vidrio

@@ -18894,3 +18894,14 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
   de 99 OC de mayoristas solo hay 4 pagos anotados en el panel (idea 322); (2) logística dejó de anotar el camión (12-14/11: 2 de 53; 12-31/10: 241 de 264;
   el 16/11: 0 de 22) y no hay tildes de carga ni «🚚 Salió» desde el 26/10 (idea 312).
 - Ojo para quien use el arnés con una planilla bajada con `cargar_pedidos.leer()`: la lista no trae `ok:true` y el panel la rechaza; agregar `ok`, `version`, `ahora`.
+
+### §4qb — 💬🤖🧠🏆 LAS MEJORAS 344-389 PROGRAMADAS Y JUNTADAS (16/11; dueño: «286. Añádelo / 344: 3C,5B / 345…389», «1A, 2B», «Cada tienda carga al sistema sus ventas propias», mayoristas «A»)
+- Siete agentes en worktrees; el límite de uso los cortó de noche y se retomaron a las 06:10 UTC. Juntadas en este orden: ia3 (359/360/364), ia2 (356/362), chat (344),
+  fun (379-389), ia1 (345/347/349/353), vis2 (368-377, 385), vis1 (366, 371, 372, 374, 376, 378). Choques: todos «agregados en el mismo lugar» (`probarAntesDeImplementar`,
+  el despacho de `doPost` después de `leerNota`, los bloques del final del `.gs`, `esFilaSistema`, `PRACTICA_LECTURAS`, `heredarMarcas` (rc/pH + cmp/oia), la ficha de
+  Contabilidad (366 la partió en bloques; la 379 y la 380/383 van en `acciones` y `arriba`)). ⚠️ Al juntar dos bloques del final del `.gs`, la llave de cierre del
+  primero queda AFUERA del conflicto: hay que reponerla (`node --check` lo avisa).
+- Servidor `2026-11-16-a` (SCRIPT_VERSION, ESTA_VERSION, SCRIPT_VERSION_ESPERADA) + la regla del bono Titanio copiada al `.gs` (`waAlDiaBonoCumple_`, `test_bono_al_dia_gs`).
+- `test_atc_lista_arriba` cambió a conciencia: la caja `atc-ia` (359) no cuenta en el orden de la 375. `test_actualizar_espera` 4c/5a falla igual con `main`: no es de esto.
+- Ideas visuales 390-440 (4 agentes, fotos de antes y después): https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183.
+
