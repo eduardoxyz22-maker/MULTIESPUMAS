@@ -210,7 +210,9 @@ const txt = (body) => ({ type: 'text', text: { body } });
   });
 
   seccion('2. 332 · el cierre del día con la meta y lo de hoy por tienda (jueves 12/11, 21:20)', () => {
-    const S = lleno(); poner('2026-11-12 21:20'); S.repaso();
+    /* (16/11, revisión de Fable) Lo que DICE cada dato se mira sin el tope del cuerpo entero (WA_CUERPO_TOPE): con estos datos el cuerpo pasa
+       de las 1.024 letras que acepta Meta y lo de abajo (2f2) mira que lo que de verdad sale entre, recortado. */
+    const S = lleno(); S.ctx.WA_CUERPO_TOPE = 1e9; poner('2026-11-12 21:20'); S.repaso();
     const cd = S.salen('cierre_del_dia_v3');
     chk('2a sale la v3 a los DOS de WA_DUENO, con 9 datos y el botón del día', cd.length === 2 && JSON.stringify(cd.map(x => x.to).sort()) === '["59177000007","59177000008"]' &&
         cd[0].p.length === 9 && cd[0].comp[1] && cd[0].comp[1].parameters[0].payload === 'cd|2026-11-12', cd.map(x => x.to + ':' + x.p.length));
@@ -223,6 +225,14 @@ const txt = (body) => ({ type: 'text', text: { body } });
     chk('2e {{7}} 340: el mes con por qué se movió desde la foto de ayer (Bs 45.000 ventas nuevas, Bs 65.000 la cuenta, Heaven pasó a «curva»)',
         p[6] === 'Bs 445.000 vendidos · proyección Bs 1.010.000 (Heaven Bs 790.000 · Sueña Bs 220.000) (cálculo de las 17:10) · ▲ subió Bs 110.000 desde ayer: Bs 45.000 son ventas nuevas y Bs 65.000 es la cuenta (Heaven pasó de «ritmo» a «curva»)', p[6]);
     chk('2f ningún dato de más de 250 letras ni con saltos de línea', p.every(t => t.length <= 250 && !/[\r\n]/.test(t)), p.map(t => t.length));
+    {
+      const fijo = (n) => Array.from(S.ctx.WA_PLANTILLAS).find(x => x.n === n).t.replace(/\{\{\d+\}\}/g, '').length;
+      const sin = fijo('cierre_del_dia_v3') + p.reduce((a, t) => a + t.length, 0);
+      const C = lleno(); poner('2026-11-12 21:20'); C.repaso();
+      const q = ((C.salen('cierre_del_dia_v3')[0]) || { p: [] }).p, con = fijo('cierre_del_dia_v3') + q.reduce((a, t) => a + t.length, 0);
+      chk('2f2 (16/11) con el tope: el cuerpo ya rellenado entra (≤ WA_CUERPO_TOPE; sin el tope eran ' + sin + ' letras) y cada dato es el principio del de arriba, con «…» si se recortó',
+          q.length === 9 && con <= C.ctx.WA_CUERPO_TOPE && q.every((t, i) => t === p[i] || (/…$/.test(t) && p[i].indexOf(t.replace(/…$/, '')) === 0)), [sin, con, q.map(t => t.length)]);
+    }
     // Sin metas cargadas
     const N = servidor(ON); N.cargar(FIX.filter(x => x.id !== '__metas__')); poner('2026-11-12 21:20'); N.repaso();
     chk('2g sin metas cargadas: lo dice y dónde se cargan', ((N.salen('cierre_del_dia_v3')[0] || { p: [] }).p[7]) === 'sin metas cargadas para noviembre (Proyección → 🎯 Metas)', N.salen('cierre_del_dia_v3').map(x => x.p[7]));
@@ -273,11 +283,16 @@ const txt = (body) => ({ type: 'text', text: { body } });
   });
 
   seccion('4. 339 · Black Friday en el cierre', () => {
-    const S = lleno(); poner('2026-11-14 21:20'); S.repaso();
+    const S = lleno(); S.ctx.WA_CUERPO_TOPE = 1e9; poner('2026-11-14 21:20'); S.repaso();   // (16/11) lo que dice cada dato, sin el tope del cuerpo (ver 2f2 y 4b2)
     const bf = S.salen('cierre_del_dia_bf');
     chk('4a el sábado 14/11 sale la de Black Friday (10 datos) a los dos, y no la v3', bf.length === 2 && S.salen('cierre_del_dia_v3').length === 0 && bf[0].p.length === 10, S.salen().map(x => x.pl));
     chk('4b {{10}}: el día de la campaña, lo vendido contra los 2 días hábiles de antes a esta hora, cada marca y lo más vendido',
         (bf[0] || { p: [] }).p[9] === 'día 2 de 15 · en la campaña Bs 15.000 (▼ 78 % contra los 2 días hábiles de antes a esta hora, Bs 66.900) · Heaven ▼ 80 % · Sueña ▼ 60 % · lo más vendido: SOFT 140x190 (3)', (bf[0] || {}).p);
+    {
+      const C = lleno(); poner('2026-11-14 21:20'); C.repaso();
+      const q = ((C.salen('cierre_del_dia_bf')[0]) || { p: [] }).p, fijo = Array.from(C.ctx.WA_PLANTILLAS).find(x => x.n === 'cierre_del_dia_bf').t.replace(/\{\{\d+\}\}/g, '').length;
+      chk('4b2 (16/11) con el tope: la de Black Friday entra entera (≤ WA_CUERPO_TOPE), con los 10 datos', q.length === 10 && fijo + q.reduce((a, t) => a + t.length, 0) <= C.ctx.WA_CUERPO_TOPE, q.map(t => t.length));
+    }
     const R = lleno(); R.meta.responder = (b) => (b.template && b.template.name === 'cierre_del_dia_bf') ? { code: 404, body: { error: { code: 132015, message: 'pausada' } } } : null;
     poner('2026-11-14 21:20'); R.repaso();
     const ll = R.meta.llamadas.filter(x => x.body && x.body.template && x.body.to === '59177000007');
