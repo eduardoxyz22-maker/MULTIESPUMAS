@@ -34895,7 +34895,8 @@ function atcLaPintar(){
     d.addEventListener('toggle', function(){ visPrefSet('atcCal', d.open); });
     d.innerHTML='<summary class="atc-calq-s"><span class="atc-calq-t"><b>📉 Calidad y motivos</b><span id="atc-calq-r"></span></span><span class="atc-calq-v" aria-hidden="true"></span></summary>';
     /* la lista va justo después de «El viaje»; los números, plegados después */
-    [cards, tw, emp].forEach(function(x){ if(x) vj.parentNode.insertBefore(x, mot); });
+    var pill=(tw.previousElementSibling && tw.previousElementSibling.classList.contains('tw-mas-h')) ? tw.previousElementSibling : null;   // «→ N columnas más» (283) va pegada a la tabla
+    [cards, pill, tw, emp].forEach(function(x){ if(x) vj.parentNode.insertBefore(x, mot); });
     vj.parentNode.insertBefore(d, mot);
     d.appendChild(mot); d.appendChild(cal);
   }

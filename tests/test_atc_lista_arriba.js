@@ -26,7 +26,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   const abrir = async (flag) => {
     const ctx = await browser.newContext({ viewport:{ width:1366, height:768 }, timezoneId:'America/La_Paz' });
     await ctx.addInitScript(() => { try{ sessionStorage.setItem('me_quien_ok','1'); localStorage.setItem('me_asis_tour','1'); }catch(e){} });
-    if(flag) await ctx.addInitScript(() => { window.ATC_LISTA_PRUEBA=1; });
+    if(flag) await ctx.addInitScript(() => { window.ATC_LISTA_PRUEBA=1; window.TW_MAS_PRUEBA=1; });   // con «→ N columnas más» (283), que va pegada a la tabla
     await ctx.route(/^https?:/, r => r.abort());
     const page = await ctx.newPage();
     page.on('pageerror', e => errores.push(e.message)); page.on('dialog', d => d.accept());
@@ -87,6 +87,9 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   });
   chk('4d cerrarlo también queda anotado', r.pref===false && r.abierto===false, r);
   chk('5 volver a dibujar no cambia el orden', r.ids.join(',')==='atc-metrics,atv-viaje,atv-cards,atv-tw,atc-empty,atc-calq', r.ids);
+  r = await page.evaluate(() => { var L=document.querySelectorAll('#view-atc .tw-mas-h'), tw=document.getElementById('atv-tw');
+    return { n:L.length, pegada:L.length===1 && tw.previousElementSibling===L[0], fueraDelPlegado:L.length===1 && !document.getElementById('atc-calq').contains(L[0]) }; });
+  chk('5b «→ N columnas más» sigue pegada a la tabla (una sola, no quedó una vieja abajo)', r.pegada && r.fueraDelPlegado, r);
   const despues = await orden(page);
   chk('6 la tabla empieza más arriba que antes', despues.twTop < antes.twTop - 150, { antes:antes.twTop, despues:despues.twTop });
   await page._ctx.close();
