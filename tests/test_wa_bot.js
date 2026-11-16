@@ -545,10 +545,15 @@ console.log('\n── 11. «Sin camión» no parte un nombre; un aviso con otra 
   chk('…y el total sigue diciendo 13', s && s.p[1] === '13 pedidos');
   chk('…y los 13 productos sin revisar, también enteros y con «y N más»', s && s.p[3] === '13 productos' && s.p[4].length <= 250 && / y \d+ más$/.test(s.p[4]), s && s.p.slice(3));
   const S2 = servidor(Object.assign({ WA_HOOK_KEY: 'buena' }, ON));
+  /* 🛡️ (16-a, revisión de Fable, a conciencia) Se cuentan en la CACHÉ, no en Propiedades (cada POST de afuera gastaba el cupo diario):
+     esta parte le da a S2 una caché que guarda de verdad. */
+  const CACHE2 = {};
+  S2.ctx.CacheService = { getScriptCache: () => ({ get: (k) => CACHE2[k] != null ? CACHE2[k] : null, put: (k, v) => { CACHE2[k] = String(v); }, putAll() {}, remove: (k) => { delete CACHE2[k]; }, removeAll() {} }) };
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
   S2.ctx.doPost({ parameter: { wa: 'TUCLAVE' }, postData: { contents: '{"entry":[]}' } });
-  const mal = JSON.parse(S2.P.WA_HOOK_MAL || '{}');
-  chk('dos avisos con otra clave en la dirección quedan contados, sin guardar el valor que vino', mal.n === 2 && !/TUCLAVE/.test(S2.P.WA_HOOK_MAL), S2.P.WA_HOOK_MAL);
+  const mal = JSON.parse(CACHE2.wa_hook_mal || '{}');
+  chk('dos avisos con otra clave en la dirección quedan contados (en la caché: no gastan el cupo de Propiedades), sin guardar el valor que vino',
+      mal.n === 2 && !/TUCLAVE/.test(CACHE2.wa_hook_mal) && !S2.P.WA_HOOK_MAL, { cache: CACHE2.wa_hook_mal, prop: S2.P.WA_HOOK_MAL });
   const pr = S2.ctx.probarAntesDeImplementar().lineas.join('\n');
   chk('probar lo dice: «con OTRA clave en la dirección… igual a WA_HOOK_KEY»', /2 aviso\(s\) de Meta con OTRA clave/.test(pr), pr.split('\n').filter(l => /Meta/.test(l)));
   chk('estadoBotWhatsApp también', S2.ctx.estadoBotWhatsApp().metaRechazados.n === 2);

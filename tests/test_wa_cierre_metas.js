@@ -479,6 +479,9 @@ const txt = (body) => ({ type: 'text', text: { body } });
       var f = '2026-11-10'; while (f <= '2026-12-09') { [0, 600, 1199, 1201, 1439].forEach(function (mi) { var D = bfnDatos(f, mi);
         o.bf.d[f + '|' + mi] = D ? [D.n, D.nTot, D.hoyHab, D.aDesde, D.aHasta, D.aCorte, D.curso, r2(D.camp.bs), D.camp.n, r2(D.antes.bs), D.antes.n,
           D.marcas.map(function (g) { return [g.k, r2(g.c.bs), r2(g.a.bs)]; }), r2(D.mayor.c.bs), r2(D.mayor.a.bs)] : null; }); f = stockSumarDias(f, 1); }
+      /* 🏆 (16/11, a conciencia) La regla del bono (376 b) está apagada en Playwright salvo AL_DIA_BONO_PRUEBA; el servidor la aplica
+         SIEMPRE. Prendida acá, las dos cuentan igual (en noviembre rige: sin la mínima no hay bono Titanio). */
+      window.AL_DIA_BONO_PRUEBA = 1;
       o.ccm = {}; ['2026-09', '2026-10', '2026-11'].forEach(function (ym) { var K = ccmCuenta(ym), vis = K.filas.filter(ccmFilaVe), t = 0;
         vis.forEach(function (r) { t = r2(t + r.to); }); o.ccm[ym] = { cerrado: K.cerrado, to: t, filas: vis.map(function (r) { return [normNombre(r.v), r.g, r2(r.bs), r2(r.ti || 0), r.pc, r2(r.to)]; }).sort() }; });
       o.tie = {}; ['2026-10'].forEach(function (ym) { o.tie[ym] = cxPryTiendas(proyeccionMes(ym)).map(function (t) { return [t.st, r2(t.vendido)]; }).sort(); });
