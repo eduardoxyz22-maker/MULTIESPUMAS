@@ -8485,6 +8485,21 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
   .cho-card.mis-c .cho-links.p400 .cho-link.mcb-btn{flex:1.5 1 0!important}
 }
 .cho-card.mis-c .cho-links.p400 .cho-link.p400-cel{font-variant-numeric:tabular-nums;letter-spacing:.01em;background:#fff;border-style:dashed}
+/* 395 · Kommo y la venta del panel lado a lado */
+.kx-f.p395{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n b" "c c" "t t"}
+.kx-f.p395 .kx-n{grid-area:n}.kx-f.p395 .kx-b{grid-area:b}.kx-f.p395 .kx-tags{grid-area:t}.kx-f.p395 .kx-tags:empty{display:none}
+.kx-f.p395 .kx-tags .kx-gem{display:none}
+.p395-c{grid-area:c;max-width:860px;display:grid;grid-template-columns:86px minmax(0,1fr) 30px minmax(0,1fr);border:1px solid #efe2c8;border-radius:11px;overflow:hidden;background:#fff;font-size:.78rem}
+.p395-c > div{padding:5px 10px;border-bottom:1px solid #f5ecdb;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p395-c > div:nth-last-child(-n+4){border-bottom:0}
+.p395-c .h{background:#fbf5e9;font-weight:900;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:#7c5a1c}
+.p395-c .k{color:#6b7f7e;font-weight:800}
+.p395-c .m{text-align:center;font-weight:900;padding:5px 0}
+.p395-c .m.na{color:#94a3b8}.p395-c .m.si{color:#15803d;background:#ecfdf3}.p395-c .m.no{color:#b45309;background:#fff7e6}
+.p395-c .v{font-weight:700;color:#1f2f2e}
+.p395-res{display:inline-flex;align-items:center;gap:6px;margin-top:4px;font-size:.74rem;font-weight:900;border-radius:999px;padding:2px 10px}
+.p395-res.si{background:#dcfce7;color:#166534}.p395-res.casi{background:#fff3d6;color:#8a5a00}
+@media (max-width:900px){ .kx-f.p395{grid-template-columns:minmax(0,1fr);grid-template-areas:"n" "c" "t" "b"} .p395-c{grid-template-columns:70px minmax(0,1fr) 26px minmax(0,1fr)} }
 /* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
 .cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
 .cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
@@ -42065,13 +42080,41 @@ function borrFilaHtml(p, conDuena){
   else if(gem) tags.push('<span class="kx-t kx-gem">✋ parece la misma que '+esc(String(gem.cliente||'—').trim().split(/\s+/).slice(0,3).join(' '))+(gem.nota?(' · nota '+esc(gem.nota)):'')+'</span>');
   if(!(p.productos||[]).some(function(x){ return String(x.desc||x.codigo||'').trim(); })) tags.push('<span class="kx-t kx-am">sin productos</span>');
   try{ revisarBorrador(p).forEach(function(r){ tags.push('<span class="kx-t '+(r.n==='alto'?'kx-mal':'kx-am')+'" title="'+esc(String(r.t).replace(/<[^>]+>/g,''))+'">'+esc(String(r.t).replace(/<[^>]+>/g,'').split(/[.:](?:\s|$)/)[0].slice(0,48))+'</span>'); }); }catch(e){}
-  return '<div class="kx-f"><div class="kx-n"><b>'+esc(p.cliente||'(sin nombre)')+'</b><small>'+[conDuena&&p.vendedor?('👤 '+esc(p.vendedor)):'', p.celular?('📱 '+esc(p.celular)):'', monto?fmtBs0(monto):'', d<=0?'llegó hoy':(d===1?'desde ayer':('hace '+d+' días'))].filter(Boolean).join(' · ')+'</small></div>'+
-    '<div class="kx-tags">'+tags.join('')+'</div><div class="kx-b">'+
+  var K395=(gem && !(G && G.cargada) && kxLadoVa()) ? kxLadoDatos(p, gem) : null;   // 🎨 (16/11, mejora 395) las dos ventas lado a lado
+  return '<div class="kx-f'+(K395?' p395':'')+'"><div class="kx-n"><b>'+esc(p.cliente||'(sin nombre)')+'</b><small>'+[conDuena&&p.vendedor?('👤 '+esc(p.vendedor)):'', p.celular?('📱 '+esc(p.celular)):'', monto?fmtBs0(monto):'', d<=0?'llegó hoy':(d===1?'desde ayer':('hace '+d+' días'))].filter(Boolean).join(' · ')+'</small>'+(K395?K395.res:'')+'</div>'+
+    '<div class="kx-tags">'+tags.join('')+'</div>'+(K395?K395.tabla:'')+'<div class="kx-b">'+
     (gem ? ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("borrEsLaMisma('"+id+"','"+String(gem.id)+"')")+'">Sí, es la misma</button>'+
             '<button type="button" class="ah-go" onclick="'+esc("verFichaGemela('"+String(gem.id)+"')")+'">Ver la mía</button>'+
             '<button type="button" class="ah-go" onclick="'+esc("completarBorrador('"+id+"')")+'">Es otra</button>')
          : ('<button type="button" class="ah-go ah-go-p" onclick="'+esc("completarBorrador('"+id+"')")+'">Completar</button>'))+
     '<button type="button" class="ah-go kx-x" title="Descartar" onclick="'+esc("descartarBorrador('"+id+"')")+'">✕</button></div></div>';
+}
+/* 🎨 (16/11, mejora 395; dueño: «¿Es la misma?: Kommo y tu venta lado a lado») El renglón decía «✋ parece la misma que ELENA SOLIZ · nota
+   2491» y para comparar había que tocar «Ver la mía» (otra ventana). De las que hoy «parecen», ninguna tenía el mismo monto ni el mismo
+   celular: coincidían solo en el nombre, y «Sí, es la misma» es el botón grande. Ahora, debajo de cada una, una tablita «📥 Kommo | 🧾 Tu
+   venta en el panel» con cliente, celular, monto y fecha: ✓ verde lo que coincide, ≠ ámbar lo que no y «·» gris lo que Kommo no trae; al
+   lado del nombre, «✓ Coinciden 4 de 4» o «⚠️ El monto no coincide · 2 de 4». Las dos ventas son las de siempre (el borrador y
+   `borrGemelo(p).p`), el monto de la venta es `ventaTotal`. Los botones no cambian. Solo mira. En Playwright como antes salvo
+   `window.KX_LADO_PRUEBA`. `tests/test_v391_mis_tarjetas.js` §395. */
+function kxLadoVa(){ try{ return vdVa('KX_LADO_PRUEBA'); }catch(e){ return false; } }
+function kxLadoDatos(b, g){
+  var cel=function(x){ return String(x||'').replace(/\D/g,'').slice(-8); }, nom=function(x){ return normNombre(String(x||'')); };
+  var mb=Number(b.saldo)||Number(b.acuenta)||0, mg=Number(ventaTotal(g))||0;
+  var dk=b.ts ? isoDeTsBolivia(b.ts) : '', dg=g.ts ? isoDeTsBolivia(g.ts) : '';
+  var nb=nom(b.cliente), ng=nom(g.cliente);
+  var F=[
+    ['Cliente', b.cliente||'—', g.cliente||'—', !!nb && !!ng && (nb===ng || ng.indexOf(nb)===0 || nb.indexOf(ng)===0)],
+    ['Celular', cel(b.celular) ? b.celular : 'Kommo no lo trae', g.celular||'—', !cel(b.celular) ? null : cel(b.celular)===cel(g.celular)],
+    ['Monto', mb ? fmtBs0(mb) : 'Kommo no lo trae', mg ? fmtBs0(mg) : '—', !(mb>0) ? null : Math.abs(mb-mg)<=1],
+    ['Fecha', dk ? fmtFechaCorta(dk) : '—', (dg ? fmtFechaCorta(dg) : '—')+(g.oc ? (' · '+ocEtiq(g.oc)) : ''), !!dk && !!dg && Math.abs(Date.parse(dk+'T12:00:00')-Date.parse(dg+'T12:00:00'))<=7*864e5]
+  ];
+  var ok=F.filter(function(x){ return x[3]===true; }).length, tot=F.filter(function(x){ return x[3]!==null; }).length, mOk=F[2][3];
+  var res = (ok===tot && mOk!==false) ? ('<span class="p395-res si">✓ Coinciden '+ok+' de '+tot+'</span>')
+          : (mOk===false ? ('<span class="p395-res casi">⚠️ El monto no coincide · '+ok+' de '+tot+'</span>') : ('<span class="p395-res casi">Coinciden '+ok+' de '+tot+'</span>'));
+  var tabla='<div class="p395-c" role="table" aria-label="Kommo y tu venta lado a lado"><div class="h"></div><div class="h">📥 Kommo</div><div class="h"></div><div class="h">🧾 Tu venta en el panel</div>'+
+    F.map(function(x){ var m=x[3]===null ? 'na' : (x[3] ? 'si' : 'no');
+      return '<div class="k">'+x[0]+'</div><div class="v" title="'+esc(x[1])+'">'+esc(x[1])+'</div><div class="m '+m+'">'+(x[3]===null ? '·' : (x[3] ? '✓' : '≠'))+'</div><div class="v" title="'+esc(x[2])+'">'+esc(x[2])+'</div>'; }).join('')+'</div>';
+  return { res:res, tabla:tabla, ok:ok, tot:tot };
 }
 var MIS_KX_MAS={ gem:false, nue:false, car:false };
 function borrBandejaCompacta(lista, todos){

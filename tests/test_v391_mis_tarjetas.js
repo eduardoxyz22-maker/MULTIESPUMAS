@@ -11,6 +11,9 @@
          una fichita y su dibujito, sin «cargar en…»; el renglón del chofer solo con chofer y sin el del stock.
    400 · Sin `MIS_BOTONES_PRUEBA`: «📞 Llamar» y «⚠️ Falta ubicación — cargar» de siempre. Con la bandera: los botones en una fila (en la
          compu), el de llamar con el número («📞 712 34567», en la compu lo copia) y «⚠️ Sin ubicación»; los mismos destinos.
+   395 · «✋ Parecen ya cargadas»: sin `KX_LADO_PRUEBA`, el renglón de siempre. Con la bandera: la tablita «📥 Kommo | 🧾 Tu venta en el
+         panel» (cliente, celular, monto, fecha) con ✓ lo que coincide, ≠ lo que no y «·» lo que Kommo no trae, y «⚠️ El monto no coincide ·
+         N de M» o «✓ Coinciden N de N». Los mismos botones. Una «✅ ya está cargada» no lleva tabla.
    Datos SINTÉTICOS. Reloj clavado el lunes 16/11/2026 10:00. Se corre:  HTTPS_PROXY=http://127.0.0.1:9 node tests/test_v391_mis_tarjetas.js */
 const { chromium } = require('playwright');
 const path = require('path');
@@ -125,6 +128,31 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     copyText=cp; window.matchMedia=mm; return { cop:window.__cop, evitado:ev2.defaultPrevented, abrioFicha:document.getElementById('modal').classList.contains('on') }; });
   chk('400e en la compu, tocar el número lo copia (no llama ni abre la ficha)', r.cop.join()==='71234567' && r.evitado && !r.abrioFicha, r);
   await ev(() => { STATE=STATE.filter(function(p){ return p.id!=='b400'; }); });
+
+  console.log('\n── 395. Kommo y tu venta lado a lado ──');
+  const fila = (o) => ev((o) => {
+    var g=__P({ id:'g395', oc:'11-040', cliente:'ANA ROJAS VACA', celular:'71112222', ts:Date.parse('2026-11-12T10:00:00-04:00'), saldo:3000, productos:[{ desc:'COLCHON SOFT', codigo:'CH1000', medida:'140x190', cant:2, precio:1500 }] });
+    var b={ id:'kommo-1', estado:'borrador', cliente:o.cli||'ANA ROJAS VACA', celular:o.cel||'', saldo:o.monto||0, acuenta:0, vendedor:'Carola Chavez', ts:Date.parse('2026-11-10T10:00:00-04:00'), productos:[] };
+    var orig=borrGemelo; borrGemelo=function(){ return { p:g, cargada:!!o.cargada, por:'parece' }; };
+    var h=borrFilaHtml(b, false); borrGemelo=orig;
+    var d=document.createElement('div'); d.innerHTML=h; document.body.appendChild(d);
+    var out={ p395:!!d.querySelector('.kx-f.p395'), filas:[].map.call(d.querySelectorAll('.p395-c .k'), function(k){ var v=k.nextElementSibling, m=v.nextElementSibling, w=m.nextElementSibling; return [k.textContent, v.textContent, m.textContent, w.textContent]; }),
+      res:(d.querySelector('.p395-res')||{}).textContent||'', botones:[].map.call(d.querySelectorAll('.kx-b button'), function(x){ return x.textContent; }).join('|'),
+      gemVisible:(function(){ var t=d.querySelector('.kx-gem'); return t ? getComputedStyle(t).display!=='none' : null; })() };
+    d.remove(); return out; }, o);
+  r = await fila({ monto:5000 });
+  chk('395a sin la bandera: el renglón de siempre, sin tabla', !r.p395 && r.filas.length===0 && r.gemVisible===true, r);
+  await ev(() => { window.KX_LADO_PRUEBA=1; });
+  r = await fila({ monto:5000 });
+  chk('395b la tablita con cliente, celular, monto y fecha, una al lado de la otra', r.p395 && r.filas.map(f=>f[0]).join('|')==='Cliente|Celular|Monto|Fecha', r.filas);
+  chk('395c ✓ el nombre y la fecha coinciden, ≠ el monto (Bs 5.000 contra Bs 3.000), «·» Kommo no trae el celular',
+      r.filas[0][2]==='✓' && r.filas[1][2]==='·' && /Kommo no lo trae/.test(r.filas[1][1]) && r.filas[2][2]==='≠' && r.filas[2][1]==='Bs 5.000' && r.filas[2][3]==='Bs 3.000' && r.filas[3][2]==='✓' && /11-040/.test(r.filas[3][3]), r.filas);
+  chk('395d al lado del nombre: «⚠️ El monto no coincide · 2 de 3»', r.res==='⚠️ El monto no coincide · 2 de 3', r.res);
+  chk('395e los botones no cambian y la etiqueta «parece la misma» queda (escondida)', r.botones==='Sí, es la misma|Ver la mía|Es otra|✕' && r.gemVisible===false, r);
+  r = await fila({ monto:3000, cel:'71112222' });
+  chk('395f todo igual: «✓ Coinciden 4 de 4»', r.res==='✓ Coinciden 4 de 4' && r.filas.every(f=>f[2]==='✓'), r);
+  r = await fila({ monto:3000, cargada:true });
+  chk('395g una «✅ ya está cargada» no lleva tabla', !r.p395 && r.filas.length===0, r);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
