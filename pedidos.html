@@ -6469,6 +6469,16 @@ tr.tj-otro td{ background:#fff7e6; } tr.tj-otro small{ color:#b45309; }
 /* 📉🔁⏳ ATC y calidad (13/11, mejoras 178-180): cada bloque en su recuadro blanco (así los temas del mes no le cambian la letra) */
 .atq-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr)); gap:12px; margin:0 0 16px; align-items:start; }
 .atq-caja{ background:#fff; border:1px solid var(--gray-lt); border-radius:14px; padding:12px; min-width:0; color:var(--text); }
+/* 🎧 (16/11, mejora 375) «📉 Calidad y motivos» en un renglón plegado, después de la lista (recuadro blanco: los temas no le cambian la letra) */
+.atc-calq{ margin:14px 0 4px; }
+.atc-calq > summary.atc-calq-s{ list-style:none; cursor:pointer; display:flex; align-items:center; gap:10px; background:#fff; border:1px dashed #9fd2cd; border-radius:12px; padding:9px 12px; color:var(--text); }
+.atc-calq > summary::-webkit-details-marker{ display:none; }
+.atc-calq > summary:hover{ border-style:solid; }
+.atc-calq-t{ flex:1; min-width:0; display:flex; flex-wrap:wrap; gap:2px 8px; align-items:baseline; font-size:.84rem; color:var(--muted); }
+.atc-calq-t > b{ font-size:.95rem; color:#134e4a; } #atc-calq-r b{ color:var(--text); } #atc-calq-r b.alta{ color:#b4182b; }
+.atc-calq-v{ flex:none; font-weight:800; font-size:.78rem; color:#0f766e; white-space:nowrap; } .atc-calq-v::after{ content:'Ver ▾'; }
+.atc-calq[open] > summary .atc-calq-v::after{ content:'Ocultar ▴'; }
+.atc-calq[open] > summary{ margin-bottom:12px; border-style:solid; }
 .atq-tw{ overflow-x:auto; }
 .atq-t{ width:100%; border-collapse:collapse; font-size:.8rem; white-space:normal; }
 .atq-t thead th{ position:static; background:#f1f5f9; color:var(--muted); text-align:left; font-size:.64rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:5px 6px; border-bottom:2px solid var(--gray-lt); white-space:nowrap; }
@@ -33902,6 +33912,7 @@ function renderAtc(){
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
   try{ atvPintar(list, mesSel); }catch(e){ console.error(e); }
   try{ atcqPintar(list); }catch(e){ console.error(e); }   // 📉🔁⏳ (178-180)
+  try{ atcLaPintar(); }catch(e){ console.error(e); }      // 🎧 (16/11, mejora 375) la lista arriba, la calidad plegada
 }
 /* ==========================================================================
    🎧 ATC CON EL ESTILO NUEVO (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo»). Solo presentación: las cuentas
@@ -34246,8 +34257,48 @@ function atcqRepHtml(list){
 function atcqPintar(list){
   var box=document.getElementById('atc-calidad'); if(!box) return;
   if(!ATCQ_REP) ATCQ_REP=atcRepMapa();
-  box.innerHTML='<div class="atq-grid">'+atcqTasaHtml(atcqTasa())+atcqEdadesHtml(atcqEdades(list||[]))+atcqRepHtml(list||[])+'</div>';
+  var T=atcqTasa(), E=atcqEdades(list||[]); ATCQ_ULT={ T:T, E:E };   // 📉 (16/11, mejora 375) el renglón plegado lee estos mismos números
+  box.innerHTML='<div class="atq-grid">'+atcqTasaHtml(T)+atcqEdadesHtml(E)+atcqRepHtml(list||[])+'</div>';
 }
+/* ============================================================================
+   🎧 ATC: LA LISTA ARRIBA, LOS NÚMEROS DE CALIDAD PLEGADOS (16/11, mejora 375; el dueño la eligió).
+   La tabla de ATC —lo que se trabaja todos los días— empezaba a ~1.700 px: antes iban «Garantía o contra costo», «Por qué se generaron»,
+   «Cada 100 vendidos», «A cuántos meses falla» y «Volvieron a reclamar», números para mirar de vez en cuando.
+   Ahora, después de las fichas y de «El viaje», va la lista; lo demás queda en UN renglón plegado «📉 Calidad y motivos — Heaven 5,5 cada 100 ·
+   Sueña 0,9 · la mitad falla antes de los 22 meses» (los números que ya calculan `atcqTasa`/`atcqEdades`, guardados en `ATCQ_ULT`), que abre
+   lo mismo de siempre (los motivos siguen filtrando al tocarlos). Cada compu recuerda si lo dejó abierto (`visPref` 'atcCal').
+   Solo mueve las cajas que ya existen: ningún número cambia. En Playwright el orden de siempre salvo `window.ATC_LISTA_PRUEBA`.
+   `tests/test_atc_lista_arriba.js`.
+   ========================================================================== */
+var ATCQ_ULT=null;
+function atcLaVa(){ try{ return vdVa('ATC_LISTA_PRUEBA'); }catch(e){ return false; } }
+function atcLaMeses(m){ return (m>=24 && m%12===0) ? ((m/12)+' años') : (atciNum(m)+' meses'); }
+function atcLaResumen(){
+  var U=ATCQ_ULT||{}, T=U.T, E=U.E, P=[];
+  if(T && T.marcas) T.marcas.forEach(function(m){ if(m.tasa!=null && m.atc) P.push(esc(m.lbl)+' <b'+(m.alerta?' class="atq-tasa alta"':'')+'>'+esc(atciNum(m.tasa))+'</b>'+(P.length?'':' cada 100')); });
+  if(E && E.med!=null) P.push('la mitad falla antes de los '+esc(atcLaMeses(E.med)));
+  return P.join(' · ');
+}
+function atcLaPintar(){
+  var cal=document.getElementById('atc-calidad'), mot=document.getElementById('atc-por-motivo'), tw=document.getElementById('atv-tw');
+  if(!cal || !mot || !tw || !atcLaVa()) return;
+  var d=document.getElementById('atc-calq');
+  if(!d){
+    var vj=document.getElementById('atv-viaje'), cards=document.getElementById('atv-cards'), emp=document.getElementById('atc-empty');
+    if(!vj) return;
+    d=document.createElement('details'); d.id='atc-calq'; d.className='atc-calq';
+    if(visPref('atcCal', false)) d.open=true;
+    d.addEventListener('toggle', function(){ visPrefSet('atcCal', d.open); });
+    d.innerHTML='<summary class="atc-calq-s"><span class="atc-calq-t"><b>📉 Calidad y motivos</b><span id="atc-calq-r"></span></span><span class="atc-calq-v" aria-hidden="true"></span></summary>';
+    /* la lista va justo después de «El viaje»; los números, plegados después */
+    [cards, tw, emp].forEach(function(x){ if(x) vj.parentNode.insertBefore(x, mot); });
+    vj.parentNode.insertBefore(d, mot);
+    d.appendChild(mot); d.appendChild(cal);
+  }
+  var r=document.getElementById('atc-calq-r'), t=atcLaResumen();
+  if(r) r.innerHTML=t ? ('— '+t) : '— por qué se generaron, cada 100 vendidos y a cuántos meses falla';
+}
+/* fin mejora 375 */
 /* ==========================================================================
    📄 INFORME DE ATC EN PDF (§4le, 15/10, dueño: «en la pestaña de ATC del panel quiero un botón que genere un informe en PDF y ese
    informe muestre lo más relevante e importante tipo presentación sobre las ATC del mes, que uno puede elegir el mes. No quiero todas
