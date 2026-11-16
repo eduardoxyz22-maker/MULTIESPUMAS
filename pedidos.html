@@ -7723,6 +7723,19 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
    productos tienen lugar: en la compu se ven sin correr la tabla. */
 #tbl-conta td:nth-child(4),#tbl-conta td:nth-child(5),#tbl-conta td:nth-child(9){ white-space:normal; min-width:120px; max-width:210px; overflow-wrap:anywhere; }
 #tbl-conta td.prod-cell{ min-width:290px; max-width:380px; }
+/* 🧾 374 · un renglón por producto (`contaProdHtml`) */
+#tbl-conta td.cpl-cell{ width:440px; min-width:440px; max-width:470px; font-size:.78rem; }
+.cpl{ display:flex; align-items:flex-start; gap:6px; line-height:1.3; min-width:0; }
+.cpl + .cpl{ margin-top:4px; padding-top:4px; border-top:1px dashed #e4eeed; }
+.cpl .pico{ margin:1px 0 0; width:22px; height:15px; }
+.cpl-sin{ display:inline-block; width:22px; flex:none; }
+.cpl-q{ flex:none; font-weight:800; color:#00897f; font-variant-numeric:tabular-nums; min-width:1.6em; white-space:nowrap; }
+.cpl-n{ flex:1 1 auto; min-width:0; color:#17302f; font-weight:600; white-space:normal; overflow-wrap:anywhere; }
+.cpl-me{ white-space:nowrap; } .cpl-me b{ font-weight:700; }
+.cpl-n small{ margin-left:6px; font-size:.86em; font-weight:600; color:#8a9e9c; }
+.cpl-n small.cpl-cu{ color:#6b8280; }
+.cpl-m{ flex:none; margin-left:8px; font-style:normal; font-weight:800; color:#17302f; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.cpl-vacio{ color:var(--muted); }
 #tbl-conta td:last-child.prod-cell{ min-width:220px; max-width:320px; }
 /* 3 · El cuadro «Hoy» de Administración: en el iPad las etiquetas se cortaban con «…» («bultos por car…»). Parten el renglón. */
 .ah-st small{ white-space:normal; overflow:visible; text-overflow:clip; }
@@ -12116,6 +12129,27 @@ function contaProdTxt(prods){
            (prodPrecio(x)>0 ? ('  ·  '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))) : '');
   });
 }
+/* 🧾 (16/11, mejora 374; dueño: «me gusta») CONTABILIDAD: UN RENGLÓN POR PRODUCTO EN LA TABLA. En la tabla de Ventas (y Mayoristas) cada
+   producto era una frase de 114 letras en promedio («TITANIO ICE · 180×200 · cód CH1231 × 1 · Bs 7.290,00 c/u = Bs 7.290,00») que se partía en
+   3 a 5 renglones: cada fila medía 95 px (hasta 220). Ahora, SOLO en la celda de la tabla: su dibujito (211), «1×» en turquesa, el nombre
+   y la medida, el código chiquito y gris, y lo que suma a la derecha; «c/u» solo cuando son 2 o más. Los mismos campos que `contaProdTxt`,
+   que sigue igual para el Excel, «📋 Copiar», las tarjetas y la ficha (la búsqueda nunca leyó la celda). Solo presentación. En Playwright,
+   apagado salvo `window.CTA_PROD_PRUEBA` (hay pruebas que leen la celda). */
+function ctaProdVe(){ return vdVa('CTA_PROD_PRUEBA'); }
+function ctaProdBs(n){ n=r2(Number(n)||0); return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); }
+function contaProdHtml(prods){
+  var L=(prods||[]).filter(function(x){ return x && (String(x.desc||'').trim() || String(x.codigo||'').trim()); });
+  if(!L.length) return '<span class="cpl-vacio">—</span>';
+  return L.map(function(x){
+    var q=Number(x.cant)||0, pu=prodPrecio(x), sub=prodSub(x), d=String(x.desc||'').trim(), med=String(x.medida||'').trim(), cod=String(x.codigo||'').trim();
+    var full=contaProdTxt([x])[0];
+    /* el nombre puede partirse; la medida, el código y el «c/u» van juntos (nunca «140×» en un renglón y «190» en otro) */
+    var cola=(med ? ('<b>'+esc(med)+'</b>') : '')+((cod && d) ? ('<small>'+esc(cod)+'</small>') : '')+((q>=2 && pu>0) ? ('<small class="cpl-cu">c/u '+esc(ctaProdBs(pu))+'</small>') : '');
+    return '<div class="cpl" title="'+esc(full)+'">'+(prodIcoHtml(x)||'<span class="cpl-sin"></span>')+
+      '<span class="cpl-q">'+q+'×</span><span class="cpl-n">'+esc(d||cod)+(cola ? (' <span class="cpl-me">'+cola+'</span>') : '')+'</span>'+
+      '<em class="cpl-m">'+(sub>0 ? esc(ctaProdBs(sub)) : '')+'</em></div>';
+  }).join('');
+}
 function refreshConta(o){
   var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=diaNegocio().slice(0,7);
   var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=diaNegocio();
@@ -13153,7 +13187,7 @@ function renderConta(){
   if(!list.length){ CTA_VISTA_IDS=[]; tbl.innerHTML=''; try{ cxCardsPintar([], list); }catch(e){} try{ tblBarPintar('conta'); }catch(e){} return; }
   var _todas=list; list=ctaOrdenar(cxFiltrar(list));   // 🗂️ (§4nr, 33) con el orden elegido en esta compu
   CTA_VISTA_IDS=list.map(function(p){ return String(p.id); });   // ◀ ▶ (297) la ficha sigue la tabla como se ve
-  var _abre=ctaNavVa() ? 'ctaAbrirDeLista' : 'showContaModal';
+  var _abre=ctaNavVa() ? 'ctaAbrirDeLista' : 'showContaModal', _cpl=ctaProdVe();
   try{ cxCardsPintar(list, _todas); }catch(e){}
   var head='<thead><tr>'+ctaTh('ing','Ingresado')+ctaTh('ent','Entrega agendada')+ctaTh('nota','N° Nota')+ctaTh('vend','Vendedor')+ctaTh('cli','Cliente')+ctaTh('tipo','Entrega')+ctaTh('cel','Celular')+
            '<th>Productos</th>'+ctaTh('fact','Facturar a')+ctaTh('nit','NIT')+ctaTh('pago','Pago')+'<th>Pagos recibidos</th>'+ctaTh('env','Recargo entrega')+'<th>Observaciones</th></tr></thead>';
@@ -13167,7 +13201,7 @@ function renderConta(){
       '<td><b>'+clfNombre(p, p.cliente||'—', 'conta')+'</b>'+dupChip(p)+'</td>'+
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
-      '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
+      (_cpl ? ('<td class="prod-cell cpl-cell">'+contaProdHtml(p.productos)+'</td>') : ('<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'))+   // 🧾 (374)
       '<td>'+(function(){ var c=docVentaChip(p); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
