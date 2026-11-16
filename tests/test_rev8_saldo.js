@@ -210,7 +210,7 @@ function PREPARAR(){
   r = await ev(async () => {
     var out={};
     await _escenario(_stock({ aca:{ TIT:4 } }), []);
-    _nuevo(); _llenarDatos('CLIENTE ESPECIAL'); _renglon(0, { codigo:'CH1201', otra:'150x200', cant:1 }); _fecha('2026-09-30'); await _esperar(500);
+    _nuevo(); _llenarDatos('CLIENTE ESPECIAL'); _renglon(0, { codigo:'CH1201', otra:'150x200', cant:1 }); _fecha('2026-09-24'); await _esperar(500);
     await _guardar();
     out.guardados=_enServidor('CLIENTE ESPECIAL'); out.sigue=document.getElementById('f-cliente').value;
     return out;
@@ -340,7 +340,7 @@ function PREPARAR(){
     _nuevo(); segSet('f-doc-tipo','RPT'); pintarDocTipo(true);
     document.getElementById('f-vendedor').value='Maria Flores'; document.getElementById('f-rpt-suc').value='Central';
     document.getElementById('f-zona').value='Central';
-    _renglon(0, { codigo:'CH1775', cant:1 }); _fecha('2026-09-30'); await _esperar(500);
+    _renglon(0, { codigo:'CH1775', cant:1 }); _fecha('2026-09-24'); await _esperar(500);
     await _guardar(); out.guardados=_enServidor('Central');
     return out;
   });
@@ -381,7 +381,7 @@ function PREPARAR(){
     var out={};
     await _escenario(_stock({ aca:{ TIT:4 } }), []);
     /* Guardar sin salir del campo (Enter): solo `input`, nunca `change`. */
-    _nuevo(); _llenarDatos('CLIENTE ENTER'); _renglon(0, { codigo:'CH1201', otra:'150x200', cant:1 }); _fecha('2026-09-30'); await _esperar(500);
+    _nuevo(); _llenarDatos('CLIENTE ENTER'); _renglon(0, { codigo:'CH1201', otra:'150x200', cant:1 }); _fecha('2026-09-24'); await _esperar(500);
     await _guardar();
     var p=window._SRV.pedidos.filter(function(q){ return q.cliente==='CLIENTE ENTER'; })[0];
     out.prod=p && p.productos && p.productos[0];

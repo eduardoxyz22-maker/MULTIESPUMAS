@@ -480,10 +480,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   console.log('\n── 13. La cantidad no se inventa ──');
   const cant = await page.evaluate(() => {
-    var hdr={A:'FECHA PROGRAMADA',B:'# NOTA DE VENTA',C:'DESCRIPCION',D:'CANTIDAD',E:'NOMBRE CLIENTE',F:'DIRECCION',G:'STATUS'};
+    var hdr={A:'FECHA PROGRAMADA',B:'# NOTA DE VENTA',C:'DESCRIPCION',D:'CANTIDAD',E:'NOMBRE CLIENTE',F:'DIRECCION',G:'STATUS',H:'TELEFONO'};   // (16/11) el teléfono es obligatorio
     var d=new Date(); d.setDate(d.getDate()+3);
     var serial=Math.round((d-new Date(Date.UTC(1899,11,30)))/86400000);
-    var fila=function(n,c){ return {A:String(serial),B:n,C:'COLCHON ECO FLEX 2 PLAZAS 140X190CM',D:c,E:'CLI',F:'calle',G:'PAGADA'}; };
+    var fila=function(n,c){ return {A:String(serial),B:n,C:'COLCHON ECO FLEX 2 PLAZAS 140X190CM',D:c,E:'CLI',F:'calle',G:'PAGADA',H:'+59171234567'}; };
     STATE=[];
     var res=rohoArmarPedidos([hdr, fila('Q1','0'), fila('Q2','-3'), fila('Q3','2,5'),
                               fila('Q4','abc'), fila('Q5','4'), fila('Q6','2,0'), fila('Q7','1.0')]);

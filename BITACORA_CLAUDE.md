@@ -18814,3 +18814,118 @@ debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cl
 - **PUBLICADO 14/11** (dueño: *«si publica»*): la página `2026-11-14-a` con 211, 212, 216 (solo con la contraseña), 217 y 218 (sin «🕐 Horario…»), el `.gs`
   14-a y `SCRIPT_VERSION_ESPERADA` 14-a en `main` (por `cherry-pick` de los commits del cambio; las pruebas del servidor 13-b —`test_gps_historial`,
   `test_wa_mayoristas`— entran con él). `FH_DESDE`='2026-11-14' = el día de publicar.
+- **Novedades para los grupos (14/11)**: la última lista fue la del 07/11 (hasta la 07-f); la nueva junta todo lo publicado del 07 al 14/11 por área, con
+  «Copiar para WhatsApp»: https://claude.ai/artifact/EL6suf9gmeCy5iwSEcCQ7r. Las metas de noviembre YA están guardadas (`__metas__` → `m['2026-11'].vd`, 10
+  vendedores): «Tu comisión» de «Tu día» ya se ve.
+- **Mejoras 246 a 257 · la tienda del mall** (dueño, 14/11: *«tendré 4 vendedores en un mall con un flujo impresionante de gente, necesito optimizar más aún
+  el panel»*): https://claude.ai/artifact/712WNCvPh54e4gJHxyRuBU. Datos: 140 ventas del equipo del 01 al 14/11, 40 % de tienda, 66 % con QR, hora pico 18-19 h;
+  Kommo «Visita tienda» compra el 46 % (24 de 52) contra 2 % de Facebook; en una tablet con la CPU 6× más lenta el panel abre en 2,8 s (0,6 s en una compu), lee
+  la planilla en 0,7 s y da el primer saldo en 0,8 s; publicado pesa 1,1 MB comprimido (3,6 MB achicado). Recomendadas: 246 + 247 + 249 + 254, después 251 (servidor).
+- **La tienda del mall en detalle + 258 a 281** (dueño, 14/11: *«246 (te diré solo a quiénes debe aparecer eso), 247 sería venta "salió de tienda"…
+  248 nadie se lleva su colchón de un mall, así que la 247 obsoleta. 251… 252… 253 cómo se rige… al final del día debería ser equitativo. 254 más detalles para
+  mostrarle a contabilidad, 256… dame MUCHO MÁS MEJORAS»*): https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc. 247 y 248 descartadas; 246 espera la lista de
+  quién lo ve. En detalle: 251 (visita anotada → lead de Kommo «Visita tienda» + WhatsApp + seguimiento), 252 (contador: solo «👀 Solo miró» se toca, lo demás
+  sale solo; en la barra, Tu día, la caja, Proyección y el cierre 21:15), 253 (rueda: 7 reglas, «Es mío», pausa, «¿Fue parejo?» ±1 turno, al día siguiente
+  arranca el que tuvo menos), 254 (Contabilidad → «🏬 Caja por tienda»: ventas, cobros, efectivo = quedó + cobrado − retirado contra lo contado, QR contra el
+  extracto, lo que falta, 🔒 cerrar, Excel de 4 hojas, PDF con firmas) y 256 (meta de hoy = lo que falta del presupuesto ÷ días hábiles que quedan). Ideas
+  nuevas 258-281 por grupo; recomendadas 253 + 252 + 251 + 254 + 256, y 258 y 266. Nada programado.
+
+### §4pz — 🏬 LA TIENDA DEL MALL HECHA (14/11; dueño: *«251 sí como cotización… 252 me gusta (solo mall), 253 ok, 254 ok, 256 ok, 264 como sería, 266 ok, 267 ok, 271 ok, 273 ok, 274 ok mostrame como sería, 276-281 ok»*, *«253 pero son 2 en un turno y otros 2 en otro turno»*, *«254 sería solo para tienda ventura sur»*, *«264 sí pero lo revisaremos y diseñaremos el formato y debe llevar un QR también»*, *«274 armalo pero que aún no funcione… debemos probar»*)
+- Hecho con 8 agentes en worktrees y juntado en la rama (sin publicar). Página para revisar con capturas inventadas: «Mall listo para revisar».
+  Detalle de 251/264/274: https://claude.ai/artifact/JAzjpfSs9MmECjetFv2ZyZ. La tienda del mall en detalle: https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc.
+- **Servidor `2026-11-14-b`** (sobre la 14-a): hoja «Mall» (`mallToque` idempotente por id, afuera del candado de doPost; `mallLeer` con hoy desde la caché),
+  `__cupos_extra__` (el portero suma, tope 20, no abre turnos cerrados) y `__caja_tienda__` en `SISTEMA_JUNTA_OPCIONAL`, `apartarCupo`/`soltarCupo` + `apartados`
+  en `list` + `aparto` en el save, `venta_grande` (≥ `VENTA_GRANDE_BS`, 8.000 de entrada; 0 apaga; solo al primero de WA_DUENO, con el repaso del bot), hoja
+  «Cotizaciones» (`cotGuardar`/`cotMarcar`/`cotLeer`, «COT MM-NNN»; una llamada con la misma `llamada.t` no se repite), Kommo de la cotización APAGADO salvo
+  `KOMMO_COT=1`, y el bot de las 48 h APAGADO salvo `COT_BOT=prueba` (solo WA_PRUEBA) o `1` (plantillas `cotizacion_seguimiento` con 3 botones `cs|<id>|…`,
+  `vendedora_llamar_cliente`, `cotizacion_sin_llamar` a las 2 h). `tests/test_servidor_mall.js` (82), `tests/test_servidor_cot.js` (85).
+- **252/253/273** (`mall*`, la barra `#mall-barra` arriba de las pestañas): solo con servidor ≥ 14-b (`mallPuede`), en el aparato marcado
+  «🏬 Esta compu es la del mall» (`me_mall_aparato`) o con un vendedor de `MALL_TIENDA='Ventura Mall'`. Cola durable `me_mall_cola`. Funciones puras que usan
+  otros: `mallEstado`, `mallResumenDia` (porHora [{h,at,co}], porVend {v:{at,co,…}}), `mallParejo`. «Es mío» va aparte de la rueda. Turno por la hora del
+  «Llegué» (`MALL_CAMBIO_TURNO='15:00'`). Una venta nueva cuenta sola (`mallVentaHecha`); una cotización, como «anotó» (`mallCotHecha`).
+  `tests/test_mall_rueda.js` (67). ⚠️ Hoy NINGÚN vendedor es de Ventura Mall en `VENDEDOR_SUCURSAL`: faltan los nombres de los 4.
+- **254/256**: `cajaAbrir`/`cajaResumenDia`/`metaDiaTienda`/`metaDiaDatos`; `CAJA_TIENDAS=['Ventura Mall']`; la suma de las cajas = el Cuadre de la tienda
+  (`test_caja_tienda` §8). `cajaMallNorm` lee la forma de `mallResumenDia`. `tests/test_caja_tienda.js` (47), `tests/test_meta_dia.js` (32).
+- **266/267**: `cupx*` (abrir cupos con la contraseña, `limTurno` = base + extra), `cupPron*` (el aviso), `aparto*` (el lugar apartado, solo con 14-b;
+  `sendBeacon` al cerrar). `tests/test_cupos_mall.js` (58).
+- **271**: modo práctica (`practica*`, script al principio del `<head>`): por pestaña, frena toda escritura en `apiPost` y en fetch/XHR/beacon salvo
+  `PRACTICA_LECTURAS` (con `mallLeer`/`cotLeer`), capa aparte de localStorage, sin WhatsApp/correo. ⚠️ Una acción NUEVA de solo lectura va en
+  `PRACTICA_LECTURAS`; una de escritura queda frenada sola. `tests/test_modo_practica.js` (54).
+- **251/274**: el 4° tipo «🧾 Cotización» (`cot*`, `docTipoSel()==='COT'`), cola `me_cot_cola`, imagen en canvas, «Para hacer» y el tablero en Proyección;
+  la venta que compró lleva `cot:<id>` en los productos (`heredarMarcas`). `tests/test_cotizar.js` (53).
+- **264**: el certificado (`cert*`) SOLO con la contraseña o `?cert=1` (`CERT_PARA_TODOS=false`), `CERT_ANOS` todo en null («a definir», etiqueta BORRADOR),
+  QR de `qrcode-generator` 1.4.4 por jsDelivr y cdnjs de respaldo (desde la sesión no se pudo abrir ninguno: probarlo en un aparato), `CERT_QR_MODO='datos'`.
+  La compra en la ATC (`atcCompra*`) prendida para todos. `tests/test_certificado.js` (58).
+- **276-281**: «🏬 El mall» y «📡 El mall en vivo» en Proyección (`mallAn*`, `mviv*`), con la contraseña; atajo `#envivo` en el manifest y en
+  `escritorio.js` (`?v=20261114a`). `tests/test_mall_analisis.js` (60).
+
+### §4pz-b — 🔎 La auditoría de Fable del mall (14/11; dueño: *«No publicaremos nada aún. Sin antes listar qué se está haciendo o se hará. Y Fable audite»*)
+- Cuatro revisores Fable (servidor, mostrador+caja, cotización+certificado, práctica+cupos+análisis) sobre `6e01cbc..3e33a76`: **ninguno encontró algo que
+  cambie lo de siempre** (otras tiendas, Contabilidad, Cuadre, cupos, bot, Kommo). 38 hallazgos dentro de lo nuevo; arreglados por cuatro agentes en
+  worktrees y juntados en la rama (sin publicar): `622acfe` (servidor), `070487a` (cotización/certificado), `f74a24b` (mostrador/caja), `d74a255`
+  (práctica/apartado). Scripts de los revisores en el scratchpad (`fable_srv/`, `fable_cot/`, `fable_mostrador/`, `fable_practica/`).
+- **Servidor (sigue `2026-11-14-b`, 10.100 líneas)**: el modo prueba del bot de cotizaciones usa su propia propiedad **`COT_PRUEBA`** (lista de celulares),
+  ya no `WA_PRUEBA` (que desvía TODO el bot); el bot de las 48 h solo mira cotizaciones de 48-96 h con `vence ≥ hoy` (las otras `bot='no_va'`); un error
+  de Meta deja `bot='error'` + `botErr` (columna nueva al FINAL de `COT_ENC`); `cotizacion_sin_llamar` solo con `estado==='abierta'` y las 2 h en horario
+  de tienda (`cotTiendaMas_`, lun-sáb hábil 09-20); el cliente oye «hoy / mañana temprano / el lunes temprano» (`cotCuandoLlama_`); **apartados**: uno por
+  aparato y turno (el nuevo suelta el anterior), tope 3 por día+turno (`apartados_tope`), vida 30 min desde `c`, el portero no cuenta como «de otro» el
+  del aparato que guarda (`body.aparato`, `apartadosOtrosDe_`) y `doSave` lo suelta; `RECHAZOS_NO_ANOTAR` (apartar/soltar/cot*/mall* no van a «Rechazos»);
+  `VENTA_GRANDE_BS` «8,000» = 8000 y ⚠️ si queda < 500; `__cupos_extra__` pide `forzarOk_` (con claves puestas); `fechaReal_` en mallLeer/cotLeer; Claude no
+  ve la cotización sin `cotBotPara_`.
+- **Página**: `payload.aparato = apartoAparato()` en TODO save (también la cola) y `adminKey` al guardar `__cupos_extra__`; el id del apartado de una venta
+  que cae a la cola va en `me_aparto_cola` (como `me_forzar_cola`); respuesta tardía de `apartarCupo` → se suelta; huérfanos del mismo aparato se sueltan
+  (`apartoHuerfanosSoltar`, salvo otra pestaña viva `me_aparto_vivos`, la cola o un pedido en el aire). Práctica: `navigator.share` frenado; no se entra con
+  guardados reales en la cola (`#pr-cola`); filas `__…` reales con `rev` mayor ganan (`PR.vio`); salir cancelado se repone a los 2 s. Cotización:
+  `COT_FIRMES` (solo esos «no» son firmes; `ocupado` y lo desconocido se reintentan), «🔗 Ya está cargada: elegir la venta», «Compró» → venta de tienda
+  conserva cliente y productos (`cotVentaFoto`/`cotVentaReponer`), «Cotizar» con pedido a medio cargar pregunta (`cotFormMedio`), la ventana de llamadas
+  repone lo escrito, «Renovar» reintenta sobre el `conflicto` (`op.re`), `abiertas:true`, `certBloqueHtml` con try (`certBloqueArmar`), «el bot les escribió»
+  = `cotBotEscribio`. Caja: el arqueo no repinta en el `change` (`cajaArqueoTextos`, `CAJA_APRIETA`), no guarda con servidor viejo
+  (`REESCRITAS[id].puede`), «💵 De ventas de otra tienda» (`E.ajenos`, sin cambiar totales), los dos interruptores del aparato se avisan; `mallEnviar` sin
+  bucle; `esc` en la medida de «El mall con números»; el en vivo muestra «Falta» de la caja.
+- **Quedan para el dueño** (no se tocaron): la hora del cambio de turno del mall (`MALL_CAMBIO_TURNO='15:00'`, el turno sale de la hora del «Llegué»),
+  «Pausa»+«Volví» al frente, la venta cargada sin «Atiendo» (hoy cuenta como cliente de la rueda), y el celular obligatorio en la cotización (así lo
+  aprobó; el revisor lo esperaba opcional porque el encargo se lo dijo mal).
+
+### §4qa — 💡 MEJORAS 282 A 343 (15/11; dueño: *«Más mejoras visuales, estéticas, funcionales, ¡mucho mucho mucho más!»*)
+- Seis agentes (visual, facilidad/velocidad, vendedoras, logística/stock, contabilidad, dueño) con la planilla del 15/11 01:03 (solo noviembre),
+  reglas en `scratchpad/mejoras_282/BRIEF.md`; 65 ideas, 3 juntadas (la factura con el N° que sigue, los avisos viejos de Contabilidad, «Salió» = confirmar
+  el turno) → **62**, 282-343, cada una con su demo (datos inventados). Página: https://claude.ai/artifact/Q89KyMFKaD1TXEr7rppMc5. Nada programado.
+- ⚠️ Dicho arriba de la página: (1) el WhatsApp de los lunes 08:00 a Contabilidad (`mayoristas_vencido`, 181) dirá Bs 136.195 vencidos de Bs 345.106 porque
+  de 99 OC de mayoristas solo hay 4 pagos anotados en el panel (idea 322); (2) logística dejó de anotar el camión (12-14/11: 2 de 53; 12-31/10: 241 de 264;
+  el 16/11: 0 de 22) y no hay tildes de carga ni «🚚 Salió» desde el 26/10 (idea 312).
+- Ojo para quien use el arnés con una planilla bajada con `cargar_pedidos.leer()`: la lista no trae `ok:true` y el panel la rechaza; agregar `ok`, `version`, `ahora`.
+
+### §4qb — 💬🤖🧠🏆 LAS MEJORAS 344-389 PROGRAMADAS Y JUNTADAS (16/11; dueño: «286. Añádelo / 344: 3C,5B / 345…389», «1A, 2B», «Cada tienda carga al sistema sus ventas propias», mayoristas «A»)
+- Siete agentes en worktrees; el límite de uso los cortó de noche y se retomaron a las 06:10 UTC. Juntadas en este orden: ia3 (359/360/364), ia2 (356/362), chat (344),
+  fun (379-389), ia1 (345/347/349/353), vis2 (368-377, 385), vis1 (366, 371, 372, 374, 376, 378). Choques: todos «agregados en el mismo lugar» (`probarAntesDeImplementar`,
+  el despacho de `doPost` después de `leerNota`, los bloques del final del `.gs`, `esFilaSistema`, `PRACTICA_LECTURAS`, `heredarMarcas` (rc/pH + cmp/oia), la ficha de
+  Contabilidad (366 la partió en bloques; la 379 y la 380/383 van en `acciones` y `arriba`)). ⚠️ Al juntar dos bloques del final del `.gs`, la llave de cierre del
+  primero queda AFUERA del conflicto: hay que reponerla (`node --check` lo avisa).
+- Servidor `2026-11-16-a` (SCRIPT_VERSION, ESTA_VERSION, SCRIPT_VERSION_ESPERADA) + la regla del bono Titanio copiada al `.gs` (`waAlDiaBonoCumple_`, `test_bono_al_dia_gs`).
+- `test_atc_lista_arriba` cambió a conciencia: la caja `atc-ia` (359) no cuenta en el orden de la 375. `test_actualizar_espera` 4c/5a falla igual con `main`: no es de esto.
+- Ideas visuales 390-440 (4 agentes, fotos de antes y después): https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183.
+
+
+
+### §4qc — ROHO: pedidos sin nombre de cliente (16/11)
+El dueño subió `DETALLE_NOTA_DE_VENTA_PARA_PROVEEDO_7.xlsx`: *«algunos pedidos salen sin nombre de cliente siendo que están… eso es gravísimo si no tomas
+todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
+- **Lo que pasó**: 18 pedidos de ROHO (notas 195621-195980, entregas 17-28/11) creados el sábado 15/11 entre 21:37 y 21:47 con TODAS las columnas del
+  cliente vacías (nombre, celular, dirección, NIT, quién recibe), solo nota/fecha/productos/pagado. Con el mismo Excel, el importador publicado (también
+  achicado) y el de la rama leen las 54 notas con nombre. Los 18 se crearon de a dos, intercalados y sin esperar la respuesta del anterior (el botón crea de
+  a uno en el orden del Excel): no salieron del botón con ese archivo (otro archivo u otro programa usando la página). La carga de las 08:12 del 16/11 salió bien.
+- **El agujero**: el importador solo exigía nota, fecha y producto; sin la columna del cliente (o con el título cambiado: «NOMBRE DEL CLIENTE»,
+  «DIRECCIÓN», «TELÉFONO») importaba igual, en silencio. Además tomaba el nombre SOLO de la primera fila de la nota y no traducía `&#xa;`/`&#xa0;`
+  (1 nombre y 9 observaciones de la planilla los tienen escritos tal cual).
+- **Hecho**: ver CLAUDE.md «🧾 ROHO: ningún pedido sin el nombre del cliente». Servidor 16-a con `falta_cliente`. Volver a subir el Excel completa los 18.
+
+- **PUBLICADO 16/11, página `2026-11-16-a`** (dueño: *«implemente el gs, sale todo ok, publica»*): el servidor `2026-11-16-a` (enlace fijo `263f43d…`,
+  13.141 líneas, con la revisión de Fable 1-6) IMPLEMENTADO por el dueño; comprobado desde acá con `{action:'getlog'}`: contesta `2026-11-16-a`. A `main` va
+  todo lo de la rama desde la publicación de la 14-a (`6e01cbc`): la 14-b y la 15-a (que no se habían publicado solas), las mejoras 344-389, el bono
+  Titanio, ROHO sin nombre (§4qc), la 335 del dashboard (ventas sin ficha en Kommo) y el `.gs` + `SCRIPT_VERSION_ESPERADA` en 16-a. Por el diff de
+  `6e01cbc..263f43d` aplicado sobre `main` (sin `herramientas/pedidos_correo`, que vive solo en la rama); NO van las visuales 390-440 (rama `mej390-junta`).
+  Las 68 pruebas que cargan el `.gs` en verde sobre `263f43d` (la batería entera ya había pasado en `075ae24`).
+- **Pedidos por correo (16/11)**: el dueño, *«no importa si sale lleno el panel, Eduardo y Ernesto pueden meter pedidos por más que salga lleno… cuando la
+  clave esté puesta se puede meter así esté lleno»*: `cargar_pedidos.py` guarda en el primer día con lugar y en el acto mueve al día pedido con `forzar`
+  (el bot junta «nuevo + cambio» en un aviso de pedido nuevo). Las «OCs del nuevo requerimiento» de Flavia Ordoñez (ROHO) son pedidos: 11-208 (T3, OC
+  260013347, martes 17/11) y 11-209 (T1, OC 260013346, miércoles 18/11), los dos en un día lleno. La tarea programada busca también a fordonez@.

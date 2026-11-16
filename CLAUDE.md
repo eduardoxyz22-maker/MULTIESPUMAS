@@ -25,6 +25,22 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     último dato bueno. Lo que puede faltar sin mentir va con `esencial=False` (contactos, razones de pérdida, catálogo). ⚠️ Una lectura
     NUEVA es esencial salvo que se diga lo contrario. 👥 La vendedora del mes anterior sin nada este mes entra al FINAL del equipo con 0,
     `soloPrev` y meta 0 si no está en `VENDOR_CFG` (CRM-03). `tests/test_generar_integridad.py` (Kommo de mentira, carpeta temporal).
+  - 🛒 **Las ventas del panel SIN ficha en Kommo entran** (mejora 335, 15/11; dueño: *«cerrado si ya se entregó… si no estaremos a la espera de que
+    el vendedor anote»*; PUBLICADO 16/11 con la página 2026-11-16-a): con la MISMA lectura del panel de las metas (`panel_leer`, no esencial), `ventas_panel_sin_ficha`
+    toma las ventas del equipo de Heaven (`VENDOR_CFG` + `PANEL_HEAVEN` = `MARCAS` heaven) sin ATC/RPT/sistema/borradores/`CONTA_EXCLUIR`, por el
+    día en que se CARGARON (`ts`, = «Fecha contrato» que escribe la 91). Entregada (✅, fecha ya pasada o venta de tienda) = cierre + cerrado +
+    pipeline; sin entregar = solo pipeline. Monto = `venta_total` (= `ventaTotal`; `parseMonto`, `r2` de JavaScript). No se suman: con `klead` o id
+    `kommo-<lead>`, ni la que tiene celular (últimos 8) + vendedora de una venta de Kommo que nadie reclama (lead en Compradores o tarjeta de la
+    bandeja, ≤45 días; una por lead). Mes anterior igual (MoM parejo). Se ve aparte: `v.panel`/`D.panelSinFicha` {c, bs, p, pbs}, fila de canal
+    «🛒 Venta sin ficha en Kommo» (`carry` + `panel`), «🛒 +N sin ficha» / «🛒 N por entregar», la ficha y el resumen de WhatsApp. ⚠️ Un vendedor
+    nuevo de Heaven va también en `PANEL_HEAVEN`; si cambia `ventaTotal`/`parseCobros`/`fueraDeConta`, cambia acá (`test_generar_integridad` §17-25,
+    `test_panel_meta` §5 con `--solo-datos-335`). Del panel solo salen números: nunca clientes, celulares ni OC.
+    🧾📄 **Con factura o remisión cuenta en el mes en que se ANOTÓ** (dueño, 15/11: *«si está marcada facturada cuenta como cierre en el mes por
+    más que se entregue en el siguiente»* y *«con nota de remisión tb cuenta… va en el mes que se marcó que se facturó o hizo la nota de
+    remisión»*): `_panel_clasificar` — factura o remisión («F»/«R» + N°, `_panel_doc`) → cierre el día en que se anotó (`fdocT`, que la página
+    guarda desde el 15/11 con `setDocVenta`: el primer guardado completo, corregir no lo cambia; sin él, el de la carga); «cuenta en <mes>» (`vmes`)
+    → el de la carga; entregada → el de la ENTREGA (`eF` o la fecha). Vale lo PRIMERO, nunca antes de la carga; lo pendiente sin documento →
+    pipeline del mes EN CURSO (mira hasta `PANEL_VENTANA_MESES`=6 atrás).
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 
@@ -937,6 +953,54 @@ las respuestas del cliente (`enc|…`) van al motor de la encuesta ANTES que Cla
   tocarlo prendido saca SOLO ese pedazo (también lo escrito a mano); los dos «llamar» se reemplazan. La ficha de logística suma «🏢 Es un edificio» (sin piso).
   🚫 **Sin botón «🕐 Horario…»** (dueño, 14/11: *«no me convence ya que no tenemos horas específicas»*): no volver a ponerlo sin que lo pida; la hora escrita
   a mano la sigue leyendo la ficha (`fichaNota`), como antes. `obsRevisar` no avisa por estas frases. `tests/test_frases_rapidas.js` (57).
+
+## 💬🤖🧠🏆 Las mejoras 344-389 (§4qb, 16/11; dueño: «286. Añádelo / 344: 3C,5B / 345,347,349,353,356,359,360,362,364,365…389» y «1A, 2B» para el bono; PUBLICADO 16/11, versión 2026-11-16-a, con todo lo de la 14-b y la 15-a; servidor `2026-11-16-a` IMPLEMENTADO 16/11 por el dueño (probar ✅, contesta `2026-11-16-a`; enlace fijo `263f43d…`, 13.141 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 14-a de `f22f45b…`, 8.941 líneas))
+Siete ramas de agentes juntadas (`mej-ia1/ia2/ia3/vis1/vis2/fun/chat`). Todo lo nuevo de la página va APAGADO en Playwright salvo su bandera, y lo que
+habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
+- **💬 344 Chat del equipo** (`chat.js`, archivo aparte, `CHAT_PRUEBA`; `.gs`: hojas «Chat»/«Chat vistos», `chatEnviar/chatLeer/chatBorrar/chatFoto` SIN el candado
+  de doPost —candado corto `mallCandado_`—, lo sin leer viaja en `list` como `chat:{v,n,t}`, 90 días con `chatPodar` 4 am): grupo, privado con Eduardo y entre
+  compañeras, ventanillas `b:log|…`/`b:conta|…`; @Bloki SIN IA (nunca plata en el grupo); `#11-188` abre la ficha; avisos de Windows (`escritorio.js` tipo «chat»),
+  Bloki y el número rojo; SIN WhatsApp (3C). ⚠️ `chatLeer` está en `PRACTICA_LECTURAS`. `test_chat` (76), `test_servidor_chat` (71).
+- **🤖 345/349** `obsIa` (Claude lee las observaciones al guardar, 4 s, `OBS_IA_PRUEBA`; lo prometido va a «Para hacer» en `cmp`, lo que dijo tarde en `oia`: los dos
+  pasan por `heredarMarcas`) · **347** `atcFotos` (motivo de `ATC_MOTIVOS`, prefijo `atf`, `ATF_PRUEBA`) · **353** la nota contra los precios (`IAC_PREGUNTA_V` 5,
+  `renglones:1`). Topes `OBS_IA_TOPE_DIA`/`ATC_FOTOS_TOPE_DIA`; `IA_OBS=0`/`IA_ATC_FOTOS=0` apagan.
+- **🧠 356** `porque_semana` lunes 08:00 y día 1 10:00 a WA_DUENO (hoja «IA semanal», sin Claude sale con reglas) y **362** «Quién necesita una mano» en Proyección
+  (`iaSemanalAccion_`, `PORQUE_PRUEBA`, `MANO_PRUEBA`) · **359/360/364** `iagAccion_` (`iaAtc`/`iaProductos`/`iaStockSemana`; filas `__atc_ia__`, `__prod_ia__`,
+  `__stock_ia__` en `esFilaSistema` vía `esFilaIag`; `IAG_TOPE_*`, `IA_GESTION=0` apaga).
+- **🏆 376 b el bono Titanio** (regla del dueño «1A, 2B»): cobra con la MÍNIMA y el panel al día (nada en rojo; el ámbar se perdona) en TODAS las fotos de los lunes
+  del mes; la foto la saca la página los lunes desde las 08:00 en `__al_dia_sem__` (nunca pisa una ya guardada); rige desde el 23/11/2026; un lunes sin foto no castiga.
+  ⚠️ La regla está DOS veces: `alDiaBonoCumple`/`ccmBonoRegla` (página) y `waAlDiaBonoCumple_`/`waCcmBonoRegla_` (`.gs`, en `waCcmCuenta_`): `tests/test_bono_al_dia_gs.js`
+  compara las dos. `AL_DIA_BONO_PRUEBA`.
+- **Visuales**: 366 ficha de Contabilidad ancha (`CTA_ANCHA_PRUEBA`; ⚠️ la ficha se arma por bloques `cab/arriba/row/prods/formPago/acciones`: algo nuevo de la ficha va
+  en su bloque, y `acciones` lleva la caja de la 379) · 368 Stock con el Plan primero · 369 Proyección con índice · 370 filtros en un renglón con la ficha al costado ·
+  371 «Tu día» al costado · 372 Guardar en «Tu pedido» · 373 globito de ayuda · 374 un renglón por producto en Contabilidad · 375 ATC con la lista arriba ·
+  376 la comisión en escalera · 377 «ⓘ Cómo funciona» (`ayudaComo`) · 378 encabezado bajo en 768 · 385 la fecha en letras. 367 quedó SOLO en fotos.
+- **Funcionales**: 379 factura/remisión al marcar «cargada» · 380 una venta cargada que cambia vuelve a «sin cargar» (`rc`) · 386 quién corrigió cada pago (`pH`) ·
+  387 lo atrasado que el GPS vio, aparte · 389 «🧹 Ordenar mi bandeja» · 384 el lugar guardado en los pedidos por correo (`cargar_pedidos.py` lee `__destinos__`) y
+  la zona de ROHO · 381/382 Bloki enseña y «📊 Uso del panel» (fila `__ensena__`) · 383 las ventas de tienda salen de «Por cargar» (dueño: «cada tienda carga al sistema
+  sus ventas propias»; `talCargaAfuera`).
+- ⏸️ `mayoristas_vencido` (181) APAGADO desde la 16-a (dueño: «A»): `WA_MV_ACTIVO=1` lo prende (`prenderMayoristasVencido`).
+- Página de las ideas visuales 390-440 con fotos de antes y después: https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183 (nada programado).
+- 🔐 **Revisión de Fable del `.gs` 16-a (16/11, ANTES de implementar)**: la clave del equipo se CIERRA ante un error (`cfgLeer_`/`cfgProp_`: una
+  `getProperties` por llamada; sin poder leer → `busy`, nunca pasa; GET_CERRADO → cerrado); «Rechazos» sin nada de lo que trae un pedido sin la
+  clave (`rechazoAjeno_`, 6 por minuto en la caché); WA_HOOK_MAL en la caché; texto libre con «'» si empieza con = + - @ ' (`celdaTexto_`/`celdaLeer_`,
+  `filaTexto_` en «Bot WhatsApp», «Borrados», «Geo», «IA comprobantes»; formato `@` en 17 columnas, marca TXT_COLS); el cuerpo de una plantilla ≤ 1.000
+  letras (`waCuerpoTope_`, 132005 = `WA_PLANTILLA_LARGA` baja al respaldo); `waRepasoBot_` no pierde lo tomado (try por mensaje + general).
+  🧷 **La ÚLTIMA línea del `.gs` es `var FIN_DEL_ARCHIVO = '<SCRIPT_VERSION>';`** (probar da ❌ CORTADO sin ella): al dar el enlace al dueño, decir
+  esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
+  `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
+
+## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
+El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
+Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón
+(los pedidos se crearon de a dos, intercalados; el botón crea de a uno). El agujero del panel: solo exigía nota, fecha y producto.
+- `rohoArmarPedidos` → `rohoColumnas` (títulos sin tildes ni «*», variantes «NOMBRE DEL CLIENTE», «CELULAR», «DIRECCIÓN»): sin NOMBRE CLIENTE, sin
+  TELEFONO/WHATSAPP o sin DIRECCION/REFERENCIA **no importa nada** y lo dice. Una nota en varias filas junta los datos de TODAS (`rohoArmarNota`); sin
+  nombre en ninguna va a «no se pueden». `xmlDes` traduce las entidades hex (`&#xa;`, `&#xa0;`); el enlace de Maps de la referencia va a `maps` (`rohoMapsDe`).
+- «📥 Crear» no corre dos veces (`ROHO_CREANDO`) y no crea uno sin nombre. 🩹 Volver a subir el Excel ofrece **Completar** las notas ya cargadas
+  (`rohoQueCompletar`, `rohoCompletar`): solo lo vacío; solo si falta cliente/celular/dirección o todavía no se entregó; nunca fecha, turno ni productos.
+- Servidor **2026-11-16-a**: `pedidoSinCliente_` → `falta_cliente` para una fila NUEVA sin cliente (no sistema, no retiro, no borrador de Kommo); en
+  `RECHAZOS_FIRMES` y `motivoDelServidor`. ⚠️ Un camino nuevo que cree pedidos tiene que mandar `cliente`. `tests/test_roho_cliente.js` (40; 37 rojas contra lo de antes).
 
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,

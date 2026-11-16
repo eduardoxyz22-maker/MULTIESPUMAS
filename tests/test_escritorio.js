@@ -148,7 +148,7 @@ function PREPARAR(){
   chk('4b escondido: no lee si la última lectura es de hace menos de 3 min', r.a===0, r);
   chk('4c pasados los 3 min lee una vez, y no otra enseguida', r.b===1 && r.c===1, r);
   r = await page.evaluate(() => { escAjustesAbrir(); var b=document.getElementById('modal-box'); return { t:b.innerText.replace(/\s+/g,' '), n:b.querySelectorAll('.esc-tipos input').length }; });
-  chk('4d la ventana «El panel en esta compu» con los cinco tipos', r.n===5 && /Prendidos/.test(r.t) && /Como programa/.test(r.t), r);
+  chk('4d la ventana «El panel en esta compu» con los seis tipos (el sexto, el chat del equipo: mejora 344)', r.n===6 && /Prendidos/.test(r.t) && /Como programa/.test(r.t) && /Me escribieron en el chat/.test(r.t), r);
   await page.context().close();
 
   // ---------- 5. sw.js ----------

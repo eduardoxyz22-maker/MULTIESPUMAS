@@ -81,6 +81,46 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   chk('4c. lo guardado en el navegador para otra vendedora sin meta del panel (Beto 12.345) sigue valiendo', /12[.,]345/.test(proyP), '');
   chk('4d. sin errores de JavaScript con la meta del panel', !errores.length, errores[0]);
 
+  /* 5. 🛒 (15/11, mejora 335) Las ventas del panel de pedidos SIN ficha en Kommo: generar.py ya las sumó (entregadas a los cierres y
+     a lo cerrado, las que faltan entregar al pipeline) y el dashboard las dice APARTE, para que no se confundan con las de Kommo.
+     Datos: el escenario de tests/test_generar_integridad.py (--solo-datos-335): Ana con 2 cierres de Kommo + 3 entregadas y 3 por
+     entregar del panel. */
+  const D5 = JSON.parse(execFileSync('python3', [path.join(__dirname, 'test_generar_integridad.py'), '--solo-datos-335'], { encoding: 'utf8', maxBuffer: 20e6 }));
+  fs.writeFileSync(tmp, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D5) + ';'));
+  const res5 = await abrir('resumen');
+  chk('5a. el resumen dice cuántas son del panel sin ficha en Kommo, cuántas entregadas (cierres) y cuántas por entregar (pipeline)',
+    /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 6 ya entregadas o con factura\/remisión \(Bs 4,590, cuentan como cierres\) y 4 por entregar \(Bs 3,750, solo en el pipeline\)/.test(res5),
+    (res5.match(/[^\n]*sin ficha en Kommo[^\n]*/) || [''])[0]);
+  chk('5b. el pulso del mes lo dice en «Cerrado en el mes» y en «Pipeline total»', /8 compradores · 🛒 6 sin ficha en Kommo/.test(res5) && /todas las etapas · 🛒 4 por entregar/.test(res5), '');
+  chk('5c. en «Rendimiento de origen» las de Kommo y las del panel suman los cierres del mes («🛒 Sin ficha en Kommo» 75 %)', /🛒 Sin ficha en Kommo\s*75%/.test(res5), (res5.match(/🛒 Sin ficha en Kommo[^\n]*\n?[^\n]*/) || [''])[0]);
+  const eq5 = await abrir('equipo');
+  chk('5d. debajo de los cierres y del pipeline de Ana, en la tabla del resumen y en su tarjeta del equipo: «🛒 +3 sin ficha» y «🛒 3 por entregar»',
+    /🛒 \+6 sin ficha/.test(res5) && /🛒 4 por entregar/.test(res5) && /🛒 \+6 sin ficha/.test(eq5) && /🛒 4 por entregar/.test(eq5),
+    [/🛒 \+6 sin ficha/.test(res5), /🛒 4 por entregar/.test(res5), /🛒 \+6 sin ficha/.test(eq5), /🛒 4 por entregar/.test(eq5)].join(' '));
+  let canal5 = '', nan5 = [], delPanel5 = [];
+  for (const v of (D5.nav || []).map(n => n.id)) {
+    const t = await abrir(v);
+    if (!canal5 && /Venta sin ficha en Kommo/.test(t)) canal5 = v;
+    if (/\bNaN\b|Infinity|undefined/.test(t)) nan5.push(v);
+    if (/\bdel panel\b/.test(t)) delPanel5.push(v);
+  }
+  chk('5e. la fila «🛒 Venta sin ficha en Kommo» aparece en la tabla de canales', !!canal5, canal5 || 'ninguna vista');
+  chk('5f. ninguna vista muestra NaN/Infinity/undefined con las ventas del panel', !nan5.length, nan5.join(', '));
+  chk('5g. no dice «del panel» (esa frase es solo de la meta que viene del panel, caso 4b)', !delPanel5.length, delPanel5.join(', '));
+  {
+    const page = await ctx.newPage();
+    page.on('pageerror', e => errores.push('drawer: ' + (e.stack || e.message)));
+    await page.addInitScript(() => { try { localStorage.clear(); localStorage.setItem('heaven_view', 'equipo'); } catch (e) {} });
+    await page.goto('file://' + tmp);
+    await page.waitForTimeout(900);
+    await page.locator('tr.clickable', { hasText: 'Ana Prueba' }).first().click();
+    await page.waitForTimeout(500);
+    const dr = await page.evaluate(() => (document.querySelector('aside.drawer.show') || {}).innerText || '');
+    await page.close();
+    chk('5h. la ficha de Ana lo dice con sus números (3 entregadas, 3 por entregar)', /Incluye 10 ventas cargadas en el panel de pedidos sin ficha en Kommo: 6 ya entregadas o con factura\/remisión/.test(dr), dr.slice(0, 200));
+  }
+  chk('5i. sin errores de JavaScript con las ventas del panel', !errores.length, errores[0]);
+
   await browser.close();
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   process.exit(FAIL ? 1 : 0);

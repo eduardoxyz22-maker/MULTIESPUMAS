@@ -194,15 +194,25 @@ function PREPARAR(){
   // ═══ 4. La pregunta al guardar ══════════════════════════════════════════════════════════════════
   console.log('\n── 4. La pregunta al guardar dice la cuenta ──');
   await reloj(LUN_18);
-  let g = await ev(async () => {
+  const nD0 = page.__dialogos.length;
+  let g0 = await ev(async () => {
     await _ver({ aca:0 }, null, '2026-10-05');
+    _llenarDatos('CLIENTE 18 15 OK');
+    var n0=window._saves.length;
+    await _guardar();
+    return { guardo:window._saves.length>n0 };
+  });
+  chk('(16/11, el dueño: «si programé cumpliendo los plazos, ¿por qué la alerta?») para el lunes 05/10 (después del viernes 02/10 que se puede) guarda SIN preguntar',
+      g0 && g0.guardo && !page.__dialogos.slice(nD0).some(t => /MIRÁ EL SALDO/.test(t)), [g0, page.__dialogos.slice(nD0).map(t => t.slice(0,80))]);
+  let g = await ev(async () => {
+    await _ver({ aca:0 }, null, '2026-09-30');
     _llenarDatos('CLIENTE 18 15');
     var n0=window._saves.length;
     await _guardar();
     return { guardo:window._saves.length>n0 };
   });
-  const preg = page.__dialogos.find(t => /ANTES DE GUARDAR, MIRÁ EL SALDO/.test(t)) || '';
-  chk('al guardar a las 18:15 algo que hay que fabricar, la pregunta de siempre sale…', !!preg, [preg.slice(0,200), g && g.__error]);
+  const preg = page.__dialogos.slice(nD0).find(t => /ANTES DE GUARDAR, MIRÁ EL SALDO/.test(t)) || '';
+  chk('al guardar a las 18:15 algo que hay que fabricar PARA ANTES de que llegue (el 30/09), la pregunta de siempre sale…', !!preg && /no llega/.test(preg), [preg.slice(0,200), g && g.__error]);
   chk('…con «~4 días» y «🕔 Ya pasaron las 16:30: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10»',
       /espera ~4 días/.test(preg) && /🕔 Ya pasaron las 16:30: se manda a producir el martes 29\/09, sale de fábrica el jueves 01\/10 \(48 h\) y ese día se recoge\./.test(preg), preg.slice(0,500));
   chk('…y guarda igual (nunca frena la venta)', g && g.guardo, g);

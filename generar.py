@@ -19,7 +19,7 @@ Requisitos: solo librería estándar de Python 3. El token de Kommo se lee de la
 variable de entorno KOMMO_TOKEN (NUNCA se escribe en el código ni en el HTML).
 """
 
-import os, sys, json, time, re, argparse, calendar, datetime, shutil, unicodedata
+import os, sys, json, time, re, math, argparse, calendar, datetime, shutil, unicodedata
 from collections import defaultdict
 from urllib import request as _rq, parse as _ps, error as _er
 
@@ -115,16 +115,23 @@ def _panel_leer_lista():
             time.sleep(4)
     raise RuntimeError(ult)
 
-def metas_del_panel(year, month):
-    """{nombre normalizado: Bs} con la meta de cada vendedora para ese mes, y una línea para el registro (sin datos de nadie).
-    {} = usar VENDOR_CFG."""
-    ym = f"{year}-{month:02d}"
+def panel_leer():
+    """🛒 (335) La ÚNICA lectura del panel de una corrida: (filas, '') o (None, por qué no). La usan las metas (175) y las ventas sin
+    ficha en Kommo (335). Nunca lanza: el panel no es esencial."""
     if not PANEL_URL:
-        return {}, "sin PANEL_URL: quedan las de VENDOR_CFG"
+        return None, "sin PANEL_URL"
     try:
-        filas = _panel_leer_lista()
+        return _panel_leer_lista(), ""
     except Exception as e:
-        return {}, f"no se pudo leer el panel ({str(e)[:60]}): quedan las de VENDOR_CFG"
+        return None, f"no se pudo leer el panel ({str(e)[:60]})"
+
+def metas_del_panel(year, month, lectura=None):
+    """{nombre normalizado: Bs} con la meta de cada vendedora para ese mes, y una línea para el registro (sin datos de nadie).
+    {} = usar VENDOR_CFG. `lectura` = lo que devolvió `panel_leer()` (si no viene, lee)."""
+    ym = f"{year}-{month:02d}"
+    filas, motivo = lectura if lectura is not None else panel_leer()
+    if filas is None:
+        return {}, f"{motivo}: quedan las de VENDOR_CFG"
     fila = next((p for p in filas if isinstance(p, dict) and str(p.get("id")) == META_FILA), None)
     if not fila:
         return {}, "el panel no tiene metas cargadas: quedan las de VENDOR_CFG"
@@ -148,7 +155,347 @@ def metas_del_panel(year, month):
         return {}, f"el panel no tiene metas por vendedora para {MESES[month].lower()} {year}: quedan las de VENDOR_CFG"
     return out, f"{len(out)} vendedora(s) con meta para {MESES[month].lower()} {year} (el presupuesto; si no tiene, la mínima)"
 
-DEFAULT_COLORS = ["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
+# ─────────────────────────────────────────────────────────────────────────────
+#  🛒 (15/11, mejora 335) LAS VENTAS DEL PANEL QUE NO TIENEN FICHA EN KOMMO
+#  El dashboard contaba solo lo que está en Kommo (lead en «Compradores» con «Fecha contrato»), y en noviembre 30 de 76 ventas de
+#  Heaven del panel no tenían ficha (ventas de tienda, que la 91 no cierra, y ventas que nadie unió): Jonathan salía con 1 cierre y
+#  «conversión 0,5 %, la más baja del equipo» con 9 ventas en el panel. Ahora esas ventas entran, con la regla del dueño (15/11):
+#  «cerrado si ya se entregó… si no estaremos a la espera de que el vendedor anote y a veces se olvidan» (no se espera la factura):
+#  · CERRADO = ya entregada: con el ✅ (`entregado`) o con la fecha de entrega ya pasada (hora de Bolivia). Una venta de tienda (sin
+#    fecha: se vende en la tienda) cuenta entregada el día que se vendió. Suma a los cierres, a lo cerrado y al pipeline.
+#  · PIPELINE = vendida y todavía no entregada (con fecha de hoy o por delante, o «el cliente avisa cuándo»): suma solo al pipeline.
+#  · EL MES = el día en que se CARGÓ la venta (`ts`, en Bolivia: `contaFecha` del panel), porque así cuenta el dashboard sus cierres:
+#    por «Fecha contrato», que la 91 escribe = el día de la venta (`kcFechaCampo_` del .gs). Si no, la misma venta contaría en un mes
+#    con ficha y en otro sin ficha.
+#  · 🧾📄 (15/11, dueño: «si está marcada facturada cuenta como cierre en el mes, por más que se entregue en el siguiente» y después «con
+#    nota de remisión tb cuenta. Si se anota que se hizo la nota de remisión o factura pero se entrega el otro mes va en el mes que se
+#    marcó») una venta con FACTURA o NOTA DE REMISIÓN (tipo «F» o «R» y su N°, `docVentaDe`/`docNumDe` de la página) es CIERRE en el mes
+#    en que se ANOTÓ el documento (`fdocT`, que la página guarda desde el 15/11; sin él, el mes en que se cargó), entregada o no. La
+#    marca de Contabilidad «esta venta cuenta en <mes>» (`vmes`, §4pb) la cierra en el mes en que se cargó. Una que se entrega es
+#    cierre en el mes de la ENTREGA (el ✅ con su día del cierre `eF`, o la fecha ya pasada). Vale lo que pase PRIMERO (nunca antes del
+#    mes en que se cargó): así no queda para siempre en el pipeline de un mes que ya cerró. Lo que falta entregar sin documento es
+#    pipeline del mes EN CURSO (sigue abierto ahora, aunque se haya cargado antes).
+#  · QUIÉNES: el equipo de Heaven (VENDOR_CFG + PANEL_HEAVEN = `MARCAS` heaven de pedidos.html; tests/test_generar_integridad.py
+#    compara las dos listas), sin ATC, RPT, filas del sistema, borradores de Kommo, Eduardo (mayoristas), ROHO ni los internos
+#    (`fueraDeConta` de la página, con CONTA_EXCLUIR). El monto = `ventaTotal` de la página (lo que falta + lo cobrado + el adelanto,
+#    sin el recargo por entrega), copiado como lo copia el .gs (`waVentaTotal_`).
+#  · SIN CONTAR DOS VECES: una venta con lead (`klead` en los productos, o id `kommo-<lead>`) ya la cuenta Kommo y no se suma. Y una sin
+#    lead que tiene el MISMO celular (los últimos 8) y la MISMA vendedora que una venta de Kommo que ninguna fila del panel reclama (un
+#    lead en «Compradores» de este mes o del anterior, o una tarjeta de Kommo que espera en la bandeja), a ≤ 45 días, se toma por esa
+#    misma venta (la regla de «ya cargada» de la 81, `borrCargadaDe`) y tampoco se suma: cada lead se lleva UNA sola.
+#  · NO es esencial (como las metas, 175): sin PANEL_URL o con la lectura caída, el dashboard sale como antes, solo con Kommo. Y del
+#    panel solo salen NÚMEROS por vendedora (cuántas y cuánto): ni clientes, ni celulares, ni OC al index.html ni al registro (públicos).
+# ─────────────────────────────────────────────────────────────────────────────
+PANEL_HEAVEN = ["Jonathan Monje", "Maria Flores", "Isabel Robledo", "Carola Chavez", "Mirian Salazar", "Andrea Orias", "Fabián Godoy"]   # = MARCAS heaven
+PANEL_INTERNOS = ["ALBA", "FABRICA", "MULTIESPUMA", "MULTIESPUMAS", "MORENO", "ALZER", "REPOSICION DE ALMACEN"]   # = CONTA_INTERNOS
+PANEL_EXCLUIR = ["ROHO", "Eduardo Añez"] + PANEL_INTERNOS                                                          # = CONTA_EXCLUIR
+PANEL_BORRADOR_EST = "Borrador Kommo"   # = BORRADOR_EST
+PANEL_BORRADOR_PREF = "kommo-"          # = BORRADOR_PREF
+PANEL_GEMELO_DIAS = 45                  # = BORR_VIVA_DIAS de la 81
+_PANEL_COBRO_RE = re.compile(r"^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([0-9.,]+)(?:\s*@\s*([0-9]{4}-[0-9]{2}-[0-9]{2}))?"
+                             r"(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*\Z")
+_PANEL_ATC_RPT = re.compile(r"^(ATC|RPT)\b", re.I | re.A)
+_JS_FLOAT = re.compile(r"[+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)")
+
+def _js_num(v):
+    """`Number(v)||0` de la página."""
+    if isinstance(v, bool):
+        return float(v)
+    if isinstance(v, (int, float)):
+        return 0.0 if v != v or v in (float("inf"), float("-inf")) else float(v)
+    s = str(v if v is not None else "").strip()
+    try:
+        x = float(s) if s else 0.0
+    except ValueError:
+        return 0.0
+    return 0.0 if x != x else x
+
+def _js_r2(n):
+    """`r2` de la página: Math.round(n*100)/100 (el medio centavo sube, como en JavaScript; `round` de Python redondea al par)."""
+    return math.floor(_js_num(n) * 100 + 0.5) / 100
+
+def _panel_monto(t):
+    """`parseMonto` de la página («Bs. 1.500.-» = 1500, «1.500,50» = 1500.5)."""
+    t = re.sub(r"[^0-9.,]", "", "" if t is None else str(t)).strip()
+    t = re.sub(r"^[.,]+|[.,]+$", "", t)
+    if not t:
+        return 0.0
+    if "," in t and "." in t:
+        t = t.replace(".", "").replace(",", ".", 1) if t.rfind(",") > t.rfind(".") else t.replace(",", "")
+    elif "," in t:
+        pc = t.split(",")
+        t = t.replace(",", "") if len(pc[-1]) == 3 else ("".join(pc[:-1]) + "." + pc[-1])
+    elif "." in t:
+        pt = t.split(".")
+        if len(pt[-1]) == 3:
+            t = t.replace(".", "")
+        elif len(pt) > 2:
+            t = "".join(pt[:-1]) + "." + pt[-1]
+    m = _JS_FLOAT.match(t)               # parseFloat: el número del principio
+    return _js_r2(float(m.group(0))) if m else 0.0
+
+def _panel_metodo(m):
+    """`normMetodo` de la página."""
+    m = (m or "").strip().lower()
+    if m.startswith("efec"):
+        return "Efectivo"
+    if m == "qr":
+        return "QR"
+    if m.startswith("tarj"):
+        return "Tarjeta"
+    return ""
+
+def _panel_cobros(txt):
+    """`parseCobros` de la página, solo lo que hace falta para el total: [{monto, ant (~ adelanto), env (^ recargo por entrega)}]."""
+    base = re.sub(r"\s*·\s*REGISTRADO\s*\Z", "", str(txt or ""), flags=re.I)
+    out = []
+    for seg in base.split("+"):
+        t = seg.strip(); ant = env = False
+        if t[:1] == "~":
+            ant = True; t = t[1:].strip()
+        elif t[:1] == "^":
+            env = True; t = t[1:].strip()
+        m = _PANEL_COBRO_RE.match(t)
+        if not m:
+            continue
+        if not _panel_metodo(m.group(1) or "") and not ant and not env:
+            continue
+        n = _panel_monto(m.group(3))
+        if not n > 0:
+            continue
+        out.append({"monto": n, "ant": ant, "env": env})
+    return out
+
+def venta_total(p):
+    """`ventaTotal(p)` de la página: lo que falta cobrar + lo cobrado + el adelanto (el recargo por entrega no es de la venta)."""
+    todo = _panel_cobros(p.get("metodoPago"))
+    ant = next((c for c in todo if c["ant"] and not c["env"]), None)
+    cob = 0.0
+    for c in todo:
+        if not c["ant"] and not c["env"]:
+            cob += c["monto"]
+    acu = _js_num(p.get("acuenta"))
+    a = ant["monto"] if ant else (_js_r2(acu) if acu > 0 else 0.0)
+    return _js_r2(_js_r2(_js_num(p.get("saldo")) + _js_r2(cob)) + a)
+
+def _panel_dia(p):
+    """`contaFecha` de la página: el día de Bolivia en que se cargó (`ts`, milisegundos); sin `ts`, la fecha."""
+    t = _js_num(p.get("ts"))
+    if t:
+        try:
+            return datetime.datetime.fromtimestamp(t / 1000.0, BOL_TZ).strftime("%Y-%m-%d")
+        except (OverflowError, OSError, ValueError):
+            return ""
+    return str(p.get("fecha") or "")
+
+def _panel_es_tienda(p):
+    """`esVentaTienda`: la dirección empieza con «SALIÓ DE TIENDA» o la zona es «TIENDA»."""
+    return _norm_vend(str(p.get("direccion") or "")).startswith("salio de tienda") or _norm_vend(str(p.get("zona") or "")) == "tienda"
+
+def _panel_lead(p):
+    """El lead de Kommo de una fila: el de su id (`kommo-<lead>`) o la marca `klead` de los productos ('' = sin ficha)."""
+    pid = str(p.get("id") or "")
+    if pid.startswith(PANEL_BORRADOR_PREF):
+        return pid[len(PANEL_BORRADOR_PREF):]
+    for x in (p.get("productos") if isinstance(p.get("productos"), list) else []):
+        if isinstance(x, dict) and x.get("klead"):
+            return str(x.get("klead"))
+    return ""
+
+def _panel_fuera(p):
+    """`fueraDeConta(p, 'tienda')`: ATC, RPT, filas del sistema (todas con «__») y los vendedores de CONTA_EXCLUIR."""
+    if _PANEL_ATC_RPT.match(str(p.get("oc") or "").strip()) or str(p.get("id") or "").startswith("__"):
+        return True
+    return _norm_vend(str(p.get("vendedor") or "")) in {_norm_vend(x) for x in PANEL_EXCLUIR}
+
+def _panel_entregada(p, hoy):
+    """La regla del dueño: con el ✅, o la fecha de entrega ya pasó, o es una venta de tienda (se entregó el día que se vendió)."""
+    e = p.get("entregado")
+    if (e.strip().upper()[:1] in ("S", "T")) if isinstance(e, str) else bool(e):
+        return True
+    f = str(p.get("fecha") or "")[:10]
+    if f:
+        return f < hoy
+    return _panel_es_tienda(p)
+
+PANEL_VENTANA_MESES = 6                 # una venta cargada hasta 6 meses antes puede cerrar (entregarse) en este mes
+
+def _panel_prods(p):
+    return [x for x in (p.get("productos") if isinstance(p.get("productos"), list) else []) if isinstance(x, dict)]
+
+def _panel_doc(p):
+    """🧾📄 Con factura o nota de remisión (`docVentaDe(p)` «F» o «R» y `docNumDe(p)`, el primer renglón que los tenga, como la página):
+    el día de Bolivia en que se anotó (`docTDe(p)` = `fdocT`, ms) o "" si no se sabe (anotada antes del 15/11). None = sin documento."""
+    tipo = next((x.get("fdoc") for x in _panel_prods(p) if x.get("fdoc") in ("F", "R")), "")
+    num = next((str(x.get("fdocn")).strip() for x in _panel_prods(p) if x.get("fdocn") is not None and str(x.get("fdocn")).strip()), "")
+    if tipo not in ("F", "R") or not num:
+        return None
+    t = next((_js_num(x.get("fdocT")) for x in _panel_prods(p) if _js_num(x.get("fdocT")) > 0), 0)
+    if not t:
+        return ""
+    try:
+        return datetime.datetime.fromtimestamp(t / 1000.0, BOL_TZ).strftime("%Y-%m-%d")
+    except (OverflowError, OSError, ValueError):
+        return ""
+
+def _panel_vmes(p):
+    """`ventaMesMarca(p)`: la marca de Contabilidad «esta venta cuenta en <mes>» ('AAAA-MM' o '')."""
+    return next((str(x.get("vmes")) for x in _panel_prods(p) if re.match(r"^\d{4}-\d{2}$", str(x.get("vmes") or ""))), "")
+
+def _panel_dia_entrega(p, hoy, carga):
+    """El día en que se entregó una venta ya entregada: el del cierre de entregas (`eF`) con el ✅; si no, su fecha (si no es después
+    de hoy: un ✅ adelantado es de hoy); sin fecha (venta de tienda), el día de la venta."""
+    f = str(p.get("fecha") or "")[:10]
+    e = p.get("entregado")
+    if (e.strip().upper()[:1] in ("S", "T")) if isinstance(e, str) else bool(e):
+        ef = next((str(x.get("eF"))[:10] for x in _panel_prods(p) if re.match(r"^\d{4}-\d{2}-\d{2}", str(x.get("eF") or ""))), "")
+        if ef:
+            return ef
+        return min(f, hoy) if f else carga
+    return f or carga
+
+def _panel_clasificar(p, hoy, ym):
+    """(mes 'AAAA-MM', día del mes para su semana, cierre True/False) de una venta del panel sin ficha, o None si no es de ningún
+    mes que se mire. Ver la regla arriba (🧾 15/11)."""
+    carga = _panel_dia(p)
+    if not re.match(r"^\d{4}-\d{2}-\d{2}$", carga or ""):
+        return None
+    cm = carga[:7]
+    dia = lambda d: d if re.match(r"^\d{4}-\d{2}-\d{2}$", d or "") and d > carga else carga   # nunca antes del día en que se cargó
+    cierres = []                                    # los días en que se pudo cerrar: vale el PRIMERO
+    if _panel_vmes(p):
+        cierres.append(carga)                       # «cuenta en <el mes en que se cargó>»
+    doc = _panel_doc(p)
+    if doc is not None:
+        cierres.append(dia(doc))                    # el día en que se anotó la factura o la remisión (sin día: el de la carga)
+    if _panel_entregada(p, hoy):
+        cierres.append(dia(_panel_dia_entrega(p, hoy, carga)))
+    if cierres:
+        d = min(cierres)
+        return (d[:7], int(carga[8:10]) if d[:7] == cm else int(d[8:10]), True)
+    if cm > ym:
+        return None
+    return (ym, int(carga[8:10]) if cm == ym else 1, False)
+
+def _tel8(t):
+    """`telClave` de la página: los últimos 8 números («+591 70863187» = «70863187»); '' con menos de 7."""
+    d = re.sub(r"\D", "", str(t or ""))
+    return d[-8:] if len(d) >= 7 else ""
+
+def kommo_tels(leads, contact_phone, user_map):
+    """Las ventas de Kommo para no contar dos veces: [{lead, tels (últimos 8), v (vendedora sin tildes), t (ms de la Fecha contrato)}]."""
+    out = []
+    for ld in (leads or []):
+        tels = set()
+        for c in ((ld.get("_embedded", {}) or {}).get("contacts") or []):
+            for _k, shown in ((contact_phone or {}).get(c.get("id")) or []):
+                t8 = _tel8(shown)
+                if t8:
+                    tels.add(t8)
+        raw = (user_map or {}).get(ld.get("responsible_user_id")) or ""
+        out.append({"lead": str(ld.get("id") or ""), "tels": tels, "v": _norm_vend(raw.split(" - ", 1)[0]),
+                    "t": int(_js_num(ld.get("_contract_ts"))) * 1000})
+    return out
+
+def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
+    """Las ventas del panel sin ficha en Kommo de ese mes y del anterior, por vendedora: ({"cur"|"prev": {clave: {name, ventas:
+    [[día, Bs, entregada]]}}, "tot": {"cur"|"prev": {c, bs, p, pbs, sm}}, "n": {conLead, parecen}}, línea para el registro).
+    (None, motivo) si no hay lectura. `hoy` = 'AAAA-MM-DD' de Bolivia."""
+    if not isinstance(filas, list):
+        return None, "sin la lectura del panel: el dashboard cuenta solo Kommo"
+    equipo = {_norm_vend(n): n for n in PANEL_HEAVEN}
+    for n in VENDOR_CFG:
+        equipo.setdefault(_norm_vend(n), n)
+    ym = f"{year}-{month:02d}"
+    ym_prev = f"{year}-{month - 1:02d}" if month > 1 else f"{year - 1}-12"
+    _md = year * 12 + (month - 1) - PANEL_VENTANA_MESES
+    ym_desde = f"{_md // 12}-{_md % 12 + 1:02d}"
+    reclamados, borradores, cand = set(), [], []
+    n = {"conLead": 0, "parecen": 0}
+    for p in filas:
+        if not isinstance(p, dict):
+            continue
+        pid, lead = str(p.get("id") or ""), _panel_lead(p)
+        if _norm_vend(str(p.get("estado") or "")) == _norm_vend(PANEL_BORRADOR_EST):   # una venta de Kommo que espera en la bandeja
+            if pid.startswith(PANEL_BORRADOR_PREF):
+                borradores.append({"lead": lead, "tel": _tel8(p.get("celular")), "t": int(_js_num(p.get("ts"))),
+                                   "v": _norm_vend(re.split(r"\s+[-–]\s+", str(p.get("vendedor") or ""))[0])})
+            continue
+        if lead:
+            reclamados.add(lead)
+        if _panel_fuera(p):
+            continue
+        vk = _norm_vend(str(p.get("vendedor") or ""))
+        if vk not in equipo:
+            continue
+        dia = _panel_dia(p)
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", dia or "") or dia[:7] < ym_desde:
+            continue
+        if lead:
+            if dia[:7] == ym:
+                n["conLead"] += 1
+            continue
+        cl = _panel_clasificar(p, hoy, ym)     # 🧾📄 (15/11) factura o remisión → el mes en que se anotó; entregada → el de la entrega; pendiente → este mes
+        if not cl or cl[0] not in (ym, ym_prev):
+            continue
+        cand.append({"v": vk, "mes": cl[0], "dd": cl[1], "ts": int(_js_num(p.get("ts"))), "tel": _tel8(p.get("celular")),
+                     "bs": venta_total(p), "ent": cl[2]})
+    # la venta de Kommo que ninguna fila reclama se lleva UNA venta sin ficha con su celular y su vendedora (la más cercana)
+    leads = {}
+    for k in (kommo_leads or []):
+        lid = str(k.get("lead") or "")
+        if not lid or lid in reclamados:
+            continue
+        e = leads.setdefault(lid, {"tels": set(), "v": k.get("v") or "", "t": int(k.get("t") or 0)})
+        e["tels"] |= set(k.get("tels") or ())
+    for b in borradores:
+        if not b["lead"] or b["lead"] in reclamados:
+            continue
+        e = leads.setdefault(b["lead"], {"tels": set(), "v": b["v"], "t": b["t"]})
+        if b["tel"]:
+            e["tels"].add(b["tel"])
+        if not e["v"]:
+            e["v"] = b["v"]
+        if not e["t"]:
+            e["t"] = b["t"]
+    ventana = PANEL_GEMELO_DIAS * 86400000
+    for lid in sorted(leads, key=lambda l: (leads[l]["t"], l)):
+        e = leads[lid]
+        if not e["tels"] or not e["v"]:
+            continue
+        mejor = None
+        for c in cand:
+            if c.get("gemelo") or not c["tel"] or c["tel"] not in e["tels"] or c["v"] != e["v"]:
+                continue
+            if e["t"] and c["ts"] and abs(c["ts"] - e["t"]) > ventana:
+                continue
+            if mejor is None or abs(c["ts"] - e["t"]) < abs(mejor["ts"] - e["t"]):
+                mejor = c
+        if mejor is not None:
+            mejor["gemelo"] = lid
+    out = {"cur": {}, "prev": {}, "n": n,
+           "tot": {"cur": dict(c=0, bs=0.0, p=0, pbs=0.0, sm=0), "prev": dict(c=0, bs=0.0, p=0, pbs=0.0, sm=0)}}
+    for c in cand:
+        if c.get("gemelo"):
+            if c["mes"] == ym:
+                n["parecen"] += 1
+            continue
+        k = "cur" if c["mes"] == ym else "prev"
+        out[k].setdefault(c["v"], {"name": equipo[c["v"]], "ventas": []})["ventas"].append([c["dd"], c["bs"], c["ent"]])
+        t = out["tot"][k]
+        if c["ent"]:
+            t["c"] += 1; t["bs"] = _js_r2(t["bs"] + c["bs"])
+        else:
+            t["p"] += 1; t["pbs"] = _js_r2(t["pbs"] + c["bs"])
+        if not c["bs"] > 0.005:
+            t["sm"] += 1
+    tc = out["tot"]["cur"]
+    txt = (f"{tc['c']} entregada(s) o con factura/remisión (cierres) y {tc['p']} por entregar (pipeline) sin ficha en Kommo en {MESES[month].lower()} {year}"
+           f" · {n['conLead']} ya con ficha · {n['parecen']} con el celular de una venta de Kommo (no se suman)"
+           + (f" · {tc['sm']} sin monto anotado" if tc["sm"] else ""))
+    return out, txt
+
+DEFAULT_COLORS =["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
 
 SUC_COLORS = {"Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D98300"}
 
@@ -525,7 +872,43 @@ def blank_vendor():
                 tarde=0, backlog=0, fuera=0, entra_dentro=0, entra_fuera=0, fix_dentro=0, fix_fuera=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
                 wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0],
-                wrl=[[],[],[],[],[]])
+                wrl=[[],[],[],[],[]],
+                # 🛒 (335) las ventas del panel sin ficha en Kommo: entregadas (c, bs), por entregar (p, pbs) y lo que suman al pipeline
+                pz_c=0, pz_bs=0.0, pz_p=0, pz_pbs=0.0, pz_pipe=0.0, pz_pipe_sd=0.0)
+
+def _bs_json(x):
+    """Bs para el JSON: con centavos solo si los hay (los de Kommo son enteros; los del panel pueden traer centavos)."""
+    r = round(float(x or 0), 2)
+    return int(r) if r == int(r) else r
+
+def _panel_sumar(vcur, vprev, suc_of, panel_ventas):
+    """🛒 (335) Suma las ventas del panel sin ficha en Kommo a cada vendedora, este mes y el anterior: las entregadas a cierres, a lo
+    cerrado, a su semana y al pipeline; las que faltan entregar, solo al pipeline. La vendedora se empareja con su nombre de Kommo
+    sin tildes ni mayúsculas («Carola Chavez» del panel = «Carola Chávez» de Kommo); la que no está en Kommo entra con el del panel."""
+    if not panel_ventas:
+        return
+    nombres = {}
+    for nm in list(vprev.keys()) + list(vcur.keys()):     # el nombre de Kommo (el de este mes manda)
+        nombres[_norm_vend(nm)] = nm
+    for clave, vd in (("cur", vcur), ("prev", vprev)):
+        for nk, o in (panel_ventas.get(clave) or {}).items():
+            nm = nombres.get(nk) or o.get("name") or nk
+            nombres[nk] = nm
+            d = vd[nm]
+            if nm not in suc_of:          # la que no está en Kommo: su tienda de Kommo o de VENDOR_CFG
+                suc_of[nm] = SUC_DE_USUARIO.get(nk) or (vendor_cfg(nm) or {}).get("suc") or "Sin sucursal"
+            for dia, bs, ent in (o.get("ventas") or []):
+                wk = min(4, max(0, (int(dia) - 1) // 7))
+                if ent:
+                    d["cierres"] += 1; d["value"] += bs; d["pz_c"] += 1; d["pz_bs"] += bs
+                    d["wc"][wk] += 1; d["wm"][wk] += bs
+                    if dia <= CURDAY:
+                        d["cierres_sd"] += 1; d["value_sd"] += bs
+                else:
+                    d["pz_p"] += 1; d["pz_pbs"] += bs
+                d["pipeline"] += bs; d["pz_pipe"] += bs
+                if dia <= CURDAY:
+                    d["pz_pipe_sd"] += bs
 
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
@@ -659,10 +1042,11 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None, metas_panel=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None, metas_panel=None, panel_ventas=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, suc_prev, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
+    _panel_sumar(vcur, vprev, suc_of, panel_ventas)   # 🛒 (335) antes de ordenar: el orden y la corona ya las cuentan
 
     names = list(vcur.keys())
     # ordena: por cierres desc, así el color/índice es estable
@@ -764,8 +1148,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         u24w = [ (round(d["wu"][k] / d["wl"][k] * 100) if d["wl"][k] else None) for k in range(5) ]
         # promedio de minutos de 1ª acción humana por semana (None si no hubo acciones esa semana)
         prw = [ (round(_median(d["wrl"][k])) if d["wrl"][k] else None) for k in range(5) ]
-        weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w, "prw": prw}
-        weekly_prev = {"c": pv["wc"], "m": pv["wm"]}
+        weekly      = {"c": d["wc"], "m": [_bs_json(x) for x in d["wm"]], "u24": u24w, "prw": prw}
+        weekly_prev = {"c": pv["wc"], "m": [_bs_json(x) for x in pv["wm"]]}
         _meta_panel = (metas_panel or {}).get(_norm_vend(name))   # 🎯 (175) la meta en Bs cargada en el panel, si la hay
         team.append({
             "ini": cfg.get("ini") or "".join([p[0] for p in name.split()[:2]]).upper(),
@@ -774,8 +1158,9 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "color": cfg.get("color") or DEFAULT_COLORS[i % len(DEFAULT_COLORS)],
             "photo": "",
             "leads": d["leads"], "prevLeads": prev_leads_sd, "cierres": d["cierres"],
-            "conv": conv, "ticket": ticket, "value": d["value"],
-            "pipeline": (int(round(pipe_by_name.get(name, 0))) if pipe_by_name is not None else d["pipeline"]),
+            "conv": conv, "ticket": ticket, "value": _bs_json(d["value"]),
+            # 🛒 (335) el pipeline de Kommo + lo vendido en el panel sin ficha (entregado o no)
+            "pipeline": (int(round(pipe_by_name.get(name, 0) + d["pz_pipe"])) if pipe_by_name is not None else _bs_json(d["pipeline"])),
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "interesado": d["interesado"], "u24": u24pct, "promTxt": prom,
@@ -788,12 +1173,12 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             # el equipo) lleva la suya; si no, 0 (no infla la meta del equipo).
             "metaCierres": cfg.get("metaCierres", 0 if name in _solo_prev else max(8, d["cierres"] + 5)),
             # 🎯 (13/11, mejora 175) la meta en Bs: la del PANEL de pedidos si la tiene para este mes; si no, la de siempre.
-            "metaMonto": _meta_panel if _meta_panel else cfg.get("metaMonto", 0 if name in _solo_prev else max(20000, d["value"])),
+            "metaMonto": _meta_panel if _meta_panel else cfg.get("metaMonto", 0 if name in _solo_prev else _bs_json(max(20000, d["value"]))),
             "v": v_tone,
             "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
-                     "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"],
-                     "pipeline": (int(round(pipe_prev_by_name.get(name, 0))) if pipe_prev_by_name is not None else 0),
-                     "leadsFull": pv["leads"], "cierresFull": pv["cierres"], "valueFull": pv["value"]},
+                     "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": _bs_json(pv["value_sd"]),
+                     "pipeline": (int(round(pipe_prev_by_name.get(name, 0) + pv["pz_pipe_sd"])) if pipe_prev_by_name is not None else 0),
+                     "leadsFull": pv["leads"], "cierresFull": pv["cierres"], "valueFull": _bs_json(pv["value"])},
             "origen": {"manual": d["manual"], "bot": d["bot"]},
             "weekly": weekly, "weeklyPrev": weekly_prev,
         })
@@ -803,12 +1188,16 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             team[-1]["soloPrev"] = True
         if _meta_panel:
             team[-1]["metaFuente"] = "panel"   # el dashboard no deja que lo guardado en el navegador la tape
+        if d["pz_c"] or d["pz_p"]:
+            # 🛒 (335) lo que de sus números viene del panel sin ficha en Kommo (ya está sumado arriba): c entregadas por Bs bs
+            # (en cierres y cerrado) y p por entregar por Bs pbs (solo en el pipeline). Solo números: ni clientes ni OC.
+            team[-1]["panel"] = {"c": d["pz_c"], "bs": _bs_json(d["pz_bs"]), "p": d["pz_p"], "pbs": _bs_json(d["pz_pbs"])}
 
     # ── globales ──
     G_leads   = sum(t["leads"] for t in team)
     G_prev    = sum(t["prevLeads"] for t in team)
     G_cierres = sum(t["cierres"] for t in team)
-    G_value   = sum(t["value"] for t in team)
+    G_value   = _bs_json(sum(t["value"] for t in team))
     G_pipeline = sum(t["pipeline"] for t in team)
     G_ticket  = round(G_value / G_cierres) if G_cierres else 0
     G_unidades = sum(t["unidades"] for t in team)
@@ -954,6 +1343,19 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "byV": carry_byV, "byCh": carry_byCh,
             "manual": carry_man, "bot": carry_bot,
         })
+    # 🛒 (335) Las ventas del panel sin ficha en Kommo, en su propia fila (como la de meses anteriores: sin leads ni conversión), para
+    # que la tabla de canales siga sumando los cierres del mes. «pipeline» acá es lo cerrado, como en las otras filas de canales.
+    _pz_names = [n for n in names if vcur[n]["pz_c"] or vcur[n]["pz_p"]]
+    if _pz_names:
+        _pz_c = sum(vcur[n]["pz_c"] for n in _pz_names)
+        _pz_bs = sum(vcur[n]["pz_bs"] for n in _pz_names)
+        channels.append({
+            "ic": "🛒", "name": "Venta sin ficha en Kommo", "leads": 0, "pct": 0, "cierres": _pz_c, "conv": 0,
+            "ticket": round(_pz_bs / _pz_c) if _pz_c else 0, "pipeline": _bs_json(_pz_bs), "cls": "carry", "carry": True, "panel": True,
+            "pend": sum(vcur[n]["pz_p"] for n in _pz_names), "pendBs": _bs_json(sum(vcur[n]["pz_pbs"] for n in _pz_names)),
+            "byV": sorted([{"name": n, "leads": 0, "cierres": vcur[n]["pz_c"], "pend": vcur[n]["pz_p"]} for n in _pz_names],
+                          key=lambda r: (-r["cierres"], -r["pend"], r["name"])),
+        })
 
     # ── tasa de cierre por tipo de carga (de los leads del mes, cuántos cerraron) ──
     origin["manualClosed"] = man_close
@@ -1061,9 +1463,10 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     if convs:
         worst = min(convs, key=lambda x: x[1])[0]
         if worst["conv"] < 4 and worst["leads"] >= 20:
+            _wpz = (worst.get("panel") or {}).get("c", 0)   # 🛒 (335) cuántos de esos cierres son del panel sin ficha en Kommo
             alerts.append({"sev":"red","who":worst["name"],
                 "t":f"Conversión {worst['conv']}% — la más baja del equipo",
-                "d":f"{worst['cierres']} cierres sobre {worst['leads']} leads, bajo el umbral de 4%.",
+                "d":f"{worst['cierres']} cierres" + (f" ({_wpz} sin ficha en Kommo)" if _wpz else "") + f" sobre {worst['leads']} leads, bajo el umbral de 4%.",
                 "act":"Coaching + auditar cotizaciones."})
     nr = sorted(team, key=lambda t: t["noRespPct"], reverse=True)
     if nr and nr[0]["noRespPct"] >= 40:
@@ -1144,7 +1547,20 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "backlogRows": bk_rows, "alerts": alerts, "dupRows": dup_rows[:50],
         "kommoBase": f"https://{SUBDOMAIN}.kommo.com",
         "workerUrl": WORKER_URL,
+        **({"panelSinFicha": _panel_resumen(panel_ventas, team)} if panel_ventas else {}),
     }
+
+def _panel_resumen(panel_ventas, team):
+    """🛒 (335) Lo que dice el dashboard de las ventas del panel sin ficha en Kommo de ESTE mes: c entregadas (Bs bs, en cierres) y p por
+    entregar (Bs pbs, en el pipeline); `sm` sin monto anotado; `conLead` ya con su ficha (las cuenta Kommo) y `parecen` con el celular de
+    una venta de Kommo (no se suman). Solo números."""
+    tot = (panel_ventas.get("tot") or {}).get("cur") or {}
+    n = panel_ventas.get("n") or {}
+    return {"c": sum((t.get("panel") or {}).get("c", 0) for t in team),
+            "bs": _bs_json(sum((t.get("panel") or {}).get("bs", 0) for t in team)),
+            "p": sum((t.get("panel") or {}).get("p", 0) for t in team),
+            "pbs": _bs_json(sum((t.get("panel") or {}).get("pbs", 0) for t in team)),
+            "sm": tot.get("sm", 0), "conLead": n.get("conLead", 0), "parecen": n.get("parecen", 0)}
 
 def build_archives():
     """Una entrada por mes (sin duplicados). El mes en curso apunta a "#" (index.html en vivo);
@@ -1358,9 +1774,17 @@ def build_wsp(pd):
         hoy = now.strftime("%d/%m")   # (25/10) la fecha de Bolivia: `date.today()` es la del runner (UTC) y después de las 20:00 decía mañana
         rank = sorted(team, key=lambda t: (t["cierres"], t["value"]), reverse=True)
         medals = ["🥇", "🥈", "🥉"] + ["•"] * 10
+        def _pz(t):   # 🛒 (335) cuántos de sus cierres son del panel sin ficha en Kommo
+            c = (t.get("panel") or {}).get("c", 0)
+            return f" (🛒 {c} sin ficha en Kommo)" if c else ""
         rank_lines = "\n".join(
-            f"{medals[i] if t['cierres'] > 0 else '•'} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"   # (06/11) sin medalla con 0 cierres
+            f"{medals[i] if t['cierres'] > 0 else '•'} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}{_pz(t)}"   # (06/11) sin medalla con 0 cierres
             for i, t in enumerate(rank))
+        psf = pd.get("panelSinFicha") or {}
+        psf_line = ""
+        if psf.get("c") or psf.get("p"):
+            psf_line = (f"_🛒 Incluye {psf.get('c', 0)} venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura/remisión (Bs {bs(psf.get('bs', 0))})"
+                        + (f" y {psf.get('p', 0)} por entregar en el pipeline (Bs {bs(psf.get('pbs', 0))})" if psf.get("p") else "") + "_\n")
         peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
         bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)
         crit = M.get("criticos7d", 0)
@@ -1381,7 +1805,7 @@ def build_wsp(pd):
             f"*📊 Heaven Colchones — resumen {hoy}*\n\n"
             f"*Mes de {pd['month']}:* {G['leads']} leads · {G['cierres']} cierres ({conv}%) · "
             f"Bs {bs(G['cerrado'])} cerrado · pipeline Bs {bs(G['pipeline'])}\n"
-            + prev_line +
+            + psf_line + prev_line +
             f"\n*🏆 Ranking de cierres*\n{rank_lines}\n\n"
             f"*⚠️ Focos de la semana*\n" + "\n".join(focos) + "\n\n"
             f"*🎯 Meta del mes:* {meta_tot} cierres — faltan {gap}. ¡Vamos equipo! 💪")
@@ -1906,16 +2330,32 @@ def main():
         sys.exit(1)
 
     # 🎯 (13/11, mejora 175) las metas en Bs de las vendedoras, del panel de pedidos. NO es esencial: si falla, VENDOR_CFG.
+    # 🛒 (15/11, mejora 335) UNA sola lectura del panel para las metas y para las ventas sin ficha en Kommo.
     print("  🎯 metas del panel de pedidos…")
     try:
-        metas_panel, _mp_txt = metas_del_panel(YEAR, MONTH)
-    except Exception as _mpe:      # nada de acá puede frenar la publicación
+        _lectura = panel_leer()
+    except Exception as _le:       # nada de acá puede frenar la publicación
+        _lectura = (None, f"no se pudo leer el panel ({type(_le).__name__})")
+    try:
+        metas_panel, _mp_txt = metas_del_panel(YEAR, MONTH, lectura=_lectura)
+    except Exception as _mpe:
         metas_panel, _mp_txt = {}, f"error al leer las metas del panel ({type(_mpe).__name__}): quedan las de VENDOR_CFG"
     print("     → " + _mp_txt)
     _DIAG.append("metas_panel=" + _mp_txt)
+    print("  🛒 ventas del panel sin ficha en Kommo…")
+    try:
+        if _lectura[0] is None:
+            panel_ventas, _pv_txt = None, f"{_lectura[1]}: el dashboard cuenta solo Kommo"
+        else:
+            panel_ventas, _pv_txt = ventas_panel_sin_ficha(_lectura[0], YEAR, MONTH, now.strftime("%Y-%m-%d"),
+                                                           kommo_tels(list(won) + list(won_prev), contact_phone, user_map))
+    except Exception as _pve:      # tampoco esto: sin él, el dashboard cuenta solo Kommo, como antes
+        panel_ventas, _pv_txt = None, f"error al contar las ventas del panel ({type(_pve).__name__}): el dashboard cuenta solo Kommo"
+    print("     → " + _pv_txt)
+    _DIAG.append("ventas_panel=" + _pv_txt)
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map, metas_panel=metas_panel)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map, metas_panel=metas_panel, panel_ventas=panel_ventas)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)
