@@ -87,6 +87,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var h=fdHtml('stock');
     var box=document.getElementById('__fdbox'); box.innerHTML=h;
     var abierto=document.getElementById('fd-caja').open, atc=document.getElementById('fd-atc-caja').open;
+    await new Promise(function(x){ setTimeout(x, 60); });   // como una persona: el toque llega después de que se dibujó (si no, Chrome junta los dos «toggle» y no avisa ninguno)
     document.getElementById('fd-caja').querySelector('summary').click();
     await new Promise(function(x){ setTimeout(x, 60); });
     return { pref:pref, abierto:abierto, atc:atc, ver:ver, luego:visPref('fdPlg', true) };
