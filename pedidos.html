@@ -3473,6 +3473,15 @@ html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .
   background:rgba(14,14,16,.88); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); border:1px solid rgba(250,204,21,.28); border-radius:16px; padding:10px 12px 12px; box-shadow:0 12px 26px -18px rgba(0,0,0,.9); }
 html.v-osc-franjas:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .af-ley, html.v-osc-franjas.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .af-ley{
   background:rgba(14,14,16,.6); border-radius:12px; padding:6px 12px; align-self:flex-start; width:fit-content; max-width:100%; }
+/* 436 · ATC: el caminito de cada ATC en la lista (Recoger · Fábrica · Lista · Vuelve · Entregada), debajo del estado. */
+.atc-cam{ margin:7px 0 1px; }
+.atc-cam-p{ display:flex; align-items:center; width:118px; }
+.atc-cam-p i{ flex:none; width:10px; height:10px; border-radius:50%; border:2px solid #cbd5e1; background:#fff; box-sizing:border-box; }
+.atc-cam-p b{ flex:1; height:3px; background:#e2e8f0; border-radius:2px; }
+.atc-cam-p i.h{ background:var(--c); border-color:var(--c); } .atc-cam-p b.h{ background:var(--c); }
+.atc-cam-p i.a{ width:18px; height:18px; border:3px solid #fff; background:var(--c); box-shadow:0 0 0 2px var(--c), 0 0 0 6px color-mix(in srgb, var(--c) 22%, transparent); }
+.atc-cam-t{ font-size:.66rem; font-weight:800; color:var(--c); letter-spacing:.02em; margin-top:4px; white-space:nowrap; }
+.atc-cam-t span{ color:#94a3b8; font-weight:700; }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3780,6 +3789,25 @@ function hcTocar(){
   }catch(e){}
 }
 document.addEventListener('DOMContentLoaded', function(){ try{ hcArmar(); }catch(e){} });
+
+/* 🎨 (16/11, mejora 436; dueño: elegida de la página de ideas 390-440) ATC: EL CAMINITO DE CADA ATC EN LA LISTA. Cada fila decía su estado con una
+   etiqueta de texto y había que leerlas una por una para saber cuánto le faltaba. Debajo del estado, en la columna «Estado» de `#tbl-atc`, cinco
+   puntitos unidos: Recoger · Fábrica · Lista · Vuelve · Entregada; los pasos hechos llenos, el de ahora grande con el color de su estado (el
+   MISMO de «🛤️ El viaje de las ATC», `atvColor`/`ATV_PASOS`) y los que faltan huecos; abajo «2 de 5 · Fábrica → Lista». La posición sale de
+   `atcEstado(p)` (sin recoger 0, fábrica 1, lista 2, recoger de fábrica o programada 3, cerrada 4): no se calcula nada nuevo, y la etiqueta, el
+   orden de las filas y lo demás de la tabla no cambian. Las tarjetas (iPad parado, celular) ya muestran el viaje con sus fechas. En Playwright
+   apagado salvo `window.ATC_CAMINO_PRUEBA`. `tests/test_v436_atc_camino.js`. */
+var ATC_CAMINO_POS={ sinrecoger:0, fabrica:1, lista:2, recogerfab:3, programada:3, cerrada:4 }, ATC_CAMINO_NOM=['Recoger','Fábrica','Lista','Vuelve','Entregada'];
+function atcCaminoVa(){ try{ return vdVa('ATC_CAMINO_PRUEBA'); }catch(e){ return false; } }
+function atcCaminoHtml(p){
+  if(!atcCaminoVa()) return '';
+  var k=atcEstado(p), n=ATC_CAMINO_POS[k]; if(n==null) return '';
+  var c=atvColor(k), h='';
+  for(var i=0;i<5;i++){ h+='<i class="'+(i<n?'h':(i===n?'a':''))+'"></i>'; if(i<4) h+='<b class="'+(i<n?'h':'')+'"></b>'; }
+  var t='Paso '+(n+1)+' de 5: '+ATC_CAMINO_NOM[n]+(n<4 ? ('; sigue '+ATC_CAMINO_NOM[n+1]) : '');
+  return '<div class="atc-cam" style="--c:'+c+'" title="'+esc(t)+'"><div class="atc-cam-p" role="img" aria-label="'+esc(t)+'">'+h+'</div>'+
+    '<div class="atc-cam-t">'+(n+1)+' de 5 · '+esc(ATC_CAMINO_NOM[n])+(n<4 ? (' <span>→ '+esc(ATC_CAMINO_NOM[n+1])+'</span>') : '')+'</div></div>';
+}
 </script>
 
 <div class="wrap">
@@ -36945,7 +36973,8 @@ function renderAtc(){
         (atcRepNro(p)>1 ? '<br><span style="display:inline-block;margin-top:3px">'+atcRepChip(p)+'</span>' : '')+   // 🔁 (179)
         ((mesSel && atcEntro(p).slice(0,7)<mesSel) ? '<br><span class="badge b-amber" title="Entró en un mes anterior y sigue sin cerrar">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>' : '')+'</td>'+
       '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
-        (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
+        (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+
+        atcCaminoHtml(p)+'</td>'+   // 🎨 (16/11, mejora 436) el caminito de 5 pasos
       '<td style="white-space:nowrap;font-size:.8rem">'+esc(fmtFecha(atcEntro(p)))+'</td>'+
       '<td><b>'+(window.PRACTICA ? practicaMarca(p) : '')+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
       '<td style="font-size:.78rem">'+esc(prod)+'</td>'+
