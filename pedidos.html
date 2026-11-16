@@ -2509,6 +2509,61 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .ctanav{display:flex;align-items:center;gap:6px;background:#e3f7f6;border-radius:10px;padding:4px 6px;margin-bottom:10px;font-weight:700;color:#00807a;font-size:.84rem}
 .ctanav button{border:0;background:#fff;border-radius:8px;min-width:40px;height:34px;font-size:1rem;cursor:pointer;color:#00807a;font-weight:800}
 .ctanav button:disabled{opacity:.35;cursor:default}
+/* 🧾 (mejora 379) la cajita del N° al marcar la venta cargada al sistema */
+.regdoc{background:#f0fbfa;border:1.5px solid #00B5AD;border-radius:12px;padding:11px 13px;margin-top:12px;color:#0f3b39}
+.regdoc-t{font-weight:800;font-size:.9rem;margin-bottom:7px}
+.regdoc-f,.regdoc-b{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.regdoc-b{margin-top:8px}
+.regdoc small{display:block;color:#4b6b69;font-size:.74rem;margin-top:6px;line-height:1.35}
+/* 🔁 (mejora 380) lo que cambió después de cargarla al sistema · 💵 (386) lo que te corrigieron */
+.rc-box{background:#fff8e6;border:1px solid #f3d38b;border-left:4px solid #d97706;border-radius:12px;padding:10px 13px;margin-bottom:10px;color:#4a3400}
+.rc-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;margin-bottom:6px}
+.rc-cab small{flex-basis:100%;color:#6b5512;font-size:.78rem}
+.rc-n{background:#d97706;color:#fff;border-radius:20px;padding:0 8px;font-size:.78rem;font-weight:800}
+.rc-it{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;border:1px solid #f1e2b8;border-radius:10px;padding:8px 10px;margin-top:6px}
+.rc-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 260px;font-size:.84rem}
+.rc-tx span{color:#3b2c00}
+.rc-tx small{color:#7a6a3c;font-size:.74rem}
+.rc-bt{display:flex;gap:6px;flex-wrap:wrap}
+.rc-pie{font-size:.72rem;color:#7a6a3c;margin-top:7px}
+.rc-ficha{background:#fff8e6;border:1px solid #f3d38b;border-radius:10px;padding:9px 12px;margin-bottom:11px;font-size:.86rem;color:#4a3400;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rc-ficha small{color:#6b5512;font-size:.76rem}
+.ph-sem{background:#fff;border:1px solid #e5edf0;border-left:4px solid #00B5AD;border-radius:12px;padding:9px 11px;margin-top:9px;font-size:.84rem;color:#1e2b30}
+.ph-sem-t{margin-bottom:5px}
+.ph-sem-f{padding:5px 0;border-top:1px dashed #e2e8ea;cursor:pointer;display:flex;flex-direction:column}
+.ph-sem-f small{color:#64748b;font-size:.74rem}
+.ph-sem-c{margin-top:6px;background:#e3f7f6;border-radius:8px;padding:6px 9px;color:#0f5c58;font-size:.8rem}
+/* 🧹 (mejora 389) ordenar la bandeja de Kommo */
+.band-ord{white-space:nowrap}
+.bo-b{display:flex;gap:10px;align-items:flex-start;border:1.5px solid #e2e8ea;border-radius:12px;padding:10px 12px;margin-bottom:9px;cursor:pointer;background:#fff;color:#1e2b30}
+.bo-b.bo-on{border-color:#00B5AD;background:#f0fbfa}
+.bo-b input{width:auto;margin-top:3px}
+.bo-tx{display:flex;flex-direction:column;gap:3px;min-width:0}
+.bo-tx small{color:#557074;font-size:.78rem}
+.bo-l{display:flex;flex-direction:column;gap:1px;font-size:.78rem;color:#334;margin-top:3px}
+.bo-mas{color:#64748b}
+.bo-q{font-size:.84rem;color:#334;margin:4px 0 8px}
+.bo-av{font-size:.84rem;color:#0f5c58;font-weight:700;margin-bottom:6px}
+.rz-por{display:block;color:#7a6a3c;font-size:.72rem}   /* 🗺️ (mejora 384) */
+.tnd-ficha{background:#eefaf6;border:1px solid #bfe7d8;border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem}   /* 🏬 (mejora 383) */
+.tnd-ficha small{display:block;font-weight:400;color:#3f6b5d;font-size:.76rem;margin-top:3px}
+/* 🎓 (mejora 381) la tarjeta de «Te muestro cómo» (el mismo diseño del recorrido) */
+.asis-tour.ensena{ border-color:#f59e0b; }
+.asis-tour.ensena[hidden]{ display:none!important; }
+/* 📊 (mejora 382) el uso del panel */
+.uso-top{background:#fff8e6;border:1px solid #f3d38b;border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:.86rem;color:#4a3400}
+.uso-sub{font-size:.8rem;color:var(--muted);margin:0 0 9px}
+.uso-t{width:100%;border-collapse:collapse;font-size:.84rem}
+.uso-t td{border-top:1px solid #e5edf0;padding:7px 6px;vertical-align:top}
+.uso-t td.uso-n{width:34%}
+.uso-e{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.uso-verde .uso-e{background:#22A06B} .uso-ambar .uso-e{background:#f59e0b} .uso-gris .uso-e{background:#94a3b8} .uso-nm .uso-e{background:#cbd5e1}
+.uso-gris td.uso-d,.uso-nm td.uso-d{color:#64748b}
+.uso-q{display:block;color:#64748b;font-size:.74rem}
+.uso-b{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.uso-b button{width:auto;font-size:.74rem;padding:4px 8px}
+.uso-ok td{opacity:.7}
+.asis-tour.ensena .asis-acc{ flex-wrap:wrap; }
 .ctanav button:not(:disabled):hover{background:var(--teal);color:#fff}
 .ctanav .ctanav-t{flex:1;min-width:0;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ctanav .ctanav-k{font-weight:400;color:#5b6b6b;font-size:.74rem}
@@ -8555,6 +8610,7 @@ function guardarDurable(rec, opts){
   delete NO_ENCOLAR[rec.id];
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) quién le cambió el día o el turno
+  try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) cambió después de cargarla al sistema · quién corrigió un pago
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
   if(esFilaRetiro(rec) && !(Number(rec.rev)>0)){
@@ -9382,6 +9438,7 @@ function apiSave(rec, opts){
   var id=rec&&rec.id;
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
+  try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
   if(!SAVE_EN_VUELO[id]){
@@ -9595,6 +9652,7 @@ function verificarEcoForm(srv, rec, prev){
    `localManda` lo compara con el `ahora` de cada lectura para saber si esa lectura ya lo tiene. */
 function aplicarSello(rec, srv, ahora){
   try{ entSrvAnotar(srv && srv.id!=null ? srv : rec); }catch(e){}   // 🧾 (10/11) lo que quedó en la planilla
+  try{ pagSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 🔁💵 (mejoras 380 y 386)
   try{ fhSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 📅 (mejora 212) …el día, el turno y su último renglón
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
@@ -9774,6 +9832,7 @@ function rechazoFirme(rec, res, colaTxt){
       actual.oc=cleanOC(actual.oc);
       try{ fhSrvAnotar(actual); }catch(e){}   // 📅 (mejora 212) la fila de la planilla es la que queda en pantalla: el próximo cambio de día sale de ahí
       try{ entSrvAnotar(actual); }catch(e){}   // 🧾 (14/11) …y su «Entregado»: si no, el ✅ que traía la planilla se le anotaba al que guarda después
+      try{ pagSrvAnotar(actual); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y sus pagos y la marca de «cargada al sistema»
       if(typeof esBorrador==='function' && esBorrador(actual)){
         STATE=STATE.filter(function(p){ return p.id!==actual.id; });
         BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(actual.id); }).concat([actual]);
@@ -10929,7 +10988,11 @@ function heredarMarcas(nuevos, viejos){
   var fH=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.fH) && x.fH.length){ fH=x.fH; return true; } return false; });
   /* 🧾 (mejora 251) …y de qué cotización salió la venta (`cot`). */
   var cotV=''; (viejos||[]).some(function(x){ if(x && x.cot){ cotV=String(x.cot); return true; } return false; });
-  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV; return x; };
+  /* 🔁💵 (mejoras 380 y 386) …y lo que cambió después de cargarla al sistema (`rc`) y quién corrigió cada pago (`pH`): son del pedido. */
+  var rcV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.rc) && x.rc.length){ rcV=x.rc; return true; } return false; });
+  var pHV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.pH) && x.pH.length){ pHV=x.pH; return true; } return false; });
+  var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -11182,6 +11245,201 @@ function fhHistAnotar(rec){
   rec.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); });
   try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x.fH=N.slice(); }); }catch(err){}
 }
+/* ============================================================================
+   🔁 CAMBIÓ DESPUÉS DE CARGARLA AL SISTEMA: VUELVE A «SIN CARGAR» (mejora 380, 16/11; dueño la eligió)
+   💵 «LO QUE TE CORRIGIERON»: CADA PAGO GUARDA QUIÉN LO CAMBIÓ (mejora 386, 16/11; dueño la eligió)
+   Del 1 al 15/11, 6 ventas ya marcadas «✅ cargada al sistema» se corrigieron después y siguieron marcadas (un precio de 790 a 620, un QR de
+   4.830 a 3.830, el banco de un QR, la fecha de otro): el sistema contable quedó con el dato viejo y nadie se enteró. Y 21 pagos ya guardados
+   se corrigieron sin que quedara quién ni cuándo.
+   · Al GUARDAR (`guardarDurable` y `apiSave`, junto con `entHistAnotar`) se compara con lo último que dijo la planilla de ese pedido
+     (`PAG_SRV`: el texto de la fila, de `mergePending`, `aplicarSello` y la fila de un «conflicto»); si hay un renglón de acá en camino
+     (todavía no está en la planilla), con lo último que mandó este aparato (`PAG_LOC`), como `fH`. Sin lectura o un pedido nuevo: nada.
+   · 380: si la planilla la tenía «cargada al sistema» y cambió el precio, un producto o su cantidad, el cliente, el NIT, «Facturar a» o el
+     monto, la fecha o el método/banco de un pago (`rcCambios`), la venta vuelve a «📥 sin cargar» y queda adentro qué cambió (`rc` en los
+     productos, los últimos `RC_MAX`: {t, q, d, c:[…]}; «✓ Ya lo corregí en el sistema» le pone `ok`). Fotos, observaciones, camión y marcas
+     de logística no cuentan. Un pago NUEVO ya la sacaba (`registradoSigue`, §4hk): ahora además queda escrito cuál.
+     Arriba de Contabilidad «🔁 N cambiaron después de cargarlas» (`rcPintarConta`) y en la ficha de la venta (`rcFichaHtml`).
+   · 386: un pago que estaba en la planilla y cambió de monto, fecha, método o banco, o se borró, o se partió en dos, deja `pH` en los productos
+     (los últimos `PH_MAX`: {t, q, d, tp:'monto'|'banco'|'metodo'|'fecha'|'borrado'|'partido'|'varios', de:[…], a:[…]}). Sumar un pago o una
+     foto no es una corrección. Se ve en la 🕓 Historia del pedido y, el sábado, en «☀️ Tu día» de la vendedora (lo que le corrigió OTRA persona
+     esa semana, con un consejo: `phSemanaHtml`).
+   · `heredarMarcas` pasa los dos; `deshDevolver` los saltea. Lo que guarda una página sin F5 no deja renglón (no los conoce).
+   · En Playwright apagado salvo `RC_PRUEBA` (380) y `PAGO_HIST_PRUEBA` (386): las pruebas de siempre comparan los productos tal cual y
+     corrigen pagos de ventas cargadas. `tests/test_cargada_cambio.js`, `tests/test_pago_corrigieron.js`.
+   ========================================================================== */
+var PAG_SRV={}, PAG_LOC={}, PAG_DONDE=null, RC_MAX=4, PH_MAX=8;
+function rcActivo(){ try{ return !(navigator.webdriver && !window.RC_PRUEBA); }catch(e){ return true; } }
+function pagPhActivo(){ try{ return !(navigator.webdriver && !window.PAGO_HIST_PRUEBA); }catch(e){ return true; } }
+function pagHistActivo(){ return rcActivo() || pagPhActivo(); }
+function pagDonde(txt){ PAG_DONDE={ d:String(txt||''), t:Date.now() }; }
+function pagNoVa(p){
+  if(!p || typeof p!=='object' || !p.id) return true;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return true; }catch(e){ return true; }
+  return !Array.isArray(p.productos) || !p.productos.length;
+}
+function rcDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].rc) && pr[i].rc.length) return pr[i].rc; return []; }
+function phDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].pH) && pr[i].pH.length) return pr[i].pH; return []; }
+function pagPonerEn(rec, k, N){
+  (rec.productos||[]).forEach(function(x){ if(x && typeof x==='object') x[k]=JSON.parse(JSON.stringify(N)); });
+  try{ var en=findById(rec.id); if(en && en!==rec && Array.isArray(en.productos)) en.productos.forEach(function(x){ if(x && typeof x==='object') x[k]=JSON.parse(JSON.stringify(N)); }); }catch(e){}
+}
+/* Lo que dijo la planilla (el texto: un objeto de STATE se cambia en el lugar al editar). */
+function pagSrvAnotar(x){
+  if(!x || x.id==null) return;
+  var id=String(x.id); if(pagNoVa(x)){ delete PAG_SRV[id]; return; }
+  try{ PAG_SRV[id]=JSON.stringify(x); }catch(e){ delete PAG_SRV[id]; }
+}
+/* Lo que mira Contabilidad de una venta (sin fotos, observaciones, camión ni marcas de logística). */
+function pagFirma(p){
+  var pr=[], pg=[];
+  (p.productos||[]).forEach(function(x){ if(!x || !(String(x.desc||'').trim() || String(x.codigo||'').trim())) return;
+    pr.push({ k:prodClave(x), c:Number(x.cant)||0, p:prodPrecio(x), d:String(x.desc||'').trim()+(String(x.medida||'').trim()?(' '+String(x.medida).trim()):'') }); });
+  try{ contaPagos(p).forEach(function(c){ if(!c || c.sinMonto) return; var m=r2(Number(c.monto)||0); if(!(m>0)) return;
+    pg.push({ k:[c.fecha||'', c.metodo||'', c.banco||'', m.toFixed(2)].join('|'), f:c.fecha||'', me:c.metodo||'', b:c.banco||'', m:m }); }); }catch(e){}
+  return { pr:pr, cli:normNombre(p.cliente), cliT:String(p.cliente||'').trim(), nit:String(p.nit||'').replace(/\s+/g,''), fa:normNombre(p.facturarA), faT:String(p.facturarA||'').trim(), pg:pg };
+}
+function pagTxt(c){ return (String((c.me||'')+(c.b?(' '+c.b):'')).trim()||'Pago')+' '+phxBs(c.m)+(c.f?(' del '+fmtFechaCorta(c.f)):''); }
+/* Los pagos que estaban y ya no (R) y los que aparecieron (A), contando repetidos. */
+function pagDiff(A0, B0){
+  var cnt={}, R=[], A=[];
+  (B0||[]).forEach(function(x){ cnt[x.k]=(cnt[x.k]||0)+1; });
+  (A0||[]).forEach(function(x){ if(cnt[x.k]>0) cnt[x.k]--; else R.push(x); });
+  var cnt2={}; (A0||[]).forEach(function(x){ cnt2[x.k]=(cnt2[x.k]||0)+1; });
+  (B0||[]).forEach(function(x){ if(cnt2[x.k]>0) cnt2[x.k]--; else A.push(x); });
+  var tp='';
+  if(R.length===1 && A.length===1){ var a=R[0], b=A[0]; tp=Math.abs(a.m-b.m)>0.005 ? 'monto' : (a.me!==b.me ? 'metodo' : (a.b!==b.b ? 'banco' : 'fecha')); }
+  else if(R.length && !A.length) tp='borrado';
+  else if(R.length===1 && A.length>1) tp='partido';
+  else if(R.length) tp='varios';
+  return { R:R, A:A, tp:tp };
+}
+/* 380: qué cambió, en criollo («precio COLCHON X 140x190 790 → 620»). */
+function rcCambios(a, b){
+  var out=[], mA={}, mB={}, sa=[], sb=[];
+  a.pr.forEach(function(x){ mA[x.k]=x; }); b.pr.forEach(function(x){ mB[x.k]=x; });
+  b.pr.forEach(function(x){ var v=mA[x.k]; if(!v){ sb.push(x); return; }
+    if(v.c!==x.c) out.push('cantidad '+x.d+' '+v.c+' → '+x.c);
+    if(Math.abs(v.p-x.p)>0.005) out.push('precio '+x.d+' '+phxBs(v.p)+' → '+phxBs(x.p)); });
+  a.pr.forEach(function(x){ if(!mB[x.k]) sa.push(x); });
+  if(sa.length===1 && sb.length===1){ out.push(sa[0].d+' → '+sb[0].d+(Math.abs(sa[0].p-sb[0].p)>0.005?(' · precio '+phxBs(sa[0].p)+' → '+phxBs(sb[0].p)):'')+(sa[0].c!==sb[0].c?(' · cantidad '+sa[0].c+' → '+sb[0].c):'')); }
+  else { sb.forEach(function(x){ out.push('➕ '+x.d+' × '+x.c); }); sa.forEach(function(x){ out.push('➖ '+x.d+' × '+x.c); }); }
+  if(a.cli!==b.cli) out.push('cliente '+(a.cliT||'—')+' → '+(b.cliT||'—'));
+  if(a.nit!==b.nit) out.push('NIT '+(a.nit||'—')+' → '+(b.nit||'—'));
+  if(a.fa!==b.fa) out.push('«Facturar a» '+(a.faT||'—')+' → '+(b.faT||'—'));
+  var D=pagDiff(a.pg, b.pg);
+  if(D.R.length || D.A.length) out.push(!D.R.length ? ('pago nuevo '+D.A.map(pagTxt).join(' + ')) : !D.A.length ? ('pago borrado '+D.R.map(pagTxt).join(' + '))
+    : ('pago '+D.R.map(pagTxt).join(' + ')+' → '+D.A.map(pagTxt).join(' + ')));
+  return out.slice(0, 6);
+}
+function pagHistAnotar(rec){
+  if(!pagHistActivo() || pagNoVa(rec)) return;
+  var id=String(rec.id), sj=PAG_SRV[id]; if(!sj) return;                 // sin lectura, o todavía no está en la planilla
+  var S=null; try{ S=JSON.parse(sj); }catch(e){ return; }
+  var tsDe=function(H){ return H.map(function(e){ return Number(e && e.t)||0; }); }, sRc=tsDe(rcDe(S)), sPh=tsDe(phDe(S));
+  var Hc=rcDe(rec), Hp=phDe(rec), lc=Hc[Hc.length-1], lp=Hp[Hp.length-1];
+  var enCamino=(lc && sRc.indexOf(Number(lc.t)||0)<0) || (lp && sPh.indexOf(Number(lp.t)||0)<0);
+  var L=PAG_LOC[id], base=enCamino ? L : { f:pagFirma(S), reg:regEnSistema(S) };
+  var F=pagFirma(rec), reg=regEnSistema(rec);
+  if(!base){ PAG_LOC[id]={ f:F, reg:reg }; return; }                      // un renglón en camino de antes de un F5: no se adivina
+  var ahora=Date.now(), q=quienEdita()||'?', d=(PAG_DONDE && ahora-PAG_DONDE.t<20000) ? PAG_DONDE.d : entVista(), k=(typeof UNLOCKED!=='undefined' && UNLOCKED) ? 1 : 0;
+  if(pagPhActivo()){
+    var D=pagDiff(base.f.pg, F.pg);
+    if(D.R.length){
+      var e={ t:ahora, q:q, d:d, tp:D.tp, de:D.R.map(pagTxt), a:D.A.map(pagTxt) }; if(k) e.k=1;
+      if(lp && e.t<=(Number(lp.t)||0)) e.t=(Number(lp.t)||0)+1;
+      pagPonerEn(rec, 'pH', Hp.concat([e]).slice(-PH_MAX));
+    }
+  }
+  if(rcActivo() && base.reg && !(tiendasCarganActivo() && talCargaAfuera(rec))){   // 🏬 (mejora 383) una venta de tienda la carga su tienda
+    var C=rcCambios(base.f, F);
+    if(C.length){
+      if(reg){ rec.metodoPago=conMarcaReg(rec.metodoPago, false); reg=false;
+        try{ var en=findById(rec.id); if(en && en!==rec) en.metodoPago=conMarcaReg(en.metodoPago, false); }catch(x){}
+        toast('🔁 Esta venta ya estaba CARGADA en el sistema contable y cambió ('+C[0]+(C.length>1?(' y '+(C.length-1)+' más'):'')+'): vuelve a «📥 sin cargar» para corregirla allá también.','err',10000); }
+      var r={ t:ahora, q:q, d:d, c:C }; if(k) r.k=1;
+      if(lc && r.t<=(Number(lc.t)||0)) r.t=(Number(lc.t)||0)+1;
+      pagPonerEn(rec, 'rc', Hc.concat([r]).slice(-RC_MAX));
+    }
+  }
+  PAG_DONDE=null;
+  PAG_LOC[id]={ f:F, reg:reg };
+}
+/* ---------- 380: lo que ve Contabilidad ---------- */
+function rcPendiente(p){ if(!p || regEnSistema(p)) return null; var H=rcDe(p), u=H[H.length-1]; return (u && !u.ok) ? u : null; }
+/* Volver a marcarla «cargada» (con «✓ Ya lo corregí» o el botón de siempre) cierra el último cambio. */
+function rcResolver(p){
+  var H=rcDe(p), u=H[H.length-1]; if(!u || u.ok) return false;
+  var N=JSON.parse(JSON.stringify(H)); N[N.length-1].ok={ t:Date.now(), q:quienEdita()||'?' };
+  pagPonerEn(p, 'rc', N);
+  if(PAG_LOC[String(p.id)]) PAG_LOC[String(p.id)].reg=true;
+  return true;
+}
+function rcLista(){ return (STATE||[]).filter(function(p){ return !pagNoVa(p) && !!rcPendiente(p); }).sort(function(a,b){ return (Number(rcPendiente(b).t)||0)-(Number(rcPendiente(a).t)||0); }); }
+function rcQuienTxt(u){ var q=String(u.q||'?'); return (q==='?' ? 'alguien que no eligió su nombre' : q)+' · '+entTs(u.t); }
+function ctaRcCorregi(id){
+  var p=findById(id); if(!p) return;
+  try{ ctaPagoRecordar(); }catch(e){}
+  rcResolver(p);
+  p.metodoPago=conMarcaReg(p.metodoPago, true);
+  persistPedido(p);
+  toast('✓ Listo: vuelve a figurar cargada en el sistema contable.','ok');
+  try{ var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on') && MODAL_KIND==='conta') showContaModal(id); }catch(e){}
+  try{ renderConta(); }catch(e){}
+}
+function rcFichaHtml(p){
+  var u=rcVe() ? rcPendiente(p) : null; if(!u) return '';
+  return '<div class="rc-ficha" id="cta-rc-ficha">🔁 <b>Cambió después de cargarla al sistema:</b> '+esc((u.c||[]).join(' · '))+
+    '<small>'+esc(rcQuienTxt(u))+'. Corregila en el sistema contable y tocá:</small>'+
+    '<button type="button" class="btn btn-sm" style="width:auto;background:var(--green);color:#fff" onclick="ctaRcCorregi(\''+esc(String(p.id))+'\')">✓ Ya lo corregí en el sistema</button></div>';
+}
+function rcVe(){ return rcActivo(); }
+var RC_VER_MAS=false;
+function rcPintarConta(){
+  var el=document.getElementById('cta-rc');
+  var L=rcVe() ? rcLista() : [];
+  if(!L.length){ if(el) el.hidden=true; return; }
+  if(!el){ var ban=document.getElementById('cta-banner'); if(!ban || !ban.parentNode) return;
+    el=document.createElement('div'); el.id='cta-rc'; el.className='rc-box no-print'; el.setAttribute('role','status'); ban.parentNode.insertBefore(el, ban); }
+  var V=RC_VER_MAS ? L : L.slice(0, 4);
+  var h='<div class="rc-cab">🔁 <b>Cambiaron después de cargarlas al sistema</b> <span class="rc-n">'+L.length+'</span>'+
+    '<small>Volvieron a «📥 sin cargar». Corregilas en el sistema contable y tocá «Ya lo corregí».</small></div>'+
+    V.map(function(p){ var u=rcPendiente(p), suc=''; try{ suc=sucursalDeVendedor(p.vendedor, contaFecha(p))||''; }catch(e){}
+      return '<div class="rc-it"><div class="rc-tx"><b>'+esc([ocEtiq(p.oc||''), p.cliente||'—', suc].filter(Boolean).join(' · '))+'</b>'+
+        '<span>'+esc((u.c||[]).join(' · '))+'</span><small>'+esc(rcQuienTxt(u))+'</small></div>'+
+        '<div class="rc-bt"><button type="button" class="ah-go ah-go-p" onclick="ctaRcCorregi(\''+esc(String(p.id))+'\')">✓ Ya lo corregí en el sistema</button>'+
+        '<button type="button" class="ah-go" onclick="showContaModal(\''+esc(String(p.id))+'\')">👀 Abrir</button></div></div>'; }).join('')+
+    (L.length>4 ? ('<button type="button" class="ah-mas" onclick="RC_VER_MAS=!RC_VER_MAS;rcPintarConta()">'+(RC_VER_MAS?'▴ Ver menos':('▾ Ver las otras '+(L.length-4)))+'</button>') : '')+
+    '<div class="rc-pie">No cuentan: fotos, observaciones, camión ni marcas de logística.</div>';
+  el.hidden=false; if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+/* ---------- 386: la historia y «Tu día» ---------- */
+var PH_TIPO={ monto:'el monto', banco:'el banco', metodo:'cómo pagó', fecha:'la fecha', borrado:'lo borraron', partido:'lo partieron en dos', varios:'varios cambios' };
+var PH_CONSEJO={ banco:'mirá el logo del banco en la foto antes de elegir', monto:'revisá el monto de la foto antes de guardar: un cero de más cambia todo',
+  metodo:'si pagó con QR elegí QR; efectivo solo si recibiste los billetes', fecha:'el primer pago va con el día en que cargaste la venta; los demás, con el día en que entró la plata',
+  partido:'si el cliente pagó con dos cosas (QR y efectivo), anotá dos pagos', borrado:'antes de guardar un pago, fijate que no esté ya anotado', varios:'antes de guardar, mirá la foto: monto, banco y fecha' };
+function phLinea(e){ return (e.de||[]).join(' + ')+' → '+((e.a&&e.a.length)?e.a.join(' + '):'🗑 lo borraron'); }
+/* La semana (desde el lunes, día de Bolivia) de lo que OTRA persona le corrigió a esta vendedora. */
+function phSemanaDatos(v, mine){
+  var hoy=diaNegocio(), dw=dowDe(hoy), lun=hoy; for(var i=0;i<((dw+6)%7);i++) lun=fechaMenos1(lun);
+  var desde=Date.parse(lun+'T00:00:00-04:00'), L=[], por={};
+  (mine||[]).forEach(function(p){ if(pagNoVa(p) || !mismoVendedor(p.vendedor, v)) return;
+    phDe(p).forEach(function(e){ if(!e || !(Number(e.t)>=desde) || mismoVendedor(e.q, v)) return;
+      L.push({ p:p, e:e }); por[e.tp||'varios']=(por[e.tp||'varios']||0)+1; }); });
+  L.sort(function(a,b){ return (Number(b.e.t)||0)-(Number(a.e.t)||0); });
+  var top=Object.keys(por).sort(function(a,b){ return por[b]-por[a]; })[0]||'';
+  return { L:L, por:por, top:top, lun:lun };
+}
+function fechaMenos1(f){ var d=new Date(f+'T12:00:00-04:00'); d.setTime(d.getTime()-864e5); return isoDeTsBolivia(d.getTime()); }
+function phSemanaVe(){ return pagPhActivo() && dowDe(diaNegocio())===6; }
+function phSemanaHtml(v, mine){
+  if(!phSemanaVe() || !v) return '';
+  var D=phSemanaDatos(v, mine); if(!D.L.length) return '';
+  var por=Object.keys(D.por).sort(function(a,b){ return D.por[b]-D.por[a]; }).map(function(k){ return D.por[k]+' por '+(PH_TIPO[k]||k); }).join(', ');
+  return '<div class="ph-sem" id="ph-sem"><div class="ph-sem-t">💵 Esta semana te corrigieron <b>'+D.L.length+' pago'+(D.L.length===1?'':'s')+'</b>: '+esc(por)+'</div>'+
+    D.L.slice(0, 5).map(function(o){ return '<div class="ph-sem-f" onclick="showMisModal(\''+esc(String(o.p.id))+'\')">'+(o.e.tp==='banco'?'🏦':'💵')+' <b>'+esc(ocEtiq(o.p.oc||'')||o.p.cliente||'—')+'</b> · '+esc(phLinea(o.e))+
+      '<small>'+esc(String(o.e.q||'?')==='?' ? 'alguien' : String(o.e.q))+' · '+esc(entTs(o.e.t))+'</small></div>'; }).join('')+
+    (D.top && PH_CONSEJO[D.top] ? ('<div class="ph-sem-c">💡 '+(D.L.length>1 && D.por[D.top]>1 ? (D.por[D.top]+' de '+D.L.length+' fueron por '+(PH_TIPO[D.top]||D.top)+': ') : '')+esc(PH_CONSEJO[D.top])+'.</div>') : '')+'</div>';
+}
 /* «12/11 🌅» · «12/11 🌆» · «12/11» (sin turno) · «sin día» */
 function fhTxt(k){
   k=String(k||''); if(!k) return 'sin día';
@@ -11303,6 +11561,12 @@ function pedHistDatos(p){
       html:'El cliente le escribió al bot: «'+esc(String(r.txt||'').slice(0,160))+'»'+
         (r.resp ? (' · 🤖 le contestó: «'+esc(String(r.resp).slice(0,160))+'»') : '')+(r.at ? (' · ✓ '+esc(r.at)) : '') });
   });
+  /* 💵 (mejora 386) quién corrigió cada pago · 🔁 (mejora 380) lo que cambió después de cargarla al sistema */
+  try{ phDe(p).forEach(function(e){ if(!e) return;
+    poner({ t:Number(e.t), h:true, k:'pagoC', ico:'💵', html:'<b>'+esc(phxQuien(e.q))+'</b> corrigió un pago: '+esc(phLinea(e))+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') }); });
+    rcDe(p).forEach(function(e){ if(!e) return;
+      poner({ t:Number(e.t), h:true, k:'rc', ico:'🔁', html:'Cambió después de cargarla al sistema ('+esc((e.c||[]).join(' · '))+') · <b>'+esc(phxQuien(e.q))+'</b>'+
+        (e.ok ? (' · ✓ corregido en el sistema por '+esc(phxQuien(e.ok.q))+' el '+esc(entTs(e.ok.t))) : ' · volvió a «sin cargar»') }); }); }catch(e){}
   ev.sort(function(a, b){ return (a.t-b.t) || (a.n-b.n); });
   /* 8. Lo que quedó distinto de lo último anotado, al final y sin hora: lo cambió un aparato con el panel sin actualizar. */
   var fin=function(ico, html){ ev.push({ t:Infinity, sinHora:true, k:'raro', ico:ico, html:html, n:ev.length }); };
@@ -12044,20 +12308,55 @@ function talAnulado(v, n, S){ return !!(S||talSet())[talClaveAnul(v, n)]; }
 function talTiendasAfuera(S){ S=S||talSet(); return Object.keys(S).filter(function(k){ return k.indexOf('t|')===0; }).map(function(k){ return k.slice(2); }); }
 /* De qué tienda es una venta: la venta de tienda dice su sucursal; si no, la de quien vendió. */
 function talTiendaDe(p){ return (esVentaTienda(p) ? sucursalDeVenta(p) : '') || sucursalDeVendedor(p && p.vendedor, p && contaFecha(p)) || ''; }
-function talCargaAfuera(p, S){ var t=talTiendaDe(p); return (t && (S||talSet())['t|'+t]) ? t : ''; }
+/* 🏬 (mejora 383, 16/11; dueño: «Cada tienda carga al sistema sus ventas propias») TODA venta de una TIENDA (la venta de tienda dice su
+   sucursal; si no, la tienda de quien vendió ESE día, `sucursalDeVendedor(v, fecha)`, con el cambio de sucursales del 01/11) la carga la
+   tienda: NO cuenta como «📥 Por cargar al sistema» de Contabilidad. Si tiene su N° de factura o remisión cuenta como cargada y se ve aparte
+   con el N° («🏬 La cargó la tienda · F 1234», chip «🏬 Las carga la tienda»); si no, se lo sigue pidiendo a la vendedora (`docVentaFalta`,
+   como siempre) sin volver a la lista de Contabilidad. Lo que NO es de una tienda (los mayoristas de Eduardo, ROHO, lo sin sucursal) sigue
+   en la lista de Contabilidad como antes. La lista de tiendas a mano del talonario (propuesta 82, `t|…`) queda de más: sigue valiendo.
+   · Una sola cuenta (`porCargarSistema` → `talCargaAfuera`): las tarjetas, el chip, «Revisar antes de cerrar», el control del cierre del
+     mes (`nxCierreControl`) y los Excel dan lo mismo.
+   · La 380 («cambió después de cargarla al sistema») no se anota en una venta de tienda: la marca de Contabilidad no es la que la carga.
+   · En Playwright apagado salvo `TIENDAS_CARGAN_PRUEBA` (las pruebas de siempre cuentan las ventas de tienda como «por cargar»).
+   `tests/test_tiendas_cargan.js`. */
+function tiendasCarganActivo(){ try{ return !(navigator.webdriver && !window.TIENDAS_CARGAN_PRUEBA); }catch(e){ return true; } }
+function talCargaAfuera(p, S){
+  var t=talTiendaDe(p); if(!t) return '';
+  if(tiendasCarganActivo() && t!=='Tiendas Roho' && !esATC(p && p.oc) && !esRPT(p && p.oc)) return t;
+  return (S||talSet())['t|'+t] ? t : '';
+}
+/* La venta la cargó (o la carga) su tienda: con el N° a la vista. '' si no es de una tienda o ya figura cargada por Contabilidad. */
+function tndCargaTxt(p){
+  if(!tiendasCarganActivo() || !p || regEnSistema(p)) return '';
+  var t=talCargaAfuera(p); if(!t) return '';
+  var d=docVentaDe(p), n=docNumDe(p);
+  return (d && n) ? ('🏬 La cargó la tienda · '+d+' '+n) : ('🏬 La carga la tienda ('+t+') · falta el N°');
+}
+function tndChip(p){
+  var t=tndCargaTxt(p); if(!t) return '';
+  var ok=!!(docVentaDe(p) && docNumDe(p));
+  return '<span class="badge '+(ok?'b-green':'b-gray')+' tnd-chip" style="font-size:.62rem;margin-right:4px;white-space:nowrap" title="Cada tienda carga sus ventas al sistema contable (dueño, 16/11)">'+esc(t)+'</span>';
+}
 /* ¿Hay que cargarla al sistema contable? La ÚNICA cuenta de «por cargar al sistema» (tarjetas, chip, Revisar antes de cerrar, el
    control del cierre). Una venta de una tienda tildada en «se cargan en otro lado» no cuenta. */
 function porCargarSistema(p, S){ return !regEnSistema(p) && !talCargaAfuera(p, S); }
-/* «38 de Buenos Aires y 65 de Mutualista no se cuentan: se cargan en otro lado» (solo las que no están marcadas en el sistema). */
+/* «38 de Buenos Aires y 65 de Mutualista no se cuentan: se cargan en otro lado» (solo las que no están marcadas en el sistema).
+   🏬 (mejora 383) con la regla del dueño: «… no se cuentan: las carga cada tienda (N todavía sin N° de factura o remisión: lo pide la vendedora)». */
 function talAfueraTxt(list, S){
-  S=S||talSet(); var por={}, n=0;
-  (list||[]).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(t){ por[t]=(por[t]||0)+1; n++; } });
+  S=S||talSet(); var por={}, n=0, sinN=0, cada=tiendasCarganActivo();
+  (list||[]).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(t){ por[t]=(por[t]||0)+1; n++; if(cada && !(docVentaDe(p) && docNumDe(p))) sinN++; } });
   if(!n) return '';
   var ks=Object.keys(por).sort(function(a,b){ return por[b]-por[a]; }), partes=ks.map(function(t){ return por[t]+' de '+t; });
-  return (partes.length>1 ? (partes.slice(0,-1).join(', ')+' y '+partes[partes.length-1]) : partes[0])+' no se cuenta'+(n===1?'':'n')+': se carga'+(n===1?'':'n')+' en otro lado';
+  return (partes.length>1 ? (partes.slice(0,-1).join(', ')+' y '+partes[partes.length-1]) : partes[0])+' no se cuenta'+(n===1?'':'n')+': '+
+    (cada ? ('las carga cada tienda'+(sinN ? (' ('+sinN+' todavía sin N° de factura o remisión: lo pide la vendedora)') : '')) : ('se carga'+(n===1?'':'n')+' en otro lado'));
 }
-/* «SÍ» / «NO» / «EN OTRO LADO», para la columna «EN SISTEMA» de los Excel. */
-function talEnSistemaTxt(p, S){ return regEnSistema(p) ? 'SÍ' : (talCargaAfuera(p, S) ? 'EN OTRO LADO' : 'NO'); }
+/* «SÍ» / «NO» / «EN OTRO LADO», para la columna «EN SISTEMA» de los Excel. 🏬 (mejora 383) «LA CARGÓ LA TIENDA (F 1234)» / «LA CARGA LA TIENDA (FALTA EL N°)». */
+function talEnSistemaTxt(p, S){
+  if(regEnSistema(p)) return 'SÍ';
+  if(!talCargaAfuera(p, S)) return 'NO';
+  if(!tiendasCarganActivo()) return 'EN OTRO LADO';
+  return (docVentaDe(p) && docNumDe(p)) ? ('LA CARGÓ LA TIENDA ('+docVentaDe(p)+' '+docNumDe(p)+')') : 'LA CARGA LA TIENDA (FALTA EL N°)';
+}
 /* Las ventas del período del Cuadre (la MISMA lista que arma `cuadreAlertas`). */
 function talEnPeriodo(pe, vend){
   pe=pe||cuadrePeriodo(); if(vend==null) vend=cuadreVendedor();
@@ -13116,6 +13415,7 @@ function renderConta(){
   try{ cajaBotonesPintar(); }catch(e){}   // 🏬 (14/11, mejora 254) «Caja de Ventura Sur»
   var list=contaLista();
   try{ ctaOtrosPintar(list); }catch(e){}   // 📅 (298) lo buscado que está en otros meses
+  try{ rcPintarConta(); }catch(e){}         // 🔁 (mejora 380) las que cambiaron después de cargarlas al sistema
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0, nCarg=0, _TS=talSet();
   list.forEach(function(p){
     envios=r2(envios+envioTotal(p));
@@ -13200,7 +13500,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
-      '<td>'+(function(){ var c=docVentaChip(p); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+
+      '<td>'+(function(){ var tc=tndChip(p), c=(tc && docVentaDe(p) && docNumDe(p)) ? tc : (tc+docVentaChip(p)); return c+(p.facturarA ? ((c?'<br>':'')+esc(p.facturarA)) : (c?'':'—')); })()+'</td>'+   // 🏬 (mejora 383)
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
@@ -13507,6 +13807,7 @@ var CX_CHIPS=[
   { k:'smon', ico:'❓', lbl:'Sin monto anotado',   cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && sinMontoAnotado(p); } },
   { k:'smar', ico:'⚪', lbl:'Cobradas sin marcar', cls:'k-gris', f:function(p){ return !p.pagado && !(contaFaltaCobrar(p)>0.005) && !sinMontoAnotado(p); } },
   { k:'carg', ico:'📥', lbl:'Por cargar al sistema', cls:'k-car', f:function(p){ return porCargarSistema(p); } },   // 🔢 (30/10, propuesta 82) sin las tiendas que se cargan en otro lado
+  { k:'tnd',  ico:'🏬', lbl:'Las carga la tienda', cls:'k-gris', f:function(p){ return !!tndCargaTxt(p); } },   // 🏬 (mejora 383) aparte, con el N° a la vista
   { k:'reg',  ico:'🧾', lbl:'Ya en el sistema',    cls:'k-ok',  f:function(p){ return regEnSistema(p); } },
   { k:'env',  ico:'🚚', lbl:'Con recargo',         cls:'k-env', f:function(p){ return envioTotal(p)>0; } },
   { k:'dup',  ico:'👯', lbl:'Dos veces',           cls:'k-sal', f:function(p){ return !!DUP_IDX.marca[p.id]; } }
@@ -20573,6 +20874,7 @@ function ctaEdVal(id, k){
   return (CTA_EDIT_V && CTA_EDIT_V[k]!=null) ? String(CTA_EDIT_V[k]) : null;
 }
 function ctaGuardarPago(id, i, igual){
+  try{ pagDonde('Contabilidad · ✏️ Corregir este pago'); }catch(e){}   // 💵 (mejora 386)
   var p=findById(id); if(!p) return;
   var _prG=null;   // §4ok-92 el guardado (para el arreglo de un toque de los avisos)
   var _vf=ctaEdVal('cta-ed-fecha','fecha'), _vm=ctaEdVal('cta-ed-monto','monto'),
@@ -20792,6 +21094,7 @@ function ctaBorrarEnvio(id){
    monto» o editar la venta como NO pagada. La marca ✅ REGISTRADO no se toca: si ese pago ya se cargó en el sistema
    contable, hay que corregirlo allá, y la pregunta lo dice. No se puede deshacer: habría que volver a registrarlo. */
 function ctaBorrarPago(id, i){
+  try{ pagDonde('Contabilidad · 🗑 Borrar este pago'); }catch(e){}   // 💵 (mejora 386)
   var p=findById(id); if(!p) return;
   var c=contaPagos(p)[i]; if(!c) return;
   if(c.sinMonto){ toast('Este pago no tiene monto anotado: no existe como renglón. Anotalo con «💵 Anotar el monto», o editá la venta y marcala NO pagada.','err',9000); return; }
@@ -21133,6 +21436,9 @@ function showContaModal(id){
           ? ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="cajaVolver()">← Volver a la caja de '+esc(cajaNombre(CAJA.t))+'</button>')   // 🏬 (254)
           : ('<button type="button" id="pc-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="abrirPorCobrar(\''+POR_COBRAR_VOLVER.origen+'\')">← Volver a la lista de lo que falta cobrar</button>')) : '')+
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
+      rcFichaHtml(p)+   // 🔁 (mejora 380) cambió después de cargarla al sistema
+      (function(){ var t=tndCargaTxt(p); return t ? ('<div class="tnd-ficha" id="cta-tnd">'+esc(t)+'<small>Cada tienda carga sus ventas al sistema contable: esta no está en «📥 Por cargar» de Contabilidad.'+
+        ((docVentaDe(p) && docNumDe(p)) ? '' : ' Cuando la vendedora anote el N° de factura o remisión, cuenta como cargada.')+'</small></div>') : ''; })()+   // 🏬 (mejora 383)
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
       row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
@@ -21156,6 +21462,7 @@ function showContaModal(id){
       row('Observaciones', esc(p.observaciones))+
       formPago+
       ctaEditHtml(p)+
+      ((CTA_REG_DOC && CTA_REG_DOC.id===String(p.id) && !reg) ? ctaRegDocHtml(p) : '')+   // 🧾 (mejora 379) el N° al marcarla cargada
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
         '<button class="btn btn-sm wa-btn" style="min-width:150px" onclick="'+esc("ctaWhatsappVenta('"+String(p.id)+"')")+'" title="Volver a pasar esta venta al grupo">📲 Reenviar la venta</button>'+
@@ -21811,6 +22118,10 @@ function ctaToggleRegistrado(id){
   var p=findById(id); if(!p) return;
   ctaPagoRecordar();                 // §4fy: marcar ✅ con un pago a medio cargar no se lo borra
   var on=!regEnSistema(p);
+  /* 🧾 (mejora 379) Al marcarla CARGADA sin N° de factura o remisión: primero la cajita para anotarlo (opcional), en el mismo guardado. */
+  if(on && regDocPide(p) && !(CTA_REG_DOC && CTA_REG_DOC.id===String(id))){ CTA_REG_DOC={ id:String(id), t:'', n:'' }; showContaModal(id); regDocFoco(); return; }
+  if(on && CTA_REG_DOC && CTA_REG_DOC.id===String(id)){ ctaRegDocGuardar(id, true); return; }
+  if(on){ try{ rcResolver(p); }catch(e){} }   // 🔁 (mejora 380) volver a marcarla cierra «cambió después de cargarla»
   p.metodoPago=conMarcaReg(p.metodoPago, on);
   persistPedido(p);
   toast(on?'Marcado como registrado en el sistema ✓':'Ya no figura como registrado','ok');
@@ -26902,7 +27213,7 @@ function deshDevolver(cur, antes, despues){
   var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
   [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
   Object.keys(claves).forEach(function(k){
-    if(k==='eH' || k==='fH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
+    if(k==='eH' || k==='fH' || k==='rc' || k==='pH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
     var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
     if(J(a)===J(d)) return;
     var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
@@ -28858,6 +29169,7 @@ function mergePending(serverList){
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   try{ serverList.forEach(function(p){ if(p) entSrvAnotar(p); }); }catch(e){}   // 🧾 (10/11) lo que dice la planilla del «Entregado» (`entHistAnotar`)
+  try{ if(pagHistActivo()) serverList.forEach(function(p){ if(p) pagSrvAnotar(p); }); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y de los pagos (`pagHistAnotar`)
   try{ serverList.forEach(function(p){ if(p) fhSrvAnotar(p); }); }catch(e){}    // 📅 (mejora 212) …y del día y el turno (`fhHistAnotar`)
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
@@ -28945,10 +29257,11 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
+var ENSENA_ID='__ensena__';              // 🎓 (mejora 381/382) lo que el dueño pidió que Bloki enseñe (desde «📊 Uso del panel»)
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
@@ -29467,6 +29780,75 @@ function ctaDocGuardar(id){
   setDocVenta(p, t, num); ctaDocOlvidar();
   persistPedido(p);
   toast('🧾 '+(t==='F'?'Factura':'Nota de remisión')+' N° '+num+' anotada ✓','ok');
+  showContaModal(id);
+  try{ renderConta(); }catch(x){}
+}
+/* ============================================================================
+   🧾 (mejora 379, 16/11; dueño la eligió) EL N° DE FACTURA O REMISIÓN SE ANOTA AL CARGARLA AL SISTEMA.
+   En noviembre 69 de 154 ventas no tenían su N°, y 35 de esas ya estaban «✅ cargadas» por Contabilidad: el número sale del sistema contable
+   en el momento de cargarla y después lo tenía que tipear otra persona, otro día (o nadie).
+   · Al tocar «✅ Pago registrado en sistema» en una venta que lo pide (`docVentaFalta`) se abre ahí mismo una cajita: «🧾 Factura · 📄
+     Remisión» + el N°, con «Guardar las dos cosas» (la marca y el documento en UN guardado, `persistPedido`) o «Solo marcar cargada»
+     (como antes: la vendedora lo anota después). Vacío = como antes.
+   · El documento se anota con `setDocVenta` (deja `fdocT`, el día en que se anotó: el dashboard cuenta esa venta como cierre ese día).
+   · Si el mismo N° (y tipo) ya está en otra venta, lo dice y pregunta (`docNumOtraVenta`); nunca frena sin preguntar.
+   · En Playwright apagado salvo `REG_DOC_PRUEBA` (las pruebas de siempre marcan «cargada» de un toque). `tests/test_factura_al_cargar.js`.
+   ========================================================================== */
+var CTA_REG_DOC=null;   // { id, t:'F'|'R'|'', n:'' } mientras la cajita está abierta
+function regDocActivo(){ try{ return !navigator.webdriver || !!window.REG_DOC_PRUEBA; }catch(e){ return true; } }
+function regDocPide(p){ return regDocActivo() && !!p && !esATC(p.oc) && !esRPT(p.oc) && docVentaFalta(p); }
+function regDocFoco(){ setTimeout(function(){ var e=document.getElementById('cta-regdoc'); if(e) try{ e.scrollIntoView({ block:'nearest' }); }catch(x){} }, 60); }
+/* Otra venta con el MISMO tipo y N° (las del equipo; ATC/RPT no tienen documento). */
+function docNumOtraVenta(p, t, num){
+  var k=String(num||'').replace(/\s+/g,'').toUpperCase(); if(!k || (t!=='F' && t!=='R')) return null;
+  for(var i=0;i<(STATE||[]).length;i++){ var q=STATE[i];
+    if(!q || String(q.id)===String(p&&p.id) || esFilaSistema(q) || esATC(q.oc) || esRPT(q.oc)) continue;
+    if(docVentaDe(q)===t && String(docNumDe(q)).replace(/\s+/g,'').toUpperCase()===k) return q; }
+  return null;
+}
+function ctaRegDocHtml(p){
+  var o=CTA_REG_DOC||{}, mio=(CTA_DOC.id===p.id), t=o.t || (mio && CTA_DOC.t) || docVentaDe(p), n=(o.n!=null && o.n!=='') ? o.n : ((mio && CTA_DOC.n!=null) ? CTA_DOC.n : docNumDe(p)), id=esc(String(p.id));
+  var b=function(v){ return '<button type="button" class="btn btn-sm'+(t===v?' btn-primary':'')+'" style="width:auto;'+(t===v?'':'background:#fff;border:1px solid var(--gray-md);color:var(--text)')+'" data-v="'+v+'" onclick="ctaRegDocTipo(\''+id+'\',\''+v+'\')">'+(v==='F'?'🧾 Factura':'📄 Remisión')+'</button>'; };
+  return '<div id="cta-regdoc" class="regdoc" role="group" aria-label="El N° de la factura o remisión">'+
+    '<div class="regdoc-t">🧾 ¿Qué número le dio el sistema a esta venta?</div>'+
+    '<div class="regdoc-f">'+b('F')+b('R')+
+      '<input type="text" id="cta-regdoc-num" value="'+esc(n||'')+'" placeholder="N°" maxlength="40" autocomplete="off" style="width:120px" '+
+        'oninput="if(CTA_REG_DOC) CTA_REG_DOC.n=this.value" onkeydown="if(event.key===\'Enter\'){event.preventDefault();ctaRegDocGuardar(\''+id+'\');}"></div>'+
+    '<div class="regdoc-b"><button type="button" class="btn btn-sm" id="cta-regdoc-ok" style="width:auto;background:var(--green);color:#fff" onclick="ctaRegDocGuardar(\''+id+'\')">✅ Guardar las dos cosas</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" id="cta-regdoc-solo" style="width:auto" onclick="ctaRegDocGuardar(\''+id+'\', true)">Solo marcar cargada</button>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="CTA_REG_DOC=null;showContaModal(\''+id+'\')">Cancelar</button></div>'+
+    '<small>Opcional. Si lo dejás vacío queda como antes y '+esc(String(p.vendedor||'la vendedora').split(' ')[0])+' lo anota después. Si el número ya está en otra venta, te aviso.</small></div>';
+}
+function ctaRegDocTipo(id, v){
+  if(!CTA_REG_DOC || CTA_REG_DOC.id!==String(id)) CTA_REG_DOC={ id:String(id), t:'', n:'' };
+  var e=document.getElementById('cta-regdoc-num'); if(e) CTA_REG_DOC.n=e.value;
+  CTA_REG_DOC.t=v;
+  var w=document.getElementById('cta-regdoc'); if(w) [].forEach.call(w.querySelectorAll('button[data-v]'), function(x){ var on=x.getAttribute('data-v')===v; x.classList.toggle('btn-primary', on);
+    x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
+  if(e) e.focus();
+}
+/* `solo` = «Solo marcar cargada» (o el botón verde de abajo con la cajita abierta): si no se escribió ningún N°, la marca sola, como antes. */
+function ctaRegDocGuardar(id, solo){
+  var p=findById(id); if(!p){ CTA_REG_DOC=null; return; }
+  var o=CTA_REG_DOC||{ t:'', n:'' }, e=document.getElementById('cta-regdoc-num');
+  var num=String((e ? e.value : o.n)||'').replace(/\s+/g,' ').trim().slice(0,40), t=o.t || ((CTA_DOC.id===p.id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p));
+  if(solo && !num) t='';
+  if(num && t!=='F' && t!=='R'){ toast('🧾 Elegí si es FACTURA o NOTA DE REMISIÓN (o tocá «Solo marcar cargada»).','err',6000); return; }
+  if(!num && !solo){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° (o tocá «Solo marcar cargada»).','err'); return; }
+  if(num){
+    var otra=docNumOtraVenta(p, t, num);
+    if(otra && !confirm('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
+       [ocEtiq(otra.oc||''), otra.cliente||'', otra.vendedor||''].filter(Boolean).join(' · ')+'.\n\n¿La anoto igual en esta?')) return;
+  }
+  try{ ctaPagoRecordar(); }catch(x){}
+  try{ if(typeof rcResolver==='function') rcResolver(p); }catch(x){}   // 🔁 (mejora 380) volver a marcarla cierra «cambió después de cargarla»
+  if(num) setDocVenta(p, t, num);
+  p.metodoPago=conMarcaReg(p.metodoPago, true);
+  CTA_REG_DOC=null; ctaDocOlvidar();
+  persistPedido(p);
+  var v=String(p.vendedor||''), quedan=num ? (STATE||[]).filter(function(q){ return q && mismoVendedor(q.vendedor, v) && docVentaFalta(q); }).length : 0;
+  toast(num ? ('✅ Cargada al sistema y '+(t==='F'?'🧾 factura':'📄 nota de remisión')+' N° '+num+' anotada ✓ · '+(v.split(' ')[0]||'La vendedora')+' ya no la ve en «Anotá la factura»'+(quedan?(' (le quedan '+quedan+')'):''))
+            : 'Marcado como registrado en el sistema ✓','ok',7000);
   showContaModal(id);
   try{ renderConta(); }catch(x){}
 }
@@ -32666,6 +33048,8 @@ function admArribaPintar(){
 }
 function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
+  try{ ensenaMirar(); }catch(e){}   // 🎓 (mejora 381) Bloki le enseña a logística lo que nunca usó
+  try{ usoBotonPintar(); }catch(e){}   // 📊 (mejora 382) «Uso del panel», con la contraseña
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); try{ waRespPintar(); }catch(e){} renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   try{ cupPronAdmPintar(); }catch(e){ console.error(e); }   // 📈 (14/11, 266) los turnos que se van a llenar (deja sus números en ADM_AV.cupos)
@@ -38093,6 +38477,7 @@ function renderBorradoresMis(){
           (n ? 'Todavía no ocupan lugar en ningún camión: eso pasa cuando les pongas la fecha y guardes.' : '')+'</div>'))+
         (car.length ? ('<div class="borr-car" style="margin-top:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.84rem;color:#0a6b47">✅ <b>'+car.length+
           (car.length===1?' ya está cargada':' ya están cargadas')+'</b> en el panel (mismo celular y vendedora): no cuentan como pendientes. '+borrUnirBtnHtml(car.length, todos)+'</div>') : '')+
+        (function(){ var b=bandejaOrdBtnHtml(lista); return b ? ('<div style="margin-top:7px">'+b+'</div>') : ''; })()+   // 🧹 (mejora 389)
       '</div>'+
       (misPlegado('kommo') ? '' : (orden.slice(0,12).map(function(p){ return borrCardHtml(p, todos); }).join('')+
       (orden.length>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(orden.length-12)+' más</div>') : '')))+
@@ -38181,38 +38566,127 @@ function completarBorrador(id){
 }
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;
+  if(!borradorEnColaComoPedido(id) &&
+     !confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
+  descartarBorradorHacer(id, false);
+}
+/* 🧹 (mejora 389) El descarte de siempre, sin preguntar; `callado` (para «Ordenar mi bandeja») no avisa cada uno. Devuelve la promesa con
+   cómo terminó: 'ok' · 'sinConexion' · 'cola' · 'noEsta' · 'conflicto' · 'incierto' · 'fallo'. */
+function descartarBorradorHacer(id, callado){
+  var avisa=callado ? function(){} : function(){ return toast.apply(null, arguments); };
+  var rec=borradorDe(id); if(!rec) return Promise.resolve('noEsta');
   /* ⚠️ Ya completada y esperando en la cola (25/09): no hay borrador que descartar. `borrarEnServidor`
      la sacaría de la cola y borraría la fila: la venta se perdía entera. */
   if(borradorEnColaComoPedido(id)){
     BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
     saveBorrMirror(); renderBorrSiActivo();
-    toast('📥 Esa venta ya la completaste: está en la cola de este dispositivo y se manda sola a la planilla. No se descartó nada.','err',9000);
-    return;
+    avisa('📥 Esa venta ya la completaste: está en la cola de este dispositivo y se manda sola a la planilla. No se descartó nada.','err',9000);
+    return Promise.resolve('cola');
   }
-  if(!confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
   var copia=JSON.parse(JSON.stringify(rec));
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
   saveBorrMirror(); renderBorrSiActivo();
+  var prom=Promise.resolve('sinConexion');
   if(CONNECTED){
     BORRADO_AQUI[String(id)]=Date.now();    // (26/09) una lectura vieja no la devuelve a la bandeja (ver `borradoAqui`)
     /* §4fz: un borrador que otra vendedora YA completó es un pedido con el MISMO id (§4es):
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
     var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
-    borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
-      if(r.ok) return;
+    prom=borrEnSerie(function(){ return borrarEnServidor(copia); }).then(function(r){   // (12/10) de a uno, como «Sí, es la misma»
+      if(r.ok) return 'ok';
       delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
-        toast('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
+        avisa('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
         try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){}
-        return;
+        return 'conflicto';
       }
-      if(r.incierto){ toast('⚠️ Google no confirmó el descarte ('+r.error+'). Si sigue en la planilla, vuelve a la bandeja con el próximo refresco.','err',9000); return; }
+      if(r.incierto){ avisa('⚠️ Google no confirmó el descarte ('+r.error+'). Si sigue en la planilla, vuelve a la bandeja con el próximo refresco.','err',9000); return 'incierto'; }
       volverBorr();     // §4fz-b (E13): un «no» claro la devuelve a la bandeja
-      toast('No se pudo descartar en el servidor ('+motivoBorrar(r)+'): sigue en la bandeja. Probá de nuevo.','err');
-    }, function(){ volverBorr(); toast('No se pudo descartar: sigue en la bandeja. Probá de nuevo con señal.','err'); });
+      avisa('No se pudo descartar en el servidor ('+motivoBorrar(r)+'): sigue en la bandeja. Probá de nuevo.','err');
+      return 'fallo';
+    }, function(){ volverBorr(); avisa('No se pudo descartar: sigue en la bandeja. Probá de nuevo con señal.','err'); return 'fallo'; });
   }
-  toast('Borrador descartado','ok');
+  avisa('Borrador descartado','ok');
+  return prom;
+}
+/* ============================================================================
+   🧹 (mejora 389, 16/11; dueño la eligió) ORDENAR LA BANDEJA DE KOMMO EN UN TOQUE.
+   María tenía 36 ventas de Kommo en la bandeja: 23 ya las había cargado a mano (el panel las reconoce y espera «🔗 Unir») y 13 sin nada
+   adentro, 10 de hace más de 15 días. Su «Para hacer» decía «📥 13 de Kommo» todos los días y ya no lo miraba.
+   · «🧹 Ordenar mi bandeja» (en la bandeja, con algo para ordenar): dos bloques ya tildados — «🔗 Unir las N que ya cargaste» (las MISMAS de
+     «Unir las N», `borrCargadasDe`: mismo lead, o mismo celular y vendedora con una venta viva) y «🗑️ Sacar las N vacías de más de
+     `BANDEJA_VACIA_DIAS` días» (sin productos ni monto, que no parecen ninguna venta: `bandejaVacias`) — y «Hacer las 2 cosas».
+   · Corre de a una, por los mismos caminos: unir = `borrUnirUna` (la venta que ya está queda con la marca de Kommo), sacar = el «Descartar» de
+     siempre (`descartarBorradorHacer`: el servidor lo anota en KOMMO_DESCARTADOS y no vuelve). Los dos van por `borrEnSerie`, y lo que Google
+     no hizo vuelve a la bandeja y se dice al final («N no se pudieron: siguen en la bandeja»).
+   · En Playwright el botón no sale salvo `BANDEJA_PRUEBA`. `tests/test_bandeja_ordenar.js`.
+   ========================================================================== */
+var BANDEJA_VACIA_DIAS=15, BANDEJA_ORD=null;
+function bandejaOrdVa(){ try{ return !navigator.webdriver || !!window.BANDEJA_PRUEBA; }catch(e){ return true; } }
+function bandejaVacia(b){
+  var nada=!((b&&b.productos)||[]).some(function(x){ return x && String(x.desc||x.codigo||'').trim(); });
+  return nada && !(borrMontoKommo(b)>0);
+}
+function bandejaVacias(lista){ return (lista||[]).filter(function(b){ var g=null; try{ g=borrGemelo(b); }catch(e){} return !g && bandejaVacia(b) && diasDeBorrador(b)>BANDEJA_VACIA_DIAS; }); }
+function bandejaLista(){ var todos=MIS_TODOS && UNLOCKED; return todos ? BORRADORES.slice() : borradoresDe(misVendedorSel()); }
+function bandejaDatos(lista){
+  var car=borrCargadasDe(lista), vac=bandejaVacias(lista), ids={};
+  car.forEach(function(o){ ids[String(o.b.id)]=1; }); vac.forEach(function(b){ ids[String(b.id)]=1; });
+  var resto=(lista||[]).filter(function(b){ return !ids[String(b.id)]; });
+  return { car:car, vac:vac, resto:resto, semana:resto.filter(function(b){ return diasDeBorrador(b)<=7; }).length };
+}
+function bandejaOrdBtnHtml(lista){
+  if(!bandejaOrdVa()) return '';
+  var D=bandejaDatos(lista), n=D.car.length+D.vac.length; if(!n) return '';
+  return '<button type="button" class="ah-go ah-go-p band-ord" id="band-ord-btn" onclick="bandejaOrdenarAbrir()" title="Unir las que ya cargaste y sacar las vacías viejas, de una vez">🧹 Ordenar mi bandeja ('+n+')</button>';
+}
+function bandejaOrdenarAbrir(){
+  var D=bandejaDatos(bandejaLista());
+  if(!D.car.length && !D.vac.length){ toast('Tu bandeja ya está ordenada ✓','ok'); return; }
+  BANDEJA_ORD={ car:D.car.map(function(o){ return { b:String(o.b.id), p:String(o.g.p.id) }; }), vac:D.vac.map(function(b){ return String(b.id); }), uc:D.car.length>0, uv:D.vac.length>0, corre:null };
+  bandejaOrdenarPintar(D);
+}
+function bandejaOrdenarPintar(D){
+  D=D||bandejaDatos(bandejaLista());
+  var O=BANDEJA_ORD||{}, nom=function(s){ return String(s||'(sin nombre)').trim(); }, mas=function(n){ return n>0 ? ('<span class="bo-mas">… y '+n+' más</span>') : ''; };
+  var bloque=function(k, on, ic, t, sub, L){ if(!L.length) return '';
+    return '<label class="bo-b'+(on?' bo-on':'')+'"><input type="checkbox" id="bo-'+k+'"'+(on?' checked':'')+(O.corre?' disabled':'')+' onchange="BANDEJA_ORD.u'+k+'=this.checked;bandejaOrdenarPintar()">'+
+      '<span class="bo-tx"><b>'+ic+' '+t+'</b><small>'+sub+'</small><span class="bo-l">'+L+'</span></span></label>'; };
+  var Lc=D.car.slice(0,6).map(function(o){ return '<span>'+esc(nom(o.b.cliente))+' → '+esc(borrOcDia(o.g.p))+'</span>'; }).join('')+mas(D.car.length-6);
+  var Lv=D.vac.slice(0,6).map(function(b){ return '<span>'+esc(nom(b.cliente))+' · hace '+diasDeBorrador(b)+' días</span>'; }).join('')+mas(D.vac.length-6);
+  var n=(O.uc?D.car.length:0)+(O.uv?D.vac.length:0), dos=O.uc && O.uv && D.car.length && D.vac.length;
+  var quedan=D.resto.length+(O.uc?0:D.car.length)+(O.uv?0:D.vac.length);
+  openModal('<div class="modal-h"><h3>🧹 Ordenar mi bandeja de Kommo</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div><div class="modal-b bo">'+
+    bloque('c', O.uc, '🔗', 'Unir '+(D.car.length===1?'la que ya cargaste':('las '+D.car.length+' que ya cargaste'))+' a mano', 'Mismo cliente (celular) y misma vendedora que un pedido tuyo: el panel ya las reconoce. Queda una sola venta, la que ya tenías.', Lc)+
+    bloque('v', O.uv, '🗑️', 'Sacar '+(D.vac.length===1?'la vacía':('las '+D.vac.length+' vacías'))+' de más de '+BANDEJA_VACIA_DIAS+' días', 'Sin productos ni monto: no fueron ventas. No vuelven a aparecer (en Kommo no se borra nada).', Lv)+
+    '<div class="bo-q">'+(quedan ? ('Después quedan <b>'+quedan+'</b>'+(D.semana?(' ('+D.semana+' de esta semana)'):'')+': esas completalas (falta la fecha de entrega).') : 'Después la bandeja queda vacía ✓')+'</div>'+
+    (O.corre ? ('<div class="bo-av" id="bo-av">⏳ '+esc(O.corre)+'</div>') : '')+
+    '<div class="modal-actions"><button type="button" class="btn btn-primary" id="bo-hacer" style="flex:1"'+((!n || O.corre)?' disabled':'')+' onclick="bandejaOrdenarHacer()">'+
+      (O.corre ? '⏳ Ordenando…' : (dos ? 'Hacer las 2 cosas' : (n ? ('Hacer esto ('+n+')') : 'Tildá algo')))+'</button>'+
+      '<button type="button" class="btn btn-ghost" onclick="closeModal()"'+(O.corre?' disabled':'')+'>Ahora no</button></div></div>');
+}
+function bandejaOrdenarHacer(){
+  var O=BANDEJA_ORD; if(!O || O.corre) return Promise.resolve(null);
+  if(!CONNECTED){ toast('Este aparato no está conectado a la planilla: conectate para ordenar la bandeja.','err',7000); return Promise.resolve(null); }
+  var tareas=[];
+  if(O.uc) O.car.forEach(function(x){ tareas.push({ k:'c', f:function(){ return borrUnirUna(x.b, x.p, true); } }); });
+  if(O.uv) O.vac.forEach(function(id){ tareas.push({ k:'v', f:function(){ return descartarBorradorHacer(id, true); } }); });
+  if(!tareas.length) return Promise.resolve(null);
+  var R={ c:0, v:0, mal:0 }, N=tareas.length;
+  var paso=function(i){
+    if(i>=N){
+      BANDEJA_ORD=null; closeModal(); renderBorrSiActivo(); try{ renderMis(); }catch(e){}
+      var h=[]; if(R.c) h.push('se '+(R.c===1?'unió 1':('unieron '+R.c))); if(R.v) h.push('se '+(R.v===1?'sacó 1 vacía':('sacaron '+R.v+' vacías')));
+      toast((h.length ? ('🧹 Listo: '+h.join(' y ')+'.') : '🧹 No se pudo ordenar nada.')+(R.mal ? (' ⚠️ '+R.mal+' no se '+(R.mal===1?'pudo':'pudieron')+': '+(R.mal===1?'sigue':'siguen')+' en la bandeja, probá de nuevo en un momento.') : ''), R.mal?'err':'ok', 9000);
+      return Promise.resolve(R);
+    }
+    O.corre=(i+1)+' de '+N; var av=document.getElementById('bo-av'); if(av) av.textContent='⏳ '+O.corre; else bandejaOrdenarPintar();
+    return Promise.resolve().then(tareas[i].f).then(function(r){ if(r==='ok' || r==='mismo') R[tareas[i].k]++; else R.mal++; }, function(){ R.mal++; })
+      .then(function(){ return paso(i+1); });
+  };
+  O.corre='1 de '+N; bandejaOrdenarPintar();
+  return paso(0);
 }
 
 function avisoMisHtml(mine){
@@ -39204,6 +39678,28 @@ function misVerLista(k){
       return '<div class="t2-f" onclick="'+abre+'"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+
       esc([p.fecha?fmtFecha(p.fecha):'', ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+(o.m?('<span class="t2-m">'+o.m(p)+'</span>'):'')+cob+'</div>'; }).join('')+'</div>');
 }
+/* ============================================================================
+   📍 (mejora 387, 16/11; dueño la eligió) «PASÓ SU TURNO» CON LO QUE VIO EL GPS.
+   El 14/11 a las 19:00, 5 vendedoras tenían en rojo «⏰ Pasaron su turno sin entregar» (8 pedidos): casi siempre se entregó y falta el ✅ de
+   logística, pero la vendedora no lo sabe y llama al cliente o a logística. Si HOY el GPS vio un camión parado en la puerta de ese pedido
+   (`gpsLlegadaDe`, la misma regla de la ficha y del cierre de entregas), el pedido sale aparte, en gris: «📍 El Carry estuvo en la puerta a las
+   11:20 · falta el ✅ de logística», y no cuenta como rojo. Rojo queda lo que el GPS no vio (o sin GPS). El GPS por pedido vale solo el día
+   de hoy (no queda guardado): un atrasado de ayer sigue en rojo. Solo mira: nada se marca ✅ (dueño, 12/10). `tests/test_turno_gps.js`.
+   ========================================================================== */
+function atrGpsPartir(atr){
+  var R={ rojo:[], gps:[], hayGps:false };
+  try{ R.hayGps=gpsDiaHay(); }catch(e){}
+  (atr||[]).forEach(function(p){ var ll=null; try{ ll=gpsLlegadaDe(p); }catch(e){} if(ll) R.gps.push({ p:p, ll:ll }); else R.rojo.push(p); });
+  return R;
+}
+function atrGpsTxt(o){ return 'el '+(o.ll.veh||'camión')+' '+(o.ll.abierta ? ('está en la puerta desde las '+gpsHoraTxt(o.ll.t0)) : ('estuvo en la puerta a las '+gpsHoraTxt(o.ll.t0))); }
+function atrGpsItem(G, k, nom){
+  if(!G || !G.length) return null;
+  var L=G.map(function(o){ return o.p; });
+  MIS_LISTAS[k]={ t:'📍 Pasaron su turno, pero el GPS vio el camión en la puerta', s:'Casi seguro se entregó: falta que logística ponga el ✅. No hace falta llamar.',
+    L:L, m:function(p){ var o=G.filter(function(x){ return x.p===p; })[0]; return o ? ('📍 '+esc(atrGpsTxt(o))) : ''; } };
+  return { sev:'i', ic:'📍', n:L.length, t:'El camión estuvo en la puerta · falta el ✅ de logística', s:(G.length===1 ? (misNom2(L)+': '+atrGpsTxt(G[0])) : nom(L))+' · casi seguro se entregó', b:'Ver', fn:"misVerLista('"+k+"')" };
+}
 function misIrA(id){ var el=document.getElementById(id); if(!el) return; try{ el.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} el.classList.remove('ah-destello'); void el.offsetWidth; el.classList.add('ah-destello'); }
 function misHacerDatos(v, mine){
   var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
@@ -39219,7 +39715,10 @@ function misHacerDatos(v, mine){
     add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn }); }catch(e){}
   add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
   var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
-  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  /* 📍 (mejora 387) los que el GPS vio con el camión en la puerta: casi seguro se entregaron, falta el ✅ de logística (no van en rojo) */
+  var _ag=atrGpsPartir(atr); atr=_ag.rojo;
+  add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misNom2(atr)+(_ag.hayGps && atr.length ? ' · el GPS no vio el camión en la puerta: llamá a logística' : ''), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  try{ add(atrGpsItem(_ag.gps, 'atrGps', function(L){ return misNom2(L); })); }catch(e){}
   var M=nxM1Datos(v, false);
   add({ sev:(M.tarde?'r':'a'), ic:'🔔', n:M.faltan, t:'Avisar a los clientes de '+(M.dia===tomorrowStr()?'mañana':nxDiaTxt(M.dia)), s:misNom2(M.L.filter(function(p){ return !nxM1Avisado(p); })), b:'🔔 Avisar', p:1, fn:"NX_M1_ABIERTA=true;renderMis();misIrA('nx-m1')", ok:'Clientes del próximo día avisados' });
   /* 🧾 (06/11, dueño: lo anota la vendedora, después de cargar el pedido, cuando ya sabe el número) La factura o nota de remisión: la
@@ -39626,6 +40125,7 @@ function misTopPintar(v, mine){
     misRecoHtml(v)+                                    // 🏆 (14/11, 273) el vendedor del día y la mejor conversión
     misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
     metaDiaHtml(v)+                                    // 🎯 (14/11, mejora 256) la meta de hoy
+    phSemanaHtml(v, mine)+                             // 💵 (mejora 386) el sábado: lo que le corrigieron esta semana
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
@@ -39637,6 +40137,7 @@ function misTopPintar(v, mine){
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; plataEnNodo(el); }   // 💵 (15/11, mejora 291)
   try{ antesIrteQuizas(v); }catch(e){}               // 🌙 (15/11, 310) desde las 19:00, una vez por día
+  try{ ensenaMirar(); }catch(e){}                    // 🎓 (mejora 381) Bloki enseña lo que nunca hizo
   try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
 }
 var MIS_HACER_MAS=false;
@@ -39689,7 +40190,9 @@ function misEqHacerDatos(T){
   MIS_LISTAS.eqSin={ t:'🔴 Productos que no hay', s:'Las vendedoras tienen que avisarle al cliente que hay que esperar.', L:sin, m:function(p){ return esc(nombreCanonico(p.vendedor||'')); } };
   add({ sev:'r', ic:'🔴', n:sin.length, t:'Productos que no hay', s:misEqQuienes(sin, pv), b:'Ver', p:1, fn:"misVerLista('eqSin')", ok:'Todos los productos tienen stock' });
   var atr=T.filter(function(p){ return minutosAtraso(p)>0; });
+  var _ag=atrGpsPartir(atr); atr=_ag.rojo;   // 📍 (mejora 387)
   add({ sev:'r', ic:'⏰', n:atr.length, t:'Pasaron su turno sin entregar', s:misEqQuienes(atr, pv), b:'Ver', fn:"setMisFiltro('atras');misIrA('mis-chips')", ok:'Ningún pedido atrasado' });
+  try{ add(atrGpsItem(_ag.gps, 'eqAtrGps', function(L){ return misEqQuienes(L, pv); })); }catch(e){}
   try{ add(avisaHacerItem(T, 'eqAvisa', function(L){ return misEqQuienes(L, pv); })); }catch(e){}   // 📦 (propuesta 76)
   var fl=q.sinFlete, fBs=0; fl.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
   MIS_LISTAS.eqFlete={ t:'🚚 Recargo por entrega sin reportar', s:'Lo reporta la vendedora desde el pedido: «Cobré el flete».', L:fl, m:function(p){ return fmtBs(envioPorCobrar(p)); } };
@@ -39826,7 +40329,7 @@ function borrBandejaCompacta(lista, todos){
     return '<div class="kx-gt">'+ic+' '+t+' · <b>'+A.length+'</b> <small>'+sub+'</small>'+(extra||'')+'</div>'+ver.map(function(p){ return borrFilaHtml(p, todos); }).join('')+
       (A.length>3?('<button type="button" class="ah-mas" onclick="MIS_KX_MAS.'+k+'=!MIS_KX_MAS.'+k+';renderBorradoresMis()">'+(MIS_KX_MAS[k]?'▴ Ver menos':('▾ Ver las otras '+(A.length-3)))+'</button>'):''); };
   var n=gem.length+nue.length;
-  return '<div class="kx"><div class="kx-cab"><span class="ah-ico">📥</span><h4>Ventas de Kommo para completar</h4><span class="ah-badge ah-badge-a" title="Sin las que ya están cargadas">'+n+'</span><span class="ah-sp"></span><small>'+(car.length?(car.length+(car.length===1?' ya está cargada':' ya están cargadas')+' · '):'')+'todavía no ocupan lugar en ningún camión</small>'+misPlegarBtn('kommo')+'</div>'+
+  return '<div class="kx"><div class="kx-cab"><span class="ah-ico">📥</span><h4>Ventas de Kommo para completar</h4><span class="ah-badge ah-badge-a" title="Sin las que ya están cargadas">'+n+'</span><span class="ah-sp"></span><small>'+(car.length?(car.length+(car.length===1?' ya está cargada':' ya están cargadas')+' · '):'')+'todavía no ocupan lugar en ningún camión</small>'+bandejaOrdBtnHtml(lista)+misPlegarBtn('kommo')+'</div>'+
     (misPlegado('kommo') ? '' : (grupo('car','✅','Ya están cargadas','no cuentan como pendientes', car, ' '+borrUnirBtnHtml(car.length, todos))+
       grupo('gem','✋','Parecen ya cargadas','confirmá y se van de acá', gem)+grupo('nue','🆕','Nuevas','falta ponerles la fecha de entrega', nue)))+'</div>';
 }
@@ -53682,6 +54185,64 @@ function rohoZona(dir){
    una sola. Los que dicen «+SOMIER» se parten por ahí; los que NO lo dicen igual
    llevan somier (confirmado por el dueño el 05/09/2026), así que se le arma.
    La medida vive al final del nombre y vale para las dos piezas. */
+/* ============================================================================
+   🗺️ (mejora 384, 16/11; dueño la eligió) LOS PEDIDOS DE ROHO SIN ZONA: EL BARRIO ESCRITO O EL SECTOR DEL PIN.
+   De los 67 pedidos del Excel de ROHO de noviembre, 35 entraron sin zona: el reparto por zona los dejaba aparte. `rohoZona` sigue mandando
+   (la zona que dice la dirección con todas las letras, o una zona del equipo como tramo entero). Sin eso:
+   · el BARRIO escrito («Barrio Las Palmas», «B/ …», «Urb. …», «Villa …», «Plan 3000», «UV 160»): si los pedidos del equipo que nombran ese
+     barrio dicen casi siempre la misma zona (≥ `ROHO_BARRIO_MIN` y ≥ 4/5 de los que lo nombran), esa (`rohoZonaBarrio`). Medido con la
+     planilla del 15/11 (dejando cada pedido afuera): acierta 14, se equivoca 3 (zonas escritas de otra forma), no dice nada en el resto;
+   · y si tampoco, después de ubicarlo en el mapa por la dirección (`ubicarImportadosRoho`), la del pin: los pedidos de al lado o hacia dónde
+     queda de la plaza (`zonaCercaDe`, la misma regla del formulario; `rohoZonaDePin`).
+   Lo puesto se ve con «≈» en la vista previa y en el resultado del importador, y queda en las observaciones («🗺️ zona ≈ …»): se cambia desde
+   la ficha. Nada pisa una zona que ya venía. ⚠️ No se inventan pines: el pin sigue siendo el de la dirección escrita (§4dh, aproximado); las
+   tiendas Roho no tienen pin a propósito (§4dn). En Playwright apagado salvo `ROHO_ZONA_PRUEBA`. `tests/test_roho_zona.js`.
+   ========================================================================== */
+var ROHO_BARRIO_MIN=2, ROHO_BARRIO_MEMO={ k:'', m:null };
+function rohoZonaActiva(){ try{ return !(navigator.webdriver && !window.ROHO_ZONA_PRUEBA); }catch(e){ return true; } }
+var ROHO_BARRIO_RE=/(?:^|[\s,;(])(?:(BARRIO|BRIO\.?|BARR\.?|B\/|URBANIZACION|URB\.?|CONDOMINIO|COND\.?)\s*[:.]?\s*|(VILLA|PLAN|UV|U\.V\.?)\s+)([A-Z0-9][A-Z0-9 ]{1,28}?)(?=\s*(?:[,;.#()\-]|\bCALLE\b|\bC\/|\bAV\b|\bAVENIDA\b|\bMZ|\bMANZANO\b|\bCASA\b|\bNRO\b|\bN°|\bNUMERO\b|\bUV\b|\bZONA\b|$))/g;
+function rohoBarrios(txt){
+  var s=sinTildes(String(txt||'')).toUpperCase().replace(/\s+/g,' '), out=[], m;
+  ROHO_BARRIO_RE.lastIndex=0;
+  while((m=ROHO_BARRIO_RE.exec(s))){
+    var nom=String(m[3]||'').trim(), pre=m[2] ? String(m[2]).replace(/\./g,'').replace(/^U V$/,'UV') : '';
+    if(pre==='UV' || pre==='U V') pre='UV';
+    var b=(pre ? (pre+' ') : '')+nom;
+    if(nom.length>=2 && out.indexOf(b)<0) out.push(b);
+  }
+  return out;
+}
+function rohoBarrioMapa(){
+  var k=(STATE||[]).length+'|'+(typeof SALDO_GEN!=='undefined' ? SALDO_GEN : 0);
+  if(ROHO_BARRIO_MEMO.k===k && ROHO_BARRIO_MEMO.m) return ROHO_BARRIO_MEMO.m;
+  var M={};
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || esRPT(p.oc) || esVentaTienda(p)) return;
+    var z=String(p.zona||'').replace(/\s+/g,' ').trim(), kz=normNombre(z); if(!kz || kz==='tienda') return;
+    rohoBarrios(p.direccion).forEach(function(b){ var g=M[b]||(M[b]={ n:0, z:{} }); g.n++; g.z[kz]=(g.z[kz]||0)+1; });
+  });
+  ROHO_BARRIO_MEMO={ k:k, m:M }; return M;
+}
+/* {zona, b} o null */
+function rohoZonaBarrio(txt){
+  var M=rohoBarrioMapa(), B=rohoBarrios(txt);
+  for(var i=0;i<B.length;i++){
+    var g=M[B[i]]; if(!g) continue;
+    var top=Object.keys(g.z).sort(function(a,b){ return g.z[b]-g.z[a]; })[0], n=g.z[top];
+    if(n>=ROHO_BARRIO_MIN && n*5>=g.n*4) return { zona:zonaCanonica(top), b:B[i].toLowerCase().replace(/(^|\s)(\S)/g, function(m, a, c){ return a+c.toUpperCase(); }) };
+  }
+  return null;
+}
+/* Al ubicarlo por la dirección: si sigue sin zona, la del pin (vecinos o la plaza). Devuelve la zona puesta, o ''. */
+function rohoZonaDePin(p, g){
+  if(!rohoZonaActiva() || !p || String(p.zona||'').trim() || !g) return '';
+  var R=null; try{ R=zonaCercaDe({ lat:Number(g.lat), lng:Number(g.lng) }, p.id); }catch(e){}
+  if(!R || !R.zona) return '';
+  p.zona=R.zona;
+  p.observaciones=String(p.observaciones||'').replace(/Importado del Excel de ROHO/, '🗺️ zona ≈ '+R.zona+' por el pin aproximado · Importado del Excel de ROHO');
+  if(p.observaciones.indexOf('🗺️ zona ≈')<0) p.observaciones=(p.observaciones?(p.observaciones+' · '):'')+'🗺️ zona ≈ '+R.zona+' por el pin aproximado';
+  return R.zona;
+}
 function rohoPartirCombo(desc){
   var s=String(desc||'').trim();
   if(!/^\s*combo\b/i.test(s)) return [s.replace(/\s+/g,' ')];
@@ -53774,7 +54335,7 @@ function rohoArmarPedidos(filas){
       porNota[oc]={
         oc:oc, fecha:xlsxFecha(f[col.fecha]), cliente:cliente,
         celular: tel || wa,
-        direccion: dir || ref, zona: rohoZona(dir+' '+ref),
+        direccion: dir || ref, zona: rohoZona(dir+' '+ref), zonaPor:'',
         nit: String((col.nit?f[col.nit]:'')||'').replace(/\s+/g,' ').trim(),
         pagado: rohoPagado(col.status?f[col.status]:''),
         estadoRaro: !rohoEstadoConocido(col.status?f[col.status]:''),
@@ -53782,6 +54343,9 @@ function rohoArmarPedidos(filas){
         obs: obs.join(' · '), productos:[], combos:0, malo:''
       };
       orden.push(oc);
+      /* 🗺️ (mejora 384) sin zona en la dirección: el barrio escrito, si los pedidos del equipo con ese barrio dicen casi siempre la misma */
+      if(!porNota[oc].zona && rohoZonaActiva()){ var _zb=rohoZonaBarrio(dir+' '+ref); if(_zb){ porNota[oc].zona=_zb.zona; porNota[oc].zonaPor='barrio'; porNota[oc].zonaB=_zb.b;
+        porNota[oc].obs=porNota[oc].obs.replace(/Importado del Excel de ROHO$/, '🗺️ zona ≈ '+_zb.zona+' por el barrio escrito ('+_zb.b+') · Importado del Excel de ROHO'); } }
     }
     var p=porNota[oc];
     var cant=rohoCant(f[col.cant]);
@@ -53868,7 +54432,7 @@ function renderImportRoho(){
         '<td>'+esc(fmtFecha(p.fecha))+'</td>'+
         '<td>'+esc(p.cliente||'—')+'</td>'+
         '<td>'+(p.celular?esc(p.celular):falta('falta'))+'</td>'+
-        '<td>'+(p.zona?esc(p.zona):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
+        '<td>'+(p.zona?(esc(p.zona)+(p.zonaPor==='barrio'?('<small class="rz-por">≈ por el barrio escrito ('+esc(p.zonaB||'')+')</small>'):'')):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
         '<td>'+(p.direccion?esc(p.direccion):falta('falta'))+'</td>'+
         '<td>'+p.productos.map(function(x){ return esc(x.desc)+' <b>×'+esc(String(x.cant))+'</b>'; }).join('<br>')+'</td>'+
         '<td style="color:var(--muted)">'+esc(p.obs)+'</td>'+
@@ -53904,7 +54468,8 @@ function renderImportRoho(){
         '<div style="font-size:.76rem;color:var(--muted);margin-top:5px">El Excel de ROHO no dice el turno. Se puede cambiar después, pedido por pedido.</div></div>'+
       ((sinZona||sinCel||sinDir||combos||avisosDia.length)?('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:10px 13px;margin-top:11px;font-size:.82rem;color:#7a5b00">'+
         (combos?lin('🛏️ <b>'+combos+'</b> combo'+(combos===1?'':'s')+' partido'+(combos===1?'':'s')+' en colchón + somier — el panel no acepta un combo en una sola línea'):'')+
-        (sinZona?lin('📍 <b>'+sinZona+'</b> sin zona: la dirección no la dice. Completala desde la ficha para que entren en la ruta'):'')+
+        (sinZona?lin('📍 <b>'+sinZona+'</b> sin zona: la dirección no la dice'+(rohoZonaActiva()?'. Si se ubican en el mapa, les pongo la zona del pin (≈)':'. Completala desde la ficha para que entren en la ruta')):'')+
+        (function(){ var nb=elegidos.filter(function(p){ return p.zonaPor==='barrio'; }).length; return nb ? lin('🗺️ <b>'+nb+'</b> con la zona puesta por el barrio escrito (≈): se puede cambiar desde la ficha') : ''; })()+
         (sinCel?lin('📱 <b>'+sinCel+'</b> sin celular válido'):'')+
         (sinDir?lin('🏠 <b>'+sinDir+'</b> sin dirección'):'')+
         avisosDia.map(function(a){ return lin('🚚 '+a); }).join('')+
@@ -54175,6 +54740,7 @@ function closeModal(){
   var ov=document.getElementById('modal'), estaba=ov.classList.contains('on');
   if(estaba) try{ naceCerrar(document.getElementById('modal-box')); }catch(e){}   // 🪄 (§4pj, 168) antes de esconderla: hace falta su lugar
   try{ ctaDocOlvidar(); }catch(e){}   // 🧾 (06/11) la factura o remisión elegida y sin guardar no queda para la próxima vez
+  CTA_REG_DOC=null;                   // 🧾 (mejora 379) …ni la cajita del N° al marcarla cargada
   ov.classList.remove('on');
   if(document.body.classList.contains('ficha-costado')){ document.body.classList.remove('ficha-costado'); [].forEach.call(document.querySelectorAll('.af-f.af-sel'), function(x){ x.classList.remove('af-sel'); }); }
   try{ [].forEach.call(ov.querySelectorAll('video'), function(x){ x.pause(); }); }catch(e){}   // 🎬 (§4mv) el video no sigue andando escondido
@@ -59132,7 +59698,7 @@ function guardarEnFila(lista, cb){
     apiSave(p).then(function(r){ if(!(r&&r.ok)) queuePending(p); sig(); }, function(){ queuePending(p); sig(); });
   })();
 }
-function ubicarPorDireccion(lista, onFin, onProgreso){
+function ubicarPorDireccion(lista, onFin, onProgreso, alUbicar){
   var pend=ubicables(lista);
   if(!pend.length){ if(onFin) onFin({n:0, de:0, sin:[]}); return; }
   if(!CONNECTED){ toast('Para ubicar por la dirección hace falta conexión al servidor.','err'); if(onFin) onFin({n:0, de:pend.length, sin:pend.slice(), sinConexion:true}); return; }
@@ -59157,7 +59723,7 @@ function ubicarPorDireccion(lista, onFin, onProgreso){
       var guardar=[];
       grupo.forEach(function(p){
         var g=porLink[ubicConsulta(p)];
-        if(g){ p.maps=linkAprox(g.lat,g.lng); MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:true}; upsert(p); guardar.push(p); n++; }
+        if(g){ p.maps=linkAprox(g.lat,g.lng); MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:true}; if(alUbicar){ try{ alUbicar(p, g); }catch(e){} } upsert(p); guardar.push(p); n++; }
         else sin.push(p);
       });
       guardarEnFila(guardar, paso);
@@ -59198,10 +59764,13 @@ function ubicarImportadosRoho(creados){
   if(!cand.length){ pinta(creados.length?'📍 Ninguno trae una dirección que se pueda buscar: cargales la ubicación desde la ficha.':''); return; }
   if(!CONNECTED){ pinta('📍 Sin conexión: cuando vuelva la señal, en el mapa tocá «📍 Ubicar por dirección».'); return; }
   pinta('<span class="spin"></span> 📍 Ubicando en el mapa '+cand.length+' direccion'+(cand.length===1?'':'es')+'… (puede tardar un minuto)');
+  var zonas=[];   // 🗺️ (mejora 384) los que no traían zona y la tomaron del pin
   ubicarPorDireccion(cand, function(r){
     pinta((r.n?('📍 <b>'+r.n+' de '+r.de+'</b> quedaron en el mapa por su dirección escrita (≈ aproximados: es la cuadra, no la puerta).'):('📍 No se pudo ubicar ninguna de las '+r.de+' direcciones.'))+
+      (zonas.length?('<br>🗺️ <b>'+zonas.length+'</b> sin zona quedaron con la zona del pin (≈): '+esc(zonas.slice(0,8).map(function(z){ return z.oc+' → '+z.zona; }).join(', '))+(zonas.length>8?(' y '+(zonas.length-8)+' más'):'')+'. Se puede cambiar desde la ficha.'):'')+
       (r.sin.length?('<br>Sin ubicar: '+esc(r.sin.map(function(p){ return p.oc||p.cliente||''; }).join(', '))+' — cargales el link desde la ficha.'):''));
-  }, function(hecho,total){ pinta('<span class="spin"></span> 📍 Ubicando… '+hecho+' de '+total); });
+  }, function(hecho,total){ pinta('<span class="spin"></span> 📍 Ubicando… '+hecho+' de '+total); },
+  function(p, g){ var z=rohoZonaDePin(p, g); if(z) zonas.push({ oc:String(p.oc||p.cliente||''), zona:z }); });
 }
 
 function revUbicDatos(){
@@ -67675,6 +68244,14 @@ function talPintar(){
   var puede=talTiendasPuede();
   var tiendas=SUCURSALES.filter(function(s){ return s.n!=='Tiendas Roho'; }).map(function(s){ return s.n; });
   Object.keys(afuera).forEach(function(t){ if(tiendas.indexOf(t)<0) tiendas.push(t); });   // una que ya no está en la lista, igual se puede destildar
+  if(tiendasCarganActivo()){   // 🏬 (mejora 383) la regla del dueño: todas las tiendas cargan sus ventas
+    var conN={}, sinN={}; talEnPeriodo(pe, vend).forEach(function(p){ if(regEnSistema(p)) return; var t=talCargaAfuera(p, S); if(!t) return; if(docVentaDe(p) && docNumDe(p)) conN[t]=(conN[t]||0)+1; else sinN[t]=(sinN[t]||0)+1; });
+    var ts=Object.keys(conN).concat(Object.keys(sinN)).filter(function(t, i, a){ return a.indexOf(t)===i; }).sort();
+    html+='<div class="tal-sec" id="tal-tiendas">🏬 Las ventas de las tiendas las carga cada tienda</div>'+
+      '<p class="tal-nota">Regla del dueño (16/11): <b>cada tienda carga al sistema sus ventas propias</b>. No cuentan como «por cargar al sistema» de Contabilidad. Las que tienen su N° de factura o remisión cuentan como cargadas; a las que no, se lo pide la vendedora. Lo que no es de una tienda (mayoristas, ROHO, sin sucursal) sigue en la lista de Contabilidad.</p>'+
+      (ts.length ? ('<div class="tal-tiendas">'+ts.map(function(t){ return '<label class="on"><span><b>'+esc(t)+'</b><br><small>'+(conN[t]||0)+' con N° · '+(sinN[t]||0)+' sin N° en '+esc(per)+'</small></span></label>'; }).join('')+'</div>') : '');
+    box.innerHTML=html; return;
+  }
   html+='<div class="tal-sec" id="tal-tiendas">🏪 Tiendas que se cargan al sistema en otro lado</div>'+
     '<p class="tal-nota">Tildá una tienda SOLO si sus ventas se cargan al sistema contable en otro lado (y por eso nadie las marca acá): dejan de contar como «sin cargar al sistema» y el aviso dice cuántas no se cuentan. Si no estás seguro, no tildes nada y preguntale al dueño.</p>'+
     (puede ? '' : ('<div class="tal-nota" style="color:#7c4b00">🔑 Cambiar esta lista pide la contraseña de Administración. '+
@@ -72119,6 +72696,305 @@ function asisTourPaso(d){
     c.hidden=false;
   }, P.v && asisVista()!==P.v ? 450 : 200);
 }
+/* ============================================================================
+   🎓 «TE MUESTRO CÓMO»: BLOKI ENSEÑA LO QUE NUNCA HICISTE (mejora 381, 16/11; dueño la eligió)
+   Juan Pablo tenía 11 avisos de Contabilidad y había cerrado 0; María 36 ventas de Kommo en la bandeja y nunca tocó «🔗 Unir»; logística puso
+   78 ✅ de a uno con «Entregó» y usó «✅ Cierre de entregas» 1 vez. Nada miraba qué no hizo NUNCA cada persona para enseñarle justo eso.
+   · Cinco tareas (`ENSENA_TAREAS`): cerrar un aviso de Contabilidad, anotar la factura o remisión, unir una venta de Kommo ya cargada, el
+     cierre de entregas (logística) y cobrar el saldo. Cada una sabe cuántas tiene la persona (`datos`: las MISMAS cuentas de «Para hacer»)
+     y si alguna vez la hizo (lo que ya guarda la planilla: `ok` de los avisos, `fdoc`, `klead` en un pedido que no vino de Kommo, `eT` del
+     cierre, un cobro que no es el adelanto).
+   · Con ≥ `ENSENA_MIN` (3) y nunca hecha, Bloki ofrece UNA vez por persona y tarea (`me_ensena`, en el aparato): «¿Te muestro cómo? (1
+     minuto)». Si dice que sí, abre la pantalla, ilumina el botón exacto (el brillo del recorrido, `asisFoco`) y dice qué tocar, paso a paso,
+     con SU primer caso de verdad; al final, «¡Listo! Te quedan N». «Ya sé, no me muestres más» lo apaga para esa persona. Solo señala: no
+     toca nada (lo toca la persona).
+   · Desde «📊 Uso del panel» (382) el dueño puede pedir «🎓 Que Bloki la enseñe»: queda en la fila del sistema `__ensena__` (`ENSENA_ID`,
+     para todos los aparatos) y Bloki la vuelve a ofrecer, con 1 o más, a quien todavía no la hizo (aunque ya se la hubiera ofrecido).
+   · Se mira al dibujar Mis pedidos (con una vendedora elegida) y Administración (logística), con un respiro, nunca con una ventana abierta ni
+     durante el recorrido. En Playwright apagado salvo `ENSENA_PRUEBA`. `tests/test_bloki_ensena.js`.
+   ========================================================================== */
+var ENSENA_LS='me_ensena', ENSENA_MIN=3, ENSENA={ T:null, ofrecio:false, k:'', i:0, c:null, v:'', P:null }, ENSENA_ESPERA_MS=2500;
+function ensenaActivo(){ try{ return !navigator.webdriver || !!window.ENSENA_PRUEBA; }catch(e){ return true; } }
+function ensenaLeer(){ try{ var o=JSON.parse(localStorage.getItem(ENSENA_LS)||'{}'); return (o && typeof o==='object') ? o : {}; }catch(e){ return {}; } }
+function ensenaClave(persona, k){ return normNombre(persona||'?')+'|'+k; }
+function ensenaPoner(persona, k, est){ var o=ensenaLeer(); o[ensenaClave(persona, k)]={ e:est, t:Date.now() }; try{ localStorage.setItem(ENSENA_LS, JSON.stringify(o)); }catch(e){} }
+function ensenaEstado(persona, k){ return ensenaLeer()[ensenaClave(persona, k)]||null; }
+/* lo que pidió el dueño (para todos los aparatos): { k:{ t, por } } */
+function ensenaPedidos(){
+  var r=(STATE||[]).filter(function(p){ return p && String(p.id)===ENSENA_ID; })[0];
+  try{ var o=JSON.parse((r && r.observaciones)||'{}')||{}; return (o.e && typeof o.e==='object') ? o.e : {}; }catch(e){ return {}; }
+}
+function ensenaMios(v){ return (STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && mismoVendedor(p.vendedor, v); }); }
+function ensenaCli(p){ return String((p&&p.cliente)||'—').trim().split(/\s+/).slice(0,3).join(' '); }
+var ENSENA_TAREAS=[
+  { k:'aviso', rol:'vend', t:'cerrar un aviso de Contabilidad', ic:'📣',
+    datos:function(v){ var L=[]; try{ L=ctaAvAbiertos(v); }catch(e){}
+      var hizo=false; try{ hizo=ctaAvLeer().some(function(a){ return a && a.ok && !a.au && mismoVendedor(a.vend, v); }); }catch(e){}
+      return { n:L.length, nunca:!hizo, c:L[0]||null, que:(L.length===1?'aviso':'avisos')+' de Contabilidad' }; },
+    pasos:function(c, v){ return [
+      { abrir:function(){ ctaAvVer(v); }, f:['.ctav-it[data-av="'+c.id+'"] .ctav-bt .ah-go:not(.ah-go-p)', '.ctav-it .ctav-bt .ah-go:not(.ah-go-p)'], t:'📣 Tu primer aviso',
+        x:'Es el de '+(c.cli||'tu cliente')+': '+(c.txt||'algo distinto de lo anotado')+'. Si hay que corregir el pago, tocá «Abrir la venta» y arreglalo.' },
+      { f:['.ctav-it[data-av="'+c.id+'"] .ah-go-p', '.ctav-it .ah-go-p'], t:'✓ Cuando ya está bien',
+        x:'Si ya lo arreglaste (o estaba bien), tocá el botón que brilla: «✓ Ya lo corregí». Contabilidad ve que lo revisaste.' } ]; } },
+  { k:'factura', rol:'vend', t:'anotar la factura o la nota de remisión', ic:'🧾',
+    datos:function(v){ var M=ensenaMios(v), L=M.filter(docVentaFalta);
+      return { n:L.length, nunca:!M.some(function(p){ return docVentaDe(p) && docNumDe(p); }), c:L[0]||null, que:(L.length===1?'venta':'ventas')+' sin el N° de factura o remisión' }; },
+    pasos:function(c){ return [
+      { abrir:function(){ showContaModal(String(c.id)); }, f:['#cta-doc button[data-v="F"]', '#cta-doc'], t:'🧾 ¿Factura o remisión?',
+        x:'Es la venta de '+ensenaCli(c)+'. Tocá «🧾 Factura» o «📄 Nota de remisión», la que le hiciste.' },
+      { f:['#cta-doc-num'], t:'El número', x:'Escribí el N° que te dio el sistema.' },
+      { f:['#cta-doc button[onclick^="ctaDocGuardar("]'], t:'💾 Guardar', x:'Tocá «💾 Guardar N°» y listo: sale de tu «Para hacer».' } ]; } },
+  { k:'kommo', rol:'vend', t:'unir una venta de Kommo que ya cargaste', ic:'🔗',
+    datos:function(v){ var L=[]; try{ L=borrCargadasDe(borradoresDe(v)); }catch(e){}
+      var hizo=(STATE||[]).some(function(p){ return p && mismoVendedor(p.vendedor, v) && kleadDe(p) && String(p.id).indexOf(BORRADOR_PREF)!==0; });
+      return { n:L.length, nunca:!hizo, c:L[0] ? L[0].b : null, que:(L.length===1?'venta de Kommo que ya cargaste':'ventas de Kommo que ya cargaste') }; },
+    pasos:function(c, v, D){ return [
+      { abrir:function(){ showView('mis'); try{ renderMis(); }catch(e){} }, f:['.borr-unir', '#band-ord-btn', '#mis-borradores'], t:'🔗 Ya las cargaste a mano',
+        x:'Estas '+D.n+' ventas de Kommo ya las tenés cargadas (mismo celular). Tocá el botón que brilla y quedan unidas: una sola venta cada una.' } ]; } },
+  { k:'cierre', rol:'log', t:'el cierre de entregas', ic:'✅',
+    datos:function(){ var hoy=todayStr(), desde=isoDeTsBolivia(Date.now()-7*864e5);
+      var L=(STATE||[]).filter(function(p){ return cierreEntEntra(p) && p.fecha<=hoy && p.fecha>=desde && !esATC(p.oc); });
+      return { n:L.length, nunca:!(STATE||[]).some(function(p){ return !!cierreEntDe(p); }), c:L[0]||null, que:'entregas sin el ✅' }; },
+    pasos:function(){ return [
+      { abrir:function(){ showView('admin'); try{ if(typeof admSecPoner==='function') admSecPoner('her'); }catch(e){} }, f:['#view-admin .adm-tools [onclick="abrirCierreEntregas()"]', '#view-admin [onclick="abrirCierreEntregas()"]', '#admin-lock'], t:'✅ El cierre de entregas',
+        x:'En vez de tocar «Entregó» uno por uno: al final del día abrí el cierre de entregas.' },
+      { abrir:function(){ abrirCierreEntregas(); }, f:['#cie-ent-confirmar'], t:'Tildá y confirmá',
+        x:'Tildá lo que salió (lo que no, «📅 No salió · reprogramar») y tocá el botón que brilla: se guardan todos juntos.' } ]; } },
+  { k:'saldo', rol:'vend', t:'cobrar el saldo', ic:'💵',
+    datos:function(v){ var hoy=todayStr(), M=ensenaMios(v);
+      var L=M.filter(function(p){ return !esATC(p.oc) && !esRPT(p.oc) && !esVentaTienda(p) && p.fecha && p.fecha<=hoy && contaFaltaCobrar(p)>0.005; });
+      var hizo=M.some(function(p){ return cobrosReales(p).some(function(c){ return !c.anticipo && !esEnvio(c); }); });
+      return { n:L.length, nunca:!hizo, c:L[0]||null, que:(L.length===1?'venta entregada con saldo':'ventas entregadas con saldo') }; },
+    pasos:function(c){ return [
+      { abrir:function(){ showContaModal(String(c.id)); }, f:['#modal-box [onclick^="ctaRegistrarPago("]'], t:'💵 Cobrar el saldo',
+        x:'Cuando '+ensenaCli(c)+' te paga el saldo: elegí cómo pagó, poné el monto, subí la foto del comprobante y tocá «Registrar pago».' } ]; } }
+];
+function ensenaTarea(k){ return ENSENA_TAREAS.filter(function(x){ return x.k===k; })[0]||null; }
+/* Quién mira ahora y con qué rol. */
+function ensenaQuien(){
+  var r=''; try{ r=quienRol(); }catch(e){}
+  var vis=''; try{ vis=asisVista(); }catch(e){}
+  if(vis==='admin' && r==='logistica') return { rol:'log', v:quienEdita()||'Logística' };
+  if(vis==='mis'){ var v=''; try{ v=misVendedorSel(); }catch(e){} if(v && !(MIS_TODOS && UNLOCKED) && !esVendedorLite(v)) return { rol:'vend', v:v }; }
+  return null;
+}
+/* La primera tarea para ofrecer, o null. */
+function ensenaElegir(Q){
+  if(!Q) return null;
+  var ped=ensenaPedidos();
+  for(var i=0;i<ENSENA_TAREAS.length;i++){
+    var T=ENSENA_TAREAS[i]; if(T.rol!==Q.rol) continue;
+    var D=null; try{ D=T.datos(Q.v); }catch(e){ D=null; }
+    if(!D || !D.nunca || !D.c) continue;
+    var st=ensenaEstado(Q.v, T.k), pd=ped[T.k], pedido=!!(pd && Number(pd.t)>0 && (!st || Number(st.t)<Number(pd.t)));
+    if(pedido ? D.n<1 : (st || D.n<ENSENA_MIN)) continue;
+    return { T:T, D:D, pedido:pedido };
+  }
+  return null;
+}
+function ensenaMirar(){
+  if(!ensenaActivo() || ENSENA.ofrecio || ENSENA.P) return;
+  clearTimeout(ENSENA.T);
+  ENSENA.T=setTimeout(function(){
+    if(ENSENA.ofrecio || ENSENA.P || (typeof ASIS_TOUR!=='undefined' && ASIS_TOUR)) return;
+    var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return;
+    var Q=ensenaQuien(), E=ensenaElegir(Q); if(!E) return;
+    ENSENA.ofrecio=true; ensenaPoner(Q.v, E.T.k, 'ofrecido');
+    ensenaCard('<small>🎓 Te muestro cómo · 1 minuto</small><b>'+esc(E.T.ic+' '+E.T.t.charAt(0).toUpperCase()+E.T.t.slice(1))+'</b>'+
+      '<span>Tenés <b>'+E.D.n+'</b> '+esc(E.D.que)+' y todavía no '+(E.T.rol==='log'?'usaste esto':'lo hiciste nunca')+'. '+(E.pedido?'Administración pidió que te lo muestre. ':'')+'Te muestro con '+(E.T.k==='cierre'?'el de hoy':'la primera')+', paso a paso.</span>'+
+      '<div class="asis-acc"><button type="button" class="asis-b si" onclick="ensenaEmpezar(\''+E.T.k+'\')">Sí, mostrame</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaCerrar()">Ahora no</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaYaSe(\''+E.T.k+'\')">Ya sé, no me muestres más</button></div>');
+  }, ENSENA_ESPERA_MS);
+}
+function ensenaCard(h){
+  var c=document.getElementById('ensena');
+  if(!c){ c=document.createElement('div'); c.id='ensena'; c.className='asis-tour ensena no-print'; c.setAttribute('role','dialog'); c.setAttribute('aria-label','Bloki te muestra cómo'); document.body.appendChild(c); }
+  c.innerHTML=h; c.hidden=false;
+  try{ blokiGesto('senala', 3000); }catch(e){}
+}
+function ensenaCerrar(){
+  var c=document.getElementById('ensena'); if(c) c.hidden=true;
+  ENSENA.P=null; ENSENA.k='';
+  if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
+}
+function ensenaYaSe(k){ var Q=ensenaQuien(); ensenaPoner(Q ? Q.v : (ENSENA.v||'?'), k, 'ya'); ensenaCerrar(); toast('Listo: no te lo vuelvo a mostrar.','ok'); }
+function ensenaEmpezar(k){
+  var T=ensenaTarea(k), Q=ensenaQuien() || (ENSENA.v ? { v:ENSENA.v, rol:T&&T.rol } : null); if(!T || !Q) { ensenaCerrar(); return; }
+  var D=T.datos(Q.v); if(!D || !D.c){ ensenaCerrar(); toast('Ya no tenés '+T.t+' pendiente ✓','ok'); return; }
+  ENSENA.k=k; ENSENA.v=Q.v; ENSENA.c=D.c; ENSENA.D=D; ENSENA.P=T.pasos(D.c, Q.v, D); ENSENA.i=0;
+  ensenaPaso(0);
+}
+function ensenaPaso(d){
+  if(!ENSENA.P) return;
+  ENSENA.i=Math.max(0, ENSENA.i+(d||0));
+  var P=ENSENA.P[ENSENA.i];
+  if(!P){ ensenaFin(); return; }
+  var abrir=P.abrir || (d<0 ? (function(){ for(var j=ENSENA.i-1;j>=0;j--){ if(ENSENA.P[j].abrir) return ENSENA.P[j].abrir; } return null; })() : null);
+  try{ if(abrir) abrir(); }catch(e){}
+  setTimeout(function(){
+    if(!ENSENA.P) return;
+    var el=asisPrimero(P.f); if(el) asisFoco(el, true);
+    var n=ENSENA.P.length, ult=ENSENA.i===n-1;
+    ensenaCard('<small>Te muestro cómo · paso '+(ENSENA.i+1)+' de '+n+'</small><b>'+esc(P.t)+'</b><span>'+esc(P.x)+'</span><div class="asis-acc">'+
+      (ENSENA.i ? '<button type="button" class="asis-b" onclick="ensenaPaso(-1)">‹ Atrás</button>' : '')+
+      '<button type="button" class="asis-b si" onclick="ensenaPaso(1)">'+(ult?'¡Listo! ✓':'Siguiente ›')+'</button>'+
+      '<button type="button" class="asis-b" onclick="ensenaYaSe(\''+ENSENA.k+'\')">Ya sé, no me muestres más</button></div>');
+  }, abrir ? 350 : 120);
+}
+function ensenaFin(){
+  var T=ensenaTarea(ENSENA.k), D=null; try{ D=T.datos(ENSENA.v); }catch(e){}
+  ensenaPoner(ENSENA.v, ENSENA.k, 'hecho');
+  if(ASIS_FOCO){ ASIS_FOCO.classList.remove('asis-foco'); ASIS_FOCO=null; }
+  ENSENA.P=null;
+  var q=D ? D.n : 0;
+  ensenaCard('<small>🎓 Te muestro cómo</small><b>¡Listo!</b><span>'+(q ? ('Te quedan <b>'+q+'</b> '+esc(D.que)+'. Seguí con la próxima igual: es lo mismo.') : 'Ya no te queda ninguna ✓')+'</span>'+
+    '<div class="asis-acc"><button type="button" class="asis-b si" onclick="ensenaCerrar()">Cerrar</button></div>');
+}
+/* 382: el dueño pide que Bloki la enseñe (para todos los aparatos). Relee la fila, junta y guarda. */
+function ensenaPedir(k){
+  if(!UNLOCKED){ toast('🔒 Con la contraseña de Administración.','err'); return Promise.resolve(false); }
+  if(!CONNECTED){ toast('Este aparato no está conectado a la planilla.','err'); return Promise.resolve(false); }
+  var escribir=function(srv){
+    var e={}; try{ var o=JSON.parse((srv && srv.observaciones)||'{}')||{}; if(o.e && typeof o.e==='object') e=o.e; }catch(x){}
+    e[k]={ t:Date.now(), por:quienEdita()||'Administración' };
+    var fila=filaSistema(ENSENA_ID, '🎓 LO QUE BLOKI ENSEÑA (no tocar: la lee el panel)', JSON.stringify({ v:1, e:e }));
+    var rv=Math.max(Number(srv && srv.rev)||0, Number(SAVE_REV[ENSENA_ID])||0); if(rv) fila.rev=rv;
+    return apiSave(fila).then(function(r){
+      if(r && r.ok){ var g=(r.pedido && String(r.pedido.id)===ENSENA_ID) ? r.pedido : fila;
+        STATE=STATE.filter(function(p){ return String(p.id)!==ENSENA_ID; }); STATE.push(g); return true; }
+      if(r && r.actual && String(r.actual.id)===ENSENA_ID && !escribir.otra){ escribir.otra=1; return escribir(r.actual); }
+      throw new Error((r && (r.error||r.motivo)) || 'no_guardo');
+    });
+  };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('sin_lectura');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===ENSENA_ID) srv=p; });
+    return escribir(srv);
+  }).then(function(){ var T=ensenaTarea(k); toast('🎓 Listo: Bloki se lo va a mostrar a quien todavía no '+(T?('sabe '+T.t):'lo usa')+', la próxima vez que abra el panel.','ok',8000); return true; },
+    function(err){ toast('No se pudo guardar ('+(typeof motivoDeError==='function' ? motivoDeError(err) : String(err))+'). Probá de nuevo.','err',8000); return false; });
+}
+/* ============================================================================
+   📊 QUÉ PARTES DEL PANEL SE USAN Y CUÁLES NO (mejora 382, 16/11; dueño la eligió)
+   Con la planilla del 15/11: «🏬 Stock de las tiendas» nunca guardó un conteo, el «🔒 Cerrar» del Cierre comercial nunca se tocó, los tildes de
+   la Lista de carga y «🚚 Ya salió» no se usaban desde el 26/10, el camión se anotó en 0 de 32 entregas, «✅ Cierre de entregas» 1 vez contra 78
+   «Entregó». Nada decía qué herramientas se dejaron de usar.
+   · Administración → Herramientas → «📊 Uso del panel» (con la contraseña): una tabla, cada herramienta en verde (se usa), ámbar (poco) o gris
+     (nunca), con desde cuándo y quién. SOLO de lo que ya guarda la planilla (`usoDatos`: las filas del sistema, `__carga_chk__`, `eH`/`eT`,
+     el camión de cada pedido, los avisos de Contabilidad, `fdoc`, `klead`, los cobros tildados de los retiros, el historial de los Excel). Lo
+     que no deja nada en la planilla dice «no se puede medir». Sin rastreo nuevo: nadie es vigilado.
+   · Arriba, lo que más trabajo ahorraría si se usara (la que no está en verde con más trabajo hecho a mano o pendiente).
+   · En cada fila: «🎓 Que Bloki la enseñe» (las cinco de la mejora 381: queda en `__ensena__`, para todos los aparatos), «🙈 Sacarla de la
+     vista» (esconde su botón, `USO_OCULTA`) y «👍 Está bien así» (la deja en gris claro): estos dos, por aparato (`me_uso`), porque no hay
+     dónde guardarlos para todos y esconder un botón a todo el equipo es una decisión del dueño.
+   · Solo mira. En Playwright el botón no sale salvo `USO_PRUEBA`. `tests/test_uso_panel.js`.
+   ========================================================================== */
+var USO_LS='me_uso', USO_DIAS=30;
+/* el botón de cada herramienta que «🙈 Sacarla de la vista» esconde (solo las que tienen un botón propio) */
+var USO_OCULTA={ tst:'#stk-tst-btn', ccm:'#pry-cierre-btn', tal:'.cx-av-btn[onclick*="talAbrir"]', dest:'.clf-dest', cierre:'#view-admin [onclick="abrirCierreEntregas()"]', salio:'.cv-salio' };
+function usoVa(){ try{ return !navigator.webdriver || !!window.USO_PRUEBA; }catch(e){ return true; } }
+function usoLeer(){ try{ var o=JSON.parse(localStorage.getItem(USO_LS)||'{}'); return (o && typeof o==='object') ? { o:o.o||{}, b:o.b||{} } : { o:{}, b:{} }; }catch(e){ return { o:{}, b:{} }; } }
+function usoPoner(campo, k, on){ var U=usoLeer(); if(on) U[campo][k]=Date.now(); else delete U[campo][k]; try{ localStorage.setItem(USO_LS, JSON.stringify(U)); }catch(e){} usoAplicarOcultas(); }
+function usoAplicarOcultas(){
+  var U=usoLeer(), sel=Object.keys(U.o).map(function(k){ return USO_OCULTA[k]; }).filter(Boolean);
+  var st=document.getElementById('uso-oculta-st');
+  if(!st){ st=document.createElement('style'); st.id='uso-oculta-st'; document.head.appendChild(st); }
+  st.textContent=sel.length ? (sel.join(',')+'{display:none!important}') : '';
+}
+function usoBotonPintar(){
+  var g=document.querySelector('.adm-tools .at-aj .at-b'); if(!g) return;
+  var b=document.getElementById('uso-btn'), ve=usoVa() && UNLOCKED;
+  if(!ve){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='uso-btn'; b.className='btn btn-sm at-t'; b.style.setProperty('--c','#334155'); b.setAttribute('data-d','qué se usa y qué no');
+    b.title='Qué herramientas del panel se usan y cuáles no, de lo que ya guarda la planilla'; b.textContent='📊 Uso del panel'; b.onclick=function(){ usoAbrir(); }; g.insertBefore(b, g.firstChild); }
+}
+function usoDias(){ return isoDeTsBolivia(Date.now()-USO_DIAS*864e5); }
+function usoQuien(L){ var c={}; L.forEach(function(q){ q=String(q||'').trim(); if(q && q!=='?') c[q]=(c[q]||0)+1; }); return Object.keys(c).sort(function(a,b){ return c[b]-c[a]; }).slice(0,3).join(', '); }
+function usoEst(n, umbral){ return !(n>0) ? 'gris' : (n<umbral ? 'ambar' : 'verde'); }
+/* Las filas de la tabla: { k, ic, t, est:'verde'|'ambar'|'gris'|'nm', d (qué dice), q (quién), pesa (trabajo), en (k de 381) } */
+function usoDatos(){
+  var hoy=todayStr(), desde=usoDias(), L=[], P=(STATE||[]).filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p); });
+  var enVentana=function(f){ f=String(f||'').slice(0,10); return f>=desde && f<=hoy; };
+  /* ✅ Cierre de entregas contra «Entregó» de a uno */
+  var diasCie={}, quienCie=[], unoAuno=0, quienUno=[];
+  P.forEach(function(p){ var c=cierreEntDe(p); if(c && c.t && enVentana(isoDeTsBolivia(c.t))){ diasCie[isoDeTsBolivia(c.t)]=1; quienCie.push(c.q); }
+    entHistDe(p).forEach(function(e){ if(e && Number(e.v) && enVentana(isoDeTsBolivia(e.t)) && !/cierre/i.test(String(e.d||''))){ unoAuno++; quienUno.push(e.q); } }); });
+  var nCie=Object.keys(diasCie).length;
+  L.push({ k:'cierre', ic:'✅', t:'Cierre de entregas', est:usoEst(nCie, 10), en:'cierre', pesa:nCie<10 ? unoAuno : 0,
+    d:(nCie ? (nCie+' día'+(nCie===1?'':'s')+' con cierre en '+USO_DIAS+' días') : 'nunca en '+USO_DIAS+' días')+(unoAuno ? (' · el ✅ se puso de a uno '+unoAuno+' veces') : ''), q:usoQuien(quienCie.length?quienCie:quienUno) });
+  /* Tildes de la Lista de carga y «🚚 Ya salió» */
+  var diasT={}, diasS={}, ultT='', ultS='';
+  Object.keys(CARGA_CHK||{}).forEach(function(k){ var f=String(k).slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
+    var s=String(k).indexOf(CARGA_SALIO)>=0; if(s){ if(f>ultS) ultS=f; if(enVentana(f)) diasS[f]=1; } else { if(f>ultT) ultT=f; if(enVentana(f)) diasT[f]=1; } });
+  var nT=Object.keys(diasT).length, nS=Object.keys(diasS).length;
+  L.push({ k:'carga', ic:'📦', t:'Tildes de la Lista de carga', est:usoEst(nT, 10), pesa:0, d:(nT ? (nT+' día'+(nT===1?'':'s')+' con tildes en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultT ? (' · el último el '+fmtFechaCorta(ultT)) : ' · nunca') });
+  L.push({ k:'salio', ic:'🚚', t:'«Ya salió» del camión (a mano)', est:usoEst(nS, 10), pesa:0, d:(nS ? (nS+' día'+(nS===1?'':'s')+' en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultS ? (' · el último el '+fmtFechaCorta(ultS)) : ' · nunca')+' (el GPS lo marca solo)' });
+  /* 🚚 El camión anotado en las entregas de los últimos 14 días */
+  var d14=isoDeTsBolivia(Date.now()-14*864e5), ent=P.filter(function(p){ return p.fecha && p.fecha>=d14 && p.fecha<=hoy && !esVentaTienda(p) && !esATC(p.oc) && !(typeof fichaRetira==='function' && fichaRetira(p)); });
+  var conCam=ent.filter(function(p){ return !!String(p.vehiculo||'').trim(); }).length, pc=ent.length ? conCam/ent.length : 0;
+  L.push({ k:'camion', ic:'🚚', t:'El camión anotado en el pedido', est:!ent.length ? 'nm' : (pc>=0.7 ? 'verde' : (conCam ? 'ambar' : 'gris')), pesa:ent.length-conCam,
+    d:ent.length ? (conCam+' de '+ent.length+' entregas de los últimos 14 días') : 'sin entregas en 14 días' });
+  /* 🏬 Stock de las tiendas · 🔒 Cerrar el cierre comercial · Talonario «ya lo vi» · 📌 Guardar este lugar */
+  var tst=tstLeer(), nTst=Object.keys(tst.s||{}).filter(function(n){ return tst.s[n] && tst.s[n].f; }).length;
+  L.push({ k:'tst', ic:'🏬', t:'Stock de las tiendas', est:usoEst(nTst, 3), pesa:0, d:nTst ? (nTst+' tienda'+(nTst===1?'':'s')+' con conteo') : 'nunca se guardó un conteo' });
+  var ccm=ccmLeer(), nCcm=Object.keys(ccm.m||{}).filter(function(ym){ return ccm.m[ym] && ccm.m[ym].c; }).length;
+  L.push({ k:'ccm', ic:'🔒', t:'«Cerrar» del Cierre comercial', est:usoEst(nCcm, 1), pesa:0, d:nCcm ? (nCcm+' mes'+(nCcm===1?'':'es')+' cerrado'+(nCcm===1?'':'s')) : 'nunca se tocó' });
+  var nTal=0; try{ nTal=Object.keys(talSet()).length; }catch(e){}
+  L.push({ k:'tal', ic:'🔢', t:'Talonario: «Anulado / ya lo vi»', est:usoEst(nTal, 3), pesa:0, d:nTal ? (nTal+' anotado'+(nTal===1?'':'s')) : 'nunca' });
+  var nDest=0; try{ nDest=Object.keys(destSet()).filter(function(k){ return destSet()[k]; }).length; }catch(e){}
+  L.push({ k:'dest', ic:'📌', t:'«Guardar este lugar» de un cliente', est:usoEst(nDest, 3), pesa:0, d:nDest ? (nDest+' lugar'+(nDest===1?'':'es')+' guardado'+(nDest===1?'':'s')) : 'nunca' });
+  /* 📣 «Ya lo corregí» de los avisos de Contabilidad, por vendedora */
+  var AV={}; try{ ctaAvLeer().forEach(function(a){ if(!a || a.qt) return; var v=String(a.vend||'?').split(' ').slice(0,2).join(' '), o=AV[v]||(AV[v]={ ok:0, n:0 }); o.n++; if(a.ok && !a.au) o.ok++; }); }catch(e){}
+  var avV=Object.keys(AV), avOk=0, avN=0, avPend=0; avV.forEach(function(v){ avOk+=AV[v].ok; avN+=AV[v].n; avPend+=AV[v].n-AV[v].ok; });
+  L.push({ k:'aviso', ic:'📣', t:'«Ya lo corregí» de los avisos de Contabilidad', est:!avN ? 'nm' : (avOk*2>=avN ? 'verde' : (avOk ? 'ambar' : 'gris')), en:'aviso', pesa:avPend,
+    d:avN ? avV.sort(function(a,b){ return (AV[b].n-AV[b].ok)-(AV[a].n-AV[a].ok); }).map(function(v){ return v.split(' ')[0]+' '+AV[v].ok+'/'+AV[v].n; }).join(' · ') : 'sin avisos' });
+  /* 🧾 La factura o remisión anotada (ventas de este mes que la piden) */
+  var mes=hoy.slice(0,7), req=P.filter(function(p){ return docVentaRequerida(p) && contaFecha(p).slice(0,7)===mes; }), conDoc=req.filter(function(p){ return !docVentaFalta(p); }).length;
+  L.push({ k:'factura', ic:'🧾', t:'N° de factura o remisión', est:!req.length ? 'nm' : (conDoc/req.length>=0.8 ? 'verde' : (conDoc ? 'ambar' : 'gris')), en:'factura', pesa:req.length-conDoc,
+    d:req.length ? (conDoc+' de '+req.length+' ventas de '+mesNombre(mes).replace(/ de \d{4}$/,'')) : 'sin ventas este mes' });
+  /* 🔗 Unir las ventas de Kommo ya cargadas */
+  var car=[], unidas=0; try{ car=borrCargadasDe(BORRADORES); }catch(e){}
+  P.forEach(function(p){ if(kleadDe(p) && String(p.id).indexOf(BORRADOR_PREF)!==0 && enVentana(contaFecha(p))) unidas++; });
+  L.push({ k:'kommo', ic:'🔗', t:'«Unir» las ventas de Kommo ya cargadas', est:!car.length ? 'verde' : (unidas ? 'ambar' : 'gris'), en:'kommo', pesa:car.length,
+    d:(car.length ? (car.length+' esperando en las bandejas') : 'ninguna esperando')+(unidas ? (' · '+unidas+' unidas en '+USO_DIAS+' días') : '') });
+  /* 💵 Los cobros tildados al cargar un retiro */
+  var rets=(typeof RETIROS!=='undefined' ? RETIROS : []).filter(function(r){ return r && enVentana(String(r.fecha||'')||contaFecha(r)); }), conT=rets.filter(function(r){ return retTicksDe(r.garantia).length>0; }).length;
+  L.push({ k:'retiro', ic:'💵', t:'Retiros con los cobros tildados', est:!rets.length ? 'nm' : (conT/rets.length>=0.7 ? 'verde' : (conT ? 'ambar' : 'gris')), pesa:0, d:rets.length ? (conT+' de '+rets.length+' retiros en '+USO_DIAS+' días') : 'sin retiros en '+USO_DIAS+' días' });
+  /* 📥 El Excel del día */
+  var d3=isoDeTsBolivia(Date.now()-2*864e5), hx=((typeof STOCK!=='undefined' && STOCK && STOCK.h) || []).filter(function(h){ return h && String(h.f||'')>=d3; });
+  var hHoy=hx.filter(function(h){ return String(h.f||'')===hoy; }).length;
+  L.push({ k:'excel', ic:'📥', t:'El Excel de los almacenes', est:hHoy ? 'verde' : (hx.length ? 'ambar' : 'gris'), pesa:0, d:hx.length ? (hx.length+' en los últimos 3 días · hoy '+hHoy) : 'ninguno en 3 días' });
+  /* lo que no deja rastro */
+  [['buscar','🔎','Quién vendió qué'], ['mapa','🗺️','Mapa de entregas'], ['parte','📋','Parte del día']].forEach(function(x){
+    L.push({ k:x[0], ic:x[1], t:x[2], est:'nm', pesa:0, d:'no se puede medir: no deja nada en la planilla' }); });
+  return L;
+}
+function usoAbrir(){
+  if(!UNLOCKED){ toast('🔒 Con la contraseña de Administración.','err'); return; }
+  var L=usoDatos(), U=usoLeer(), n={ verde:0, ambar:0, gris:0 };
+  L.forEach(function(r){ if(n[r.est]!=null) n[r.est]++; });
+  var top=L.filter(function(r){ return r.est!=='verde' && r.est!=='nm' && r.pesa>0; }).sort(function(a,b){ return b.pesa-a.pesa; })[0];
+  var est={ verde:'se usa', ambar:'poco', gris:'nunca', nm:'no se mide' };
+  var fila=function(r){
+    var ok=!!U.b[r.k], oc=!!U.o[r.k];
+    var bts=(r.est==='verde' || r.est==='nm') ? '' :
+      ((r.en ? '<button type="button" class="btn btn-sm uso-ens" data-k="'+r.en+'" onclick="ensenaPedir(this.dataset.k)">🎓 Que Bloki la enseñe</button>' : '')+
+       (USO_OCULTA[r.k] ? ('<button type="button" class="btn btn-ghost btn-sm" data-k="'+r.k+'" onclick="usoPoner(\'o\', this.dataset.k, '+(oc?'false':'true')+');usoAbrir()">'+(oc?'↩️ Volver a mostrarla':'🙈 Sacarla de la vista')+'</button>') : '')+
+       '<button type="button" class="btn btn-ghost btn-sm" data-k="'+r.k+'" onclick="usoPoner(\'b\', this.dataset.k, '+(ok?'false':'true')+');usoAbrir()">'+(ok?'↩️ Volver a mirarla':'👍 Está bien así')+'</button>');
+    return '<tr class="uso-'+r.est+(ok?' uso-ok':'')+'" data-k="'+r.k+'"><td class="uso-n"><span class="uso-e" title="'+est[r.est]+'"></span><b>'+r.ic+' '+esc(r.t)+'</b>'+
+      '<span class="uso-q">'+esc(est[r.est])+(ok?' · 👍 está bien así (en este aparato)':'')+(oc?' · 🙈 escondida en este aparato':'')+'</span></td>'+
+      '<td class="uso-d">'+esc(r.d)+(r.q?('<span class="uso-q">quién: '+esc(r.q)+'</span>'):'')+'</td><td><div class="uso-b">'+bts+'</div></td></tr>';
+  };
+  var orden={ gris:0, ambar:1, verde:2, nm:3 };
+  var V=L.slice().sort(function(a,b){ return (orden[a.est]-orden[b.est]) || ((U.b[a.k]?1:0)-(U.b[b.k]?1:0)); });
+  openModal('<div class="modal-h"><h3>📊 Uso del panel · '+esc(mesNombre(todayStr().slice(0,7)))+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b" id="uso-ov"><p class="uso-sub">Sale de lo que ya guarda la planilla (los últimos '+USO_DIAS+' días). Nadie es vigilado: solo dice qué se usa. '+
+      '🟢 '+n.verde+' se usan · 🟡 '+n.ambar+' poco · ⚪ '+n.gris+' nunca.</p>'+
+    (top ? ('<div class="uso-top" id="uso-top">💡 Lo que más trabajo ahorraría si se usara: <b>'+top.ic+' '+esc(top.t)+'</b> — '+esc(top.d)+'.</div>') : '')+
+    '<table class="uso-t"><tbody>'+V.map(fila).join('')+'</tbody></table>'+
+    '<p class="uso-sub" style="margin-top:9px">«🎓 Que Bloki la enseñe» le llega a quien todavía no la usa, en su aparato. «🙈 Sacarla de la vista» y «👍 Está bien así» quedan en ESTE aparato.</p></div>', true);
+}
+try{ setTimeout(usoAplicarOcultas, 0); }catch(e){}
 /* La oferta, una sola vez por aparato: la llama quienElegir cuando una vendedora elige su nombre.
    🎬 (26/10, §4mv; dueño: «que Bloki enseñe y lleve al enlace») Primero el VIDEO de cómo cargar un pedido (`me_asis_video`, una vez por
    aparato, también a quien ya vio el recorrido); el recorrido, la próxima vez que elija su nombre. */
