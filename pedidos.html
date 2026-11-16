@@ -8708,8 +8708,8 @@ function m418Avances(list, R){
   var req=list.filter(docVentaRequerida).length, sdoc=list.filter(docVentaFalta).length;
   var pag=list.filter(function(p){ return !!p.pagado; }).length;
   var nReg=Number(M.nReg)||0, nCarg=(M.nCarg!=null) ? Number(M.nCarg)||0 : Math.max(0, (M.n||0)-nReg);
-  var pst=0; try{ pst=nxPstLista().length; }catch(e){}
-  return { pst:{ h:Math.max(0, m418PagosMes()-pst), t:m418PagosMes(), txt:'pagos completos' },
+  var pst=0, pm=0; try{ pst=nxPstLista().length; pm=m418PagosMes(); }catch(e){}
+  return { pst:{ h:Math.max(0, pm-pst), t:pm, txt:'pagos completos' },
            sdoc:{ h:Math.max(0, req-sdoc), t:req, txt:'ya tienen su N°' },
            debe:{ h:pag, t:list.length, txt:'pagadas' },
            carg:{ h:nReg, t:nReg+nCarg, txt:'ya cargadas' } };
