@@ -8448,6 +8448,14 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 .prod-saldo.ps390 .ps390-donde i.si{background:#e0f2f1;color:#0f766e;font-weight:800}
 .prod-saldo.ps390 .ps-f{margin-top:6px}
 @media (max-width:560px){ .ps390-f{flex-wrap:wrap} .ps390-f .ps-act{margin-left:0} }
+/* 391 · la franja de cuándo arriba de cada tarjeta de Mis pedidos (la tarjeta tiene 14px 15px de relleno y `overflow:hidden`) */
+.cho-card.mis-c .p391-b{display:flex;align-items:center;gap:8px;margin:-14px -15px 12px;padding:8px 15px;font-size:.82rem;font-weight:900;letter-spacing:.01em;background:#f1f5f9;color:#475569;border-bottom:1px solid rgba(15,23,42,.06)}
+.cho-card.mis-c .p391-b .d{margin-left:auto;font-weight:800;font-size:.74rem;opacity:.92;text-align:right}
+.cho-card.mis-c .p391-b.p391-al{background:#e11d48;color:#fff}
+.cho-card.mis-c .p391-b.p391-hoy{background:#00B5AD;color:#fff}
+.cho-card.mis-c .p391-b.p391-man{background:#ccf3f0;color:#065f5b}
+.cho-card.mis-c .p391-b.p391-sem{background:#eef2f7;color:#334155}
+.cho-card.mis-c .p391-b.p391-lej{background:#f8fafc;color:#64748b}
 </style>
 <style>
 /* 🧑‍💼 (15/11) Las mejoras para vendedoras 304-311: clases `vd-*` (no reusar nombres del panel). Tema claro, colores del panel. */
@@ -41988,6 +41996,7 @@ function renderMis(){
   }
   // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
   if(MIS_FILTER==='atras') lista.sort(function(a,b){ return minutosAtraso(b)-minutosAtraso(a); });
+  else if(misOrdenVa()) lista.sort(misOrdenCmp);   // 🎨 (16/11, mejora 391) lo atrasado y lo de hoy primero
   if(!lista.length){
     tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
     vacioPoner(empty, MIS_FILTER, MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
@@ -42112,6 +42121,7 @@ function misCardHtmlBase(p, n, todos, verNota){
                     : sinMontoAnotado(p) ? badgeSinMonto() : '<span class="badge b-gray">Sin saldo</span>'));
   var _est=misEstadoCard(p, falta);   // 🧾 (§4ip) el borde dice cómo está: va bien / debe plata / falta stock / entregado
   return '<div class="cho-card mis-c mis-est-'+_est+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
+    (misOrdenVa() ? misCuandoHtml(p) : '')+   // 🎨 (16/11, mejora 391) cuándo se entrega, en una franja de color arriba
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+clfNombre(p, p.cliente||'—', 'mis')+'</div>'+
@@ -42146,6 +42156,39 @@ function misCardHtmlBase(p, n, todos, verNota){
       (misVeRepetir() ? repetirBtnHtml(p, 'cho-link ico') : '')+   // 🔁 (§4ok-101) solo con Eduardo elegido
     '</div>'+
   '</div>';
+}
+/* 🎨 (16/11, mejora 391; dueño: «Mis pedidos: primero lo más cercano, con su día arriba») Las tarjetas iban de la entrega MÁS LEJANA a la
+   más cercana: en «⏳ No entregados» la primera era la del 05/12 y la que ya pasó su día quedaba al final, con la fecha en gris chiquito.
+   Ahora lo que falta entregar va del día más cercano al más lejano (lo atrasado y lo de hoy primero; lo que «avisa cuándo», al final de
+   eso) y después lo entregado, del más nuevo al más viejo, como siempre. Cada tarjeta sin entregar lleva arriba una franja de color que
+   dice CUÁNDO: «⏰ Ya pasó su día» rojo, «📅 Hoy» turquesa, «🚚 Mañana» turquesa claro, «Esta semana» y «Más adelante» en gris. Solo el
+   orden y el dibujo: los filtros, los números y lo que abre cada tarjeta no cambian. «⏰ Atrasados» sigue con el que más espera arriba.
+   En Playwright como antes salvo `window.MIS_ORDEN_PRUEBA`. `tests/test_v391_mis_orden.js`. */
+function misOrdenVa(){ try{ return vdVa('MIS_ORDEN_PRUEBA'); }catch(e){ return false; } }
+function misOrdenCmp(a, b){
+  var ea=!!a.entregado, eb=!!b.entregado;
+  if(ea!==eb) return ea ? 1 : -1;
+  var fa=(!ea && entregaAConfirmar(a)) ? '9999' : (fechaSalida(a)||''), fb=(!eb && entregaAConfirmar(b)) ? '9999' : (fechaSalida(b)||'');
+  if(!ea){ if(fa!==fb) return fa<fb ? -1 : 1; return (a.ts||0)-(b.ts||0); }
+  if(fa!==fb) return fa<fb ? 1 : -1;
+  return (b.ts||0)-(a.ts||0);
+}
+var MIS_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function misCuandoDatos(p){
+  if(!p || p.entregado) return null;
+  if(entregaAConfirmar(p)) return { c:'lej', t:'📦 Sin día', d:'el cliente avisa cuándo' };
+  var f=fechaSalida(p); if(!f) return null;
+  var hoy=todayStr(), dow=dowDe(hoy), dd=(MIS_DIA_SEM[dowDe(f)]||'')+' '+fmtFechaCorta(f);
+  if(f<hoy){ var n=Math.max(1, Math.round((Date.parse(hoy+'T12:00:00')-Date.parse(f+'T12:00:00'))/864e5));
+    return { c:'al', t:'⏰ Ya pasó su día', d:'era el '+dd+' · hace '+n+' día'+(n===1?'':'s') }; }
+  if(f===hoy) return { c:'hoy', t:'📅 Hoy', d:dd };
+  if(f===tomorrowStr()) return { c:'man', t:'🚚 Mañana', d:dd };
+  if(f<=stockSumarDias(hoy, dow===0 ? 0 : (7-dow))) return { c:'sem', t:'Esta semana', d:dd };
+  return { c:'lej', t:'Más adelante', d:dd };
+}
+function misCuandoHtml(p){
+  var D=misCuandoDatos(p); if(!D) return '';
+  return '<div class="p391-b p391-'+D.c+'"><span>'+esc(D.t)+'</span><span class="d">'+esc(D.d)+'</span></div>';
 }
 /* 🧾 (§4ip, 09/10; dueño: «lo demás aplica» — muestra 1) Cómo está el pedido, para el color del borde de su tarjeta:
    entregado (✅ marcado) · falta stock (una línea «✗ no hay») · debe plata (saldo y no es ATC/RPT) · va bien. Solo mira. */
