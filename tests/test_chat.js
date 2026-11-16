@@ -435,6 +435,37 @@ function INIT(o) {
     chk('11i. a las demás también les desaparece', enCa && enCa.bt > 0 && !enCa.x, enCa);
   }
 
+  /* 12. Ctrl + K, la ficha al costado, el sonido, «🔴 Urgente» solo donde va */
+  {
+    const pal = await M.p.evaluate(() => palAcciones().map(a => a.t));
+    chk('12a. Ctrl + K: «Abrir el chat», «Escribirle a Eduardo» y «Preguntarle a Logística»', pal.indexOf('Abrir el chat') >= 0 && pal.indexOf('Escribirle a Eduardo') >= 0 && pal.indexOf('Preguntarle a Logística') >= 0, pal.slice(-4));
+    await M.p.evaluate(() => chatAbrir('eq'));
+    let r = await M.p.evaluate(() => ({ urg: !!document.getElementById('cht-turg'), sos: (document.querySelector('.cht-sos') || {}).textContent }));
+    chk('12b. en el grupo no hay «🔴 Urgente»; arriba dice quién sos', r.urg === false && /Sos Mirian Salazar/.test(r.sos || ''), r);
+    await M.p.evaluate((c) => chatAbrir(c), P_ME);
+    r = await M.p.evaluate(() => !!document.getElementById('cht-turg'));
+    chk('12c. por privado con Eduardo sí', r === true, r);
+    r = await M.p.evaluate(() => { var va = window.fichaCostadoVa; window.fichaCostadoVa = function () { return true; }; fichaCostadoAplicar('x'); var o = document.body.classList.contains('cht-on'); document.body.classList.remove('ficha-costado'); window.fichaCostadoVa = va; return o; });
+    chk('12d. abrir la ficha al costado cierra el chat (viven en el mismo lugar)', r === false, r);
+    await CA.p.evaluate(() => chatAbrir('p:carola chavez|mirian salazar'));
+    await escribir(CA.p, 'Miri, ¿tenés el catálogo de Sueña?');
+    const son = await M.p.evaluate(async () => { window.SON_PRUEBA = 1; localStorage.removeItem('me_asis_mudo'); SON_LOG.length = 0; chatCerrar(); CHAT.leyendo = false; await chatLeerYa(); return SON_LOG.slice(); });
+    chk('12e. llega algo con el chat cerrado: suena (sin el 🔇)', son.indexOf('chat') >= 0, son);
+    const cp = await M.p.evaluate(() => (escPendientes() || []).filter(x => x.tipo === 'chat' && /Carola/.test(x.t)).length);
+    chk('12f. el privado entre compañeras también avisa', cp === 1, cp);
+    /* «Preguntar por este pedido» en la ficha */
+    await M.p.evaluate((id) => { chatCerrar(); showMisModal(id); }, PED_ID);
+    r = await M.p.evaluate(() => { var b = document.querySelector('#modal-box .cht-ficha'); return b && b.textContent; });
+    chk('12g. en la ficha del pedido: «💬 Preguntarle a Logística por este pedido»', /Preguntarle a Logística por este pedido/.test(r || ''), r);
+    await M.p.click('#modal-box .cht-ficha'); await M.p.waitForTimeout(300);
+    r = await M.p.evaluate(() => ({ modal: document.getElementById('modal').classList.contains('on'), cur: CHAT.cur, tx: (document.getElementById('cht-tx') || {}).value }));
+    chk('12h. tocarlo abre su ventanilla con «#11-188 » ya escrito', !r.modal && r.cur === 'b:log|mirian salazar' && r.tx === '#11-188 ', r);
+    await LO.p.evaluate(async (id) => { await refrescarEstado(); chatCerrar(); showPedidoModal(id); }, PED_ID);
+    r = await LO.p.evaluate(() => { var b = document.querySelector('#modal-box .cht-ficha'); return b && { t: b.textContent, c: b.getAttribute('data-chtc') }; });
+    chk('12i. a Logística, en la ficha de Administración: «Escribirle a Mirian por este pedido»', r && /Escribirle a Mirian/.test(r.t) && r.c === 'b:log|mirian salazar', r);
+    await LO.p.evaluate(() => closeModal());
+  }
+
   chk('Z. ningún error de JavaScript en las páginas', errores.length === 0, errores.slice(0, 5));
   await browser.close();
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

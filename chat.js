@@ -593,6 +593,8 @@ var CSS=
 '.cht-yo{ padding:30px 22px; text-align:center; color:#17302f; } .cht-yo p{ color:#5d6f6e; } .cht-yo .cht-bt{ margin:6px; }'+
 '.cht-aviso{ font-size:.76rem; background:#FEF3E2; color:#7c4b00; border-radius:10px; padding:6px 10px; margin-bottom:6px; }'+
 '.cht-sv{ font-size:.72rem; color:#6B6B6B; margin-left:auto; }'+
+'.cht-ficha{ background:#E6F7F6!important; color:#007a74!important; border:1px solid #99DDD9!important; font-weight:700; }'+
+'.cht-sos{ font-size:.74rem; color:#6B6B6B; padding:2px 8px 0; } .cht-sos b{ color:#17302f; }'+
 '#cht-visor{ position:fixed; left:0; right:0; bottom:0; top:max(var(--wco-h,0px), var(--sa-t,0px)); z-index:4100; background:rgba(15,40,45,.72); display:flex; align-items:center; justify-content:center; padding:20px; }'+
 '#cht-visor[hidden]{ display:none; } .cht-vis-c{ background:#fff; border-radius:14px; padding:10px; max-width:min(1100px,100%); max-height:100%; display:flex; flex-direction:column; gap:8px; }'+
 '.cht-vis-c img{ max-width:100%; max-height:calc(80vh / var(--vz,1)); object-fit:contain; } .cht-vis-b{ display:flex; gap:10px; align-items:center; justify-content:flex-end; }'+
@@ -656,7 +658,8 @@ function pintarLista(){
     return '<button type="button" class="cht-it'+(o.c===C.cur?' on':'')+(n?' nl':'')+'" data-cc="'+E(o.c)+'"><span class="cht-av'+(o.n.g?' g':'')+'" style="--c:'+o.n.col+'">'+E(o.n.av)+'</span>'+
       '<span class="cht-itt"><b>'+E(o.n.t)+'</b><small>'+E(prev)+'</small></span><span class="cht-itd">'+(u?E(cuando(u.t)):'')+(n?'<span class="cht-cn'+(rojo?' r':'')+'">'+n+'</span>':'')+'</span></button>';
   };
-  var h=(grupos.length?'<div class="cht-sc">Grupos</div>'+grupos.map(item).join(''):'')+(gente.length?'<div class="cht-sc">Personas</div>'+gente.map(item).join(''):'')+
+  var h='<div class="cht-sos">Sos <b>'+E(Y.n)+'</b> · <button type="button" class="cht-vis" data-yo="otro">no soy yo</button></div>'+
+    (grupos.length?'<div class="cht-sc">Grupos</div>'+grupos.map(item).join(''):'')+(gente.length?'<div class="cht-sc">Personas</div>'+gente.map(item).join(''):'')+
     (!L.length?'<div class="cht-vac">Nada con «'+E(($('cht-bus')||{}).value)+'»</div>':'');
   if(box._h!==h){ var st=box.scrollTop; box.innerHTML=h; box._h=h; box.scrollTop=st; }
 }
@@ -731,7 +734,7 @@ function pintarConvEntera(envio){
   var n=nombreConv(c, Y);
   if(cc._k!==c+'|'+Y.k){
     cc._k=c+'|'+Y.k;
-    var urgVa=(Y.r==='v' && (/^b:/.test(c) || miembros(c).indexOf(EDU_K)>=0));
+    var urgVa=(Y.r==='v' && c!=='eq' && (/^b:/.test(c) || miembros(c).indexOf(EDU_K)>=0));   // a Eduardo o a una ventanilla, no en el grupo
     cc.innerHTML='<div class="cht-cch">'+(C.uno?'<button type="button" class="cht-ix" id="cht-atras" aria-label="Volver a la lista">←</button>':'')+
         '<span class="cht-av'+(n.g?' g':'')+'" style="--c:'+n.col+'">'+E(n.av)+'</span><span class="cht-itt"><b>'+E(n.t)+'</b><small>'+E(n.sub)+'</small></span>'+
         (C.uno?'':'<button type="button" class="cht-ix" id="cht-x2" aria-label="Cerrar el chat">✕</button>')+'</div>'+
@@ -973,7 +976,46 @@ function blokiAviso(){
     x:'«'+String(m.x || '📷 Foto').replace(/\s+/g,' ').slice(0,90)+'»', b:['Abrir el chat', "chatAbrir('"+String(m.c).replace(/['\\]/g,'')+"')"] };
 }
 window.chatBlokiAviso=blokiAviso;
+/* 💬 «Preguntar por este pedido» en la ficha (la de Mis pedidos y la de Administración): abre la conversación que corresponde con
+   «#11-188 » ya escrito. Una vendedora → su ventanilla de Logística; Logística / Contabilidad → la ventanilla de la vendedora del pedido;
+   Eduardo → su privado con ella. Sin vendedora del equipo (ROHO, internos), no aparece. */
+function fichaConv(p, Y){
+  if(!p || !Y) return null;
+  var vk=chatClave(p.vendedor||''), esEq=equipo().some(function(x){ return x.k===vk; });
+  if(Y.r==='v') return { c:'b:log|'+Y.k, t:'💬 Preguntarle a Logística por este pedido' };
+  if(!esEq) return null;
+  if(Y.r==='l') return { c:'b:log|'+vk, t:'💬 Escribirle a '+nombreDe(vk).split(' ')[0]+' por este pedido' };
+  if(Y.r==='c') return { c:'b:conta|'+vk, t:'💬 Escribirle a '+nombreDe(vk).split(' ')[0]+' por este pedido' };
+  if(Y.r==='d') return { c:pk(EDU_K, vk), t:'💬 Escribirle a '+nombreDe(vk).split(' ')[0]+' por este pedido' };
+  return null;
+}
+function fichaBoton(id){
+  if(!activo() || !servidorOk()) return;
+  var p=null; try{ p=findById(id); }catch(e){} if(!p || !p.oc) return;
+  var f=fichaConv(p, yo()), box=$('modal-box'); if(!f || !box || box.querySelector('.cht-ficha')) return;
+  var oc=String(p.oc).replace(/^OC\s*/i,'').trim();
+  var b='<button type="button" class="btn btn-sm cht-ficha no-print" data-chtc="'+E(f.c)+'" data-chto="'+E(oc)+'">'+E(f.t)+'</button>';
+  var ac=box.querySelector('.fl-listo') ? box.querySelector('.fl-listo').parentNode : null, acs=box.querySelectorAll('.modal-actions');
+  if(ac) ac.insertAdjacentHTML('afterbegin', b);
+  else if(acs.length) acs[acs.length-1].insertAdjacentHTML('beforeend', b);
+  else box.insertAdjacentHTML('beforeend', '<div style="margin-top:10px">'+b+'</div>');
+}
+function fichaPreguntar(c, oc){
+  try{ if(typeof closeModal==='function') closeModal(); }catch(e){}
+  chatAbrir(c);
+  setTimeout(function(){ var t=$('cht-tx'); if(!t) return; var ins='#'+oc+' '; if(t.value.indexOf(ins)<0) t.value=ins+t.value; try{ t.focus(); t.setSelectionRange(t.value.length, t.value.length); }catch(e){} }, 60);
+}
+document.addEventListener('click', function(e){
+  var b=e.target && e.target.closest && e.target.closest('[data-chtc]'); if(!b) return;
+  fichaPreguntar(b.getAttribute('data-chtc'), b.getAttribute('data-chto'));
+});
 function engancharPanel(){
+  ['showMisModal', 'showPedidoModal'].forEach(function(fn){
+    if(typeof window[fn]!=='function' || window[fn]._cht) return;
+    var _o=window[fn];
+    window[fn]=function(id){ var r=_o.apply(this, arguments); try{ fichaBoton(id); }catch(e){} return r; };
+    window[fn]._cht=1;
+  });
   if(typeof window.asisAvisos==='function' && !window.asisAvisos._cht){
     var _aa=window.asisAvisos;
     window.asisAvisos=function(){
