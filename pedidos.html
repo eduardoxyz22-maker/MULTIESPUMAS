@@ -3277,6 +3277,21 @@ html:is(.tema-black-friday, .tema-halloween, .tema-todos-santos) .hdr-tabs .ht-b
 html.tema-black-friday .hdr-tabs .ht-b:not(.on) .ico-b svg{ stroke:#facc15; }
 @media(prefers-reduced-motion:reduce){ html.v-tabs-hdr body.hdr-chico .hdr-tabs{ animation:none; } }
 @media print{ .hdr-tabs{ display:none !important; } }
+/* 430 · Las ventanas largas: si la ventana no entra en la pantalla (`#modal-box.alta`), el título queda arriba, el medio se desplaza adentro
+   y la última fila de botones va pegada abajo (`.modal-pie`), en botones grandes, con «▾ hay más abajo» mientras falte. */
+#modal-box.alta{ display:flex; flex-direction:column; max-height:calc(100vh / var(--vz,1) - 40px); }
+#modal-box.alta > .modal-h{ flex:none; }
+#modal-box.alta > .modal-b{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
+#modal-box.alta > .modal-pie{ flex:none; position:relative; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; padding:12px 20px 14px; background:#fff;
+  border-top:1px solid #e3eeee; box-shadow:0 -14px 22px -14px rgba(15,40,45,.35); }
+#modal-box.alta > .modal-pie > .modal-actions{ display:contents; }
+#modal-box.alta > .modal-pie .btn{ margin:0 !important; flex:1 1 auto; width:auto !important; min-height:44px; justify-content:center; white-space:nowrap; padding-left:16px; padding-right:16px; }
+#modal-box.alta > .modal-pie .btn-primary{ flex:1.6 1 150px; font-size:1rem; }
+#modal-box.alta > .modal-pie > .mp-mas{ position:absolute; right:20px; top:-38px; border:0; background:#0f3d3a; color:#fff; font:800 .72rem var(--font-sans, Inter, sans-serif);
+  padding:5px 12px; border-radius:999px; box-shadow:0 6px 14px -6px rgba(0,0,0,.5); cursor:pointer; transition:opacity .2s; }
+#modal-box.alta.mp-fin > .modal-pie > .mp-mas{ opacity:0; pointer-events:none; }
+@media(max-width:560px){ #modal-box.alta > .modal-pie{ padding:10px 12px 12px; } #modal-box.alta > .modal-pie .btn{ white-space:normal; } }
+@media print{ #modal-box.alta{ max-height:none; display:block; } #modal-box.alta > .modal-b{ overflow:visible; } .mp-mas{ display:none !important; } }
 </style>
 <script>
 /* 🎨 (16/11, mejora 429; dueño: elegida de la página de ideas 390-440) AL BAJAR, LAS PESTAÑAS TE ACOMPAÑAN ARRIBA. Mis pedidos de una vendedora
@@ -3338,6 +3353,50 @@ function htabTocar(id){
   try{ window.scrollTo(0, 0); }catch(e){}   // la otra pestaña, desde su principio
 }
 document.addEventListener('DOMContentLoaded', function(){ try{ htabArmar(); }catch(e){} });
+
+/* 🎨 (16/11, mejora 430; dueño: elegida de la página de ideas 390-440) LAS VENTANAS LARGAS: LOS BOTONES SIEMPRE A LA VISTA. La ficha de un pedido
+   de Mis pedidos mide 1.141 px en una pantalla de 768: «Editar el pedido», «Copiar para WhatsApp» y «✓ Listo» quedaban fuera de la vista y al
+   bajar se iba el título. Ahora, si la ventana no entra (`openModal` → `mpieAgendar`, cuando ya terminó de armarse quien la abrió), el título
+   queda arriba, el medio se desplaza adentro y la ÚLTIMA fila de botones (la `.modal-actions` del final y el «✓ Listo») pasa a un pie pegado
+   abajo (`.modal-pie`). Son los MISMOS botones, movidos (no se copian): hacen lo de siempre. Las ventanas cortas quedan igual que hoy, y las que
+   ya tienen su propio pie o su forma (la ficha de Administración `fl-ficha`, la del cliente `clf-box`, el costado, la de cupos `.cupx`)
+   quedan afuera. Si la misma ventana se vuelve a dibujar, el medio sigue donde estaba. En Playwright apagado salvo
+   `window.MODAL_PIE_PRUEBA`. `tests/test_v430_ventana_pie.js`. */
+var MPIE={ sc:0, tit:null };
+function mpieVa(){ try{ return vdVa('MODAL_PIE_PRUEBA'); }catch(e){ return false; } }
+/* En `openModal`, ANTES de cambiar el contenido: dónde estaba el medio (para la misma ventana dibujada de nuevo). */
+function mpieAntes(box, abierta){
+  var b=(abierta && box && box.classList.contains('alta')) ? box.querySelector(':scope > .modal-b') : null;
+  MPIE.sc=b ? b.scrollTop : 0; MPIE.tit=b ? modalTitulo() : null;
+  if(box){ box.classList.remove('alta'); box.classList.remove('mp-fin'); }
+}
+function mpieAgendar(){ if(!mpieVa()) return; Promise.resolve().then(function(){ try{ mpieAplicar(); }catch(e){} }); }
+function mpieAplicar(){
+  var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
+  if(!ov || !box || !ov.classList.contains('on') || box.classList.contains('alta')) return false;
+  if(box.classList.contains('fl-ficha') || box.classList.contains('clf-box') || document.body.classList.contains('ficha-costado')) return false;
+  var hd=box.querySelector(':scope > .modal-h'), b=box.querySelector(':scope > .modal-b'); if(!hd || !b || box.querySelector('.cupx, .modal-pie')) return false;
+  var z=zoomPag()||1, r=box.getBoundingClientRect(); if(!(r.height > window.innerHeight-40*z+1)) return false;
+  /* La última fila de botones: el «✓ Listo» (o «Cerrar») suelto del final y la `.modal-actions` justo antes. Si después hay algo que se ve, no se toca. */
+  var vis=function(x){ return x.offsetWidth>0 || x.offsetHeight>0; };
+  var kids=[].filter.call(b.children, vis), fin=null, ult=null, k=kids.length-1;
+  if(k>=0 && kids[k].tagName==='BUTTON' && kids[k].classList.contains('btn-primary')){ fin=kids[k]; k--; }
+  if(k>=0 && kids[k].classList.contains('modal-actions')) ult=kids[k];
+  if(!fin && !ult) return false;
+  var pie=document.createElement('div'); pie.className='modal-pie';
+  var mas=document.createElement('button'); mas.type='button'; mas.className='mp-mas'; mas.textContent='▾ hay más abajo'; mas.setAttribute('aria-hidden','true'); mas.tabIndex=-1;
+  mas.onclick=function(){ try{ b.scrollBy({ top:Math.round(b.clientHeight*0.7), behavior:visQuieto() ? 'auto' : 'smooth' }); }catch(e){ b.scrollTop+=Math.round(b.clientHeight*0.7); } };
+  pie.appendChild(mas); if(ult) pie.appendChild(ult); if(fin) pie.appendChild(fin);
+  box.appendChild(pie); box.classList.add('alta');
+  if(MPIE.tit!==null && MPIE.tit===modalTitulo()) b.scrollTop=MPIE.sc;
+  MPIE.tit=null;
+  b.addEventListener('scroll', mpieFin, { passive:true }); mpieFin();
+  return true;
+}
+function mpieFin(){
+  var box=document.getElementById('modal-box'), b=box && box.querySelector(':scope > .modal-b'); if(!b) return;
+  box.classList.toggle('mp-fin', b.scrollTop+b.clientHeight >= b.scrollHeight-8);
+}
 </script>
 
 <div class="wrap">
@@ -56622,6 +56681,7 @@ function openModal(html, ancha){
   var ov=document.getElementById('modal'), box=document.getElementById('modal-box');
   var antes=ov.classList.contains('on') ? modalTitulo() : null;
   if(antes===null){ var a=document.activeElement; MODAL_FOCO_ANTES=(a && a!==document.body && !box.contains(a)) ? a : null; }
+  try{ mpieAntes(box, antes!==null); }catch(e){}   // 🎨 (16/11, mejora 430) la ventana larga con los botones abajo
   box.innerHTML=html;
   box.classList.toggle('ancha', !!ancha);
   box.classList.remove('fl-ficha');   // 🗂️ (23/10) la ficha de Administración la vuelve a poner; cualquier otra ventana, no
@@ -56636,6 +56696,7 @@ function openModal(html, ancha){
   if(!box.contains(document.activeElement)){ try{ box.focus({ preventScroll:true }); }catch(e){} }
   acomodarFichas();                        // el reporte y los productos traen sus fichas
   if(antes===null) try{ naceAbrir(box); }catch(e){}   // 🪄 (§4pj, 168) la ventana nace de lo que se tocó
+  try{ mpieAgendar(); }catch(e){}   // 🎨 (16/11, mejora 430) si no entra en la pantalla, los botones del final van pegados abajo
 }
 /* 🪄 (§4pj, 10/11, idea 168; dueño: «me gustan todas para publicar…») LAS VENTANAS NACEN DE LO QUE TOCÁS: la ventana crece desde la ficha,
    el renglón o el botón que se tocó, y al cerrarla un contorno vuelve a ese lugar. Solo dibujo (`Element.animate`: no deja estilos
