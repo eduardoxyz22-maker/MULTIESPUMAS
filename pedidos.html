@@ -1390,7 +1390,8 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-fila.pry-toca{cursor:pointer;flex-wrap:wrap;border-radius:8px;transition:background .15s}
 .pry-fila.pry-toca:hover{background:#f7fbfb}
 .pry-fila.pry-toca:focus-visible{outline:3px solid var(--teal);outline-offset:-3px}
-.pry-mom-ab{font-size:.66rem;font-weight:800;color:var(--teal-dk);white-space:nowrap;margin-top:1px}
+.pry-mom-ab{display:inline-block;font-size:.72rem;font-weight:800;color:#fff;background:var(--teal-dk,#00A09A);border-radius:999px;padding:3px 10px;white-space:nowrap;margin-top:4px;box-shadow:0 1px 3px rgba(0,0,0,.15);cursor:pointer}
+.pry-abre .pry-mom-ab{background:#e6f6f5;color:var(--teal-dk,#00A09A);box-shadow:none}
 .pry-mom-det{order:3;flex-basis:100%;min-width:0;display:grid;grid-template-columns:minmax(0,640px) auto;justify-content:space-between;gap:14px;align-items:center;cursor:default;
   background:#fbfdfd;border:1px solid #e3eeee;border-radius:12px;padding:10px 12px;margin:2px 0 4px}
 .pmd-tw{min-width:0;overflow-x:auto}
@@ -19474,6 +19475,12 @@ function pryMomHtml(R, A, r){
   return '<div class="pry-mom" title="'+esc((A.curso?'A esta altura (día '+A.dia+(A.hora?(', '+A.hora):'')+')':'El mes entero')+': '+fmtBs0(M.act)+' contra '+fmtBs0(M.ant)+' de '+mesNombre(A.cmp)+(A.curso ? pryCorteTxt(A.corte, A.hora) : ''))+'">'+svg+
          '<small style="color:'+(p==null?'var(--muted)':col)+'">'+esc(txt)+'</small></div>';
 }
+/* (17/11, dueño: «el botón que se vea más») el botón de la tablita del vendedor contra el mes de comparación: una pastilla que dice qué abre. */
+function pryMomAbTxt(ab){
+  if(ab) return '▾ cerrar';
+  var A=PRY_MOM_CTX && PRY_MOM_CTX.A, m=''; try{ m=A && A.cmp ? pryMesCorto(A.cmp) : ''; }catch(e){ m=''; }
+  return '📊 vs '+(m||'mes pasado')+': unidades y somieres ▸';
+}
 /* 📊 MoM B (§4nj, 27/10; dueño: «falta el mom en unidades y monto… cómo sé cuánto vendió el mes pasado vs lo de ahora… en ventas, unidades
    y Bs», y de las muestras eligió la B: «tocar y se abre»). Tocar un vendedor en Proyección abre, debajo de su fila, una tablita: el mes de
    comparación A ESTA ALTURA (o entero, si el mes ya cerró o era más corto), este mes, la diferencia y el % en ventas, unidades y Bs, con
@@ -19512,7 +19519,7 @@ function pryMomTocar(el){
   var viejo=el.querySelector('.pry-mom-det'); if(viejo) viejo.remove();
   if(ab){ var h=''; try{ h=pryMomDetHtml(PRY_MOM_CTX.R, PRY_MOM_CTX.A, r); }catch(e){} if(h) el.insertAdjacentHTML('beforeend', h); }
   el.classList.toggle('pry-abre', ab); el.setAttribute('aria-expanded', ab ? 'true' : 'false');
-  var ch=el.querySelector('.pry-mom-ab'); if(ch) ch.textContent=ab ? '▾ cerrar' : 'ventas · unidades ▸';
+  var ch=el.querySelector('.pry-mom-ab'); if(ch) ch.textContent=pryMomAbTxt(ab);
 }
 document.addEventListener('click', function(e){
   var f=e.target && e.target.closest ? e.target.closest('#pry-vendedores .pry-fila.pry-toca') : null;
@@ -19597,7 +19604,7 @@ function renderProyeccion(){
            '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small>'+(r.amb==='tienda' && pryKpiVa() ? ('<span class="pry-kpi" data-kpi="'+esc(pryKpiClave(r.vendedor))+'" data-n="'+(Number(r.n)||0)+'"'+pryKpiEntAttr(_ENT, r)+'></span>') : '')+'</div>'+
            pryMedioHtml(_VDB ? m415Html(_VDB, r) : '', _ENT ? pryEntHtml(_ENT, r) : '')+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
-           (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+(ab ? '▾ cerrar' : 'ventas · unidades ▸')+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
+           (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+pryMomAbTxt(ab)+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
   };
   /* Abajo de cada grupo, con qué se proyectó y la cuenta entera (§4gu), para que se pueda seguir con la calculadora. */
   var metodoPie=function(k, nombre, g){
@@ -69880,7 +69887,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-h';
+var PANEL_V='2026-11-17-i';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
