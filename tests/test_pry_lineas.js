@@ -82,17 +82,20 @@ function PREPARAR(){
     chk('2 · almohadas fuera: total 12 unidades (11 colchones + 1 somier)', r.tot.u===12 && r.tot.c===11 && r.tot.s===1, r.tot);
     chk('3 · la suma de las líneas = las unidades de «Por vendedor»', r.tot.u===r.uPry, [r.tot.u, r.uPry]);
     chk('4 · mayoristas: los 5 ORO de Eduardo; Todo = 17', r.may.u===5 && r.todo.u===17, [r.may, r.todo]);
-    chk('2 · la tabla dice la línea y el total', /TITANIO/.test(r.txt) && /12 unidades/.test(r.txt) && /Heaven/.test(r.txt) && /Sueña/.test(r.txt), r.txt.slice(0,400));
+    chk('2 · la tabla dice la línea y el total', /TITANIO/i.test(r.txt) && /12 unidades/i.test(r.txt) && /Heaven/.test(r.txt) && /Sueña/.test(r.txt), r.txt.slice(0,400));
     const c=await page.evaluate(() => { var D=pryLineasDatos('2026-10','tienda'); return D.tot.u; });
     chk('5 · octubre tiene 10 unidades del equipo (contra lo que se compara)', c===10, c);
-    const v=await page.evaluate(() => [].map.call(document.querySelectorAll('#pry-lineas .plin-l'), function(d){ return d.querySelector('.plin-n').textContent+'|'+d.querySelectorAll('summary span')[5].textContent; }));
-    chk('5 · «vs octubre» con lo de octubre a esta altura', v.indexOf('SOFT|9 −56%')>=0 && v.indexOf('TITANIO|1 +300%')>=0, v);
-    await page.evaluate(() => { [].forEach.call(document.querySelectorAll('#pry-lineas .plin-l'), function(d){ if(d.querySelector('.plin-n').textContent==='TITANIO') d.open=true; }); });
-    const p=await page.evaluate(() => [].map.call(document.querySelectorAll('#pry-lineas .plin-l[open] .plin-pr'), function(x){ return x.innerText.replace(/\s+/g,' ').trim(); }));
-    chk('6 · tocar TITANIO muestra sus productos con medida', p.length===3 && p.some(function(t){ return /TITANIO ICE 160x190 ×2 2/.test(t); }), p);
+    const v=await page.evaluate(() => [].map.call(document.querySelectorAll('#pry-lineas .plin-lr'), function(r){ return r.querySelector('.plin-n').textContent+'|'+r.querySelectorAll('td')[2].textContent; }));
+    chk('5 · «vs oct.» con lo de octubre a esta altura', v.indexOf('Soft|▼ −56 %')>=0 && v.indexOf('Titanio|▲ +300 %')>=0 && v.indexOf('Cloud|nuevo')>=0, v);
+    const p=await page.evaluate(() => { var t=[].filter.call(document.querySelectorAll('#pry-lineas .plin-l'), function(b){ return b.querySelector('.plin-n').textContent==='Titanio'; })[0];
+      return [].map.call(t.querySelectorAll('.plin-pr'), function(x){ return x.innerText.replace(/\s+/g,' ').trim(); }); });
+    chk('6 · TITANIO muestra a la vista qué titanios: ICE, Látex y el somier, con medidas', p.length===3 && p.some(function(t){ return /^Titanio ICE 160×190 2 2\b/.test(t); }) && p.some(function(t){ return /^Somier Titanio Látex/.test(t); }), p);
+    const u=await page.evaluate(() => { var t=[].filter.call(document.querySelectorAll('#pry-lineas .plin-l'), function(b){ return b.querySelector('.plin-n').textContent==='Soft'; })[0];
+      return { uno:t.classList.contains('plin-uno'), pr:t.querySelectorAll('.plin-pr').length, ms:t.querySelector('.plin-lr .plin-ms').textContent }; });
+    chk('6 · una línea de un solo producto (Soft) lleva las medidas en su fila, sin repetir el nombre', u.uno && u.pr===0 && /140×190 4/.test(u.ms), u);
     await page.evaluate(() => pryLineasQ('mayor')); await page.waitForTimeout(80);
     const m=await page.evaluate(() => document.getElementById('pry-lineas').innerText.replace(/\s+/g,' '));
-    chk('4 · el botón Mayoristas cambia la tabla', /5 unidades/.test(m) && /ORO/.test(m), m.slice(0,300));
+    chk('4 · el botón Mayoristas cambia la tabla', /5 unidades/i.test(m) && /ORO/i.test(m), m.slice(0,300));
     await page._ctx.close(); }
 
   chk('sin errores de página', errores.length===0, errores.slice(0,3));

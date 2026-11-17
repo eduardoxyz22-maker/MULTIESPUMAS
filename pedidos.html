@@ -1135,34 +1135,51 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .pcal-domt{display:grid;gap:4px;margin-top:6px} .pcal-domt>div{display:grid;grid-template-columns:minmax(120px,1fr) auto auto 52px;gap:10px;align-items:baseline}
 .pcal-domt b{font-variant-numeric:tabular-nums;text-align:right} .pcal-domt span:nth-child(3){color:#7a6420;font-variant-numeric:tabular-nums}
 .pcal-domp{margin-top:6px;font-size:.74rem;color:#7a6420}
-/* 🛏️ (17/11) Lo vendido por línea */
-.plin-q{margin:2px 0 8px;max-width:100%;overflow-x:auto;flex-wrap:nowrap}
-.plin-n{overflow-wrap:anywhere}
-.plin-ex{font-size:.8rem;color:var(--muted);margin:0 0 10px;line-height:1.45}
-.plin-m{margin:0 0 14px}
-.plin-mt{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-left:4px solid;padding:4px 0 4px 10px;margin-bottom:4px}
-.plin-mt span{font-size:.8rem;color:var(--muted)}
-.plin-r{display:grid;grid-template-columns:minmax(110px,1.6fr) .6fr .6fr .6fr 1.3fr 1fr 1fr;gap:6px;align-items:center;padding:6px 4px;font-size:.84rem;font-variant-numeric:tabular-nums}
-.plin-r > span:not(:first-child){text-align:right}
-.plin-h{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--line,#e5e7eb)}
-.plin-l{border-bottom:1px solid var(--line,#eef0f2)}
-.plin-l > summary{cursor:pointer;list-style:none}
-.plin-l > summary::-webkit-details-marker{display:none}
-.plin-l > summary:hover{background:rgba(0,181,173,.06)}
-.plin-n{font-weight:700}
-.plin-n::before{content:'▸ ';color:var(--muted);font-weight:400}
-.plin-l[open] .plin-n::before{content:'▾ '}
-.plin-u b{font-size:1rem}
-.plin-p{display:flex;align-items:center;gap:6px;justify-content:flex-end}
-.plin-p i{display:block;height:8px;border-radius:4px;min-width:2px;max-width:70%}
-.plin-p em{font-style:normal;min-width:34px}
-.plin-r small{color:var(--muted)}
-.plin-ps{padding:2px 4px 10px 22px}
-.plin-pr{display:grid;grid-template-columns:1fr 50px 90px;gap:6px;padding:4px 0;font-size:.8rem;border-top:1px dashed var(--line,#eef0f2);font-variant-numeric:tabular-nums}
-.plin-pr > :not(:first-child){text-align:right}
-.plin-pr small{display:block;color:var(--muted);font-size:.72rem}
-.plin-pie{font-size:.74rem;color:var(--muted);margin-top:4px}
-@media (max-width:600px){ .plin-r{grid-template-columns:minmax(90px,1.4fr) .5fr .5fr .6fr 1fr;font-size:.8rem} .plin-r > :nth-child(6), .plin-r > :nth-child(7){display:none} }
+/* 🛏️ (17/11) Lo vendido por línea: tarjeta por marca, la línea con su total y debajo sus productos a la vista */
+.plin-cab{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.plin-cab > div:first-child{min-width:0;flex:1 1 320px}
+.plin-ex{font-size:.8rem;color:var(--muted);margin:4px 0 0;line-height:1.45}
+.plin-q{margin:0;max-width:100%;overflow-x:auto;flex-wrap:nowrap}
+.plin-kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;background:var(--line,#e6ebee);border:1px solid var(--line,#e6ebee);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.plin-kpi > div{background:var(--card,#fff);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.plin-kpi b{font-size:1.25rem;font-variant-numeric:tabular-nums;color:var(--text,#0f2b2a);line-height:1.1}
+.plin-kpi span{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.plin-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(460px,100%),1fr));gap:16px;align-items:start}
+.plin-m{background:var(--card,#fff);border:1px solid var(--line,#e6ebee);border-top:3px solid var(--plin-c);border-radius:12px;overflow:hidden;min-width:0}
+.plin-mt{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px 10px}
+.plin-mt h4{margin:0;font-size:1rem;letter-spacing:.01em}
+.plin-mt p{margin:2px 0 0;font-size:.76rem;color:var(--muted)}
+.plin-mk{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.plin-mk b{font-size:1.5rem;font-variant-numeric:tabular-nums;line-height:1}
+.plin-mk span:not(.plin-vs){font-size:.72rem;color:var(--muted)}
+.plin-t{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.82rem;font-variant-numeric:tabular-nums}
+.plin-t col.c-u{width:54px} .plin-t col.c-p{width:56px} .plin-t col.c-v{width:84px} .plin-t col.c-b{width:96px}
+.plin-t thead th{background:transparent;font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:right;padding:6px 10px;border-bottom:1px solid var(--line,#e6ebee);white-space:nowrap}
+.plin-t thead th:first-child{text-align:left;padding-left:14px}
+.plin-t td,.plin-t th{padding:6px 10px;vertical-align:top}
+.plin-t td:not(:first-child){text-align:right}
+.plin-lr{background:var(--plin-f)}
+.plin-lr th{text-align:left;padding:9px 10px 7px 14px}
+.plin-lr td{padding-top:9px}
+.plin-l + .plin-l .plin-lr th, .plin-l + .plin-l .plin-lr td{border-top:1px solid var(--line,#e6ebee)}
+.plin-n{display:block;font-weight:700;font-size:.88rem;overflow-wrap:anywhere}
+.plin-lr .plin-ms{margin-top:4px}
+.plin-bar{display:block;height:4px;border-radius:2px;background:rgba(0,0,0,.06);margin-top:5px;max-width:180px}
+.plin-bar i{display:block;height:100%;border-radius:2px;background:var(--plin-c)}
+.plin-num b{font-size:.95rem}
+.plin-pct{color:var(--muted)}
+.plin-bs{white-space:nowrap}
+.plin-pr td{border-top:1px dashed rgba(0,0,0,.06)}
+.plin-pr td:first-child{padding-left:26px}
+.plin-pn{display:block;overflow-wrap:anywhere}
+.plin-ms{display:flex;flex-wrap:wrap;gap:4px;margin-top:3px}
+.plin-ms span{font-size:.68rem;color:var(--muted);background:rgba(0,0,0,.035);border-radius:999px;padding:1px 7px;white-space:nowrap}
+.plin-ms b{color:var(--text,#0f2b2a);font-weight:600}
+.plin-vs{font-size:.72rem;font-weight:600;white-space:nowrap;color:var(--muted)}
+.plin-up{color:#15803d} .plin-dn{color:#b91c1c} .plin-nuevo{color:#0f766e}
+.plin-pie{font-size:.72rem;color:var(--muted);margin:12px 0 0;line-height:1.45}
+@media (max-width:600px){ .plin-kpi{grid-template-columns:repeat(3,minmax(0,1fr))} .plin-kpi > div:nth-child(n+4){display:none}
+  .plin-t col.c-p{width:0} .plin-t th:nth-child(3), .plin-t td:nth-child(3){display:none} .plin-t col.c-b{width:80px} .plin-t col.c-v{width:64px} }
 .pcal-pie{margin-top:4px;font-size:.76rem;color:var(--muted);line-height:1.45;max-width:640px}
 /* 🛍️ (13/11, mejora 177) «Black Friday en números» en Proyección: el estilo de las fichas de marca (`.cx-kf`); con el tema, negra con dorado. */
 .bfn{--c:#ca8a04;--t:#854d0e;background:linear-gradient(150deg,color-mix(in srgb, var(--c) 12%, #fff) 0%,#fff 65%);border:1px solid color-mix(in srgb, var(--c) 40%, #fff);border-radius:14px;padding:12px 14px;margin:0 0 18px;min-width:0;color:var(--text);overflow-wrap:anywhere}
@@ -18284,37 +18301,61 @@ function pryLineasDatos(ym, q, C, V){
   });
   return { B:B, tot:tot };
 }
+/* El nombre como se lee: «TITANIO ICE» → «Titanio ICE» (las siglas quedan en mayúscula). */
+var PRY_LIN_SIGLAS=/^(ICE|HD|XL|XXL|TA|II|III|IV|PRO|MDF)$/;
+var PRY_LIN_TILDES={ ortopedico:'ortopédico', semiortopedico:'semiortopédico', antialergico:'antialérgico', anatomico:'anatómico', viscolastico:'viscolástico', bahia:'bahía', clasico:'clásico', hibrido:'híbrido', latex:'látex' };
+function pryLinNombre(t){ return String(t||'').toLowerCase().replace(/[a-z]+/g, function(w){ return PRY_LIN_TILDES[w]||w; }).replace(/(^|[\s\-\/])([a-záéíóúñü])/g, function(m, a, b){ return a+b.toUpperCase(); })
+  .split(' ').map(function(w){ return PRY_LIN_SIGLAS.test(w.toUpperCase()) ? w.toUpperCase() : w; }).join(' '); }
+function pryLinRgba(hex, a){ var h=String(hex||'#94a3b8').replace('#',''); if(h.length===3) h=h.replace(/./g, '$&$&');
+  return 'rgba('+parseInt(h.slice(0,2),16)+','+parseInt(h.slice(2,4),16)+','+parseInt(h.slice(4,6),16)+','+a+')'; }
+function pryLinVs(a, b){
+  if(!(b>0)) return a>0 ? '<span class="plin-vs plin-nuevo">nuevo</span>' : '<span class="plin-vs">—</span>';
+  var p=Math.round((a/b-1)*100), c=p>0 ? 'up' : (p<0 ? 'dn' : 'eq');
+  return '<span class="plin-vs plin-'+c+'" title="'+b+' a esta altura del mes anterior">'+(p>0?'▲ +':(p<0?'▼ −':''))+Math.abs(p)+' %</span>';
+}
 function pryLineasPoner(R){
   var box=document.getElementById('pry-lineas'); if(!box) return;
   if(!pryLineasVa()){ box.innerHTML=''; return; }
   var ym=R.ym, q=PRY_LIN_Q, V=pryVentas(), cmp=metasMesMas(ym, -1), curso=(R.estado==='curso'), C=null, hora='';
   if(curso){ var mi=pryMinBo(Date.now()); C=pryCorteAltura(R.hoy||diaNegocio(), cmp, mi); hora=pryDiaHabil(R.hoy||diaNegocio()) ? pryHoraTxt(mi) : ''; }
   var D=pryLineasDatos(ym, q, null, V), A=pryLineasDatos(cmp, q, C, V), mc=pryMesCorto(cmp);
-  var cmpTxt = curso ? (C && !C.entero ? (mc+' a esta altura') : (mc+' entero')) : (mc+' entero');
-  var nU=function(n){ return n+' u.'; };
+  var altura = curso && C && !C.entero;
+  var pl=function(n, s, p){ return n+' '+(n===1 ? s : p); };
   var seg='<div class="seg plin-q" id="plin-q">'+[['tienda','Equipo'],['mayor','Mayoristas'],['roho','ROHO'],['todo','Todo']].map(function(o){
     return '<button type="button" data-val="'+o[0]+'" class="'+(q===o[0]?'active':'')+'" onclick="pryLineasQ(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')+'</div>';
-  var cab='<div class="plin-r plin-h"><span>Línea</span><span>Colch.</span><span>Som.</span><span>Unid.</span><span>%</span><span>vs '+esc(mc)+'</span><span>Bs</span></div>';
-  var bloques=ATCI_MARCAS.map(function(g){
+  var tarjetas=ATCI_MARCAS.map(function(g){
     var m=D.B[g.k], a=A.B[g.k]; if(!m || !m.u) return '';
     var L=Object.keys(m.L).map(function(k){ return m.L[k]; }).sort(function(x, y){ return (x.sin-y.sin) || (y.u-x.u) || (y.bs-x.bs) || (x.lbl<y.lbl?-1:1); });
-    return '<div class="plin-m" data-m="'+esc(g.k||'sin')+'"><div class="plin-mt" style="border-left-color:'+g.col+'"><b>'+g.ico+' '+esc(g.lbl)+'</b><span>'+nU(m.u)+' ('+m.c+' colch. · '+m.s+' som.) · '+fmtBs0(m.bs)+
-      (a && a.u ? (' · '+pryDifPct(m.u, a.u)+' en unidades vs '+esc(mc)) : '')+'</span></div>'+cab+
-      L.map(function(l){
-        var la=a && a.L[l.lbl], pct=Math.round(l.u/m.u*100);
-        var P=Object.keys(l.P).map(function(k){ return l.P[k]; }).sort(function(x, y){ return (y.u-x.u) || (y.bs-x.bs); });
-        return '<details class="plin-l"><summary class="plin-r"><span class="plin-n">'+esc(l.lbl)+'</span><span>'+(l.c||'')+'</span><span>'+(l.s||'')+'</span><span class="plin-u"><b>'+l.u+'</b></span>'+
-          '<span class="plin-p"><i style="width:'+pct+'%;background:'+g.col+'"></i><em>'+pct+' %</em></span><span>'+(la && la.u ? (la.u+' '+pryDifPct(l.u, la.u)) : '<small>—</small>')+'</span><span>'+(l.bs>0.009 ? fmtBs0(l.bs) : '<small>—</small>')+'</span></summary>'+
-          '<div class="plin-ps">'+P.map(function(pr){
-            var ms=Object.keys(pr.M).sort(function(x, y){ return pr.M[y]-pr.M[x]; }).map(function(k){ return esc(k)+' ×'+pr.M[k]; }).join(' · ');
-            return '<div class="plin-pr"><span>'+esc(pr.lbl)+'<small>'+ms+'</small></span><b>'+pr.u+'</b><span>'+(pr.bs>0.009 ? fmtBs0(pr.bs) : '—')+'</span></div>'; }).join('')+'</div></details>';
-      }).join('')+'</div>';
+    var filas=L.map(function(l){
+      var la=a && a.L[l.lbl], pct=Math.round(l.u/m.u*100);
+      var P=Object.keys(l.P).map(function(k){ return l.P[k]; }).sort(function(x, y){ return (y.u-x.u) || (y.bs-x.bs); });
+      var chips=function(pr){ return Object.keys(pr.M).sort(function(x, y){ return pr.M[y]-pr.M[x]; }).map(function(k){ return '<span>'+esc(k.replace('x','×'))+' <b>'+pr.M[k]+'</b></span>'; }).join(''); };
+      /* Una línea con UN solo producto que se llama como ella («Confort Plus»): las medidas van en la misma fila, sin repetir el nombre. */
+      var uno=(P.length===1 && stockNorm(P[0].lbl)===stockNorm(l.lbl));
+      return '<tbody class="plin-l'+(uno?' plin-uno':'')+'">'+
+        '<tr class="plin-lr" style="--plin-c:'+g.col+';--plin-f:'+pryLinRgba(g.col, .08)+'"><th scope="rowgroup"><span class="plin-n">'+esc(l.sin ? 'Sin línea en el nombre' : pryLinNombre(l.lbl))+'</span>'+
+          (uno ? ('<span class="plin-ms">'+chips(P[0])+'</span>') : '')+'<span class="plin-bar" aria-hidden="true"><i style="width:'+Math.max(2, pct)+'%"></i></span></th>'+
+          '<td class="plin-num"><b>'+l.u+'</b></td><td class="plin-pct">'+pct+' %</td><td>'+pryLinVs(l.u, la ? la.u : 0)+'</td><td class="plin-bs">'+(l.bs>0.009 ? fmtBs0(l.bs) : '—')+'</td></tr>'+
+        (uno ? '' : P.map(function(pr){
+          var pa=la && la.P[pr.lbl];
+          var ms=chips(pr);
+          return '<tr class="plin-pr"><td><span class="plin-pn">'+esc(pryLinNombre(pr.lbl))+'</span><span class="plin-ms">'+ms+'</span></td>'+
+            '<td class="plin-num">'+pr.u+'</td><td></td><td>'+pryLinVs(pr.u, pa ? pa.u : 0)+'</td><td class="plin-bs">'+(pr.bs>0.009 ? fmtBs0(pr.bs) : '—')+'</td></tr>';
+        }).join(''))+'</tbody>';
+    }).join('');
+    return '<section class="plin-m" data-m="'+esc(g.k||'sin')+'" style="--plin-c:'+g.col+'">'+
+      '<header class="plin-mt"><div><h4>'+esc(g.lbl)+'</h4><p>'+pl(m.c,'colchón','colchones')+' · '+pl(m.s,'somier','somieres')+' · '+fmtBs0(m.bs)+'</p></div>'+
+        '<div class="plin-mk"><b>'+m.u+'</b><span>unidades</span>'+(a && a.u ? pryLinVs(m.u, a.u) : '')+'</div></header>'+
+      '<table class="plin-t"><colgroup><col><col class="c-u"><col class="c-p"><col class="c-v"><col class="c-b"></colgroup>'+
+        '<thead><tr><th scope="col">Línea y producto</th><th scope="col">Unid.</th><th scope="col" title="de lo vendido de la marca">%</th><th scope="col" title="contra '+esc(mc)+'">vs '+esc(mc.slice(0,3))+'.</th><th scope="col">Bs</th></tr></thead>'+filas+'</table></section>';
   }).join('');
-  box.innerHTML='<div class="cua-box" id="pry-lin-box"><div class="cua-t">🛏️ Lo vendido por línea — '+esc(mesNombre(ym))+'</div>'+seg+
-    '<div class="plin-ex">Colchones y somieres de las ventas del mes (las mismas de «Por vendedor»), por marca y línea. Tocá una línea para ver sus productos y medidas. '+
-      'Total: <b>'+D.tot.u+' unidad'+(D.tot.u===1?'':'es')+'</b> ('+D.tot.c+' colchón'.replace('colchón', D.tot.c===1?'colchón':'colchones')+' · '+D.tot.s+(D.tot.s===1?' somier':' somieres')+') en '+D.tot.n+' venta'+(D.tot.n===1?'':'s')+'. Contra '+esc(cmpTxt)+(curso && C && !C.entero ? pryCorteTxt(C, hora) : '')+': '+A.tot.u+' unidades.</div>'+
-    (bloques || '<div class="empty" style="padding:14px 0">No hay colchones ni somieres vendidos en '+esc(mesNombre(ym))+'.</div>')+
-    '<div class="plin-pie">Las almohadas, sábanas y protectores no entran (como las unidades de arriba). Bs = precio de cada producto × cantidad: lo cargado sin precio no suma.</div></div>';
+  box.innerHTML='<div class="cua-box plin" id="pry-lin-box"><div class="plin-cab"><div><div class="cua-t">Lo vendido por línea — '+esc(mesNombre(ym))+'</div>'+
+      '<p class="plin-ex">Colchones y somieres de las ventas del mes (las mismas de «Por vendedor»), por marca, línea y producto, con sus medidas.</p></div>'+seg+'</div>'+
+    '<div class="plin-kpi"><div><b>'+D.tot.u+'</b><span>unidades</span></div><div><b>'+D.tot.c+'</b><span>'+(D.tot.c===1?'colchón':'colchones')+'</span></div><div><b>'+D.tot.s+'</b><span>'+(D.tot.s===1?'somier':'somieres')+'</span></div>'+
+      '<div><b>'+D.tot.n+'</b><span>'+(D.tot.n===1?'venta':'ventas')+'</span></div><div><b>'+A.tot.u+'</b><span>'+esc(mc)+(altura ? ' a esta altura' : ' entero')+'</span></div></div>'+
+    (tarjetas ? '<div class="plin-grid">'+tarjetas+'</div>' : '<div class="empty" style="padding:14px 0">No hay colchones ni somieres vendidos en '+esc(mesNombre(ym))+'.</div>')+
+    '<p class="plin-pie">«vs '+esc(mc)+'»: '+(altura ? ('contra '+esc(mc)+pryCorteTxt(C, hora)) : ('contra '+esc(mc)+' entero'))+'. Las almohadas, sábanas y protectores no entran (como las unidades de arriba). '+
+      'Bs = precio de cada producto × cantidad: lo cargado sin precio no suma.</p></div>';
 }
 function pryLineasQ(q){ PRY_LIN_Q=q; segSet('plin-q', q); try{ if(PRY_LIN_R) pryLineasPoner(PRY_LIN_R); }catch(e){} }
 var PRY_LIN_R=null;
