@@ -76,10 +76,10 @@ function PREPARAR(){
   { const page=await abrir(true, 'Noviembre');
     await page.evaluate(() => PINTAR()); await page.waitForTimeout(300);
     const r=await page.evaluate(KPI), m=Object.fromEntries(r);
-    chk('2 · Carola (con tilde en Kommo): conversión con las ventas del panel y lo de Kommo aparte', m['Carola Chavez']==='📥 236 leads · 🎯 0,8 % conversión (2 ventas del panel) · ⚠️ en Kommo 16 cierres · ⏱ responde en 3.1 h · 92 % atendidos', m['Carola Chavez']);
-    chk('2 · Isabel («Isabel Robledo - Central» en Kommo)', /253 leads/.test(m['Isabel Robledo']||'') && /0,8 % conversión \(2 ventas del panel\)/.test(m['Isabel Robledo']||''), m['Isabel Robledo']);
-    const ig = await page.evaluate(() => pryKpiTxt({leads:10, cierres:2}, 2));
-    chk('2c · si Kommo coincide con el panel, no se avisa nada', !/Kommo/.test(ig) && /20 %/.test(ig), ig);
+    chk('2 · Carola (con tilde en Kommo): la cuenta de la conversión, panel contra Kommo, respuesta', /Conversión 0,8 % = 2 ventas del panel ÷ 236 leads de Kommo/.test(m['Carola Chavez']||'') && /Panel: 2 ventas · Kommo: 16 cierres ⚠️ 14 más en Kommo que en el panel/.test(m['Carola Chavez']||'') && /responde en 3.1 h · 92 % atendidos/.test(m['Carola Chavez']||''), m['Carola Chavez']);
+    chk('2 · Isabel («Isabel Robledo - Central» en Kommo)', /2 ventas del panel ÷ 253 leads/.test(m['Isabel Robledo']||''), m['Isabel Robledo']);
+    const ig = await page.evaluate(() => [pryKpiTxt({leads:10, cierres:2}, 2, 1, 1), pryKpiTxt({leads:10, cierres:1}, 3, 2, 1)]);
+    chk('2c · panel = Kommo: ✓ y sin aviso; partido en entregadas y pendientes; faltan en Kommo', /20 %/.test(ig[0]) && /✅ 1 entregada o facturada · ⏳ 1 pendiente/.test(ig[0]) && /2 cierres<\/b> ✓/.test(ig[0]) && !/⚠️/.test(ig[0]) && /⚠️ faltan 2 en Kommo/.test(ig[1]) && /✅ 2 entregadas o facturadas · ⏳ 1 pendiente\)/.test(ig[1]), ig);
     chk('2 · Maria sale del dashboard de Sueña', /99 leads/.test(m['Maria Flores']||''), m['Maria Flores']);
     const u=await page.evaluate(() => window._pedidas);
     const bus = await page.evaluate(() => [pryKpiBuscar({'juan pablo':1}, 'juan pablo paredes'), pryKpiBuscar({'fernando peinado charcas':2}, 'fernando peinado'),
