@@ -57,7 +57,8 @@ function PREPARAR(){
       window._pedidas=[];
       var dash=function(team){ return '<script>window.PANEL_DATA = '+JSON.stringify({ month:o.mes, year:2026, team:team })+';<\/script>'; };
       pubDashTraer=function(url){ window._pedidas.push(url);
-        if(/VISCARRA/.test(url)) return Promise.resolve(dash([{ name:'Maria Flores', leads:99, cierres:9, conv:9.1, promTxt:'5 min', respPct:100 }]));
+        if(/VISCARRA/.test(url)) return Promise.resolve('<script>window.PANEL_DATA = '+JSON.stringify({ month:o.mes+' 2026', year:2026,   // Sueña: «Noviembre 2026»
+          team:[{ name:'Maria Flores Charcas', leads:99, cierres:9, conv:9.1, promTxt:'5 min', respPct:100 }] })+';<\/script>');
         return Promise.resolve(dash([{ name:'Carola Chávez', leads:236, cierres:16, conv:6.8, promTxt:'3.1 h', respPct:92 },
                                      { name:'Isabel Robledo - Central', leads:253, cierres:21, conv:8.3, promTxt:'30 min', respPct:87 }])); };
     }, { flag, mes });
@@ -79,6 +80,9 @@ function PREPARAR(){
     chk('2 · Isabel («Isabel Robledo - Central» en Kommo)', /253 leads/.test(m['Isabel Robledo']||'') && /8,3 %/.test(m['Isabel Robledo']||''), m['Isabel Robledo']);
     chk('2 · Maria sale del dashboard de Sueña', /99 leads/.test(m['Maria Flores']||''), m['Maria Flores']);
     const u=await page.evaluate(() => window._pedidas);
+    const bus = await page.evaluate(() => [pryKpiBuscar({'juan pablo':1}, 'juan pablo paredes'), pryKpiBuscar({'fernando peinado charcas':2}, 'fernando peinado'),
+      pryKpiBuscar({'maria':3}, 'maria flores'), pryKpiBuscar({'juan pablo a':4,'juan pablo b':5}, 'juan pablo'), pubDashYm({month:'Noviembre 2026', year:2026})]);
+    chk('2b · nombres de Kommo distintos (Juan Pablo, Fernando Peinado Charcas) y el mes «Noviembre 2026»', JSON.stringify(bus)==='[1,2,null,null,"2026-11"]', bus);
     chk('2 · lee el dashboard de este sitio y el de Sueña', u.some(x=>/^index\.html/.test(x)) && u.some(x=>/VISCARRA\/index\.html/.test(x)), u);
     await page._ctx.close(); }
 

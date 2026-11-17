@@ -16569,7 +16569,7 @@ function pubDashDe(html){
   return null;
 }
 /* El mes del dashboard ('2026-11') por su `month` («Noviembre») y `year`. */
-function pubDashYm(D){ if(!D) return ''; var m=MESES_ES.indexOf(String(D.month||'').toLowerCase()); return (m>=0 && D.year) ? (D.year+'-'+(m<9?'0':'')+(m+1)) : ''; }
+function pubDashYm(D){ if(!D) return ''; var m=MESES_ES.indexOf(String(D.month||'').toLowerCase().trim().split(/\s+/)[0]);   /* Sueña dice «Noviembre 2026» */ return (m>=0 && D.year) ? (D.year+'-'+(m<9?'0':'')+(m+1)) : ''; }
 /* Lo del dashboard de `ym`, de a una lectura cada 10 min: {estado:'ok'|'lee'|'error'|'otro', D, err, t}. Repinta la caja al terminar. */
 function pubDash(ym, forzar){
   var c=PUB_DASH[ym];
@@ -16605,6 +16605,17 @@ function pryKpiTraer(ym){
   });
   return c;
 }
+/* El nombre del panel contra el de Kommo: igual, o uno empieza con el otro por palabras enteras (Kommo: «Juan Pablo» y «Fernando Peinado
+   Charcas»; el panel: «Juan Pablo Paredes» y «Fernando Peinado»), con dos palabras al menos y uno solo que calce. */
+function pryKpiBuscar(T, k){
+  if(!T || !k) return null; if(T[k]) return T[k];
+  var hit=null, n=0;
+  Object.keys(T).forEach(function(x){
+    var c=x.length<k.length ? x : k, l=x.length<k.length ? k : x;
+    if(c.split(' ').length>=2 && (l===c || l.indexOf(c+' ')===0)){ hit=T[x]; n++; }
+  });
+  return n===1 ? hit : null;
+}
 function pryKpiTxt(v){
   if(!v) return '';
   var n=function(x){ return String(x).replace('.', ','); }, P=[];
@@ -16618,7 +16629,7 @@ function pryKpiTxt(v){
 function pryKpiPintar(ym){
   var c=PRY_KPI[ym]; if(!c) return;
   [].forEach.call(document.querySelectorAll('#pry-vendedores .pry-kpi[data-kpi]'), function(el){
-    var v=c.team[el.getAttribute('data-kpi')]; el.innerHTML=v ? pryKpiTxt(v) : ''; el.hidden=!v;
+    var v=pryKpiBuscar(c.team, el.getAttribute('data-kpi')); el.innerHTML=v ? pryKpiTxt(v) : ''; el.hidden=!v;
   });
 }
 function pryKpiPoner(ym){ if(!pryKpiVa() || !document.querySelector('#pry-vendedores .pry-kpi')) return; pryKpiTraer(ym); pryKpiPintar(ym); }
