@@ -157,7 +157,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
     return { bars:document.querySelectorAll('#pry-ix').length, secs:document.querySelectorAll('#cta-pane-proy .pix-s').length, grupos:document.querySelectorAll('#pix-s-despacio').length,
       cajas:document.querySelectorAll('#pry-vendedores').length, her:document.querySelectorAll('#pry-metas-btn').length };
   });
-  chk('10 otro mes y vuelta: una barra, una sección por caja, nada repetido', r.bars===1 && r.secs===15 && r.grupos===1 && r.cajas===1 && r.her===1, r);
+  chk('10 otro mes y vuelta: una barra, una sección por caja, nada repetido', r.bars===1 && r.secs===16 && r.grupos===1 && r.cajas===1 && r.her===1, r);
   await page._ctx.close();
 
   console.log('\n── 11. El iPad parado ──');

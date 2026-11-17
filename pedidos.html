@@ -1135,6 +1135,34 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .pcal-domt{display:grid;gap:4px;margin-top:6px} .pcal-domt>div{display:grid;grid-template-columns:minmax(120px,1fr) auto auto 52px;gap:10px;align-items:baseline}
 .pcal-domt b{font-variant-numeric:tabular-nums;text-align:right} .pcal-domt span:nth-child(3){color:#7a6420;font-variant-numeric:tabular-nums}
 .pcal-domp{margin-top:6px;font-size:.74rem;color:#7a6420}
+/* 🛏️ (17/11) Lo vendido por línea */
+.plin-q{margin:2px 0 8px;max-width:100%;overflow-x:auto;flex-wrap:nowrap}
+.plin-n{overflow-wrap:anywhere}
+.plin-ex{font-size:.8rem;color:var(--muted);margin:0 0 10px;line-height:1.45}
+.plin-m{margin:0 0 14px}
+.plin-mt{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;border-left:4px solid;padding:4px 0 4px 10px;margin-bottom:4px}
+.plin-mt span{font-size:.8rem;color:var(--muted)}
+.plin-r{display:grid;grid-template-columns:minmax(110px,1.6fr) .6fr .6fr .6fr 1.3fr 1fr 1fr;gap:6px;align-items:center;padding:6px 4px;font-size:.84rem;font-variant-numeric:tabular-nums}
+.plin-r > span:not(:first-child){text-align:right}
+.plin-h{font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);border-bottom:1px solid var(--line,#e5e7eb)}
+.plin-l{border-bottom:1px solid var(--line,#eef0f2)}
+.plin-l > summary{cursor:pointer;list-style:none}
+.plin-l > summary::-webkit-details-marker{display:none}
+.plin-l > summary:hover{background:rgba(0,181,173,.06)}
+.plin-n{font-weight:700}
+.plin-n::before{content:'▸ ';color:var(--muted);font-weight:400}
+.plin-l[open] .plin-n::before{content:'▾ '}
+.plin-u b{font-size:1rem}
+.plin-p{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+.plin-p i{display:block;height:8px;border-radius:4px;min-width:2px;max-width:70%}
+.plin-p em{font-style:normal;min-width:34px}
+.plin-r small{color:var(--muted)}
+.plin-ps{padding:2px 4px 10px 22px}
+.plin-pr{display:grid;grid-template-columns:1fr 50px 90px;gap:6px;padding:4px 0;font-size:.8rem;border-top:1px dashed var(--line,#eef0f2);font-variant-numeric:tabular-nums}
+.plin-pr > :not(:first-child){text-align:right}
+.plin-pr small{display:block;color:var(--muted);font-size:.72rem}
+.plin-pie{font-size:.74rem;color:var(--muted);margin-top:4px}
+@media (max-width:600px){ .plin-r{grid-template-columns:minmax(90px,1.4fr) .5fr .5fr .6fr 1fr;font-size:.8rem} .plin-r > :nth-child(6), .plin-r > :nth-child(7){display:none} }
 .pcal-pie{margin-top:4px;font-size:.76rem;color:var(--muted);line-height:1.45;max-width:640px}
 /* 🛍️ (13/11, mejora 177) «Black Friday en números» en Proyección: el estilo de las fichas de marca (`.cx-kf`); con el tema, negra con dorado. */
 .bfn{--c:#ca8a04;--t:#854d0e;background:linear-gradient(150deg,color-mix(in srgb, var(--c) 12%, #fff) 0%,#fff 65%);border:1px solid color-mix(in srgb, var(--c) 40%, #fff);border-radius:14px;padding:12px 14px;margin:0 0 18px;min-width:0;color:var(--text);overflow-wrap:anywhere}
@@ -4781,6 +4809,8 @@ function glSigue(){
         <!-- 📣 (15/11, mejora 337) Lo que vende cada Bs de publicidad: el gasto (fila `__publicidad__`, solo en el panel) contra los leads y ventas
              por canal del dashboard publicado (`pubPintar`). Solo con la contraseña. -->
         <div id="pry-pub"></div>
+        <!-- 🛏️ (17/11) Lo vendido por línea: colchones y somieres por marca y línea, con sus productos. Solo mira. -->
+        <div id="pry-lineas"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
         <div id="pry-hist"></div>
@@ -18218,6 +18248,76 @@ function pryCalorDia(f){
   }
   det.innerHTML=h;
 }
+/* 🛏️ (17/11; dueño: «¿Dónde vemos qué productos vendieron por línea? Y una tabla de ejemplo 40 ice 30 etc. En proyección al final?»)
+   LO VENDIDO POR LÍNEA, al final de Proyección. SOLO MIRA. ⚠️ Una sola verdad:
+   · Las ventas = las de «👤 Por vendedor» (`pryVentas`, el mes que cuentan `ym`): Equipo (`tienda`), Mayoristas (`mayor`), ROHO o todo junto.
+   · Las unidades = las de Proyección (`pryTipoProd`): colchones y somieres con su cantidad; un combo = 1 colchón + 1 somier. Almohadas,
+     sábanas, protectores y lo demás no cuentan (como las unidades de arriba): la suma de las líneas da las unidades de «Por vendedor».
+   · La marca y la línea = `atciProdDe` (la MISMA regla del informe de ATC y de «📉 Cada 100 vendidos»: TITANIO = ICE, LATEX…).
+   · Bs = el precio c/u de cada renglón × la cantidad (`prodPrecio`); un renglón sin precio suma 0 (Eduardo carga a veces sin precio).
+   · Contra el mes anterior: a esta altura (`pryCorteAltura` + `pryEnAltura`) con el mes en curso; entero con un mes cerrado.
+   En Playwright solo con `PRY_LINEAS_PRUEBA`. `tests/test_pry_lineas.js`. */
+var PRY_LIN_Q='tienda';
+function pryLineasVa(){ try{ return vdVa('PRY_LINEAS_PRUEBA'); }catch(e){ return false; } }
+function pryLineasEntra(x, q){ return q==='todo' ? (x.amb==='tienda' || x.amb==='mayor' || x.amb==='roho') : x.amb===q; }
+function pryLineasDatos(ym, q, C, V){
+  V=V||pryVentas();
+  var idx={}; (STATE||[]).forEach(function(p){ if(p && p.id) idx[p.id]=p; });
+  var B={}, tot={ c:0, s:0, u:0, bs:0, n:0 };
+  V.forEach(function(x){
+    if(x.ym!==ym || !pryLineasEntra(x, q) || (C && !pryEnAltura(x, C))) return;
+    var p=idx[x.id]; if(!p) return;
+    var mv = x.g==='heaven' || x.g==='suena' ? x.g : (x.amb==='roho' ? 'roho' : (marcaDe(p.vendedor)||'')), alguno=false;
+    (p.productos||[]).forEach(function(r){
+      var t=pryTipoProd(r), n=Number(r && r.cant)||0; if(!t || !(n>0)) return;
+      var o=atciProdDe(r, mv); if(!o) return;
+      var c=(t==='colchon'||t==='combo') ? n : 0, so=(t==='somier'||t==='combo') ? n : 0, bs=r2(prodPrecio(r)*n);
+      var m=B[o.marca]||(B[o.marca]={ c:0, s:0, u:0, bs:0, L:{} });
+      var l=m.L[o.lin]||(m.L[o.lin]={ lbl:o.lin, sin:(o.lin===ATCI_SIN_LINEA), c:0, s:0, u:0, bs:0, P:{} });
+      var pr=l.P[o.prod]||(l.P[o.prod]={ lbl:o.prod, u:0, bs:0, M:{} });
+      [m, l, tot].forEach(function(z){ z.c+=c; z.s+=so; z.u+=c+so; z.bs=r2(z.bs+bs); });
+      pr.u+=c+so; pr.bs=r2(pr.bs+bs);
+      var me=producirMedidaEtq(r.medida||''); pr.M[me]=(pr.M[me]||0)+c+so;
+      alguno=true;
+    });
+    if(alguno) tot.n++;
+  });
+  return { B:B, tot:tot };
+}
+function pryLineasPoner(R){
+  var box=document.getElementById('pry-lineas'); if(!box) return;
+  if(!pryLineasVa()){ box.innerHTML=''; return; }
+  var ym=R.ym, q=PRY_LIN_Q, V=pryVentas(), cmp=metasMesMas(ym, -1), curso=(R.estado==='curso'), C=null, hora='';
+  if(curso){ var mi=pryMinBo(Date.now()); C=pryCorteAltura(R.hoy||diaNegocio(), cmp, mi); hora=pryDiaHabil(R.hoy||diaNegocio()) ? pryHoraTxt(mi) : ''; }
+  var D=pryLineasDatos(ym, q, null, V), A=pryLineasDatos(cmp, q, C, V), mc=pryMesCorto(cmp);
+  var cmpTxt = curso ? (C && !C.entero ? (mc+' a esta altura') : (mc+' entero')) : (mc+' entero');
+  var nU=function(n){ return n+' u.'; };
+  var seg='<div class="seg plin-q" id="plin-q">'+[['tienda','Equipo'],['mayor','Mayoristas'],['roho','ROHO'],['todo','Todo']].map(function(o){
+    return '<button type="button" data-val="'+o[0]+'" class="'+(q===o[0]?'active':'')+'" onclick="pryLineasQ(\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')+'</div>';
+  var cab='<div class="plin-r plin-h"><span>Línea</span><span>Colch.</span><span>Som.</span><span>Unid.</span><span>%</span><span>vs '+esc(mc)+'</span><span>Bs</span></div>';
+  var bloques=ATCI_MARCAS.map(function(g){
+    var m=D.B[g.k], a=A.B[g.k]; if(!m || !m.u) return '';
+    var L=Object.keys(m.L).map(function(k){ return m.L[k]; }).sort(function(x, y){ return (x.sin-y.sin) || (y.u-x.u) || (y.bs-x.bs) || (x.lbl<y.lbl?-1:1); });
+    return '<div class="plin-m" data-m="'+esc(g.k||'sin')+'"><div class="plin-mt" style="border-left-color:'+g.col+'"><b>'+g.ico+' '+esc(g.lbl)+'</b><span>'+nU(m.u)+' ('+m.c+' colch. · '+m.s+' som.) · '+fmtBs0(m.bs)+
+      (a && a.u ? (' · '+pryDifPct(m.u, a.u)+' en unidades vs '+esc(mc)) : '')+'</span></div>'+cab+
+      L.map(function(l){
+        var la=a && a.L[l.lbl], pct=Math.round(l.u/m.u*100);
+        var P=Object.keys(l.P).map(function(k){ return l.P[k]; }).sort(function(x, y){ return (y.u-x.u) || (y.bs-x.bs); });
+        return '<details class="plin-l"><summary class="plin-r"><span class="plin-n">'+esc(l.lbl)+'</span><span>'+(l.c||'')+'</span><span>'+(l.s||'')+'</span><span class="plin-u"><b>'+l.u+'</b></span>'+
+          '<span class="plin-p"><i style="width:'+pct+'%;background:'+g.col+'"></i><em>'+pct+' %</em></span><span>'+(la && la.u ? (la.u+' '+pryDifPct(l.u, la.u)) : '<small>—</small>')+'</span><span>'+(l.bs>0.009 ? fmtBs0(l.bs) : '<small>—</small>')+'</span></summary>'+
+          '<div class="plin-ps">'+P.map(function(pr){
+            var ms=Object.keys(pr.M).sort(function(x, y){ return pr.M[y]-pr.M[x]; }).map(function(k){ return esc(k)+' ×'+pr.M[k]; }).join(' · ');
+            return '<div class="plin-pr"><span>'+esc(pr.lbl)+'<small>'+ms+'</small></span><b>'+pr.u+'</b><span>'+(pr.bs>0.009 ? fmtBs0(pr.bs) : '—')+'</span></div>'; }).join('')+'</div></details>';
+      }).join('')+'</div>';
+  }).join('');
+  box.innerHTML='<div class="cua-box" id="pry-lin-box"><div class="cua-t">🛏️ Lo vendido por línea — '+esc(mesNombre(ym))+'</div>'+seg+
+    '<div class="plin-ex">Colchones y somieres de las ventas del mes (las mismas de «Por vendedor»), por marca y línea. Tocá una línea para ver sus productos y medidas. '+
+      'Total: <b>'+D.tot.u+' unidad'+(D.tot.u===1?'':'es')+'</b> ('+D.tot.c+' colchón'.replace('colchón', D.tot.c===1?'colchón':'colchones')+' · '+D.tot.s+(D.tot.s===1?' somier':' somieres')+') en '+D.tot.n+' venta'+(D.tot.n===1?'':'s')+'. Contra '+esc(cmpTxt)+(curso && C && !C.entero ? pryCorteTxt(C, hora) : '')+': '+A.tot.u+' unidades.</div>'+
+    (bloques || '<div class="empty" style="padding:14px 0">No hay colchones ni somieres vendidos en '+esc(mesNombre(ym))+'.</div>')+
+    '<div class="plin-pie">Las almohadas, sábanas y protectores no entran (como las unidades de arriba). Bs = precio de cada producto × cantidad: lo cargado sin precio no suma.</div></div>';
+}
+function pryLineasQ(q){ PRY_LIN_Q=q; segSet('plin-q', q); try{ if(PRY_LIN_R) pryLineasPoner(PRY_LIN_R); }catch(e){} }
+var PRY_LIN_R=null;
 /* ============================================================================
    🛍️ (13/11, mejora 177; dueño: «🛍️ Black Friday en números») LA CAMPAÑA DE BLACK FRIDAY EN NÚMEROS. Una ficha en Proyección (que ya es
    solo con la contraseña) desde el primer día de la campaña hasta `BFN_DIAS_DESPUES` días después del último; fuera de eso no se ve (ni con
@@ -19443,6 +19543,7 @@ function renderProyeccion(){
   try{ pryCarreraPoner(R); }catch(e){}   // 🏁 (§4pj, 166) la carrera del mes
   try{ pryCalorPoner(R); }catch(e){}     // 🟩 (§4pj, 167) el calendario de calor
   try{ pubPintar(R); }catch(e){}         // 📣 (15/11, mejora 337) lo que vende cada Bs de publicidad
+  try{ PRY_LIN_R=R; pryLineasPoner(R); }catch(e){}   // 🛏️ (17/11) lo vendido por línea
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
   var _ph=document.getElementById('pry-hist'); if(_ph) _ph.innerHTML=pryHistHtml(R);   // 📒 (§4mn) lo que dijo cada día
@@ -37077,6 +37178,7 @@ var PIX_SECS=[
   { k:'carrera', ix:'',                 t:'🏁 La carrera del mes',          ids:['pry-carrera'] },
   { k:'calor',   ix:'🟩 Calendario',    t:'🟩 Calendario de calor',         ids:['pry-calor'] },
   { k:'pub',     ix:'',                 t:'📣 Lo que vende cada Bs de publicidad', ids:['pry-pub'] },
+  { k:'lineas',  ix:'🛏️ Líneas',        t:'🛏️ Lo vendido por línea',        ids:['pry-lineas'] },
   { k:'prueba',  ix:'', grupo:1, cerr:1, t:'🧪 ¿Qué tan bien proyecta?',     ids:['pry-prueba'] },
   { k:'hist',    ix:'', grupo:1, cerr:1, t:'📒 Lo que dijo la proyección cada día', ids:['pry-hist'] },
   { k:'patron',  ix:'', grupo:1, cerr:1, t:'📅 Cómo se viene vendiendo',     ids:['pry-patron'] },
@@ -37200,6 +37302,7 @@ function pixClave(k, R, A){
   if(k==='carrera') return 'cada vendedora, día por día';
   if(k==='calor') return 'lo vendido, las entregas y lo cobrado, día por día';
   if(k==='pub') return 'el gasto contra los leads y las ventas de cada canal';
+  if(k==='lineas'){ var bx=document.querySelector('#pry-lineas .plin-ex b'); return bx ? (bx.textContent+' por marca y línea') : 'colchones y somieres por marca y línea'; }
   if(k==='prueba'){ var Pr=[]; R.marcas.forEach(function(m){ var mt=R.metodos[m.g.k]; if(mt && mt.err && mt.err.n>=PRY_MIN_PARES) Pr.push(m.g.lbl+': el ritmo se equivocó '+Math.round(mt.err.r*100)+' %, la curva '+Math.round(mt.err.c*100)+' %'); });
     return Pr.length ? Pr.join(' · ') : 'con los meses que ya pasaron'; }
   if(k==='hist') return 'una foto por día y cuánto se movió';
@@ -39592,7 +39695,7 @@ var ATCI_MARCAS=[
 var ATCI_SIN_LINEA='Sin línea en el nombre';
 var ATCI_LINEAS={
   heaven:[ [/\bTITANIO\b|\bICE\b|\bLATEX\b/, 'TITANIO'], [/\bORO\b|\bVISCOLASTICO\b|\bBI RELAX\b/, 'ORO'], [/\bESPECIAL\b/, 'ESPECIAL'], [/\bPLATA\b/, 'PLATA'],
-           [/\bDREAM\b/, 'DREAM'], [/\bTROPICAL\b/, 'TROPICAL'], [/\bALMOHADAS?\b/, 'ALMOHADA'], [/\bCOLCHONETA\b/, 'COLCHONETA'] ],
+           [/\bDREAM\b/, 'DREAM'], [/\bTROPICAL\b/, 'TROPICAL'], [/\bCLOUD\b/, 'CLOUD'], [/\bALMOHADAS?\b/, 'ALMOHADA'], [/\bCOLCHONETA\b/, 'COLCHONETA'] ],
   suena:[ [/\bPREMIER DELUXE\b/, 'PREMIER DELUXE'], [/\bCONFORT PLUS\b/, 'CONFORT PLUS'], [/\bESSENTIAL\b/, 'ESSENTIAL'], [/\bLITE\b/, 'LITE'], [/\bSMART\b/, 'SMART'],
           [/\bSOFT\b/, 'SOFT'], [/\bSEMIORTOPEDICO\b/, 'SEMIORTOPÉDICO'], [/\bORTOPEDICO\b/, 'ORTOPÉDICO'], [/\bBAHIA\b/, 'BAHÍA'], [/\bCARIOCA\b/, 'CARIOCA'],
           [/\bMOVEL PRO\b/, 'MOVEL PRO'], [/\bCUNA\b/, 'CUNA'], [/\bCAMPING\b|\bCOLCHONETA\b/, 'COLCHONETA'], [/\bRESPALDAR\b/, 'RESPALDAR'] ],
