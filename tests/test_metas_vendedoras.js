@@ -165,7 +165,7 @@ const VENTANA = () => {
   /* 6 · el cierre comercial lee lo mismo */
   r=await page.evaluate(()=>{ var mt=ccmMetas('2026-11'), D=ccmDatos('2026-11'), c=D.filas.filter(function(f){ return normNombre(f.v)===normNombre('Carola Chavez'); })[0];
     return { ok:mt.ok, maria:ccmMetaDe(mt.vd,'Maria Flores'), carola:c ? [c.mi, c.pr] : null }; });
-  chk('6 · después de guardar acá, el cierre comercial las toma como guardadas (no sugeridas) con los mismos números', r.ok===true && r.maria.join()==='100000,100000' && r.carola && r.carola.join()==='90000,100000', r);
+  chk('6 · después de guardar acá, el cierre comercial las toma como guardadas (no sugeridas) con los mismos números', r.ok===true && r.maria.slice(0,2).join()==='100000,100000' && !r.maria[2] && r.carola && r.carola.join()==='90000,100000', r);
   await page.evaluate(()=>{ ccmAbrir('2026-11'); ccmEdAbrir(); var i=CCM.ed.vs.map(function(o){ return o.v; }).indexOf('Jonathan Monje'); CCM.ed.mi[i]='60.000'; CCM.ed.pr[i]='80.000';
     var a=document.getElementById('ccm-mi-'+i), b=document.getElementById('ccm-pr-'+i); if(a) a.value='60.000'; if(b) b.value='80.000';
     return ccmEdGuardar(); });

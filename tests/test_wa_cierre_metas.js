@@ -206,7 +206,7 @@ const txt = (body) => ({ type: 'text', text: { body } });
     chk('1g WA_TIPOS: cd = v3 (respaldo la v2 y la primera, con 7) y bf; cm = cierre_del_mes (sin respaldo); ext = logistica_excel_tarde (respaldo la del Excel de las 10:00, 3)',
         W.cd.plantilla === 'cierre_del_dia_v3' && W.cd.vieja === 'cierre_del_dia_v2' && W.cd.nv === 7 && W.cd.vieja2 === 'cierre_del_dia' && W.cd.nv2 === 7 && W.cd.bf === 'cierre_del_dia_bf' &&
         W.cm.plantilla === 'cierre_del_mes' && !W.cm.vieja && W.ext.plantilla === 'logistica_excel_tarde' && W.ext.vieja === 'logistica_excel_falta' && W.ext.nv === 3, [W.cd, W.cm, W.ext]);
-    chk('1h la versión es la 2026-11-15-a o una que la trae entera (16-a), y ESTA_VERSION igual', ['2026-11-15-a', '2026-11-16-a'].indexOf(S.ctx.SCRIPT_VERSION) >= 0 && new RegExp("var ESTA_VERSION = '" + S.ctx.SCRIPT_VERSION + "'").test(SRC));
+    chk('1h la versión es la 2026-11-15-a o una que la trae entera (16-a), y ESTA_VERSION igual', ['2026-11-15-a', '2026-11-16-a', '2026-11-17-a'].indexOf(S.ctx.SCRIPT_VERSION) >= 0 && new RegExp("var ESTA_VERSION = '" + S.ctx.SCRIPT_VERSION + "'").test(SRC));
   });
 
   seccion('2. 332 · el cierre del día con la meta y lo de hoy por tienda (jueves 12/11, 21:20)', () => {
@@ -475,6 +475,7 @@ const txt = (body) => ({ type: 'text', text: { body } });
     await bctx.route(/^https?:\/\//, r => r.abort());
     const page = await bctx.newPage();
     page.on('pageerror', e => errores.push(e.message));
+    await page.addInitScript(() => { window.CCM_TRAMOS_PRUEBA = 1; });   // 📶 (17/11) el .gs trae las tablas del dueño de noviembre: la página también
     await page.clock.install({ time: new Date('2026-11-14T18:00:00-04:00') });
     await page.goto('file://' + PEDIDOS, { waitUntil: 'load' });
     await page.waitForTimeout(300);
