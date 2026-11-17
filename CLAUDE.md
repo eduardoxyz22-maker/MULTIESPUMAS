@@ -981,6 +981,13 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   en su bloque, y `acciones` lleva la caja de la 379) · 368 Stock con el Plan primero · 369 Proyección con índice · 370 filtros en un renglón con la ficha al costado ·
   371 «Tu día» al costado · 372 Guardar en «Tu pedido» · 373 globito de ayuda · 374 un renglón por producto en Contabilidad · 375 ATC con la lista arriba ·
   376 la comisión en escalera · 377 «ⓘ Cómo funciona» (`ayudaComo`) · 378 encabezado bajo en 768 · 385 la fecha en letras. 367 quedó SOLO en fotos.
+  📏 **El encabezado en UN renglón** (§4qe, 17/11, captura del dueño desde el iPad: con la meta chica, «Buscar», «💬 Chat» y la campanita los
+  anillos bajaban a un 2º renglón y el encabezado bajo medía 193 px): `hdrCompactar` (desde `hdrMedir`; un `ResizeObserver` de `.header-in` lo
+  llama cuando entra algo después, p. ej. el chat; al cambiar la ventana vuelve a probar desde 0) achica de a un paso hasta que entra:
+  `hc1` sin «Ctrl K» · `hc2` «Buscar» y «Chat» en círculo · `hc3` la meta chica sin barrita · 4-6 la cuenta de la 434 (`hc-chica` → `hc-mini` →
+  `hc-no`; `hcAcomodar` ya no decide sola, llama a `hdrMedir(true)`) · 7 `hc-sindia` sin el día. ⚠️ Algo NUEVO en `.header-in` entra en ese orden
+  (y si tiene versión chica, va en un paso). No mide con el encabezado chico (al bajar) ni en el celular (≤ 560). `tests/test_hdr_un_renglon.js` (16),
+  `test_v434_cuenta_tema` 4c-4e cambiaron a conciencia (la cuenta se achica después de los botones).
 - **Funcionales**: 379 factura/remisión al marcar «cargada» · 380 una venta cargada que cambia vuelve a «sin cargar» (`rc`) · 386 quién corrigió cada pago (`pH`) ·
   387 lo atrasado que el GPS vio, aparte · 389 «🧹 Ordenar mi bandeja» · 384 el lugar guardado en los pedidos por correo (`cargar_pedidos.py` lee `__destinos__`) y
   la zona de ROHO · 381/382 Bloki enseña y «📊 Uso del panel» (fila `__ensena__`) · 383 las ventas de tienda salen de «Por cargar» (dueño: «cada tienda carga al sistema

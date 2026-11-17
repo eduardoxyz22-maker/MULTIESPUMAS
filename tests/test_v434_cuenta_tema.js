@@ -52,7 +52,8 @@ function PREPARAR(){
     return { hay:!!e, ve:ve, txt:e ? e.innerText.replace(/\s+/g,' ').trim() : '', cls:e ? e.className : '', role:e ? e.getAttribute('role') : null,
       junto:ve ? Math.round(pb.getBoundingClientRect().left-e.getBoundingClientRect().right) : null, antes:!!(e && e.nextElementSibling===pb),
       unRenglon:Math.max.apply(null, tops)-Math.min.apply(null, tops)<=30, hh:parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdr-h')), hd:Math.round(h.getBoundingClientRect().height),
-      anim:e ? getComputedStyle(e).animationName+'|'+getComputedStyle(e,'::after').animationName : '' };
+      anim:e ? getComputedStyle(e).animationName+'|'+getComputedStyle(e,'::after').animationName : '',
+      hc:document.documentElement.className.split(/\s+/).filter(function(c){ return /^hc/.test(c); }).join(' '), dia:getComputedStyle(document.querySelector('.htitle')).display!=='none' };
   });
 
   console.log('\n── 1. Sin la bandera ──');
@@ -101,14 +102,23 @@ function PREPARAR(){
   console.log('\n── 4. Angosto con la meta chica (378) ──');
   page = await abrir({ flag:true, w:1180, h:768, bajo:true, clave:true });
   r = await leer(page);
-  chk('4c. a 1.180 px (iPad acostado) con la meta chica: se achica y el encabezado sigue en un renglón', r.ve && /hc-(chica|mini)/.test(r.cls) && r.unRenglon && Math.abs(r.hh-r.hd)<=1, r);
+  /* 📏 (17/11, captura del dueño desde el iPad) Ahora el encabezado se achica en un orden (`hdrCompactar`): primero «Ctrl K», «Buscar» y «Chat»
+     en círculo y la meta chica sin su barrita; recién después la cuenta (sin la fecha → sin el título → no se ve) y, al final, el día. */
+  chk('4c. a 1.180 px (iPad acostado) con la meta chica: algo se achica y el encabezado sigue en un renglón, con la cuenta y el día', r.ve && /hc1/.test(r.hc) && r.dia && r.unRenglon && Math.abs(r.hh-r.hd)<=1, r);
   await page._ctx.close();
   page = await abrir({ w:1000, h:768, bajo:true, clave:true });
   const sinElla = await leer(page);
   await page._ctx.close();
   page = await abrir({ flag:true, w:1000, h:768, bajo:true, clave:true });
   r = await leer(page);
-  chk('4d. a 1.000 px, si ni chiquita entra, no se ve: el encabezado queda del mismo alto que sin ella', !r.ve && /hc-no/.test(r.cls) && r.hd===sinElla.hd, [r.cls, r.hd, sinElla.hd]);
+  chk('4d. a 1.000 px: con «Buscar» y la meta achicados entra chiquita (sin la fecha); el encabezado queda del mismo alto que sin ella y con el día', r.ve && /hc-(chica|mini)/.test(r.cls) && /hc3/.test(r.hc) && r.dia && r.hd===sinElla.hd, [r.cls, r.hc, r.hd, sinElla.hd]);
+  await page._ctx.close();
+  page = await abrir({ w:760, h:768, bajo:true, clave:true });
+  const sinElla2 = await leer(page);
+  await page._ctx.close();
+  page = await abrir({ flag:true, w:760, h:768, bajo:true, clave:true });
+  r = await leer(page);
+  chk('4e. a 760 px, si ni chiquita entra, no se ve (antes que el día): el encabezado queda del mismo alto que sin ella', !r.ve && /hc-no/.test(r.cls) && r.unRenglon && r.hd===sinElla2.hd, [r.cls, r.hc, r.dia, r.hd, sinElla2.hd]);
   await page._ctx.close();
 
   console.log('\n── 6. Celular y «reducir movimiento» ──');
