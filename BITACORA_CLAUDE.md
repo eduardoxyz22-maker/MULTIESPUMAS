@@ -18959,3 +18959,21 @@ entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGA
   Además el 03/11 pasó a Compradores ventas de fines de octubre (09-318, 10-382…), que Kommo cuenta en noviembre; y 10-391 es 14.630 en el panel y 14.360
   en Kommo. Se le propuso: Maria limpia la bandeja con «Sí, es la misma» y corrige la «Fecha contrato» de las de octubre; y, si quiere, que el dashboard
   empareje también por vendedora + mismo monto cuando el celular no coincide (espera su respuesta).
+
+### §4qe — ⚠️ El dashboard avisa las ventas que pueden estar contadas dos veces (16-17/11)
+- **Pedido** (dueño, después del caso de Maria Flores, §4qd): *«1 puede fallar eso. Y si vendió dos clientes distintos pero es el mismo producto y
+  precio?»* → se le explicó que emparejar por monto solo falla (en la bandeja de Kommo, «💵 parece por el monto» acierta 119 de 144: 25 mal) y que por
+  eso el dashboard NO va a restar nada; se le propuso solo avisarlo → *«si agrega el aviso en el dashboard»*.
+- **Regla** (`ventas_panel_sin_ficha`, después de los gemelos por celular): venta de Kommo de ESTE mes (`won`; su «Fecha contrato» en Bolivia cae en el
+  mes) que ninguna fila reclama (`klead`/`kommo-<lead>`) ni se llevó una gemela; la venta del panel sin ficha del mismo mes, la misma vendedora, monto
+  > 0 e igual ±1 Bs, a ≤ `PANEL_PARECE_DIAS`=60 días, la más cercana en el tiempo, cada una una sola vez. Resultado `out["parece"]` por vendedora
+  {name, n, bs, c=cuántas de ellas ya cuentan como cierre}, `n["dobles"]`.
+- **Dónde se ve**: `team[].panelDoble` {n, bs, c}; `panelSinFicha.dobles/doblesBs`; alerta ámbar «N venta(s) que pueden estar contadas dos veces (Bs X)»
+  con la vendedora y «Que cada una las una en el panel: Mis pedidos → «📥 Ventas de Kommo por completar» → «Sí, es la misma»»; en la tabla del resumen y
+  la tarjeta del equipo «⚠️ N ¿dos veces?» (ámbar, `pdSub`) debajo de los cierres; en la ficha de la vendedora el texto entero (`pdTxt`); en el resumen
+  una línea; en el resumen de WhatsApp otra; en el registro, cuántas. **Ningún número cambia** (prueba 26b).
+- **Con la planilla real** (copia del 16/11, las tarjetas de la bandeja como ventas de Kommo): Maria Flores 3, Bs 25.200, las tres en cierres (= las de
+  §4qd: 10-337, 11-091, 09-237). Nadie más.
+- Pruebas: `test_generar_integridad` §26 (82 bien; el escenario `LEADS_26` / `correr_26`, también `--solo-datos-335-dobles`), `test_panel_meta` §6
+  (27 bien). Las demás del dashboard (`test_actualizar_espera`, `test_bf_numeros`, `test_halloween`, `test_navidad`, `test_paneldup`,
+  `test_seguimiento_sin_cloudflare`, `test_temas_mejoras`, `test_duplicados.py`) siguen en verde.

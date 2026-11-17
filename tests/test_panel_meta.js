@@ -121,6 +121,35 @@ const TPL = process.env.TPL || path.join(RAIZ, 'panel_template.html');
   }
   chk('5i. sin errores de JavaScript con las ventas del panel', !errores.length, errores[0]);
 
+  /* 6. ⚠️ (16/11, dueño: «si agrega el aviso en el dashboard») ventas de Kommo sin unir con el MISMO monto que una venta del panel sin
+     ficha de la misma vendedora: el dashboard las cuenta a las dos (no cambia ningún número) y lo AVISA en ámbar. Datos: el escenario
+     de la prueba 26 de tests/test_generar_integridad.py (--solo-datos-335-dobles): Ana con 2 que pueden estar dos veces (Bs 3.700). */
+  const D6 = JSON.parse(execFileSync('python3', [path.join(__dirname, 'test_generar_integridad.py'), '--solo-datos-335-dobles'], { encoding: 'utf8', maxBuffer: 20e6 }));
+  fs.writeFileSync(tmp, tpl.replace('__PANEL_DATA__', 'window.PANEL_DATA = ' + JSON.stringify(D6) + ';'));
+  const res6 = await abrir('resumen'), eq6 = await abrir('equipo');
+  chk('6a. el resumen dice cuántas pueden estar dos veces y cuánto', /⚠️ 2 ventas pueden estar contadas dos veces \(Bs 3,700\)/.test(res6), (res6.match(/[^\n]*dos veces[^\n]*/) || [''])[0]);
+  chk('6b. en la fila de Ana (tabla del resumen) y en su tarjeta del equipo: «⚠️ 2 ¿dos veces?»', /⚠️ 2 ¿dos veces\?/.test(res6) && /⚠️ 2 ¿dos veces\?/.test(eq6),
+    [/⚠️ 2 ¿dos veces\?/.test(res6), /⚠️ 2 ¿dos veces\?/.test(eq6)].join(' '));
+  let al6 = '';
+  for (const v of (D6.nav || []).map(n => n.id)) { const t = await abrir(v); if (!al6 && /2 venta\(s\) que pueden estar contadas dos veces/.test(t)) al6 = v; }
+  chk('6c. la alerta ámbar con cómo se arregla aparece en alguna vista', !!al6, al6 || 'ninguna vista');
+  {
+    const page = await ctx.newPage();
+    page.on('pageerror', e => errores.push('drawer6: ' + (e.stack || e.message)));
+    await page.addInitScript(() => { try { localStorage.clear(); localStorage.setItem('heaven_view', 'equipo'); } catch (e) {} });
+    await page.goto('file://' + tmp);
+    await page.waitForTimeout(900);
+    await page.locator('tr.clickable', { hasText: 'Ana Prueba' }).first().click();
+    await page.waitForTimeout(500);
+    const dr = await page.evaluate(() => (document.querySelector('aside.drawer.show') || {}).innerText || '');
+    if (process.env.CAPTURAS) { await page.screenshot({ path: process.env.CAPTURAS + '/dobles_ficha.png' }); }
+    await page.close();
+    chk('6d. la ficha de Ana lo explica: mismo monto, Bs 3.700, y cómo unirlas', /2 ventas de Kommo sin unir parecen las mismas[^\n]*Bs 3,700[^\n]*Sí, es la misma/.test(dr), (dr.match(/[^\n]*sin unir[^\n]*/) || [''])[0]);
+  }
+  const res5b = res5;
+  chk('6e. sin ventas con el mismo monto (el escenario 5), nada de «dos veces»', !/dos veces/.test(res5b) && !/dos veces/.test(eq5), '');
+  chk('6f. sin errores de JavaScript con el aviso', !errores.length, errores[0]);
+
   await browser.close();
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   process.exit(FAIL ? 1 : 0);
