@@ -19004,7 +19004,7 @@ function pryAlturaHtml(R){
   /* §4gy → (08/11, P1) el otro mes, a los mismos días hábiles y a la misma hora; si tenía menos días hábiles, entero, y se dice. */
   var cmpTxt = !A.curso ? ' entero' : pryCorteTxt(A.corte, A.hora);
   var h=ayudaComo('pry-altura', '<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta '+(A.curso ? 'ahora' : 'el final (el mes entero)')+
-        ', contra lo que tenía '+esc(mesNombre(A.cmp))+cmpTxt+'.</div>')+sel+
+        ', contra lo que tenía '+esc(mesNombre(A.cmp))+cmpTxt+'.'+pryHabilesExplica(A)+'</div>')+sel+
         '<div class="pry-gana">'+['equipo'].concat(MARCAS.map(function(g){ return g.k; })).filter(function(k){ return A.act[k].n || A.ant[k].n; }).map(function(k){
           var g=MARCAS.filter(function(x){ return x.k===k; })[0];
           return '<div>'+(g ? (g.ico+' <b>'+esc(g.lbl)+'</b>') : '👥 <b>Todo el equipo</b>')+': '+esc(linea(k))+'</div>';
@@ -19119,6 +19119,14 @@ function pryMomDe(R, A, r){
      mes de comparación ENTERO; y la línea de unidades día por día. */
   return { act:act, ant:ant, cur:pryMomSerie(xs, R.ym, dia||0), prev:pryMomSerie(xs, A.cmp, 0),
            tres:{ act:ac, ant:an, ent:en }, curU:pryMomSerie(xs, R.ym, dia||0, 'u'), prevU:pryMomSerie(xs, A.cmp, 0, 'u') };
+}
+/* 🗓️ (17/11, dueño: «en Cómo funciona debería explicar eso de los días hábiles») Por qué el otro mes va a otro día: los mismos días hábiles. */
+function pryHabilesExplica(A){
+  if(!A || !A.curso || !A.cmp || !A.corte || A.enteroAntes) return '';
+  var C=A.corte, n=C.n||0, cm=pryMesCorto(A.cmp), m=pryMesCorto(A.ym);
+  var porQue=(C.dia && C.dia!==A.dia) ? (' Por eso '+esc(cm)+' va al día '+C.dia+' y no al '+A.dia+': comparar con el '+A.dia+' le daría a '+esc(cm)+' más días de venta y '+esc(m)+' parecería peor.') : '';
+  return ' <b>¿Contra qué día?</b> Se comparan los mismos <b>días hábiles</b> (lunes a sábado, sin domingos ni feriados), no el mismo número de día: '+
+    esc(m)+' lleva '+n+' día'+(n===1?'':'s')+' hábil'+(n===1?'':'es')+(C.dia ? (' y el '+n+'.º día hábil de '+esc(cm)+' fue el '+C.dia) : '')+'.'+porQue;
 }
 function pryMomHtml(R, A, r){
   var M=pryMomDe(R, A, r); if(!M || !(M.act>0.009 || M.ant>0.009)) return '';
@@ -19312,7 +19320,7 @@ function renderProyeccion(){
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box'+(_VDB ? ' m415-on' : '')+'"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
     (conProy ? ayudaComo('pry-vend', '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).'+
-      ((_A && _A.cmp) ? (' Tocá un vendedor para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs.') : '')+'</div>') : '')+
+      ((_A && _A.cmp) ? (' Tocá un vendedor para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades, colchones, somieres y Bs.'+pryHabilesExplica(_A)) : '')+'</div>') : '')+
     (_VDB ? m415Ley(_VDB) : '')+
     (E.n || R.mayor.filas.length
       ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m, m.g.k); }).join('')+

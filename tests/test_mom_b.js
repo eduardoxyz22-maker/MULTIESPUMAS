@@ -65,7 +65,7 @@ function PREPARAR(){
              txt:mir ? mir.innerText.replace(/\s+/g,' ') : '', intro:document.getElementById('pry-vendedores').innerText.replace(/\s+/g,' ') };
   });
   chk('cada vendedor con su MoM se puede tocar (role=button, con teclado) y arranca cerrado', r.tocables>=3 && r.rol==='button' && r.tab==='0' && r.exp==='false', r);
-  chk('arriba lo dice: «Tocá un vendedor para verlo contra septiembre en ventas, unidades y Bs.»', /Tocá un vendedor para verlo contra septiembre en ventas, unidades y Bs\./.test(r.intro), r.intro.slice(0,300));
+  chk('arriba lo dice: «Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs.» y explica los días hábiles (17/11)', /Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs\./.test(r.intro) && /¿Contra qué día\? Se comparan los mismos días hábiles/.test(r.intro), r.intro.slice(0,500));
   chk('la fila se sigue leyendo igual (nombre, detalle, vendido, proyección, el MoM) y al final «ventas · unidades ▸»', /^Mirian Salazar \d+ venta.*Bs 3\.900,00 📈 Bs [\d.]+ ▲ 30% vs sep.*ventas · unidades ▸$/.test(r.txt), r.txt);
   await page.click('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-q');
   r = await page.evaluate(() => {
