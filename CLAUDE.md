@@ -977,6 +977,12 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   del mes; la foto la saca la página los lunes desde las 08:00 en `__al_dia_sem__` (nunca pisa una ya guardada); rige desde el 23/11/2026; un lunes sin foto no castiga.
   ⚠️ La regla está DOS veces: `alDiaBonoCumple`/`ccmBonoRegla` (página) y `waAlDiaBonoCumple_`/`waCcmBonoRegla_` (`.gs`, en `waCcmCuenta_`): `tests/test_bono_al_dia_gs.js`
   compara las dos. `AL_DIA_BONO_PRUEBA`.
+- **📶 Las comisiones con los escalones en Bs de CADA vendedora** (§4qf, 17/11; dueño: *«calculas por % de presupuesto y mínimo. Nosotros se los
+  asignamos cada mes»*): `vd[v] = [mínima, presupuesto, [[Bs, %]…]]` en `__metas__`; con escalones vale el más alto alcanzado (debajo del primero, 0) y
+  NO la escala de la marca (`ccmEmVend`, `ccmTramoMonto`; Sueña sin escalones sigue con `esc`). Noviembre = las tablas del dueño (`CCM_TRAMOS_DUENO`,
+  mientras no haya escalones guardados; la de Mia Plaza sin nombre = Jonathan). Se editan en 🏁 Cierre comercial → ✏️ Metas («2 % desde 90.000 · …»).
+  ⚠️ Toda cuenta nueva del % usa `r.em` (la escala de la vendedora), nunca `es.esc[r.g]` a secas. `.gs` **2026-11-17-a** con lo mismo (`waCcmEmVend_`).
+  Playwright: solo con `CCM_TRAMOS_PRUEBA`. `tests/test_comision_escalones.js` (27).
 - **Visuales**: 366 ficha de Contabilidad ancha (`CTA_ANCHA_PRUEBA`; ⚠️ la ficha se arma por bloques `cab/arriba/row/prods/formPago/acciones`: algo nuevo de la ficha va
   en su bloque, y `acciones` lleva la caja de la 379) · 368 Stock con el Plan primero · 369 Proyección con índice · 370 filtros en un renglón con la ficha al costado ·
   371 «Tu día» al costado · 372 Guardar en «Tu pedido» · 373 globito de ayuda · 374 un renglón por producto en Contabilidad · 375 ATC con la lista arriba ·

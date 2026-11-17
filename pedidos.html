@@ -9932,6 +9932,7 @@ function m416Poner(R){
 </style>
 <style>
 /* 🧑‍💼 (15/11) Las mejoras para vendedoras 304-311: clases `vd-*` (no reusar nombres del panel). Tema claro, colores del panel. */
+.ccm-tr-in{width:100%;min-width:220px;font:inherit;font-size:.8rem;border:1px solid #cfd8dc;border-radius:8px;padding:5px 7px;resize:vertical}
 .vd-pill{display:inline-block;background:#fff;border:1px solid #cfe7e5;border-radius:999px;padding:3px 10px;font-weight:700;font-size:.78rem;margin:2px 4px 2px 0;color:#14313a}
 .vd-mini{font-size:.78rem;color:#5b7480;margin-top:8px;line-height:1.45}
 .vd-ojo{color:#7c4b00;font-weight:700}
@@ -16706,7 +16707,7 @@ function metasCopiarAnterior(){
   metasRecordar();
   MARCAS.forEach(function(g){ META_ED.v[g.k]=Number(e[g.k])||0; });
   /* 👥 (174) …y las de cada vendedora, si ese mes las tiene guardadas (quedan sin guardar hasta «Guardar metas») */
-  if(vd){ META_ED.vs.forEach(function(o, i){ META_ED.vd[i]=metasVdTxt(ccmMetaDe(vd, o.v)); }); META_ED.vdDe=ant; META_ED.vdOk=false; }
+  if(vd){ META_ED.vs.forEach(function(o, i){ var a=ccmMetaDe(vd, o.v); META_ED.vd[i]=metasVdTxt(a); if(META_ED.vtr) META_ED.vtr[i]=a[2]; }); META_ED.vdDe=ant; META_ED.vdOk=false; }
   metasModal();
   toast('Copiadas las de '+mesNombre(ant)+(vd ? ' (marcas y vendedoras)' : '')+': revisalas y guardá.','ok',5000);
 }
@@ -16730,6 +16731,7 @@ function metasVdCargar(E){
   var mt=ccmMetas(E.ym);
   E.vs=[]; MARCAS.forEach(function(g){ g.vendedores.forEach(function(v){ E.vs.push({ v:v, g:g.k }); }); });
   E.vd=E.vs.map(function(o){ return metasVdTxt(ccmMetaDe(mt.vd, o.v)); });
+  E.vtr=E.vs.map(function(o){ return ccmMetaDe(mt.vd, o.v)[2]; });   // 📶 los escalones no se editan acá: se guardan como estaban
   E.vdOk=!!mt.ok; E.vdDe=mt.de; E.R=null;
 }
 /* Lo escrito en un campo de una vendedora, en número (lo que no se entiende, null). */
@@ -16808,7 +16810,8 @@ function metasVdLeer(){
     if(er){ if(!mal) mal=o.v+': '+er; return; }
     var mi=a ? r2(parseMonto(a)||0) : 0, pr=b ? r2(parseMonto(b)||0) : 0;
     if(mi>0 && pr>0 && mi>pr+0.005 && !mal) mal=o.v+': la mínima ('+fmtBs0(mi)+') es más que el presupuesto ('+fmtBs0(pr)+')';
-    if(mi>0 || pr>0) vd[o.v]=[mi, pr];
+    var tr=E.vtr ? E.vtr[i] : null;
+    if(tr) vd[o.v]=[mi>0 ? mi : tr[0][0], pr, tr]; else if(mi>0 || pr>0) vd[o.v]=[mi, pr];
   });
   return { vd:vd, mal:mal, toca:toca };
 }
@@ -16956,11 +16959,80 @@ function ccmVdDe(ym){ var e=metasLeer().m[ym]; return (e && e.vd && typeof e.vd=
 function ccmMetasSep(){ var o={}; CCM_SEP_PAGADO.forEach(function(c){ o[c[0]]=[c[3], c[4]]; }); return o; }
 /* Las metas del mes: las guardadas (ok); si no, las del último mes guardado o las de septiembre del dashboard, como SUGERENCIA. */
 function ccmMetas(ym){
-  var vd=ccmVdDe(ym); if(vd) return { vd:vd, de:'', ok:true };
+  var vd=ccmVdDe(ym); if(vd) return { vd:ccmVdConDueno(vd, ym), de:'', ok:true };
+  if(ccmTramosDueno(ym)) return { vd:ccmVdConDueno({}, ym), de:'', ok:true, dueno:1 };   // 📶 los escalones que mandó el dueño
   for(var i=1;i<=12;i++){ var m=metasMesMas(ym,-i); if(m<PRY_PRIMER_MES) break; var a=ccmVdDe(m); if(a) return { vd:a, de:m, ok:false }; }
   return { vd:ccmMetasSep(), de:'sep', ok:false };
 }
-function ccmMetaDe(vd, v){ var k=normNombre(v); for(var n in (vd||{})) if(normNombre(n)===k){ var a=vd[n]||[]; return [Number(a[0])||0, Number(a[1])||0]; } return [0,0]; }
+function ccmMetaDe(vd, v){ var k=normNombre(v); for(var n in (vd||{})) if(normNombre(n)===k){ var a=vd[n]||[]; return [Number(a[0])||0, Number(a[1])||0, ccmTramosVal(a[2])]; } return [0,0,null]; }
+/* 📶 (17/11; dueño: *«Las comisiones están mal, calculas por % de presupuesto y mínimo. Nosotros se los asignamos cada mes»*) LOS ESCALONES
+   DE CADA VENDEDORA, EN Bs. Cada mes el dueño le asigna a cada una desde cuántos Bs cobra cada %: Fabián (Central 1) 2 % desde 90.000,
+   2,5 % desde 100.000, 2,75 % desde 115.000, 3 % desde 145.000, 3,5 % desde 195.000 y 4 % desde 245.000. Van en la fila `__metas__`, en el
+   mes, como TERCER elemento de la vendedora: `vd['Fabian Godoy'] = [mínima, presupuesto, [[90000,2],[100000,2.5],…]]`. Con escalones, el %
+   es el del escalón más alto que alcanzó (en Bs, sobre TODO lo vendido) y debajo del primero, 0; la escala por marca (`esc`) queda para quien
+   no tiene escalones (Sueña). La mínima = el primer escalón y el presupuesto = el del 2,75 % (la fila roja de su tabla).
+   `CCM_TRAMOS_DUENO` = las tablas que mandó el dueño el 17/11 para noviembre: valen mientras la vendedora no tenga escalones GUARDADOS en ese
+   mes (guardar las metas los deja en la planilla). ⚠️ La misma cuenta en el `.gs` (`waCcmEmVend_`, `WA_CCM_TRAMOS_DUENO`). */
+var CCM_TRAMOS_PCT=[2, 2.5, 2.75, 3, 3.5, 4];
+var CCM_TRAMOS_DUENO={ '2026-11':{
+  'Fabian Godoy':  [90000, 100000, 115000, 145000, 195000, 245000],
+  'Andrea Orias':  [95000, 105000, 120000, 150000, 200000, 250000],
+  'Carola Chavez': [110000, 120000, 135000, 155000, 205000, 255000],
+  'Jonathan Monje':[95000, 105000, 120000, 150000, 200000, 250000],
+  'Mirian Salazar':[95000, 105000, 120000, 150000, 200000, 250000],
+  'Maria Flores':  [95000, 105000, 120000, 150000, 200000, 250000],
+  'Isabel Robledo':[100000, 110000, 125000, 155000, 205000, 255000] } };
+/* Escalones válidos: [[Bs, %]…] con Bs > 0, ordenados por Bs; null si no hay ninguno. */
+function ccmTramosVal(a){
+  if(!Array.isArray(a)) return null;
+  var o=a.map(function(t){ return Array.isArray(t) ? [r2(Number(t[0])||0), Number(t[1])||0] : null; }).filter(function(t){ return t && t[0]>0.005 && t[1]>=0; });
+  o.sort(function(x,y){ return x[0]-y[0]; });
+  return o.length ? o : null;
+}
+function ccmTramosDueno(ym){
+  var D=CCM_TRAMOS_DUENO[ym], o={}; if(!D || (navigator.webdriver && !window.CCM_TRAMOS_PRUEBA)) return null;   // en las pruebas viejas, sus metas de mentira
+  Object.keys(D).forEach(function(v){ var b=D[v]; o[v]=[b[0], b[2], b.map(function(x, i){ return [x, CCM_TRAMOS_PCT[i]]; })]; });
+  return o;
+}
+/* Las metas del mes con los escalones del dueño puestos donde falten (no toca lo guardado: devuelve otro objeto). */
+function ccmVdConDueno(vd, ym){
+  var T=ccmTramosDueno(ym); if(!T) return vd;
+  var o={}, vistos={};
+  Object.keys(vd||{}).forEach(function(n){ var a=(vd[n]||[]).slice(), k=normNombre(n), t=null;
+    Object.keys(T).forEach(function(m){ if(normNombre(m)===k) t=T[m]; });
+    if(t && !ccmTramosVal(a[2])) a=[t[0], t[1], t[2]];
+    if(t) vistos[k]=1; o[n]=a; });
+  Object.keys(T).forEach(function(m){ if(!vistos[normNombre(m)]) o[m]=T[m].slice(); });
+  return o;
+}
+/* La escala de UNA vendedora: sus escalones en Bs (si tiene) con el bono de su marca; si no, la de la marca. */
+function ccmEmVend(em, mm){
+  var tr=mm && mm[2]; if(!tr) return em;
+  return { t:tr.map(function(t){ return ['bs', t[0], t[1]]; }), bono:em ? (Number(em.bono)||0) : 0, vend:1 };
+}
+/* Los escalones escritos: «2 % desde 90.000 · 2,5 % desde 100.000 · …» (también «90.000 = 2», uno por renglón o separados por «·», «;»). */
+function ccmTramosTxt(tr){ return (tr||[]).map(function(t){ return String(t[1]).replace('.', ',')+' % desde '+Math.round(t[0]).toLocaleString('es-BO'); }).join(' · '); }
+function ccmTramosLeer(txt){
+  txt=String(txt==null ? '' : txt).trim(); if(!txt) return { tr:null };
+  var o=[], mal='';
+  txt.split(/\s*(?:·|;|\n|\|)\s*/).forEach(function(pz){
+    pz=pz.trim(); if(!pz || mal) return;
+    var m=pz.match(/^([\d]+(?:[.,]\d+)?)\s*%\s*(?:desde|de|:|=|→|->)?\s*(?:Bs\.?\s*)?([\d.,]+)$/i), bs, pc;
+    if(m){ pc=Number(m[1].replace(',', '.')); bs=parseMonto(m[2]); }
+    else{ m=pz.match(/^(?:Bs\.?\s*)?([\d.,]+)\s*(?:=|:|→|->)\s*([\d]+(?:[.,]\d+)?)\s*%?$/i); if(m){ bs=parseMonto(m[1]); pc=Number(m[2].replace(',', '.')); } }
+    if(!m || !(bs>0) || !isFinite(pc) || pc<0 || pc>100){ mal='«'+pz+'» no se entiende: escribí «2 % desde 90.000»'; return; }
+    o.push([r2(bs), pc]);
+  });
+  if(mal) return { mal:mal };
+  return { tr:ccmTramosVal(o) };
+}
+/* Desde cuántos Bs empieza un tramo: en Bs (los escalones de la vendedora) o el % de la mínima o del presupuesto (la escala de la marca). */
+function ccmTramoMonto(t, min, pres){
+  if(!t) return 0;
+  if(t[0]==='bs') return r2(Number(t[1])||0);
+  var base = t[0]==='pres' ? pres : min; if(!(base>0)) return 0;
+  return r2(base*(Number(t[1])||0)/100);
+}
 function ccmEscalaCopia(e){
   var o={};
   MARCAS.forEach(function(g){ var x=(e && e[g.k])||{ t:[], bono:0 };
@@ -16979,16 +17051,15 @@ function ccmEscala(ym){
    mínima, 0 SIEMPRE (lo único que se vio en septiembre sin excepción): un tramo «desde el 80 % del presupuesto» no paga sin la mínima. */
 function ccmPctDe(em, bs, min, pres){
   var best=null;
-  if(min>0 && bs<min-0.005) return { pct:0, desde:0, t:null };
+  if(min>0 && bs<min-0.005 && !(em && em.vend)) return { pct:0, desde:0, t:null };   // con escalones propios, los escalones mandan
   ((em && em.t)||[]).forEach(function(t){
-    var base = t[0]==='pres' ? pres : min; if(!(base>0)) return;
-    var monto=r2(base*(Number(t[1])||0)/100), pc=Number(t[2])||0;
+    var monto=ccmTramoMonto(t, min, pres), pc=Number(t[2])||0; if(!(monto>0)) return;
     if(bs < monto-0.005) return;
     if(!best || monto>best.monto+0.005 || (Math.abs(monto-best.monto)<0.005 && pc>best.pct)) best={ monto:monto, pct:pc, t:t };
   });
   return best ? { pct:best.pct, desde:best.monto, t:best.t } : { pct:0, desde:0, t:null };
 }
-function ccmTramoTxt(t){ return t ? ('desde el '+String(Number(t[1])||0).replace('.', ',')+'% '+(t[0]==='pres' ? 'del presupuesto' : 'de la mínima')) : 'no llegó a la mínima'; }
+function ccmTramoTxt(t){ if(t && t[0]==='bs') return 'desde '+fmtBs0(t[1]); return t ? ('desde el '+String(Number(t[1])||0).replace('.', ',')+'% '+(t[0]==='pres' ? 'del presupuesto' : 'de la mínima')) : 'no llegó a la mínima'; }
 /* 📈 (13/11, mejora 190) El TRAMO SIGUIENTE con la misma regla (`ccmPctDe`): de los montos donde empieza algún tramo (y la mínima, que
    con 0 debajo también es un escalón), el más chico por encima de lo vendido donde el % sube. Devuelve desde cuánto (`desde`), cuánto falta
    (`falta`), el % y el tramo; `null` si ya está en el más alto (o la escala no tiene tramos). */
@@ -16996,7 +17067,7 @@ function ccmTramoSig(em, bs, min, pres){
   var act=ccmPctDe(em, bs, min, pres).pct, M=[];
   var poner=function(m){ if(m>bs+0.005 && M.indexOf(m)<0) M.push(m); };
   if(min>0) poner(r2(min));
-  ((em && em.t)||[]).forEach(function(t){ var base = t[0]==='pres' ? pres : min; if(base>0) poner(r2(base*(Number(t[1])||0)/100)); });
+  ((em && em.t)||[]).forEach(function(t){ var m=ccmTramoMonto(t, min, pres); if(m>0) poner(m); });
   M.sort(function(a,b){ return a-b; });
   for(var i=0;i<M.length;i++){ var q=ccmPctDe(em, M[i], min, pres); if(q.pct>act+1e-9) return { desde:M[i], falta:r2(M[i]-bs), pct:q.pct, t:q.t }; }
   return null;
@@ -17079,8 +17150,8 @@ function ccmFilas(ventas, ajustes, mt, es){
   ventas.forEach(function(x){ if(x.est!=='cuenta') return; var r=fila(x.v, x.g); r.n++; r.u+=x.u; r.bs=r2(r.bs+x.bs); r.ti=r2(r.ti+x.ti); r.tiFalta+=(x.tiFalta||[]).length; });
   ajustes.forEach(function(a){ var r=fila(a.v, a.g); r.aj=r2(r.aj+a.dbs); r.ajTi=r2(r.ajTi+a.dti); r.ajCom=r2(r.ajCom+a.com); r.ajBono=r2(r.ajBono+a.bono); r.ajN++; });
   return orden.map(function(k){
-    var r=F[k], mm=ccmMetaDe(mt.vd, r.v), em=es.esc[r.g];
-    r.mi=mm[0]; r.pr=mm[1]; r.sinMetas=!(r.mi>0 || r.pr>0);
+    var r=F[k], mm=ccmMetaDe(mt.vd, r.v), em=(r.g!=='sin' && es.esc[r.g]) ? ccmEmVend(es.esc[r.g], mm) : es.esc[r.g];
+    r.mi=mm[0]; r.pr=mm[1]; r.tr=mm[2]; r.em=em; r.sinMetas=!(r.mi>0 || r.pr>0 || r.tr);
     var q=(em && !r.sinMetas) ? ccmPctDe(em, r.bs, r.mi, r.pr) : { pct:0, t:null };
     r.pc=q.pct; r.tramo=q.t; r.co=r2(r.bs*r.pc/100);
     r.bp=em ? (Number(em.bono)||0) : 0; r.bo=r2(r.ti*r.bp/100);
@@ -17168,7 +17239,7 @@ function ccmCuenta(ym){
     filas=vt.map(function(r){ return { v:r.v, g:r.g||'sin', n:Number(r.n)||0, u:Number(r.u)||0, bs:Number(r.bs)||0, ti:Number(r.ti)||0, tiFalta:0,
       mi:Number(r.mi)||0, pr:Number(r.pr)||0, sinMetas:!(Number(r.mi)>0 || Number(r.pr)>0), pc:Number(r.pc)||0, tramo:null, co:Number(r.co)||0,
       bp:Number(r.bp)||0, bo:Number(r.bo)||0, aj:Number(r.aj)||0, ajTi:Number(r.at)||0, ajCom:Number(r.ac)||0, ajBono:Number(r.ab)||0, ajN:(Number(r.aj)||Number(r.ac)||Number(r.ab)) ? 1 : 0, to:Number(r.to)||0 }; });
-    filas.forEach(function(r){ var em=es.esc[r.g]; if(em && !r.sinMetas) r.tramo=ccmPctDe(em, r.bs, r.mi, r.pr).t; });
+    filas.forEach(function(r, i){ var tr=ccmTramosVal((vt[i]||{}).tr); if(tr){ r.tr=tr; r.sinMetas=false; } var em=es.esc[r.g]; if(em && tr) em=ccmEmVend(em, [0,0,tr]); r.em=em; if(em && !r.sinMetas) r.tramo=ccmPctDe(em, r.bs, r.mi, r.pr).t; });
     ventas=Object.keys(C.s||{}).map(function(id){ var a=C.s[id], x=T.porId[id], r=vt[a[0]]||{};
       return { id:id, v:r.v||(x && x.v)||'', g:r.g||'sin', oc:x ? x.oc : '', nota:x ? x.nota : '', cliente:x ? x.cliente : '', f:x ? x.f : '', reg:x ? x.reg : '',
                bs:Number(a[1])||0, ti:Number(a[2])||0, u:x ? x.u : 0, est:'cuenta', ahora:x ? x.bs : null }; })
@@ -17215,7 +17286,7 @@ function ccmSigueDatos(ym, K, R){
   var o={ ym:ym, fin:pryFinDeMes(ym), filas:[], hoy:0, sigue:0, borde:0, bsHoy:0, bsSigue:0 };
   (K.filas||[]).filter(ccmFilaVe).forEach(function(r){
     var p=pr[normNombre(r.v)], mas=p ? Math.max(0, r2(p.proy-p.vendido)) : 0, bs=r2(r.bs+mas), fac=r.bs>0.005 ? bs/r.bs : 1;
-    var em=K.es && K.es.esc ? K.es.esc[r.g] : null, q=(em && !r.sinMetas) ? ccmPctDe(em, bs, r.mi, r.pr) : { pct:0, t:null };
+    var em=r.em || (K.es && K.es.esc ? K.es.esc[r.g] : null), q=(em && !r.sinMetas) ? ccmPctDe(em, bs, r.mi, r.pr) : { pct:0, t:null };
     var co=r2(bs*q.pct/100), bo=r2(r2(r.ti*fac)*(r.bp||0)/100);
     if(r.boRegla && r.boRegla.rige && (r.boRegla.rojo || !(r.mi>0) || bs<r.mi-0.005)) bo=0;   // 🏆 (16/11) sin mínima, sin llegar a ella o con un lunes en rojo, sin bono
     var to=r2(co+bo+(r.ajCom||0)+(r.ajBono||0));
@@ -17367,7 +17438,11 @@ function ccmMarcaHtml(R, g, filas, t, conAj){
     (R.sg ? ('<td class="csg-c"><b>'+fmtBs0(filas.reduce(function(a, r){ var f=ccmSigueDe(R.sg, r.v); return r2(a+(f ? f.to : 0)); }, 0))+'</b></td>') : '')+'</tr>';
   var escTx='';
   if(g.k!=='sin'){ var em=R.es.esc[g.k]; escTx='Escala'+(R.es.de && R.es.de!=='sep' ? (' (la guardada para '+esc(mesNombre(R.es.de))+')') : (R.es.ok ? '' : ' ⚠️ sin confirmar'))+': '+
-    ((em && em.t.length) ? em.t.map(function(t){ return ccmPcTxt(t[2])+' '+ccmTramoTxt(t); }).join(' · ') : 'sin tramos')+' · bono Titanio '+ccmPcTxt(em ? em.bono : 0)+'.'; }
+    ((em && em.t.length) ? em.t.map(function(t){ return ccmPcTxt(t[2])+' '+ccmTramoTxt(t); }).join(' · ') : 'sin tramos')+' · bono Titanio '+ccmPcTxt(em ? em.bono : 0)+'.'; 
+    var conTr=filas.filter(function(r){ return r.tr; });
+    if(conTr.length) escTx=(conTr.length===filas.length ? '📶 Cada vendedora cobra con SUS escalones (en Bs, los del mes)' : ('📶 Con sus escalones (en Bs): '+conTr.map(function(r){ return esc(r.v); }).join(', ')+'. Las demás: '+escTx.charAt(0).toLowerCase()+escTx.slice(1)))+
+      (conTr.length===filas.length ? (' · bono Titanio '+ccmPcTxt(em ? em.bono : 0)+'.') : '');
+  }
   return '<div class="ccm-box ccm-marca" data-marca="'+esc(g.k)+'" style="--c:'+col+';--t:'+tx+'"><div class="ccm-t"><span class="ccm-g">'+(g.ico||'')+' '+esc(g.lbl)+'</span></div>'+
     '<div class="ccm-scroll"><table class="ccm-tab"><thead>'+head+'</thead><tbody>'+rows+'</tbody><tfoot>'+foot+'</tfoot></table></div>'+(escTx ? ('<div class="ccm-nota">'+escTx+'</div>') : '')+'</div>';
 }
@@ -17473,7 +17548,7 @@ function ccmExcluir(L, si){
 function ccmFoto(R, prev){
   var vt=[], idx={};
   var poner=function(r){ idx[normNombre(r.v)]=vt.length;
-    vt.push({ v:r.v, g:r.g, n:r.n, u:r.u, bs:r.bs, ti:r.ti, mi:r.mi, pr:r.pr, pc:r.pc, co:r.co, bp:r.bp, bo:r.bo, aj:r.aj, at:r.ajTi, ac:r.ajCom, ab:r.ajBono, to:r.to }); };
+    vt.push({ v:r.v, g:r.g, n:r.n, u:r.u, bs:r.bs, ti:r.ti, mi:r.mi, pr:r.pr, tr:r.tr||undefined, pc:r.pc, co:r.co, bp:r.bp, bo:r.bo, aj:r.aj, at:r.ajTi, ac:r.ajCom, ab:r.ajBono, to:r.to }); };
   R.filas.forEach(function(r){ if(ccmFilaVe(r)) poner(r); });
   var vi=function(v){ var k=normNombre(v); if(!(k in idx)) poner({ v:nombreCanonico(v), g:marcaDe(v)||'sin', n:0, u:0, bs:0, ti:0, mi:0, pr:0, pc:0, co:0, bp:0, bo:0, aj:0, ajTi:0, ajCom:0, ajBono:0, to:0 }); return idx[k]; };
   var s={}, aj={};
@@ -17543,8 +17618,8 @@ function ccmPctLeer(t){ t=String(t==null ? '' : t).trim().replace(/\s*%$/, '').r
 function ccmEdAbrir(){
   var ym=CCM.ym, mt=ccmMetas(ym), es=ccmEscala(ym), vs=[];
   MARCAS.forEach(function(g){ g.vendedores.forEach(function(v){ vs.push({ v:v, g:g.k }); }); });
-  var E={ ym:ym, vs:vs, mi:[], pr:[], de:mt.de, ok:mt.ok, escDe:es.de, escOk:es.ok, esc:{} };
-  vs.forEach(function(o, i){ var a=ccmMetaDe(mt.vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; });
+  var E={ ym:ym, vs:vs, mi:[], pr:[], tr:[], de:mt.de, ok:mt.ok, escDe:es.de, escOk:es.ok, esc:{} };
+  vs.forEach(function(o, i){ var a=ccmMetaDe(mt.vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; E.tr[i]=ccmTramosTxt(a[2]); });
   MARCAS.forEach(function(g){ var x=es.esc[g.k]||{ t:[], bono:0 }; E.esc[g.k]={ t:x.t.map(function(t){ return [t[0], ccmNumIn(t[1]), ccmNumIn(t[2])||'0']; }), bono:ccmNumIn(x.bono)||'0' }; });
   CCM.ed=E; ccmPintar();
   var b=document.getElementById('ccm-body'); if(b) b.scrollTop=0;
@@ -17552,7 +17627,7 @@ function ccmEdAbrir(){
 function ccmEdCancelar(){ CCM.ed=null; ccmPintar(); }
 function ccmEdRecordar(){
   var E=CCM.ed; if(!E) return;
-  E.vs.forEach(function(o, i){ var a=document.getElementById('ccm-mi-'+i), b=document.getElementById('ccm-pr-'+i); if(a) E.mi[i]=a.value; if(b) E.pr[i]=b.value; });
+  E.vs.forEach(function(o, i){ var a=document.getElementById('ccm-mi-'+i), b=document.getElementById('ccm-pr-'+i), c=document.getElementById('ccm-tr-'+i); if(a) E.mi[i]=a.value; if(b) E.pr[i]=b.value; if(c) E.tr[i]=c.value; });
   MARCAS.forEach(function(g){ var x=E.esc[g.k];
     x.t.forEach(function(t, j){ var b=document.getElementById('ccm-t-'+g.k+'-'+j+'-b'), d=document.getElementById('ccm-t-'+g.k+'-'+j+'-d'), p=document.getElementById('ccm-t-'+g.k+'-'+j+'-p');
       if(b) t[0]=b.value==='pres' ? 'pres' : 'min'; if(d) t[1]=d.value; if(p) t[2]=p.value; });
@@ -17577,7 +17652,7 @@ function ccmEdCopiar(de){
   ccmEdRecordar();
   var E=CCM.ed, vd = de==='sep' ? ccmMetasSep() : ccmVdDe(de);
   if(!vd){ toast('No hay metas guardadas de '+mesNombre(de)+'.','err',5000); return; }
-  E.vs.forEach(function(o, i){ var a=ccmMetaDe(vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; });
+  E.vs.forEach(function(o, i){ var a=ccmMetaDe(vd, o.v); E.mi[i]=a[0] ? Math.round(a[0]).toLocaleString('es-BO') : ''; E.pr[i]=a[1] ? Math.round(a[1]).toLocaleString('es-BO') : ''; E.tr[i]=ccmTramosTxt(a[2]); });
   E.de=de; ccmPintar();
   toast('Copiadas las de '+(de==='sep' ? 'septiembre (dashboard)' : mesNombre(de))+': revisalas y guardá.','ok',5000);
 }
@@ -17599,13 +17674,16 @@ function ccmEdHtml(R){
   var E=CCM.ed, ym=E.ym, mc=ccmMes(ym), ant=metasMesMas(ym, -1), hayAnt=!!ccmVdDe(ant);
   var V={}; R.filas.forEach(function(r){ V[normNombre(r.v)]=r; });
   var h='<div class="ccm-wrap"><div class="ccm-box ccm-ed"><div class="ccm-t">✏️ Metas de '+esc(mc)+' por vendedor</div>'+
-    '<p class="ccm-exp">La mínima y el presupuesto de cada vendedor, en Bs. Se miden con lo vendido como en Proyección: el total de cada venta, en el mes de su entrega agendada.</p>';
+    '<p class="ccm-exp">La mínima y el presupuesto de cada vendedor, en Bs. Se miden con lo vendido como en Proyección: el total de cada venta, en el mes de su entrega agendada. '+
+    '<b>📶 Escalones</b>: desde cuántos Bs cobra cada % (sobre TODO lo vendido, vale el escalón más alto que alcanzó; debajo del primero, 0 %). Con escalones no se usa la escala de la marca. '+
+    'Escribilos así: «2 % desde 90.000 · 2,5 % desde 100.000 · 2,75 % desde 115.000».</p>';
   if(!E.ok) h+='<div class="ccm-av">'+(E.de==='sep' ? '🧾 <b>Sugeridas: las de septiembre</b> (del dashboard de septiembre).' : ('📋 <b>Sugeridas: las de '+esc(mesNombre(E.de))+'</b>.'))+' No están guardadas: revisalas y tocá «Guardar».</div>';
   MARCAS.forEach(function(g){
-    h+='<div class="ccm-ed-g" style="--t:'+(g.txt||g.col)+'"><b>'+g.ico+' '+esc(g.lbl)+'</b><div class="ccm-scroll"><table class="ccm-ed-tab"><thead><tr><th>Vendedor</th><th>Mínima (Bs)</th><th>Presupuesto (Bs)</th><th>En '+esc(mc)+' lleva</th></tr></thead><tbody>'+
+    h+='<div class="ccm-ed-g" style="--t:'+(g.txt||g.col)+'"><b>'+g.ico+' '+esc(g.lbl)+'</b><div class="ccm-scroll"><table class="ccm-ed-tab"><thead><tr><th>Vendedor</th><th>Mínima (Bs)</th><th>Presupuesto (Bs)</th><th>📶 Escalones (% desde Bs)</th><th>En '+esc(mc)+' lleva</th></tr></thead><tbody>'+
       E.vs.map(function(o, i){ if(o.g!==g.k) return ''; var r=V[normNombre(o.v)];
         return '<tr><td>'+esc(o.v)+'</td><td><input id="ccm-mi-'+i+'" type="text" inputmode="decimal" autocomplete="off" aria-label="Mínima de '+esc(o.v)+'" value="'+esc(E.mi[i]||'')+'" placeholder="0" onblur="metasFormato(this)"></td>'+
           '<td><input id="ccm-pr-'+i+'" type="text" inputmode="decimal" autocomplete="off" aria-label="Presupuesto de '+esc(o.v)+'" value="'+esc(E.pr[i]||'')+'" placeholder="0" onblur="metasFormato(this)"></td>'+
+          '<td class="ccm-tr-td"><textarea id="ccm-tr-'+i+'" rows="2" class="ccm-tr-in" autocomplete="off" aria-label="Escalones de '+esc(o.v)+'" placeholder="sin escalones: usa la escala de la marca">'+esc(E.tr[i]||'')+'</textarea></td>'+
           '<td>'+(r ? fmtBs(r.bs) : fmtBs(0))+'</td></tr>'; }).join('')+'</tbody></table></div></div>';
   });
   h+='<div class="ccm-acc">'+(hayAnt ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="ccmEdCopiar(\''+ant+'\')">📋 Copiar las de '+esc(ccmMes(ant))+'</button>') : '')+
@@ -17635,9 +17713,11 @@ function ccmEdGuardar(){
   E.vs.forEach(function(o, i){
     var a=String(E.mi[i]||'').trim(), b=String(E.pr[i]||'').trim(), er=(a && montoError(a)) || (b && montoError(b));
     if(er){ if(!mal) mal=o.v+': '+er; return; }
-    var mi=a ? r2(parseMonto(a)) : 0, pr=b ? r2(parseMonto(b)) : 0;
+    var mi=a ? r2(parseMonto(a)) : 0, pr=b ? r2(parseMonto(b)) : 0, T=ccmTramosLeer(E.tr[i]);
+    if(T.mal){ if(!mal) mal=o.v+', escalones: '+T.mal; return; }
+    if(T.tr && !(mi>0)) mi=T.tr[0][0];   // 📶 sin mínima escrita, la mínima es el primer escalón
     if(mi>0 && pr>0 && mi>pr+0.005 && !mal) mal=o.v+': la mínima ('+fmtBs0(mi)+') es más que el presupuesto ('+fmtBs0(pr)+')';
-    if(mi>0 || pr>0) vd[o.v]=[mi, pr];
+    if(T.tr) vd[o.v]=[mi, pr, T.tr]; else if(mi>0 || pr>0) vd[o.v]=[mi, pr];
   });
   var es=ccmEdEscala(); if(es.mal && !mal) mal=es.mal;
   if(mal){ toast('❌ '+mal,'err',8000); return Promise.resolve(null); }
@@ -43813,12 +43893,12 @@ function misComisionDatos(v, ym){
   if(!v || contaExcluido(v) || esVendedorLite(v)) return null;
   ym=ym||diaNegocio().slice(0,7);
   var mt=ccmMetas(ym); if(!mt.ok) return null;
-  var mm=ccmMetaDe(mt.vd, v), mi=mm[0], pr=mm[1]; if(!(mi>0 || pr>0)) return null;
+  var mm=ccmMetaDe(mt.vd, v), mi=mm[0], pr=mm[1]; if(!(mi>0 || pr>0 || mm[2])) return null;
   var K=misComisionCuenta(ym), k=normNombre(v), r=null;
   K.filas.forEach(function(f){ if(!r && normNombre(f.v)===k) r=f; });
   if(!r || r.g==='sin') return null;
-  var em=K.es.esc[r.g]; if(!em) return null;
-  var o={ ym:ym, v:r.v, g:r.g, cerrado:K.cerrado, escOk:!!K.es.ok, n:r.n, bs:r.bs, mi:mi, pr:pr, pc:r.pc, tramo:r.tramo, co:r.co, bo:r.bo, ti:r.ti, boR:r.boRegla||null, boSin:r.boSin||0,
+  var em=r.em || K.es.esc[r.g]; if(!em) return null;
+  var o={ em:em, ym:ym, v:r.v, g:r.g, cerrado:K.cerrado, escOk:!!K.es.ok, n:r.n, bs:r.bs, mi:mi, pr:pr, pc:r.pc, tramo:r.tramo, co:r.co, bo:r.bo, ti:r.ti, boR:r.boRegla||null, boSin:r.boSin||0,
           aj:r2((r.ajCom||0)+(r.ajBono||0)), to:r.to, fuera:0, nFuera:0 };
   K.ventas.forEach(function(x){ if(normNombre(x.v)===k && x.est!=='cuenta' && x.est!=='ajuste'){ o.fuera=r2(o.fuera+(Number(x.bs)||0)); o.nFuera++; } });
   if(K.cerrado) return o;
@@ -43851,8 +43931,8 @@ function misComisionHtml(v){
   if(o.boR && o.boR.rige && !o.cerrado){ var bL=comEscBonoTxt(o); if(bL[0]) h+='<div class="td-com-l '+(bL[1]==='cesc-bono-r' ? 'td-com-mal' : (bL[1] ? 'td-com-av' : 'td-com-ok'))+'" data-k="bono">'+esc(bL[0])+'</div>'; }   // 🏆 (16/11) el bono, solo si cumple
   if(o.cerrado) return h+'<div class="td-com-l">🔒 '+esc(ccmCap(mes))+' ya está cerrado: tu comisión quedó así. Lo que cambie después va como ajuste al mes siguiente.</div></div>';
   if(o.sig){
-    var d=o.sig.desde, q = Math.abs(d-o.mi)<0.01 ? 'tu mínima' : (Math.abs(d-o.pr)<0.01 ? 'tu presupuesto'
-          : ('el '+String(Number(o.sig.t && o.sig.t[1])||0).replace('.', ',')+'\u00a0% de tu '+((o.sig.t && o.sig.t[0]==='pres') ? 'presupuesto' : 'mínima')));
+    var d=o.sig.desde, q = Math.abs(d-o.mi)<0.01 ? 'tu mínima' : (Math.abs(d-o.pr)<0.01 ? 'tu presupuesto' : ((o.sig.t && o.sig.t[0]==='bs') ? 'el escalón siguiente'
+          : ('el '+String(Number(o.sig.t && o.sig.t[1])||0).replace('.', ',')+'\u00a0% de tu '+((o.sig.t && o.sig.t[0]==='pres') ? 'presupuesto' : 'mínima'))));
     h+='<div class="td-com-l" data-k="sig">📈 Te faltan <b>'+arriba(o.sig.falta)+'</b> para '+q+' ('+B(d)+') y pasar al <b>'+esc(P(o.sig.pct))+'</b>: tu comisión sería <b>'+B(o.sig.to)+'</b>.</div>';
   }else if(o.ultimo) h+='<div class="td-com-l td-com-ok" data-k="sig">🏆 Ya estás en el tramo más alto (<b>'+esc(P(o.pc))+'</b>): todo lo que sumes va al '+esc(P(o.pc))+'.</div>';
   var mq = o.metaQue==='pres' ? 'tu presupuesto' : 'tu mínima';
@@ -43889,7 +43969,7 @@ function comEscSigue(ym, v){
 function comEscPasos(em, mi, pr){
   var M=[], poner=function(m){ m=r2(m); if(m>0.005 && M.indexOf(m)<0) M.push(m); };
   if(mi>0) poner(mi);
-  ((em && em.t)||[]).forEach(function(t){ var base=t[0]==='pres' ? pr : mi; if(base>0) poner(base*(Number(t[1])||0)/100); });
+  ((em && em.t)||[]).forEach(function(t){ var m=ccmTramoMonto(t, mi, pr); if(m>0) poner(m); });
   M.sort(function(a,b){ return a-b; });
   var S=[{ desde:0, pct:ccmPctDe(em, 0, mi, pr).pct }];
   M.forEach(function(m){ var q=ccmPctDe(em, m, mi, pr); if(Math.abs(q.pct-S[S.length-1].pct)>1e-9) S.push({ desde:m, pct:q.pct, t:q.t }); });
@@ -43921,7 +44001,7 @@ function comEscBonoTxt(o){
                     : ['🏆 Llegaste a tu mínima'+al+': cada colchón Titanio que vendas suma al bono.', ''];
 }
 function comEscHtml(o){
-  var K=misComisionCuenta(o.ym), em=K.es && K.es.esc ? K.es.esc[o.g] : null; if(!em) return null;
+  var K=misComisionCuenta(o.ym), em=o.em || (K.es && K.es.esc ? K.es.esc[o.g] : null); if(!em) return null;
   var P=comEscPasos(em, o.mi, o.pr), S=comEscSigue(o.ym, o.v);
   var B=function(n){ return fmtBs0(n).replace(' ', ' '); }, Pc=function(n){ return ccmPcTxt(n).replace(' ', ' '); };
   var Nk=function(n){ n=Number(n)||0; return n>=1000 ? ((Math.round(n/100)/10).toLocaleString('es-BO')+' mil') : String(Math.round(n)); };   // «110 mil»: entra en el escalón

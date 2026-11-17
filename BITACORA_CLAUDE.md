@@ -19007,3 +19007,29 @@ entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGA
   otra vendedora («Isabel Robled», «Isabel Roble»… «I»), cada una sin verlo hoy. Ahora sale solo para un nombre que es de una vendedora
   (`antesIrteConocido`: `VENDEDORES` o con pedidos) y, con el campo en uso, recién cuando el nombre queda quieto 1,5 s (`ANTES_IRTE_QUIETO_MS`).
   `test_antes_irte` 5c-5e (con el teclado de verdad: rojo contra la página de antes, que anotaba 8 nombres a medias).
+
+### §4qf — 📶 Las comisiones con los escalones en Bs de cada vendedora (17/11)
+- **Dueño** (17/11, con 7 tablas, una por vendedora de Heaven): *«Las comisiones están mal, calculas por % de presupuesto y mínimo. Nosotros se los
+  asignamos cada mes. Te paso las metas de todos los de Heaven, central 1 es Fabián y banzer 1 es Andrea. Los demás tienen nombre»*. Cada tabla: 2 %,
+  2,5 %, 2,75 % (la fila roja), 3 %, 3,5 % y 4 %, cada una desde un monto en Bs. La de MIA PLAZA sin nombre se tomó como **Jonathan Monje** (Mia Plaza
+  tiene a Jonathan y a Mirian, y la de Mirian vino con nombre) — confirmarlo con el dueño.
+- **Antes**: el % salía de la escala de la MARCA (`esc`: 2 % desde la mínima, 2,75 % desde el presupuesto, 3 % desde el 120 % del presupuesto).
+- **Ahora**: `vd[v] = [mínima, presupuesto, [[Bs, %]…]]` en `__metas__` del mes. Con escalones: el % del escalón más alto alcanzado, sobre TODO lo
+  vendido; debajo del primero, 0; la escala de la marca no se usa (`ccmEmVend` arma una escala `['bs', Bs, %]` con el bono de la marca;
+  `ccmTramoMonto` dice desde cuánto empieza cualquier tramo; `ccmPctDe` no aplica «debajo de la mínima» a una escala `vend`). Sueña (sin tablas)
+  sigue con la escala de su marca. Mínima = el primer escalón, presupuesto = el del 2,75 %.
+- **Noviembre**: `CCM_TRAMOS_DUENO['2026-11']` = las 7 tablas. `ccmMetas` las pone (`ccmVdConDueno`) en cada vendedora que no tenga escalones
+  GUARDADOS (también si noviembre no tenía metas guardadas: queda `ok`). Guardar en el editor del 🏁 Cierre comercial las deja en la planilla.
+- **Editor** (🏁 Cierre comercial → ✏️ Metas): columna «📶 Escalones (% desde Bs)», un texto por vendedora: «2 % desde 90.000 · 2,5 % desde 100.000 · …»
+  (también «90.000 = 2», uno por renglón o con «;») — `ccmTramosLeer`/`ccmTramosTxt`; mal escrito no guarda y dice cuál. Sin mínima escrita, la
+  mínima es el primer escalón. La ventana «🎯 Metas por marca» (174) no edita escalones pero los CONSERVA al guardar (`E.vtr`).
+- **Dónde se ve**: el 🏁 Cierre comercial («desde Bs 115.000» debajo de cada vendedora, la nota de la marca dice «📶 Cada vendedora cobra con SUS
+  escalones»), «💰 Comisiones» de Proyección (`ccmSigueDatos` con `r.em`), «Tu comisión» y su escalera (`misComisionDatos` → `o.em`, `comEscPasos`
+  con los escalones; «para el escalón siguiente»). Al cerrar, `vt[].tr` guarda los escalones del mes.
+- **Servidor `2026-11-17-a`**: lo mismo en el `.gs` (`WA_CCM_TRAMOS_DUENO`, `waCcmTramosVal_`, `waCcmVdConDueno_`, `waCcmEmVend_`,
+  `waCcmTramoMonto_`; `waCcmMetas_`, `waCcmMetaDe_`, `waCcmPctDe_`, `waCcmFilas_`) para el cierre del mes por WhatsApp del 01/12. La página sigue
+  esperando la 16-a (no necesita la 17-a). Volver atrás: ✏️ a la versión anotada Y pegar la 16-a de `263f43d…`.
+- En Playwright las tablas del dueño NO se aplican salvo `window.CCM_TRAMOS_PRUEBA` (las pruebas viejas usan sus metas de mentira de noviembre).
+- `tests/test_comision_escalones.js` (27; contra la página de antes no corre: no existen las funciones). Cambiadas a conciencia: `test_cierre_comercial`
+  3 (el texto de arriba es más largo), `test_metas_vendedoras` 6 (`ccmMetaDe` devuelve 3 cosas), `test_wa_cierre_metas` 1h y con
+  `CCM_TRAMOS_PRUEBA`, `test_servidor` l (la versión).
