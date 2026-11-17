@@ -150,7 +150,8 @@ const AVISOS = { v: 1, a: [
   { id: 'av2', k: 'y', pid: 'c2', vend: 'Carola Chavez', cli: 'CLIENTE C2', txt: 'otra cosa', ks: ['monto'], ok: 1762800000000 },          // corregido: no
   { id: 'av3', k: 'z', pid: 'c5', vend: 'Carola Chavez', cli: 'CLIENTE C5', txt: 'la foto es del 03/11', ks: ['dia'] },                     // solo la fecha
   { id: 'av4', k: 'w', pid: 'c6', vend: 'Carola Chavez', cli: 'CLIENTE C6', txt: 'algo', qt: 1762800000000 },                                // quitado: no
-  { id: 'av5', k: 'v', pid: 'm1', vend: 'Mauricio Merida', cli: 'CLIENTE M', txt: 'la foto es del 02/11 · la foto es del 03/11' }       // de otro, solo fecha por texto
+  { id: 'av5', k: 'v', pid: 'm1', vend: 'Mauricio Merida', cli: 'CLIENTE M', txt: 'la foto es del 02/11 · la foto es del 03/11' },      // de otro, solo fecha por texto
+  { id: 'av6', k: 'u', pid: 'c1', vend: 'Carola Chavez', cli: 'CLIENTE OCTUBRE', f: '2026-10-20', txt: 'la foto dice Bs 450', ks: ['monto'] }   // 🗓️ (17/11) de un pago de OCTUBRE: no sale
 ] };
 const PRY = { v: 1, d: { '2026-11-09': { h: '17:10', dt: 7, dr: 17, v: 250000, p: 990000, b: {} }, '2026-11-10': { h: '17:05', dt: 8, dr: 16, v: 287400, p: 1020000, b: { suena: [60000, 220000, 'r'], heaven: [227400, 800000, 'c'] } } } };
 const SISTEMA = (id, obs, o) => P(id, '', Object.assign({ oc: '', cliente: 'FILA DEL SISTEMA', fecha: '', turno: '', productos: [], observaciones: obs, ts: TS(HOY, '09:00') }, o || {}));
@@ -535,10 +536,10 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
       L.forEach(function (p) { out[p.id] = [r2(ventaTotal(p)), saldoACobrar(p), !!docVentaFalta(p), !!fueraDeConta(p)]; });
       var hoy = L.filter(function (p) { return !fueraDeConta(p) && !esBorrador(p) && contaFecha(p) === HOY; }).map(function (p) { return p.id; }).sort();
       STATE = L.filter(function (p) { return !esBorrador(p); });
-      var ab = ctaAvAbiertos('Carola Chavez').map(function (a) { return a.id; });
+      var ab = ctaAvCuentan('Carola Chavez').map(function (a) { return a.id; });   // 🗓️ (17/11) desde AL_DIA_DESDE, como el «Buen día»
       var fila = L.filter(function (p) { return p.id === CTA_AV_ID; })[0];
       var solo = ctaAvLeer(fila).map(function (a) { return [a.id, ctaAvSoloFecha(a)]; });
-      return { out: out, hoy: hoy, ab: ab, solo: solo, docv: DOCV_DESDE, ctaId: CTA_AV_ID, pryId: PRY_HIST_ID };
+      return { out: out, hoy: hoy, ab: ab, solo: solo, docv: DOCV_DESDE, ctaId: CTA_AV_ID, pryId: PRY_HIST_ID, desde: AL_DIA_DESDE };
     }, { L, HOY });
     const srv = {}; L.forEach(p => { srv[p.id] = [S.ctx.waVentaTotal_(p), S.ctx.waSaldoACobrar_(p), !!S.ctx.waDocVentaFalta_(p, HOY), !!S.ctx.waFueraDeConta_(p)]; });
     const dif = Object.keys(srv).filter(k => JSON.stringify(srv[k]) !== JSON.stringify(pag.out[k]));
@@ -547,11 +548,11 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     const hoyS = L.filter(p => S.ctx.waEsVentaConta_(p) && S.ctx.waContaFecha_(p) === HOY).map(p => p.id).sort();
     chk('7b las ventas cargadas hoy: las mismas que Contabilidad → Ventas', JSON.stringify(hoyS) === JSON.stringify(pag.hoy), { gs: hoyS, pagina: pag.hoy });
     const V = { nombre: 'Carola Chavez' }, fila = L.find(p => p.id === '__avisos_conta__');
-    const abS = S.ctx.waCtaAvLeer_(fila).filter(a => !a.ok && !a.qt && S.ctx.waBdEsDe_(a.vend, V)).map(a => a.id);
-    chk('7c los avisos abiertos de Carola: los mismos que `ctaAvAbiertos`', JSON.stringify(abS) === JSON.stringify(pag.ab), { gs: abS, pagina: pag.ab });
+    const abS = S.ctx.waCtaAvLeer_(fila).filter(a => !a.ok && !a.qt && S.ctx.waBdEsDe_(a.vend, V) && S.ctx.waCtaAvCuenta_(a)).map(a => a.id);
+    chk('7c los avisos abiertos de Carola que cuentan (desde noviembre; sin el de octubre): los mismos que `ctaAvCuentan`', JSON.stringify(abS) === JSON.stringify(pag.ab), { gs: abS, pagina: pag.ab });
     const soloS = S.ctx.waCtaAvLeer_(fila).map(a => [a.id, S.ctx.waCtaAvSoloFecha_(a)]);
     chk('7d «solo la fecha de la foto»: igual que `ctaAvSoloFecha` (por `ks` y por el texto)', JSON.stringify(soloS) === JSON.stringify(pag.solo), { gs: soloS, pagina: pag.solo });
-    chk('7e las constantes copiadas son las de la página (DOCV_DESDE, CTA_AV_ID, PRY_HIST_ID)', S.ctx.WA_DOCV_DESDE === pag.docv && S.ctx.WA_CTA_AV_ID === pag.ctaId && S.ctx.WA_PRY_HIST_ID === pag.pryId, [pag.docv, pag.ctaId, pag.pryId]);
+    chk('7e las constantes copiadas son las de la página (DOCV_DESDE, CTA_AV_ID, PRY_HIST_ID)', S.ctx.WA_DOCV_DESDE === pag.docv && S.ctx.WA_CTA_AV_ID === pag.ctaId && S.ctx.WA_PRY_HIST_ID === pag.pryId && S.ctx.WA_AL_DIA_DESDE === pag.desde, [pag.docv, pag.ctaId, pag.pryId, pag.desde]);
     chk('7f sin errores en la página', errores.length === 0, errores);
     await browser.close();
   } catch (e) { chk('la sección corre sin reventar', false, String((e && e.stack) || e).split('\n').slice(0, 3).join(' | ')); }
