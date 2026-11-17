@@ -65,7 +65,8 @@ function kommoBase() {
 const contacto = (K, id, nombre, tel, leads) => { K.contactos[id] = { id, name:nombre, custom_fields_values:[{ field_id:1, field_code:'PHONE', values:[{ value:tel }] }], _embedded:{ leads:(leads || []).map(x => ({ id:x })) } }; };
 const lead = (K, id, o) => { K.leads[id] = Object.assign({ id, name:'Lead ' + id, price:0, status_id:103, pipeline_id:EMBUDO, responsible_user_id:UID_CAROLA, updated_at:1793900000, _embedded:{ contacts:[] } }, o); };
 
-function cargar(filas, props, K, opts) {
+function cargar(filas, props, K0, opts) {
+  const K = K0;
   opts = opts || {};
   const sh = hacerPlanilla([HDR].concat(filas)), llamadas = [], lock = { tomado:false, veces:0, ocupado:!!opts.candadoOcupado };
   const cache = { _m:{}, get(k) { return this._m[k] != null ? this._m[k] : null; }, put(k, v) { this._m[k] = String(v); }, putAll(o) { Object.assign(this._m, o); }, remove(k) { delete this._m[k]; } };
@@ -82,10 +83,11 @@ function cargar(filas, props, K, opts) {
     Session:{ getScriptTimeZone:() => 'America/La_Paz', getTemporaryActiveUserKey:() => 'ABCDEFGH' },
     ScriptApp:{ newTrigger:() => ({ timeBased:() => ({ after:() => ({ create:() => ({}) }) }) }), getProjectTriggers:() => [], deleteTrigger:() => {} },
     UrlFetchApp:{ fetch:(url, op) => {
+      const K = (opts.Ksuena && url.indexOf('gerenciamultiespumasviscarra') >= 0) ? opts.Ksuena : K0;   // 🛏️ el Kommo de Sueña aparte
       op = op || {};
       const metodo = String(op.method || 'get').toLowerCase(), ruta = url.split('/api/v4')[1] || '', p = ruta.split('?')[0], q = qs(ruta);
       const cuerpo = op.payload ? JSON.parse(op.payload) : null;
-      llamadas.push({ metodo, ruta, p, q, cuerpo, conCandado:lock.tomado, auth:(op.headers || {}).Authorization });
+      llamadas.push({ metodo, ruta, p, q, cuerpo, conCandado:lock.tomado, auth:(op.headers || {}).Authorization, host:url.split('/api/v4')[0] });
       if (opts.falla && opts.falla(metodo, p)) return resp(opts.falla(metodo, p), { title:'no' });
       if (metodo === 'get' && p === '/leads/pipelines') return resp(200, K.pipelines);
       if (metodo === 'get' && p === '/leads/custom_fields') return resp(200, K.campos);
@@ -322,6 +324,36 @@ console.log('\n── 9. ▶️ probarKommoEscribe y probarAntesDeImplementar �
     try { L = a.ctx.probarAntesDeImplementar().lineas; } catch (e) { L = ['revento: ' + e.message]; }
     chk('g. probarAntesDeImplementar dice si el cierre de Kommo está prendido o apagado', L.some(l => /cierre de las ventas en Kommo está apagado/.test(l)), L.filter(l => /Kommo/.test(l)).join(' | '));
   }
+}
+
+console.log('\n── 10. 🛏️ Sueña: su venta cierra el lead en el Kommo de Sueña (2026-11-17-c) ──');
+{
+  const SE = 10989127, COMPRO = 6601, FCS = 7701, UID_JP = 801;
+  const KH = kommoBase();
+  const KS = kommoBase();
+  KS.pipelines = { _embedded:{ pipelines:[{ id:SE, name:'Embudo de ventas', _embedded:{ statuses:[{ id:6600, name:'ATENDIDO' }, { id:COMPRO, name:'COMPRO' }, { id:142, name:'Logrado con éxito' }] } }] } };
+  KS.campos = { _embedded:{ custom_fields:[{ id:FCS, name:'Fecha contrato', type:'date' }] } };
+  KS.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'Juan Pablo' }, { id:802, name:'Fernando Peinado Charcas' }, { id:803, name:'Mauricio Merida' }] } };
+  contacto(KS, 5101, 'CLIENTE SUEÑA', '+591 70099988', [4201]); lead(KS, 4201, { pipeline_id:SE, status_id:6600, responsible_user_id:UID_JP });
+  const venta = fila({ id:'s1', vend:'Juan Pablo Paredes', cel:'70099988', oc:'11-300' });
+  const a = cargar([venta], Object.assign(ON(), { KOMMO_TOKEN_SUENA:'token-suena' }), KH, { Ksuena:KS });
+  const r = a.cerrar({ id:'s1', total:4200 });
+  const W = escrituras(a);
+  chk('⚠️ a. la venta de Juan Pablo Paredes («Juan Pablo» en ese Kommo) pasa su lead a «COMPRO» del Kommo de Sueña', r.hecho === 'cerrado' && r.cuenta === 'suena' && KS.leads[4201].status_id === COMPRO &&
+    KS.leads[4201].price === 4200 && KS.leads[4201].pipeline_id === SE && JSON.stringify(KS.leads[4201].custom_fields_values || []).indexOf(String(FCS)) >= 0, r);
+  chk('b. todo va al Kommo de Sueña con SU token (nada al de Heaven) y la fila queda con klead', a.llamadas.length > 0 && a.llamadas.every(x => /gerenciamultiespumasviscarra/.test(x.host) && x.auth === 'Bearer token-suena') && a.klead('s1') === '4201',
+    a.llamadas.map(x => x.host + ' ' + x.auth).slice(0, 3));
+  const b = cargar([venta], ON(), KH, { Ksuena:KS });
+  const r2 = b.cerrar({ id:'s1', total:4200 });
+  chk('c. sin KOMMO_TOKEN_SUENA: la de Sueña no hace nada (sin_token) y no llama a nadie', r2.hecho === 'nada' && r2.motivo === 'sin_token' && b.llamadas.length === 0, r2);
+  const K3 = kommoBase(); contacto(K3, 5001, 'CLIENTA INVENTADA', '+591 70011122', [4001]); lead(K3, 4001, {});
+  const c = cargar([fila({ id:'h1' }), venta], Object.assign(ON(), { KOMMO_TOKEN_SUENA:'token-suena' }), K3, { Ksuena:kommoBase() });
+  const r3 = c.cerrar({ id:'h1', total:3500 });
+  chk('d. la de Heaven sigue en el Kommo de Heaven (eanez) con KOMMO_TOKEN', r3.hecho === 'cerrado' && !r3.cuenta && c.llamadas.every(x => /eanez/.test(x.host) && x.auth === 'Bearer token-de-prueba'), r3);
+  const d = cargar([], { KOMMO_TOKEN_SUENA:'token-suena' }, KH, { Ksuena:KS });
+  const rp = d.ctx.probarKommoEscribeSuena(), Wd = escrituras(d), T = rp.lineas.join('\n');
+  chk('e. probarKommoEscribeSuena: lee «COMPRO», encuentra a los tres vendedores y escribe solo el MISMO precio a un lead', rp.ok && /COMPRO/.test(T) && /Juan Pablo Paredes → usuario 801/.test(T) && /Fernando Peinado → usuario 802/.test(T) &&
+    Wd.length === 1 && Wd[0].metodo === 'patch' && /gerenciamultiespumasviscarra/.test(Wd[0].host), rp.lineas);
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
