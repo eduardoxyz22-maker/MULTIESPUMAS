@@ -25,7 +25,7 @@ function PREPARAR() {
   var P = function (vend, dia, o) { n++; return Object.assign({ id: 'p' + n, oc: '11-' + (400 + n), nota: String(800 + n), vendedor: vend, cliente: 'CLIENTE SECRETO ' + n, celular: '7' + String(3000000 + n),
     zona: 'Norte', maps: 'https://www.google.com/maps?q=-17.78,-63.18', fecha: '2026-11-25', turno: 'AM',
     productos: [{ desc: 'COLCHON SOFT', medida: '140x190', codigo: '', cant: 1, precio: 5000, fdoc: 'F', fdocn: '7' + n }], saldo: 5000, acuenta: 0, pagado: false, metodoPago: '', ts: T(dia) }, o || {}); };
-  var sinDoc = function (p) { p.productos.forEach(function (x) { delete x.fdoc; delete x.fdocn; }); return p; };
+  var sinDoc = function (p) { p.productos.forEach(function (x) { delete x.fdoc; delete x.fdocn; }); p.fecha = '2026-11-14'; return p; };   // (17/11) solo entregadas: ya salió
   window._pl = [
     sinDoc(P('Isabel Robledo', '2026-11-10')), sinDoc(P('Isabel Robledo', '2026-11-11')),
     P('Isabel Robledo', '2026-11-03', { productos: [{ desc: 'COLCHON SOFT', medida: '140x190', cant: 1, precio: 5000, fdoc: 'F', fdocn: '91' }, { desc: 'ALMOHADA FIBRA', medida: '50x70', cant: 2, precio: 100, fdoc: 'F', fdocn: '91' }] }),

@@ -42,6 +42,10 @@ function PREPARAR(){
     productos:[{ desc:'COLCHON SOFT', medida:'140x190', codigo:'COLT0048', cant:1, precio:2000, fdoc:'F', fdocn:'5'+n }], saldo:0, acuenta:0, pagado:true, metodoPago:'QR BISA 2000 @2026-11-02 #'+n,
     entregado:false, ts:_ts('2026-11-02T10:00:00'), fotos:[], chofer:'', vehiculo:'', maps:'https://maps.app.goo.gl/x', celular:'7'+String(1000000+n), zona:'Norte', nroDia:n }, o); };
   var ICE=function(c, pr, doc){ return { desc:'TITANIO ICE', medida:'140x190', codigo:'CH1220', cant:c, precio:pr, fdoc:doc?'F':undefined, fdocn:doc?'77':undefined }; };
+  /* (17/11) solo entregadas: la factura o remisión se pide recién con la entrega hecha; las ventas de noviembre del ejemplo todavía no salieron
+     (hoy, mañana, el jueves…). Esta, ENTREGADA el 06/11 y pagada por QR, se suma SOLO donde se pregunta por la factura, para no mover los totales. */
+  window.ENTREGADA_SIN_DOC=function(){ return V({ id:'entsd', oc:'11-030', cliente:'ENTREGADA SIN DOC', fecha:'2026-11-06', entregado:true, ts:_ts('2026-11-03T11:00:00'),
+    productos:[{ desc:'COLCHON SOFT', medida:'140x190', codigo:'COLT0048', cant:1, precio:1500 }], metodoPago:'QR BISA 1500 @2026-11-03 #30' }); };
   window.FIX=function(){ n=0;
     return [
       /* MIRIAN (Heaven): octubre */
@@ -193,7 +197,9 @@ function PREPARAR(){
   r = await ev(async () => {
     STATE=FIX(); STK(); QUIEN({ v:'Mirian Salazar' }); BLOKI_P.chat=[];
     var deben=await PREG('¿Quiénes me deben?'), uno=await PREG('quién me debe, raul?'), ef=await PREG('¿Cuánto efectivo tengo sin rendir?'), E=misEfectivoDatos('Mirian Salazar');
-    var av=await PREG('¿Qué pagos tienen un aviso de Contabilidad?'), fa=await PREG('¿Qué ventas no tienen factura o remisión?');
+    var av=await PREG('¿Qué pagos tienen un aviso de Contabilidad?');
+    STATE.push(ENTREGADA_SIN_DOC());   // (17/11) solo entregadas
+    var fa=await PREG('¿Qué ventas no tienen factura o remisión?');
     var faL=STATE.filter(function(p){ return docVentaFalta(p) && mismoVendedor(p.vendedor, 'Mirian Salazar'); }).length;
     QUIEN({ clave:1 }); var eqEf=await PREG('¿cuánto efectivo hay sin rendir?'), eqDeb=await PREG('¿quiénes deben?');
     QUIEN({ rol:'logistica' }); var lDeb=await PREG('¿Quiénes me deben?'), lEf=await PREG('¿cuánto efectivo tengo sin rendir?'), lFa=await PREG('¿qué ventas no tienen factura?');
@@ -286,6 +292,7 @@ function PREPARAR(){
     var mine=STATE.filter(function(p){ return mismoVendedor(p.vendedor, 'Mirian Salazar'); }), I=misHacerDatos('Mirian Salazar', mine);
     var v=await PREG('¿Qué me falta hacer hoy?');
     QUIEN({ rol:'logistica' }); var A=admHacerDatos(), l=await PREG('¿qué me falta hacer?');
+    STATE.push(ENTREGADA_SIN_DOC());   // (17/11) solo entregadas
     QUIEN({ rol:'conta' }); CX_HACER_ULT=null; var c=await PREG('¿qué tengo que hacer?');
     QUIEN({}); var nadie=await PREG('¿qué me falta hacer?');
     /* el botón de un renglón lleva a su pestaña */

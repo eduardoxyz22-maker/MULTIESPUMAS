@@ -39,7 +39,7 @@ const chk = (l, c, e) => { if (e && e.error) c = false; c ? PASS++ : FAIL++; con
     var doc = function (o, t, n) { o.productos = o.productos.map(function (x) { return Object.assign({}, x, { fdoc: t, fdocn: n, fdocT: T('2026-11-11') }); }); return o; };
     var L = [
       doc(P('t1', { cliente: 'CON FACTURA' }), 'F', '1234'),                                     // Carola · Tienda Banzer · con N°
-      P('t2', { vendedor: 'Juan Pablo Paredes', cliente: 'SIN NUMERO' }),                          // Carmelo · sin N°
+      P('t2', { vendedor: 'Juan Pablo Paredes', cliente: 'SIN NUMERO', fecha: '2026-11-12' }),    // Carmelo · sin N° · (17/11) solo entregadas: ya salió
       P('t3', { cliente: 'DE OCTUBRE', ts: T('2026-10-20'), fecha: '2026-10-25', metodoPago: '~QR BISA 1000 @2026-10-20 #2' }),   // Carola en octubre = Central
       P('t4', { vendedor: 'Fernando Paz', cliente: 'SIN SUCURSAL' }),                              // sin sucursal → Contabilidad
       doc(P('t5', { vendedor: 'Isabel Robledo', cliente: 'YA CARGADA', metodoPago: '~QR BISA 1000 @2026-11-10 #5 · REGISTRADO' }), 'R', '88'),
