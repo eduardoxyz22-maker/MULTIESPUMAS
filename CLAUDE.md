@@ -2501,6 +2501,11 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   con la lista; Aceptar guarda igual (nunca frena la venta). Usa la planilla recién leída (la última lectura de antes de
   guardar, la de cupos; una edición que cambia productos también lee). Al editar pregunta solo si cambió un producto, su
   cantidad o la fecha.
+- **🏭⛔ Lo que se fabrica no se promete antes** (17/11, dueño, con el 11-152 —especial 160x200 cargado para el día siguiente—: *«sí, Eduardo y ROHO
+  libres»*): la línea roja ya NO solo avisa para 📐 medida especial, 🏭 lo mandado a fabricar para ese pedido, ⏳ en producción y 🏭 «no hay»
+  (`FAB_FRENO_TIPOS`): el formulario (`fabFrenoGuardar`, con `saldoFilasAGuardar`: solo si cambia la fecha o el producto) y 📅 Reprogramar
+  (`reproStockConfirmar` → `fabFrenoPedido`, los cuatro caminos) no dejan una fecha antes del «desde» del cuadrito. Libres: `esVendedorLite` y
+  `UNLOCKED`. Moreno y la recogida siguen solo avisando. Playwright solo con `FAB_FRENO_PRUEBA`. `tests/test_fab_freno.js` (12).
 - **Ventana que quedaba** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
   servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos. **Desde §4hj (02/10, dueño: «hazlo») el servidor
   `2026-10-02-a` lleva el libro de reservas y el que guarda segundo se entera** (ver «📦 Servidor `2026-10-02-a`» más abajo).
