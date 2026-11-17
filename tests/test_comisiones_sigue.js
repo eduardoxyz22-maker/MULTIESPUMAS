@@ -64,14 +64,14 @@ function PREPARAR(){
   });
   const F = r.filas || {};
   chk('1a. Maria: hoy 8.000 (debajo de la mínima: 0); si sigue, 16.000 (pasa el presupuesto: 2,75 % = Bs 440); está a Bs 2.000 del 3 % (120 % del presupuesto)',
-      F['Maria Flores'] && F['Maria Flores'].hoy===0 && F['Maria Flores'].bs===16000 && F['Maria Flores'].pct===2.75 && F['Maria Flores'].co===440 && F['Maria Flores'].borde && F['Maria Flores'].mira==='a Bs 2.000 del 3 %', F['Maria Flores']);
+      F['Maria Flores'] && F['Maria Flores'].hoy===0 && F['Maria Flores'].bs===16000 && F['Maria Flores'].pct===2.75 && F['Maria Flores'].co===440 && F['Maria Flores'].borde && F['Maria Flores'].mira==='quedaría a Bs 2.000 del 3 %', F['Maria Flores']);
   chk('1b. Mauricio: 26.666,67 con la mínima de 20.000 y sin presupuesto: 2 % = Bs 533,33; ya en el tramo más alto',
-      F['Mauricio Merida'] && F['Mauricio Merida'].bs===26666.67 && F['Mauricio Merida'].pct===2 && F['Mauricio Merida'].to===533.33 && F['Mauricio Merida'].mira==='ya en el tramo más alto', F['Mauricio Merida']);
-  chk('1c. Fernando: se proyecta 9.000 y su mínima es 9.100: «⚠️ a Bs 100 de la mínima» (al borde)', F['Fernando Peinado'] && F['Fernando Peinado'].to===0 && F['Fernando Peinado'].borde && F['Fernando Peinado'].mira==='⚠️ a Bs 100 de la mínima', F['Fernando Peinado']);
+      F['Mauricio Merida'] && F['Mauricio Merida'].bs===26666.67 && F['Mauricio Merida'].pct===2 && F['Mauricio Merida'].to===533.33 && F['Mauricio Merida'].mira==='llegaría al tramo más alto', F['Mauricio Merida']);
+  chk('1c. Fernando: se proyecta 9.000 y su mínima es 9.100: «⚠️ a Bs 100 de la mínima» (al borde)', F['Fernando Peinado'] && F['Fernando Peinado'].to===0 && F['Fernando Peinado'].borde && F['Fernando Peinado'].mira==='⚠️ quedaría a Bs 100 de la mínima', F['Fernando Peinado']);
   chk('1d. Carola: 10.666,67 contra una mínima de 30.000: «le faltan Bs 19.334 para la mínima» (más de 15.000: no está al borde)',
-      F['Carola Chavez'] && F['Carola Chavez'].to===0 && !F['Carola Chavez'].borde && F['Carola Chavez'].bs===10666.67 && F['Carola Chavez'].mira==='le faltan Bs 19.334 para la mínima', F['Carola Chavez']);
+      F['Carola Chavez'] && F['Carola Chavez'].to===0 && !F['Carola Chavez'].borde && F['Carola Chavez'].bs===10666.67 && F['Carola Chavez'].mira==='le faltarían Bs 19.334 para la mínima', F['Carola Chavez']);
   chk('1e. Andrea: el bono Titanio (1 % de 3.000) va igual hoy y si sigue (todo agendado): 82,50 + 30 = Bs 112,50; a Bs 600 del 3 %',
-      F['Andrea Orias'] && F['Andrea Orias'].hoy===112.5 && F['Andrea Orias'].to===112.5 && F['Andrea Orias'].bo===30 && F['Andrea Orias'].mira==='a Bs 600 del 3 %', F['Andrea Orias']);
+      F['Andrea Orias'] && F['Andrea Orias'].hoy===112.5 && F['Andrea Orias'].to===112.5 && F['Andrea Orias'].bo===30 && F['Andrea Orias'].mira==='quedaría a Bs 600 del 3 %', F['Andrea Orias']);
   chk('1f. hoy = el total del Cierre comercial (Bs 112,50); si siguen así, Bs 1.085,83; 3 al borde de un escalón', r.hoy===r.hoyCierre && r.hoy===112.5 && r.sigue===1085.83 && r.borde===3, [r.hoy, r.hoyCierre, r.sigue, r.borde]);
   chk('1g. de la que más cobraría a la que menos', r.orden && r.orden[0]==='Mauricio Merida' && r.orden[1]==='Maria Flores' && r.orden[2]==='Andrea Orias', r.orden);
 
@@ -92,7 +92,7 @@ function PREPARAR(){
   });
   chk('2a. Proyección: «💰 Comisiones de noviembre», «Hoy, con lo vendido Bs 113», «Si siguen así, al 30/11 Bs 1.086» y «3» al borde',
       /💰 Comisiones de noviembre/.test(r.pry) && /Hoy, con lo vendido Bs 113/.test(r.pry) && /Si siguen así, al 30\/11 Bs 1\.086/.test(r.pry) && /A menos de Bs 15\.000 de un escalón 3/.test(r.pry), r.pry);
-  chk('2b. la tabla con «⚠️ a Bs 100 de la mínima» y «a Bs 2.000 del 3 %», tres filas en ámbar', /⚠️ a Bs 100 de la mínima/.test(r.pry) && /a Bs 2\.000 del 3 %/.test(r.pry) && r.amb===3, r.amb);
+  chk('2b. la tabla con «⚠️ a Bs 100 de la mínima» y «a Bs 2.000 del 3 %», tres filas en ámbar', /⚠️ quedaría a Bs 100 de la mínima/.test(r.pry) && /quedaría a Bs 2\.000 del 3 %/.test(r.pry) && r.amb===3, r.amb);
   chk('2c. el Cierre: la columna «📈 Si sigue así» al final de cada marca, con su celda por vendedora (las del borde en ámbar)',
       r.th && r.th[r.th.length-1]==='📈 SI SIGUE ASÍ' || (r.th && /Si sigue así/i.test(r.th[r.th.length-1])), [r.th, r.celdas, r.ambC]);
   chk('2d. …y arriba del total: «📈 Si siguen así, al 30/11: Bs 1.086 (para separar la plata)»', /📈 Si siguen así, al 30\/11: Bs 1\.086 \(para separar la plata\)/.test(r.ccm), r.ccm.slice(0, 900));
