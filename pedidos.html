@@ -33015,7 +33015,12 @@ function setDocVenta(p, v, num, copiaT){
     if(T) x.fdocT=T; else delete x.fdocT; });
 }
 /* ¿Le falta? Solo a una venta del equipo cargada desde DOCV_DESDE (y que tenga productos donde guardarlo). */
-function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.id) && ((p.productos||[]).length>0) && contaFecha(p)>=DOCV_DESDE; }
+function docVentaRequerida(p){ return !!p && !fueraDeConta(p) && !borradorDe(p.id) && ((p.productos||[]).length>0) && contaFecha(p)>=DOCV_DESDE && docVentaEntregada(p); }
+/* 🚚 (17/11, dueño, con la captura de «Tu panel al día»: «es solo de pedidos entregados no? No lo pendiente de entrega porque esos aún no se sabe
+   el Nro de factura») Se pide recién cuando la venta ya se ENTREGÓ: ✅, venta de tienda, o la fecha de entrega ya pasó (la regla de siempre: los
+   choferes no marcan ✅). Lo de hoy sin ✅, lo de mañana y lo que «avisa cuándo» (sin fecha) todavía no. Anotarlo antes se puede igual.
+   ⚠️ La misma regla en el `.gs` (`waDocVentaFalta_`, «Buen día»): tests/test_wa_buen_dia_cierre.js. */
+function docVentaEntregada(p){ if(!p) return false; if(p.entregado || esVentaTienda(p)) return true; return !!p.fecha && String(p.fecha) < diaNegocio(); }
 function docVentaFalta(p){ return docVentaRequerida(p) && !(docVentaDe(p) && docNumDe(p)); }
 function docVentaChip(p){
   var d=docVentaDe(p), n=docNumDe(p);
@@ -69431,7 +69436,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-a';
+var PANEL_V='2026-11-17-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

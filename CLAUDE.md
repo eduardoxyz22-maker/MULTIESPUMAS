@@ -3142,7 +3142,8 @@ con código/cantidad/precio, total y entrega (`waTr4Params_`). `tests/test_wa_tr
 - 🧾 **Factura o nota de remisión obligatoria, la anota la vendedora DESPUÉS, en Contabilidad** (dueño: *«aún no saben qué nro de factura o nota
   remisión les tocará… que lo puedan colocar en contabilidad»*): el formulario del pedido NO la pide (no volver a ponerla ahí). Fila de la ficha de
   Contabilidad (`ctaDocHtml`/`ctaDocGuardar`): tipo + N° en los productos (`fdoc`/`fdocn`; `submitPedido` los rescata de `prev`). Obligatoria desde
-  `DOCV_DESDE` (`docVentaFalta`): «Para hacer» de la vendedora (abre la ficha de Contabilidad) y de Contabilidad (filtro `sdoc`), el cierre en rojo,
+  `DOCV_DESDE` (`docVentaFalta`) y SOLO para lo ya entregado (17/11, dueño: *«es solo de pedidos entregados… lo pendiente de entrega aún no se sabe el Nro»*;
+  `docVentaEntregada`: ✅, venta de tienda o fecha pasada; el `.gs` 17-a igual con `waDocVentaEntregada_`): «Para hacer» de la vendedora (abre la ficha de Contabilidad) y de Contabilidad (filtro `sdoc`), el cierre en rojo,
   ⚠️ su botón dice «💾 Guardar N°» (07/11, versión 2026-11-07-a): con «💾 Guardar» `test_rev30_plata` tocaba ese en vez del de «✏️ Corregir este pago»;
   `docVentaChip` y dos columnas al FINAL del Excel («FALTA» en el tipo o el N° que falta). Todavía NO decide FACTURADO / NO FACTURADO de los retiros.
   `tests/test_factura_remision.js`, `tests/test_factura_conflicto.js` (página + `.gs`: la vendedora sin contraseña, y la carrera con el formulario abierto).

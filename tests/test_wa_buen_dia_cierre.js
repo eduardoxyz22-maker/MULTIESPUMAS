@@ -537,7 +537,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
       var solo = ctaAvLeer(fila).map(function (a) { return [a.id, ctaAvSoloFecha(a)]; });
       return { out: out, hoy: hoy, ab: ab, solo: solo, docv: DOCV_DESDE, ctaId: CTA_AV_ID, pryId: PRY_HIST_ID };
     }, { L, HOY });
-    const srv = {}; L.forEach(p => { srv[p.id] = [S.ctx.waVentaTotal_(p), S.ctx.waSaldoACobrar_(p), !!S.ctx.waDocVentaFalta_(p), !!S.ctx.waFueraDeConta_(p)]; });
+    const srv = {}; L.forEach(p => { srv[p.id] = [S.ctx.waVentaTotal_(p), S.ctx.waSaldoACobrar_(p), !!S.ctx.waDocVentaFalta_(p, HOY), !!S.ctx.waFueraDeConta_(p)]; });
     const dif = Object.keys(srv).filter(k => JSON.stringify(srv[k]) !== JSON.stringify(pag.out[k]));
     chk('7a ventaTotal, saldoACobrar, docVentaFalta y fueraDeConta dan lo mismo en la página y acá, pedido por pedido (' + L.length + ' filas)', dif.length === 0,
         dif.map(k => k + ': gs ' + JSON.stringify(srv[k]) + ' · página ' + JSON.stringify(pag.out[k])));
