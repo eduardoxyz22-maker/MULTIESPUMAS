@@ -39,11 +39,15 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       saldo: 0, acuenta: 0, pagado: true, metodoPago: '', ts: T('2026-11-11T11:00:00') }, o); };
     var sinDoc = function (o) { var p = P(o); p.productos.forEach(function (x) { delete x.fdoc; delete x.fdocn; }); return p; };
     window._pl = [
-      sinDoc({ id: 'i1', ts: T('2026-11-05T11:00:00'), maps: '' }),                                   // Isabel: sin factura hace 7 días y sin ubicación (para el 16/11)
-      sinDoc({ id: 'i2', fecha: '2026-11-13', maps: '' }),                                              // sin factura de ayer, sin ubicación para el próximo camión
+      P({ id: 'i1', ts: T('2026-11-05T11:00:00'), maps: '' }),                                        // Isabel: sin ubicación (para el 16/11)
+      P({ id: 'i2', fecha: '2026-11-13', maps: '' }),                                                   // sin ubicación para el próximo camión
       P({ id: 'i3', fecha: '2026-11-10', entregado: true, metodoPago: 'Efectivo 1000 @2026-11-10 #11' }),   // efectivo de hace 2 días
       P({ id: 'm1', vendedor: 'Mirian Salazar' }),                                                       // Mirian: todo al día
-      sinDoc({ id: 'f1', vendedor: 'Maria Flores', ts: T('2026-11-12T09:00:00') }),                     // María: sin factura de hoy
+      sinDoc({ id: 'f1', vendedor: 'Maria Flores', ts: T('2026-11-12T09:00:00'), fecha: '2026-11-12', entregado: true }),   // María: sin factura de hoy ((17/11) solo entregadas: ✅ hoy)
+      /* (17/11) solo entregadas: la factura se pide recién con la entrega hecha; las dos de Isabel sin factura ya salieron (aparte de las sin ubicación,
+         que todavía no se entregan). Al final, para no correr los números de las de arriba. */
+      sinDoc({ id: 'i1b', ts: T('2026-11-05T11:00:00'), fecha: '2026-11-07', entregado: true }),     // Isabel: sin factura hace 7 días
+      sinDoc({ id: 'i2b', fecha: '2026-11-11' }),                                                       // sin factura de ayer (salió ayer)
       { id: 'kommo-71', estado: BORRADOR_EST, vendedor: 'Isabel Robledo', cliente: 'LEAD NUEVO', celular: '79999999', saldo: 1000, fecha: '', productos: [], ts: T('2026-11-10T12:00:00') },
       { id: '__avisos_conta__', cliente: '📣', fecha: '', observaciones: JSON.stringify({ v: 1, a: [
         { id: 'av1', pid: 'i3', vend: 'Isabel Robledo', cli: 'CLIENTE 3', txt: 'la foto dice Bs 900', ks: ['monto'], t: T('2026-11-11T12:00:00') },
