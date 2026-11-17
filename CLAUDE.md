@@ -978,6 +978,11 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   al final de la lista en gris («De antes de noviembre») y en «Para hacer» como 🗂️ sin color, sin contar para el al día, el bono, el rojo ni Bloki.
   Kommo igual por el `ts` del borrador. La factura (`DOCV_DESDE`) y el efectivo (`EFE_CERRADO`) ya arrancaban en noviembre. ⚠️ El «Buen día» del
   `.gs` todavía lista todos los avisos abiertos. `test_al_dia` 7b.
+- **🤖 Las fotos de los avisos se leen solas en CUALQUIER aparato** (17/11, dueño: *«Claude debería hacerlo solo, tiene luz verde total… son
+  10-15 en el mes… hablamos de dinero»*): `ctaAvReleer`/`ctaAvLeerPagando` sin la contraseña, cada foto una vez por página (`CTA_AV_RELEO.pedidas`);
+  una foto nueva (`iasSubida`) adelanta la revisión. «✓ Ya lo corregí» con una foto sin leer la LEE en ese momento (`ctaAvCorregiDecidir`): coincide
+  → se cierra; no coincide o no se pudo leer → pide la razón; el pago borrado se cierra con «borró ese pago». Ya no se cierra nada a ciegas.
+  `test_avisos_arreglo` 6d, 7d-7f.
 - **🏆 376 b el bono Titanio** (regla del dueño «1A, 2B»): cobra con la MÍNIMA y el panel al día (nada en rojo; el ámbar se perdona) en TODAS las fotos de los lunes
   del mes; la foto la saca la página los lunes desde las 08:00 en `__al_dia_sem__` (nunca pisa una ya guardada); rige desde el 23/11/2026; un lunes sin foto no castiga.
   ⚠️ La regla está DOS veces: `alDiaBonoCumple`/`ccmBonoRegla` (página) y `waAlDiaBonoCumple_`/`waCcmBonoRegla_` (`.gs`, en `waCcmCuenta_`): `tests/test_bono_al_dia_gs.js`

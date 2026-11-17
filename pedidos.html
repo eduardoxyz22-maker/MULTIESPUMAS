@@ -72537,11 +72537,23 @@ function ctaAvRazon(id, v, k){
   return ctaAvOk(id, v, { okRaz:t.slice(0, 140) });
 }
 /* «✓ Ya lo corregí»: se mira el pago. Coincide, o cambió y no hay con qué compararlo → se cierra. Quedó igual → la razón. */
+/* 💵 (17/11) Ya no se cierra a ciegas: si la foto del pago no tiene lectura (la subieron nueva), se LEE en ese momento y recién ahí se decide.
+   Si no se pudo leer, no se cierra (pide la razón). Si el pago ya no está, se cierra diciéndolo («borró ese pago»), para que Contabilidad lo vea. */
 function ctaAvCorregi(id, v){
   var a=ctaAvLeer().filter(function(o){ return o.id===id; })[0]; if(!a) return Promise.resolve(false);
   var e=ctaAvEvaluar(a);
-  var cierra = e.est==='ok' || e.est==='?' || (e.est==='pe' && !e.igual);
-  if(cierra) return ctaAvOk(id, v, e.est==='ok' ? { okArr:e.noErr ? 'no era un error' : 'ya coincide con la foto' } : null);
+  if(e.est==='pe' && e.x && !CTA_AV_RELEO.leyendo){
+    CTA_AV_RELEO.leyendo=true; toast('🤖 Leyendo la foto del pago…','ok',4000);
+    return ctaAvLeerPagando(e.x.comps).then(function(){ CTA_AV_RELEO.leyendo=false; return ctaAvCorregiDecidir(a, v, ctaAvEvaluar(a)); },
+      function(){ CTA_AV_RELEO.leyendo=false; return ctaAvCorregiDecidir(a, v, ctaAvEvaluar(a)); });
+  }
+  return ctaAvCorregiDecidir(a, v, e);
+}
+function ctaAvCorregiDecidir(a, v, e){
+  var id=a.id;
+  if(e.est==='ok') return ctaAvOk(id, v, { okArr:e.noErr ? 'no era un error' : 'ya coincide con la foto' });
+  if(e.est==='?') return ctaAvOk(id, v, { okArr:'borró ese pago' });
+  if(e.est==='pe') toast('No pude leer la foto todavía: decí por qué quedó así, o probá de nuevo en un rato.','err',8000);
   CTA_AV_RAZON[id]=1; ctaAvVer(v);
   setTimeout(function(){ var b=document.querySelector('.ctav-it[data-av="'+String(id).replace(/["\\]/g,'')+'"] .ctav-raz'); if(b) try{ b.scrollIntoView({ block:'center' }); }catch(x){} }, 30);
   return Promise.resolve(false);
@@ -72703,17 +72715,23 @@ function ctaAvTiendaTodas(v){
    se cierra solo y «Ya lo corregí» no puede verificar nada (pide la razón). Ahora, en un aparato CON la contraseña (`iacPuede`: no gasta
    en el de una vendedora), las fotos de los avisos abiertos que faltan se leen solas, de a `CTA_AV_RELEO_TOPE` por página abierta; con la
    lectura nueva, lo que ya coincide (o el voucher de tarjeta) se cierra solo como siempre. ~USD 0,02 por foto. */
-var CTA_AV_RELEO_TOPE=48, CTA_AV_RELEO={ hecho:false };
-function ctaAvReleer(A){
-  if(CTA_AV_RELEO.hecho || !iacPuede() || !CONNECTED) return Promise.resolve(0);
-  var fs=[], v={};
-  (A||[]).forEach(function(a){ var x=ctaAvPagoDe(a); (x ? x.comps : []).forEach(function(f){ if(f && !IAC.res[f] && !v[f]){ v[f]=1; fs.push(f); } }); });
-  if(!fs.length) return Promise.resolve(0);
-  CTA_AV_RELEO.hecho=true;
-  fs=fs.slice(0, CTA_AV_RELEO_TOPE);
+/* 💵 (17/11, dueño: «si Contabilidad pidió que verifiquen el pago y el vendedor carga uno nuevo, no deberías esperar que uno lo haga: Claude
+   debería hacerlo solo, tiene luz verde total… porque hablamos de dinero») Ya no hace falta la contraseña: CUALQUIER aparato lee las fotos de
+   los avisos abiertos que no tienen lectura (son pocas: ~10-15 por mes). Cada foto se pide UNA vez por página abierta (`pedidas`); una foto
+   NUEVA que se sube después también se lee. El tope por día del servidor (IA_COMP_TOPE_DIA) sigue mandando. */
+var CTA_AV_RELEO_TOPE=48, CTA_AV_RELEO={ pedidas:{} };
+function ctaAvLeerPagando(fs){
+  fs=(fs||[]).filter(function(f){ return f && !IAC.res[f] && !CTA_AV_RELEO.pedidas[f]; }).slice(0, CTA_AV_RELEO_TOPE);
+  if(!fs.length || !CONNECTED || !iacServidorOk()) return Promise.resolve(0);
+  fs.forEach(function(f){ CTA_AV_RELEO.pedidas[f]=1; });
   return conTopeDuro(apiPost({ action:'iaComprobantes', fotos:fs }), 90000, 'tardo_ia').then(function(r){
     if(!r || !r.ok) return 0; iacTomar(r); return Object.keys(r.res||{}).length;
   }, function(){ return 0; });
+}
+function ctaAvReleer(A){
+  var fs=[], v={};
+  (A||[]).forEach(function(a){ var x=ctaAvPagoDe(a); (x ? x.comps : []).forEach(function(f){ if(f && !IAC.res[f] && !v[f]){ v[f]=1; fs.push(f); } }); });
+  return ctaAvLeerPagando(fs);
 }
 function ctaAvAutoRevisar(){
   if(!ctaAvAutoActivo() || !CONNECTED || !iacServidorOk() || CTA_AV_AUTO.corre) return Promise.resolve(0);
@@ -73026,6 +73044,7 @@ function iasPuedeLeer(){ return iasActivo() && iacServidorOk() && !!CONNECTED &&
 function iasSubida(fid){
   if(!fid || !iasActivo()) return;
   IAS.mias[String(fid)]=Date.now();
+  try{ CTA_AV_AUTO.t=0; }catch(e){}   // 💵 (17/11) una foto nueva: los avisos se vuelven a mirar en la próxima lectura, sin esperar 10 min
   iasRepintar();
 }
 function iasPedir(fid){
