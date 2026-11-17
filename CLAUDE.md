@@ -1071,7 +1071,10 @@ Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 
   que ENTREGADO ES FACTURADO… eso confunde»*): en el hueco del medio de cada fila (debajo de la barra de la 415 si hay metas), «✅ Entregado o facturado
   Bs X · N» (`pryEntCerrada`: ✅, venta de tienda, o factura/remisión con su N° = la regla de cierre de la 335) y «⏳ Pendiente Bs Y · M» (con cuántas ya
   debían salir sin ✅), con su barrita. Las MISMAS ventas de la fila (`pryEntDatos` sobre `pryVentas`, mismo `ym` y `vk`; sin ROHO): las dos partes suman lo
-  vendido. 🚫 Nada de «por facturar» aparte. `pryMedioHtml`, `PRY_ENT_PRUEBA`, `tests/test_pry_entregado.js` (11).
+  vendido. 🚫 Nada de «por facturar» aparte. `pryMedioHtml`, `PRY_ENT_PRUEBA`, `tests/test_pry_entregado.js` (19).
+  ✅⏳ **También en las fichas de marca, de tienda, el tablero, «Cómo van contra la meta» y «Cada tienda contra su meta»** (17/11, dueño: *«no me
+  mostrás separado… como en la ficha de los vendedores»*): `pryEntDatos` suma además por `g|<marca>`, `st|<tienda>` y `eq`; `pryEntMini` es el renglón chico.
+  Los % dicen cuál es cuál: «vendido N % · llegaría al M %» y «llegaría al N % de la meta» (antes «N % de la meta» era la proyección, al lado de lo vendido).
 
 ## 🛍️ Tema de Black Friday (§4pr, 13/11; dueño: «ármame la muestra de black friday» → «C y sí también Dashboard»; PUBLICADO 13/11, versión 2026-11-13-a, `828251f`)
 `tema-black-friday`: negro con dorado. Etiqueta dorada al lado del nombre (🚫 SIN la cinta amarilla de arriba: el dueño la marcó, «no me gusta»), ciudad de noche,
