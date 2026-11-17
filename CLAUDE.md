@@ -2654,6 +2654,11 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   vendedor»), marca y línea con `atciProdDe` (la regla del informe de ATC: TITANIO = ICE/LATEX; **CLOUD** entró a `ATCI_LINEAS` de Heaven), Bs =
   `prodPrecio` × cantidad; contra el mes anterior a esta altura (`pryCorteAltura`/`pryEnAltura`). Cada línea con sus productos y medidas a la vista (tarjeta por marca; una línea de un solo producto lleva las medidas en su fila). Solo
   mira. Playwright solo con `PRY_LINEAS_PRUEBA`. `tests/test_pry_lineas.js` (15); `test_pry_indice` §10 cuenta 16 secciones.
+- **📥 Los números de Kommo de cada vendedor en «Por vendedor»** (17/11, dueño: *«tenemos espacio para poner ahí KPIs, como leads, conversión»*):
+  `pryKpiPoner` lee el dashboard publicado (`PANEL_DATA.team`: leads, cierres, conv, promTxt, respPct; Heaven = `index.html`, Sueña =
+  `../MULTIESPUMAS-VISCARRA/`, `PRY_KPI_FUENTES`), del MISMO mes, cada 10 min como mucho, y pinta `.pry-kpi[data-kpi]` (nombre sin tildes ni « - Sucursal»,
+  `pryKpiClave`). No calcula nada. `PRY_KPI_PRUEBA`. 🙈 «Quién necesita una mano» con «Ocultar» (`mnoOculta`/`mnoOcultar`, `visPref('mnoOculta')`;
+  el botón de arriba la vuelve a abrir). `tests/test_pry_kpi.js` (8).
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de

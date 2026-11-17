@@ -1135,6 +1135,9 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .pcal-domt{display:grid;gap:4px;margin-top:6px} .pcal-domt>div{display:grid;grid-template-columns:minmax(120px,1fr) auto auto 52px;gap:10px;align-items:baseline}
 .pcal-domt b{font-variant-numeric:tabular-nums;text-align:right} .pcal-domt span:nth-child(3){color:#7a6420;font-variant-numeric:tabular-nums}
 .pcal-domp{margin-top:6px;font-size:.74rem;color:#7a6420}
+.pry-kpi{display:block;margin-top:3px;font-size:.74rem;color:var(--muted);line-height:1.5}
+.pry-kpi b{color:var(--text,#0f2b2a);font-weight:700}
+.pry-kpi[hidden]{display:none}
 /* 🛏️ (17/11) Lo vendido por línea: tarjeta por marca, la línea con su total y debajo sus productos a la vista */
 .plin-cab{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
 .plin-cab > div:first-child{min-width:0;flex:1 1 320px}
@@ -16575,6 +16578,46 @@ function pubDash(ym, forzar){
   }).catch(function(x){ e.estado='error'; e.err=String((x && x.message)||x); }).then(function(){ e.t=Date.now(); pubRepintar(); });
   return e;
 }
+/* 📥 (17/11; dueño, con la captura de «Por vendedor»: «tenemos espacio para poner ahí KPIs, como leads, conversión…»)
+   LOS NÚMEROS DE KOMMO DE CADA VENDEDOR, debajo de su nombre en «👤 Por vendedor». SOLO MIRA. ⚠️ No se calculan acá: salen del dashboard publicado
+   (el mismo `window.PANEL_DATA.team` que muestra el dashboard: `leads` del mes, `cierres` de esos leads, `conv` = conversión del mes, `promTxt` = cuánto
+   tarda en contestar, `respPct` = de sus leads, cuántos ya atendió). Heaven = el dashboard de este sitio (`pubDashUrl`); Sueña = el de su repo
+   (`PRY_KPI_FUENTES`). El mismo mes que se mira (uno anterior, su archivo del historial); si el dashboard es de otro mes o no se puede leer, no se
+   muestra nada. Se lee cada 10 min como mucho y se pinta en los lugares (`[data-kpi]`) sin rearmar la lista. Playwright solo con `PRY_KPI_PRUEBA`
+   (la lectura pasa por `pubDashTraer`). `tests/test_pry_kpi.js`. */
+var PRY_KPI_FUENTES=['', '../MULTIESPUMAS-VISCARRA/'], PRY_KPI={};
+function pryKpiVa(){ try{ return vdVa('PRY_KPI_PRUEBA'); }catch(e){ return false; } }
+function pryKpiClave(n){ return sinTildes(String(n||'')).toLowerCase().replace(/\s+-\s+.*$/, '').replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+function pryKpiTraer(ym){
+  var c=PRY_KPI[ym];
+  if(c && (c.lee || Date.now()-c.t<PUB_DASH_CADA)) return c;
+  c=PRY_KPI[ym]={ lee:true, t:Date.now(), team:(c && c.team)||{} };
+  Promise.all(PRY_KPI_FUENTES.map(function(base){
+    var p; try{ p=conTopeDuro(Promise.resolve(pubDashTraer(base+pubDashUrl(ym))), 20000, 'tardo_dashboard'); }catch(x){ p=Promise.reject(x); }
+    return Promise.resolve(p).then(function(html){ var D=pubDashDe(html); return (D && pubDashYm(D)===ym) ? (D.team||[]) : []; }).catch(function(){ return []; });
+  })).then(function(L){
+    var T={}; L.forEach(function(team){ team.forEach(function(v){ if(v && v.name) T[pryKpiClave(v.name)]=v; }); });
+    c.team=T; c.lee=false; c.t=Date.now(); pryKpiPintar(ym);
+  });
+  return c;
+}
+function pryKpiTxt(v){
+  if(!v) return '';
+  var n=function(x){ return String(x).replace('.', ','); }, P=[];
+  P.push('📥 <b>'+(Number(v.leads)||0)+'</b> leads');
+  P.push('✅ <b>'+(Number(v.cierres)||0)+'</b> cierres');
+  if(v.conv!=null) P.push('🎯 <b>'+esc(n(v.conv))+' %</b> conversión');
+  if(v.promTxt && v.promTxt!=='—') P.push('⏱ responde en <b>'+esc(v.promTxt)+'</b>');
+  if(v.respPct!=null) P.push('<b>'+(Number(v.respPct)||0)+' %</b> atendidos');
+  return P.join(' · ');
+}
+function pryKpiPintar(ym){
+  var c=PRY_KPI[ym]; if(!c) return;
+  [].forEach.call(document.querySelectorAll('#pry-vendedores .pry-kpi[data-kpi]'), function(el){
+    var v=c.team[el.getAttribute('data-kpi')]; el.innerHTML=v ? pryKpiTxt(v) : ''; el.hidden=!v;
+  });
+}
+function pryKpiPoner(ym){ if(!pryKpiVa() || !document.querySelector('#pry-vendedores .pry-kpi')) return; pryKpiTraer(ym); pryKpiPintar(ym); }
 /* Un canal del dashboard: {nom, ic, leads, cierres, bs} (sin la fila «Cerrados de meses anteriores»). */
 function pubCanales(D){
   return ((D && D.channels)||[]).filter(function(c){ return c && !c.carry && c.name; }).map(function(c){
@@ -19515,7 +19558,7 @@ function renderProyeccion(){
     var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), ab=!!(mom && PRY_MOM_ABIERTO[vk]), det2='';
     if(mom){ PRY_MOM_CTX.filas[vk]=r; if(ab){ try{ det2=pryMomDetHtml(R, _A, r); }catch(e){} } }
     return '<div class="pry-fila'+(mom ? ' pry-toca' : '')+(ab ? ' pry-abre' : '')+'"'+(mom ? (' data-vk="'+esc(vk)+'" role="button" tabindex="0" aria-expanded="'+ab+'" title="Tocá para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs"') : '')+'>'+
-           '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
+           '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small>'+(r.amb==='tienda' && pryKpiVa() ? ('<span class="pry-kpi" data-kpi="'+esc(pryKpiClave(r.vendedor))+'"></span>') : '')+'</div>'+
            pryMedioHtml(_VDB ? m415Html(_VDB, r) : '', _ENT ? pryEntHtml(_ENT, r) : '')+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
            (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+(ab ? '▾ cerrar' : 'ventas · unidades ▸')+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
@@ -19584,6 +19627,7 @@ function renderProyeccion(){
   try{ pryCarreraPoner(R); }catch(e){}   // 🏁 (§4pj, 166) la carrera del mes
   try{ pryCalorPoner(R); }catch(e){}     // 🟩 (§4pj, 167) el calendario de calor
   try{ pubPintar(R); }catch(e){}         // 📣 (15/11, mejora 337) lo que vende cada Bs de publicidad
+  try{ pryKpiPoner(R.ym); }catch(e){}    // 📥 (17/11) leads, conversión y respuesta de cada vendedor (del dashboard de Kommo)
   try{ PRY_LIN_R=R; pryLineasPoner(R); }catch(e){}   // 🛏️ (17/11) lo vendido por línea
   var _pp=document.getElementById('pry-plata'); if(_pp) _pp.innerHTML=pryPlataHtml(R.ym);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
@@ -81194,6 +81238,9 @@ function vdIniciar(){
 .pqs, .mno{ background:#fff; border:1px solid var(--gray-md); border-radius:14px; padding:12px 16px; margin:4px 0 14px; color:var(--text); }
 .pqs{ border-top:4px solid #00B5AD; }
 .mno{ border-top:4px solid #0f766e; }
+.mno-hb{ display:flex; gap:6px; flex-wrap:wrap; }
+.mno-pleg{ padding-top:10px !important; padding-bottom:10px !important; }
+.mno-pl-n{ font-weight:600; color:var(--muted); font-size:.82rem; }
 .pqs-h, .mno-h{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; font-weight:800; font-size:.95rem; }
 .pqs-s, .mno-s{ font-size:.76rem; color:var(--muted); margin:3px 0 10px; line-height:1.4; }
 .pqs-res{ font-size:.92rem; font-weight:700; color:#0f4c4a; background:#f0fdfa; border-radius:10px; padding:8px 11px; margin:0 0 10px; line-height:1.45; }
@@ -81282,6 +81329,7 @@ function pqsRepintar(){ try{ pqsPintar(); }catch(e){} }
 function pqsIr(id){
   var el=document.getElementById(id); if(!el) return;
   if(id==='pry-porque' && !PQS.items) pqsCargar(true);
+  if(id==='pry-mano' && mnoOculta()) mnoOcultar(false);   // 🙈 el botón de arriba la vuelve a mostrar
   try{ var y=el.getBoundingClientRect().top+window.scrollY-(typeof hdrAltoEn==='function' ? hdrAltoEn(el) : 80)-10; window.scrollTo({ top:y, behavior:'smooth' }); }catch(e){ el.scrollIntoView(); }
 }
 /* ── 🧠 la tarjeta del porqué ── */
@@ -81394,10 +81442,20 @@ function mnoVideos(){ return Object.keys(VIDEOS||{}).map(function(k){ return { k
 function mnoEl(v){ return MNO_HOMBRES.test(normNombre(v).toLowerCase()) ? 'él' : 'ella'; }
 function mnoSemana(){ return pqsLunes(diaNegocio()); }
 function mnoItem(){ var s=mnoSemana(); return ((PQS.items && PQS.items.equipo) || []).filter(function(x){ return x.semana===s; })[0] || null; }
+/* 🙈 (17/11; dueño, con la captura: «falta el botón ocultar») plegada en un renglón, por aparato; «👁 Mostrar» o el botón de arriba la abren. */
+function mnoOculta(){ return !!visPref('mnoOculta', false); }
+function mnoOcultar(si){ visPrefSet('mnoOculta', !!si); pqsRepintar(); }
 function mnoHtml(){
   var sem=mnoSemana(), it=mnoItem();
-  var h='<div class="mno" id="pry-mano-box"><div class="mno-h"><span>🤝 Quién necesita una mano esta semana</span>'+
-    (it ? '<button type="button" class="btn btn-ghost btn-sm" id="mno-otra" onclick="mnoPedir(true)"'+(MNO.pidiendo?' disabled':'')+'>'+(MNO.pidiendo ? '⏳ Pidiendo…' : '🔄 Pedirla de nuevo')+'</button>' : '')+'</div>'+
+  if(mnoOculta()){
+    var hab0=(it && it.hab)||{}, n=it ? (it.personas||[]).filter(function(p){ return !hab0[normNombre(p.vend).toLowerCase().replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim()]; }).length : 0;
+    return '<div class="mno mno-pleg" id="pry-mano-box"><div class="mno-h"><span>🤝 Quién necesita una mano esta semana'+
+      (it ? ('<small class="mno-pl-n">'+(n ? (n===1 ? ' · 1 persona pendiente' : (' · '+n+' personas pendientes')) : ' · nadie pendiente')+'</small>') : '')+'</span>'+
+      '<button type="button" class="btn btn-ghost btn-sm" id="mno-mostrar" onclick="mnoOcultar(false)">👁 Mostrar</button></div></div>';
+  }
+  var h='<div class="mno" id="pry-mano-box"><div class="mno-h"><span>🤝 Quién necesita una mano esta semana</span><span class="mno-hb">'+
+    '<button type="button" class="btn btn-ghost btn-sm" id="mno-ocultar" onclick="mnoOcultar(true)">🙈 Ocultar</button>'+
+    (it ? '<button type="button" class="btn btn-ghost btn-sm" id="mno-otra" onclick="mnoPedir(true)"'+(MNO.pidiendo?' disabled':'')+'>'+(MNO.pidiendo ? '⏳ Pidiendo…' : '🔄 Pedirla de nuevo')+'</button>' : '')+'</span></div>'+
     '<div class="mno-s">Solo para vos (con la contraseña). Claude lee lo que ya cuenta el panel de cada persona, sin clientes, y no compara a nadie con nadie: van por nombre.</div>';
   if(!PQS.items) return h+'<div class="pqs-av">'+(PQS.cargando ? '⏳ Leyendo lo guardado…' : 'No se pudo leer lo guardado.')+'</div></div>';
   if(MNO.msg) h+='<div class="pqs-av pqs-mal">'+esc(MNO.msg)+'</div>';
