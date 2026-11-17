@@ -4984,6 +4984,13 @@ function waKmCuando_(seg, B) {
   return (d === B.hoy ? 'de hoy ' : (d === waMasDias_(B.hoy, -1) ? 'de ayer ' : 'del ' + d.slice(8, 10) + '/' + d.slice(5, 7) + ' ')) + x.txt.slice(6);
 }
 /* ── Los avisos de Contabilidad (`__avisos_conta__`, `{v:1, a:[…]}`: `ctaAvLeer` de la página) ── */
+/** 🗓️ (17/11, dueño: «les cuenta mal por cosas de octubre… debería ser desde noviembre») = `ctaAvCuenta` de la página: un aviso cuenta por el
+ *  día del PAGO (`a.f`; sin él, el día del aviso) desde WA_AL_DIA_DESDE (= AL_DIA_DESDE). Los de antes no salen en el «Buen día». */
+var WA_AL_DIA_DESDE = '2026-11-01';
+function waCtaAvCuenta_(a) {
+  var f = String((a && (a.f || (a.t ? new Date(Number(a.t) - 4 * 3600000).toISOString().slice(0, 10) : ''))) || '');
+  return !f || f >= WA_AL_DIA_DESDE;
+}
 function waCtaAvLeer_(fila) {
   var L = [];
   try { var o = JSON.parse(String((fila && fila.observaciones) || '{}')); if (o && Array.isArray(o.a)) L = o.a.filter(function (a) { return a && a.id && a.pid; }); } catch (e) {}
@@ -5038,7 +5045,7 @@ function waBdDatos_(lista, V, B, K) {
     var fa = waContaFecha_(a), fb = waContaFecha_(b);
     return fa < fb ? -1 : (fa > fb ? 1 : (waBdOc_(a) < waBdOc_(b) ? -1 : 1));
   });
-  waCtaAvLeer_(por[WA_CTA_AV_ID]).forEach(function (a) { if (!a.ok && !a.qt && waBdEsDe_(a.vend, V)) av.push(a); });
+  waCtaAvLeer_(por[WA_CTA_AV_ID]).forEach(function (a) { if (!a.ok && !a.qt && waBdEsDe_(a.vend, V) && waCtaAvCuenta_(a)) av.push(a); });
   var km = null;
   if (K) { var uid = kcUsuario_({ usuarios:K.usuarios }, V.nombre); km = uid ? (K.porUid[uid] || []) : null; }
   return { V:V, ent:ent, cob:cob, bs:bs, doc:doc, av:av, km:km, por:por, vacio:!ent.length && !doc.length && !av.length && !(km && km.length) };

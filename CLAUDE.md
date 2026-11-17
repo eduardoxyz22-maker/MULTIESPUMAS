@@ -976,8 +976,9 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
 - **🗓️ El «al día» cuenta desde noviembre** (17/11, dueño: *«les cuenta mal por cosas de octubre… debería ser por faltantes y cosas por hacer desde
   noviembre»*): `AL_DIA_DESDE`='2026-11-01'. Un aviso de Contabilidad cuenta por el día del PAGO (`ctaAvCuenta`, `ctaAvCuentan`); los de antes van
   al final de la lista en gris («De antes de noviembre») y en «Para hacer» como 🗂️ sin color, sin contar para el al día, el bono, el rojo ni Bloki.
-  Kommo igual por el `ts` del borrador. La factura (`DOCV_DESDE`) y el efectivo (`EFE_CERRADO`) ya arrancaban en noviembre. ⚠️ El «Buen día» del
-  `.gs` todavía lista todos los avisos abiertos. `test_al_dia` 7b.
+  Kommo igual por el `ts` del borrador. La factura (`DOCV_DESDE`) y el efectivo (`EFE_CERRADO`) ya arrancaban en noviembre. El «Buen día» del
+  `.gs` 17-a tampoco nombra los de antes (`waCtaAvCuenta_` = `ctaAvCuenta`, `WA_AL_DIA_DESDE`; `test_wa_buen_dia_cierre` 7c/7e). `test_al_dia` 7b.
+  Página PUBLICADA 17/11, versión 2026-11-17-c.
 - **🤖 Las fotos de los avisos se leen solas en CUALQUIER aparato** (17/11, dueño: *«Claude debería hacerlo solo, tiene luz verde total… son
   10-15 en el mes… hablamos de dinero»*): `ctaAvReleer`/`ctaAvLeerPagando` sin la contraseña, cada foto una vez por página (`CTA_AV_RELEO.pedidas`);
   una foto nueva (`iasSubida`) adelanta la revisión. «✓ Ya lo corregí» con una foto sin leer la LEE en ese momento (`ctaAvCorregiDecidir`): coincide
