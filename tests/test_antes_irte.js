@@ -40,9 +40,9 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       saldo: 0, acuenta: 0, pagado: true, metodoPago: '', ts: T('2026-11-12T15:00:00') }, o); };
     var sinDoc = function (o) { var p = P(o); p.productos.forEach(function (x) { delete x.fdoc; delete x.fdocn; }); return p; };
     window._pl = [
-      sinDoc({ id: 'h1' }),                                                                     // hoy, sin factura
+      sinDoc({ id: 'h1', entregado: true }),                                                    // hoy, sin factura (17/11: entregada, si no no se pide)
       P({ id: 'h2', fecha: '2026-11-13', maps: '', entregado: false, pagado: true, metodoPago: 'Efectivo 870 @2026-11-12 #20' }),   // hoy, con factura; mañana sin ubicación; efectivo de hoy
-      sinDoc({ id: 'a1', ts: T('2026-11-11T15:00:00') }),                                       // ayer sin factura: no es de hoy
+      sinDoc({ id: 'a1', ts: T('2026-11-11T15:00:00'), entregado: true }),                      // ayer sin factura: no es de hoy
       P({ id: 'a2', fecha: '2026-11-16', maps: '', ts: T('2026-11-10T15:00:00') }),             // sin ubicación pero para el 16/11: no es del próximo camión
       { id: 'kommo-81', estado: BORRADOR_EST, vendedor: 'Isabel Robledo', cliente: 'LEAD DE HOY', celular: '78888888', saldo: 1000, fecha: '', productos: [], ts: T('2026-11-12T12:00:00') },
       { id: 'kommo-82', estado: BORRADOR_EST, vendedor: 'Isabel Robledo', cliente: 'LEAD VIEJO', celular: '78888877', saldo: 1000, fecha: '', productos: [], ts: T('2026-11-09T12:00:00') },
