@@ -1749,6 +1749,18 @@ html.tema-espuma .logo-h{ background:linear-gradient(100deg,#fff 0 40%,#b8fff8 4
 .pal-kbd{ font-size:.66rem; font-weight:800; border:1px solid rgba(255,255,255,.5); border-bottom-width:2px; border-radius:6px; padding:1px 6px; opacity:.9; white-space:nowrap; }
 @media(max-width:900px){ .pal-kbd{ display:none; } }
 @media(max-width:700px){ .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; font-size:1rem; } .pal-btn-t{ display:none; } }
+/* 📏 (17/11, captura del dueño desde el iPad: «En el iPad se ve así arriba») EL ENCABEZADO EN UN SOLO RENGLÓN. Con la meta del mes al lado del
+   día (378), «Buscar», «💬 Chat» y la campanita, en el iPad acostado no entraba todo y los anillos de los cupos bajaban a un segundo renglón:
+   el encabezado quedaba MÁS alto. `hdrCompactar` (desde `hdrMedir`) achica de a un paso hasta que entra en uno: hc1 sin «Ctrl K» · hc2 «Buscar»
+   y «Chat» en círculo · hc3 la meta sin la barrita ni el nombre del mes · después la cuenta de Black Friday/Navidad (434) más chica y, si igual
+   no entra, sin ella · y recién al final sin el día (`hc-sindia`; los anillos siguen diciendo los cupos). Solo dibujo. */
+html.hc1 .header-in .pal-kbd{ display:none; }
+html.hc2 .header-in > .pal-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; font-size:1rem; }
+html.hc2 .header-in > .pal-btn .pal-btn-t, html.hc2 .header-in > .cht-btn .cht-btn-t{ display:none; }
+html.hc2 .header-in > .cht-btn{ padding:0; width:40px; height:40px; justify-content:center; border-radius:50%; }
+html.hc3 .header-in > .hdr-meta-mini :is(.hmm-bar, .hmm-e){ display:none; }
+html.hc3 .header-in > .hdr-meta-mini::before{ content:'🎯'; }
+html.hc-sindia .header-in > .htitle{ display:none; }
 .pal-ov{ position:fixed; inset:0; z-index:4500; background:rgba(15,40,44,.38); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:flex-start;
   padding:max(calc(9vh / var(--vz,1)), var(--sa-t,0px)) 14px 14px; opacity:0; transition:opacity .16s; }
 .pal-ov.abierta{ opacity:1; }
@@ -3858,11 +3870,16 @@ function hcPintar(hoy){
 function hcAcomodar(){
   var el=HC.el; if(!el || !el.classList.contains('on')) return;
   var hi=el.parentNode, uno=function(){ var t=null, ok=true; [].forEach.call(hi.children, function(c){ if(!ok || !c.offsetWidth || getComputedStyle(c).position==='absolute') return; var y=c.offsetTop+c.offsetHeight/2; if(t===null) t=y; else if(Math.abs(y-t)>c.offsetHeight/2+8) ok=false; }); return ok; };
-  el.classList.remove('hc-chica','hc-mini','hc-no');
-  if(!uno()) el.classList.add('hc-chica');
-  if(!uno()){ el.classList.remove('hc-chica'); el.classList.add('hc-mini'); }
-  if(!uno()){ el.classList.remove('hc-mini'); el.classList.add('hc-no'); }   // ni así: mejor no está (el encabezado no se parte por ella)
-  try{ hdrMedir(); }catch(e){}
+  /* 📏 (17/11) los pasos de la cuenta van ahora en `hdrCompactar`, DESPUÉS de achicar «Buscar», «Chat» y la meta: el mismo orden de siempre
+     (sin la fecha → sin el título → no se ve), pero antes se probaban con los botones grandes y el chat que llegaba después bajaba los anillos. */
+  if(typeof hdrCompactar!=='function'){
+    var hi=el.parentNode, uno=function(){ var t=null, ok=true; [].forEach.call(hi.children, function(c){ if(!ok || !c.offsetWidth || getComputedStyle(c).position==='absolute') return; var y=c.offsetTop+c.offsetHeight/2; if(t===null) t=y; else if(Math.abs(y-t)>c.offsetHeight/2+8) ok=false; }); return ok; };
+    el.classList.remove('hc-chica','hc-mini','hc-no');
+    if(!uno()) el.classList.add('hc-chica');
+    if(!uno()){ el.classList.remove('hc-chica'); el.classList.add('hc-mini'); }
+    if(!uno()){ el.classList.remove('hc-mini'); el.classList.add('hc-no'); }   // ni así: mejor no está (el encabezado no se parte por ella)
+  }
+  try{ hdrMedir(true); }catch(e){}
 }
 function hcTocar(){
   var D=hcDatos(); if(!D || D.k!=='bf' || !UNLOCKED) return;
@@ -29439,7 +29456,35 @@ function updateStats(o){
    arriba de todo (`HDR_SUBE`, con margen para que no tiemble en el borde). El alto que se esconde pasa a margen del encabezado, así que la
    página no salta (tampoco en el iPad, que no compensa el scroll solo). `--hdr-h` = lo que tapa arriba, para lo que se pega debajo. */
 var HDR={ chico:false, full:0, ruta:0 }, HDR_BAJA=120, HDR_SUBE=24;
-function hdrMedir(){
+/* 📏 (17/11) Un solo renglón: si algo del encabezado bajó a un segundo renglón, un paso más chico (`html.hc1`…`hc4`, ver el CSS). Con
+   `desde0` (al cambiar el tamaño de la ventana) vuelve a probar desde el tamaño entero. Con el encabezado chico (al bajar) no mide: ahí ya
+   va todo achicado. En el celular (≤ 560 px) tiene su propio arreglo. */
+var HDR_COMP=0, HDR_COMP_MAX=7;   // 1-3 botones y meta · 4-6 la cuenta de la 434 (hc-chica, hc-mini, hc-no) · 7 sin el día
+function hdrEnvuelto(){
+  var hi=document.querySelector('.header-in'), lg=hi && hi.querySelector('.logo'); if(!hi || !lg) return false;
+  var b=lg.getBoundingClientRect().bottom;
+  return [].some.call(hi.children, function(c){
+    if(c===lg || c.hidden) return false;
+    var cs=getComputedStyle(c); if(cs.display==='none' || cs.position==='absolute' || cs.position==='fixed') return false;
+    var r=c.getBoundingClientRect(); return r.width>0 && r.height>0 && r.top>=b-2;
+  });
+}
+function hdrCompPoner(n){
+  var h=document.documentElement;
+  for(var i=1;i<=3;i++) h.classList.toggle('hc'+i, i<=n);
+  h.classList.toggle('hc-sindia', n>=7);
+  var c=document.getElementById('hdr-cuenta');
+  if(c){ c.classList.toggle('hc-chica', n===4); c.classList.toggle('hc-mini', n===5); c.classList.toggle('hc-no', n>=6); }
+  HDR_COMP=n;
+}
+function hdrCompactar(desde0){
+  hdrCompPoner((desde0 || window.innerWidth<=560) ? 0 : HDR_COMP);
+  if(HDR.chico || window.innerWidth<=560) return;
+  var n=HDR_COMP;
+  while(n<HDR_COMP_MAX && hdrEnvuelto()){ n++; hdrCompPoner(n); }
+}
+function hdrMedir(desde0){
+  try{ hdrCompactar(desde0===true); }catch(e){}
   var h=document.querySelector('.header'), r=h && h.querySelector('.h-ruta'); if(!h) return;
   if(HDR.chico) HDR.full=h.offsetHeight+HDR.ruta;
   else { HDR.ruta=r ? r.offsetHeight : 0; HDR.full=h.offsetHeight; }
@@ -29478,7 +29523,11 @@ function hdrArrancar(){
   try{ hdrBajoAplicar(); }catch(e){}               // 🖥️ (378) en las compus de 768 de alto, más bajo
   hdrMedir();
   window.addEventListener('scroll', hdrScroll, { passive:true });
-  window.addEventListener('resize', function(){ try{ hdrBajoAplicar(); }catch(e){} hdrMedir(); });
+  window.addEventListener('resize', function(){ try{ hdrBajoAplicar(); }catch(e){} hdrMedir(true); });
+  /* 📏 (17/11) Lo que entra al encabezado después (el botón del chat, la cuenta de Black Friday, la meta) puede bajar los anillos: se mira
+     cada vez que el renglón cambia de tamaño. */
+  var hi=document.querySelector('.header-in');
+  if(hi && window.ResizeObserver){ try{ var hiAlto=0; new ResizeObserver(function(){ var a=hi.offsetHeight; if(a===hiAlto) return; hiAlto=a; if(!HDR.chico) hdrMedir(); }).observe(hi); }catch(e){} }
   /* (27/10, §4ni) Si el «terminó de esconderse» llega cuando ya se volvió a subir (con la máquina cargada pasa), la ciudad está volviendo a
      crecer desde 0: medir ahí dejaba el encabezado entero en 84 px. Se mide solo con la ciudad quieta (su propio fin de transición). */
   var r=document.querySelector('.header .h-ruta'); if(r) r.addEventListener('transitionend', function(e){ if(e.target!==r || e.propertyName!=='height' || HDR.chico) return; try{ if(r.getAnimations && r.getAnimations().length) return; }catch(x){} hdrMedir(); });

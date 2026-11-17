@@ -18977,3 +18977,20 @@ entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGA
 - Pruebas: `test_generar_integridad` §26 (82 bien; el escenario `LEADS_26` / `correr_26`, también `--solo-datos-335-dobles`), `test_panel_meta` §6
   (27 bien). Las demás del dashboard (`test_actualizar_espera`, `test_bf_numeros`, `test_halloween`, `test_navidad`, `test_paneldup`,
   `test_seguimiento_sin_cloudflare`, `test_temas_mejoras`, `test_duplicados.py`) siguen en verde.
+- **📏 El encabezado en un solo renglón (17/11)** (dueño, con dos capturas del iPad instalado a las 19:59-20:00: *«En el iPad se ve así arriba»*). El
+  iPad acostado instalado queda con ≤ 800 px de alto útil → «el encabezado bajo» de la 378 (`hdr-bajo`): la meta sube al lado del día en versión
+  chica, y con «Buscar Ctrl K», «💬 Chat» (la 344, que entra después) y la campanita el renglón no alcanzaba: los anillos AM/PM bajaban a un segundo
+  renglón a la izquierda y el encabezado medía 193 px (más alto que sin la 378). La cuenta de Black Friday (434) ya tenía su propio achique
+  (`hcAcomodar`) pero se probaba con los botones grandes y antes de que llegara el chat. Reproducido con Playwright a 1180 × 790 con la franja del
+  iPad (`--sa-t` 24) y `navigator.webdriver` en false (todo prendido como en el aparato): igual a la captura.
+  · **Arreglo** (`hdrCompactar`/`hdrCompPoner`/`hdrEnvuelto`, llamado desde `hdrMedir`; `ResizeObserver` de `.header-in`; al cambiar la ventana
+    `hdrMedir(true)` vuelve a probar desde 0): pasos en orden hasta que todo entra en un renglón — 1 sin «Ctrl K» · 2 «Buscar» y «Chat» en círculo ·
+    3 la meta chica sin barrita ni el nombre del mes (queda «🎯 67 % → 108 %») · 4-6 la cuenta sin la fecha → sin el título → no se ve · 7 sin el día.
+  · **Medido**: iPad 1180 × 790 → 132 px (antes 193, con la franja de la hora), con el día, la meta, la cuenta de Black Friday y los anillos a la
+    derecha; 1366 × 768 paso 2; 1280 × 720 paso 3; 1024 × 700 paso 6 (sin la cuenta); 1440 × 900 y 1920 × 1080 nada; iPad parado (820) paso 6.
+  · `tests/test_hdr_un_renglon.js` (16). `test_v434_cuenta_tema` 4c-4e cambiadas a conciencia (a 1.000 px la cuenta ahora entra chiquita, porque
+    antes se achican «Buscar» y «Chat»; el «no se ve» se prueba a 760). Verdes también: test_arriba_4iw, test_chat, test_estetica_4mo, test_hdr_bajo,
+    test_hdr_meta, test_ipad_franja, test_mis_ancha, test_rev_4jd, test_semana, test_v429, test_v435, test_vidrio_agrandar, test_dia_pegado,
+    test_fondo_noche, test_halloween, test_navidad, test_sin_barra, test_temas_mejoras, test_v431, test_version_nueva, test_visual_4pj, test_bloki,
+    test_asistente, test_quien, test_modo_practica, test_mall_analisis, test_mejoras_3_10_11, test_pry_indice. (test_estetica_4mo y test_v429 2e
+    fallaron una vez con 13 pruebas a la vez —el encabezado chico medido antes de terminar de esconder la ciudad—; solas y de a 6, verdes.)
