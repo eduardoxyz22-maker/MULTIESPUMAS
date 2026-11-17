@@ -27110,6 +27110,7 @@ function submitPedido(){
           if(rptSumarPreguntar(rec, isEdit, guardarYa)) return;          // 🏪 (15/11, 304) ¿se suma a la RPT que ya va a esa tienda? (solo si la vendedora lo acepta)
           guardarYa();
         };
+        if(!_avisa && !fabFrenoGuardar(rec.vendedor, prev, isEdit, _deBorrador)) return;   // 🏭⛔ (17/11) lo que se fabrica no se promete antes
         if(_avisa) _fin(); else saldoPreguntarAlGuardar(prev, isEdit, _deBorrador, _fin);   // 🧾 con la planilla recién bajada (ver arriba) · 📦 sin día no se pregunta: el cuadrito ya lo dice
       });
     });
@@ -27117,6 +27118,7 @@ function submitPedido(){
   }
   fxDupPreguntar(function(){                                             // 🧰 (§4ih) ¿el mismo pedido dos veces?
     var _fin=function(){ if(rptSumarPreguntar(rec, isEdit, guardarYa)) return; guardarYa(); };   // 🏪 (15/11, 304)
+    if(!_avisa && !fabFrenoGuardar(rec.vendedor, prev, isEdit, _deBorrador)) return;   // 🏭⛔ (17/11)
     if(_avisa) _fin(); else saldoPreguntarAlGuardar(prev, isEdit, _deBorrador, _fin);   // 🧾 sin conexión: con lo que hay
   });
   }   // fin de `seguirAlGuardar` (idea 119)
@@ -37518,6 +37520,15 @@ function reproStockAvisos(p, fNueva, tNueva){
 /* ❓ (16/11) Con `otraVez` (lo que preguntó, para volver a correrlo), la ventana del panel: devuelve null mientras espera (`!null` corta
    igual que «Cancelar»). Sin `otraVez`, la del navegador, como antes. */
 function reproStockConfirmar(p, f, t, otraVez){
+  /* 🏭⛔ (17/11) Lo que se fabrica no se pasa a un día al que no llega: frena (Eduardo, ROHO y Administración con la contraseña, libres). */
+  if(fabFrenoActivo() && p && !fabFrenoLibre(p.vendedor)){
+    var _fr=fabFrenoPedido(p, f);
+    if(_fr.length){
+      avisoVentana('⛔ Para el '+saldoDiaTxt(f)+' no llega a fabricarse:\n\n   • '+fabFrenoLineas(_fr, f).join('\n   • '),
+        { icono:'🏭', titulo:'Para el '+saldoDiaTxt(f)+' no llega a fabricarse', sub:(ocEtiq(p.oc)||'El pedido')+' no se movió: elegí otro día', lineas:fabFrenoLineas(_fr, f), si:'Entendido' });
+      return false;
+    }
+  }
   var st=reproStockAvisos(p, f, t); if(!st.length) return true;
   var _t='📦 Ojo con el stock (la reserva por fecha del cuadrito) al adelantar este pedido al '+fmtFecha(f)+':\n\n   • '+st.join('\n   • ')+
                  '\n\nAvisá a los vendedores y a logística (o mandá a producir).\n\n• Aceptar: reprogramar igual.\n• Cancelar: no mover nada.';
@@ -52547,6 +52558,60 @@ function saldoPreguntaDatos(prev, isEdit, deBorrador){
   return { lineas:lineas, items:items, primero:primero, aQuien:aQuien };
 }
 
+/* 🏭⛔ (17/11, el dueño, con el 11-152 —una medida especial cargada el 13/11 para el 14/11 y movida por la vendedora al 18/11—: «¿cómo es
+   posible que un vendedor reprograme un pedido… a una medida especial y le permita para el día siguiente? si sabemos que las medidas
+   especiales se fabrican y tienen tiempo de espera» → «sí, Eduardo y ROHO libres»). Hasta acá la línea roja «no llega: programá desde…»
+   solo avisaba (27/09). Ahora FRENA, para lo que hay que fabricar: 📐 medida especial, 🏭 lo que logística ya mandó a fabricar para
+   ESTE pedido, ⏳ lo que viene de fábrica y 🏭 «no hay: mandar a producir». La fecha tiene que ser la del cuadrito («desde…») o después.
+   Al cargar, al editar (solo si cambia la fecha o el producto: `saldoFilasAGuardar`) y al reprogramar (`reproStockConfirmar`, los cuatro
+   caminos). Libres: Eduardo y ROHO (`esVendedorLite`) y Administración con la contraseña (`UNLOCKED`: le sale la pregunta de siempre).
+   📥 Moreno y 🚚 la recogida siguen solo avisando (el dueño nombró lo que se fabrica). En Playwright solo con `FAB_FRENO_PRUEBA`. */
+var FAB_FRENO_TIPOS={ especial:'📐 medida especial: se fabrica a pedido', fabcli:'🏭 se está fabricando para este pedido', prod:'⏳ está en producción', pedir:'🏭 no hay: hay que mandar a producir' };
+function fabFrenoActivo(){ return !(navigator.webdriver && !window.FAB_FRENO_PRUEBA); }
+function fabFrenoLibre(vend){ return !!UNLOCKED || esVendedorLite(vend||''); }
+function fabFrenoTxt(nom, cant, v){ return nom+(cant>1?(' ×'+cant):'')+' — '+FAB_FRENO_TIPOS[v.tipo]+' · se puede entregar '+(saldoDesdeTxt(v)||'más adelante')+'.'; }
+/* Los renglones del formulario que la fecha elegida no alcanza a fabricar. */
+function fabFrenoForm(prev, isEdit, deBorrador){
+  var out=[], fecha=saldoFechaForm(); if(!fecha) return out;
+  var filas; try{ filas=saldoFilasAGuardar(prev, isEdit, deBorrador); }catch(e){ return out; }
+  var sinId=saldoSinId();
+  filas.forEach(function(r){ var v; try{ v=saldoVeredictoFila(r.f, sinId, fecha); }catch(e){ return; }
+    if(v && v.fechaCorta && FAB_FRENO_TIPOS[v.tipo]) out.push({ txt:fabFrenoTxt(saldoNombre(r.f.x), r.f.total, v), box:r.f.box, desde:v.desde||'' }); });
+  return out;
+}
+/* Los productos de un pedido ya guardado que no llegan a la fecha `f` (para 📅 Reprogramar). */
+function fabFrenoPedido(p, f){
+  var out=[];
+  if(!p || !/^\d{4}-\d{2}-\d{2}$/.test(String(f||'')) || p.entregado || esATC(p.oc) || esVentaTienda(p) || esFilaSistema(p)) return out;
+  var por={};
+  (p.productos||[]).forEach(function(x){
+    if(!x || esProdDeTienda(x) || recogeDeTienda(x) || !(Number(x.cant)>0)) return;
+    try{
+      var xx=saldoMedidaGuardada(x), inf=stockInfo(xx);
+      var fl=saldoClasificar({ x:xx, k:inf.k, cat:!!inf.cat, completo:true }, null, true);
+      if(!fl.esp && !fl.fab && (!STOCK_CARGADO || !inf.k || inf.k==='|' || fl.codOtro)) return;   // lo del almacén, solo con el stock cargado
+      if(!por[fl.g]) por[fl.g]={ f:fl, total:0, nom:saldoNombre(xx) };
+      por[fl.g].total+=Number(x.cant)||0;
+    }catch(e){}
+  });
+  Object.keys(por).forEach(function(g){ var o=por[g], v; o.f.total=o.total;
+    try{ v=saldoVeredictoFila(o.f, String(p.id), f); }catch(e){ return; }
+    if(v && v.fechaCorta && FAB_FRENO_TIPOS[v.tipo]) out.push({ txt:fabFrenoTxt(o.nom, o.total, v), desde:v.desde||'' }); });
+  return out;
+}
+function fabFrenoLineas(L, f){
+  return L.map(function(x){ return x.txt; }).concat(['Elegí ese día o uno después. Si de verdad se puede antes, lo cambia Administración con la contraseña.']);
+}
+/* Al guardar el formulario: true = sigue (no hay nada o está libre); false = frenado (ya se dijo). */
+function fabFrenoGuardar(vend, prev, isEdit, deBorrador){
+  if(!fabFrenoActivo() || fabFrenoLibre(vend)) return true;
+  var L=fabFrenoForm(prev, isEdit, deBorrador); if(!L.length) return true;
+  var f=saldoFechaForm();
+  avisoVentana('⛔ Para el '+saldoDiaTxt(f)+' no llega a fabricarse:\n\n   • '+fabFrenoLineas(L, f).join('\n   • '),
+    { icono:'🏭', titulo:'Para el '+saldoDiaTxt(f)+' no llega a fabricarse', sub:'No se guardó: cambiá la fecha de entrega', lineas:fabFrenoLineas(L, f), si:'✏️ Cambiar la fecha' });
+  try{ var fe=document.getElementById('f-fecha'); if(fe){ fe.scrollIntoView({block:'center'}); fe.focus(); } }catch(e){}
+  return false;
+}
 /* ---- 📦 El libro de reservas del servidor (02/10, §4hj) ----
    El dueño: *«Dos vendedores que guardan la última unidad en los mismos segundos la venden dos veces: la revisión del saldo
    tendría que estar también en el servidor»*. La pregunta de arriba sale con la planilla recién leída, pero si A y B leen
@@ -69527,7 +69592,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-d';
+var PANEL_V='2026-11-17-e';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
