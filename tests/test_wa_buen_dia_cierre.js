@@ -167,8 +167,11 @@ const FIX = [
   P('c9', 'Carola Chavez', { oc: '11-109', fecha: HOY, nroDia: 8, entregado: true, saldo: 999 }),
   P('ct', 'Carola Chavez', { oc: '11-110', fecha: '', turno: '', zona: 'Tienda', direccion: 'Salió de tienda', ts: TS('2026-11-05') }),
   P('kommo-555', 'Carola Chavez', { oc: '', fecha: '', estado: 'Borrador Kommo', ts: TS('2026-11-09'), saldo: 5000 }),
+  // (17/11) solo entregadas: la factura se pide recién con la entrega hecha. c1 y c4 son de HOY sin ✅ (todavía no); estas dos ya salieron el sábado
+  P('cv1', 'Carola Chavez', { oc: '11-111', fecha: '2026-11-07', entregado: true, ts: TS('2026-11-03') }),
+  P('cv4', 'Carola Chavez', { oc: '11-114', fecha: '2026-11-07', ts: TS('2026-11-04'), productos: [{ desc: 'SOMIER ORO', medida: '140x190', cant: 1, precio: 2000, fdoc: 'R' }] }),
   // Maria: una venta sin factura (y una de hoy CON factura, del cierre)
-  P('m1', 'Maria Flores', { oc: '11-201', ts: TS('2026-11-06') }),
+  P('m1', 'Maria Flores', { oc: '11-201', ts: TS('2026-11-06'), fecha: '2026-11-09' }),   // (17/11) solo entregadas: salió ayer
   // Mirian: lo de hoy ya entregado → nada que avisarle
   P('mi1', 'Mirian Salazar', { oc: '11-401', fecha: HOY, entregado: true }),
   // Eduardo: tiene entrega hoy, pero no recibe el buen día (y en el cierre cuenta como entrega)
@@ -282,7 +285,7 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
     chk('3b {{3}} sus entregas de hoy sin ✅: la mañana primero, 6 a la vista y «y 2 más» (sin la ✅, la venta de tienda ni el borrador)',
         c[2] === '8 pedidos · 11-101 · 11-102 · ATC 11-005 · 11-104 · 11-105 · 11-106 y 2 más', c[2]);
     chk('3c {{4}} lo de cobrar en la puerta (la ATC no se cobra)', c[3] === 'Bs 3.450 en 2 pedidos', c[3]);
-    chk('3d {{5}} sus ventas sin factura o remisión desde el 01/11 (la «R» sin N° también; la venta de tienda también; la ATC no)', c[4] === '3 ventas · 11-101 · 11-104 · 11-110', c[4]);
+    chk('3d {{5}} sus ventas ENTREGADAS sin factura o remisión desde el 01/11 (la «R» sin N° también; la venta de tienda también; la ATC no; las de hoy sin ✅, todavía no)', c[4] === '3 ventas · 11-111 · 11-114 · 11-110', c[4]);
     chk('3e {{6}} Kommo: 2 sin responder (el bot de Kommo no contesta por ella; lo de hace 3 días no cuenta), el más viejo de ayer', c[5] === '2 leads (el más viejo, de ayer 21:40)', c[5]);
     chk('3f {{7}} los avisos de Contabilidad abiertos (ni el corregido ni el quitado), con cuántos son solo la fecha', c[6] === '2 avisos · 11-101 · 11-105 (1 solo la fecha de la foto)', c[6]);
     chk('3g Maria («Maria» en WA_VENDEDORAS = Maria Flores): sin entregas, nada que cobrar, 1 venta sin factura, Kommo al día (contestado en el mismo segundo)',
@@ -606,7 +609,8 @@ const eventos = (S) => S.kommo.llamadas.filter(u => /\/events/.test(u));
         !tos(S).some(t => /5917000000[23]/.test(t)) && salteados(S).length === 0, { a: tos(S), hoja: S.hoja().map(f => f[3] + ' ' + f[4] + ' ' + f[7] + ' ' + f[8]) });
     const c = (bd(S).find(x => x.to === '59170000001') || { p: [] }).p, mi = (bd(S).find(x => x.to === '59170000004') || { p: [] }).p;
     chk('9d Carola: el domingo no sale el camión → «Hoy se entregan: ninguno» y «nada» por cobrar (aunque un pedido quedó con fecha de domingo); lo demás, igual',
-        JSON.stringify(c) === JSON.stringify(['Carola', 'domingo 15/11', 'ninguno', 'nada', '3 ventas · 11-101 · 11-104 · 11-110', 'ninguno', '2 avisos · 11-101 · 11-105 (1 solo la fecha de la foto)']), c);
+        // (17/11) solo entregadas: el domingo las de HOY del martes (11-101, 11-104) ya pasaron y cuentan, más las dos del sábado 07/11 (11-111, 11-114)
+        JSON.stringify(c) === JSON.stringify(['Carola', 'domingo 15/11', 'ninguno', 'nada', '5 ventas · 11-101 · 11-111 · 11-104 · 11-114 · 11-110', 'ninguno', '2 avisos · 11-101 · 11-105 (1 solo la fecha de la foto)']), c);
     chk('9e Mirian: su lead de hoy', JSON.stringify(mi) === JSON.stringify(['Mirian', 'domingo 15/11', 'ninguno', 'nada', 'ninguna', '1 lead (de hoy 08:00)', 'ninguno']), mi);
     chk('9f Kommo se lee UNA vez en la vuelta (los usuarios, una vez), aunque son 4 vendedoras', S.kommo.llamadas.filter(u => /\/users/.test(u)).length === 1 && eventos(S).length === 2,
         { users: S.kommo.llamadas.filter(u => /\/users/.test(u)).length, events: eventos(S).length });
