@@ -51271,11 +51271,16 @@ function stockCuantoPedir(o){
 }
 /* 🎯 (18/10, §4ls) El objetivo y el punto de pedido EN PALABRAS, con los MISMOS números de la cuenta (`stockObjetivo`, `stockLibreObj`):
    el Plan, la tabla, «Cómo se calcula» y la copia para la fábrica dicen esto y nada calculado aparte. */
-function stockObjCorto(o){   // «tener 14 · pedí al bajar a 11 · libre 9»
+function stockObjCorto(o){   // «tener 14 · pedir cuando queden 11 · libre 9»
   if(!stockObjActivo(o)) return '';
   var l=stockLibreObj(o);
-  return 'tener '+stockUnid(o.objetivo)+' · pedí al bajar a '+stockUnid(o.puntoPedido)+(l!=null?(' · libre '+stockUnid(l)):'');
+  return 'tener '+stockUnid(o.objetivo)+' · pedir cuando queden '+stockUnid(o.puntoPedido)+(l!=null?(' · '+stockLibreTxt(l)):'');
 }
+/* 🧮 (17/11, dueño con el Plan en la mano: «¿Pedir 3 rota +5? ¿En total 8 o cómo? Logística se confundirá si ni yo entendí») «Tener» ya
+   INCLUYE los días de reserva: el número es el total. La etiqueta dice solo «rota»/«cayendo» y abajo «con N días de reserva»; lo libre en
+   negativo es lo que FALTA para lo vendido. */
+function stockLibreTxt(l){ l=Number(l)||0; return l<0 ? ('faltan '+stockUnid(-l)+' para lo vendido') : ('libre '+stockUnid(l)); }
+function stockObjReservaTxt(o){ var d=Number(o && o.objExtra)||0; return d>0 ? ('ya con '+d+(d===1?' día':' días')+' de reserva · ') : ''; }
 /* 📈 (01/11, §4od) LA CLASE del objetivo, para que se vea por qué un producto tiene más: «rota» (+STOCK_OBJ_EXTRA_ROTA días), «cayendo»
    (+STOCK_OBJ_EXTRA) o nada (las almohadas siguen con lo suyo). La etiqueta del Plan (`.pl-clase`) y la frase de «Cómo se calcula» salen de
    `o.objClase`/`o.objMuCorta`, que deja `stockObjetivo`: ninguna cuenta aparte. */
@@ -51301,7 +51306,7 @@ function stockObjClaseHtml(o){
   return ' <span class="pl-clase pl-cl-'+o.objClase+'" title="'+esc(cae
     ? ('Viene cayendo: en los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles'+comp+' vende '+stockNum(o.objMuCorta||0,2)+' por día hábil, menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % de los '+stockNum(o.objMuLarga||0,2)+' de '+STOCK_OBJ_VENTANA+' días. Objetivo = punto de pedido + '+o.objExtra+' día de venta.')
     : ('Rota y no viene cayendo: en los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles'+comp+' vende '+stockNum(o.objMuCorta||0,2)+' por día hábil contra '+stockNum(o.objMuLarga||0,2)+' en '+STOCK_OBJ_VENTANA+'. Objetivo = punto de pedido + '+o.objExtra+' días de venta.'))+'">'+
-    (cae ? 'cayendo' : 'rota')+' +'+o.objExtra+'</span>'+
+    (cae ? 'cayendo' : 'rota')+'</span>'+
     (stockObjFalto(o) ? (' <span class="pl-clase pl-cl-falto" title="'+esc(stockObjFaltoTxt(o))+'">¿cayó o faltó?</span>') : '');
 }
 function stockObjClasePorque(o){   // el paréntesis de «Cómo se calcula»
@@ -68248,7 +68253,7 @@ function stockPlanHtml(d, lista){
       '<td data-l="Qué hacer hoy" class="pl-q"><span class="pl-que pl-'+(x.g||'gris')+'">'+(x.g==='ya'?'<i class="late-dot"></i>':'')+sfAccion(o)+'</span>'+planYaHtml(o)+'</td>'+
       /* 🎯 (18/10, §4ls, decisión 4) El objetivo y el punto de pedido de cada producto (`stockObjetivo`): lo que rota se pide hasta el
          objetivo cuando lo libre baja al punto de pedido; lo demás, «a pedido» (solo lo vendido). */
-      '<td data-l="Tener" class="pl-tener">'+(stockObjActivo(o) ? ('<b>'+stockUnid(o.objetivo)+'</b>'+stockObjClaseHtml(o)+'<small>pedí al bajar a '+stockUnid(o.puntoPedido)+(h!=null?(' · libre '+stockUnid(stockLibreObj(o))):'')+'</small>')
+      '<td data-l="Tener" class="pl-tener">'+(stockObjActivo(o) ? ('<b>'+stockUnid(o.objetivo)+'</b>'+stockObjClaseHtml(o)+'<small>'+stockObjReservaTxt(o)+'pedir cuando queden '+stockUnid(o.puntoPedido)+(h!=null?(' · '+stockLibreTxt(stockLibreObj(o))):'')+'</small>')
         : '<span class="pl-cero">a pedido</span>')+'</td>'+
       '<td data-l="Pedir · 7 días" class="pl-p7">'+num(x.p7)+'</td>'+
       '<td data-l="Pedir · 15 días (incluye los 7)" class="pl-p15">'+num(x.p15)+'</td>'+
@@ -68278,7 +68283,7 @@ function stockPlanHtml(d, lista){
       (filas || '<tr><td colspan="9" class="pl-vacio">Nada con este filtro.</td></tr>')+'</tbody></table></div>'+
     planNombreHtml(d, 'plan')+   // ❓ (15/11, mejora 316)
     iapHtml()+   // 🧠 (16/11, mejora 360) lo escrito a mano, con lo que propone Claude
-    ayudaComo('plan', '<div class="pl-ley">🎯 <b>Tener</b>: lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>')+
+    ayudaComo('plan', '<div class="pl-ley">🎯 <b>Tener</b> es el TOTAL que hay que tener (ya incluye los días de reserva: no se suma nada encima); «Pedí N ya» es lo que falta para llegar a ese total. Lo que rota se pide hasta el objetivo cuando lo libre (PTF + Banzer + lo que viene − lo vendido para los próximos '+STOCK_HORIZ_VENDIDO+' días) baja al punto de pedido: la venta de '+(STOCK_OBJ_FABRICA+STOCK_OBJ_REVISION)+' días hábiles ('+STOCK_OBJ_FABRICA+' de fábrica + '+STOCK_OBJ_REVISION+' de revisión) más un margen; el objetivo, <b>'+STOCK_OBJ_EXTRA_ROTA+' días</b> más si <span class="pl-clase pl-cl-rota">rota</span> y no viene cayendo, '+STOCK_OBJ_EXTRA+' si viene <span class="pl-clase pl-cl-cayendo">cayendo</span> (los últimos '+STOCK_OBJ_CAIDA_VENTANA+' días hábiles completos venden menos del '+Math.round(STOCK_OBJ_CAIDA_UMBRAL*100)+' % del ritmo de '+STOCK_OBJ_VENTANA+'; «¿cayó o faltó?» = quizá fue falta de stock); las almohadas, '+STOCK_OBJ_EXTRA_ALMOHADA+'. Primero se trae de Moreno y lo que falta se fabrica. Lo que no rota, «a pedido»: solo lo vendido.</div>')+
     (F.length>PLAN_TOPE ? ('<button type="button" class="btn btn-ghost btn-sm" onclick="PLAN_TODOS=!PLAN_TODOS;planRepintar()">'+(PLAN_TODOS?'🙈 Ver solo los primeros '+PLAN_TOPE:('👁️ Ver los '+(F.length-PLAN_TOPE)+' que siguen'))+'</button>') : '')+
   '</div>';
 }

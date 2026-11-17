@@ -345,6 +345,9 @@ Propiedades del script.
     `o.objSinHoy`. Almohadas siguen con `STOCK_OBJ_EXTRA_ALMOHADA`=5; lo que no rota y lo discontinuado siguen sin objetivo.
     ⚠️ Nada se calcula aparte: 7 / 15 / 30 días, el mes, «Pedido a producción» y «Qué va a dónde» salen de `o.objS` como antes (bajar
     `STOCK_OBJ_EXTRA_ROTA` a 1 los baja a todos); «Se corta» no se mueve (sigue con `o.porDia`).
+    · 🧮 (17/11, dueño: *«¿Pedir 3 rota +5? ¿En total 8 o cómo?»*) «Tener» es el TOTAL (ya incluye la reserva): la etiqueta dice solo «rota» /
+      «cayendo», abajo «ya con N días de reserva · pedir cuando queden X · libre Y» y lo libre negativo «faltan N para lo vendido»
+      (`stockObjReservaTxt`, `stockLibreTxt`); la leyenda arranca diciéndolo. Los números no cambiaron.
     · En el Plan, la celda «Tener» lleva la etiqueta `.pl-clase` («rota +5» turquesa / «cayendo +1» gris, `stockObjClaseHtml`) y, al
     lado de «cayendo +1», **«¿cayó o faltó?»** (`stockObjFalto`: hoy quedan ≤ 1 para cargar, o en la ventana hubo «✗ no hay»
     (`o.objNoHay`) o hechos a pedido 🏭 (`o.objAPedido`)) — SOLO AVISO, no cambia ningún número. La leyenda, «Cómo se calcula»
