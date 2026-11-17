@@ -4391,7 +4391,7 @@ function glSigue(){
         <div class="grid2">
           <div class="field">
             <label class="lb" id="f-monto1-lb">¿Cuánto pagó con el primer método?</label>
-            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto1" placeholder="Ej. 1500" oninput="mixtoMonto1Input()"></div>
+            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto1" placeholder="Ej. 1500" oninput="mixtoMonto1Input()" onblur="pintarMixto()"></div>
           </div>
           <div class="field">
             <label class="lb"><span id="f-monto2-lb">¿Cuánto pagó con este método?</span> <span class="req">*</span></label>
@@ -12845,6 +12845,8 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   var acu=document.getElementById('f-acuenta');
   if(acu) acu.addEventListener('input', function(e){ if(!totalAutoDePersona(e)) return; TOT_AUTO.toc=true; pintarTotalProds(); });
+  /* 💳 (17/11, revisión de Fable) el «queda debiendo» del pago con dos métodos sigue al saldo que se escribe. */
+  var _sdo=document.getElementById('f-saldo'); if(_sdo) _sdo.addEventListener('input', function(){ try{ pintarMixto(); }catch(e){} });
   ['f-saldo','f-cobrado'].forEach(function(id){
     var el=document.getElementById(id); if(!el) return;
     el.addEventListener('input', function(e){
@@ -25141,11 +25143,11 @@ function mixtoTotalBase(){
   return (segVal('f-pagado')==='SI') ? montoForm('f-cobrado') : montoForm('f-acuenta');   // «1.500» = 1.500 (26/09)
 }
 function mixtoMonto2(){ return montoForm('f-monto2'); }
-function mixtoMetNom(m){ return ({ Efectivo:'💵 Efectivo', QR:'📱 QR', Tarjeta:'💳 Tarjeta' })[m]||''; }
+function mixtoMetNom(m){ m=String(m||''); m=/^efe/i.test(m)?'Efectivo':/^qr/i.test(m)?'QR':/^tar/i.test(m)?'Tarjeta':m; return ({ Efectivo:'💵 Efectivo', QR:'📱 QR', Tarjeta:'💳 Tarjeta' })[m]||''; }
 /* Escribir lo del 1.er método llena el 2.º con lo que falta para el total (o el adelanto). */
 function mixtoMonto1Input(){
   var base=mixtoTotalBase(), m1=montoForm('f-monto1'), e2=document.getElementById('f-monto2');
-  if(e2){ e2.value = (base>0 && m1>0 && m1<base-0.009) ? String(r2(base-m1)) : ''; e2.classList.remove('err'); }
+  if(e2 && base>0){ e2.value = (m1>0 && m1<base-0.009) ? String(r2(base-m1)) : ''; e2.classList.remove('err'); }
   pintarMixto();
 }
 function mixtoMonto2Input(){ pintarMixto(); }
@@ -25178,15 +25180,22 @@ function pintarMixto(){
      falta; abajo, la suma contra el total. */
   var si=segVal('f-pagado')==='SI', m1n=mixtoMetNom(segVal('f-metodo')), m2n=mixtoMetNom(segVal('f-metodo2'));
   var _rb=pagoRestoPrev(), qe = _rb ? (_rb.mx ? '(el adelanto)' : '(lo que entra ahora)') : (si ? '(el total cobrado)' : '(el adelanto)');
+  var _ya = !!(_rb && _rb.mx);   // el bloque describe el adelanto YA registrado en dos métodos: no se cambia desde acá
+  if(_ya){ m1n=mixtoMetNom(_rb.ant && _rb.ant.metodo)||'1.er método'; m2n=mixtoMetNom(_rb.mx.metodo)||m2n; }
+  ['f-monto1','f-monto2'].forEach(function(id){ var x=document.getElementById(id); if(x) x.readOnly=_ya; });
   var lm2=document.getElementById('f-metodo2-lb'); if(lm2) lm2.textContent = si ? '¿Con qué pagó la otra parte?' : '¿Con qué pagó la otra parte del adelanto?';
-  var _lc=document.querySelector('#wrap-comp .lb'); if(_lc && m1n){ var _h=_lc.innerHTML; if(_h.indexOf(' con '+m1n)<0) _lc.innerHTML=_h.replace(/^Comprobante del pago( con [^<]*)?/, 'Comprobante del pago con '+m1n); }
+  var _lc=document.querySelector('#wrap-comp .lb'); if(_lc && _ya) _lc.innerHTML=_lc.innerHTML.replace(/^Comprobante del pago con [^<]*?(?= <span)/, 'Comprobante del pago');
+  if(_lc && m1n && !_ya){ var _h=_lc.innerHTML; if(_h.indexOf(' con '+m1n)<0) _lc.innerHTML=_h.replace(/^Comprobante del pago( con [^<]*)?/, 'Comprobante del pago con '+m1n); }
   var l1=document.getElementById('f-monto1-lb'), l2=document.getElementById('f-monto2-lb');
   if(l1) l1.textContent='¿Cuánto pagó con '+(m1n||'el primer método')+'?';
   if(l2) l2.textContent='¿Cuánto pagó con '+(m2n||'el segundo método')+'?';
   var e1=document.getElementById('f-monto1');
-  if(e1 && document.activeElement!==e1) e1.value = (base>0 && m2>0 && m2<base-0.009) ? String(r2(base-m2)) : '';
-  if(h) h.innerHTML = !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
+  if(e1 && document.activeElement!==e1 && base>0 && m2>0 && m2<base-0.009) e1.value = String(r2(base-m2));   // con el 2.º vacío o inválido, lo escrito en el 1.º queda (y se avisa)
+  var m1=montoForm('f-monto1');
+  if(h) h.innerHTML = _ya ? ('🔒 El adelanto ya está registrado: '+esc(m1n)+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n)+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b>. Se corrige en Contabilidad; lo que falta va con el método de arriba.')
+       : !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
        : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+qe+(!si && montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))
+       : (!(m2>0) && m1>=base-0.009) ? ('⚠️ '+esc(m1n||'El primer método')+' (<b>'+fmtBs(m1)+'</b>) no puede ser igual o más que <b>'+fmtBs(base)+'</b> '+qe+': si pagó todo con un solo método, tocá «✕ Quitar».')
        : (m2>=base-0.009) ? ('⚠️ '+esc(m2n||'El segundo método')+' (<b>'+fmtBs(m2)+'</b>) no puede ser igual o más que <b>'+fmtBs(base)+'</b> '+qe+': si pagó todo con un solo método, tocá «✕ Quitar».')
        : ('Entre los dos tienen que sumar <b>'+fmtBs(base)+'</b> '+qe+'. Escribí cuánto pagó con uno y el otro se completa solo.');
   iasPintarForm();                                  // 🔎 (§78)
@@ -26519,7 +26528,7 @@ function submitPedido(){
       var _irA=function(id){ var e=document.getElementById(id); if(e){ e.classList.add('seg-err'); setTimeout(function(){ e.classList.remove('seg-err'); },1600); e.scrollIntoView({block:'center'}); } };
       if(!_mx2){ toast('Elegí con qué pagó la OTRA parte (segundo método), o quitá el segundo método','err'); _irA('wrap-mixto'); return; }
       if(!(_mbase>0)){ toast(_rbV ? ('Con lo ya cobrado ('+fmtBs(_rbV.ya)+') no falta cobrar nada: quitá el segundo método') : segVal('f-pagado')==='SI' ? 'Poné primero el MONTO TOTAL COBRADO: el segundo pago es una parte de eso' : 'Poné primero el A CUENTA: el segundo pago es una parte de eso','err'); _irA('wrap-mixto'); return; }
-      if(!(_mm2>0) || _mm2>=_mbase-0.009){ markErr('f-monto2'); toast('El segundo pago tiene que ser mayor a 0 y menor a '+fmtBs(_mbase)+(_rbV?' (lo que faltaba cobrar: ya habían entrado '+fmtBs(_rbV.ya)+')':' (el total)')+'. El resto queda con el primer método.','err'); var _fmm=document.getElementById('f-monto2'); _fmm.focus(); _fmm.scrollIntoView({block:'center'}); return; }
+      if(!(_mm2>0) || _mm2>=_mbase-0.009){ markErr('f-monto2'); toast('El segundo pago tiene que ser mayor a 0 y menor a '+fmtBs(_mbase)+(_rbV?' (lo que faltaba cobrar: ya habían entrado '+fmtBs(_rbV.ya)+')':(segVal('f-pagado')==='SI'?' (el total cobrado)':' (el adelanto)'))+'. El resto queda con el primer método.','err'); var _fmm=document.getElementById('f-monto2'); _fmm.focus(); _fmm.scrollIntoView({block:'center'}); return; }
       if(_mx2==='QR' && !segVal('f-banco2')){ toast('Elegí a qué banco entró el QR del segundo pago','err'); _irA('wrap-banco2'); return; }
       if(_mx2===segVal('f-metodo') && (_mx2!=='QR' || segVal('f-banco2')===segVal('f-banco'))){ toast('El segundo método es igual al primero. Si pagó todo con '+_mx2+', quitá el segundo método.','err'); _irA('wrap-mixto'); return; }
       if(!compsArr(FORM_COMPS2).length){ toast('Falta la imagen del SEGUNDO pago: '+nombreComprobante(_mx2),'err'); _irA('wrap-comp2'); return; }
@@ -30908,7 +30917,7 @@ function renderCupoFormBase(){
    cuando hace falta (lleno, quedan pocos, sin conexión, la copia vieja). Día cerrado, domingo y feriado reemplazan las tarjetas; el sábado la
    tarde va apagada. Las cuentas son las del cartel de siempre (`limTurno`, `cuposUsadosTurno`, `diaCerrado`, `feriadoDe`, `cupoFechaNota`),
    que se sigue armando escondido. En Playwright, lo de antes salvo `FH_PRUEBA`. */
-var NOVEDADES_V='2026-10-27', LS_NOV='me_novedades_visto';
+var NOVEDADES_V='2026-11-17', LS_NOV='me_novedades_visto';
 function fhVa(){ return !(navigator.webdriver && !window.FH_PRUEBA); }
 function fhNovedadVista(){ try{ localStorage.setItem(LS_NOV, NOVEDADES_V); }catch(e){} setTimeout(function(){ try{ fhPintar(); }catch(e){} }, 60); }
 /* 🎨 (16/11, mejora 367; dueño: «Nuevo pedido: los campos a la vista al abrir») En una compu de 1.366 × 768 el primer campo (Fecha de entrega)
