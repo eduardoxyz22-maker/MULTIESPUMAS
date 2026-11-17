@@ -4334,15 +4334,6 @@ function glSigue(){
           <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-saldo" value="0"></div>
         </div>
       </div>
-      <!-- 💳 (15/11, 308) cómo va a pagar lo que falta: logística lleva el POS o el QR (`pcob*`; no es obligatorio) -->
-      <div class="field" id="wrap-pcob" hidden>
-        <label class="lb">¿Cómo va a pagar el cliente el SALDO (lo que falta)? <span class="hint">(lo ve logística: llevar el POS o el QR)</span></label>
-        <div class="vd-pc-ops" id="f-pcob" role="group" aria-label="Cómo paga lo que falta">
-          <button type="button" data-val="E" aria-pressed="false" onclick="pcobElegir(this)">💵 Efectivo<small>al chofer</small></button>
-          <button type="button" data-val="Q" aria-pressed="false" onclick="pcobElegir(this)">📱 QR<small>llevar el QR</small></button>
-          <button type="button" data-val="T" aria-pressed="false" onclick="pcobElegir(this)">💳 Tarjeta<small>llevar el POS</small></button>
-        </div>
-      </div>
 
       <div class="field" id="wrap-metodo" style="display:none">
         <label class="lb">¿Con qué pagó? <span class="req">*</span></label>
@@ -4390,7 +4381,7 @@ function glSigue(){
       <div id="wrap-mixto" style="display:none;border:1px dashed var(--teal-border);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--teal-lt)">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:.85rem">💳 Segundo método de pago</b><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="toggleMixto(false)">✕ Quitar</button></div>
         <div class="field">
-          <label class="lb">¿Con qué pagó la otra parte? <span class="req">*</span></label>
+          <label class="lb"><span id="f-metodo2-lb">¿Con qué pagó la otra parte?</span> <span class="req">*</span></label>
           <div class="seg mtd" id="f-metodo2">
             <button type="button" data-val="Efectivo">💵 Efectivo</button>
             <button type="button" data-val="QR">📱 QR</button>
@@ -4417,12 +4408,21 @@ function glSigue(){
           <div id="f-comp-box2"></div>
           <div id="ias-f2" class="ias-box" aria-live="polite"></div>
         </div>
-        <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Lo que no pongas acá queda con el primer método.</div>
+        <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Cada uno con su comprobante: arriba el del primer método, acá el del segundo.</div>
       </div>
       <!-- 💵 (07/11) ¿Quién recibió el efectivo? Obligatorio cuando entra efectivo (ver `recibioObligatorio`). -->
       <div class="field" id="wrap-recibio" style="display:none">
         <label class="lb">¿Quién recibió el efectivo? <span class="req">*</span> <span class="hint">el Cuadre se lo pide a esa persona</span></label>
         <div id="f-recibio-box"></div>
+      </div>
+      <!-- 💳 (15/11, 308) cómo va a pagar lo que falta: logística lleva el POS o el QR (`pcob*`; no es obligatorio) -->
+      <div class="field" id="wrap-pcob" hidden>
+        <label class="lb">¿Cómo va a pagar el cliente el SALDO (lo que falta)? <span class="hint">(lo ve logística: llevar el POS o el QR)</span></label>
+        <div class="vd-pc-ops" id="f-pcob" role="group" aria-label="Cómo paga lo que falta">
+          <button type="button" data-val="E" aria-pressed="false" onclick="pcobElegir(this)">💵 Efectivo<small>al chofer</small></button>
+          <button type="button" data-val="Q" aria-pressed="false" onclick="pcobElegir(this)">📱 QR<small>llevar el QR</small></button>
+          <button type="button" data-val="T" aria-pressed="false" onclick="pcobElegir(this)">💳 Tarjeta<small>llevar el POS</small></button>
+        </div>
       </div>
       </div><!-- /wrap-cobro-todo -->
 
@@ -25067,7 +25067,8 @@ function renderCompForm(pide){
   var esQR=pide;
   var lb=wrap.querySelector('.lb');
   if(lb && pide){
-    lb.innerHTML='Comprobante del pago <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
+    var _m1=(typeof MIXTO!=='undefined' && MIXTO && typeof mixtoMetNom==='function') ? mixtoMetNom(segVal('f-metodo')) : '';
+    lb.innerHTML='Comprobante del pago'+(_m1?(' con '+_m1):'')+' <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
   }
   wrap.style.display = pide ? 'block' : 'none';
   /* ⚠️ Al ocultar NO se borra FORM_COMPS: esta función corre muchas veces mientras se
@@ -25164,7 +25165,7 @@ function pintarMixto(){
   var metodoVisible=!!wm && wm.style.display!=='none';
   var btn=document.getElementById('btn-mixto'); if(btn) btn.style.display=(metodoVisible && !MIXTO)?'inline-block':'none';
   box.style.display=(metodoVisible && MIXTO)?'block':'none';
-  if(!(metodoVisible && MIXTO)){ iasPintarForm(); return; }
+  if(!(metodoVisible && MIXTO)){ var _lc0=document.querySelector('#wrap-comp .lb'); if(_lc0) _lc0.innerHTML=_lc0.innerHTML.replace(/^Comprobante del pago con [^<]*?(?= <span)/, 'Comprobante del pago'); iasPintarForm(); return; }
   var esQR=segVal('f-metodo2')==='QR';
   if(esQR) renderBancos2();
   document.getElementById('wrap-banco2').style.display=esQR?'block':'none';
@@ -25176,14 +25177,18 @@ function pintarMixto(){
      por método. El del primero NO se guarda: es «el total − el segundo» (así se guardó siempre). Escribir uno llena el otro con lo que
      falta; abajo, la suma contra el total. */
   var si=segVal('f-pagado')==='SI', m1n=mixtoMetNom(segVal('f-metodo')), m2n=mixtoMetNom(segVal('f-metodo2'));
+  var _rb=pagoRestoPrev(), qe = _rb ? (_rb.mx ? '(el adelanto)' : '(lo que entra ahora)') : (si ? '(el total cobrado)' : '(el adelanto)');
+  var lm2=document.getElementById('f-metodo2-lb'); if(lm2) lm2.textContent = si ? '¿Con qué pagó la otra parte?' : '¿Con qué pagó la otra parte del adelanto?';
+  var _lc=document.querySelector('#wrap-comp .lb'); if(_lc && m1n){ var _h=_lc.innerHTML; if(_h.indexOf(' con '+m1n)<0) _lc.innerHTML=_h.replace(/^Comprobante del pago( con [^<]*)?/, 'Comprobante del pago con '+m1n); }
   var l1=document.getElementById('f-monto1-lb'), l2=document.getElementById('f-monto2-lb');
   if(l1) l1.textContent='¿Cuánto pagó con '+(m1n||'el primer método')+'?';
   if(l2) l2.textContent='¿Cuánto pagó con '+(m2n||'el segundo método')+'?';
   var e1=document.getElementById('f-monto1');
   if(e1 && document.activeElement!==e1) e1.value = (base>0 && m2>0 && m2<base-0.009) ? String(r2(base-m2)) : '';
   if(h) h.innerHTML = !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
-       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+(si?'(el total cobrado)':('(el adelanto)'+(montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))))
-       : ('Entre los dos tienen que sumar '+fmtBs(base)+' '+(si?'(el total cobrado)':'(el adelanto)')+'. Escribí cuánto pagó con uno y el otro se completa solo.');
+       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+qe+(!si && montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))
+       : (m2>=base-0.009) ? ('⚠️ '+esc(m2n||'El segundo método')+' (<b>'+fmtBs(m2)+'</b>) no puede ser igual o más que <b>'+fmtBs(base)+'</b> '+qe+': si pagó todo con un solo método, tocá «✕ Quitar».')
+       : ('Entre los dos tienen que sumar <b>'+fmtBs(base)+'</b> '+qe+'. Escribí cuánto pagó con uno y el otro se completa solo.');
   iasPintarForm();                                  // 🔎 (§78)
 }
 function adjuntarCompForm2(){ adjuntarCompForm(2); }
