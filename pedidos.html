@@ -5287,6 +5287,11 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
    lo que sobra a la izquierda muestra lo que está AL DÍA; los datos de la derecha van de a dos. */
 #mis-top{margin:0 0 14px;align-items:stretch}
 #mis-top>.ah-card{display:flex;flex-direction:column}
+.td-part{margin:6px 0 4px}
+.td-part-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.22);overflow:hidden}
+.td-part-bar>i{display:block;height:100%;background:#fff;border-radius:6px}
+.td-part-l{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;margin-top:5px;font-size:.8rem;color:rgba(255,255,255,.92)}
+.td-part-l b{color:#fff;font-weight:800}
 .mis-nuevo .filters{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;background:#f3f8f8;border:1px solid #e1ebea;border-radius:14px;padding:8px 10px;margin-bottom:12px}
 .mis-nuevo .filters .field{margin:0}
 .mis-nuevo .filters #mis-busca{flex:2 1 260px;margin:0!important;align-self:flex-end}
@@ -5297,8 +5302,10 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 /* 🖥️ 371 · «Tu día» al costado y los pedidos arriba (`misAnchaVe`): dos columnas desde 1.300 px. Lo que dice cada caja no cambia: #mis-top
    pasa a `display:contents`, así «Para hacer» (.ah-card) va a la izquierda con su alto justo, arriba de los filtros y las tarjetas, y «Tu día»
    (.td) a la derecha, pegado mientras se baja (con su propio scroll si no entra). La última fila (1fr) se lleva el alto que sobre de «Tu día»:
-   así no aparecen huecos entre las cajas de la izquierda cuando la lista es corta. */
-@media (min-width:1300px){
+   así no aparecen huecos entre las cajas de la izquierda cuando la lista es corta.
+   📱 (17/11, captura del dueño desde el iPad acostado, 1.180 px: la caja de «Para hacer» se estiraba al alto de «Tu día» y quedaba un hueco
+   blanco enorme) Desde 1.100 px, no desde 1.300: la izquierda queda con ~710 px. */
+@media (min-width:1100px){
   #view-mis .card.mis-ancha{display:grid;grid-template-columns:minmax(0,1fr) 370px;grid-template-rows:repeat(24,auto) 1fr;column-gap:16px;row-gap:0;align-items:start}
   #view-mis .card.mis-ancha > *, #view-mis .card.mis-ancha > #mis-top > *{grid-column:1;min-width:0}
   #view-mis .card.mis-ancha > .filters{grid-column:1 / -1}
@@ -44285,6 +44292,7 @@ function misTopPintar(v, mine){
   var der='<div class="td"><div class="td-top"><div class="td-cab"><span>☀️ Tu día, '+esc(String(v).split(' ')[0])+'</span><small>'+hora+'</small></div>'+
       /* (§4nl, Astra A06) sin la venta de tienda, como los números de Mis pedidos (dueño, 26/09): se explica al pasar el ratón */
       '<div class="td-lbl" title="'+esc('Los pedidos que se entregan en '+mesN(R.mes)+' (por la fecha de entrega), sin ventas de tienda, ATC ni reposiciones: por eso puede dar menos que Contabilidad y Proyección, que cuentan también la venta de tienda.')+'">Vendido para '+esc(mesN(R.mes))+'</div><div class="td-big">'+fmtBs0(R.bs)+'</div>'+
+      misPartHtml(R)+   // ✅⏳ (17/11) debajo del monto: cuánto ya está entregado o facturado y cuánto falta
       '<div class="td-mes">'+misMesLineaHtml(mine, R, pct)+'</div>'+   // 📈 (§4ni, 11) la línea de «Tu mes» en vez de la barrita
       '<div class="td-meta">'+(R.bsAnt>0 ? (esc(may(mesN(R.ant)))+' entero: <b>'+fmtBs0(R.bsAnt)+'</b>'+(R.bsAnt>R.bs?(' · te faltan <b>'+fmtBs0(r2(R.bsAnt-R.bs))+'</b> para igualarlo'):' · <b>¡ya lo pasaste!</b>')) : ('Sin ventas en '+esc(mesN(R.ant))))+'</div></div>'+
     '<div class="td-filas">'+
@@ -65737,18 +65745,31 @@ function misAnilloDatos(mine){
      en otra zona, el 31/10 a las 22:00 de acá ya decía «Vendido para noviembre» al lado del efectivo de octubre. */
   var hoy=diaNegocio(), mes=hoy.slice(0,7), d=new Date(hoy.slice(0,8)+'01T12:00:00'); d.setMonth(d.getMonth()-1);
   var ant=isoLocal(d).slice(0,7);
-  var R={ mes:mes, ant:ant, bs:0, bsAnt:0, n:0, ent:0, cobrar:0 };
+  var R={ mes:mes, ant:ant, bs:0, bsAnt:0, n:0, ent:0, cobrar:0, bsCer:0, nCer:0 };
   mine.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
     var m=p.fecha ? ventaMes(p) : '';   // 📅 (08/11) el mes de la entrega, o el que marcó Contabilidad (sin fecha, como siempre, no entra)
     if(m===ant) R.bsAnt+=ventaTotal(p)||0;
     if(m!==mes) return;
     R.n++; R.bs+=ventaTotal(p)||0;
+    if(pryEntCerrada(p)){ R.bsCer+=ventaTotal(p)||0; R.nCer++; }   // ✅ (17/11) entregado o facturado: la MISMA regla de Proyección → «Por vendedor»
     if(p.entregado) R.ent++;   // (12/10, dueño) solo con el ✅ de logística
     if(!p.pagado) R.cobrar+=Number(p.saldo)||0;
   });
   R.cobrar=Math.max(0, Math.min(R.cobrar, R.bs));
   return R;
+}
+/* ✅⏳ (17/11, dueño, con la captura de «Tu día»: «eso que muestra vendido noviembre ¿es lo ya facturado? abajo del monto debería especificar
+   facturado / pendiente facturar») Las MISMAS ventas de «Vendido para <mes>» partidas con la regla de Proyección → «Por vendedor»
+   (`pryEntCerrada`: ✅, venta de tienda o factura/remisión con su N°; dueño, 16/11: «entregado ES facturado»). Las dos partes suman el monto.
+   En Playwright solo con `TD_ENT_PRUEBA` (las pruebas de siempre leen el texto de «Tu día»). */
+function misPartHtml(R){
+  try{ if(!vdVa('TD_ENT_PRUEBA')) return ''; }catch(e){ return ''; }
+  if(!R || !(R.bs>0.005)) return '';
+  var c=Math.max(0, Math.min(R.bsCer||0, R.bs)), pe=r2(R.bs-c), nP=R.n-(R.nCer||0), f=R.bs>0 ? Math.round(c/R.bs*100) : 0;
+  return '<div class="td-part" title="'+esc('Entregado o facturado = con ✅, venta de tienda, o con su N° de factura o nota de remisión anotado. Pendiente = lo demás de «Vendido para».')+'">'+
+    '<div class="td-part-bar"><i style="width:'+f+'%"></i></div>'+
+    '<div class="td-part-l"><span>✅ Entregado o facturado <b>'+fmtBs0(c)+'</b> · '+(R.nCer||0)+'</span><span>⏳ Pendiente <b>'+fmtBs0(pe)+'</b> · '+nP+'</span></div></div>';
 }
 function misAnilloHtml(mine, todos){
   var R=misAnilloDatos(mine); if(!R.n && !R.bsAnt) return '';

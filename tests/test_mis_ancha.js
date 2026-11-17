@@ -77,9 +77,27 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   await page._ctx.close();
 
   console.log('\n── 6. Angosto ──');
-  page = await abrir(true, 1200, 800);
+  page = await abrir(true, 1050, 800);
   r = await medir(page);
-  chk('6a. en 1.200 px, como siempre (sin las dos columnas) y sin scroll a lo ancho', r.grid!=='grid' && r.sw<=r.iw, r);
+  chk('6a. en 1.050 px, como siempre (sin las dos columnas) y sin scroll a lo ancho', r.grid!=='grid' && r.sw<=r.iw, r);
+  await page._ctx.close();
+  /* 📱 (17/11) el iPad acostado (1.180): antes, la caja de «Para hacer» se estiraba al alto de «Tu día» y quedaba un hueco blanco */
+  page = await abrir(true, 1180, 820);
+  r = await medir(page);
+  chk('6c. en 1.180 px (iPad acostado), dos columnas: «Para hacer» con su alto justo, sin hueco, y sin scroll a lo ancho', r.grid==='grid' && r.td && r.td.l>r.ah.r && r.ah.h<r.td.h-20 && r.sw<=r.iw, r);
+  await page.screenshot({ path: require('os').tmpdir()+'/mis_ancha_1180.png' });
+  await page._ctx.close();
+
+  console.log('\n── 7. Entregado o facturado / pendiente, debajo del monto ──');
+  page = await abrir(true);
+  await page.addInitScript(() => { window.TD_ENT_PRUEBA=1; });
+  await page.evaluate(() => { window.TD_ENT_PRUEBA=1; });
+  r = await page.evaluate(async () => { await _ver('Isabel Robledo');
+    var mine=STATE.filter(function(p){ return mismoVendedor(p.vendedor,'Isabel Robledo'); }), R=misAnilloDatos(mine), el=document.querySelector('#mis-top .td-part');
+    return { txt: el ? el.innerText : '', bs:R.bs, cer:R.bsCer, f:fmtBs0(R.bsCer), p:fmtBs0(r2(R.bs-R.bsCer)) }; });
+  chk('7a. debajo de «Vendido para» dice cuánto está entregado o facturado y cuánto pendiente, y suman el monto', r.txt.indexOf('Entregado o facturado '+r.f)>=0 && r.txt.indexOf('Pendiente '+r.p)>=0 && r.cer>=0 && r.cer<=r.bs, r);
+  r = await page.evaluate(() => { window.TD_ENT_PRUEBA=0; renderMis(); return !!document.querySelector('#mis-top .td-part'); });
+  chk('7b. sin la bandera (Playwright) no aparece: las pruebas de siempre leen «Tu día» igual', r===false, r);
   await page._ctx.close();
   page = await abrir(true, 1920, 1080);
   r = await medir(page);
