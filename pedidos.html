@@ -48004,17 +48004,6 @@ function atcHoja(p){
   });
   caja(d1,d2);
   hueco();
-  // ---- Detalles del reclamo ----
-  seccion('DETALLES DEL RECLAMO');
-  var tipo=atcTipo(p), rec=[];
-  rec.push('Tipo: '+(tipo ? atcTipoTxt(tipo) : 'sin marcar')+'   ·   Motivo: '+(atcMotivo(p)||'sin anotar'));
-  if(atcDetalle(p)) rec.push(atcDetalle(p));
-  if(p.observaciones) rec.push('Observaciones: '+p.observaciones);
-  if(prods.length>4) rec.push('También: '+prods.slice(4).map(rptNombreProd).join(' · '));
-  var nf=atcFotos(p).length; if(nf) rec.push('Fotos del producto: '+nf+' (los enlaces van en el correo).');
-  var rr=fila(Math.max(72.75, 14*alto(rec.join('\n'), 95))); put(rr,0,rec.join('\n'),{ sz:11, h:'left', v:'top', wrap:1 }); for(c=1;c<C;c++) put(rr,c,'',{}); une(rr,0,rr,C-1);
-  caja(rr,rr);
-  hueco();
   // ---- Esquema: los dos dibujos ----
   seccion('ESQUEMA');
   var e1=fila(17.25); put(e1,0,'COLCHÓN',NB); put(e1,1,'',NB); put(e1,2,'SOMIER',NB); put(e1,3,'',NB); une(e1,0,e1,1); une(e1,2,e1,3);
@@ -48022,24 +48011,43 @@ function atcHoja(p){
   var e2=M.length-1; caja(e1,e2);
   var rDib=e1+1;
   hueco();
-  // ---- Recepción de productos ----
+  /* 📋 (17/11) El formato de logística de NOVIEMBRE («FORMATO ATC 2026 - HEAVEN ACTUALIZADO NOVIEMBRE»): la recepción es una tabla de
+     condición (la llena el chofer al retirar), el detalle del reclamo va en su recuadro, y al final la constancia con las firmas del
+     chofer y del cliente. Lo que el panel sabe (tipo, motivo, detalle, qué se recoge, observaciones) va escrito en el recuadro del detalle. */
   seccion('RECEPCION DE PRODUCTOS');
-  var pz=atcRecibido(p), tiene=function(lbl){ return pz.indexOf(lbl)>=0 ? 'SI' : ''; };
-  var p1=fila(); put(p1,0,'El equipo de logística de Heaven Colchones recepcionó los siguientes artículos:',N); for(c=1;c<C;c++) put(p1,c,'',N); une(p1,0,p1,C-1);
-  r=fila(); put(r,0,'COLCHÓN:',N); put(r,1,tiene('Colchón'),N); put(r,2,'PATAS:',N); put(r,3,tiene('Patas'),N);
-  r=fila(); put(r,0,'SOMIER:',N); put(r,1,tiene('Sómier'),N); put(r,2,'ACCESORIOS:',N); put(r,3,tiene('Accesorios'),N);
-  r=fila(); put(r,0,atcRecibidoNota(p) ? 'NOTA:' : '',N); put(r,1,atcRecibidoNota(p),V); put(r,2,'',V); put(r,3,'',V); une(r,1,r,3);
-  fila(22);
-  r=fila(); put(r,0,'',{ bd:'B' }); put(r,2,'',{ bd:'B' });
-  r=fila(); put(r,0,'ENTREGUE CONFORME',N); put(r,2,'RECIBI CONFORME',N);
-  var p2=fila(); put(p2,0,'CARNET DE IDENTIDAD',N); put(p2,2,'CARNET DE IDENTIDAD',N);
-  caja(p1,p2);
+  var TH={ b:1, sz:8, color:'123B63', fill:'EAF4FA', h:'center', wrap:1, todo:1 }, TC={ sz:8, h:'center', wrap:1, todo:1 }, TL={ sz:9, wrap:1, todo:1 };
+  var t1=fila(15.6); put(t1,0,'CONDICIÓN',TH); put(t1,1,'',TH); put(t1,2,'COLCHÓN',TH); put(t1,3,'SOMIER',TH); une(t1,0,t1,1);
+  ['Sucio en alguna zona','Tiene descosturas / costuras abiertas','Presenta manchas','Otra observación'].forEach(function(t){
+    var rf=fila(t.length>30 ? 21 : 15.6); put(rf,0,t,TL); put(rf,1,'',TL); une(rf,0,rf,1); put(rf,2,'☐ Sí  ☐ No',TC); put(rf,3,'☐ Sí  ☐ No',TC);
+  });
+  var tipo=atcTipo(p), rec=[], pz=atcRecibido(p);
+  rec.push('Tipo: '+(tipo ? atcTipoTxt(tipo) : 'sin marcar')+'   ·   Motivo: '+(atcMotivo(p)||'sin anotar'));
+  if(atcDetalle(p)) rec.push(atcDetalle(p));
+  if(pz.length) rec.push('Se recoge: '+pz.join(', ')+(atcRecibidoNota(p) ? (' — '+atcRecibidoNota(p)) : ''));
+  else if(atcRecibidoNota(p)) rec.push('Nota: '+atcRecibidoNota(p));
+  if(p.observaciones) rec.push('Observaciones: '+p.observaciones);
+  if(prods.length>4) rec.push('También: '+prods.slice(4).map(rptNombreProd).join(' · '));
+  var nf=atcFotos(p).length; if(nf) rec.push('Fotos del producto: '+nf+' (los enlaces van en el correo).');
+  var dl=fila(15.6); put(dl,0,'Detalle de reclamo, suciedad, descosturas, manchas u otros daños (indicar zona y características):',{ sz:9, wrap:1 }); for(c=1;c<C;c++) put(dl,c,'',{}); une(dl,0,dl,C-1);
+  var rr=fila(Math.max(66, 14*alto(rec.join('\n'), 95))); put(rr,0,rec.join('\n'),{ sz:10, h:'left', v:'top', wrap:1 }); for(c=1;c<C;c++) put(rr,c,'',{}); une(rr,0,rr,C-1);
+  caja(t1,rr);
   hueco();
   // ---- Condiciones ambientales (en blanco, como el formato) ----
   seccion('CONDICIONES AMBIENTALES');
-  var a1=fila(); put(a1,0,'HUMEDAD',N); put(a1,2,'TIPO DE SOMIER',N);
-  var a2=fila(); put(a2,0,'DESNIVEL',N); put(a2,2,'EXPOSICION AL SOL',N);
+  var a1=fila(15.6); put(a1,0,'HUMEDAD',N); put(a1,2,'TIPO DE SOMIER',N);
+  var a2=fila(15.6); put(a2,0,'DESNIVEL',N); put(a2,2,'EXPOSICION AL SOL',N);
   caja(a1,a2);
+  hueco();
+  // ---- Constancia del estado y las firmas del chofer y del cliente ----
+  seccion('CONSTANCIA DEL ESTADO AL MOMENTO DE LA ENTREGA');
+  var k1=fila(46.8); put(k1,0,'Las partes dejan constancia de que el estado físico del producto fue revisado visualmente al momento del retiro y que las condiciones observadas fueron registradas en este formulario. Las firmas acreditan la descripción del estado indicado, sin implicar por sí solas aceptación o rechazo del reclamo.',{ sz:9, h:'left', v:'top', wrap:1 }); for(c=1;c<C;c++) put(k1,c,'',{}); une(k1,0,k1,C-1);
+  var FT={ b:1, sz:8, color:'123B63', h:'center' }, FL={ sz:9 };
+  var f1=fila(20.4); put(f1,0,'CHOFER',FT); put(f1,1,'',FT); put(f1,2,'CLIENTE',FT); put(f1,3,'',FT); une(f1,0,f1,1); une(f1,2,f1,3);
+  var fr;
+  [['Firma: __________________________________',21.6],['Nombre: _________________________________',21.6],['C.I.: ____________________________________',21.6],['Fecha: ____ / ____ / ______',25.8]].forEach(function(x){
+    fr=fila(x[1]); put(fr,0,x[0],FL); put(fr,1,'',FL); put(fr,2,x[0],FL); put(fr,3,'',FL); une(fr,0,fr,1); une(fr,2,fr,3);
+  });
+  caja(k1,fr);
   hueco();
   // ---- A quién se manda (como el formato de la RPT) ----
   seccion('ENVIAR ESTE FORMULARIO POR CORREO A');
@@ -48063,9 +48071,10 @@ function atcHoja(p){
     });
   });
   var emuCol=function(w){ return Math.round((w*7+5)*9525); };
-  var W=[18.7, 28.7, 18, 28];
+  var W=[18.7, 26.9, 30.2, 28];   // (17/11) los anchos del formato de noviembre
   var anchoAB=emuCol(W[0])+emuCol(W[1]), anchoCD=emuCol(W[2])+emuCol(W[3]);
-  var cxC=Math.round(anchoAB*0.74), cxS=Math.round(anchoCD*0.84);
+  /* (17/11) con las columnas del formato de noviembre C es más ancha: los dibujos se achican para no pisar la fila de abajo del esquema (alto máx. ~1,6 M EMU) */
+  var CY_MAX=1600000, cxC=Math.round(Math.min(anchoAB*0.74, CY_MAX*610/464)), cxS=Math.round(Math.min(anchoCD*0.84, (CY_MAX-120000)*702/409));
   return { name:'ATC', matrix:mat, merges:merges, rowH:rowH, cols:W, sinGrilla:true, unaHoja:true,
     imgs:[
       /* el logo de Heaven, dentro del título (283×198 px) */
