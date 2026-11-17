@@ -16359,7 +16359,11 @@ function cxPryTiendas(R){
    · En Playwright apagado salvo `window.PRY_TMETA_PRUEBA`.
    ========================================================================== */
 var PRY_TMETA_AB={};
-function pryTMetaVe(){ return !(navigator.webdriver && !window.PRY_TMETA_PRUEBA); }
+/* 🙈 (17/11; dueño, con las dos capturas: «¿la ficha acaso no dice lo mismo que las barras?» → eligió dejar las fichas de cada tienda) las barras
+   no se muestran: decían lo mismo que las fichas de «🏬 Por tienda» (que ya llevan su meta, `pryTMetaDatos`). La cuenta queda; para volver a
+   mostrarlas, `PRY_TMETA_LISTA=true`. En Playwright se siguen viendo con `PRY_TMETA_PRUEBA` (las pruebas de la 333). */
+var PRY_TMETA_LISTA=false;
+function pryTMetaVe(){ return navigator.webdriver ? !!window.PRY_TMETA_PRUEBA : PRY_TMETA_LISTA; }
 function pryTMetaDatos(R, T){
   T=T||cxPryTiendas(R);
   var mt=ccmMetas(R.ym), out={ ym:R.ym, ok:!!mt.ok, filas:[], estado:R.estado };
@@ -69844,7 +69848,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-g';
+var PANEL_V='2026-11-17-h';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

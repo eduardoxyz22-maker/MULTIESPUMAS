@@ -2659,6 +2659,8 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   `../MULTIESPUMAS-VISCARRA/`, `PRY_KPI_FUENTES`), del MISMO mes, cada 10 min como mucho, y pinta `.pry-kpi[data-kpi]` (nombre sin tildes ni « - Sucursal»,
   `pryKpiClave`). No calcula nada. `PRY_KPI_PRUEBA`. 🙈 «Quién necesita una mano» con «Ocultar» (`mnoOculta`/`mnoOcultar`, `visPref('mnoOculta')`;
   el botón de arriba la vuelve a abrir). `tests/test_pry_kpi.js` (8).
+- **🙈 «Cada tienda contra su meta» no se muestra** (17/11, dueño: *«¿la ficha acaso no dice lo mismo que las barras?»* → «Dejar las fichas»):
+  `PRY_TMETA_LISTA=false`; las fichas de «🏬 Por tienda» ya llevan la meta (`pryTMetaDatos`). En Playwright siguen con `PRY_TMETA_PRUEBA`.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
