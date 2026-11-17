@@ -981,7 +981,8 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   asignamos cada mes»*): `vd[v] = [mínima, presupuesto, [[Bs, %]…]]` en `__metas__`; con escalones vale el más alto alcanzado (debajo del primero, 0) y
   NO la escala de la marca (`ccmEmVend`, `ccmTramoMonto`; Sueña sin escalones sigue con `esc`). Noviembre = las tablas del dueño (`CCM_TRAMOS_DUENO`,
   mientras no haya escalones guardados; la de Mia Plaza sin nombre = Jonathan). Se editan en 🏁 Cierre comercial → ✏️ Metas («2 % desde 90.000 · …»).
-  ⚠️ Toda cuenta nueva del % usa `r.em` (la escala de la vendedora), nunca `es.esc[r.g]` a secas. `.gs` **2026-11-17-a** con lo mismo (`waCcmEmVend_`).
+  ⚠️ Toda cuenta nueva del % usa `r.em` (la escala de la vendedora), nunca `es.esc[r.g]` a secas. `.gs` **2026-11-17-a** con lo mismo (`waCcmEmVend_`;
+  lo implementa el dueño, la página sigue esperando la 16-a). PÁGINA PUBLICADA 17/11, versión 2026-11-17-a (dueño: «Sí es Jonathan, publica»), junto con §4qe.
   Playwright: solo con `CCM_TRAMOS_PRUEBA`. `tests/test_comision_escalones.js` (27).
 - **Visuales**: 366 ficha de Contabilidad ancha (`CTA_ANCHA_PRUEBA`; ⚠️ la ficha se arma por bloques `cab/arriba/row/prods/formPago/acciones`: algo nuevo de la ficha va
   en su bloque, y `acciones` lleva la caja de la 379) · 368 Stock con el Plan primero · 369 Proyección con índice · 370 filtros en un renglón con la ficha al costado ·
