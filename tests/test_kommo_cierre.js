@@ -328,18 +328,18 @@ console.log('\n── 9. ▶️ probarKommoEscribe y probarAntesDeImplementar �
 
 console.log('\n── 10. 🛏️ Sueña: su venta cierra el lead en el Kommo de Sueña (2026-11-17-c) ──');
 {
-  const SE = 10989127, COMPRO = 6601, FCS = 7701, UID_JP = 801;
+  const SE = 10989127, COMPRO = 6601, FCS = 7701, UID_JP = 13073611;   // (11-17-d) en Kommo se llama «Alberto Pareja»
   const KH = kommoBase();
   const KS = kommoBase();
   KS.pipelines = { _embedded:{ pipelines:[{ id:SE, name:'Embudo de ventas', _embedded:{ statuses:[{ id:6600, name:'ATENDIDO' }, { id:COMPRO, name:'COMPRO' }, { id:142, name:'Logrado con éxito' }] } }] } };
   KS.campos = { _embedded:{ custom_fields:[{ id:FCS, name:'Fecha contrato', type:'date' }] } };
-  KS.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'Juan Pablo' }, { id:802, name:'Fernando Peinado Charcas' }, { id:803, name:'Mauricio Merida' }] } };
+  KS.usuarios = { _embedded:{ users:[{ id:13073611, name:'Alberto Pareja' }, { id:802, name:'Fernando Peinado Charcas' }, { id:803, name:'Mauricio Merida' }] } };
   contacto(KS, 5101, 'CLIENTE SUEÑA', '+591 70099988', [4201]); lead(KS, 4201, { pipeline_id:SE, status_id:6600, responsible_user_id:UID_JP });
   const venta = fila({ id:'s1', vend:'Juan Pablo Paredes', cel:'70099988', oc:'11-300' });
   const a = cargar([venta], Object.assign(ON(), { KOMMO_TOKEN_SUENA:'token-suena' }), KH, { Ksuena:KS });
   const r = a.cerrar({ id:'s1', total:4200 });
   const W = escrituras(a);
-  chk('⚠️ a. la venta de Juan Pablo Paredes («Juan Pablo» en ese Kommo) pasa su lead a «COMPRO» del Kommo de Sueña', r.hecho === 'cerrado' && r.cuenta === 'suena' && KS.leads[4201].status_id === COMPRO &&
+  chk('⚠️ a. la venta de Juan Pablo Paredes (en ese Kommo, «Alberto Pareja», 13073611) pasa su lead a «COMPRO» del Kommo de Sueña', r.hecho === 'cerrado' && r.cuenta === 'suena' && KS.leads[4201].status_id === COMPRO &&
     KS.leads[4201].price === 4200 && KS.leads[4201].pipeline_id === SE && JSON.stringify(KS.leads[4201].custom_fields_values || []).indexOf(String(FCS)) >= 0, r);
   chk('b. todo va al Kommo de Sueña con SU token (nada al de Heaven) y la fila queda con klead', a.llamadas.length > 0 && a.llamadas.every(x => /gerenciamultiespumasviscarra/.test(x.host) && x.auth === 'Bearer token-suena') && a.klead('s1') === '4201',
     a.llamadas.map(x => x.host + ' ' + x.auth).slice(0, 3));
@@ -352,7 +352,7 @@ console.log('\n── 10. 🛏️ Sueña: su venta cierra el lead en el Kommo de
   chk('d. la de Heaven sigue en el Kommo de Heaven (eanez) con KOMMO_TOKEN', r3.hecho === 'cerrado' && !r3.cuenta && c.llamadas.every(x => /eanez/.test(x.host) && x.auth === 'Bearer token-de-prueba'), r3);
   const d = cargar([], { KOMMO_TOKEN_SUENA:'token-suena' }, KH, { Ksuena:KS });
   const rp = d.ctx.probarKommoEscribeSuena(), Wd = escrituras(d), T = rp.lineas.join('\n');
-  chk('e. probarKommoEscribeSuena: lee «COMPRO», encuentra a los tres vendedores y escribe solo el MISMO precio a un lead', rp.ok && /COMPRO/.test(T) && /Juan Pablo Paredes → usuario 801/.test(T) && /Fernando Peinado → usuario 802/.test(T) &&
+  chk('e. probarKommoEscribeSuena: lee «COMPRO», encuentra a los tres vendedores y escribe solo el MISMO precio a un lead', rp.ok && /COMPRO/.test(T) && /Juan Pablo Paredes → usuario 13073611/.test(T) && /Fernando Peinado → usuario 802/.test(T) &&
     Wd.length === 1 && Wd[0].metodo === 'patch' && /gerenciamultiespumasviscarra/.test(Wd[0].host), rp.lineas);
 }
 

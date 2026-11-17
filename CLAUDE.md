@@ -3076,8 +3076,8 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **91 en Sueña** (`.gs` **2026-11-17-c**, 17/11, dueño: *«sí ármalo lo de Sueña y publiquemos»*): la venta de un vendedor de Sueña (`WA_MARCAS`) cierra
   su lead en el Kommo de SUEÑA (`gerenciamultiespumasviscarra`, embudo 10989127, la etapa ganada se llama «COMPRO»), con la propiedad
   **`KOMMO_TOKEN_SUENA`** (opcionales `KOMMO_SUBDOMAIN_SUENA`, `KOMMO_EMBUDO_SUENA`). `KC_CTA` = la cuenta de la llamada en curso (la leen
-  `kPedir_` y la caché de `kcMeta_`; vuelve a '' en un `finally`). `kcUsuario_` también junta al revés («Juan Pablo» de Kommo = «Juan Pablo
-  Paredes»). Sin ese token la de Sueña no hace nada. ▶️ `probarKommoEscribeSuena` desde el editor. ⚠️ Un camino NUEVO que hable con Kommo
+  `kPedir_` y la caché de `kcMeta_`; vuelve a '' en un `finally`). `kcUsuario_` también junta al revés; **Juan Pablo Paredes = usuario 13073611**, que en ese Kommo se llama «Alberto Pareja»
+  (`KC_SUENA_USUARIOS`, = `USER_RENAME_ID` del generar.py de Sueña; `.gs` **2026-11-17-d**). Sin ese token la de Sueña no hace nada. ▶️ `probarKommoEscribeSuena` desde el editor. ⚠️ Un camino NUEVO que hable con Kommo
   para una venta de Sueña pone `KC_CTA='suena'` y lo devuelve en `finally`. `test_kommo_cierre` §10.
 - **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 102 vigía de leads en `waRepaso` → `WA_DUENO`
   (propiedad nueva) · 105 `__reclamo_fab__` (en `esFilaSistema`; Playwright solo `RECLAMO_FAB_PRUEBA`) → `reclamo_fabrica` 10:00 · 108 la
