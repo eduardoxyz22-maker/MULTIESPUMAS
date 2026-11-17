@@ -1130,6 +1130,11 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .pcal-esc i{width:22px;height:11px;border-radius:3px;display:inline-block}
 .pcal-d{margin-top:10px;font-size:.9rem;min-height:1.5em;color:var(--text)}
 .pcal-d b{font-variant-numeric:tabular-nums}
+.pcal-t{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px;font-size:.84rem;color:var(--muted)} .pcal-t b{color:var(--text)}
+.pcal-dom{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff8e6;border:1px solid #f5d98a;color:#3d2e00;font-size:.84rem}
+.pcal-domt{display:grid;gap:4px;margin-top:6px} .pcal-domt>div{display:grid;grid-template-columns:minmax(120px,1fr) auto auto 52px;gap:10px;align-items:baseline}
+.pcal-domt b{font-variant-numeric:tabular-nums;text-align:right} .pcal-domt span:nth-child(3){color:#7a6420;font-variant-numeric:tabular-nums}
+.pcal-domp{margin-top:6px;font-size:.74rem;color:#7a6420}
 .pcal-pie{margin-top:4px;font-size:.76rem;color:var(--muted);line-height:1.45;max-width:640px}
 /* 🛍️ (13/11, mejora 177) «Black Friday en números» en Proyección: el estilo de las fichas de marca (`.cx-kf`); con el tema, negra con dorado. */
 .bfn{--c:#ca8a04;--t:#854d0e;background:linear-gradient(150deg,color-mix(in srgb, var(--c) 12%, #fff) 0%,#fff 65%);border:1px solid color-mix(in srgb, var(--c) 40%, #fff);border-radius:14px;padding:12px 14px;margin:0 0 18px;min-width:0;color:var(--text);overflow-wrap:anywhere}
@@ -18126,16 +18131,37 @@ function pryCarreraPlay(){
    calendario no es el «Vendido en <mes>» (el pie lo dice). */
 var PRY_CALOR_Q='v', PRY_CALOR=null;
 var PRY_CALOR_COL=['#e3f4f2','#a9e0da','#5cc6bc','#17998f','#0b5e58'];
+/* (17/11, dueño, con la captura del calendario: «al dar clic debería decir Mia Plaza xxxx, Banzer xxxx») cada día lleva además lo de CADA
+   TIENDA (`vt`/`ct`/`et`: {día:{tienda:monto}}), con la tienda de quien vendió en ESE mes (`sucursalDeVendedor(v, ym-01)`, la MISMA regla de
+   las fichas «🏬 Por tienda»): las tiendas de un día suman el día. */
+function pryCalorTienda(p, ym){ return sucursalDeVendedor(p && p.vendedor, ym+'-01') || 'Sin tienda'; }
+function pryCalorSuma(M, d, t, v){ var o=M[d]||(M[d]={}); o[t]=r2((o[t]||0)+v); }
 function pryCalorDatos(ym){
-  var c={ ym:ym, v:{}, e:{}, c:{} };
+  var c={ ym:ym, v:{}, e:{}, c:{}, vt:{}, et:{}, ct:{} };
   STATE.forEach(function(p){
+    var t=null;
     if(!fueraDeConta(p,'tienda')){
-      var d=contaFecha(p)||''; if(d.slice(0,7)===ym) c.v[d]=r2((c.v[d]||0)+ventaTotal(p));
-      contaPagos(p).forEach(function(q){ var f=String(q.fecha||''), m=Number(q.monto)||0; if(f.slice(0,7)===ym && m>0) c.c[f]=r2((c.c[f]||0)+m); });
+      var d=contaFecha(p)||''; if(d.slice(0,7)===ym){ var bs=ventaTotal(p); c.v[d]=r2((c.v[d]||0)+bs); pryCalorSuma(c.vt, d, t=pryCalorTienda(p, ym), bs); }
+      contaPagos(p).forEach(function(q){ var f=String(q.fecha||''), m=Number(q.monto)||0; if(f.slice(0,7)===ym && m>0){ c.c[f]=r2((c.c[f]||0)+m); pryCalorSuma(c.ct, f, t||(t=pryCalorTienda(p, ym)), m); } });
     }
-    if(p.fecha && String(p.fecha).slice(0,7)===ym && !esVentaTienda(p)) c.e[p.fecha]=(c.e[p.fecha]||0)+1;
+    if(p.fecha && String(p.fecha).slice(0,7)===ym && !esVentaTienda(p)){ c.e[p.fecha]=(c.e[p.fecha]||0)+1; pryCalorSuma(c.et, p.fecha, t||pryCalorTienda(p, ym), 1); }
   });
   return c;
+}
+/* Los domingos de un mes, del 1.º al k-ésimo (k = 99: todos), sumados por tienda: lo vendido por el día en que se cargó (`vt`). */
+function pryCalorDomingos(C, k){
+  var ym=C.ym, n=+pryFinDeMes(ym).slice(8), out={ n:0, t:{}, tot:0 };
+  for(var d=1; d<=n && out.n<k; d++){
+    if(new Date(+ym.slice(0,4), +ym.slice(5,7)-1, d).getDay()!==0) continue;
+    out.n++; var f=ym+'-'+(d<10?'0':'')+d, o=C.vt[f]||{};
+    Object.keys(o).forEach(function(t){ out.t[t]=r2((out.t[t]||0)+o[t]); out.tot=r2(out.tot+o[t]); });
+  }
+  return out;
+}
+function pryCalorTiendasHtml(o, q){
+  var ks=Object.keys(o||{}).filter(function(t){ return o[t]>0; }).sort(function(a,b){ return o[b]-o[a]; });
+  if(!ks.length) return '';
+  return '<div class="pcal-t">'+ks.map(function(t){ return '<span>🏬 '+esc(t)+' <b>'+esc(pryCalorTxt(q, o[t]))+'</b></span>'; }).join('')+'</div>';
 }
 function pryCalorPoner(R){
   var box=document.getElementById('pry-calor'); if(!box) return;
@@ -18175,7 +18201,22 @@ function pryCalorDia(f){
   [].forEach.call(G.querySelectorAll('.sel'), function(x){ x.classList.remove('sel'); });
   var b=G.querySelector('[data-f="'+f+'"]'); if(b) b.classList.add('sel');
   var q=PRY_CALOR_Q, v=(C[q]||{})[f]||0, dd=new Date(+f.slice(0,4), +f.slice(5,7)-1, +f.slice(8)), DS=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  det.innerHTML='El <b>'+DS[dd.getDay()]+' '+(+f.slice(8))+'/'+f.slice(5,7)+'</b> '+({ v:'se cargaron ventas por', e:(f>diaNegocio()?'hay agendadas':'se agendaron'), c:'se cobraron' })[q]+' <b>'+esc(pryCalorTxt(q, v))+'</b>.';
+  var h='El <b>'+DS[dd.getDay()]+' '+(+f.slice(8))+'/'+f.slice(5,7)+'</b> '+({ v:'se cargaron ventas por', e:(f>diaNegocio()?'hay agendadas':'se agendaron'), c:'se cobraron' })[q]+' <b>'+esc(pryCalorTxt(q, v))+'</b>'+
+    (v ? ':' : '.')+pryCalorTiendasHtml((C[q+'t']||{})[f], q);
+  /* ☀️ Un domingo, en «Vendido»: los domingos del mes hasta este, por tienda, contra los mismos domingos del mes anterior (el 2.º contra los 2
+     primeros), la regla de los domingos de «A esta altura» (`PRY_DOM_*`). */
+  if(q==='v' && dd.getDay()===0){
+    var ord=0; for(var d2=1; d2<=+f.slice(8); d2++) if(new Date(+f.slice(0,4), +f.slice(5,7)-1, d2).getDay()===0) ord++;
+    var A=pryCalorDomingos(C, ord), ymA=metasMesMas(C.ym, -1), B=pryCalorDomingos(pryCalorDatos(ymA), ord);
+    var ts=Object.keys(A.t).concat(Object.keys(B.t)).filter(function(t, i, a){ return a.indexOf(t)===i && ((A.t[t]||0)>0 || (B.t[t]||0)>0); })
+      .sort(function(a,b){ return (A.t[b]||0)-(A.t[a]||0) || (B.t[b]||0)-(B.t[a]||0); });
+    var en=function(n){ return n+' domingo'+(n===1?'':'s'); };
+    h+='<div class="pcal-dom"><b>☀️ Los domingos de '+esc(mesNombre(C.ym).replace(/ de \d{4}$/,''))+' hasta este ('+en(A.n)+')</b> contra '+(B.n===A.n ? 'los mismos ' : 'los ')+en(B.n)+' de '+esc(mesNombre(ymA).replace(/ de \d{4}$/,''))+':'+
+      (ts.length ? ('<div class="pcal-domt">'+ts.map(function(t){ var a=A.t[t]||0, b=B.t[t]||0;
+        return '<div><span>🏬 '+esc(t)+'</span><b>'+fmtBs0(a)+'</b><span>'+(b>0.009 ? ('contra '+fmtBs0(b)) : ('sin ventas en '+esc(pryMesCorto(ymA))))+'</span>'+(b>0.009 ? pryDifPct(a, b) : '<span></span>')+'</div>'; }).join('')+'</div>') : ' sin ventas cargadas un domingo.')+
+      '<div class="pcal-domp">Por el día en que se cargó cada venta y la tienda de quien vendió.</div></div>';
+  }
+  det.innerHTML=h;
 }
 /* ============================================================================
    🛍️ (13/11, mejora 177; dueño: «🛍️ Black Friday en números») LA CAMPAÑA DE BLACK FRIDAY EN NÚMEROS. Una ficha en Proyección (que ya es
@@ -69615,7 +69656,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-f';
+var PANEL_V='2026-11-17-g';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
