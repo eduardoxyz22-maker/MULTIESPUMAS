@@ -17307,13 +17307,14 @@ function ccmSigueDatos(ym, K, R){
   o.filas.sort(function(a,b){ return b.to-a.to || b.bs-a.bs || a.v.localeCompare(b.v,'es'); });
   return o;
 }
-/* «a Bs 4.900 del 2,75 %» / «⚠️ a Bs 22 de la mínima» / «le faltan Bs 22.500 para la mínima». */
+/* «quedaría a Bs 4.900 del 2,75 %» / «⚠️ quedaría a Bs 22 de la mínima» / «le faltarían Bs 22.500 para la mínima».
+   🗣️ (17/11, dueño: «¿no debería decir le faltarían? Porque eso es una proyección») Es lo de «si sigue así»: en condicional, nunca «le faltan». */
 function ccmSigueMira(f){
   if(f.sinMetas) return 'sin metas: sin comisión';
-  if(!f.sig) return f.pct>0 ? 'ya en el tramo más alto' : '';
+  if(!f.sig) return f.pct>0 ? 'llegaría al tramo más alto' : '';
   var cuanto=fmtBs0(Math.ceil(f.sig.falta));
-  if(f.aMin) return f.borde ? ('⚠️ a '+cuanto+' de la mínima') : ('le faltan '+cuanto+' para la mínima');
-  return f.borde ? ('a '+cuanto+' del '+ccmPcTxt(f.sig.pct)) : '';
+  if(f.aMin) return f.borde ? ('⚠️ quedaría a '+cuanto+' de la mínima') : ('le faltarían '+cuanto+' para la mínima');
+  return f.borde ? ('quedaría a '+cuanto+' del '+ccmPcTxt(f.sig.pct)) : '';
 }
 function ccmSigueHtml(R, S){
   if(!S) return '';
