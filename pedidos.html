@@ -1365,6 +1365,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-linea{font-size:.78rem;line-height:1.5;margin:10px 0 4px;color:var(--text)}
 .pry-intro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:-4px 0 12px}
 .pry-gana{background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #7c3aed;border-radius:9px;padding:9px 13px;margin-bottom:14px;font-size:.8rem;line-height:1.5;color:#3b0764}
+.pry-dom{margin-top:6px;padding-top:6px;border-top:1px dashed #ddd6fe;color:#6b21a8}
 .pry-gana>div+div{margin-top:4px}
 .pry-cmp{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);margin:0 0 12px}
 .pry-cmp select{font-size:.82rem;padding:6px 8px;border:1px solid var(--gray-md);border-radius:8px;background:#fff}
@@ -18331,7 +18332,7 @@ function pryCargadaAl(x, d, min){ return x.reg<d || (x.reg===d && (min==null || 
    n-ésimo día hábil, a la misma hora. Hoy no hábil (domingo, feriado): el otro mes entra hasta el día antes de su (n+1)-ésimo, entero. Si el
    otro mes no llega a ese día hábil, entero. {lim, min, entero, n (días hábiles), hab (hoy es hábil), dia (el día del otro mes; 0 = antes de
    empezar)}. ⚠️ Es la MISMA cuenta que `waVbCorte_` del .gs (los lunes, «cómo va cada vendedor»): tests/test_wa_13_25_26.js las compara. */
-function pryCorteAltura(hoy, cmp, min){
+function pryCorteHabil(hoy, cmp, min){
   var ini=hoy.slice(0,7)+'-01', hab=pryDiaHabil(hoy), n=pryHabiles(ini, hoy), k=hab ? n : n+1, fin=pryFinDeMes(cmp), d='', c=0;
   for(var f=cmp+'-01', i=0; i<40 && f<=fin; i++, f=stockSumarDias(f,1)) if(pryDiaHabil(f) && ++c===k){ d=f; break; }
   if(!d) return { lim:'', min:null, entero:true, n:n, hab:hab, dia:+fin.slice(8,10) };
@@ -18339,10 +18340,45 @@ function pryCorteAltura(hoy, cmp, min){
   var l=stockSumarDias(d,-1);
   return { lim:l, min:null, entero:false, n:n, hab:hab, dia:(l<cmp+'-01' ? 0 : +l.slice(8,10)) };
 }
+/* ☀️ (17/11, Fable con los datos reales + dueño: «Sí, prográmalo apagado hasta el 1/12») LOS DOMINGOS «a esta altura». Desde que abrieron
+   Mia Plaza y la Tienda Banzer el domingo, noviembre vendió el 12 % en domingos (agosto-octubre, ~3 %). Con solo los días hábiles, el otro
+   mes traía TODOS los domingos que caían antes de su corte, sin importar cuántos llevaba este: el lunes 07/12 el equipo saldría 10 % abajo
+   vendiendo igual. Desde `PRY_DOM_DESDE` los domingos van APARTE: el 1.er domingo del otro mes contra el 1.er domingo de este (el k-ésimo,
+   si hoy es domingo, a la misma hora); lo demás, los mismos días hábiles de siempre. Una tienda que empezó a abrir el domingo después cuenta
+   sus domingos desde ese día (`PRY_DOM_TIENDA`, por la tienda de quien vendió: `x.st`); un domingo de antes va con los días hábiles.
+   NO cambia qué es un día hábil, ni las metas por día, la proyección (la curva) ni las comisiones. ⚠️ La MISMA cuenta en el .gs
+   (`WA_DOM_DESDE`, `WA_DOM_TIENDA`, `waDomOrd_`, `waEnAltura_`; tests/test_domingos_altura.js las compara). */
+var PRY_DOM_DESDE='2026-12-01';
+var PRY_DOM_TIENDA={ 'Tienda Banzer':'2026-11-02' };
+function pryDomActivo(hoy){ return String(hoy||'')>=PRY_DOM_DESDE; }
+function pryEsDomingo(f){ return /^\d{4}-\d\d-\d\d$/.test(String(f||'')) && new Date(f+'T12:00:00Z').getUTCDay()===0; }
+/* Qué domingo del mes es `f` (1 = el primero) para la tienda `st`; 0 = no es domingo o la tienda todavía no abría ese domingo. */
+function pryDomOrd(f, st){
+  f=String(f||''); if(!pryEsDomingo(f)) return 0;
+  var ini=PRY_DOM_TIENDA[st||'']||''; if(ini && f<ini) return 0;
+  var n=0; for(var d=+f.slice(8,10); d>0; d-=7){ var g=f.slice(0,8)+(d<10?'0':'')+d; if(!ini || g>=ini) n++; }
+  return n;
+}
+/* Los domingos de `ym` hasta el día `f` (incluido). */
+function pryDomHasta(ym, f){ var n=0, fin=f||pryFinDeMes(ym); for(var g=ym+'-01', i=0; i<31 && g<=fin; i++, g=stockSumarDias(g,1)) if(pryEsDomingo(g)) n++; return n; }
+/* El corte del otro mes: los días hábiles (`pryCorteHabil`) y, con los domingos prendidos, `dom` (cuántos domingos lleva este mes, hoy
+   incluido) y `domMin` (hoy es domingo: el k-ésimo del otro mes, hasta esta hora). */
+function pryCorteAltura(hoy, cmp, min){
+  var C=pryCorteHabil(hoy, cmp, min);
+  if(pryDomActivo(hoy)){ C.dom=pryDomHasta(hoy.slice(0,7), hoy); C.domMin=(pryEsDomingo(hoy) && min!=null) ? min : null; C.domCmp=Math.min(C.dom, pryDomHasta(cmp)); }
+  return C;
+}
+/* ¿La venta `x` del otro mes entra a esta altura? (la usan «A esta altura», el MoM, «Tu mes», Bloki y «Dónde se vende») */
+function pryEnAltura(x, C){
+  if(!C || C.entero || !C.lim) return true;
+  if(C.dom!=null){ var o=pryDomOrd(x.reg, x.st||''); if(o) return o<C.dom || (o===C.dom && (C.domMin==null || x.m<=C.domMin)); }
+  return pryCargadaAl(x, C.lim, C.min);
+}
 /* El texto del corte del otro mes: «al día 7 a las 08:00 (los mismos 6 días hábiles)» / «hasta el día 6 entero (…)» / «entero». */
 function pryCorteTxt(C, hora){
   if(!C) return '';
-  var dh=' ('+(C.n ? ('los mismos '+C.n+' día'+(C.n===1?'':'s')+' hábil'+(C.n===1?'':'es')) : 'todavía sin días hábiles')+')';
+  var dh=' ('+(C.n ? ('los mismos '+C.n+' día'+(C.n===1?'':'s')+' hábil'+(C.n===1?'':'es')) : 'todavía sin días hábiles')+
+         (C.dom!=null ? (C.dom ? (' y '+(C.dom===1 ? 'su primer domingo' : ('sus primeros '+C.dom+' domingos'))) : ' y ningún domingo') : '')+')';
   if(C.entero) return ' entero: a esta altura ya había cerrado'+dh;
   if(C.min!=null) return ' al día '+C.dia+(hora ? (' a las '+hora) : '')+dh;
   return (C.dia ? (' hasta el día '+C.dia+' entero') : ' antes de su primer día hábil')+dh;
@@ -18617,7 +18653,7 @@ function dsvPeriodo(per, hoy){
 /* ¿La venta `x` del período anterior entra en la comparación? El mes que va con el mes en curso, solo lo cargado hasta esta altura. */
 function dsvEnCorte(x, P){
   var c=P.corte; if(!c || x.ym!==c.ym || !c.C || c.C.entero || !c.C.lim) return true;
-  return pryCargadaAl(x, c.C.lim, c.C.min);
+  return pryEnAltura(x, c.C);
 }
 /* La zona de un pedido: { t:'zona'|'tienda'|'sin', k, z, pt, por }. `por` = la puso el panel ('vecinos' | 'plaza'), no estaba escrita. */
 function dsvZonaDe(p){
@@ -18937,19 +18973,19 @@ function pryTramo(reg, ym){
   return d<=7 ? 1 : (d<=14 ? 2 : (d<=21 ? 3 : (d<=28 ? 4 : 5)));
 }
 /* Lo vendido para `ym` (equipo de tiendas, por marca y en total) cargado hasta el día `dia` del mes (0 = todo), con sus semanas. */
-function pryAcum(V, ym, dia, min){
+function pryAcum(V, ym, dia, min, C){
   var fin=pryFinDeMes(ym), dd=Math.min(dia||99, +fin.slice(8,10)), lim = dia ? ym+'-'+(dd<10?'0':'')+dd : '';
   if(typeof dia==='string') lim=dia;      // (08/11, P1) el corte ya calculado por días hábiles (`pryCorteAltura`)
   else if(dia && dia>dd) min=null;        // el otro mes ya terminó antes de ese día: entra entero (§4gy)
-  var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, s:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
+  var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, s:0, dbs:0, dn:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
   var o={ equipo:nuevo() };
   MARCAS.forEach(function(g){ o[g.k]=nuevo(); });
   V.forEach(function(x){
-    if(x.ym!==ym || x.amb!=='tienda' || (lim && !pryCargadaAl(x, lim, min))) return;
-    var tr=pryTramo(x.reg, ym);
+    if(x.ym!==ym || x.amb!=='tienda' || (C ? !pryEnAltura(x, C) : (lim && !pryCargadaAl(x, lim, min)))) return;
+    var tr=pryTramo(x.reg, ym), dom=pryEsDomingo(x.reg) && (!C || pryDomOrd(x.reg, x.st||''));   // ☀️ lo vendido en domingo (la línea de «Domingos»)
     [o.equipo, o[x.g]].forEach(function(t){
       if(!t) return;
-      t.bs+=x.bs; t.n++; if(x.bs>0.009) t.nm++; t.u+=x.u; t.c+=x.c; t.s+=x.s;
+      t.bs+=x.bs; t.n++; if(x.bs>0.009) t.nm++; t.u+=x.u; t.c+=x.c; t.s+=x.s; if(dom){ t.dbs+=x.bs; t.dn++; }
       t.sem[tr].bs+=x.bs; t.sem[tr].u+=x.u;
     });
   });
@@ -18970,10 +19006,18 @@ function pryAltura(R){
     A.corte = curso ? pryCorteAltura(R.hoy, cmp, A.min) : null;
     A.enteroAntes = !!(A.corte && A.corte.entero);   // el otro mes tenía menos días hábiles: ya había cerrado
     A.diaCmp = A.corte ? A.corte.dia : 0;
-    A.ant = (A.corte && !A.corte.entero) ? pryAcum(R.V, cmp, A.corte.lim, A.corte.min) : pryAcum(R.V, cmp, 0);
+    A.ant = (A.corte && !A.corte.entero) ? pryAcum(R.V, cmp, A.corte.lim, A.corte.min, A.corte) : pryAcum(R.V, cmp, 0);
     A.antEntero=pryAcum(R.V, cmp, 0);
   }
   return A;
+}
+/* ☀️ (17/11) «Domingos: Bs 70.115 en 3; octubre Bs 10.900 en 3» — solo con los domingos prendidos y el mes en curso. */
+function pryDomLinea(A){
+  var C=A && A.corte; if(!A || !A.curso || !C || C.dom==null) return '';
+  var a=A.act.equipo, b=A.ant.equipo, nb=C.entero ? pryDomHasta(A.cmp) : C.domCmp;
+  var en=function(n){ return ' en '+n+' domingo'+(n===1?'':'s'); };
+  return '<div class="pry-dom">☀️ <b>Domingos</b>: '+fmtBs0(a.dbs)+en(C.dom)+'; '+esc(pryMesCorto(A.cmp))+' '+fmtBs0(b.dbs)+en(nb)+
+    (C.entero ? '' : ' (el '+(C.dom===1 ? '1.er domingo contra el 1.er domingo' : 'mismo número de domingos')+')')+'.</div>';
 }
 /* «14 % arriba» / «8 % abajo» / «igual»; sin nada del otro lado, «—». */
 function pryVaTxt(x, y){
@@ -19008,7 +19052,7 @@ function pryAlturaHtml(R){
         '<div class="pry-gana">'+['equipo'].concat(MARCAS.map(function(g){ return g.k; })).filter(function(k){ return A.act[k].n || A.ant[k].n; }).map(function(k){
           var g=MARCAS.filter(function(x){ return x.k===k; })[0];
           return '<div>'+(g ? (g.ico+' <b>'+esc(g.lbl)+'</b>') : '👥 <b>Todo el equipo</b>')+': '+esc(linea(k))+'</div>';
-        }).join('')+'</div>';
+        }).join('')+pryDomLinea(A)+'</div>';
   MARCAS.forEach(function(g){
     var k=g.k, a=A.act[k], b=A.ant[k], e=A.antEntero[k];
     if(!(a.n || b.n || e.n)) return;
@@ -19113,7 +19157,7 @@ function pryMomDe(R, A, r){
   var suma=function(o, x){ o.n++; o.u+=Number(x.u)||0; o.c+=Number(x.c)||0; o.s+=Number(x.s)||0; o.bs+=x.bs; };   // 🛏️ (17/11, dueño: «¿dónde veo cuántos colchones y somieres vendió cada vendedor?») colchones y somieres aparte
   xs.forEach(function(x){
     if(x.ym===R.ym){ act+=x.bs; suma(ac, x); }
-    if(x.ym===A.cmp){ suma(en, x); if(!lim || pryCargadaAl(x, lim, limMin)){ ant+=x.bs; suma(an, x); } }
+    if(x.ym===A.cmp){ suma(en, x); if(!lim || pryEnAltura(x, C)){ ant+=x.bs; suma(an, x); } }
   });
   /* 📊 (§4nj, MoM B) además de los Bs: ventas (cuántas) y unidades (`pryVentas` → `x.u`, la misma cuenta de la fila), de los dos meses y del
      mes de comparación ENTERO; y la línea de unidades día por día. */
@@ -19126,7 +19170,10 @@ function pryHabilesExplica(A){
   var C=A.corte, n=C.n||0, cm=pryMesCorto(A.cmp), m=pryMesCorto(A.ym);
   var porQue=(C.dia && C.dia!==A.dia) ? (' Por eso '+esc(cm)+' va al día '+C.dia+' y no al '+A.dia+': comparar con el '+A.dia+' le daría a '+esc(cm)+' más días de venta y '+esc(m)+' parecería peor.') : '';
   return ' <b>¿Contra qué día?</b> Se comparan los mismos <b>días hábiles</b> (lunes a sábado, sin domingos ni feriados), no el mismo número de día: '+
-    esc(m)+' lleva '+n+' día'+(n===1?'':'s')+' hábil'+(n===1?'':'es')+(C.dia ? (' y el '+n+'.º día hábil de '+esc(cm)+' fue el '+C.dia) : '')+'.'+porQue;
+    esc(m)+' lleva '+n+' día'+(n===1?'':'s')+' hábil'+(n===1?'':'es')+(C.dia ? (' y el '+n+'.º día hábil de '+esc(cm)+' fue el '+C.dia) : '')+'.'+porQue+
+    (C.dom!=null ? (' <b>Los domingos van aparte</b> (desde diciembre, porque Mia Plaza y la Tienda Banzer abren el domingo): '+esc(m)+' lleva '+C.dom+' domingo'+(C.dom===1?'':'s')+
+      ' y de '+esc(cm)+' entran sus primeros '+C.dom+' (el 1.er domingo contra el 1.er domingo), aunque caigan después del día '+(C.dia||'')+'; los que caen antes y no le tocan, no.'+
+      ' La Tienda Banzer cuenta sus domingos desde que abrió (02/11).') : '');
 }
 function pryMomHtml(R, A, r){
   var M=pryMomDe(R, A, r); if(!M || !(M.act>0.009 || M.ant>0.009)) return '';
@@ -43867,7 +43914,7 @@ function misMesLineaHtml(mine, R, pct){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
     var m=p.fecha ? ventaMes(p) : ''; if(m!==R.mes && m!==R.ant) return;   // 📅 (08/11) con la marca del mes, como `misAnilloDatos`
     var ts=Number(p.ts)||0;
-    xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p)||0 });   // `m` = la hora de carga, como `pryVentas`
+    xs.push({ ym:m, reg:(contaFecha(p)||p.fecha), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p)||0, st:(sucursalDeVendedor(p.vendedor, m+'-01')||'') });   // `m` = la hora de carga, como `pryVentas`
   });
   if(!(R.bs>0.009 || R.bsAnt>0.009)) return '<div class="td-prog"><i style="width:'+Math.round(pct*100)+'%"></i></div>';
   var cur=pryMomSerie(xs, R.mes, dia), prev=pryMomSerie(xs, R.ant, 0), D=Math.max(cur.fin, prev.fin);
@@ -43876,7 +43923,7 @@ function misMesLineaHtml(mine, R, pct){
      cargado ese día a las 19:00, y con los mismos pedidos Proyección decía «▲ 100%» y acá «▼ 33%». */
   /* (08/11, P1) …y desde el 08/11 a los mismos DÍAS HÁBILES (`pryCorteAltura`, la cuenta de Proyección y del bot de los lunes). */
   var C=pryCorteAltura(hoy, R.ant, pryMinBo(Date.now())), alt=0;
-  xs.forEach(function(x){ if(x.ym===R.ant && (C.entero || pryCargadaAl(x, C.lim, C.min))) alt+=x.bs; });
+  xs.forEach(function(x){ if(x.ym===R.ant && pryEnAltura(x, C)) alt+=x.bs; });
   var W=300, H=64, max=Math.max(1, R.bs, R.bsAnt)*1.06;
   var pts=function(a){ return a.map(function(v,i){ return ((D>1?i/(D-1):0)*W).toFixed(1)+','+(H-3-v/max*(H-8)).toFixed(1); }).join(' '); };
   var c=cur.v, ux=c.length ? ((D>1?(c.length-1)/(D-1):0)*W).toFixed(1) : '0', uy=c.length ? (H-3-c[c.length-1]/max*(H-8)).toFixed(1) : String(H-3);
@@ -77108,7 +77155,7 @@ function blokiVentas(o){
   if(P.k==='mes'){
     /* (08/11, P1) a los mismos DÍAS HÁBILES y a la misma hora (`pryCorteAltura`, como Proyección y el bot de los lunes) */
     var pv=blokiYmAnt(P.ym), alt=0, ent=0, min=pryMinBo(Date.now()), C=P.curso ? pryCorteAltura(diaNegocio(), pv, min) : null, entero=!C || C.entero;
-    V.forEach(function(x){ if(!mio(x) || x.ym!==pv) return; ent=r2(ent+(roho ? x.u : x.bs)); if(entero || pryCargadaAl(x, C.lim, C.min)) alt=r2(alt+(roho ? x.u : x.bs)); });
+    V.forEach(function(x){ if(!mio(x) || x.ym!==pv) return; ent=r2(ent+(roho ? x.u : x.bs)); if(entero || pryEnAltura(x, C)) alt=r2(alt+(roho ? x.u : x.bs)); });
     var act=roho ? T.u : T.bs;
     if(alt>0.009){
       var pct=Math.round((act/alt-1)*100);
