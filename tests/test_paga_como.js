@@ -61,7 +61,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   await ev(() => { _saldo('1580'); });
   await esperar(80);
   r = await ev(() => { var o = _w(); o.txt = document.getElementById('wrap-pcob').innerText.replace(/\s+/g, ' '); return o; });
-  chk('2b · con saldo aparece «¿Cómo paga lo que falta?» con 💵 Efectivo · 📱 QR · 💳 Tarjeta, ninguno elegido', r.vis && /Cómo paga lo que falta/.test(r.txt) && /Efectivo/.test(r.txt) && /QR/.test(r.txt) && /Tarjeta/.test(r.txt) && r.on.length === 0, r);
+  chk('2b · con saldo aparece «¿Cómo paga lo que falta?» con 💵 Efectivo · 📱 QR · 💳 Tarjeta, ninguno elegido', r.vis && /Cómo va a pagar el cliente el SALDO/.test(r.txt) && /Efectivo/.test(r.txt) && /QR/.test(r.txt) && /Tarjeta/.test(r.txt) && r.on.length === 0, r);
   await ev(() => { document.querySelector('#f-pagado button[data-val="SI"]').click(); });
   await esperar(80);
   r = await ev(() => _w());
