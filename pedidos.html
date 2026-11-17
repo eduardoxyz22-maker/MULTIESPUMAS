@@ -19025,7 +19025,7 @@ function pryAlturaHtml(R){
     h+='<div class="pry-grupo pry-altura" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'"><div class="pry-gh"><b>'+g.ico+' '+esc(g.lbl)+'</b>'+
        '<span>'+esc(pryVaTxt(a.bs, b.bs))+' en plata · '+esc(pryVaTxt(a.u, b.u))+' en unidades</span></div>'+
        '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th><th>Vendido</th><th>Ventas</th><th>Unidades</th><th>Colchones</th><th>Somieres</th><th>Bs por unidad</th></tr></thead><tbody>'+
-       fila(mes.charAt(0).toUpperCase()+mes.slice(1)+hasta, a)+fila(cm.charAt(0).toUpperCase()+cm.slice(1)+(A.curso ? (A.enteroAntes ? ' entero' : (A.diaCmp ? ' al día '+A.diaCmp : ' antes de empezar')) : ''), b)+dif+
+       fila(mes.charAt(0).toUpperCase()+mes.slice(1)+hasta, a)+fila(cm.charAt(0).toUpperCase()+cm.slice(1)+(A.curso ? (A.enteroAntes ? ' entero' : (A.diaCmp ? ' al día '+A.diaCmp+(A.diaCmp!==A.dia ? ' (mismos días hábiles)' : '') : ' antes de empezar')) : ''), b)+dif+
        (A.curso ? fila(cm.charAt(0).toUpperCase()+cm.slice(1)+' entero', e, 'pry-sub') : '')+
        '</tbody></table></div>'+
        (semanas ? ('<details class="pry-sem-det"><summary>📅 Semana por semana (por el día en que se cargó la venta)</summary><div class="pry-scroll"><table class="pry-tabla">'+
