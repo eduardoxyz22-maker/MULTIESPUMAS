@@ -31,7 +31,7 @@ function PREPARAR() {
   var P = function (i, cli, o) {
     return Object.assign({ id: 'p' + i, oc: '11-' + (100 + i), nota: String(4500 + i), vendedor: 'Isabel Robledo', cliente: cli, celular: '7000123' + i,
       fecha: '2026-11-18', turno: 'AM', zona: 'NORTE', direccion: 'Calle 1', maps: '', productos: [{ desc: 'COLCHON TITANIO ICE', codigo: 'CH1220', medida: '140x190', cant: 1, precio: 2000 }],
-      acuenta: 500, saldo: 1500, pagado: false, metodoPago: '~Efectivo 500 @2026-11-0' + i + ' #44' + i, entregado: false, ts: new Date('2026-11-0' + i + 'T10:00:00-04:00').getTime(), facturarA: '', nit: '' }, o || {});
+      acuenta: 500, saldo: 1500, pagado: false, metodoPago: '~Efectivo 500 @2026-11-0' + i + ' #44' + i, entregado: true,   /* (17/11) la factura se pide solo a lo entregado */ ts: new Date('2026-11-0' + i + 'T10:00:00-04:00').getTime(), facturarA: '', nit: '' }, o || {});
   };
   var F = function (p, t, n) { p.productos.forEach(function (x) { x.fdoc = t; x.fdocn = n; }); return p; };
   STATE = [P(1, 'ANA UNO'), P(2, 'BETO DOS'), F(P(3, 'CARLA TRES'), 'F', '900'), P(4, 'DORA CUATRO'), F(P(5, 'EMA CINCO'), 'R', '77')];

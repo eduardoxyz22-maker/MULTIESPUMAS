@@ -38,13 +38,13 @@ const chk = (l, c, e) => { if (e && e.error) c = false; c ? PASS++ : FAIL++; con
     var ts = new Date('2026-11-10T11:00:00-04:00').getTime(), hoy = todayStr();
     var V = function (id, o) { return Object.assign({ id: id, oc: '11-' + id.slice(1), nota: id.slice(1), vendedor: 'Juan Pablo Paredes', cliente: 'CLIENTE ' + id.toUpperCase(), celular: '70000000',
       fecha: '2026-11-20', turno: 'AM', zona: 'Norte', direccion: 'Calle 1', maps: '', productos: [{ desc: 'COLCHON SOFT', medida: '140x190', cant: 1, precio: 1200 }], saldo: 0, acuenta: 1200,
-      pagado: true, metodoPago: '~QR BISA 1200 @2026-11-10 #1', entregado: false, ts: ts, fotos: [], rev: 1 }, o); };
+      pagado: true, metodoPago: '~QR BISA 1200 @2026-11-10 #1', entregado: true, ts: ts,   /* (17/11) la factura se pide solo a lo entregado */ fotos: [], rev: 1 }, o); };
     var av = function (i, pid) { return { id: 'av' + i, k: 'k' + i, pid: pid, vend: 'Juan Pablo Paredes', cli: 'CLIENTE ' + pid.toUpperCase(), nota: '1', f: '2026-11-10', m: 1200, met: 'QR BISA',
       txt: 'la foto dice Bs 1.020', mes: '2026-11', t: ts, por: 'Contabilidad' }; };
     STATE = [V('v101'), V('v102'), V('v103'),
       { id: CTA_AV_ID, cliente: '📣 AVISOS', observaciones: JSON.stringify({ v: 1, a: [av(1, 'v101'), av(2, 'v102'), av(3, 'v103')] }), productos: [], rev: 1 },
       /* logística: 3 entregas de hoy sin ✅ y nunca un cierre */
-      V('e201', { vendedor: 'Mirian Salazar', fecha: hoy }), V('e202', { vendedor: 'Mirian Salazar', fecha: hoy }), V('e203', { vendedor: 'Mirian Salazar', fecha: hoy })];
+      V('e201', { vendedor: 'Mirian Salazar', fecha: hoy, entregado: false }), V('e202', { vendedor: 'Mirian Salazar', fecha: hoy, entregado: false }), V('e203', { vendedor: 'Mirian Salazar', fecha: hoy, entregado: false })];
     saveMirror();
     window._card = function () { var c = document.getElementById('ensena'); return (c && !c.hidden) ? c.textContent : ''; };
     window._foco = function () { var f = document.querySelector('.asis-foco'); return f ? (f.textContent || f.id || f.tagName).trim().slice(0, 60) : ''; };
