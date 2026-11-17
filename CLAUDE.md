@@ -973,6 +973,11 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
 - **🧠 356** `porque_semana` lunes 08:00 y día 1 10:00 a WA_DUENO (hoja «IA semanal», sin Claude sale con reglas) y **362** «Quién necesita una mano» en Proyección
   (`iaSemanalAccion_`, `PORQUE_PRUEBA`, `MANO_PRUEBA`) · **359/360/364** `iagAccion_` (`iaAtc`/`iaProductos`/`iaStockSemana`; filas `__atc_ia__`, `__prod_ia__`,
   `__stock_ia__` en `esFilaSistema` vía `esFilaIag`; `IAG_TOPE_*`, `IA_GESTION=0` apaga).
+- **🗓️ El «al día» cuenta desde noviembre** (17/11, dueño: *«les cuenta mal por cosas de octubre… debería ser por faltantes y cosas por hacer desde
+  noviembre»*): `AL_DIA_DESDE`='2026-11-01'. Un aviso de Contabilidad cuenta por el día del PAGO (`ctaAvCuenta`, `ctaAvCuentan`); los de antes van
+  al final de la lista en gris («De antes de noviembre») y en «Para hacer» como 🗂️ sin color, sin contar para el al día, el bono, el rojo ni Bloki.
+  Kommo igual por el `ts` del borrador. La factura (`DOCV_DESDE`) y el efectivo (`EFE_CERRADO`) ya arrancaban en noviembre. ⚠️ El «Buen día» del
+  `.gs` todavía lista todos los avisos abiertos. `test_al_dia` 7b.
 - **🏆 376 b el bono Titanio** (regla del dueño «1A, 2B»): cobra con la MÍNIMA y el panel al día (nada en rojo; el ámbar se perdona) en TODAS las fotos de los lunes
   del mes; la foto la saca la página los lunes desde las 08:00 en `__al_dia_sem__` (nunca pisa una ya guardada); rige desde el 23/11/2026; un lunes sin foto no castiga.
   ⚠️ La regla está DOS veces: `alDiaBonoCumple`/`ccmBonoRegla` (página) y `waAlDiaBonoCumple_`/`waCcmBonoRegla_` (`.gs`, en `waCcmCuenta_`): `tests/test_bono_al_dia_gs.js`
