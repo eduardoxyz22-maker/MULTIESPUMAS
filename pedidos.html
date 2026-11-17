@@ -30599,7 +30599,7 @@ function fhPintar(){
                 (x.ap ? '<span class="fh-ap" title="Otra venta lo tiene apartado mientras la cobran">⏳ '+x.ap+' apartado'+(x.ap===1?'':'s')+' por otra venta</span>' : '');   // ⏳ (267)
       return '<div class="fh-t '+x.k+(x.sel ? ' sel' : '')+'" data-t="'+t+'"><div class="fh-t1"><span>'+(t==='AM' ? '🌅 Mañana' : '🌆 Tarde')+'</span>'+
         (tag ? '<em'+(tag==='Tu turno' ? ' class="tu"' : (tag==='Se llena' ? ' class="pr"' : ''))+'>'+tag+'</em>' : '')+'</div>'+
-        (x.l ? ('<div class="fh-n"><b>'+x.r+'</b>'+(x.r===1 ? 'libre' : 'libres')+' de '+x.l+'</div>'+(mas ? '<div class="fh-chips">'+mas+'</div>' : '')+
+        (x.l ? ('<div class="fh-n"><b>'+(x.r<0?('+'+(-x.r)):x.r)+'</b>'+(x.r<0 ? 'de más' : (x.r===1 ? 'libre' : 'libres'))+' de '+x.l+'</div>'+(mas ? '<div class="fh-chips">'+mas+'</div>' : '')+
                 '<div class="fh-bar"><i style="width:'+Math.min(100, Math.round(100*x.u/x.l))+'%"></i></div>'+ver)
              : '<div class="fh-n">El camión no sale los sábados a la tarde</div>')+'</div>'; }).join('')+'</div>';
     var s=T[turno];
@@ -44313,7 +44313,7 @@ function misTopPintar(v, mine){
     misComisionHtml(v)+                                // 💰 (13/11, mejora 190) su comisión y su presupuesto, con las metas del mes guardadas
     metaDiaHtml(v)+                                    // 🎯 (14/11, mejora 256) la meta de hoy
     phSemanaHtml(v, mine)+                             // 💵 (mejora 386) el sábado: lo que le corrigieron esta semana
-    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
+    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+cupoLibresTxt(am)+'</span>'):'')+(pm!=null?('<span>🌆 '+cupoLibresTxt(pm)+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
       '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+antesIrteBotonHtml(v)+'</div></div>';   // 🌙 (15/11, 310) «Me voy»   // 🏬 (254) «Caja de hoy» en el aparato del mall
@@ -44470,7 +44470,7 @@ function misEqPintar(mine){
       '</small></span><b>'+fmtBs0(EF.tot)+'</b></div>'+
       misTiendaFila(tie, true)+
     '</div>'+
-    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+am+(am===1?' libre':' libres')+'</span>'):'')+(pm!=null?('<span>🌆 '+pm+(pm===1?' libre':' libres')+'</span>'):'')+'</div>') : '')+
+    ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+cupoLibresTxt(am)+'</span>'):'')+(pm!=null?('<span>🌆 '+cupoLibresTxt(pm)+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Pendientes del equipo</button>'+
       (UNLOCKED?'<button type="button" class="ah-go" onclick="showView(\'conta\');segSet(\'cta-tab\',\'proy\');setContaTab(\'proy\')">📊 Proyección</button>':'')+'</div></div>';
   /* abajo: una fila por vendedora */
@@ -65740,6 +65740,9 @@ function almTendFlechas(A){
 }
 
 /* ---------------------------------------------------------------- ⭕ LOS ANILLOS DE MIS PEDIDOS */
+/* 🎟️ (17/11, captura del dueño: «Martes 17/11 · -1 libres · -2 libres») Un turno con más pedidos que lugares (forzado con la clave) dice
+   «N de más», como el chip de Administración; lleno, «lleno». */
+function cupoLibresTxt(n){ n=Number(n)||0; return n<0 ? ((-n)+' de más') : (n===0 ? 'lleno' : (n+(n===1?' libre':' libres'))); }
 function misAnilloDatos(mine){
   /* (§4nl, 27/10, Astra A08) El mes de la plata es el de Bolivia (`diaNegocio`, como el efectivo de Tu día y Proyección): con el aparato
      en otra zona, el 31/10 a las 22:00 de acá ya decía «Vendido para noviembre» al lado del efectivo de octubre. */
@@ -65748,7 +65751,10 @@ function misAnilloDatos(mine){
   var R={ mes:mes, ant:ant, bs:0, bsAnt:0, n:0, ent:0, cobrar:0, bsCer:0, nCer:0 };
   mine.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p) || esATC(p.oc) || esRPT(p.oc)) return;
-    var m=p.fecha ? ventaMes(p) : '';   // 📅 (08/11) el mes de la entrega, o el que marcó Contabilidad (sin fecha, como siempre, no entra)
+    /* 📅 (08/11) el mes de la entrega, o el que marcó Contabilidad. (17/11, auditoría con la planilla real) Una venta SIN fecha («el cliente
+       avisa cuándo») entra en el mes en que se cargó, como en Proyección y en la comisión (`ventaMes` → `fechaSalida`): con «sin fecha no
+       entra», a Jonathan le faltaban Bs 6.510 y a Mauricio Bs 4.785 contra su comisión. La venta de tienda va aparte (`misTiendaDatos`). */
+    var m=esVentaTienda(p) ? '' : ventaMes(p);
     if(m===ant) R.bsAnt+=ventaTotal(p)||0;
     if(m!==mes) return;
     R.n++; R.bs+=ventaTotal(p)||0;
