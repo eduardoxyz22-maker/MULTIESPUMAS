@@ -4354,7 +4354,7 @@ function glSigue(){
       </div>
 
       <div class="field" id="wrap-cobrado" style="display:none">
-        <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">cuánto entró por esta venta</span></label>
+        <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">TODO lo que pagó por esta venta (si pagó con dos métodos, la suma de los dos)</span></label>
         <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-cobrado" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
       </div>
 
@@ -4397,10 +4397,17 @@ function glSigue(){
             <button type="button" data-val="Tarjeta">💳 Tarjeta</button>
           </div>
         </div>
-        <div class="field">
-          <label class="lb">¿Cuánto pagó con este método? <span class="req">*</span> <span class="hint" id="f-monto2-hint"></span></label>
-          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lb" id="f-monto1-lb">¿Cuánto pagó con el primer método?</label>
+            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto1" placeholder="Ej. 1500" oninput="mixtoMonto1Input()"></div>
+          </div>
+          <div class="field">
+            <label class="lb"><span id="f-monto2-lb">¿Cuánto pagó con este método?</span> <span class="req">*</span></label>
+            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1000" oninput="mixtoMonto2Input()"></div>
+          </div>
         </div>
+        <div class="hint" id="f-monto2-hint" style="margin:-4px 0 8px"></div>
         <div class="field" id="wrap-banco2" style="display:none">
           <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
           <div class="seg mtd" id="f-banco2"></div>
@@ -25120,7 +25127,7 @@ function mixtoBtnHtml(){
 }
 function toggleMixto(on){
   MIXTO = (on==null) ? !MIXTO : !!on;
-  if(!MIXTO){ FORM_COMPS2=[]; segSet('f-metodo2',''); segSet('f-banco2',''); var m=document.getElementById('f-monto2'); if(m){ m.value=''; m.classList.remove('err'); } }
+  if(!MIXTO){ FORM_COMPS2=[]; segSet('f-metodo2',''); segSet('f-banco2',''); var m=document.getElementById('f-monto2'); if(m){ m.value=''; m.classList.remove('err'); } mixtoMonto1Limpiar(); }
   pintarMixto();
   if(MIXTO){ var w=document.getElementById('wrap-mixto'); if(w) w.scrollIntoView({block:'center'}); }
 }
@@ -25133,6 +25140,15 @@ function mixtoTotalBase(){
   return (segVal('f-pagado')==='SI') ? montoForm('f-cobrado') : montoForm('f-acuenta');   // «1.500» = 1.500 (26/09)
 }
 function mixtoMonto2(){ return montoForm('f-monto2'); }
+function mixtoMetNom(m){ return ({ Efectivo:'💵 Efectivo', QR:'📱 QR', Tarjeta:'💳 Tarjeta' })[m]||''; }
+/* Escribir lo del 1.er método llena el 2.º con lo que falta para el total (o el adelanto). */
+function mixtoMonto1Input(){
+  var base=mixtoTotalBase(), m1=montoForm('f-monto1'), e2=document.getElementById('f-monto2');
+  if(e2){ e2.value = (base>0 && m1>0 && m1<base-0.009) ? String(r2(base-m1)) : ''; e2.classList.remove('err'); }
+  pintarMixto();
+}
+function mixtoMonto2Input(){ pintarMixto(); }
+function mixtoMonto1Limpiar(){ var e=document.getElementById('f-monto1'); if(e) e.value=''; }
 function renderBancos2(){
   var box=document.getElementById('f-banco2'); if(!box) return;
   var v=(document.getElementById('f-vendedor')||{}).value||'';
@@ -25156,9 +25172,18 @@ function pintarMixto(){
   var b2=document.getElementById('f-comp-box2');
   if(b2) b2.innerHTML=compTiraHtml(FORM_COMPS2,'quitarCompForm2','adjuntarCompForm2()','La imagen de ESTE pago: '+nombreComprobante(segVal('f-metodo2')||'')+'. <b>Al menos una es obligatoria.</b>');
   var base=mixtoTotalBase(), m2=mixtoMonto2(), h=document.getElementById('f-monto2-hint');
-  if(h) h.innerHTML = !(base>0) ? (segVal('f-pagado')==='SI' ? 'primero poné el monto total cobrado' : 'primero poné el A cuenta')
-       : (m2>0 && m2<base-0.009) ? ('el resto, <b>'+fmtBs(r2(base-m2))+'</b>, queda con '+esc(segVal('f-metodo')||'el primer método'))
-       : ('de los '+fmtBs(base)+' que entraron en total');
+  /* 💳 (17/11, dueño: «debería preguntar cuánto pagó con el método 1 y cuánto con el método 2 y sugerir el saldo faltante») Un campo
+     por método. El del primero NO se guarda: es «el total − el segundo» (así se guardó siempre). Escribir uno llena el otro con lo que
+     falta; abajo, la suma contra el total. */
+  var si=segVal('f-pagado')==='SI', m1n=mixtoMetNom(segVal('f-metodo')), m2n=mixtoMetNom(segVal('f-metodo2'));
+  var l1=document.getElementById('f-monto1-lb'), l2=document.getElementById('f-monto2-lb');
+  if(l1) l1.textContent='¿Cuánto pagó con '+(m1n||'el primer método')+'?';
+  if(l2) l2.textContent='¿Cuánto pagó con '+(m2n||'el segundo método')+'?';
+  var e1=document.getElementById('f-monto1');
+  if(e1 && document.activeElement!==e1) e1.value = (base>0 && m2>0 && m2<base-0.009) ? String(r2(base-m2)) : '';
+  if(h) h.innerHTML = !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
+       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+(si?'(el total cobrado)':'(el adelanto)'))
+       : ('Entre los dos tienen que sumar '+fmtBs(base)+' '+(si?'(el total cobrado)':'(el adelanto)')+'. Escribí cuánto pagó con uno y el otro se completa solo.');
   iasPintarForm();                                  // 🔎 (§78)
 }
 function adjuntarCompForm2(){ adjuntarCompForm(2); }
