@@ -4861,8 +4861,17 @@ function waVentaTotal_(p) {
 /** `saldoACobrar` de la página: lo que el camión cobra de la venta (una ATC o una RPT no se cobran). */
 function waSaldoACobrar_(p) { return (!p || /^(ATC|RPT)\b/i.test(String(p.oc || '').trim())) ? 0 : (Number(p.saldo) || 0); }
 /** `docVentaFalta` de la página: una venta del equipo cargada desde WA_DOCV_DESDE sin el tipo (F/R) o sin el N° (`fdoc`/`fdocn`). */
-function waDocVentaFalta_(p) {
+/** 🚚 (2026-11-17-a, dueño: «es solo de pedidos entregados, lo pendiente de entrega aún no sabe el N° de factura») `docVentaEntregada` de la
+    página: ✅, venta de tienda («SALIÓ DE TIENDA…» o zona TIENDA), o la fecha de entrega ya pasó. Lo de hoy sin ✅ y lo sin fecha, todavía no. */
+function waDocVentaEntregada_(p, hoy) {
+  if (!p) return false;
+  if (p.entregado === true || String(p.entregado).toUpperCase().charAt(0) === 'S' || String(p.entregado) === 'true') return true;
+  if (waNorm_(p.direccion).indexOf('salio de tienda') === 0 || waNorm_(p.zona) === 'tienda') return true;
+  return !!p.fecha && !!hoy && String(p.fecha) < String(hoy);
+}
+function waDocVentaFalta_(p, hoy) {
   if (!p || waFueraDeConta_(p) || String(p.estado || '') === BORRADOR_EST || !((p.productos || []).length > 0) || waContaFecha_(p) < WA_DOCV_DESDE) return false;
+  if (!waDocVentaEntregada_(p, hoy)) return false;
   var d = '', n = '';
   (p.productos || []).some(function (x) { if (x && (x.fdoc === 'F' || x.fdoc === 'R')) { d = x.fdoc; return true; } return false; });
   (p.productos || []).some(function (x) { if (x && x.fdocn != null && String(x.fdocn).trim()) { n = String(x.fdocn).trim(); return true; } return false; });
@@ -5025,7 +5034,7 @@ function waBdDatos_(lista, V, B, K) {
                 .sort(function (a, b) { return (tu(a) - tu(b)) || ((Number(a.nroDia) || 0) - (Number(b.nroDia) || 0)); });
   var cob = ent.filter(function (p) { return waSaldoACobrar_(p) > 0.005; }), bs = 0;
   cob.forEach(function (p) { bs = waR2_(bs + waSaldoACobrar_(p)); });
-  var doc = mias.filter(waDocVentaFalta_).sort(function (a, b) {
+  var doc = mias.filter(function (p) { return waDocVentaFalta_(p, B.hoy); }).sort(function (a, b) {
     var fa = waContaFecha_(a), fb = waContaFecha_(b);
     return fa < fb ? -1 : (fa > fb ? 1 : (waBdOc_(a) < waBdOc_(b) ? -1 : 1));
   });
