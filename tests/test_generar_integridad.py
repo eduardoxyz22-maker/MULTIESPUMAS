@@ -229,10 +229,26 @@ def correr_335(panel="lista", con_url=True):
         if cfg0 is None: G.VENDOR_CFG.pop("Ana Prueba", None)
         else: G.VENDOR_CFG["Ana Prueba"] = cfg0
 
+# ⚠️ (16/11) el escenario de la prueba 26 (y `--solo-datos-335-dobles`): ventas de Kommo de Ana sin unir con el MISMO monto que
+# ventas suyas del panel sin ficha → el aviso «pueden estar dos veces».
+LEADS_26 = [lead(6, ANA, M1, M1, 3000),     # = a3 (Bs 3.000, por entregar): parece la misma
+            lead(7, ANA, M1, M1, 701),      # = a4 (venta de tienda, Bs 700): ±1 también
+            lead(8, ANA, M1, M1, 4200),     # ninguna venta del panel con ese monto: nada
+            lead(9, BETO, M1, M1, 2000),    # el monto de a1 (de Ana) pero es de Beto: otra vendedora, nada
+            lead(10, ANA, P1, P1, 100)]     # el monto de a18 pero la venta de Kommo es del mes ANTERIOR: no se cuenta dos veces este mes
+def correr_26():
+    global CUR
+    cur0 = CUR[:]
+    CUR = cur0 + LEADS_26
+    try:
+        return correr_335()
+    finally:
+        CUR = cur0
+
 # `--solo-datos`: imprime el PANEL_DATA del caso «todo bien» y sale (lo usa tests/test_panel_meta.js para abrir el
 # dashboard de verdad con estos mismos datos inventados).
 if _SOLO_DATOS:
-    _s, _pd, _t, _a = correr_335() if "--solo-datos-335" in _ARGV0 else correr()
+    _s, _pd, _t, _a = (correr_26() if "--solo-datos-335-dobles" in _ARGV0 else correr_335() if "--solo-datos-335" in _ARGV0 else correr())
     sys.stdout.write(json.dumps(_pd, ensure_ascii=False))
     sys.exit(0 if _pd else 1)
 
@@ -502,6 +518,39 @@ _mi = re.search(r"var CONTA_INTERNOS=\[([^\]]*)\]", _ped); _me = re.search(r"var
 chk("25d. PANEL_INTERNOS y PANEL_EXCLUIR = CONTA_INTERNOS y CONTA_EXCLUIR de la página",
     bool(_mi and _me) and getattr(G, "PANEL_INTERNOS", None) == re.findall(r"'([^']+)'", _mi.group(1)) and
     getattr(G, "PANEL_EXCLUIR", None) == re.findall(r"'([^']+)'", _me.group(1)) + re.findall(r"'([^']+)'", _mi.group(1)), (getattr(G, "PANEL_EXCLUIR", None),))
+
+# ── 26 · (16/11, dueño: «si agrega el aviso en el dashboard») ventas que PUEDEN estar dos veces ─────────────────────────
+# Una venta de Kommo de este mes que nadie unió y una venta del panel sin ficha de la MISMA vendedora por el MISMO monto (±1): el
+# dashboard las cuenta a las dos y solo AVISA (el monto solo se equivoca, 25 de 144 en la bandeja): ningún número cambia.
+salio, pd, txt, archivos = correr_26()     # (LEADS_26, arriba)
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ana Prueba", {})
+    beto = {t["name"]: t for t in pd["team"]}.get("Beto Prueba", {})
+    pdob = ana.get("panelDoble") or {}
+    chk("26a. Ana: 2 ventas del panel con el monto de una venta de Kommo suya sin unir (3.000 y 700), 1 de ellas en cierres",
+        pdob == {"n": 2, "bs": 3700, "c": 1}, pdob)
+    chk("26b. los números NO cambian: los cierres de Ana = 8 + las 3 de Kommo de este mes (6, 7 y 8) = 11, lo cerrado 8.090 + 3.000 + 701 + 4.200",
+        ana.get("cierres") == 11 and ana.get("value") == 8090 + 3000 + 701 + 4200 and (ana.get("panel") or {}).get("c") == 6,
+        {k: ana.get(k) for k in ("cierres", "value", "panel")})
+    chk("26c. Beto no tiene aviso (el monto de su venta es de una venta de Ana)", not beto.get("panelDoble"), beto.get("panelDoble"))
+    psf = pd.get("panelSinFicha") or {}
+    chk("26d. el resumen dice cuántas y cuánto: 2, Bs 3.700", psf.get("dobles") == 2 and psf.get("doblesBs") == 3700, psf)
+    al = [a for a in pd.get("alerts") or [] if "dos veces" in a.get("t", "")]
+    chk("26e. una alerta ámbar con la vendedora, cuántas, cuánto y cómo se arregla (unirlas en el panel)",
+        len(al) == 1 and al[0]["sev"] == "amber" and al[0]["who"] == "Ana" and "2 venta(s)" in al[0]["t"] and "Bs 3.700" in al[0]["t"]
+        and "Sí, es la misma" in al[0]["act"], al)
+    chk("26f2. el resumen de WhatsApp lo dice en una línea", "⚠️ 2 venta(s) pueden estar contadas dos veces (Bs 3.700)" in (pd.get("wsp") or ""),
+        [l for l in (pd.get("wsp") or "").split("\n") if "dos veces" in l])
+    chk("26f. el registro lo dice en números", "⚠️ 2 con el mismo monto que una venta de Kommo sin unir" in txt, [l for l in txt.split("\n") if "ficha" in l][:2])
+    fuga = [s for s in SECRETOS_335 + ("PRUEBA_DE_MENTIRA",) if s in txt or s in ULTIMO_HTML]
+    chk("26g. ni el registro ni el index.html dicen nada de la lista (clientes, celulares, OC)", not fuga, fuga)
+else:
+    chk("26. (el panel con el aviso de dos veces no se escribió)", False, txt[-400:])
+salio, pd, txt, archivos = correr_335()
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("26h. sin ventas de Kommo con el mismo monto (el escenario de siempre): sin aviso", pd is not None and "panelDoble" not in ana and
+    not (pd.get("panelSinFicha") or {}).get("dobles") and not any("dos veces" in a.get("t", "") for a in pd.get("alerts") or []),
+    (ana.get("panelDoble"), (pd or {}).get("panelSinFicha")))
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())

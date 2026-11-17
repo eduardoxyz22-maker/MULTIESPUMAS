@@ -41,6 +41,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     guarda desde el 15/11 con `setDocVenta`: el primer guardado completo, corregir no lo cambia; sin él, el de la carga); «cuenta en <mes>» (`vmes`)
     → el de la carga; entregada → el de la ENTREGA (`eF` o la fecha). Vale lo PRIMERO, nunca antes de la carga; lo pendiente sin documento →
     pipeline del mes EN CURSO (mira hasta `PANEL_VENTANA_MESES`=6 atrás).
+    ⚠️ **«Pueden estar dos veces»: SOLO AVISO** (§4qe, 16/11; dueño, con Maria Flores: *«si agrega el aviso en el dashboard»*): una venta de Kommo de
+    ESTE mes (`won`, «Fecha contrato» del mes) que nadie unió ni es gemela + una venta del panel sin ficha de la MISMA vendedora por el MISMO monto (±1,
+    `kommo_tels` lleva `bs` = `price`) a ≤ `PANEL_PARECE_DIAS`=60 → `parece` → `v.panelDoble` {n, bs, c}, `D.panelSinFicha.dobles/doblesBs`, alerta
+    ámbar, «⚠️ N ¿dos veces?» bajo los cierres (tabla y tarjeta), la ficha (`pdTxt`), el resumen y WhatsApp. 🚫 **No resta nada**: el monto solo se
+    equivoca (en la bandeja, 25 de 144). Se arregla uniéndolas en el panel («Sí, es la misma»). Con la planilla real: Maria 3, Bs 25.200.
+    `test_generar_integridad` §26 (`--solo-datos-335-dobles`), `test_panel_meta` §6.
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 

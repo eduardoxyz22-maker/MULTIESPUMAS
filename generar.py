@@ -192,6 +192,7 @@ PANEL_EXCLUIR = ["ROHO", "Eduardo Añez"] + PANEL_INTERNOS                      
 PANEL_BORRADOR_EST = "Borrador Kommo"   # = BORRADOR_EST
 PANEL_BORRADOR_PREF = "kommo-"          # = BORRADOR_PREF
 PANEL_GEMELO_DIAS = 45                  # = BORR_VIVA_DIAS de la 81
+PANEL_PARECE_DIAS = 60                  # ⚠️ (16/11) el aviso «pueden estar dos veces»: venta de Kommo sin unir y del panel con el mismo monto
 _PANEL_COBRO_RE = re.compile(r"^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([0-9.,]+)(?:\s*@\s*([0-9]{4}-[0-9]{2}-[0-9]{2}))?"
                              r"(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*\Z")
 _PANEL_ATC_RPT = re.compile(r"^(ATC|RPT)\b", re.I | re.A)
@@ -394,7 +395,7 @@ def kommo_tels(leads, contact_phone, user_map):
                     tels.add(t8)
         raw = (user_map or {}).get(ld.get("responsible_user_id")) or ""
         out.append({"lead": str(ld.get("id") or ""), "tels": tels, "v": _norm_vend(raw.split(" - ", 1)[0]),
-                    "t": int(_js_num(ld.get("_contract_ts"))) * 1000})
+                    "t": int(_js_num(ld.get("_contract_ts"))) * 1000, "bs": _js_num(ld.get("price"))})
     return out
 
 def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
@@ -473,7 +474,37 @@ def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
                 mejor = c
         if mejor is not None:
             mejor["gemelo"] = lid
-    out = {"cur": {}, "prev": {}, "n": n,
+    # ⚠️ (16/11, dueño: «si agrega el aviso en el dashboard») la venta de Kommo de ESTE mes que nadie reclama y una venta del panel sin
+    # ficha de la misma vendedora por el MISMO monto (±1) a ≤ PANEL_PARECE_DIAS: PUEDEN ser la misma contada dos veces. Solo se AVISA:
+    # el monto solo se equivoca (en la bandeja, 25 de 144), así que no se resta nada y los números siguen iguales.
+    parece = {}
+    usados = {c.get("gemelo") for c in cand if c.get("gemelo")}
+    km = {}
+    for k in (kommo_leads or []):
+        lid = str(k.get("lead") or "")
+        if not lid or lid in reclamados or lid in usados or lid in km or not k.get("v") or not _js_num(k.get("bs")) > 0.005:
+            continue
+        t = int(k.get("t") or 0)
+        if not t or datetime.datetime.fromtimestamp(t / 1000, BOL_TZ).strftime("%Y-%m") != ym:
+            continue
+        km[lid] = {"v": k["v"], "t": t, "bs": _js_num(k.get("bs"))}
+    tomadas, ventana2 = set(), PANEL_PARECE_DIAS * 86400000
+    for lid in sorted(km, key=lambda l: (km[l]["t"], l)):
+        e, mejor = km[lid], None
+        for i, c in enumerate(cand):
+            if i in tomadas or c.get("gemelo") or c["mes"] != ym or c["v"] != e["v"] or not c["bs"] > 0.005:
+                continue
+            if abs(c["bs"] - e["bs"]) > 1 or (c["ts"] and abs(c["ts"] - e["t"]) > ventana2):
+                continue
+            if mejor is None or abs(c["ts"] - e["t"]) < abs(cand[mejor]["ts"] - e["t"]):
+                mejor = i
+        if mejor is not None:
+            tomadas.add(mejor)
+            c = cand[mejor]
+            o = parece.setdefault(c["v"], {"name": equipo[c["v"]], "n": 0, "bs": 0.0, "c": 0})
+            o["n"] += 1; o["bs"] = _js_r2(o["bs"] + c["bs"]); o["c"] += 1 if c["ent"] else 0
+    n["dobles"] = sum(o["n"] for o in parece.values())
+    out = {"cur": {}, "prev": {}, "n": n, "parece": parece,
            "tot": {"cur": dict(c=0, bs=0.0, p=0, pbs=0.0, sm=0), "prev": dict(c=0, bs=0.0, p=0, pbs=0.0, sm=0)}}
     for c in cand:
         if c.get("gemelo"):
@@ -492,7 +523,8 @@ def ventas_panel_sin_ficha(filas, year, month, hoy, kommo_leads=None):
     tc = out["tot"]["cur"]
     txt = (f"{tc['c']} entregada(s) o con factura/remisión (cierres) y {tc['p']} por entregar (pipeline) sin ficha en Kommo en {MESES[month].lower()} {year}"
            f" · {n['conLead']} ya con ficha · {n['parecen']} con el celular de una venta de Kommo (no se suman)"
-           + (f" · {tc['sm']} sin monto anotado" if tc["sm"] else ""))
+           + (f" · {tc['sm']} sin monto anotado" if tc["sm"] else "")
+           + (f" · ⚠️ {n['dobles']} con el mismo monto que una venta de Kommo sin unir (se suman igual: solo el aviso)" if n["dobles"] else ""))
     return out, txt
 
 DEFAULT_COLORS =["#00B5AD", "#2E6FE0", "#7A5AF0", "#D98300", "#159A57", "#DC4046", "#22A7C9"]
@@ -1192,6 +1224,11 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             # 🛒 (335) lo que de sus números viene del panel sin ficha en Kommo (ya está sumado arriba): c entregadas por Bs bs
             # (en cierres y cerrado) y p por entregar por Bs pbs (solo en el pipeline). Solo números: ni clientes ni OC.
             team[-1]["panel"] = {"c": d["pz_c"], "bs": _bs_json(d["pz_bs"]), "p": d["pz_p"], "pbs": _bs_json(d["pz_pbs"])}
+        _pd = ((panel_ventas or {}).get("parece") or {}).get(_norm_vend(name))
+        if _pd and _pd.get("n"):
+            # ⚠️ (16/11) ventas del panel sin ficha con el mismo monto que una venta de Kommo suya sin unir: n (Bs bs, c de ellas en
+            # cierres). Ya están sumadas en sus números (no se resta nada): es solo el aviso. Solo números.
+            team[-1]["panelDoble"] = {"n": _pd["n"], "bs": _bs_json(_pd["bs"]), "c": _pd.get("c", 0)}
 
     # ── globales ──
     G_leads   = sum(t["leads"] for t in team)
@@ -1510,6 +1547,16 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "t":f"La carga manual convierte {ratio}× más que el bot" if bot_ch["conv"] else "La carga manual es la que convierte",
             "d":f"Manual {man_ch['conv']}% vs bot {bot_ch['conv']}%. Priorizar captación manual de calidad.",
             "act":"Documentar el playbook de la mejor vendedora."})
+    # ⚠️ (16/11, dueño) ventas que pueden estar dos veces: la de Kommo sin unir y la del panel por el mismo monto (solo el aviso)
+    dob = [t for t in team if (t.get("panelDoble") or {}).get("n")]
+    if dob:
+        _dn = sum(t["panelDoble"]["n"] for t in dob)
+        _db = sum(t["panelDoble"]["bs"] for t in dob)
+        alerts.append({"sev":"amber","who":" / ".join(t["name"].split()[0] for t in dob[:4]),
+            "t":f"{_dn} venta(s) que pueden estar contadas dos veces (Bs {_db:,.0f})".replace(",", "."),
+            "d":"; ".join(f"{t['name'].split()[0]}: {t['panelDoble']['n']} (Bs {t['panelDoble']['bs']:,.0f})".replace(",", ".") for t in dob)
+                + ". Son ventas de Kommo sin unir con una venta cargada en el panel sin ficha por el MISMO monto: los números las cuentan a las dos.",
+            "act":"Que cada una las una en el panel: Mis pedidos → «📥 Ventas de Kommo por completar» → «Sí, es la misma»."})
     if not alerts:
         alerts.append({"sev":"green","who":"Equipo","t":"Sin alertas críticas este mes",
             "d":"Los indicadores están dentro de rango.","act":"Mantener el ritmo de seguimiento."})
@@ -1560,7 +1607,9 @@ def _panel_resumen(panel_ventas, team):
             "bs": _bs_json(sum((t.get("panel") or {}).get("bs", 0) for t in team)),
             "p": sum((t.get("panel") or {}).get("p", 0) for t in team),
             "pbs": _bs_json(sum((t.get("panel") or {}).get("pbs", 0) for t in team)),
-            "sm": tot.get("sm", 0), "conLead": n.get("conLead", 0), "parecen": n.get("parecen", 0)}
+            "sm": tot.get("sm", 0), "conLead": n.get("conLead", 0), "parecen": n.get("parecen", 0),
+            "dobles": sum((t.get("panelDoble") or {}).get("n", 0) for t in team),
+            "doblesBs": _bs_json(sum((t.get("panelDoble") or {}).get("bs", 0) for t in team))}
 
 def build_archives():
     """Una entrada por mes (sin duplicados). El mes en curso apunta a "#" (index.html en vivo);
@@ -1785,6 +1834,9 @@ def build_wsp(pd):
         if psf.get("c") or psf.get("p"):
             psf_line = (f"_🛒 Incluye {psf.get('c', 0)} venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura/remisión (Bs {bs(psf.get('bs', 0))})"
                         + (f" y {psf.get('p', 0)} por entregar en el pipeline (Bs {bs(psf.get('pbs', 0))})" if psf.get("p") else "") + "_\n")
+        if psf.get("dobles"):   # ⚠️ (16/11) pueden estar dos veces (se cuentan igual: solo el aviso)
+            psf_line += (f"_⚠️ {psf['dobles']} venta(s) pueden estar contadas dos veces (Bs {bs(psf.get('doblesBs', 0))}): venta de Kommo sin unir "
+                         f"con el mismo monto que una del panel sin ficha. Unirlas en el panel_\n")
         peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
         bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)
         crit = M.get("criticos7d", 0)

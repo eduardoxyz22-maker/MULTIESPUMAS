@@ -2052,6 +2052,22 @@ function pzTxt(o) {
   return "🛒 Incluye " + n + (n === 1 ? " venta cargada" : " ventas cargadas") + " en el panel de pedidos sin ficha en Kommo: " + partes.join(" y ") + ".";
 }
 window.pzTxt = pzTxt;
+/* ⚠️ (16/11, dueño: «si agrega el aviso en el dashboard») ventas del panel sin ficha con el MISMO monto que una venta de Kommo de la misma
+   vendedora que nadie unió: pueden ser la misma contada dos veces. generar.py deja `v.panelDoble` {n, bs, c} y `D.panelSinFicha.dobles`.
+   Los números NO cambian (el monto solo se equivoca): acá solo se avisa, en ámbar. */
+function pdTxt(o) {
+  if (!o || !o.n) return "";
+  const bs = n => "Bs " + Math.round(n || 0).toLocaleString("en-US");
+  return "⚠️ " + o.n + (o.n === 1 ? " venta de Kommo sin unir parece la misma" : " ventas de Kommo sin unir parecen las mismas") +
+    " que cargó en el panel sin ficha (mismo monto, " + bs(o.bs) + "): pueden estar contadas dos veces. Los números las cuentan igual;" +
+    " se arregla uniéndolas en el panel: Mis pedidos → «📥 Ventas de Kommo por completar» → «Sí, es la misma».";
+}
+window.pdTxt = pdTxt;
+const pdSub = (o, fs) => !o || !o.n ? null : /*#__PURE__*/React.createElement("div", {
+  className: "pd-sub", title: pdTxt(o),
+  style: { marginTop: 2, fontSize: fs || ".58rem", fontWeight: 800, color: "var(--amber-ink)", background: "var(--amber-bg)",
+           borderRadius: 6, padding: "1px 5px", display: "inline-block", whiteSpace: "nowrap" }
+}, "⚠️ " + o.n + " ¿dos veces?");
 // Sparkline: si hay valor del mes anterior, la línea va de "prev" → "v" (sube si mejoró, baja si empeoró vs el mes pasado).
 // Sin prev (métricas sin historial) queda plana con una ondulación mínima. El último punto siempre es el valor real.
 function sparkOf(v, prev) {
@@ -2540,7 +2556,10 @@ function ProfileDrawer({
   }, "Pipeline total"))), v.panel && /*#__PURE__*/React.createElement("div", {
     className: "pz-nota",
     style: { margin: "-2px 0 10px", fontSize: ".72rem", color: "var(--muted)", lineHeight: 1.4 }
-  }, pzTxt(v.panel)), /*#__PURE__*/React.createElement("div", {
+  }, pzTxt(v.panel)), v.panelDoble && v.panelDoble.n ? /*#__PURE__*/React.createElement("div", {
+    className: "pd-nota",
+    style: { margin: "-4px 0 10px", fontSize: ".72rem", color: "var(--amber-ink)", background: "var(--amber-bg)", borderRadius: 8, padding: "6px 9px", lineHeight: 1.4 }
+  }, pdTxt(v.panelDoble)) : null, /*#__PURE__*/React.createElement("div", {
     className: "dr-kpis"
   }, /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
@@ -3796,7 +3815,7 @@ function TeamTable({
     style: {
       fontWeight: 800
     }
-  }, v.cierres, deltaSub(v.cierres, v.prev && v.prev.cierres, null), pzSub(v.panel, "c")), /*#__PURE__*/React.createElement("td", {
+  }, v.cierres, deltaSub(v.cierres, v.prev && v.prev.cierres, null), pzSub(v.panel, "c"), pdSub(v.panelDoble)), /*#__PURE__*/React.createElement("td", {
     className: "r"
   }, /*#__PURE__*/React.createElement(Pill, {
     tone: convTone(window.convPct(v))
@@ -4540,7 +4559,11 @@ function ViewResumen() {
   }, "Actualizado ", D.updated, " \xB7 datos en vivo desde Kommo. El an\xE1lisis del mes vive en la pesta\xF1a de inteligencia."), PSF && /*#__PURE__*/React.createElement("p", {
     className: "rhero-sub pz-nota",
     style: { marginTop: 4 }
-  }, pzTxt(PSF)), /*#__PURE__*/React.createElement("button", {
+  }, pzTxt(PSF)), PSF && PSF.dobles ? /*#__PURE__*/React.createElement("p", {
+    className: "rhero-sub pd-nota",
+    style: { marginTop: 4, color: "var(--amber-ink)", fontWeight: 700 }
+  }, "⚠️ " + PSF.dobles + (PSF.dobles === 1 ? " venta puede estar" : " ventas pueden estar") + " contadas dos veces (Bs " + Math.round(PSF.doblesBs || 0).toLocaleString("en-US") +
+     "): ventas de Kommo sin unir con el mismo monto que una cargada en el panel sin ficha. Mirá «Alertas»; se arregla uniéndolas en el panel.") : null, /*#__PURE__*/React.createElement("button", {
     className: "btn pri diag2-cta",
     onClick: () => window.__go("analisis")
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -5945,7 +5968,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, "Cierres"), v.panel && v.panel.c ? /*#__PURE__*/React.createElement("div", {
         className: "pz-sub", title: pzTxt(v.panel),
         style: { marginTop: 2, fontSize: ".6rem", fontWeight: 700, color: "var(--muted)" }
-      }, "🛒 +", v.panel.c, " sin ficha") : null), /*#__PURE__*/React.createElement("div", {
+      }, "🛒 +", v.panel.c, " sin ficha") : null, pdSub(v.panelDoble, ".6rem")), /*#__PURE__*/React.createElement("div", {
         className: "tm"
       }, /*#__PURE__*/React.createElement("div", {
         className: "v num",
