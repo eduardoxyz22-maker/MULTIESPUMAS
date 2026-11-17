@@ -2653,7 +2653,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   las ventas de `pryVentas` (Equipo / Mayoristas / ROHO / Todo), colchones y somieres con `pryTipoProd` (combo = 1 + 1; suma = las unidades de «Por
   vendedor»), marca y línea con `atciProdDe` (la regla del informe de ATC: TITANIO = ICE/LATEX; **CLOUD** entró a `ATCI_LINEAS` de Heaven), Bs =
   `prodPrecio` × cantidad; contra el mes anterior a esta altura (`pryCorteAltura`/`pryEnAltura`). Cada línea con sus productos y medidas a la vista (tarjeta por marca; una línea de un solo producto lleva las medidas en su fila). Solo
-  mira. Playwright solo con `PRY_LINEAS_PRUEBA`. `tests/test_pry_lineas.js` (16); `test_pry_indice` §10 cuenta 16 secciones.
+  mira. Playwright solo con `PRY_LINEAS_PRUEBA`. `tests/test_pry_lineas.js` (15); `test_pry_indice` §10 cuenta 16 secciones.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
