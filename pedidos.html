@@ -80646,9 +80646,24 @@ function antesIrteVisto(v, marcar){
   if(marcar && !ya){ o.v.push(k); try{ localStorage.setItem(LS_ANTES_IRTE, JSON.stringify(o)); }catch(e){} }
   return ya;
 }
-function antesIrteQuizas(v){
+/* (17/11, captura del dueño: «al querer cambiar de nombre de vendedor, cada vez que borré una letra me salió ese aviso como 10 veces») `renderMis`
+   corre con cada tecla de «Tu nombre» y cada pedazo («Isabel Robled», «Isab», «I») era otra vendedora que todavía no lo había visto hoy. Ahora sale
+   solo para un nombre que ES de una vendedora (de la lista o con pedidos) y, si se está escribiendo, recién cuando el nombre queda quieto. */
+var ANTES_IRTE_T=null, ANTES_IRTE_QUIETO_MS=1500;
+function antesIrteConocido(v){
+  var k=normNombre(v); if(!k) return false;
+  if((VENDEDORES||[]).some(function(n){ return normNombre(n)===k; })) return true;
+  return (STATE||[]).some(function(p){ return p && !esFilaSistema(p) && normNombre(p.vendedor)===k; });
+}
+function antesIrteQuizas(v, quieto){
   if(!antesIrteVa() || !v || MIS_TODOS || contaExcluido(v) || esVendedorLite(v)) return;
-  if(horaBolivia().getHours()<ANTES_IRTE_HORA || antesIrteVisto(v)) return;
+  if(horaBolivia().getHours()<ANTES_IRTE_HORA || antesIrteVisto(v) || !antesIrteConocido(v)) return;
+  var mv=document.getElementById('mis-vendedor');
+  if(!quieto && mv && document.activeElement===mv){
+    clearTimeout(ANTES_IRTE_T);
+    ANTES_IRTE_T=setTimeout(function(){ var m=document.getElementById('mis-vendedor'); if(m && normNombre(m.value)===normNombre(v)) antesIrteQuizas(v, true); }, ANTES_IRTE_QUIETO_MS);
+    return;
+  }
   var vm=document.getElementById('view-mis'); if(!vm || !vm.classList.contains('active')) return;
   var md=document.getElementById('modal'); if(md && md.classList.contains('on')) return;
   antesIrteVisto(v, true);

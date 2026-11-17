@@ -19002,3 +19002,8 @@ entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGA
   y `mpieAplicar` cuenta el borde para decidir si la ventana es larga: sobran 0, el título queda a 44 px. `test_v430_ventana_pie` §7 (rojo
   contra la página de antes: sobraban 24). Verdes: test_ipad_franja, test_sin_barra, test_vidrio_agrandar, test_v402, test_mis_nota,
   test_ficha_cliente, test_preguntas_panel, test_form_foco, test_teclado_320.
+- **🌙 «Antes de irte» salía con cada letra borrada (17/11)** (dueño, con la captura «Antes de irte, I»: *«al querer cambiar de nombre de vendedor cada
+  vez que borré una letra me salió ese aviso como 10 veces»*). `renderMis` corre con cada tecla de «Tu nombre» y `antesIrteQuizas` lo tomaba como
+  otra vendedora («Isabel Robled», «Isabel Roble»… «I»), cada una sin verlo hoy. Ahora sale solo para un nombre que es de una vendedora
+  (`antesIrteConocido`: `VENDEDORES` o con pedidos) y, con el campo en uso, recién cuando el nombre queda quieto 1,5 s (`ANTES_IRTE_QUIETO_MS`).
+  `test_antes_irte` 5c-5e (con el teclado de verdad: rojo contra la página de antes, que anotaba 8 nombres a medias).
