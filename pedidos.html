@@ -25128,13 +25128,14 @@ function quitarCompForm(i){
 var MIXTO=false, FORM_COMPS2=[], COMP_DESTINO=1, BANCO_EXTRA2='';
 /* El botón vive AL LADO de «¿Con qué pagó?» (el dueño, 18/09: abajo del recargo confundía). */
 function mixtoBtnHtml(){
-  return '<button type="button" id="btn-mixto" class="btn btn-ghost btn-sm" style="width:auto;margin-left:10px;font-size:.72rem;padding:3px 9px;vertical-align:middle;display:'+(MIXTO?'none':'inline-block')+'" onclick="toggleMixto()" title="El cliente pagó una parte con un método y el resto con otro (ej. QR + tarjeta)">➕ Pagó con dos métodos</button>';
+  return '<button type="button" id="btn-mixto" class="btn btn-ghost btn-sm" style="width:auto;margin-left:10px;font-size:.72rem;padding:3px 9px;vertical-align:middle;display:'+(MIXTO?'none':'inline-block')+'" onclick="event.preventDefault();event.stopPropagation();toggleMixto()" title="El cliente pagó una parte con un método y el resto con otro (ej. QR + tarjeta)">➕ Pagó con dos métodos</button>';
 }
 function toggleMixto(on){
   MIXTO = (on==null) ? !MIXTO : !!on;
   if(!MIXTO){ FORM_COMPS2=[]; segSet('f-metodo2',''); segSet('f-banco2',''); var m=document.getElementById('f-monto2'); if(m){ m.value=''; m.classList.remove('err'); } mixtoMonto1Limpiar(); }
   pintarMixto();
-  if(MIXTO){ var w=document.getElementById('wrap-mixto'); if(w) w.scrollIntoView({block:'center'}); }
+  /* 💳 (17/11, dueño: «los lleva directo al pago 2 y no al 1») se baja a «1️⃣ Pago 1» (debajo del encabezado y de la barra de pasos) y el cursor queda en su monto. */
+  if(MIXTO){ var w=document.getElementById('pago1-tit'); if(!w || w.hidden) w=document.getElementById('wrap-mixto'); if(w) w.scrollIntoView({block:'start'}); var e1=document.getElementById('f-monto1'); if(e1 && !e1.readOnly && !e1.value){ try{ e1.focus({preventScroll:true}); }catch(e){} } }
 }
 /* Sobre qué total se reparte: lo cobrado (pagado) o el adelanto (a cuenta). */
 function mixtoTotalBase(){
@@ -25174,7 +25175,7 @@ function pintarMixto(){
   if(_p1t) _p1t.hidden=!_on; if(_wm1) _wm1.hidden=!_on;
   if(_ahint) _ahint.textContent = (_on && segVal('f-pagado')!=='SI') ? '(adelanto = Pago 1 + Pago 2)' : '(adelanto)';
   if(!_on){ var _lc0=document.querySelector('#wrap-comp .lb'); if(_lc0) _lc0.innerHTML=_lc0.innerHTML.replace(/^Comprobante del (pago con [^<]*?|Pago 1[^<]*?)(?= <span)/, 'Comprobante del pago');
-    if(wm){ var _lm0=wm.querySelector('.lb'); if(_lm0 && /^¿Con qué pagó el Pago 1\?/.test(_lm0.innerHTML)) _lm0.innerHTML=(segVal('f-pagado')==='SI'?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'+mixtoBtnHtml(); }
+    if(wm){ var _lm0=wm.querySelector('.lb'), _t0=_lm0&&_lm0.firstChild; if(_t0 && _t0.nodeType===3 && /^¿Con qué pagó el Pago 1\?/.test(_t0.data)) _t0.data=(segVal('f-pagado')==='SI'?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' '; }
     iasPintarForm(); return; }
   var esQR=segVal('f-metodo2')==='QR';
   if(esQR) renderBancos2();
@@ -25196,7 +25197,7 @@ function pintarMixto(){
      qué total se trata. Solo presentación: se guarda igual que siempre (el 1.º = el total − el 2.º). */
   var _qt = si ? 'el total de' : 'el A cuenta de';
   if(_p1t) _p1t.innerHTML='1️⃣ Pago 1 de 2'+(base>0 ? ' <span class="pago-tot">· '+_qt+' <b>'+fmtBs(base)+'</b> se pagó en dos partes</span>' : '');
-  var _lm=wm.querySelector('.lb'); if(_lm && !/^¿Con qué pagó el Pago 1\?/.test(_lm.innerHTML)) _lm.innerHTML='¿Con qué pagó el Pago 1? <span class="req">*</span>'+mixtoBtnHtml();
+  var _lm=wm.querySelector('.lb'), _t1=_lm&&_lm.firstChild; if(_t1 && _t1.nodeType===3 && !/^¿Con qué pagó el Pago 1\?/.test(_t1.data)) _t1.data='¿Con qué pagó el Pago 1? ';   // solo el texto: rearmar el botón en medio del toque lo «tocaba» dos veces
   var lm2=document.getElementById('f-metodo2-lb'); if(lm2) lm2.textContent = '¿Con qué pagó el Pago 2?';
   var _lc=document.querySelector('#wrap-comp .lb');
   if(_lc){ var _c1='Comprobante del Pago 1'+(m1n?(' · '+m1n):''); if(_lc.innerHTML.indexOf(_c1+' <span')!==0) _lc.innerHTML=_lc.innerHTML.replace(/^Comprobante del (pago con [^<]*?|Pago 1[^<]*?|pago)(?= <span)/, _c1); }
@@ -81378,7 +81379,7 @@ function vdIniciar(){
 #wrap-cobro-todo.mixto-on #pago1-tit,#wrap-cobro-todo.mixto-on #wrap-metodo,#wrap-cobro-todo.mixto-on #wrap-banco,#wrap-cobro-todo.mixto-on #wrap-monto1,#wrap-cobro-todo.mixto-on #wrap-comp{background:var(--teal-lt);border-left:1px dashed var(--teal-border);border-right:1px dashed var(--teal-border);margin:0;padding:6px 12px}
 #wrap-cobro-todo.mixto-on #pago1-tit{border-top:1px dashed var(--teal-border);border-radius:10px 10px 0 0;margin-top:8px;padding-top:10px}
 #wrap-cobro-todo.mixto-on #wrap-comp{border-bottom:1px dashed var(--teal-border);border-radius:0 0 10px 10px;padding-bottom:10px;margin-bottom:10px}
-.pago-tit{font-weight:700;font-size:.85rem}
+.pago-tit{font-weight:700;font-size:.85rem;scroll-margin-top:calc(var(--hdr-h,70px) + 96px)}
 .pago-tit .pago-tot{font-weight:500;color:var(--muted)}
 </style>
 <script>
