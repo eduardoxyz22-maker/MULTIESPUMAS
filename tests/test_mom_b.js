@@ -66,7 +66,7 @@ function PREPARAR(){
   });
   chk('cada vendedor con su MoM se puede tocar (role=button, con teclado) y arranca cerrado', r.tocables>=3 && r.rol==='button' && r.tab==='0' && r.exp==='false', r);
   chk('arriba lo dice: «Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs.» y explica los días hábiles (17/11)', /Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs\./.test(r.intro) && /¿Contra qué día\? Se comparan los mismos días hábiles/.test(r.intro), r.intro.slice(0,500));
-  chk('la fila se sigue leyendo igual (nombre, detalle, vendido, proyección, el MoM) y al final «ventas · unidades ▸»', /^Mirian Salazar \d+ venta.*Bs 3\.900,00 📈 Bs [\d.]+ ▲ 30% vs sep.*ventas · unidades ▸$/.test(r.txt), r.txt);
+  chk('la fila se sigue leyendo igual (nombre, detalle, vendido, proyección, el MoM) y al final «📊 vs sep…: unidades y somieres ▸»', /^Mirian Salazar \d+ venta.*Bs 3\.900,00 📈 Bs [\d.]+ ▲ 30% vs sep.*📊 vs sep\S*: unidades y somieres ▸$/.test(r.txt), r.txt);
   await page.click('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-q');
   r = await page.evaluate(() => {
     var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"]'), d=f && f.querySelector('.pry-mom-det');
@@ -88,7 +88,7 @@ function PREPARAR(){
     return { sigue:sigue, tras:tras, m2:m2 }; });
   chk('tocar adentro de la tablita no la cierra, y al repintar Proyección las abiertas siguen abiertas', r.sigue && r.tras && r.m2, r);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"]'); f.click(); return { det:!!f.querySelector('.pry-mom-det'), exp:f.getAttribute('aria-expanded'), ab:(f.querySelector('.pry-mom-ab')||{}).textContent }; });
-  chk('tocar la fila otra vez la cierra', !r.det && r.exp==='false' && r.ab==='ventas · unidades ▸', r);
+  chk('tocar la fila otra vez la cierra', !r.det && r.exp==='false' && /^📊 vs .+: unidades y somieres ▸$/.test(r.ab), r);
   await page.focus('#pry-vendedores .pry-fila[data-vk*="carola"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(100);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="carola"]'); return { det:!!(f && f.querySelector('.pry-mom-det')), exp:f && f.getAttribute('aria-expanded') }; });
   chk('con el teclado: Enter sobre un vendedor también la abre', r.det && r.exp==='true', r);
