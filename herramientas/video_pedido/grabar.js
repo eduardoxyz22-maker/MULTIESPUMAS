@@ -286,7 +286,7 @@ function tile(z, x, y){
 
   /* ── 5. paso 4: cobro ── */
   await verEn('#fp-4', 0.14);
-  await cap('Paso 4 de 4 · Cobro', '¿Pagó todo? Hacé clic en «SÍ, pagado»', 'Si dejó un adelanto, dejá «NO» y anotá el adelanto en «A cuenta» y lo que falta en «Saldo».', { ms:4600 });
+  await cap('Paso 4 de 4 · Cobro', '¿El cliente ya pagó el TOTAL? Hacé clic en «SÍ, pagó todo»', 'Si dejó un adelanto, dejá «NO, falta pagar» y anotá el adelanto en «A cuenta» y lo que falta en «Saldo por cobrar».', { ms:4600 });
   await clic(page.locator('#f-acuenta')); await page.locator('#f-acuenta').fill(''); await page.locator('#f-acuenta').pressSequentially('1000', { delay:130 });
   await espera(700);
   await clic(page.locator('#f-saldo')); await page.locator('#f-saldo').fill(''); await page.locator('#f-saldo').pressSequentially('2400', { delay:130 });
@@ -299,6 +299,11 @@ function tile(z, x, y){
   const [fc] = await Promise.all([ page.waitForEvent('filechooser'), clic(page.locator('#f-comp-box [onclick^="adjuntarCompForm"]').first()) ]);
   await fc.setFiles(path.join(__dirname, 'recibo.jpg'));
   await espera(2600);
+  /* (17/11) el efectivo pide quién lo recibió (§4ow): sin eso no se guarda */
+  await verEn('#wrap-recibio', 0.30);
+  await cap('Paso 4 de 4 · Cobro', '¿Quién recibió el efectivo?', 'Si lo cobraste vos, tocá tu nombre. Si lo cobró el chofer en la puerta, «El chofer».', { ms:3200 });
+  await clic(page.locator('#f-recibio-box button').first());
+  await espera(700);
   await verEn('#f-obs', 0.30);
   await cap('Observaciones', 'Lo que logística tiene que saber', 'Por ejemplo: llamar antes, un piso sin ascensor, un horario.', { ms:2600 });
   await escribe('#f-obs', 'Llamar antes de ir. Es un 3er piso, sin ascensor.', 55);
@@ -423,11 +428,11 @@ function tile(z, x, y){
     await verEn('#fp-3', 0.20);
     await cap('Paso 3 · Entrega', 'No hace falta: ya dice «Listo»', 'Se lo llevó del local.', { ms:2600 });
     await verEn('#fp-4', 0.14);
-    await cap('Paso 4 · Cobro', 'Si pagó todo, hacé clic en «SÍ, pagado»', null, { ms:2000 });
+    await cap('Paso 4 · Cobro', 'Si pagó el total, hacé clic en «SÍ, pagó todo»', null, { ms:2000 });
     await toca('#f-pagado button[data-val="SI"]', 0.30);
     await cap('Paso 4 · Cobro', '¿Con qué pagó? Y cuánto entró', 'Con QR, también a qué banco.', { ms:2600 });
     await toca('#f-metodo button[data-val="QR"]', 0.30);
-    await escribe('#f-cobrado', '2900', 130);
+    await page.locator('#f-cobrado').fill(''); await escribe('#f-cobrado', '2900', 130);
     await toca('#f-banco button', 0.35);
     await espera(300);
     await verEn('#wrap-comp', 0.30);
