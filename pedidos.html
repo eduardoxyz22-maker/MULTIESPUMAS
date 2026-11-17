@@ -4326,7 +4326,7 @@ function glSigue(){
 
       <div class="grid2" id="wrap-nopago">
         <div class="field">
-          <label class="lb">A cuenta <span class="hint">(adelanto)</span></label>
+          <label class="lb">A cuenta <span class="hint" id="f-acuenta-hint">(adelanto)</span></label>
           <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-acuenta" value="0"></div>
         </div>
         <div class="field">
@@ -4335,6 +4335,12 @@ function glSigue(){
         </div>
       </div>
 
+      <div class="field" id="wrap-cobrado" style="display:none">
+        <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">TODO lo que pagó por esta venta (si pagó con dos métodos, la suma de los dos)</span></label>
+        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-cobrado" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
+      </div>
+
+      <div id="pago1-tit" class="pago-tit" hidden>1️⃣ Pago 1 de 2</div>
       <div class="field" id="wrap-metodo" style="display:none">
         <label class="lb">¿Con qué pagó? <span class="req">*</span></label>
         <div class="seg mtd" id="f-metodo">
@@ -4344,11 +4350,52 @@ function glSigue(){
         </div>
       </div>
 
-      <div class="field" id="wrap-cobrado" style="display:none">
-        <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">TODO lo que pagó por esta venta (si pagó con dos métodos, la suma de los dos)</span></label>
-        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-cobrado" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
+
+<div class="field" id="wrap-banco" style="display:none">
+        <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
+        <div class="seg mtd" id="f-banco"></div>
       </div>
 
+      <div class="field" id="wrap-monto1" hidden>
+        <label class="lb" id="f-monto1-lb">¿Cuánto pagó con el primer método?</label>
+            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto1" placeholder="Ej. 1500" oninput="mixtoMonto1Input()" onblur="pintarMixto()"></div>
+      </div>
+      <div class="field" id="wrap-comp" style="display:none">
+        <label class="lb">Comprobante del QR <span class="req">*</span> <span class="hint">la captura del pago</span></label>
+        <div id="f-comp-box"></div>
+        <div id="ias-f1" class="ias-box" aria-live="polite"></div><!-- 🔎 (§78) lo que dice la foto, al subirla -->
+      </div>
+      <!-- 💳 PAGO MIXTO (§4ej): el cliente paga una parte con un método y el resto con otro
+           (QR + tarjeta es el caso típico). Los dos pagos van en la MISMA venta, con el
+           mismo N° de nota; el segundo lleva su propio monto y su propia imagen. -->
+      <div id="wrap-mixto" style="display:none;border:1px dashed var(--teal-border);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--teal-lt)">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:.85rem" id="pago2-tit">2️⃣ Pago 2 de 2</b><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="toggleMixto(false)">✕ Quitar</button></div>
+        <div class="field">
+          <label class="lb"><span id="f-metodo2-lb">¿Con qué pagó la otra parte?</span> <span class="req">*</span></label>
+          <div class="seg mtd" id="f-metodo2">
+            <button type="button" data-val="Efectivo">💵 Efectivo</button>
+            <button type="button" data-val="QR">📱 QR</button>
+            <button type="button" data-val="Tarjeta">💳 Tarjeta</button>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <label class="lb"><span id="f-monto2-lb">¿Cuánto pagó con este método?</span> <span class="req">*</span></label>
+            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1000" oninput="mixtoMonto2Input()"></div>
+          </div>
+        </div>
+        <div class="field" id="wrap-banco2" style="display:none">
+          <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
+          <div class="seg mtd" id="f-banco2"></div>
+        </div>
+        <div class="field" id="wrap-comp2">
+          <label class="lb">Comprobante del Pago 2 <span class="req">*</span></label>
+          <div id="f-comp-box2"></div>
+          <div id="ias-f2" class="ias-box" aria-live="polite"></div>
+        </div>
+        <div class="hint" id="f-monto2-hint" style="margin:4px 0 8px;font-size:.9rem"></div>
+        <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Cada pago con su comprobante: arriba el del Pago 1, acá el del Pago 2.</div>
+      </div>
       <!-- ⚠️ El flete NO depende de cómo se pagó la mercadería: se cobra igual aunque la
            venta quede toda por cobrar. Por eso este campo está SIEMPRE visible. -->
       <div class="field" id="wrap-envio">
@@ -4365,52 +4412,7 @@ function glSigue(){
         </div>
       </div>
 
-      <div class="field" id="wrap-banco" style="display:none">
-        <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
-        <div class="seg mtd" id="f-banco"></div>
-      </div>
-
-      <div class="field" id="wrap-comp" style="display:none">
-        <label class="lb">Comprobante del QR <span class="req">*</span> <span class="hint">la captura del pago</span></label>
-        <div id="f-comp-box"></div>
-        <div id="ias-f1" class="ias-box" aria-live="polite"></div><!-- 🔎 (§78) lo que dice la foto, al subirla -->
-      </div>
-      <!-- 💳 PAGO MIXTO (§4ej): el cliente paga una parte con un método y el resto con otro
-           (QR + tarjeta es el caso típico). Los dos pagos van en la MISMA venta, con el
-           mismo N° de nota; el segundo lleva su propio monto y su propia imagen. -->
-      <div id="wrap-mixto" style="display:none;border:1px dashed var(--teal-border);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--teal-lt)">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:.85rem">💳 Segundo método de pago</b><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="toggleMixto(false)">✕ Quitar</button></div>
-        <div class="field">
-          <label class="lb"><span id="f-metodo2-lb">¿Con qué pagó la otra parte?</span> <span class="req">*</span></label>
-          <div class="seg mtd" id="f-metodo2">
-            <button type="button" data-val="Efectivo">💵 Efectivo</button>
-            <button type="button" data-val="QR">📱 QR</button>
-            <button type="button" data-val="Tarjeta">💳 Tarjeta</button>
-          </div>
-        </div>
-        <div class="grid2">
-          <div class="field">
-            <label class="lb" id="f-monto1-lb">¿Cuánto pagó con el primer método?</label>
-            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto1" placeholder="Ej. 1500" oninput="mixtoMonto1Input()" onblur="pintarMixto()"></div>
-          </div>
-          <div class="field">
-            <label class="lb"><span id="f-monto2-lb">¿Cuánto pagó con este método?</span> <span class="req">*</span></label>
-            <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1000" oninput="mixtoMonto2Input()"></div>
-          </div>
-        </div>
-        <div class="hint" id="f-monto2-hint" style="margin:-4px 0 8px"></div>
-        <div class="field" id="wrap-banco2" style="display:none">
-          <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
-          <div class="seg mtd" id="f-banco2"></div>
-        </div>
-        <div class="field" id="wrap-comp2">
-          <label class="lb">Comprobante de este pago <span class="req">*</span></label>
-          <div id="f-comp-box2"></div>
-          <div id="ias-f2" class="ias-box" aria-live="polite"></div>
-        </div>
-        <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Cada uno con su comprobante: arriba el del primer método, acá el del segundo.</div>
-      </div>
-      <!-- 💵 (07/11) ¿Quién recibió el efectivo? Obligatorio cuando entra efectivo (ver `recibioObligatorio`). -->
+            <!-- 💵 (07/11) ¿Quién recibió el efectivo? Obligatorio cuando entra efectivo (ver `recibioObligatorio`). -->
       <div class="field" id="wrap-recibio" style="display:none">
         <label class="lb">¿Quién recibió el efectivo? <span class="req">*</span> <span class="hint">el Cuadre se lo pide a esa persona</span></label>
         <div id="f-recibio-box"></div>
@@ -25070,7 +25072,7 @@ function renderCompForm(pide){
   var lb=wrap.querySelector('.lb');
   if(lb && pide){
     var _m1=(typeof MIXTO!=='undefined' && MIXTO && typeof mixtoMetNom==='function') ? mixtoMetNom(segVal('f-metodo')) : '';
-    lb.innerHTML='Comprobante del pago'+(_m1?(' con '+_m1):'')+' <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
+    lb.innerHTML=(_m1?('Comprobante del Pago 1 · '+_m1):'Comprobante del pago')+' <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
   }
   wrap.style.display = pide ? 'block' : 'none';
   /* ⚠️ Al ocultar NO se borra FORM_COMPS: esta función corre muchas veces mientras se
@@ -25167,7 +25169,13 @@ function pintarMixto(){
   var metodoVisible=!!wm && wm.style.display!=='none';
   var btn=document.getElementById('btn-mixto'); if(btn) btn.style.display=(metodoVisible && !MIXTO)?'inline-block':'none';
   box.style.display=(metodoVisible && MIXTO)?'block':'none';
-  if(!(metodoVisible && MIXTO)){ var _lc0=document.querySelector('#wrap-comp .lb'); if(_lc0) _lc0.innerHTML=_lc0.innerHTML.replace(/^Comprobante del pago con [^<]*?(?= <span)/, 'Comprobante del pago'); iasPintarForm(); return; }
+  var _on=metodoVisible && MIXTO, _wct=document.getElementById('wrap-cobro-todo'); if(_wct) _wct.classList.toggle('mixto-on', !!_on);
+  var _p1t=document.getElementById('pago1-tit'), _wm1=document.getElementById('wrap-monto1'), _ahint=document.getElementById('f-acuenta-hint');
+  if(_p1t) _p1t.hidden=!_on; if(_wm1) _wm1.hidden=!_on;
+  if(_ahint) _ahint.textContent = (_on && segVal('f-pagado')!=='SI') ? '(adelanto = Pago 1 + Pago 2)' : '(adelanto)';
+  if(!_on){ var _lc0=document.querySelector('#wrap-comp .lb'); if(_lc0) _lc0.innerHTML=_lc0.innerHTML.replace(/^Comprobante del (pago con [^<]*?|Pago 1[^<]*?)(?= <span)/, 'Comprobante del pago');
+    if(wm){ var _lm0=wm.querySelector('.lb'); if(_lm0 && /^¿Con qué pagó el Pago 1\?/.test(_lm0.innerHTML)) _lm0.innerHTML=(segVal('f-pagado')==='SI'?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'+mixtoBtnHtml(); }
+    iasPintarForm(); return; }
   var esQR=segVal('f-metodo2')==='QR';
   if(esQR) renderBancos2();
   document.getElementById('wrap-banco2').style.display=esQR?'block':'none';
@@ -25183,21 +25191,28 @@ function pintarMixto(){
   var _ya = !!(_rb && _rb.mx);   // el bloque describe el adelanto YA registrado en dos métodos: no se cambia desde acá
   if(_ya){ m1n=mixtoMetNom(_rb.ant && _rb.ant.metodo)||'1.er método'; m2n=mixtoMetNom(_rb.mx.metodo)||m2n; }
   ['f-monto1','f-monto2'].forEach(function(id){ var x=document.getElementById(id); if(x) x.readOnly=_ya; });
-  var lm2=document.getElementById('f-metodo2-lb'); if(lm2) lm2.textContent = si ? '¿Con qué pagó la otra parte?' : '¿Con qué pagó la otra parte del adelanto?';
-  var _lc=document.querySelector('#wrap-comp .lb'); if(_lc && _ya) _lc.innerHTML=_lc.innerHTML.replace(/^Comprobante del pago con [^<]*?(?= <span)/, 'Comprobante del pago');
-  if(_lc && m1n && !_ya){ var _h=_lc.innerHTML; if(_h.indexOf(' con '+m1n)<0) _lc.innerHTML=_h.replace(/^Comprobante del pago( con [^<]*)?/, 'Comprobante del pago con '+m1n); }
+  /* 💳 (17/11, dueño: «si pagó en 2 métodos debería abrirse para MARCAR pago 1… pago 2… y detallar cómo pagaron para dar ese total
+     de a cuenta») Dos tarjetas: «1️⃣ Pago 1» (método, banco, monto, comprobante) y «2️⃣ Pago 2» (lo mismo); arriba de la primera, de
+     qué total se trata. Solo presentación: se guarda igual que siempre (el 1.º = el total − el 2.º). */
+  var _qt = si ? 'el total de' : 'el A cuenta de';
+  if(_p1t) _p1t.innerHTML='1️⃣ Pago 1 de 2'+(base>0 ? ' <span class="pago-tot">· '+_qt+' <b>'+fmtBs(base)+'</b> se pagó en dos partes</span>' : '');
+  var _lm=wm.querySelector('.lb'); if(_lm && !/^¿Con qué pagó el Pago 1\?/.test(_lm.innerHTML)) _lm.innerHTML='¿Con qué pagó el Pago 1? <span class="req">*</span>'+mixtoBtnHtml();
+  var lm2=document.getElementById('f-metodo2-lb'); if(lm2) lm2.textContent = '¿Con qué pagó el Pago 2?';
+  var _lc=document.querySelector('#wrap-comp .lb');
+  if(_lc){ var _c1='Comprobante del Pago 1'+(m1n?(' · '+m1n):''); if(_lc.innerHTML.indexOf(_c1+' <span')!==0) _lc.innerHTML=_lc.innerHTML.replace(/^Comprobante del (pago con [^<]*?|Pago 1[^<]*?|pago)(?= <span)/, _c1); }
+  var _lc2=document.querySelector('#wrap-comp2 .lb'); if(_lc2) _lc2.innerHTML='Comprobante del Pago 2'+(m2n?(' · '+m2n):'')+' <span class="req">*</span>';
   var l1=document.getElementById('f-monto1-lb'), l2=document.getElementById('f-monto2-lb');
-  if(l1) l1.textContent='¿Cuánto pagó con '+(m1n||'el primer método')+'?';
-  if(l2) l2.textContent='¿Cuánto pagó con '+(m2n||'el segundo método')+'?';
+  if(l1) l1.textContent='¿Cuánto fue el Pago 1'+(m1n?(' ('+m1n+')'):'')+'?';
+  if(l2) l2.textContent='¿Cuánto fue el Pago 2'+(m2n?(' ('+m2n+')'):'')+'?';
   var e1=document.getElementById('f-monto1');
   if(e1 && document.activeElement!==e1 && base>0 && m2>0 && m2<base-0.009) e1.value = String(r2(base-m2));   // con el 2.º vacío o inválido, lo escrito en el 1.º queda (y se avisa)
   var m1=montoForm('f-monto1');
   if(h) h.innerHTML = _ya ? ('🔒 El adelanto ya está registrado: '+esc(m1n)+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n)+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b>. Se corrige en Contabilidad; lo que falta va con el método de arriba.')
        : !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
-       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+qe+(!si && montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))
+       : (m2>0 && m2<base-0.009) ? ('✓ Pago 1'+(m1n?(' '+esc(m1n)):'')+' <b>'+fmtBs(r2(base-m2))+'</b> + Pago 2'+(m2n?(' '+esc(m2n)):'')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+qe+(!si && montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))
        : (!(m2>0) && m1>=base-0.009) ? ('⚠️ '+esc(m1n||'El primer método')+' (<b>'+fmtBs(m1)+'</b>) no puede ser igual o más que <b>'+fmtBs(base)+'</b> '+qe+': si pagó todo con un solo método, tocá «✕ Quitar».')
        : (m2>=base-0.009) ? ('⚠️ '+esc(m2n||'El segundo método')+' (<b>'+fmtBs(m2)+'</b>) no puede ser igual o más que <b>'+fmtBs(base)+'</b> '+qe+': si pagó todo con un solo método, tocá «✕ Quitar».')
-       : ('Entre los dos tienen que sumar <b>'+fmtBs(base)+'</b> '+qe+'. Escribí cuánto pagó con uno y el otro se completa solo.');
+       : ('Pago 1 + Pago 2 tienen que sumar <b>'+fmtBs(base)+'</b> '+qe+'. Escribí el Pago 1 y el Pago 2 se completa solo con lo que falta.');
   iasPintarForm();                                  // 🔎 (§78)
 }
 function adjuntarCompForm2(){ adjuntarCompForm(2); }
@@ -81358,6 +81373,13 @@ function vdIniciar(){
 .mno-hab{ opacity:.6; }
 .mno-n{ font-size:.78rem; color:var(--muted); margin-top:6px; }
 @media (max-width:560px){ .mno-l{ grid-template-columns:1fr; gap:1px; } }
+
+/* 💳 (17/11) Pago con dos métodos: «1️⃣ Pago 1» y «2️⃣ Pago 2» como dos tarjetas iguales */
+#wrap-cobro-todo.mixto-on #pago1-tit,#wrap-cobro-todo.mixto-on #wrap-metodo,#wrap-cobro-todo.mixto-on #wrap-banco,#wrap-cobro-todo.mixto-on #wrap-monto1,#wrap-cobro-todo.mixto-on #wrap-comp{background:var(--teal-lt);border-left:1px dashed var(--teal-border);border-right:1px dashed var(--teal-border);margin:0;padding:6px 12px}
+#wrap-cobro-todo.mixto-on #pago1-tit{border-top:1px dashed var(--teal-border);border-radius:10px 10px 0 0;margin-top:8px;padding-top:10px}
+#wrap-cobro-todo.mixto-on #wrap-comp{border-bottom:1px dashed var(--teal-border);border-radius:0 0 10px 10px;padding-bottom:10px;margin-bottom:10px}
+.pago-tit{font-weight:700;font-size:.85rem}
+.pago-tit .pago-tot{font-weight:500;color:var(--muted)}
 </style>
 <script>
 /* ---------------------------------------------------------------------------
