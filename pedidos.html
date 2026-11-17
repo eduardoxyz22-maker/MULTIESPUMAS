@@ -72684,12 +72684,30 @@ function ctaAvTiendaTodas(v){
   });
 }
 /* Con cada lectura buena: lo abierto que ya coincide (o que no es un error) se cierra solo. Una vez cada 10 min como mucho. */
+/* 🔁 (17/11, auditoría con la planilla real; dueño: «si le dan ya lo corregí, ¿cómo verificamos que lo corrigió?») De 47 avisos abiertos,
+   en 37 la foto del pago no tenía lectura vigente: eran lecturas viejas (antes del 15/11 el voucher de tarjeta pegado en la nota salía «no es
+   un comprobante», E3) que el servidor vuelve a leer con la pregunta nueva, pero solo si alguien paga la lectura. Sin lectura, el aviso no
+   se cierra solo y «Ya lo corregí» no puede verificar nada (pide la razón). Ahora, en un aparato CON la contraseña (`iacPuede`: no gasta
+   en el de una vendedora), las fotos de los avisos abiertos que faltan se leen solas, de a `CTA_AV_RELEO_TOPE` por página abierta; con la
+   lectura nueva, lo que ya coincide (o el voucher de tarjeta) se cierra solo como siempre. ~USD 0,02 por foto. */
+var CTA_AV_RELEO_TOPE=48, CTA_AV_RELEO={ hecho:false };
+function ctaAvReleer(A){
+  if(CTA_AV_RELEO.hecho || !iacPuede() || !CONNECTED) return Promise.resolve(0);
+  var fs=[], v={};
+  (A||[]).forEach(function(a){ var x=ctaAvPagoDe(a); (x ? x.comps : []).forEach(function(f){ if(f && !IAC.res[f] && !v[f]){ v[f]=1; fs.push(f); } }); });
+  if(!fs.length) return Promise.resolve(0);
+  CTA_AV_RELEO.hecho=true;
+  fs=fs.slice(0, CTA_AV_RELEO_TOPE);
+  return conTopeDuro(apiPost({ action:'iaComprobantes', fotos:fs }), 90000, 'tardo_ia').then(function(r){
+    if(!r || !r.ok) return 0; iacTomar(r); return Object.keys(r.res||{}).length;
+  }, function(){ return 0; });
+}
 function ctaAvAutoRevisar(){
   if(!ctaAvAutoActivo() || !CONNECTED || !iacServidorOk() || CTA_AV_AUTO.corre) return Promise.resolve(0);
   if(CTA_AV_AUTO.t && Date.now()-CTA_AV_AUTO.t<CTA_AV_AUTO_MS) return Promise.resolve(0);
   var A=ctaAvAbiertos(''); if(!A.length) return Promise.resolve(0);
   CTA_AV_AUTO.t=Date.now(); CTA_AV_AUTO.corre=true;
-  return ctaAvTraerLecturas(A).then(function(){
+  return ctaAvTraerLecturas(A).then(function(){ return ctaAvReleer(A); }).then(function(){
     var refs=ctaAvRefs(), ch=[];
     A.forEach(function(a){ var e=ctaAvEvaluar(a, refs); if(e.est==='ok') ch.push({ id:a.id, ok:Date.now(), okPor:'🤖 el panel', au:e.noErr ? 'no_error' : 'coincide' }); });
     if(!ch.length) return 0;

@@ -214,6 +214,30 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     r7.o7==='no_error' && r7.o8==='no_error' && r7.o10==='coincide' && r7.o11 && r7.n===4, r7);
   chk('7c. Contabilidad ve «🤖 Se cerró solo…: ya coincide con la foto», y no vuelve a mirar en los 10 minutos siguientes', /Se cerró solo el .*ya coincide con la foto/.test(r7.html) && r7.otraVez===0, r7);
 
+  /* 7d · (17/11) la foto del aviso SIN lectura vigente (lectura vieja que el servidor relee): con la contraseña se lee sola una vez y,
+     con la lectura nueva, el aviso del voucher de tarjeta se cierra solo; sin la contraseña no gasta */
+  const r7d = await ev(async () => {
+    var o={}, t=Date.now()-86400000;
+    STATE.push(Object.assign({}, findById('a8'), { id:'a20', oc:'11-a20', nota:'5020', cliente:'ZOE VIEJA', rev:1,
+      metodoPago:textoCobros([{ anticipo:true, metodo:'Tarjeta', monto:2000, fecha:'2026-11-03', nota:'5020', comps:['z20'] }]) }));
+    await ctaAvGuardar([{ id:'o20', k:'a20|2026-11-03|2000|Tarjeta', pid:'a20', vend:'Carola Chavez', cli:'ZOE VIEJA', nota:'5020', f:'2026-11-03', m:2000, met:'Tarjeta',
+      txt:'la foto no es un comprobante de pago', mes:'2026-11', t:t, por:'Contabilidad', ks:['nl'] }]);
+    var base=apiPost; __S.llamadas=[];
+    apiPost=function(b){ var r=base(b); if(b.action==='iaComprobantes' && !b.leer){ return r.then(function(x){ x.res.z20={ cp:false, le:true, m:0, no:'nota de venta con el voucher pegado', t:1, pv:5 }; return x; }); } return r; };
+    window.CTA_AV_AUTO_PRUEBA=1; IAC.res={}; CTA_AV_LEE.pedidas={};
+    var U=UNLOCKED; UNLOCKED=false; IAC.clave=''; CTA_AV_RELEO.hecho=false; CTA_AV_AUTO.t=0;
+    await ctaAvAutoRevisar(); await _esp(60);
+    o.sinClave=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).length;
+    o.sinClaveAbierto=!ctaAvLeer().filter(function(a){ return a.id==='o20'; })[0].ok;
+    UNLOCKED=true; CTA_AV_RELEO.hecho=false; CTA_AV_AUTO.t=0; IAC.res={}; CTA_AV_LEE.pedidas={}; __S.llamadas=[];
+    await ctaAvAutoRevisar(); await _esp(80);
+    o.pagas=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).map(function(b){ return b.fotos; });
+    var a=ctaAvLeer().filter(function(a){ return a.id==='o20'; })[0]||{}; o.au=a.au||''; o.ok=!!a.ok;
+    UNLOCKED=U; apiPost=base; window.CTA_AV_AUTO_PRUEBA=0; return o;
+  });
+  chk('7d. sin la contraseña, la foto sin lectura no se paga y el aviso queda abierto', r7d.sinClave===0 && r7d.sinClaveAbierto, r7d);
+  chk('7e. con la contraseña se lee UNA vez (solo la que falta) y el voucher de tarjeta se cierra solo', r7d.pagas.length===1 && JSON.stringify(r7d.pagas[0])==='["z20"]' && r7d.ok && r7d.au==='no_error', r7d);
+
   /* 8 · Contabilidad: los mismos arreglos en la revisión de las fotos */
   const r8 = await ev(async () => {
     Object.keys(__S.lee).forEach(function(f){ IAC.res[f]=__S.lee[f]; });
