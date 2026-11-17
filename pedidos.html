@@ -4317,10 +4317,10 @@ function glSigue(){
       <div class="sec">💰 Cobro</div>
 
       <div class="field">
-        <label class="lb">¿Pagado?</label>
+        <label class="lb">¿El cliente ya pagó el TOTAL de la venta? <span class="hint" id="f-pagado-tot"></span></label>
         <div class="seg pay" id="f-pagado">
-          <button type="button" data-val="SI">SÍ, pagado</button>
-          <button type="button" data-val="NO" class="active">NO</button>
+          <button type="button" data-val="SI">SÍ, pagó todo</button>
+          <button type="button" data-val="NO" class="active">NO, falta pagar</button>
         </div>
       </div>
 
@@ -4336,7 +4336,7 @@ function glSigue(){
       </div>
       <!-- 💳 (15/11, 308) cómo va a pagar lo que falta: logística lleva el POS o el QR (`pcob*`; no es obligatorio) -->
       <div class="field" id="wrap-pcob" hidden>
-        <label class="lb">¿Cómo paga lo que falta? <span class="hint">(lo ve logística: llevar el POS o el QR)</span></label>
+        <label class="lb">¿Cómo va a pagar el cliente el SALDO (lo que falta)? <span class="hint">(lo ve logística: llevar el POS o el QR)</span></label>
         <div class="vd-pc-ops" id="f-pcob" role="group" aria-label="Cómo paga lo que falta">
           <button type="button" data-val="E" aria-pressed="false" onclick="pcobElegir(this)">💵 Efectivo<small>al chofer</small></button>
           <button type="button" data-val="Q" aria-pressed="false" onclick="pcobElegir(this)">📱 QR<small>llevar el QR</small></button>
@@ -12734,7 +12734,15 @@ function pintarProdRpt(){
 }
 /* Suma de los ítems, debajo de la lista. Es solo informativa: el total de la venta lo
    sigue mandando "A cuenta + Saldo". El botón la copia a los montos para no tipear. */
+/* 💰 (17/11, dueño: «¿Pagado? … algunos no entienden… aclarar pagado el total y mostrarles cuánto es») Al lado de la pregunta del cobro,
+   cuánto es el total de la venta (la suma de los productos), o cuántos productos faltan con precio. Solo texto. */
+function pagadoTotPintar(){
+  var el=document.getElementById('f-pagado-tot'); if(!el) return;
+  var S=totalItems();
+  el.textContent = !S.con ? '' : (S.sin ? ('(falta el precio de '+S.sin+' producto'+(S.sin===1?'':'s')+')') : ('(total: '+fmtBs(S.t)+')'));
+}
 function pintarTotalProds(){
+  try{ pagadoTotPintar(); }catch(e){}
   var cja=document.getElementById('f-prods-total'); if(!cja) return;
   try{ totalAutoPoner(); }catch(e){}   // 🧮 (06/11) primero el monto, después la caja que lo dice
   try{ nvpTrasPrecios(); }catch(e){}   // 🧾 (16/11, 353) el aviso de la nota de venta sigue a los precios que se escriben
@@ -13788,7 +13796,7 @@ function montoForm(el){
    «SÍ, pagado» proponía Bs 3.200 para una venta de 3.000 con 300 + 200 a cuenta. */
 /* (30/09, revisión en tres niveles, R2-1) Lo que «A cuenta» tiene DE MÁS sobre el anticipo escrito es el 2° método, se
    reconozca como mixto o no: desde §4gy (A2) `mixtoEn` no reconoce un 2° pago del MISMO método que el anticipo (lo deja
-   Contabilidad al corregir), pero `p.acuenta` lo sigue sumando, y se contaba dos veces («SÍ, pagado» 3.000 → 3.500). Lo usa
+   Contabilidad al corregir), pero `p.acuenta` lo sigue sumando, y se contaba dos veces («SÍ, pagó todo» 3.000 → 3.500). Lo usa
    el freno «poné el saldo» (`_cobAparte`): solo cobros registrados, nunca el anticipo. */
 function cobradoFueraDeAcuenta(p){
   if(!p) return 0;
@@ -18731,7 +18739,7 @@ function pryPlata(ym){
     var tot=ventaTotal(p), resto=r2(tot-cob);
     sumar(g,'vendido',tot); sumar(g,'n',1);
     if(resto>0.009){
-      if(p.pagado) sumar(g,'sinMonto',resto);                          // «SÍ, pagado» sin el monto anotado (§4fg)
+      if(p.pagado) sumar(g,'sinMonto',resto);                          // «SÍ, pagó todo» sin el monto anotado (§4fg)
       else if((contaFecha(p)||f)>=ini){ sumar(g,'faltaMes',resto); sumar(g,'nFaltaMes',1); }
       else { sumar(g,'faltaAntes',resto); sumar(g,'nFaltaAntes',1); }
     } else if(resto<-0.009) sumar(g,'deMas',-resto);
@@ -25615,7 +25623,7 @@ function obsRevPlata(U, C, p, cita){
   var vs={}; hits.forEach(function(h){ vs[h.v]=1; }); if(Object.keys(vs).length>1) return [];   // dos montos distintos: no se adivina
   hits.sort(function(a, b){ return a.i-b.i; });
   var h=hits[0], bs=function(n){ return Math.abs(n-Math.round(n))<0.005 ? fmtBs0(n) : fmtBs(n); };
-  var t='Dicen «'+cita(h.i, h.j)+'» y '+(pag ? 'la venta está marcada «SÍ, pagado».' : (S<0.005 ? 'no hay saldo por cobrar.' : ('el saldo es '+bs(S)+'.')));
+  var t='Dicen «'+cita(h.i, h.j)+'» y '+(pag ? 'la venta está marcada «SÍ, pagó todo».' : (S<0.005 ? 'no hay saldo por cobrar.' : ('el saldo es '+bs(S)+'.')));
   return [{ k:'plata', t:t, foco:{ plata:1 } }];
 }
 /* Todo lo que la nota contradice de `p` (un pedido o lo que tiene el formulario). `o.rel`: leer «hoy/mañana/pasado mañana»; `o.tipo`. */
@@ -26504,15 +26512,15 @@ function submitPedido(){
     if(saldoObligActivo() && cobroSinMonto(vendedor, _cobAparte)){
       var _pSM=EDIT_ID ? findById(EDIT_ID) : null, _smIgual=false;
       if(_pSM && ventaGuardadaSinMonto(_pSM)){
-        _smIgual=preguntaYa('💵 Esta venta ya estaba guardada SIN MONTO (ni saldo por cobrar ni pago).\n\nAceptar: guardarla igual así.\nCancelar: poner ahora el saldo por cobrar o marcar «SÍ, pagado».',
+        _smIgual=preguntaYa('💵 Esta venta ya estaba guardada SIN MONTO (ni saldo por cobrar ni pago).\n\nAceptar: guardarla igual así.\nCancelar: poner ahora el saldo por cobrar o marcar «SÍ, pagó todo».',
           { icono:'💵', aviso:true, titulo:'Esta venta ya estaba guardada sin monto', sub:'Ni saldo por cobrar ni pago',
-            lineas:['Si sabés cuánto es, poné el saldo por cobrar o marcá «SÍ, pagado».', 'Si no, se guarda igual así, sin monto.'],
+            lineas:['Si sabés cuánto es, poné el saldo por cobrar o marcá «SÍ, pagó todo».', 'Si no, se guarda igual así, sin monto.'],
             no:'✏️ Poner el monto', si:'💾 Guardar igual así' }, _otraVez);
         if(_smIgual===null) return;   // ❓ esperando la respuesta
       }
       if(!_smIgual){
         markErr('f-saldo');
-        toast('💵 Poné el SALDO POR COBRAR (lo que falta pagar) o marcá «SÍ, pagado» con lo que pagó: una venta no se guarda sin monto.','err',8000);
+        toast('💵 Poné el SALDO POR COBRAR (lo que falta pagar) o marcá «SÍ, pagó todo» con lo que pagó: una venta no se guarda sin monto.','err',8000);
         var _fsSM=document.getElementById('f-saldo'); if(_fsSM){ try{ _fsSM.focus(); _fsSM.scrollIntoView({block:'center'}); }catch(e){} }
         return;
       }
@@ -26575,7 +26583,7 @@ function submitPedido(){
      suelto le borraría a contabilidad todo el historial.
      (27/09, decisión del dueño del 26/09 20:37) Y si SÍ cambió los montos, los pagos ya
      registrados TAMPOCO se borran: corregir el precio cambia el saldo (`_soloPrecio`),
-     corregir «A cuenta» corrige solo el adelanto (`_rehaceAdel`, §4fr) y «SÍ, pagado» anota
+     corregir «A cuenta» corrige solo el adelanto (`_rehaceAdel`, §4fr) y «SÍ, pagó todo» anota
      lo que faltaba como un cobro de hoy (`_rb`, ver `pagoRestoPrev`). */
   var _compSinPago=false;
   var _pagSI  = segVal('f-pagado')==='SI';
@@ -26599,7 +26607,7 @@ function submitPedido(){
     _compSinPago=true;
   })();
   if(_compSinPago){
-    toast('Subiste la imagen pero no anotaste ningún pago. El comprobante va pegado a un pago: poné cuánto entró en «A cuenta» o marcá «SÍ, pagado». Si todavía no pagó, quitá la imagen y adjuntala después desde Contabilidad al registrar el pago.','err');
+    toast('Subiste la imagen pero no anotaste ningún pago. El comprobante va pegado a un pago: poné cuánto entró en «A cuenta» o marcá «SÍ, pagó todo». Si todavía no pagó, quitá la imagen y adjuntala después desde Contabilidad al registrar el pago.','err');
     /* (26/09) Sin pago el bloque del método se esconde y la imagen con él: «quitá la imagen» no tenía
        dónde tocarse (el «A cuenta» vuelto a 0 con la foto ya subida trababa el guardado, §4gb). */
     renderCompForm(true);
@@ -26656,7 +26664,7 @@ function submitPedido(){
                adelanto mixto del 28/08 reescribía los DOS renglones con la fecha de HOY: Bs 2.000 se
                mudaban del cuadre de agosto, ya arqueado, al de septiembre. Si el adelanto ya era un
                renglón del historial, conserva su día y su recibo (los dos renglones comparten los dos:
-               así los reconoce `mixtoDe`). Con «SÍ, pagado» sigue como siempre, igual que en §4fr. */
+               así los reconoce `mixtoDe`). Con «SÍ, pagó todo» sigue como siempre, igual que en §4fr. */
             if(!_pagSI && _antPrev){ dia=_antPrev.fecha||contaFecha(prev)||dia; nota=limpiaNota(_antPrev.nota)||nota; }
             return textoCobros([
               { anticipo:true, metodo:segVal('f-metodo'),  banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),   monto:r2(base-m2), fecha:dia, nota:nota, comps:compsArr(FORM_COMPS) },
@@ -31317,7 +31325,7 @@ function faltaCampoTxt(k){
     case 'Nota': return 'Falta el N° de la nota de venta';
     case 'Saldo o pagado':
       if(segVal('f-pagado')==='SI') return segVal('f-metodo') ? 'Falta el monto total cobrado' : 'Falta con qué pagó: tocá Efectivo, QR o Tarjeta';
-      return segVal('f-pagado')==='NO' ? 'Falta el saldo por cobrar (lo que falta pagar)' : 'Falta decir si ya pagó: tocá «SÍ, pagado» o poné el saldo por cobrar';
+      return segVal('f-pagado')==='NO' ? 'Falta el saldo por cobrar (lo que falta pagar)' : 'Falta decir si ya pagó: tocá «SÍ, pagó todo» o poné el saldo por cobrar';
     case 'Quién recibió el efectivo': return 'Falta quién recibió el efectivo: tocá tu nombre o el del chofer que lo cobró';
   }
   return 'Falta: '+String(k||'').toLowerCase();
@@ -41907,13 +41915,13 @@ var PR_PASOS={
   hola:{ ico:'🧪', t:'¡Estás practicando!', x:'Cargá lo que quieras: nada va a la planilla y al cliente no le llega nada. Tocá «📋 Ejercicios» arriba para ver 5 tareas.' },
   form:{ ico:'📝', t:'Un pedido nuevo', x:'Elegí tu nombre (Vendedor), después el cliente y su celular, y los productos con su código. Te voy diciendo qué mirar en cada paso.', vid:'pedido' },
   editar:{ ico:'✏️', t:'Estás corrigiendo un pedido', x:'Cambiá lo que haga falta y tocá «Guardar cambios». En práctica, la planilla no cambia.' },
-  tienda:{ ico:'🏪', t:'Venta de tienda', x:'Es la que se lleva el cliente del local: no lleva día, turno ni dirección y no ocupa lugar en el camión. Va «SÍ, pagado», cómo pagó y la foto del comprobante.', vid:'tienda' },
+  tienda:{ ico:'🏪', t:'Venta de tienda', x:'Es la que se lleva el cliente del local: no lleva día, turno ni dirección y no ocupa lugar en el camión. Va «SÍ, pagó todo», cómo pagó y la foto del comprobante.', vid:'tienda' },
   celular:{ ico:'📱', t:'El celular del cliente', x:'Con el celular el bot le confirma el pedido por WhatsApp (de verdad; en práctica no le llega nada). Si ya compró antes, el panel completa sus datos.' },
   producto:{ ico:'🛏️', t:'Elegiste un producto', x:'Mirá el cuadrito de abajo del producto: ✅ hay, 📥 se trae de Moreno, 🏭 hay que fabricar. Ahí dice desde qué día se puede entregar. No olvides el precio.' },
   fecha:{ ico:'📅', t:'El día de entrega', x:'Arriba del formulario ves cuántos lugares le quedan al camión a la mañana y a la tarde. Si el turno está lleno, el panel no te deja.' },
   turno:{ ico:'🌅', t:'Mañana o tarde', x:'🌅 AM sale a la mañana y 🌆 PM a la tarde. Cada turno tiene sus propios lugares: mover un pedido de la mañana no libera la tarde.' },
   cobro:{ ico:'💵', t:'El cobro', x:'«A cuenta» es lo que el cliente ya pagó (el adelanto) y «Saldo por cobrar» lo que falta. Después elegí con qué pagó.' },
-  pagado:{ ico:'✅', t:'Venta pagada', x:'«SÍ, pagado» = el cliente pagó todo. Elegí con qué pagó, cuánto entró y subí la foto del comprobante.' },
+  pagado:{ ico:'✅', t:'Venta pagada', x:'«SÍ, pagó todo» = el cliente pagó todo. Elegí con qué pagó, cuánto entró y subí la foto del comprobante.' },
   metodo:{ ico:'💳', t:'Con qué pagó', x:'En efectivo hay que decir quién recibió la plata. En QR o tarjeta, la foto del comprobante.' },
   qr:{ ico:'📱', t:'Pago con QR', x:'Elegí el BANCO donde entró y subí la foto del comprobante: Contabilidad la compara con el banco.' },
   comprobante:{ ico:'📎', t:'La foto del comprobante', x:'En práctica la foto queda solo en este aparato: no se sube a Drive.' },
@@ -41971,7 +41979,7 @@ function practicaTrasGuardarFila(eco, prev){
 /* ── 📋 Los ejercicios ── */
 var PR_EJ=[
   { k:'venta_qr', t:'💳 Cargá una venta con adelanto en QR', c:'Nuevo pedido → cliente y celular → producto con su precio → «A cuenta» con el adelanto → «¿Con qué pagó?» 📱 QR → el banco → la foto del comprobante → Guardar.', ir:'form' },
-  { k:'tienda', t:'🏪 Registrá una venta de tienda', c:'🧾 Contabilidad → «🏪 Venta de tienda» → cliente, productos con su precio → «SÍ, pagado», cómo pagó y la foto → «Registrar venta de tienda».', ir:'tienda' },
+  { k:'tienda', t:'🏪 Registrá una venta de tienda', c:'🧾 Contabilidad → «🏪 Venta de tienda» → cliente, productos con su precio → «SÍ, pagó todo», cómo pagó y la foto → «Registrar venta de tienda».', ir:'tienda' },
   { k:'cobro', t:'💵 Cobrá el saldo de una venta', c:'🧾 Contabilidad → tocá una venta con saldo (puede ser la de práctica) → «Registrar pago» → cómo pagó, cuánto y la foto → Guardar.', ir:'conta' },
   { k:'atc', t:'🎧 Cargá una ATC', c:'Nuevo pedido → 🎧 ATC → motivo, detalle, fecha de compra, garantía o contra costo y qué se le recoge → Guardar.', ir:'form' },
   { k:'repro', t:'📅 Reprogramá un pedido', c:'📋 Mis pedidos (o Administración) → abrí un pedido → «📅 Reprogramar» → el día y el turno nuevos.', ir:'mis' }
@@ -76474,7 +76482,7 @@ var ASIS_AYUDA=[
   /* 🎬 (26/10, §4mv; dueño: «y también registrar una venta de tienda») */
   { q:'¿Cómo registro una venta de tienda?', k:'venta tienda local mostrador se lo lleva salio de tienda registrar sin camion video', v:'conta', vid:'tienda',
     f:['#view-conta .lb-acc [onclick="abrirVentaTienda()"]','#cx-grupos [onclick="abrirVentaTienda()"]'],
-    p:['En 🧾 Contabilidad tocá «🏪 Venta de tienda».','La tienda se pone sola con la tuya: si fue en otra, elegila arriba.','Nota de venta, cliente y celular, y los productos con su código, cantidad y precio. No lleva fecha de entrega, turno ni dirección.','En el cobro: «SÍ, pagado», cómo pagó, cuánto entró y la foto del comprobante (o del recibo).','Tocá «Registrar venta de tienda»: queda como 🏪 SALIÓ DE TIENDA y no ocupa lugar en el camión.','🎬 Hay un video: «▶️ Ver el video».'] }
+    p:['En 🧾 Contabilidad tocá «🏪 Venta de tienda».','La tienda se pone sola con la tuya: si fue en otra, elegila arriba.','Nota de venta, cliente y celular, y los productos con su código, cantidad y precio. No lleva fecha de entrega, turno ni dirección.','En el cobro: «SÍ, pagó todo», cómo pagó, cuánto entró y la foto del comprobante (o del recibo).','Tocá «Registrar venta de tienda»: queda como 🏪 SALIÓ DE TIENDA y no ocupa lugar en el camión.','🎬 Hay un video: «▶️ Ver el video».'] }
 ];
 /* 🗣️ (12/10, F) Cómo habla la gente: cada palabra suma las del panel que quiere decir. */
 var ASIS_SINONIMOS={ plata:'pago cobro', cobrar:'pago cobro', cobre:'pago cobro', pagar:'pago', pagaron:'pago', deposito:'pago qr', deposite:'pago qr',
