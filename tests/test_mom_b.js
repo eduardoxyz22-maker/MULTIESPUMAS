@@ -77,11 +77,11 @@ function PREPARAR(){
   });
   chk('tocar a Mirian abre su tablita debajo', r.abre && r.exp==='true' && r.ab==='▾ cerrar', r);
   chk('…columnas: septiembre a esta altura (al 23, 15:00), octubre al 23, diferencia y %', JSON.stringify(r.th)===JSON.stringify(['','septiembre al 23, 15:00','octubre al 23','Diferencia','%']), r.th);
-  chk('…ventas 2 → 2 (= 0%), unidades 2 → 2, Bs 3.000 → 3.900 (+900, ▲ 30%): los Bs son los del % de la fila', JSON.stringify(r.tr)===JSON.stringify([['Ventas','2','2','0','= 0%'],['Unidades','2','2','0','= 0%'],['Bs','Bs 3.000','Bs 3.900','+900','▲ 30%']]), r.tr);
-  chk('…abajo, septiembre entero (3 ventas · 3 unidades · Bs 6.000: con la del 28/09), y la línea de unidades', r.ent==='Septiembre entero: 3 ventas · 3 unidades · Bs 6.000' && r.svg, r);
+  chk('…ventas 2 → 2 (= 0%), unidades 2 → 2 (🛏️ 17/11: con colchones y somieres aparte), Bs 3.000 → 3.900 (+900, ▲ 30%): los Bs son los del % de la fila', JSON.stringify(r.tr)===JSON.stringify([['Ventas','2','2','0','= 0%'],['Unidades','2','2','0','= 0%'],['· Colchones','2','2','0','= 0%'],['· Somieres','0','0','0','= 0%'],['Bs','Bs 3.000','Bs 3.900','+900','▲ 30%']]), r.tr);
+  chk('…abajo, septiembre entero (3 ventas · 3 unidades · Bs 6.000: con la del 28/09), y la línea de unidades', r.ent==='Septiembre entero: 3 ventas · 3 unidades (3 colchones · 0 somieres) · Bs 6.000' && r.svg, r);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="maria"]'); f.click(); var d=f.querySelector('.pry-mom-det');
     return d ? [].map.call(d.querySelectorAll('tbody tr'), function(x){ return [].map.call(x.children, function(c){ return c.textContent; }); }) : null; });
-  chk('Maria: 1 venta y 1 unidad contra 1 y 1 (= 0%), Bs 4.000 → 2.000 (−2.000, ▼ 50%)', r && JSON.stringify(r)===JSON.stringify([['Ventas','1','1','0','= 0%'],['Unidades','1','1','0','= 0%'],['Bs','Bs 4.000','Bs 2.000','−2.000','▼ 50%']]), r);
+  chk('Maria: 1 venta y 1 unidad contra 1 y 1 (= 0%), Bs 4.000 → 2.000 (−2.000, ▼ 50%)', r && JSON.stringify(r)===JSON.stringify([['Ventas','1','1','0','= 0%'],['Unidades','1','1','0','= 0%'],['· Colchones','1','1','0','= 0%'],['· Somieres','0','0','0','= 0%'],['Bs','Bs 4.000','Bs 2.000','−2.000','▼ 50%']]), r);
   r = await page.evaluate(() => { var d=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det'); d.querySelector('td').click();
     var sigue=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det');
     renderProyeccion(); var tras=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det'), m2=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="maria"] .pry-mom-det');

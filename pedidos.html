@@ -5190,6 +5190,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-it:hover{transform:translateY(-1px);box-shadow:0 8px 18px -14px var(--c)}
 .ah-it::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c)}
 .ctav-sub-v{margin-top:14px;color:#64748b}.ctav-viejos .ctav-it{opacity:.72;filter:grayscale(.6)}.ctav-viejos .ctav-q{color:#475569!important}
+.pmd-sub{padding-left:10px;color:#64748b;font-size:.92em}
 .ah-it.ah-a{--c:#c2620a;--cb:#fffaf2}.ah-it.ah-i{--c:#2457c5;--cb:#f6f9ff}
 .ah-n{font-size:1.4rem;font-weight:900;color:var(--c);text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em;white-space:nowrap}
 .ah-tx{min-width:0}
@@ -19108,8 +19109,8 @@ function pryMomDe(R, A, r){
   /* (08/11, P1) el corte del otro mes es el de `pryAltura` (los mismos días hábiles, `pryCorteAltura`): una sola cuenta para la fila, la
      tablita, «A esta altura» y el bot de los lunes. */
   var dia=A.curso ? A.dia : 0, C=A.curso ? (A.corte || pryCorteAltura(R.hoy, A.cmp, A.min)) : null, lim=(C && !C.entero) ? C.lim : '', limMin=C ? C.min : null;
-  var act=0, ant=0, T=function(){ return { n:0, u:0, bs:0 }; }, ac=T(), an=T(), en=T();
-  var suma=function(o, x){ o.n++; o.u+=Number(x.u)||0; o.bs+=x.bs; };
+  var act=0, ant=0, T=function(){ return { n:0, u:0, c:0, s:0, bs:0 }; }, ac=T(), an=T(), en=T();
+  var suma=function(o, x){ o.n++; o.u+=Number(x.u)||0; o.c+=Number(x.c)||0; o.s+=Number(x.s)||0; o.bs+=x.bs; };   // 🛏️ (17/11, dueño: «¿dónde veo cuántos colchones y somieres vendió cada vendedor?») colchones y somieres aparte
   xs.forEach(function(x){
     if(x.ym===R.ym){ act+=x.bs; suma(ac, x); }
     if(x.ym===A.cmp){ suma(en, x); if(!lim || pryCargadaAl(x, lim, limMin)){ ant+=x.bs; suma(an, x); } }
@@ -19160,9 +19161,9 @@ function pryMomDetHtml(R, A, r){
   var pU=pryMomPct(t.act.u, t.ant.u), col=(pU==null || pU>=0) ? '#15803d' : '#b91c1c';
   var svg='<svg class="pmd-l" viewBox="0 0 '+W+' '+H+'" aria-hidden="true"><polyline points="'+pts(pu)+'" fill="none" stroke="#b4c2c1" stroke-width="1.5" stroke-dasharray="3 2"/>'+
           (cu.length ? '<polyline points="'+pts(cu)+'" fill="none" stroke="'+col+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' : '')+'</svg>';
-  var e=t.ent, ent=alt ? ('<div class="pmd-ent">'+esc(cm.charAt(0).toUpperCase()+cm.slice(1))+' entero: '+e.n+' venta'+(e.n===1?'':'s')+' · '+e.u+' unidad'+(e.u===1?'':'es')+' · '+fmtBs0(e.bs)+'</div>') : '';
+  var e=t.ent, ent=alt ? ('<div class="pmd-ent">'+esc(cm.charAt(0).toUpperCase()+cm.slice(1))+' entero: '+e.n+' venta'+(e.n===1?'':'s')+' · '+e.u+' unidad'+(e.u===1?'':'es')+' ('+e.c+' colch'+(e.c===1?'ón':'ones')+' · '+e.s+' somier'+(e.s===1?'':'es')+') · '+fmtBs0(e.bs)+'</div>') : '';
   return '<div class="pry-mom-det" onclick="event.stopPropagation()"><div class="pmd-tw"><table class="pmd-t"><thead><tr><th></th><th>'+thAnt+'</th><th>'+thAct+'</th><th class="pmd-dif">Diferencia</th><th>%</th></tr></thead>'+
-         '<tbody>'+fila('n','Ventas')+fila('u','Unidades')+fila('bs','Bs')+'</tbody></table>'+ent+'</div>'+
+         '<tbody>'+fila('n','Ventas')+fila('u','Unidades')+fila('c','<span class="pmd-sub">· Colchones</span>')+fila('s','<span class="pmd-sub">· Somieres</span>')+fila('bs','Bs')+'</tbody></table>'+ent+'</div>'+
          '<div class="pmd-g">'+svg+'<small>unidades, día por día (punteado: '+esc(cm)+')</small></div></div>';
 }
 function pryMomTocar(el){
