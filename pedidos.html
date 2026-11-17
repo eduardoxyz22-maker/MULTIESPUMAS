@@ -1135,6 +1135,7 @@ button.fl-chip{cursor:pointer;font-family:inherit}
 .pcal-domt{display:grid;gap:4px;margin-top:6px} .pcal-domt>div{display:grid;grid-template-columns:minmax(120px,1fr) auto auto 52px;gap:10px;align-items:baseline}
 .pcal-domt b{font-variant-numeric:tabular-nums;text-align:right} .pcal-domt span:nth-child(3){color:#7a6420;font-variant-numeric:tabular-nums}
 .pcal-domp{margin-top:6px;font-size:.74rem;color:#7a6420}
+.pry-kpi .pry-kpi-g{color:var(--muted);font-size:.95em}.pry-kpi .pry-kpi-d{color:#b45309;font-weight:600}
 .pry-kpi{display:block;margin-top:3px;font-size:.74rem;color:var(--muted);line-height:1.5}
 .pry-kpi b{color:var(--text,#0f2b2a);font-weight:700}
 .pry-kpi[hidden]{display:none}
@@ -16616,12 +16617,16 @@ function pryKpiBuscar(T, k){
   });
   return n===1 ? hit : null;
 }
-function pryKpiTxt(v){
+/* (17/11, dueño: «la conversión debería ser en base a ventas del panel… ¿no que venta cargada en el panel se sube sola a Kommo?») La conversión
+   = las ventas del panel de la fila (`n`, las mismas de «N ventas») ÷ los leads de Kommo. Lo que Kommo dice cerrado se muestra aparte SOLO si no
+   coincide: la venta cargada pasa el lead a Compradores (§4ok-91) solo en el Kommo de Heaven y si encuentra el lead; Sueña tiene otro Kommo. */
+function pryKpiTxt(v, n){
   if(!v) return '';
-  var n=function(x){ return String(x).replace('.', ','); }, P=[];
-  P.push('📥 <b>'+(Number(v.leads)||0)+'</b> leads');
-  P.push('✅ <b>'+(Number(v.cierres)||0)+'</b> cierres');
-  if(v.conv!=null) P.push('🎯 <b>'+esc(n(v.conv))+' %</b> conversión');
+  var f=function(x){ return String(x).replace('.', ','); }, P=[], L=Number(v.leads)||0, k=Number(v.cierres)||0;
+  P.push('📥 <b>'+L+'</b> leads');
+  if(n!=null && L>0) P.push('🎯 <b>'+f(Math.round(n/L*1000)/10)+' %</b> conversión <span class="pry-kpi-g">('+n+' '+(n===1?'venta':'ventas')+' del panel)</span>');
+  else if(v.conv!=null) P.push('🎯 <b>'+esc(f(v.conv))+' %</b> conversión');
+  if(n!=null && k!==n) P.push('<span class="pry-kpi-d" title="Las ventas que en Kommo no figuran como cerradas (lead en Compradores)">⚠️ en Kommo '+k+' '+(k===1?'cierre':'cierres')+'</span>');
   if(v.promTxt && v.promTxt!=='—') P.push('⏱ responde en <b>'+esc(v.promTxt)+'</b>');
   if(v.respPct!=null) P.push('<b>'+(Number(v.respPct)||0)+' %</b> atendidos');
   return P.join(' · ');
@@ -16629,7 +16634,7 @@ function pryKpiTxt(v){
 function pryKpiPintar(ym){
   var c=PRY_KPI[ym]; if(!c) return;
   [].forEach.call(document.querySelectorAll('#pry-vendedores .pry-kpi[data-kpi]'), function(el){
-    var v=pryKpiBuscar(c.team, el.getAttribute('data-kpi')); el.innerHTML=v ? pryKpiTxt(v) : ''; el.hidden=!v;
+    var v=pryKpiBuscar(c.team, el.getAttribute('data-kpi')), dn=el.getAttribute('data-n'); el.innerHTML=v ? pryKpiTxt(v, dn==null ? null : Number(dn)) : ''; el.hidden=!v;
   });
 }
 function pryKpiPoner(ym){ if(!pryKpiVa() || !document.querySelector('#pry-vendedores .pry-kpi')) return; pryKpiTraer(ym); pryKpiPintar(ym); }
@@ -19573,7 +19578,7 @@ function renderProyeccion(){
     var vk=r.amb+'|'+(normNombre(r.vendedor)||r.vendedor), ab=!!(mom && PRY_MOM_ABIERTO[vk]), det2='';
     if(mom){ PRY_MOM_CTX.filas[vk]=r; if(ab){ try{ det2=pryMomDetHtml(R, _A, r); }catch(e){} } }
     return '<div class="pry-fila'+(mom ? ' pry-toca' : '')+(ab ? ' pry-abre' : '')+'"'+(mom ? (' data-vk="'+esc(vk)+'" role="button" tabindex="0" aria-expanded="'+ab+'" title="Tocá para verlo contra '+esc(pryMesCorto(_A.cmp))+' en ventas, unidades y Bs"') : '')+'>'+
-           '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small>'+(r.amb==='tienda' && pryKpiVa() ? ('<span class="pry-kpi" data-kpi="'+esc(pryKpiClave(r.vendedor))+'"></span>') : '')+'</div>'+
+           '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small>'+(r.amb==='tienda' && pryKpiVa() ? ('<span class="pry-kpi" data-kpi="'+esc(pryKpiClave(r.vendedor))+'" data-n="'+(Number(r.n)||0)+'"></span>') : '')+'</div>'+
            pryMedioHtml(_VDB ? m415Html(_VDB, r) : '', _ENT ? pryEntHtml(_ENT, r) : '')+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
            (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+(ab ? '▾ cerrar' : 'ventas · unidades ▸')+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual

@@ -76,8 +76,10 @@ function PREPARAR(){
   { const page=await abrir(true, 'Noviembre');
     await page.evaluate(() => PINTAR()); await page.waitForTimeout(300);
     const r=await page.evaluate(KPI), m=Object.fromEntries(r);
-    chk('2 · Carola (con tilde en Kommo): leads, cierres, conversión, respuesta y atendidos', m['Carola Chavez']==='📥 236 leads · ✅ 16 cierres · 🎯 6,8 % conversión · ⏱ responde en 3.1 h · 92 % atendidos', m['Carola Chavez']);
-    chk('2 · Isabel («Isabel Robledo - Central» en Kommo)', /253 leads/.test(m['Isabel Robledo']||'') && /8,3 %/.test(m['Isabel Robledo']||''), m['Isabel Robledo']);
+    chk('2 · Carola (con tilde en Kommo): conversión con las ventas del panel y lo de Kommo aparte', m['Carola Chavez']==='📥 236 leads · 🎯 0,8 % conversión (2 ventas del panel) · ⚠️ en Kommo 16 cierres · ⏱ responde en 3.1 h · 92 % atendidos', m['Carola Chavez']);
+    chk('2 · Isabel («Isabel Robledo - Central» en Kommo)', /253 leads/.test(m['Isabel Robledo']||'') && /0,8 % conversión \(2 ventas del panel\)/.test(m['Isabel Robledo']||''), m['Isabel Robledo']);
+    const ig = await page.evaluate(() => pryKpiTxt({leads:10, cierres:2}, 2));
+    chk('2c · si Kommo coincide con el panel, no se avisa nada', !/Kommo/.test(ig) && /20 %/.test(ig), ig);
     chk('2 · Maria sale del dashboard de Sueña', /99 leads/.test(m['Maria Flores']||''), m['Maria Flores']);
     const u=await page.evaluate(() => window._pedidas);
     const bus = await page.evaluate(() => [pryKpiBuscar({'juan pablo':1}, 'juan pablo paredes'), pryKpiBuscar({'fernando peinado charcas':2}, 'fernando peinado'),
