@@ -96,8 +96,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var L=await window._leer(d.bytes);
     var oc=STATE.filter(function(x){ return /^JUAN/.test(x.cliente); })[0].oc;
     return { n:d.n, t:d.t, oc:oc, filas:L.filas, crudo:L.crudo.length, partes:(L.crudo.match(/xl\/media\/image[0-9_]+\.png/g)||[]).filter(function(x,i,a){ return a.indexOf(x)===i; }),
-             grilla:/showGridLines="0"/.test(L.crudo), unaHoja:/fitToPage="1"/.test(L.crudo) && /paperSize="9"/.test(L.crudo) };
+             grilla:/showGridLines="0"/.test(L.crudo), unaHoja:/fitToPage="1"/.test(L.crudo) && /paperSize="9"/.test(L.crudo),
+             b64:(function(){ var u=new Uint8Array(d.bytes), t=''; for(var i=0;i<u.length;i++) t+=String.fromCharCode(u[i]); return btoa(t); })() };
   });
+  if(process.env.ATC_XLSX_SALIDA && baj.b64) require('fs').writeFileSync(process.env.ATC_XLSX_SALIDA, Buffer.from(baj.b64,'base64'));
   chk('baja «ATC-<número>-<cliente>.xlsx» sin tildes', baj.n && /^ATC-11-\d{3}-JUAN-PEREZ-HIJOS\.xlsx$/.test(baj.n) && /spreadsheetml/.test(baj.t), baj.n);
 
   // ============ 2. lo que dice el Excel ============
@@ -116,8 +118,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('PLAZA (160 → 2 ½) y MEDIDAS', celda(fila('PLAZA'),'B')==='2 ½' && /^160x190/.test(celda(fila('PLAZA'),'D')), fila('PLAZA'));
   const rec=F.filter(function(f){ return /^Tipo: /.test(celda(f,'A')); })[0]||{};
   chk('DETALLES DEL RECLAMO: tipo, motivo y el detalle', /Tipo: Garantía/.test(celda(rec,'A')) && /Motivo: Hundimiento/.test(celda(rec,'A')) && /hundido en el medio del lado derecho/.test(celda(rec,'A')), celda(rec,'A'));
-  chk('RECEPCION DE PRODUCTOS: colchón y patas en SI, somier vacío, la nota', celda(fila('COLCHÓN:'),'B')==='SI' && celda(fila('COLCHÓN:'),'D')==='SI' && celda(fila('SOMIER:'),'B')==='' && celda(fila('NOTA:'),'B')==='4 patas negras', [fila('COLCHÓN:'), fila('SOMIER:')]);
-  chk('las firmas y las condiciones ambientales (en blanco) como el formato', !!fila('ENTREGUE CONFORME').A && !!fila('HUMEDAD').A && celda(fila('HUMEDAD'),'B')==='' && !!fila('DESNIVEL').A, '');
+  chk('el detalle dice qué se recoge y la nota', /Se recoge: Colchón, Patas — 4 patas negras/.test(celda(rec,'A')), celda(rec,'A'));
+  chk('RECEPCION DE PRODUCTOS como el formato de noviembre: tabla de condición con Sí/No para colchón y somier', celda(fila('CONDICIÓN'),'C')==='COLCHÓN' && celda(fila('CONDICIÓN'),'D')==='SOMIER' && ['Sucio en alguna zona','Tiene descosturas / costuras abiertas','Presenta manchas','Otra observación'].every(function(t){ var f=fila(t); return celda(f,'C')==='☐ Sí  ☐ No' && celda(f,'D')==='☐ Sí  ☐ No'; }), fila('CONDICIÓN'));
+  chk('el recuadro «Detalle de reclamo…» del formato', !!fila('Detalle de reclamo, suciedad, descosturas, manchas u otros daños (indicar zona y características):').A, '');
+  chk('condiciones ambientales en blanco, la constancia y las firmas del chofer y del cliente', !!fila('HUMEDAD').A && celda(fila('HUMEDAD'),'B')==='' && !!fila('DESNIVEL').A && !!fila('CONSTANCIA DEL ESTADO AL MOMENTO DE LA ENTREGA').A && celda(fila('CHOFER'),'C')==='CLIENTE' && /^Firma: _+$/.test(celda(fila('Firma: __________________________________'),'C')) && !!fila('C.I.: ____________________________________').A && !fila('ENTREGUE CONFORME').A, fila('CHOFER'));
   const mails=['logistica@colchonesheaven.com','ernesto.flores@colchonesheaven.com','daniel.garnica@colchonesheaven.com','jose.rivero@colchonesheaven.com','e.anez@colchonesheaven.com','eliana.vargas@colchonesheaven.com'];
   const todo=F.map(function(f){ return Object.keys(f||{}).map(function(k){ return f[k]; }).join(' | '); }).join('\n');
   chk('los seis correos van escritos adentro del Excel', mails.every(function(m){ return todo.indexOf(m)>=0; }) && /ENVIAR ESTE FORMULARIO POR CORREO A/.test(todo), mails.filter(function(m){ return todo.indexOf(m)<0; }));
