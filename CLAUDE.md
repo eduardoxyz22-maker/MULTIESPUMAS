@@ -991,6 +991,10 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   📱 **La ventana larga (430) resta la franja de arriba** (17/11, captura del dueño: el título de la ficha medio tapado y empañado debajo de la hora
   del iPad): con `html.sa-top`/`html.wco` el `max-height` de `#modal-box.alta` resta `--sa-t`/`--wco-h` y `mpieAplicar` cuenta el borde de arriba
   de la ventana; sin eso medía 24 px más que la pantalla y se arrastraba para arriba. `test_v430_ventana_pie` §7.
+  🌙 **«Antes de irte» (310) solo para un nombre de vendedora y con el campo quieto** (17/11, dueño: *«al querer cambiar de nombre de vendedor cada
+  vez que borré una letra me salió ese aviso como 10 veces»*): `renderMis` corre con cada tecla de «Tu nombre» y cada pedazo («Isabel Robled»,
+  «I») era otra vendedora sin verlo hoy. `antesIrteQuizas` exige `antesIrteConocido(v)` (de `VENDEDORES` o con pedidos) y, con el campo en uso,
+  espera `ANTES_IRTE_QUIETO_MS`=1,5 s con el mismo nombre. ⚠️ Algo NUEVO que salga solo desde `renderMis` por vendedora, igual. `test_antes_irte` 5c-5e.
 - **Funcionales**: 379 factura/remisión al marcar «cargada» · 380 una venta cargada que cambia vuelve a «sin cargar» (`rc`) · 386 quién corrigió cada pago (`pH`) ·
   387 lo atrasado que el GPS vio, aparte · 389 «🧹 Ordenar mi bandeja» · 384 el lugar guardado en los pedidos por correo (`cargar_pedidos.py` lee `__destinos__`) y
   la zona de ROHO · 381/382 Bloki enseña y «📊 Uso del panel» (fila `__ensena__`) · 383 las ventas de tienda salen de «Por cargar» (dueño: «cada tienda carga al sistema

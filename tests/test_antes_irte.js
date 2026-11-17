@@ -102,6 +102,28 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   r = await ev(() => _m().on);
   chk('5b · volver a Isabel después de mirar a Mirian no la abre de nuevo (una vez por día y por vendedora)', r === false, r);
 
+  // ============ 5c. escribiendo el nombre (17/11, captura del dueño: «cada vez que borré una letra me salió ese aviso como 10 veces») ============
+  // como el dueño: estaba en Isabel (ya la vio hoy) y borra su nombre letra por letra para poner otra vendedora
+  await ev(() => { closeModal(); try { localStorage.setItem('me_antes_irte', JSON.stringify({ d: diaNegocio(), v: [normNombre('Isabel Robledo')] })); } catch (e) {}
+    document.getElementById('mis-top')._h = ''; _ver('Isabel Robledo');
+    window._abiertas = 0; var m = document.getElementById('modal');
+    window._obs = new MutationObserver(function () { var on = m.classList.contains('on') && !!document.getElementById('vd-antes-irte'); if (on && !m._contada) { m._contada = 1; window._abiertas++; } if (!on) m._contada = 0; });
+    window._obs.observe(m, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true }); });
+  await page.click('#mis-vendedor');
+  await page.keyboard.press('End');
+  for (let i = 0; i < 14; i++) await page.keyboard.press('Backspace', { delay: 60 });
+  await esperar(2200);
+  r = await ev(() => { var o = null; try { o = JSON.parse(localStorage.getItem('me_antes_irte') || 'null'); } catch (e) {} return { abiertas: window._abiertas, vistos: o ? o.v : [], foco: document.activeElement && document.activeElement.id }; });
+  chk('5c · borrando letra por letra en «Tu nombre» no sale ninguna vez (ni para «Isabel Robled», «Isa» o «I»)', r.abiertas === 0 && (r.vistos || []).length === 1 && r.foco === 'mis-vendedor', r);
+  await page.keyboard.type('Mirian Salazar', { delay: 40 });
+  await esperar(600);
+  r = await ev(() => window._abiertas);
+  chk('5d · con el nombre entero, mientras el campo sigue en uso, espera (no sale enseguida)', r === 0, r);
+  await esperar(1900);
+  r = await ev(() => { var o = null; try { o = JSON.parse(localStorage.getItem('me_antes_irte') || 'null'); } catch (e) {} return { abiertas: window._abiertas, txt: _m().txt.slice(0, 60), vistos: o ? o.v : [], k: normNombre('Mirian Salazar') }; });
+  chk('5e · con el nombre quieto sale UNA vez, para Mirian', r.abiertas === 1 && /Antes de irte, Mirian/.test(r.txt) && JSON.stringify(r.vistos) === JSON.stringify(['isabel robledo', r.k]), r);
+  await ev(() => { window._obs.disconnect(); closeModal(); document.getElementById('mis-vendedor').blur(); });
+
   // ============ 6. antes de las 19:00 ============
   await page.clock.setFixedTime(new Date('2026-11-13T18:30:00-04:00'));
   await ev(() => { try { localStorage.removeItem('me_antes_irte'); } catch (e) {} document.getElementById('mis-top')._h = ''; _ver('Isabel Robledo'); });
