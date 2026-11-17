@@ -5189,6 +5189,7 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
   background:var(--cb);border:1px solid color-mix(in srgb,var(--c) 14%,#fff);position:relative;overflow:hidden;animation:ah-entra .35s ease-out both;transition:transform .15s,box-shadow .15s}
 .ah-it:hover{transform:translateY(-1px);box-shadow:0 8px 18px -14px var(--c)}
 .ah-it::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:4px;border-radius:0 4px 4px 0;background:var(--c)}
+.ctav-sub-v{margin-top:14px;color:#64748b}.ctav-viejos .ctav-it{opacity:.72;filter:grayscale(.6)}.ctav-viejos .ctav-q{color:#475569!important}
 .ah-it.ah-a{--c:#c2620a;--cb:#fffaf2}.ah-it.ah-i{--c:#2457c5;--cb:#f6f9ff}
 .ah-n{font-size:1.4rem;font-weight:900;color:var(--c);text-align:center;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.02em;white-space:nowrap}
 .ah-tx{min-width:0}
@@ -43774,10 +43775,11 @@ function misHacerDatos(v, mine){
   _cot.arriba.forEach(add);
   /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
   /* 📅 (30/10, §78) lo que es SOLO de la fecha de la foto no es plata: va aparte, en ámbar (`ctaAvSoloFecha`) */
-  try{ var av0=ctaAvAbiertos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
+  try{ var av0=ctaAvCuentan(v), avV=ctaAvViejos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
     add({ sev:'r', ic:'📣', n:av.length, t:'Contabilidad te pide revisar '+(av.length===1?'un pago':'pagos'),
       s:av.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(av.length>3?' y más':''), b:'Ver', p:1, fn:_avFn, ok:avF.length?'Ningún pago con la plata mal':'Sin avisos de Contabilidad' });
-    add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn }); }catch(e){}
+    add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn });
+    add({ sev:'i', ic:'🗂️', n:avV.length, t:(avV.length===1?'Un aviso':'Avisos')+' de antes de noviembre', s:'no cuentan para tu panel al día · revisalos cuando puedas', b:'Ver', fn:_avFn }); }catch(e){}
   add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
   var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
   /* 📍 (mejora 387) los que el GPS vio con el camión en la puerta: casi seguro se entregaron, falta el ✅ de logística (no van en rojo) */
@@ -44370,7 +44372,7 @@ function misEqQuienes(L, vend){
 function misEqHacerDatos(T){
   var I=[], OK=[], add=function(o){ if(o && o.n>0) I.push(o); else if(o && o.ok) OK.push(o.ok); };
   var pv=function(p){ return p.vendedor; }, q=misPendientes(T);
-  try{ var av0=ctaAvAbiertos('').filter(function(a){ return !contaExcluido(a.vend); }), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha);   // 📅 (§78) la fecha sola, aparte
+  try{ var av0=ctaAvCuentan('').filter(function(a){ return !contaExcluido(a.vend); }), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha);   // 📅 (§78) la fecha sola, aparte
     add({ sev:'r', ic:'📣', n:av.length, t:'Contabilidad pide revisar pagos', s:misEqQuienes(av, function(a){ return a.vend; }), b:'Ver', p:1, fn:"ctaAvVer('')", ok:avF.length?'Ningún pago con la plata mal':'Sin avisos de Contabilidad' });
     add({ sev:'a', ic:'📅', n:avF.length, t:'Pagos con otra fecha en la foto', s:'no es plata · '+misEqQuienes(avF, function(a){ return a.vend; }), b:'Ver', fn:"ctaAvVer('')" }); }catch(e){}
   var sin=q.sinStock.map(function(x){ return x.p; });
@@ -72316,6 +72318,15 @@ function ctaAvGuardar(cambios, intento){
 }
 function ctaAvDe(k){ var L=ctaAvLeer().filter(function(a){ return a.k===k; }); return L[L.length-1]||null; }
 function ctaAvAbiertos(v){ return ctaAvLeer().filter(function(a){ return !a.ok && !a.qt && (!v || mismoVendedor(a.vend, v)); }); }
+/* 🗓️ (17/11, dueño, con la lista de Fernando: «sus avisos marca en rojo y les cuenta mal por cosas de octubre y estamos en noviembre. Para
+   ser justos debería ser por faltantes y cosas por hacer desde noviembre») Lo que cuenta para «Tu panel al día», el bono Titanio, «Para hacer»
+   y Bloki arranca el AL_DIA_DESDE: un aviso cuenta por el día del PAGO (`a.f`; sin él, el día del aviso). Lo de antes sigue en la lista
+   para revisarlo, aparte, en gris y sin contar. La factura ya arrancaba el 01/11 (`DOCV_DESDE`) y el efectivo de octubre está cerrado
+   (`EFE_CERRADO`). Con la planilla del 16/11: de 47 avisos abiertos, 44 eran de pagos de octubre. */
+var AL_DIA_DESDE='2026-11-01';
+function ctaAvCuenta(a){ var f=String((a && (a.f || (a.t ? isoDeTsBolivia(a.t) : ''))) || ''); return !f || f>=AL_DIA_DESDE; }
+function ctaAvViejos(v){ return ctaAvAbiertos(v).filter(function(a){ return !ctaAvCuenta(a); }); }
+function ctaAvCuentan(v){ return ctaAvAbiertos(v).filter(ctaAvCuenta); }
 /* 📅 (30/10, §78; dueño: los 35 avisos del 26/10 que eran SOLO de fecha le salían en ROJO a la vendedora) ¿Este aviso es solo de la
    fecha de la foto? Entonces no es plata: va en ámbar en «Para hacer» y aparte en su lista. Los avisos nuevos traen qué encontró (`ks`);
    los de antes se leen por su texto (`iacCorto`: cada motivo separado por « · », la fecha empieza «la foto es del …»). */
@@ -72355,7 +72366,8 @@ function iacAvisarPanel(){
 /* La vendedora: su lista, con «Abrir la venta» y «✓ Ya lo corregí». */
 function ctaAvVer(v){
   /* 📅 (30/10, §78) primero lo de plata; lo que es SOLO la fecha va abajo, aparte y sin rojo */
-  var L0=ctaAvAbiertos(v), LP=L0.filter(function(a){ return !ctaAvSoloFecha(a); }), LF=L0.filter(ctaAvSoloFecha), L=LP.concat(LF);
+  var LA=ctaAvAbiertos(v), L0=LA.filter(ctaAvCuenta), LV=LA.filter(function(a){ return !ctaAvCuenta(a); });   // 🗓️ lo de antes de AL_DIA_DESDE, al final y sin contar
+  var LP=L0.filter(function(a){ return !ctaAvSoloFecha(a); }), LF=L0.filter(ctaAvSoloFecha), L=LP.concat(LF).concat(LV);
   CTA_AV_VER={ v:String(v||'') };   // §4ok-92 para repintar la lista después de un arreglo
   var fila=function(a){ return '<div class="ctav-it'+(ctaAvSoloFecha(a)?' ctav-fecha':'')+'" data-av="'+esc(a.id)+'"><div class="ctav-tx"><b>'+esc(a.cli)+'</b>'+(a.nota?(' · nota '+esc(a.nota)):'')+' · '+esc(fmtFechaCorta(a.f))+' · '+fmtBs(a.m)+' '+esc(a.met)+
       '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small>'+ctaAvFilaExtraHtml(a, v)+'</div>'+
@@ -72366,7 +72378,8 @@ function ctaAvVer(v){
     'Revisalo, corregilo (o pasale a Contabilidad el comprobante que va) y tocá <b>«✓ Ya lo corregí»</b>.</p>'+
     ctaAvTiendaTodasHtml(L, v)+   // §4ok-92 las ventas de tienda con el día equivocado, de una vez
     (L.length ? (LP.map(fila).join('')+
-      (LF.length ? ('<div class="ctav-sub ctav-sub-f">📅 <b>Solo la fecha</b> — no falta plata: la foto es de otro día que el pago. Mirala y tocá «✓ Ya lo corregí».</div>'+LF.map(fila).join('')) : ''))
+      (LF.length ? ('<div class="ctav-sub ctav-sub-f">📅 <b>Solo la fecha</b> — no falta plata: la foto es de otro día que el pago. Mirala y tocá «✓ Ya lo corregí».</div>'+LF.map(fila).join('')) : '')+
+      (LV.length ? ('<div class="ctav-sub ctav-sub-v">🗂️ <b>De antes de noviembre</b> — no cuentan para tu panel al día ni para el bono. Revisalos cuando puedas.</div><div class="ctav-viejos">'+LV.map(fila).join('')+'</div>') : ''))
       : '<div class="iac-vacio">✅ No tenés nada pendiente de Contabilidad.</div>')+'</div>', true);
   ctaAvLeerFotos(L);   // §4ok-92 lo que la IA ya leyó de esas fotos (sin gastar), para el arreglo de un toque
 }
@@ -75785,7 +75798,7 @@ function asisAvisos(){
   ASIS.alGuardar.forEach(function(a){ A.push(a); });   // (12/10) tras guardar la pantalla pasa a Mis pedidos: se ven en todas
   if(vis==='mis' && v){
     try{   // 📣 (26/10) Contabilidad le pidió revisar pagos
-      var avT=ctaAvAbiertos(v), avC=avT.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=avT.filter(ctaAvSoloFecha);   // 📅 (§78) la fecha sola no es plata
+      var avT=ctaAvCuentan(v), avC=avT.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=avT.filter(ctaAvSoloFecha);   // 📅 (§78) la fecha sola no es plata
       if(avC.length) A.push({ k:'ctaav|'+avC.map(function(a){ return a.id; }).join(','), sev:'ro', ico:'📣',
         t:'Contabilidad te pide revisar '+(avC.length===1?'un pago':(avC.length+' pagos')),
         x:'Las fotos de los comprobantes no coinciden con lo anotado. Revisalo y tocá «✓ Ya lo corregí».', b:['Ver cuáles', "ctaAvVer('"+esc(String(v).replace(/'/g,''))+"')"] });
@@ -80505,14 +80518,14 @@ function alDiaCalcular(v){
   var fac=mine.filter(function(p){ try{ return docVentaFalta(p); }catch(e){ return false; } });
   D.push({ k:'fac', ic:'🧾', t:'Factura', n:fac.length, L:fac, sev:!fac.length ? 'v' : (fac.some(function(p){ return dTs(p.ts)>AL_DIA_VIEJO; }) ? 'r' : 'a'),
     s:fac.length ? (fac.length+(fac.length===1?' venta':' ventas')+' sin N° de factura o remisión') : 'todas con factura o remisión' });
-  var av0=[]; try{ av0=ctaAvAbiertos(v); }catch(e){ av0=[]; }
+  var av0=[]; try{ av0=ctaAvCuentan(v); }catch(e){ av0=[]; }   // 🗓️ desde AL_DIA_DESDE
   var avP=av0.filter(function(a){ try{ return !ctaAvSoloFecha(a); }catch(e){ return true; } });
   D.push({ k:'av', ic:'📣', t:'Avisos', n:av0.length, sev:!av0.length ? 'v' : (avP.length ? 'r' : 'a'),
     s:av0.length ? (av0.length+' aviso'+(av0.length===1?'':'s')+' de Contabilidad'+(avP.length ? (' ('+avP.length+' de plata)') : ' (solo la fecha de la foto)')) : 'sin avisos de Contabilidad' });
   var ub=misPendientes(mine).sinGps.filter(function(p){ return !esBorrador(p) && !esVentaTienda(p) && p.fecha && p.fecha>=todayStr(); });
   D.push({ k:'ub', ic:'📍', t:'Ubic.', n:ub.length, L:ub, sev:!ub.length ? 'v' : (ub.some(function(p){ return p.fecha<=prox; }) ? 'r' : 'a'),
     s:ub.length ? (ub.length+(ub.length===1?' entrega':' entregas')+' sin ubicación de Google Maps') : 'ubicaciones completas' });
-  var br=[]; try{ br=borrPendientes(borradoresDe(v)); }catch(e){ br=[]; }
+  var br=[]; try{ br=borrPendientes(borradoresDe(v)).filter(function(b){ var t=Number(b && b.ts)||0; return !t || isoDeTsBolivia(t)>=AL_DIA_DESDE; }); }catch(e){ br=[]; }   // 🗓️ desde AL_DIA_DESDE
   D.push({ k:'ko', ic:'📥', t:'Kommo', n:br.length, sev:!br.length ? 'v' : (br.some(function(b){ return diasDeBorrador(b)>AL_DIA_VIEJO; }) ? 'r' : 'a'),
     s:br.length ? (br.length+(br.length===1?' venta':' ventas')+' de Kommo para completar') : 'sin ventas de Kommo pendientes' });
   var E=null; try{ E=misEfectivoDatos(v); }catch(e){ E=null; }

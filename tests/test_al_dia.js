@@ -51,7 +51,9 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       { id: 'kommo-71', estado: BORRADOR_EST, vendedor: 'Isabel Robledo', cliente: 'LEAD NUEVO', celular: '79999999', saldo: 1000, fecha: '', productos: [], ts: T('2026-11-10T12:00:00') },
       { id: '__avisos_conta__', cliente: '📣', fecha: '', observaciones: JSON.stringify({ v: 1, a: [
         { id: 'av1', pid: 'i3', vend: 'Isabel Robledo', cli: 'CLIENTE 3', txt: 'la foto dice Bs 900', ks: ['monto'], t: T('2026-11-11T12:00:00') },
-        { id: 'av2', pid: 'f1', vend: 'Maria Flores', cli: 'CLIENTE 5', txt: 'la foto es del 10/11', ks: ['dia'], t: T('2026-11-11T12:00:00') }] }) }
+        { id: 'av2', pid: 'f1', vend: 'Maria Flores', cli: 'CLIENTE 5', txt: 'la foto es del 10/11', ks: ['dia'], t: T('2026-11-11T12:00:00') },
+        /* 🗓️ (17/11) un aviso de un pago de OCTUBRE: no cuenta para el al día de Mirian (sigue 100 %) */
+        { id: 'av3', pid: 'm1', vend: 'Mirian Salazar', cli: 'CLIENTE VIEJO', f: '2026-10-20', m: 500, met: 'QR BISA', txt: 'la foto dice Bs 450', ks: ['monto'], t: T('2026-10-26T12:00:00') }] }) }
     ];
     apiSave = function (rec) { var g = JSON.parse(JSON.stringify(rec)); window._pl = window._pl.filter(function (x) { return x.id !== g.id; }).concat([g]); return Promise.resolve({ ok: true, pedido: g }); };
     apiList = function () { return Promise.resolve({ ok: true, pedidos: JSON.parse(JSON.stringify(window._pl)) }); };
@@ -117,6 +119,16 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('6b · con la contraseña: «Isabel Robledo tiene el panel al día en un 0 %», con los cinco puntos', /Isabel Robledo<\/b> tiene el panel al día en un <b>0 %/.test(r.adm.h) && r.adm.f === 5, r.adm);
   chk('6c · una vendedora solo ve lo suyo', /Solo te puedo decir lo tuyo/.test(r.otra) && /Tenés el panel al día en un <b>100 %/.test(r.yo), r);
   chk('6d · ninguna pregunta de la ayuda se toma por esta', r.ay.length === 0, r.ay);
+
+  // ============ 7b. lo de antes de noviembre no cuenta (dueño, 17/11) ============
+  r = await ev(() => { window.AL_DIA_PRUEBA = 1; var R = alDiaDatos('Mirian Salazar'), av = R.D.filter(function (d) { return d.k === 'av'; })[0];
+    var H = misHacerDatos('Mirian Salazar', (STATE || []).filter(function (p) { return p && !esFilaSistema(p) && mismoVendedor(p.vendedor, 'Mirian Salazar'); }));
+    var it = H.filter(function (o) { return o.ic === '🗂️'; })[0], rojo = H.filter(function (o) { return o.ic === '📣'; })[0];
+    ctaAvVer('Mirian Salazar'); var m = document.getElementById('modal-box') || document.body;
+    var t = m.innerText; closeModal();
+    return { pct: R.pct, av: av.sev + ':' + av.n, it: it ? (it.sev + ':' + it.n) : null, rojo: !!rojo, lista: /De antes de noviembre/.test(t) && /CLIENTE VIEJO/.test(t) }; });
+  chk('7b · un aviso de un pago de octubre: Mirian sigue 100 %, 📣 verde, «Para hacer» lo pone gris aparte y la lista lo muestra «De antes de noviembre»',
+    r.pct === 100 && r.av === 'v:0' && r.it === 'i:1' && !r.rojo && r.lista, r);
 
   chk('7 · sin errores de la página', errores.length === 0, errores);
   await browser.close();
