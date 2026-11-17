@@ -18994,3 +18994,11 @@ entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGA
     test_fondo_noche, test_halloween, test_navidad, test_sin_barra, test_temas_mejoras, test_v431, test_version_nueva, test_visual_4pj, test_bloki,
     test_asistente, test_quien, test_modo_practica, test_mall_analisis, test_mejoras_3_10_11, test_pry_indice. (test_estetica_4mo y test_v429 2e
     fallaron una vez con 13 pruebas a la vez —el encabezado chico medido antes de terminar de esconder la ciudad—; solas y de a 6, verdes.)
+- **📱 El título de la ficha debajo de la hora del iPad (17/11)** (dueño, captura a las 20:04 de la ficha de Mis pedidos de la OC 11-170 de Tienda
+  Amiga: el título «TIENDA AMIGA ER S.A. · OC 11-170 · Nota 260600247» quedaba arriba, medio tapado y empañado). La ventana larga de la 430
+  (`#modal-box.alta`, `max-height: 100vh − 40`) no restaba la franja de la hora (`html.sa-top` le pone a la ventana un borde de arriba de
+  `--sa-t`): medía 24 px más que la pantalla, la ventana se podía arrastrar para arriba y el título quedaba en la zona de la hora (que el iPad
+  empaña). Medido a 1180 × 790 con `--sa-t` 24: sobraban 24 px (`scrollHeight − clientHeight`). Ahora `html.sa-top`/`html.wco` restan la franja
+  y `mpieAplicar` cuenta el borde para decidir si la ventana es larga: sobran 0, el título queda a 44 px. `test_v430_ventana_pie` §7 (rojo
+  contra la página de antes: sobraban 24). Verdes: test_ipad_franja, test_sin_barra, test_vidrio_agrandar, test_v402, test_mis_nota,
+  test_ficha_cliente, test_preguntas_panel, test_form_foco, test_teclado_320.

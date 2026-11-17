@@ -988,6 +988,9 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   `hc-no`; `hcAcomodar` ya no decide sola, llama a `hdrMedir(true)`) · 7 `hc-sindia` sin el día. ⚠️ Algo NUEVO en `.header-in` entra en ese orden
   (y si tiene versión chica, va en un paso). No mide con el encabezado chico (al bajar) ni en el celular (≤ 560). `tests/test_hdr_un_renglon.js` (16),
   `test_v434_cuenta_tema` 4c-4e cambiaron a conciencia (la cuenta se achica después de los botones).
+  📱 **La ventana larga (430) resta la franja de arriba** (17/11, captura del dueño: el título de la ficha medio tapado y empañado debajo de la hora
+  del iPad): con `html.sa-top`/`html.wco` el `max-height` de `#modal-box.alta` resta `--sa-t`/`--wco-h` y `mpieAplicar` cuenta el borde de arriba
+  de la ventana; sin eso medía 24 px más que la pantalla y se arrastraba para arriba. `test_v430_ventana_pie` §7.
 - **Funcionales**: 379 factura/remisión al marcar «cargada» · 380 una venta cargada que cambia vuelve a «sin cargar» (`rc`) · 386 quién corrigió cada pago (`pH`) ·
   387 lo atrasado que el GPS vio, aparte · 389 «🧹 Ordenar mi bandeja» · 384 el lugar guardado en los pedidos por correo (`cargar_pedidos.py` lee `__destinos__`) y
   la zona de ROHO · 381/382 Bloki enseña y «📊 Uso del panel» (fila `__ensena__`) · 383 las ventas de tienda salen de «Por cargar» (dueño: «cada tienda carga al sistema

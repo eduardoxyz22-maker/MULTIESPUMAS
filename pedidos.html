@@ -3313,6 +3313,11 @@ html.tema-black-friday .hdr-tabs .ht-b:not(.on) .ico-b svg{ stroke:#facc15; }
 /* 430 · Las ventanas largas: si la ventana no entra en la pantalla (`#modal-box.alta`), el título queda arriba, el medio se desplaza adentro
    y la última fila de botones va pegada abajo (`.modal-pie`), en botones grandes, con «▾ hay más abajo» mientras falte. */
 #modal-box.alta{ display:flex; flex-direction:column; max-height:calc(calc(100vh / var(--vz,1)) - 40px); }
+/* 📱 (17/11, captura del dueño desde el iPad: el título de la ficha medio tapado y borroso debajo de la hora) Con la franja de arriba (la hora del
+   iPad, `html.sa-top`; la barra de Windows, `html.wco`) la ventana se pone ese alto más abajo: sin restarlo, medía 24 px más que la pantalla, se
+   podía arrastrar para arriba y el título quedaba debajo de la hora (que el iPad empaña). */
+html.sa-top #modal-box.alta{ max-height:calc(calc(100vh / var(--vz,1)) - 40px - var(--sa-t,0px)); }
+html.wco #modal-box.alta{ max-height:calc(calc(100vh / var(--vz,1)) - 40px - var(--wco-h,0px)); }
 #modal-box.alta > .modal-h{ flex:none; }
 #modal-box.alta > .modal-b{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; scrollbar-width:thin; }
 #modal-box.alta > .modal-pie{ flex:none; position:relative; display:flex; flex-wrap:wrap; gap:8px; align-items:stretch; padding:12px 20px 14px; background:#fff;
@@ -3663,7 +3668,10 @@ function mpieAplicar(){
   if(!ov || !box || !ov.classList.contains('on') || box.classList.contains('alta')) return false;
   if(box.classList.contains('fl-ficha') || box.classList.contains('clf-box') || document.body.classList.contains('ficha-costado')) return false;
   var hd=box.querySelector(':scope > .modal-h'), b=box.querySelector(':scope > .modal-b'); if(!hd || !b || box.querySelector('.cupx, .modal-pie')) return false;
-  var z=zoomPag()||1, r=box.getBoundingClientRect(); if(!(r.height > window.innerHeight-40*z+1)) return false;
+  /* (17/11) la franja de arriba (la hora del iPad, la barra de Windows: el borde de arriba de la ventana) también ocupa: si no, una ventana que
+     entraba justo sin ella quedaba sin pie y 24 px más alta que la pantalla */
+  var franja=0; try{ franja=parseFloat(getComputedStyle(ov).borderTopWidth)||0; }catch(e){}
+  var z=zoomPag()||1, r=box.getBoundingClientRect(); if(!(r.height > window.innerHeight-(40+franja)*z+1)) return false;
   /* La última fila de botones: el «✓ Listo» (o «Cerrar») suelto del final y la `.modal-actions` justo antes. Si después hay algo que se ve, no se toca. */
   var vis=function(x){ return x.offsetWidth>0 || x.offsetHeight>0; };
   var kids=[].filter.call(b.children, vis), fin=null, ult=null, k=kids.length-1;

@@ -108,6 +108,21 @@ function PREPARAR(){
   chk('6a. la ficha ancha también: «Editar», «Copiar» y «✓ Listo» en el pie, a la vista', r.alta && r.editar && r.editar.enPie && r.editar.bottom<=r.vh && r.listo && r.listo.enPie, r);
   await page._ctx.close();
 
+  /* 📱 (17/11, captura del dueño desde el iPad instalado: el título de la ficha medio tapado y borroso debajo de la hora) Con la franja de la
+     hora (`html.sa-top`, el borde de arriba de la ventana), la ventana larga tiene que restarla: si no, medía 24 px más que la pantalla y se
+     podía arrastrar para arriba. Playwright no tiene franja: se simula con `--sa-t` y un `resize`, como en test_ipad_franja. */
+  console.log('\n── 7. El iPad instalado (la franja de la hora) ──');
+  page = await abrir({ flag:true });
+  await page.setViewportSize({ width:1180, height:790 });
+  await page.evaluate(() => { document.documentElement.style.setProperty('--sa-t', '24px'); window.dispatchEvent(new Event('resize')); });
+  await page.waitForTimeout(200);
+  await abrirMis(page, 'largo');
+  r = await page.evaluate(() => { var ov=document.getElementById('modal'), bx=document.getElementById('modal-box'), h=bx.querySelector('.modal-h').getBoundingClientRect();
+    ov.scrollTop=200; var sc=ov.scrollTop;
+    return { sa:document.documentElement.classList.contains('sa-top'), alta:bx.classList.contains('alta'), sobra:ov.scrollHeight-ov.clientHeight, sc:sc, tit:Math.round(h.top), abajo:Math.round(bx.getBoundingClientRect().bottom), vh:innerHeight }; });
+  chk('7a. con la franja de 24 px la ficha larga entra entera: no se puede arrastrar para arriba y el título queda debajo de la hora', r.sa && r.alta && r.sobra<=1 && r.sc===0 && r.tit>=44 && r.abajo<=r.vh, r);
+  await page._ctx.close();
+
   chk('sin errores en la página', errores.length===0, errores.slice(0,4));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
