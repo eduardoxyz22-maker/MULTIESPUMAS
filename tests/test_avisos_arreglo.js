@@ -184,10 +184,14 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       productos:[{ desc:'COLCHON', cant:1, precio:1000 }], saldo:0, acuenta:0, pagado:true, ts:new Date('2026-11-01T11:00:00-04:00').getTime(), rev:1,
       metodoPago:textoCobros([{ anticipo:true, metodo:'Efectivo', monto:100, fecha:'2026-11-01', nota:'5012', comps:['r12'] }, { metodo:'QR', banco:'BISA', monto:900, fecha:'2026-11-03', nota:'6012', comps:['n13'] }]) });
     await ctaAvGuardar([{ id:'o12', k:'a12|2026-11-03|900|QR BISA', pid:'a12', vend:'Carola Chavez', cli:'LUIS OTRAFOTO', nota:'5012', f:'2026-11-03', m:900, met:'QR BISA', txt:'la foto no se lee', mes:'2026-11', t:Date.now()-86400000, por:'Contabilidad', fs:['n12'], ks:['nl'] }]);
+    var base=apiPost, pide=[]; apiPost=function(b){ if(b.action==='iaComprobantes' && !b.leer) pide.push(b.fotos); return base(b); };
     await ctaAvCorregi('o12', 'Carola Chavez'); await _esp(200);
-    var a=ctaAvLeer().filter(function(o){ return o.id==='o12'; })[0]||{}; closeModal(); return { ok:!!a.ok, raz:a.okRaz||'' };
+    apiPost=base;
+    var a=ctaAvLeer().filter(function(o){ return o.id==='o12'; })[0]||{}; closeModal(); return { ok:!!a.ok, raz:!!CTA_AV_RAZON.o12, pide:pide };
   });
-  chk('6d. le subieron OTRA foto al pago (todavía sin leer): «Ya lo corregí» cierra sin pedir razón', r6d.ok && !r6d.raz, r6d);
+  /* 💵 (17/11, dueño: «Claude debería hacerlo solo… hablamos de dinero») antes se cerraba a ciegas; ahora la lee en ese momento y, si no
+     se pudo leer, NO se cierra (pide la razón). Con la lectura buena se cierra o no según lo que dice la foto (7f). */
+  chk('6d. le subieron OTRA foto al pago (todavía sin leer): «Ya lo corregí» la manda a leer y, si no se pudo leer, no cierra', !r6d.ok && r6d.raz && JSON.stringify(r6d.pide)==='[["n13"]]', r6d);
 
   /* 7 · los que ya coinciden o no son errores se cierran solos */
   const r7 = await ev(async () => {
@@ -214,8 +218,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     r7.o7==='no_error' && r7.o8==='no_error' && r7.o10==='coincide' && r7.o11 && r7.n===4, r7);
   chk('7c. Contabilidad ve «🤖 Se cerró solo…: ya coincide con la foto», y no vuelve a mirar en los 10 minutos siguientes', /Se cerró solo el .*ya coincide con la foto/.test(r7.html) && r7.otraVez===0, r7);
 
-  /* 7d · (17/11) la foto del aviso SIN lectura vigente (lectura vieja que el servidor relee): con la contraseña se lee sola una vez y,
-     con la lectura nueva, el aviso del voucher de tarjeta se cierra solo; sin la contraseña no gasta */
+  /* 7d · (17/11) la foto del aviso SIN lectura vigente (lectura vieja que el servidor relee, o una foto nueva): CUALQUIER aparato la lee
+     sola UNA vez (dueño: «Claude debería hacerlo solo, tiene luz verde total») y, con la lectura nueva, el voucher de tarjeta se cierra solo */
   const r7d = await ev(async () => {
     var o={}, t=Date.now()-86400000;
     STATE.push(Object.assign({}, findById('a8'), { id:'a20', oc:'11-a20', nota:'5020', cliente:'ZOE VIEJA', rev:1,
@@ -225,18 +229,41 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var base=apiPost; __S.llamadas=[];
     apiPost=function(b){ var r=base(b); if(b.action==='iaComprobantes' && !b.leer){ return r.then(function(x){ x.res.z20={ cp:false, le:true, m:0, no:'nota de venta con el voucher pegado', t:1, pv:5 }; return x; }); } return r; };
     window.CTA_AV_AUTO_PRUEBA=1; IAC.res={}; CTA_AV_LEE.pedidas={};
-    var U=UNLOCKED; UNLOCKED=false; IAC.clave=''; CTA_AV_RELEO.hecho=false; CTA_AV_AUTO.t=0;
-    await ctaAvAutoRevisar(); await _esp(60);
-    o.sinClave=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).length;
-    o.sinClaveAbierto=!ctaAvLeer().filter(function(a){ return a.id==='o20'; })[0].ok;
-    UNLOCKED=true; CTA_AV_RELEO.hecho=false; CTA_AV_AUTO.t=0; IAC.res={}; CTA_AV_LEE.pedidas={}; __S.llamadas=[];
+    var U=UNLOCKED; UNLOCKED=false; IAC.clave=''; CTA_AV_RELEO.pedidas={}; CTA_AV_AUTO.t=0;
     await ctaAvAutoRevisar(); await _esp(80);
     o.pagas=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).map(function(b){ return b.fotos; });
     var a=ctaAvLeer().filter(function(a){ return a.id==='o20'; })[0]||{}; o.au=a.au||''; o.ok=!!a.ok;
+    CTA_AV_AUTO.t=0; __S.llamadas=[]; await ctaAvAutoRevisar(); await _esp(60);
+    o.otraVez=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).length;
     UNLOCKED=U; apiPost=base; window.CTA_AV_AUTO_PRUEBA=0; return o;
   });
-  chk('7d. sin la contraseña, la foto sin lectura no se paga y el aviso queda abierto', r7d.sinClave===0 && r7d.sinClaveAbierto, r7d);
-  chk('7e. con la contraseña se lee UNA vez (solo la que falta) y el voucher de tarjeta se cierra solo', r7d.pagas.length===1 && JSON.stringify(r7d.pagas[0])==='["z20"]' && r7d.ok && r7d.au==='no_error', r7d);
+  chk('7d. sin la contraseña, la foto sin lectura se lee UNA vez (solo la que falta) y el voucher de tarjeta se cierra solo', r7d.pagas.length===1 && r7d.pagas[0].indexOf('z20')>=0 && r7d.ok && r7d.au==='no_error', r7d);
+  chk('7e. la misma foto no se vuelve a pagar en esa página', r7d.otraVez===0, r7d);
+
+  /* 7f · «✓ Ya lo corregí» con una foto NUEVA sin leer: se lee en ese momento y decide (antes se cerraba a ciegas) */
+  const r7f = await ev(async () => {
+    var o={}, t=Date.now()-86400000;
+    STATE.push(Object.assign({}, findById('a8'), { id:'a21', oc:'11-a21', nota:'5021', cliente:'ANA NUEVA', rev:1,
+      metodoPago:textoCobros([{ anticipo:true, metodo:'QR', banco:'BISA', monto:1000, fecha:'2026-11-03', nota:'5021', comps:['n21'] }]) }));
+    STATE.push(Object.assign({}, findById('a8'), { id:'a22', oc:'11-a22', nota:'5022', cliente:'BETO NUEVO', rev:1,
+      metodoPago:textoCobros([{ anticipo:true, metodo:'QR', banco:'BISA', monto:1000, fecha:'2026-11-03', nota:'5022', comps:['n22'] }]) }));
+    await ctaAvGuardar([
+      { id:'o21', k:'a21|2026-11-03|900|QR BISA', pid:'a21', vend:'Carola Chavez', cli:'ANA NUEVA', nota:'5021', f:'2026-11-03', m:900, met:'QR BISA', fs:['v21'], txt:'la foto dice Bs 1000', mes:'2026-11', t:t, por:'Contabilidad', ks:['mas'] },
+      { id:'o22', k:'a22|2026-11-03|900|QR BISA', pid:'a22', vend:'Carola Chavez', cli:'BETO NUEVO', nota:'5022', f:'2026-11-03', m:900, met:'QR BISA', fs:['v22'], txt:'la foto dice Bs 1000', mes:'2026-11', t:t, por:'Contabilidad', ks:['mas'] }]);
+    var base=apiPost; __S.llamadas=[];
+    apiPost=function(b){ var r=base(b); if(b.action==='iaComprobantes' && !b.leer){ return r.then(function(x){
+      if(b.fotos.indexOf('n21')>=0) x.res.n21={ cp:true, le:true, m:1000, mo:'BOB', f:'2026-11-03', bd:'BISA', t:1, pv:5 };
+      if(b.fotos.indexOf('n22')>=0) x.res.n22={ cp:true, le:true, m:400, mo:'BOB', f:'2026-11-03', bd:'BISA', t:1, pv:5 };
+      return x; }); } return r; };
+    var U=UNLOCKED; UNLOCKED=false; IAC.res={}; CTA_AV_RELEO.pedidas={};
+    await ctaAvCorregi('o21', 'Carola Chavez'); await _esp(80);
+    await ctaAvCorregi('o22', 'Carola Chavez'); await _esp(80);
+    var L=ctaAvLeer(), g=function(id){ return L.filter(function(a){ return a.id===id; })[0]||{}; };
+    o.a21={ ok:!!g('o21').ok, arr:g('o21').okArr||'' }; o.a22={ ok:!!g('o22').ok, razon:!!CTA_AV_RAZON.o22 };
+    o.leidas=__S.llamadas.filter(function(b){ return b.action==='iaComprobantes' && !b.leer; }).length;
+    closeModal(); UNLOCKED=U; apiPost=base; return o;
+  });
+  chk('7f. foto nueva que coincide → se lee y se cierra «ya coincide con la foto»; foto nueva que NO coincide → no se cierra, pide la razón', r7f.a21.ok && /coincide/.test(r7f.a21.arr) && !r7f.a22.ok && r7f.a22.razon && r7f.leidas===2, r7f);
 
   /* 8 · Contabilidad: los mismos arreglos en la revisión de las fotos */
   const r8 = await ev(async () => {
