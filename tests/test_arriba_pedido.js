@@ -101,8 +101,8 @@ function PREPARAR(){
   r = await page.evaluate(() => { CARGA_ESTADO='error'; ULTIMO_ERROR='sin internet'; var o=DIA('2026-10-28', 5, 2); CARGA_ESTADO='ok'; ULTIMO_ERROR=''; return o; });
   chk('sin conexión: la pastilla en ámbar «Sin conexión» y abajo lo que dice la conexión de siempre', r.vivoOff && r.vivo==='Sin conexión' && /^k-off\|📡 Sin respuesta del servidor/.test(r.alertas[0]||''), r);
   r = await page.evaluate(() => { document.querySelector('#fh .fh-ic[href="guia-vendedor.html"]').addEventListener('click', function(e){ e.preventDefault(); }, true);
-    fhNovedadVista(); return new Promise(function(res){ setTimeout(function(){ res({ punto:!!document.querySelector('#fh .fh-ic .pt'), ls:localStorage.getItem('me_novedades_visto') }); }, 150); }); });
-  chk('abrir Novedades saca el punto (se recuerda en el aparato)', !r.punto && r.ls==='2026-10-27', r);
+    fhNovedadVista(); return new Promise(function(res){ setTimeout(function(){ res({ punto:!!document.querySelector('#fh .fh-ic .pt'), ls:localStorage.getItem('me_novedades_visto'), nv:NOVEDADES_V }); }, 150); }); });
+  chk('abrir Novedades saca el punto (se recuerda en el aparato)', !r.punto && r.ls===r.nv, r);
   r = await page.evaluate(() => { EDIT_ID='x1'; var o=DIA('2026-10-28', 5, 2); EDIT_ID=null; return o; });
   chk('corrigiendo un pedido dice «Corregir pedido»', r.h3==='Corregir pedido', r.h3);
   r = await page.evaluate(() => { var v=document.getElementById('view-form'); v.classList.add('venta-tienda'); DIA('2026-10-28', 5, 2);
