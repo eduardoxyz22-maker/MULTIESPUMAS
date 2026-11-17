@@ -4815,8 +4815,11 @@ function glSigue(){
             <button class="btn btn-sm imes-btn" id="pry-mano-btn" onclick="pqsIr('pry-mano')">🤝 Quién necesita una mano</button>
           </div>
         </div>
+        <!-- 📈 (17/11) La Proyección completa de Fable: el titular, leads y conversión, la tabla de los vendedores y las tiendas aparte (`pfcPintar`). -->
+        <div id="pry-titular"></div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <div id="pry-leads"></div>
         <!-- 📈 (15/11, mejora 340) Por qué se movió la proyección desde la foto de ayer: ventas nuevas o la cuenta (`pryMovPintar`). Solo mira. -->
         <div id="pry-mov"></div>
         <!-- 🧠🤝 (16/11, mejoras 356 y 362) Lo que escribió Claude: el porqué de la semana y quién necesita una mano (`pqsPintar`). Solo miran. -->
@@ -4827,12 +4830,14 @@ function glSigue(){
         <div id="pry-com"></div>
         <!-- 🛍️ (13/11, mejora 177) Black Friday en números: solo mientras dura la campaña y 7 días después (`bfnPintar`). Solo mira. -->
         <div id="pry-bf"></div>
+        <div id="pry-tiendas"></div>
         <!-- ✨ (§4jw, K) Una ficha por marca con la curva del mes: lo vendido día a día, hasta dónde llegaría y la meta. -->
         <div id="cx-pry"></div>
         <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
         <div id="pry-altura"></div>
         <!-- 💵 (10/10, §4je) De dónde sale lo vendido: cobrado en el mes, adelantos de antes y lo que falta, y cómo se llega al Cuadre. -->
         <div id="pry-plata"></div>
+        <div id="pry-vtabla"></div>
         <div id="pry-vendedores"></div>
         <!-- 🏁 y 🟩 (§4pj, 10/11, ideas 166 y 167): la carrera del mes y el calendario de calor. Solo miran. -->
         <div id="pry-carrera"></div>
@@ -7139,6 +7144,88 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .ay-globo[hidden]{ display:none; }
 .ay-globo .ay-n{ display:block; color:#007c76; font-weight:800; margin-bottom:2px; }
 @media (prefers-reduced-motion:reduce){ .ay-globo{ transition:none; transform:none; } }
+/* 📈 (17/11) La Proyección completa de Fable: el título del mes, el titular, leads y conversión, la tabla de los vendedores y «▶ Presentar». */
+.pfc-cab{ display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:space-between; margin:0 0 12px; }
+.pfc-cab h2{ margin:0; font-size:clamp(1.25rem,2.6vw,1.7rem); letter-spacing:-.02em; color:#12262b; }
+.pfc-cs{ font-size:.86rem; color:#4b6361; margin-top:2px; } .pfc-cs b{ color:#12262b; }
+.pfc-pres-b{ font:inherit; font-weight:800; color:#fff; background:#00A09A; border:0; border-radius:10px; padding:9px 18px; min-height:42px; cursor:pointer; }
+.pfc-pres-b:hover{ background:#008f89; }
+.pfc-box{ background:#fff; border:1px solid #e3ebec; border-radius:16px; padding:16px; margin:0 0 12px; box-shadow:0 1px 2px rgba(18,38,43,.04); color:#12262b; }
+.pfc-st{ font-weight:800; font-size:1rem; margin:0 0 10px; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; }
+.pfc-st small{ font-weight:500; color:#5b7177; font-size:.82rem; }
+.pfc-corte{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px; background:#e3f6f5; color:#0b6f6a; border:1px solid #bfe7e4; border-radius:999px;
+  padding:3px 10px; font-size:.76rem; font-weight:700; line-height:1.35; }
+.pfc-frase{ font-size:clamp(1.02rem,2vw,1.3rem); font-weight:800; margin:0 0 12px; letter-spacing:-.01em; }
+.pfc-tit{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; }
+.pfc-tc{ border:1px solid #e3ebec; border-top:5px solid var(--c); border-radius:14px; padding:12px 14px; min-width:0; }
+.pfc-tn{ font-weight:800; font-size:.9rem; }
+.pfc-d{ font-weight:800; white-space:nowrap; } .pfc-d small{ font-weight:600; font-size:.8em; }
+.pfc-up{ color:#17994f; } .pfc-dn{ color:#c62f2f; } .pfc-eq{ color:#5b7177; } .pfc-nv{ color:#6d3fd6; }
+.pfc-big{ display:block; font-size:clamp(1.9rem,4vw,2.6rem); letter-spacing:-.03em; line-height:1.1; margin:2px 0; }
+.pfc-ts{ font-size:.82rem; color:#5b7177; } .pfc-tx{ font-size:.78rem; color:#5b7177; margin-top:4px; }
+.pfc-ls{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr)); gap:10px; }
+.pfc-lc{ border:1px solid #e3ebec; border-top:4px solid var(--c); border-radius:14px; padding:12px; min-width:0; }
+.pfc-lh{ font-weight:800; margin-bottom:8px; }
+.pfc-fu{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.pfc-fu > div{ background:#f5f9f9; border-radius:11px; padding:7px 9px; position:relative; min-width:0; }
+.pfc-fu > div:not(:last-child)::after{ content:'›'; position:absolute; right:-10px; top:50%; transform:translateY(-50%); font-weight:800; color:#00A09A; font-size:18px; }
+.pfc-fu b{ display:block; font-size:1.3rem; font-weight:800; line-height:1.15; white-space:nowrap; }
+.pfc-fu span{ display:block; font-size:.76rem; font-weight:700; }
+.pfc-fu small{ display:block; font-size:.7rem; color:#5b7177; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pfc-fu .pfc-cv{ background:#e3f6f5; } .pfc-fu .pfc-cv b{ color:#0b6f6a; }
+.pfc-kp{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.pfc-kp > div{ border:1px solid #e3ebec; border-radius:10px; padding:6px 9px; min-width:0; }
+.pfc-kp small{ display:block; font-size:.7rem; color:#5b7177; } .pfc-kp b{ display:block; font-size:.98rem; font-weight:800; white-space:nowrap; }
+.pfc-vth{ display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; margin-bottom:8px; }
+.pfc-seg{ display:inline-flex; flex-wrap:wrap; background:#e8eff0; border-radius:12px; padding:3px; gap:2px; }
+.pfc-seg button{ font:inherit; font-size:.8rem; font-weight:700; border:0; background:transparent; color:#5b7177; padding:7px 12px; border-radius:9px; min-height:36px; cursor:pointer; }
+.pfc-seg button.on{ background:#fff; color:#12262b; box-shadow:0 1px 3px rgba(18,38,43,.14); }
+.pfc-chs{ display:flex; flex-wrap:wrap; gap:5px; }
+.pfc-ch{ font-size:.76rem; font-weight:800; border-radius:999px; padding:3px 10px; white-space:nowrap; }
+.pfc-ch.ok{ background:#e4f5ea; color:#17994f; } .pfc-ch.ce{ background:#fdf1dc; color:#a66300; } .pfc-ch.ma{ background:#fde8e8; color:#c62f2f; } .pfc-ch.nv{ background:#efe9fc; color:#6d3fd6; }
+.pfc-sx{ overflow-x:auto; border:1px solid #e3ebec; border-radius:12px; }
+table.pfc-vt{ width:100%; border-collapse:collapse; font-size:.84rem; font-variant-numeric:tabular-nums; }
+.pfc-vt th{ background:#f5f9f9; color:#5b7177; font-size:.72rem; font-weight:700; text-align:right; padding:8px 10px; border-bottom:2px solid #00B5AD; white-space:nowrap; vertical-align:bottom; }
+.pfc-vt th small{ display:block; font-weight:600; }
+.pfc-vt td{ padding:8px 10px; border-top:1px solid #e3ebec; text-align:right; white-space:nowrap; vertical-align:middle; }
+.pfc-vt td small{ display:block; color:#5b7177; font-size:.72rem; }
+.pfc-vt .nm{ text-align:left; font-weight:700; } .pfc-vt .c{ text-align:center; color:#5b7177; }
+.pfc-vt .pfc-p{ color:#6d3fd6; font-weight:700; }
+.pfc-vt tr.pfc-tot td{ font-weight:800; background:#fbfdfd; border-top:2px solid #cfe1df; }
+.pfc-dot{ display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:7px; vertical-align:0; }
+.pfc-pp{ font-weight:800; border-radius:999px; padding:2px 8px; } .pfc-pp.ok{ background:#e4f5ea; color:#17994f; } .pfc-pp.ce{ background:#fdf1dc; color:#a66300; } .pfc-pp.ma{ background:#fde8e8; color:#c62f2f; }
+.pfc-pie{ font-size:.76rem; color:#5b7177; margin-top:8px; }
+.pfc-vk{ padding:0 4px 12px; border-bottom:1px solid #eef3f3; margin-bottom:4px; }
+.pfc-tiles{ display:grid; grid-template-columns:repeat(auto-fill,minmax(132px,1fr)); gap:6px; }
+.pfc-tiles > div{ border:1px solid #e3ebec; border-radius:10px; padding:6px 9px; min-width:0; background:#fff; }
+.pfc-tiles small{ display:block; font-size:.68rem; color:#5b7177; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pfc-tiles b{ display:block; font-size:.92rem; font-weight:800; white-space:nowrap; color:#12262b; }
+.pfc-tiles .pfc-ok b{ color:#17994f; } .pfc-tiles .pfc-am b{ color:#a66300; } .pfc-tiles .pfc-rj b{ color:#c62f2f; }
+.pfc-cab{ background:#fff; border:1px solid #e3ebec; border-radius:16px; padding:12px 16px; }
+/* ▶ Presentar: la pestaña a pantalla entera, una sección por vez, con la barrita de abajo. */
+body.pfc-pres{ overflow:hidden; }
+body.pfc-pres #cta-pane-proy{ position:fixed; inset:0; z-index:6000; overflow:auto; background:var(--bg-app,#f2f6f6);
+  padding:calc(20px + var(--sa-t,0px)) clamp(14px,4vw,56px) 104px; display:block!important; }
+body.pfc-pres #cta-pane-proy > :not(.pix-s):not(#pfc-presbar){ display:none!important; }
+body.pfc-pres #cta-pane-proy > .pix-s:not(.pfc-cur){ display:none!important; }
+body.pfc-pres #cta-pane-proy > .pix-s.pfc-cur{ max-width:1280px; margin:0 auto; }
+body.pfc-pres .pix-s.pfc-cur > .pix-b{ display:block!important; }
+body.pfc-pres .pix-s.pfc-cur > .pix-h{ pointer-events:none; background:none; border:0; box-shadow:none; padding:0 0 6px; border-bottom:2px solid #00B5AD; border-radius:0; }
+body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-t > b{ font-size:clamp(1.4rem,3.2vw,2.2rem); }
+body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-k{ font-size:clamp(.9rem,1.6vw,1.1rem); }
+body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-v{ display:none; }
+body.pfc-pres #asis-yo, body.pfc-pres .asis-globo{ display:none!important; }
+#pfc-presbar{ position:fixed; left:50%; bottom:calc(14px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:6010; display:flex; gap:6px; align-items:center;
+  background:#fff; border:1px solid #e3ebec; border-radius:999px; box-shadow:0 8px 28px rgba(18,38,43,.22); padding:6px; }
+#pfc-presbar[hidden]{ display:none; }
+#pfc-presbar button{ font:inherit; font-weight:800; border:0; border-radius:999px; min-width:48px; min-height:48px; cursor:pointer; }
+#pfc-presbar .pfc-pv{ background:#e3f6f5; color:#00A09A; font-size:1.4rem; }
+#pfc-presbar .pfc-px{ background:#eef2f3; color:#12262b; padding:0 16px; font-size:.86rem; }
+#pfc-presbar .pfc-pn{ font-weight:800; min-width:64px; text-align:center; font-variant-numeric:tabular-nums; color:#12262b; }
+@media (max-width:640px){
+  .pfc-fu{ gap:10px; } .pfc-fu b{ font-size:1.05rem; } .pfc-fu > div{ padding:6px; }
+  .pfc-vt{ font-size:.78rem; } .pfc-vt td, .pfc-vt th{ padding:7px 7px; }
+}
 /* 🧭 (16/11, mejora 369) Proyección: la barra del índice pegada arriba y cada caja en una sección plegable con su renglón de título. */
 .pix-bar{ position:sticky; top:var(--hdr-h,0px); z-index:7; display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #d9e9e7; border-radius:14px;
   padding:6px 6px 6px 8px; margin:0 0 14px; box-shadow:0 6px 18px -12px rgba(0,80,78,.45); }
@@ -16330,7 +16417,9 @@ function cxPryPintar(R){
   /* 🎯 (15/11, mejora 333) cada tienda contra su meta · 🏬 (mejora 343) la tienda nueva, día por día. Solo miran. */
   var tMeta=''; if(pryTMetaVe()){ try{ tMeta=pryTMetaHtml(R, T); }catch(e){ tMeta=''; } }
   var tNueva=''; if(pryTNuevaVe()){ try{ tNueva=pryTNuevaHtml(R, T); }catch(e){ tNueva=''; } }
-  box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml+tMeta+tNueva;
+  var _pt=(typeof pfcVa==='function' && pfcVa()) ? document.getElementById('pry-tiendas') : null;   // 📈 (17/11) con la Proyección completa, las tiendas van en su sección
+  if(_pt){ box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : ''); _pt.innerHTML=tiendasHtml+tMeta+tNueva; }
+  else box.innerHTML=(cards ? '<div class="cx-kfs">'+cards+'</div>' : '')+tiendasHtml+tMeta+tNueva;
 }
 /* 🏬 (§4pb) Las tiendas del mes de `R` (la cuenta de `proyeccionMes`): por tienda (la de cada vendedor en ese mes, `pryVentas` → `st`: cada
    vendedor entero en una; el reparto por lo vendido queda para quien no tiene tienda en la lista), ventas, unidades, lo vendido, la proyección,
@@ -16672,6 +16761,7 @@ function pryKpiPintar(ym){
     var v=pryKpiBuscar(c.team, el.getAttribute('data-kpi')), dn=el.getAttribute('data-n'), de=el.getAttribute('data-e'), dp=el.getAttribute('data-p');
     el.innerHTML=v ? pryKpiTxt(v, dn==null ? null : Number(dn), de==null ? null : Number(de), dp==null ? null : Number(dp)) : ''; el.hidden=!v;
   });
+  try{ pfcKpi(ym); }catch(e){}   // 📈 (17/11) leads y conversión del titular y de la tabla
 }
 function pryKpiPoner(ym){ if(!pryKpiVa() || !document.querySelector('#pry-vendedores .pry-kpi')) return; pryKpiTraer(ym); pryKpiPintar(ym); }
 /* Un canal del dashboard: {nom, ic, leads, cierres, bs} (sin la fila «Cerrados de meses anteriores»). */
@@ -19623,7 +19713,8 @@ function renderProyeccion(){
            '<div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small>'+(r.amb==='tienda' && pryKpiVa() ? ('<span class="pry-kpi" data-kpi="'+esc(pryKpiClave(r.vendedor))+'" data-n="'+(Number(r.n)||0)+'"'+pryKpiEntAttr(_ENT, r)+'></span>') : '')+'</div>'+
            pryMedioHtml(_VDB ? m415Html(_VDB, r) : '', _ENT ? pryEntHtml(_ENT, r) : '')+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div>'+
-           (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+pryMomAbTxt(ab)+'</span></div>') : '')+det2+'</div>';   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
+           (mom ? mom.replace(/<\/div>$/, '<span class="pry-mom-ab">'+pryMomAbTxt(ab)+'</span></div>') : '')+det2+'</div>'+
+           ((r.amb==='tienda' && typeof pfcVa==='function' && pfcVa()) ? '<div class="pfc-vk" data-vk="'+esc(vk)+'"></div>' : '');   // 📈 (17/11) las fichitas de Fable   // 📈 (§4ni, 11) DESPUÉS en el texto: la fila se sigue leyendo igual
   };
   /* Abajo de cada grupo, con qué se proyectó y la cuenta entera (§4gu), para que se pueda seguir con la calculadora. */
   var metodoPie=function(k, nombre, g){
@@ -19709,6 +19800,7 @@ function renderProyeccion(){
     '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta ahora, contra lo que otro mes tenía cargado al mismo día y a la misma hora (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
     '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó aotro mes no está en la curva del mes de antes.'+
     '</div></div>';
+  try{ pfcPintar(R, _A); }catch(e){ console.error(e); }   // 📈 (17/11) la Proyección completa de Fable
   try{ pixPintar(R, _A); }catch(e){ console.error(e); }   // 🧭 (16/11, mejora 369) el índice y el renglón de cada sección
 }
 /* Con qué se proyectó el equipo, en una línea (la ficha «📈 Proyección al cierre»). Si todo va con el ritmo, el texto de
@@ -37375,11 +37467,12 @@ var PIX_SECS=[
   { k:'patron',  ix:'', grupo:1, cerr:1, t:'📅 Cómo se viene vendiendo',     ids:['pry-patron'] },
   { k:'como',    ix:'', grupo:1, cerr:1, t:'❓ Cómo se cuenta',              ids:['pry-como'] }
 ];
-function pixVa(){ try{ return vdVa('PRY_INDICE_PRUEBA'); }catch(e){ return false; } }
+function pixVa(){ try{ return vdVa('PRY_INDICE_PRUEBA') || pfcVa(); }catch(e){ return false; } }
 function pixAbierta(s){ return !!visPref('pry_'+s.k, !s.cerr); }
 /* Se arma UNA vez: la barra, las secciones (moviendo las cajas de siempre) y «🧰 Herramientas». */
 function pixArmar(){
   var pane=document.getElementById('cta-pane-proy'); if(!pane || PIX.hecho) return !!PIX.hecho;
+  if(pfcVa()) PIX_SECS=PFC_SECS;   // 📈 (17/11) el orden de la Proyección completa
   var fil=pane.querySelector(':scope > .filters'); if(!fil) return false;
   var bar=document.createElement('div'); bar.id='pry-ix'; bar.className='pix-bar';
   var chips=PIX_SECS.filter(function(s){ return s.ix; }).map(function(s){ return '<button type="button" class="pix-c" data-k="'+s.k+'">'+s.ix+'</button>'; }).join('')+
@@ -37414,6 +37507,14 @@ function pixArmar(){
     sec.querySelector('.pix-h').setAttribute('aria-expanded', String(!sec.classList.contains('pix-cerr')));
     ancla=sec;
   });
+  if(pfcVa()){   // 📈 (17/11) las secciones en el orden de la Proyección completa (no en el de las cajas)
+    var an=bar, gEl=document.getElementById('pix-s-despacio'), gPuesto=false;
+    PIX_SECS.forEach(function(s){
+      var el=document.getElementById('pix-s-'+s.k); if(!el) return;
+      if(s.grupo && gEl && !gPuesto){ an.parentNode.insertBefore(gEl, an.nextSibling); an=gEl; gPuesto=true; }
+      an.parentNode.insertBefore(el, an.nextSibling); an=el;
+    });
+  }
   bar.addEventListener('click', pixClick);
   document.addEventListener('pointerdown', function(e){ var m=document.getElementById('pix-her-m'); if(m && !m.hidden && !e.target.closest('.pix-her')) pixHer(false); }, true);
   document.addEventListener('keydown', function(e){ var m=document.getElementById('pix-her-m'); if(e.key==='Escape' && m && !m.hidden){ e.preventDefault(); e.stopPropagation(); pixHer(false, true); } }, true);
@@ -37484,6 +37585,9 @@ function pixClave(k, R, A){
     return (D.curso ? 'campaña hasta ahora ' : 'campaña ')+fmtBs0(D.camp.bs)+' · '+bfnPctTxt(D.camp.bs, D.antes.bs)+' contra los días de antes'; }
   if(k==='tiendas'){ var T=[]; R.marcas.forEach(function(m){ if(m.tot.n) T.push(m.g.lbl+(conProy ? (' 📈 '+fmtBs0(m.tot.proy)) : (' '+fmtBs0(m.tot.vendido)))); });
     var nt=document.querySelectorAll('#cx-pry .cx-kf-t').length; return T.join(' · ')+(nt ? (' · '+nt+' tienda'+(nt===1?'':'s')) : ''); }
+  if(k==='marcas'){ var Pm=[]; R.marcas.forEach(function(m){ var mt=metaDe(R.ym, m.g.k); if(mt) Pm.push(m.g.lbl+' '+metaPct(m.tot.vendido, mt)+' %'+(conProy ? (' → '+metaPct(m.tot.proy, mt)+' %') : '')); });
+    return Pm.length ? 'meta: '+Pm.join(' · ') : (A && A.cmp ? 'el equipo '+pryVaTxt(A.act.equipo.bs, A.ant.equipo.bs)+' contra '+pryMesCorto(A.cmp) : ''); }
+  if(k==='tiendas2'){ var nt2=document.querySelectorAll('#pry-tiendas .cx-kf-t').length; return nt2 ? (nt2+' tienda'+(nt2===1?'':'s')+' · la tienda de quien vendió en el mes') : ''; }
   if(k==='altura'){ if(!A || !A.cmp) return ''; return 'el equipo '+pryVaTxt(A.act.equipo.bs, A.ant.equipo.bs)+' en plata · '+pryVaTxt(A.act.equipo.u, A.ant.equipo.u)+' en unidades, contra '+pryMesCorto(A.cmp); }
   if(k==='plata'){ var G=PRY_PLATA_ULT && PRY_PLATA_ULT.ym===R.ym ? PRY_PLATA_ULT.G.equipo : null; if(!G) return '';
     var cob=(G.mes||0)+(G.antes||0)+(G.despues||0)+(G.sinF||0), fal=(G.faltaMes||0)+(G.faltaAntes||0);
@@ -37518,6 +37622,297 @@ function pixPintar(R, A){
   pixScroll();
 }
 /* fin mejora 369 */
+/* ============================================================================
+   📈 LA PROYECCIÓN COMPLETA DE FABLE (17/11; dueño: «me gusta lo que propuso fable, hacelo»; la muestra:
+   https://claude.ai/artifact/VCgSiLZeq86V61NG3m24hU). La pestaña se ordena como una presentación, sin perder ninguna caja de las de antes:
+   Resumen · Cada marca · Vendedores · Comisiones · Black Friday · Tiendas · De dónde sale · Carrera · Calendario · Publicidad · Líneas ·
+   Para mirar despacio. Lo nuevo:
+   · Arriba, el título del mes con los días hábiles que van y faltan, y «▶ Presentar» (una sección por pantalla; flechas, deslizar, Esc).
+   · «El titular» (`pfcTitularHtml`): una frase que se lee en 5 segundos y una tarjeta por el equipo y cada marca contra el mes de comparación
+     A ESTA ALTURA, en plata y en unidades (las cuentas de `pryAltura`, las mismas de «A esta altura»), con el corte escrito: «Hoy mar 17/11
+     17:30 = día hábil 13 → contra jue 15/10 hasta las 17:30».
+   · «Leads, conversión y ticket» (`pfcLeadsHtml`): por el equipo y cada marca, los leads de Kommo (el dashboard publicado, `PRY_KPI`) contra
+     el mes de comparación, las ventas del panel, la conversión (ventas del panel ÷ leads), el ticket (vendido ÷ ventas) y Bs por lead.
+   · «Los vendedores en una tabla» (`pfcTablaHtml`): vendido, llegaría, % del presupuesto, Bs / ventas / unidades contra el mes de comparación
+     a esta altura (`pryMomDe`, la misma cuenta de su tablita), leads y conversión; se ordena por plata, % del presupuesto, cambio o conversión.
+   · Las tiendas pasan a su propia sección (`#pry-tiendas`; antes iban debajo de las marcas, en `#cx-pry`).
+   Ninguna cuenta nueva de la proyección: todo sale de `proyeccionMes`, `pryAltura`, `pryMomDe`, `ccmMetas`, `PRY_KPI`. Solo mira.
+   En Playwright todo como antes salvo `window.PFC_PRUEBA` (con la bandera, también el índice de la 369). `tests/test_pry_fable.js`.
+   ========================================================================== */
+var PFC_SECS=[
+  { k:'resumen', ix:'📊 Resumen',       t:'📊 Resumen',                     ids:['pry-titular','pry-nota','pry-metrics','pry-leads','pry-mov','pry-porque','pry-mano'] },
+  { k:'marcas',  ix:'🛏️ Marcas',        t:'🛏️ Cada marca',                  ids:['pry-metas','cx-pry','pry-altura'] },
+  { k:'vend',    ix:'👤 Vendedores',    t:'👤 Vendedores',                  ids:['pry-vtabla','pry-vendedores'] },
+  { k:'com',     ix:'💰 Comisiones',    t:'💰 Comisiones',                  ids:['pry-com'] },
+  { k:'bf',      ix:'🛍️ Black Friday',  t:'🛍️ Black Friday',                ids:['pry-bf'] },
+  { k:'tiendas2',ix:'🏬 Tiendas',       t:'🏬 Cada tienda',                 ids:['pry-tiendas'] },
+  { k:'plata',   ix:'💵 De dónde sale', t:'💵 De dónde sale lo vendido',     ids:['pry-plata'] },
+  { k:'carrera', ix:'🏁 Carrera',       t:'🏁 La carrera del mes',          ids:['pry-carrera'] },
+  { k:'calor',   ix:'🟩 Calendario',    t:'🟩 Calendario de calor',         ids:['pry-calor'] },
+  { k:'pub',     ix:'📣 Publicidad',    t:'📣 Lo que vende cada Bs de publicidad', ids:['pry-pub'] },
+  { k:'lineas',  ix:'🛏️ Líneas',        t:'🛏️ Lo vendido por línea',        ids:['pry-lineas'] },
+  { k:'prueba',  ix:'', grupo:1, cerr:1, t:'🧪 ¿Qué tan bien proyecta?',     ids:['pry-prueba'] },
+  { k:'hist',    ix:'', grupo:1, cerr:1, t:'📒 Lo que dijo la proyección cada día', ids:['pry-hist'] },
+  { k:'patron',  ix:'', grupo:1, cerr:1, t:'📅 Cómo se viene vendiendo',     ids:['pry-patron'] },
+  { k:'como',    ix:'', grupo:1, cerr:1, t:'❓ Cómo se cuenta',              ids:['pry-como'] }
+];
+var PFC_CTX=null, PFC_ORD='plata', PFC_PRES={ on:false, i:0, L:[], x0:null };
+function pfcVa(){ try{ return vdVa('PFC_PRUEBA'); }catch(e){ return false; } }
+function pfcMes(ym){ return String(pryMesCorto(ym)||'').toLowerCase(); }
+function pfcPrev(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1; if(m<1){ m=12; y--; } return y+'-'+(m<10?'0':'')+m; }
+function pfcPct(a, b){ if(!(b>0.009)) return null; return Math.round((a/b-1)*100); }
+function pfcN(x){ return Math.round(Number(x)||0).toLocaleString('es-BO'); }
+function pfcPc1(x){ return (Math.round(x*10)/10).toLocaleString('es-BO')+' %'; }
+/* ▲ 21 % / ▼ 8 % / ≈ igual (−1 %): con menos de 3 % de diferencia es «igual» (se dice el número entre paréntesis). */
+function pfcDif(p, big){
+  if(p==null) return '<span class="pfc-d pfc-nv">nuevo</span>';
+  var c=p>=3 ? 'up' : (p<=-3 ? 'dn' : 'eq');
+  return '<span class="pfc-d pfc-'+c+(big?' pfc-big':'')+'">'+(c==='up' ? '▲ '+p+' %' : c==='dn' ? '▼ '+(-p)+' %' : '≈ igual'+(p ? ' <small>('+(p>0?'+':'−')+Math.abs(p)+' %)</small>' : ''))+'</span>';
+}
+/* «📅 Hoy mar 17/11 17:30 = día hábil 13 → contra jue 15/10 hasta las 17:30 (el 02/11 fue feriado)» */
+function pfcCorteChip(R, A, corto){
+  if(!A || !A.cmp) return '';
+  var cm=pfcMes(A.cmp), t;
+  if(!A.curso) t=pfcMes(A.ym)+' entero contra '+cm+' entero';
+  else {
+    var C=A.corte; if(!C) return '';
+    var hoy='Hoy '+pryDiaTxt(R.hoy)+(A.hora ? ' '+A.hora : '')+' = día hábil '+C.n;
+    if(C.entero) t=hoy+' → '+cm+' entero (tenía menos días hábiles)';
+    else {
+      var fer=[]; for(var f=R.ym+'-01', i=0; i<31 && f<R.hoy; i++, f=stockSumarDias(f,1)) if(dowDe(f)!==0 && !pryDiaHabil(f)) fer.push(fmtFechaCorta(f));
+      t=hoy+' → contra '+(C.lim ? pryDiaTxt(C.lim) : cm)+(C.min!=null && A.hora ? ' hasta las '+A.hora : ' entero')+
+        (fer.length && !corto ? ' ('+(fer.length===1 ? 'el '+fer[0]+' fue feriado' : fer.join(', ')+' fueron feriados')+')' : '');
+    }
+  }
+  return '<span class="pfc-corte'+(corto?' pfc-corte-c':'')+'">📅 '+esc(t)+'</span>';
+}
+/* ---- El titular ---- */
+function pfcTitularHtml(R, A){
+  if(!A || !A.cmp) return '';
+  var cm=pfcMes(A.cmp), cards=[{ lbl:'Todo el equipo', col:'#12262b', a:A.act.equipo, b:A.ant.equipo }];
+  R.marcas.forEach(function(m){ var a=A.act[m.g.k], b=A.ant[m.g.k]; if(a && b && (a.n || b.n)) cards.push({ lbl:m.g.lbl, ico:m.g.ico, col:m.g.col, a:a, b:b }); });
+  if(!(cards[0].a.n || cards[0].b.n)) return '';
+  cards.forEach(function(c){ c.p=pfcPct(c.a.bs, c.b.bs); c.pu=pfcPct(c.a.u, c.b.u); });
+  var ms=cards.slice(1).slice().sort(function(x, y){ return (y.p==null ? -999 : y.p)-(x.p==null ? -999 : x.p); }), fr=[], empuja=false;
+  (ms.length ? ms : [cards[0]]).forEach(function(c){
+    var n=c===cards[0] ? 'El equipo' : c.lbl;
+    if(c.p==null) fr.push(n+' no vendía en '+cm);
+    else if(c.p>=3){ fr.push(n+(empuja ? ' también sube (+'+c.p+' %)' : ' empuja el mes (+'+c.p+' %)')); empuja=true; }
+    else if(c.p<=-3) fr.push(n+' va '+(-c.p)+' % abajo de '+cm);
+    else fr.push(n+' está igual que '+cm);
+  });
+  var ficha=function(c){
+    return '<div class="pfc-tc" style="--c:'+c.col+'"><div class="pfc-tn">'+(c.ico ? c.ico+' ' : '')+esc(c.lbl)+'</div>'+pfcDif(c.p, true)+
+      '<div class="pfc-ts">en plata · unidades '+pfcDif(c.pu)+'</div>'+
+      '<div class="pfc-tx">'+fmtBs0(c.a.bs)+' contra '+fmtBs0(c.b.bs)+' · '+c.a.u+' contra '+c.b.u+' u.</div></div>';
+  };
+  return '<div class="pfc-box"><div class="pfc-st">El titular <small>contra '+esc(cm)+(A.curso ? ', a esta altura' : '')+'</small> '+pfcCorteChip(R, A)+'</div>'+
+    '<p class="pfc-frase">'+esc(fr.join('. '))+'.</p><div class="pfc-tit">'+cards.map(ficha).join('')+'</div></div>';
+}
+/* ---- Leads, conversión y ticket (Kommo + el panel) ---- */
+function pfcKpiDe(ym, nombre){ var c=PRY_KPI[ym]; return (c && c.team) ? pryKpiBuscar(c.team, pryKpiClave(nombre)) : null; }
+function pfcLeadsHtml(R){
+  var c=PRY_KPI[R.ym]; if(!c || !c.team || !Object.keys(c.team).length) return '';
+  var pv=PRY_KPI[pfcPrev(R.ym)], hayPv=!!(pv && pv.team && Object.keys(pv.team).length);
+  var grupo=function(lbl, col, filas, tot){
+    var L=0, Lp=0, con=0;
+    filas.forEach(function(r){ var v=pfcKpiDe(R.ym, r.vendedor); if(v){ L+=Number(v.leads)||0; con++; } if(hayPv){ var w=pryKpiBuscar(pv.team, pryKpiClave(r.vendedor)); if(w) Lp+=Number(w.leads)||0; } });
+    if(!con) return '';
+    /* octubre es el mes ENTERO (el dashboard archivado): se compara con a cuánto llegaría este mes al ritmo de hoy, no con lo de hoy */
+    var n=tot.n, cv=L ? n/L*100 : null, cur=(R.estado==='curso' && R.dt>0), Lr=cur ? Math.round(L/R.dt*(R.dt+R.dr)) : L, pl=hayPv ? pfcPct(Lr, Lp) : null;
+    return '<div class="pfc-lc" style="--c:'+col+'"><div class="pfc-lh">'+esc(lbl)+'</div><div class="pfc-fu">'+
+      '<div><b>'+pfcN(L)+'</b><span>leads</span><small>'+(cur ? '→ ~'+pfcN(Lr)+' al cierre' : 'de Kommo')+'</small>'+(hayPv && Lp ? '<small>'+esc(pfcMes(pfcPrev(R.ym)).slice(0,3))+'. entero '+pfcN(Lp)+' '+pfcDif(pl)+'</small>' : '')+'</div>'+
+      '<div><b>'+n+'</b><span>ventas</span><small>en el panel</small></div>'+
+      '<div class="pfc-cv"><b>'+(cv==null ? '—' : pfcPc1(cv))+'</b><span>conversión</span><small>'+n+' de '+pfcN(L)+'</small></div></div>'+
+      '<div class="pfc-kp"><div><small>Ticket promedio</small><b>'+(n ? fmtBs0(tot.vendido/n) : '—')+'</b><small>por venta</small></div>'+
+      '<div><small>Bs por lead</small><b>'+(L ? fmtBs0(tot.vendido/L) : '—')+'</b><small>vendido ÷ leads</small></div></div></div>';
+  };
+  var todas=[]; R.marcas.forEach(function(m){ todas=todas.concat(m.filas); });
+  var h=grupo('Todo el equipo', '#12262b', todas.concat(R.sinMarca.filas), R.equipo)+R.marcas.map(function(m){ return m.filas.length ? grupo(m.g.ico+' '+m.g.lbl, m.g.col, m.filas, m.tot) : ''; }).join('');
+  if(!h) return '';
+  return '<div class="pfc-box"><div class="pfc-st">Leads, conversión y ticket <small>lo que entra por Kommo y lo que rinde · conversión = ventas del panel ÷ leads de Kommo</small></div><div class="pfc-ls">'+h+'</div></div>';
+}
+/* ---- Los vendedores en una tabla ---- */
+function pfcFilas(R, A){
+  var M=null; try{ M=ccmMetas(R.ym); }catch(e){ M=null; }
+  var meta=!!(M && M.ok), cerr=(R.estado==='cerrado'), out=[];
+  var cmpHay=!!(A && A.cmp && R.V.some(function(x){ return x.ym===A.cmp && x.amb==='tienda'; }));
+  var una=function(r, g){
+    var mm=meta ? ccmMetaDe(M.vd, r.vendedor) : [0,0], pres=mm[1]>0 ? mm[1] : mm[0], proy=cerr ? r.vendido : r.proy;
+    var mo=null; try{ mo=pryMomDe(R, A, r); }catch(e){ mo=null; }
+    var t=mo && mo.tres, nuevo=!!(t && cmpHay && !t.ent.n);
+    var v=pfcKpiDe(R.ym, r.vendedor), L=v ? (Number(v.leads)||0) : null;
+    out.push({ r:r, g:g, pres:pres, proy:proy, pp:pres>0 ? proy/pres*100 : null, t:t, nuevo:nuevo,
+               pB:t && !nuevo ? pfcPct(t.act.bs, t.ant.bs) : null, pN:t && !nuevo ? pfcPct(t.act.n, t.ant.n) : null, pU:t && !nuevo ? pfcPct(t.act.u, t.ant.u) : null,
+               L:L, cv:L ? r.n/L*100 : null });
+  };
+  R.marcas.forEach(function(m){ m.filas.forEach(function(r){ una(r, m.g); }); });
+  R.sinMarca.filas.forEach(function(r){ una(r, null); });
+  return out;
+}
+function pfcTablaHtml(R, A){
+  var F=pfcFilas(R, A); if(!F.length) return '';
+  var O=PFC_ORD, val=function(f){ return O==='pres' ? (f.pp==null ? -1 : f.pp) : O==='cambio' ? (f.pB==null ? -999 : f.pB) : O==='conv' ? (f.cv==null ? -1 : f.cv) : f.r.vendido; };
+  F.sort(function(a, b){ return val(b)-val(a) || b.r.vendido-a.r.vendido; });
+  var cm=A && A.cmp ? pfcMes(A.cmp) : '', alt=!!(A && A.curso), conProy=(R.estado!=='cerrado');
+  var cuenta=function(fn){ return F.filter(fn).length; };
+  var chips=[], cp=function(n, t, cls){ if(n) chips.push('<span class="pfc-ch '+cls+'">'+n+' '+t+'</span>'); };
+  cp(cuenta(function(f){ return f.pp!=null && f.pp>=100; }), 'llega'+(cuenta(function(f){ return f.pp!=null && f.pp>=100; })===1?'':'n'), 'ok');
+  cp(cuenta(function(f){ return f.pp!=null && f.pp>=90 && f.pp<100; }), 'cerca', 'ce');
+  cp(cuenta(function(f){ return f.pp!=null && f.pp<90; }), 'no llega'+(cuenta(function(f){ return f.pp!=null && f.pp<90; })===1?'':'n'), 'ma');
+  cp(cuenta(function(f){ return f.pB!=null && f.pB>=3; }), '▲ suben', 'ok');
+  cp(cuenta(function(f){ return f.pB!=null && f.pB<=-3; }), '▼ bajan', 'ma');
+  cp(cuenta(function(f){ return f.nuevo; }), 'nuevo'+(cuenta(function(f){ return f.nuevo; })===1?'':'s'), 'nv');
+  var seg=[['plata','Por plata vendida'],['pres','Por % de su presupuesto'],['cambio','Por cambio contra '+(cm||'el otro mes')],['conv','Por conversión']].map(function(o){
+    return '<button type="button" class="'+(O===o[0]?'on':'')+'" onclick="pfcOrden(\''+o[0]+'\')">'+esc(o[1])+'</button>'; }).join('');
+  var vs=function(p, a, b, f){ return f.nuevo ? '<span class="pfc-d pfc-nv">nuevo</span><small>— → '+esc(b)+'</small>' : (f.t ? pfcDif(p)+'<small>'+esc(a)+' → '+esc(b)+'</small>' : '—'); };
+  var tot={ v:0, p:0, pres:0, n:0, u:0, an:0, au:0, ab:0, L:0, hayL:false };
+  var filas=F.map(function(f, i){
+    var r=f.r, t=f.t; tot.v+=r.vendido; tot.p+=f.proy; tot.pres+=f.pres; tot.n+=r.n; tot.u+=r.u;
+    if(t){ tot.ab+=t.ant.bs; tot.an+=t.ant.n; tot.au+=t.ant.u; }
+    if(f.L!=null){ tot.L+=f.L; tot.hayL=true; }
+    var cls=f.pp==null ? '' : (f.pp>=100 ? 'ok' : f.pp>=90 ? 'ce' : 'ma');
+    return '<tr><td class="c">'+(i+1)+'</td><td class="nm"><i class="pfc-dot" style="background:'+(f.g ? f.g.col : '#d97706')+'"></i>'+esc(r.vendedor)+'</td>'+
+      '<td>'+fmtBs0(r.vendido)+'</td>'+(conProy ? '<td class="pfc-p">'+fmtBs0(f.proy)+'</td>' : '')+
+      '<td>'+(f.pp==null ? '<small>sin meta</small>' : '<span class="pfc-pp '+cls+'">'+Math.round(f.pp)+' %</span>')+'</td>'+
+      (cm ? '<td>'+vs(f.pB, t ? fmtBs0(t.ant.bs).replace('Bs ','') : '', fmtBs0(r.vendido).replace('Bs ',''), f)+'</td>'+
+            '<td>'+vs(f.pN, t ? String(t.ant.n) : '', String(t ? t.act.n : r.n), f)+'</td>'+
+            '<td>'+vs(f.pU, t ? String(t.ant.u) : '', String(t ? t.act.u : r.u), f)+'</td>' : '')+
+      '<td>'+(f.L==null ? '<small>—</small>' : pfcN(f.L))+'</td>'+
+      '<td>'+(f.cv==null ? '<small>—</small>' : '<b>'+pfcPc1(f.cv)+'</b><small>'+r.n+' de '+pfcN(f.L)+'</small>')+'</td></tr>';
+  }).join('');
+  var tp=tot.pres>0 ? Math.round(tot.p/tot.pres*100) : null;
+  var totF='<tr class="pfc-tot"><td></td><td class="nm">Total equipo</td><td>'+fmtBs0(tot.v)+'</td>'+(conProy ? '<td class="pfc-p">'+fmtBs0(tot.p)+'</td>' : '')+
+    '<td>'+(tp==null ? '' : tp+' %')+'</td>'+
+    (cm ? '<td>'+pfcDif(pfcPct(tot.v, tot.ab))+'<small>'+fmtBs0(tot.ab).replace('Bs ','')+' → '+fmtBs0(tot.v).replace('Bs ','')+'</small></td>'+
+          '<td>'+pfcDif(pfcPct(tot.n, tot.an))+'<small>'+tot.an+' → '+tot.n+'</small></td><td>'+pfcDif(pfcPct(tot.u, tot.au))+'<small>'+tot.au+' → '+tot.u+'</small></td>' : '')+
+    '<td>'+(tot.hayL ? pfcN(tot.L) : '')+'</td><td>'+(tot.hayL && tot.L ? '<b>'+pfcPc1(tot.n/tot.L*100)+'</b>' : '')+'</td></tr>';
+  return '<div class="pfc-box" id="pfc-vt-box"><div class="pfc-st">Los '+F.length+' en una tabla <small>presupuesto, contra '+esc(cm||'el otro mes')+(alt ? ' a esta altura' : '')+', leads y conversión</small></div>'+
+    '<div class="pfc-vth"><div class="pfc-seg">'+seg+'</div><div class="pfc-chs">'+chips.join('')+'</div></div>'+
+    (alt ? '<div style="margin:0 0 8px">'+pfcCorteChip(R, A)+'</div>' : '')+
+    '<div class="pfc-sx"><table class="pfc-vt"><thead><tr><th>#</th><th class="nm">Vendedor</th><th>Vendido</th>'+(conProy ? '<th>Llegaría</th>' : '')+'<th>% presup.</th>'+
+    (cm ? '<th>Bs vs '+esc(cm.slice(0,3))+'.<small>'+(alt?'a esta altura':'el mes')+'</small></th><th>Ventas<small>'+esc(cm.slice(0,3))+'. → '+esc(pfcMes(R.ym).slice(0,3))+'.</small></th><th>Unidades<small>colch. y somieres</small></th>' : '')+
+    '<th>Leads</th><th>Conversión<small>panel ÷ leads</small></th></tr></thead><tbody>'+filas+totF+'</tbody></table></div>'+
+    '<div class="pfc-pie">Conversión = ventas del panel ÷ leads de Kommo. «nuevo» = no vendía en '+esc(cm||'el otro mes')+'. % presup. = a cuánto llegaría si sigue así. El detalle de cada uno, abajo en su fila.</div></div>';
+}
+/* ---- Las fichitas de cada vendedor, debajo de su fila: ticket, Bs por lead, colchones y somieres, cuánto le falta por día para la mínima y
+   el presupuesto, lo que falta cobrar y las ventas ya entregadas sin factura ni remisión. Las cuentas de siempre: `pryVentas` (las mismas
+   ventas de la fila), `ccmMetas`, `contaFaltaCobrar`, `docVentaFalta`/`docVentaEntregada`, `PRY_KPI`. */
+function pfcTilesPintar(){
+  if(!PFC_CTX) return;
+  var R=PFC_CTX.R, M=null; try{ M=ccmMetas(R.ym); }catch(e){ M=null; }
+  var porId={}; (STATE||[]).forEach(function(p){ if(p && p.id!=null) porId[String(p.id)]=p; });
+  var filas={}; R.marcas.forEach(function(m){ m.filas.forEach(function(r){ filas[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)]=r; }); });
+  R.sinMarca.filas.forEach(function(r){ filas[r.amb+'|'+(normNombre(r.vendedor)||r.vendedor)]=r; });
+  [].forEach.call(document.querySelectorAll('#pry-vendedores .pfc-vk[data-vk]'), function(el){
+    var vk=el.getAttribute('data-vk'), r=filas[vk]; if(!r){ el.innerHTML=''; return; }
+    var c=0, sm=0, cob=0, sf=0;
+    R.V.forEach(function(x){
+      if(x.vk!==vk || x.ym!==R.ym) return;
+      c+=Number(x.c)||0; sm+=Number(x.s)||0;
+      var p=porId[String(x.id)]; if(!p) return;
+      cob+=contaFaltaCobrar(p); try{ if(docVentaFalta(p) && docVentaEntregada(p)) sf++; }catch(e){}
+    });
+    var v=pfcKpiDe(R.ym, r.vendedor), L=v ? (Number(v.leads)||0) : 0;
+    var T=[], t=function(lbl, val, sub, cls){ T.push('<div class="'+(cls||'')+'"><small>'+lbl+'</small><b>'+val+'</b>'+(sub ? '<small>'+sub+'</small>' : '')+'</div>'); };
+    t('Ticket promedio', r.n ? fmtBs0(r.vendido/r.n) : '—', 'por venta');
+    if(L) t('Bs por lead', fmtBs0(r.vendido/L), 'vendido ÷ '+pfcN(L)+' leads');
+    t('Colchones / somieres', c+' / '+sm, (c+sm) ? Math.round(sm/(c+sm)*100)+' % son somieres' : 'sin unidades');
+    if(M && M.ok && R.estado==='curso'){
+      var mm=ccmMetaDe(M.vd, r.vendedor), dr=Math.max(1, R.dr||0);
+      var porDia=function(meta, lbl){ if(!(meta>0)) return; var f=meta-r.vendido;
+        if(f<=0.009) t('Por día para '+lbl, '✅ ya pasó', fmtBs0(meta), 'pfc-ok');
+        else t('Por día para '+lbl, fmtBs0(f/dr), 'faltan '+pryDiasHabTxt(R.dr||0)); };
+      if(mm[0]>0 && mm[0]<mm[1]) porDia(mm[0], 'la mínima');
+      porDia(mm[1]>0 ? mm[1] : mm[0], 'el presupuesto');
+    }
+    t('Por cobrar', fmtBs0(cob), r.vendido>0.009 ? Math.round((1-cob/r.vendido)*100)+' % cobrado' : '', cob>0.009 ? 'pfc-am' : '');
+    t('Sin factura o remisión', String(sf), sf ? 'ya entregadas' : 'todo anotado', sf ? 'pfc-rj' : '');
+    el.innerHTML='<div class="pfc-tiles">'+T.join('')+'</div>';
+  });
+}
+function pfcOrden(o){ PFC_ORD=o; visPrefSet('pfc_ord', o); pfcTablaPintar(); }
+function pfcTablaPintar(){ var el=document.getElementById('pry-vtabla'); if(el && PFC_CTX) el.innerHTML=pfcTablaHtml(PFC_CTX.R, PFC_CTX.A); }
+/* Lo de Kommo llega después (se lee del dashboard publicado): se vuelven a pintar las cajas que lo usan. */
+function pfcKpi(ym){
+  if(!pfcVa() || !PFC_CTX || PFC_CTX.R.ym!==ym) return;
+  var l=document.getElementById('pry-leads'); if(l) l.innerHTML=pfcLeadsHtml(PFC_CTX.R);
+  pfcTablaPintar(); pfcTilesPintar();
+  try{ pixPintar(PFC_CTX.R, PFC_CTX.A); }catch(e){}
+}
+/* ---- Arriba: el mes, los días hábiles y «▶ Presentar» ---- */
+function pfcCabHtml(R){
+  var hb=horaBolivia(), z=function(n){ return (n<10?'0':'')+n; }, d='';
+  if(R.estado==='curso') d=DIAS_SEM[dowDe(R.hoy)]+' '+(+R.hoy.slice(8,10))+' · van '+pryDiasHabTxt(R.dt)+' · <b>'+pryFaltanTxt(R.dr)+'</b>';
+  else if(R.estado==='cerrado') d='el mes ya cerró';
+  else d='todavía no empezó';
+  var t=ULTIMO_REFRESCO ? new Date(ULTIMO_REFRESCO+(new Date().getTimezoneOffset()*60000)-4*3600000) : hb;
+  return '<div><h2>Proyección · '+esc(mesNombre(R.ym))+'</h2><div class="pfc-cs">'+d+' · datos de las '+z(t.getHours())+':'+z(t.getMinutes())+'</div></div>'+
+    '<button type="button" class="pfc-pres-b" onclick="pfcPresAbrir()">▶ Presentar</button>';
+}
+function pfcPintar(R, A){
+  if(!pfcVa()) return;
+  PFC_ORD=visPref('pfc_ord', PFC_ORD)||'plata';
+  PFC_CTX={ R:R, A:A };
+  var pane=document.getElementById('cta-pane-proy'), cab=document.getElementById('pfc-cab');
+  if(pane && !cab){ cab=document.createElement('div'); cab.id='pfc-cab'; cab.className='pfc-cab'; pane.insertBefore(cab, pane.firstChild); }
+  if(cab) cab.innerHTML=pfcCabHtml(R);
+  var put=function(id, h){ var e=document.getElementById(id); if(e) e.innerHTML=h; };
+  put('pry-titular', pfcTitularHtml(R, A));
+  try{ if(pryKpiVa()){ pryKpiTraer(R.ym); pryKpiTraer(pfcPrev(R.ym)); } }catch(e){}
+  put('pry-leads', pfcLeadsHtml(R));
+  put('pry-vtabla', pfcTablaHtml(R, A));
+  pfcTilesPintar();
+  if(PFC_PRES.on) setTimeout(function(){ pfcPresLista(); pfcPresIr(PFC_PRES.i); }, 0);
+}
+/* ---- ▶ Presentar: una sección por pantalla ---- */
+function pfcPresLista(){ PFC_PRES.L=[].slice.call(document.querySelectorAll('#cta-pane-proy > .pix-s')).filter(function(s){ return !s.hidden && s.querySelector('.pix-b').innerHTML.trim(); }); }
+function pfcPresAbrir(){
+  if(!pixArmar()) return;
+  pfcPresLista(); if(!PFC_PRES.L.length) return;
+  PFC_PRES.on=true; document.body.classList.add('pfc-pres');
+  /* la tarjeta grande es de vidrio (`backdrop-filter`): adentro, «fixed» no es la pantalla. Mientras se presenta, la pestaña va directo en el body. */
+  var pn=document.getElementById('cta-pane-proy'); if(pn && pn.parentNode!==document.body){ PFC_PRES.casa=[pn.parentNode, pn.nextSibling]; document.body.appendChild(pn); }
+  var bar=document.getElementById('pfc-presbar');
+  if(!bar){
+    bar=document.createElement('div'); bar.id='pfc-presbar'; bar.setAttribute('role','toolbar'); bar.setAttribute('aria-label','Presentación');
+    bar.innerHTML='<button type="button" class="pfc-pv" aria-label="Anterior" onclick="pfcPresIr(PFC_PRES.i-1)">‹</button><span class="pfc-pn"></span>'+
+      '<button type="button" class="pfc-pv" aria-label="Siguiente" onclick="pfcPresIr(PFC_PRES.i+1)">›</button><button type="button" class="pfc-px" onclick="pfcPresSalir()">✕ Salir</button>';
+    document.getElementById('cta-pane-proy').appendChild(bar);
+    var pane=document.getElementById('cta-pane-proy');
+    pane.addEventListener('touchstart', function(e){ if(PFC_PRES.on && e.touches.length===1) PFC_PRES.x0=[e.touches[0].clientX, e.touches[0].clientY]; }, { passive:true });
+    pane.addEventListener('touchend', function(e){
+      if(!PFC_PRES.on || !PFC_PRES.x0) return; var t=e.changedTouches[0], dx=t.clientX-PFC_PRES.x0[0], dy=t.clientY-PFC_PRES.x0[1]; PFC_PRES.x0=null;
+      if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.6 && !(e.target.closest && e.target.closest('.pfc-sx,.pry-scroll,input,select,.pix-chips'))) pfcPresIr(PFC_PRES.i+(dx<0 ? 1 : -1));
+    }, { passive:true });
+    document.addEventListener('keydown', function(e){
+      if(!PFC_PRES.on || (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName))) return;
+      if(e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); pfcPresIr(PFC_PRES.i+1); }
+      else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); pfcPresIr(PFC_PRES.i-1); }
+      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); pfcPresSalir(); }
+    }, true);
+  }
+  bar.hidden=false;
+  pfcPresIr(0);
+  try{ var de=document.documentElement; if(de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen().catch(function(){}); }catch(e){}
+}
+function pfcPresIr(i){
+  var L=PFC_PRES.L; if(!L.length) return;
+  i=Math.max(0, Math.min(L.length-1, i)); PFC_PRES.i=i;
+  L.forEach(function(s, j){ s.classList.toggle('pfc-cur', j===i); });
+  var n=document.querySelector('#pfc-presbar .pfc-pn'); if(n) n.textContent=(i+1)+' / '+L.length;
+  var pane=document.getElementById('cta-pane-proy'); if(pane) pane.scrollTop=0;
+  try{ acomodarFichas(); }catch(e){} try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+}
+function pfcPresSalir(){
+  PFC_PRES.on=false; document.body.classList.remove('pfc-pres');
+  var pn=document.getElementById('cta-pane-proy'), c=PFC_PRES.casa; if(pn && c){ c[0].insertBefore(pn, c[1] && c[1].parentNode===c[0] ? c[1] : null); PFC_PRES.casa=null; }
+  PFC_PRES.L.forEach(function(s){ s.classList.remove('pfc-cur'); });
+  var bar=document.getElementById('pfc-presbar'); if(bar) bar.hidden=true;
+  try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); }catch(e){}
+  try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+}
+/* fin Proyección completa */
 /* ============================================================================
    ⓘ LAS EXPLICACIONES LARGAS, EN «ⓘ CÓMO FUNCIONA» (16/11, mejora 377; el dueño la eligió).
    Cada mejora trajo su explicación en un párrafo fijo (letra chica y gris): ~70 en Proyección, Stock, el Cuadre y ATC. Se leen una vez y
