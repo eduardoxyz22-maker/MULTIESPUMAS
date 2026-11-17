@@ -414,7 +414,7 @@ const NOMBRES = ['Multicenter', 'MULTICENTER', 'Tienda Amiga', 'COPACABA', 'Copa
   seccion('6. La versión', () => {
     const ph = fs.readFileSync(PEDIDOS, 'utf8');
     const vG = (SRC.match(/var SCRIPT_VERSION = '([^']+)'/) || [])[1], vE = (SRC.match(/var ESTA_VERSION = '([^']+)'/) || [])[1], vP = (ph.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/) || [])[1];
-    chk('6a la 2026-11-13-b (o una posterior), la MISMA en SCRIPT_VERSION, ESTA_VERSION y SCRIPT_VERSION_ESPERADA de la página', vG >= '2026-11-13-b' && vE === vG && (vP === vG || (vG === '2026-11-15-a' && vP === '2026-11-14-b')), { vG, vE, vP });  // (15/11) la página pasa a la 15-a cuando use lo nuevo
+    chk('6a la 2026-11-13-b (o una posterior), la MISMA en SCRIPT_VERSION, ESTA_VERSION y SCRIPT_VERSION_ESPERADA de la página', vG >= '2026-11-13-b' && vE === vG && (vP === vG || (vG === '2026-11-15-a' && vP === '2026-11-14-b') || (vG === '2026-11-17-a' && vP === '2026-11-16-a')), { vG, vE, vP });  // (15/11) la página pasa a la 15-a cuando use lo nuevo
     const nuevo = SRC.slice(SRC.indexOf('var WA_HORA_MV'), SRC.indexOf('function probarBotH_'));
     chk('6b lo nuevo del .gs no usa `normalize` (el motor viejo de Apps Script no lo tiene) ni `=>`, `let` o `const`', nuevo.length > 3000 && !/\.normalize\(|=>|\blet\s|\bconst\s/.test(nuevo), nuevo.length);
   });
