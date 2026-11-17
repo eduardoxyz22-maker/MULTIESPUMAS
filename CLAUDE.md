@@ -2632,6 +2632,12 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   entrega agendada en «Mes» y sus saldos anteriores (`contaFechaMesBase`), «Tu mes» y Productos del mes; la entrega, los cupos, el stock y los
   cobros no cambian. ⚠️ Lo VENDIDO de un mes por la entrega va con `ventaMes(p)`, nunca `p.fecha.slice(0,7)`; el `.gs` la cuenta con
   `waVentaMes_` (`test_wa_13_25_26` §3b5 compara). `tests/test_pry_tiendas.js`, `tests/test_venta_mes.js`.
+- **☀️ Los domingos «a esta altura»** (17/11, Fable con los datos reales + dueño: *«Sí, prográmalo apagado hasta el 1/12»*): desde `PRY_DOM_DESDE`
+  (2026-12-01) el k-ésimo domingo del otro mes contra el k-ésimo de este (hoy domingo: a la misma hora), lo demás los mismos días hábiles; la Tienda
+  Banzer cuenta sus domingos desde el 02/11 (`PRY_DOM_TIENDA`, por `x.st`). `pryCorteAltura` (= `pryCorteHabil` + `dom/domMin/domCmp`) y
+  **`pryEnAltura(x, C)`**: ⚠️ toda comparación «a esta altura» NUEVA usa `pryEnAltura`, no `pryCargadaAl(x, C.lim, C.min)`. Línea «☀️ Domingos» en A esta
+  altura (`pryDomLinea`). NO cambia día hábil, metas por día, la curva ni comisiones. En el `.gs` **2026-11-17-b** (`WA_DOM_*`, `waEnAltura_`; lo implementa
+  el dueño antes del 07/12). `tests/test_domingos_altura.js` (16) compara página y `.gs`.
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 - **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
