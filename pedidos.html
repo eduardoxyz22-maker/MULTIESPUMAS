@@ -25182,7 +25182,7 @@ function pintarMixto(){
   var e1=document.getElementById('f-monto1');
   if(e1 && document.activeElement!==e1) e1.value = (base>0 && m2>0 && m2<base-0.009) ? String(r2(base-m2)) : '';
   if(h) h.innerHTML = !(base>0) ? (si ? '⬆️ Primero poné arriba el <b>monto total cobrado</b> (todo lo que pagó)' : '⬆️ Primero poné arriba el <b>A cuenta</b> (todo el adelanto)')
-       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+(si?'(el total cobrado)':'(el adelanto)'))
+       : (m2>0 && m2<base-0.009) ? ('✓ '+esc(m1n||'1.er método')+' <b>'+fmtBs(r2(base-m2))+'</b> + '+esc(m2n||'2.º método')+' <b>'+fmtBs(m2)+'</b> = <b>'+fmtBs(base)+'</b> '+(si?'(el total cobrado)':('(el adelanto)'+(montoForm('f-saldo')>0.005?' · queda debiendo <b>'+fmtBs(montoForm('f-saldo'))+'</b>':''))))
        : ('Entre los dos tienen que sumar '+fmtBs(base)+' '+(si?'(el total cobrado)':'(el adelanto)')+'. Escribí cuánto pagó con uno y el otro se completa solo.');
   iasPintarForm();                                  // 🔎 (§78)
 }
