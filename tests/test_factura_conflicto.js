@@ -75,8 +75,9 @@ const doc = (r) => { const x=((r&&r.productos)||[])[0]||{}; return [x.fdoc||'', 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
   const errores=[];
+  /* (17/11) solo entregadas: la fecha de entrega ya pasó (ayer), si no, no se pide la factura. */
   const venta = (id, n) => ({ id, nota:'5'+n, oc:'11-0'+n, cliente:'CLIENTE INVENTADO '+n, celular:'7000000'+n, nit:'', turno:'AM', zona:'Norte',
-    direccion:'Calle inventada '+n, fecha:'2026-11-10', maps:'', observaciones:'', garantia:'', facturarA:'', estado:'', entregado:false, verificado:false,
+    direccion:'Calle inventada '+n, fecha:'2026-11-05', maps:'', observaciones:'', garantia:'', facturarA:'', estado:'', entregado:false, verificado:false,
     vehiculo:'', chofer:'', nroDia:Number(n), fotos:[], vendedor:'Maria Flores', ts:Date.parse('2026-11-05T11:00:00-04:00'), rev:0, acuenta:1000, saldo:2000, pagado:false,
     metodoPago:'~Efectivo 1000 @2026-11-05 #5'+n+' %IMG'+n, productos:[{ desc:'COLCHON TITANIO', medida:'140x190', cant:1, precio:3000 }] });
 

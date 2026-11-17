@@ -34,7 +34,8 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       window._pl = window._pl.filter(function (x) { return x.id !== g.id; }).concat([g]); return Promise.resolve({ ok: true, pedido: g }); };
     apiList = function () { return Promise.resolve({ ok: true, pedidos: JSON.parse(JSON.stringify(window._pl)) }); };
     var ts = function (f) { return new Date(f + 'T11:00:00-04:00').getTime(); };
-    var P = function (o) { return Object.assign({ id: 'x', oc: '11-001', nota: '1', vendedor: 'Carola Chavez', cliente: 'CLIENTE', celular: '70000000', fecha: '2026-11-09', turno: 'AM',
+    // (17/11) solo entregadas: la factura se pide recién con la entrega hecha → las ventas del ejemplo se entregaron ayer (05/11).
+    var P = function (o) { return Object.assign({ id: 'x', oc: '11-001', nota: '1', vendedor: 'Carola Chavez', cliente: 'CLIENTE', celular: '70000000', fecha: '2026-11-05', turno: 'AM',
       zona: 'Norte', direccion: 'Calle 1', maps: '', productos: [{ desc: 'TITANIO LATEX', medida: '160x190', codigo: '', cant: 1, precio: 3200 }], saldo: 3200, acuenta: 0,
       pagado: false, metodoPago: '', entregado: false, ts: ts('2026-11-03'), fotos: [] }, o); };
     window._pl = [
@@ -188,6 +189,20 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('7e · corregir el pedido desde el formulario conserva el día', r.form && r.form.every(x => x === t0), r.form);
   chk('7f · sacar el documento borra el día', r.sacado.every(x => x == null), r.sacado);
   chk('7g · el chip dice cuándo se anotó (al pasar el mouse)', /anotada el 04\/11/.test(r.chip), r.chip);
+
+  // 8. (17/11, dueño: «es solo de pedidos entregados… lo pendiente de entrega aún no sabe el N° de factura») hoy = viernes 06/11
+  r = await ev(() => {
+    var base = { id: 'q', oc: '11-201', nota: '601', vendedor: 'Carola Chavez', cliente: 'PRUEBA ENTREGA', celular: '70000000', turno: 'AM', zona: 'Norte', direccion: 'Calle 1', maps: '',
+      productos: [{ desc: 'TITANIO LATEX', medida: '160x190', codigo: '', cant: 1, precio: 3200 }], saldo: 3200, acuenta: 0, pagado: false, metodoPago: '', entregado: false,
+      ts: new Date('2026-11-03T11:00:00-04:00').getTime(), fotos: [] };
+    var f = function (o) { return docVentaFalta(Object.assign({}, base, o)); };
+    return { manana: f({ fecha: '2026-11-07' }), ayer: f({ fecha: '2026-11-05' }), hoy: f({ fecha: '2026-11-06' }), hoyOk: f({ fecha: '2026-11-06', entregado: true }),
+             sinFecha: f({ fecha: '' }), tienda: f({ fecha: '', zona: 'TIENDA', direccion: 'SALIÓ DE TIENDA (Central)' }) };
+  });
+  chk('8a · fecha de mañana y sin ✅: todavía no se pide la factura (no se sabe el N°)', r.manana === false, r);
+  chk('8b · la misma con fecha de ayer (ya salió): se pide', r.ayer === true, r);
+  chk('8c · hoy sin ✅ no; hoy con ✅ sí; sin fecha («avisa cuándo») no', r.hoy === false && r.hoyOk === true && r.sinFecha === false, r);
+  chk('8d · la venta de tienda (se entrega en el momento): se pide', r.tienda === true, r);
 
   chk('sin errores de JavaScript', errors.length === 0, errors);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');
