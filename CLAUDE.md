@@ -861,7 +861,9 @@ Muestras: https://claude.ai/artifact/FeYLnhWt5EqbuDhmADy82f. Afuera: 158, 160, 1
   (`me_bienv`). `BIENV_PRUEBA`.
 - 🏁 **166 carrera** (`pryCarreraDatos`: las ventas de «Por vendedor» en su día de carga; el último día = lo «vendido» de Proyección) y 🟩 **167
   calendario** (`pryCalorDatos`: vendido por la CARGA, entregas agendadas, cobrado por la fecha del pago; el pie avisa que no es el total de la
-  ficha, que va por entrega). ⚠️ No calculan plata aparte: salen de `pryVentas`, `contaFecha`, `ventaTotal`, `contaPagos`.
+  ficha, que va por entrega). 🏬☀️ Tocar un día dice lo de cada tienda (`vt/et/ct`, la tienda de quien vendió
+  en ese mes, como «Por tienda»; suman el día) y un DOMINGO en «Vendido», los domingos del mes hasta ese, por tienda, contra los mismos del mes
+  anterior (`pryCalorDomingos`; 17/11, dueño: *«al dar clic debería decir Mia Plaza xxxx, Banzer xxxx»*). La regla de «A esta altura» con domingos sigue apagada hasta el 01/12. ⚠️ No calculan plata aparte: salen de `pryVentas`, `contaFecha`, `ventaTotal`, `contaPagos`.
 - La ficha de logística ya no dice «RPT RPT …» ni «Mañana MAÑANA». `tests/test_visual_4pj.js` (51).
 
 ## 🤖 Encuesta post venta por WhatsApp (§4oh, 31/10; estructura propuesta, NADA programado)
