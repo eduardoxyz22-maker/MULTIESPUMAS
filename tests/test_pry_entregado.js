@@ -90,6 +90,24 @@ function PREPARAR(){
     await page.evaluate(() => PINTAR(true)); await page.waitForTimeout(150);
     r=await page.evaluate(() => FILA('Carola Chavez'));
     chk('4 · con metas guardadas: en el hueco del medio, debajo de la barra del presupuesto', r && r.medio && r.con415 && /✅ Entregado o facturado Bs 8\.500,00/.test(r.t), r);
+    /* 5. (17/11, dueño: «no me mostrás separado lo entregado/facturado vs lo que falta… como en la ficha de los vendedores») lo mismo en la
+       ficha de cada marca, de cada tienda, en «Cómo van contra la meta», en el tablero (equipo) y en «Cada tienda contra su meta». */
+    await page.evaluate(() => { window.PRY_TMETA_PRUEBA=1; window.PRY_TABLERO_PRUEBA=1; PINTAR(true); }); await page.waitForTimeout(200);
+    r=await page.evaluate(() => {
+      const T=sel=>[].map.call(document.querySelectorAll(sel), x=>x.innerText.replace(/\s+/g,' ').trim());
+      const D=pryEntDatos('2026-11');
+      return { eq:D.eq, g:D['g|heaven'], st:Object.keys(D).filter(k=>/^st\|/.test(k)).map(k=>[k, D[k].ok.bs, D[k].pen.bs]),
+        marca:T('#cx-pry > .cx-kfs:not(.cx-kfs-t) .pent-m'), tienda:T('#cx-pry-tiendas ~ .cx-kfs-t .pent-m'), metas:T('#pry-metas-box .pent-m'),
+        tab:T('#m416 .pent-eq'), tmeta:T('#pry-tmeta .pent-ptm'), pill:T('.m416-f .n small') };
+    });
+    chk('5 · el equipo: entregado o facturado Bs 16.500 + pendiente Bs 2.500 = lo vendido de las dos (19.000)', r.eq && r.eq.ok.bs===16500 && r.eq.pen.bs===2500, r.eq);
+    chk('5 · las tiendas suman el equipo', r.st.reduce((a,x)=>a+x[1],0)===16500 && r.st.reduce((a,x)=>a+x[2],0)===2500, r.st);
+    chk('5 · la ficha de la marca lo dice', r.marca.length>=1 && r.marca.some(t=>/✅ Entregado o facturado Bs 16\.500/.test(t) && /⏳ Pendiente Bs 2\.500/.test(t)), r.marca);
+    chk('5 · la ficha de cada tienda lo dice', r.tienda.length===r.st.length && r.tienda.length>=1, r.tienda);
+    chk('5 · «Cómo van contra la meta» lo dice', r.metas.some(t=>/Bs 16\.500/.test(t)), r.metas);
+    chk('5 · el tablero de arriba (equipo) lo dice', r.tab.length===1 && /Bs 16\.500/.test(r.tab[0]), r.tab);
+    chk('5 · «Cada tienda contra su meta» lo dice, a la vista', r.tmeta.length>=1, r.tmeta);
+    chk('5 · el % de la marca dice cuál es lo vendido y cuál la proyección', r.pill.some(t=>/vendido \d+ % · llegaría al \d+ %/.test(t)), r.pill);
     await page._ctx.close(); }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));

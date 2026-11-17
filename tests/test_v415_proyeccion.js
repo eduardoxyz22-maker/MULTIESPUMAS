@@ -144,7 +144,7 @@ function PREPARAR(){
   chk('416b. Vendido en noviembre → Si sigue así → Meta del equipo, con los números de la proyección', r.t.indexOf('Vendido en noviembre'+r.vend)>=0 && r.t.indexOf('📈 Si sigue así'+r.proy)>0 && r.t.indexOf('🎯 Meta del equipo'+r.meta)>0, r.t);
   chk('416c. «N ventas · … · N % de la meta», la pastilla «se proyecta el N %» y «N de M días hábiles»',
       r.t.indexOf(r.n+' ventas')>=0 && r.t.indexOf(r.pv+' % de la meta')>0 && r.t.indexOf('se proyecta el '+r.pp+' %')>0 && r.t.indexOf(r.dt+' de '+r.tot+' días hábiles')>0 && r.bar, r.t);
-  chk('416d. una ficha chica por marca con su meta («92 % de su meta»)', r.fichas.length>=2 && r.fichas.some(function(f){ return /Heaven/.test(f) && f.indexOf(r.heaven+' % de su meta')>0; }), r.fichas);
+  chk('416d. una ficha chica por marca con su meta («vendido N % · llegaría al 92 %»; 17/11: se dice cuál es cuál)', r.fichas.length>=2 && r.fichas.some(function(f){ return /Heaven/.test(f) && f.indexOf('llegaría al '+r.heaven+' %')>0; }), r.fichas);
   r = await ev(page, () => { PINTAR(false); return { hay:!!document.getElementById('m416'), vis:document.getElementById('pry-metrics').offsetHeight>0 }; });
   chk('416e. sin meta del equipo para el mes, las fichas de siempre', !r.hay && r.vis, r);
 
@@ -163,8 +163,8 @@ function PREPARAR(){
   });
   const He=r.marcas['💚 Heaven']||{}, Su=r.marcas['🛏️ Sueña']||{};
   chk('417a. Heaven: la raya punteada en su meta con «🎯 meta Bs 40.000» y la pastilla con el % de la meta', He.raya && He.lab==='🎯 meta Bs 40.000' &&
-      He.est===(r.Heaven>=100 ? '✅ llega a la meta' : r.Heaven+' % de la meta'), [He, r.Heaven]);
-  chk('417b. Sueña: «🎯 meta Bs 20.000» y su pastilla', Su.raya && Su.lab==='🎯 meta Bs 20.000' && Su.est===(r['Sueña']>=100 ? '✅ llega a la meta' : r['Sueña']+' % de la meta'), [Su, r['Sueña']]);
+      He.est===(r.Heaven>=100 ? '✅ llega a la meta' : 'llegaría al '+r.Heaven+' % de la meta'), [He, r.Heaven]);
+  chk('417b. Sueña: «🎯 meta Bs 20.000» y su pastilla', Su.raya && Su.lab==='🎯 meta Bs 20.000' && Su.est===(r['Sueña']>=100 ? '✅ llega a la meta' : 'llegaría al '+r['Sueña']+' % de la meta'), [Su, r['Sueña']]);
   chk('417c. el punto final se pinta por el estado (verde llega, ámbar cerca, rojo no)', [[He, r.Heaven], [Su, r['Sueña']]].every(function(x){ var p=x[1]; return x[0].punto===(p>=100 ? '#059669' : (p>=90 ? '#d97706' : '#dc2626')); }), [He.punto, Su.punto]);
   const Bz=r.tiendas['Tienda Banzer']||{};
   chk('417d. la tienda lleva la meta de «Cada tienda contra su meta» (Tienda Banzer = Bs 12.000)', Bz.meta===12000 && Bz.lab==='🎯 meta Bs 12.000' && /de la meta|llega a la meta/.test(Bz.est||''), Bz);

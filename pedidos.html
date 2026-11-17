@@ -1327,6 +1327,8 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pent-t b{color:var(--text,#1f2a2a);font-weight:700}
 .pent-t .e b{color:#15803d} .pent-t .p b{color:#b45309}
 .pent-t em{font-style:normal;color:#b91c1c}
+.pent-m{margin:6px 0 4px} .pent-m .pent-b{height:6px} .pent-m .pent-t{font-size:.7rem;gap:2px 10px}
+.pent-ptm{grid-column:2 / 4;margin:2px 0 0} .pent-eq{margin:8px 0 2px}
 .pry-n{text-align:right;white-space:nowrap;order:2}
 .pry-mom{order:1;margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:1px;flex:none}
 .pry-mom-l{width:110px;height:30px;display:block}
@@ -9333,11 +9335,26 @@ function pryEntDatos(ym){
   pryVentas().forEach(function(x){
     if(x.ym!==ym || x.amb==='roho') return;
     var p=findById(x.id); if(!p) return;
-    var o=M[x.vk]||(M[x.vk]={ ok:{ n:0, bs:0 }, pen:{ n:0, bs:0, tarde:0 } });
-    if(pryEntCerrada(p)){ o.ok.n++; o.ok.bs=r2(o.ok.bs+x.bs); }
-    else { o.pen.n++; o.pen.bs=r2(o.pen.bs+x.bs); if(x.f<hoy) o.pen.tarde++; }
+    /* (17/11, dueño: «no me mostrás separado lo entregado/facturado vs lo que falta… como en la ficha de los vendedores») la misma cuenta
+       también por marca (`g|<marca>`, como `m.tot`), por tienda (`st|<tienda>`, como `cxPryTiendas`) y del equipo (`eq`). */
+    var ks=[x.vk, 'g|'+x.g]; if(x.amb==='tienda'){ ks.push('st|'+(x.st||'')); ks.push('eq'); }
+    var cer=pryEntCerrada(p);
+    ks.forEach(function(k){
+      var o=M[k]||(M[k]={ ok:{ n:0, bs:0 }, pen:{ n:0, bs:0, tarde:0 } });
+      if(cer){ o.ok.n++; o.ok.bs=r2(o.ok.bs+x.bs); }
+      else { o.pen.n++; o.pen.bs=r2(o.pen.bs+x.bs); if(x.f<hoy) o.pen.tarde++; }
+    });
   });
   return M;
+}
+/* La versión chica para las fichas de marca, de tienda y de las metas: la barrita y los dos montos en un renglón. */
+function pryEntMini(o, cls){
+  if(!o || !(o.ok.n+o.pen.n)) return '';
+  var tot=o.ok.bs+o.pen.bs, we=tot>0.009 ? Math.round(o.ok.bs/tot*1000)/10 : Math.round(o.ok.n/(o.ok.n+o.pen.n)*1000)/10;
+  return '<div class="pent pent-m'+(cls ? ' '+cls : '')+'" title="De lo vendido: lo ya entregado o facturado (✅ del cierre, venta de tienda, o factura / nota de remisión anotada) y lo pendiente">'+
+    '<div class="pent-b" role="img" aria-label="Entregado o facturado '+Math.round(we)+' por ciento"><i class="e" style="width:'+we+'%"></i><i class="p" style="width:'+(Math.round((100-we)*10)/10)+'%"></i></div>'+
+    '<div class="pent-t"><span class="e">✅ Entregado o facturado <b>'+fmtBs0(o.ok.bs)+'</b></span>'+
+      '<span class="p">⏳ Pendiente <b>'+fmtBs0(o.pen.bs)+'</b>'+(o.pen.tarde ? (' <em>('+o.pen.tarde+' sin ✅ con fecha pasada)</em>') : '')+'</span></div></div>';
 }
 /* El hueco del medio de la fila: la barra hacia el presupuesto (415, si hay metas guardadas) y, debajo, lo cerrado y lo pendiente. */
 function pryMedioHtml(m415, ent){
@@ -9387,6 +9404,7 @@ function m415Html(D, r){
    Va adentro de `#pry-nota` (debajo de sus avisos), así se mueve con su sección del índice (369). Bandera: `PRY_TABLERO_PRUEBA`. */
 function m416Html(R){
   var E=R.equipo, meta=metaEquipo(R.ym); if(!(meta>0)) return '';
+  var EN=null; try{ EN=pryEntDatos(R.ym); }catch(e){}
   var cerr=(R.estado==='cerrado'), proy=cerr ? E.vendido : E.proy;
   var top=Math.max(meta*1.08, proy*1.03, E.vendido), W=function(v){ return (Math.min(top, Math.max(0, v))/top*100).toFixed(1)+'%'; };
   var pp=proy/meta*100, est=pp>=100 ? 'ok' : (pp>=90 ? 'ce' : 'ma'), pv=Math.round(E.vendido/meta*100);
@@ -9402,19 +9420,20 @@ function m416Html(R){
       (cerr ? (est==='ok' ? ('✅ llegó: el '+Math.round(pp)+' %') : ('cerró en el '+Math.round(pp)+' % de la meta')) : (est==='ok' ? ('✅ se proyecta el '+Math.round(pp)+' %: llega') : ('se proyecta el '+Math.round(pp)+' % de la meta')))+'</span></div>'+
     '</div><div class="m416-bar" role="img" aria-label="'+esc('vendido '+pv+' por ciento de la meta'+(cerr ? '' : (', se proyecta '+Math.round(pp)+' por ciento')))+'">'+
       (cerr ? '' : '<i class="p" style="width:'+W(proy)+'"></i>')+'<i class="v" style="width:'+W(E.vendido)+'"></i><u style="left:'+W(meta)+'"></u><em style="left:'+W(meta)+'">🎯 meta</em></div>'+
-    '<div class="m416-lb"><span>■ <b style="color:#00A09A">vendido</b>'+(cerr ? '' : ' · ▨ <b style="color:#7c3aed">si sigue así</b>')+'</span><span>'+R.dt+' de '+(R.dt+R.dr)+' días hábiles</span></div></div>';
+    (EN ? pryEntMini(EN.eq, 'pent-eq') : '')+'<div class="m416-lb"><span>■ <b style="color:#00A09A">vendido</b>'+(cerr ? '' : ' · ▨ <b style="color:#7c3aed">si sigue así</b>')+'</span><span>'+R.dt+' de '+(R.dt+R.dr)+' días hábiles</span></div></div>';
   var fs=[];
   R.marcas.forEach(function(m){
     var mt=metaDe(R.ym, m.g.k), py=cerr ? m.tot.vendido : m.tot.proy, t2=Math.max(mt*1.08, py*1.03, m.tot.vendido, 1);
     var W2=function(v){ return (Math.min(t2, Math.max(0, v))/t2*100).toFixed(1)+'%'; };
-    fs.push('<div class="m416-f" style="--c:'+m.g.col+'"><div class="n"><span>'+m.g.ico+' '+esc(m.g.lbl)+'</span><small>'+(mt>0 ? (metaPct(py, mt)+' % de su meta') : 'sin meta')+'</small></div>'+
+    fs.push('<div class="m416-f" style="--c:'+m.g.col+'"><div class="n"><span>'+m.g.ico+' '+esc(m.g.lbl)+'</span><small>'+(mt>0 ? (cerr ? ('cerró en el '+metaPct(py, mt)+' % de su meta') : ('vendido '+metaPct(m.tot.vendido, mt)+' % · llegaría al '+metaPct(py, mt)+' %')) : 'sin meta')+'</small></div>'+
       '<div class="v">'+fmtBs0(m.tot.vendido)+'</div><div class="s">'+(cerr ? '' : ('📈 <b>'+fmtBs0(m.tot.proy)+'</b> · '))+esc(nV(m.tot.n)+' · '+m.tot.u+' u.')+'</div>'+
-      (mt>0 ? ('<div class="mb"><i class="p" style="width:'+W2(py)+'"></i><i class="v" style="width:'+W2(m.tot.vendido)+'"></i><u style="left:'+W2(mt)+'"></u></div>') : '')+'</div>');
+      (mt>0 ? ('<div class="mb"><i class="p" style="width:'+W2(py)+'"></i><i class="v" style="width:'+W2(m.tot.vendido)+'"></i><u style="left:'+W2(mt)+'"></u></div>') : '')+
+      (EN ? pryEntMini(EN['g|'+m.g.k]) : '')+'</div>');
   });
   if(R.sinMarca.filas.length) fs.push('<div class="m416-f" style="--c:var(--amber)"><div class="n"><span>⚠️ Sin marca</span><small>de nadie</small></div><div class="v">'+fmtBs0(R.sinMarca.tot.vendido)+'</div>'+
     '<div class="s">'+esc(nV(R.sinMarca.tot.n)+' · '+R.sinMarca.tot.u+' u.')+'</div></div>');
   if(R.mayor.filas.length) fs.push('<div class="m416-f" style="--c:#1d6fb8"><div class="n"><span>🏭 Mayoristas</span><small>aparte</small></div><div class="v">'+fmtBs0(R.mayor.tot.vendido)+'</div>'+
-    '<div class="s">'+(cerr ? '' : ('📈 <b>'+fmtBs0(R.mayor.tot.proy)+'</b> · '))+esc(nV(R.mayor.tot.n)+' · '+R.mayor.tot.u+' u.')+'</div></div>');
+    '<div class="s">'+(cerr ? '' : ('📈 <b>'+fmtBs0(R.mayor.tot.proy)+'</b> · '))+esc(nV(R.mayor.tot.n)+' · '+R.mayor.tot.u+' u.')+'</div>'+(EN ? pryEntMini(EN['g|mayor']) : '')+'</div>');
   var RT=R.roho && R.roho.tot;
   if(RT && RT.n) fs.push('<div class="m416-f" style="--c:#475569"><div class="n"><span>🛏️ ROHO</span><small>en unidades</small></div><div class="v">'+nU(RT.u)+'</div>'+
     '<div class="s">'+(cerr ? '' : ('📈 <b>'+RT.proyU+' u.</b> · '))+esc(RT.c+' colchones · '+RT.s+' somieres')+'</div></div>');
@@ -9429,7 +9448,7 @@ function m417Partes(meta, proy, conProy, Y, W, H){
   return {
     linea:'<line class="m417-meta" x1="4" x2="'+(W-4)+'" y1="'+y.toFixed(1)+'" y2="'+y.toFixed(1)+'"/>',
     lab:'<span class="m417-ml" style="top:'+(y/H*100).toFixed(1)+'%">🎯 meta '+fmtBs0(meta)+'</span>',
-    pill:conProy ? ('<div class="m417-est '+est+'">'+(est==='ok' ? '✅ llega a la meta' : (Math.round(proy/meta*100)+' % de la meta'))+'</div>') : '',
+    pill:conProy ? ('<div class="m417-est '+est+'">'+(est==='ok' ? '✅ llega a la meta' : ('llegaría al '+Math.round(proy/meta*100)+' % de la meta'))+'</div>') : '',
     col:conProy ? ({ ok:'#059669', ce:'#d97706', ma:'#dc2626' })[est] : '',
     est:est
   };
@@ -16180,6 +16199,7 @@ function cxPryPintar(R){
   var conProy=(R.estado!=='cerrado'), hoyD=(R.estado==='cerrado') ? N : (R.estado==='curso' ? Math.min(N, +String(todayStr()).slice(8,10)) : 0);
   var anima=visAnimar('cxPry', R.ym+'|'+ms.map(function(m){ return m.g.k+m.tot.vendido; }).join('|'));
   var cM=false; try{ cM=vdVa('PRY_CURVA_META_PRUEBA'); }catch(e){}   // 🎨 (16/11, mejora 417) la meta como una raya en cada curva
+  var EN=null; try{ EN=pryEntDatos(R.ym); }catch(e){}   // ✅⏳ (17/11) lo entregado o facturado y lo pendiente, también en cada ficha
   /* Una ficha (la de una marca o la de una tienda, §4pb): `o` = {ico, lbl, col, txt, n, u, vendido, proy, entra(x), pie, cls}; `entra` dice
      qué ventas del mes arman la línea llena (acumulado por el día en que se cargó, `x.reg`). */
   var ficha=function(o, anim){
@@ -16206,12 +16226,13 @@ function cxPryPintar(R){
     return '<div class="cx-kf'+(o.cls ? ' '+o.cls : '')+'" style="--c:'+o.col+';--t:'+(o.txt||o.col)+'"><div class="cx-kf-h"><b>'+o.ico+' '+esc(o.lbl)+'</b><span>'+o.n+' venta'+(o.n===1?'':'s')+' · '+o.u+' u.</span></div>'+
       (o.sub ? '<div class="cx-kf-s">'+esc(o.sub)+'</div>' : '')+
       '<div class="cx-kf-n'+(m4 ? ' m417-n' : '')+'"><div><small>Vendido</small><b>'+fmtBs0(vend)+'</b></div>'+(conProy?('<div><small>📈 Llegaría a</small><b class="cx-kf-p">'+fmtBs0(proy)+'</b></div>'):'')+(m4 ? m4.pill : '')+'</div>'+
+      (o.ent ? pryEntMini(o.ent) : '')+
       svg+'<div class="cx-kf-x"><span>1</span><span>'+N+'</span></div>'+
       '<div class="cx-kf-pie">'+o.pie+(conProy?' · línea llena = lo vendido según el día en que se cargó; punteada = la proyección':'')+'</div></div>';
   };
   var cards=ms.map(function(m){
     return ficha({ ico:m.g.ico, lbl:m.g.lbl, col:m.g.col, txt:m.g.txt, n:m.tot.n, u:m.tot.u, vendido:m.tot.vendido, proy:m.tot.proy,
-                   entra:function(x){ return x.g===m.g.k; }, pie:metaPieTxt(R.ym, m), meta:(cM ? metaDe(R.ym, m.g.k) : 0) }, anima);
+                   entra:function(x){ return x.g===m.g.k; }, pie:metaPieTxt(R.ym, m), ent:(EN ? EN['g|'+m.g.k] : null), meta:(cM ? metaDe(R.ym, m.g.k) : 0) }, anima);
   }).join('');
   /* 🏬 Por tienda (§4pb, 08/11; dueño: «¿y también por tienda, cómo quedaría?» → la ficha de marca, «esa»). La tienda NO entra en ninguna
      cuenta: solo REPARTE lo que ya está. Cada venta trae su tienda (`x.st`, de `pryVentas`: la de quien vendió en ESE mes; dueño: «están mal
@@ -16225,7 +16246,7 @@ function cxPryPintar(R){
     var tMt={}; if(cM){ try{ var TD=pryTMetaDatos(R, T); if(TD.ok) TD.filas.forEach(function(e){ tMt[e.st]=e.meta; }); }catch(e){} }   // 🎨 (mejora 417) la meta de cada tienda (333)
     tiendasHtml='<div class="cx-kt" id="cx-pry-tiendas"><b>🏬 Por tienda</b><span>cada vendedor en su tienda de ese mes'+(conProy ? '; las tiendas suman el equipo' : '')+'</span></div>'+
       '<div class="cx-kfs cx-kfs-t">'+T.map(function(t){
-        return ficha({ ico:'🏬', lbl:t.k, col:t.col, txt:t.txt, n:t.n, u:t.u, vendido:t.vendido, proy:t.proy, cls:'cx-kf-t', meta:(tMt[t.st]||0),
+        return ficha({ ico:'🏬', lbl:t.k, col:t.col, txt:t.txt, n:t.n, u:t.u, vendido:t.vendido, proy:t.proy, cls:'cx-kf-t', meta:(tMt[t.st]||0), ent:(EN ? EN['st|'+(t.st||'')] : null),
                        entra:function(x){ return (x.st||'')===t.st; }, sub:t.vendedores.join(' · '),
                        pie:(t.vendedores.length===1 ? 'Su proyección es la de '+t.vendedores[0] : 'La suma de la proyección de sus vendedores') }, animaT);
       }).join('')+'</div>';
@@ -16333,6 +16354,7 @@ function pryTMetaDatos(R, T){
 }
 function pryTMetaPct(n){ return Math.round(Number(n)||0)+' %'; }
 function pryTMetaHtml(R, T){
+  var TEN=null; try{ TEN=pryEntDatos(R.ym); }catch(e){}
   var D=pryTMetaDatos(R, T), mes=mesNombre(R.ym).replace(/ de \d{4}$/,'');
   var cab='<div class="ptm" id="pry-tmeta"><div class="ptm-t">🎯 Cada tienda contra su meta · '+esc(mes)+'</div>';
   if(!D.ok) return cab+'<div class="ptm-s">Para ver cada tienda contra su meta, guardá las metas de cada vendedora de '+esc(mes)+' (🎯 Metas → por vendedora). La meta de una tienda es la suma de la de su gente.</div></div>';
@@ -16354,7 +16376,7 @@ function pryTMetaHtml(R, T){
       '<span class="ptm-b" role="img" aria-label="'+esc(e.k)+(e.meta>0 ? (': vendido '+Math.round(e.pv)+' por ciento de la meta'+(curso ? (', se proyecta '+Math.round(e.pp)+' por ciento') : '')) : ': sin meta')+'">'+
         (e.meta>0 && curso ? '<i class="ptm-bp '+cls+'" style="width:'+W(e.pp)+'"></i>' : '')+(e.meta>0 ? '<i class="ptm-bv '+cls+'" style="width:'+W(e.pv)+'"></i><u style="left:'+raya+'"></u>' : '')+'</span>'+
       '<span class="ptm-pc '+cls+'">'+(e.meta>0 ? pryTMetaPct(p) : '—')+'</span>'+
-      '<span class="ptm-f">'+(e.meta>0 ? ('vendido '+fmtBs0(e.vendido)+(curso ? (' · 📈 '+fmtBs0(e.proy)) : '')+' de '+fmtBs0(e.meta)+(pie ? ' · '+esc(pie) : '')) : ('vendido '+fmtBs0(e.vendido)+' · '+esc(pie)))+'</span></summary>'+
+      '<span class="ptm-f">'+(e.meta>0 ? ('vendido '+fmtBs0(e.vendido)+(curso ? (' · 📈 '+fmtBs0(e.proy)) : '')+' de '+fmtBs0(e.meta)+(pie ? ' · '+esc(pie) : '')) : ('vendido '+fmtBs0(e.vendido)+' · '+esc(pie)))+'</span>'+(TEN ? pryEntMini(TEN['st|'+(e.st||'')], 'pent-ptm') : '')+'</summary>'+
       '<div class="ptm-vs">'+(lista || '<div class="ptm-v"><span>Nadie con meta guardada en esta tienda.</span></div>')+'</div></details>';
   });
   return h+'<div class="ptm-l"><span><b class="ptm-bv ptm-ok"></b>vendido</span>'+(curso ? '<span><b class="ptm-bp ptm-ok"></b>si sigue así</span>' : '')+'<span>│ la raya = la meta</span><span>verde llega · ámbar cerca (90 %) · rojo no llega</span></div></div>';
@@ -16662,6 +16684,7 @@ function metaMarcaDatos(R, m){
   return { M:M, v:v, p:p, pv:metaPct(v,M), pp:metaPct(p,M), falta:falta, dq:dq, porDia:porDia, est:est, faltaP:r2(Math.max(0, M-p)) };
 }
 function metasHtml(R){
+  var MEN=null; try{ MEN=pryEntDatos(R.ym); }catch(e){}
   var ms=R.marcas.map(function(m){ return { m:m, d:metaMarcaDatos(R, m) }; }), con=ms.filter(function(x){ return x.d; });
   var mes=mesNombre(R.ym);
   if(!con.length) return '<div class="mt-box mt-vacio" id="pry-metas-box"><span>🎯 Todavía no hay metas para '+esc(mes)+'.</span><button type="button" class="btn btn-sm mt-btn" onclick="metasAbrir()">🎯 Cargar las metas</button></div>';
@@ -16683,7 +16706,7 @@ function metasHtml(R){
       '<div class="mt-barra" role="img" aria-label="'+esc(g.lbl)+': vendido '+d.pv+' por ciento de la meta'+(conP?(', proyección '+d.pp+' por ciento'):'')+'">'+
         (conP?('<i class="mt-bp" style="width:'+w2+'%"></i>'):'')+'<i class="mt-bv" style="width:'+w1+'%"></i></div>'+
       '<div class="mt-tres"><span>Vendido <b>'+fmtBs0(d.v)+'</b></span>'+(conP?('<span>📈 Proyección <b class="mt-ppx">'+fmtBs0(d.p)+'</b></span>'):'')+'<span>🎯 Meta <b>'+fmtBs0(d.M)+'</b></span></div>'+
-      nota+dia+'</div>';
+      (MEN ? pryEntMini(MEN['g|'+g.k]) : '')+nota+dia+'</div>';
   });
   return h+'</div>'+ayudaComo('pry-metas', '<div class="mt-ley">La barra entera es la meta: lo pintado es lo vendido'+(R.estado!=='cerrado'?'; lo claro, hasta dónde llegaría con la proyección':'')+'. Se mide como la proyección: lo vendido con entrega agendada en el mes, no lo cobrado.</div>')+'</div>';
 }
@@ -69592,7 +69615,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-17-e';
+var PANEL_V='2026-11-17-f';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
