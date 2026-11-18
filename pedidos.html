@@ -52386,6 +52386,13 @@ function diaHabilMas(f, n){ for(var i=0; i<n; i++) f=sigDiaHabil(f); return f; }
 function saldoDiaRecoge(){ return diaHabilMas(todayStr(), STOCK_DIAS_RECOGIDA); }
 /* 🏭 El día en que sale de la fábrica (y se recoge) lo que arrancó `desde`. */
 function saldoSaleDeFabrica(desde){ return diaHabilMas(desde, DIAS_PRODUCCION); }
+/* 📐 (18/11, el dueño: «cambia las medidas especiales a 5 días, este mes y diciembre») Hasta `ESP_TEMPORADA.hasta` la medida especial
+   tarda más: `ESP_TEMPORADA.dias` días hábiles de producción, así el plazo al cliente es ~5 días (sale de fábrica, ese día se recoge y
+   se entrega desde el siguiente). Pasada la fecha vuelve sola a las 48 h de siempre (`DIAS_PRODUCCION`). */
+var ESP_TEMPORADA={ desde:'2026-11-18', hasta:'2026-12-31', dias:4 };
+/* «~5 días hábiles» en la temporada (lo que dijo el dueño); fuera de ella, los días de siempre. */
+function espEsperaTxt(v){ return (v && v.prodDias && v.prodDias!==DIAS_PRODUCCION) ? ('~'+(v.prodDias+1)+' días hábiles') : saldoDiasTxt(v.espera); }
+function espDiasProduccion(desde){ var d=String(desde||todayStr()); return (d>=ESP_TEMPORADA.desde && d<=ESP_TEMPORADA.hasta) ? ESP_TEMPORADA.dias : DIAS_PRODUCCION; }
 /* El día en que logística y producción EMPIEZAN con lo que se pide ahora. */
 function horaCorteTxt(h){ var m=Math.round((h%1)*60); return Math.floor(h)+':'+('0'+m).slice(-2); }
 /* (§4jd) `cuando` (ms) opcional: el día en que arrancaba lo pedido a esa hora (el «✓ Ya pedí» guarda la suya). */
@@ -52398,7 +52405,8 @@ function diaArranque(cuando){
    si no es hoy) y qué día sale de fábrica. (28/09) El dueño preguntó «¿por qué 5 días?»: la cuenta queda a la vista. */
 function saldoArrancaTxt(v){
   if(!v || !v.arranca) return '';
-  var hoy=todayStr(), fab=v.sale ? (', sale de fábrica el '+saldoDiaTxt(v.sale)+' ('+(DIAS_PRODUCCION*24)+' h) y ese día se recoge') : '';
+  var _pd=v.prodDias||DIAS_PRODUCCION;
+  var hoy=todayStr(), fab=v.sale ? (', sale de fábrica el '+saldoDiaTxt(v.sale)+' ('+(_pd===DIAS_PRODUCCION?((_pd*24)+' h'):(_pd+' días hábiles'))+') y ese día se recoge') : '';
   if(v.arranca===hoy) return fab ? ('🏭 Se manda a producir hoy'+fab+'.') : '';
   var por = FERIADOS[hoy] ? ('Hoy es feriado ('+FERIADOS[hoy]+')')
           : diaDomingo(hoy) ? 'Hoy es domingo'
@@ -52945,7 +52953,8 @@ function saldoVeredictoFila(f, sinId, fecha){
 function saldoVeredictoEspecial(f, sinId, fecha){
   var hoy=todayStr(), v={ k:f.k, cant:f.total, tipo:'especial', color:'azul', sinLibre:true, sinId:sinId||'', cod:f.codOtro||null, x:f.x };
   v.arranca=diaArranque();                     // 🕔 (28/09) la fábrica empieza el día hábil en que trabaja producción
-  v.sale=saldoSaleDeFabrica(v.arranca);        // …y sale 48 h (2 días hábiles) después: ese día se recoge
+  v.prodDias=espDiasProduccion(v.arranca);      // 📐 (18/11) noviembre y diciembre: más días de producción (ESP_TEMPORADA)
+  v.sale=diaHabilMas(v.arranca, v.prodDias);    // …y sale después: ese día se recoge
   var min=saldoMax(proximoDiaEntrega(), stockSumarDias(v.sale, 1));
   saldoPonerDia(v, min, sinId);                // (28/09) sin cupo en 60 días no promete ninguno
   if(fecha && fecha<min) v.fechaCorta=fecha;
@@ -53028,7 +53037,7 @@ function saldoTitulo(v){
     case 'pedir':  return '🏭 NO HAY · '+(v.sinCupo ? ('hay que mandar a producir (avisá a logística)'+sc) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)'));
     case 'nofab':  return '🛑 YA NO SE FABRICA · '+(v.libres>0 ? ('quedan '+stockUnid(v.libres)+' y el pedido lleva '+v.cant) : 'no queda ninguno')+': no se puede vender, ofrecé otro modelo';
     /* (rev8) Los tres que no salen del saldo del almacén. */
-    case 'especial': return '📐 MEDIDA ESPECIAL · se fabrica a pedido'+(v.sinCupo ? sc : (': decile al cliente que espere '+saldoDiasTxt(v.espera)));
+    case 'especial': return '📐 MEDIDA ESPECIAL · se fabrica a pedido'+(v.sinCupo ? sc : (': decile al cliente que espere '+espEsperaTxt(v)));
     case 'codigo':   return '⚠️ EL CÓDIGO ES DE '+(v.cod.por==='medida' ? 'OTRA MEDIDA' : 'OTRO PRODUCTO')+' · '+v.cod.code+' es '+saldoCodNombre(v.cod)+
                             ': corregí el código o '+(v.cod.por==='medida' ? 'la medida' : 'el producto')+' para ver el saldo';
     case 'fabcli':   return v.yaLlego
@@ -53384,7 +53393,7 @@ function saldoAlertaTxt(v){
   /* ✏️ (18/10, §4ls textos, T4) En una RPT el que espera es la sucursal, no «el cliente» (la pregunta del final ya lo decía). */
   var quien=(typeof docTipoSel==='function' && docTipoSel()==='RPT') ? 'la sucursal' : 'el cliente', aQ=(quien==='la sucursal'?'a la sucursal':'al cliente');
   /* (rev8) 📐 y 🏷️: lo que el dueño pidió que diga la pregunta. */
-  if(v.tipo==='especial') return 'medida especial: se fabrica a pedido, '+saldoDiasTxt(v.espera)+' (decile '+aQ+' que espere).'+
+  if(v.tipo==='especial') return 'medida especial: se fabrica a pedido, '+espEsperaTxt(v)+' (decile '+aQ+' que espere).'+
                                  (v.cod ? (' ⚠️ El código '+v.cod.code+' es del '+saldoCodNombre(v.cod)+': borralo del renglón.') : '');
   if(v.tipo==='codigo')   return 'el código '+v.cod.code+' es de '+saldoCodNombre(v.cod)+', no de lo que dice el renglón: corregí el código o '+
                                  (v.cod.por==='medida' ? 'la medida' : 'el producto')+'. '+saldoCodBienTxt(v);
