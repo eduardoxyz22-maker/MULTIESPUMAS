@@ -12904,6 +12904,9 @@ function totalAutoPoner(){
    estaba guardado con esa misma diferencia y no se tocaron precios ni plata: se pregunta en vez de frenar. En Playwright solo con
    `COBRO_SUMA_PRUEBA` (las pruebas de siempre guardan ventas de ejemplo con montos sueltos). */
 function cobroSumaVa(){ return !(navigator.webdriver && !window.COBRO_SUMA_PRUEBA); }
+function cobroSumaListo(vend){
+  try{ var r=cobroSumaRevisar(vend, EDIT_ID ? findById(EDIT_ID) : null, montoForm('f-acuenta')); return !r || !!r.subir || !!r.viejo; }catch(e){ return true; }
+}
 function cobroSumaRevisar(vend, prev, acu){
   if(!cobroSumaVa() || docTipoSel()!=='OC' || esVendedorLite(vend) || cliEsInterno(vend)) return null;
   var S=totalItems(); if(S.sin || !S.con || !(S.t>0.005)) return null;
@@ -32192,7 +32195,8 @@ function fxPasosEstado(sinRecibio){   // sinRecibio: el chip «Saldo o pagado» 
     prods,
     tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal()),   // §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
     (tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))) &&
-      (!!sinRecibio || !recibioFormFalta(val('f-vendedor')))   // 💵 (07/11) quién recibió el efectivo, lo mismo que Guardar
+      (!!sinRecibio || !recibioFormFalta(val('f-vendedor'))) &&   // 💵 (07/11) quién recibió el efectivo, lo mismo que Guardar
+      cobroSumaListo(val('f-vendedor'))   // 🧮 (18/11) lo cobrado da con la suma de los productos, lo mismo que Guardar
   ];
 }
 function fxPasosPintar(){
