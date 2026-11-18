@@ -14337,6 +14337,14 @@ function contaPagoTxt(p){
    ========================================================================== */
 function prodPrecio(x){ var n=Number(x&&x.precio); return (isFinite(n)&&n>0)?r2(n):0; }
 function prodSub(x){ return r2(prodPrecio(x)*(Number(x&&x.cant)||0)); }
+/* 🧮 (18/11) ¿Todos los productos tienen precio? Solo así la suma de los productos sirve de total de la venta. */
+function preciosCompletos(p){ var xs=(p&&p.productos)||[]; return xs.length>0 && xs.every(function(x){ return prodPrecio(x)>0; }); }
+/* 🧮 (18/11, revisión de Fable) Lo que a la venta le falta de total según sus productos: la 11-218 quedó con total 700 y productos por
+   1.080. 0 si los precios no están todos, en ATC/RPT o si el total ya llega. */
+function totalCortoDe(p){
+  if(!p || noSeCobra(p) || !preciosCompletos(p)) return 0;
+  var d=r2(prodTotal(p)-ventaTotal(p)); return d>0.005 ? d : 0;
+}
 function prodTotal(p){ var t=0; ((p&&p.productos)||[]).forEach(function(x){ t+=prodSub(x); }); return r2(t); }
 function tienePrecios(p){ return ((p&&p.productos)||[]).some(function(x){ return prodPrecio(x)>0; }); }
 /* Empezado a llenar pero incompleto: es lo que hay que reclamar. Un pedido sin ningún
@@ -23908,7 +23916,10 @@ function ctaEnvioAPago(id, e){
       function(){ ctaEnvioAPago(id, e); })) return;
   ctaPagoRecordar();                               // §4fy: un pago a medio cargar no se pierde con el repintado
   CTA_EDIT_I=-1; CTA_EDIT_V=null;                  // los renglones cambian de lugar: que no quede abierto el editor de otro
-  var objetivo=objetivoCobro(p);                   // lo que la venta tenía que cobrar: no cambia
+  var objetivo=objetivoCobro(p);                   // lo que la venta tenía que cobrar: no cambia…
+  /* 🧮 (18/11, la 11-218) …salvo que el total estaba corto contra los productos: ese pago completa lo que faltaba del total
+     (total 700 + QR 380 con productos por 1.080 → total 1.080, saldo 0), en vez de dejar la venta «cobrada de más». */
+  var _sube=Math.min(monto, totalCortoDe(p)); if(_sube>0.005){ objetivo=r2(objetivo+_sube); saldoDesp=r2(saldoDesp+_sube); }
   var cobros=cobrosDe(p).slice();                  // con el pago «sin monto» si lo hay: `aplicarCobros` le muda las fotos (§4fg)
   var nuevo={ metodo:c.metodo, banco:c.banco||'', monto:monto, fecha:c.fecha||'', nota:c.nota||'', recibio:c.recibio||'',
               comps:cs.slice(), comp:cs[0]||'' };
@@ -24173,6 +24184,9 @@ function showContaModal(id){
   }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
+  /* 🧮 (18/11, la 11-218) Pagada pero con el total corto contra sus productos: le falta eso, y el bloque abre como pago de la venta
+     (antes abría solo en «recargo por entrega» y el QR que faltaba se anotaba como flete). */
+  var _cortoM=totalCortoDe(p); if(falta<=0.005 && _cortoM>0) falta=_cortoM;
   var prods=contaProdTxt(p.productos).map(esc).join('<br>');
   var bancos=bancosDeVendedor(p.vendedor);
   var mb=function(m){ return '<button type="button" class="btn btn-sm" style="'+(CTA_PAGO.metodo===m?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetMetodo(\''+p.id+'\',\''+m+'\')">'+m+'</button>'; };
@@ -24335,7 +24349,10 @@ function ctaEditHtml(p){
   /* 💳 Con pago mixto (§4ej) este campo es SOLO el primer método; el segundo se ve en los
      pagos registrados y `aplicarMontos` lo vuelve a sumar a p.acuenta (§4eu). Se dice. */
   var _mxE=mixtoDe(p), _mxEM=_mxE?r2(Number(_mxE.monto)||0):0;
-  var _dSal=String(r2(Number(p.saldo)||0)), _vAcu=mval('acu', acuReal, 'A cuenta'), _vSal=mval('sal', _dSal, 'Saldo por cobrar');
+  /* 🧮 (18/11, revisión de Fable) Un saldo negativo (cobrada de más) no se propone: Guardar lo rechaza. Con todos los precios, lo que
+     falta según los productos; si no, 0. */
+  var _salG=r2(Number(p.saldo)||0); if(_salG< -0.005) _salG=preciosCompletos(p) ? Math.max(0, r2(prodTotal(p)-contaCobrado(p))) : 0;
+  var _dSal=String(_salG), _vAcu=mval('acu', acuReal, 'A cuenta'), _vSal=mval('sal', _dSal, 'Saldo por cobrar');
   return '<div id="cta-edit" data-id="'+esc(String(p.id))+'" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
     '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
       '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
@@ -24771,7 +24788,8 @@ function ctaRegistrarPago(id){
   var _otraP=function(){ ctaRegistrarPago(id); };
   if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
   else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !preguntaYa(_cxR, ctaChoferCruceO(_cxR, CTA_PAGO.recibio), _otraP)) return; }
-  var falta=Number(p.saldo)||0;
+  var falta=Number(p.saldo)||0, _cortoR=totalCortoDe(p);   // 🧮 (18/11) el total corto contra los productos también falta cobrar
+  if(falta<=0.005 && _cortoR>0) falta=_cortoR;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
              comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])};
@@ -24846,7 +24864,7 @@ function ctaRegistrarPago(id){
   arr.push(linea);
   CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   fxSello('COBRADO','plata');
-  var _prP=aplicarCobros(p, arr);
+  var _prP=aplicarCobros(p, arr, _cortoR>0 ? r2(objetivoCobro(p)+Math.min(monto,_cortoR)) : null);   // 🧮 completa el total corto
   sonidoPanel('caja');                          // 🔔 (§4ni, 16) la caja registradora
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
         (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
@@ -73408,8 +73426,11 @@ function ctaAvArreglos(x, c){
     if(m.k==='dia'){
       var ff=String(m.fFoto||'');
       if(!/^\d{4}-\d{2}-\d{2}$/.test(ff) || ff>hoy) return;
-      if(esVentaTienda(p) && (x.ant || x.f===contaFecha(p))) add({ k:'tienda', f:ff });
-      else if(!x.ant) add({ k:'dia', f:ff });
+      /* 📅 (18/11, la 11-008) Un cobro no puede ser de antes de que se cargara la venta: la IA leyó 03/11 como 11/03 y el arreglo lo
+         puso en marzo (el pago se fue del Cuadre de noviembre). Esa fecha no se ofrece (la venta de tienda sí, abajo). */
+      var _fc=p && p.ts ? isoDeTsBolivia(p.ts) : '';
+      if(esVentaTienda(p) && (x.ant || x.f===contaFecha(p))) add({ k:'tienda', f:ff });   // la venta de tienda sí puede ser de antes de cargarse
+      else if(!x.ant && !(_fc && ff<_fc)) add({ k:'dia', f:ff });
     }
   });
   return out;
