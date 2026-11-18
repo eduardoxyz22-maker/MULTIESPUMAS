@@ -45293,7 +45293,11 @@ function misEqEfectivo(vends){
   retirosDe(pe, '').forEach(function(r){ var o=toma(r.entrega); if(o) o.r=r2(o.r+(Number(r.monto)||0)); });
   var cho=[]; try{ cho=choferesConocidos(); }catch(e){}
   var esCho=function(v){ return cho.some(function(c){ return mismoVendedor(c, v); }); }, esVend=function(v){ return vends.some(function(x){ return mismoVendedor(x, v); }); };
-  var F=[]; Object.keys(M).forEach(function(k){ var o=M[k], t=Math.max(0, r2(o.c-o.r)); if(t<0.005) return;
+  /* 💵 (18/11, revisión de Fable) Lo sin rendir de cada uno = «Le queda en la mano» del Cuadre (`cuadreEfectivo`, la regla del efectivo),
+     no la resta del mes: Mirian rindió el 03/11 lo de octubre y acá le restaba esos 5.440 contra lo de noviembre (16.305 vs 21.745). */
+  try{ var E=cuadreEfectivo(pe, ''); if(E && E.pareo){ Object.keys(M).forEach(function(k){ M[k].f=0; });
+    (E.filas||[]).forEach(function(x){ var o=toma(x.nombre); if(o) o.f=Math.max(0, Number(x.falta)||0); }); } }catch(e){}
+  var F=[]; Object.keys(M).forEach(function(k){ var o=M[k], t=(o.f!=null) ? r2(o.f) : Math.max(0, r2(o.c-o.r)); if(t<0.005) return;
     if(esVend(o.v)) F.push({ v:o.v, t:t, cho:false }); else if(esCho(o.v)) F.push({ v:o.v, t:t, cho:true }); });
   F.sort(function(a,b){ return b.t-a.t; });
   var tot=0; F.forEach(function(f){ tot=r2(tot+f.t); });
