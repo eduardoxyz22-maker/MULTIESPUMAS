@@ -111,7 +111,7 @@ TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
 - El código viene como `PN20309-<código>`. Si lo que sigue es un código nuestro (`CH1473`, `CH1803`, `COLT44` = `COLT0044`) se usa ese. Los
   `COLT00N` cortos son de ELLOS, no nuestros: `COLT001` = `COLT0028` COLCHON ORTOPEDICO SUEÑA 140x190 (14/11, OC 260600247) ·
   `COLT002` = `COLT0029` COLCHON ORTOPEDICO SUEÑA 105x190 · `COLT003` = `COLT0037` COLCHON
-  SEMIORTOP. 105x190 · `COLT006` = `COLT0069` COLCHON SEMIORTOP. 180x190. Uno que no esté en esta lista: por el NOMBRE y la medida contra
+  SEMIORTOP. 105x190 · `COLT006` = `COLT0069` COLCHON SEMIORTOP. 180x190. `COLT014` = `COLT0038` COLCHON SEMIORTOP. 140x190 (17/11, OC 260600251/254, Bs 654). Uno que no esté en esta lista: por el NOMBRE y la medida contra
   `CODIGOS` («Ortopédico» = COLCHON ORTOPEDICO SUEÑA, «Semiortopédico» = COLCHON SEMIORTOP.), se anota en observaciones y se agrega acá.
 - `observaciones`: `A CRÉDITO — DEBE Bs X. OC Tienda Amiga N del dd/mm/aaaa (Marketplace NNNNN; pedido de venta de origen N). <producto como
   lo dice la OC>; código en la OC: PN20309-…. Recepción en Almacenes Ferrotodo, Bodega 14, de 09:00 a 16:00.`
