@@ -25,7 +25,13 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
    dueño (13/11, OC 260013258: *«roho solo hay que facturarlo ya lo facturé»*). No se carga ni se le pregunta: basta con nombrarla en el resumen.
 2. Por cada PDF de pedido: `get_message` con `messageFormat: "RAW"` → el resultado queda en un archivo JSON →
    `python3 -I extraer_pdf.py <ese_json> <carpeta_nueva_en_el_scratchpad>` → leer los `.txt`.
-3. Armar un JSON con los pedidos (formato en `cargar_pedidos.py`) y correr primero SIN `--guardar` (muestra qué haría y cuáles
+3. 📦 **El stock, antes de la fecha** (17/11, dueño: *«igual si es por falta de stock debes aclararle porque se movió para X días»*): con el JSON
+   armado, bajar la planilla (`python3 -I -c "import sys;sys.path.insert(0,'.');sys.argv=['x'];import cargar_pedidos as c,json;json.dump(c.leer(),open('<carpeta>/planilla.json','w'))"`)
+   y correr `node stock_check.js <pedidos.json> <planilla.json>`: la MISMA cuenta del cuadrito del formulario (Excel del día, lo vendido
+   sin entregar, producción, Moreno, las 48 h de fábrica). Si un pedido sale con `"mover": true`, su `fecha` pasa a la de `desde` (el
+   primer día en que llega todo) y el `motivo` va en las observaciones («Se movió del <día> al <día> por stock: …»). Eso no es
+   `dia_del_dueno`: el script igual busca cupo desde ahí. Un producto `noRec` (el panel no lo reconoce) se carga en la fecha pedida y se dice en el resumen.
+   Armar un JSON con los pedidos (formato en `cargar_pedidos.py`) y correr primero SIN `--guardar` (muestra qué haría y cuáles
    «ya estaban»), después con `--guardar`. El script relee la planilla, salta lo que ya está por su número (OC / «OP-…»), saca la OC
    del panel y el N° del día, calcula el total, y si el día está lleno/cerrado/feriado lo pasa al siguiente día hábil y lo anota (va
    para cuando haya cupo). 🎟️ **Solo cuando el dueño dice el día** (16/11: *«solo cuando yo te instruya para tal día, es tal día; si no,
@@ -57,6 +63,10 @@ cargues no olvides responder el email con los datos de para qué día fue cargad
   borrador (`delete_draft`). Si la firma no aparece, NO mandar: dejar la respuesta como borrador en el hilo (`create_draft` con
   `replyToMessageId`) y decirlo en el resumen.
   Si el script pasó el pedido a otro día (lleno, cerrado, feriado), se dice la fecha NUEVA, sin explicar el panel. Sin precios ni montos.
+  📦 **Si se movió por STOCK, el correo dice por qué** (17/11, dueño): con el `motivo` de `stock_check.js`, en palabras del cliente, por ejemplo
+  «Lamentamos informarle que el Colchón Semiortopédico 140x190 no lo tenemos disponible en este momento y se fabrica, por lo que su pedido
+  fue programado para el sábado 21/11/2026, turno de la mañana.» (o «lo tenemos en nuestro almacén de fábrica y hay que traerlo», «está en
+  producción»). Nunca nombres de almacenes, del panel ni cantidades de stock. Vale para Multicenter y Tienda Amiga (a los que se responde).
   🛒 **Tienda Amiga pide 24 horas: si no entra ese día, se le dice y se disculpa** (17/11, dueño: *«recuerda en el correo aclarar lo sentimos
   para el miércoles estamos llenos tanto turno AM como PM, se cargó o entregará jueves»*). Si el pedido NO quedó en el día hábil siguiente
   (el que piden), el correo lo dice antes de confirmar, por ejemplo: «Lamentamos informarle que para el miércoles 18/11/2026 no tenemos
