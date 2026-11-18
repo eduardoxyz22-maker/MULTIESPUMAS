@@ -256,6 +256,19 @@ def main():
                 break
             if intento == 0 and res.get('error') == 'cupos_llenos' and d.get('dia_del_dueno') is True:
                 lleno = {"usados": res.get('usados'), "cupos": res.get('cupos')}
+            # 🛒 (17/11, dueño: «tienda amiga se puede am o pm») Tienda Amiga recibe de 09:00 a 16:00: lleno a la mañana → la tarde del MISMO día
+            # (el sábado no hay tarde); recién si la tarde también está llena, el día siguiente a la mañana.
+            if (res.get('error') == 'cupos_llenos' and 'TIENDA AMIGA' in str(rec.get('cliente', '')).upper() and rec['turno'] == 'AM'
+                    and datetime.date.fromisoformat(rec['fecha']).weekday() != 5):
+                rec['turno'] = 'PM'
+                P = leer()
+                rec['nroDia'] = next_dia(P, rec['fecha'])
+                rec['oc'] = next_oc(P)
+                rec['observaciones'] = obs_base + (' · Se pidió para el %s a la mañana pero estaba lleno: quedó el %s a la tarde (Tienda Amiga recibe de 09:00 a 16:00).'
+                                                   % (pedida, rec['fecha']))
+                continue
+            if 'TIENDA AMIGA' in str(rec.get('cliente', '')).upper() and rec['turno'] == 'PM':
+                rec['turno'] = 'AM'   # el día siguiente, de nuevo primero la mañana
             f2 = siguiente_habil(rec['fecha'])
             if datetime.date.fromisoformat(f2).weekday() == 5 and rec['turno'] == 'PM':
                 rec['turno'] = 'AM'   # el sábado el camión sale solo a la mañana

@@ -105,7 +105,8 @@ de Denisse denisse.navarro@tiendaamiga.com.bo con pedidos recuerda cárgalos»*)
 TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
 - `clave` y `nota` = ese Nro. Doc. · `cliente` y `facturarA` = `TIENDA AMIGA ER S.A.` · `celular` vacío ·
   `direccion` = `Almacenes Ferrotodo, Bodega 14, Parque Industrial, Santa Cruz` · `zona` = `PARQUE INDUSTRIAL`.
-- Fecha: la OC dice «24 Hrs. posterior a la emisión» → el día hábil siguiente, turno AM (reciben de 09:00 a 16:00; si está lleno, el script lo pasa).
+- Fecha: la OC dice «24 Hrs. posterior a la emisión» → el día hábil siguiente, turno AM (reciben de 09:00 a 16:00). 🕐 **Mañana o tarde** (17/11, dueño:
+  *«tienda amiga se puede am o pm»*): si la mañana está llena, el script prueba la TARDE del mismo día antes de pasar al día siguiente.
 - ⚠️ **El PDF trae DOS precios encimados en el mismo casillero** (ej. `510.00` y `679.99`; `630.00` y `840.00`): el de venta al público y el
   que nos pagan (el 75 %). **Vale el MENOR**, como en todos los cargados antes (510, 630, 654, 1.170…). `total_impreso` = ese mismo.
 - El código viene como `PN20309-<código>`. Si lo que sigue es un código nuestro (`CH1473`, `CH1803`, `COLT44` = `COLT0044`) se usa ese. Los
