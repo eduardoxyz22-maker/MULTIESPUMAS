@@ -129,6 +129,33 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   const s7 = await ev(() => { window.COBRO_SUMA_PRUEBA = false; var x = cobroSumaVa(); window.COBRO_SUMA_PRUEBA = true; return x; });
   chk('7b en Playwright sin la marca está apagado', s7 === false, s7);
 
+  // ============ 8. Contabilidad: la 11-218 (pagada con el total corto) ============
+  const c218 = (mp, sal) => ev((o) => { var p = { id:'x218', oc:'11-903', ts:new Date('2026-11-14T10:00:00-04:00').getTime(), vendedor:'Juan Pablo Paredes', cliente:'C', celular:'71234567', fecha:'2026-11-14', nota:'506',
+      productos:[{ desc:'COLCHON SOFT', medida:'105x190', cant:1, precio:850 }, { desc:'PROTECTOR', medida:'105x190', cant:1, precio:230 }], metodoPago:o.mp, acuenta:0, saldo:o.sal, pagado:true };
+    STATE = STATE.filter(x => x.id !== 'x218').concat([p]); saveMirror(); UNLOCKED = true; CTA_TIPO = 'pago'; return true; }, { mp, sal });
+  const e218 = () => ev(() => { var p = findById('x218'); return { sal:p.saldo, pag:p.pagado, vt:ventaTotal(p), env:envioTotal(p) }; });
+  await c218('~Efectivo 700 @2026-11-14 #506 %A1', 0);
+  const env8 = await ev(() => { try { closeModal(); } catch (e) {} showContaModal('x218'); var m = document.getElementById('cta-pago-monto'); m.value = '380'; document.getElementById('cta-pago-fecha').value = '2026-11-14';
+    var n = document.getElementById('cta-pago-nota'); if (n) n.value = '506'; CTA_PAGO.metodo = 'QR'; CTA_PAGO.banco = 'BISA'; CTA_PAGO.comps = ['IMGQ']; CTA_PAGO.rEleg = true; var e = CTA_FORM_ENV; ctaRegistrarPago('x218'); return e; });
+  await page.clock.runFor(800);
+  r = await e218();
+  chk('8a la ficha abre como PAGO de la venta (no como recargo)', env8 === false, env8);
+  chk('8b registrar el QR de 380 deja total 1.080, saldo 0 y sin recargo', Math.abs(r.vt - 1080) < 0.01 && Math.abs(r.sal) < 0.01 && r.pag === true && r.env === 0, r);
+  await c218('~Efectivo 700 @2026-11-14 #506 %A1 + ^QR BISA 380 @2026-11-14 #506 %A2', 0);
+  await ev(() => { ctaEnvioAPago('x218', 0); }); await page.clock.runFor(800);
+  r = await e218();
+  chk('9 «Era un pago de la venta» completa el total: 1.080 y saldo 0', Math.abs(r.vt - 1080) < 0.01 && Math.abs(r.sal) < 0.01 && r.env === 0, r);
+  await c218('~Efectivo 700 @2026-11-14 #506 %A1 + QR BISA 380 @2026-11-14 #506 %A2', -380);
+  const s10 = await ev(() => { try { closeModal(); } catch (e) {} CTA_EDIT = true; showContaModal('x218'); var x = document.getElementById('cta-saldo'); return x ? x.value : null; });
+  chk('10 «Corregir precios y montos» no propone un saldo negativo', s10 === '0', s10);
+  await ev(() => { try { closeModal(); } catch (e) {} });
+
+  // ============ 11. una foto con el día y el mes al revés (la 11-008) ============
+  const a11 = await ev(() => { var p = { id:'x008', oc:'11-904', ts:new Date('2026-10-31T10:00:00-04:00').getTime(), vendedor:'Isabel Robledo', productos:[], metodoPago:'' };
+    var x = { p:p, ant:false, f:'2026-11-03', monto:14130 }; var c = { mot:[{ k:'dia', fFoto:'2026-03-11', fEsp:'2026-11-03' }] };
+    return ctaAvArreglos(x, c).map(f => f.k); });
+  chk('11 no ofrece «poner la fecha de la foto» si es de antes de cargar la venta', Array.isArray(a11) && a11.indexOf('dia') < 0, a11);
+
   chk('sin errores de la página', !errors.length, errors.slice(0, 3));
   console.log(`\n${PASS} ✓ · ${FAIL} ✗`);
   await browser.close();
