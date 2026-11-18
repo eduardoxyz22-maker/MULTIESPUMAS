@@ -12921,7 +12921,7 @@ function cobroSumaRevisar(vend, prev, acu){
        se guarda con saldo 0 y el total de los productos (antes conservaba el saldo −380). */
     else if(pago && (Number(prev.saldo)||0)< -0.005 && Math.abs(regis-S.t)<=0.005 && Math.abs(cb-S.t)<=0.005) r={ cero:true, regis:regis, t:S.t };
     else if(Math.abs(cb-S.t)>0.005)
-      r={ campo:'f-cobrado', tot:cb, msg:'«SÍ, pagó todo» con '+fb(cb)+', pero los productos suman '+fb(S.t)+'. Si pagó con dos métodos (efectivo y QR), tocá «Pagó con dos métodos» y poné cada monto: el total es '+fb(S.t)+'. Si hubo descuento, bajá el precio del producto. Si todavía debe '+(cb<S.t?fb(S.t-cb):'algo')+', marcá «NO, falta pagar» y poné el saldo.' };
+      r={ campo:'f-cobrado', tot:cb, msg:'«SÍ, pagó todo» con '+fb(cb)+', pero los productos suman '+fb(S.t)+'. Si pagó con dos métodos (efectivo y QR), tocá «Pagó con dos métodos» y poné cada monto: el total es '+fb(S.t)+'. El precio de cada producto tiene que ser el que pagó el cliente: lo pagado tiene que dar justo con los precios. Si todavía debe '+(cb<S.t?fb(S.t-cb):'algo')+', marcá «NO, falta pagar» y poné el saldo.' };
     else if(pago && regis>S.t+0.005)
       r={ campo:'f-cobrado', tot:cb, msg:'Esta venta ya tiene registrados '+fb(regis)+' y los productos ahora suman '+fb(S.t)+': bajaste el precio por debajo de lo que ya pagó. Corregí los pagos en Contabilidad antes de bajar el precio.' };
   } else {
@@ -12934,7 +12934,7 @@ function cobroSumaRevisar(vend, prev, acu){
     else if(pago && acu<=0.005 && sal<=0.005)
       r={ campo:'f-saldo', tot:0, msg:'Esta venta figura PAGADA ('+fb(regis)+'). Si ya pagó todo, dejá «SÍ, pagó todo». Si subiste un precio, dejá «SÍ, pagó todo» y guardá: lo que falta queda por cobrar solo.' };
     else if(Math.abs(tot-S.t)>0.005)
-      r={ campo:'f-saldo', tot:tot, msg:(ya>0.005 ? 'Lo pagado ('+fb(ya)+') + el saldo ('+fb(sal)+') da '+fb(tot) : 'El saldo por cobrar ('+fb(sal)+')')+', pero los productos suman '+fb(S.t)+'. '+(ya<=S.t+0.005 ? 'El saldo tiene que ser '+fb(S.t-ya)+'.' : 'Ya pagó más que la suma: revisá los precios.')+' Si hubo descuento, bajá el precio del producto.' };
+      r={ campo:'f-saldo', tot:tot, msg:(ya>0.005 ? 'Lo pagado ('+fb(ya)+') + el saldo ('+fb(sal)+') da '+fb(tot) : 'El saldo por cobrar ('+fb(sal)+')')+', pero los productos suman '+fb(S.t)+'. '+(ya<=S.t+0.005 ? 'El saldo tiene que ser '+fb(S.t-ya)+'.' : 'Ya pagó más que la suma: revisá los precios.')+' Los precios de los productos tienen que dar justo con lo que paga el cliente.' };
   }
   if(r && prev && !r.subir && !r.cero){
     var pT=prodTotal(prev), vT=ventaTotal(prev);
@@ -27238,6 +27238,20 @@ function submitPedido(){
         /* ⚠️ Un recargo SIN método es el que todavía NO se cobró: así lo distingue todo el
            panel. Con método (y su fecha, recibo y comprobante) es el que ya entró. */
         var linea = cobrados.length ? cobrados[0] : (pactados[0] || { fecha:'', nota:'', comps:[] });
+        /* 🚚 (18/11, el dueño: «debe preguntar») Un recargo YA COBRADO que se cambia desde el formulario (otro monto, o pasarlo a «no lo
+           cobré») cambia plata ya anotada —y pasarlo a «no» le borra el recibo y la foto—: se pregunta antes. */
+        if(cobrados.length && envioYaCobrado(linea) && (!yaCob || Math.abs(r2(Number(linea.monto)||0)-monto)>0.005)){
+          var _cobE=r2(Number(linea.monto)||0);
+          var _okE=preguntaYa('🚚 El recargo por entrega ya está COBRADO: '+fmtBs(_cobE)+'.\n\n'+(!yaCob
+              ? 'Pasarlo a «no lo cobré» le borra el método, el recibo y la foto de ese cobro.'
+              : 'Cambiarlo a '+fmtBs(monto)+' cambia un cobro ya anotado (con el comprobante de '+fmtBs(_cobE)+').')+
+              '\n\nSi el cobro está mal anotado, lo mejor es corregirlo en Contabilidad → ✏️ Corregir este pago. ¿Cambiarlo igual?',
+            { icono:'🚚', aviso:true, titulo:'El recargo por entrega ya está cobrado ('+fmtBs(_cobE)+')', sub:(!yaCob?'Lo pasaste a «no lo cobré»':('Pusiste '+fmtBs(monto))),
+              lineas:[ !yaCob ? 'Pasarlo a «no lo cobré» le borra el método, el recibo y la foto de ese cobro.' : 'Cambia un cobro ya anotado (con el comprobante de '+fmtBs(_cobE)+').',
+                       'Si el cobro está mal anotado, corregilo en Contabilidad → ✏️ Corregir este pago.' ],
+              no:'✏️ Volver sin guardar', si:'Cambiarlo igual' }, _otraVez);
+          if(!_okE){ _cancelarEnvio=true; return; }   // ❓ null también corta (esperando la respuesta)
+        }
         if(yaCob && !envioYaCobrado(linea)){
           _cobrarAhora(linea);
         }else if(!yaCob && envioYaCobrado(linea)){
