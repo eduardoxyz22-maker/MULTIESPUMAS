@@ -156,6 +156,25 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     return ctaAvArreglos(x, c).map(f => f.k); });
   chk('11 no ofrece «poner la fecha de la foto» si es de antes de cargar la venta', Array.isArray(a11) && a11.indexOf('dia') < 0, a11);
 
+  // ============ 12-14. Formulario: revisión de Fable (pagada → NO con «A cuenta», saldo negativo, bajar el adelanto) ============
+  const mix = base({ id: 'cs-mix', oc: '11-905', metodoPago: '~Efectivo 700 @2026-11-14 #5555 %IMG1 + QR BISA 380 @2026-11-14 #5555 %IMG2', acuenta: 0, saldo: 0, pagado: true });
+  await sembrar(mix); await page.clock.runFor(300);
+  await venta({ editar: true, pagado: 'NO', acuenta: 700, saldo: 0 });
+  r = await fin();
+  chk('12 pagada con dos métodos → «NO» + A cuenta 700: NO se guarda (perdía plata)', r.nada && /figura PAGADA/.test(r.t), r);
+  const neg = base({ id: 'cs-neg', oc: '11-906', metodoPago: '~Efectivo 700 @2026-11-14 #5555 %IMG1 + QR BISA 380 @2026-11-14 #5555 %IMG2', acuenta: 0, saldo: -380, pagado: true });
+  await sembrar(neg); await page.clock.runFor(300);
+  await venta({ editar: true, cobrado: 1080 });
+  r = await fin();
+  chk('13 la 11-218 como quedó (saldo −380): guardar la deja en 1.080 y saldo 0', !r.nada && Math.abs(r.sal) < 0.01 && Math.abs(r.vt - 1080) < 0.01 && /@2026-11-14/.test(r.mp), r);
+  const ade = base({ id: 'cs-ade', oc: '11-907', metodoPago: 'Efectivo %IMG1', acuenta: 700, saldo: 380, pagado: false });
+  await sembrar(ade); await page.clock.runFor(300);
+  const nDlg = DLG.length;
+  await venta({ editar: true, acuenta: 0, saldo: 1080 });
+  await page.clock.runFor(300);
+  chk('14 bajar el «A cuenta» de 700 a 0 pregunta antes', DLG.length > nDlg && /pago ya anotado/.test(DLG[DLG.length - 1] || ''), DLG.slice(-1));
+  await fin();
+
   chk('sin errores de la página', !errors.length, errors.slice(0, 3));
   console.log(`\n${PASS} ✓ · ${FAIL} ✗`);
   await browser.close();

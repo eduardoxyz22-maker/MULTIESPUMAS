@@ -12905,17 +12905,21 @@ function totalAutoPoner(){
    `COBRO_SUMA_PRUEBA` (las pruebas de siempre guardan ventas de ejemplo con montos sueltos). */
 function cobroSumaVa(){ return !(navigator.webdriver && !window.COBRO_SUMA_PRUEBA); }
 function cobroSumaListo(vend){
-  try{ var r=cobroSumaRevisar(vend, EDIT_ID ? findById(EDIT_ID) : null, montoForm('f-acuenta')); return !r || !!r.subir || !!r.viejo; }catch(e){ return true; }
+  try{ var r=cobroSumaRevisar(vend, EDIT_ID ? findById(EDIT_ID) : null, montoForm('f-acuenta')); return !r || !!r.subir || !!r.cero || !!r.viejo || !!r.preg; }catch(e){ return true; }
 }
 function cobroSumaRevisar(vend, prev, acu){
   if(!cobroSumaVa() || docTipoSel()!=='OC' || esVendedorLite(vend) || cliEsInterno(vend)) return null;
   var S=totalItems(); if(S.sin || !S.con || !(S.t>0.005)) return null;
   var si=segVal('f-pagado')==='SI', fb=function(v){ return fmtBs(r2(v)); }, r=null;
   var pago=prev && !!prev.pagado && (Number(prev.saldo)||0)<=0.009, regis=prev ? contaCobrado(prev) : 0;
+  var P0=(prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
   if(si){
     var cb=montoForm('f-cobrado');
     /* el «Monto total cobrado» puede seguir con lo de antes (se completa solo SOLO cuando lo toca la persona) o ya ir con la suma */
     if(pago && S.t>regis+0.005 && Math.abs(prodTotal(prev)-S.t)>0.005 && (Math.abs(cb-regis)<=0.005 || Math.abs(cb-S.t)<=0.005)) r={ subir:r2(S.t-regis), regis:regis, t:S.t };
+    /* (18/11, revisión de Fable) Saldo negativo (la 11-218 como quedó, o cobrada de más) y ahora lo registrado = la suma = lo cobrado:
+       se guarda con saldo 0 y el total de los productos (antes conservaba el saldo −380). */
+    else if(pago && (Number(prev.saldo)||0)< -0.005 && Math.abs(regis-S.t)<=0.005 && Math.abs(cb-S.t)<=0.005) r={ cero:true, regis:regis, t:S.t };
     else if(Math.abs(cb-S.t)>0.005)
       r={ campo:'f-cobrado', tot:cb, msg:'«SÍ, pagó todo» con '+fb(cb)+', pero los productos suman '+fb(S.t)+'. Si pagó con dos métodos (efectivo y QR), tocá «Pagó con dos métodos» y poné cada monto: el total es '+fb(S.t)+'. Si hubo descuento, bajá el precio del producto. Si todavía debe '+(cb<S.t?fb(S.t-cb):'algo')+', marcá «NO, falta pagar» y poné el saldo.' };
     else if(pago && regis>S.t+0.005)
@@ -12923,15 +12927,25 @@ function cobroSumaRevisar(vend, prev, acu){
   } else {
     var sal=montoForm('f-saldo'), ya=totalAutoYa(acu), tot=r2(ya+sal);
     if(pago && acu<=0.005 && sal>0.005 && Math.abs(prodTotal(prev)-S.t)>0.005 && Math.abs(r2(regis+sal)-S.t)<=0.005) r={ subir:r2(sal), regis:regis, t:S.t };
+    /* (18/11, revisión de Fable) Una venta pagada que pasa a «NO» con un «A cuenta»: el 2° método del pago mixto se contaba dos veces y se
+       perdía plata del efectivo (700 → 320). Desde el formulario no se reparte un pago ya registrado: Contabilidad. */
+    else if(pago && P0 && P0.pagado==='SI' && acu>0.005)
+      r={ campo:'f-acuenta', tot:-1, msg:'Esta venta figura PAGADA ('+fb(regis)+' registrados). No la pases a «NO» poniendo «A cuenta»: si subiste un precio, dejá «SÍ, pagó todo» y guardá (lo que falta queda por cobrar solo); si un pago está mal anotado, corregilo en Contabilidad → ✏️ Corregir este pago.' };
     else if(pago && acu<=0.005 && sal<=0.005)
       r={ campo:'f-saldo', tot:0, msg:'Esta venta figura PAGADA ('+fb(regis)+'). Si ya pagó todo, dejá «SÍ, pagó todo». Si subiste un precio, dejá «SÍ, pagó todo» y guardá: lo que falta queda por cobrar solo.' };
     else if(Math.abs(tot-S.t)>0.005)
       r={ campo:'f-saldo', tot:tot, msg:(ya>0.005 ? 'Lo pagado ('+fb(ya)+') + el saldo ('+fb(sal)+') da '+fb(tot) : 'El saldo por cobrar ('+fb(sal)+')')+', pero los productos suman '+fb(S.t)+'. '+(ya<=S.t+0.005 ? 'El saldo tiene que ser '+fb(S.t-ya)+'.' : 'Ya pagó más que la suma: revisá los precios.')+' Si hubo descuento, bajá el precio del producto.' };
   }
-  if(r && prev && !r.subir){
+  if(r && prev && !r.subir && !r.cero){
     var pT=prodTotal(prev), vT=ventaTotal(prev);
     r.viejo = Math.abs(pT-vT)>0.005 && Math.abs(pT-S.t)<=0.005 && Math.abs(vT-r.tot)<=0.005;
+    /* cobrada de más de antes (saldo negativo) que se abre sin tocar la plata: pregunta en vez de trabar hasta la dirección */
+    if(!r.viejo && si && (Number(prev.saldo)||0)< -0.005 && Math.abs(r.tot-regis)<=0.005 && Math.abs(pT-S.t)<=0.005) r.viejo=true;
   }
+  /* 📉 (18/11, revisión de Fable) Bajar o borrar el «A cuenta» de una venta que ya lo tenía saca plata ya anotada (y del Cuadre de su día):
+     el adelanto «suelto» (Efectivo %IMG) se borraba sin ninguna pregunta. Se pregunta. */
+  if(!r && !si && P0 && P0.pagado!=='SI' && P0.acu>0.005 && acu<P0.acu-0.005)
+    r={ preg:true, campo:'f-acuenta', msg:'Bajás «A cuenta» de '+fb(P0.acu)+' a '+fb(acu)+': '+fb(P0.acu-acu)+' de un pago ya anotado se '+(acu>0.005?'saca':'borra')+' (y del Cuadre de ese día). Hacelo solo si ese pago NO entró; si entró y está mal anotado, corregilo en Contabilidad.' };
   return r;
 }
 function totalAutoPintar(cja, t, sin){
@@ -26751,7 +26765,7 @@ function submitPedido(){
      no se guarda (`cobroSumaRevisar`): ni «SÍ» con otro monto, ni «NO» con lo pagado + el saldo distinto de la suma, ni una
      venta pagada que pasa a «NO» sin saldo (quedaba de Bs 0), ni un precio cambiado en una venta pagada (la diferencia se perdía).
      Lo que ya estaba guardado así y no se toca, pregunta. */
-  var _csR = cobroSumaRevisar(vendedor, prev, _acu), _csSubir = (_csR && _csR.subir) || 0;
+  var _csR = cobroSumaRevisar(vendedor, prev, _acu), _csSubir = (_csR && _csR.subir) || 0, _csCero = !!(_csR && _csR.cero);
   if(_csSubir){
     var _csOk=preguntaYa('🧮 Los productos ahora suman '+fmtBs(_csR.t)+' y ya entraron '+fmtBs(_csR.regis)+': quedan '+fmtBs(_csSubir)+' por cobrar.\n\nAceptar: guardar con ese saldo (los pagos registrados quedan como están).\nCancelar: volver.',
       { icono:'🧮', titulo:'Quedan '+fmtBs(_csSubir)+' por cobrar', sub:'Subiste un precio en una venta que ya estaba pagada',
@@ -26759,6 +26773,13 @@ function submitPedido(){
         no:'✏️ Volver', si:'💾 Guardar con el saldo' }, _otraVez);
     if(_csOk===null) return;
     if(!_csOk) return;
+  }
+  else if(_csR && _csR.cero){}
+  else if(_csR && _csR.preg){
+    var _csP=preguntaYa('📉 '+_csR.msg+'\n\nAceptar: guardar igual. Cancelar: volver.',
+      { icono:'📉', aviso:true, titulo:'Se saca plata de un pago ya anotado', sub:'Bajaste «A cuenta»', lineas:[_csR.msg], no:'✏️ Volver', si:'💾 Guardar igual' }, _otraVez);
+    if(_csP===null) return;
+    if(!_csP){ markErr('f-acuenta'); return; }
   }
   else if(_csR){
     var _csSi=false;
@@ -26964,7 +26985,7 @@ function submitPedido(){
   /* …y si cambió «A cuenta», se corrige SOLO el adelanto (§4fr: su día, su recibo, quién tiene la plata) y los otros cobros
      registrados —que el formulario ni muestra— quedan como están. */
   /* 🧮 (18/11) Subió un precio en una venta pagada (`cobroSumaRevisar` → `subir`): los pagos quedan y la diferencia queda por cobrar. */
-  if(_csSubir>0.005 && _tieneHist){ _plataIgual=false; _mixCambio=false; _soloPrecio=true; _salVal=_csSubir; }
+  if((_csSubir>0.005 || _csCero) && _tieneHist){ _plataIgual=false; _mixCambio=false; _soloPrecio=true; _salVal=_csCero ? 0 : _csSubir; }
   var _rehaceAdel = _tieneHist && !_plataIgual && !_soloPrecio && !_pagSI;
   /* 💵 B. «SÍ, pagado» sobre una venta con pagos y sin saldar: el adelanto queda en SU día y lo que faltaba entra HOY como un
      cobro nuevo (ver `pagoRestoPrev`). */
@@ -26978,7 +26999,7 @@ function submitPedido(){
      guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0).
      (27/09) Lo mismo cuando cambió solo el precio (`_soloPrecio`): los pagos quedan como están. */
   var _p0=(isEdit && prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
-  var _tocoPago = !_csSubir && !!(_p0 && _tieneHist && (_plataIgual || _soloPrecio) && (_pagSI || _acuVal>0) && (
+  var _tocoPago = !_csSubir && !_csCero && !!(_p0 && _tieneHist && (_plataIgual || _soloPrecio) && (_pagSI || _acuVal>0) && (
         segVal('f-metodo')!==_p0.metodo ||
         (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
         (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
@@ -29939,7 +29960,7 @@ function editPedido(id){
   pintarMixto();
   if(_mx) segSet('f-banco2', _mx.banco||'');
   // 💵 La plata tal como quedó a la vista (ver EDIT_PLATA0).
-  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), metodo:segVal('f-metodo'), banco:segVal('f-banco'), ef:formEfectivoFirma() };
+  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), acu:r2(montoForm('f-acuenta')), metodo:segVal('f-metodo'), banco:segVal('f-banco'), ef:formEfectivoFirma() };
   recibioFormOlvidar(); recibioFormPintar();   // 💵 (07/11) el efectivo que ya estaba no se vuelve a preguntar
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
