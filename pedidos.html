@@ -12899,6 +12899,38 @@ function totalAutoPoner(){
   el.value=r2(v);
   if(si){ if(typeof pintarMixto==='function') pintarMixto(); } else updateMetodoVisibility();
 }
+/* 🧮 (18/11) ¿Lo cobrado da con la suma de los productos? Devuelve null si está bien o {msg, campo, viejo}. Solo una VENTA (📄 OC)
+   con todos los precios puestos y de quien tiene el precio obligatorio (no Eduardo, ROHO ni internos). `viejo` = el pedido ya
+   estaba guardado con esa misma diferencia y no se tocaron precios ni plata: se pregunta en vez de frenar. En Playwright solo con
+   `COBRO_SUMA_PRUEBA` (las pruebas de siempre guardan ventas de ejemplo con montos sueltos). */
+function cobroSumaVa(){ return !(navigator.webdriver && !window.COBRO_SUMA_PRUEBA); }
+function cobroSumaRevisar(vend, prev, acu){
+  if(!cobroSumaVa() || docTipoSel()!=='OC' || esVendedorLite(vend) || cliEsInterno(vend)) return null;
+  var S=totalItems(); if(S.sin || !S.con || !(S.t>0.005)) return null;
+  var si=segVal('f-pagado')==='SI', fb=function(v){ return fmtBs(r2(v)); }, r=null;
+  var pago=prev && !!prev.pagado && (Number(prev.saldo)||0)<=0.009, regis=prev ? contaCobrado(prev) : 0;
+  if(si){
+    var cb=montoForm('f-cobrado');
+    /* el «Monto total cobrado» puede seguir con lo de antes (se completa solo SOLO cuando lo toca la persona) o ya ir con la suma */
+    if(pago && S.t>regis+0.005 && Math.abs(prodTotal(prev)-S.t)>0.005 && (Math.abs(cb-regis)<=0.005 || Math.abs(cb-S.t)<=0.005)) r={ subir:r2(S.t-regis), regis:regis, t:S.t };
+    else if(Math.abs(cb-S.t)>0.005)
+      r={ campo:'f-cobrado', tot:cb, msg:'«SÍ, pagó todo» con '+fb(cb)+', pero los productos suman '+fb(S.t)+'. Si pagó con dos métodos (efectivo y QR), tocá «Pagó con dos métodos» y poné cada monto: el total es '+fb(S.t)+'. Si hubo descuento, bajá el precio del producto. Si todavía debe '+(cb<S.t?fb(S.t-cb):'algo')+', marcá «NO, falta pagar» y poné el saldo.' };
+    else if(pago && regis>S.t+0.005)
+      r={ campo:'f-cobrado', tot:cb, msg:'Esta venta ya tiene registrados '+fb(regis)+' y los productos ahora suman '+fb(S.t)+': bajaste el precio por debajo de lo que ya pagó. Corregí los pagos en Contabilidad antes de bajar el precio.' };
+  } else {
+    var sal=montoForm('f-saldo'), ya=totalAutoYa(acu), tot=r2(ya+sal);
+    if(pago && acu<=0.005 && sal>0.005 && Math.abs(prodTotal(prev)-S.t)>0.005 && Math.abs(r2(regis+sal)-S.t)<=0.005) r={ subir:r2(sal), regis:regis, t:S.t };
+    else if(pago && acu<=0.005 && sal<=0.005)
+      r={ campo:'f-saldo', tot:0, msg:'Esta venta figura PAGADA ('+fb(regis)+'). Si ya pagó todo, dejá «SÍ, pagó todo». Si subiste un precio, dejá «SÍ, pagó todo» y guardá: lo que falta queda por cobrar solo.' };
+    else if(Math.abs(tot-S.t)>0.005)
+      r={ campo:'f-saldo', tot:tot, msg:(ya>0.005 ? 'Lo pagado ('+fb(ya)+') + el saldo ('+fb(sal)+') da '+fb(tot) : 'El saldo por cobrar ('+fb(sal)+')')+', pero los productos suman '+fb(S.t)+'. '+(ya<=S.t+0.005 ? 'El saldo tiene que ser '+fb(S.t-ya)+'.' : 'Ya pagó más que la suma: revisá los precios.')+' Si hubo descuento, bajá el precio del producto.' };
+  }
+  if(r && prev && !r.subir){
+    var pT=prodTotal(prev), vT=ventaTotal(prev);
+    r.viejo = Math.abs(pT-vT)>0.005 && Math.abs(pT-S.t)<=0.005 && Math.abs(vT-r.tot)<=0.005;
+  }
+  return r;
+}
 function totalAutoPintar(cja, t, sin){
   var h='<b>Los ítems suman '+fmtBs(t)+'</b>';
   if(sin){ cja.innerHTML=h+' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'; return; }
@@ -26692,6 +26724,35 @@ function submitPedido(){
     else toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
     setSubmitting(false); return;
   }
+  /* 🧮 (18/11, el dueño: «ese error de pago fue garrafal») LO COBRADO DA CON LA SUMA DE LOS PRODUCTOS. La 11-218 se guardó «SÍ,
+     pagó todo» con Bs 700 (solo el efectivo) y productos por Bs 1.080: la caja lo avisaba en ámbar y dejaba guardar; Contabilidad
+     registró el QR de 380 como flete, «Era un pago de la venta» lo pasó a los pagos y la venta quedó en 700 con saldo −380. Ahora
+     no se guarda (`cobroSumaRevisar`): ni «SÍ» con otro monto, ni «NO» con lo pagado + el saldo distinto de la suma, ni una
+     venta pagada que pasa a «NO» sin saldo (quedaba de Bs 0), ni un precio cambiado en una venta pagada (la diferencia se perdía).
+     Lo que ya estaba guardado así y no se toca, pregunta. */
+  var _csR = cobroSumaRevisar(vendedor, prev, _acu), _csSubir = (_csR && _csR.subir) || 0;
+  if(_csSubir){
+    var _csOk=preguntaYa('🧮 Los productos ahora suman '+fmtBs(_csR.t)+' y ya entraron '+fmtBs(_csR.regis)+': quedan '+fmtBs(_csSubir)+' por cobrar.\n\nAceptar: guardar con ese saldo (los pagos registrados quedan como están).\nCancelar: volver.',
+      { icono:'🧮', titulo:'Quedan '+fmtBs(_csSubir)+' por cobrar', sub:'Subiste un precio en una venta que ya estaba pagada',
+        lineas:['Ya entraron '+fmtBs(_csR.regis)+' y los productos suman '+fmtBs(_csR.t)+'.', 'Los pagos registrados quedan como están y la venta pasa a «falta cobrar '+fmtBs(_csSubir)+'».'],
+        no:'✏️ Volver', si:'💾 Guardar con el saldo' }, _otraVez);
+    if(_csOk===null) return;
+    if(!_csOk) return;
+  }
+  else if(_csR){
+    var _csSi=false;
+    if(_csR.viejo){
+      _csSi=preguntaYa('🧮 '+_csR.msg+'\n\nEsta venta ya estaba guardada así. Aceptar: guardarla igual. Cancelar: corregirla.',
+        { icono:'🧮', aviso:true, titulo:'Lo cobrado no da con la suma de los productos', sub:'Esta venta ya estaba guardada así',
+          lineas:[_csR.msg], no:'✏️ Corregir', si:'💾 Guardar igual así' }, _otraVez);
+      if(_csSi===null) return;
+    }
+    if(!_csSi){
+      markErr(_csR.campo); toast('🧮 '+_csR.msg,'err',14000);
+      var _csEl=document.getElementById(_csR.campo); if(_csEl){ try{ _csEl.focus(); _csEl.scrollIntoView({block:'center'}); }catch(e){} }
+      return;
+    }
+  }
   /* 📍 LA UBICACIÓN NO SE PIERDE EN SILENCIO (25/09). `normalizaUbicacion` devuelve null con lo que
      no entiende («maps.app.goo.gl/…» sin https, un texto con el enlace adentro) y acá se guardaba
      `maps:''`: la vendedora pegaba la ubicación, veía ✓ y el chofer salía sin ella. Editando otra
@@ -26881,6 +26942,8 @@ function submitPedido(){
   var _soloPrecio = _tieneHist && !_plataIgual && !_pagSI && !_mixCambio && r2(Number(prev.acuenta)||0)===_acuVal;
   /* …y si cambió «A cuenta», se corrige SOLO el adelanto (§4fr: su día, su recibo, quién tiene la plata) y los otros cobros
      registrados —que el formulario ni muestra— quedan como están. */
+  /* 🧮 (18/11) Subió un precio en una venta pagada (`cobroSumaRevisar` → `subir`): los pagos quedan y la diferencia queda por cobrar. */
+  if(_csSubir>0.005 && _tieneHist){ _plataIgual=false; _mixCambio=false; _soloPrecio=true; _salVal=_csSubir; }
   var _rehaceAdel = _tieneHist && !_plataIgual && !_soloPrecio && !_pagSI;
   /* 💵 B. «SÍ, pagado» sobre una venta con pagos y sin saldar: el adelanto queda en SU día y lo que faltaba entra HOY como un
      cobro nuevo (ver `pagoRestoPrev`). */
@@ -26894,7 +26957,7 @@ function submitPedido(){
      guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0).
      (27/09) Lo mismo cuando cambió solo el precio (`_soloPrecio`): los pagos quedan como están. */
   var _p0=(isEdit && prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
-  var _tocoPago = !!(_p0 && _tieneHist && (_plataIgual || _soloPrecio) && (_pagSI || _acuVal>0) && (
+  var _tocoPago = !_csSubir && !!(_p0 && _tieneHist && (_plataIgual || _soloPrecio) && (_pagSI || _acuVal>0) && (
         segVal('f-metodo')!==_p0.metodo ||
         (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
         (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
