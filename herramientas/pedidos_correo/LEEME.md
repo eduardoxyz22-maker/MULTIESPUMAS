@@ -57,6 +57,11 @@ cargues no olvides responder el email con los datos de para qué día fue cargad
   borrador (`delete_draft`). Si la firma no aparece, NO mandar: dejar la respuesta como borrador en el hilo (`create_draft` con
   `replyToMessageId`) y decirlo en el resumen.
   Si el script pasó el pedido a otro día (lleno, cerrado, feriado), se dice la fecha NUEVA, sin explicar el panel. Sin precios ni montos.
+  🛒 **Tienda Amiga pide 24 horas: si no entra ese día, se le dice y se disculpa** (17/11, dueño: *«recuerda en el correo aclarar lo sentimos
+  para el miércoles estamos llenos tanto turno AM como PM, se cargó o entregará jueves»*). Si el pedido NO quedó en el día hábil siguiente
+  (el que piden), el correo lo dice antes de confirmar, por ejemplo: «Lamentamos informarle que para el miércoles 18/11/2026 no tenemos
+  disponibilidad de entrega en ninguno de los dos turnos (mañana ni tarde), por lo que su pedido fue programado para el jueves 19/11/2026,
+  turno de la tarde.» Si solo cambió el turno (la mañana llena, quedó la tarde del mismo día), alcanza con decir el turno: no hace falta disculpa.
 - 👥 **En la respuesta a Tienda Amiga (Denisse) van con copia Ernesto y David Alba** (14/11, dueño: *«Si Ernesto no está en los correos que envía
   Denisse debes añadirlo en la respuesta. Ernesto y David Alba»*): `cc` = las copias que ya tenía el último mensaje (sin e.anez@) +
   `ernesto.flores@colchonesheaven.com` + `logistica@colchonesheaven.com` (David Alba; dueño: *«David Alba es el correo de logística»* y *«Dalba no corresponde»*:
