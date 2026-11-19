@@ -291,8 +291,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   D.vistos.length=0;
   f = await page.evaluate(() => editarForm('H9', function(){ document.getElementById('f-envio').value='50'; }));
   r = await page.evaluate(() => { var p=findById('H9'); return { envs:envs(p), cob:envioCobrado(p), pend:envioPorCobrar(p) }; });
-  chk('3f · (control) un solo flete cobrado, control a la vista: corregir 80 → 50 sigue andando, sin preguntar',
-      r.cob===50 && r.pend===0 && r.envs.length===1 && r.envs[0].comps.join()==='FL9' && D.vistos.length===0, { formulario:f, envs:r.envs, dialogos:D.vistos });
+  // (18/11, el dueño: «debe preguntar») cambiar un flete ya cobrado desde el formulario pregunta antes; aceptando, se corrige como siempre.
+  chk('3f · (control) un solo flete cobrado: corregir 80 → 50 PREGUNTA y, aceptando, se corrige',
+      r.cob===50 && r.pend===0 && r.envs.length===1 && r.envs[0].comps.join()==='FL9' && D.vistos.length===1 && /ya está COBRADO/.test(D.vistos[0]||''), { formulario:f, envs:r.envs, dialogos:D.vistos });
 
   // 3g · DOS fletes cobrados (40 + 60) y alguien pone 80: no se sabe de cuál bajar → se pregunta.
   const dosCobrados = () => page.evaluate(() => {

@@ -297,6 +297,10 @@ function PREPARAR(){
     pryCalorQ('e'); o.eAct=document.querySelector('#pcal-q .active').textContent; o.e10=cel(10); o.e12=cel(12); pryCalorDia('2026-11-10'); o.eDet=document.getElementById('pcal-d').textContent; o.ePie=document.getElementById('pcal-pie').textContent;
     pryCalorQ('c'); o.c4=cel(4); o.c11=cel(11); pryCalorDia('2026-11-04'); o.cDet=document.getElementById('pcal-d').textContent; o.cPie=document.getElementById('pcal-pie').textContent;
     renderProyeccion(); o.queda=document.querySelector('#pcal-q .active').textContent; pryCalorQ('v');
+    /* (17/11) cada día por tienda y, un domingo, los domingos por tienda contra el mes anterior */
+    var C2=PRY_CALOR; o.tOk=Object.keys(C2.v).every(function(f){ var t=C2.vt[f]||{}; return Math.abs(Object.keys(t).reduce(function(a,k){ return a+t[k]; },0)-C2.v[f])<0.005; });
+    pryCalorDia('2026-11-03'); o.tDet=document.getElementById('pcal-d').innerText; o.tN=document.querySelectorAll('#pcal-d .pcal-t span').length;
+    pryCalorDia('2026-11-08'); o.dom=document.getElementById('pcal-d').innerText; o.domBox=!!document.querySelector('#pcal-d .pcal-dom');
     return o;
   });
   chk('vendido = por el día en que se CARGÓ: el 3 → 5.000, el 4 → 5.000, el 9 → 4.000, el 10 → 3.200 (con la de diciembre), el 11 → 3.500', r.v && r.v['2026-11-03']===5000 && r.v['2026-11-04']===5000 && r.v['2026-11-09']===4000 && r.v['2026-11-10']===3200 && r.v['2026-11-11']===3500 && !r.v['2026-10-28'], r.v);
@@ -309,6 +313,8 @@ function PREPARAR(){
   chk('«Entregas»: cuenta pedidos; mañana ya se ve (no se apaga) y dice «hay agendadas»', r.eAct==='Entregas' && r.e10 && r.e10.t==='2' && r.e12 && r.e12.t==='2' && r.e12.op!=='0.45' && /martes 10\/11/.test(r.eDet) && /2 pedidos/.test(r.eDet) && /10 entregas agendadas/.test(r.ePie), [r.e10, r.e12, r.eDet, r.ePie]);
   chk('«Cobrado»: el 4 → Bs 1.200 y el total del mes', r.c4 && r.c4.t==='1 mil' && r.c11 && r.c11.t==='700' && /Bs 1\.200/.test(r.cDet) && /Bs 1\.900/.test(r.cPie), [r.c4, r.c11, r.cDet, r.cPie]);
   chk('lo elegido queda al repintar Proyección', r.queda==='Cobrado', r.queda);
+  chk('(17/11) cada día, lo de cada tienda suma el día y tocarlo lo lista', r.tOk && r.tN>=1 && /🏬/.test(r.tDet), [r.tOk, r.tN, r.tDet]);
+  chk('(17/11) un domingo dice los domingos del mes por tienda contra los mismos de octubre', r.domBox && /Los domingos de noviembre hasta este \(2 domingos\)/.test(r.dom) && /de octubre/.test(r.dom), r.dom);
   await page._ctx.close();
   page = await abrir(390, 800);
   r = await ev(page, async () => {

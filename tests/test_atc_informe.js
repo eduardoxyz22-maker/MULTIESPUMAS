@@ -9,6 +9,9 @@
      · «⬇️ Descargar PDF» baja un PDF de verdad, apaisado, una hoja por página (con jsPDF y html2canvas servidos desde una copia local:
        `ATCI_LIBS_DIR`, o la carpeta de `npm i jspdf@2.5.1 html2canvas@1.4.1`); sin las librerías, abre la ventana de imprimir;
      · la hoja apaisada (`@page`) vive SOLO mientras el informe está abierto.
+   (13/11, mejoras 178-180) Después de «Por marca y línea» van DOS hojas más de «Calidad» (cada 100 vendidos + volvieron a reclamar, y a
+   cuántos meses de la compra): las cuentas de hojas y las posiciones de «dónde están», «tiempos», «tendencia» y «detalle» se corrieron dos
+   lugares A CONCIENCIA. Lo de esas hojas lo cuida tests/test_atc_calidad.js.
    Datos SINTÉTICOS. Se corre:  node tests/test_atc_informe.js   (desde la raíz) */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path'), fs = require('fs'), os = require('os');
@@ -118,7 +121,7 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
   chk('todas: «Lo más importante» dice desde cuándo, el promedio por mes y el mes con más, sin comparar con un mes',
     /Desde agosto 2026 entraron <b>9<\/b> ATC: 3 por mes en promedio \(3 meses\)/.test(r.I) && /El mes con más ATC fue <b>octubre 2026<\/b> \(6\)/.test(r.I) &&
     /«Hundimiento»<\/b>: 4 de 9/.test(r.I) && !/que en |meses anteriores/.test(r.I), r.I);
-  chk('todas: 9 hojas (con «Por marca y línea»; las 9 entran en una hoja de detalle)', r.hojas===9, r.hojas);
+  chk('todas: 11 hojas (con «Por marca y línea» y las 2 de «Calidad»; las 9 entran en una hoja de detalle)', r.hojas===11, r.hojas);
   r = await page.evaluate(() => { var S=STATE; STATE=[]; var D=atciDatos('todas'), H=atciHojas(D); STATE=S; return { n:D.n, I:D.I.join(), h:H.length, t:H.join('') }; });
   chk('todas, sin ninguna ATC: lo dice y no se rompe', r.n===0 && /Todavía no hay ninguna ATC/.test(r.I) && r.h===3 && /No hay ninguna ATC cargada/.test(r.t), r);
 
@@ -173,7 +176,7 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
   chk('las abiertas que no entran en «Las que más esperan» siguen en «Las que siguen esperando: 9 a 20 de 20», con la fecha de compra', r.tit.indexOf('Las que siguen esperando: 9 a 20 de 20')>=0 && /Compra/i.test(r.ab) && /\d{2}\/\d{2}\/24/.test(r.ab) && (r.ab.match(/ATC 10-1\d\d/g)||[]).length===12, r.ab.slice(0, 500));
   chk('«Quién las cargó» con 9 vendedores: están los 9, en dos columnas', ['Ana Uno','Bea Dos','Ceci Tres','Dora Cuatro','Ema Cinco','Fede Seis','Gabi Siete','Hugo Ocho','Ines Nueve'].every(function(v){ return r.prod.indexOf(v)>=0; }) && /Quién las cargó\s*9/.test(r.prod), r.prod.slice(-500));
   chk('en ninguna hoja queda un «Y N más» sin mostrar (solo «siguen en la hoja siguiente»)', !/Y \d+ (más|productos? más)[^:]*\.\s*$/m.test(r.todo) && !/Y \d+ más\.|\(están en el detalle\)/.test(r.todo), (r.todo.match(/Y \d+[^\n]*/g)||[]).join(' / '));
-  chk('las hojas: portada, resumen, motivos, productos, los otros productos, «Por marca y línea» (sin el número, «PRODUCTO NUMERO n» es UN producto), dónde, las que siguen, tiempos, tendencia y 2 de detalle (11 + 9) = 12', r.n===12, r.n);
+  chk('las hojas: portada, resumen, motivos, productos, los otros productos, «Por marca y línea» (sin el número, «PRODUCTO NUMERO n» es UN producto), las 2 de «Calidad», dónde, las que siguen, tiempos, tendencia y 2 de detalle (11 + 9) = 14', r.n===14, r.n);
 
   /* ---- 2. el botón y la ventana ---- */
   r = await page.evaluate(() => {
@@ -185,19 +188,20 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
       txt:H.map(function(h){ return h.innerText; }), tam:H.map(function(h){ return h.offsetWidth+'x'+h.offsetHeight; }), zoom:document.getElementById('atci-hojas').style.zoom };
   });
   chk('el botón «📄 Informe PDF» está en la pestaña ATC y abre la ventana en el mes que se mira (octubre)', r.vis && r.abierto==='flex' && r.mes==='2026-10', r);
-  chk('9 hojas (portada, resumen, motivos, productos, por marca y línea, dónde están, tiempos, tendencia y el detalle) y lo dice arriba', r.n===9 && /Octubre 2026 · 6 ATC · 9 hojas/.test(r.info), r.info);
+  chk('11 hojas (portada, resumen, motivos, productos, por marca y línea, las 2 de calidad, dónde están, tiempos, tendencia y el detalle) y lo dice arriba', r.n===11 && /Octubre 2026 · 6 ATC · 11 hojas/.test(r.info), r.info);
   chk('cada hoja mide 1123×794 (A4 apaisada) y en pantalla se achica para entrar', r.tam.every(function(t){ return t==='1123x794'; }) && Number(r.zoom)>0 && Number(r.zoom)<=1, r.tam.concat([r.zoom]));
-  chk('las hojas van numeradas «Hoja N de 9» (menos la portada)', r.pies[0]==='portada' && /Hoja 2 de 9/.test(r.pies[1]) && /Hoja 9 de 9/.test(r.pies[8]) && /Informe de ATC · Octubre 2026/.test(r.pies[1]), r.pies);
+  chk('las hojas van numeradas «Hoja N de 11» (menos la portada)', r.pies[0]==='portada' && /Hoja 2 de 11/.test(r.pies[1]) && /Hoja 11 de 11/.test(r.pies[10]) && /Informe de ATC · Octubre 2026/.test(r.pies[1]), r.pies);
+  chk('después de «Por marca y línea», las 2 de «Calidad»: cada 100 vendidos y a cuántos meses de la compra', /cada 100 vendidos/i.test(r.txt[5]) && /meses de la compra/i.test(r.txt[6]), [r.txt[5].slice(0,80), r.txt[6].slice(0,80)]);
   chk('la portada: Octubre 2026 en curso, 6 entraron, 2 volvieron (33%), 10,5 días', /Informe de ATC/.test(r.txt[0]) && /Octubre 2026/.test(r.txt[0]) && /mes en curso, hasta el 15\/10\/2026/.test(r.txt[0]) &&
     /6\s*ATC entraron en el mes/.test(r.txt[0]) && /2\s*·\s*33%\s*ya volvieron al cliente/.test(r.txt[0]) && /10,5\s*días tardó/.test(r.txt[0]), r.txt[0]);
   chk('el resumen: las fichas y «Lo más importante»', /Entraron\s*6/i.test(r.txt[1]) && /▲ 4 más que septiembre \(2\)/.test(r.txt[1]) && /Volvieron al cliente\s*2 de 6/i.test(r.txt[1]) && /Siguen abiertas\s*4/i.test(r.txt[1]) && /Hundimiento/.test(r.txt[1]) &&
     /De meses anteriores\s*1/i.test(r.txt[1]) && /Lo más importante/.test(r.txt[1]), r.txt[1]);
   chk('motivos (con «sep.» para comparar) y la antigüedad con el comodín', /Por qué se generaron/.test(r.txt[2]) && /Hundimiento\s*3 50% · sep\. 1/.test(r.txt[2]) && /De 1 a 2 años/.test(r.txt[2]) && /Con comodín: 1/.test(r.txt[2]), r.txt[2]);
   chk('productos, la dona de marcas y quién las cargó', /TITANIO LATEX\s*3 50%/.test(r.txt[3]) && /Heaven/.test(r.txt[3]) && /Sueña/.test(r.txt[3]) && /Quién las cargó/.test(r.txt[3]), r.txt[3]);
-  chk('dónde están: los 6 pasos, las que más esperan (la de 12 días primero) y la de septiembre que sigue abierta', /Por recoger/.test(r.txt[5]) && /ATC 10-003[\s\S]*12/.test(r.txt[5]) && /Vienen de meses anteriores/.test(r.txt[5]) && /ATC 09-002/.test(r.txt[5]), r.txt[5]);
-  chk('los tiempos: 2 · 6,5 · 1,5 días por tramo y 10,5 el circuito', /Hasta el recojo\s*2 días/i.test(r.txt[6]) && /En fábrica\s*6,5 días/i.test(r.txt[6]) && /Hasta el cliente\s*1,5 días/i.test(r.txt[6]) && /Circuito completo\s*10,5 días/i.test(r.txt[6]), r.txt[6]);
-  chk('la tendencia: 6 meses, octubre con 6', /Los últimos 6 meses/.test(r.txt[7]) && /Oct 26/.test(r.txt[7]) && /May 26/.test(r.txt[7]) && /2 cerradas · 10,5 d/.test(r.txt[7]), r.txt[7]);
-  chk('el detalle: las 6, con cliente, motivo y lo que se hizo', /Las 6 ATC de octubre/.test(r.txt[8]) && /ROCA JUAN/.test(r.txt[8]) && /✔ Se cambió la espuma/.test(r.txt[8]) && /sin motivo/.test(r.txt[8]) && !/VENTA COMUN/.test(r.txt.join(' ')), r.txt[8]);
+  chk('dónde están: los 6 pasos, las que más esperan (la de 12 días primero) y la de septiembre que sigue abierta', /Por recoger/.test(r.txt[7]) && /ATC 10-003[\s\S]*12/.test(r.txt[7]) && /Vienen de meses anteriores/.test(r.txt[7]) && /ATC 09-002/.test(r.txt[7]), r.txt[7]);
+  chk('los tiempos: 2 · 6,5 · 1,5 días por tramo y 10,5 el circuito', /Hasta el recojo\s*2 días/i.test(r.txt[8]) && /En fábrica\s*6,5 días/i.test(r.txt[8]) && /Hasta el cliente\s*1,5 días/i.test(r.txt[8]) && /Circuito completo\s*10,5 días/i.test(r.txt[8]), r.txt[8]);
+  chk('la tendencia: 6 meses, octubre con 6', /Los últimos 6 meses/.test(r.txt[9]) && /Oct 26/.test(r.txt[9]) && /May 26/.test(r.txt[9]) && /2 cerradas · 10,5 d/.test(r.txt[9]), r.txt[9]);
+  chk('el detalle: las 6, con cliente, motivo y lo que se hizo', /Las 6 ATC de octubre/.test(r.txt[10]) && /ROCA JUAN/.test(r.txt[10]) && /✔ Se cambió la espuma/.test(r.txt[10]) && /sin motivo/.test(r.txt[10]) && !/VENTA COMUN/.test(r.txt.join(' ')), r.txt[10]);
   chk('mientras está abierto, la hoja va apaisada (@page)', r.page, r.page);
 
   r = await page.evaluate(() => {
@@ -205,7 +209,7 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
     var H=[].slice.call(document.querySelectorAll('#atci-hojas .ai-pag'));
     return { info:document.getElementById('atci-info').textContent, t0:H[0].innerText, det:H[H.length-1].innerText };
   });
-  chk('cambiar el mes rehace el informe: septiembre, 2 ATC, sin «mes en curso»', /Septiembre 2026 · 2 ATC · 9 hojas/.test(r.info) && !/mes en curso/.test(r.t0) && /ATC 09-001/.test(r.det) && !/ATC 10-001/.test(r.det), r.info);
+  chk('cambiar el mes rehace el informe: septiembre, 2 ATC, sin «mes en curso»', /Septiembre 2026 · 2 ATC · 11 hojas/.test(r.info) && !/mes en curso/.test(r.t0) && /ATC 09-001/.test(r.det) && !/ATC 10-001/.test(r.det), r.info);
 
   r = await page.evaluate(() => {
     var a=document.getElementById('atci-alc'), vis=!!(a && a.offsetParent); a.value='todas'; a.dispatchEvent(new Event('change'));
@@ -214,15 +218,15 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
       info:document.getElementById('atci-info').textContent, txt:H.map(function(h){ return h.innerText; }), pie:(H[1].querySelector('.ai-pie')||{}).textContent };
   });
   chk('arriba se elige «📅 Un mes» o «🗂️ Todas, desde el inicio»; con «Todas» el mes se esconde', r.vis && r.opc==='📅 Un mes|🗂️ Todas, desde el inicio' && r.mesOculto, r.opc);
-  chk('con «Todas» el informe dice las 9 desde agosto, en 9 hojas', /Todas las ATC · desde agosto 2026 · 9 ATC · 9 hojas/.test(r.info) && /Informe de ATC · Todas las ATC · desde agosto 2026/.test(r.pie), [r.info, r.pie]);
+  chk('con «Todas» el informe dice las 9 desde agosto, en 11 hojas', /Todas las ATC · desde agosto 2026 · 9 ATC · 11 hojas/.test(r.info) && /Informe de ATC · Todas las ATC · desde agosto 2026/.test(r.pie), [r.info, r.pie]);
   chk('portada: «Todas las ATC», desde agosto hasta hoy, 9 en total', /Todas las ATC/.test(r.txt[0]) && /desde agosto 2026 hasta el 15\/10\/2026/.test(r.txt[0]) && /9\s*ATC en total/.test(r.txt[0]) && !/mes en curso/.test(r.txt[0]), r.txt[0]);
   chk('resumen: «Por mes, en promedio 3» con el que más (oct.), y sin «De meses anteriores» ni «que septiembre»',
     /Todas las ATC, desde agosto 2026/.test(r.txt[1]) && /Por mes, en promedio\s*3/i.test(r.txt[1]) && /el que más: Oct 26 \(6\)/.test(r.txt[1]) && !/De meses anteriores/i.test(r.txt[1]) && !/que septiembre/.test(r.txt[1]), r.txt[1]);
   chk('motivos sin la columna del mes anterior', /Hundimiento\s*4 44%/.test(r.txt[2]) && !/sep\. \d/.test(r.txt[2]) && !/las del mes anterior/.test(r.txt[2]), r.txt[2]);
-  chk('dónde están: «todas las ATC» y las abiertas por el mes en que entraron (septiembre 1, octubre 4)', /Dónde están todas las ATC/.test(r.txt[5]) &&
-    /Las abiertas, por el mes en que entraron/.test(r.txt[5]) && /Septiembre 2026\s*1/.test(r.txt[5]) && /Octubre 2026\s*4/.test(r.txt[5]) && !/Vienen de meses anteriores/.test(r.txt[5]), r.txt[5]);
-  chk('tendencia: mes por mes desde el inicio (ago., sep., oct.), sin mayo', /Mes por mes, desde el inicio/.test(r.txt[7]) && /Ago 26/.test(r.txt[7]) && /Oct 26/.test(r.txt[7]) && !/May 26/.test(r.txt[7]) && !/el mes de este informe/.test(r.txt[7]), r.txt[7]);
-  chk('detalle: «Todas las ATC: 9», con la de agosto y las de octubre', /Todas las ATC: 9/.test(r.txt[8]) && /ATC 08-001/.test(r.txt[8]) && /ATC 10-006/.test(r.txt[8]), r.txt[8]);
+  chk('dónde están: «todas las ATC» y las abiertas por el mes en que entraron (septiembre 1, octubre 4)', /Dónde están todas las ATC/.test(r.txt[7]) &&
+    /Las abiertas, por el mes en que entraron/.test(r.txt[7]) && /Septiembre 2026\s*1/.test(r.txt[7]) && /Octubre 2026\s*4/.test(r.txt[7]) && !/Vienen de meses anteriores/.test(r.txt[7]), r.txt[7]);
+  chk('tendencia: mes por mes desde el inicio (ago., sep., oct.), sin mayo', /Mes por mes, desde el inicio/.test(r.txt[9]) && /Ago 26/.test(r.txt[9]) && /Oct 26/.test(r.txt[9]) && !/May 26/.test(r.txt[9]) && !/el mes de este informe/.test(r.txt[9]), r.txt[9]);
+  chk('detalle: «Todas las ATC: 9», con la de agosto y las de octubre', /Todas las ATC: 9/.test(r.txt[10]) && /ATC 08-001/.test(r.txt[10]) && /ATC 10-006/.test(r.txt[10]), r.txt[10]);
   r = await page.evaluate(() => { var a=document.getElementById('atci-alc'); a.value='mes'; a.dispatchEvent(new Event('change'));
     return { oculto:document.getElementById('atci-mes').hidden, info:document.getElementById('atci-info').textContent }; });
   chk('volver a «Un mes» muestra el mes y el informe de ese mes', !r.oculto && /Septiembre 2026 · 2 ATC/.test(r.info), r);
@@ -237,8 +241,8 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
     await page.waitForTimeout(200);
     r = await page.evaluate(() => ({ est:document.getElementById('atci-estado').innerText, ocup:ATCI_OCUPADO, host:!!document.getElementById('atci-render'), btn:document.getElementById('atci-pdf').disabled }));
     chk('«⬇️ Descargar PDF» baja «Informe-ATC-octubre-2026.pdf», un PDF de verdad', dl.suggestedFilename()==='Informe-ATC-octubre-2026.pdf' && buf.slice(0,5).toString()==='%PDF-', dl.suggestedFilename());
-    chk('9 páginas A4 apaisadas (841,89 × 595,28 pt), una por hoja', nPag===9 && apais, { nPag, apais, kb:Math.round(buf.length/1024) });
-    chk('dice que está listo, y limpia la copia y el botón', /Listo: se bajó Informe-ATC-octubre-2026\.pdf \(9 hojas\)/.test(r.est) && !r.ocup && !r.host && !r.btn, r);
+    chk('11 páginas A4 apaisadas (841,89 × 595,28 pt), una por hoja', nPag===11 && apais, { nPag, apais, kb:Math.round(buf.length/1024) });
+    chk('dice que está listo, y limpia la copia y el botón', /Listo: se bajó Informe-ATC-octubre-2026\.pdf \(11 hojas\)/.test(r.est) && !r.ocup && !r.host && !r.btn, r);
     /* la foto de la portada no sale en blanco: se mira un píxel del fondo oscuro */
     const color = await page.evaluate(() => window.html2canvas(document.querySelector('#atci-hojas .ai-pag'), { scale:1, logging:false, backgroundColor:'#fff' }).then(function(cv){
       return [].slice.call(cv.getContext('2d').getImageData(40, 300, 1, 1).data).slice(0,3); }));
@@ -249,8 +253,8 @@ const SALIDA = process.env.ATCI_SALIDA || fs.mkdtempSync(path.join(os.tmpdir(), 
     const [dl2] = await Promise.all([ page.waitForEvent('download', { timeout:90000 }), page.click('#atci-pdf') ]);
     const dest2 = path.join(SALIDA, dl2.suggestedFilename()); await dl2.saveAs(dest2);
     const t2 = fs.readFileSync(dest2).toString('latin1');
-    chk('con «Todas» baja «Informe-ATC-todas-al-15-octubre-2026.pdf», 9 páginas', dl2.suggestedFilename()==='Informe-ATC-todas-al-15-octubre-2026.pdf' &&
-      (t2.match(/\/Type \/Page\b(?!s)/g)||[]).length===9, dl2.suggestedFilename());
+    chk('con «Todas» baja «Informe-ATC-todas-al-15-octubre-2026.pdf», 11 páginas', dl2.suggestedFilename()==='Informe-ATC-todas-al-15-octubre-2026.pdf' &&
+      (t2.match(/\/Type \/Page\b(?!s)/g)||[]).length===11, dl2.suggestedFilename());
     await page.evaluate(() => { var a=document.getElementById('atci-alc'); a.value='mes'; a.dispatchEvent(new Event('change')); });
   } else console.log('… sin las copias de jsPDF y html2canvas (npm i jspdf@2.5.1 html2canvas@1.4.1 y ATCI_LIBS_DIR=…/node_modules): se saltea la parte del PDF');
 

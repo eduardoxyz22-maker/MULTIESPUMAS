@@ -36,6 +36,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   await ctx.route(/^https?:\/\//, r => r.abort());
   await page.clock.setFixedTime(new Date('2026-10-30T10:00:00-04:00'));
   await page.goto('file://' + PEDIDOS, { waitUntil:'load' });
+  /* 🗓️ (17/11) estos avisos son de pagos de OCTUBRE (fechas fijas): acá se mira la lista, no el corte de «lo que cuenta» (`AL_DIA_DESDE`, test_al_dia 7b) */
+  await page.evaluate(() => { AL_DIA_DESDE = '2026-01-01'; });
   await page.waitForTimeout(400);
   const ev = async (fn, arg) => { try { return await page.evaluate(fn, arg); } catch(e){ return { __error:String((e&&e.message)||e).slice(0,300) }; } };
 

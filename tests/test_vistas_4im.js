@@ -142,7 +142,7 @@ const SHOTS = process.env.SHOTS || '';
   chk('entregas de hoy = las marcadas de las de hoy (1 de 4)', ()=>r.M[0]==='Entregas de hoy|1 de 4 marcadas', r.M);
   chk('cupos de mañana (sábado) = 6 ocupados de 15 (§4jd: dice ocupados y libres)', ()=>/\|6 ocupados de 15 · 9 libres/.test(r.M[2]), r.M);
   chk('una vez por mañana: la segunda no sale; con el botón 🌅, sí', ()=>(r.b===false && r.c===true), r);
-  r = await ev(()=>{ try{ localStorage.removeItem('me_salud_dia'); }catch(e){} UNLOCKED=false; var s=document.createElement('div'); return { boton:!!document.getElementById('adm-salud-btn'), fuente:/saludDelDia\(\)/.test(String(tryUnlock)) }; });
+  r = await ev(()=>{ try{ localStorage.removeItem('me_salud_dia'); }catch(e){} UNLOCKED=false; var s=document.createElement('div'); return { boton:!!document.getElementById('adm-salud-btn'), fuente:/saludDelDia\(\)/.test(String(tryUnlock)+(typeof admAbrirSesion==='function'?String(admAbrirSesion):''))   /* 🔓 (15/11, 302) la clave buena pasa por admAbrirSesion */ }; });
   chk('sale al poner la clave de Administración (tryUnlock) y hay un botón para volver a verla', ()=>(r.boton && r.fuente), r);
   if(SHOTS){ await ev(()=>{ saludDelDia(true); }); await page.waitForTimeout(1600); await page.screenshot({ path:path.join(SHOTS,'w5_salud.png') }); await ev(()=>{ saludCerrar(); }); }
 

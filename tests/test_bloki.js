@@ -127,7 +127,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('el botón «📢 Decir anuncio» dice que lo grita Bloki', /Bloki lo grita/.test(r.boton||'') && !/Eduardo/.test(r.boton||''), r.boton);
 
   console.log('\n── 7. Se viste según el tema del mes, con TODOS los trajes (31/10, dueño: «¿no debería vestirse acorde a la temática del mes?») ──');
-  const TEMAS={ halloween:'bk-capa', 'todos-santos':'bk-calaverita', navidad:'bk-bufanda', 'anio-nuevo':'bk-mono', carnaval:'bk-serpentinas', madre:'#e11d48', patria:'bk-bandera', 'santa-cruz':'bk-bandera' };
+  const TEMAS={ halloween:'bk-capa', 'todos-santos':'bk-calaverita', navidad:'bk-bufanda', 'anio-nuevo':'bk-mono', carnaval:'bk-serpentinas', madre:'#e11d48', patria:'bk-bandera', 'santa-cruz':'bk-bandera', 'black-friday':'bk-bolsa' };
   const visto={};
   for(const t of Object.keys(TEMAS)){
     await ponerTema(t);
@@ -152,7 +152,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('el vendedor y logística no se ponen nada ENCIMA de su gorra o su casco (sombrero de bruja, corona, gorro, gorrito)',
       Object.keys(visto).every(t => !visto[t].vendedor.cabeza && !visto[t].logistica.cabeza), '');
   chk('Bloki con algo en la cabeza no lleva la chispa (Halloween, Navidad, Año Nuevo); sin nada en la cabeza sí (Todos Santos, solo la calaverita: «B»)',
-      ['halloween','navidad','anio-nuevo'].every(t => visto[t].bloki.cabeza && !visto[t].bloki.chispa) && ['todos-santos','madre','patria','santa-cruz','carnaval'].every(t => !visto[t].bloki.cabeza && visto[t].bloki.chispa), '');
+      ['halloween','navidad','anio-nuevo'].every(t => visto[t].bloki.cabeza && !visto[t].bloki.chispa) && ['todos-santos','madre','patria','santa-cruz','carnaval','black-friday'].every(t => !visto[t].bloki.cabeza && visto[t].bloki.chispa), '');
   r = await ev(() => { var h=document.documentElement; h.className=h.className.replace(/(^|\s)tema-[a-z-]+/g,' ')+' tema-todos-santos'; BLOKI_SRC={};
     var o={}; Object.keys(BLOKI_TRAJES).forEach(function(t){ var s=blokiSvg(t); o[t]={ cal:/bk-calaverita/.test(s), flores:/bk-corona|bk-flores-gorra|bk-calavera"/.test(s), mej:/#f6a5ab/.test(s) }; }); return o; });
   chk('Todos Santos (dueño: «B»): la calaverita a sus pies, la cara de siempre (con sus cachetes) y sin flores ni cara pintada',

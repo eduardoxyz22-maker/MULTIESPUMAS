@@ -34,7 +34,8 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
       window._pl = window._pl.filter(function (x) { return x.id !== g.id; }).concat([g]); return Promise.resolve({ ok: true, pedido: g }); };
     apiList = function () { return Promise.resolve({ ok: true, pedidos: JSON.parse(JSON.stringify(window._pl)) }); };
     var ts = function (f) { return new Date(f + 'T11:00:00-04:00').getTime(); };
-    var P = function (o) { return Object.assign({ id: 'x', oc: '11-001', nota: '1', vendedor: 'Carola Chavez', cliente: 'CLIENTE', celular: '70000000', fecha: '2026-11-09', turno: 'AM',
+    // (17/11) solo entregadas: la factura se pide recién con la entrega hecha → las ventas del ejemplo se entregaron ayer (05/11).
+    var P = function (o) { return Object.assign({ id: 'x', oc: '11-001', nota: '1', vendedor: 'Carola Chavez', cliente: 'CLIENTE', celular: '70000000', fecha: '2026-11-05', turno: 'AM',
       zona: 'Norte', direccion: 'Calle 1', maps: '', productos: [{ desc: 'TITANIO LATEX', medida: '160x190', codigo: '', cant: 1, precio: 3200 }], saldo: 3200, acuenta: 0,
       pagado: false, metodoPago: '', entregado: false, ts: ts('2026-11-03'), fotos: [] }, o); };
     window._pl = [
@@ -157,6 +158,51 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('6b · lo elegido y tipeado sin guardar sobrevive a un repintado de la ficha', r.trasRepintar.t === 'R' && r.trasRepintar.n === '9999', r.trasRepintar);
   chk('6c · al cerrar la ficha se olvida: al abrirla de nuevo vuelve lo guardado (Factura 7788)', r.trasCerrar.t === 'F' && r.trasCerrar.n === '7788', r.trasCerrar);
   chk('6d · el N° tiene tope de 40 letras en el campo', r.max === '40', r.max);
+
+  // 7. (15/11, dueño: «Si se anota que se hizo la nota de remisión o factura pero se entrega el otro mes va en el mes que se marcó») `fdocT`
+  r = await ev(async () => {
+    var o = {}, T = function (id) { var g = window._pl.find(x => x.id === id); return g ? g.productos.map(x => x.fdocT) : null; };
+    o.n1 = T('n1');                                    // lo anotado en el paso 4
+    o.n2 = T('n2');                                    // la factura de antes (sin día): sigue sin día
+    STATE = JSON.parse(JSON.stringify(window._pl)); saveMirror();
+    await new Promise(r => setTimeout(r, 1200));
+    showContaModal('n1'); ctaDocTipo('n1', 'F'); document.getElementById('cta-doc-num').value = '00452';
+    ctaDocGuardar('n1'); await new Promise(r => setTimeout(r, 400)); closeModal();
+    o.corregido = T('n1'); o.tipoN = window._pl.find(x => x.id === 'n1').productos.map(x => x.fdoc + x.fdocn);
+    showContaModal('n2'); document.getElementById('cta-doc-num').value = '7789';
+    ctaDocGuardar('n2'); await new Promise(r => setTimeout(r, 400)); closeModal();
+    o.n2corr = T('n2');
+    STATE = JSON.parse(JSON.stringify(window._pl)); saveMirror();
+    editPedido('n1'); await new Promise(r => setTimeout(r, 300));
+    document.getElementById('f-direccion').value = 'CALLE NUEVA 3';
+    submitPedido(); await new Promise(r => setTimeout(r, 450));
+    o.form = T('n1');
+    var p = findById('n1'); setDocVenta(p, '', ''); o.sacado = p.productos.map(x => x.fdocT);
+    o.chip = docVentaChip(Object.assign({}, findById('n2'), { productos: [{ desc: 'X', fdoc: 'R', fdocn: '9', fdocT: new Date('2026-11-04T15:00:00-04:00').getTime() }] }));
+    return o;
+  });
+  var t0 = r.n1 && r.n1[0];
+  chk('7a · al anotarla queda el día en que se anotó (fdocT) en todos los productos', t0 > new Date('2026-11-06T09:59:00-04:00').getTime() && r.n1.every(x => x === t0), r.n1);
+  chk('7b · una factura anotada antes (sin día) sigue sin día: el dashboard usa el mes en que se cargó', r.n2.every(x => x == null), r.n2);
+  chk('7c · corregir el tipo y el número NO cambia el día (el documento ya estaba hecho)', r.tipoN.every(x => x === 'F00452') && r.corregido.every(x => x === t0), r);
+  chk('7d · corregir el N° de una anotada sin día no le inventa un día', r.n2corr.every(x => x == null), r.n2corr);
+  chk('7e · corregir el pedido desde el formulario conserva el día', r.form && r.form.every(x => x === t0), r.form);
+  chk('7f · sacar el documento borra el día', r.sacado.every(x => x == null), r.sacado);
+  chk('7g · el chip dice cuándo se anotó (al pasar el mouse)', /anotada el 04\/11/.test(r.chip), r.chip);
+
+  // 8. (17/11, dueño: «es solo de pedidos entregados… lo pendiente de entrega aún no sabe el N° de factura») hoy = viernes 06/11
+  r = await ev(() => {
+    var base = { id: 'q', oc: '11-201', nota: '601', vendedor: 'Carola Chavez', cliente: 'PRUEBA ENTREGA', celular: '70000000', turno: 'AM', zona: 'Norte', direccion: 'Calle 1', maps: '',
+      productos: [{ desc: 'TITANIO LATEX', medida: '160x190', codigo: '', cant: 1, precio: 3200 }], saldo: 3200, acuenta: 0, pagado: false, metodoPago: '', entregado: false,
+      ts: new Date('2026-11-03T11:00:00-04:00').getTime(), fotos: [] };
+    var f = function (o) { return docVentaFalta(Object.assign({}, base, o)); };
+    return { manana: f({ fecha: '2026-11-07' }), ayer: f({ fecha: '2026-11-05' }), hoy: f({ fecha: '2026-11-06' }), hoyOk: f({ fecha: '2026-11-06', entregado: true }),
+             sinFecha: f({ fecha: '' }), tienda: f({ fecha: '', zona: 'TIENDA', direccion: 'SALIÓ DE TIENDA (Central)' }) };
+  });
+  chk('8a · fecha de mañana y sin ✅: todavía no se pide la factura (no se sabe el N°)', r.manana === false, r);
+  chk('8b · la misma con fecha de ayer (ya salió): se pide', r.ayer === true, r);
+  chk('8c · hoy sin ✅ no; hoy con ✅ sí; sin fecha («avisa cuándo») no', r.hoy === false && r.hoyOk === true && r.sinFecha === false, r);
+  chk('8d · la venta de tienda (se entrega en el momento): se pide', r.tienda === true, r);
 
   chk('sin errores de JavaScript', errors.length === 0, errors);
   console.log('\n' + PASS + ' bien, ' + FAIL + ' mal');

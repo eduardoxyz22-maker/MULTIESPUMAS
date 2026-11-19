@@ -58,7 +58,7 @@ function lista() {
 (async () => {
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] });
   const errores = [];
-  async function abrir(vp, fecha, libs) {
+  async function abrir(vp, fecha, libs, q) {
     const ctx = await browser.newContext({ viewport: vp, timezoneId: 'America/La_Paz', acceptDownloads: true });
     await ctx.route(/^https?:\/\//, r => {
       const u = r.request().url(), dar = (f, t) => r.fulfill({ status: 200, contentType: t, body: fs.readFileSync(f) });
@@ -76,7 +76,7 @@ function lista() {
     const page = await ctx.newPage();
     page.on('pageerror', e => errores.push(e.message)); page.on('dialog', d => d.accept());
     await page.clock.setFixedTime(new Date(fecha || T0));
-    await page.goto('file://' + PEDIDOS, { waitUntil: 'load' });
+    await page.goto('file://' + PEDIDOS + (q || ''), { waitUntil: 'load' });
     await page.evaluate(async (L) => {
       CONNECTED = true; CARGA_GEN++; CARGA_ESTADO = 'ok'; try { clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); } catch (e) {}
       window.__L = L; apiList = () => Promise.resolve(JSON.parse(JSON.stringify(window.__L))); apiSave = () => Promise.resolve({ ok: true });
@@ -164,9 +164,10 @@ function lista() {
     ['Chofer', () => { showView('chofer'); }],
   ];
   const NOV = Date.parse('2026-11-10T10:00:00-04:00');
-  for (const [vp, fecha] of [[{ width: 1920, height: 1000 }, T0], [{ width: 1180, height: 820 }, T0], [{ width: 1920, height: 1000 }, NOV]]) {
-    let { ctx, page } = await abrir(vp, fecha);
-    if (fecha === NOV) vp.width += ' (noviembre)';
+  /* 🛍️ (13/11) y la muestra de Black Friday (negro con dorado), con ?tema=black-friday */
+  for (const [vp, fecha, q] of [[{ width: 1920, height: 1000 }, T0], [{ width: 1180, height: 820 }, T0], [{ width: 1920, height: 1000 }, NOV], [{ width: 1920, height: 1000 }, NOV, '?tema=black-friday']]) {
+    let { ctx, page } = await abrir(vp, fecha, null, q);
+    if (q) vp.width += ' (Black Friday)'; else if (fecha === NOV) vp.width += ' (noviembre)';
     const malos = [], sinVidrio = [];
     for (const [nom, fn] of ESTADOS) {
       await page.evaluate(`(${fn.toString()})()`); await page.waitForTimeout(450);

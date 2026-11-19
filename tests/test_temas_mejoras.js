@@ -59,7 +59,15 @@ function armarDashboard(){
     ['2026-10-27T10:00:00-04:00','halloween','27/10'],
     ['2026-10-31T23:59:00-04:00','halloween','31/10 23:59 (ya 1/11 en UTC)'],
     ['2026-11-01T00:01:00-04:00','todos-santos','1/11 00:01'],
-    ['2026-11-30T23:59:00-04:00','todos-santos','30/11 23:59'],
+    ['2026-11-12T23:59:00-04:00','todos-santos','12/11 23:59 (la víspera de Black Friday)'],
+    ['2026-11-13T00:01:00-04:00','black-friday','13/11 00:01: Black Friday (dueño, 13/11: «que salga desde ahora»: dos semanas antes del viernes)'],
+    ['2026-11-19T12:00:00-04:00','black-friday','19/11'],
+    ['2026-11-20T00:01:00-04:00','black-friday','20/11 00:01'],
+    ['2026-11-27T12:00:00-04:00','black-friday','27/11, el viernes de Black Friday'],
+    ['2026-11-30T23:59:00-04:00','black-friday','30/11 23:59 (el «Cyber Monday»)'],
+    ['2027-11-11T12:00:00-04:00','todos-santos','11/11/2027 (en 2027 Black Friday es el 26)'],
+    ['2027-11-12T00:01:00-04:00','black-friday','12/11/2027'],
+    ['2027-11-29T23:59:00-04:00','black-friday','29/11/2027 23:59'],
     ['2026-12-01T00:01:00-04:00','navidad','1/12'],
     ['2026-12-30T23:59:00-04:00','navidad','30/12 23:59'],
     ['2026-12-31T00:01:00-04:00','anio-nuevo','31/12'],
@@ -81,13 +89,14 @@ function armarDashboard(){
     ['2027-09-18T00:01:00-04:00','santa-cruz','18/9'],
     ['2027-09-24T23:59:00-04:00','santa-cruz','24/9 23:59'],
     ['2027-09-25T00:01:00-04:00','espuma','25/9'],
-    ['2027-11-15T12:00:00-04:00','todos-santos','noviembre del año que viene']
+    ['2027-11-08T12:00:00-04:00','todos-santos','noviembre del año que viene']
   ];
   for (const [cuando, esp, l] of CASOS) chk('1 · '+l+' → '+esp, (await temaDe(PEDIDOS, cuando))===esp, cuando);
   chk('1 · ?tema=carnaval lo muestra cualquier día', (await temaDe(PEDIDOS, '2026-10-27T10:00:00-04:00', '?tema=carnaval'))==='carnaval');
   chk('1 · …y ?tema=todos-santos también', (await temaDe(PEDIDOS, '2026-06-10T10:00:00-04:00', '?tema=todos-santos'))==='todos-santos');
   const dash = armarDashboard();
   chk('1 · el dashboard elige el mismo: 1/11 → Todos Santos', (await temaDe(dash, '2026-11-01T09:00:00-04:00'))==='todos-santos');
+  chk('1 · …el 13/11 → Black Friday (dueño: «C y sí también Dashboard», «que salga desde ahora») y el 12/11 sigue Todos Santos', (await temaDe(dash, '2026-11-13T09:00:00-04:00'))==='black-friday' && (await temaDe(dash, '2026-11-12T09:00:00-04:00'))==='todos-santos');
   chk('1 · …31/12 → Año Nuevo y 18/9 → 24 de Septiembre', (await temaDe(dash, '2026-12-31T09:00:00-04:00'))==='anio-nuevo' && (await temaDe(dash, '2027-09-18T09:00:00-04:00'))==='santa-cruz');
 
   // ═══ 2. Lo que se ve ═══
@@ -118,6 +127,13 @@ function armarDashboard(){
   r = await mira('?tema=carnaval'); chk('2 · Carnaval: 🎭 (la pestaña elegida con el color de SU sección, §4nk)', /🎭/.test(r.logoTxt) && r.pestana==='rgb(15, 118, 110)', [r.logoTxt, r.pestana]);
   r = await mira('?tema=madre'); chk('2 · Día de la Madre: 💐', /💐/.test(r.logoTxt), r.logoTxt);
   r = await mira('?tema=anio-nuevo'); chk('2 · Año Nuevo: 🎆 y la noche azul', /🎆/.test(r.logoTxt) && /rgb\(11, 29, 58\)/.test(r.fondo), [r.logoTxt, r.fondo]);
+  r = await mira('?tema=black-friday');
+  chk('2 · Black Friday (muestra, solo con ?tema): la etiqueta dibujada al lado del nombre, SIN la cinta amarilla de arriba (dueño, 13/11: «no me gusta»); a las 10:00 el cielo de día (azul)', r.papel==='none' && /^url\("data:image\/svg/.test(r.logoImg) && /rgb\(15, 31, 61\)/.test(r.fondo), r);
+  /* 🌅 (13/11, dueño: «el fondo no iba por hora del día, el sol bajando y etc.?») en Black Friday el encabezado cambia según la hora; la noche, negra */
+  { const fondoA = async (h) => { const p=await abrir(PEDIDOS, '2026-11-20T'+h+':00-04:00', { q:'' }); const x=await p.evaluate(()=>{ var H=document.querySelector('.header'); return { m:H.getAttribute('data-momento'), f:getComputedStyle(H).backgroundImage.slice(0,60) }; }); await cerrar(p); return x; };
+    const am=await fondoA('06:40'), di=await fondoA('12:00'), at=await fondoA('17:50'), no=await fondoA('21:30');
+    chk('2 · Black Friday según la hora: amanecer violeta, día azul, atardecer anaranjado y la noche negra', am.m==='amanecer' && /rgb\(30, 27, 75\)/.test(am.f) && di.m==='dia' && /rgb\(30, 58, 138\)/.test(di.f) &&
+      at.m==='atardecer' && /rgb\(67, 20, 7\)/.test(at.f) && no.m==='noche' && /rgb\(5, 5, 5\)/.test(no.f), [am, di, at, no]); }
   r = await mira('?tema=espuma');
   chk('2 · Espuma: el brillo que pasa por el nombre (la letra recortada sobre un degradé que se mueve), sin emoji', /text/.test(r.clip) && r.anLogo==='esp-brillo' && (r.logoTxt==='none' || r.logoTxt==='normal'), r);
   r = await mira('?tema=todos-santos', 390);
@@ -129,7 +145,7 @@ function armarDashboard(){
   console.log('\n── 3. Lo que se mueve: el lienzo del encabezado ──');
   const lienzo = async (q, init, espera) => { const p=await abrir(PEDIDOS, '2026-10-27T10:00:00-04:00', { q:q, init:init, espera:espera||300 });
     const o=await p.evaluate(()=>({ fx:window.hdrFx ? { e:hdrFx.efecto, n:hdrFx.n(), c:hdrFx.cuadros() } : null, vis:getComputedStyle(document.getElementById('hdr-fx')).display })); await cerrar(p); return o; };
-  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos' };
+  const EF={ espuma:'burbujas', 'todos-santos':'petalos', carnaval:'confeti', madre:'corazones', patria:'patria', 'santa-cruz':'confeti-scz', 'anio-nuevo':'fuegos', 'black-friday':'etiquetas' };
   for (const t of Object.keys(EF)) { const o=await lienzo('?tema='+t); chk('3 · '+t+' dibuja '+EF[t]+' (en las pruebas, un solo cuadro quieto)', o.fx && o.fx.e===EF[t] && o.fx.c===1 && o.fx.n>0, o); }
   let o = await lienzo('?tema=todos-santos', ()=>{ window.HDR_FX_PRUEBA=1; }, 900);
   chk('3 · con HDR_FX_PRUEBA se mueve (más de 10 cuadros en 0,9 s)', o.fx && o.fx.c>10, o);
@@ -147,17 +163,19 @@ function armarDashboard(){
     const x=await p.evaluate(()=>window.temaMelodia ? { veces:temaMelodia.veces(), sonando:temaMelodia.sonando() } : null);
     await cerrar(p); return x;
   };
-  let m = await melodia('2026-11-05T10:00:00-04:00', null, 2);
-  chk('4 · en noviembre se carga, y en las pruebas no suena sola (sin TS_MUSICA_PRUEBA)', m && m.veces===0, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 0);
+  let m = await melodia('2026-11-02T10:00:00-04:00', null, 2);
+  chk('4 · el 1-2 de noviembre se carga, y en las pruebas no suena sola (sin TS_MUSICA_PRUEBA)', m && m.veces===0, m);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 0);
   chk('4 · recién abierta NO suena (los navegadores no dejan sin un toque)', m && m.veces===0, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 3);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 3);
   chk('4 · el primer toque la hace sonar UNA vez aunque toque tres', m && m.veces===1 && m.sonando, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; try{ localStorage.setItem('me_asis_mudo','1'); }catch(e){} }, 2);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; try{ localStorage.setItem('me_asis_mudo','1'); }catch(e){} }, 2);
   chk('4 · con el 🔇 de Bloki no suena', m && m.veces===0, m);
   m = await melodia('2026-10-27T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1);
   chk('4 · en octubre no se carga (suena la bruja, no esta)', m===null, m);
-  m = await melodia('2026-11-05T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1, dash);
+  m = await melodia('2026-11-13T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1);
+  chk('4 · (13/11, dueño) pasado el 2 de noviembre ya no se carga: solo el 1 y el 2', m===null, m);
+  m = await melodia('2026-11-02T10:00:00-04:00', ()=>{ window.TS_MUSICA_PRUEBA=1; }, 1, dash);
   chk('4 · el dashboard también la tiene', m && m.veces===1, m);
   const mel = fs.readFileSync(path.join(RAIZ,'tema-melodia.js'),'utf8');
   chk('4 · es una melodía PROPIA (no la de la película) y dice por qué', /Recuérdame/.test(mel) && /derechos/.test(mel) && /PROPIA/.test(mel), '');

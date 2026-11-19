@@ -65,8 +65,8 @@ function PREPARAR(){
              txt:mir ? mir.innerText.replace(/\s+/g,' ') : '', intro:document.getElementById('pry-vendedores').innerText.replace(/\s+/g,' ') };
   });
   chk('cada vendedor con su MoM se puede tocar (role=button, con teclado) y arranca cerrado', r.tocables>=3 && r.rol==='button' && r.tab==='0' && r.exp==='false', r);
-  chk('arriba lo dice: «Tocá un vendedor para verlo contra septiembre en ventas, unidades y Bs.»', /Tocá un vendedor para verlo contra septiembre en ventas, unidades y Bs\./.test(r.intro), r.intro.slice(0,300));
-  chk('la fila se sigue leyendo igual (nombre, detalle, vendido, proyección, el MoM) y al final «ventas · unidades ▸»', /^Mirian Salazar \d+ venta.*Bs 3\.900,00 📈 Bs [\d.]+ ▲ 30% vs sep.*ventas · unidades ▸$/.test(r.txt), r.txt);
+  chk('arriba lo dice: «Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs.» y explica los días hábiles (17/11)', /Tocá un vendedor para verlo contra septiembre en ventas, unidades, colchones, somieres y Bs\./.test(r.intro) && /¿Contra qué día\? Se comparan los mismos días hábiles/.test(r.intro), r.intro.slice(0,500));
+  chk('la fila se sigue leyendo igual (nombre, detalle, vendido, proyección, el MoM) y al final «📊 vs sep…: unidades y somieres ▸»', /^Mirian Salazar \d+ venta.*Bs 3\.900,00 📈 Bs [\d.]+ ▲ 30% vs sep.*📊 vs sep\S*: unidades y somieres ▸$/.test(r.txt), r.txt);
   await page.click('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-q');
   r = await page.evaluate(() => {
     var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"]'), d=f && f.querySelector('.pry-mom-det');
@@ -77,18 +77,18 @@ function PREPARAR(){
   });
   chk('tocar a Mirian abre su tablita debajo', r.abre && r.exp==='true' && r.ab==='▾ cerrar', r);
   chk('…columnas: septiembre a esta altura (al 23, 15:00), octubre al 23, diferencia y %', JSON.stringify(r.th)===JSON.stringify(['','septiembre al 23, 15:00','octubre al 23','Diferencia','%']), r.th);
-  chk('…ventas 2 → 2 (= 0%), unidades 2 → 2, Bs 3.000 → 3.900 (+900, ▲ 30%): los Bs son los del % de la fila', JSON.stringify(r.tr)===JSON.stringify([['Ventas','2','2','0','= 0%'],['Unidades','2','2','0','= 0%'],['Bs','Bs 3.000','Bs 3.900','+900','▲ 30%']]), r.tr);
-  chk('…abajo, septiembre entero (3 ventas · 3 unidades · Bs 6.000: con la del 28/09), y la línea de unidades', r.ent==='Septiembre entero: 3 ventas · 3 unidades · Bs 6.000' && r.svg, r);
+  chk('…ventas 2 → 2 (= 0%), unidades 2 → 2 (🛏️ 17/11: con colchones y somieres aparte), Bs 3.000 → 3.900 (+900, ▲ 30%): los Bs son los del % de la fila', JSON.stringify(r.tr)===JSON.stringify([['Ventas','2','2','0','= 0%'],['Unidades','2','2','0','= 0%'],['· Colchones','2','2','0','= 0%'],['· Somieres','0','0','0','= 0%'],['Bs','Bs 3.000','Bs 3.900','+900','▲ 30%']]), r.tr);
+  chk('…abajo, septiembre entero (3 ventas · 3 unidades · Bs 6.000: con la del 28/09), y la línea de unidades', r.ent==='Septiembre entero: 3 ventas · 3 unidades (3 colchones · 0 somieres) · Bs 6.000' && r.svg, r);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="maria"]'); f.click(); var d=f.querySelector('.pry-mom-det');
     return d ? [].map.call(d.querySelectorAll('tbody tr'), function(x){ return [].map.call(x.children, function(c){ return c.textContent; }); }) : null; });
-  chk('Maria: 1 venta y 1 unidad contra 1 y 1 (= 0%), Bs 4.000 → 2.000 (−2.000, ▼ 50%)', r && JSON.stringify(r)===JSON.stringify([['Ventas','1','1','0','= 0%'],['Unidades','1','1','0','= 0%'],['Bs','Bs 4.000','Bs 2.000','−2.000','▼ 50%']]), r);
+  chk('Maria: 1 venta y 1 unidad contra 1 y 1 (= 0%), Bs 4.000 → 2.000 (−2.000, ▼ 50%)', r && JSON.stringify(r)===JSON.stringify([['Ventas','1','1','0','= 0%'],['Unidades','1','1','0','= 0%'],['· Colchones','1','1','0','= 0%'],['· Somieres','0','0','0','= 0%'],['Bs','Bs 4.000','Bs 2.000','−2.000','▼ 50%']]), r);
   r = await page.evaluate(() => { var d=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det'); d.querySelector('td').click();
     var sigue=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det');
     renderProyeccion(); var tras=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"] .pry-mom-det'), m2=!!document.querySelector('#pry-vendedores .pry-fila[data-vk*="maria"] .pry-mom-det');
     return { sigue:sigue, tras:tras, m2:m2 }; });
   chk('tocar adentro de la tablita no la cierra, y al repintar Proyección las abiertas siguen abiertas', r.sigue && r.tras && r.m2, r);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="mirian"]'); f.click(); return { det:!!f.querySelector('.pry-mom-det'), exp:f.getAttribute('aria-expanded'), ab:(f.querySelector('.pry-mom-ab')||{}).textContent }; });
-  chk('tocar la fila otra vez la cierra', !r.det && r.exp==='false' && r.ab==='ventas · unidades ▸', r);
+  chk('tocar la fila otra vez la cierra', !r.det && r.exp==='false' && /^📊 vs .+: unidades y somieres ▸$/.test(r.ab), r);
   await page.focus('#pry-vendedores .pry-fila[data-vk*="carola"]'); await page.keyboard.press('Enter'); await page.waitForTimeout(100);
   r = await page.evaluate(() => { var f=document.querySelector('#pry-vendedores .pry-fila[data-vk*="carola"]'); return { det:!!(f && f.querySelector('.pry-mom-det')), exp:f && f.getAttribute('aria-expanded') }; });
   chk('con el teclado: Enter sobre un vendedor también la abre', r.det && r.exp==='true', r);

@@ -233,7 +233,7 @@ const resp = (S) => (S.post({ action: 'waRespuestas' }).resp || []);
     const S = armar();
     const L = S.ctx.probarAntesDeImplementar().lineas;
     chk('6a «👥 Lo que escribe uno de los 7 número(s) del equipo… no se toma como un cliente»', L.some(l => /^✅ 👥 Lo que escribe uno de los 7 número\(s\) del equipo/.test(l)), L.filter(l => /👥/.test(l)));
-    chk('6b la versión es la 2026-11-09-a y nada frena', L.some(l => l === '✅ Versión de este código: 2026-11-09-a') && !L.some(l => /^❌/.test(l)), L.filter(l => /^❌|Versión/.test(l)));
+    chk('6b la versión es la 2026-11-09-a o una posterior y nada frena', L.some(l => { var m=/^✅ Versión de este código: (\d{4}-\d{2}-\d{2}-[a-z])$/.exec(l); return !!m && m[1]>='2026-11-09-a'; }) && !L.some(l => /^❌/.test(l)), L.filter(l => /^❌|Versión/.test(l)));
   });
 
   console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

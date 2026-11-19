@@ -17357,7 +17357,7 @@ Esperan decisión del dueño (NO hechos): 94 (reporte ROHO), 98 («Copiar para M
 - 💵 **06/11 — el efectivo sin chofer** (pregunta del dueño): `ctaChoferSugerido` = el camión que el GPS vio en la casa → el chofer del pedido → el
   chofer del camión del pedido ese día → si no, nada: «¿Quién recibió?» queda en la vendedora, como antes, y Contabilidad lo cambia a mano.
 
-### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a`, espera que el dueño lo implemente)
+### §4pm — 🛏️💚 EL CIERRE DEL DÍA CON LA PROYECCIÓN DE CADA MARCA (11/11; dueño, con la captura del cierre del 10/11: *«Me gusta lo que dice proyección pero… separaría cuánto da Heaven y cuánto Sueña en esa proyección»*; servidor `2026-11-11-a` IMPLEMENTADO 11/11 por el dueño, contesta `2026-11-11-a`; página 2026-11-11-a PUBLICADA `0bd8588`)
 - La foto diaria de `__pry_hist__` ya traía la proyección de cada marca (`b:{heaven:[vendido, proyección, c|r], suena:[…]}`, `pryHistEntrada`).
   `waCdPry_` ahora la dice: «Bs 456.664 vendidos · proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …) (cálculo de las 17:00)», la más grande
   primero, con los mismos nombres que la pregunta del mes del bot (`waPregMesTxt_`). Una foto sin `b` sale como antes. No se calcula nada nuevo.
@@ -18594,3 +18594,442 @@ La fábrica 3D de Mis pedidos (solo con Eduardo elegido, `depConstruir`). Pedido
     cargada) y `test_mispedidos` (1; sola y 6 a la vez, 33/33). `test_estetica_4mo` con 15 a la vez a veces falla 1·1440 (`--hdr-h` 84): lo
     publicado (`main`) falla igual o más (7 de 8 corridas en paralelo; la copia nueva 1 de 6). En `pub_mn` (rama `pub-ni`, `5ae4c4b`): la nueva
     52, temas 92, 3/10/11 29, fichas 13, visual 20, arriba 24, celular 35, estética 4mp 9, cupos 23, reprogramar 26, cierre 26, Halloween 22, Navidad 21.
+
+### §4pn — 🪶 LAS ALMOHADAS NO CUENTAN COMO PRODUCTOS EN EL CIERRE DEL DÍA (12-13/11; dueño, con la captura del cierre del 12/11: *«No deberían contar las almohadas, inflan los números en cantidad productos vendidos»*)
+- En la captura: Isabel «13 prod.» con 6 almohadas, Carola «12 prod.» con 4; el total «30 productos».
+- `.gs` `2026-11-13-a`: `waCdEsAlmohada_` (misma familia que `stockEsAlmohadaK` de la página, sin mayúsculas ni acentos) → `waCdProds_` no las suma; `waCdDetalle_`
+  las pone aparte, en cursiva, «+ N almohadas (no cuentan como productos): …». Los montos (Bs) no cambian. Sábanas/protectores siguen contando.
+- Página: solo `SCRIPT_VERSION_ESPERADA` → 2026-11-13-a (publicar DESPUÉS de que el dueño implemente). `test_wa_buen_dia_cierre` 143/0, `test_wa_13_25_26` 103/0,
+  `test_wa_bot` 253/0, `test_servidor` 414/0. `test_wa_equipo` 6b ya estaba rojo antes (fija la versión 09-a): no es de este cambio.
+- 👥 El mismo día: Eliana Vargas (76359297) a `WA_DUENO` como Alberto, con una función que el dueño corre en un archivo aparte (`agregarElianaUnaVez`) y
+  `probarMensajeAEliana` (le manda el cierre de hoy de prueba). El número NO va al repo.
+
+
+### §4po — 🛰️ EL GPS PROPONE EL CAMIÓN QUE FALTÓ (idea 133, 13/11)
+- Dueño: «136, 143, 129, 133» (aprobó la 133 de la lista de ideas). Problema: pedidos de hoy que salen sin camión asignado y el GPS igual los ve
+  (la parada de un camión a ≤ 300 m del pin, que el servidor 13-b nombra o la página reconoce con la misma regla, `gpsPedidosCerca`).
+- Página sola (`pedidos.html`, el `.gs` no cambia): `gpsCamionEntra` (hoy, sin `vehiculoDe`, sin sistema/borrador/venta de tienda/`fichaRetira`),
+  `gpsCamionPropDe(p)` → { veh = el camión que se paró (`gpsLlegadaDe`), chofer = `choferDeCamion(veh, pedidos de hoy)` (rotan, §4om) },
+  `gpsCamionPropuestas()` (en el orden en que el GPS los vio). Solo con `gpsDiaHay()`: sin el día del GPS no sale nada (Playwright igual que antes).
+- Dónde: cartel azul `#gps-cam-bar` (`gpsCamionHtml(list)`, solo lo que está en la lista) junto al de §4ok-106: en la tabla en `#adm-gps-ent`,
+  con las fichas antes del primer turno de hoy. En el Cierre de entregas: «· lo llevó <camión> · <chofer> 🚚 Asignar» en la fila (`gpsCamionCierreHtml`;
+  el botón no tilda el pedido) y una línea en el resumen del GPS (`gpsCamionCierreResumenHtml`).
+- Aceptar: `gpsCamionAsignar(id)` relee la propuesta (si ya tiene camión, no toca), pone camión + chofer y guarda con `persistPedido` → `guardarDurable`
+  (el camino de `setVehiculo`/`cvAsignar`); `gpsCamionAsignarTodos()` = todos los que siguen sin camión, un repintado y un guardado durable por pedido.
+  🚫 Nada se asigna solo. Lo de días anteriores no se puede proponer: el GPS_DIA es de hoy y no queda guardado (el cartel lo dice).
+- `tests/test_gps_camion.js` 22/0. Siguen bien: `test_gps_pagina` 58, `test_cierre_entregas` 26, `test_adm_fichas` 13, `test_camiones_admin` 40,
+  `test_gps_entregados_adm` 22, `test_choferes_rotan` 12. `PANEL_V`/`panel-version.json` NO se subieron (se suben al publicar).
+
+### §4pp — ⏳ COBRANZA: ANTIGÜEDAD DE SALDOS (136), LO QUE VA A ENTRAR (143) Y EL ESTADO DE CUENTA DE CADA MAYORISTA (129) (13/11; dueño, con las páginas «Contabilidad en el panel» y «Mejoras 128 a 135»: *«136, 143 , 129, 133»*; en la rama, espera «publica»)
+- Una ventana, «📅 Cobranza» en Contabilidad (`cbzAbrir`), con tres pestañas: 📅 Antigüedad de saldos, 📈 Lo que va a entrar y, en Mayoristas, 🏭 Por cliente.
+  Todo el historial de la planilla que se mira (Ventas o Mayoristas), con un vendedor elegible adentro (arranca con el de la pantalla).
+- Con la copia de la planilla del 12/11 (scratchpad, `cbz/ver.js`): el equipo debe Bs 110.469 de lo ya entregado en 46 ventas (44 clientes); más de 60 días
+  Bs 85.780 en 40 ventas (los mismos números de la propuesta del 09/11); por entregar Bs 47.383 (esta semana Bs 21.660), con Bs 32.990 ya cobrados de
+  adelanto. Mayoristas: Multicenter Bs 95.869 en 30 OC (Bs 31.008 de más de 60 días), Copacaba Bs 64.000, ROHO Bs 62.356, Tienda Amiga Bs 30.749.
+- «Pagó las tildadas» registra los pagos como Contabilidad de a uno (mismas obligaciones: banco, N°, comprobante). Decidido por mí: cada OC tildada queda
+  pagada ENTERA (un pago parcial va desde su venta) y una OC que alguien pagó mientras tanto se saltea. El comprobante se sube una vez y va en todas.
+- «Incobrable» (lo que decía la propuesta) NO se hizo: cambiaría «Falta cobrar» en todo el panel. Queda para cuando el dueño diga si un incobrable sale
+  de esos números.
+- `test_conta_4jw` cambió a conciencia (Revisar tiene 4 botones). `tests/test_cobranza.js` (34; sin `cbzAbrir` falla en la primera).
+- **Misma tarde, el dueño: *«La 136 sería con la 129? Solo los mayoristas se atrasan en pagar…»*** → la antigüedad de saldos queda SOLO en Mayoristas
+  (pestañas Por cliente · Antigüedad · Lo que va a entrar); en Ventas, solo «Lo que va a entrar». Lo que tenía el equipo «con más de 60 días»: 39 de las 46
+  ventas son de julio-agosto (los primeros meses del panel), 24 sin ningún pago anotado: casi seguro cobradas y no anotadas. Se le dijo; no se tocó nada.
+- **Revisión de Fable 5.2 con razonamiento alto (dueño: *«que Fable en alto revise los cálculos»*)**: totales iguales a «Falta cobrar», tramos sin corrimiento,
+  y el `metodoPago` de «Pagó las tildadas» idéntico al de `ctaRegistrarPago` en seis casos (adelanto, mixto, flete, REGISTRADO, suelto, centavos). Diez
+  hallazgos, todos arreglados: (1 MEDIA) «Asignar los N» del GPS asignaba también lo que el filtro escondía → `data-ids`; (2 MEDIA) las ventas de Eduardo sin
+  monto anotado se veían «al día» → `'sinm'` (14 en la copia del 12/11, 9 de Multicenter); (3) un guardado colgado trababa el botón → todo en memoria +
+  `Promise.all`; (4) lo tipeado mientras subía el comprobante se perdía; (5) «N clientes» por celular; (6) Luis Franco/Arce y nombres con variantes; (7)
+  efectivo sin chofer; (8) la pregunta contaba OC ya pagadas; (9) venta de tienda y ✅ adelantado; (10) GPS pisaba un chofer a mano y no avisaba lo aproximado.
+  Sus pruebas quedaron en `scratchpad/t/rev*.js`; las nuevas, en `test_cobranza` §9 y `test_gps_camion` §6b.
+
+### §4pq — 🧾 EL RETIRO PIDE EL N° DEL RECIBO DE ENTREGA Y 🔇 LA MÚSICA DE NOVIEMBRE SOLO EL 1 Y EL 2 (13/11; dueño, con una captura del formulario del retiro)
+- *«Ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el vendedor a Eduardo que entregó el dinero… arriba en la lista va
+  tildado qué ventas cubre… no?»* → sí: el campo «N° de notas que cubre este retiro» pasa a «N° del recibo de entrega» (el de la foto; se pueden anotar dos
+  si son dos recibos). Se guarda donde siempre (`nota`), que es lo que ya cruzaba el control del talonario; las ventas que cubre son los cobros tildados.
+  Tablas, texto del Cuadre y Excel dicen «N° del recibo». El bot «Ya lo recibí» (.gs) sigue anotando ahí las notas de venta (es Contabilidad con un chofer, sin
+  recibo firmado): no se tocó.
+- *«Quitá la música de ingreso, ya pasó el día de los muertos… ¿en noviembre viene Thanksgiving?»* → la melodía de Todos Santos se carga solo el 1 y el 2 de
+  noviembre (o con `?tema=todos-santos`), en el panel y en el dashboard. El tema visual de noviembre no se tocó. Thanksgiving no se celebra en Bolivia: se le
+  propuso Black Friday (27/11) en vez, sin hacer nada. `test_temas_mejoras` §4 (94).
+- *«¿Y si tienen dos recibos? 1 de lo facturado y otro de lo no facturado… y que explique ahí que se refiere si las ventas es con factura o nota remisión»*
+  → en el retiro, «¿De qué ventas es la plata?»:
+  · Explica: 🧾 Facturado = plata de ventas con FACTURA · 📄 No facturado = plata de ventas con NOTA DE REMISIÓN (lo que la vendedora anota en Contabilidad,
+    `docVentaDe`). Cada cobro de la lista lleva su etiqueta («🧾 con factura», «📄 con remisión» o «sin factura ni remisión anotada»).
+  · El tipo se propone solo con lo tildado (`retTipoDocs`) mientras nadie toque los botones (`tipoMano`): todo con factura → Facturado, todo con remisión →
+    No facturado, de las dos → «Las dos». La línea «De lo tildado arriba: 2 con factura · Bs 1.500 · 1 con nota de remisión · Bs 700» lo dice.
+  · «🧾+📄 Las dos (dos recibos)», solo en un retiro nuevo (editando, cada fila es un retiro de un tipo): dos campos de recibo («de lo FACTURADO» y «de lo NO
+    FACTURADO») y «¿Cuánto es lo facturado?» (propuesto = lo tildado con factura; el resto es lo no facturado). `guardarRetiroAmbos` arma DOS retiros con
+    `filaDeRetiro` (ids nuevos, la misma foto, «retiro en dos recibos: el otro es el N»), cada uno con los cobros de su tipo tildados (lo sin anotar va con
+    lo no facturado). Si lo tildado no da justo cada monto, pregunta. Frena: falta un recibo, el mismo recibo en los dos, lo facturado en 0 o = el total.
+  · Nada cambia en cómo se guarda o se lee un retiro: son dos filas como las de siempre, y el Cuadre, el Mayor y el bot las leen igual.
+  · `tests/test_retiro_dos_recibos.js` (16). De paso, `test_wa_er` §10 fallaba a veces con «Execution context was destroyed» (1 de 3 con la página de antes,
+    sin ninguna navegación ni pedido de página): el ✏️ Corregir + Guardar va ahora en su propio `page.evaluate`, 83/83 tres veces.
+
+### §4pr — 🛍️ MUESTRA DEL TEMA DE BLACK FRIDAY (13/11; dueño: «ok ármame la muestra de blackfriday», después de que se le ofreció en vez de Thanksgiving)
+- Tema `black-friday` en el panel y en el dashboard: negro con dorado. Arriba, una cinta amarilla con «BLACK FRIDAY ✦» que corre despacio (la letra va con
+  `textLength`, así mide lo mismo con cualquier fuente), la etiqueta dorada dibujada al lado de MULTIESPUMAS, la ciudad en gris oscuro y la calle con rayas
+  doradas. En `#hdr-fx`, etiquetas de precio que caen (las grandes con «%») y brillitos dorados. Fondo negro con etiquetas apenas visibles y un brillo
+  dorado abajo. Las tarjetas grandes en vidrio oscuro con borde dorado y la letra clara de lo que va directo sobre ellas (copia de las reglas de noviembre).
+  Bloki: una bolsa de compras negra con etiqueta a los pies, en los cinco trajes (ajustada para que entre en su dibujo de 232 de alto). Fábrica 3D: colores
+  del tema en `VIDA_TEMA_COL`. Barra de la ventana instalada: `#0a0a0a`. No dice descuentos ni ofertas.
+- **No se prende solo**: `BF_DIAS=null` en los dos `<head>`. Black Friday = el viernes después del cuarto jueves de noviembre (27/11/2026, 26/11/2027,
+  24/11/2028). Opciones que se le dieron: A solo el 27, B del 23 al 30 (con el Cyber Monday), C del 20 al 30; y si lo quiere también en el dashboard.
+- Contraste medido con `test_vidrio_agrandar` (pasada nueva con `?tema=black-friday`: 13 vistas, con pedidos y sin pedidos, 0 mal; contra la página de
+  antes, 3 rojas). 390 px sin correrse de costado en las cuatro pestañas. `test_temas_mejoras` 97, `test_bloki` 29.
+- La falla «3f la ventana de Bloki entra en la pantalla» de `test_vidrio_agrandar` salió una vez y en las dos repeticiones no: es de tiempo (300 ms).
+- Página para el dueño (capturas con clientes inventados y el encabezado en video): https://claude.ai/artifact/8DPvoK1VUiHnRvapnyvVhh.
+- **La cinta amarilla se sacó** (dueño, con la captura marcada en rojo: *«Eso que marqué de rojo no me gusta»*): fuera `header::before`, `bf-cinta` y el espacio
+  de arriba en el panel, y la cinta de la caja de la marca en el dashboard. Lo demás queda. No volver a ponerla. `test_temas_mejoras` 96.
+- **Los días** (dueño: *«C y sí también Dashboard»*): `BF_DIAS=[-7, 3]` en los dos `<head>` = del viernes 20 al lunes 30/11/2026 (en 2027, del 19 al 29). El
+  dashboard también. Va con el próximo «publica» (tiene que salir antes del 20/11). `test_temas_mejoras`: 19/11 Todos Santos, 20/11 00:01 y 30/11 23:59
+  Black Friday, 2027 corrido un día, y el dashboard igual.
+- **§4pr-b — Desde HOY** (13/11 al mediodía; se le explicó que salía el 20 y dijo *«que salga desde ahora»*): `BF_DIAS=[-14, 3]` en los dos `<head>` =
+  dos semanas antes del viernes hasta el lunes siguiente (2026: del 13 al 30/11; 2027: del 12 al 29/11). Página `2026-11-13-b` (`PANEL_V` y
+  `panel-version.json` juntos), publicada SOLA desde `main` (los plazos de Cobranza de la rama siguen esperando su «publica»). Pruebas cambiadas a
+  conciencia: `test_temas_mejoras` (12/11 Todos Santos, 13/11 00:01 Black Friday; 2027: 11/11 y 12/11; «noviembre del año que viene» pasa al 08/11/2027)
+  y `test_navidad` (el «noviembre = Todos Santos» pasa del 15/11 al 10/11).
+
+### §4ps — 🚀 PUBLICADO 13/11 (`828251f`): SERVIDOR 2026-11-13-a + PÁGINA 2026-11-13-a
+El dueño (13/11): *«listo implementado»* (el `.gs` de las almohadas, enlace fijo `0f1eefe…`, 8.104 líneas). El servidor contesta `2026-11-13-a`
+(verificado con una lectura). Se publicó la página `2026-11-13-a` con TODO lo de la rama desde la 11-a: §4pn (espera la 13-a), §4pp Cobranza
+(136/143/129 + los arreglos de Fable), §4po el GPS propone el camión (133), §4pq el retiro con el N° del recibo y los dos recibos (facturado /
+no facturado), la música de noviembre solo el 1 y el 2, y §4pr el tema de Black Friday del 20 al 30/11 (panel y dashboard). `PANEL_V` y
+`panel-version.json` juntos. Volver atrás del servidor: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
+Batería antes de publicar: 4 suites en rojo. `test_onclicks` era real (los ids `ret-nota-nueva`/`-r` se armaban con una variable: ahora van
+escritos enteros, `campo()` del retiro); `test_visual_4pj`, `test_actualizar_espera` y `test_astra_deshacer` dieron bien solas (inestables con la
+máquina cargada: 51/51 tres veces seguidas la visual). En `main` = `828251f` (los archivos de la rama copiados tal cual sobre `fec3743`).
+- 13/11 (después de publicar): el dueño sobre la OC 260013258 de ROHO (consignación de mayo, Bs 25.040): *«roho solo hay que facturarlo ya lo
+  facturé»*. No se carga. Queda en `herramientas/pedidos_correo/LEEME.md`: una OC de ROHO por consignación ya vendida es solo factura (no se carga
+  ni se pregunta). Sigue pendiente la medida del OP-03-11-26 de Copacaba Potosí.
+- 13/11: la OC 260013258 de ROHO quedó CARGADA como venta de tienda de Eduardo, **11-150** (dueño: «si hazlo»): cliente «ROHO CONSIGNACION TIENDA
+  1» (Cobranza la junta en ROHO; «CONSIGNACION» la saca de la demanda del stock), nota 260013258, 8 × CH2108 a 936 + 16 × CH2109 a 1.097 =
+  Bs 25.040 a crédito, día de la venta 12/11, factura (sin N°: el dueño no lo pasó). Probado antes en una copia: sin cupo, sin camión, sin bot,
+  no toca PTF/Banzer ni la rotación; suma a Mayoristas de noviembre en Proyección.
+- 13/11, ⏸️ EN ESPERA (dueño: «espera consultaré con gerencia»): plazos de pago en la Cobranza de mayoristas — ROHO 60 días, Tienda Amiga 30,
+  Multicenter 30 (lo dijo él). Nada programado: no tocar hasta que confirme. → Confirmados con otros números el mismo día: §4pt.
+
+### §4pt — ⏳ EL PLAZO DE PAGO DE CADA MAYORISTA EN COBRANZA (13/11; dueño, después de consultar con gerencia: *«ROHO 120 DIAS · TIENDA AMIGA 60 dias · MULTICENTER 60 dias · copacaba 15 dias · luis franco 15 dias»*; PUBLICADO 13/11 con la página 2026-11-13-b, §4pv)
+- `CBZ_PLAZOS` por el nombre de la ficha (`cbzMayCliente`); un cliente que no está paga al entregar (plazo 0: vence el día de la entrega).
+  Plazo en días CORRIDOS desde la entrega agendada (la venta de tienda, desde el día de la venta: `fechaSalida` → `contaFecha`).
+- Solo Mayoristas (`contaAmbito()==='mayor'`): `cbzConPlazo` le pone a cada deuda `plazo`, `vence` y `venc` (= `diasEntre(vence, hoy)`; un ✅
+  adelantado vence desde SU fecha) y el tramo del vencimiento (`CBZ_TRAMOS_MAY`: pv / v30 / v60 / v60m / sinF). En Ventas sigue d7/d30/d60/d60m.
+- Antigüedad: «Vencido (pasó su plazo)», «Por vencer», «Vencido hace más de 60 días»; de la más atrasada a la que vence más lejos; cada fila
+  «a N días · vencida hace N d / vence en N d». Copiar y Excel con PLAZO / VENCE / DÍAS VENCIDA al FINAL del detalle (las de antes no se mueven).
+- Por cliente: «⏳ Paga a N días», Vencido / Por vencer y el próximo vencimiento en la ficha; en el detalle cada OC con «vence dd/mm», «Las vencidas»
+  (reemplaza «Las de más de 30 días»: tilda lo vencido y lo sin fecha) y el estado de cuenta (copia y Excel) con el plazo, VENCIDO / POR VENCER y
+  las columnas VENCE y DÍAS VENCIDA al final. `cbzMayDatos` deja `plazo, venc, nVenc, v60m, maxVenc, pv, nPv, prox` (ya no d30/d60/d60m).
+- Con la copia de la planilla del 13/11 a la mañana (sin la 11-150): Bs 312.616 entregado sin pago en 72 OC → **vencido Bs 139.649 (15 OC)** y por
+  vencer Bs 172.967 (57). Vencido: Copacaba 53.050 (5 OC, la más atrasada 69 d), Multicenter 31.008 (5 OC, 32 d) y los que no tienen plazo: CAMSA
+  30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662, «VILLAREAL» 1.813 y «SEÑORA VILLAREAL» 1.641,50 (dos fichas). ROHO, Tienda Amiga y
+  Luis Franco: todo por vencer (Tienda Amiga vence lo primero el 14/11).
+- `tests/test_cobranza.js` → 50 (§5b y §6-7 cambiaron A CONCIENCIA: iban por días desde la entrega; §10 nueva: ROHO 120 = por vencer, CAMSA al
+  entregar, Ventas sin cambios).
+- Preguntado al dueño y contestado (13/11): (1) CAMSA, Karina Torrico, Electrocenter → *«al entregar»* (plazo 0, como ya estaba); (2) «VILLAREAL» y
+  «SEÑORA VILLAREAL» → *«son de Multicenter»* (entregas a domicilio de Multicenter con el nombre del cliente final; 09-332 dice «mandar por correo factura a
+  viviana», 10-034 lleva su OC 32458): `cbzMayCliente` las manda a Multicenter por `CBZ_MAY_ALIAS` y, en general, por «multicenter» en la nota o «Facturar a»
+  (la 09-163 «pedido de multicenter es…», ya pagada); (3) *«me confundí, Tienda Amiga es 120 días, ROHO y Multicenter 60»* → `CBZ_PLAZOS` corregido. La nota
+  de la 11-150 («Plazo de pago de ROHO: 60 días») queda bien como está.
+- Con la copia del 13/11 y los plazos corregidos: vencido **Bs 136.195 (13 OC)** — Copacaba 53.050 (5, la más atrasada 69 d), Multicenter 31.008 (5, 32 d),
+  CAMSA 30.675 (83 d), Karina Torrico 16.800 (77 d), Electrocenter 4.662 (24 d) — y por vencer Bs 176.421 (59). Multicenter debe 99.324 en 32 OC (con las dos
+  de Villarreal, por vencer). ROHO 62.356 y Tienda Amiga 30.749, todo por vencer. `test_cobranza` → 52.
+
+### §4pu — 💵👆 «EFECTIVO POR RETIRAR» SE TOCA (13/11; dueño, con la ficha del Cuadre marcada en rojo: *«al dar clic ahí no pasa nada, ¿cómo veo o qué
+debería mostrar? ¿quién tiene la plata? ¿cuándo, dónde se cobró o qué cliente?»*)
+- La ficha «Efectivo por retirar» del Cuadre (y «Le queda en la mano» de la tabla) abren `abrirEfectivo(q, 'mano')` → `abrirEfectivoMano`: SOLO lo que sigue
+  sin recoger, por persona (vendedor/a o chofer), con día y hace cuántos días, cliente, OC y nota, vendedor (con «Todos»), dónde (`efeManoDonde`: la tienda de
+  quien la recibió, o «🚚 en la entrega · zona»; el panel no anota el lugar exacto del cobro), lo parcial («Bs 400 de Bs 1.000 · Bs 600 ya retirado»), el
+  faltante del mes anterior, los retiros que no tapan nada, el más viejo y el último retiro. Con una vendedora elegida, lo de sus ventas que tiene un chofer va
+  aparte («🚚 + Bs X lo tiene el chofer»). Copiar, «👁 Ver todo lo cobrado y los retiros» y «💵 Registrar retiro». Tocar un cliente abre su venta y «← Volver
+  al efectivo por retirar» (`EFE_VER_SOLO`). Retirado de más abre la lista de siempre. La cuenta es la de la ficha (`cuadreEfectivo` → `efePareo`).
+- `tests/test_efectivo_por_retirar.js` (19). `test_efe_pareo`, `test_efe_regla`, `test_efectivo_fecha`, `test_chofer_efectivo`, `test_cuadre_alta`,
+  `test_rev2_cuadre`, `test_por_cobrar` siguen bien.
+
+### §4pv — 🚀 PUBLICADO 13/11: PÁGINA 2026-11-13-b (dueño: «si publica todo»)
+- Black Friday desde hoy (§4pr-b, `BF_DIAS=[-14, 3]`: del 13 al 30/11, panel y dashboard), los plazos de pago de cada mayorista en Cobranza (§4pt) y
+  «Efectivo por retirar» que se toca (§4pu). `PANEL_V` y `panel-version.json` juntos. El servidor no cambió (sigue 2026-11-13-a).
+- `herramientas/pedidos_correo/` sigue solo en la rama (como siempre: no se publica).
+
+### §4pw — 🌅 BLACK FRIDAY SEGÚN LA HORA + 📅 EL MES DE ATC = LO QUE ENTRÓ ESE MES (13/11; dueño: «si publica»; PUBLICADO, página 2026-11-13-c)
+- **El cielo** (dueño, con la captura de las 16:15: *«el fondo no iba por hora del día, el sol bajando y etc.?»*): el cielo por la hora (§4pj) andaba, pero es
+  un velo transparente y sobre el negro de Black Friday no se veía (solo el sol). Ahora en Black Friday el `--grad-header` del `.header` cambia con
+  `[data-momento]`: amanecer violeta, día azul, atardecer anaranjado, noche negra; la ciudad se aclara de día. Las ventanas (`.modal-h`, `.fh`, `.pap-cab`)
+  siguen negras (el `--grad-header` de `html` no cambia). `test_temas_mejoras` §2 (los cuatro momentos).
+- **ATC por mes** (dueño, con la captura de noviembre: 44 = 10 de noviembre + 34 abiertas de agosto-octubre: *«filtro ATC por mes para ver los "problemas" del
+  mes y me muestra ATC desde agosto… ¿no funciona el filtro?»*): el mes muestra SOLO lo que entró ese mes (fichas, el viaje, los motivos, la tabla). Las abiertas
+  de meses anteriores —lo que pidió el 11/09, §4ea— se suman tocando la ficha «ATC en el período» («hay N abiertas de meses anteriores · Tocá para sumarlas»;
+  otro toque vuelve), por aparato en `me_atc_viejas`. El informe PDF ya era así (§4le). `tests/test_atc_mes.js` (11).
+
+
+### §4px — 🎯📧🏪📍🛍️🏭 LAS MEJORAS 174-185 Y LAS QUE SIGUIERON (13/11; dueño, con la página «Mejoras 174 a 185»: *«174, 175, 177, 178, 179, 180, 181 (solo a Eliana), 182, 183, 185 y dame MAS MEJORAS»*; con «Mejoras 186 a 197»: *«190, 193, MAS MEJORAS»*; con «Mejoras 198 a 209»: *«203, 204 (y cuántas entregas de cada tienda… cuántas entregas hizo cada camión o chofer en el mes de cada tienda para ver los totales), 207»*; y después: *«avisás que esté y publicás»*)
+- Se programaron en paralelo, un agente por grupo en su worktree (ramas `mej-a`…`mej-j`), y se juntaron en la rama. Detalle de cada una en CLAUDE.md
+  («Las mejoras 174-185»).
+- **174/175** metas por vendedora en la ventana de Metas y el dashboard que las lee (`metas_del_panel`, no esencial). **177** Black Friday en números
+  (`bfnDatos`). **181** el lunes 08:00 lo vencido de los mayoristas SOLO a Contabilidad (servidor `2026-11-13-b`). **182** el estado de cuenta al correo.
+  **183** el efectivo por retirar por tienda. **185** las ubicaciones que faltan para hoy y el próximo camión.
+- **185, ajuste mío al juntar**: con la planilla real del 13/11 la lista sacaba «Roho» (Tienda 1) y dos pedidos de FABRICA. `ubfEntra` deja afuera Eduardo,
+  ROHO y los internos, la misma regla que el bot (`nxBotManda`). `test_ubic_faltan` +1.
+- **177**: la cuenta de `BF_DIAS` del `<head>` es ahora `window.bfCampana(año)` (el tema no cambió; el dashboard sigue con su propia copia de `BF_DIAS`).
+- **181**: el agente agregó un renglón «🧾 Sin monto anotado» (dato 6) que el dueño no pidió; se le dice. Una OC entregada sin fecha cuenta como vencida (la
+  regla de la ficha «Por cliente»).
+- Propuestas nuevas: «Mejoras 186 a 197» (https://claude.ai/artifact/4CwPyCjqm9bxCiQpxWYMHP) y «Mejoras 198 a 209»
+  (https://claude.ai/artifact/1RAFDbqRaBryhtz5FBNU5e), con números de la planilla del 13/11 (precios bajo la mediana, QR BISA de noviembre, deuda de
+  Copacaba/Multicenter, stock que no rota, 52 de 133 entregas de noviembre sin camión, 56 formas de escribir la zona, 34 celulares con dos nombres).
+- **Después**: 190 (comisión en «Tu día», `ccmCuenta`), 193 (Qué ofertar; ajuste mío: precio ≈ con la mediana de todo lo cobrado por el producto cuando ningún
+  código junta 3 ventas — con la planilla real bajó de 40 a 30 los «sin precio»), 178-180 (ATC y calidad; **pregunta abierta**: si las ventas de Eduardo cuentan en
+  «cada 100 vendidos» — con ellas ORO 7,2 % y TITANIO 7,7 %, sin ellas 9,1 % y 8,8 %), 203/204 (camión en el cierre y entregas por camión/chofer/tienda; probado con la
+  planilla real de noviembre), 207 (Dónde se vende) y el GPS de la 204 en el servidor 13-b (hoja «Historial GPS», `gpsHist`).
+- **Batería** sobre la rama (antes del GPS): 4 rojas — test_anuncio y test_actualizar_espera, que ya fallaban (relojes fijos de octubre), y test_asistente_rev y
+  test_visual_4pj, que solas pasan (17/0 y 51/0: carga de la máquina). En la copia de publicación (main + los cambios, servidor 13-a): test_servidor 414/0, test_wa_bot
+  253/0, test_version_nueva y las nuevas en verde.
+- **Publicado** 13/11 como página 2026-11-13-d, SIN el `.gs` 13-b ni sus pruebas (`test_servidor`, `test_wa_bot`, `test_wa_mayoristas`, `test_gps_historial`) y con
+  `SCRIPT_VERSION_ESPERADA` en 13-a; las columnas del GPS aparecen solas cuando el servidor conteste 13-b (`servidorTiene`). Al implementar el dueño: llevar a `main` el
+  `.gs`, esas pruebas y la ESPERADA en 13-b.
+
+### §4py — 🛏️🕓🧾📅⚡ LAS MEJORAS 211, 212, 216, 217 Y 218 + LA PÁGINA 222-233 (14/11; dueño, con «Mejoras 210 a 221»: *«211,212,216,217,218, y dame maaaaaas mejoras visuales, facilidades etc»*)
+- Un agente por mejora en su worktree (`mej-211`, `mej-212`, `mej-216`, `mej-217`, `mej-218`), juntadas por `cherry-pick` en la rama; los choques fueron solo
+  el CSS del final del último `<style>` (se dejaron todos los bloques). Detalle de cada una en CLAUDE.md («Las mejoras 211, 212, 216, 217 y 218»).
+- **211** el dibujito de cada producto (`prodIcoTipo`/`prodIcoHtml`, solo dibujo, sin letras) en la ficha y las fichas de Administración, la Lista de carga,
+  Mis pedidos y la columna del formulario. **212** la historia del pedido (`fH` en los productos + `pedHistHtml`). **216** «🧾 Leer la nota» (servidor).
+  **217** el cliente elige el día nuevo por el bot y logística lo mueve (servidor). **218** las frases rápidas arriba de las observaciones (`frq*`).
+- **Arreglo al juntar** (lo encontró el agente de la 212, viene de §4pl): después de un `conflicto`, `ENT_SRV` no tomaba el ✅ de la fila de la planilla y el ✅
+  que había puesto otra página sin F5 se le anotaba a quien guardaba después. `entSrvAnotar(actual)` en el camino del `conflicto`; `test_entregado_quien` 7b.
+- **Servidor `2026-11-14-a`** = la 13-b (que el dueño no implementó todavía) + 216 + 217. La página muestra «Leer la nota» y los pedidos de cambio de día
+  solo con servidor ≥ 14-a (`NOTA_SERVIDOR`, `RD_SERVIDOR`): se puede publicar la página antes.
+- **Dudas que quedan para el dueño**: 217 ofrece solo días DESPUÉS del que tenía el pedido (`RD_ANTES_DEL_DIA=false`), habla de tú, «No, dejarlo» no le
+  avisa al cliente, logística puede recibir dos avisos (el urgente de Claude y el del día elegido), sin Claude no hay botones. 218: prender un botón por lo
+  escrito a mano y tocarlo borra ese pedazo. 212: lo que manda el bot no está en la historia (haría falta el servidor); `FH_DESDE` = el día de publicar.
+- Propuestas nuevas: «Mejoras 222 a 233» (https://claude.ai/artifact/JvSwRpgf1S9hW2cGHqC1GF), con números de las 137 ventas del equipo de noviembre.
+- **Respuestas del dueño (14/11)** a las dudas de la 217: *«1. Cómo está, 2. Como está, 3. Como está»* — solo días después del que tenía, «No, dejarlo» no
+  le avisa al cliente y el bot habla de tú. Y la 216: *«lo de llenar con la foto de la nota que solo aparezca al poner la contraseña, de momento la probaré yo»*
+  → `notaLeerVe` pide `UNLOCKED` (y `tryUnlock` repinta la barra); `test_leer_nota_pagina` b2.
+- **218 sin «🕐 Horario…»** (dueño, 14/11: *«En observaciones botón hora no me convence ya que no tenemos horas específicas»*): quedan cinco botones. Se sacó
+  la entrada de `FRQ`, su lectura en `frqSpans` (la palabra «HORARIO» sigue cortando la frase del edificio) y la etiqueta «🕐 Horario: …» que la 218 le había
+  sumado a `fichaObsChips`; la hora escrita a mano la sigue leyendo `fichaNota` como antes de la 218. `test_frases_rapidas` 57/0 (1a-1b, 4, 5f, 6f-6g, 11).
+- Propuestas nuevas: «Mejoras 234 a 245» (https://claude.ai/artifact/ScavVWoAWbvumoE6xNHTxj), con los números de noviembre.
+- **Servidor `2026-11-14-a` IMPLEMENTADO el 14/11 por el dueño** (copió el `.gs` del enlace fijo `f22f45b…`, 8.941 líneas; probar ✅; Nueva versión). Lo
+  comprobé desde acá con `{action:'getlog'}` (devuelve solo la versión y las firmas de GET): contesta `2026-11-14-a`. Con eso se prenden en la página YA
+  publicada (13-d) la 181 (lunes 08:00 a Contabilidad, falta que Meta apruebe `mayoristas_vencido` con `crearPlantillasWhatsApp`) y el GPS de la 204
+  (la hoja «Historial GPS» se llena a las 21 h). `main` sigue con el `.gs` y ESPERADA en 13-a (la página publicada dice en gris «el servidor ya está en
+  14-a»): se pasan con la página de 211-218. Volver atrás: ✏️ a la versión anotada Y pegar la 13-a de `0f1eefe…` (8.104 líneas).
+- **PUBLICADO 14/11** (dueño: *«si publica»*): la página `2026-11-14-a` con 211, 212, 216 (solo con la contraseña), 217 y 218 (sin «🕐 Horario…»), el `.gs`
+  14-a y `SCRIPT_VERSION_ESPERADA` 14-a en `main` (por `cherry-pick` de los commits del cambio; las pruebas del servidor 13-b —`test_gps_historial`,
+  `test_wa_mayoristas`— entran con él). `FH_DESDE`='2026-11-14' = el día de publicar.
+- **Novedades para los grupos (14/11)**: la última lista fue la del 07/11 (hasta la 07-f); la nueva junta todo lo publicado del 07 al 14/11 por área, con
+  «Copiar para WhatsApp»: https://claude.ai/artifact/EL6suf9gmeCy5iwSEcCQ7r. Las metas de noviembre YA están guardadas (`__metas__` → `m['2026-11'].vd`, 10
+  vendedores): «Tu comisión» de «Tu día» ya se ve.
+- **Mejoras 246 a 257 · la tienda del mall** (dueño, 14/11: *«tendré 4 vendedores en un mall con un flujo impresionante de gente, necesito optimizar más aún
+  el panel»*): https://claude.ai/artifact/712WNCvPh54e4gJHxyRuBU. Datos: 140 ventas del equipo del 01 al 14/11, 40 % de tienda, 66 % con QR, hora pico 18-19 h;
+  Kommo «Visita tienda» compra el 46 % (24 de 52) contra 2 % de Facebook; en una tablet con la CPU 6× más lenta el panel abre en 2,8 s (0,6 s en una compu), lee
+  la planilla en 0,7 s y da el primer saldo en 0,8 s; publicado pesa 1,1 MB comprimido (3,6 MB achicado). Recomendadas: 246 + 247 + 249 + 254, después 251 (servidor).
+- **La tienda del mall en detalle + 258 a 281** (dueño, 14/11: *«246 (te diré solo a quiénes debe aparecer eso), 247 sería venta "salió de tienda"…
+  248 nadie se lleva su colchón de un mall, así que la 247 obsoleta. 251… 252… 253 cómo se rige… al final del día debería ser equitativo. 254 más detalles para
+  mostrarle a contabilidad, 256… dame MUCHO MÁS MEJORAS»*): https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc. 247 y 248 descartadas; 246 espera la lista de
+  quién lo ve. En detalle: 251 (visita anotada → lead de Kommo «Visita tienda» + WhatsApp + seguimiento), 252 (contador: solo «👀 Solo miró» se toca, lo demás
+  sale solo; en la barra, Tu día, la caja, Proyección y el cierre 21:15), 253 (rueda: 7 reglas, «Es mío», pausa, «¿Fue parejo?» ±1 turno, al día siguiente
+  arranca el que tuvo menos), 254 (Contabilidad → «🏬 Caja por tienda»: ventas, cobros, efectivo = quedó + cobrado − retirado contra lo contado, QR contra el
+  extracto, lo que falta, 🔒 cerrar, Excel de 4 hojas, PDF con firmas) y 256 (meta de hoy = lo que falta del presupuesto ÷ días hábiles que quedan). Ideas
+  nuevas 258-281 por grupo; recomendadas 253 + 252 + 251 + 254 + 256, y 258 y 266. Nada programado.
+
+### §4pz — 🏬 LA TIENDA DEL MALL HECHA (14/11; dueño: *«251 sí como cotización… 252 me gusta (solo mall), 253 ok, 254 ok, 256 ok, 264 como sería, 266 ok, 267 ok, 271 ok, 273 ok, 274 ok mostrame como sería, 276-281 ok»*, *«253 pero son 2 en un turno y otros 2 en otro turno»*, *«254 sería solo para tienda ventura sur»*, *«264 sí pero lo revisaremos y diseñaremos el formato y debe llevar un QR también»*, *«274 armalo pero que aún no funcione… debemos probar»*)
+- Hecho con 8 agentes en worktrees y juntado en la rama (sin publicar). Página para revisar con capturas inventadas: «Mall listo para revisar».
+  Detalle de 251/264/274: https://claude.ai/artifact/JAzjpfSs9MmECjetFv2ZyZ. La tienda del mall en detalle: https://claude.ai/artifact/GHk9pU7JwxXZPDF55io8dc.
+- **Servidor `2026-11-14-b`** (sobre la 14-a): hoja «Mall» (`mallToque` idempotente por id, afuera del candado de doPost; `mallLeer` con hoy desde la caché),
+  `__cupos_extra__` (el portero suma, tope 20, no abre turnos cerrados) y `__caja_tienda__` en `SISTEMA_JUNTA_OPCIONAL`, `apartarCupo`/`soltarCupo` + `apartados`
+  en `list` + `aparto` en el save, `venta_grande` (≥ `VENTA_GRANDE_BS`, 8.000 de entrada; 0 apaga; solo al primero de WA_DUENO, con el repaso del bot), hoja
+  «Cotizaciones» (`cotGuardar`/`cotMarcar`/`cotLeer`, «COT MM-NNN»; una llamada con la misma `llamada.t` no se repite), Kommo de la cotización APAGADO salvo
+  `KOMMO_COT=1`, y el bot de las 48 h APAGADO salvo `COT_BOT=prueba` (solo WA_PRUEBA) o `1` (plantillas `cotizacion_seguimiento` con 3 botones `cs|<id>|…`,
+  `vendedora_llamar_cliente`, `cotizacion_sin_llamar` a las 2 h). `tests/test_servidor_mall.js` (82), `tests/test_servidor_cot.js` (85).
+- **252/253/273** (`mall*`, la barra `#mall-barra` arriba de las pestañas): solo con servidor ≥ 14-b (`mallPuede`), en el aparato marcado
+  «🏬 Esta compu es la del mall» (`me_mall_aparato`) o con un vendedor de `MALL_TIENDA='Ventura Mall'`. Cola durable `me_mall_cola`. Funciones puras que usan
+  otros: `mallEstado`, `mallResumenDia` (porHora [{h,at,co}], porVend {v:{at,co,…}}), `mallParejo`. «Es mío» va aparte de la rueda. Turno por la hora del
+  «Llegué» (`MALL_CAMBIO_TURNO='15:00'`). Una venta nueva cuenta sola (`mallVentaHecha`); una cotización, como «anotó» (`mallCotHecha`).
+  `tests/test_mall_rueda.js` (67). ⚠️ Hoy NINGÚN vendedor es de Ventura Mall en `VENDEDOR_SUCURSAL`: faltan los nombres de los 4.
+- **254/256**: `cajaAbrir`/`cajaResumenDia`/`metaDiaTienda`/`metaDiaDatos`; `CAJA_TIENDAS=['Ventura Mall']`; la suma de las cajas = el Cuadre de la tienda
+  (`test_caja_tienda` §8). `cajaMallNorm` lee la forma de `mallResumenDia`. `tests/test_caja_tienda.js` (47), `tests/test_meta_dia.js` (32).
+- **266/267**: `cupx*` (abrir cupos con la contraseña, `limTurno` = base + extra), `cupPron*` (el aviso), `aparto*` (el lugar apartado, solo con 14-b;
+  `sendBeacon` al cerrar). `tests/test_cupos_mall.js` (58).
+- **271**: modo práctica (`practica*`, script al principio del `<head>`): por pestaña, frena toda escritura en `apiPost` y en fetch/XHR/beacon salvo
+  `PRACTICA_LECTURAS` (con `mallLeer`/`cotLeer`), capa aparte de localStorage, sin WhatsApp/correo. ⚠️ Una acción NUEVA de solo lectura va en
+  `PRACTICA_LECTURAS`; una de escritura queda frenada sola. `tests/test_modo_practica.js` (54).
+- **251/274**: el 4° tipo «🧾 Cotización» (`cot*`, `docTipoSel()==='COT'`), cola `me_cot_cola`, imagen en canvas, «Para hacer» y el tablero en Proyección;
+  la venta que compró lleva `cot:<id>` en los productos (`heredarMarcas`). `tests/test_cotizar.js` (53).
+- **264**: el certificado (`cert*`) SOLO con la contraseña o `?cert=1` (`CERT_PARA_TODOS=false`), `CERT_ANOS` todo en null («a definir», etiqueta BORRADOR),
+  QR de `qrcode-generator` 1.4.4 por jsDelivr y cdnjs de respaldo (desde la sesión no se pudo abrir ninguno: probarlo en un aparato), `CERT_QR_MODO='datos'`.
+  La compra en la ATC (`atcCompra*`) prendida para todos. `tests/test_certificado.js` (58).
+- **276-281**: «🏬 El mall» y «📡 El mall en vivo» en Proyección (`mallAn*`, `mviv*`), con la contraseña; atajo `#envivo` en el manifest y en
+  `escritorio.js` (`?v=20261114a`). `tests/test_mall_analisis.js` (60).
+
+### §4pz-b — 🔎 La auditoría de Fable del mall (14/11; dueño: *«No publicaremos nada aún. Sin antes listar qué se está haciendo o se hará. Y Fable audite»*)
+- Cuatro revisores Fable (servidor, mostrador+caja, cotización+certificado, práctica+cupos+análisis) sobre `6e01cbc..3e33a76`: **ninguno encontró algo que
+  cambie lo de siempre** (otras tiendas, Contabilidad, Cuadre, cupos, bot, Kommo). 38 hallazgos dentro de lo nuevo; arreglados por cuatro agentes en
+  worktrees y juntados en la rama (sin publicar): `622acfe` (servidor), `070487a` (cotización/certificado), `f74a24b` (mostrador/caja), `d74a255`
+  (práctica/apartado). Scripts de los revisores en el scratchpad (`fable_srv/`, `fable_cot/`, `fable_mostrador/`, `fable_practica/`).
+- **Servidor (sigue `2026-11-14-b`, 10.100 líneas)**: el modo prueba del bot de cotizaciones usa su propia propiedad **`COT_PRUEBA`** (lista de celulares),
+  ya no `WA_PRUEBA` (que desvía TODO el bot); el bot de las 48 h solo mira cotizaciones de 48-96 h con `vence ≥ hoy` (las otras `bot='no_va'`); un error
+  de Meta deja `bot='error'` + `botErr` (columna nueva al FINAL de `COT_ENC`); `cotizacion_sin_llamar` solo con `estado==='abierta'` y las 2 h en horario
+  de tienda (`cotTiendaMas_`, lun-sáb hábil 09-20); el cliente oye «hoy / mañana temprano / el lunes temprano» (`cotCuandoLlama_`); **apartados**: uno por
+  aparato y turno (el nuevo suelta el anterior), tope 3 por día+turno (`apartados_tope`), vida 30 min desde `c`, el portero no cuenta como «de otro» el
+  del aparato que guarda (`body.aparato`, `apartadosOtrosDe_`) y `doSave` lo suelta; `RECHAZOS_NO_ANOTAR` (apartar/soltar/cot*/mall* no van a «Rechazos»);
+  `VENTA_GRANDE_BS` «8,000» = 8000 y ⚠️ si queda < 500; `__cupos_extra__` pide `forzarOk_` (con claves puestas); `fechaReal_` en mallLeer/cotLeer; Claude no
+  ve la cotización sin `cotBotPara_`.
+- **Página**: `payload.aparato = apartoAparato()` en TODO save (también la cola) y `adminKey` al guardar `__cupos_extra__`; el id del apartado de una venta
+  que cae a la cola va en `me_aparto_cola` (como `me_forzar_cola`); respuesta tardía de `apartarCupo` → se suelta; huérfanos del mismo aparato se sueltan
+  (`apartoHuerfanosSoltar`, salvo otra pestaña viva `me_aparto_vivos`, la cola o un pedido en el aire). Práctica: `navigator.share` frenado; no se entra con
+  guardados reales en la cola (`#pr-cola`); filas `__…` reales con `rev` mayor ganan (`PR.vio`); salir cancelado se repone a los 2 s. Cotización:
+  `COT_FIRMES` (solo esos «no» son firmes; `ocupado` y lo desconocido se reintentan), «🔗 Ya está cargada: elegir la venta», «Compró» → venta de tienda
+  conserva cliente y productos (`cotVentaFoto`/`cotVentaReponer`), «Cotizar» con pedido a medio cargar pregunta (`cotFormMedio`), la ventana de llamadas
+  repone lo escrito, «Renovar» reintenta sobre el `conflicto` (`op.re`), `abiertas:true`, `certBloqueHtml` con try (`certBloqueArmar`), «el bot les escribió»
+  = `cotBotEscribio`. Caja: el arqueo no repinta en el `change` (`cajaArqueoTextos`, `CAJA_APRIETA`), no guarda con servidor viejo
+  (`REESCRITAS[id].puede`), «💵 De ventas de otra tienda» (`E.ajenos`, sin cambiar totales), los dos interruptores del aparato se avisan; `mallEnviar` sin
+  bucle; `esc` en la medida de «El mall con números»; el en vivo muestra «Falta» de la caja.
+- **Quedan para el dueño** (no se tocaron): la hora del cambio de turno del mall (`MALL_CAMBIO_TURNO='15:00'`, el turno sale de la hora del «Llegué»),
+  «Pausa»+«Volví» al frente, la venta cargada sin «Atiendo» (hoy cuenta como cliente de la rueda), y el celular obligatorio en la cotización (así lo
+  aprobó; el revisor lo esperaba opcional porque el encargo se lo dijo mal).
+
+### §4qa — 💡 MEJORAS 282 A 343 (15/11; dueño: *«Más mejoras visuales, estéticas, funcionales, ¡mucho mucho mucho más!»*)
+- Seis agentes (visual, facilidad/velocidad, vendedoras, logística/stock, contabilidad, dueño) con la planilla del 15/11 01:03 (solo noviembre),
+  reglas en `scratchpad/mejoras_282/BRIEF.md`; 65 ideas, 3 juntadas (la factura con el N° que sigue, los avisos viejos de Contabilidad, «Salió» = confirmar
+  el turno) → **62**, 282-343, cada una con su demo (datos inventados). Página: https://claude.ai/artifact/Q89KyMFKaD1TXEr7rppMc5. Nada programado.
+- ⚠️ Dicho arriba de la página: (1) el WhatsApp de los lunes 08:00 a Contabilidad (`mayoristas_vencido`, 181) dirá Bs 136.195 vencidos de Bs 345.106 porque
+  de 99 OC de mayoristas solo hay 4 pagos anotados en el panel (idea 322); (2) logística dejó de anotar el camión (12-14/11: 2 de 53; 12-31/10: 241 de 264;
+  el 16/11: 0 de 22) y no hay tildes de carga ni «🚚 Salió» desde el 26/10 (idea 312).
+- Ojo para quien use el arnés con una planilla bajada con `cargar_pedidos.leer()`: la lista no trae `ok:true` y el panel la rechaza; agregar `ok`, `version`, `ahora`.
+
+### §4qb — 💬🤖🧠🏆 LAS MEJORAS 344-389 PROGRAMADAS Y JUNTADAS (16/11; dueño: «286. Añádelo / 344: 3C,5B / 345…389», «1A, 2B», «Cada tienda carga al sistema sus ventas propias», mayoristas «A»)
+- Siete agentes en worktrees; el límite de uso los cortó de noche y se retomaron a las 06:10 UTC. Juntadas en este orden: ia3 (359/360/364), ia2 (356/362), chat (344),
+  fun (379-389), ia1 (345/347/349/353), vis2 (368-377, 385), vis1 (366, 371, 372, 374, 376, 378). Choques: todos «agregados en el mismo lugar» (`probarAntesDeImplementar`,
+  el despacho de `doPost` después de `leerNota`, los bloques del final del `.gs`, `esFilaSistema`, `PRACTICA_LECTURAS`, `heredarMarcas` (rc/pH + cmp/oia), la ficha de
+  Contabilidad (366 la partió en bloques; la 379 y la 380/383 van en `acciones` y `arriba`)). ⚠️ Al juntar dos bloques del final del `.gs`, la llave de cierre del
+  primero queda AFUERA del conflicto: hay que reponerla (`node --check` lo avisa).
+- Servidor `2026-11-16-a` (SCRIPT_VERSION, ESTA_VERSION, SCRIPT_VERSION_ESPERADA) + la regla del bono Titanio copiada al `.gs` (`waAlDiaBonoCumple_`, `test_bono_al_dia_gs`).
+- `test_atc_lista_arriba` cambió a conciencia: la caja `atc-ia` (359) no cuenta en el orden de la 375. `test_actualizar_espera` 4c/5a falla igual con `main`: no es de esto.
+- Ideas visuales 390-440 (4 agentes, fotos de antes y después): https://claude.ai/artifact/UiXo1B76sghNpj2XpYW183.
+
+
+
+### §4qc — ROHO: pedidos sin nombre de cliente (16/11)
+El dueño subió `DETALLE_NOTA_DE_VENTA_PARA_PROVEEDO_7.xlsx`: *«algunos pedidos salen sin nombre de cliente siendo que están… eso es gravísimo si no tomas
+todos los datos… revisá qué pasó y cómo no vuelva a pasar»*.
+- **Lo que pasó**: 18 pedidos de ROHO (notas 195621-195980, entregas 17-28/11) creados el sábado 15/11 entre 21:37 y 21:47 con TODAS las columnas del
+  cliente vacías (nombre, celular, dirección, NIT, quién recibe), solo nota/fecha/productos/pagado. Con el mismo Excel, el importador publicado (también
+  achicado) y el de la rama leen las 54 notas con nombre. Los 18 se crearon de a dos, intercalados y sin esperar la respuesta del anterior (el botón crea de
+  a uno en el orden del Excel): no salieron del botón con ese archivo (otro archivo u otro programa usando la página). La carga de las 08:12 del 16/11 salió bien.
+- **El agujero**: el importador solo exigía nota, fecha y producto; sin la columna del cliente (o con el título cambiado: «NOMBRE DEL CLIENTE»,
+  «DIRECCIÓN», «TELÉFONO») importaba igual, en silencio. Además tomaba el nombre SOLO de la primera fila de la nota y no traducía `&#xa;`/`&#xa0;`
+  (1 nombre y 9 observaciones de la planilla los tienen escritos tal cual).
+- **Hecho**: ver CLAUDE.md «🧾 ROHO: ningún pedido sin el nombre del cliente». Servidor 16-a con `falta_cliente`. Volver a subir el Excel completa los 18.
+
+- **PUBLICADO 16/11, página `2026-11-16-a`** (dueño: *«implemente el gs, sale todo ok, publica»*): el servidor `2026-11-16-a` (enlace fijo `263f43d…`,
+  13.141 líneas, con la revisión de Fable 1-6) IMPLEMENTADO por el dueño; comprobado desde acá con `{action:'getlog'}`: contesta `2026-11-16-a`. A `main` va
+  todo lo de la rama desde la publicación de la 14-a (`6e01cbc`): la 14-b y la 15-a (que no se habían publicado solas), las mejoras 344-389, el bono
+  Titanio, ROHO sin nombre (§4qc), la 335 del dashboard (ventas sin ficha en Kommo) y el `.gs` + `SCRIPT_VERSION_ESPERADA` en 16-a. Por el diff de
+  `6e01cbc..263f43d` aplicado sobre `main` (sin `herramientas/pedidos_correo`, que vive solo en la rama); NO van las visuales 390-440 (rama `mej390-junta`).
+  Las 68 pruebas que cargan el `.gs` en verde sobre `263f43d` (la batería entera ya había pasado en `075ae24`).
+- **Pedidos por correo (16/11)**: el dueño, *«no importa si sale lleno el panel, Eduardo y Ernesto pueden meter pedidos por más que salga lleno… cuando la
+  clave esté puesta se puede meter así esté lleno»*: `cargar_pedidos.py` guarda en el primer día con lugar y en el acto mueve al día pedido con `forzar`
+  (el bot junta «nuevo + cambio» en un aviso de pedido nuevo). Las «OCs del nuevo requerimiento» de Flavia Ordoñez (ROHO) son pedidos: 11-208 (T3, OC
+  260013347, martes 17/11) y 11-209 (T1, OC 260013346, miércoles 18/11), los dos en un día lleno. La tarea programada busca también a fordonez@.
+  ⚠️ Corrección del dueño, el mismo día: *«solo cuando yo te instruya para tal día, es tal día; si no, para cuando haya cupo»*. Forzar un día lleno va
+  SOLO con `"dia_del_dueno": true` en el JSON (lo pongo yo cuando él dice el día); las vueltas automáticas siguen al primer día con cupo. La 11-207
+  (Multicenter, OC 33658) queda el jueves 19/11.
+
+### §4qd — 🎨❓🧾✅ Las visuales 367 y 390-440, ninguna ventanita del navegador, la nota para Eduardo y lo entregado en Proyección (16/11)
+El dueño: *«¿y por qué no se implementaron las mejoras visuales si habíamos dado el ok? ¿qué pasó, Claudio?»* (las 390-440 quedaron en `mej390-junta`
+y no entraron en la 16-a), con la captura de «…github.io dice: ¿Prender el MODO PRÁCTICA…?» *«¿no que mis alertas no salían ya esas feas?»*, con la ficha
+del 11-207 *«eduardo necesita ver el nro de nota de venta»* y *«ok avisame y publica»*. Después, con la captura de Proyección: *«ahí debería mostrar lo ya
+entregado y lo pendiente… en ese espacio en blanco»* y *«dijimos que ENTREGADO ES FACTURADO… eso confunde»*.
+- **Visuales 367 y 390-440 (menos 403)**: las juntó `mej390-junta` (4 agentes); dos regresiones de verdad arregladas al juntar (`pix-s-bf` buscado por id
+  → `[data-k="bf"]`; el `94vw` de la 397 → `calc(… / var(--vz,1))`). Fotos: https://claude.ai/artifact/4iCAAgc9LX6uo6GAk82GFD.
+- **Preguntas**: pieza común (`preguntaYa`/`preguntaTextoYa`/`avisoVentana`) + 4 agentes por lotes (`preg-lA`…`preg-lD`), juntados en `preg-todas` con
+  los arreglos de los cruces entre lotes (fmov dentro de `submitPedido`, `confirmarReemplazoForm` con `otraVez`, `asegurarClaveAdmin` en todos los
+  lugares, claves tapadas con `campoClave`, «Usar los tres» que sigue después de una pregunta, el 2º clic de un doble clic que no contesta). Detalle en
+  CLAUDE.md §4qd.
+- **La nota de venta en «📋 Datos»** (`misNotaFila`), solo con Eduardo elegido.
+- **Proyección → Por vendedor**: «✅ Entregado o facturado» y «⏳ Pendiente» en el hueco del medio (`pryEntDatos`). La primera versión partía en tres
+  (entregado / por entregar / por facturar): el dueño la corrigió, quedó en dos con la regla de cierre de la 335.
+- **11-210** (16/11, el dueño por el chat): CH1075 COLCHON ESPECIAL JUNIOR 105x190 ×3, Multicenter Parque Industrial, martes 17/11 PM. Falta el N° de OC y
+  el precio (los pasa el dueño). La vuelta de las 17:47 del correo no trajo nada nuevo.
+- **🔎 Maria Flores: el dashboard de Kommo no coincide con el panel** (dueño: *«Y LOS DATOS del kommo no me coinciden con el panel… EJEMPLO maria
+  flores»*). Dashboard: 18 cierres Bs 100.443 = 10 fichas de Kommo en Compradores con «Fecha contrato» de noviembre (Bs 55.630, el monto de Kommo) + 8
+  ventas del panel sin ficha ya entregadas o facturadas (Bs 44.813: 09-064, 09-237, 10-337, 10-394, 11-091, 11-101, 11-143, 11-188; reproducido EXACTO
+  con `ventas_panel_sin_ficha` sobre la planilla). Panel: 18 ventas Bs 95.363 = lo que se ENTREGA en noviembre (9 cargadas en ago-oct; 4 por entregar
+  Bs 23.770 que el dashboard deja en pipeline). Causa principal: Maria tiene **36 ventas de Kommo en la bandeja** (14 de noviembre, Bs 64.920; las demás
+  vendedoras 0, Mirian 2) y las volvió a cargar a mano; el dashboard empareja por celular (+ vendedora, ≤45 días) y no puede con 10-337 (Bs 12.740, la
+  ficha de Kommo sin celular), 11-091 (Bs 6.770, otro celular) ni, casi seguro, 09-237 (Bs 5.690, cargada el 19/09): ~Bs 25.000 contados dos veces.
+  Además el 03/11 pasó a Compradores ventas de fines de octubre (09-318, 10-382…), que Kommo cuenta en noviembre; y 10-391 es 14.630 en el panel y 14.360
+  en Kommo. Se le propuso: Maria limpia la bandeja con «Sí, es la misma» y corrige la «Fecha contrato» de las de octubre; y, si quiere, que el dashboard
+  empareje también por vendedora + mismo monto cuando el celular no coincide (espera su respuesta).
+
+### §4qe — ⚠️ El dashboard avisa las ventas que pueden estar contadas dos veces (16-17/11)
+- **Pedido** (dueño, después del caso de Maria Flores, §4qd): *«1 puede fallar eso. Y si vendió dos clientes distintos pero es el mismo producto y
+  precio?»* → se le explicó que emparejar por monto solo falla (en la bandeja de Kommo, «💵 parece por el monto» acierta 119 de 144: 25 mal) y que por
+  eso el dashboard NO va a restar nada; se le propuso solo avisarlo → *«si agrega el aviso en el dashboard»*.
+- **Regla** (`ventas_panel_sin_ficha`, después de los gemelos por celular): venta de Kommo de ESTE mes (`won`; su «Fecha contrato» en Bolivia cae en el
+  mes) que ninguna fila reclama (`klead`/`kommo-<lead>`) ni se llevó una gemela; la venta del panel sin ficha del mismo mes, la misma vendedora, monto
+  > 0 e igual ±1 Bs, a ≤ `PANEL_PARECE_DIAS`=60 días, la más cercana en el tiempo, cada una una sola vez. Resultado `out["parece"]` por vendedora
+  {name, n, bs, c=cuántas de ellas ya cuentan como cierre}, `n["dobles"]`.
+- **Dónde se ve**: `team[].panelDoble` {n, bs, c}; `panelSinFicha.dobles/doblesBs`; alerta ámbar «N venta(s) que pueden estar contadas dos veces (Bs X)»
+  con la vendedora y «Que cada una las una en el panel: Mis pedidos → «📥 Ventas de Kommo por completar» → «Sí, es la misma»»; en la tabla del resumen y
+  la tarjeta del equipo «⚠️ N ¿dos veces?» (ámbar, `pdSub`) debajo de los cierres; en la ficha de la vendedora el texto entero (`pdTxt`); en el resumen
+  una línea; en el resumen de WhatsApp otra; en el registro, cuántas. **Ningún número cambia** (prueba 26b).
+- **Con la planilla real** (copia del 16/11, las tarjetas de la bandeja como ventas de Kommo): Maria Flores 3, Bs 25.200, las tres en cierres (= las de
+  §4qd: 10-337, 11-091, 09-237). Nadie más.
+- Pruebas: `test_generar_integridad` §26 (82 bien; el escenario `LEADS_26` / `correr_26`, también `--solo-datos-335-dobles`), `test_panel_meta` §6
+  (27 bien). Las demás del dashboard (`test_actualizar_espera`, `test_bf_numeros`, `test_halloween`, `test_navidad`, `test_paneldup`,
+  `test_seguimiento_sin_cloudflare`, `test_temas_mejoras`, `test_duplicados.py`) siguen en verde.
+- **📏 El encabezado en un solo renglón (17/11)** (dueño, con dos capturas del iPad instalado a las 19:59-20:00: *«En el iPad se ve así arriba»*). El
+  iPad acostado instalado queda con ≤ 800 px de alto útil → «el encabezado bajo» de la 378 (`hdr-bajo`): la meta sube al lado del día en versión
+  chica, y con «Buscar Ctrl K», «💬 Chat» (la 344, que entra después) y la campanita el renglón no alcanzaba: los anillos AM/PM bajaban a un segundo
+  renglón a la izquierda y el encabezado medía 193 px (más alto que sin la 378). La cuenta de Black Friday (434) ya tenía su propio achique
+  (`hcAcomodar`) pero se probaba con los botones grandes y antes de que llegara el chat. Reproducido con Playwright a 1180 × 790 con la franja del
+  iPad (`--sa-t` 24) y `navigator.webdriver` en false (todo prendido como en el aparato): igual a la captura.
+  · **Arreglo** (`hdrCompactar`/`hdrCompPoner`/`hdrEnvuelto`, llamado desde `hdrMedir`; `ResizeObserver` de `.header-in`; al cambiar la ventana
+    `hdrMedir(true)` vuelve a probar desde 0): pasos en orden hasta que todo entra en un renglón — 1 sin «Ctrl K» · 2 «Buscar» y «Chat» en círculo ·
+    3 la meta chica sin barrita ni el nombre del mes (queda «🎯 67 % → 108 %») · 4-6 la cuenta sin la fecha → sin el título → no se ve · 7 sin el día.
+  · **Medido**: iPad 1180 × 790 → 132 px (antes 193, con la franja de la hora), con el día, la meta, la cuenta de Black Friday y los anillos a la
+    derecha; 1366 × 768 paso 2; 1280 × 720 paso 3; 1024 × 700 paso 6 (sin la cuenta); 1440 × 900 y 1920 × 1080 nada; iPad parado (820) paso 6.
+  · `tests/test_hdr_un_renglon.js` (16). `test_v434_cuenta_tema` 4c-4e cambiadas a conciencia (a 1.000 px la cuenta ahora entra chiquita, porque
+    antes se achican «Buscar» y «Chat»; el «no se ve» se prueba a 760). Verdes también: test_arriba_4iw, test_chat, test_estetica_4mo, test_hdr_bajo,
+    test_hdr_meta, test_ipad_franja, test_mis_ancha, test_rev_4jd, test_semana, test_v429, test_v435, test_vidrio_agrandar, test_dia_pegado,
+    test_fondo_noche, test_halloween, test_navidad, test_sin_barra, test_temas_mejoras, test_v431, test_version_nueva, test_visual_4pj, test_bloki,
+    test_asistente, test_quien, test_modo_practica, test_mall_analisis, test_mejoras_3_10_11, test_pry_indice. (test_estetica_4mo y test_v429 2e
+    fallaron una vez con 13 pruebas a la vez —el encabezado chico medido antes de terminar de esconder la ciudad—; solas y de a 6, verdes.)
+- **📱 El título de la ficha debajo de la hora del iPad (17/11)** (dueño, captura a las 20:04 de la ficha de Mis pedidos de la OC 11-170 de Tienda
+  Amiga: el título «TIENDA AMIGA ER S.A. · OC 11-170 · Nota 260600247» quedaba arriba, medio tapado y empañado). La ventana larga de la 430
+  (`#modal-box.alta`, `max-height: 100vh − 40`) no restaba la franja de la hora (`html.sa-top` le pone a la ventana un borde de arriba de
+  `--sa-t`): medía 24 px más que la pantalla, la ventana se podía arrastrar para arriba y el título quedaba en la zona de la hora (que el iPad
+  empaña). Medido a 1180 × 790 con `--sa-t` 24: sobraban 24 px (`scrollHeight − clientHeight`). Ahora `html.sa-top`/`html.wco` restan la franja
+  y `mpieAplicar` cuenta el borde para decidir si la ventana es larga: sobran 0, el título queda a 44 px. `test_v430_ventana_pie` §7 (rojo
+  contra la página de antes: sobraban 24). Verdes: test_ipad_franja, test_sin_barra, test_vidrio_agrandar, test_v402, test_mis_nota,
+  test_ficha_cliente, test_preguntas_panel, test_form_foco, test_teclado_320.
+- **🌙 «Antes de irte» salía con cada letra borrada (17/11)** (dueño, con la captura «Antes de irte, I»: *«al querer cambiar de nombre de vendedor cada
+  vez que borré una letra me salió ese aviso como 10 veces»*). `renderMis` corre con cada tecla de «Tu nombre» y `antesIrteQuizas` lo tomaba como
+  otra vendedora («Isabel Robled», «Isabel Roble»… «I»), cada una sin verlo hoy. Ahora sale solo para un nombre que es de una vendedora
+  (`antesIrteConocido`: `VENDEDORES` o con pedidos) y, con el campo en uso, recién cuando el nombre queda quieto 1,5 s (`ANTES_IRTE_QUIETO_MS`).
+  `test_antes_irte` 5c-5e (con el teclado de verdad: rojo contra la página de antes, que anotaba 8 nombres a medias).
+
+### §4qf — 📶 Las comisiones con los escalones en Bs de cada vendedora (17/11)
+- **Dueño** (17/11, con 7 tablas, una por vendedora de Heaven): *«Las comisiones están mal, calculas por % de presupuesto y mínimo. Nosotros se los
+  asignamos cada mes. Te paso las metas de todos los de Heaven, central 1 es Fabián y banzer 1 es Andrea. Los demás tienen nombre»*. Cada tabla: 2 %,
+  2,5 %, 2,75 % (la fila roja), 3 %, 3,5 % y 4 %, cada una desde un monto en Bs. La de MIA PLAZA sin nombre se tomó como **Jonathan Monje** (Mia Plaza
+  tiene a Jonathan y a Mirian, y la de Mirian vino con nombre) — confirmarlo con el dueño.
+- **Antes**: el % salía de la escala de la MARCA (`esc`: 2 % desde la mínima, 2,75 % desde el presupuesto, 3 % desde el 120 % del presupuesto).
+- **Ahora**: `vd[v] = [mínima, presupuesto, [[Bs, %]…]]` en `__metas__` del mes. Con escalones: el % del escalón más alto alcanzado, sobre TODO lo
+  vendido; debajo del primero, 0; la escala de la marca no se usa (`ccmEmVend` arma una escala `['bs', Bs, %]` con el bono de la marca;
+  `ccmTramoMonto` dice desde cuánto empieza cualquier tramo; `ccmPctDe` no aplica «debajo de la mínima» a una escala `vend`). Sueña (sin tablas)
+  sigue con la escala de su marca. Mínima = el primer escalón, presupuesto = el del 2,75 %.
+- **Noviembre**: `CCM_TRAMOS_DUENO['2026-11']` = las 7 tablas. `ccmMetas` las pone (`ccmVdConDueno`) en cada vendedora que no tenga escalones
+  GUARDADOS (también si noviembre no tenía metas guardadas: queda `ok`). Guardar en el editor del 🏁 Cierre comercial las deja en la planilla.
+- **Editor** (🏁 Cierre comercial → ✏️ Metas): columna «📶 Escalones (% desde Bs)», un texto por vendedora: «2 % desde 90.000 · 2,5 % desde 100.000 · …»
+  (también «90.000 = 2», uno por renglón o con «;») — `ccmTramosLeer`/`ccmTramosTxt`; mal escrito no guarda y dice cuál. Sin mínima escrita, la
+  mínima es el primer escalón. La ventana «🎯 Metas por marca» (174) no edita escalones pero los CONSERVA al guardar (`E.vtr`).
+- **Dónde se ve**: el 🏁 Cierre comercial («desde Bs 115.000» debajo de cada vendedora, la nota de la marca dice «📶 Cada vendedora cobra con SUS
+  escalones»), «💰 Comisiones» de Proyección (`ccmSigueDatos` con `r.em`), «Tu comisión» y su escalera (`misComisionDatos` → `o.em`, `comEscPasos`
+  con los escalones; «para el escalón siguiente»). Al cerrar, `vt[].tr` guarda los escalones del mes.
+- **Servidor `2026-11-17-a`**: lo mismo en el `.gs` (`WA_CCM_TRAMOS_DUENO`, `waCcmTramosVal_`, `waCcmVdConDueno_`, `waCcmEmVend_`,
+  `waCcmTramoMonto_`; `waCcmMetas_`, `waCcmMetaDe_`, `waCcmPctDe_`, `waCcmFilas_`) para el cierre del mes por WhatsApp del 01/12. La página sigue
+  esperando la 16-a (no necesita la 17-a). Volver atrás: ✏️ a la versión anotada Y pegar la 16-a de `263f43d…`.
+- En Playwright las tablas del dueño NO se aplican salvo `window.CCM_TRAMOS_PRUEBA` (las pruebas viejas usan sus metas de mentira de noviembre).
+- `tests/test_comision_escalones.js` (27; contra la página de antes no corre: no existen las funciones). Cambiadas a conciencia: `test_cierre_comercial`
+  3 (el texto de arriba es más largo), `test_metas_vendedoras` 6 (`ccmMetaDe` devuelve 3 cosas), `test_wa_cierre_metas` 1h y con
+  `CCM_TRAMOS_PRUEBA`, `test_servidor` l (la versión).

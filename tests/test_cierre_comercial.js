@@ -115,7 +115,7 @@ const espera=ms=>new Promise(r=>setTimeout(r,ms||80));
 
   /* 3 · las metas sugeridas, el editor y la prueba */
   r = await ev(page, ()=>{ ccmEdAbrir(); var i=CCM.ed.vs.map(function(o){ return o.v; }).indexOf('Maria Flores');
-    return { mi:document.getElementById('ccm-mi-'+i).value, pr:document.getElementById('ccm-pr-'+i).value, prueba:document.getElementById('ccm-prueba-res').innerText, tit:document.getElementById('ccm-body').innerText.replace(/\s+/g,' ').slice(0,300) }; });
+    return { mi:document.getElementById('ccm-mi-'+i).value, pr:document.getElementById('ccm-pr-'+i).value, prueba:document.getElementById('ccm-prueba-res').innerText, tit:document.getElementById('ccm-body').innerText.replace(/\s+/g,' ').slice(0,700) }; });
   chk('3 · el editor arranca con las de septiembre (Maria 100.000 / 130.000) y lo dice', r.mi==='100.000' && r.pr==='130.000' && /Sugeridas: las de septiembre/.test(r.tit), r);
   chk('3 · «🧪 Prueba»: con la escala puesta da lo mismo que se pagó en los 8 casos', /da lo mismo que se pagó en los 8 casos/.test(r.prueba||''), r.prueba);
   r = await ev(page, ()=>{ var d=document.getElementById('ccm-t-heaven-2-d'); d.value='125'; ccmEdProbar(); var a=document.getElementById('ccm-prueba-res').innerText; d.value='120'; ccmEdProbar(); return [a, document.getElementById('ccm-prueba-res').innerText]; });

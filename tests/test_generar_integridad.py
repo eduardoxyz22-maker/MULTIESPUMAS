@@ -33,7 +33,8 @@ os.environ["KOMMO_SUBDOMAIN"] = "eanez"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # GENERAR_DIR=<carpeta con otro generar.py y su panel_template.html> = los «dientes»: la misma prueba contra una versión vieja.
 sys.path.insert(0, os.environ.get("GENERAR_DIR") or RAIZ)
-_SOLO_DATOS = "--solo-datos" in sys.argv[1:] or bool(os.environ.get("SOLO_DATOS"))
+_ARGV0 = sys.argv[1:]
+_SOLO_DATOS = any(a.startswith("--solo-datos") for a in _ARGV0) or bool(os.environ.get("SOLO_DATOS"))   # --solo-datos-335: el escenario de la 335
 sys.argv = [sys.argv[0]]   # generar.py lee sus propias opciones de acá
 import generar as G
 
@@ -72,9 +73,19 @@ SIN_CONTRATO = False
 
 NOMBRE_ANA = "Ana Prueba - Central"   # el caso 9 la cambia por «Ána Prúeba» (con tildes), como pasó con Carola en Kommo
 
-def fabricar_urlopen(fallar=None):
-    """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None."""
+PANEL_PEDIDOS = []   # (175) lo que el generador le pidió al panel de pedidos (el Apps Script de mentira)
+CONTACTOS = []       # (335) los contactos de Kommo del mes (con su teléfono), para la regla del celular
+ULTIMO_HTML = ""     # el index.html de la última corrida
+
+def fabricar_urlopen(fallar=None, panel=None):
+    """fallar(path, params) → código HTTP con que tiene que fallar esa consulta, o None.
+    panel(req) → lo que contesta el panel de pedidos (un dict = JSON, bytes = tal cual, una excepción = se lanza); sin `panel`, 404."""
     def urlopen(req, timeout=None):
+        if "script.google.com" in req.full_url:
+            PANEL_PEDIDOS.append({"url": req.full_url, "metodo": req.get_method(), "cuerpo": (req.data or b"").decode("utf-8")})
+            r = panel(req) if panel else urllib.error.HTTPError(req.full_url, 404, "no existe", {}, io.BytesIO(b""))
+            if isinstance(r, Exception): raise r
+            return RespCruda(r) if isinstance(r, bytes) else Resp(r)
         u = urllib.parse.urlparse(req.full_url)
         path = u.path.replace("/api/v4", "")
         q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
@@ -99,7 +110,7 @@ def fabricar_urlopen(fallar=None):
             body = emb("custom_fields", cfs)
         elif path == "/leads/loss_reasons": body = emb("loss_reasons", [])
         elif path == "/events": body = emb("events", [])
-        elif path == "/contacts": body = emb("contacts", [])
+        elif path == "/contacts": body = emb("contacts", CONTACTOS)
         elif path == "/leads":
             if q.get("limit") == "1": body = emb("leads", CUR[:1])
             elif "filter[statuses][0][status_id]" in q: body = emb("leads", [])
@@ -122,13 +133,17 @@ class Resp:
     def __enter__(self): return self
     def __exit__(self, *a): return False
 
-def correr(fallar=None):
+class RespCruda(Resp):
+    def __init__(self, crudo): self.status = 200; self._b = crudo
+
+def correr(fallar=None, panel=None):
     """Corre main() con el Kommo de mentira. Devuelve (salida_con_error, PANEL_DATA o None, texto impreso)."""
     tmp = tempfile.mkdtemp(prefix="gen_integridad_")
     G.HERE = tmp
     G._DIAG.clear()
     if hasattr(G, "_FALLAS"): G._FALLAS.clear()
-    G._rq.urlopen = fabricar_urlopen(fallar)
+    del PANEL_PEDIDOS[:]
+    G._rq.urlopen = fabricar_urlopen(fallar, panel)
     G.time.sleep = lambda s: None
     out = io.StringIO(); err = io.StringIO(); salio = None
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
@@ -138,16 +153,102 @@ def correr(fallar=None):
             salio = e.code
     pd = None
     p = os.path.join(tmp, "index.html")
+    global ULTIMO_HTML
+    ULTIMO_HTML = ""
     if os.path.exists(p):
-        h = open(p, encoding="utf-8").read()
+        h = ULTIMO_HTML = open(p, encoding="utf-8").read()
         m = re.search(r"window\.PANEL_DATA = (\{.*?\});\n", h, re.S) or re.search(r"window\.PANEL_DATA = (\{.*\});", h)
         pd = json.loads(m.group(1)) if m else None
     return salio, pd, out.getvalue() + err.getvalue(), os.listdir(tmp)
 
+# 🛒 (335) EL ESCENARIO DE LAS VENTAS DEL PANEL SIN FICHA EN KOMMO (las pruebas 17-24 y `--solo-datos-335`, que usa
+# tests/test_panel_meta.js para abrir el dashboard con estos datos). Ana (en VENDOR_CFG) tiene en Kommo los leads 1 y 5 (este con
+# el teléfono 7222 3333) y en el panel las filas de abajo.
+import datetime as _dt2
+_HOY = G.now.strftime("%Y-%m-%d")
+_FUT = (G.m_end + _dt2.timedelta(days=5)).strftime("%Y-%m-%d")      # una entrega por delante (siempre después de hoy)
+_PAS = G.p_start.strftime("%Y-%m-%d")                                # una entrega que ya pasó (el 1° del mes anterior)
+_TS = M1 * 1000                                                      # cargada el 1° de este mes a las 12:00 (ms, como la planilla)
+_TSP = P1 * 1000                                                     # cargada el 1° del mes anterior
+def fila(i, **k):
+    """Una venta del panel de mentira (lo que contesta el `list`), con datos de cliente que NO pueden salir a ningún lado."""
+    r = {"id": i, "fecha": "", "oc": "11-9%02d" % (len(i) % 90), "vendedor": "Ana Prueba", "cliente": "CLIENTE SECRETO " + i,
+         "celular": "", "direccion": "Calle Inventada 123", "zona": "Norte", "pagado": False, "saldo": 0, "ts": _TS,
+         "metodoPago": "", "estado": "En stock", "entregado": False, "acuenta": 0, "productos": [{"desc": "COLCHON", "cant": 1}]}
+    r.update(k); return r
+FILAS_335 = [
+    # ── entran (de Ana, que está en VENDOR_CFG) ──
+    fila("a1", fecha=_PAS, saldo=0, pagado=True, metodoPago="~Efectivo 1.500 @2026-11-01 #901 + QR BISA 500 @2026-11-02 #902 %FOTO1"),   # entrega pasada: cerrada, Bs 2.000
+    fila("a2", fecha=_FUT, entregado=True, saldo=800, acuenta=200, metodoPago="QR BISA %FOTO2"),                                       # con ✅ (aunque la fecha sea después): cerrada, Bs 1.000
+    fila("a4", direccion="SALIÓ DE TIENDA · Central", zona="TIENDA", pagado=True, metodoPago="Efectivo 700 @2026-11-01 #904 + ^Efectivo 50 @2026-11-01"),   # venta de tienda: cerrada, Bs 700 (el recargo no es de la venta)
+    fila("a3", fecha=_FUT, saldo=3000),                                                                                                  # se entrega más adelante: pipeline, Bs 3.000
+    fila("a18", fecha=_HOY, saldo=100),                                                                                                  # se entrega HOY sin ✅: todavía pipeline
+    fila("a19", saldo=50, productos=[{"desc": "COLCHON", "cant": 1, "avisa": _FUT}]),                                                     # «el cliente avisa cuándo» (sin fecha, no es de tienda): pipeline
+    fila("a15", ts=_TSP, fecha=_PAS, saldo=400),                                                                                         # del MES ANTERIOR, entregada: cuenta en el anterior
+    fila("a20", ts=_TSP, fecha=_FUT, saldo=600),                                                                                         # del mes anterior, sin entregar ni factura: pipeline de ESTE mes (sigue abierta)
+    # 🧾 (15/11, dueño: «si está marcada facturada cuenta como cierre en el mes, por más que se entregue en el siguiente»)
+    fila("a21", ts=_TSP, fecha=_FUT, saldo=250, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "F", "fdocn": "777"}]),              # del mes anterior CON factura, sin entregar: cierre del ANTERIOR
+    fila("a22", ts=_TSP, fecha=_FUT, entregado=True, saldo=300, productos=[{"desc": "COLCHON", "cant": 1, "eF": _HOY}]),               # del anterior SIN factura, entregada HOY: cierre de ESTE mes
+    fila("a23", fecha=_FUT, saldo=500, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "F", "fdocn": "778"}]),                         # de este mes CON factura, sin entregar: cierre de este mes
+    fila("a24", ts=_TSP, fecha=_FUT, saldo=150, productos=[{"desc": "COLCHON", "cant": 1, "vmes": _PAS[:7]}]),                           # marcada «cuenta en <mes anterior>»: cierre del anterior
+    fila("a25", ts=_TSP, fecha=_FUT, saldo=70, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "R", "fdocn": "55"}]),                  # con REMISIÓN (cuenta igual) sin el día en que se anotó: cierre del ANTERIOR (el de la carga)
+    # 📄 (15/11, dueño: «con nota de remisión tb cuenta… va en el mes que se marcó que se facturó o hizo la nota de remisión»)
+    fila("a26", ts=_TSP, fecha=_FUT, saldo=90, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "R", "fdocn": "56", "fdocT": _TS}]),   # del anterior, remisión anotada el 1° de ESTE mes, sin entregar: cierre de ESTE mes
+    fila("a27", ts=_TSP, fecha=_PAS, saldo=40, productos=[{"desc": "COLCHON", "cant": 1, "fdoc": "F", "fdocn": "779", "fdocT": _TS}]),  # del anterior y ENTREGADA en el anterior, factura anotada este mes: cierre del ANTERIOR (vale lo primero)
+    # ── no entran ──
+    fila("a5", fecha=_PAS, saldo=900, productos=[{"desc": "COLCHON", "cant": 1, "klead": "1"}]),     # con su lead (`klead`): ya la cuenta Kommo
+    fila("kommo-4", fecha=_PAS, saldo=900),                                                          # venta que vino de Kommo (id kommo-<lead>)
+    fila("a7", oc="ATC 11-001", fecha=_PAS, saldo=500),                                              # ATC
+    fila("a8", oc="RPT 11-002", fecha=_PAS, saldo=500),                                              # RPT
+    fila("a9", vendedor="ALBA", fecha=_PAS, saldo=500),                                              # pedido interno
+    fila("a10", vendedor="Eduardo Añez", fecha=_PAS, saldo=500),                                     # mayorista
+    fila("a11", vendedor="ROHO", fecha=_PAS, saldo=500),                                             # ROHO
+    fila("a12", vendedor="Mauricio Merida", fecha=_PAS, saldo=500),                                  # Sueña (no es del equipo de Heaven)
+    fila("kommo-77", estado="Borrador Kommo", vendedor="Ana Prueba - Central", celular="+591 70011999", saldo=1200),   # una venta de Kommo que espera en la bandeja…
+    fila("a14", fecha=_PAS, saldo=1200, celular="700-11999"),                                        # …y la misma venta cargada en el panel sin unir: no se suma
+    fila("a17", fecha=_PAS, saldo=2500, celular="72223333"),                                         # la venta de Kommo del lead 5 (mismo celular), sin unir: no se suma
+    {"id": "__dias_cerrados__", "cliente": "📅 DÍAS CERRADOS", "observaciones": ""},
+]
+SECRETOS_335 = ("CLIENTE SECRETO", "Calle Inventada", "70011999", "11-9", "FOTO1", "#901")
+def panel_lista(filas):
+    return lambda req: {"ok": True, "version": "2026-11-14-a", "pedidos": filas}
+URL_335 = "https://script.google.com/macros/s/PRUEBA_DE_MENTIRA/exec"
+def correr_335(panel="lista", con_url=True):
+    """Corre el generador con el escenario 335 y deja todo como estaba. `panel` = cómo contesta el panel ("lista" = FILAS_335)."""
+    global CUR
+    cur0, cfg0, url0 = CUR[:], G.VENDOR_CFG.get("Ana Prueba"), G.PANEL_URL
+    l5 = lead(5, ANA, M1, M1, 2500); l5["_embedded"]["contacts"] = [{"id": 900}]
+    CUR = cur0 + [l5]
+    CONTACTOS[:] = [{"id": 900, "custom_fields_values": [{"field_code": "PHONE", "values": [{"value": "+591 7222 3333"}]}]}]
+    G.VENDOR_CFG["Ana Prueba"] = dict(ini="AP", color="#123456", suc="Central", metaCierres=35, metaMonto=135000)
+    G.PANEL_URL = URL_335 if con_url else ""
+    try:
+        return correr(panel=panel_lista(FILAS_335) if panel == "lista" else panel)
+    finally:
+        CUR = cur0; CONTACTOS[:] = []; G.PANEL_URL = url0
+        if cfg0 is None: G.VENDOR_CFG.pop("Ana Prueba", None)
+        else: G.VENDOR_CFG["Ana Prueba"] = cfg0
+
+# ⚠️ (16/11) el escenario de la prueba 26 (y `--solo-datos-335-dobles`): ventas de Kommo de Ana sin unir con el MISMO monto que
+# ventas suyas del panel sin ficha → el aviso «pueden estar dos veces».
+LEADS_26 = [lead(6, ANA, M1, M1, 3000),     # = a3 (Bs 3.000, por entregar): parece la misma
+            lead(7, ANA, M1, M1, 701),      # = a4 (venta de tienda, Bs 700): ±1 también
+            lead(8, ANA, M1, M1, 4200),     # ninguna venta del panel con ese monto: nada
+            lead(9, BETO, M1, M1, 2000),    # el monto de a1 (de Ana) pero es de Beto: otra vendedora, nada
+            lead(10, ANA, P1, P1, 100)]     # el monto de a18 pero la venta de Kommo es del mes ANTERIOR: no se cuenta dos veces este mes
+def correr_26():
+    global CUR
+    cur0 = CUR[:]
+    CUR = cur0 + LEADS_26
+    try:
+        return correr_335()
+    finally:
+        CUR = cur0
+
 # `--solo-datos`: imprime el PANEL_DATA del caso «todo bien» y sale (lo usa tests/test_panel_meta.js para abrir el
 # dashboard de verdad con estos mismos datos inventados).
 if _SOLO_DATOS:
-    _s, _pd, _t, _a = correr()
+    _s, _pd, _t, _a = (correr_26() if "--solo-datos-335-dobles" in _ARGV0 else correr_335() if "--solo-datos-335" in _ARGV0 else correr())
     sys.stdout.write(json.dumps(_pd, ensure_ascii=False))
     sys.exit(0 if _pd else 1)
 
@@ -254,6 +355,202 @@ if hasattr(G, "SUC_DE_USUARIO"):
     chk("10i. …y Banzer igual (10:30 adentro, 16:30 fuera); el lunes sigue 8:30 a 20:30 y Mia Plaza el lunes 9 a 21",
         fuera("Carola Chávez", 10, 30, 15) is False and fuera("Carola Chávez", 16, 30, 15) is True and fuera("Carola Chávez", 20, 20) is False and fuera("Jonathan Monje", 20, 30) is False)
     G.SUC_DE_USUARIO.clear(); G.SUC_DE_USUARIO.update(_antes)
+
+# ── 11-15 · (13/11, mejora 175) la meta en Bs de cada vendedora sale del panel de pedidos ───────────
+# El dueño quiere cargarlas en un solo lugar (el panel: Proyección → 🎯 Metas). La fila `__metas__` del panel: `m[ym].vd =
+# {nombre:[mínima, presupuesto]}`; la meta = el presupuesto (si es 0, la mínima). No es esencial: sin panel, VENDOR_CFG.
+YM = f"{G.YEAR}-{G.MONTH:02d}"
+URL_PANEL = "https://script.google.com/macros/s/PRUEBA_DE_MENTIRA/exec"
+SECRETOS = ("CLIENTE SECRETO", "70011223", "Calle Inventada 123", "PRUEBA_DE_MENTIRA")
+def panel_con(m, extra_ok=True):
+    """El Apps Script de mentira: contesta la lista con la fila de metas y una venta de un cliente (que no puede salir a ningún lado)."""
+    def contesta(req):
+        filas = [{"id": "v1", "cliente": "CLIENTE SECRETO", "celular": "70011223", "direccion": "Calle Inventada 123", "vendedor": "Ana Prueba"}]
+        if m is not None:
+            filas.append({"id": "__metas__", "cliente": "🎯 METAS", "observaciones": json.dumps({"v": 1, "m": m})})
+        return {"ok": True, "version": "2026-11-13-a", "pedidos": filas}
+    return contesta
+_cfg_antes = G.VENDOR_CFG.get("Ana Prueba")
+G.VENDOR_CFG["Ana Prueba"] = dict(ini="AP", color="#123456", suc="Central", metaCierres=35, metaMonto=135000)
+G.PANEL_URL = URL_PANEL
+
+# 11 · metas del panel presentes → se usan
+M11 = {YM: {"heaven": 400000, "vd": {"Ana Prueba": [120000, 150000], "Beto Prueba": [70000, 0], "Mauricio Merida": [75000, 120000]}, "esc": {"heaven": {"t": [], "bono": 1}}},
+       "2020-01": {"vd": {"Ana Prueba": [1, 2]}}}
+salio, pd, txt, archivos = correr(panel=panel_con(M11))
+if pd:
+    team = {t["name"]: t for t in pd["team"]}
+    ana, beto = team.get("Ana Prueba", {}), team.get("Beto Prueba", {})
+    chk("11a. con metas del panel para el mes, la meta en Bs de Ana es su PRESUPUESTO del panel (150.000), no la de VENDOR_CFG (135.000)",
+        ana.get("metaMonto") == 150000 and ana.get("metaFuente") == "panel", {k: ana.get(k) for k in ("metaMonto", "metaFuente", "metaCierres")})
+    chk("11b. la meta de CIERRES sigue saliendo de VENDOR_CFG (35)", ana.get("metaCierres") == 35, ana.get("metaCierres"))
+    chk("11c. Beto sin presupuesto (0) lleva su MÍNIMA (70.000), aunque solo haya trabajado el mes anterior", beto.get("metaMonto") == 70000 and beto.get("metaFuente") == "panel", {k: beto.get(k) for k in ("metaMonto", "metaFuente", "soloPrev")})
+    chk("11d. la meta del equipo en Bs es la suma de las del equipo: 150.000 + 70.000 = 220.000 (Mauricio no está en Kommo: no suma)",
+        sum(t.get("metaMonto", 0) for t in pd["team"]) == 220000, [(t["name"], t.get("metaMonto")) for t in pd["team"]])
+    chk("11e. una sola lectura al panel: POST de «list», con `_=` para que no salga de una caché", len(PANEL_PEDIDOS) == 1 and PANEL_PEDIDOS[0]["metodo"] == "POST" and
+        json.loads(PANEL_PEDIDOS[0]["cuerpo"]).get("action") == "list" and "?_=" in PANEL_PEDIDOS[0]["url"], PANEL_PEDIDOS[:1])
+    fuga = [s for s in SECRETOS if s in txt or s in ULTIMO_HTML]
+    chk("11f. ni el registro ni el index.html (los dos PÚBLICOS) dicen nada del cliente de la lista ni la dirección del panel", not fuga, fuga)
+    chk("11g. el registro dice cuántas vendedoras tienen meta del panel", re.search(r"3 vendedora\(s\) con meta", txt) is not None, [l for l in txt.split("\n") if "meta" in l.lower()][:4])
+else:
+    chk("11. (el panel con las metas del panel no se escribió)", False, txt[-400:])
+
+# 12 · el nombre con tilde empareja (el panel con tilde y mayúsculas, Kommo sin; y al revés)
+M12 = {YM: {"vd": {"ÁNA PRUÉBA": [0, 99000]}}}
+salio, pd, txt, archivos = correr(panel=panel_con(M12))
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("12a. «ÁNA PRUÉBA» en el panel empareja con «Ana Prueba» de Kommo: 99.000", ana.get("metaMonto") == 99000 and ana.get("metaFuente") == "panel", ana.get("metaMonto"))
+NOMBRE_ANA = "Ána Prúeba - Central"
+salio, pd, txt, archivos = correr(panel=panel_con({YM: {"vd": {"Ana Prueba": [80000, 98000]}}}))
+NOMBRE_ANA = "Ana Prueba - Central"
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ána Prúeba", {})
+chk("12b. y «Ána Prúeba» de Kommo con «Ana Prueba» del panel: 98.000", ana.get("metaMonto") == 98000, ana.get("metaMonto"))
+
+# 13 · la lectura del panel se cae → VENDOR_CFG y el panel se publica igual
+for nombre, resp in (("un 500", urllib.error.HTTPError(URL_PANEL, 500, "x", {}, io.BytesIO(b""))),
+                     ("una página de Google en vez del JSON", b"<!DOCTYPE html><html><body>Error CLIENTE SECRETO</body></html>"),
+                     ("un «clave» del servidor", {"ok": False, "error": "clave"}),
+                     ("sin red", urllib.error.URLError("sin red"))):
+    salio, pd, txt, archivos = correr(panel=(lambda req, r=resp: r))
+    ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+    chk(f"13. con {nombre} del panel: se publica igual, con la meta de VENDOR_CFG (135.000) y sin marca de panel, tras dos intentos",
+        pd is not None and salio in (None, 0) and ana.get("metaMonto") == 135000 and not ana.get("metaFuente") and len(PANEL_PEDIDOS) == 2 and not G._FALLAS,
+        (salio, ana.get("metaMonto"), len(PANEL_PEDIDOS), txt[-200:]))
+chk("13b. …y el diagnóstico lo dice sin la dirección ni lo que contestó", "no se pudo leer el panel" in txt and not [s for s in SECRETOS if s in txt or s in ULTIMO_HTML], [l for l in txt.split("\n") if "panel" in l][:3])
+
+# 14 · el mes no tiene metas por vendedora (o no hay fila de metas) → VENDOR_CFG
+for nombre, m in (("solo la meta de la marca", {YM: {"heaven": 500000}}), ("las de otro mes", {"2020-01": {"vd": {"Ana Prueba": [1, 5]}}}), ("sin fila de metas", None)):
+    salio, pd, txt, archivos = correr(panel=panel_con(m))
+    ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+    chk(f"14. {nombre}: queda la de VENDOR_CFG (135.000)", pd is not None and ana.get("metaMonto") == 135000 and not ana.get("metaFuente"), (ana.get("metaMonto"), txt[-160:]))
+
+# 15 · sin PANEL_URL no se le pregunta nada al panel
+G.PANEL_URL = ""
+salio, pd, txt, archivos = correr(panel=panel_con(M11))
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("15. sin el secreto PANEL_URL: ninguna lectura al panel y la meta de VENDOR_CFG", not PANEL_PEDIDOS and ana.get("metaMonto") == 135000 and "sin PANEL_URL" in txt, (len(PANEL_PEDIDOS), ana.get("metaMonto")))
+
+# 16 · `--month M --year YYYY` (un mes cerrado): las metas de ESE mes
+G.PANEL_URL = URL_PANEL
+G._rq.urlopen = fabricar_urlopen(None, panel_con({"2026-10": {"vd": {"Ana Prueba": [100000, 130000]}}, "2026-11": {"vd": {"Ana Prueba": [100000, 160000]}}}))
+_mdp = getattr(G, "metas_del_panel", lambda y, m: ({}, ""))
+mo, _t1 = _mdp(2026, 10)
+mn, _t2 = _mdp(2026, 11)
+chk("16. al regenerar octubre toma las de octubre (130.000) y noviembre las suyas (160.000)", mo.get("ana prueba") == 130000 and mn.get("ana prueba") == 160000 and "octubre 2026" in _t1, (mo, mn, _t1))
+G.PANEL_URL = ""
+if _cfg_antes is None: del G.VENDOR_CFG["Ana Prueba"]
+else: G.VENDOR_CFG["Ana Prueba"] = _cfg_antes
+
+# ── 17-25 · (15/11, mejora 335) las ventas del panel SIN ficha en Kommo entran al dashboard ────────────
+# Dueño: «cerrado si ya se entregó… si no estaremos a la espera de que el vendedor anote y a veces se olvidan». Entregada (✅, fecha ya
+# pasada o venta de tienda) = cierre + cerrado + pipeline; vendida y sin entregar = solo pipeline. El mes = el día en que se cargó. Una
+# con lead (klead / kommo-<lead>) ya la cuenta Kommo; una con el celular y la vendedora de una venta de Kommo que nadie reclama, también.
+salio, pd, txt, archivos = correr_335()
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ana Prueba", {})
+    pz = ana.get("panel") or {}
+    chk("17a. entregadas (fecha ya pasada, ✅ aunque la fecha sea después, venta de tienda, la del mes anterior entregada hoy), con factura y con remisión anotada este mes → 6 cierres más, Bs 2.000 + 1.000 + 700 + 300 + 500 + 90",
+        pz.get("c") == 6 and pz.get("bs") == 4590, pz)
+    chk("17b. sin entregar ni documento (por delante, HOY sin ✅, «avisa cuándo», la del mes anterior) → 4 en el pipeline, Bs 3.000 + 100 + 50 + 600",
+        pz.get("p") == 4 and pz.get("pbs") == 3750, pz)
+    chk("17c. los cierres de Ana = 2 de Kommo (leads 1 y 5) + 6 del panel = 8; lo cerrado = 1.000 + 2.500 + 4.590 = 8.090",
+        ana.get("cierres") == 8 and ana.get("value") == 8090, {k: ana.get(k) for k in ("cierres", "value", "pipeline", "conv")})
+    chk("17d. el pipeline = Kommo (3.500) + todo lo vendido en el panel sin ficha (4.590 + 3.750) = 11.840", ana.get("pipeline") == 11840, ana.get("pipeline"))
+    chk("17e. la conversión y lo global cuentan con el total (8 cierres / 3 leads; global 8 cierres, Bs 8.090)",
+        pd["global"]["cierres"] == 8 and pd["global"]["cerrado"] == 8090 and ana.get("conv") == round(8 / 3 * 100, 1), (pd["global"], ana.get("conv")))
+    psf = pd.get("panelSinFicha") or {}
+    chk("18a. con ficha en Kommo (`klead` y `kommo-<lead>`) no se suman de nuevo: el resumen dice 2 ya con ficha",
+        psf.get("conLead") == 2 and psf.get("c") == 6, psf)
+    chk("18b. la que tiene el celular y la vendedora de una venta de Kommo sin unir (la tarjeta de la bandeja y el lead 5) NO se suma: 2",
+        psf.get("parecen") == 2, psf)
+    chk("19. ATC, RPT, interno (ALBA), mayorista (Eduardo), ROHO y Sueña quedan fuera: nadie más en el equipo",
+        sorted(t["name"] for t in pd["team"]) == ["Ana Prueba", "Beto Prueba"] and not (({t["name"]: t for t in pd["team"]}.get("Beto Prueba") or {}).get("panel")),
+        [t["name"] for t in pd["team"]])
+    pr = ana.get("prev") or {}
+    chk("20. el mes anterior suma su entregada, la de factura, la marcada, la de remisión sin día y la entregada antes de anotar la factura (Kommo 1.000 + panel 400 + 250 + 150 + 70 + 40 = 1.910, 6 cierres) y no la que se entregó este mes, la de remisión anotada este mes ni las pendientes",
+        pr.get("cierres") == 6 and pr.get("value") == 1910 and pr.get("valueFull") == 1910, pr)
+    wk = (ana.get("weekly") or {})
+    _h7 = int(_HOY[8:10]) <= 7          # la del mes anterior entregada HOY va a la semana de hoy
+    chk("21. la semana 1 (días 1-7) lleva los cierres de Kommo, los del panel cargados el 1° y la remisión anotada el 1°: 7, Bs 7.790 (+ la entregada hoy si hoy es de la semana 1)",
+        (wk.get("c") or [0])[0] == 7 + _h7 and (wk.get("m") or [0])[0] == 7790 + 300 * _h7, wk)
+    chs = pd.get("channels") or []
+    fp = next((c for c in chs if c.get("panel")), {})
+    chk("22a. «🛒 Venta sin ficha en Kommo» en los canales (aparte, sin leads ni conversión): 6 cierres, 4 por entregar",
+        fp.get("cierres") == 6 and fp.get("pend") == 4 and fp.get("carry") is True and fp.get("leads") == 0, fp)
+    chk("22b. …y los canales siguen sumando los cierres del mes (2 de Kommo + 3)", sum(c.get("cierres", 0) for c in chs) == pd["global"]["cierres"], [(c["name"], c["cierres"]) for c in chs])
+    w = pd.get("wsp") or ""
+    chk("22c. el resumen de WhatsApp lo dice aparte (cuántas y cuánto, en el ranking y abajo del mes)",
+        "🛒 6 sin ficha en Kommo" in w and "Incluye 6 venta(s) cargadas en el panel sin ficha en Kommo ya entregadas o con factura/remisión" in w, [l for l in w.split("\n") if "🛒" in l])
+    fuga = [s for s in SECRETOS_335 + ("PRUEBA_DE_MENTIRA",) if s in txt or s in ULTIMO_HTML]
+    chk("23a. ni el registro ni el index.html (PÚBLICOS) dicen nada de la lista: clientes, celulares, OC, recibos, fotos, la dirección del panel", not fuga, fuga)
+    chk("23b. una sola lectura al panel (metas y ventas con la misma)", len(PANEL_PEDIDOS) == 1, len(PANEL_PEDIDOS))
+    chk("23c. el registro dice cuántas entraron, en números", re.search(r"6 entregada\(s\) o con factura/remisión \(cierres\) y 4 por entregar", txt) is not None, [l for l in txt.split("\n") if "ficha" in l][:3])
+else:
+    chk("17. (el panel con las ventas del panel no se escribió)", False, txt[-400:])
+
+# 24 · la lectura del panel se cae (o no hay PANEL_URL) → el dashboard como antes: solo Kommo
+for nombre, panel in (("con el panel caído", lambda req: urllib.error.HTTPError(URL_335, 500, "x", {}, io.BytesIO(b""))), ("sin PANEL_URL", None)):
+    salio, pd, txt, archivos = correr_335(panel=panel, con_url=panel is not None)
+    ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+    chk(f"24. {nombre}: se publica igual y como antes, solo Kommo (2 cierres, Bs 3.500, sin «panel» ni fila de canal)",
+        pd is not None and salio in (None, 0) and ana.get("cierres") == 2 and ana.get("value") == 3500 and "panel" not in ana and
+        "panelSinFicha" not in pd and not any(c.get("panel") for c in pd.get("channels") or []) and not G._FALLAS,
+        (salio, {k: ana.get(k) for k in ("cierres", "value", "panel")}, txt[-200:]))
+
+# 25 · las cuentas copiadas de la página dan lo mismo que la página (sus casos escritos) y las listas son las mismas
+# (los números esperados los dio la página misma, `ventaTotal`/`parseMonto`/`r2` en pedidos.html, el 15/11)
+_vt = getattr(G, "venta_total", lambda p: None)
+chk("25a. `ventaTotal`: adelanto + cobros + saldo, sin el recargo por entrega (3.300,50); un renglón que la página no entiende no cuenta (1.800,50)",
+    _vt({"saldo": 300, "acuenta": 0, "metodoPago": "~Efectivo 1.500 @2026-11-01 + QR BISA 1,500,50 @2026-11-02 #9 %X + ^QR BISA 80 · REGISTRADO"}) == 3300.5 and
+    _vt({"saldo": 300, "acuenta": 0, "metodoPago": "~Efectivo Bs. 1.500.- @2026-11-01 + QR BISA 1,500,50 @2026-11-02 #9 %X + ^QR BISA 80 · REGISTRADO"}) == 1800.5)
+_pm = getattr(G, "_panel_monto", lambda t: None); _r2 = getattr(G, "_js_r2", lambda n: None)
+chk("25a2. `parseMonto` y `r2` como la página: «Bs. 1.500.-» 1.500, «1,500,50» y «1.500.50» 1.500,50, «1.234,5»; 1,005 → 1 y 2,675 → 2,68",
+    [_pm("Bs. 1.500.-"), _pm("1,500,50"), _pm("1.500.50"), _pm("1.234,5"), _r2(1.005), _r2(2.675)] == [1500, 1500.5, 1500.5, 1234.5, 1, 2.68])
+chk("25b. sin el adelanto escrito vale «A cuenta»; una «PAGADA sin monto» vale 0 (como en la página: no inventa el monto)",
+    getattr(G, "venta_total", lambda p: None)({"saldo": 100, "acuenta": 250, "metodoPago": "QR BISA %X"}) == 350 and
+    getattr(G, "venta_total", lambda p: None)({"saldo": 0, "pagado": True, "metodoPago": "Efectivo %X"}) == 0)
+_ped = open(os.path.join(os.environ.get("GENERAR_DIR") or RAIZ, "pedidos.html"), encoding="utf-8").read()
+_mh = re.search(r"\{k:'heaven'[^}]*vendedores:\[([^\]]*)\]", _ped)
+_heav = re.findall(r"'([^']+)'", _mh.group(1)) if _mh else []
+chk("25c. PANEL_HEAVEN = los vendedores de Heaven de `MARCAS` en pedidos.html (un vendedor nuevo va en los dos)",
+    bool(_heav) and sorted(getattr(G, "PANEL_HEAVEN", [])) == sorted(_heav), (getattr(G, "PANEL_HEAVEN", None), _heav))
+_mi = re.search(r"var CONTA_INTERNOS=\[([^\]]*)\]", _ped); _me = re.search(r"var CONTA_EXCLUIR=\[([^\]]*)\]\.concat\(CONTA_INTERNOS\)", _ped)
+chk("25d. PANEL_INTERNOS y PANEL_EXCLUIR = CONTA_INTERNOS y CONTA_EXCLUIR de la página",
+    bool(_mi and _me) and getattr(G, "PANEL_INTERNOS", None) == re.findall(r"'([^']+)'", _mi.group(1)) and
+    getattr(G, "PANEL_EXCLUIR", None) == re.findall(r"'([^']+)'", _me.group(1)) + re.findall(r"'([^']+)'", _mi.group(1)), (getattr(G, "PANEL_EXCLUIR", None),))
+
+# ── 26 · (16/11, dueño: «si agrega el aviso en el dashboard») ventas que PUEDEN estar dos veces ─────────────────────────
+# Una venta de Kommo de este mes que nadie unió y una venta del panel sin ficha de la MISMA vendedora por el MISMO monto (±1): el
+# dashboard las cuenta a las dos y solo AVISA (el monto solo se equivoca, 25 de 144 en la bandeja): ningún número cambia.
+salio, pd, txt, archivos = correr_26()     # (LEADS_26, arriba)
+if pd:
+    ana = {t["name"]: t for t in pd["team"]}.get("Ana Prueba", {})
+    beto = {t["name"]: t for t in pd["team"]}.get("Beto Prueba", {})
+    pdob = ana.get("panelDoble") or {}
+    chk("26a. Ana: 2 ventas del panel con el monto de una venta de Kommo suya sin unir (3.000 y 700), 1 de ellas en cierres",
+        pdob == {"n": 2, "bs": 3700, "c": 1}, pdob)
+    chk("26b. los números NO cambian: los cierres de Ana = 8 + las 3 de Kommo de este mes (6, 7 y 8) = 11, lo cerrado 8.090 + 3.000 + 701 + 4.200",
+        ana.get("cierres") == 11 and ana.get("value") == 8090 + 3000 + 701 + 4200 and (ana.get("panel") or {}).get("c") == 6,
+        {k: ana.get(k) for k in ("cierres", "value", "panel")})
+    chk("26c. Beto no tiene aviso (el monto de su venta es de una venta de Ana)", not beto.get("panelDoble"), beto.get("panelDoble"))
+    psf = pd.get("panelSinFicha") or {}
+    chk("26d. el resumen dice cuántas y cuánto: 2, Bs 3.700", psf.get("dobles") == 2 and psf.get("doblesBs") == 3700, psf)
+    al = [a for a in pd.get("alerts") or [] if "dos veces" in a.get("t", "")]
+    chk("26e. una alerta ámbar con la vendedora, cuántas, cuánto y cómo se arregla (unirlas en el panel)",
+        len(al) == 1 and al[0]["sev"] == "amber" and al[0]["who"] == "Ana" and "2 venta(s)" in al[0]["t"] and "Bs 3.700" in al[0]["t"]
+        and "Sí, es la misma" in al[0]["act"], al)
+    chk("26f2. el resumen de WhatsApp lo dice en una línea", "⚠️ 2 venta(s) pueden estar contadas dos veces (Bs 3.700)" in (pd.get("wsp") or ""),
+        [l for l in (pd.get("wsp") or "").split("\n") if "dos veces" in l])
+    chk("26f. el registro lo dice en números", "⚠️ 2 con el mismo monto que una venta de Kommo sin unir" in txt, [l for l in txt.split("\n") if "ficha" in l][:2])
+    fuga = [s for s in SECRETOS_335 + ("PRUEBA_DE_MENTIRA",) if s in txt or s in ULTIMO_HTML]
+    chk("26g. ni el registro ni el index.html dicen nada de la lista (clientes, celulares, OC)", not fuga, fuga)
+else:
+    chk("26. (el panel con el aviso de dos veces no se escribió)", False, txt[-400:])
+salio, pd, txt, archivos = correr_335()
+ana = {t["name"]: t for t in (pd or {}).get("team", [])}.get("Ana Prueba", {})
+chk("26h. sin ventas de Kommo con el mismo monto (el escenario de siempre): sin aviso", pd is not None and "panelDoble" not in ana and
+    not (pd.get("panelSinFicha") or {}).get("dobles") and not any("dos veces" in a.get("t", "") for a in pd.get("alerts") or []),
+    (ana.get("panelDoble"), (pd or {}).get("panelSinFicha")))
 
 # ── 6 · que la prueba no tocó el panel del repo ───────────────────────────────────────────────────
 chk("6. el index.html del repo no se tocó (todo fue a una carpeta temporal)", not os.path.exists(os.path.join(RAIZ, "index.html")) or "tok_de_mentira" not in open(os.path.join(RAIZ, "index.html"), encoding="utf-8").read())

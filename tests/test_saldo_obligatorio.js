@@ -74,7 +74,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { paso:paso, der:der, guardo:window._planilla.length>n0, avisos:g.avisos, err:g.err };
   });
   chk('1a. Carola, «NO» y saldo 0: Guardar NO guarda', r1.guardo===false, r1);
-  chk('1b. marca el saldo en rojo y dice que ponga el saldo o «SÍ, pagado»', r1.err && r1.avisos.some(a=>/SALDO POR COBRAR/.test(a) && /SÍ, pagado/.test(a)), r1.avisos);
+  chk('1b. marca el saldo en rojo y dice que ponga el saldo o «SÍ, pagado»', r1.err && r1.avisos.some(a=>/SALDO POR COBRAR/.test(a) && /SÍ, pagó todo/.test(a)), r1.avisos);
   chk('1c. el paso «Cobro» dice lo mismo (sin listo)', r1.paso===false, r1.paso);
 
   /* 2 · con saldo se guarda */

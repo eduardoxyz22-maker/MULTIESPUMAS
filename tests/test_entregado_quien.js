@@ -127,6 +127,22 @@ function BASE(){
   chk('guardar otra cosa sin tocar el ✅ no anota nada', r.a===0, r);
   chk('un ✅ que sacó otra página sin F5 no se le anota a quien guarda después', r.b===0 && r.ent===false, r);
 
+  console.log('\n── 7b. Un «conflicto» trae el ✅ de la planilla ──');
+  r = await ev(async () => { _cargar([ _P({ id:'o2' }) ]); quienRol('logistica'); setVendedorMem('');
+    /* Otra página (sin F5, no conoce `eH`) le puso el ✅ en la planilla; acá se guarda otra cosa con el sello viejo → «conflicto». */
+    var h=JSON.parse(JSON.stringify(window._hoja.o2)); h.entregado=true; h.rev=Date.now()+77; window._hoja.o2=h;
+    var orig=apiPost, una=true;
+    apiPost=function(payload){
+      if(una && payload && payload.action==='save' && payload.pedido && payload.pedido.id==='o2'){ una=false;
+        return Promise.resolve({ ok:false, error:'conflicto', pedido:JSON.parse(JSON.stringify(window._hoja.o2)), ahora:Date.now() }); }
+      return orig(payload); };
+    var p=findById('o2'); p.observaciones='otra cosa'; persistPedido(p); await _esperar(); await _esperar();
+    apiPost=orig;
+    var q=findById('o2'); var ent=!!(q && q.entregado);
+    if(q){ q.observaciones='otra cosa más'; persistPedido(q); await _esperar(); }
+    return { ent:ent, b:_H('o2').length, srv:ENT_SRV.o2 }; });
+  chk('después de un «conflicto», el ✅ que trajo la planilla no se le anota a quien guarda después', r.b===0 && r.srv===true, r);
+
   console.log('\n── 8. Sin lectura de la planilla / venta de tienda ──');
   r = await ev(async () => { ENT_SRV={}; ENT_PROPIO={}; STATE=[ _P({ id:'s1' }) ]; quienRol('logistica');
     toggleEntregado('s1'); await _esperar();
