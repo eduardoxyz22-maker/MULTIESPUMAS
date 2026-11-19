@@ -7250,6 +7250,8 @@ body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-t > b{ font-size:clamp(1.4rem,3.2vw,2
 body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-k{ font-size:clamp(.9rem,1.6vw,1.1rem); }
 body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-v{ display:none; }
 body.pfc-pres #asis-yo, body.pfc-pres .asis-globo{ display:none!important; }
+/* (19/11, revisión de Fable P3) lo que se abre desde la presentación (metas, Ctrl+K, ventanas) va ENCIMA, no detrás */
+body.pfc-pres .modal-overlay, body.pfc-pres .pal-ov, body.pfc-pres .adm-ov, body.pfc-pres #toast{ z-index:6100!important; }
 #pfc-presbar{ position:fixed; left:50%; bottom:calc(14px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); z-index:6010; display:flex; gap:6px; align-items:center;
   background:#fff; border:1px solid #e3ebec; border-radius:999px; box-shadow:0 8px 28px rgba(18,38,43,.22); padding:6px; }
 #pfc-presbar[hidden]{ display:none; }
@@ -11081,6 +11083,10 @@ var ATC_RECOJO_A_MANO_DESDE='2026-11-20';
 function atcFueRecogida(p){
   var a=atcDe(p)||{};
   if(a.pdev && a.rec) return true;               // se programó la devolución: el recojo ya pasó
+  /* (19/11, revisión de Fable A1) una ATC sin fecha de recojo (las traídas de Trello) vive en su devolución sin `rec`: igual ya se recogió */
+  if(a.pdev && p && p.fecha===a.pdev) return true;
+  /* (Fable A2) ya está lista en fábrica, devuelta o cerrada: el recojo pasó aunque nadie lo haya tildado */
+  if(a.dev || a.rf || a.ent) return true;
   if(p && p.entregado) return true;              // logística (o el chofer) marcó «✓ Recogido»
   var f=atcRecogida(p);
   return !!(f && f<=todayStr() && f<ATC_RECOJO_A_MANO_DESDE);
@@ -11090,6 +11096,7 @@ function atcViaje(p){ return (p && esATC(p.oc)) ? (atcViajeDevolucion(p) ? 'dev'
 /* Un recojo cuyo día ya pasó y nadie marcó «✓ Recogido» (solo los de la regla nueva). */
 function atcRecojoSinMarcar(p, hoy){
   if(atcViaje(p)!=='rec' || (p && p.entregado) || atcEntregada(p) || atcDevProg(p)) return false;
+  var _a=atcDe(p)||{}; if(_a.dev || _a.rf || _a.ent) return false;   // (Fable A2) ya está lista en fábrica: no se pide marcar el recojo
   var f=String((p&&p.fecha)||''); hoy=hoy||todayStr();
   return !!f && f<hoy && f>=ATC_RECOJO_A_MANO_DESDE;
 }
@@ -12280,6 +12287,7 @@ function descartarImagenesSinPegar(soloPago){
   return ids.length;
 }
 function showView(v){
+  try{ if(PFC_PRES.on) pfcPresSalir(); }catch(e){}   // (19/11, Fable P5) cambiar de pestaña sale de la presentación
   var enForm=document.getElementById('view-form').classList.contains('active');
   if(enForm && v!=='form'){
     var sinPegar=imagenesSinPegar();
@@ -16212,7 +16220,7 @@ function cxVistaCambiar(){ cxLS('me_cx_tabla', cxModoTarjetas() ? '1' : null); r
 (function(){
   try{
     var mq=window.matchMedia && matchMedia('(max-width:'+(CX_ANGOSTO-1)+'px)');
-    if(mq){ var f=function(){ try{ renderContaSiActiva(); }catch(e){} };
+    if(mq){ var f=function(){ try{ if(pfcPresQuieta()) PFC_PRES.sucio=true; else renderContaSiActiva(); }catch(e){} };
       if(mq.addEventListener) mq.addEventListener('change', f); else if(mq.addListener) mq.addListener(f); }
   }catch(e){}
 })();
@@ -20248,6 +20256,7 @@ function prySemanaHtml(P, g){
    ========================================================================== */
 function contaTab(){ return segVal('cta-tab')||'ventas'; }
 function setContaTab(t){
+  try{ if(PFC_PRES.on && t!=='proy') pfcPresSalir(); }catch(e){}   // (19/11, Fable P5)
   // 📈 (28/09) La proyección es solo con la contraseña de Administración: sin ella, vuelve a Ventas.
   if(t==='proy' && !UNLOCKED){ t='ventas'; segSet('cta-tab','ventas'); }
   // "Ventas" y "Mayoristas" son la MISMA pantalla con distinta gente adentro:
@@ -28275,7 +28284,7 @@ function avisaFormPintar(){
   if(c && !puede) c.checked=false;
   var on=avisaFormOn(), view=document.getElementById('view-form');
   if(view) view.classList.toggle('avisa-cuando', on);
-  var lt=document.getElementById('f-fecha-lbt'); if(lt) lt.textContent = on ? 'Volver a llamar el…' : (docTipoSel()==='ATC' ? '🎧 Día del recojo (lunes o martes)' : 'Fecha de entrega');
+  var lt=document.getElementById('f-fecha-lbt'); if(lt) lt.textContent = on ? 'Volver a llamar el…' : (docTipoSel()==='ATC' ? ((EDIT_ID && (function(){ try{ return atcViajeDevolucion(findById(EDIT_ID)); }catch(e){ return false; } })()) ? '🔁 Día de la devolución' : '🎧 Día del recojo (lunes o martes)') : 'Fecha de entrega');   // (Fable A3)
   var inf=document.getElementById('f-avisa-info'); if(inf) inf.hidden=!on;
   var ff=document.getElementById('f-fecha');
   if(ff && on){ ff.min=tomorrowStr(); ff.max=stockSumarDias(todayStr(), AVISA_MAX_DIAS); }
@@ -28489,6 +28498,11 @@ function setDocTipo(){
    tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
 function pintarDocTipo(limpiar){
   var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
+  /* 🎧 (19/11, revisión de Fable A6) Al pasar un pedido NUEVO a ATC, la fecha que puso el panel solo (`proximoDiaEntrega`) casi nunca es
+     lunes o martes: se propone el próximo lunes o martes hábil. Lo que escribió la persona no se toca. */
+  try{ if(limpiar && tipo==='ATC' && !EDIT_ID){ var _ff=document.getElementById('f-fecha'); if(_ff && (!_ff.value || _ff.value===proximoDiaEntrega()) && !atcDiaPermitido(_ff.value||'1970-01-05')){
+    var _d=proximoDiaEntrega(), _n=0; while(_n++<14 && (!atcDiaPermitido(_d) || !diaHabil(_d))) _d=sigDiaHabil(_d);
+    if(atcDiaPermitido(_d)){ _ff.value=_d; _ff.dispatchEvent(new Event('change',{bubbles:true})); } } } }catch(e){}
   DOC_TIPO_PINTADO=tipo;
   try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) ATC y RPT no apartan: lo apartado para un pedido se suelta
   try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
@@ -30893,7 +30907,8 @@ function deshEntregaOfrecer(id, foto, ficha, pr){
   var p=findById(id); if(!p || !deshVa()) return;
   var despues=deshFotoEntrega(p);                                 // (§4nl, A01) cómo la dejó la entrega
   deshTaparAviso();
-  deshOfrecer((p.entregado ? '✅ ' : '↩️ ')+(p.cliente||'El pedido')+(p.entregado ? ': entregado' : ': ya no figura entregado'), function(){
+  deshOfrecer((p.entregado ? '✅ ' : '↩️ ')+(p.cliente||'El pedido')+(p.entregado ? ': '+entMarcaNombre(p).toLowerCase() : ': ya no figura '+entMarcaNombre(p).toLowerCase()), function(){
+    try{ if(document.getElementById('pdev-tras')) closeModal(); }catch(e){}   // (Fable A4) ya no quedó recogido
     var q=findById(id);
     if(!q){ toast('No se pudo deshacer: el pedido ya no está en la lista.','err'); return; }
     // la marca, su registro del cierre y la ATC, como estaban — sobre la versión de ahora (§4nl, A01)
@@ -32325,7 +32340,8 @@ function fxPasosEstado(sinRecibio){   // sinRecibio: el chip «Saldo o pagado» 
     !!val('f-vendedor') && !!val(tipo==='RPT'?'f-rpt-suc':'f-cliente') && (lite || tipo==='RPT' || (!!val('f-celular') && !celFormFalta(val('f-vendedor')))) &&   // 📱 (§4ok-95) lo mismo que Guardar
       (lite || tipo!=='OC' || !!val('f-nota')) && (!esRoho(val('f-vendedor')) || !!val('f-oc')) && !atcMal,
     prods,
-    tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal()),   // §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
+    tienda || (!!val('f-fecha') && !!val('f-zona') && !fxUbicMal() &&
+      !(tipo==='ATC' && !UNLOCKED && atcDiaMal(val('f-fecha'), EDIT_ID ? findById(EDIT_ID) : null))),   // 🎧 (19/11, Fable A6) lunes o martes, lo mismo que Guardar · §4ok-E5: la ubicación que Guardar frena (no se entiende o fuera de Santa Cruz)
     (tipo!=='OC' || lite || cliEsInterno(val('f-vendedor')) || (pag==='SI' ? !!segVal('f-metodo') : (pag==='NO' && (montoForm('f-saldo')>0 || cobroFormCobAparte()>0.009)))) &&
       (!!sinRecibio || !recibioFormFalta(val('f-vendedor'))) &&   // 💵 (07/11) quién recibió el efectivo, lo mismo que Guardar
       cobroSumaListo(val('f-vendedor'))   // 🧮 (18/11) lo cobrado da con la suma de los productos, lo mismo que Guardar
@@ -32803,7 +32819,7 @@ function autoRepintar(){
   else if(document.getElementById('view-admin').classList.contains('active')){ if(UNLOCKED) renderAdmin(); }
   else if(document.getElementById('view-mis').classList.contains('active')) renderMis();
   else if(document.getElementById('view-chofer').classList.contains('active')) renderChofer();
-  else if(document.getElementById('view-conta').classList.contains('active')) renderContaSiActiva();
+  else if(document.getElementById('view-conta').classList.contains('active')){ if(pfcPresQuieta()) PFC_PRES.sucio=true; else renderContaSiActiva(); }
   window.scrollTo(0,y);
 }
 function autoRefrescar(motivo){
@@ -37865,7 +37881,7 @@ var PFC_SECS=[
   { k:'patron',  ix:'', grupo:1, cerr:1, t:'📅 Cómo se viene vendiendo',     ids:['pry-patron'] },
   { k:'como',    ix:'', grupo:1, cerr:1, t:'❓ Cómo se cuenta',              ids:['pry-como'] }
 ];
-var PFC_CTX=null, PFC_ORD='plata', PFC_PRES={ on:false, i:0, L:[], x0:null };
+var PFC_CTX=null, PFC_ORD='plata', PFC_PRES={ on:false, i:0, k:'', L:[], x0:null, sucio:false, repintando:false };
 function pfcVa(){ try{ return vdVa('PFC_PRUEBA'); }catch(e){ return false; } }
 function pfcMes(ym){ return String(pryMesCorto(ym)||'').toLowerCase(); }
 function pfcPrev(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-1; if(m<1){ m=12; y--; } return y+'-'+(m<10?'0':'')+m; }
@@ -38072,14 +38088,30 @@ function pfcPintar(R, A){
   put('pry-leads', pfcLeadsHtml(R));
   put('pry-vtabla', pfcTablaHtml(R, A));
   pfcTilesPintar();
-  if(PFC_PRES.on) setTimeout(function(){ pfcPresLista(); pfcPresIr(PFC_PRES.i); }, 0);
+  if(PFC_PRES.on) setTimeout(function(){ pfcPresLista(); pfcPresIr(pfcPresIdx(PFC_PRES.k, PFC_PRES.i)); }, 0);
 }
-/* ---- ▶ Presentar: una sección por pantalla ---- */
+/* ---- ▶ Presentar: una sección por pantalla ----
+   (19/11, revisión de Fable; dueño: «A») Mientras se presenta, la lectura automática y el giro del iPad NO vuelven a dibujar Proyección
+   (`pfcPresQuieta` → `PFC_PRES.sucio`): los números quedan quietos y se ponen al día al cambiar de sección o al salir. Lo que la persona
+   toca (Comparar con, ordenar…) sí repinta, pero la sección queda donde estaba (`pfcPresIr` sube SOLO si cambia de sección, buscada por
+   su nombre `k`). Las ventanas van encima (CSS), pellizcar no cambia de sección, cambiar de pestaña sale, y al salir se vuelve a la
+   sección que se miraba. `tests/test_pry_presentar.js`. */
+function pfcPresQuieta(){ return !!(PFC_PRES.on && !PFC_PRES.repintando); }
 function pfcPresLista(){ PFC_PRES.L=[].slice.call(document.querySelectorAll('#cta-pane-proy > .pix-s')).filter(function(s){ return !s.hidden && s.querySelector('.pix-b').innerHTML.trim(); }); }
+function pfcPresK(s){ return s ? String(s.id||'').replace(/^pix-s-/,'') : ''; }
+function pfcPresIdx(k, i){
+  var L=PFC_PRES.L; for(var j=0;j<L.length;j++){ if(pfcPresK(L[j])===k) return j; }
+  return Math.max(0, Math.min(L.length-1, i||0));
+}
+function pfcPresHayVentana(){
+  var m=document.getElementById('modal'); if(m && m.classList.contains('on')) return true;
+  var pal=document.getElementById('pal-ov'); if(pal && pal.offsetParent!==null && !pal.hidden) return true;
+  return [].some.call(document.querySelectorAll('.adm-ov'), function(o){ return o.offsetParent!==null || getComputedStyle(o).display!=='none'; });
+}
 function pfcPresAbrir(){
   if(!pixArmar()) return;
   pfcPresLista(); if(!PFC_PRES.L.length) return;
-  PFC_PRES.on=true; document.body.classList.add('pfc-pres');
+  PFC_PRES.on=true; PFC_PRES.sucio=false; document.body.classList.add('pfc-pres');
   /* la tarjeta grande es de vidrio (`backdrop-filter`): adentro, «fixed» no es la pantalla. Mientras se presenta, la pestaña va directo en el body. */
   var pn=document.getElementById('cta-pane-proy'); if(pn && pn.parentNode!==document.body){ PFC_PRES.casa=[pn.parentNode, pn.nextSibling]; document.body.appendChild(pn); }
   var bar=document.getElementById('pfc-presbar');
@@ -38089,37 +38121,60 @@ function pfcPresAbrir(){
       '<button type="button" class="pfc-pv" aria-label="Siguiente" onclick="pfcPresIr(PFC_PRES.i+1)">›</button><button type="button" class="pfc-px" onclick="pfcPresSalir()">✕ Salir</button>';
     document.getElementById('cta-pane-proy').appendChild(bar);
     var pane=document.getElementById('cta-pane-proy');
-    pane.addEventListener('touchstart', function(e){ if(PFC_PRES.on && e.touches.length===1) PFC_PRES.x0=[e.touches[0].clientX, e.touches[0].clientY]; }, { passive:true });
+    pane.addEventListener('touchstart', function(e){
+      if(!PFC_PRES.on) return;
+      /* (Fable P4) con dos dedos (pellizcar) no es deslizar */
+      PFC_PRES.x0 = e.touches.length===1 ? [e.touches[0].clientX, e.touches[0].clientY] : null;
+    }, { passive:true });
     pane.addEventListener('touchend', function(e){
-      if(!PFC_PRES.on || !PFC_PRES.x0) return; var t=e.changedTouches[0], dx=t.clientX-PFC_PRES.x0[0], dy=t.clientY-PFC_PRES.x0[1]; PFC_PRES.x0=null;
+      if(!PFC_PRES.on || !PFC_PRES.x0) return;
+      if(e.touches && e.touches.length){ PFC_PRES.x0=null; return; }
+      if(window.visualViewport && visualViewport.scale>1.01){ PFC_PRES.x0=null; return; }   // agrandada: arrastrar es mirar
+      var t=e.changedTouches[0], dx=t.clientX-PFC_PRES.x0[0], dy=t.clientY-PFC_PRES.x0[1]; PFC_PRES.x0=null;
       if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.6 && !(e.target.closest && e.target.closest('.pfc-sx,.pry-scroll,input,select,.pix-chips'))) pfcPresIr(PFC_PRES.i+(dx<0 ? 1 : -1));
     }, { passive:true });
+    pane.addEventListener('touchcancel', function(){ PFC_PRES.x0=null; }, { passive:true });
     document.addEventListener('keydown', function(e){
-      if(!PFC_PRES.on || (e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName))) return;
-      if(e.key==='ArrowRight' || e.key==='PageDown'){ e.preventDefault(); pfcPresIr(PFC_PRES.i+1); }
-      else if(e.key==='ArrowLeft' || e.key==='PageUp'){ e.preventDefault(); pfcPresIr(PFC_PRES.i-1); }
-      else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); pfcPresSalir(); }
+      if(!PFC_PRES.on) return;
+      if(pfcPresHayVentana()) return;   // (Fable P3) Esc y las flechas son de la ventana abierta
+      var enCampo=e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName);
+      if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); pfcPresSalir(); return; }
+      if(enCampo) return;
+      /* (Fable P7) AvPág/RePág bajan dentro de la sección: solo ← y → cambian */
+      if(e.key==='ArrowRight'){ e.preventDefault(); pfcPresIr(PFC_PRES.i+1); }
+      else if(e.key==='ArrowLeft'){ e.preventDefault(); pfcPresIr(PFC_PRES.i-1); }
     }, true);
   }
   bar.hidden=false;
-  pfcPresIr(0);
+  PFC_PRES.k=''; pfcPresIr(0);
   try{ var de=document.documentElement; if(de.requestFullscreen && !document.fullscreenElement) de.requestFullscreen().catch(function(){}); }catch(e){}
 }
 function pfcPresIr(i){
   var L=PFC_PRES.L; if(!L.length) return;
-  i=Math.max(0, Math.min(L.length-1, i)); PFC_PRES.i=i;
+  i=Math.max(0, Math.min(L.length-1, i));
+  var k=pfcPresK(L[i]), cambia=(k!==PFC_PRES.k);
+  PFC_PRES.i=i; PFC_PRES.k=k;
   L.forEach(function(s, j){ s.classList.toggle('pfc-cur', j===i); });
   var n=document.querySelector('#pfc-presbar .pfc-pn'); if(n) n.textContent=(i+1)+' / '+L.length;
-  var pane=document.getElementById('cta-pane-proy'); if(pane) pane.scrollTop=0;
+  if(!cambia) return;   // (Fable P1) la misma sección: no se sube ni se toca nada
+  var pane=document.getElementById('cta-pane-proy');
+  if(pane){ pane.scrollTop=0; if(!pane.hasAttribute('tabindex')) pane.tabIndex=-1; try{ pane.focus({ preventScroll:true }); }catch(e){} }
+  /* lo que la lectura automática dejó para después se dibuja ahora, al entrar a otra sección */
+  if(PFC_PRES.sucio){ PFC_PRES.sucio=false; PFC_PRES.repintando=true; try{ renderContaSiActiva(); }catch(e){} PFC_PRES.repintando=false; }
   try{ acomodarFichas(); }catch(e){} try{ window.dispatchEvent(new Event('resize')); }catch(e){}
 }
 function pfcPresSalir(){
-  PFC_PRES.on=false; document.body.classList.remove('pfc-pres');
+  if(!PFC_PRES.on) return;
+  var cur=PFC_PRES.L[PFC_PRES.i];
+  PFC_PRES.on=false; PFC_PRES.k=''; document.body.classList.remove('pfc-pres');
   var pn=document.getElementById('cta-pane-proy'), c=PFC_PRES.casa; if(pn && c){ c[0].insertBefore(pn, c[1] && c[1].parentNode===c[0] ? c[1] : null); PFC_PRES.casa=null; }
   PFC_PRES.L.forEach(function(s){ s.classList.remove('pfc-cur'); });
   var bar=document.getElementById('pfc-presbar'); if(bar) bar.hidden=true;
   try{ if(document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(function(){}); }catch(e){}
+  if(PFC_PRES.sucio){ PFC_PRES.sucio=false; try{ renderContaSiActiva(); }catch(e){} }
   try{ window.dispatchEvent(new Event('resize')); }catch(e){}
+  /* (Fable P6) se vuelve a la sección que se estaba mirando, no arriba de todo */
+  if(cur && cur.isConnected) setTimeout(function(){ try{ window.scrollTo(0, Math.max(0, window.scrollY + cur.getBoundingClientRect().top - (typeof hdrAltoEn==='function' ? hdrAltoEn(cur) : 80) - 8)); }catch(e){} }, 30);
 }
 /* fin Proyección completa */
 /* ============================================================================
@@ -45848,7 +45903,7 @@ function misCardHtmlBase(p, n, todos, verNota){
       ((_t394 && !String(p.chofer||'').trim()) ? '' : ('<span class="mi" title="Chofer">🚚</span><div class="cho-row">'+choferTexto(p)+'</div>'))+   // 🎨 (394) recién con chofer
     '</div>'+
     fotosHtml(p, false)+
-    (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">ENTREGADO</div>':'')+
+    (p.entregado?'<div class="mis-sello'+(misSelloNuevo(p.id)?' golpe':'')+'">'+esc(entMarcaNombre(p).toUpperCase())+'</div>':'')+   // (Fable A5) una ATC dice RECOGIDO / DEVUELTO
     '<div class="cho-links'+(_b400?' p400':'')+'">'+   // 🎨 (16/11, mejora 400) en una fila, con el número a la vista
       misCobrarBtnHtml(p, 'cho-link', 'tarjeta')+   // 💵 (295) cobrar el saldo sin ir a Contabilidad
       '<button class="cho-link ico" onclick="event.stopPropagation();editarDesdeMis(\''+p.id+'\')">✏️ Editar</button>'+
