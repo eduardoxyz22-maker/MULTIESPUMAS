@@ -1475,6 +1475,10 @@ en una línea. `tests/test_ficha_auto.js`.
 - **Pestaña «🤖 Bot»** (`#tab-bot`/`#view-bot`, `botVe()`, `botTabPintar`): las respuestas al bot salieron de Administración. Solo con la clave de
   ESA visita o eligiendo Logística, Administración o Eduardo (`f555b4a`); ⚠️ NO con `me_adm_dev` (queda para siempre). `test_saldo_almacen`
   cuenta `tab-bot` entre las pestañas. `tests/test_adm_fichas.js` (13), `tests/test_bot_tab.js` (9). Bitácora §4md.
+- **🎧 Botón «ATC» en los filtros** (19/11, dueño: *«¿y acá dónde filtro por ATC?»* → *«sí, agregalo»*): `{k:'atc'}` en `QUICK_DEFS`, al lado de
+  «🏪 Reposiciones»; deja solo las ATC del período (viven en el día de su viaje: recojo o devolución) y parpadea con `recogerFabPendientes()`
+  (las que hay que ir a buscar a la fábrica y nadie tildó «✓ Recogido»: el mismo aviso de la ficha del chofer y la Lista de carga). Solo filtra.
+  `tests/test_chip_atc.js` (10; 8 rojas contra el panel de antes).
 
 ## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10, PUBLICADO `bb9fa20`; batería 279 suites · 8.945 · 0 mal)
 - **El `ts` de una venta de tienda es su DÍA** (§4nm): `mismoContenido` lo compara como número (R-01; si no, un `conflicto` de fecha pasaba por «ok
