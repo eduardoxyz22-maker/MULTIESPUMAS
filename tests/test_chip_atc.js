@@ -53,7 +53,7 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   chk('1a · hay un botón «🎧 ATC»', /🎧 ATC/.test(r.txt), r.txt);
   chk('1b · va justo al lado de «Reposiciones»', r.ks.indexOf('atc') === r.ks.indexOf('rpt') + 1, r.ks);
   chk('1c · cuenta las 3 ATC (no la venta ni la reposición)', /🎧 ATC 3\b/.test(r.txt), r.txt);
-  chk('1d · parpadea en rojo: 1 para recoger de fábrica', /qchip-alerta/.test(r.cls) && /🔴 1 recoger de fábrica/.test(r.txt), r);
+  chk('1d · parpadea en rojo: 1 por marcar (la de traer de fábrica)', /qchip-alerta/.test(r.cls) && /🔴 1 por marcar/.test(r.txt), r);
   chk('1e · el globito explica qué falta y dónde se marca', /buscar a la fábrica/.test(r.tit) && /Recogido/.test(r.tit), r.tit);
 
   await page.evaluate(() => setQuick('atc')); r = await estado();
