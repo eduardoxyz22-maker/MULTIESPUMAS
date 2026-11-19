@@ -987,6 +987,41 @@ body.ficha-costado .wrap{ max-width:none; margin-left:0; margin-right:min(900px,
 .fl-modp.fuerte{border-left:6px solid var(--red)}.fl-modp i{font-style:normal;color:#7a5200}
 .fl-modok{margin-left:auto;background:var(--red);color:#fff;border:0;border-radius:8px;padding:5px 10px;font-weight:800;font-size:.8rem;cursor:pointer;font-family:inherit}
 .fl-qh{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;padding:9px 14px;font-size:.98rem}
+/* 🎧 (19/11) La ATC en Administración: el recuadro de la ficha grande, lo que se trae/lleva y la línea de la ficha chica */
+.atcb{border:2px solid #efbcd9;background:#fbe8f3;border-radius:14px;padding:11px 14px;margin:0 0 12px;display:flex;flex-direction:column;gap:8px}
+.atcb.ok{border-color:#a9dcbd;background:#e5f6ec}
+.atcb-t{font-size:.76rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#b0257a}
+.atcb.ok .atcb-t{color:#127a3e}
+.atcb-pasos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;list-style:none;margin:0;padding:0}
+.atcb-pasos li{background:#fff;border:1px solid #efbcd9;border-radius:10px;padding:5px 8px;font-size:.76rem;line-height:1.25;min-width:0}
+.atcb-pasos li b{display:block;font-size:.8rem}
+.atcb-pasos li.hecho{background:#f3fbf6;border-color:#a9dcbd;color:#127a3e}
+.atcb-pasos li.ahora{background:#b0257a;border-color:#b0257a;color:#fff}
+.atcb-pasos li.falta{color:#9a8a94}
+@media (max-width:560px){.atcb-pasos{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.atcb-d{margin:0;font-size:.86rem}
+.atcb-mal{background:#fdecea;border:1px solid #f5b8b2;border-left:5px solid #b42318;border-radius:9px;padding:7px 10px;font-size:.85rem;color:#b42318;font-weight:600}
+.atcb-com{background:#fff6dc;border:1px solid #f0d27a;border-radius:9px;padding:6px 10px;font-size:.84rem;color:#8a5a00;font-weight:700}
+.atcb-acc{display:flex;flex-wrap:wrap;gap:8px}
+.atcb-b{border:1.5px solid #efbcd9;background:#fff;color:#b0257a;border-radius:10px;padding:8px 13px;font:inherit;font-weight:800;font-size:.86rem;cursor:pointer}
+.atcb-b.rec{background:#b0257a;border-color:#b0257a;color:#fff}
+.atcb-b.dev{background:#0b5f99;border-color:#0b5f99;color:#fff}
+.atcb-b.mal{background:#b42318;border-color:#b42318;color:#fff}
+.atcb-n{margin:0;font-size:.78rem;color:var(--muted)}
+.atc-bul{background:#163a3a;color:#fff;border-radius:10px;padding:7px 12px;font-weight:700;font-size:.9rem;margin-bottom:8px}
+.atc-pl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;margin-bottom:6px}
+.atc-n{background:#163a3a;color:#fff;border-radius:8px;font-weight:800;padding:3px 9px}
+.atc-chs{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+.atcc{display:inline-block;border:1.5px solid var(--line,#d8e6e5);border-radius:8px;padding:1px 7px;font-size:.78rem;font-weight:700;background:#fff}
+.atcc.rec{border-color:#efbcd9;background:#fbe8f3;color:#b0257a}
+.atcc.ok{border-color:#a9dcbd;background:#e5f6ec;color:#127a3e}
+.atcc.no{border-color:#f5b8b2;background:#fdecea;color:#b42318}
+.atc-rcb{font-size:.82rem;margin-top:4px}
+.atc-nt{font-size:.78rem;color:var(--muted);margin-top:6px}
+.af-atc{font-size:.8rem;font-weight:800;color:#b0257a;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.af-atc.mal{color:#b42318}
+.af-atc button{border:0;border-radius:8px;background:#0b5f99;color:#fff;font:inherit;font-size:.76rem;font-weight:800;padding:4px 9px;cursor:pointer}
+.af-atc.mal button{background:#b42318}
 .fl-qh-s{color:#9bb}.fl-qh .fl-qh-k{min-width:0;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:#00756f}
 .fl-obs .t{font-size:.72rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8a6400}
 .fl-obs ul{margin:0;padding:6px 10px 6px 28px;border-radius:9px;display:grid;gap:2px;font-size:.88rem;font-weight:700}
@@ -11038,11 +11073,36 @@ function atcViajeDevolucion(p){ var a=atcDe(p); return !!(a && a.pdev && p && p.
    dejaba puesto, y si después se movía el recojo con 📅 la matriz seguía en el día viejo y lo daba por
    recogido. Una fila que ya quedó así se lee por su fecha. */
 function atcRecogida(p){ var a=atcDe(p); return (a&&a.pdev&&a.rec) || (p&&p.fecha) || ''; }
+/* ✋ (19/11, dueño: «que no se marquen solas… logística debe marcar "recogido"») Desde el 20/11 el recojo SE MARCA: lo pone logística con
+   «✓ Recogido» (el ✅ del viaje del recojo, `p.entregado`) y ahí mismo se le ofrece programar la devolución (`atcTrasRecoger`). Que pase el
+   día ya no alcanza, y el GPS no lo propone (`cierreEntGps`: el GPS sí vale para la DEVOLUCIÓN, la etapa final). Los recojos de antes de
+   esa fecha siguen con la regla vieja (§4bs: la fecha pasada = recogido), para que las ATC en curso no vuelvan a «Por recoger». */
+var ATC_RECOJO_A_MANO_DESDE='2026-11-20';
 function atcFueRecogida(p){
   var a=atcDe(p)||{};
   if(a.pdev && a.rec) return true;               // se programó la devolución: el recojo ya pasó
+  if(p && p.entregado) return true;              // logística (o el chofer) marcó «✓ Recogido»
   var f=atcRecogida(p);
-  return !!((f && f<=todayStr()) || (p&&p.entregado));
+  return !!(f && f<=todayStr() && f<ATC_RECOJO_A_MANO_DESDE);
+}
+/* ¿Qué viaje es ESTE de la ATC? 'dev' = el de la devolución (vive en su día, `pdev`), 'rec' = el del recojo, '' = no es ATC. */
+function atcViaje(p){ return (p && esATC(p.oc)) ? (atcViajeDevolucion(p) ? 'dev' : 'rec') : ''; }
+/* Un recojo cuyo día ya pasó y nadie marcó «✓ Recogido» (solo los de la regla nueva). */
+function atcRecojoSinMarcar(p, hoy){
+  if(atcViaje(p)!=='rec' || (p && p.entregado) || atcEntregada(p) || atcDevProg(p)) return false;
+  var f=String((p&&p.fecha)||''); hoy=hoy||todayStr();
+  return !!f && f<hoy && f>=ATC_RECOJO_A_MANO_DESDE;
+}
+function atcRecojosSinMarcar(){ var hoy=todayStr(); return STATE.filter(function(p){ return atcRecojoSinMarcar(p, hoy); }); }
+/* Cómo se llama el ✅ de este viaje: «Recogido» en el recojo de una ATC, «Devuelto» en su devolución, «Entregado» en lo demás. */
+function entMarcaNombre(p){ var v=atcViaje(p); return v==='rec' ? 'Recogido' : (v==='dev' ? 'Devuelto' : 'Entregado'); }
+/* Al marcar «✓ Recogido» se abre enseguida «🔁 Programar devolución» (dueño, 19/11: «al momento de marcar RECOGIDO debe salir el botón para
+   programar devolución»). «Más tarde» la deja en fábrica con el botón a la vista. */
+function atcTrasRecoger(p, desde){
+  if(!p || atcViaje(p)!=='rec' || !p.entregado || atcDevProg(p) || atcEntregada(p)) return;
+  if(typeof navigator!=='undefined' && navigator.webdriver && !window.ATC_RECOGER_PRUEBA) return;   // en las pruebas de siempre no se abre
+  var id=String(p.id);
+  setTimeout(function(){ var q=findById(id); if(q && q.entregado && !atcDevProg(q)) abrirProgramarDevAtc(id, { trasRecoger:true, desde:desde||'' }); }, 90);
 }
 /* 🏭 RECOGER DE FÁBRICA (§4eb, dueño 11/09): *"volvió de fábrica significa un turno para
    logística: ir a recoger a la fábrica y ese día llevar al cliente… mejor que sea una alerta
@@ -26599,6 +26659,25 @@ function submitPedido(){
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
     return;
   }
+  /* 📅 (19/11, dueño: «al llenar una ATC solo puedes permitirles agendar los lunes y martes únicamente, a los vendedores») El recojo de una
+     ATC va lunes o martes. Con la clave de Administración se puede otro día, preguntando. La devolución (y una ATC cuyo día no se tocó)
+     no se mira. En Playwright solo con `ATC_DIA_PRUEBA`. */
+  if(docTipoSel()==='ATC'){
+    var _fAtcD=String((document.getElementById('f-fecha')||{}).value||'');
+    if(atcDiaMal(_fAtcD, EDIT_ID ? findById(EDIT_ID) : null)){
+      if(!UNLOCKED){
+        markErr('f-fecha');
+        toast('🎧 Las ATC se agendan solo los LUNES o MARTES. El '+fmtFecha(_fAtcD)+' es '+diaSemana(_fAtcD)+': elegí un lunes o un martes.','err',8000);
+        try{ var _ffD=document.getElementById('f-fecha'); _ffD.focus(); _ffD.scrollIntoView({block:'center'}); }catch(e){}
+        return;
+      }
+      var _rDia=preguntaYa('🎧 Las ATC se agendan los lunes o martes, y el '+fmtFecha(_fAtcD)+' es '+diaSemana(_fAtcD)+'.\n\nVos tenés la clave de Administración.\n\nAceptar: agendarla igual ese día.\nCancelar: cambiar el día.',
+        { icono:'🎧', aviso:true, titulo:'Las ATC van lunes o martes', lineas:['El '+fmtFecha(_fAtcD)+' es '+diaSemana(_fAtcD)+'. Un vendedor no puede agendarla ese día; vos tenés la clave de Administración.'],
+          no:'📅 Cambiar el día', si:'💾 Agendarla igual' }, _otraVez);
+      if(_rDia===null) return;
+      if(!_rDia){ markErr('f-fecha'); try{ document.getElementById('f-fecha').focus(); }catch(e){} return; }
+    }
+  }
   /* 📷 (§4lh) Una foto del producto que todavía está subiendo se perdería: el pedido se guardaría sin ella. */
   if(docTipoSel()==='ATC' && ATC_FOTO_SUBIENDO>0){
     toast('📷 Esperá que termine de subir la foto del producto y volvé a tocar Guardar.','err',7000);
@@ -28196,7 +28275,7 @@ function avisaFormPintar(){
   if(c && !puede) c.checked=false;
   var on=avisaFormOn(), view=document.getElementById('view-form');
   if(view) view.classList.toggle('avisa-cuando', on);
-  var lt=document.getElementById('f-fecha-lbt'); if(lt) lt.textContent = on ? 'Volver a llamar el…' : 'Fecha de entrega';
+  var lt=document.getElementById('f-fecha-lbt'); if(lt) lt.textContent = on ? 'Volver a llamar el…' : (docTipoSel()==='ATC' ? '🎧 Día del recojo (lunes o martes)' : 'Fecha de entrega');
   var inf=document.getElementById('f-avisa-info'); if(inf) inf.hidden=!on;
   var ff=document.getElementById('f-fecha');
   if(ff && on){ ff.min=tomorrowStr(); ff.max=stockSumarDias(todayStr(), AVISA_MAX_DIAS); }
@@ -34511,8 +34590,11 @@ var QUICK_DEFS=[
      Parpadea con las que hay que ir a buscar a la fábrica y nadie tildó «✓ Recogido» (`recogerFabPendientes`: desde 2 días
      hábiles antes de la devolución; es el mismo aviso «🏭 Recoger de fábrica» de la ficha del chofer y la Lista de carga). */
   {k:'atc',         lbl:'🎧 ATC',           test:function(p){return esATC(p&&p.oc);},
-                                          alerta:function(){ return recogerFabPendientes().length; }, alertaTxt:'recoger de fábrica',
-                                          tit:function(n){ return n ? (n+' ATC para ir a buscar a la fábrica antes de su devolución: nadie marcó «✓ Recogido» (está en la ficha del chofer y en la Lista de carga)') : 'Solo las ATC: recojos y devoluciones'; }}
+                                          /* (19/11) …y los recojos que ya pasaron y nadie marcó «✓ Recogido» (desde el 20/11 no se marcan solos) */
+                                          alerta:function(){ return recogerFabPendientes().length+atcRecojosSinMarcar().length; }, alertaTxt:'por marcar',
+                                          tit:function(n){ if(!n) return 'Solo las ATC: recojos y devoluciones';
+                                            var f=recogerFabPendientes().length, r=atcRecojosSinMarcar().length;
+                                            return [r?(r+' recojo'+(r===1?'':'s')+' que ya pasó y nadie marcó «✓ Recogido»'):'', f?(f+' para ir a buscar a la fábrica antes de su devolución: nadie marcó «✓ Recogido de fábrica»'):''].filter(Boolean).join(' · '); }}
 ];
 /* 🗓️ LA SEMANA: EL STOCK DE LOS PRODUCTOS DE LOS PRÓXIMOS 5 DÍAS HÁBILES (26/10 y 27/10).
    El dueño (26/10): «un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si por ejemplo sabés que jueves
@@ -35106,7 +35188,7 @@ function admVista(){
 }
 function admVistaPoner(v){ try{ localStorage.setItem(LS_ADM_VISTA, v); }catch(e){} renderAdmin(); }
 function admFichaEstado(p){
-  if(p.entregado) return { c:'ent', t:'🚚 Entregado' };
+  if(p.entregado) return { c:'ent', t:({rec:'✓ Recogido', dev:'✅ Devuelto'}[atcViaje(p)]||'🚚 Entregado') };
   var m=modDe(p);
   if(m) return { c:'mod late', t:(m.d||[]).some(function(t){ return /^📅/.test(String(t)); }) ? '⚠️ Cambió la fecha' : '⚠️ Modificado', title:'Lo cambiaron después de revisado: abrí la ficha y tocá «Ya lo revisé»' };
   var sal=(p.vehiculo && p.fecha===todayStr()) ? camionSalio(p.fecha, p.vehiculo) : '';
@@ -35142,7 +35224,7 @@ function admFichaHtml(p, dn){
   var tipo=esATC(p.oc)?'🎧 ':esRPT(p.oc)?'🏪 ':'';
   var pr=(p.productos||[]), tienda=pr.filter(function(x){ return deTiendaNoViaja(p, x); }), carga=pr.filter(function(x){ return !deTiendaNoViaja(p, x); });
   var MAX=4, filas=carga.slice(0, MAX).map(function(x){
-    var tag=prodLugarTag(x) || ' <span class="lug lug-sr">sin revisar</span>';
+    var tag=esATC(p.oc) ? (' '+atcProdChip(p)) : (prodLugarTag(x) || ' <span class="lug lug-sr">sin revisar</span>');   // 🎧 (19/11) una ATC no sale del stock
     var m=String(x.medida||'').trim(), mk=!m ? '' : (normMedida(m)==='50x70' ? ' af-m5070' : hasEspecial({productos:[x]}) ? ' af-mesp' : '');
     var cp=cantPrimeroVa();   // 🎨 (mejora 413) el nombre sin la medida repetida y la cantidad en ámbar si es más de 1
     return '<div class="af-pl"><span class="af-c'+((cp && (Number(x.cant)||0)>1)?' mas':'')+'">'+esc(String(x.cant||0))+'</span>'+prodIcoHtml(x)+'<span class="af-nm">'+esc((cp ? prodNombreCorto(x) : x.desc)||'—')+(m?(' <em class="'+mk.trim()+'"'+(mk===' af-mesp'?' title="Medida especial: se fabrica a pedido"':'')+'>'+(mk===' af-mesp'?'📐 ':'')+esc(m.replace(/x/gi,'×'))+'</em>'):'')+'</span><span class="af-lg">'+tag+'</span></div>';
@@ -35172,10 +35254,10 @@ function admFichaHtml(p, dn){
       /* (24/10, dueño: «¿esto no es redundante?») arriba solo lo que los productos NO dicen; el stock lo dice cada producto y el color */
       (/^(ent|mod|sal|ok)\b/.test(E.c) ? ('<span class="af-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span>') : '')+'</div>'+
     '<div class="af-ps">'+(filas||('<div class="af-mas">'+(tienda.length?'Nada para cargar':'Sin productos')+'</div>'))+'</div>'+nt+
-    '<div class="af-inf">'+dir+cam+gpsL+'</div>'+
+    '<div class="af-inf">'+atcChicaLinea(p)+dir+cam+gpsL+'</div>'+
     '<div class="af-tb">'+
       /* 🎨 (§4ni, 9) los íconos propios, con color */
-      btn(icoHtml('ent'),'Entregó',"quickEntregado('"+pid+"')", p.entregado?'on':(gpsL?'gps':''))+
+      btn(icoHtml('ent'),({rec:'Recogido', dev:'Devuelto'}[atcViaje(p)]||'Entregó'),"quickEntregado('"+pid+"')", p.entregado?'on':(gpsL&&atcViaje(p)!=='rec'?'gps':''))+
       btn(icoHtml('wa'),'WhatsApp',"copyPedido('"+pid+"')")+
       btn(icoHtml('editar'),'Editar',"EDIT_DESDE='admin';editPedido('"+pid+"')")+
       btn(icoHtml('repro'),'Reprog.',"reprogramarPedido('"+pid+"')")+
@@ -42820,7 +42902,7 @@ function abrirDevolucionAtc(id){
       /* El recojo no se marca: es la fecha del viaje, puesta al cargar la ATC. */
       '<div style="background:var(--gray-lt);border-radius:10px;padding:10px 13px;margin-bottom:11px;font-size:.82rem">'+
         '🚚 <b>Recojo programado:</b> '+(atcRecogida(p)?esc(fmtFecha(atcRecogida(p))):'<i>sin fecha</i>')+
-        (yaRec?'':' <span style="color:var(--muted)">— todavía no llegó ese día</span>')+
+        (yaRec?'':' <span style="color:var(--muted)">— todavía no lo marcaron «✓ Recogido»</span>')+
         '<div style="font-size:.75rem;color:var(--muted);margin-top:3px">Se cambia editando la ATC, no acá.</div>'+
         (atcDevProg(p)?('<div style="margin-top:6px;color:#075985">🔁 <b>Devolución programada:</b> '+esc(fmtFecha(atcDevProg(p)))+' '+esc(atcDevTurno(p))+' <span style="color:var(--muted)">— ocupa cupo ese día; el ✅ del chofer la cierra</span></div>'):'')+
       '</div>'+
@@ -42903,7 +42985,11 @@ function guardarDevolucionAtc(id){
 /* 🔁 PROGRAMAR LA DEVOLUCIÓN (§4dz): día y turno del viaje para llevarle el producto de
    vuelta al cliente. Ocupa un cupo del camión como cualquier entrega: el servidor lo
    valida igual que un pedido nuevo (día cerrado, turno lleno) y, si no entra, avisa. */
-function abrirProgramarDevAtc(id){
+/* `opt.trasRecoger` (19/11): se abre sola al marcar «✓ Recogido» — dice que quedó recogido y «Más tarde» la deja en fábrica. `opt.desde`
+   = 'ficha' para volver a la ficha grande al terminar. */
+var PDEV_DESDE={ id:'', desde:'' };
+function abrirProgramarDevAtc(id, opt){
+  opt=opt||{}; PDEV_DESDE={ id:String(id), desde:opt.desde||'' };
   var p=findById(id); if(!p){ toast('No encontré esa ATC','err'); return; }
   if(!atcFueRecogida(p)){ toast('Primero hay que recogerlo: la devolución se programa después del recojo','err'); return; }
   var a=atcDe(p)||{}, hoy=todayStr(), f0=a.pdev||proximoDiaEntrega(), t0=normTurno(a.pturno||'AM');
@@ -42920,11 +43006,12 @@ function abrirProgramarDevAtc(id){
     return '🌅 AM '+c(amL,limTurno(f,'AM'))+' · 🌆 PM '+(lPM>0?c(pmL,lPM):'<b>no hay (sábado)</b>')+' cupos usados el '+fmtFecha(f);
   };
   openModal(
-    '<div class="modal-h"><h3>🔁 Programar devolución · '+esc(p.cliente||'')+'</h3>'+
+    '<div class="modal-h"><h3>'+(opt.trasRecoger?'✓ Recogido · ':'🔁 Programar devolución · ')+esc(p.cliente||'')+'</h3>'+
       '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
       '<div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">'+esc(ocEtiq(p.oc))+' · '+esc(prodText(p.productos))+
         '<br>Recogido al cliente el <b>'+esc(fmtFecha(atcRecogida(p)))+'</b>'+(atcDevuelta(p)?(' · listo en fábrica desde el <b>'+esc(fmtFecha(atcDevuelta(p)))+'</b>'):'')+'</div>'+
+      (opt.trasRecoger ? ('<div id="pdev-tras" style="background:#e5f6ec;border:1px solid #a9dcbd;color:#127a3e;border-radius:10px;padding:9px 12px;font-weight:700;font-size:.86rem;margin-bottom:10px">✓ Quedó recogido. Ahora está en fábrica: elegí qué día se le devuelve.</div>') : '')+
       '<div class="field"><label class="lb">¿Qué día se le lleva de vuelta?</label>'+
         '<input type="date" id="pdev-fecha" min="'+esc(hoy)+'" value="'+esc(f0)+'" onchange="document.getElementById(\'pdev-cupos\').innerHTML=abrirProgramarDevAtc._cupos(this.value)"></div>'+
       '<div class="field" style="margin-top:9px"><label class="lb">Turno</label>'+
@@ -42934,7 +43021,7 @@ function abrirProgramarDevAtc(id){
       '<div class="btn-row" style="margin-top:16px">'+
         '<button class="btn btn-primary btn-sm" style="width:auto" onclick="guardarProgramarDevAtc(\''+esc(p.id)+'\')">Programar</button>'+
         (atcDevProg(p)?('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="quitarProgramarDevAtc(\''+esc(p.id)+'\')">↺ Quitar la devolución</button>'):'')+
-        '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cancelar</button>'+
+        '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="pdevMasTarde()">'+(opt.trasRecoger?'Más tarde':'Cancelar')+'</button>'+
       '</div>'+
     '</div>');
   abrirProgramarDevAtc._cupos=cuposTxt;
@@ -42971,7 +43058,15 @@ function guardarProgramarDevAtc(id){
   p.fecha=f; p.turno=t; p.entregado=false;
   fhDonde('🎧 programar la devolución de la ATC');   // 📅 (mejora 212)
   persistPedido(p, _avisos.length?{forzar:true}:undefined); closeModal(); renderAtc();
+  pdevVolver(id);   // 🎧 (19/11) desde Administración: repinta y vuelve a la ficha si se abrió desde ahí
   toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
+}
+/* «Más tarde» / «Cancelar»: cierra y, si vino de la ficha grande de Administración, vuelve a ella. */
+function pdevMasTarde(){ var d=PDEV_DESDE; closeModal(); if(d && d.id) pdevVolver(d.id); }
+function pdevVolver(id){
+  var d=PDEV_DESDE; PDEV_DESDE={ id:'', desde:'' };
+  var va=document.getElementById('view-admin'); if(va && va.classList.contains('active')){ try{ renderAdmin(); }catch(e){} }
+  if(d && d.id===String(id) && d.desde==='ficha'){ try{ showPedidoModal(id); }catch(e){} }
 }
 function quitarProgramarDevAtc(id){
   var p=findById(id); if(!p) return;
@@ -43092,7 +43187,7 @@ function verAtc(id){
         (UNLOCKED?('<button class="btn btn-primary btn-sm" style="width:auto" onclick="closeModal();abrirDevolucionAtc(\''+esc(p.id)+'\')">📦 Anotar avance</button>'+
                    (atcEntregada(p) ? '' : (atcFueRecogida(p)
                      ? '<button class="btn btn-sm" style="width:auto;background:#0369a1;color:#fff;font-weight:700" onclick="closeModal();abrirProgramarDevAtc(\''+esc(p.id)+'\')">🔁 '+(atcDevProg(p)?'Cambiar devolución':'Programar devolución')+'</button>'
-                     : '<button class="btn btn-sm" style="width:auto;opacity:.55;cursor:not-allowed" disabled title="Primero hay que recogerlo: la devolución se programa después del recojo">🔁 Programar devolución</button>'))+
+                     : '<button class="btn btn-sm" style="width:auto;background:#b0257a;color:#fff;font-weight:700" onclick="closeModal();atcRecogidoDesdeAtc(\''+esc(p.id)+'\')" title="Marcarlo recogido y programar la devolución">✓ Recogido</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
         '<button class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--teal-border);color:#065f5b;font-weight:700" onclick="atcCorreoVer(\''+esc(p.id)+'\')">📧 Correo de la ATC</button>'+   // 📧 (§4li)
         '<button class="btn btn-sm" style="width:auto;background:#1D9DB4;color:#fff;font-weight:700" onclick="bajarAtcExcel(\''+esc(p.id)+'\')">⬇️ Excel de la ATC</button>'+   // 📄 (06/11)
@@ -47643,7 +47738,7 @@ function copiarBusca(){
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ obsAntesDeListo(id, function(){ quickVerificadoYa(id); }); }   // 📝 (23/10) con observaciones, primero se leen
 function quickVerificadoYa(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; if(salioPreguntaAntes(p, 'quick')) return; /* 🚚 (mejora 312) sin camión: primero «¿en qué camión salió?» */ var foto=deshFotoEntrega(p); entDonde('Administración (botón Entregó)'); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); deshEntregaOfrecer(id, foto, false, pr);   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
+function quickEntregado(id){ var p=findById(id); if(!p) return; if(salioPreguntaAntes(p, 'quick')) return; /* 🚚 (mejora 312) sin camión: primero «¿en qué camión salió?» */ var foto=deshFotoEntrega(p); entDonde('Administración (botón Entregó)'); p.entregado=!p.entregado; atcAlMarcarEntregado(p); if(!p.entregado) entregaRegistroBorrar(p); else entregaAdelantadaAnotar(p); var pr=persistPedido(p); var _mk=entMarcaNombre(p); toast(p.entregado?(_mk+' ✓'):(_mk==='Entregado'?'Entrega deshecha':('Se sacó «'+_mk+'»')),'ok'); deshEntregaOfrecer(id, foto, false, pr); atcTrasRecoger(p, 'quick');   // ↩️ (§4ni, 7) · (§4nl, A01) con el guardado, por si vuelve con un «no»
   rptFaltaAlEntregar(p, false); }   // 🏪 (30/10, propuesta 83) una RPT con ✗ o 🏭 sin llegar: ¿armamos la de lo que faltó?
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
@@ -61131,9 +61226,9 @@ function fichaHaceTxt(ts){
 function fichaAvisos(p, ret, chips){
   var a=[]; if(!p || p.entregado || esVentaTienda(p)) return a;
   var hoy=todayStr(), f=p.fecha||'', veh=vehiculoDe(p), pr=p.productos||[], nNo=0, nSin=0;
-  pr.forEach(function(x){ if(enProduccion(x)) return; if(x.chk==='no') nNo++; else if(!prodHay(x) && !esRecoger(x) && !recogeDeTienda(x)) nSin++; });
+  if(!atcViaje(p)) pr.forEach(function(x){ if(enProduccion(x)) return; if(x.chk==='no') nNo++; else if(!prodHay(x) && !esRecoger(x) && !recogeDeTienda(x)) nSin++; });   // 🎧 (19/11) una ATC no sale del stock
   if(!f){ if(!entregaAConfirmar(p)) a.push('📅 No tiene fecha de entrega.'); }   // 📦 (propuesta 76) la que «avisa cuándo» no tiene día a propósito
-  else if(f<hoy) a.push('📅 Era para el '+fmtFechaCorta(f)+' y no figura «🚚 Entregado»: si salió, marcalo; si no, reprogramalo.');
+  else if(f<hoy && !atcViaje(p)) a.push('📅 Era para el '+fmtFechaCorta(f)+' y no figura «🚚 Entregado»: si salió, marcalo; si no, reprogramalo.');   // 🎧 (19/11) en una ATC lo dice el recuadro «La ATC»
   if(f && f>=hoy && feriadoDe(f)) a.push('🚫 El '+fmtFechaCorta(f)+' es feriado ('+feriadoDe(f)+'): el camión no sale.');
   if(ret){
     if(veh) a.push('🏪 El cliente lo retira, pero tiene camión ('+veh+'): ¿hace falta?');
@@ -61525,6 +61620,7 @@ function fichaBultos(p, N){
 /* 1 · «Qué hacer», en UNA línea (24/10, ficha compacta): cuántos bultos y de dónde › adónde y cuándo (con el horario de la nota) ›
    a quién llamar. Lo que se prepara va en las etiquetas de «Antes de cargar», no acá. */
 function fichaQueHacer(p, N, ret){
+  if(atcViaje(p)) return atcQueHacer(p, N);   // 🎧 (19/11) en una ATC no se «carga» nada del depósito: se recoge o se devuelve
   var lug={}, orden=[];
   ((p&&p.productos)||[]).forEach(function(x, ix){
     if(N.noLlevar.indexOf(ix)>=0 || deTiendaNoViaja(p, x)) return;
@@ -61541,6 +61637,116 @@ function fichaQueHacer(p, N, ret){
   var tel=N.llamar ? ('📞 llamar <b>'+esc(N.llamar)+(N.recibe?(' a '+esc(N.recibe)):' al cliente')+'</b>') : (N.recibe ? ('👤 recibe <b>'+esc(N.recibe)+'</b>') : '');
   var partes=[carga||'<b>nada que cargar</b>', donde]; if(tel) partes.push(tel);
   return '<div class="fl-qh"><span class="fl-qh-k">🧭 Qué hacer</span>'+partes.map(function(t){ return '<span>'+t+'</span>'; }).join('<span class="fl-qh-s">›</span>')+'</div>';
+}
+/* ============================================================================
+   🎧 LA ATC EN ADMINISTRACIÓN (19/11; dueño, con la maqueta: «no entiendo dónde se marca recogido y dónde se programa la devolución…
+   ahorita está marcando entregado cuando se recoge», «al momento de marcar RECOGIDO debe salir el botón para programar devolución», «que no
+   se marquen solas… logística debe marcar recogido», «con el GPS sí, cuando ya se programa la devolución»).
+   La ficha grande y la chica de una ATC dicen qué viaje es (🎧 Recojo / 🔁 Devolución, `atcViaje`), el ✅ se llama «Recogido» o «Devuelto»
+   (`entMarcaNombre`), el recuadro «🎧 La ATC» muestra los cuatro pasos con el botón que toca en cada uno, y en lugar de los botones de stock
+   va lo que se trae o se lleva (una ATC no sale del stock: `stockCuenta` ya la deja afuera, §4cx). El circuito y los datos son los de
+   siempre (`atcEstado`, `abrirProgramarDevAtc`, `marcarRecogidoFab`, `atcAlMarcarEntregado`): solo cambia dónde y cómo se ve.
+   ========================================================================== */
+function atcQueHacer(p, N){
+  var v=atcViaje(p), n=0; ((p&&p.productos)||[]).forEach(function(x){ n+=Number(x.cant)||0; });
+  var dia=p.fecha ? ((function(t){ var w=t.split(' '); return w.length>1 ? (w[0].slice(0,3)+' '+w[1]) : t; })(nxDiaTxt(p.fecha))+(p.turno?(' a la '+(normTurno(p.turno)==='PM'?'tarde':'mañana')):'')) : 'sin fecha';
+  var partes=[];
+  if(v==='rec'){
+    partes.push('🔁 ir a buscar <b>'+n+' producto'+(n===1?'':'s')+'</b> al cliente');
+    partes.push('<b>'+esc(dia)+(N&&N.hora?(', '+esc(N.hora)):'')+'</b>'+(p.zona?(' · '+esc(p.zona)):''));
+    if(atcComodinAviso(p)) partes.push('🛏️ llevar el comodín');
+  }else{
+    if(atcRecogerFabPend(p)) partes.push('🏭 <b>traerlo de la fábrica</b>');
+    partes.push('devolver <b>'+esc(dia)+(N&&N.hora?(', '+esc(N.hora)):'')+'</b>'+(p.zona?(' · '+esc(p.zona)):''));
+    if(atcComodinAviso(p)) partes.push('🛏️ traer el comodín');
+  }
+  var tel=N&&N.llamar ? ('📞 llamar <b>'+esc(N.llamar)+(N.recibe?(' a '+esc(N.recibe)):' al cliente')+'</b>') : (N&&N.recibe ? ('👤 recibe <b>'+esc(N.recibe)+'</b>') : '');
+  if(tel) partes.push(tel);
+  return '<div class="fl-qh"><span class="fl-qh-k">🧭 Qué hacer</span>'+partes.map(function(t){ return '<span>'+t+'</span>'; }).join('<span class="fl-qh-s">›</span>')+'</div>';
+}
+/* Los cuatro pasos y el botón que toca. Solo un paso «ahora». */
+function atcFichaBoxHtml(p){
+  if(!p || !esATC(p.oc)) return '';
+  var pid=esc(String(p.id)).replace(/'/g,"\\'"), a=atcDe(p)||{}, rec=atcFueRecogida(p), recF=atcRecogida(p), rf=atcRecogidoFab(p), ent=atcEntregada(p), pdev=a.pdev||'';
+  var tc=function(t){ t=normTurno(t); return t==='PM'?' tarde':(t==='AM'?' mañana':''); };
+  var paso=function(cls, t, sub){ return '<li class="'+cls+'"><b>'+t+'</b><span>'+esc(sub||'—')+'</span></li>'; };
+  var ahora=!rec ? 1 : (!rf && !ent) ? 2 : (!ent ? 3 : 0);
+  var c=function(i){ return ahora===i ? 'ahora' : (ahora===0 || i<ahora ? 'hecho' : 'falta'); };
+  var pasos='<ol class="atcb-pasos">'+
+    paso(c(1), rec?'1 · Recojo ✓':'1 · Recojo', recF ? (fmtFechaCorta(recF)+(rec?'':tc(a.pdev?a.rturno:p.turno))) : 'sin fecha')+
+    paso(c(2), rf?'2 · Traído de fábrica ✓':'2 · En fábrica', !rec ? '' : (rf ? fmtFechaCorta(rf) : (a.dev ? ('listo el '+fmtFechaCorta(a.dev)) : 'desde '+fmtFechaCorta(recF))))+
+    paso(c(3), '3 · Devolución', pdev ? (fmtFechaCorta(pdev)+tc(a.pturno)) : 'sin programar')+
+    paso(c(4), ent?'4 · Entregada ✓':'4 · Entregada', ent ? fmtFechaCorta(ent) : '')+'</ol>';
+  var det=[atcTipoLbl(atcTipo(p)), atcMotivo(p)].filter(Boolean).join(' · ')+(atcDetalle(p)?(': «'+atcDetalle(p)+'»'):'');
+  var avisos='';
+  if(atcRecojoSinMarcar(p)) avisos+='<div class="atcb-mal">⚠️ El recojo era el '+esc(fmtFechaCorta(p.fecha))+' y nadie marcó «✓ Recogido». Si ya lo trajeron, marcalo; si no, reprogramalo.</div>';
+  if(atcRecogerFabPend(p)) avisos+='<div class="atcb-mal">🏭 Hay que ir a buscarlo a la fábrica: la devolución es el '+esc(fmtFechaCorta(pdev))+' y todavía nadie lo trajo.</div>';
+  var com=atcComodinAviso(p); if(com) avisos+='<div class="atcb-com">'+esc(com)+'</div>';
+  var b=function(cls, t, fn){ return '<button type="button" class="atcb-b '+cls+'" onclick="'+fn+'">'+t+'</button>'; };
+  var acc='', nota='';
+  if(ent){ nota='✅ ATC cerrada: se le devolvió el '+esc(fmtFechaCorta(ent))+'.'; }
+  else if(!rec){ acc+=b('rec', '✓ Recogido', "toggleEntregado('"+pid+"')"); nota='Al marcarlo se abre «Programar devolución». No se marca solo: ni por la fecha ni por el GPS.'; }
+  else if(!pdev){ acc+=b('dev', '🔁 Programar devolución', "abrirProgramarDevAtc('"+pid+"',{desde:'ficha'})")+b('sec', '📦 Anotar avance', "closeModal();abrirDevolucionAtc('"+pid+"')"); nota='Está en fábrica. «Anotar avance» = listo en fábrica, qué se hizo.'; }
+  else{
+    if(!rf) acc+=b(atcRecogerFabPend(p)?'mal':'sec', '🏭 ✓ Recogido de fábrica', "atcFabDesdeFicha('"+pid+"')");
+    acc+=b('sec', '🔁 Cambiar devolución', "abrirProgramarDevAtc('"+pid+"',{desde:'ficha'})");
+    nota='El «✅ Devuelto» de este viaje cierra la ATC (el GPS lo puede proponer).';
+  }
+  acc+=b('sec', '🔍 Ver la ATC', "closeModal();verAtc('"+pid+"')");
+  return '<div class="atcb'+(ent?' ok':'')+'"><div class="atcb-t">🎧 La ATC</div>'+pasos+
+    (det?('<p class="atcb-d">'+esc(det)+'</p>'):'')+avisos+'<div class="atcb-acc">'+acc+'</div>'+(nota?('<p class="atcb-n">'+nota+'</p>'):'')+'</div>';
+}
+/* ✓ Recogido desde la pestaña 🎧 ATC: el mismo ✅ del viaje del recojo (como `toggleEntregado`, sin reabrir la ficha de Administración)
+   y enseguida «Programar devolución». */
+function atcRecogidoDesdeAtc(id){
+  var p=findById(id); if(!p || p.entregado || atcViaje(p)!=='rec') return;
+  entDonde('pestaña ATC (botón Recogido)');
+  p.entregado=true; atcAlMarcarEntregado(p); entregaAdelantadaAnotar(p);
+  persistPedido(p);
+  try{ renderAtc(); }catch(e){}
+  toast('Marcado como recogido ✓','ok');
+  abrirProgramarDevAtc(id, { trasRecoger:true });
+}
+/* 📅 (19/11) Los días en que se puede agendar el recojo de una ATC: lunes (1) y martes (2). */
+var ATC_DIAS_RECOJO=[1,2];
+function atcDiaPermitido(f){ return ATC_DIAS_RECOJO.indexOf(dowDe(f))>=0; }
+/* ¿Este día de recojo no vale? Una devolución, o una ATC a la que no le cambiaron el día, no se miran. */
+function atcDiaMal(f, prev){
+  if(typeof navigator!=='undefined' && navigator.webdriver && !window.ATC_DIA_PRUEBA) return false;
+  if(!f || atcDiaPermitido(f)) return false;
+  if(prev && esATC(prev.oc) && (atcDevProg(prev) || atcViajeDevolucion(prev) || prev.fecha===f)) return false;
+  return true;
+}
+function atcFabDesdeFicha(id){ marcarRecogidoFab(id); try{ renderAdmin(); }catch(e){} try{ reabrirFicha(id); }catch(e){} }
+function atcFabDesdeLista(id){ marcarRecogidoFab(id); try{ renderAdmin(); }catch(e){} }
+/* Lo que se trae (recojo) o se lleva (devolución), en vez de los botones de stock. */
+function atcProdChip(p){
+  var v=atcViaje(p);
+  if(v==='rec') return '<span class="atcc rec">🔁 se trae del cliente</span>';
+  return atcRecogidoFab(p) ? '<span class="atcc ok">🏭 traído de fábrica ✓</span>' : '<span class="atcc no">🏭 de fábrica · falta traerlo</span>';
+}
+function atcCargaHtml(p){
+  var v=atcViaje(p), pr=(p.productos||[]), n=0; pr.forEach(function(x){ n+=Number(x.cant)||0; });
+  var com=!!atcComodinAviso(p), chip=atcProdChip(p);
+  var linea=v==='rec' ? ('🔁 Se trae '+n+' producto'+(n===1?'':'s')+' del cliente'+(com?' · 🛏️ se lleva el comodín':''))
+                      : ('📦 '+n+' bulto'+(n===1?'':'s')+' · el producto del cliente, de la fábrica'+(com?' · 🛏️ se trae el comodín':''));
+  var filas=pr.map(function(x){
+    var m=String(x.medida||'').trim();
+    return '<div class="atc-pl"><span class="atc-n">'+esc(String(x.cant||0))+'</span><div><b>'+esc(x.desc||'—')+'</b><div class="atc-chs">'+
+      (m?('<span class="atcc">'+esc(m)+'</span>'):'')+(x.codigo?('<span class="atcc">'+esc(x.codigo)+'</span>'):'')+chip+'</div></div></div>';
+  }).join('');
+  var rcb=(v==='rec' && atcRecibido(p).length) ? ('<div class="atc-rcb">Recibir: <b>'+esc(atcRecibido(p).join(', '))+'</b>'+(atcRecibidoNota(p)?(' · '+esc(atcRecibidoNota(p))):'')+'</div>') : '';
+  return '<div class="atc-bul">'+linea+'</div>'+filas+rcb+
+    '<div class="atc-nt">'+(v==='rec' ? 'No se carga nada del depósito para esto: se trae el producto del cliente.' : 'Es el producto del cliente, reparado: no sale del stock.')+'</div>';
+}
+/* La línea de la ficha chica: en qué está y el botón que toca. */
+function atcChicaLinea(p){
+  if(!p || !esATC(p.oc) || atcEntregada(p)) return '';
+  var pid=esc(String(p.id)).replace(/'/g,"\\'"), a=atcDe(p)||{};
+  if(atcRecojoSinMarcar(p)) return '<div class="af-atc mal">⚠️ Recojo sin marcar</div>';
+  if(atcRecogerFabPend(p)) return '<div class="af-atc mal">🏭 Traer de fábrica <button type="button" onclick="event.stopPropagation();atcFabDesdeLista(\''+pid+'\')">✓ Recogido de fábrica</button></div>';
+  if(atcFueRecogida(p) && !a.pdev) return '<div class="af-atc">🏭 En fábrica <button type="button" onclick="event.stopPropagation();abrirProgramarDevAtc(\''+pid+'\')">🔁 Programar devolución</button></div>';
+  return '';
 }
 /* 7 · el mapita del lugar, con la distancia a PTF (no se baja en las pruebas, salvo `FX_PRUEBA`) */
 function fichaMapaPunto(p, N){
@@ -61610,10 +61816,10 @@ function showPedidoModal(id){
         ' · 📥 Ingresó '+esc(fichaIngresoTxt(p))+(hace?(' ('+esc(hace)+')'):'')+'</div></div>'+
       '<div class="fl-pills">'+
         (entregaAConfirmar(p) ? ('<span class="fl-pill" title="Sin día de entrega: no ocupa cupo, el bot no le escribe y no sale en la carga">📦 Avisa cuándo · '+esc(avisaTxt(p))+'</span>')   // 📦 (propuesta 76)
-        : ('<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">🚚 Entrega '+((dias.c==='hoy'||dias.c==='man')&&!p.entregado?('<i class="fl-hace">'+esc(dias.t)+'</i> '):'')+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
+        : ('<span class="fl-pill fl-ent'+(dias.c&&!p.entregado?(' fl-ent-'+dias.c):'')+'">'+({rec:'🎧 Recojo ', dev:'🔁 Devolución '}[atcViaje(p)]||'🚚 Entrega ')+((dias.c==='hoy'||dias.c==='man')&&!p.entregado?('<i class="fl-hace">'+esc(dias.t)+'</i> '):'')+esc(p.fecha?nxDiaTxt(p.fecha):'sin fecha')+' · '+turnoTxt+
           (dias.t&&dias.c!=='hoy'&&dias.c!=='man'&&!p.entregado?(' <i class="fl-hace">'+esc(dias.t)+'</i>'):'')+'</span>'))+
         (ret ? ('<span class="fl-pill fl-ret">🏪 Retira en '+esc(ret.donde)+'</span>') : ('<span class="fl-pill">🚛 '+esc(p.vehiculo||'Sin camión')+'</span>'))+
-        (p.entregado ? '<span class="fl-pill ok">🚚 Entregado</span>' : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
+        (p.entregado ? ('<span class="fl-pill ok">'+({rec:'✓ Recogido', dev:'✅ Devuelto'}[atcViaje(p)]||'🚚 Entregado')+'</span>') : (p.verificado ? '<span class="fl-pill ok">✅ Listo para cargar</span>' : ''))+
       '</div></div>';
   var obs=String(p.observaciones||'').trim();
   // 📝 «Antes de cargar»: lo que no coincide (rojo) + lo que falta (ámbar) + las etiquetas para tildar + la nota (plegada si ya se leyó en etiquetas)
@@ -61655,14 +61861,16 @@ function showPedidoModal(id){
   var est=estadoStock(p), aMano=p.estado && normNombre(est.txt).indexOf(normNombre(p.estado))!==0;   // I · «a mano» solo si dice otra cosa que lo automático
   var sug=ret ? null : fichaSugerido(p);
   var S=fichaSugStock(p), nAuto=S ? S.g.lineas.filter(function(l){ return fichaSugAuto(l) && N.noLlevar.indexOf(l.i)<0; }).length : 0;   // (09/11) lo que no se lleva no se marca
-  var colCarga='<div class="fl-c"><h4>📦 Qué se carga y de dónde'+
+  var colCarga=atc ? ('<div class="fl-c"><h4>'+(atcViaje(p)==='rec'?'🔁 Qué se trae del cliente':'📦 Qué se le lleva')+'</h4>'+atcCargaHtml(p)+   // 🎧 (19/11) una ATC no sale del stock
+      (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+'</div>') :
+    '<div class="fl-c"><h4>📦 Qué se carga y de dónde'+
         (nAuto ? ('<button type="button" class="fl-auto" onclick="fichaSugUsarStock(\''+pid+'\',\'todo\')" title="Marca lo que está sin marcar o en «✗ no hay» como dice la 🤖 Revisión automática">✨ Marcar '+(nAuto===1?'el producto':('los '+nAuto))+' como dice el stock</button>') : '')+
       '</h4>'+fichaBultos(p, N)+fichaProdsHtml(p, N, S)+
       (atcFotos(p).length ? ('<div class="fl-sub">📷 Fotos del producto</div>'+atcFotosTiraHtml(p)) : '')+   // 🎧 (§4lh)
     '</div>';
   /* (24/10, dueño: «eso de stock como se marca solo podría ir abajo») el estado de stock y sus tres botones, en una franja debajo de las
      dos columnas: siguen a la vista (logística los usa), pero ya no ocupan la columna de los productos. */
-  var stockHtml=
+  var stockHtml=atc ? '' :   // 🎧 (19/11) sin «En stock / En producción / No hay» en una ATC
       '<div class="fl-est fl-est-abajo"><b>Stock:</b> '+estadoStockBadge(p)+(aMano?(' <span class="badge b-gray" title="Marcado a mano con los botones">a mano: '+esc(p.estado)+'</span>'):'')+
         ' <span class="fl-est-t">(se pone solo con la marca de cada producto)</span>'+
         '<div class="modal-actions">'+
@@ -61676,7 +61884,7 @@ function showPedidoModal(id){
       (ret ? '<div class="fl-ret-nota">Lo retira el cliente: no hace falta camión. Si igual lo llevan, elegilo acá.</div>' : '')+
       '<div class="fl-sel">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
       '<div class="fl-sws">'+fichaSw(p.verificado, '✅ Listo para cargar', "verificadoConObs('"+pid+"')")+
-      fichaSw(p.entregado, '🚚 Entregado', "toggleEntregado('"+pid+"')", cierreEntTxt(p))+'</div>'+entHistHtml(p)+
+      fichaSw(p.entregado, ({rec:'✓ Recogido', dev:'✅ Devuelto al cliente'}[atcViaje(p)]||'🚚 Entregado'), "toggleEntregado('"+pid+"')", cierreEntTxt(p))+'</div>'+entHistHtml(p)+
       '<div class="fl-sub">📷 Fotos de la entrega</div>'+fotosHtml(p, true)+
       '<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>'+
     '</div>';
@@ -61695,7 +61903,7 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+clfVolverHtml(p.id)+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      top+modHtml+rdFichaHtml(p)+fichaQueHacer(p, N, ret)+   // 📅 (14/11, mejora 217) el cliente pidió otro día por el bot
+      top+modHtml+rdFichaHtml(p)+fichaQueHacer(p, N, ret)+atcFichaBoxHtml(p)+   // 📅 (14/11, mejora 217) el cliente pidió otro día por el bot · 🎧 (19/11) la ATC
       /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
       '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
@@ -61822,11 +62030,13 @@ function toggleEntregado(id){
   else entregaAdelantadaAnotar(p);              // ✅ (16/10, §4lr U12) entregado antes de su día: salió HOY
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   var pr=guardarDurable(p);
-  toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
-  if(p.entregado) fxSello('ENTREGADO','ent');
+  var _mk=entMarcaNombre(p);   // 🎧 (19/11) en una ATC: «Recogido» en el recojo, «Devuelto» en la devolución
+  toast(p.entregado?('Marcado como '+_mk.toLowerCase()+' ✓'):(_mk==='Entregado'?'Entrega deshecha':('Se sacó «'+_mk+'»')),'ok');
+  if(p.entregado) fxSello(_mk.toUpperCase(),'ent');
   reabrirFicha(id);
   deshEntregaOfrecer(id, foto, true, pr);       // (§4nl, A01) con el guardado, por si vuelve con un «no»
   rptFaltaAlEntregar(p, true);                  // 🏪 (30/10, propuesta 83) una RPT con ✗ o 🏭 sin llegar: ¿armamos la de lo que faltó? (al contestar vuelve a la ficha)
+  atcTrasRecoger(p, 'ficha');                   // 🎧 (19/11) recogido: ¿qué día se le devuelve?
 }
 
 /* ============================================================================
@@ -62262,6 +62472,9 @@ function renderCierreEntregas(){
    confirma con el botón de siempre. */
 function cierreEntGps(p){
   if(!p || p.fecha!==todayStr()) return null;
+  /* 🎧 (19/11, dueño: «con el GPS sí, cuando ya se programa la devolución… la etapa final») el recojo de una ATC lo marca logística a mano
+     con «✓ Recogido» (que abre «Programar devolución»): el GPS no lo propone. La devolución sí, como cualquier entrega. */
+  if(atcViaje(p)==='rec') return null;
   var ll=gpsLlegadaDe(p); if(ll) return { k:'vio', ll:ll };
   var veh=vehiculoDe(p), d=veh ? gpsDiaDe(veh) : null; if(!d) return null;
   var pin=null; try{ pin=almPunto(p); }catch(e){}
@@ -70494,7 +70707,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-19-a';
+var PANEL_V='2026-11-19-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
