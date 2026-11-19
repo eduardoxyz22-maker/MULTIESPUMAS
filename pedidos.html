@@ -34505,7 +34505,14 @@ var QUICK_DEFS=[
   {k:'rpt',         lbl:'🏪 Reposiciones',  test:function(p){return esRPT(p&&p.oc);},
                                           /* 🏪 (30/10, propuesta 83) y las entregadas con faltantes que nadie resolvió (últimos 30 días) */
                                           alerta:function(){ return rptFaltaPendientes().length; }, alertaTxt:'con faltantes',
-                                          tit:function(n){ return n ? (n+' reposici'+(n===1?'ón entregada':'ones entregadas')+' con productos que no había: ¿se mandó lo que faltó? (ver el aviso de arriba)') : 'Solo las reposiciones de tienda'; }}
+                                          tit:function(n){ return n ? (n+' reposici'+(n===1?'ón entregada':'ones entregadas')+' con productos que no había: ¿se mandó lo que faltó? (ver el aviso de arriba)') : 'Solo las reposiciones de tienda'; }},
+  /* 🎧 (19/11) El dueño, mirando los filtros: «¿y acá dónde filtro por ATC?» → «sí, agregalo». Al lado de Reposiciones: los recojos
+     y las devoluciones de ATC del período (la ATC vive en el día de su viaje: el recojo, o la devolución una vez programada).
+     Parpadea con las que hay que ir a buscar a la fábrica y nadie tildó «✓ Recogido» (`recogerFabPendientes`: desde 2 días
+     hábiles antes de la devolución; es el mismo aviso «🏭 Recoger de fábrica» de la ficha del chofer y la Lista de carga). */
+  {k:'atc',         lbl:'🎧 ATC',           test:function(p){return esATC(p&&p.oc);},
+                                          alerta:function(){ return recogerFabPendientes().length; }, alertaTxt:'recoger de fábrica',
+                                          tit:function(n){ return n ? (n+' ATC para ir a buscar a la fábrica antes de su devolución: nadie marcó «✓ Recogido» (está en la ficha del chofer y en la Lista de carga)') : 'Solo las ATC: recojos y devoluciones'; }}
 ];
 /* 🗓️ LA SEMANA: EL STOCK DE LOS PRODUCTOS DE LOS PRÓXIMOS 5 DÍAS HÁBILES (26/10 y 27/10).
    El dueño (26/10): «un botón que muestre lo de la semana, lo que falta en la semana, y parpadee rojo si por ejemplo sabés que jueves
@@ -70487,7 +70494,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-18-d';
+var PANEL_V='2026-11-19-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
