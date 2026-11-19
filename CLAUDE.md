@@ -1478,7 +1478,16 @@ en una línea. `tests/test_ficha_auto.js`.
 - **🎧 Botón «ATC» en los filtros** (19/11, dueño: *«¿y acá dónde filtro por ATC?»* → *«sí, agregalo»*): `{k:'atc'}` en `QUICK_DEFS`, al lado de
   «🏪 Reposiciones»; deja solo las ATC del período (viven en el día de su viaje: recojo o devolución) y parpadea con `recogerFabPendientes()`
   (las que hay que ir a buscar a la fábrica y nadie tildó «✓ Recogido»: el mismo aviso de la ficha del chofer y la Lista de carga). Solo filtra.
-  `tests/test_chip_atc.js` (10; 8 rojas contra el panel de antes).
+  `tests/test_chip_atc.js` (10; 8 rojas contra el panel de antes). Desde el 19/11 también cuenta los recojos sin marcar («🔴 N por marcar»).
+- **🎧 La ATC en Administración** (19/11, dueño con la maqueta https://claude.ai/artifact/1ZwMvsN7WrAPxJymvEQV5L: *«ahorita está marcando
+  entregado cuando se recoge»*, *«al momento de marcar RECOGIDO debe salir el botón para programar devolución»*, *«que no se marquen solas…
+  logística debe marcar recogido»*, *«con el GPS sí, cuando ya se programa la devolución»*): `atcViaje(p)` = 'rec' | 'dev' | ''. La ficha grande
+  y la chica dicen «🎧 Recojo» / «🔁 Devolución», el ✅ se llama «Recogido» / «Devuelto» (`entMarcaNombre`), recuadro `atcFichaBoxHtml` (4 pasos +
+  el botón que toca), `atcCargaHtml` en vez de los botones de stock, `atcChicaLinea` en la chica. ✋ **Desde `ATC_RECOJO_A_MANO_DESDE` (20/11) el
+  recojo NO se da por hecho porque pasó el día** (`atcFueRecogida`): lo marca logística, y `atcTrasRecoger` abre `abrirProgramarDevAtc(id,
+  {trasRecoger})` con «Más tarde» (`pdevMasTarde`). `cierreEntGps` no propone el recojo (la devolución sí). Los recojos de antes del 20/11 siguen
+  con la regla vieja (§4bs). 📅 **El vendedor agenda el recojo de una ATC solo lunes o martes** (`ATC_DIAS_RECOJO`, `atcDiaMal` en `submitPedido`;
+  con la clave de Administración pregunta; la devolución no se mira). En Playwright: `ATC_RECOGER_PRUEBA`, `ATC_DIA_PRUEBA`. `tests/test_atc_admin.js` (35).
 
 ## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10, PUBLICADO `bb9fa20`; batería 279 suites · 8.945 · 0 mal)
 - **El `ts` de una venta de tienda es su DÍA** (§4nm): `mismoContenido` lo compara como número (R-01; si no, un `conflicto` de fecha pasaba por «ok
