@@ -13815,6 +13815,8 @@ function qaConsulta_(c8, nom, orig, ahoraS, solo) {
   try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
   if (cache) {
     try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) {}
+    /* (revisión 2 de Fable) Con `solo`, sirve también la consulta COMPLETA de hace un momento (la del formulario de esa misma venta). */
+    if (!out && solo) { try { var cf = cache.get(ck.slice(0, ck.length - solo.length - 1)); if (cf) { out = JSON.parse(cf); out.cache = true; } } catch (e) {} }
   }
   if (!out) {
     out = { ok:true, version:SCRIPT_VERSION, cel8:c8, nombre:nom, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
@@ -13963,7 +13965,8 @@ function cruceElegir_(tomados, planilla) {
   if (!tomados.length) return [];
   var t0 = Date.now(), msgs = [], devolver = [], hecho = waJsonProp_('CRUCE_HECHO', {}) || {}, cambio = false, R = planilla();
   /* (Fable 7) El mismo cliente y la misma asesora avisados hace poco (`c` = celular, `a` = a quién, en CRUCE_HECHO): no se repite. */
-  var yaAvisado = function (c8, a) { for (var k in hecho) { var h = hecho[k]; if (h && h.c === c8 && (h.a || []).indexOf(a) >= 0 && t0 - (Number(h.t) || 0) * 1000 < CRUCE_MISMO_CLIENTE_MS) return true; } return false; };
+  /* (revisión 2 de Fable) …y la misma vendedora que vende (`v`): si al mismo cliente le vende OTRA, es otro aviso. */
+  var yaAvisado = function (c8, a, v) { for (var k in hecho) { var h = hecho[k]; if (h && h.c === c8 && waNorm_(h.v || '') === waNorm_(v) && (h.a || []).indexOf(a) >= 0 && t0 - (Number(h.t) || 0) * 1000 < CRUCE_MISMO_CLIENTE_MS) return true; } return false; };
   tomados.forEach(function (x) {
     if (Date.now() - t0 > CRUCE_TIEMPO_MS) { devolver.push(x); return; }
     var p = R[x.id];
@@ -13981,11 +13984,11 @@ function cruceElegir_(tomados, planilla) {
     }
     var a = [];
     otros.forEach(function (o) {
-      if (yaAvisado(c8, o.n)) return;
-      a.push(o.n);
+      if (yaAvisado(c8, o.n, p.vendedor)) return;
+      if (waVendCel_(o.n)) a.push(o.n);   // sin su número no le llega: no cuenta como avisada (queda anotado en «Bot WhatsApp»)
       msgs.push({ id:x.id, k:'cx', a:o.n, n:0, cx:{ ts:o.ts } });
     });
-    hecho[x.id] = { t:ahoraS, c:c8, a:a }; cambio = true;
+    hecho[x.id] = a.length ? { t:ahoraS, c:c8, v:String(p.vendedor || '').slice(0, 40), a:a } : { t:ahoraS }; cambio = true;   // el celular, solo si se avisó a alguien
   });
   if (cambio) cruceHechoGuardar_(hecho);
   cruceDevolver_(devolver);

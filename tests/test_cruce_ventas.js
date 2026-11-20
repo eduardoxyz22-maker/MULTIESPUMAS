@@ -215,6 +215,34 @@ console.log('\n── 9. Revisión de Fable ──');
   chk('6. con las 80 búsquedas a mano gastadas, la del formulario (auto) sigue andando', rm.ok === false && rm.error === 'tope' && ra.ok !== false, { rm:rm.error, ra:ra.ok });
 }
 
+console.log('\n── 10. Segunda revisión de Fable ──');
+{
+  /* 5 · al mismo cliente le vende OTRA vendedora dentro de las 48 h: es otro aviso */
+  const A = servidor(VEND, kommoHeaven());
+  A.guardar(ped()); pasar(2); A.ctx.waRepaso();
+  pasar(30); A.guardar(ped({ vendedor:'Maria Flores' })); pasar(2); A.ctx.waRepaso();
+  const P = A.cx().map(m => m.template.components[0].parameters[3].text);
+  chk('⚠️ 5. Isabel vende y 30 min después Maria a la misma clienta: Carola recibe DOS avisos (uno por cada vendedora)', A.cx().length === 2 && P[0] === 'Isabel Robledo' && P[1] === 'Maria Flores', P);
+  pasar(30); A.guardar(ped({ vendedor:'Maria Flores' })); pasar(2); A.ctx.waRepaso();
+  chk('5b. otra venta de Maria a la misma clienta: no repite', A.cx().length === 2, A.cx().length);
+  /* 4 · sin el número de la asesora, CRUCE_HECHO no guarda el celular ni la cuenta como avisada */
+  const B = servidor({ WA_VENDEDORAS:'Isabel Robledo:70000002' }, kommoHeaven());
+  B.guardar(ped()); pasar(2); B.ctx.waRepaso();
+  const hb = JSON.parse(B.P.CRUCE_HECHO || '{}'), vb = hb[Object.keys(hb)[0]] || {};
+  chk('4. Carola sin número: CRUCE_HECHO lo recuerda sin celular ni asesoras (no la da por avisada)', Object.keys(hb).length === 1 && !vb.c && !vb.a, vb);
+  B.P.WA_VENDEDORAS = VEND.WA_VENDEDORAS; pasar(5); B.guardar(ped()); pasar(2); B.ctx.waRepaso();
+  chk('4b. ya con su número, la venta siguiente a esa clienta SÍ le llega', B.cx().length === 1, B.cx().length);
+  /* 6 · lo que preguntó el formulario un momento antes sirve: el cruce no vuelve a llamar a Kommo */
+  const okSuena = (p) => p === '/users' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ users:[{ id:13073611, name:'Mauricio Merida' }] } }) }
+    : p === '/leads/pipelines' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ pipelines:[] } }) } : { getResponseCode:() => 204, getContentText:() => '' };
+  const C = servidor(Object.assign({ KOMMO_TOKEN_SUENA:'k-suena' }, VEND), kommoHeaven(), { suena:okSuena });
+  const rf = C.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel Robledo', auto:1 });
+  chk('6a. (la consulta completa de las dos cuentas salió entera)', rf.ok !== false && !rf.incompleto && rf.cuentas.length === 2, { inc:rf.incompleto, c:(rf.cuentas || []).map(c => c.marca) });
+  const antes = C.kommo.length;
+  C.guardar(ped()); pasar(1.2); C.ctx.waRepaso();
+  chk('6. con la consulta completa del formulario a la mano, el cruce no le pregunta nada a Kommo y avisa igual', C.kommo.length === antes && C.cx().length === 1, { antes, despues:C.kommo.length, cx:C.cx().length });
+}
+
 console.log('\n── 7. La plantilla ──');
 {
   const A = servidor(VEND, kommoHeaven());
@@ -267,6 +295,43 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('8f. la consulta del formulario va con `auto` (tope aparte) y el mismo celular no se vuelve a preguntar al cambiar de vendedora', res.auto && res.llamadasTotal === 1, res);
   const g = await pg.evaluate(() => { return { boton:!!document.querySelector('#cruce-form button'), guarda:typeof submitPedido === 'function' }; });
   chk('8e. el cartel no tiene botones ni frena: solo avisa', !g.boton && g.guarda);
+
+  /* Segunda revisión de Fable: el borrador de Kommo (vive en BORRADORES), lo incompleto, el tope y el número que cambia */
+  const r2 = await pg.evaluate(async (ahora) => {
+    var espera = (ms) => new Promise(r => setTimeout(r, ms));
+    var resp = function (inc) { return { ok:true, ahora:ahora, incompleto:inc ? 1 : 0, cuentas:[{ marca:'heaven', contactos:1, leads:inc ? [] : [{ id:'71', resp:'Carola Chavez', pares:[{ ts:ahora - 3 * 86400 + 7200, desde:ahora - 3 * 86400 + 7200, quien:'Carola Chavez' }] }] }] }; };
+    var set = function (id, v) { var e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles:true })); };
+    var box = document.getElementById('cruce-form'), out = {};
+    window.CRUCE_REINT_MS = 20; window.CRUCE_ESPERA_MS = 10;
+    var modo = 'bien', n = 0, cels = [];
+    window.apiPost = function (b) { if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] }); n++; cels.push(b.cel);
+      if (modo === 'tope') return Promise.resolve({ ok:false, error:'tope' });
+      if (modo === 'inc') { modo = 'bien'; return Promise.resolve(resp(true)); }
+      return Promise.resolve(resp(false)); };
+    /* g · completar un borrador de Kommo */
+    resetForm(); CRUCE_MEMO = {};
+    BORRADORES = [{ id:'kommo-71', estado:BORRADOR_EST, vendedor:'Isabel Robledo', celular:'70011122' }];
+    EDIT_ID = 'kommo-71'; set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011122'); await espera(200);
+    out.borrador = box.hidden ? '' : box.textContent;
+    BORRADORES = []; EDIT_ID = null;
+    /* h · Kommo contestó a medias sin nadie: vuelve a preguntar y al rato lo ve */
+    resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; modo = 'inc'; n = 0;
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011133'); await espera(300);
+    out.inc = { n:n, txt:box.hidden ? '' : box.textContent };
+    /* i · con el tope del día no se insiste */
+    resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; modo = 'tope'; n = 0;
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011144'); await espera(300);
+    out.tope = n;
+    /* j · el número cambia antes de que corra la consulta: solo se pregunta el último */
+    resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; modo = 'bien'; n = 0; cels = []; window.CRUCE_ESPERA_MS = 80;
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011155'); await espera(20); set('f-celular', '70011166'); await espera(250);
+    out.cambia = cels.slice();
+    return out;
+  }, ahora);
+  chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /lo está atendiendo Carola Chavez/.test(r2.borrador), r2.borrador);
+  chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
+  chk('8i. con el tope del día gastado: una sola consulta, sin reintentos', r2.tope === 1, r2.tope);
+  chk('8j. el celular cambió antes de preguntar: solo se consulta el último', r2.cambia.length === 1 && r2.cambia[0] === '70011166', r2.cambia);
   await b.close(); fin();
 })();
 function fin() { console.log('\n' + PASS + ' bien · ' + FAIL + ' mal'); process.exit(FAIL ? 1 : 0); }

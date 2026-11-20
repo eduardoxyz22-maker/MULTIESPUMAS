@@ -72202,7 +72202,8 @@ function cruceFormVa(){ try{ return !navigator.webdriver || !!window.CRUCE_PRUEB
 /** Lo que se mira ahora: {c8, v, mk} o null (no corresponde). Una venta nueva, o un borrador de Kommo que se está completando (Fable 1). */
 function cruceFormQue(){
   if(!cruceFormVa() || docTipoSel()!=='OC' || window.PRACTICA) return null;
-  if(EDIT_ID){ var ed=(STATE||[]).filter(function(p){ return String(p.id)===String(EDIT_ID); })[0]; if(!ed || String(ed.estado||'')!==BORRADOR_EST) return null; }
+  /* Los borradores viven en BORRADORES, no en STATE (revisión 2 de Fable). Uno que ya espera en la cola como pedido ya no es borrador. */
+  if(EDIT_ID){ var ed=borradorDe(EDIT_ID); if(!ed || !esBorrador(ed) || borradorEnColaComoPedido(EDIT_ID)) return null; }
   var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), mk=v ? marcaDe(v) : '';
   var c8=cliCelClave((document.getElementById('f-celular')||{}).value||'');
   if(!mk || !c8 || c8.length<8) return null;
@@ -72224,10 +72225,11 @@ function cruceFormPintar(){
   var q=cruceFormQue(), k=q ? q.c8+'|'+normNombre(q.v) : '';
   if(!q){ box.hidden=true; box.innerHTML=''; box._h=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
   if(k!==CRUCE_F.k){
+    clearTimeout(CRUCE_F.t);   // (revisión 2 de Fable) lo programado para el número de antes no corre
     CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; box.hidden=true; box.innerHTML=''; box._h='';
     var m=CRUCE_MEMO[q.c8];
     if(m && Date.now()-m.ms<CRUCE_MEMO_MS) CRUCE_F.r=m.r;
-    else { clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS); return; }
+    else { CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS); return; }
   }
   if(!CRUCE_F.r){ box.hidden=true; return; }
   var L=cruceOtros(CRUCE_F.r, q.v, q.mk);
@@ -72249,7 +72251,7 @@ function cruceFormReintentar(k){
 }
 function cruceFormBuscar(){
   var q=cruceFormQue(); if(!q) return;
-  var k=q.c8+'|'+normNombre(q.v); if(k!==CRUCE_F.k) return;
+  var k=q.c8+'|'+normNombre(q.v); if(k!==CRUCE_F.k || CRUCE_F.r) return;
   if(!SERVER_VER){ cruceFormReintentar(k); return; }
   if(!servidorTiene(QA_SERVIDOR)) return;
   var g=++CRUCE_F.gen; CRUCE_F.busy=true;
@@ -72259,7 +72261,9 @@ function cruceFormBuscar(){
     var ok=r && r.ok!==false && Array.isArray(r.cuentas);
     if(ok && !r.incompleto) CRUCE_MEMO[q.c8]={ r:r, ms:Date.now() };
     if(k!==CRUCE_F.k) return;
-    if(!ok){ cruceFormReintentar(k); return; }
+    if(!ok){ if(!(r && r.error==='tope')) cruceFormReintentar(k); return; }   // con el tope del día, reintentar no sirve
+    /* Kommo contestó a medias y todavía no se ve a nadie: se vuelve a preguntar (si ya se ve a alguien, eso alcanza para avisar). */
+    if(r.incompleto && !cruceOtros(r, q.v, q.mk).length){ cruceFormReintentar(k); return; }
     CRUCE_F.r=r; cruceFormPintar();
   }).catch(function(){ if(g===CRUCE_F.gen){ CRUCE_F.busy=false; cruceFormReintentar(k); } });
 }
