@@ -1,0 +1,221 @@
+/* 📞 (20/11) «¿QUIÉN LO ATIENDE?» — dueño: una pestaña con un buscador de celular que diga si otra vendedora lo está atendiendo.
+   Regla (Comunicación Interna 032-2026 + respuestas del dueño del 20/11): 15 días; conversar = un mensaje del CLIENTE y uno de la
+   VENDEDORA con no más de 24 h entre los dos (uno solo no cuenta; el bot no es la vendedora); una tarea abierta con fecha futura en
+   Kommo = la fecha acordada (la excepción).
+
+   LO QUE CUIDA:
+   A. Servidor (el .gs real con un Kommo de mentira, datos INVENTADOS):
+      1. celular que no se entiende → `cel`; nada a Kommo.
+      2. busca el número en los contactos y vuelve a mirar el teléfono (la búsqueda de Kommo busca en todo).
+      3. los mensajes se piden por el CONTACTO (por el lead Kommo contesta 204, probado el 20/11 con la cuenta de verdad).
+      4. la regla del par: cliente + vendedora a ≤ 24 h (justo 24 h vale, un segundo más no); el bot (created_by 0) no cuenta.
+      5. el par más nuevo dice quién; responsable, etapa, sucursal, último mensaje de cada lado.
+      6. tareas abiertas con fecha futura; las vencidas no.
+      7. Sueña sin token → `sinToken`, sin preguntar.
+      8. anota la consulta en la hoja «Quién atiende» (quién buscó, el número, el resultado) y NO toma el candado.
+      9. la misma búsqueda seguida sale de la caché.
+   B. Página (QA_PRUEBA):
+      10. la pestaña está escondida en Playwright y aparece con QA_PRUEBA.
+      11. los carteles: libre (y con quién fue la última), lo atiende OTRA, lo atendés VOS, fecha acordada, ya compró.
+      12. sin el servidor nuevo dice qué falta y muestra los pedidos del panel con ese celular.
+      13. un número mal escrito pide el número completo; con o sin 591 es el mismo.
+   Se corre:  node tests/test_quien_atiende.js   ·  contra otro .gs: GS=… */
+const fs = require('fs'), vm = require('vm'), path = require('path');
+let PASS = 0, FAIL = 0;
+const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 400)) : ''); };
+const GS = process.env.GS || path.resolve(__dirname, '..', 'google-apps-script.gs');
+const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.html');
+
+const AHORA = Date.parse('2026-11-20T10:00:00-04:00'), S = Math.floor(AHORA / 1000), H = 3600, D = 86400;
+const U_CAR = 901, U_MAR = 902;
+
+function kommo() {
+  const K = {
+    pipelines:{ _embedded:{ pipelines:[{ id:500, name:'Ventas', _embedded:{ statuses:[{ id:101, name:'Nueva consulta' }, { id:103, name:'Cotizacion enviada' }, { id:142, name:'Logrado con éxito' }] } }] } },
+    usuarios:{ _embedded:{ users:[{ id:U_CAR, name:'Carola Chavez - Tienda Banzer' }, { id:U_MAR, name:'Maria Flores - Buenos Aires' }] } },
+    contactos:{}, leads:{}, eventos:[], tareas:[]
+  };
+  const contacto = (id, nombre, tel, leads) => { K.contactos[id] = { id, name:nombre, custom_fields_values:[{ field_code:'PHONE', values:[{ value:tel }] }], _embedded:{ leads:leads.map(x => ({ id:x })) } }; };
+  const lead = (id, o) => { K.leads[id] = Object.assign({ id, name:'Lead ' + id, status_id:103, pipeline_id:500, responsible_user_id:U_CAR, created_at:S - 30 * D, updated_at:S - D }, o); };
+  const ev = (contactoId, leadId, tipo, ts, quien) => K.eventos.push({ c:contactoId, type:tipo, entity_type:'lead', entity_id:leadId, created_at:ts, created_by:quien || 0 });
+  return { K, contacto, lead, ev };
+}
+
+function cargar(K, props) {
+  props = Object.assign({ KOMMO_TOKEN:'tok-inventado' }, props || {});
+  const hojas = {}, llamadas = [], lock = { veces:0 };
+  const hoja = (n) => hojas[n] = hojas[n] || { filas:[], appendRow(r) { this.filas.push(r); }, getRange:() => ({ setFontWeight(){}, setNumberFormat(){} }), setFrozenRows(){} };
+  const cache = { _m:{}, get(k) { return this._m[k] != null ? this._m[k] : null; }, put(k, v) { this._m[k] = String(v); }, remove(k) { delete this._m[k]; } };
+  const resp = (code, o) => ({ getResponseCode:() => code, getContentText:() => o == null ? '' : JSON.stringify(o) });
+  const qs = (u) => { const q = {}; (u.split('?')[1] || '').split('&').forEach(p => { if (!p) return; const i = p.indexOf('='), k = decodeURIComponent(i < 0 ? p : p.slice(0, i)), v = i < 0 ? '' : decodeURIComponent(p.slice(i + 1)); (q[k] = q[k] || []).push(v); }); return q; };
+  class FakeDate extends Date { constructor(...a) { a.length ? super(...a) : super(AHORA); } static now() { return AHORA; } }
+  const ctx = {
+    console, Date:FakeDate,
+    SpreadsheetApp:{ getActiveSpreadsheet:() => ({ getSheetByName:(n) => hojas[n] || null, insertSheet:(n) => hoja(n) }), flush:() => {} },
+    PropertiesService:{ getScriptProperties:() => ({ getProperty:(k) => props[k] != null ? props[k] : null, getProperties:() => Object.assign({}, props), setProperty:(k, v) => { props[k] = String(v); }, deleteProperty:(k) => { delete props[k]; } }) },
+    LockService:{ getScriptLock:() => ({ waitLock() { lock.veces++; }, tryLock() { lock.veces++; return true; }, releaseLock() {} }), getDocumentLock:() => ({ waitLock() { lock.veces++; }, releaseLock() {} }) },
+    CacheService:{ getScriptCache:() => cache },
+    ContentService:{ MimeType:{ JSON:'json' }, createTextOutput:(t) => ({ _t:t, setMimeType() { return this; } }) },
+    Utilities:{ formatDate:(d) => String(d) },
+    Session:{ getScriptTimeZone:() => 'America/La_Paz', getTemporaryActiveUserKey:() => 'ABCDEFGH' },
+    ScriptApp:{ newTrigger:() => ({ timeBased:() => ({ after:() => ({ create:() => ({}) }) }) }), getProjectTriggers:() => [], deleteTrigger:() => {} },
+    UrlFetchApp:{ fetch:(url, op) => {
+      op = op || {};
+      const metodo = String(op.method || 'get').toLowerCase(), ruta = url.split('/api/v4')[1] || '', p = ruta.split('?')[0], q = qs(ruta);
+      llamadas.push({ metodo, p, q, host:url.split('/api/v4')[0] });
+      if (metodo !== 'get') return resp(405, {});
+      if (p === '/users') return resp(200, K.usuarios);
+      if (p === '/leads/pipelines') return resp(200, K.pipelines);
+      if (p === '/contacts') {
+        const t = (q.query || [''])[0];
+        const cs = Object.values(K.contactos).filter(c => c.name.indexOf(t) >= 0 || c.custom_fields_values[0].values.some(v => String(v.value).replace(/\D/g, '').indexOf(t) >= 0));   // como Kommo: por los números
+        return cs.length ? resp(200, { _embedded:{ contacts:cs } }) : resp(204, null);
+      }
+      if (p === '/leads') { const L = (q['filter[id][]'] || []).map(i => K.leads[i]).filter(Boolean); return L.length ? resp(200, { _embedded:{ leads:L } }) : resp(204, null); }
+      if (p === '/events') {
+        const ent = (q['filter[entity][]'] || [])[0], ids = q['filter[entity_id][]'] || [], tipos = q['filter[type][]'] || [], desde = Number((q['filter[created_at][from]'] || ['0'])[0]);
+        if (ent !== 'contact') return resp(204, null);   // como Kommo de verdad: por el lead, nada
+        const E = K.eventos.filter(e => ids.indexOf(String(e.c)) >= 0 && tipos.indexOf(e.type) >= 0 && e.created_at >= desde).sort((a, b) => b.created_at - a.created_at);
+        return E.length ? resp(200, { _embedded:{ events:E } }) : resp(204, null);
+      }
+      if (p === '/tasks') {
+        const ids = q['filter[entity_id][]'] || [];
+        const T = K.tareas.filter(t => ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed);
+        return T.length ? resp(200, { _embedded:{ tasks:T } }) : resp(204, null);
+      }
+      return resp(404, {});
+    } }
+  };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(GS, 'utf8'), ctx);
+  const post = (b) => JSON.parse(ctx.doPost({ postData:{ contents:JSON.stringify(b) }, parameter:{} })._t);
+  return { post, llamadas, hojas, lock, ctx, cache };
+}
+
+function servidor() {
+  /* El cliente 70011122: un contacto con dos leads, de Carola (conversaron hace 3 días) y de María (hace 20 días, sin par) */
+  const k = kommo();
+  k.contacto(61, 'CLIENTA INVENTADA', '+591 700-11122', [71, 72]);
+  k.contacto(62, 'OTRO 70011122 EN EL NOMBRE', '76543210', [79]);   // el número en el NOMBRE, otro teléfono: no es este
+  k.lead(71, { responsible_user_id:U_CAR, status_id:103, updated_at:S - 3 * D });
+  k.lead(72, { responsible_user_id:U_MAR, status_id:101, updated_at:S - 20 * D });
+  k.lead(79, { responsible_user_id:U_MAR });
+  k.ev(61, 71, 'incoming_chat_message', S - 3 * D, 0);
+  k.ev(61, 71, 'outgoing_chat_message', S - 3 * D + 2 * H, U_CAR);       // par: el cliente y Carola a 2 h
+  k.ev(61, 71, 'outgoing_chat_message', S - 3 * D + 5 * H, 0);           // el bot, después: no corre el par
+  k.ev(61, 72, 'outgoing_chat_message', S - 20 * D, U_MAR);
+  k.ev(61, 72, 'incoming_chat_message', S - 20 * D + 30 * H, 0);         // 30 h después: no es par
+  k.ev(61, 72, 'outgoing_chat_message', S - 20 * D + 31 * H, 0);         // el bot contesta: tampoco
+  k.ev(62, 79, 'incoming_chat_message', S - D, 0);
+  k.ev(62, 79, 'outgoing_chat_message', S - D + H, U_MAR);
+  k.K.tareas.push({ id:1, entity_type:'leads', entity_id:72, complete_till:S + 5 * D, responsible_user_id:U_MAR, text:'Llamar: compra el mes que viene', is_completed:false });
+  k.K.tareas.push({ id:2, entity_type:'leads', entity_id:71, complete_till:S - D, responsible_user_id:U_CAR, text:'vencida', is_completed:false });
+
+  const A = cargar(k.K);
+  let r = A.post({ action:'quienAtiende', cel:'12', quien:'Maria Flores' });
+  chk('1 · un celular que no se entiende → «cel» y nada a Kommo', r.ok === false && r.error === 'cel' && !A.llamadas.length, r);
+
+  r = A.post({ action:'quienAtiende', cel:'591 70011122', quien:'Maria Flores' });
+  const H1 = r.cuentas && r.cuentas[0], L = (H1 && H1.leads) || [], l71 = L.find(x => x.id === '71'), l72 = L.find(x => x.id === '72');
+  chk('2a · contesta ok, con la regla (15 días, 24 h) y la hora de Google', r.ok && r.dias === 15 && r.parH === 24 && r.ahora === S, { ok:r.ok, dias:r.dias, parH:r.parH });
+  chk('2b · encuentra los 2 leads de ESE número (no el contacto que lo tiene en el nombre)', L.length === 2 && !L.some(x => x.id === '79') && H1.contactos === 1, L.map(x => x.id));
+  const ev = A.llamadas.filter(c => c.p === '/events');
+  chk('3 · los mensajes se piden por el CONTACTO, en una sola consulta', ev.length === 1 && ev[0].q['filter[entity][]'][0] === 'contact' && ev[0].q['filter[entity_id][]'].join() === '61', ev.map(c => c.q));
+  chk('4a · Carola: par cliente + vendedora a 2 h → última conversación hace 3 días', l71 && l71.par && l71.par.quien === 'Carola Chavez' && l71.par.ts === S - 3 * D + 2 * H, l71 && l71.par);
+  chk('4b · el bot después del par no lo corre', l71 && l71.par && l71.par.ts === S - 3 * D + 2 * H);
+  chk('4c · María: el cliente contestó 30 h después y lo demás fue el bot → SIN par', l72 && l72.par === null, l72 && l72.par);
+  chk('5a · responsable, sucursal (de « - Tienda Banzer») y etapa', l71 && l71.resp === 'Carola Chavez' && l71.suc === 'Tienda Banzer' && l71.et === 'Cotizacion enviada', l71);
+  chk('5b · último mensaje del cliente y de una vendedora (el bot no)', l72 && l72.ultCli === S - 20 * D + 30 * H && l72.ultVend && l72.ultVend.quien === 'Maria Flores', l72);
+  chk('5c · el nombre del contacto', l71 && l71.cli === 'CLIENTA INVENTADA');
+  chk('6 · la tarea abierta con fecha futura va (la vencida no)', l72 && l72.tarea && l72.tarea.ts === S + 5 * D && /mes que viene/.test(l72.tarea.txt) && l71 && !l71.tarea, { t72:l72 && l72.tarea, t71:l71 && l71.tarea });
+  const S2 = r.cuentas && r.cuentas[1];
+  chk('7 · Sueña sin token → «sinToken», sin preguntarle a nadie', S2 && S2.marca === 'suena' && S2.sinToken === true && !A.llamadas.some(c => /gerencia/.test(c.host)), S2);
+  const fh = (A.hojas['Quién atiende'] || { filas:[] }).filas;
+  chk('8a · la consulta queda anotada: encabezado + una fila (quién buscó, el número, el resultado)', fh.length === 2 && fh[1][1] === 'Maria Flores' && fh[1][2] === '70011122' && /^Atiende: Carola Chavez, Maria Flores$/.test(fh[1][3]), fh);
+  chk('8b · no toma el candado', A.lock.veces === 0, A.lock.veces);
+  const n0 = A.llamadas.length;
+  const r2 = A.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel' });
+  chk('9 · la misma búsqueda seguida sale de la caché (y se anota igual)', r2.cache === true && A.llamadas.length === n0 && (A.hojas['Quién atiende'].filas.length === 3), { cache:r2.cache, nuevas:A.llamadas.length - n0 });
+
+  /* 4d · el borde de las 24 h */
+  const k2 = kommo();
+  k2.contacto(63, 'BORDE', '71112222', [81, 82]);
+  k2.lead(81); k2.lead(82, { responsible_user_id:U_MAR });
+  k2.ev(63, 81, 'incoming_chat_message', S - 4 * D, 0); k2.ev(63, 81, 'outgoing_chat_message', S - 4 * D + 24 * H, U_CAR);
+  k2.ev(63, 82, 'incoming_chat_message', S - 4 * D, 0); k2.ev(63, 82, 'outgoing_chat_message', S - 4 * D + 24 * H + 1, U_MAR);
+  const B = cargar(k2.K), rb = B.post({ action:'quienAtiende', cel:'71112222' });
+  const b81 = rb.cuentas[0].leads.find(x => x.id === '81'), b82 = rb.cuentas[0].leads.find(x => x.id === '82');
+  chk('4d · justo 24 h vale; 24 h y un segundo no', b81 && b81.par && b82 && b82.par === null, { b81:b81 && b81.par, b82:b82 && b82.par });
+  return r;
+}
+
+async function pagina(respuesta) {
+  const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
+  const ctx = await browser.newContext({ viewport:{ width:1280, height:900 }, timezoneId:'America/La_Paz' });
+  await ctx.route(/^https?:\/\//, r => r.abort());
+  const errs = [];
+  const abrir = async (prueba) => {
+    const page = await ctx.newPage(); page.on('pageerror', e => errs.push(e.message)); page.on('dialog', d => d.accept());
+    await page.clock.setFixedTime(new Date(AHORA));
+    if (prueba) await page.addInitScript(() => { window.QA_PRUEBA = 1; });
+    await page.goto('file://' + PEDIDOS, { waitUntil:'load' }); await page.waitForTimeout(300);
+    return page;
+  };
+  let page = await abrir(false);
+  chk('10a · en Playwright la pestaña está escondida', await page.evaluate(() => document.getElementById('tab-qa').hidden === true));
+  await page.close();
+  page = await abrir(true);
+  chk('10b · con QA_PRUEBA aparece y abre la vista', await page.evaluate(() => { showView('qa'); return !document.getElementById('tab-qa').hidden && document.getElementById('view-qa').classList.contains('active') && document.getElementById('tab-qa').classList.contains('active'); }));
+  const buscar = (cel, yo, resp, srv) => page.evaluate(async (a) => {
+    SERVER_VER = a.srv || '2026-11-20-a';
+    try { localStorage.setItem('me_mis_vendedor', a.yo || ''); } catch (e) {}
+    window.__resp = a.resp; window.apiPost = function () { return Promise.resolve(JSON.parse(JSON.stringify(window.__resp))); };
+    document.getElementById('qa-cel').value = a.cel; qaBuscar();
+    await new Promise(r => setTimeout(r, 80));
+    return document.getElementById('qa-res').innerText.replace(/\s+/g, ' ');
+  }, { cel, yo, resp, srv });
+  let t = await buscar('70011122', 'Maria Flores', respuesta);
+  chk('11a · María busca: «Lo está atendiendo Carola Chavez», con la fecha y hasta cuándo vale', /Lo está atendiendo Carola Chavez/.test(t) && /vale hasta el 02\/12/.test(t), t.slice(0, 300));
+  chk('11b · la fecha acordada de María (la tarea) es suya: no la nombra como «otra»', /Lo está atendiendo Carola Chavez Carola Chavez:/.test(t) && !/Lo está atendiendo [^.]*Maria Flores/.test(t), t.slice(0, 200));
+  chk('11c · cada lead con su marca, etapa, responsable, última conversación y la tarea', /Heaven/.test(t) && /Cotizacion enviada/.test(t) && /Asignado a Carola Chavez \(Tienda Banzer\)/.test(t) && /Fecha acordada/.test(t) && /mes que viene/.test(t), t);
+  chk('11d · el lead de María dice que no hubo conversación (cliente y vendedora a ≤ 24 h)', /ninguna en 60 días/.test(t), t);
+  t = await buscar('70011122', 'Carola Chavez', respuesta);
+  chk('11e · Carola busca: «Lo está atendiendo Maria Flores» por la fecha acordada (la regla de la excepción)', /Lo está atendiendo Maria Flores/.test(t) && /fecha acordada para el 25\/11/.test(t), t.slice(0, 260));
+  const sinTarea = JSON.parse(JSON.stringify(respuesta)); sinTarea.cuentas[0].leads.forEach(l => { l.tarea = null; });
+  t = await buscar('70011122', 'Carola Chavez', sinTarea);
+  chk('11f · sin la tarea, Carola ve «Lo estás atendiendo vos»', /Lo estás atendiendo vos/.test(t), t.slice(0, 200));
+  const viejo = JSON.parse(JSON.stringify(sinTarea)); viejo.ahora += 20 * 86400;
+  t = await buscar('70011122', 'Isabel Robledo', viejo);
+  chk('11g · 20 días después: «Libre» y con quién fue la última conversación', /Libre: nadie lo está atendiendo/.test(t) && /La última fue con Carola Chavez/.test(t), t.slice(0, 260));
+  const compro = JSON.parse(JSON.stringify(viejo)); compro.cuentas[0].leads[0].cerrado = 'ganado'; compro.cuentas[0].leads[0].cierre = viejo.ahora - 2 * 86400;
+  t = await buscar('70011122', 'Isabel Robledo', compro);
+  chk('11h · si compró hace poco: «Ya compró con …»', /Ya compró con Carola Chavez/.test(t), t.slice(0, 200));
+  t = await buscar('70011122', '', respuesta);
+  chk('11i · sin nombre elegido, pide elegirlo para saber si sos vos', /Elegí tu nombre/.test(t), t.slice(0, 300));
+  /* 12 · sin el servidor nuevo: lo que el panel sabe */
+  t = await page.evaluate(async () => {
+    STATE = [{ id:'p1', oc:'11-201', cliente:'CLIENTA INVENTADA', celular:'+591 700 11122', vendedor:'Maria Flores', ts:Date.now() - 86400000, fecha:'2026-11-22', productos:[] },
+             { id:'p2', oc:'11-202', cliente:'OTRA', celular:'71119999', vendedor:'Isabel Robledo', ts:Date.now(), fecha:'2026-11-22', productos:[] }];
+    window.apiPost = function () { window.__llamo = 1; return Promise.resolve({}); };
+    SERVER_VER = '2026-11-17-d'; window.__llamo = 0;
+    document.getElementById('qa-cel').value = '70011122'; qaBuscar();
+    await new Promise(r => setTimeout(r, 50));
+    return document.getElementById('qa-res').innerText.replace(/\s+/g, ' ') + (window.__llamo ? ' [LLAMÓ]' : '');
+  });
+  chk('12 · con un servidor anterior: dice qué falta, no llama y muestra el pedido del panel con ese celular (y no el otro)', /falta una versión nueva del servidor/.test(t) && /OC 11-201/.test(t) && !/11-202/.test(t) && !/LLAMÓ/.test(t), t);
+  t = await page.evaluate(async () => { document.getElementById('qa-cel').value = '7001'; qaBuscar(); return document.getElementById('qa-res').innerText; });
+  chk('13a · un número incompleto pide el número completo', /celular completo/.test(t), t);
+  chk('13b · con o sin 591, con espacios o guiones: los mismos 8', await page.evaluate(() => qaCel8('+591 700-11122') === '70011122' && qaCel8('70011122') === '70011122'));
+  chk('13c · la regla está a la vista (15 días, 24 h)', await page.evaluate(() => { var d = document.querySelector('.qa-regla').textContent; return /15 días/.test(d) && /24 horas/.test(d); }));
+  chk('sin errores de la página', !errs.length, errs);
+  await browser.close();
+}
+
+(async () => {
+  const r = servidor();
+  await pagina(r);
+  console.log(`\n${PASS} bien, ${FAIL} mal`);
+  process.exit(FAIL ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

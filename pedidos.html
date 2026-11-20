@@ -1945,7 +1945,7 @@ html.hc-sindia .header-in > .htitle{ display:none; }
    pestañas: pastillas blancas con el dibujo gris, y SOLO la elegida con el color de su sección (un color por vez, no seis). La elegida
    lleva su color también con los temas del mes. `[id]` y `html` adelante: le gana a las reglas de cada tema (`html.tema-x .nav button.active`). */
 #tab-form{ --c1:#2dd4bf; --c2:#0f766e; } #tab-mis{ --c1:#60a5fa; --c2:#1d4ed8; } #tab-chofer{ --c1:#4ade80; --c2:#15803d; }
-#tab-conta{ --c1:#fbbf24; --c2:#d97706; } #tab-atc{ --c1:#f472b6; --c2:#be185d; } #tab-admin{ --c1:#a78bfa; --c2:#6d28d9; } #tab-bot{ --c1:#94a3b8; --c2:#475569; }
+#tab-conta{ --c1:#fbbf24; --c2:#d97706; } #tab-atc{ --c1:#f472b6; --c2:#be185d; } #tab-admin{ --c1:#a78bfa; --c2:#6d28d9; } #tab-bot{ --c1:#94a3b8; --c2:#475569; } #tab-qa{ --c1:#38bdf8; --c2:#0369a1; }
 @media(min-width:701px){
   .nav{ gap:8px; margin-bottom:14px; }
   html .nav button[id]{ border:1px solid var(--gray-md); border-radius:999px; padding:7px 16px 7px 7px; background:#fff; color:var(--muted); }
@@ -3361,6 +3361,9 @@ try{ hdrCieloPintar(); setInterval(function(){ if(!document.hidden) hdrCieloPint
   <button id="tab-chofer" hidden onclick="showView('chofer')"><span class="t-ic"><span class="ico-b" style="--c1:#4ade80;--c2:#15803d" aria-hidden="true"><svg viewBox="0 0 24 24"><g class="cuerpo"><path d="M2 7h11v9H2z"/><path d="M13 10h4l3 3v3h-7z"/></g><circle class="rueda" cx="6" cy="17.5" r="1.8"/><circle class="rueda" cx="16" cy="17.5" r="1.8"/></svg></span></span><span class="t-lb">Chofer</span><span class="t-cr">Chofer</span></button>
   <button id="tab-conta" onclick="showView('conta')"><span class="t-ic"><span class="ico-b" style="--c1:#fbbf24;--c2:#d97706" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse class="moneda" cx="12" cy="18" rx="6.5" ry="2.3"/><ellipse class="moneda" cx="12" cy="13.5" rx="6.5" ry="2.3"/><ellipse class="moneda" cx="12" cy="9" rx="6.5" ry="2.3"/></svg></span></span><span class="t-lb">Contabilidad</span><span class="t-cr">Conta</span></button>
   <button id="tab-atc" onclick="showView('atc')"><span class="t-ic"><span class="ico-b" style="--c1:#f472b6;--c2:#be185d" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 14v-2a6 6 0 0 1 12 0v2"/><rect x="4" y="13" width="4" height="6" rx="1.5"/><rect x="16" y="13" width="4" height="6" rx="1.5"/><path class="onda" d="M2 12a3 3 0 0 0 0 6"/><path class="onda" d="M22 12a3 3 0 0 1 0 6"/></svg></span></span><span class="t-lb">ATC</span><span class="t-cr">ATC</span></button>
+  <!-- 📞 (20/11, dueño: «una pestaña que muestre un buscador donde coloquen un número de teléfono y salga si otro asesor lo está atendiendo»)
+       Escondida en Playwright salvo QA_PRUEBA (`qaTabPintar`): las pruebas de siempre cuentan las pestañas. -->
+  <button id="tab-qa" hidden onclick="showView('qa')"><span class="t-ic"><span class="ico-b" style="--c1:#38bdf8;--c2:#0369a1" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.6 3.5h2.6l1.4 4-1.9 1.3a10 10 0 0 0 6.5 6.5l1.3-1.9 4 1.4v2.6a2 2 0 0 1-2.2 2A16 16 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/><circle class="onda" cx="17" cy="7" r="3.2"/><path class="onda" d="M19.3 9.3l2.2 2.2"/></svg></span></span><span class="t-lb">¿Quién lo atiende?</span><span class="t-cr">Quién atiende</span></button>
   <button id="tab-admin" onclick="showView('admin')"><span class="t-ic"><span class="ico-b" style="--c1:#a78bfa;--c2:#6d28d9" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="11" width="12" height="9" rx="2"/><path class="arco" d="M8.5 11V8.5a3.5 3.5 0 0 1 7 0V11"/><circle cx="12" cy="15.5" r="1.2"/></svg></span></span><span class="t-lb">Administración</span><span class="t-cr">Admin</span></button>
   <!-- 🤖 (24/10, dueño: «lo del bot… en una pestaña nueva de solo BOT, y solo se habilite con la clave de administración o como logística»)
        Escondida hasta entonces (`botTabPintar`). -->
@@ -4721,6 +4724,27 @@ function glSigue(){
       <div id="rd-bot"></div>   <!-- 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» / «No, dejarlo» -->
       <div id="wa-resp-adm"></div>   <!-- 💬 (12/10, §4kk) lo que contestaron los clientes al bot · (24/10) vive en esta pestaña -->
       <div id="bot-vacio" class="empty" hidden>✅ No hay respuestas de clientes esperando.</div>
+    </div>
+  </div>
+  <!-- 📞 (20/11) ¿QUIÉN LO ATIENDE? La vendedora escribe el celular y ve si otra lo está atendiendo en Kommo (regla de la Comunicación
+       Interna 032-2026: 15 días desde la última conversación = un mensaje del cliente y uno de la vendedora a ≤ 24 h). Solo mira. -->
+  <div id="view-qa" class="view">
+    <div class="card qa-card">
+      <div class="qa-cab"><b>📞 ¿Quién lo atiende?</b><span>Escribí el celular del cliente y te digo si otra vendedora lo está atendiendo en Kommo.</span></div>
+      <form class="qa-form" onsubmit="qaBuscar();return false" autocomplete="off">
+        <label class="lb" for="qa-cel">Celular del cliente</label>
+        <div class="qa-fila"><input id="qa-cel" type="text" inputmode="tel" placeholder="Ej. 71234567 (con o sin 591)" maxlength="24" oninput="qaEscribe()"><button type="submit" id="qa-btn" class="btn btn-primary">🔎 Buscar</button></div>
+      </form>
+      <div id="qa-res"></div>
+      <details class="qa-regla"><summary>📜 La regla (Comunicación Interna 032-2026)</summary>
+        <ul>
+          <li>Una vendedora tiene la oportunidad mientras haya <b>conversado con el cliente en los últimos <span class="qa-dias">15</span> días</b>.</li>
+          <li><b>Conversar</b> = un mensaje del cliente y uno de la vendedora con <b>no más de 24 horas</b> entre los dos. Un mensaje solo (el cliente escribió y nadie contestó, o la vendedora escribió y el cliente no contestó) no cuenta. Las respuestas del bot tampoco.</li>
+          <li><b>Excepción:</b> una fecha acordada y anotada en Kommo como tarea (compra el mes que viene, espera la reposición, una entrega agendada…) la mantiene aunque pasen los 15 días. La vendedora tiene que hacer el seguimiento acordado.</li>
+          <li>Que pasen los 15 días <b>no pasa la venta a otra</b> automáticamente; un mensaje de último momento tampoco revive la oportunidad. Crear la ficha primero, tener el contacto asignado o haberlo atendido en otra compra no da derecho por sí solo.</li>
+        </ul>
+        <p>Cada búsqueda queda anotada (quién buscó, cuándo y qué le salió).</p>
+      </details>
     </div>
   </div>
   <div id="view-atc" class="view">
@@ -12319,6 +12343,8 @@ function showViewAhora(v){
   document.getElementById('view-conta').classList.toggle('active',v==='conta');
   document.getElementById('view-atc').classList.toggle('active',v==='atc');
   document.getElementById('view-bot').classList.toggle('active',v==='bot');
+  document.getElementById('view-qa').classList.toggle('active',v==='qa');
+  document.getElementById('tab-qa').classList.toggle('active',v==='qa');
   document.getElementById('tab-bot').classList.toggle('active',v==='bot');
   document.getElementById('tab-atc').classList.toggle('active',v==='atc');
   document.getElementById('tab-form').classList.toggle('active',v==='form');
@@ -12333,6 +12359,7 @@ function showViewAhora(v){
   if(v==='conta') refreshConta({ rapida:1 });   // 🚀 (296) al toque con lo leído (`pesContaRapida`); 🔄 Actualizar sigue leyendo siempre
   if(v==='atc') refreshAtc();
   if(v==='bot'){ try{ waRespPintar(); waRespTraer(); }catch(e){} }
+  if(v==='qa'){ try{ qaPintar(); setTimeout(function(){ var i=document.getElementById('qa-cel'); if(i && !i.value) i.focus(); }, 60); }catch(e){} }
   if(v==='admin' && UNLOCKED) pesAdmEntrar();   // 🚀 (296) = loadFromServer(false), sin leer si se leyó hace < 1 min
   if(v==='mis'){ misVendedorSel(); pesMisEntrar(); }   // 🚀 (296) = refreshMis(), sin leer si se leyó hace < 1 min
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
@@ -71914,6 +71941,125 @@ function botVe(){
     return /(^|\s)EDUARDO(\s|$)/i.test(normNombre(getVendedorMem()));
   }catch(e){ return !!UNLOCKED; }
 }
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   📞 (20/11) ¿QUIÉN LO ATIENDE? — dueño: *«un buscador donde coloquen un número de teléfono y salga si otro asesor lo está atendiendo»*,
+   con la regla de la Comunicación Interna 032-2026 y sus respuestas del 20/11: **15 días**; conversar = **un mensaje del cliente y uno
+   de la vendedora con no más de 24 h** («a veces el cliente escribe y el asesor no responde, o viceversa»); **pestaña nueva**.
+   Kommo lo lee el servidor (acción `quienAtiende`, desde QA_SERVIDOR): contactos con ese número, sus leads, los mensajes de chat de cada
+   lead y las tareas abiertas (la fecha acordada = la excepción). Acá se decide el cartel con QA_DIAS / QA_PAR_H (= los del .gs).
+   Además, lo que el panel ya sabe: los pedidos con ese celular. SOLO MIRA. En Playwright escondida salvo QA_PRUEBA.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+var QA_DIAS=15, QA_PAR_H=24, QA_SERVIDOR='2026-11-20-a', QA_PANEL_DIAS=90;
+var QA={ c8:'', busy:false, r:null, err:'', gen:0 };
+function qaVa(){ try{ return !navigator.webdriver || !!window.QA_PRUEBA; }catch(e){ return true; } }
+function qaTabPintar(){ var t=document.getElementById('tab-qa'); if(t) t.hidden=!qaVa(); }
+function qaCel8(t){ return cliCelClave(t); }
+function qaNom(t){ return sinTildes(String(t||'').split(/\s+[-–]\s+/)[0]).replace(/[^a-zñ ]/g,' ').replace(/\s+/g,' ').trim(); }
+/** ¿Es la misma persona? «Isabel Robledo» = «Isabel Robledo - Central» = «Isabel». Con una sola palabra de un lado, basta esa. */
+function qaMismo(a, b){
+  var A=qaNom(a).split(' ').filter(function(w){ return w.length>1; }), B=qaNom(b).split(' ').filter(function(w){ return w.length>1; });
+  if(!A.length || !B.length) return false;
+  var cor=A.length<=B.length ? A : B, lar=A.length<=B.length ? B : A;
+  return cor.every(function(w){ return lar.indexOf(w)>=0; });
+}
+function qaYo(){ try{ return getVendedorMem()||''; }catch(e){ return ''; } }
+function qaFecha(ts){ return ts ? fmtFechaCorta(isoDeTsBolivia(ts*1000))+' '+hhmmDeTs(ts*1000) : ''; }
+function qaHace(ts, ahora){   // días de CALENDARIO en Bolivia (17/11 12:00 visto el 20/11 = hace 3 días)
+  var d=Math.round((Date.parse(isoDeTsBolivia(Number(ahora)*1000))-Date.parse(isoDeTsBolivia(Number(ts)*1000)))/86400000);
+  return d<=0 ? 'hoy' : (d===1 ? 'ayer' : ('hace '+d+' días'));
+}
+function qaEscribe(){ var i=document.getElementById('qa-cel'); if(i && qaCel8(i.value)!==QA.c8 && QA.r){ /* el resultado de otro número no queda a la vista */ QA.r=null; QA.err=''; qaPintar(); } }
+/** Los pedidos del panel con ese celular (lo que el panel ya sabe, sin Kommo): los más nuevos primero. */
+function qaPanelPedidos(c8){
+  var lim=Date.now()-QA_PANEL_DIAS*86400000;
+  return (STATE||[]).filter(function(p){
+    if(!p || (typeof esFilaSistema==='function' && esFilaSistema(p)) || String(p.id||'').indexOf('__')===0) return false;
+    if(qaCel8(p.celular)!==c8) return false;
+    return (Number(p.ts)||0)>=lim || String(p.fecha||'')>=isoDeTsBolivia(lim);
+  }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+}
+/** El cartel, con la regla. Entra la respuesta del servidor; sale {k:'libre'|'tuyo'|'otro'|'compro', quien:[{n, por, ts}], ultimo}. */
+function qaVeredicto(r, yo){
+  var ahora=Number(r && r.ahora)||Math.floor(Date.now()/1000), lim=ahora-QA_DIAS*86400, vig=[], compro=null, ultimo=null;
+  ((r && r.cuentas)||[]).forEach(function(c){
+    (c.leads||[]).forEach(function(l){
+      if(l.par && (!ultimo || l.par.ts>ultimo.ts)) ultimo={ ts:l.par.ts, n:l.par.quien, marca:c.marca };
+      if(l.par && l.par.ts>=lim) vig.push({ n:l.par.quien, por:'conv', ts:l.par.ts, marca:c.marca, et:l.et });
+      else if(l.tarea && l.tarea.ts>ahora) vig.push({ n:l.tarea.quien||l.resp, por:'fecha', ts:l.tarea.ts, marca:c.marca, et:l.et });
+      if(l.cerrado==='ganado' && (l.cierre||l.tocado)>=lim && (!compro || (l.cierre||l.tocado)>compro.ts)) compro={ n:l.resp, ts:l.cierre||l.tocado, marca:c.marca };
+    });
+  });
+  /* una sola línea por vendedora: la conversación más nueva gana sobre la fecha acordada */
+  var por={}; vig.forEach(function(v){ var k=qaNom(v.n); if(!por[k] || (v.por==='conv' && (por[k].por!=='conv' || v.ts>por[k].ts))) por[k]=v; });
+  var quien=Object.keys(por).map(function(k){ return por[k]; }).sort(function(a,b){ return (a.por==='conv'?0:1)-(b.por==='conv'?0:1) || b.ts-a.ts; });
+  var otros=quien.filter(function(v){ return !yo || !qaMismo(v.n, yo); });
+  var k = !quien.length ? (compro ? 'compro' : 'libre') : (otros.length ? 'otro' : 'tuyo');
+  return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora };
+}
+function qaBuscar(){
+  var i=document.getElementById('qa-cel'), c8=qaCel8(i ? i.value : '');
+  if(!c8){ QA.r=null; QA.err='Escribí el celular completo (8 números; con o sin 591).'; qaPintar(); return; }
+  QA.c8=c8; QA.err=''; QA.r=null;
+  if(!servidorTiene(QA_SERVIDOR)){ QA.err='sinsrv'; qaPintar(); return; }
+  QA.busy=true; var g=++QA.gen; qaPintar();
+  conTopeDuro(apiPost({ action:'quienAtiende', cel:c8, quien:qaYo() }), 45000, 'tardo').then(function(r){
+    if(g!==QA.gen) return;
+    QA.busy=false;
+    if(!r || r.ok===false){ QA.err=(r && r.error==='cel') ? 'Ese número no se entiende.' : ('Kommo no contestó'+(r && r.error ? ' ('+String(r.error)+')' : '')+'. Probá de nuevo en un rato.'); }
+    else QA.r=r;
+    qaPintar();
+  }).catch(function(e){ if(g!==QA.gen) return; QA.busy=false; QA.err='No hay conexión con el panel ('+(motivoDeError ? motivoDeError(e) : String(e&&e.message||e))+').'; qaPintar(); });
+}
+var QA_MARCA={ heaven:'Heaven', suena:'Sueña' };
+function qaLeadHtml(l, marca, r){
+  var ahora=r.ahora, lim=ahora-QA_DIAS*86400, vale=l.par && l.par.ts>=lim;
+  var est=l.cerrado==='ganado' ? '<span class="qa-chip qa-ok">✅ Compró</span>' : (l.cerrado==='perdido' ? '<span class="qa-chip qa-gris">✖ Perdido</span>' : '');
+  var filas=[];
+  filas.push('<div class="qa-l-f"><span>💬 Última conversación</span><b>'+(l.par ? esc(qaFecha(l.par.ts))+' · '+esc(l.par.quien)+' <small>('+qaHace(l.par.ts, ahora)+')</small> '+(vale?'<span class="qa-chip qa-vale">vale</span>':'<span class="qa-chip qa-gris">pasaron '+QA_DIAS+' días</span>') : '<span class="qa-gris-t">ninguna en '+60+' días (cliente y vendedora a ≤ '+QA_PAR_H+' h)</span>')+'</b></div>');
+  filas.push('<div class="qa-l-f"><span>🙋 Último mensaje del cliente</span><b>'+(l.ultCli ? esc(qaFecha(l.ultCli))+' <small>('+qaHace(l.ultCli, ahora)+')</small>' : '—')+'</b></div>');
+  filas.push('<div class="qa-l-f"><span>👩‍💼 Último mensaje de una vendedora</span><b>'+(l.ultVend ? esc(qaFecha(l.ultVend.ts))+' · '+esc(l.ultVend.quien)+' <small>('+qaHace(l.ultVend.ts, ahora)+')</small>' : '—')+'</b></div>');
+  if(l.tarea) filas.push('<div class="qa-l-f"><span>📅 Fecha acordada (tarea)</span><b>'+esc(fmtFechaCorta(isoDeTsBolivia(l.tarea.ts*1000)))+' · '+esc(l.tarea.quien||'')+(l.tarea.txt?' <small>«'+esc(l.tarea.txt)+'»</small>':'')+'</b></div>');
+  if(l.msgOk===false) filas.push('<div class="qa-l-f qa-ojo"><span>⚠️</span><b>Kommo no devolvió todos los mensajes de este lead: lo de arriba puede estar incompleto.</b></div>');
+  return '<div class="qa-lead'+(vale?' qa-lead-vale':'')+'">'+
+    '<div class="qa-l-cab"><span class="qa-chip qa-m-'+esc(marca)+'">'+esc(QA_MARCA[marca]||marca)+'</span><b>'+esc(l.cli||l.n||'(sin nombre)')+'</b>'+est+'</div>'+
+    '<div class="qa-l-sub">'+esc([l.et && ('Etapa «'+l.et+'»'), l.resp && ('Asignado a '+l.resp+(l.suc?' ('+l.suc+')':'')), l.creado && ('creado el '+fmtFechaCorta(isoDeTsBolivia(l.creado*1000)))].filter(Boolean).join(' · '))+'</div>'+
+    filas.join('')+'</div>';
+}
+function qaPintar(){
+  var box=document.getElementById('qa-res'); if(!box) return;
+  document.querySelectorAll('.qa-dias').forEach(function(e){ e.textContent=QA_DIAS; });
+  var b=document.getElementById('qa-btn'); if(b){ b.disabled=QA.busy; b.textContent=QA.busy?'⏳ Buscando…':'🔎 Buscar'; }
+  if(QA.busy){ box.innerHTML='<div class="qa-cargando">⏳ Preguntándole a Kommo por el <b>…'+esc(QA.c8.slice(-4))+'</b> (contactos, leads y mensajes de los últimos 60 días). Tarda unos segundos.</div>'; return; }
+  var html='';
+  if(QA.err && QA.err!=='sinsrv') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">⚠️</div><div><b>'+esc(QA.err)+'</b></div></div>';
+  if(QA.err==='sinsrv') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">🛠️</div><div><b>Para preguntarle a Kommo falta una versión nueva del servidor del panel</b> ('+esc(QA_SERVIDOR)+'). Mientras tanto, abajo está lo que el panel ya sabe de ese número.</div></div>';
+  var r=QA.r, yo=qaYo();
+  if(r){
+    var V=qaVeredicto(r, yo), U=V.ultimo;
+    if(V.k==='libre') html+='<div class="qa-ver qa-v-libre"><div class="qa-v-ic">✅</div><div><b>Libre: nadie lo está atendiendo</b><span>En los últimos '+QA_DIAS+' días no hubo conversación (cliente y vendedora a ≤ '+QA_PAR_H+' h) ni una fecha acordada en Kommo.'+(U?' La última fue con <b>'+esc(U.n)+'</b> el '+esc(qaFecha(U.ts))+' ('+qaHace(U.ts, V.ahora)+').':'')+'</span></div></div>';
+    else if(V.k==='compro') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">🛒</div><div><b>Ya compró con '+esc(V.compro.n)+'</b><span>El lead quedó ganado el '+esc(qaFecha(V.compro.ts))+' ('+qaHace(V.compro.ts, V.ahora)+'). Si es una compra nueva, hablalo con tu encargado.</span></div></div>';
+    else if(V.k==='tuyo') html+='<div class="qa-ver qa-v-tuyo"><div class="qa-v-ic">👍</div><div><b>Lo estás atendiendo vos</b><span>'+V.quien.map(function(q){ return q.por==='conv' ? 'Última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+')' : 'Fecha acordada para el '+esc(fmtFechaCorta(isoDeTsBolivia(q.ts*1000)))+': hacé el seguimiento'; }).join(' · ')+'.</span></div></div>';
+    else html+='<div class="qa-ver qa-v-otro"><div class="qa-v-ic">⚠️</div><div><b>Lo está atendiendo '+V.otros.map(function(q){ return esc(q.n); }).join(' y ')+'</b><span>'+V.otros.map(function(q){ return q.por==='conv' ? esc(q.n)+': última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+esc(fmtFechaCorta(isoDeTsBolivia((q.ts+QA_DIAS*86400)*1000)))+')' : esc(q.n)+': fecha acordada para el '+esc(fmtFechaCorta(isoDeTsBolivia(q.ts*1000))); }).join(' · ')+'. Antes de atenderlo, hablalo con '+(V.otros.length>1?'ellas':esc(V.otros[0].n.split(' ')[0]))+' o con tu encargado.</span></div></div>';
+    if(!yo) html+='<div class="qa-nota">💡 Elegí tu nombre en «¿Quién está usando el panel?» para que te diga si sos vos.</div>';
+    var hay=0;
+    (r.cuentas||[]).forEach(function(c){
+      if(c.error) html+='<div class="qa-nota qa-ojo">⚠️ Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+': '+esc(c.error)+'</div>';
+      (c.leads||[]).forEach(function(l){ hay++; html+=qaLeadHtml(l, c.marca, r); });
+      if(c.masLeads) html+='<div class="qa-nota">… y '+c.masLeads+' lead'+(c.masLeads>1?'s':'')+' más viejos en '+esc(QA_MARCA[c.marca]||c.marca)+'.</div>';
+    });
+    if(!hay) html+='<div class="qa-nota">Ese número no está en ningún contacto de Kommo'+((r.cuentas||[]).some(function(c){ return c.sinToken; })?' (de Sueña no hay acceso todavía)':'')+'.</div>';
+  }
+  if(QA.c8 && (r || QA.err==='sinsrv')){
+    var P=qaPanelPedidos(QA.c8);
+    html+='<div class="qa-panel"><div class="qa-panel-t">📋 En el panel (últimos '+QA_PANEL_DIAS+' días)</div>'+
+      (P.length ? P.slice(0,6).map(function(p){
+        return '<div class="qa-p"><b>'+esc(ocEtiq(p.oc)||'pedido')+'</b><span>'+esc([p.cliente, p.vendedor, p.ts?('cargado el '+fmtFechaCorta(isoDeTsBolivia(p.ts))):'', p.fecha?('entrega '+fmtFechaCorta(p.fecha)):''].filter(Boolean).join(' · '))+'</span></div>';
+      }).join('')+(P.length>6?'<div class="qa-nota">… y '+(P.length-6)+' más.</div>':'') : '<div class="qa-nota">Ningún pedido con ese celular.</div>')+'</div>';
+  }
+  if(!html) html='<div class="qa-vacio">Escribí un celular y tocá <b>🔎 Buscar</b>.</div>';
+  box.innerHTML=html;
+}
+window.addEventListener('load', function(){ try{ qaTabPintar(); }catch(e){} });
 function botTabPintar(){
   var t=document.getElementById('tab-bot'); if(!t) return;
   var ve=botVe(); t.hidden=!ve;
@@ -82196,6 +82342,35 @@ function vdIniciar(){
 #wrap-cobro-todo.mixto-on #wrap-comp{border-bottom:1px dashed var(--teal-border);border-radius:0 0 10px 10px;padding-bottom:10px;margin-bottom:10px}
 .pago-tit{font-weight:700;font-size:.85rem;scroll-margin-top:calc(var(--hdr-h,70px) + 96px)}
 .pago-tit .pago-tot{font-weight:500;color:var(--muted)}
+
+/* 📞 (20/11) ¿Quién lo atiende? */
+#view-qa .qa-card{ max-width:860px; margin:0 auto; }
+.qa-cab{ display:flex; flex-direction:column; gap:2px; margin-bottom:12px; } .qa-cab b{ font-size:1.12rem; } .qa-cab span{ color:var(--txt-2,#5b6b7a); font-size:.88rem; }
+.qa-form .lb{ display:block; margin-bottom:4px; }
+.qa-fila{ display:flex; gap:8px; flex-wrap:wrap; } .qa-fila input{ flex:1 1 220px; min-width:0; font-size:1.15rem; padding:10px 12px; letter-spacing:.04em; } .qa-fila button{ flex:0 0 auto; width:auto; min-height:44px; padding-inline:22px; }
+#qa-res{ margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+.qa-vacio,.qa-cargando{ padding:14px; border:1px dashed #b9d7e6; border-radius:12px; color:#476072; background:#f6fbfe; font-size:.92rem; }
+.qa-ver{ display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:14px; border:1px solid; }
+.qa-ver > div > b{ display:block; font-size:1.08rem; } .qa-ver > div > span{ display:block; margin-top:3px; font-size:.9rem; line-height:1.45; }
+.qa-v-ic{ font-size:1.7rem; line-height:1; }
+.qa-v-libre{ background:#ecfdf5; border-color:#86efac; color:#14532d; }
+.qa-v-otro{ background:#fff7ed; border-color:#fdba74; color:#7c2d12; }
+.qa-v-tuyo{ background:#eff6ff; border-color:#93c5fd; color:#1e3a8a; }
+.qa-v-ojo{ background:#fffbeb; border-color:#fcd34d; color:#78350f; }
+.qa-lead{ border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; background:#fff; color:#1f2937; }
+.qa-lead-vale{ border-color:#fdba74; box-shadow:inset 3px 0 0 #fb923c; }
+.qa-l-cab{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; } .qa-l-cab b{ font-size:.98rem; }
+.qa-l-sub{ font-size:.8rem; color:#64748b; margin:2px 0 6px; }
+.qa-l-f{ display:flex; gap:10px; justify-content:space-between; padding:4px 0; border-top:1px solid #f1f5f9; font-size:.86rem; flex-wrap:wrap; }
+.qa-l-f>span{ color:#64748b; } .qa-l-f>b{ font-weight:600; text-align:right; } .qa-l-f small{ color:#64748b; font-weight:400; }
+.qa-chip{ display:inline-block; padding:1px 8px; border-radius:999px; font-size:.72rem; font-weight:700; border:1px solid transparent; vertical-align:1px; }
+.qa-m-heaven{ background:#e0f7f6; color:#00726c; border-color:#99e2de; } .qa-m-suena{ background:#fdf2f8; color:#9d174d; border-color:#f9a8d4; }
+.qa-vale{ background:#ffedd5; color:#9a3412; } .qa-gris{ background:#f1f5f9; color:#64748b; } .qa-ok{ background:#dcfce7; color:#166534; }
+.qa-gris-t{ color:#94a3b8; font-weight:400; }
+.qa-nota{ font-size:.84rem; color:#5b6b7a; } .qa-ojo{ color:#92400e; }
+.qa-panel{ border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; background:#f8fafc; color:#1f2937; }
+.qa-panel-t{ font-weight:700; margin-bottom:6px; } .qa-p{ display:flex; gap:8px; font-size:.86rem; padding:3px 0; flex-wrap:wrap; } .qa-p span{ color:#475569; }
+.qa-regla{ margin-top:16px; font-size:.86rem; color:#334155; } .qa-regla summary{ cursor:pointer; font-weight:700; } .qa-regla ul{ margin:8px 0 4px 18px; padding:0; display:flex; flex-direction:column; gap:4px; }
 </style>
 <script>
 /* ---------------------------------------------------------------------------
