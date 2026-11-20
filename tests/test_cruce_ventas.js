@@ -329,6 +329,9 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
       return Promise.resolve({ ok:true, ahora:ahora, incompleto:1, cuentas:[{ marca:'heaven', contactos:0, leads:[] }, { marca:'suena', leads:[], error:'falló: 500' }] }); };
     set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011177'); await espera(300);
     out.otraMarca = n;
+    /* h3 · …y esa memoria (Sueña caída) no le sirve a una vendedora de Sueña con el mismo celular: vuelve a preguntar */
+    set('f-vendedor', 'Mauricio Merida'); await espera(300);
+    out.otraMarcaSuena = n;
     window.apiPost = function (b) { if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] }); n++; cels.push(b.cel);
       if (modo === 'tope') return Promise.resolve({ ok:false, error:'tope' });
       return Promise.resolve(resp(false)); };
@@ -345,6 +348,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /lo está atendiendo Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
   chk('8h2. Heaven contestó bien y Sueña está caída: una sola consulta (la otra marca no hace reintentar)', r2.otraMarca === 1, r2.otraMarca);
+  chk('8h3. con ese mismo celular, una vendedora de Sueña no usa la memoria con Sueña caída: vuelve a preguntar', r2.otraMarcaSuena >= 2, r2.otraMarcaSuena);
   chk('8i. con el tope del día gastado: una sola consulta, sin reintentos', r2.tope === 1, r2.tope);
   chk('8j. el celular cambió antes de preguntar: solo se consulta el último', r2.cambia.length === 1 && r2.cambia[0] === '70011166', r2.cambia);
   await b.close(); fin();
