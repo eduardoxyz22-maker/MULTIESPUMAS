@@ -273,6 +273,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   let chromium; try { ({ chromium } = require('playwright')); } catch (e) { console.log('(sin playwright: se saltea la página)'); fin(); return; }
   const b = await chromium.launch(), pg = await b.newPage();
   await pg.route(/^https:\/\//, r => r.abort());
+  pg.on('dialog', d => d.accept());
   await pg.addInitScript(() => { window.CRUCE_PRUEBA = 1; });
   await pg.goto('file://' + PEDIDOS);
   await pg.waitForFunction(() => typeof cruceFormPintar === 'function');
@@ -391,11 +392,23 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     out.faltaOtra = document.getElementById('crvf-falta').textContent;
     setv('crvf-o-t', 'saludo');
     document.getElementById('crvf-ok').click(); await espera(30);
-    out.cerro = !!CRUCE_F.pide && !!CRUCE_F.req;
+    out.cerro = !!(CRUCE_F.arm && CRUCE_F.arm.req && CRUCE_F.arm.fot.length === 2);
     out.pedido = box.textContent;
     var P1 = [{ desc:'COLCHON', cant:1 }, { desc:'SOMIER', cant:1 }]; cruceRevPoner(P1); out.crv = P1[0].crv || null;
     var her = heredarMarcas([{ desc:'COLCHON', cant:1 }], P1); out.hereda = !!(her[0].crv && her[0].crv.por === 'Isabel Robledo');
+    /* (revisión de Fable 1) quitar una captura en la ventana y «Cancelar» no toca lo ya pedido */
+    crvFormAbrir(); await espera(20); crvFotoQuitar(0); closeModal(); await espera(20);
+    out.cancelaQueda = CRUCE_F.arm && CRUCE_F.arm.fot.length === 2 && (cruceRevEstado() || {}).ok === true;
+    /* (Fable 2) cambiar el celular después de pedir: no se pierde callado; volver al mismo lo recupera */
+    set('f-celular', '7001118'); await espera(30); out.malCel = (cruceRevEstado() || {}).mal || '';
+    set('f-celular', '70011188'); await espera(60); out.vuelve = (cruceRevEstado() || {}).ok === true;
+    /* (Fable 4) lo que está subiendo también ocupa lugar */
+    var antesF = CRUCE_F.fot.slice(), nSub = 0; CRUCE_F.fot = []; CRUCE_F.fotKm = []; CRUCE_F.fotSub = 3;
+    window.subirFoto = function () { nSub++; return Promise.resolve({ ok:true, fotoId:'x' + nSub }); };
+    await crvFotosElegidas({ target:{ files:[{}, {}, {}], value:'' } }, 1); await espera(30);
+    out.lugar = nSub; CRUCE_F.fotSub = 0; CRUCE_F.fot = antesF;
     set('f-celular', '70011199'); await espera(30); var P2 = [{ desc:'X', cant:1 }]; cruceRevPoner(P2); out.otroCel = !P2[0].crv;
+    var armAntes = CRUCE_F.arm; resetForm(); out.resetLimpia = CRUCE_F.arm === null; CRUCE_F.arm = armAntes;
     /* Administración */
     var ped = { id:'crvP1', oc:'11-777', fecha:'2026-11-25', vendedor:'Isabel Robledo', cliente:'CLIENTA INVENTADA', celular:'70011188', productos:P1, rev:3, ts:Date.now() };
     STATE.push(ped);
@@ -406,6 +419,9 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     crvResolver('crvP1', 'Carola Chavez');
     out.resuelto = guardados.length ? crvDe(guardados[0]) : null;
     out.despues = crvHacer() === null;
+    if (guardados.length) { var ix = STATE.findIndex(x => x.id === 'crvP1'); STATE[ix] = guardados[0]; }
+    out.ficha = crvFichaHtml(findById('crvP1'));
+    crvAbrir(); out.decididas = (document.querySelector('#modal-box .crv-modal') || {}).textContent || '';
     try { closeModal(); } catch (e) {}
     return out;
   }, ahora);
@@ -421,6 +437,11 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('⚠️ 8m. «Pedir revisión» lo confirma en el cartel y al guardar deja `crv` (quién vendió, a quién nombra Kommo) en la venta', /Vas a pedir revisión/.test(r3.pedido) && r3.crv && r3.crv.por === 'Isabel Robledo' && r3.crv.de[0] === 'Carola Chavez' && /conversó/.test(r3.crv.det), r3.crv);
   chk('8n. al corregir la venta el pedido de revisión se conserva; con otro celular no se pide', r3.hereda && r3.otroCel, { hereda:r3.hereda, otro:r3.otroCel });
   chk('⚠️ 8o. Administración (solo con la contraseña) lo ve en «Para hacer» y en la lista', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacer || '') && /CLIENTA INVENTADA/.test(r3.lista) && /Es de Carola Chavez/.test(r3.lista) && /Es de Isabel Robledo/.test(r3.lista) && /respondió mi cotización/.test(r3.lista) && /próximo paso/.test(r3.lista) && /fotoRev1/.test(r3.listaH) && /Captura de Kommo/.test(r3.listaH) && /no cuenta/.test(r3.lista), { sin:r3.sinClave, hacer:r3.hacer, lista:r3.lista.slice(0, 300) });
+  chk('⚠️ 8x. (Fable 1) quitar una captura en la ventana y cancelar no toca lo ya pedido', r3.cancelaQueda);
+  chk('⚠️ 8y. (Fable 2) cambiar el celular después de pedir lo dice al guardar; volver al mismo número lo recupera', /cambiaste el celular o la vendedora/.test(r3.malCel) && r3.vuelve, { mal:r3.malCel, vuelve:r3.vuelve });
+  chk('8z. (Fable 4) con 3 subiendo, de 3 nuevas se sube 1 (máximo 4)', r3.lugar === 1, r3.lugar);
+  chk('8z2. una venta nueva (resetForm) no arrastra el pedido de revisión de la anterior', r3.resetLimpia);
+  chk('⚠️ 8z3. (Fable 3) la decisión se ve en la ficha del pedido y en «Ya decididas», con «Cambiar»', /Revisión del cliente: es de Carola Chavez/.test(r3.ficha) && /Ya decididas/.test(r3.decididas) && /Decidido: es de Carola Chavez/.test(r3.decididas) && /Cambiar/.test(r3.decididas), { ficha:r3.ficha.slice(0, 200) });
   chk('8p. «Es de Carola Chavez» lo anota en la venta (sin cambiar la vendedora) y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /puede ser de Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
