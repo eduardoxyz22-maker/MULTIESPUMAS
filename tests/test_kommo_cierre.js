@@ -402,6 +402,22 @@ console.log('\n── 11. 🛏️ (11-20-b) Las ventas de Sueña llegan a la ban
   chk('i. probarKommoSuenaBandeja solo lee: dice la etapa, cuántos y de qué vendedora, sin escribir nada ni nombrar clientes',
     /COMPRO/.test(L) && /Juan Pablo Paredes/.test(L) && !/CLIENTE SUEÑA/.test(L) && e.sh._datos.length === 1 && escrituras(e).length === 0, L);
   chk('j. después de cada pasada, la cuenta vuelve a Heaven (KC_CTA vacío)', a.ctx.KC_CTA === '' && e.ctx.KC_CTA === '');
+  // (20/11, dueño: «juan pablo en kommo se llama multiespumas, lo veías por su código de usuario») manda el número; el nombre también lo encuentra
+  const KS2 = kommoBase(); KS2.pipelines = KS.pipelines; KS2.campos = KS.campos;
+  KS2.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'multiespumas' }, { id:UID_MM, name:'Mauricio Merida' }] } };
+  KS2.contactos[5101] = KS.contactos[5101];
+  lead(KS2, 4301, { pipeline_id:SE, status_id:COMPRO, price:900, responsible_user_id:UID_JP, updated_at:Math.floor(Date.now() / 1000), _embedded:{ contacts:[{ id:5101, is_main:true }] } });
+  const f = cargar([], Object.assign({}, props), KH, { Ksuena:KS2 }); f.ctx.kommoRepaso();
+  chk('k. el usuario 13073611 que en Kommo se llama «multiespumas» es Juan Pablo Paredes', f.row('kommo-4301') && f.row('kommo-4301')[3] === 'Juan Pablo Paredes', f.row('kommo-4301') && f.row('kommo-4301')[3]);
+  const KS3 = kommoBase(); KS3.pipelines = KS.pipelines; KS3.campos = KS.campos;
+  KS3.usuarios = { _embedded:{ users:[{ id:777001, name:'multiespumas' }, { id:UID_MM, name:'Mauricio Merida' }] } };
+  KS3.contactos[5101] = KS.contactos[5101];
+  lead(KS3, 4302, { pipeline_id:SE, status_id:COMPRO, price:900, responsible_user_id:777001, updated_at:Math.floor(Date.now() / 1000), _embedded:{ contacts:[{ id:5101, is_main:true }] } });
+  const g = cargar([], Object.assign({}, props), KH, { Ksuena:KS3 }); g.ctx.kommoRepaso();
+  g.ctx.KC_CTA = 'suena'; const uG = g.ctx.kcUsuario_(g.ctx.kcMeta_(true), 'Juan Pablo Paredes'); g.ctx.KC_CTA = '';
+  chk('l. si su número fuera otro, el usuario «multiespumas» igual es Juan Pablo (en la bandeja y para cerrar su lead)', g.row('kommo-4302') && g.row('kommo-4302')[3] === 'Juan Pablo Paredes' && uG === '777001', [g.row('kommo-4302') && g.row('kommo-4302')[3], uG]);
+  const hp = cargar([], props, KH, { Ksuena:KS2 }); const T2 = hp.ctx.probarKommoEscribeSuena().lineas.join('\n');
+  chk('m. probarKommoEscribeSuena dice con qué nombre figura cada número en Kommo', /Juan Pablo Paredes → usuario 13073611 \(en Kommo «multiespumas»\)/.test(T2), T2);
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
