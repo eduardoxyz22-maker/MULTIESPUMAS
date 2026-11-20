@@ -27501,7 +27501,11 @@ function submitPedido(){
     if(isEdit && prev && _p0 && _pmPrev && String(_metForm||'').trim()!==_pmPrev &&
        segVal('f-pagado')===_p0.pagado && r2(montoForm('f-cobrado'))===_p0.cobrado && segVal('f-metodo')===_p0.metodo && segVal('f-banco')===_p0.banco &&
        r2(_acuVal)===r2(Number(prev.acuenta)||0) && r2(_salVal)===r2(Number(prev.saldo)||0) &&
-       ((_pmPrev.match(/%[^\s%+]+/g)||[]).some(function(id){ return String(_metForm||'').indexOf(id)<0; }) || !String(_metForm||'').trim())){
+       !_mixOn &&
+       /* 📎 (20/11, dueño: «borré las 3 fotos para colocarlas… poner 1 pago por QR y otro de efectivo me salta ese error») SOLO una imagen que el
+          formulario SIGUE mostrando y no supo escribir. Una que la persona QUITÓ a propósito no cuenta: antes, quitar las fotos viejas y subir
+          otras (o partir el pago en QR + efectivo) volvía al método de antes con las fotos viejas, y salía «SE GUARDÓ INCOMPLETO». */
+       ((_pmPrev.match(/%[^\s%+]+/g)||[]).some(function(id){ var f=fidLimpio(id.slice(1)); return String(_metForm||'').indexOf(f)<0 && compsArr(FORM_COMPS).indexOf(f)>=0; }) || !String(_metForm||'').trim())){
       _metodoPago = _pmPrev;
     }
   }
@@ -27863,6 +27867,42 @@ function submitPedido(){
   if(rec.metodoPago && recibioFormHace(vendedor) && FORM_RECIBIO.eleg && FORM_RECIBIO.quien)
     rec.metodoPago=recibioAplicar(rec.metodoPago, prev, FORM_RECIBIO.quien, rec.acuenta, rec.nota, (prev && contaFecha(prev)) || todayStr());
   if(_fvNueva && rec.metodoPago) rec.metodoPago=pagosAlDia(rec.metodoPago, _fvAntes, _fvNueva);   // 📅 (§4nm) lo cobrado el día de la venta va con ella
+  /* 📎 (20/11, dueño: «cuando cargan un pago con efectivo y suben imagen del recibo sale ese error, no acepta la imagen») RED DE SEGURIDAD: una
+     imagen que la persona subió en ESTE formulario (Pago 1 o Pago 2) y que, por el camino que sea, no quedó en «Método pago», se pega al
+     pago que se ve (el adelanto o el primer cobro; la del Pago 2, al último) en vez de perderse — antes salía «SE GUARDÓ INCOMPLETO… falta
+     1 imagen de pago». Si ese pago ya tiene las 4, al primero con lugar; si ninguno tiene lugar, NO se guarda y se dice. */
+  try{
+    var _imgPrev=prev ? imgsPagoDe(prev) : [], _imgRec=imgsPagoDe(rec);
+    var _imgFalta=function(a){ return compsArr(a).map(fidLimpio).filter(function(id){ return id && _imgPrev.indexOf(id)<0 && _imgRec.indexOf(id)<0; }); };
+    var _f1=_imgFalta(FORM_COMPS), _f2=(typeof FORM_COMPS2!=='undefined' && MIXTO) ? _imgFalta(FORM_COMPS2) : [];
+    if((_f1.length || _f2.length) && String(rec.metodoPago||'').trim()){
+      var _regR=regEnSistema(rec), _antR=anticipoDe(rec), _cobR=ctaCobrosConFecha(rec), _envR=enviosDe(rec);
+      var _lis=(_antR?[JSON.parse(JSON.stringify(_antR))]:[]).concat(_cobR);
+      var _poner=function(ids, desdeAtras){
+        ids.forEach(function(id){
+          var orden=_lis.map(function(c,i){ return i; }); if(desdeAtras) orden.reverse();
+          for(var k=0;k<orden.length;k++){ var c=_lis[orden[k]], cs=compsArr(c.comps!=null?c.comps:c.comp);
+            if(cs.length<COMP_MAX){ c.comps=cs.concat([id]); c.comp=c.comps[0]||''; return; } }
+        });
+      };
+      var _suelto=_lis.some(function(c){ return c && c.sinMonto; });   // §4fg: el pago de mentira de una «PAGADA sin monto» no se reescribe
+      if(_suelto){
+        var _bS=sinMarcaReg(rec.metodoPago), _nS=compsArr(imgsPagoDe(rec)).length;
+        _f1.concat(_f2).forEach(function(id){ if(_nS<COMP_MAX){ _bS+=' %'+id; _nS++; } });
+        rec.metodoPago=conMarcaReg(_bS, _regR);
+      }else _poner(_f1, false), _poner(_f2, true);
+      if(_lis.length && !_suelto){
+        var _ant2=_antR ? _lis[0] : null, _cob2=_antR ? _lis.slice(1) : _lis;
+        rec.metodoPago=conMarcaReg(textoCobros((_ant2?[_ant2]:[]).concat(_cob2).concat(_envR)), _regR);
+      }
+      var _siguen=_imgFalta(_f1.concat(_f2)).filter(function(id){ return imgsPagoDe(rec).indexOf(id)<0; });
+      if(_siguen.length){
+        toast('📎 No se guardó: '+(_siguen.length===1?'la imagen que subiste no entra':'las '+_siguen.length+' imágenes que subiste no entran')+' en el pago (cada pago lleva hasta '+COMP_MAX+' imágenes y ya están llenos). Quitá alguna que sobre y volvé a guardar.','err',12000);
+        var _wc=document.getElementById('wrap-comp'); if(_wc){ try{ _wc.scrollIntoView({block:'center'}); }catch(e){} }
+        return;
+      }
+    }
+  }catch(eImg){}
   /* 📥 La marca del lead de Kommo va adentro de los productos, y `productos` se rearma de cero:
      si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
      Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
