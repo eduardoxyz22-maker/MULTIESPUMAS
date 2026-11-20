@@ -431,5 +431,43 @@ console.log('\n── 11. 🛏️ (11-20-b) Las ventas de Sueña llegan a la ban
   chk('m. probarKommoEscribeSuena dice con qué nombre figura cada número en Kommo', /Juan Pablo Paredes → usuario 13073611 \(en Kommo «multiespumas»\)/.test(T2), T2);
 }
 
+console.log('\n── 12. 🛏️ (20/11) Traer las ventas de Sueña de ANTES (herramientas/traer-ventas-suena-antes.gs, archivo aparte) ──');
+{
+  const SE = 10989127, COMPRO = 6601, FCS = 7701, UID_JP = 13073611, UID_MM = 803;
+  const HELPER = fs.readFileSync(path.resolve('herramientas/traer-ventas-suena-antes.gs'), 'utf8');
+  const s = (d) => Math.floor(Date.parse(d + 'T12:00:00-04:00') / 1000);
+  const KH = kommoBase(), KS = kommoBase();
+  KS.pipelines = { _embedded:{ pipelines:[{ id:SE, name:'Embudo de ventas', _embedded:{ statuses:[{ id:6600, name:'ATENDIDO' }, { id:COMPRO, name:'COMPRO' }] } }] } };
+  KS.campos = { _embedded:{ custom_fields:[{ id:FCS, name:'Fecha contrato', type:'date' }] } };
+  KS.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'multiespumas' }, { id:UID_MM, name:'Mauricio Merida' }] } };
+  KS.contactos[5101] = { id:5101, name:'CLIENTE SUEÑA VIEJO', custom_fields_values:[{ field_id:9001, field_code:'PHONE', values:[{ value:'70099988' }] }] };
+  const ld = (id, uid, fc, upd, st) => lead(KS, id, { pipeline_id:SE, status_id:st || COMPRO, price:1000, responsible_user_id:uid, updated_at:upd || s('2026-11-19'),
+    custom_fields_values:fc ? [{ field_id:FCS, values:[{ value:s(fc) }] }] : [], _embedded:{ contacts:[{ id:5101, is_main:true }] } });
+  ld(4501, UID_JP, '2026-11-03'); ld(4502, UID_MM, '2026-11-10'); ld(4503, UID_MM, '2026-10-20');   // octubre: no
+  ld(4504, UID_JP, '2026-11-05'); ld(4505, UID_MM, '2026-11-12', null, 6600);                     // 4504 ya en el panel; 4505 no compró
+  ld(4506, UID_MM, '2026-11-14');                                                                 // descartado por una vendedora
+  const props = { KOMMO_TOKEN:'token-de-prueba', KOMMO_TOKEN_SUENA:'token-suena', KOMMO_DESCARTADOS:JSON.stringify({ '4506':Math.floor(Date.now() / 86400000) }) };
+  const ya = fila({ id:'kommo-4504', vend:'Juan Pablo Paredes', estado:'Borrador Kommo', fecha:'' });
+  const a = cargar([ya], props, KH, { Ksuena:KS });
+  a.ctx.Logger = { log(){} }; vm.runInContext(HELPER, a.ctx);
+  const n0 = a.sh._datos.length;
+  const V = a.ctx.verVentasSuenaAntes().join('\n');
+  chk('⚠️ a. verVentasSuenaAntes solo lee: 4 de noviembre en «COMPRO», 1 ya está, 1 descartada, trae 2 (sin la de octubre ni la que no compró)',
+    /desde el 2026-11-01: 4\b/.test(V) && /ya están en el panel: 1/.test(V) && /descartadas por una vendedora: 1/.test(V) && /traería a la bandeja: 2/.test(V) && /Juan Pablo Paredes: 1/.test(V) && /Mauricio Merida: 1/.test(V) &&
+    a.sh._datos.length === n0 && escrituras(a).length === 0 && !/CLIENTE SUEÑA/.test(V), V);
+  const T = a.ctx.traerVentasSuenaAntes().join('\n');
+  const vd = (id) => a.row('kommo-' + id) && a.row('kommo-' + id)[3];
+  chk('⚠️ b. traerVentasSuenaAntes arma los 2 borradores (Juan Pablo por su número, Mauricio) y nada más', vd(4501) === 'Juan Pablo Paredes' && vd(4502) === 'Mauricio Merida' &&
+    !a.row('kommo-4503') && !a.row('kommo-4505') && !a.row('kommo-4506') && a.sh._datos.length === n0 + 2 && /traídas a la bandeja «Ventas de Kommo por cargar»: 2/.test(T) && /Listo/.test(T), T);
+  const T2 = a.ctx.traerVentasSuenaAntes().join('\n');
+  chk('c. ejecutarla de nuevo no repite nada', a.sh._datos.length === n0 + 2 && /traídas a la bandeja «Ventas de Kommo por cargar»: 0/.test(T2), T2);
+  chk('d. todo fue al Kommo de Sueña con su token y la cuenta vuelve a Heaven', a.llamadas.every(x => !/gerenciamultiespumasviscarra/.test(x.host) || x.auth === 'Bearer token-suena') && a.ctx.KC_CTA === '');
+  const b = cargar([], { KOMMO_TOKEN:'token-de-prueba' }, KH, { Ksuena:KS }); b.ctx.Logger = { log(){} }; vm.runInContext(HELPER, b.ctx);
+  chk('e. sin KOMMO_TOKEN_SUENA lo dice y no llama a nadie', /Falta la propiedad KOMMO_TOKEN_SUENA/.test(b.ctx.traerVentasSuenaAntes().join('\n')) && b.llamadas.length === 0);
+  const nombres = (HELPER.match(/^function\s+(\w+)/mg) || []).map(x => x.replace(/^function\s+/, '')).concat((HELPER.match(/^var\s+(\w+)/mg) || []).map(x => x.replace(/^var\s+/, '')));
+  const gs = fs.readFileSync(GS, 'utf8');
+  chk('f. ningún nombre del archivo aparte choca con Código.gs', nombres.length >= 6 && nombres.every(n => !new RegExp('^(function|var)\\s+' + n + '\\b', 'm').test(gs)), nombres);
+}
+
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
 process.exit(FAIL ? 1 : 0);
