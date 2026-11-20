@@ -248,6 +248,15 @@ console.log('\n── 10. Segunda revisión de Fable ──');
   chk('6. con la consulta completa del formulario a la mano, el cruce no le pregunta nada a Kommo y avisa igual', C.kommo.length === antes && C.cx().length === 1, { antes, despues:C.kommo.length, cx:C.cx().length });
 }
 
+console.log('\n── 11. Las capturas de la revisión no son fotos sueltas ──');
+{
+  const A = servidor(VEND, kommoHeaven());
+  const p = ped({ productos:[{ desc:'COLCHON', cant:1, crv:{ t:1, por:'Isabel Robledo', de:['Carola Chavez'], fot:['capRev9'] } }] });
+  A.guardar(p);
+  const set = A.ctx.idsFotoEnUso_();
+  chk('el barrido de fotos huérfanas no se lleva las capturas de un pedido de revisión', !!set.capRev9, Object.keys(set));
+}
+
 console.log('\n── 7. La plantilla ──');
 {
   const A = servidor(VEND, kommoHeaven());
@@ -355,7 +364,22 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011188'); await espera(200);
     var box = document.getElementById('cruce-form'), out = { txt:box.textContent };
     var P0 = [{ desc:'COLCHON', cant:1 }]; cruceRevPoner(P0); out.sinPedir = !P0[0].crv;
+    /* «Pedir revisión» abre la ventana con los requisitos del instructivo */
     box.querySelector('button').click(); await espera(30);
+    var mb = document.getElementById('modal-box'); out.ventana = mb ? mb.textContent : '';
+    document.getElementById('crvf-ok').click(); await espera(10);
+    out.faltaVacio = document.getElementById('crvf-falta').textContent;
+    var setv = function (id, v) { var e = document.getElementById(id); if (e.type === 'checkbox') { e.checked = !!v; e.dispatchEvent(new Event('change')); } else e.value = v; };
+    var hoy = diaNegocio();
+    setv('crvf-g', 1); setv('crvf-g-t', 'cot'); setv('crvf-g-f', isoMasDiasSimple(hoy, -20)); setv('crvf-g-p', 'le mando la cotización del 160 el viernes'); setv('crvf-d', 1);
+    document.getElementById('crvf-ok').click(); await espera(10);
+    out.falta20 = document.getElementById('crvf-falta').textContent;
+    setv('crvf-g-f', isoMasDiasSimple(hoy, -3));
+    window.fotoCronometro = function () { return Promise.resolve('data:image/jpeg;base64,AAA'); };
+    window.subirFoto = function () { return Promise.resolve({ ok:true, fotoId:'fotoRev1' }); };
+    await crvFotosElegidas({ target:{ files:[{ name:'a.jpg' }], value:'' } }); await espera(20);
+    document.getElementById('crvf-ok').click(); await espera(30);
+    out.cerro = !!CRUCE_F.pide && !!CRUCE_F.req;
     out.pedido = box.textContent;
     var P1 = [{ desc:'COLCHON', cant:1 }, { desc:'SOMIER', cant:1 }]; cruceRevPoner(P1); out.crv = P1[0].crv || null;
     var her = heredarMarcas([{ desc:'COLCHON', cant:1 }], P1); out.hereda = !!(her[0].crv && her[0].crv.por === 'Isabel Robledo');
@@ -366,7 +390,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     UNLOCKED = false; out.sinClave = crvHacer() === null;
     UNLOCKED = true; var H = crvHacer(); out.hacer = H && H.n === 1 ? H.t : null;
     var guardados = []; window.guardarDurable = function (p) { guardados.push(JSON.parse(JSON.stringify(p))); return Promise.resolve({ ok:true }); };
-    crvAbrir(); out.lista = (document.querySelector('#modal-box .crv-modal') || {}).textContent || '';
+    crvAbrir(); out.lista = (document.querySelector('#modal-box .crv-modal') || {}).textContent || ''; out.listaH = (document.querySelector('#modal-box .crv-modal') || {}).innerHTML || '';
     crvResolver('crvP1', 'Carola Chavez');
     out.resuelto = guardados.length ? crvDe(guardados[0]) : null;
     out.despues = crvHacer() === null;
@@ -375,9 +399,14 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   }, ahora);
   chk('⚠️ 8k. el cartel dice «puede ser de» y que tener mensajes no prueba que lo atendió', /puede ser de Carola Chavez/.test(r3.txt) && /no significa que lo haya atendido/.test(r3.txt), r3.txt);
   chk('8l. sin tocar «Pedir revisión» no se anota nada en la venta', r3.sinPedir);
+  chk('⚠️ 8q. «Pedir revisión» abre los requisitos de la Comunicación Interna 032-2026 (gestión en 15 días, fecha acordada, §8, capturas)', /032-2026/.test(r3.ventana) && /últimos 15 días/.test(r3.ventana) && /fecha futura/.test(r3.ventana) && /Capturas/.test(r3.ventana) && /§8/.test(r3.ventana), r3.ventana.slice(0, 200));
+  chk('⚠️ 8r. sin completar no deja pedirla y dice qué falta (por qué, captura, §8)', /al menos una de las tres/.test(r3.faltaVacio) && /captura/.test(r3.faltaVacio) && /§8/.test(r3.faltaVacio), r3.faltaVacio);
+  chk('8s. una gestión de hace 20 días no alcanza (son 15)', /más de 15 días/.test(r3.falta20), r3.falta20);
+  chk('8t. completo y con la captura subida: se cierra y el cartel lo confirma', r3.cerro && /Vas a pedir revisión con 1 captura/.test(r3.pedido), r3.pedido);
+  chk('⚠️ 8u. lo presentado viaja en la venta (requisitos y capturas)', r3.crv && r3.crv.req && r3.crv.req.g && r3.crv.req.g.t === 'cot' && r3.crv.req.d === 1 && r3.crv.fot && r3.crv.fot[0] === 'fotoRev1', r3.crv);
   chk('⚠️ 8m. «Pedir revisión» lo confirma en el cartel y al guardar deja `crv` (quién vendió, a quién nombra Kommo) en la venta', /Vas a pedir revisión/.test(r3.pedido) && r3.crv && r3.crv.por === 'Isabel Robledo' && r3.crv.de[0] === 'Carola Chavez' && /conversó/.test(r3.crv.det), r3.crv);
   chk('8n. al corregir la venta el pedido de revisión se conserva; con otro celular no se pide', r3.hereda && r3.otroCel, { hereda:r3.hereda, otro:r3.otroCel });
-  chk('⚠️ 8o. Administración (solo con la contraseña) lo ve en «Para hacer» y en la lista', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacer || '') && /CLIENTA INVENTADA/.test(r3.lista) && /Es de Carola Chavez/.test(r3.lista) && /Es de Isabel Robledo/.test(r3.lista), { sin:r3.sinClave, hacer:r3.hacer });
+  chk('⚠️ 8o. Administración (solo con la contraseña) lo ve en «Para hacer» y en la lista', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacer || '') && /CLIENTA INVENTADA/.test(r3.lista) && /Es de Carola Chavez/.test(r3.lista) && /Es de Isabel Robledo/.test(r3.lista) && /respondió mi cotización/.test(r3.lista) && /próximo paso/.test(r3.lista) && /fotoRev1/.test(r3.listaH), { sin:r3.sinClave, hacer:r3.hacer, lista:r3.lista.slice(0, 300) });
   chk('8p. «Es de Carola Chavez» lo anota en la venta (sin cambiar la vendedora) y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /puede ser de Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
