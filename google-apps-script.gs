@@ -3559,6 +3559,9 @@ function idsFotoEnUso_() {
   for (var i = 1; i < vals.length; i++) {
     (String(vals[i][15] || '').match(/%\s*[A-Za-z0-9_-]+/g) || []).forEach(function (s) { set[s.replace(/^%\s*/, '')] = 1; });
     String(vals[i][28] || '').split(/[\s|]+/).forEach(function (x) { if (x) set[x] = 1; });
+    /* 🔎 (2026-11-20-c) las capturas de un pedido de revisión del cliente (`crv.fot`, adentro de los productos) */
+    var pj = String(vals[i][14] || '');
+    if (pj.indexOf('"crv"') >= 0) { try { (JSON.parse(pj) || []).forEach(function (x) { ((x && x.crv && x.crv.fot) || []).forEach(function (f) { if (f) set[String(f)] = 1; }); }); } catch (e) {} }
   }
   return set;
 }
