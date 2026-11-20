@@ -32,3 +32,19 @@ jobs:
           KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
           KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
         run: node herramientas/probar_quien_atiende.js
+      # Los arreglos PROPUESTOS en la segunda revisión (herramientas/quien_atiende_propuesta.diff), probados contra el Kommo de verdad
+      # en la copia de trabajo de ESTA corrida (no se guarda nada en el repositorio). Cuando ya estén aplicados, este paso no hace nada.
+      - name: Lo mismo con los arreglos propuestos (si todavía no están aplicados)
+        if: always()
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+          KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
+        run: |
+          D=herramientas/quien_atiende_propuesta.diff
+          if [ -f "$D" ] && git apply --check "$D" 2>/dev/null; then
+            git apply "$D"
+            node herramientas/probar_quien_atiende.js
+          else
+            echo "La propuesta ya está aplicada (o ya no corresponde a estos archivos): no se prueba aparte."
+          fi

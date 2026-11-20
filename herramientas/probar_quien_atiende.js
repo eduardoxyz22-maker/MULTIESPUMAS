@@ -19,7 +19,7 @@
 const fs = require('fs'), vm = require('vm'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
 
 const RAIZ = path.resolve(__dirname, '..');
-const GS = path.join(RAIZ, 'google-apps-script.gs'), PEDIDOS = path.join(RAIZ, 'pedidos.html');
+const GS = process.env.QA_GS || path.join(RAIZ, 'google-apps-script.gs'), PEDIDOS = process.env.QA_PEDIDOS || path.join(RAIZ, 'pedidos.html');   // (QA_GS / QA_PEDIDOS: para probar una copia)
 const MUESTRA = Number(process.env.QA_MUESTRA) || 40, MUESTRA_NOMBRE = Number(process.env.QA_MUESTRA_NOMBRE) || 14;
 const D = 86400, H = 3600, IN = 'incoming_chat_message', OUT = 'outgoing_chat_message';
 const T0 = Math.floor(Date.now() / 1000);            // «ahora» para toda la corrida (lo que entre después a Kommo no se mira)
@@ -152,6 +152,11 @@ function main() {
               ' · ahora fijo = ' + new Date(T0 * 1000).toISOString() + ' · muestra ' + MUESTRA + ' números y ' + MUESTRA_NOMBRE + ' nombres');
   const gs = cargarGs(), pag = cargarPagina();
   console.log('Versión del .gs que se prueba: ' + gs.SCRIPT_VERSION + ' · QA_DIAS ' + gs.QA_DIAS + ' · QA_PAR_H ' + gs.QA_PAR_H + ' · topes: ' + gs.QA_MAX_LEADS + ' leads por número, ' + gs.QA_LEADS_POR_CLIENTE + ' por cliente, ' + gs.QA_MAX_CONTACTOS + ' contactos, ' + gs.QA_PAGINAS + ' páginas de mensajes');
+  /* Con los arreglos de la segunda revisión el servidor toma la etapa «Compradores» por «compró» (con la «Fecha contrato») y mira el chat
+     que cuelga del contacto: la verdad de abajo lo cuenta igual. Se detecta por el .gs que se está probando. */
+  const REGLA2 = typeof gs.qaTopeSuma_ === 'function';
+  console.log(REGLA2 ? 'Este .gs YA trae los arreglos de la segunda revisión (etapa de compra, chat sin lead, tope en Propiedades…): se compara con esa regla.' : 'Este .gs es el de ANTES de los arreglos de la segunda revisión.');
+  const fContrato = (l) => { let fc = 0; ((l && l.custom_fields_values) || []).forEach((f) => { if (/contrato/.test(normN(f.field_name)) && /^date/.test(String(f.field_type || '')) && f.values && f.values[0]) fc = Number(f.values[0].value) || 0; }); return fc; };
   let MAL = 0; const mal = (t) => { MAL++; console.log('   ❌ ' + t); };
 
   /* ── 1 · la verdad de cada cuenta ── */
@@ -176,7 +181,8 @@ function main() {
     const tareas = { leads: {}, contacts: {} }; let tBot = 0, tFut = 0, tLejos = 0;
     ta.L.forEach((x) => { const et = x.entity_type; if (tareas[et]) (tareas[et][x.entity_id] = tareas[et][x.entity_id] || []).push(x); if (!Number(x.created_by)) tBot++; if (Number(x.complete_till) > T0) tFut++; if (Number(x.complete_till) > T0 + 90 * D) tLejos++; });
     console.log('   tareas abiertas: ' + ta.L.length + ' (estado ' + ta.estado + ') · puestas por el bot: ' + tBot + ' · con fecha futura: ' + tFut + ' · a más de 90 días: ' + tLejos + ' · en leads: ' + Object.keys(tareas.leads).length + ' leads · en contactos: ' + Object.keys(tareas.contacts).length);
-    V[c.marca] = { c, ev, porLead, nomU, tareas, tareasOk: ta.estado === 'ok', evOk: ev.estado === 'ok', leads: {}, cDeLead: {} };
+    const sueltos = {}; ev.L.forEach((e) => { if (e.entity_type === 'contact') (sueltos[e.entity_id] = sueltos[e.entity_id] || []).push({ type: e.type, created_at: Number(e.created_at) || 0, created_by: Number(e.created_by) || 0 }); });
+    V[c.marca] = { c, ev, porLead, sueltos, nomU, tareas, tareasOk: ta.estado === 'ok', evOk: ev.estado === 'ok', leads: {}, cDeLead: {} };
     if (ev.estado !== 'ok') mal('no se pudo bajar la verdad entera de ' + c.marca + ' (' + ev.estado + '): la comparación de abajo puede dar diferencias que no son del panel');
   }
 
@@ -288,10 +294,13 @@ function main() {
           const cv = conversaciones(W.porLead[lid] || []), ult = Math.max(0, ...Object.keys(cv).map((u) => cv[u]));
           if (est === 'p') continue;
           if (est === 'g') { const tc = Math.max(Number(l.closed_at) || Number(l.updated_at) || 0, ult); if (tc >= LIM) ganados.push(W.nomU[String(l.responsible_user_id)] || (Number(l.responsible_user_id) ? 'usuario ' + l.responsible_user_id : '(sin asignar)')); continue; }
+          /* regla 2: en la etapa de compra (lead vivo), «ya compró» si la «Fecha contrato» es de hace ≤ 15 días; sus conversaciones cuentan */
+          if (REGLA2 && (W.ganadas || []).some((g) => String(g.s) === String(l.status_id) && String(g.p) === String(l.pipeline_id)) && fContrato(l) >= LIM) ganados.push(W.nomU[String(l.responsible_user_id)] || (Number(l.responsible_user_id) ? 'usuario ' + l.responsible_user_id : '(sin asignar)'));
           abiertos.push(l);
           for (const u in cv) if (cv[u] >= LIM) at[c.marca + '|' + u] = W.nomU[u] || 'usuario ' + u;
           (W.tareas.leads[lid] || []).forEach((x) => { const ts = Number(x.complete_till) || 0; if (Number(x.created_by) && ts > T0 && ts <= T0 + 90 * D) { const u = Number(x.responsible_user_id) || Number(l.responsible_user_id) || 0; at[c.marca + '|' + u] = u ? (W.nomU[String(u)] || 'usuario ' + u) : '(sin asignar)'; } });
         }
+        if (REGLA2) { const cvc = conversaciones(W.sueltos[co.id] || []); for (const u in cvc) if (cvc[u] >= LIM) at[c.marca + '|' + u] = W.nomU[u] || 'usuario ' + u; }   // el chat que cuelga del contacto
         (W.tareas.contacts[co.id] || []).forEach((x) => { const ts = Number(x.complete_till) || 0; if (Number(x.created_by) && ts > T0 && ts <= T0 + 90 * D) abiertos.forEach((l) => { const u = Number(x.responsible_user_id) || Number(l.responsible_user_id) || 0; at[c.marca + '|' + u] = u ? (W.nomU[String(u)] || 'usuario ' + u) : '(sin asignar)'; }); });
       }
     }
@@ -335,7 +344,7 @@ function main() {
 
   /* ── 3b · los que COMPRARON hace poco: ¿qué les dice el panel a las otras vendedoras? ── */
   titulo('3b · Clientes que COMPRARON hace 15 días o menos (lead en la etapa de compra): ¿qué dice el panel?');
-  const Cb = { n: 0, libre: 0, atiende: 0, compro: 0, nose: 0, conPar: 0 };
+  const Cb = { n: 0, libre: 0, atiende: 0, compro: 0, nose: 0, nadie: 0, conPar: 0, igual: 0, fcVieja: 0 };
   for (const g of (H1.ganadas || [])) {
     const rg = api(cH, '/leads?with=contacts&limit=50&filter[statuses][0][pipeline_id]=' + g.p + '&filter[statuses][0][status_id]=' + g.s + '&filter[updated_at][from]=' + LIM + '&order[updated_at]=desc');
     const Lg = rg.code === 200 ? emb(rg.o, 'leads') : [];
@@ -350,11 +359,14 @@ function main() {
       const tt = tels(rc.o).map((t) => t.replace(/\D/g, '')).filter((d) => d.length >= 7); if (!tt.length) continue;
       olvidar(); let r = null; try { r = gs.quienAtiende_({ action: 'quienAtiende', cel: tt[0].slice(-8), quien: 'Prueba de solo lectura' }); } catch (e) { continue; }
       if (!r || !Array.isArray(r.cuentas)) continue;
-      const k = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), '').k; Cb.n++; Cb[k === 'otro' || k === 'tuyo' ? 'atiende' : k]++;
-      if (Object.keys(conversaciones(H1.porLead[l.id] || [])).length) Cb.conPar++;
+      const k = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), '').k, kk = k === 'otro' || k === 'tuyo' ? 'atiende' : k; Cb.n++; Cb[kk]++;
+      const cvl = conversaciones(H1.porLead[l.id] || []); if (Object.keys(cvl).length) Cb.conPar++;
+      const fc = fContrato(l), esp = Object.keys(cvl).some((u) => cvl[u] >= LIM) ? 'atiende' : (fc >= LIM ? 'compro' : 'libre'); if (fc < LIM) Cb.fcVieja++;
+      if (kk === esp || (esp !== 'libre' && kk === 'atiende')) Cb.igual++;
     }
   }
-  console.log('   probados: ' + Cb.n + ' → el panel dice «Ya compró»: ' + Cb.compro + ' · «Lo está atendiendo…»: ' + Cb.atiende + ' · «Libre»: ' + Cb.libre + (Cb.libre ? ' ⚠️ (compraron hace ≤ 15 días y a otra vendedora le sale Libre)' : '') + ' · no se pudo saber: ' + Cb.nose + ' · (con alguna conversación en 17 días: ' + Cb.conPar + ')');
+  console.log('   probados: ' + Cb.n + ' → el panel dice «Ya compró»: ' + Cb.compro + ' · «Lo está atendiendo…»: ' + Cb.atiende + ' · «Libre»: ' + Cb.libre + (Cb.libre > Cb.fcVieja ? ' ⚠️ (compraron hace ≤ 15 días y a otra vendedora le sale Libre)' : '') + ' · no se pudo saber: ' + Cb.nose + ' · (con alguna conversación en 17 días: ' + Cb.conPar + ' · con «Fecha contrato» de hace más de 15 días: ' + Cb.fcVieja + ')');
+  if (REGLA2) { console.log('   con la regla 2 (compró hace ≤ 15 días por su «Fecha contrato» → «Ya compró»; si además conversa → «Lo está atendiendo»): coinciden ' + Cb.igual + ' de ' + Cb.n); if (Cb.igual !== Cb.n) mal('los que compraron: ' + (Cb.n - Cb.igual) + ' de ' + Cb.n + ' no dicen lo que marca la regla 2'); }
 
   /* ── 3c · los chats que cuelgan del CONTACTO y no de un lead ── */
   titulo('3c · Conversaciones vigentes en un chat que cuelga del contacto (no de un lead): ¿qué dice el panel?');
@@ -370,6 +382,7 @@ function main() {
     const quienes = Object.keys(cv).filter((u) => cv[u] >= LIM).map((u) => normN(H1.nomU[u] || 'usuario ' + u));
     if (quienes.every((q) => Array.from(Vx.quien || []).some((x) => normN(x.n) === q))) Cs.vistos++;
   }
+  if (REGLA2 && Cs.vistos !== Cs.n) mal('chat sin lead: ' + (Cs.n - Cs.vistos) + ' de ' + Cs.n + ' no nombran a quien conversa ahí');
   console.log('   contactos con conversación vigente en un chat SIN lead: ' + Cs.n + ' → el panel dice «Libre»: ' + Cs.libre + (Cs.libre ? ' ⚠️' : '') + ' · «Lo está atendiendo…»: ' + Cs.atiende + ' (nombrando a TODAS las que conversan ahí: ' + Cs.vistos + ') · otra cosa: ' + Cs.otro);
 
   /* ── 4 · por NOMBRE: que el contacto de la muestra aparezca, y lo que no se puede saber sin probar ── */
