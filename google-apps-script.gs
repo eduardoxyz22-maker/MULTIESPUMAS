@@ -1744,6 +1744,7 @@ function doPostCuerpo_(e) {
     if (gd) lst.gpsDia = gd;                            // (2026-10-13-b) salidas, registro y paradas de hoy, también de la caché
     try { lst.apartados = apartadosParaLista_(); } catch (eAp) {}   // 🎟️ (2026-11-14-b, mejora 267) los lugares apartados ahora (una propiedad: sin red ni planilla)
     try { var cht = chatParaLista_(body); if (cht) lst.chat = cht; } catch (eCh) {}   // 💬 (2026-11-16-a, mejora 344) cuántos sin leer del chat (de la caché: sin leer la hoja)
+    try { var cxl = cruceParaLista_(); if (cxl.length) lst.cx = cxl; } catch (eCx) {}   // 🔀 (2026-11-20-c) las ventas que nombraron a otra asesora: ella puede pedir revisión
     return listaResponder_(lst, body);
   }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
@@ -10467,7 +10468,7 @@ var WA_PLANTILLAS = [
      y orden que `waVgParams_`. */
   /* 🔀 (2026-11-20-c) A la vendedora que atendía al cliente, cuando otra de la misma marca le carga una venta. Mismos datos y orden que cruceParams_. */
   { n:'asesora_cliente_compro',
-    t:'🤖 🔀 *Tu cliente acaba de comprar*\n\nHola {{1}}: el cliente *{{2}}* (celular terminado en {{3}}), que según Kommo estabas atendiendo vos en los últimos 15 días, acaba de comprar.\n\n🧑‍💼 *La venta la cargó:* {{4}}\n🧾 *Pedido:* {{5}}\n🛏️ *Productos:* {{6}}\n🕐 *Cuándo:* {{7}}\n\nSi hay algo que aclarar, hablalo con Eduardo.',
+    t:'🤖 🔀 *Tu cliente acaba de comprar*\n\nHola {{1}}: el cliente *{{2}}* (celular terminado en {{3}}), que según Kommo estabas atendiendo vos en los últimos 15 días, acaba de comprar.\n\n🧑‍💼 *La venta la cargó:* {{4}}\n🧾 *Pedido:* {{5}}\n🛏️ *Productos:* {{6}}\n🕐 *Cuándo:* {{7}}\n\n🔎 Si el cliente era tuyo, pedí revisión desde el panel: *Mis pedidos → Para hacer* (con lo que pide la Comunicación Interna 032-2026, dentro de 15 días).',
     e:['Maria', 'JUAN PEREZ', '4321', 'Isabel Robledo', 'OC 11-262', '1 × COLCHON TITANIO ICE 140x190', '20/11 16:10'] },
   { n:'venta_grande',
     t:'🤖 💰 *Venta grande*\n\n🧑‍💼 *Vendedor:* {{1}}\n🏬 *Tienda:* {{2}}\n💵 *Monto:* {{3}}\n🛏️ *Productos:* {{4}}\n\nEl detalle está en el panel: Contabilidad → 📋 Ventas.',
@@ -13991,7 +13992,12 @@ function cruceElegir_(tomados, planilla) {
       if (waVendCel_(o.n)) a.push(o.n);   // sin su número no le llega: no cuenta como avisada (queda anotado en «Bot WhatsApp»)
       msgs.push({ id:x.id, k:'cx', a:o.n, n:0, cx:{ ts:o.ts } });
     });
-    hecho[x.id] = a.length ? { t:ahoraS, c:c8, v:String(p.vendedor || '').slice(0, 40), a:a } : { t:ahoraS }; cambio = true;   // el celular, solo si se avisó a alguien
+    /* `n` = las asesoras que Kommo nombra (aunque no les llegue el WhatsApp): la página les ofrece «Pedir revisión» (`cruceParaLista_`).
+       El celular (`c`) y `a`, solo si se avisó a alguien (lo que mira yaAvisado). */
+    var h = { t:ahoraS };
+    if (otros.length) { h.v = String(p.vendedor || '').slice(0, 40); h.n = otros.map(function (o) { return o.n; }); }
+    if (a.length) { h.c = c8; h.a = a; }
+    hecho[x.id] = h; cambio = true;
   });
   if (cambio) cruceHechoGuardar_(hecho);
   cruceDevolver_(devolver);
@@ -14003,6 +14009,13 @@ function cruceParams_(m, p) {
   var prods = waProds_(p); if (prods.length > 300) prods = prods.slice(0, 297) + '…';
   return [String(m.a || '').trim().split(/\s+/)[0] || String(m.a || ''), String(p.cliente || 'el cliente').trim().slice(0, 60) || 'el cliente', c8.slice(-4),
           String(p.vendedor || '').trim(), waOc_(p.oc), prods, waBo_(carga).txt];
+}
+/** 🔀 (dueño, 20/11: el pedido de revisión lo hace la que reclama) Para la lectura `list` (`cx`): qué ventas de los últimos 20 días
+    nombraron a qué asesoras. Sin red ni planilla: una propiedad. Sin celulares ni clientes (la página los toma de la venta). */
+function cruceParaLista_() {
+  var hecho = waJsonProp_('CRUCE_HECHO', {}) || {}, lim = Math.floor(Date.now() / 1000) - 20 * 86400, out = [];
+  Object.keys(hecho).forEach(function (id) { var h = hecho[id]; if (h && Array.isArray(h.n) && h.n.length && (Number(h.t) || 0) >= lim) out.push({ id:id, v:h.v || '', n:h.n, t:Number(h.t) || 0 }); });
+  return out;
 }
 function cruceArmar_(m, recs, cfg) {
   var T = WA_TIPOS.cx, p = recs[m.id] || null;
