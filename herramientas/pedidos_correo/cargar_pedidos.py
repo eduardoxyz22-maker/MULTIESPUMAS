@@ -193,14 +193,18 @@ def armar(d, P):
         prods.append({"desc": str(x['desc']).strip(), "medida": str(x.get('medida') or '').strip(),
                       "codigo": str(x.get('codigo') or '').strip().upper(), "cant": cant, "precio": precio})
     suma = round(sum(x['cant'] * x['precio'] for x in prods), 2)
+    # 🧹 (20/11, dueño: «¿por qué los pedidos que le doy copiar WhatsApp salen así? …hasta con tu instrucción»): las OBSERVACIONES las lee
+    # logística y van en el «📋 Copiar para WhatsApp»: solo lo que sirve para entregar. Lo que es para el dueño (el total del PDF que no da,
+    # el día que se movió, el lugar guardado…) va en `notas` del resumen de la vuelta, NUNCA en el pedido.
     obs = str(d.get('observaciones') or '').strip()
+    notas = []
     ti = d.get('total_impreso')
     if ti is not None and abs(float(ti) - suma) > 0.005:
-        obs += ' · El PDF decía total Bs %s, pero la suma de cantidad × precio da Bs %s: vale la suma.' % (ti, suma)
+        notas.append('El PDF decía total Bs %s, pero la suma de cantidad × precio da Bs %s: se cargó la suma.' % (ti, suma))
     fecha = d['fecha']
     if fecha < hoy_bo().isoformat():
         nueva = siguiente_habil(hoy_bo().isoformat())
-        obs += ' · La fecha pedida (%s) ya pasó: quedó el %s.' % (fecha, nueva)
+        notas.append('La fecha pedida (%s) ya pasó: quedó el %s.' % (fecha, nueva))
         fecha = nueva
     zona, direccion, maps = d.get('zona') or '', d.get('direccion') or '', str(d.get('maps') or '').strip()
     lug = lugar_para(P, d)
@@ -208,15 +212,15 @@ def armar(d, P):
         maps = lug['m']
         zona = zona or lug['z']
         direccion = direccion or lug['d']
-        obs += ' · 📌 lugar guardado (%s)' % (' · '.join(x for x in (lug['z'], lug['d']) if x) or 'el pin guardado')
+        notas.append('📌 lugar guardado (%s)' % (' · '.join(x for x in (lug['z'], lug['d']) if x) or 'el pin guardado'))
     rec = {"id": uid(), "fecha": fecha, "oc": next_oc(P), "vendedor": VENDEDOR, "cliente": d['cliente'],
            "productos": prods, "celular": str(d.get('celular') or ''), "turno": d.get('turno') or 'AM',
            "zona": zona, "direccion": direccion, "maps": maps, "pagado": False,
            "saldo": suma, "ts": int(time.time() * 1000), "metodoPago": "",
-           "observaciones": (obs + ' · Cargado automáticamente desde el correo.').strip(' ·'),
+           "observaciones": obs,
            "estado": "", "entregado": False, "vehiculo": "", "chofer": "", "garantia": "", "nota": d.get('nota') or '',
            "acuenta": 0, "facturarA": d.get('facturarA') or '', "nit": "", "nroDia": next_dia(P, fecha),
-           "verificado": False, "fotos": []}
+           "verificado": False, "fotos": [], "_notas": notas}
     return rec
 
 
@@ -239,13 +243,13 @@ def main():
         except Exception as e:
             resumen.append({"clave": clave, "resultado": "NO cargado: " + str(e)})
             continue
+        notas = rec.pop('_notas', [])
         if not guardar:
             resumen.append({"clave": clave, "resultado": "se cargaría", "oc": rec['oc'], "fecha": rec['fecha'],
-                            "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps'])})
+                            "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps']), "notas": notas})
             continue
         pedida = rec['fecha']
         turno0 = rec['turno']
-        obs_base = rec['observaciones']
         res = None
         lleno = None   # 🎟️ (16/11) el día pedido estaba lleno: después de guardarlo se mueve ahí con `forzar`
         for intento in range(6):
@@ -264,8 +268,7 @@ def main():
                 P = leer()
                 rec['nroDia'] = next_dia(P, rec['fecha'])
                 rec['oc'] = next_oc(P)
-                rec['observaciones'] = obs_base + (' · Se pidió para el %s a la mañana pero estaba lleno: quedó el %s a la tarde (Tienda Amiga recibe de 09:00 a 16:00).'
-                                                   % (pedida, rec['fecha']))
+                notas.append('Se pidió para el %s a la mañana pero estaba lleno: quedó el %s a la tarde.' % (pedida, rec['fecha']))
                 continue
             if 'TIENDA AMIGA' in str(rec.get('cliente', '')).upper() and rec['turno'] == 'PM':
                 rec['turno'] = 'AM'   # el día siguiente, de nuevo primero la mañana
@@ -276,15 +279,13 @@ def main():
             rec['fecha'] = f2
             rec['nroDia'] = next_dia(P, f2)
             rec['oc'] = next_oc(P)
-            rec['observaciones'] = obs_base + (' · Se pidió para el %s pero ese día no tenía lugar (o estaba cerrado/feriado): quedó el %s %s.'
-                                               % (pedida, f2, rec['turno']))
+            notas.append('Se pidió para el %s pero ese día no tenía lugar (o estaba cerrado/feriado): quedó el %s %s.' % (pedida, f2, rec['turno']))
         forzado = None
         if res and res.get('ok') and lleno and rec['fecha'] != pedida:
             g = dict(res.get('pedido') or rec)
             g['fecha'] = pedida
             g['turno'] = turno0
-            g['observaciones'] = obs_base + (' · El %s %s estaba lleno (%s de %s): se cargó igual en ese día porque el dueño pidió ese día.'
-                                             % (pedida, turno0, lleno.get('usados'), lleno.get('cupos')))
+            notas.append('El %s %s estaba lleno (%s de %s): se cargó igual en ese día porque el dueño pidió ese día.' % (pedida, turno0, lleno.get('usados'), lleno.get('cupos')))
             r2 = post({"action": "save", "pedido": g, "forzar": True, "av": 1})
             if r2.get('ok'):
                 res = r2
@@ -297,7 +298,7 @@ def main():
             g = res.get('pedido') or {}
             resumen.append({"clave": clave, "resultado": "CARGADO", "oc": g.get('oc') or rec['oc'], "fecha": rec['fecha'],
                             "turno": rec['turno'], "nroDia": g.get('nroDia') or rec['nroDia'], "total": rec['saldo'],
-                            "pedida": pedida, "lugar_guardado": bool(rec['maps']), **({"dia_lleno_forzado": forzado} if forzado else {})})
+                            "pedida": pedida, "lugar_guardado": bool(rec['maps']), "notas": notas, **({"dia_lleno_forzado": forzado} if forzado else {})})
         else:
             resumen.append({"clave": clave, "resultado": "NO cargado", "error": (res or {}).get('error'), "detalle": res})
         time.sleep(2)

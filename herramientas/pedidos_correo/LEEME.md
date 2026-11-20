@@ -104,9 +104,16 @@ OC trae OTRA dirección (a domicilio), se escribe esa y no se le pone el pin de 
 | dirección / zona | A domicilio: la del correo (`zona` por barrio; Las Palmas = SUR). Al almacén (CD): `ALMACENES MULTICENTER — Centro de Distribución Santa Cruz`, zona `PARQUE INDUSTRIAL` | `TRANSPORTADORA ZONA BIMODAL — enviar a <CIUDAD>`, zona `BIMODAL` | Tienda 1: `Banzer cuarto anillo`, `Norte` · Tienda 2: `Virgen de cotoca 2do anillo`, `Este` · Tienda 3: `Doble vía cuarto anillo`, `Sur` |
 | `celular` | el de quien recibe (si es a domicilio) | `77081968` | vacío |
 | fecha | la del correo («Fecha de entrega: LUNES 09/11 turno PM»); si no dice, el día hábil siguiente AM | no la traen: hoy antes de las 16:30 → **2 días hábiles** después + 1 (sale de fábrica en 48 h, se entrega al otro día); después de las 16:30, uno más. Turno AM | la «Fecha de entrega» impresa en la OC; si el correo dice «pendiente de coordinar», igual la de la OC y se anota |
-| observaciones | `A CRÉDITO — DEBE Bs X. OC Multicenter N (sucursal). ENTREGA A DOMICILIO: recibe …, cel. …` | `Pedido OP-… de JOSE CARLOS COPACABA (CIUDAD), del dd/mm, mandado por Juan Carlos Arce. «PUESTOS EN TRANSPORTADORA».` | Empieza con `Tienda N · OC ROHO N «descripción de la OC»` + lo del correo (coordinar con Flavia la ventana horaria) |
+| observaciones (cortas: ver 🧹 abajo) | `OC Multicenter N (sucursal). ENTREGA A DOMICILIO: recibe …, cel. …` | `Pedido OP-… del dd/mm de JOSE CARLOS COPACABA (CIUDAD). Enviar a <ciudad> por la transportadora (zona Bimodal).` | Empieza con `Tienda N · OC ROHO N «descripción de la OC»` + lo del correo que sirva para entregar (coordinar con Flavia la ventana horaria) |
 
 Domingo no hay camión; el sábado solo a la mañana.
+
+🧹 **Las observaciones son para ENTREGAR, nada más** (20/11, dueño, mirando el «📋 Copiar para WhatsApp» del 11-255 y el 11-237: *«¿por qué los
+pedidos que le doy copiar WhatsApp salen así? …hasta con tu instrucción que te di»*). Las lee logística y salen en el mensaje de WhatsApp del
+pedido: solo el número de pedido del cliente y lo que sirve para entregar (a dónde, quién recibe, horario de recepción). **NUNCA**: «A CRÉDITO —
+DEBE…» (el saldo ya sale como «POR COBRAR»), «mandado por… al correo», «Cargado automáticamente», el total del PDF que no daba, el día que se
+movió, el lugar guardado, «el dueño dijo…», explicaciones de códigos ni nada de lo que se decidió en el chat. Eso va SOLO en el resumen de la
+vuelta para el dueño (`cargar_pedidos.py` lo devuelve en `notas`; ya no lo escribe en el pedido).
 
 👤 **Juan Carlos Arce manda también los de LUIS FRANCO (Villamontes, Tarija)** (09/11, asunto «PEDIDO ARCE-LUIS FRANCO-VILLAMONTES», PDF
 «PEDIDO LUIS FRANCO dd-mm-aa», misma numeración «OP-NN-MM-AA» que Copacaba): se arma IGUAL que Copacaba con `cliente`
@@ -129,8 +136,8 @@ TIENDA AMIGA ER S.A. con UN «Nro. Doc.» de 9 dígitos (ej. `260600230`):
   `COLT002` = `COLT0029` COLCHON ORTOPEDICO SUEÑA 105x190 · `COLT003` = `COLT0037` COLCHON
   SEMIORTOP. 105x190 · `COLT006` = `COLT0069` COLCHON SEMIORTOP. 180x190. `COLT014` = `COLT0038` COLCHON SEMIORTOP. 140x190 (17/11, OC 260600251/254, Bs 654). Uno que no esté en esta lista: por el NOMBRE y la medida contra
   `CODIGOS` («Ortopédico» = COLCHON ORTOPEDICO SUEÑA, «Semiortopédico» = COLCHON SEMIORTOP.), se anota en observaciones y se agrega acá.
-- `observaciones`: `A CRÉDITO — DEBE Bs X. OC Tienda Amiga N del dd/mm/aaaa (Marketplace NNNNN; pedido de venta de origen N). <producto como
-  lo dice la OC>; código en la OC: PN20309-…. Recepción en Almacenes Ferrotodo, Bodega 14, de 09:00 a 16:00.`
+- `observaciones`: `OC Tienda Amiga N (Marketplace NNNNN). Recepción en Almacenes Ferrotodo, Bodega 14, de 09:00 a 16:00.` (el producto como lo dice la
+  OC y su código PN20309-… van en el resumen para el dueño, no en el pedido: ver 🧹)
 - Es mayorista: el stock no lo cuenta como demanda (`STOCK_CLIENTES_FUERA`), eso lo hace el panel solo.
 - ⚠️ El 09/11 el Gmail conectado (mithoseg@gmail.com) NO tenía ningún correo de Tienda Amiga: las OC le llegan al dueño a otra casilla. Hasta
   que las reenvíe a esa cuenta, la vuelta no encuentra nada y él las sube al chat. Primeros cargados acá: 11-104, 11-105 y 11-106.
