@@ -201,6 +201,12 @@ function main() {
     });
     console.log('   leads leídos: ' + L.length + ' de ' + ids.length + ' (' + fall + ' pedidos fallaron; los que faltan están borrados) · ' + JSON.stringify(est) + ' · cerrados sin closed_at: ' + sinCierre + ' · sin contacto: ' + sinContacto + ' · con 2+ contactos: ' + variosContactos);
     console.log('   updated_at del lead ANTERIOR a su último mensaje (más de 2 min): ' + updAntes + ' de ' + L.length + ' → ' + (updAntes > L.length * 0.05 ? '⚠️ updated_at NO sigue a los mensajes: «los 8 leads más recientes» (QA_MAX_LEADS) y «3 por cliente» pueden dejar afuera el lead donde está la conversación' : 'updated_at sigue a los mensajes (el tope de leads se queda con los que tienen la conversación)'));
+    /* las etapas: ¿dónde quedan los que COMPRARON? (el servidor llama «ganado» solo al estado 142 de Kommo) */
+    const rp = api(c, '/leads/pipelines'), nomEt = {}, porEt = {}; W.ganadas = [];
+    emb(rp.o, 'pipelines').forEach((p) => emb(p, 'statuses').forEach((st) => { nomEt[p.id + '|' + st.id] = String(st.name || ''); if (/^(compradores|compro|comprador|ganado|logrado con exito)$/.test(normN(st.name)) || String(st.id) === '142') W.ganadas.push({ p: p.id, s: st.id, n: String(st.name || '') }); }));
+    L.forEach((l) => { const n = nomEt[l.pipeline_id + '|' + l.status_id] || '(otra)'; porEt[n] = (porEt[n] || 0) + 1; });
+    console.log('   leads con mensajes por etapa (nombres del embudo, no de clientes): ' + JSON.stringify(porEt));
+    console.log('   etapas que quieren decir «compró»: ' + (W.ganadas.map((g) => '«' + g.n + '» = estado ' + (String(g.s) === '142' ? '142 (el «ganado» de Kommo)' : g.s + ' (una etapa común: el servidor NO la toma por «ganado»)')).join(' · ') || 'ninguna'));
     /* la regla por LEAD (como está programado) contra la regla por CONTACTO (juntando sus leads) */
     const porC = {}; L.forEach((l) => { const cid = W.cDeLead[l.id]; if (cid) (porC[cid] = porC[cid] || []).push(l); });
     let cVarios = 0, cruzados = 0, cruzSinNadie = 0, masDe3 = 0, masDe8 = 0, dosVend = 0;
@@ -327,6 +333,41 @@ function main() {
   console.log('   llamadas a Kommo por búsqueda: mediana ' + mediana(nLlam) + ', máx ' + Math.max.apply(null, nLlam.concat([0])) + ' · tiempo por búsqueda desde acá: mediana ' + mediana(tiempos).toFixed(1) + ' s, máx ' + Math.max.apply(null, tiempos.concat([0])).toFixed(1) + ' s');
   difs.forEach((d) => mal(d));
 
+  /* ── 3b · los que COMPRARON hace poco: ¿qué les dice el panel a las otras vendedoras? ── */
+  titulo('3b · Clientes que COMPRARON hace 15 días o menos (lead en la etapa de compra): ¿qué dice el panel?');
+  const Cb = { n: 0, libre: 0, atiende: 0, compro: 0, nose: 0, conPar: 0 };
+  for (const g of (H1.ganadas || [])) {
+    const rg = api(cH, '/leads?with=contacts&limit=50&filter[statuses][0][pipeline_id]=' + g.p + '&filter[statuses][0][status_id]=' + g.s + '&filter[updated_at][from]=' + LIM + '&order[updated_at]=desc');
+    const Lg = rg.code === 200 ? emb(rg.o, 'leads') : [];
+    console.log('   etapa «' + g.n + '» (estado ' + g.s + '): ' + (rg.code === 200 ? Lg.length + (rg.o._links && rg.o._links.next ? '+' : '') : (rg.code === 204 ? 0 : 'HTTP ' + rg.code)) + ' leads tocados en los últimos 15 días (primera página)');
+    for (const l of toma(Lg, 12)) {
+      const cs = emb(l, 'contacts'), pr = cs.filter((x) => x.is_main)[0] || cs[0]; if (!pr) continue;
+      const rc = api(cH, '/contacts/' + pr.id); if (rc.code !== 200 || !rc.o) continue;
+      const tt = tels(rc.o).map((t) => t.replace(/\D/g, '')).filter((d) => d.length >= 7); if (!tt.length) continue;
+      olvidar(); let r = null; try { r = gs.quienAtiende_({ action: 'quienAtiende', cel: tt[0].slice(-8), quien: 'Prueba de solo lectura' }); } catch (e) { continue; }
+      if (!r || !Array.isArray(r.cuentas)) continue;
+      const k = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), '').k; Cb.n++; Cb[k === 'otro' || k === 'tuyo' ? 'atiende' : k]++;
+      if (Object.keys(conversaciones(H1.porLead[l.id] || [])).length) Cb.conPar++;
+    }
+  }
+  console.log('   probados: ' + Cb.n + ' → el panel dice «Ya compró»: ' + Cb.compro + ' · «Lo está atendiendo…»: ' + Cb.atiende + ' · «Libre»: ' + Cb.libre + (Cb.libre ? ' ⚠️ (compraron hace ≤ 15 días y a otra vendedora le sale Libre)' : '') + ' · no se pudo saber: ' + Cb.nose + ' · (con alguna conversación en 17 días: ' + Cb.conPar + ')');
+
+  /* ── 3c · los chats que cuelgan del CONTACTO y no de un lead ── */
+  titulo('3c · Conversaciones vigentes en un chat que cuelga del contacto (no de un lead): ¿qué dice el panel?');
+  const sueltosH = {}; H1.ev.L.forEach((e) => { if (e.entity_type === 'contact') (sueltosH[e.entity_id] = sueltosH[e.entity_id] || []).push({ type: e.type, created_at: Number(e.created_at), created_by: Number(e.created_by) || 0 }); });
+  const Cs = { n: 0, libre: 0, atiende: 0, otro: 0, vistos: 0 };
+  for (const cid of Object.keys(sueltosH)) {
+    const cv = conversaciones(sueltosH[cid]); if (!Object.keys(cv).some((u) => cv[u] >= LIM)) continue;
+    const rc = api(cH, '/contacts/' + cid); if (rc.code !== 200 || !rc.o) continue;
+    const tt = tels(rc.o).map((t) => t.replace(/\D/g, '')).filter((d) => d.length >= 7); if (!tt.length) continue;
+    olvidar(); let r = null; try { r = gs.quienAtiende_({ action: 'quienAtiende', cel: tt[0].slice(-8), quien: 'Prueba de solo lectura' }); } catch (e) { continue; }
+    if (!r || !Array.isArray(r.cuentas)) continue;
+    const Vx = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), ''); Cs.n++; Cs[Vx.k === 'libre' ? 'libre' : (Vx.k === 'otro' || Vx.k === 'tuyo') ? 'atiende' : 'otro']++;
+    const quienes = Object.keys(cv).filter((u) => cv[u] >= LIM).map((u) => normN(H1.nomU[u] || 'usuario ' + u));
+    if (quienes.every((q) => Array.from(Vx.quien || []).some((x) => normN(x.n) === q))) Cs.vistos++;
+  }
+  console.log('   contactos con conversación vigente en un chat SIN lead: ' + Cs.n + ' → el panel dice «Libre»: ' + Cs.libre + (Cs.libre ? ' ⚠️' : '') + ' · «Lo está atendiendo…»: ' + Cs.atiende + ' (nombrando a TODAS las que conversan ahí: ' + Cs.vistos + ') · otra cosa: ' + Cs.otro);
+
   /* ── 4 · por NOMBRE: que el contacto de la muestra aparezca, y lo que no se puede saber sin probar ── */
   titulo('4 · Por nombre y apellido (' + MUESTRA_NOMBRE + ' contactos de la muestra con nombre y apellido)');
   const N = { probados: 0, encontrado: 0, enMas: 0, noAparece: 0, incompletos: 0, varios: 0, corta250: 0, masDe8: 0, llam: [], tiempos: [] };
@@ -356,6 +397,19 @@ function main() {
   console.log('   con 2+ contactos que se llaman así: ' + N.varios + ' · con más de ' + gs.QA_MAX_CONTACTOS + ': ' + N.masDe8 + ' · incompletos: ' + N.incompletos);
   console.log('   la búsqueda de Kommo por la palabra más larga trae MÁS de 250 contactos (el servidor mira solo los primeros 250 y no avisa): ' + N.corta250 + ' de ' + N.probados + (N.corta250 ? ' ⚠️' : ''));
   console.log('   llamadas por búsqueda: mediana ' + mediana(N.llam) + ', máx ' + Math.max.apply(null, N.llam.concat([0])) + ' · tiempo: mediana ' + mediana(N.tiempos).toFixed(1) + ' s, máx ' + Math.max.apply(null, N.tiempos.concat([0])).toFixed(1) + ' s');
+  /* ¿y preguntándole a Kommo por el nombre ENTERO? ¿y por las DOS palabras más largas? (para elegir la búsqueda más fina) */
+  const E = { n: 0, entero: 0, enteroMenos: 0, dos: 0 };
+  nombresMuestra.forEach((m) => {
+    const nom = pag.qaNombreBusca(m.nombre); if (!nom || /\d/.test(m.nombre) || E.n >= 10) return; E.n++;
+    const esta = (q) => { const r = api(cH, '/contacts?query=' + encodeURIComponent(q) + '&limit=250'); return { si: r.code === 200 && emb(r.o, 'contacts').some((x) => String(x.id) === String(m.cid)), n: r.code === 200 ? emb(r.o, 'contacts').length : 0 }; };
+    const w = nom.split(' ').filter((x) => x.length > 1).sort((a, b) => b.length - a.length), l1 = esta(w[0]), en = esta(nom), d2 = esta(w.slice(0, 2).join(' '));
+    if (en.si) E.entero++; if (en.si && en.n < l1.n) E.enteroMenos++; if (d2.si) E.dos++;
+  });
+  console.log('   preguntándole a Kommo por el nombre ENTERO (sin tildes) encuentra al contacto: ' + E.entero + ' de ' + E.n + ' (y trae menos contactos que con una palabra: ' + E.enteroMenos + ') · por las dos palabras más largas juntas: ' + E.dos + ' de ' + E.n);
+  /* nombres y apellidos MUY comunes (palabras elegidas acá, no sacadas de los datos): ¿cuántos contactos trae Kommo? El servidor mira 250. */
+  const comunes = ['Maria', 'Carlos', 'Fernando', 'Alejandra', 'Jose', 'Rodriguez', 'Gutierrez', 'Fernandez', 'Mamani', 'Flores', 'Vargas', 'Rojas', 'Justiniano', 'Suarez'];
+  const cuentaCom = comunes.map((w) => { let n = 0, mas = false; for (let pg = 1; pg <= 6; pg++) { const r = api(cH, '/contacts?query=' + encodeURIComponent(w) + '&limit=250&page=' + pg); if (r.code !== 200) break; n += emb(r.o, 'contacts').length; if (!(r.o._links && r.o._links.next)) break; if (pg === 6) mas = true; } return w + ' ' + n + (mas ? '+' : ''); });
+  console.log('   contactos que trae Kommo por una palabra común (el servidor mira solo los primeros 250): ' + cuentaCom.join(' · '));
   /* ¿la búsqueda de Kommo distingue tildes y mayúsculas? (se cuentan contactos, no se imprime la palabra) */
   let tIgual = 0, tDist = 0, tMas = 0, mIgual = 0, mDist = 0;
   conTilde.forEach((w) => {
