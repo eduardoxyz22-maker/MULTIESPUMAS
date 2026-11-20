@@ -72320,7 +72320,7 @@ function crxPidio(p, v){ var c=crvDe(p); return !!(c && normNombre(c.por)===norm
 function crxHacer(v){
   var L=crxMios(v); if(!L.length) return null;
   CRX_V=v;
-  var sin=L.filter(function(e){ return !crxPidio(findById(e.id), v); });
+  var sin=L.filter(function(e){ return !crvDe(findById(e.id)); });   // (revisión de Fable) la que ya tiene un pedido de revisión (de quien sea) no se pide otra vez
   var nom=L.slice(0,3).map(function(e){ var p=findById(e.id); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(p.vendedor||'?')+')'; }).join(' · ')+(L.length>3?' y más':'');
   return { sev:sin.length?'a':'i', ic:'🔀', n:sin.length||L.length, t:sin.length ? ((sin.length===1?'Otra vendedora le vendió a un cliente':'Otras vendedoras le vendieron a clientes')+' que atendías') : 'Ventas a tus clientes: revisión pedida',
     s:nom+(sin.length?' · si el cliente era tuyo, pedí revisión':''), b:'🔎 Ver', fn:'crxAbrir()' };
@@ -72348,19 +72348,19 @@ function crvFormAbrir(id){
   var ven=String(p.vendedor||'otra vendedora');
   if(CRUCE_F.fotK!=='p:'+id){ CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK='p:'+id; }
   CRUCE_F.revId=String(id);
-  var hoy=diaNegocio();
+  var hoy=diaNegocio(), dv=crvDiaVenta(p);
   var h='<div class="modal-h"><h3>🔎 Pedir revisión del cliente</h3><button class="modal-x" onclick="crxAbrir()" aria-label="Volver">✕</button></div>'+
     '<div class="modal-b crvf">'+
-    '<p style="margin:0 0 8px;font-size:.84rem"><b>'+esc(ven)+'</b> le cargó una venta a <b>'+esc(String(p.cliente||'—').trim())+'</b> ('+esc(ocEtiq(p.oc))+'). Para pedir revisión tenés que <b>demostrar</b> que el cliente es tuyo con lo que pide la <b>Comunicación Interna 032-2026</b>. Completá todo.</p>'+
-    '<div class="crvf-op"><label><input type="checkbox" id="crvf-g" onchange="crvFormVer()"> Tuve una gestión comercial con el cliente en los últimos '+CRV_DIAS+' días (§7)</label>'+
+    '<p style="margin:0 0 8px;font-size:.84rem"><b>'+esc(ven)+'</b> le cargó una venta a <b>'+esc(String(p.cliente||'—').trim())+'</b> ('+esc(ocEtiq(p.oc))+') el <b>'+esc(fmtFecha(dv))+'</b>. Para pedir revisión tenés que <b>demostrar</b> que el cliente es tuyo con lo que pide la <b>Comunicación Interna 032-2026</b>. Completá todo.</p>'+
+    '<div class="crvf-op"><label><input type="checkbox" id="crvf-g" onchange="crvFormVer()"> Tuve una gestión comercial con el cliente en los '+CRV_DIAS+' días antes de esta venta (§7)</label>'+
       '<div class="crvf-in" id="crvf-g-in" hidden>'+
       '<label>Qué fue<select id="crvf-g-t">'+crvOpts(CRV_GESTION)+'</select></label>'+
-      '<label>Fecha<input type="date" id="crvf-g-f" max="'+hoy+'"></label>'+
+      '<label>Fecha<input type="date" id="crvf-g-f" max="'+dv+'"></label>'+
       '<label style="grid-column:1/-1">Próximo paso que quedó acordado<input type="text" id="crvf-g-p" maxlength="200" placeholder="Ej.: le mando la cotización del 160 el viernes"></label></div></div>'+
     '<div class="crvf-op"><label><input type="checkbox" id="crvf-e" onchange="crvFormVer()"> Quedó acordada una fecha futura ANTES de esta venta (excepción a los '+CRV_DIAS+' días)</label>'+
       '<div class="crvf-in" id="crvf-e-in" hidden>'+
       '<label>Qué se acordó<select id="crvf-e-t">'+crvOpts(CRV_EXCEP)+'</select></label>'+
-      '<label>Cuándo se acordó<input type="date" id="crvf-e-a" max="'+hoy+'"></label>'+
+      '<label>Cuándo se acordó<input type="date" id="crvf-e-a" max="'+dv+'"></label>'+
       '<label>Para qué fecha<input type="date" id="crvf-e-f"></label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-k"> Está anotada en Kommo (tarea o nota)</label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-s"> Hice el seguimiento acordado</label></div></div>'+
@@ -72408,21 +72408,24 @@ function crvFotosElegidas(ev, deKommo){
     });
   }, Promise.resolve());
 }
+/** El día de la venta (cuándo se cargó, en hora de Bolivia): los 15 días del instructivo se cuentan hacia atrás desde ahí, no desde hoy
+    (revisión de Fable: la que reclama tiene 15 días para pedirlo). */
+function crvDiaVenta(p){ var t=Number(p && p.ts)||0; return t>0 ? isoDeTsBolivia(t) : diaNegocio(); }
 /** Lo que pide el instructivo, leído de la ventana: { req, falta[] }. */
 function crvFormLeer(){
   var v=function(id){ var e=document.getElementById(id); return e ? (e.type==='checkbox' ? !!e.checked : String(e.value||'').trim()) : ''; };
-  var hoy=diaNegocio(), lim=isoMasDiasSimple(hoy, -CRV_DIAS), falta=[], req={};
+  var pv=findById(CRUCE_F.revId), hoy=pv ? crvDiaVenta(pv) : diaNegocio(), lim=isoMasDiasSimple(hoy, -CRV_DIAS), falta=[], req={};
   if(!v('crvf-g') && !v('crvf-e')) falta.push('marcá cómo demostrás que el cliente es tuyo: la gestión de los últimos '+CRV_DIAS+' días o la fecha futura acordada');
   if(v('crvf-g')){
     req.g={ t:v('crvf-g-t'), f:v('crvf-g-f'), p:v('crvf-g-p') };
     if(!req.g.t) falta.push('qué gestión comercial tuviste');
-    if(!req.g.f) falta.push('la fecha de esa gestión'); else if(req.g.f>hoy) falta.push('la fecha de la gestión no puede ser futura'); else if(req.g.f<lim) falta.push('la gestión tiene más de '+CRV_DIAS+' días: no alcanza (usá la excepción si quedó una fecha acordada)');
+    if(!req.g.f) falta.push('la fecha de esa gestión'); else if(req.g.f>hoy) falta.push('la gestión tiene que ser de antes de la venta ('+fmtFechaCorta(hoy)+')'); else if(req.g.f<lim) falta.push('la gestión es de más de '+CRV_DIAS+' días antes de la venta: no alcanza (usá la excepción si quedó una fecha acordada)');
     if(req.g.p.length<8) falta.push('el próximo paso que quedó acordado');
   }
   if(v('crvf-e')){
     req.e={ t:v('crvf-e-t'), a:v('crvf-e-a'), f:v('crvf-e-f'), k:v('crvf-e-k')?1:0, s:v('crvf-e-s')?1:0 };
     if(!req.e.t) falta.push('qué fecha futura se acordó');
-    if(!req.e.a) falta.push('cuándo se acordó'); else if(req.e.a>hoy) falta.push('«cuándo se acordó» no puede ser futuro');
+    if(!req.e.a) falta.push('cuándo se acordó'); else if(req.e.a>hoy) falta.push('la fecha tiene que haberse acordado antes de la venta ('+fmtFechaCorta(hoy)+')');
     if(!req.e.f) falta.push('para qué fecha se acordó'); else if(req.e.a && req.e.f<req.e.a) falta.push('la fecha acordada es anterior al día en que se acordó');
     if(!req.e.k) falta.push('la fecha acordada tiene que estar anotada en Kommo');
     if(!req.e.s) falta.push('confirmá que hiciste el seguimiento acordado');
@@ -72439,19 +72442,36 @@ function crvFormLeer(){
   return { req:req, falta:falta };
 }
 function crvFormConfirmar(){
-  var p=findById(CRUCE_F.revId), v=CRX_V; if(!p || !v){ closeModal(); return; }
-  var R=crvFormLeer(), box=document.getElementById('crvf-falta');
-  if(R.falta.length){ if(box){ box.hidden=false; box.innerHTML='Falta: '+R.falta.map(esc).join(' · '); } return; }
-  if(crvDe(p)){ toast('Mientras completabas, esa venta ya recibió un pedido de revisión.', 'err'); return crxAbrir(); }
-  var F=(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX), n=JSON.parse(JSON.stringify(p));
-  if(!(n.productos||[]).length){ toast('Esa venta no tiene productos: no se puede anotar.', 'err'); return; }
-  n.productos[0].crv={ t:Date.now(), por:String(v).slice(0,60), vende:String(p.vendedor||'').slice(0,60), req:R.req, fot:F,
+  var id=CRUCE_F.revId, p0=findById(id), v=CRX_V; if(!p0 || !v){ closeModal(); return; }
+  var R=crvFormLeer(), box=document.getElementById('crvf-falta'), btn=document.getElementById('crvf-ok');
+  var decir=function(t){ if(box){ box.hidden=false; box.innerHTML=t; } };
+  if(R.falta.length){ decir('Falta: '+R.falta.map(esc).join(' · ')); return; }
+  var F=(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX);
+  var crv={ t:Date.now(), por:String(v).slice(0,60), vende:String(p0.vendedor||'').slice(0,60), req:R.req, fot:F,
     fotK:(CRUCE_F.fotKm||[]).filter(function(x){ return F.indexOf(x)>=0; }) };
-  persistPedido(n);
-  CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK='';
-  toast('Listo: pediste revisión. Administración decide de quién es el cliente.', 'ok');
-  try{ renderMis(); }catch(e){}
-  crxAbrir();
+  if(btn){ btn.disabled=true; btn.textContent='⏳ Guardando…'; }
+  var fallo=function(t){ if(btn){ btn.disabled=false; btn.textContent='🔎 Pedir revisión'; } decir(t); };
+  /* (revisión de Fable) Con la ventana abierta el panel no relee: antes de guardar se lee la planilla y el `crv` va sobre la fila de AHORA;
+     si igual otro la tocó en el medio (`conflicto`), se pone sobre la que devolvió el servidor y se reintenta una vez. «Listo» recién con el sí. */
+  var poner=function(fila){ var n=JSON.parse(JSON.stringify(fila)); if(!(n.productos||[]).length) return null; n.productos[0].crv=JSON.parse(JSON.stringify(crv)); return n; };
+  var intentar=function(fila, vuelta){
+    if(!fila){ fallo('Esa venta ya no está en la planilla: no se puede pedir revisión.'); return; }
+    var c0=crvDe(fila); if(c0 && normNombre(c0.por)!==normNombre(crv.por)){ fallo('Mientras completabas, esa venta ya recibió un pedido de revisión de '+esc(c0.por||'otra asesora')+'.'); return; }
+    var n=poner(fila); if(!n){ fallo('Esa venta no tiene productos: no se puede anotar.'); return; }
+    var antes=JSON.parse(JSON.stringify(fila));
+    Promise.resolve(persistPedido(n)).then(function(res){
+      if(res && (res.ok || res.local)){
+        CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK='';
+        toast(res.ok ? 'Listo: pediste revisión. Administración decide de quién es el cliente.' : 'Pediste revisión: quedó en este aparato y se manda sola apenas haya conexión.', 'ok');
+        try{ renderMis(); }catch(e){}
+        crxAbrir(); return;
+      }
+      if(res && res.error==='conflicto' && res.pedido && !vuelta){ intentar(res.pedido, 1); return; }
+      try{ if(!(res && res.error==='conflicto')){ upsert(antes); saveMirror(); } }catch(e){}   // no quedó en la planilla: la copia de acá vuelve a como estaba
+      fallo('No se pudo guardar el pedido de revisión'+(res && (res.motivo||res.error) ? (' ('+esc(res.motivo||res.error)+')') : '')+'. Tus datos y capturas siguen acá: probá de nuevo.');
+    }, function(){ fallo('No se pudo guardar el pedido de revisión. Tus datos y capturas siguen acá: probá de nuevo.'); });
+  };
+  Promise.resolve(typeof refrescarEstadoYa==='function' ? refrescarEstadoYa() : null).catch(function(){}).then(function(){ intentar(findById(id), 0); });
 }
 /** Lo que se presentó, en renglones (para el cartel, la lista de Administración y la ficha). */
 function crvReqLineas(c){

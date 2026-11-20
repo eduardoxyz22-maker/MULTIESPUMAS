@@ -258,6 +258,17 @@ console.log('\n── 12. La lectura dice qué ventas nombraron a quién (para p
   chk('el WhatsApp a la asesora le dice que puede pedir revisión en Mis pedidos → Para hacer', /pedí revisión desde el panel/.test(pl.t) && /Mis pedidos → Para hacer/.test(pl.t), pl.t.slice(-160));
 }
 
+console.log('\n── 13. Podar CRUCE_HECHO no se lleva lo que una asesora todavía puede reclamar ──');
+{
+  const A = servidor(VEND, kommoHeaven());
+  const h = {}, ahoraS = Math.floor(RELOJ.ms / 1000);
+  h.reclamable = { t:ahoraS - 5 * 86400, v:'Isabel Robledo', n:['Carola Chavez'] };
+  for (let i = 0; i < 200; i++) h['sin' + i] = { t:ahoraS - 3600 + i };
+  A.ctx.cruceHechoGuardar_(h);
+  const g = JSON.parse(A.P.CRUCE_HECHO);
+  chk('con 200 ventas nuevas sin cruce, la que nombra a Carola (de hace 5 días) se queda', !!g.reclamable && Object.keys(g).length <= 150, Object.keys(g).length);
+}
+
 console.log('\n── 11. Las capturas de la revisión no son fotos sueltas ──');
 {
   const A = servidor(VEND, kommoHeaven());
@@ -412,13 +423,37 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     document.getElementById('crvf-ok').click(); await espera(10);
     out.faltaOtra = document.getElementById('crvf-falta').textContent;
     setv('crvf-o-t', 'mia');
-    var guardados = []; window.guardarDurable = function (p) { guardados.push(JSON.parse(JSON.stringify(p))); return Promise.resolve({ ok:true }); };
-    document.getElementById('crvf-ok').click(); await espera(30);
+    window.refrescarEstadoYa = function () { return Promise.resolve(); };
+    /* (Fable 1) el servidor dice `conflicto` (logística tocó la venta mientras ella completaba): un error que no es conflicto deja todo */
+    var guardados = [], modo = 'error';
+    window.guardarDurable = function (p) { guardados.push(JSON.parse(JSON.stringify(p)));
+      if (modo === 'error') { return Promise.resolve({ ok:false, error:'busy', motivo:'ocupado' }); }
+      if (modo === 'conflicto') { modo = 'ok'; var fr = JSON.parse(JSON.stringify(STATE.find(x => x.id === 'crvP1'))); fr.rev = 9; fr.estado = 'Listo'; fr.productos[0].chk = 'ok'; return Promise.resolve({ ok:false, error:'conflicto', pedido:fr }); }
+      return Promise.resolve({ ok:true }); };
+    document.getElementById('crvf-ok').click(); await espera(40);
+    out.errSigue = { falta:(document.getElementById('crvf-falta') || {}).textContent || '', fotos:CRUCE_F.fot.length, ok:!!document.getElementById('crvf-ok') && !document.getElementById('crvf-ok').disabled };
+    modo = 'conflicto'; guardados = [];
+    document.getElementById('crvf-ok').click(); await espera(60);
+    out.reintentos = guardados.length; out.sobreFresca = guardados.length === 2 && guardados[1].rev === 9 && guardados[1].estado === 'Listo' && guardados[1].productos[0].chk === 'ok' && !!crvDe(guardados[1]);
+    guardados = guardados.slice(1);
     out.crv = guardados.length ? crvDe(guardados[0]) : null;
     out.vendedorIgual = guardados.length ? guardados[0].vendedor : '';
     if (guardados.length) { var ix = STATE.findIndex(x => x.id === 'crvP1'); STATE[ix] = guardados[0]; }
     out.listaDespues = (document.getElementById('modal-box') || {}).textContent || '';
     var H2 = crxHacer('Carola Chavez'); out.hacerDespues = H2 ? H2.t : null;
+    /* (Fable 4) otra asesora nombrada en la misma venta: ya tiene pedido de revisión, no le insiste */
+    crxTomar([{ id:'crvP1', v:'Isabel Robledo', n:['Carola Chavez', 'Maria Flores'], t:Math.floor(Date.now() / 1000) - 3600 }]);
+    var HM = crxHacer('Maria Flores'); out.maria = HM ? { n:HM.n, sev:HM.sev, t:HM.t } : null;
+    /* (Fable 2) los 15 días se cuentan desde el DÍA DE LA VENTA, no desde hoy */
+    var vieja = { id:'crvP2', oc:'11-700', fecha:'2026-11-25', vendedor:'Isabel Robledo', cliente:'OTRA CLIENTA', celular:'70011177', productos:[{ desc:'X', cant:1 }], rev:1, ts:Date.now() - 10 * 86400000 };
+    STATE.push(vieja); crxTomar([{ id:'crvP2', v:'Isabel Robledo', n:['Carola Chavez'], t:Math.floor(Date.now() / 1000) - 10 * 86400 }]); CRX_V = 'Carola Chavez';
+    crvFormAbrir('crvP2'); await espera(20);
+    var dv = isoMasDiasSimple(diaNegocio(), -10);
+    setv('crvf-g', 1); setv('crvf-g-t', 'cot'); setv('crvf-g-p', 'le mando la cotización el viernes'); setv('crvf-d', 1); setv('crvf-o-t', 'mia');
+    setv('crvf-g-f', isoMasDiasSimple(dv, -8)); out.f8antes = crvFormLeer().falta.join(' | ');
+    setv('crvf-g-f', isoMasDiasSimple(dv, 2)); out.fDespues = crvFormLeer().falta.join(' | ');
+    out.ventanaDia = (document.getElementById('modal-box') || {}).textContent || '';
+    closeModal();
     var her = heredarMarcas([{ desc:'COLCHON', cant:1 }], STATE.find(x => x.id === 'crvP1').productos); out.hereda = !!(her[0].crv && her[0].crv.por === 'Carola Chavez');
     /* Administración */
     UNLOCKED = false; out.sinClave = crvHacer() === null;
@@ -437,14 +472,18 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('⚠️ 8k. el cartel de quien carga dice «puede ser de» y que tener mensajes no prueba que lo atendió, sin botones', /puede ser de Carola Chavez/.test(r3.txt) && /no significa que lo haya atendido/.test(r3.txt) && r3.botones === 0, r3.txt);
   chk('⚠️ 8l. «Para hacer» de Carola (la que reclama): «otra vendedora le vendió a un cliente que atendías»; a Isabel y a Maria, nada', r3.hacer && r3.hacer.n === 1 && /cliente que atendías/.test(r3.hacer.t) && r3.hacerIsa === null && r3.hacerMaria === null, r3);
   chk('8m. la lista dice quién cargó la venta y ofrece «Pedir revisión» (no lista lo que ya no está en la planilla)', /Isabel Robledo le cargó una venta a CLIENTA INVENTADA/.test(r3.lista) && /Pedir revisión/.test(r3.lista) && (r3.lista.match(/le cargó una venta/g) || []).length === 1, r3.lista.slice(0, 300));
-  chk('⚠️ 8q. «Pedir revisión» abre los requisitos de la Comunicación Interna 032-2026 (gestión en 15 días, fecha acordada, por qué no es de la otra, §8, capturas)', /032-2026/.test(r3.ventana) && /últimos 15 días/.test(r3.ventana) && /fecha futura/.test(r3.ventana) && /no es de Isabel Robledo/.test(r3.ventana) && /mínimo 2/.test(r3.ventana) && /Captura de Kommo/.test(r3.ventana) && /§8/.test(r3.ventana), r3.ventana.slice(0, 200));
+  chk('⚠️ 8q. «Pedir revisión» abre los requisitos de la Comunicación Interna 032-2026 (gestión en 15 días, fecha acordada, por qué no es de la otra, §8, capturas)', /032-2026/.test(r3.ventana) && /15 días antes de esta venta/.test(r3.ventana) && /fecha futura/.test(r3.ventana) && /no es de Isabel Robledo/.test(r3.ventana) && /mínimo 2/.test(r3.ventana) && /Captura de Kommo/.test(r3.ventana) && /§8/.test(r3.ventana), r3.ventana.slice(0, 200));
   chk('⚠️ 8r. sin completar no deja pedirla y dice qué falta', /cómo demostrás/.test(r3.faltaVacio) && /mínimo 2 capturas/.test(r3.faltaVacio) && /de Kommo/.test(r3.faltaVacio) && /§8/.test(r3.faltaVacio) && /no es de la otra/.test(r3.faltaVacio), r3.faltaVacio);
   chk('8s. una gestión de hace 20 días no alcanza (son 15)', /más de 15 días/.test(r3.falta20), r3.falta20);
   chk('⚠️ 8v. capturas: con 1 pide mínimo 2; con 2 sin ninguna de Kommo pide la de Kommo', /mínimo 2 capturas/.test(r3.falta1foto) && !/mínimo 2/.test(r3.faltaKommo) && /de Kommo/.test(r3.faltaKommo), { uno:r3.falta1foto, kommo:r3.faltaKommo });
   chk('8w. «por qué la venta no es de la otra» también es obligatorio', /no es de la otra/.test(r3.faltaOtra), r3.faltaOtra);
   chk('8z. lo que está subiendo ocupa lugar (máximo 4)', r3.lugar === 0, r3.lugar);
   chk('⚠️ 8u. completo: queda en la venta (quién pide, quién vendió, requisitos y capturas con la de Kommo) sin cambiar la vendedora', r3.crv && r3.crv.por === 'Carola Chavez' && r3.crv.vende === 'Isabel Robledo' && r3.crv.req.g.t === 'cot' && r3.crv.req.o.t === 'mia' && r3.crv.req.d === 1 && r3.crv.fot.length === 2 && r3.crv.fotK.length === 1 && r3.crv.fotK[0] === r3.crv.fot[1] && r3.vendedorIgual === 'Isabel Robledo', r3.crv);
+  chk('⚠️ 8c1. (Fable 1) si no se pudo guardar, la ventana sigue abierta con los datos y las capturas, y lo dice', /No se pudo guardar el pedido de revisión/.test(r3.errSigue.falta) && r3.errSigue.fotos === 2 && r3.errSigue.ok, r3.errSigue);
+  chk('⚠️ 8c2. (Fable 1) si otro tocó la venta en el medio (conflicto), el pedido de revisión va sobre la fila nueva (sin pisar lo de logística)', r3.reintentos === 2 && r3.sobreFresca, r3.reintentos);
   chk('8t. después dice «Pediste revisión… pendiente» y deja de pedirla en «Para hacer»', /Pediste revisión/.test(r3.listaDespues) && /pendiente de Administración/.test(r3.listaDespues) && /revisión pedida/.test(r3.hacerDespues || ''), { l:r3.listaDespues.slice(0, 200), h:r3.hacerDespues });
+  chk('8c3. (Fable 4) a otra asesora nombrada en una venta que ya tiene pedido de revisión no se le pide de nuevo', r3.maria && r3.maria.sev === 'i' && /revisión pedida/.test(r3.maria.t), r3.maria);
+  chk('⚠️ 8c4. (Fable 2) los 15 días se cuentan desde el día de la venta: 8 días antes de una venta de hace 10 vale; después de la venta, no', !/15 días/.test(r3.f8antes) && !/antes de la venta/.test(r3.f8antes) && /antes de la venta/.test(r3.fDespues) && /el <b>|el \d{2}\/\d{2}\/\d{4}/.test(r3.ventanaDia), { a:r3.f8antes, d:r3.fDespues });
   chk('8n. si Isabel corrige la venta, el pedido de revisión se conserva', r3.hereda);
   chk('⚠️ 8o. Administración (solo con la contraseña) lo ve con todo lo presentado y las capturas', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacerAdm || '') && /CLIENTA INVENTADA/.test(r3.listaAdm) && /Es de Isabel Robledo/.test(r3.listaAdm) && /Es de Carola Chavez/.test(r3.listaAdm) && /respondió mi cotización/.test(r3.listaAdm) && /salió de mi gestión/.test(r3.listaAdm) && /Captura de Kommo/.test(r3.listaAdmH), { sin:r3.sinClave, hacer:r3.hacerAdm });
   chk('8p. «Es de Carola Chavez» (con confirmación) lo anota y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);

@@ -13959,7 +13959,11 @@ function cruceOtros_(cuenta, vend, ahora, mk) {
   return orden.map(function (k) { return por[k]; });
 }
 function cruceHechoGuardar_(hecho) {
-  var ks = Object.keys(hecho).sort(function (a, b) { return (Number(hecho[a].t) || 0) - (Number(hecho[b].t) || 0); });
+  /* (revisión de Fable) Al podar, primero se van las que no nombran a nadie (`n`, solo sirven para no mirar dos veces) y las de más de 20 días;
+     las que nombran a una asesora quedan los 20 días en que ella puede pedir revisión (`cruceParaLista_`). */
+  var lim = Math.floor(Date.now() / 1000) - 20 * 86400;
+  var prio = function (k) { var h = hecho[k] || {}; return (Array.isArray(h.n) && h.n.length && (Number(h.t) || 0) >= lim) ? 1 : 0; };
+  var ks = Object.keys(hecho).sort(function (a, b) { return (prio(a) - prio(b)) || ((Number(hecho[a].t) || 0) - (Number(hecho[b].t) || 0)); });
   while (ks.length > CRUCE_HECHO_MAX || (ks.length && JSON.stringify(hecho).length > CRUCE_HECHO_LETRAS)) delete hecho[ks.shift()];
   try { PropertiesService.getScriptProperties().setProperty('CRUCE_HECHO', JSON.stringify(hecho)); } catch (e) {}
 }
