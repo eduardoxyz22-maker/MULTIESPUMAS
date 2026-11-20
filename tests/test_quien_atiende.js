@@ -68,7 +68,7 @@ function cargar(K, props) {
       if (p === '/leads/pipelines') return resp(200, K.pipelines);
       if (p === '/contacts') {
         const t = (q.query || [''])[0];
-        const cs = Object.values(K.contactos).filter(c => c.name.indexOf(t) >= 0 || c.custom_fields_values[0].values.some(v => String(v.value).replace(/\D/g, '').indexOf(t) >= 0));   // como Kommo: por los números
+        const cs = Object.values(K.contactos).filter(c => c.name.toLowerCase().indexOf(t.toLowerCase()) >= 0 || c.custom_fields_values[0].values.some(v => String(v.value).replace(/\D/g, '').indexOf(t) >= 0));   // como Kommo: por los números
         return cs.length ? resp(200, { _embedded:{ contacts:cs } }) : resp(204, null);
       }
       if (p === '/leads') { const L = (q['filter[id][]'] || []).map(i => K.leads[i]).filter(Boolean); return L.length ? resp(200, { _embedded:{ leads:L } }) : resp(204, null); }
@@ -132,7 +132,7 @@ function servidor() {
   const S2 = r.cuentas && r.cuentas[1];
   chk('7 · Sueña sin token → «sinToken», sin preguntarle a nadie', S2 && S2.marca === 'suena' && S2.sinToken === true && !A.llamadas.some(c => /gerencia/.test(c.host)), S2);
   const fh = (A.hojas['Quién atiende'] || { filas:[] }).filas;
-  chk('8a · la consulta queda anotada: encabezado + una fila (quién buscó, el número, el resultado)', fh.length === 2 && fh[1][1] === 'Maria Flores' && fh[1][2] === '70011122' && /^Atiende: Carola Chavez, Maria Flores$/.test(fh[1][3]), fh);
+  chk('8a · la consulta queda anotada: encabezado + una fila (quién buscó, el número, el resultado)', fh.length === 2 && fh[1][1] === 'Maria Flores' && fh[1][2] === '70011122' && fh[1][3] === '' && /^Atiende: Carola Chavez, Maria Flores$/.test(fh[1][4]), fh);
   chk('8b · no toma el candado', A.lock.veces === 0, A.lock.veces);
   const n0 = A.llamadas.length;
   const r2 = A.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel' });
@@ -147,6 +147,25 @@ function servidor() {
   const B = cargar(k2.K), rb = B.post({ action:'quienAtiende', cel:'71112222' });
   const b81 = rb.cuentas[0].leads.find(x => x.id === '81'), b82 = rb.cuentas[0].leads.find(x => x.id === '82');
   chk('4d · justo 24 h vale; 24 h y un segundo no', b81 && b81.par && b82 && b82.par === null, { b81:b81 && b81.par, b82:b82 && b82.par });
+  /* 14 · por NOMBRE: dos clientes que se llaman igual, con números distintos → dos contactos, cada uno con el final de su número */
+  const k3 = kommo();
+  k3.contacto(91, 'ANA ROJAS VACA', '70001111', [911]);
+  k3.contacto(92, 'Ana Rojas', '+591 7999-2222', [921]);
+  k3.contacto(93, 'MARIANA ROJAS', '71113333', [931]);        // «Mariana» no es «Ana»
+  k3.contacto(94, 'ANA MARIA SOLIZ', '71114444', [941]);      // sin «Rojas»
+  k3.lead(911, { responsible_user_id:U_CAR }); k3.lead(921, { responsible_user_id:U_MAR }); k3.lead(931); k3.lead(941);
+  k3.ev(91, 911, 'incoming_chat_message', S - 2 * D, 0); k3.ev(91, 911, 'outgoing_chat_message', S - 2 * D + H, U_CAR);
+  const N = cargar(k3.K);
+  let rn = N.post({ action:'quienAtiende', nombre:'Ana', quien:'Isabel' });
+  chk('14a · con UNA palabra no busca (salen demasiados) → «nombre»', rn.ok === false && rn.error === 'nombre' && !N.llamadas.length, rn);
+  rn = N.post({ action:'quienAtiende', nombre:'ana rojas', quien:'Isabel Robledo' });
+  const LN = rn.cuentas[0].leads;
+  chk('14b · encuentra a las DOS «Ana Rojas» (no a Mariana ni a Ana María Soliz)', rn.ok && rn.nombre === 'ana rojas' && LN.length === 2 && LN.map(x => x.id).sort().join() === '911,921' && rn.cuentas[0].contactos === 2 && rn.cuentas[0].porNombre, LN.map(x => x.id));
+  chk('14c · cada lead dice de qué contacto es y el final de SU número', LN.find(x => x.id === '911').t4 === '1111' && LN.find(x => x.id === '921').t4 === '2222' && LN.find(x => x.id === '911').cid === '91', LN.map(x => [x.id, x.cid, x.t4]));
+  chk('14d · la conversación sale en la que corresponde (Carola, la …1111)', LN.find(x => x.id === '911').par && LN.find(x => x.id === '911').par.quien === 'Carola Chavez' && !LN.find(x => x.id === '921').par);
+  const fn = N.hojas['Quién atiende'].filas;
+  chk('14e · la hoja anota el nombre buscado', fn.length === 2 && fn[1][3] === 'ana rojas' && fn[1][2] === '', fn);
+  global.__RN = rn;
   return r;
 }
 
@@ -209,6 +228,22 @@ async function pagina(respuesta) {
   chk('13a · un número incompleto pide el número completo', /celular completo/.test(t), t);
   chk('13b · con o sin 591, con espacios o guiones: los mismos 8', await page.evaluate(() => qaCel8('+591 700-11122') === '70011122' && qaCel8('70011122') === '70011122'));
   chk('13c · la regla está a la vista (15 días, 24 h)', await page.evaluate(() => { var d = document.querySelector('.qa-regla').textContent; return /15 días/.test(d) && /24 horas/.test(d); }));
+  /* 15 · la página por NOMBRE */
+  t = await buscar('Ana Rojas', 'Isabel Robledo', global.__RN);
+  chk('15a · dos «Ana Rojas»: lo dice y pide fijarse el final del celular', /Hay 2 clientes que se llaman «ANA ROJAS»/.test(t) && /final del celular/.test(t), t.slice(0, 300));
+  chk('15b · cada una con su cartel: la …1111 la atiende Carola, la …2222 libre', /Cliente 1 · ANA ROJAS VACA · 📱 celular terminado en …1111 ⚠️ Lo está atendiendo Carola Chavez/.test(t) && /Cliente 2 · Ana Rojas · 📱 celular terminado en …2222 ✅ Libre/.test(t), t);
+  const una = JSON.parse(JSON.stringify(global.__RN)); una.cuentas[0].leads = una.cuentas[0].leads.filter(l => l.id === '921');
+  t = await buscar('ana rojas', 'Isabel Robledo', una);
+  chk('15c · si hay una sola: el cartel de siempre + «un cliente con ese nombre (terminado en …2222)»', /Libre: nadie lo está atendiendo/.test(t) && /un cliente con ese nombre \(celular terminado en …2222\)/.test(t) && !/Hay 2 clientes/.test(t), t.slice(0, 300));
+  t = await page.evaluate(async () => { document.getElementById('qa-cel').value = 'Ana'; qaBuscar(); return document.getElementById('qa-res').innerText; });
+  chk('15d · con una sola palabra pide nombre Y apellido', /nombre Y el apellido/.test(t), t);
+  t = await page.evaluate(async () => {
+    STATE = [{ id:'p9', oc:'11-301', cliente:'ANA ROJAS VACA', celular:'70001111', vendedor:'Carola Chavez', ts:Date.now(), fecha:'2026-11-25', productos:[] },
+             { id:'p8', oc:'11-302', cliente:'MARIANA ROJAS', celular:'71113333', vendedor:'Maria Flores', ts:Date.now(), fecha:'2026-11-25', productos:[] }];
+    SERVER_VER = '2026-11-17-d'; document.getElementById('qa-cel').value = 'ana rojas'; qaBuscar();
+    await new Promise(r => setTimeout(r, 50)); return document.getElementById('qa-res').innerText.replace(/\s+/g, ' ');
+  });
+  chk('15e · en el panel, por nombre: Ana Rojas Vaca (…1111) sí, Mariana no', /11-301/.test(t) && /…1111/.test(t) && !/11-302/.test(t), t);
   chk('sin errores de la página', !errs.length, errs);
   await browser.close();
 }

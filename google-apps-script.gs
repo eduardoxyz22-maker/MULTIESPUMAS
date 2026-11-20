@@ -13306,10 +13306,12 @@ var QA_DIAS = 15;              // la Comunicación Interna 032-2026 (dueño, 20/
 var QA_PAR_H = 24;             // cliente y vendedora a ≤ 24 h (dueño, 20/11). = QA_PAR_H de la página
 var QA_HISTORIA_DIAS = 60;     // cuánto para atrás se miran los mensajes (para decir «lo tuvo X el 20/10» aunque ya no valga)
 var QA_MAX_LEADS = 8;          // los leads más recientes de ese número
+var QA_MAX_LEADS_NOMBRE = 14;  // por nombre: entre todos los clientes que se llaman así
+var QA_MAX_CONTACTOS = 8;      // por nombre: cuántos clientes distintos con ese nombre (los demás se cuentan)
 var QA_PAGINAS = 5;            // de 100 mensajes cada una (las respuestas del bot también vienen: son más de la mitad)
 var QA_CACHE_SEG = 90;         // la misma búsqueda seguida no vuelve a preguntarle a Kommo
 var QA_HOJA = 'Quién atiende';
-var QA_HOJA_ENC = ['Fecha', 'Buscó', 'Celular (8)', 'Resultado'];
+var QA_HOJA_ENC = ['Fecha', 'Buscó', 'Celular (8)', 'Nombre buscado', 'Resultado'];
 var QA_CHAT = ['incoming_chat_message', 'outgoing_chat_message'];
 
 /** id → nombre (sin « - Sucursal») y sucursal, de la cuenta en curso (KC_CTA). 6 h en la caché. */
@@ -13376,25 +13378,33 @@ function qaPar_(msgs) {
   return mejor ? { ts:mejor.ts, u:mejor.u } : null;
 }
 /** Lo de UNA cuenta de Kommo (la de KC_CTA) para ese número. */
-function qaCuenta_(c8, marca, ahoraS) {
-  var res = { marca:marca, leads:[], contactos:0 };
+function qaCuenta_(q, marca, ahoraS) {
+  var res = { marca:marca, leads:[], contactos:0 }, c8 = q.c8 || '', pal = q.nom ? kcNorm_(q.nom).split(' ').filter(function (w) { return w.length > 1; }) : [];
   if (!kcToken_()) { res.sinToken = true; return res; }
-  var r = kPedir_('get', '/contacts?query=' + encodeURIComponent(c8) + '&with=leads&limit=50');
+  var r = kPedir_('get', '/contacts?query=' + encodeURIComponent(c8 || q.nom) + '&with=leads&limit=50');
   if (r.code === 204) return res;
   if (r.code !== 200 || !r.o) { res.error = 'Kommo no contestó la búsqueda (HTTP ' + r.code + ')'; return res; }
-  var ids = [], cli = {}, cids = [];
+  var ids = [], cli = {}, cids = [], cdeL = {}, t4 = {};
   kEmb_(r.o, 'contacts').forEach(function (c) {
-    if (!kcTels_(c).some(function (t) { return kcCel8_(t) === c8; })) return;   // `query` busca en todo: el número se mira de nuevo
+    /* `query` busca en todo: se vuelve a mirar. Por celular, el número; por NOMBRE, todas sus palabras en el nombre del contacto
+       (dos clientes que se llaman igual salen como DOS contactos, cada uno con el final de su número). */
+    if (c8 && !kcTels_(c).some(function (t) { return kcCel8_(t) === c8; })) return;
+    if (!c8) { var nc = ' ' + kcNorm_(c.name) + ' '; if (!pal.length || !pal.every(function (w) { return nc.indexOf(' ' + w) >= 0; })) return; }
     res.contactos++;
-    cids.push(String(c.id));
-    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); if (ids.indexOf(id) < 0) { ids.push(id); cli[id] = String(c.name || '').slice(0, 60); } });
+    if (cids.length >= QA_MAX_CONTACTOS) { res.masContactos = (res.masContactos || 0) + 1; return; }
+    var cid = String(c.id), tt = kcTels_(c).map(kcCel8_).filter(Boolean);
+    cids.push(cid);
+    t4[cid] = tt.length ? tt[0].slice(-4) : '';
+    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); if (ids.indexOf(id) < 0) { ids.push(id); cli[id] = String(c.name || '').slice(0, 60); cdeL[id] = cid; } });
   });
+  res.porNombre = !c8;
   if (!ids.length) return res;
   var rl = kPedir_('get', '/leads?' + ids.slice(0, 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&limit=50');
   if (rl.code !== 200 || !rl.o) { res.error = 'Kommo no contestó los leads (HTTP ' + rl.code + ')'; return res; }
   var L = kEmb_(rl.o, 'leads').sort(function (a, b) { return (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0); });
-  res.masLeads = Math.max(0, L.length - QA_MAX_LEADS);
-  L = L.slice(0, QA_MAX_LEADS);
+  var tope = c8 ? QA_MAX_LEADS : QA_MAX_LEADS_NOMBRE;
+  res.masLeads = Math.max(0, L.length - tope);
+  L = L.slice(0, tope);
   var us = qaUsuarios_(), et = qaEtapas_(), desde = ahoraS - QA_HISTORIA_DIAS * 86400;
   function nom(u) { var x = us[String(u)]; return x ? x.n : (u ? 'usuario ' + u : ''); }
   function suc(u) { var x = us[String(u)]; return x ? x.s : ''; }
@@ -13417,7 +13427,7 @@ function qaCuenta_(c8, marca, ahoraS) {
     });
     var e = et[String(l.pipeline_id) + '|' + String(l.status_id)] || {};
     res.leads.push({
-      id:id, n:String(l.name || '').slice(0, 60), cli:cli[id] || '',
+      id:id, n:String(l.name || '').slice(0, 60), cli:cli[id] || '', cid:cdeL[id] || '', t4:t4[cdeL[id]] || '',
       resp:nom(l.responsible_user_id), suc:suc(l.responsible_user_id),
       et:e.n || '', emb:e.e || '', cerrado:String(l.status_id) === '142' ? 'ganado' : (String(l.status_id) === '143' ? 'perdido' : ''),
       creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:Number(l.closed_at) || 0,
@@ -13448,16 +13458,21 @@ function qaResumen_(out, ahoraS) {
   var ks = Object.keys(quien);
   return ks.length ? 'Atiende: ' + ks.join(', ') : 'Libre';
 }
+/** El nombre que se puede buscar: nombre y apellido (2 palabras de 2+ letras), sin números. '' si no alcanza. */
+function qaNombre_(t) {
+  var n = kcNorm_(String(t == null ? '' : t)).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  return n.split(' ').filter(function (w) { return w.length > 1; }).length >= 2 ? n.slice(0, 60) : '';
+}
 function quienAtiende_(body) {
-  var c8 = kcCel8_(body && body.cel);
-  if (!c8) return { ok:false, error:'cel', version:SCRIPT_VERSION };
-  var ahoraS = Math.floor(Date.now() / 1000), cache = null, ck = 'qa_' + c8, out = null;
+  var c8 = kcCel8_(body && body.cel), nom = c8 ? '' : qaNombre_(body && body.nombre);
+  if (!c8 && !nom) return { ok:false, error:(body && body.nombre) ? 'nombre' : 'cel', version:SCRIPT_VERSION };
+  var ahoraS = Math.floor(Date.now() / 1000), cache = null, ck = c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_'), out = null;
   try { cache = CacheService.getScriptCache(); var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) { cache = null; }
   if (!out) {
-    out = { ok:true, version:SCRIPT_VERSION, cel8:c8, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
+    out = { ok:true, version:SCRIPT_VERSION, cel8:c8, nombre:nom, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
     [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
       KC_CTA = x[0];
-      try { out.cuentas.push(qaCuenta_(c8, x[1], ahoraS)); }
+      try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom }, x[1], ahoraS)); }
       catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
       finally { KC_CTA = ''; }
     });
@@ -13465,7 +13480,7 @@ function quienAtiende_(body) {
   }
   try {
     var q = String((body && body.quien) || '').slice(0, 60);
-    qaHoja_().appendRow([new Date(), celdaTexto_(q), celdaTexto_(c8), celdaTexto_(qaResumen_(out, ahoraS))]);
+    qaHoja_().appendRow([new Date(), celdaTexto_(q), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]);
   } catch (e) {}
   return out;
 }
