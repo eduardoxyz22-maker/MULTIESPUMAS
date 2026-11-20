@@ -13304,29 +13304,41 @@ function probarIaObsAtc_(bien, ojo) {
    ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
 var QA_DIAS = 15;              // la Comunicación Interna 032-2026 (dueño, 20/11: «15 días»). = QA_DIAS de la página
 var QA_PAR_H = 24;             // cliente y vendedora a ≤ 24 h (dueño, 20/11). = QA_PAR_H de la página
-var QA_HISTORIA_DIAS = 60;     // cuánto para atrás se miran los mensajes (para decir «lo tuvo X el 20/10» aunque ya no valga)
-var QA_MAX_LEADS = 8;          // los leads más recientes de ese número
-var QA_MAX_LEADS_NOMBRE = 14;  // por nombre: entre todos los clientes que se llaman así
+var QA_HISTORIA_DIAS = 60;     // cuánto para atrás se miran los mensajes (para decir «la última fue con X el 20/10» aunque ya no valga)
+var QA_MAX_LEADS = 8;          // por celular: los leads más recientes de ese número
+var QA_LEADS_POR_CLIENTE = 3;  // por nombre: los más recientes de CADA cliente que se llama así (no los 14 primeros de todos juntos)
 var QA_MAX_CONTACTOS = 8;      // por nombre: cuántos clientes distintos con ese nombre (los demás se cuentan)
 var QA_PAGINAS = 5;            // de 100 mensajes cada una (las respuestas del bot también vienen: son más de la mitad)
-var QA_CACHE_SEG = 90;         // la misma búsqueda seguida no vuelve a preguntarle a Kommo
+var QA_TAREA_MAX_DIAS = 90;    // una tarea más lejos que esto no es «fecha acordada» (revisión de Fable, M5: si no, una tarea al 2027 lo retiene para siempre)
+var QA_CACHE_SEG = 90;         // la misma búsqueda seguida no vuelve a preguntarle a Kommo (solo si salió COMPLETA)
+var QA_TOPE_DIA = 80;          // búsquedas por persona y día (revisión de Fable, M6: no recorrer la cartera ajena)
 var QA_HOJA = 'Quién atiende';
 var QA_HOJA_ENC = ['Fecha', 'Buscó', 'Celular (8)', 'Nombre buscado', 'Resultado'];
 var QA_CHAT = ['incoming_chat_message', 'outgoing_chat_message'];
 
-/** id → nombre (sin « - Sucursal») y sucursal, de la cuenta en curso (KC_CTA). 6 h en la caché. */
+/** Sin tildes ni mayúsculas, también ã õ ç ü ý (kcNorm_ conoce solo áéíóúñ: «João» no encontraba a nadie; Fable M3). */
+function qaNorm_(t) {
+  return kcNorm_(String(t == null ? '' : t).toLowerCase().replace(/[ãåā]/g, 'a').replace(/[õøō]/g, 'o').replace(/ç/g, 'c').replace(/[ýÿ]/g, 'y'))
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+/** id → nombre (sin « - Sucursal») y sucursal, de la cuenta en curso (KC_CTA). 6 h en la caché. En Sueña, Juan Pablo Paredes es el
+    usuario 13073611, que en ese Kommo se llama «Alberto Pareja» (KC_SUENA_USUARIOS): se muestra como Juan Pablo (Fable A3). */
 function qaUsuarios_() {
-  var cache = null, k = 'qa_us' + KC_CTA;
+  var cache = null, k = 'qa_us2' + KC_CTA;
   try { cache = CacheService.getScriptCache(); var c = cache.get(k); if (c) return JSON.parse(c); } catch (e) { cache = null; }
   var out = {}, r = kPedir_('get', '/users?limit=250');
   if (r.code === 200 && r.o) kEmb_(r.o, 'users').forEach(function (u) {
     var pz = String(u.name || '').split(/\s+[-–]\s+/);
     out[String(u.id)] = { n:pz[0].trim(), s:(pz[1] || '').trim() };
   });
+  if (KC_CTA === 'suena') for (var nom in KC_SUENA_USUARIOS) {
+    var id = String(KC_SUENA_USUARIOS[nom]);
+    out[id] = { n:nom.replace(/\b[a-z]/g, function (x) { return x.toUpperCase(); }), s:(out[id] && out[id].s) || '' };
+  }
   try { if (cache && Object.keys(out).length) cache.put(k, JSON.stringify(out), 21600); } catch (e) {}
   return out;
 }
-/** status_id → {n: nombre de la etapa, e: nombre del embudo}. 6 h en la caché. */
+/** pipeline|status_id → {n: nombre de la etapa, e: nombre del embudo}. 6 h en la caché. */
 function qaEtapas_() {
   var cache = null, k = 'qa_et' + KC_CTA;
   try { cache = CacheService.getScriptCache(); var c = cache.get(k); if (c) return JSON.parse(c); } catch (e) { cache = null; }
@@ -13337,16 +13349,18 @@ function qaEtapas_() {
   try { if (cache && Object.keys(out).length) cache.put(k, JSON.stringify(out), 21600); } catch (e) {}
   return out;
 }
-/** Los mensajes de chat de esos CONTACTOS desde `desde` (s), repartidos por lead: {lead: [{t:'in'|'out', ts, u}]} (u = usuario de
-    Kommo; 0 = el bot). ⚠️ Se piden por el CONTACTO (`filter[entity][]=contact`): por el lead Kommo contesta 204 (§4ng) y sin filtro
-    trae los mensajes de toda la cuenta. Probado el 20/11 con 25 números de verdad: por el contacto vienen TODOS los del lead (25 de 25
-    iguales a la lista entera de la cuenta; herramientas/inspeccionar_atiende.py, variante D). */
-function qaMensajes_(cids, desde) {
-  var out = {}, ok = true;
-  if (!cids.length) return { m:out, ok:ok };
+/** Los mensajes de chat de esos CONTACTOS entre `desde` y `hasta` (s; hasta 0 = ahora), repartidos por lead:
+    {m: {lead: [{t:'in'|'out', ts, u}]}, ok, otros} (u = usuario de Kommo; 0 = el bot; `otros` = los que no cuelgan de un lead).
+    ⚠️ Por el CONTACTO (`filter[entity][]=contact`): por el lead Kommo contesta 204 (§4ng) y sin filtro trae toda la cuenta. Probado el
+    20/11 con 25 números de verdad: vienen TODOS los del lead (herramientas/inspeccionar_atiende.py, variante D). `ok` = false si Kommo
+    falló o quedaron más páginas (puede faltar algo). */
+function qaMensajes_(cids, desde, hasta, paginas) {
+  var out = {}, ok = true, otros = 0;
+  if (!cids.length) return { m:out, ok:ok, otros:0 };
   var base = '/events?filter[entity][]=contact&' + cids.slice(0, 10).map(function (c) { return 'filter[entity_id][]=' + encodeURIComponent(c); }).join('&') +
-             '&filter[type][]=' + QA_CHAT[0] + '&filter[type][]=' + QA_CHAT[1] + '&filter[created_at][from]=' + desde + '&limit=100&page=';
-  for (var pg = 1; pg <= QA_PAGINAS; pg++) {
+             '&filter[type][]=' + QA_CHAT[0] + '&filter[type][]=' + QA_CHAT[1] + '&filter[created_at][from]=' + desde +
+             (hasta ? '&filter[created_at][to]=' + hasta : '') + '&limit=100&page=';
+  for (var pg = 1; pg <= paginas; pg++) {
     var r = kPedir_('get', base + pg);
     if (r.code === 204) break;
     if (r.code !== 200 || !r.o) { ok = false; break; }
@@ -13354,72 +13368,107 @@ function qaMensajes_(cids, desde) {
     L.forEach(function (e) {
       var t = e.type === QA_CHAT[0] ? 'in' : (e.type === QA_CHAT[1] ? 'out' : '');
       if (!t) return;
-      var k = e.entity_type === 'lead' ? String(e.entity_id) : '_c';
+      if (e.entity_type !== 'lead') { otros++; return; }
+      var k = String(e.entity_id);
       (out[k] = out[k] || []).push({ t:t, ts:Number(e.created_at) || 0, u:Number(e.created_by) || 0 });
     });
     if (L.length < 100 || !(r.o._links && r.o._links.next)) break;
-    if (pg === QA_PAGINAS) ok = false;   // había más: lo más viejo quedó afuera
+    if (pg === paginas) ok = false;
   }
-  return { m:out, ok:ok };
+  return { m:out, ok:ok, otros:otros };
 }
-/** La regla del dueño: un mensaje del cliente y uno de una persona (no el bot) a ≤ QA_PAR_H. Devuelve el par MÁS NUEVO
-    {ts: el último de los dos, u: quién contestó/escribió} o null. */
-function qaPar_(msgs) {
+/** La regla del dueño: un mensaje del cliente y uno de una PERSONA (no el bot) a ≤ QA_PAR_H. Devuelve, por vendedora, su conversación
+    más nueva (`ts`) y la primera desde `lim` (`desde`, 0 si no tuvo en la ventana): así se ve que Carola conversaba ANTES de que María
+    entrara al mismo lead (Fable A4). Ordenadas de la más nueva a la más vieja. */
+function qaPares_(msgs, lim) {
   var ent = msgs.filter(function (m) { return m.t === 'in'; }).map(function (m) { return m.ts; });
-  var mejor = null, ven = QA_PAR_H * 3600;
+  var por = {}, ven = QA_PAR_H * 3600;
   msgs.forEach(function (m) {
     if (m.t !== 'out' || !m.u) return;
     var cerca = 0;
     ent.forEach(function (x) { if (Math.abs(x - m.ts) <= ven && x > cerca) cerca = x; });
     if (!cerca) return;
-    var fin = Math.max(cerca, m.ts);
-    if (!mejor || fin > mejor.ts || (fin === mejor.ts && m.ts > mejor.out)) mejor = { ts:fin, u:m.u, out:m.ts };
+    var fin = Math.max(cerca, m.ts), k = String(m.u), p = por[k] || (por[k] = { u:m.u, ts:0, desde:0 });
+    if (fin > p.ts) p.ts = fin;
+    if (fin >= lim && (!p.desde || fin < p.desde)) p.desde = fin;
   });
-  return mejor ? { ts:mejor.ts, u:mejor.u } : null;
+  return Object.keys(por).map(function (k) { return por[k]; }).sort(function (a, b) { return b.ts - a.ts; });
 }
-/** Lo de UNA cuenta de Kommo (la de KC_CTA) para ese número. */
+/** ¿Ese teléfono es el buscado? Por los últimos 8 (o 7: un fijo, Fable B3). */
+function qaTelEs_(t, q) { var d = String(t == null ? '' : t).replace(/\D/g, ''); return !!q && d.length >= q.length && d.slice(-q.length) === q; }
+/** Lo de UNA cuenta de Kommo (la de KC_CTA) para ese número o ese nombre. */
 function qaCuenta_(q, marca, ahoraS) {
-  var res = { marca:marca, leads:[], contactos:0 }, c8 = q.c8 || '', pal = q.nom ? kcNorm_(q.nom).split(' ').filter(function (w) { return w.length > 1; }) : [];
+  var res = { marca:marca, leads:[], contactos:0, msgOk:true, tareasOk:true, sinLeads:[] }, c8 = q.c8 || '';
+  var pal = q.nom ? q.nom.split(' ').filter(function (w) { return w.length > 1; }) : [];
   if (!kcToken_()) { res.sinToken = true; return res; }
-  var r = kPedir_('get', '/contacts?query=' + encodeURIComponent(c8 || q.nom) + '&with=leads&limit=50');
+  /* Por nombre se le pregunta a Kommo por la palabra MÁS LARGA (como la escribió la vendedora y, si no trae nada, sin tildes) y se filtra
+     acá por palabras enteras: «Ana Rojas» = «ANA ROJAS VACA», no «Mariana Rojas» ni «Ana María Soliz». */
+  var preguntas = c8 ? [c8] : [];
+  if (!c8) {
+    var largo = function (txt) { return String(txt || '').split(/\s+/).sort(function (a, b) { return b.length - a.length; })[0] || ''; };
+    preguntas.push(largo(q.orig || q.nom));
+    if (qaNorm_(preguntas[0]) !== preguntas[0]) preguntas.push(largo(q.nom));
+  }
+  var r = null;
+  for (var pi = 0; pi < preguntas.length; pi++) {
+    r = kPedir_('get', '/contacts?query=' + encodeURIComponent(preguntas[pi]) + '&with=leads&limit=250');
+    if (r.code !== 204) break;
+  }
   if (r.code === 204) return res;
   if (r.code !== 200 || !r.o) { res.error = 'Kommo no contestó la búsqueda (HTTP ' + r.code + ')'; return res; }
-  var ids = [], cli = {}, cids = [], cdeL = {}, t4 = {};
+  var ids = [], cdeL = {}, cli = {}, cids = [], t4 = {};
   kEmb_(r.o, 'contacts').forEach(function (c) {
-    /* `query` busca en todo: se vuelve a mirar. Por celular, el número; por NOMBRE, todas sus palabras en el nombre del contacto
-       (dos clientes que se llaman igual salen como DOS contactos, cada uno con el final de su número). */
-    if (c8 && !kcTels_(c).some(function (t) { return kcCel8_(t) === c8; })) return;
-    if (!c8) { var nc = ' ' + kcNorm_(c.name) + ' '; if (!pal.length || !pal.every(function (w) { return nc.indexOf(' ' + w) >= 0; })) return; }
+    if (c8 && !kcTels_(c).some(function (t) { return qaTelEs_(t, c8); })) return;   // `query` busca en todo: el número se mira de nuevo
+    if (!c8) { var nc = ' ' + qaNorm_(c.name) + ' '; if (!pal.length || !pal.every(function (w) { return nc.indexOf(' ' + w + ' ') >= 0; })) return; }
     res.contactos++;
     if (cids.length >= QA_MAX_CONTACTOS) { res.masContactos = (res.masContactos || 0) + 1; return; }
-    var cid = String(c.id), tt = kcTels_(c).map(kcCel8_).filter(Boolean);
+    var cid = String(c.id), tt = kcTels_(c).map(function (t) { return String(t).replace(/\D/g, ''); }).filter(function (d) { return d.length >= 7; });
     cids.push(cid);
     t4[cid] = tt.length ? tt[0].slice(-4) : '';
-    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); if (ids.indexOf(id) < 0) { ids.push(id); cli[id] = String(c.name || '').slice(0, 60); cdeL[id] = cid; } });
+    cli[cid] = String(c.name || '').slice(0, 60);
+    var n = 0;
+    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); if (!cdeL[id]) { ids.push(id); cdeL[id] = cid; n++; } });
+    if (!n) res.sinLeads.push({ cli:cli[cid], t4:t4[cid] });
   });
   res.porNombre = !c8;
   if (!ids.length) return res;
-  var rl = kPedir_('get', '/leads?' + ids.slice(0, 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&limit=50');
-  if (rl.code !== 200 || !rl.o) { res.error = 'Kommo no contestó los leads (HTTP ' + rl.code + ')'; return res; }
-  var L = kEmb_(rl.o, 'leads').sort(function (a, b) { return (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0); });
-  var tope = c8 ? QA_MAX_LEADS : QA_MAX_LEADS_NOMBRE;
-  res.masLeads = Math.max(0, L.length - tope);
-  L = L.slice(0, tope);
-  var us = qaUsuarios_(), et = qaEtapas_(), desde = ahoraS - QA_HISTORIA_DIAS * 86400;
+  var L = [];
+  for (var k = 0; k < ids.length && k < 120; k += 40) {
+    var rl = kPedir_('get', '/leads?' + ids.slice(k, k + 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&limit=50');
+    if (rl.code === 204) continue;   // contacto sin leads vivos (Fable B4)
+    if (rl.code !== 200 || !rl.o) { res.error = 'Kommo no contestó los leads (HTTP ' + rl.code + ')'; return res; }
+    L = L.concat(kEmb_(rl.o, 'leads'));
+  }
+  L.sort(function (a, b) { return (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0); });
+  var antes = L.length;
+  if (c8) L = L.slice(0, QA_MAX_LEADS);
+  else { var cuenta = {}; L = L.filter(function (l) { var c = cdeL[String(l.id)]; cuenta[c] = (cuenta[c] || 0) + 1; return cuenta[c] <= QA_LEADS_POR_CLIENTE; }); }
+  res.masLeads = antes - L.length;
+  var us = qaUsuarios_(), et = qaEtapas_(), lim = ahoraS - QA_DIAS * 86400;
   function nom(u) { var x = us[String(u)]; return x ? x.n : (u ? 'usuario ' + u : ''); }
   function suc(u) { var x = us[String(u)]; return x ? x.s : ''; }
-  /* Las tareas ABIERTAS de esos leads (una fecha acordada y anotada = la excepción de los 15 días). Una sola consulta. */
-  var tareas = {};
-  var rt = kPedir_('get', '/tasks?filter[entity_type]=leads&' + L.map(function (l) { return 'filter[entity_id][]=' + encodeURIComponent(l.id); }).join('&') +
-                          '&filter[is_completed]=0&limit=100');
-  if (rt.code === 200 && rt.o) kEmb_(rt.o, 'tasks').forEach(function (t) {
-    var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
-    if (ts > ahoraS && (!tareas[id] || ts < tareas[id].ts)) tareas[id] = { ts:ts, quien:nom(t.responsible_user_id), txt:String(t.text || '').slice(0, 80) };
+  /* Las tareas ABIERTAS de esos leads y contactos con fecha futura (≤ QA_TAREA_MAX_DIAS) puestas por una PERSONA = la fecha acordada,
+     la excepción de los 15 días. Las del bot no (Fable M5). */
+  var tareas = {}, tareasC = {}, tope = ahoraS + QA_TAREA_MAX_DIAS * 86400;
+  [['leads', L.map(function (l) { return l.id; }), tareas], ['contacts', cids, tareasC]].forEach(function (x) {
+    if (!x[1].length) return;
+    var rt = kPedir_('get', '/tasks?filter[entity_type]=' + x[0] + '&' + x[1].map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
+                            '&filter[is_completed]=0&limit=250');
+    if (rt.code === 204) return;
+    if (rt.code !== 200 || !rt.o) { res.tareasOk = false; return; }
+    kEmb_(rt.o, 'tasks').forEach(function (t) {
+      var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
+      if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
+      if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
+    });
   });
-  var M = qaMensajes_(cids, desde);
-  res.msgOk = M.ok;
+  /* Los mensajes: lo que decide el cartel (los últimos QA_DIAS + 2 días) aparte de la historia, así una historia larga nunca deja afuera
+     lo reciente (Fable M4). */
+  var corte = ahoraS - (QA_DIAS + 2) * 86400;
+  var M = qaMensajes_(cids, corte, 0, QA_PAGINAS), Hh = qaMensajes_(cids, ahoraS - QA_HISTORIA_DIAS * 86400, corte - 1, 2);
+  res.msgOk = M.ok; res.histOk = Hh.ok; res.otros = M.otros + Hh.otros;
   L.forEach(function (l) {
-    var id = String(l.id), msgs = M.m[id] || [], par = qaPar_(msgs);
+    var id = String(l.id), msgs = (M.m[id] || []).concat(Hh.m[id] || []), pares = qaPares_(msgs, lim), cid = cdeL[id];
     var uIn = 0, uOut = null;
     msgs.forEach(function (m) {
       if (m.t === 'in' && m.ts > uIn) uIn = m.ts;
@@ -13427,12 +13476,14 @@ function qaCuenta_(q, marca, ahoraS) {
     });
     var e = et[String(l.pipeline_id) + '|' + String(l.status_id)] || {};
     res.leads.push({
-      id:id, n:String(l.name || '').slice(0, 60), cli:cli[id] || '', cid:cdeL[id] || '', t4:t4[cdeL[id]] || '',
+      id:id, cli:cli[cid] || '', t4:t4[cid] || '',
       resp:nom(l.responsible_user_id), suc:suc(l.responsible_user_id),
       et:e.n || '', emb:e.e || '', cerrado:String(l.status_id) === '142' ? 'ganado' : (String(l.status_id) === '143' ? 'perdido' : ''),
       creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:Number(l.closed_at) || 0,
-      ultCli:uIn, ultVend:uOut, par:par ? { ts:par.ts, quien:nom(par.u), suc:suc(par.u) } : null,
-      nMsg:msgs.length, msgOk:M.ok, tarea:tareas[id] || null
+      ultCli:uIn, ultVend:uOut,
+      par:pares.length ? { ts:pares[0].ts, quien:nom(pares[0].u), suc:suc(pares[0].u) } : null,
+      pares:pares.map(function (p) { return { ts:p.ts, desde:p.desde, quien:nom(p.u), suc:suc(p.u) }; }),
+      nMsg:msgs.length, tarea:tareas[id] || tareasC[cid] || null
     });
   });
   return res;
@@ -13446,42 +13497,56 @@ function qaHoja_() {
   }
   return sh;
 }
-/** Lo que se anota de cada consulta: una línea corta («Libre» / «Isabel Robledo: 14/11» …), sin datos del cliente. */
+/** ¿Kommo contestó TODO? Si no, ni el cartel ni la hoja pueden decir «Libre» (Fable A1). */
+function qaIncompleto_(out) {
+  return (out.cuentas || []).some(function (c) { return c.error || c.msgOk === false || c.tareasOk === false; });
+}
+/** Lo que se anota de cada consulta: una línea corta («Libre» / «Atiende: Isabel Robledo» / «No se pudo consultar…»), sin datos del cliente.
+    Misma regla que el cartel de la página (qaVeredicto). */
 function qaResumen_(out, ahoraS) {
-  var lim = ahoraS - QA_DIAS * 86400, quien = {};
+  var lim = ahoraS - QA_DIAS * 86400, quien = {}, compro = '';
   (out.cuentas || []).forEach(function (c) {
     (c.leads || []).forEach(function (l) {
-      var vale = (l.par && l.par.ts >= lim) || (l.tarea && l.tarea.ts > ahoraS);
-      if (vale) { var q = (l.par && l.par.ts >= lim) ? l.par.quien : (l.tarea.quien || l.resp); quien[q] = 1; }
+      if (l.cerrado === 'ganado') { if ((l.cierre || l.tocado) >= lim || (l.par && l.par.ts >= lim)) compro = l.resp || '(sin asignar)'; return; }
+      if (l.cerrado === 'perdido') return;
+      (l.pares || []).forEach(function (p) { if (p.ts >= lim) quien[p.quien || '(sin asignar)'] = 1; });
+      if (l.tarea && l.tarea.ts > ahoraS) quien[l.tarea.quien || l.resp || '(sin asignar)'] = 1;
     });
   });
-  var ks = Object.keys(quien);
-  return ks.length ? 'Atiende: ' + ks.join(', ') : 'Libre';
+  var ks = Object.keys(quien), inc = qaIncompleto_(out);
+  if (ks.length) return 'Atiende: ' + ks.join(', ') + (inc ? ' (Kommo no contestó todo)' : '');
+  if (inc) return 'No se pudo consultar todo en Kommo';
+  return compro ? 'Ya compró con ' + compro : 'Libre';
 }
-/** El nombre que se puede buscar: nombre y apellido (2 palabras de 2+ letras), sin números. '' si no alcanza. */
+/** El nombre que se puede buscar: nombre y apellido (2 palabras de 2+ letras, una de 3+), sin números. '' si no alcanza. */
 function qaNombre_(t) {
-  var n = kcNorm_(String(t == null ? '' : t)).replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
-  return n.split(' ').filter(function (w) { return w.length > 1; }).length >= 2 ? n.slice(0, 60) : '';
+  var n = qaNorm_(t).replace(/[0-9]/g, ' ').replace(/\s+/g, ' ').trim(), w = n.split(' ').filter(function (x) { return x.length > 1; });
+  return (w.length >= 2 && w.some(function (x) { return x.length >= 3; })) ? n.slice(0, 60) : '';
 }
 function quienAtiende_(body) {
   var c8 = kcCel8_(body && body.cel), nom = c8 ? '' : qaNombre_(body && body.nombre);
   if (!c8 && !nom) return { ok:false, error:(body && body.nombre) ? 'nombre' : 'cel', version:SCRIPT_VERSION };
   var ahoraS = Math.floor(Date.now() / 1000), cache = null, ck = c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_'), out = null;
-  try { cache = CacheService.getScriptCache(); var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) { cache = null; }
+  var quien = String((body && body.quien) || '').slice(0, 60);
+  try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+  /* Tope por persona y día (por el nombre que manda la página, o el aparato): no sirve para recorrer la cartera ajena (Fable M6). */
+  if (cache) {
+    var dia = Utilities.formatDate(new Date(), 'America/La_Paz', 'yyyyMMdd'), kt = 'qa_tope_' + dia + '_' + (qaNorm_(quien) || String(body && body.dev || 'x')).replace(/ /g, '_').slice(0, 40);
+    try { var n = Number(cache.get(kt)) || 0; if (n >= QA_TOPE_DIA) return { ok:false, error:'tope', tope:QA_TOPE_DIA, version:SCRIPT_VERSION }; cache.put(kt, String(n + 1), 86400); } catch (e) {}
+    try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) {}
+  }
   if (!out) {
     out = { ok:true, version:SCRIPT_VERSION, cel8:c8, nombre:nom, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
     [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
       KC_CTA = x[0];
-      try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom }, x[1], ahoraS)); }
+      try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:String((body && body.nombreOrig) || '').slice(0, 60) }, x[1], ahoraS)); }
       catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
       finally { KC_CTA = ''; }
     });
-    try { if (cache) cache.put(ck, JSON.stringify(out), QA_CACHE_SEG); } catch (e) {}
+    out.incompleto = qaIncompleto_(out);
+    try { if (cache && !out.incompleto) cache.put(ck, JSON.stringify(out), QA_CACHE_SEG); } catch (e) {}   // un error no se guarda (Fable A1)
   }
-  try {
-    var q = String((body && body.quien) || '').slice(0, 60);
-    qaHoja_().appendRow([new Date(), celdaTexto_(q), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]);
-  } catch (e) {}
+  try { qaHoja_().appendRow([new Date(), celdaTexto_(quien), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]); } catch (e) {}
   return out;
 }
 

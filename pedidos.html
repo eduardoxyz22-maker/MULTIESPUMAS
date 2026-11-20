@@ -4733,7 +4733,7 @@ function glSigue(){
       <div class="qa-cab"><b>📞 ¿Quién lo atiende?</b><span>Escribí el celular (o el nombre y apellido) del cliente y te digo si otra vendedora lo está atendiendo en Kommo.</span></div>
       <form class="qa-form" onsubmit="qaBuscar();return false" autocomplete="off">
         <label class="lb" for="qa-cel">Celular o nombre y apellido del cliente</label>
-        <div class="qa-fila"><input id="qa-cel" type="text" inputmode="tel" placeholder="Celular (71234567) o nombre y apellido" maxlength="24" oninput="qaEscribe()"><button type="submit" id="qa-btn" class="btn btn-primary">🔎 Buscar</button></div>
+        <div class="qa-fila"><input id="qa-cel" type="text" inputmode="text" placeholder="Celular (71234567) o nombre y apellido" maxlength="60" oninput="qaEscribe()"><button type="submit" id="qa-btn" class="btn btn-primary">🔎 Buscar</button></div>
       </form>
       <div id="qa-res"></div>
       <details class="qa-regla"><summary>📜 La regla (Comunicación Interna 032-2026)</summary>
@@ -4741,7 +4741,7 @@ function glSigue(){
           <li>Una vendedora tiene la oportunidad mientras haya <b>conversado con el cliente en los últimos <span class="qa-dias">15</span> días</b>.</li>
           <li><b>Conversar</b> = un mensaje del cliente y uno de la vendedora con <b>no más de 24 horas</b> entre los dos. Un mensaje solo (el cliente escribió y nadie contestó, o la vendedora escribió y el cliente no contestó) no cuenta. Las respuestas del bot tampoco.</li>
           <li><b>Excepción:</b> una fecha acordada y anotada en Kommo como tarea (compra el mes que viene, espera la reposición, una entrega agendada…) la mantiene aunque pasen los 15 días. La vendedora tiene que hacer el seguimiento acordado.</li>
-          <li>Que pasen los 15 días <b>no pasa la venta a otra</b> automáticamente; un mensaje de último momento tampoco revive la oportunidad. Crear la ficha primero, tener el contacto asignado o haberlo atendido en otra compra no da derecho por sí solo.</li>
+          <li>Que pasen los 15 días <b>no pasa la venta a otra</b> automáticamente; un mensaje suelto de último momento (sin respuesta del cliente) tampoco revive la oportunidad. Un lead marcado como perdido no retiene a nadie. Crear la ficha primero, tener el contacto asignado o haberlo atendido en otra compra no da derecho por sí solo.</li>
         </ul>
         <p>Cada búsqueda queda anotada (quién buscó, cuándo y qué le salió).</p>
       </details>
@@ -42532,7 +42532,7 @@ function practicaEs(p){ return !!(window.PRACTICA && p && p.id!=null && practica
 function practicaMarca(p){ return practicaEs(p) ? '<span class="pr-chip" title="Cargado o cambiado en el modo práctica: no está en la planilla">🧪</span>' : ''; }
 function practicaEsLectura(payload){ var a=String((payload && payload.action) || 'save'); return !!(window.PRACTICA_LECTURAS && window.PRACTICA_LECTURAS[a]); }
 /* Lo que contesta «el servidor» en práctica. Nada sale a la red. */
-var PR_SIN_IA={ bloki:1, leerNota:1, iaComprobantes:1, compsCarpeta:1, kommoCierre:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1 };   // lo que gasta crédito o escribe afuera: un «no» claro
+var PR_SIN_IA={ bloki:1, leerNota:1, iaComprobantes:1, compsCarpeta:1, kommoCierre:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1, quienAtiende:1 };   // lo que gasta crédito o escribe afuera: un «no» claro
 var PR_CONTADOR={};
 function practicaResponder(payload){
   var act=String((payload && payload.action) || 'save'), r;
@@ -71963,7 +71963,7 @@ function qaMismo(a, b){
   return cor.every(function(w){ return lar.indexOf(w)>=0; });
 }
 /** Nombre y apellido para buscar (= qaNombre_ del .gs): 2 palabras de 2+ letras, sin números. '' si no alcanza. */
-function qaNombreBusca(t){ var n=sinTildes(t).replace(/ñ/g,'n').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(); return n.split(' ').filter(function(w){ return w.length>1; }).length>=2 ? n.slice(0,60) : ''; }
+function qaNombreBusca(t){ var n=sinTildes(t).replace(/ñ/g,'n').replace(/ç/g,'c').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim(), w=n.split(' ').filter(function(x){ return x.length>1; }); return (w.length>=2 && w.some(function(x){ return x.length>=3; })) ? n.slice(0,60) : ''; }
 function qaYo(){ try{ return getVendedorMem()||''; }catch(e){ return ''; } }
 function qaFecha(ts){ return ts ? fmtFechaCorta(isoDeTsBolivia(ts*1000))+' '+hhmmDeTs(ts*1000) : ''; }
 function qaHace(ts, ahora){   // días de CALENDARIO en Bolivia (17/11 12:00 visto el 20/11 = hace 3 días)
@@ -71977,101 +71977,135 @@ function qaPanelPedidos(c8, nom){
   return (STATE||[]).filter(function(p){
     if(!p || (typeof esFilaSistema==='function' && esFilaSistema(p)) || String(p.id||'').indexOf('__')===0) return false;
     if(c8){ if(qaCel8(p.celular)!==c8) return false; }
-    else { var cn=' '+qaNombreBusca(p.cliente+' x')+' '; if(!pal.length || !pal.every(function(w){ return cn.indexOf(' '+w)>=0; })) return false; }
+    else { var cn=' '+sinTildes(p.cliente).replace(/ñ/g,'n').replace(/ç/g,'c').replace(/[^a-z ]/g,' ').replace(/\s+/g,' ').trim()+' '; if(!pal.length || !pal.every(function(w){ return cn.indexOf(' '+w+' ')>=0; })) return false; }
     return (Number(p.ts)||0)>=lim || String(p.fecha||'')>=isoDeTsBolivia(lim);
   }).sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
 }
-/** El cartel, con la regla. Entra la respuesta del servidor; sale {k:'libre'|'tuyo'|'otro'|'compro', quien:[{n, por, ts}], ultimo}. */
+/** ¿Kommo contestó TODO? (= qaIncompleto_ del .gs) Si no, el cartel nunca dice «Libre» en verde (revisión de Fable, A1). */
+function qaIncompleto(r){ return ((r && r.cuentas)||[]).some(function(c){ return c.error || c.msgOk===false || c.tareasOk===false; }); }
+function qaN(n){ return String(n||'').trim() || '(sin asignar)'; }
+/** El cartel, con la regla (= qaResumen_ del .gs). Entra la respuesta del servidor (o la parte de UN cliente); sale
+    {k:'libre'|'tuyo'|'otro'|'compro'|'nose', quien:[{n, por:'conv'|'fecha', ts, desde}], otros, compro, ultimo, inc}.
+    · Cada vendedora que conversó en la ventana cuenta, aunque sea en el MISMO lead (Fable A4), con desde cuándo (`desde`).
+    · La fecha acordada (tarea abierta de una persona) cuenta aunque haya conversación de otra.
+    · Un lead PERDIDO no retiene a nadie; uno GANADO hace poco = «ya compró» (Fable M7).
+    · Si Kommo no contestó todo y no aparece nadie: «no se pudo saber», nunca «libre». */
 function qaVeredicto(r, yo){
-  var ahora=Number(r && r.ahora)||Math.floor(Date.now()/1000), lim=ahora-QA_DIAS*86400, vig=[], compro=null, ultimo=null;
+  var ahora=Number(r && r.ahora)||Math.floor(Date.now()/1000), lim=ahora-QA_DIAS*86400, vig=[], compro=null, ultimo=null, inc=qaIncompleto(r);
   ((r && r.cuentas)||[]).forEach(function(c){
     (c.leads||[]).forEach(function(l){
-      if(l.par && (!ultimo || l.par.ts>ultimo.ts)) ultimo={ ts:l.par.ts, n:l.par.quien, marca:c.marca };
-      if(l.par && l.par.ts>=lim) vig.push({ n:l.par.quien, por:'conv', ts:l.par.ts, marca:c.marca, et:l.et });
-      else if(l.tarea && l.tarea.ts>ahora) vig.push({ n:l.tarea.quien||l.resp, por:'fecha', ts:l.tarea.ts, marca:c.marca, et:l.et });
-      if(l.cerrado==='ganado' && (l.cierre||l.tocado)>=lim && (!compro || (l.cierre||l.tocado)>compro.ts)) compro={ n:l.resp, ts:l.cierre||l.tocado, marca:c.marca };
+      var pares=l.pares || (l.par ? [{ ts:l.par.ts, desde:l.par.ts>=lim ? l.par.ts : 0, quien:l.par.quien }] : []);
+      pares.forEach(function(p){ if(!ultimo || p.ts>ultimo.ts) ultimo={ ts:p.ts, n:qaN(p.quien), marca:c.marca }; });
+      if(l.cerrado==='ganado'){
+        var tc=Math.max(l.cierre||l.tocado||0, pares.length ? pares[0].ts : 0);
+        if(tc>=lim && (!compro || tc>compro.ts)) compro={ n:qaN(l.resp), ts:tc, marca:c.marca };
+        return;
+      }
+      if(l.cerrado==='perdido') return;
+      pares.forEach(function(p){ if(p.ts>=lim) vig.push({ n:qaN(p.quien), por:'conv', ts:p.ts, desde:p.desde||p.ts, marca:c.marca, et:l.et }); });
+      if(l.tarea && l.tarea.ts>ahora) vig.push({ n:qaN(l.tarea.quien||l.resp), por:'fecha', ts:l.tarea.ts, desde:0, marca:c.marca, et:l.et });
     });
   });
-  /* una sola línea por vendedora: la conversación más nueva gana sobre la fecha acordada */
-  var por={}; vig.forEach(function(v){ var k=qaNom(v.n); if(!por[k] || (v.por==='conv' && (por[k].por!=='conv' || v.ts>por[k].ts))) por[k]=v; });
-  var quien=Object.keys(por).map(function(k){ return por[k]; }).sort(function(a,b){ return (a.por==='conv'?0:1)-(b.por==='conv'?0:1) || b.ts-a.ts; });
+  /* una sola línea por vendedora: la conversación gana sobre la fecha acordada; de la conversación, la más nueva y la primera */
+  var por={}; vig.forEach(function(v){
+    var k=qaNom(v.n), o=por[k];
+    if(!o){ por[k]=v; return; }
+    if(v.por==='conv' && o.por!=='conv'){ por[k]=v; return; }
+    if(v.por==='conv' && o.por==='conv'){ o.ts=Math.max(o.ts, v.ts); o.desde=Math.min(o.desde||v.desde, v.desde||o.desde); }
+  });
+  var quien=Object.keys(por).map(function(k){ return por[k]; }).sort(function(a,b){ return (a.por==='conv'?0:1)-(b.por==='conv'?0:1) || (a.desde||a.ts)-(b.desde||b.ts); });
   var otros=quien.filter(function(v){ return !yo || !qaMismo(v.n, yo); });
-  var k = !quien.length ? (compro ? 'compro' : 'libre') : (otros.length ? 'otro' : 'tuyo');
-  return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora };
+  var k = quien.length ? (otros.length ? 'otro' : 'tuyo') : (compro ? 'compro' : (inc ? 'nose' : 'libre'));
+  return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora, inc:inc };
 }
 function qaBuscar(){
   var i=document.getElementById('qa-cel'), v=i ? i.value : '', c8=qaCel8(v), nom=(!c8 && !/\d/.test(v)) ? qaNombreBusca(v) : '';
   if(!c8 && !nom){ QA.r=null; QA.err=/\d/.test(v) ? 'Escribí el celular completo (8 números; con o sin 591).' : 'Escribí el celular, o el nombre Y el apellido del cliente (con uno solo salen demasiados).'; qaPintar(); return; }
   QA.c8=c8; QA.nom=nom; QA.err=''; QA.r=null;
   if(!servidorTiene(QA_SERVIDOR)){ QA.err='sinsrv'; qaPintar(); return; }
+  if(window.PRACTICA){ QA.err='En el Modo práctica no se le pregunta a Kommo: salí de la práctica para buscar.'; qaPintar(); return; }   // Fable A2
   QA.busy=true; var g=++QA.gen; qaPintar();
-  conTopeDuro(apiPost({ action:'quienAtiende', cel:c8, nombre:nom, quien:qaYo() }), 45000, 'tardo').then(function(r){
+  conTopeDuro(apiPost({ action:'quienAtiende', cel:c8, nombre:nom, nombreOrig:nom ? String(v).trim().slice(0,60) : '', quien:qaYo() }), 60000, 'tardo').then(function(r){
     if(g!==QA.gen) return;
     QA.busy=false;
-    if(!r || r.ok===false){ QA.err=(r && r.error==='cel') ? 'Ese número no se entiende.' : (r && r.error==='nombre') ? 'Escribí el nombre Y el apellido.' : ('Kommo no contestó'+(r && r.error ? ' ('+String(r.error)+')' : '')+'. Probá de nuevo en un rato.'); }
+    if(!r || r.ok===false || !Array.isArray(r.cuentas)){
+      QA.err=(r && r.error==='cel') ? 'Ese número no se entiende.' : (r && r.error==='nombre') ? 'Escribí el nombre Y el apellido.' :
+             (r && r.error==='tope') ? ('Llegaste a las '+(r.tope||'')+' búsquedas de hoy. Mañana se puede de nuevo.') :
+             (r && r.error==='practica') ? 'En el Modo práctica no se le pregunta a Kommo.' :
+             ('Kommo no contestó'+(r && r.error ? ' ('+String(r.error)+')' : '')+'. Probá de nuevo en un rato.');
+    }
     else QA.r=r;
     qaPintar();
-  }).catch(function(e){ if(g!==QA.gen) return; QA.busy=false; QA.err='No hay conexión con el panel ('+(motivoDeError ? motivoDeError(e) : String(e&&e.message||e))+').'; qaPintar(); });
+  }).catch(function(e){ if(g!==QA.gen) return; QA.busy=false; QA.err='No se pudo terminar la búsqueda ('+(typeof motivoDeError==='function' ? motivoDeError(e) : String(e&&e.message||e))+'). Probá de nuevo.'; qaPintar(); });
 }
 var QA_MARCA={ heaven:'Heaven', suena:'Sueña' };
 function qaLeadHtml(l, marca, r){
-  var ahora=r.ahora, lim=ahora-QA_DIAS*86400, vale=l.par && l.par.ts>=lim;
-  var est=l.cerrado==='ganado' ? '<span class="qa-chip qa-ok">✅ Compró</span>' : (l.cerrado==='perdido' ? '<span class="qa-chip qa-gris">✖ Perdido</span>' : '');
-  var filas=[];
-  filas.push('<div class="qa-l-f"><span>💬 Última conversación</span><b>'+(l.par ? esc(qaFecha(l.par.ts))+' · '+esc(l.par.quien)+' <small>('+qaHace(l.par.ts, ahora)+')</small> '+(vale?'<span class="qa-chip qa-vale">vale</span>':'<span class="qa-chip qa-gris">pasaron '+QA_DIAS+' días</span>') : '<span class="qa-gris-t">ninguna en '+60+' días (cliente y vendedora a ≤ '+QA_PAR_H+' h)</span>')+'</b></div>');
+  var ahora=r.ahora, lim=ahora-QA_DIAS*86400, vale=l.cerrado!=='perdido' && l.cerrado!=='ganado' && ((l.par && l.par.ts>=lim) || (l.tarea && l.tarea.ts>ahora));
+  var est=l.cerrado==='ganado' ? '<span class="qa-chip qa-ok">✅ Compró</span>' : (l.cerrado==='perdido' ? '<span class="qa-chip qa-gris">✖ Perdido: no retiene</span>' : '');
+  var pares=(l.pares||[]).filter(function(p){ return p.ts>=lim; }), filas=[];
+  filas.push('<div class="qa-l-f"><span>💬 Última conversación</span><b>'+(l.par ? esc(qaFecha(l.par.ts))+' · '+esc(qaN(l.par.quien))+' <small>('+qaHace(l.par.ts, ahora)+')</small> '+(l.par.ts>=lim?'<span class="qa-chip qa-vale">vale</span>':'<span class="qa-chip qa-gris">pasaron '+QA_DIAS+' días</span>') : '<span class="qa-gris-t">ninguna en 60 días (cliente y vendedora a ≤ '+QA_PAR_H+' h)</span>')+'</b></div>');
+  if(pares.length>1) filas.push('<div class="qa-l-f"><span>👥 Conversaron en estos '+QA_DIAS+' días</span><b>'+pares.slice().sort(function(a,b){ return (a.desde||a.ts)-(b.desde||b.ts); }).map(function(p, i){ return esc(qaN(p.quien))+' <small>(desde el '+esc(fmtFechaCorta(isoDeTsBolivia((p.desde||p.ts)*1000)))+(i===0?', primera':'')+')</small>'; }).join(' · ')+'</b></div>');
   filas.push('<div class="qa-l-f"><span>🙋 Último mensaje del cliente</span><b>'+(l.ultCli ? esc(qaFecha(l.ultCli))+' <small>('+qaHace(l.ultCli, ahora)+')</small>' : '—')+'</b></div>');
-  filas.push('<div class="qa-l-f"><span>👩‍💼 Último mensaje de una vendedora</span><b>'+(l.ultVend ? esc(qaFecha(l.ultVend.ts))+' · '+esc(l.ultVend.quien)+' <small>('+qaHace(l.ultVend.ts, ahora)+')</small>' : '—')+'</b></div>');
-  if(l.tarea) filas.push('<div class="qa-l-f"><span>📅 Fecha acordada (tarea)</span><b>'+esc(fmtFechaCorta(isoDeTsBolivia(l.tarea.ts*1000)))+' · '+esc(l.tarea.quien||'')+(l.tarea.txt?' <small>«'+esc(l.tarea.txt)+'»</small>':'')+'</b></div>');
-  if(l.msgOk===false) filas.push('<div class="qa-l-f qa-ojo"><span>⚠️</span><b>Kommo no devolvió todos los mensajes de este lead: lo de arriba puede estar incompleto.</b></div>');
+  filas.push('<div class="qa-l-f"><span>👩‍💼 Último mensaje de una vendedora</span><b>'+(l.ultVend ? esc(qaFecha(l.ultVend.ts))+' · '+esc(qaN(l.ultVend.quien))+' <small>('+qaHace(l.ultVend.ts, ahora)+')</small>' : '—')+'</b></div>');
+  if(l.tarea) filas.push('<div class="qa-l-f"><span>📅 Fecha acordada (tarea en Kommo)</span><b>'+esc(fmtFechaCorta(isoDeTsBolivia(l.tarea.ts*1000)))+' · '+esc(qaN(l.tarea.quien))+(l.tarea.puso && l.tarea.puso!==l.tarea.quien?' <small>(la puso '+esc(l.tarea.puso)+')</small>':'')+'</b></div>');
   return '<div class="qa-lead'+(vale?' qa-lead-vale':'')+'">'+
     '<div class="qa-l-cab"><span class="qa-chip qa-m-'+esc(marca)+'">'+esc(QA_MARCA[marca]||marca)+'</span><b>'+esc(l.cli||l.n||'(sin nombre)')+'</b>'+(l.t4?'<span class="qa-cel4">📱 …'+esc(l.t4)+'</span>':'')+est+'</div>'+
-    '<div class="qa-l-sub">'+esc([l.et && ('Etapa «'+l.et+'»'), l.resp && ('Asignado a '+l.resp+(l.suc?' ('+l.suc+')':'')), l.creado && ('creado el '+fmtFechaCorta(isoDeTsBolivia(l.creado*1000)))].filter(Boolean).join(' · '))+'</div>'+
+    '<div class="qa-l-sub">'+esc([l.et && ('Etapa «'+l.et+'»'), 'Asignado a '+qaN(l.resp)+(l.suc?' ('+l.suc+')':''), l.creado && ('creado el '+fmtFechaCorta(isoDeTsBolivia(l.creado*1000)))].filter(Boolean).join(' · '))+'</div>'+
     filas.join('')+'</div>';
+}
+function qaCartel(V, chico){
+  var cls=chico?' qa-ver-chico':'', U=V.ultimo, fc=function(ts){ return esc(fmtFechaCorta(isoDeTsBolivia(ts*1000))); };
+  var ojoInc=V.inc ? ' <i>Ojo: Kommo no contestó todo; puede haber más.</i>' : '';
+  if(V.k==='nose') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">❓</div><div><b>No se pudo saber</b><span>Kommo no contestó todo (la búsqueda, los mensajes o las tareas). No es «libre»: probá de nuevo en un rato.</span></div></div>';
+  if(V.k==='libre') return '<div class="qa-ver qa-v-libre'+cls+'"><div class="qa-v-ic">✅</div><div><b>Libre: nadie lo está atendiendo</b><span>En los últimos '+QA_DIAS+' días no hubo conversación (cliente y vendedora a ≤ '+QA_PAR_H+' h) ni una fecha acordada en Kommo.'+(U?' La última fue con <b>'+esc(U.n)+'</b> el '+esc(qaFecha(U.ts))+' ('+qaHace(U.ts, V.ahora)+').':'')+'</span></div></div>';
+  if(V.k==='compro') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">🛒</div><div><b>Ya compró con '+esc(V.compro.n)+'</b><span>El lead quedó ganado hace poco ('+esc(qaFecha(V.compro.ts))+', '+qaHace(V.compro.ts, V.ahora)+'). Si es una compra nueva, hablalo con tu encargado.'+ojoInc+'</span></div></div>';
+  var linea=function(q){ return q.por==='conv' ? esc(q.n)+': conversa desde el '+fc(q.desde||q.ts)+', la última el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')' : esc(q.n)+': fecha acordada para el '+fc(q.ts); };
+  if(V.k==='tuyo') return '<div class="qa-ver qa-v-tuyo'+cls+'"><div class="qa-v-ic">👍</div><div><b>Lo estás atendiendo vos</b><span>'+V.quien.map(function(q){ return q.por==='conv' ? 'Última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+')' : 'Fecha acordada para el '+fc(q.ts)+': hacé el seguimiento'; }).join(' · ')+'.'+ojoInc+'</span></div></div>';
+  var yoV=V.quien.filter(function(q){ return V.otros.indexOf(q)<0; });
+  return '<div class="qa-ver qa-v-otro'+cls+'"><div class="qa-v-ic">⚠️</div><div><b>Lo está atendiendo '+V.otros.map(function(q){ return esc(q.n); }).join(' y ')+(yoV.length?' (y vos)':'')+'</b><span>'+V.quien.map(linea).join(' · ')+'. Antes de atenderlo, hablalo con '+(V.otros.length>1?'ellas':esc(V.otros[0].n.split(' ')[0]))+' o con tu encargado.'+ojoInc+'</span></div></div>';
 }
 function qaPintar(){
   var box=document.getElementById('qa-res'); if(!box) return;
   document.querySelectorAll('.qa-dias').forEach(function(e){ e.textContent=QA_DIAS; });
   var b=document.getElementById('qa-btn'); if(b){ b.disabled=QA.busy; b.textContent=QA.busy?'⏳ Buscando…':'🔎 Buscar'; }
-  if(QA.busy){ box.innerHTML='<div class="qa-cargando">⏳ Preguntándole a Kommo por <b>'+(QA.c8?'el …'+esc(QA.c8.slice(-4)):'«'+esc(QA.nom.toUpperCase())+'»')+'</b> (contactos, leads y mensajes de los últimos 60 días). Tarda unos segundos.</div>'; return; }
+  if(QA.busy){ box.innerHTML='<div class="qa-cargando">⏳ Preguntándole a Kommo por <b>'+(QA.c8?'el …'+esc(QA.c8.slice(-4)):'«'+esc(QA.nom.toUpperCase())+'»')+'</b> (contactos, leads, mensajes y tareas). Tarda unos segundos.</div>'; return; }
   var html='';
   if(QA.err && QA.err!=='sinsrv') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">⚠️</div><div><b>'+esc(QA.err)+'</b></div></div>';
-  if(QA.err==='sinsrv') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">🛠️</div><div><b>Para preguntarle a Kommo falta una versión nueva del servidor del panel</b> ('+esc(QA_SERVIDOR)+'). Mientras tanto, abajo está lo que el panel ya sabe de ese número.</div></div>';
+  if(QA.err==='sinsrv') html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">🛠️</div><div><b>Para preguntarle a Kommo falta una versión nueva del servidor del panel</b> ('+esc(QA_SERVIDOR)+'). Mientras tanto, abajo está lo que el panel ya sabe.</div></div>';
   var r=QA.r, yo=qaYo();
   if(r){
-    /* Por NOMBRE puede haber varios clientes que se llaman igual: cada uno (= cada contacto de Kommo, con el final de su número) con su cartel. */
+    /* Por NOMBRE puede haber varios clientes que se llaman igual: cada uno (por el final de su celular; el mismo en Heaven y en Sueña es UNO,
+       Fable M1) con su cartel. */
     var grupos=[], porC={};
     (r.cuentas||[]).forEach(function(c){
       if(c.error) html+='<div class="qa-nota qa-ojo">⚠️ Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+': '+esc(c.error)+'</div>';
-      (c.leads||[]).forEach(function(l){
-        var k=r.nombre ? (c.marca+'|'+(l.cid||l.id)) : 'uno';
+      else if(c.msgOk===false) html+='<div class="qa-nota qa-ojo">⚠️ Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' no devolvió todos los mensajes: puede faltar una conversación.</div>';
+      if(c.tareasOk===false) html+='<div class="qa-nota qa-ojo">⚠️ Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' no devolvió las tareas: puede faltar una fecha acordada.</div>';
+      if(c.sinToken) html+='<div class="qa-nota">ℹ️ El Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' no se consultó (el servidor no tiene su acceso).</div>';
+      (c.leads||[]).forEach(function(l, li){
+        var k=r.nombre ? (l.t4 || (c.marca+'|'+(l.cli||li))) : 'uno';
         if(!porC[k]){ porC[k]={ k:k, t4:l.t4, cli:l.cli, cuentas:{} }; grupos.push(porC[k]); }
-        (porC[k].cuentas[c.marca]=porC[k].cuentas[c.marca]||{ marca:c.marca, leads:[] }).leads.push(l);
+        (porC[k].cuentas[c.marca]=porC[k].cuentas[c.marca]||{ marca:c.marca, leads:[], msgOk:c.msgOk, tareasOk:c.tareasOk, error:c.error }).leads.push(l);
       });
     });
     var varios=r.nombre && grupos.length>1;
     if(varios) html+='<div class="qa-ver qa-v-ojo"><div class="qa-v-ic">👥</div><div><b>Hay '+grupos.length+' clientes que se llaman «'+esc(QA.nom.toUpperCase())+'»</b><span>Son personas distintas (cada una con su número). Fijate el <b>final del celular</b> para saber cuál es el tuyo, o buscalo por el celular.</span></div></div>';
     if(r.nombre && grupos.length===1) html+='<div class="qa-nota">Encontré <b>un</b> cliente con ese nombre'+(grupos[0].t4?' (celular terminado en …'+esc(grupos[0].t4)+')':'')+'. Si el de tu cliente termina distinto, es otra persona: buscalo por el celular.</div>';
     var unR=function(G){ return { ahora:r.ahora, cuentas:Object.keys(G.cuentas).map(function(m){ return G.cuentas[m]; }) }; };
-    var cartel=function(V, chico){
-      var cls=chico?' qa-ver-chico':'', U=V.ultimo;
-      if(V.k==='libre') return '<div class="qa-ver qa-v-libre'+cls+'"><div class="qa-v-ic">✅</div><div><b>Libre: nadie lo está atendiendo</b><span>En los últimos '+QA_DIAS+' días no hubo conversación (cliente y vendedora a ≤ '+QA_PAR_H+' h) ni una fecha acordada en Kommo.'+(U?' La última fue con <b>'+esc(U.n)+'</b> el '+esc(qaFecha(U.ts))+' ('+qaHace(U.ts, V.ahora)+').':'')+'</span></div></div>';
-      if(V.k==='compro') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">🛒</div><div><b>Ya compró con '+esc(V.compro.n)+'</b><span>El lead quedó ganado el '+esc(qaFecha(V.compro.ts))+' ('+qaHace(V.compro.ts, V.ahora)+'). Si es una compra nueva, hablalo con tu encargado.</span></div></div>';
-      if(V.k==='tuyo') return '<div class="qa-ver qa-v-tuyo'+cls+'"><div class="qa-v-ic">👍</div><div><b>Lo estás atendiendo vos</b><span>'+V.quien.map(function(q){ return q.por==='conv' ? 'Última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+')' : 'Fecha acordada para el '+esc(fmtFechaCorta(isoDeTsBolivia(q.ts*1000)))+': hacé el seguimiento'; }).join(' · ')+'.</span></div></div>';
-      return '<div class="qa-ver qa-v-otro'+cls+'"><div class="qa-v-ic">⚠️</div><div><b>Lo está atendiendo '+V.otros.map(function(q){ return esc(q.n); }).join(' y ')+'</b><span>'+V.otros.map(function(q){ return q.por==='conv' ? esc(q.n)+': última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+esc(fmtFechaCorta(isoDeTsBolivia((q.ts+QA_DIAS*86400)*1000)))+')' : esc(q.n)+': fecha acordada para el '+esc(fmtFechaCorta(isoDeTsBolivia(q.ts*1000))); }).join(' · ')+'. Antes de atenderlo, hablalo con '+(V.otros.length>1?'ellas':esc(V.otros[0].n.split(' ')[0]))+' o con tu encargado.</span></div></div>';
-    };
-    if(!varios){ html+=cartel(qaVeredicto(r, yo), false); }
+    if(!varios) html+=qaCartel(qaVeredicto(r, yo), false);
     if(!yo) html+='<div class="qa-nota">💡 Elegí tu nombre en «¿Quién está usando el panel?» para que te diga si sos vos.</div>';
     grupos.forEach(function(G, gi){
       var leadsHtml='';
       Object.keys(G.cuentas).forEach(function(m){ G.cuentas[m].leads.forEach(function(l){ leadsHtml+=qaLeadHtml(l, m, r); }); });
-      if(varios) html+='<div class="qa-grupo"><div class="qa-grupo-t">Cliente '+(gi+1)+' · '+esc(G.cli||'')+(G.t4?' · <span class="qa-cel4">📱 celular terminado en …'+esc(G.t4)+'</span>':'')+'</div>'+cartel(qaVeredicto(unR(G), yo), true)+leadsHtml+'</div>';
+      if(varios) html+='<div class="qa-grupo"><div class="qa-grupo-t">Cliente '+(gi+1)+' · '+esc(G.cli||'')+(G.t4?' · <span class="qa-cel4">📱 celular terminado en …'+esc(G.t4)+'</span>':'')+'</div>'+qaCartel(qaVeredicto(unR(G), yo), true)+leadsHtml+'</div>';
       else html+=leadsHtml;
     });
     (r.cuentas||[]).forEach(function(c){
       if(c.masLeads) html+='<div class="qa-nota">… y '+c.masLeads+' lead'+(c.masLeads>1?'s':'')+' más viejos en '+esc(QA_MARCA[c.marca]||c.marca)+'.</div>';
       if(c.masContactos) html+='<div class="qa-nota">… y '+c.masContactos+' cliente'+(c.masContactos>1?'s':'')+' más con ese nombre en '+esc(QA_MARCA[c.marca]||c.marca)+': buscalo por el celular.</div>';
+      (c.sinLeads||[]).forEach(function(x){ html+='<div class="qa-nota">· '+esc(x.cli||'')+(x.t4?' (…'+esc(x.t4)+')':'')+' está en Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' sin ningún lead.</div>'; });
     });
-    if(!grupos.length) html+='<div class="qa-nota">'+(r.nombre?'Ningún contacto de Kommo se llama así':'Ese número no está en ningún contacto de Kommo')+((r.cuentas||[]).some(function(c){ return c.sinToken; })?' (de Sueña no hay acceso todavía)':'')+'.</div>';
+    if(!grupos.length && !qaIncompleto(r)) html+='<div class="qa-nota">'+(r.nombre?'Ningún contacto de Kommo se llama así':'Ese número no está en ningún contacto de Kommo')+'.</div>';
   }
   if((QA.c8 || QA.nom) && (r || QA.err==='sinsrv')){
     var P=qaPanelPedidos(QA.c8, QA.nom);
@@ -72080,7 +72114,7 @@ function qaPintar(){
         return '<div class="qa-p"><b>'+esc(ocEtiq(p.oc)||'pedido')+'</b><span>'+esc([p.cliente, qaCel8(p.celular)?('📱 …'+qaCel8(p.celular).slice(-4)):'', p.vendedor, p.ts?('cargado el '+fmtFechaCorta(isoDeTsBolivia(p.ts))):'', p.fecha?('entrega '+fmtFechaCorta(p.fecha)):''].filter(Boolean).join(' · '))+'</span></div>';
       }).join('')+(P.length>6?'<div class="qa-nota">… y '+(P.length-6)+' más.</div>':'') : '<div class="qa-nota">Ningún pedido con '+(QA.c8?'ese celular':'ese nombre')+'.</div>')+'</div>';
   }
-  if(!html) html='<div class="qa-vacio">Escribí un celular y tocá <b>🔎 Buscar</b>.</div>';
+  if(!html) html='<div class="qa-vacio">Escribí un celular (o nombre y apellido) y tocá <b>🔎 Buscar</b>.</div>';
   box.innerHTML=html;
 }
 window.addEventListener('load', function(){ try{ qaTabPintar(); }catch(e){} });

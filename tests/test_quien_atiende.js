@@ -41,7 +41,7 @@ function kommo() {
   return { K, contacto, lead, ev };
 }
 
-function cargar(K, props) {
+function cargar(K, props, falla) {
   props = Object.assign({ KOMMO_TOKEN:'tok-inventado' }, props || {});
   const hojas = {}, llamadas = [], lock = { veces:0 };
   const hoja = (n) => hojas[n] = hojas[n] || { filas:[], appendRow(r) { this.filas.push(r); }, getRange:() => ({ setFontWeight(){}, setNumberFormat(){} }), setFrozenRows(){} };
@@ -64,6 +64,7 @@ function cargar(K, props) {
       const metodo = String(op.method || 'get').toLowerCase(), ruta = url.split('/api/v4')[1] || '', p = ruta.split('?')[0], q = qs(ruta);
       llamadas.push({ metodo, p, q, host:url.split('/api/v4')[0] });
       if (metodo !== 'get') return resp(405, {});
+      if (falla && falla(p)) return resp(falla(p), { title:'no' });
       if (p === '/users') return resp(200, K.usuarios);
       if (p === '/leads/pipelines') return resp(200, K.pipelines);
       if (p === '/contacts') {
@@ -73,14 +74,14 @@ function cargar(K, props) {
       }
       if (p === '/leads') { const L = (q['filter[id][]'] || []).map(i => K.leads[i]).filter(Boolean); return L.length ? resp(200, { _embedded:{ leads:L } }) : resp(204, null); }
       if (p === '/events') {
-        const ent = (q['filter[entity][]'] || [])[0], ids = q['filter[entity_id][]'] || [], tipos = q['filter[type][]'] || [], desde = Number((q['filter[created_at][from]'] || ['0'])[0]);
+        const ent = (q['filter[entity][]'] || [])[0], ids = q['filter[entity_id][]'] || [], tipos = q['filter[type][]'] || [], desde = Number((q['filter[created_at][from]'] || ['0'])[0]), hasta = Number((q['filter[created_at][to]'] || ['0'])[0]) || 9e12;
         if (ent !== 'contact') return resp(204, null);   // como Kommo de verdad: por el lead, nada
-        const E = K.eventos.filter(e => ids.indexOf(String(e.c)) >= 0 && tipos.indexOf(e.type) >= 0 && e.created_at >= desde).sort((a, b) => b.created_at - a.created_at);
+        const E = K.eventos.filter(e => ids.indexOf(String(e.c)) >= 0 && tipos.indexOf(e.type) >= 0 && e.created_at >= desde && e.created_at <= hasta).sort((a, b) => b.created_at - a.created_at);
         return E.length ? resp(200, { _embedded:{ events:E } }) : resp(204, null);
       }
       if (p === '/tasks') {
         const ids = q['filter[entity_id][]'] || [];
-        const T = K.tareas.filter(t => ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed);
+        const et = (q['filter[entity_type]'] || ['leads'])[0], T = K.tareas.filter(t => (t.entity_type || 'leads') === et && ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed);
         return T.length ? resp(200, { _embedded:{ tasks:T } }) : resp(204, null);
       }
       return resp(404, {});
@@ -109,8 +110,8 @@ function servidor() {
   k.ev(61, 72, 'outgoing_chat_message', S - 20 * D + 31 * H, 0);         // el bot contesta: tampoco
   k.ev(62, 79, 'incoming_chat_message', S - D, 0);
   k.ev(62, 79, 'outgoing_chat_message', S - D + H, U_MAR);
-  k.K.tareas.push({ id:1, entity_type:'leads', entity_id:72, complete_till:S + 5 * D, responsible_user_id:U_MAR, text:'Llamar: compra el mes que viene', is_completed:false });
-  k.K.tareas.push({ id:2, entity_type:'leads', entity_id:71, complete_till:S - D, responsible_user_id:U_CAR, text:'vencida', is_completed:false });
+  k.K.tareas.push({ id:1, entity_type:'leads', entity_id:72, complete_till:S + 5 * D, responsible_user_id:U_MAR, created_by:U_MAR, text:'Llamar: compra el mes que viene', is_completed:false });
+  k.K.tareas.push({ id:2, entity_type:'leads', entity_id:71, complete_till:S - D, responsible_user_id:U_CAR, created_by:U_CAR, text:'vencida', is_completed:false });
 
   const A = cargar(k.K);
   let r = A.post({ action:'quienAtiende', cel:'12', quien:'Maria Flores' });
@@ -121,14 +122,14 @@ function servidor() {
   chk('2a · contesta ok, con la regla (15 días, 24 h) y la hora de Google', r.ok && r.dias === 15 && r.parH === 24 && r.ahora === S, { ok:r.ok, dias:r.dias, parH:r.parH });
   chk('2b · encuentra los 2 leads de ESE número (no el contacto que lo tiene en el nombre)', L.length === 2 && !L.some(x => x.id === '79') && H1.contactos === 1, L.map(x => x.id));
   const ev = A.llamadas.filter(c => c.p === '/events');
-  chk('3 · los mensajes se piden por el CONTACTO, en una sola consulta', ev.length === 1 && ev[0].q['filter[entity][]'][0] === 'contact' && ev[0].q['filter[entity_id][]'].join() === '61', ev.map(c => c.q));
+  chk('3 · los mensajes se piden por el CONTACTO: lo reciente (17 días) aparte de la historia (60 días)', ev.length === 2 && ev.every(c => c.q['filter[entity][]'][0] === 'contact' && c.q['filter[entity_id][]'].join() === '61') && Number(ev[0].q['filter[created_at][from]'][0]) === S - 17 * D && Number(ev[1].q['filter[created_at][to]'][0]) === S - 17 * D - 1, ev.map(c => c.q));
   chk('4a · Carola: par cliente + vendedora a 2 h → última conversación hace 3 días', l71 && l71.par && l71.par.quien === 'Carola Chavez' && l71.par.ts === S - 3 * D + 2 * H, l71 && l71.par);
   chk('4b · el bot después del par no lo corre', l71 && l71.par && l71.par.ts === S - 3 * D + 2 * H);
   chk('4c · María: el cliente contestó 30 h después y lo demás fue el bot → SIN par', l72 && l72.par === null, l72 && l72.par);
   chk('5a · responsable, sucursal (de « - Tienda Banzer») y etapa', l71 && l71.resp === 'Carola Chavez' && l71.suc === 'Tienda Banzer' && l71.et === 'Cotizacion enviada', l71);
   chk('5b · último mensaje del cliente y de una vendedora (el bot no)', l72 && l72.ultCli === S - 20 * D + 30 * H && l72.ultVend && l72.ultVend.quien === 'Maria Flores', l72);
   chk('5c · el nombre del contacto', l71 && l71.cli === 'CLIENTA INVENTADA');
-  chk('6 · la tarea abierta con fecha futura va (la vencida no)', l72 && l72.tarea && l72.tarea.ts === S + 5 * D && /mes que viene/.test(l72.tarea.txt) && l71 && !l71.tarea, { t72:l72 && l72.tarea, t71:l71 && l71.tarea });
+  chk('6 · la tarea abierta con fecha futura va (la vencida no), con quién la puso y SIN su texto', l72 && l72.tarea && l72.tarea.ts === S + 5 * D && l72.tarea.puso === 'Maria Flores' && !('txt' in l72.tarea) && l71 && !l71.tarea, { t72:l72 && l72.tarea, t71:l71 && l71.tarea });
   const S2 = r.cuentas && r.cuentas[1];
   chk('7 · Sueña sin token → «sinToken», sin preguntarle a nadie', S2 && S2.marca === 'suena' && S2.sinToken === true && !A.llamadas.some(c => /gerencia/.test(c.host)), S2);
   const fh = (A.hojas['Quién atiende'] || { filas:[] }).filas;
@@ -161,11 +162,70 @@ function servidor() {
   rn = N.post({ action:'quienAtiende', nombre:'ana rojas', quien:'Isabel Robledo' });
   const LN = rn.cuentas[0].leads;
   chk('14b · encuentra a las DOS «Ana Rojas» (no a Mariana ni a Ana María Soliz)', rn.ok && rn.nombre === 'ana rojas' && LN.length === 2 && LN.map(x => x.id).sort().join() === '911,921' && rn.cuentas[0].contactos === 2 && rn.cuentas[0].porNombre, LN.map(x => x.id));
-  chk('14c · cada lead dice de qué contacto es y el final de SU número', LN.find(x => x.id === '911').t4 === '1111' && LN.find(x => x.id === '921').t4 === '2222' && LN.find(x => x.id === '911').cid === '91', LN.map(x => [x.id, x.cid, x.t4]));
+  chk('14c · cada lead dice de qué contacto es y el final de SU número', LN.find(x => x.id === '911').t4 === '1111' && LN.find(x => x.id === '921').t4 === '2222' && !('cid' in LN[0]), LN.map(x => [x.id, x.t4]));
   chk('14d · la conversación sale en la que corresponde (Carola, la …1111)', LN.find(x => x.id === '911').par && LN.find(x => x.id === '911').par.quien === 'Carola Chavez' && !LN.find(x => x.id === '921').par);
   const fn = N.hojas['Quién atiende'].filas;
   chk('14e · la hoja anota el nombre buscado', fn.length === 2 && fn[1][3] === 'ana rojas' && fn[1][2] === '', fn);
   global.__RN = rn;
+
+  /* ── Revisión de Fable ── */
+  /* A1 · Kommo falla: nunca «Libre», no se guarda en la caché y la hoja no dice «Libre» */
+  const kf = kommo(); kf.contacto(61, 'CLIENTA', '70011122', [71]); kf.lead(71);
+  const F = cargar(kf.K, {}, (p) => p === '/events' ? 500 : 0);
+  let rf = F.post({ action:'quienAtiende', cel:'70011122', quien:'Maria Flores' });
+  chk('A1a · /events con error → msgOk false e «incompleto»', rf.ok && rf.cuentas[0].msgOk === false && rf.incompleto === true, { msgOk:rf.cuentas[0].msgOk, inc:rf.incompleto });
+  chk('A1b · la hoja anota «No se pudo consultar», no «Libre»', /No se pudo consultar/.test(F.hojas['Quién atiende'].filas[1][4]), F.hojas['Quién atiende'].filas[1]);
+  const n0f = F.llamadas.length; F.post({ action:'quienAtiende', cel:'70011122', quien:'Maria Flores' });
+  chk('A1c · un resultado incompleto NO queda en la caché (reintentar vuelve a preguntar)', F.llamadas.length > n0f);
+  const F2 = cargar(kf.K, {}, (p) => p === '/tasks' ? 429 : 0);
+  rf = F2.post({ action:'quienAtiende', cel:'70011122' });
+  chk('A1d · /tasks con error → tareasOk false', rf.cuentas[0].tareasOk === false && rf.incompleto === true);
+  const F3 = cargar(kf.K, {}, (p) => p === '/contacts' ? 401 : 0);
+  rf = F3.post({ action:'quienAtiende', cel:'70011122' });
+  chk('A1e · la búsqueda falla (401) → error e incompleto', /HTTP 401/.test(rf.cuentas[0].error || '') && rf.incompleto === true, rf.cuentas[0]);
+
+  /* A3 · Sueña: el usuario 13073611 («Alberto Pareja» en Kommo) se muestra como Juan Pablo Paredes */
+  const ks = kommo(); ks.K.usuarios._embedded.users.push({ id:13073611, name:'Alberto Pareja' });
+  ks.contacto(81, 'CLIENTE SUENA', '72220000', [881]); ks.lead(881, { responsible_user_id:13073611 });
+  ks.ev(81, 881, 'incoming_chat_message', S - D, 0); ks.ev(81, 881, 'outgoing_chat_message', S - D + H, 13073611);
+  const SU = cargar(ks.K, { KOMMO_TOKEN_SUENA:'tok-suena' });
+  const rsu = SU.post({ action:'quienAtiende', cel:'72220000' });
+  const ls = (rsu.cuentas[1].leads || [])[0];
+  chk('A3 · en Sueña, Juan Pablo Paredes (no «Alberto Pareja»)', ls && ls.resp === 'Juan Pablo Paredes' && ls.par && ls.par.quien === 'Juan Pablo Paredes', ls && { resp:ls.resp, par:ls.par });
+
+  /* A4 · dos vendedoras en el MISMO lead: salen las dos, con desde cuándo */
+  const k4 = kommo(); k4.contacto(41, 'MISMO LEAD', '73330000', [411]); k4.lead(411, { responsible_user_id:U_CAR });
+  k4.ev(41, 411, 'incoming_chat_message', S - 5 * D, 0); k4.ev(41, 411, 'outgoing_chat_message', S - 5 * D + H, U_CAR);
+  k4.ev(41, 411, 'outgoing_chat_message', S - 2 * H, U_MAR); k4.ev(41, 411, 'incoming_chat_message', S - H, 0);
+  const A4 = cargar(k4.K), r4 = A4.post({ action:'quienAtiende', cel:'73330000' }), l4 = r4.cuentas[0].leads[0];
+  chk('A4 · el lead trae a las dos: María (la más nueva) y Carola (desde hace 5 días)', l4.pares.length === 2 && l4.pares[0].quien === 'Maria Flores' && l4.pares[1].quien === 'Carola Chavez' && l4.pares[1].desde === S - 5 * D + H, l4.pares);
+  global.__R4 = r4;
+
+  /* M5 · una tarea del bot o a más de 90 días no es «fecha acordada» */
+  const k5 = kommo(); k5.contacto(51, 'TAREAS', '74440000', [511, 512]); k5.lead(511); k5.lead(512);
+  k5.K.tareas.push({ entity_type:'leads', entity_id:511, complete_till:S + 3 * D, responsible_user_id:U_MAR, created_by:0, is_completed:false });
+  k5.K.tareas.push({ entity_type:'leads', entity_id:512, complete_till:S + 200 * D, responsible_user_id:U_MAR, created_by:U_MAR, is_completed:false });
+  k5.K.tareas.push({ entity_type:'contacts', entity_id:51, complete_till:S + 9 * D, responsible_user_id:U_CAR, created_by:U_CAR, is_completed:false });
+  const r5 = cargar(k5.K).post({ action:'quienAtiende', cel:'74440000' }), L5 = r5.cuentas[0].leads;
+  chk('M5 · la del bot y la de 200 días no cuentan; la puesta en el CONTACTO sí (a los dos leads)', L5.every(l => l.tarea && l.tarea.ts === S + 9 * D && l.tarea.quien === 'Carola Chavez'), L5.map(l => l.tarea));
+
+  /* B3 · un teléfono fijo de 7 números · B4 · un contacto sin leads vivos */
+  const kb = kommo(); kb.contacto(71, 'FIJO', '+591 3 3345678', [999]);
+  const rb3 = cargar(kb.K).post({ action:'quienAtiende', cel:'3345678' });
+  chk('B3/B4 · el fijo de 7 se encuentra; su lead borrado (204) no es un error: «sin ningún lead» no', rb3.cuentas[0].contactos === 1 && !rb3.cuentas[0].error && !rb3.incompleto, rb3.cuentas[0]);
+
+  /* M6 · tope por persona y día */
+  const kt = kommo(); kt.contacto(61, 'X', '70011122', []);
+  const T = cargar(kt.K); let rt = null;
+  for (let i = 0; i < 81; i++) rt = T.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel Robledo' });
+  chk('M6a · la búsqueda 81 del día → «tope»', rt.ok === false && rt.error === 'tope', rt);
+  chk('M6b · otra persona sigue pudiendo', T.post({ action:'quienAtiende', cel:'70011122', quien:'Carola Chavez' }).ok === true);
+  chk('M6c · por nombre, palabras ENTERAS: «co nu» no busca (una de 3+ letras) y «ana roj» no es «Ana Rojas»',
+      N.post({ action:'quienAtiende', nombre:'co nu' }).error === 'nombre' && (N.post({ action:'quienAtiende', nombre:'ana roj' }).cuentas[0].leads || []).length === 0);
+  /* M3 · João Peña */
+  const kj = kommo(); kj.contacto(31, 'João Peña', '75550000', [311]); kj.lead(311);
+  const rj = cargar(kj.K).post({ action:'quienAtiende', nombre:'joao pena', nombreOrig:'João Peña' });
+  chk('M3 · «João Peña» se encuentra (ã, ñ)', (rj.cuentas[0].leads || []).length === 1, rj.cuentas[0]);
   return r;
 }
 
@@ -197,8 +257,8 @@ async function pagina(respuesta) {
   }, { cel, yo, resp, srv });
   let t = await buscar('70011122', 'Maria Flores', respuesta);
   chk('11a · María busca: «Lo está atendiendo Carola Chavez», con la fecha y hasta cuándo vale', /Lo está atendiendo Carola Chavez/.test(t) && /vale hasta el 02\/12/.test(t), t.slice(0, 300));
-  chk('11b · la fecha acordada de María (la tarea) es suya: no la nombra como «otra»', /Lo está atendiendo Carola Chavez Carola Chavez:/.test(t) && !/Lo está atendiendo [^.]*Maria Flores/.test(t), t.slice(0, 200));
-  chk('11c · cada lead con su marca, etapa, responsable, última conversación y la tarea', /Heaven/.test(t) && /Cotizacion enviada/.test(t) && /Asignado a Carola Chavez \(Tienda Banzer\)/.test(t) && /Fecha acordada/.test(t) && /mes que viene/.test(t), t);
+  chk('11b · la fecha acordada de María (la tarea) es suya: dice «Carola (y vos)», no la nombra como «otra»', /Lo está atendiendo Carola Chavez \(y vos\)/.test(t) && !/Lo está atendiendo [^.(]*Maria Flores/.test(t), t.slice(0, 200));
+  chk('11c · cada lead con su marca, etapa, responsable, última conversación y la tarea', /Heaven/.test(t) && /Cotizacion enviada/.test(t) && /Asignado a Carola Chavez \(Tienda Banzer\)/.test(t) && /Fecha acordada/.test(t) && !/mes que viene/.test(t), t);
   chk('11d · el lead de María dice que no hubo conversación (cliente y vendedora a ≤ 24 h)', /ninguna en 60 días/.test(t), t);
   t = await buscar('70011122', 'Carola Chavez', respuesta);
   chk('11e · Carola busca: «Lo está atendiendo Maria Flores» por la fecha acordada (la regla de la excepción)', /Lo está atendiendo Maria Flores/.test(t) && /fecha acordada para el 25\/11/.test(t), t.slice(0, 260));
@@ -244,6 +304,20 @@ async function pagina(respuesta) {
     await new Promise(r => setTimeout(r, 50)); return document.getElementById('qa-res').innerText.replace(/\s+/g, ' ');
   });
   chk('15e · en el panel, por nombre: Ana Rojas Vaca (…1111) sí, Mariana no', /11-301/.test(t) && /…1111/.test(t) && !/11-302/.test(t), t);
+  /* Fable, en la página */
+  const inc = JSON.parse(JSON.stringify(viejo)); inc.cuentas[0].msgOk = false;
+  t = await buscar('70011122', 'Isabel Robledo', inc);
+  chk('A1p · sin los mensajes completos y sin nadie a la vista: «No se pudo saber», nunca «Libre»', /No se pudo saber/.test(t) && !/Libre/.test(t), t.slice(0, 300));
+  t = await buscar('73330000', 'Maria Flores', global.__R4);
+  chk('A4p · María en el lead de Carola: «Lo está atendiendo Carola Chavez (y vos)», Carola primero', /Lo está atendiendo Carola Chavez \(y vos\)/.test(t) && /Carola Chavez: conversa desde el 15\/11/.test(t) && /primera/.test(t), t.slice(0, 500));
+  const perd = JSON.parse(JSON.stringify(sinTarea)); perd.cuentas[0].leads.forEach(l => { l.cerrado = 'perdido'; });
+  t = await buscar('70011122', 'Isabel Robledo', perd);
+  chk('M7 · un lead PERDIDO no retiene: «Libre» y el lead dice «Perdido: no retiene»', /Libre/.test(t) && /Perdido: no retiene/.test(t), t.slice(0, 300));
+  t = await page.evaluate(async () => { window.PRACTICA = 1; window.__llamo = 0; window.apiPost = function () { window.__llamo = 1; return Promise.resolve({ ok:true, practica:1 }); }; SERVER_VER = '2026-11-20-a'; document.getElementById('qa-cel').value = '70011122'; qaBuscar(); await new Promise(r => setTimeout(r, 50)); window.PRACTICA = 0; return document.getElementById('qa-res').innerText + (window.__llamo ? ' [LLAMÓ]' : ''); });
+  chk('A2 · en el Modo práctica no pregunta ni dice «Libre»', /Modo práctica/.test(t) && !/Libre/.test(t) && !/LLAMÓ/.test(t), t.slice(0, 200));
+  t = await buscar('70011122', 'Isabel Robledo', { ok:true, practica:1, ahora:Date.now() });
+  chk('A2b · una respuesta sin «cuentas» no se pinta como «Libre»', !/Libre/.test(t) && /Kommo no contestó/.test(t), t.slice(0, 200));
+  chk('B1 · el campo deja escribir nombres largos (teclado de texto, 60 letras)', await page.evaluate(() => { var i = document.getElementById('qa-cel'); return i.inputMode === 'text' && i.maxLength === 60; }));
   chk('sin errores de la página', !errs.length, errs);
   await browser.close();
 }
