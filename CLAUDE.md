@@ -1057,6 +1057,12 @@ el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_qu
   notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
   o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
 
+## 💵💵 «Pagó con dos métodos» en Contabilidad y editar un pago sin perder fotos (20/11; dueño: *«en la pestaña cargar pago no sale la opción de 2 métodos como en el "pedido"»* y el «SE GUARDÓ INCOMPLETO» al partir un QR en QR + efectivo; PUBLICADO 20/11, versión 2026-11-20-d, `5aff719`)
+- Registrar pago → «➕ Pagó con dos métodos» (`CTA_PAGO.mx`, `ctaMx*`, `ctaMxHtml`): Pago 2 con su monto, método, banco e imagen; `ctaRegistrarPago` anota
+  DOS renglones (frena el mismo método, `mixtoMismoMetodo`); el efectivo de cualquiera de los dos pide quién lo recibió (`ctaHayEfe`). `tests/test_cta_dos_metodos.js` (13).
+- Editar: el rescate del método de antes (§4jd A2-3) ya no corre con el mixto prendido ni cuando las fotos de antes se quitaron; y una red al final de
+  `submitPedido` pega en un pago con lugar (`COMP_MAX`) toda imagen subida que no quedó en `metodoPago` (sin lugar, no guarda y lo dice). `tests/test_editar_partir_pago.js` (7).
+
 ## 📄 El PDF del pedido del cliente en la ficha (20/11; dueño: *«cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo pueda descargar… en el pedido en el panel»*; servidor `2026-11-20-b` lo implementa el dueño; página 2026-11-20-b en la rama)
 La revisión de correos pone `"pdf": "<ruta>"` en el JSON de cada pedido de Multicenter y Tienda Amiga; `cargar_pedidos.py` (`subir_pdf`, solo con
 servidor ≥ 20-b) lo sube con la acción **`pdfPedido`** (`guardarPdfPedido_`: solo `%PDF`, ≤ 10 MB, carpeta APARTE «PDF de pedidos MultiEspumas»
