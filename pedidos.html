@@ -23609,6 +23609,46 @@ function contaPagosHtml(p){
    Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
    Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
 var CTA_PAGO={metodo:'Efectivo', banco:'', comps:[], recibio:''};   // recibio: '' = la vendedora · nombre = el chofer (§4eq)
+/* 💳 (20/11, dueño: «en la pestaña cargar pago no sale la opción de 2 métodos como en el pedido») «➕ Pagó con dos métodos» en «Registrar
+   pago» de Contabilidad: `CTA_PAGO.mx` = {metodo, banco, comps, mano} = el PAGO 2 (el 1 es el de siempre). Mismo día y mismo N° de recibo;
+   se registran DOS cobros (cada uno con su método, banco e imágenes), en un solo guardado. Los dos métodos tienen que ser distintos (o QR a
+   otro banco: `mixtoMismoMetodo`). «¿Quién recibió la plata?» es del que va en efectivo (como mucho uno). Solo en el pago de la venta, nunca
+   en el recargo por entrega. */
+function ctaMxOn(){ return !!CTA_PAGO.mx && CTA_TIPO!=='envio' && !CTA_FORM_ENV; }
+function ctaHayEfe(){ return CTA_PAGO.metodo==='Efectivo' || (ctaMxOn() && CTA_PAGO.mx.metodo==='Efectivo'); }
+function ctaMxToggle(id, on){
+  ctaPagoRecordar();
+  if(on){ CTA_PAGO.mx={ metodo:'', banco:'', comps:[], mano:false }; if(CTA_PAGO_V){ delete CTA_PAGO_V.monto; delete CTA_PAGO_V.monto2; } }
+  else{ CTA_PAGO.mx=null; if(CTA_PAGO_V) delete CTA_PAGO_V.monto2; if(!ctaHayEfe()){ CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; } }
+  showContaModal(id);
+  if(on) setTimeout(function(){ var e=document.getElementById('cta-pago-monto'); if(e){ e.value=''; try{ e.focus(); e.scrollIntoView({block:'center'}); }catch(x){} } ctaMxSuma(); }, 30);
+}
+function ctaMxMetodo(id, m){ ctaPagoRecordar(); if(!CTA_PAGO.mx) return; CTA_PAGO.mx.metodo=m; if(m!=='QR') CTA_PAGO.mx.banco=''; if(!ctaHayEfe()){ CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; } showContaModal(id); }
+function ctaMxBanco(id, b){ ctaPagoRecordar(); if(!CTA_PAGO.mx) return; CTA_PAGO.mx.banco=b; showContaModal(id); }
+function ctaMxSacarComp(id, i){ ctaPagoRecordar(); if(!CTA_PAGO.mx) return; var a=compsArr(CTA_PAGO.mx.comps); if(i==null) a=[]; else a.splice(i,1); CTA_PAGO.mx.comps=a; showContaModal(id); }
+function ctaAdjuntarMx(id){
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  ctaPagoRecordar(); COMP_DESTINO={ id:id, mx:true };
+  var el=document.getElementById('comp-input'); if(!el) return;
+  el.value=''; el.dataset.pedido=id; el.click();
+}
+/* Escribir el Pago 1 propone en el Pago 2 lo que falta (si nadie lo tocó a mano); abajo, la suma contra lo que falta. */
+function ctaMxSugerir(){
+  if(!CTA_PAGO.mx) return;
+  var e1=document.getElementById('cta-pago-monto'), e2=document.getElementById('cta-pago-monto2'), box=document.getElementById('cta-mx-suma');
+  var falta=Number((box&&box.getAttribute('data-falta'))||0), m1=parseMonto(e1?e1.value:'');
+  if(e2 && !CTA_PAGO.mx.mano && falta>0) e2.value = (m1>0 && m1<falta-0.005) ? String(r2(falta-m1)) : '';
+  ctaMxSuma();
+}
+function ctaMxMano(){ if(CTA_PAGO.mx) CTA_PAGO.mx.mano=true; ctaMxSuma(); }
+function ctaMxSuma(){
+  var box=document.getElementById('cta-mx-suma'); if(!box) return;
+  var e1=document.getElementById('cta-pago-monto'), e2=document.getElementById('cta-pago-monto2');
+  var falta=Number(box.getAttribute('data-falta')||0), t=r2(parseMonto(e1?e1.value:'')+parseMonto(e2?e2.value:''));
+  var d=r2(t-falta);
+  box.innerHTML='Pago 1 + Pago 2 = <b>'+fmtBs(t)+'</b>'+(falta>0 ? (' · falta cobrar '+fmtBs(falta)+
+    (Math.abs(d)<0.005 ? ' · <b style="color:var(--green)">✓ justo</b>' : (d<0 ? (' · queda debiendo <b style="color:var(--red)">'+fmtBs(-d)+'</b>') : (' · <b style="color:var(--amber)">'+fmtBs(d)+' de más</b>')))) : '');
+}
 /* ⚠️ Adjuntar una imagen repinta la ficha entera (`showContaModal`), y eso borraba el
    MONTO, la FECHA y el N° DE RECIBO que se estuvieran tipeando. El monto parecía
    sobrevivir solo porque vuelve a nacer con el saldo; la fecha volvía a HOY sin avisar,
@@ -23628,6 +23668,7 @@ function ctaPagoRecordar(){
        parezca tipeado. */
     var v={ fecha:f.value, nota:n.value };
     if(String(m.value)!==String(m.getAttribute('data-def')||'')) v.monto=m.value;
+    var m2=document.getElementById('cta-pago-monto2'); if(m2) v.monto2=m2.value;   // 💳 (20/11) el Pago 2
     CTA_PAGO_V=v;
   }
   ctaEditRecordar();                 // 26/09: y lo tipeado en «✏️ Corregir este pago», si está abierto (✅, 📎, ✕… también repintan)
@@ -23660,6 +23701,7 @@ function onCompElegido(ev){
   var destino=COMP_DESTINO; COMP_DESTINO=null;
   // Cuántas tiene ya: las del pago que se está por registrar, o las del pago elegido.
   var yaTiene = !destino ? compsArr(CTA_PAGO.comps).length
+    : destino.mx ? compsArr(CTA_PAGO.mx && CTA_PAGO.mx.comps).length   // 💳 (20/11) el Pago 2 que se está por registrar
     : destino.envio
       ? (function(){ var c=enviosDe(p)[Number(destino.e)||0]; return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()   // §4fy: el tope se mide en EL flete elegido, no en el primero
       : destino.anticipo
@@ -23680,7 +23722,12 @@ function onCompElegido(ev){
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
       return;
     }
-    if(destino && destino.envio){
+    if(destino && destino.mx){
+      // 💳 (20/11) Al PAGO 2 del «Pagó con dos métodos» que se está por registrar.
+      if(CTA_PAGO.mx){ CTA_PAGO.mx.comps=compsArr(compsArr(CTA_PAGO.mx.comps).concat([res.fotoId])); toast('Imagen del Pago 2 lista ✓','ok'); }
+      else toast('La imagen se subió pero ya no estaba abierto el Pago 2: volvé a tocar «➕ Pagó con dos métodos» y adjuntala.','err',8000);
+      showContaModal(p.id);
+    }else if(destino && destino.envio){
       // Al RECARGO POR ENTREGA: se reescribe solo su renglón.
       var ae=enviosDe(p), _e=Number(destino.e)||0;
       /* §4fy: si el renglón no aparece, NO se pega en el primero que haya (eso era poner la
@@ -24459,6 +24506,7 @@ function showContaModal(id){
   if(_stc){ esEnv=false; CTA_TIPO='pago'; }
   CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
+  var _mxOn = !esEnv && !!CTA_PAGO.mx;   // 💳 (20/11) «Pagó con dos métodos»
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
   var formPago = (_stc || falta>0.005 || !yaEnv || envioPendiente(p) || _sinM)
@@ -24481,11 +24529,13 @@ function showContaModal(id){
              : (_stc ? '🔧 Registrar el pago de la reparación <span style="font-weight:400;color:var(--muted)">— ATC contra costo: entra a la caja (Cuadre, efectivo por retirar), no suma a las ventas</span>'
                      : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>'))+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))+'" value="'+esc(_pv.monto!=null?_pv.monto:(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta))))+'" placeholder="'+(esEnv?'ej. 150':(_stc?'lo que pagó':''))+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">'+(_mxOn?'1️⃣ Monto del Pago 1':'Monto')+'</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto"'+(_mxOn?' oninput="ctaMxSugerir()"':'')+' data-def="'+esc(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))+'" value="'+esc(_pv.monto!=null?_pv.monto:(_mxOn?'':(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))))+'" placeholder="'+(esEnv?'ej. 150':(_stc?'lo que pagó':''))+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
-         '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
+         '<div style="margin-top:9px"><label class="lb">'+(_mxOn?'Método del Pago 1':'Método')+
+           ((!esEnv && !_mxOn) ? ' <button type="button" id="cta-mx-btn" class="btn btn-ghost btn-sm" style="width:auto;margin-left:10px;font-size:.72rem;padding:3px 9px;vertical-align:middle" onclick="ctaMxToggle('+esc(JSON.stringify(String(p.id)))+',true)" title="El cliente pagó una parte con un método y el resto con otro (ej. efectivo + QR)">➕ Pagó con dos métodos</button>' : '')+
+         '</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
          (CTA_PAGO.metodo==='Efectivo' ? ctaRecibioHtml(p) : '')+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
          (metodoConComprobante(CTA_PAGO.metodo) ? (
@@ -24494,7 +24544,8 @@ function showContaModal(id){
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
               '<div id="ias-cta" class="ias-box" aria-live="polite" data-id="'+esc(String(p.id))+'"></div>'+   // 🔎 (§78) lo que dice la foto
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.005?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
+         (_mxOn ? ctaMxHtml(p, falta) : '')+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.005?'Registrar el cobro del flete':'Anotar el recargo'):(_mxOn?'Registrar los dos pagos':'Registrar pago'))+'</button>'))+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var cab='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>';
@@ -24837,13 +24888,32 @@ function ctaEliminarVenta(id){
   closeModal();
   borrarConDeshacer(id);                         // ↩️ (§4ni, 7) 5 s para arrepentirse
 }
-function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(m!=='Efectivo') CTA_PAGO.recibio=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
+function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!ctaHayEfe()) CTA_PAGO.recibio=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
 /* 🚚 ¿QUIÉN RECIBIÓ LA PLATA? (§4eq) Solo para efectivo: el QR y la tarjeta van al banco.
    El dueño: *"a veces le pagan a ellos [los choferes] el cliente y las vendedoras hacen
    también una nota de ese efectivo, pero ¿cómo hacemos que reporten que fue el chofer que
    recibió?"*. Acá. Por defecto la vendedora; con «El chofer» se elige cuál (el asignado a la
    entrega viene primero). Sirve para el pago nuevo (`CTA_PAGO`) y para corregir uno
    anotado (`CTA_EDIT_R`). */
+function ctaMxHtml(p, falta){
+  var X=CTA_PAGO.mx||{}, idj=esc(JSON.stringify(String(p.id))), _pv=CTA_PAGO_V||{};
+  setTimeout(ctaMxSuma, 0);   // la suma, apenas está dibujado
+  var mb=function(m){ return '<button type="button" class="btn btn-sm" style="'+(X.metodo===m?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaMxMetodo('+idj+',\''+m+'\')">'+m+'</button>'; };
+  var bb=function(b){ return '<button type="button" class="btn btn-sm" style="'+(X.banco===b?'background:var(--teal-dk);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaMxBanco('+idj+','+esc(JSON.stringify(b))+')">🏦 '+esc(b)+'</button>'; };
+  return '<div id="cta-mx" style="margin-top:12px;border:1px dashed var(--teal);border-radius:10px;padding:10px 12px;background:#fff">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px"><b>2️⃣ Pago 2</b>'+
+      '<button type="button" class="btn btn-ghost btn-sm" style="width:auto;font-size:.72rem;padding:3px 9px" onclick="ctaMxToggle('+idj+',false)">✕ Era un solo método</button></div>'+
+    '<div style="font-size:.76rem;color:var(--muted);margin-bottom:6px">Mismo día y mismo N° de recibo que el Pago 1. Cada pago con su método y su imagen.</div>'+
+    '<label class="lb">Monto del Pago 2</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto2" oninput="ctaMxMano()" value="'+esc(_pv.monto2!=null?_pv.monto2:'')+'" placeholder="lo que pagó con el otro método" style="width:100%">'+
+    '<div id="cta-mx-suma" data-falta="'+esc(String(r2(Math.max(0,falta))))+'" style="font-size:.8rem;margin-top:5px"></div>'+
+    '<div style="margin-top:9px"><label class="lb">Método del Pago 2</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
+    (X.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancosDeVendedor(p.vendedor).map(bb).join('')+'</div></div>') : '')+
+    ((X.metodo==='Efectivo' && CTA_PAGO.metodo!=='Efectivo') ? ctaRecibioHtml(p) : '')+
+    (X.metodo ? ('<div style="margin-top:9px"><label class="lb">Comprobante del Pago 2 <span style="color:var(--red)">*</span></label>'+
+      compTiraHtml(X.comps||[], 'ctaMxSacarComp.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntarMx('+JSON.stringify(p.id)+')',
+        'La imagen de ESTE pago: '+nombreComprobante(X.metodo)+'. <b>Al menos una es obligatoria.</b>')+'</div>') : '')+
+  '</div>';
+}
 function ctaRecibioHtml(p, opts){
   opts=opts||{};
   /* 🚚 §4ok-112 el pago en efectivo del día de la entrega viene con el chofer puesto (el que el GPS vio en la casa, si no el del pedido) */
@@ -24880,7 +24950,7 @@ function ctaRecibioHtml(p, opts){
    qué). No en una venta de tienda, ATC/RPT, ni para Eduardo, ROHO o los internos (`recibioObligatorio`, como el formulario). */
 function ctaRecibioObliga(p){ return !!p && recibioObligatorio(p.vendedor) && !esVentaTienda(p) && (!noSeCobra(p) || atcCobra(p)); }   // 🔧 (20/11) la ATC contra costo también
 function ctaRecibioFalta(p, fecha){
-  if(!p || CTA_PAGO.metodo!=='Efectivo' || CTA_PAGO.rEleg || !ctaRecibioObliga(p)) return false;
+  if(!p || !ctaHayEfe() || CTA_PAGO.rEleg || !ctaRecibioObliga(p)) return false;   // 💳 (20/11) el efectivo puede ser el Pago 2
   return !ctaChoferSugerido(p, fecha);
 }
 function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); CTA_PAGO.rEleg=true; showContaModal(id); }   // §4ok-112 lo eligió la persona
@@ -24941,7 +25011,7 @@ function ctaChoferCruceO(txt, ch){
 function ctaRecibioAutoPoner(p, opts){
   opts=opts||{};
   if(opts.edit) return ctaChoferSugerido(p, opts.fecha);
-  if(CTA_PAGO.metodo!=='Efectivo') return null;
+  if(!ctaHayEfe()) return null;
   var s=ctaChoferSugerido(p, (CTA_PAGO_V && CTA_PAGO_V.fecha!=null) ? CTA_PAGO_V.fecha : todayStr());
   if(!CTA_PAGO.rEleg) CTA_PAGO.recibio=s ? s.ch : '';
   return s;
@@ -25032,6 +25102,20 @@ function ctaRegistrarPago(id){
     memeCompConta(CTA_PAGO.metodo, {id:id});
     return;
   }
+  /* 💳 (20/11) «Pagó con dos métodos»: el Pago 2 con lo mismo que se le pide al 1 (monto, método distinto, banco, imagen). */
+  var _mx = ctaMxOn() ? CTA_PAGO.mx : null, monto2=0, linea2=null;
+  if(_mx){
+    var _m2El=document.getElementById('cta-pago-monto2');
+    var _mxIr=function(msg){ toast(msg,'err',7000); var b=document.getElementById('cta-mx'); if(b){ try{ b.scrollIntoView({block:'center'}); }catch(e){} } };
+    if(_m2El && montoFrena(_m2El, 'Monto del Pago 2')) return;
+    monto2=parseMonto(_m2El ? _m2El.value : '');
+    if(!(monto2>0)){ _mxIr('Poné cuánto pagó con el Pago 2 (o tocá «✕ Era un solo método»)'); if(_m2El) _m2El.focus(); return; }
+    if(!_mx.metodo){ _mxIr('Elegí con qué pagó el Pago 2'); return; }
+    if(_mx.metodo==='QR' && !_mx.banco){ _mxIr('Elegí a qué banco entró el QR del Pago 2'); return; }
+    if(mixtoMismoMetodo({metodo:_mx.metodo, banco:_mx.banco}, {metodo:CTA_PAGO.metodo, banco:CTA_PAGO.banco})){
+      _mxIr('Los dos pagos son con el mismo método'+(_mx.metodo==='QR'?' y al mismo banco':'')+': registralo como UN solo pago por la suma, o elegí el otro método.'); return; }
+    if(!compsArr(_mx.comps).length){ _mxIr('Falta la imagen del Pago 2: '+nombreComprobante(_mx.metodo)); return; }
+  }
   /* 🚚 §4ok-112 Quién tiene el efectivo, con la fecha que quedó: puesto solo (nadie eligió) = el chofer de ese día, si es el día de la
      entrega; elegido a mano = se pregunta si es el chofer de OTRO camión ese día. */
   if(ctaRecibioFalta(p, fecha)){
@@ -25044,13 +25128,17 @@ function ctaRegistrarPago(id){
   /* ❓ (16/11, la 282 en todo el panel) las preguntas de «Registrar pago» en la ventana del panel, de a una; al contestar vuelve a correr
      (hasta la última pregunta solo lee y valida) y con todas contestadas registra UNA vez */
   var _otraP=function(){ ctaRegistrarPago(id); };
-  if(CTA_PAGO.metodo==='Efectivo' && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
-  else if(CTA_PAGO.metodo==='Efectivo'){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !preguntaYa(_cxR, ctaChoferCruceO(_cxR, CTA_PAGO.recibio), _otraP)) return; }
+  if(ctaHayEfe() && !CTA_PAGO.rEleg){ var _sgR=ctaChoferSugerido(p, fecha); CTA_PAGO.recibio=_sgR ? _sgR.ch : ''; }
+  else if(ctaHayEfe()){ var _cxR=ctaChoferCruce(p, fecha, CTA_PAGO.recibio); if(_cxR && !preguntaYa(_cxR, ctaChoferCruceO(_cxR, CTA_PAGO.recibio), _otraP)) return; }
   var falta=Number(p.saldo)||0, _cortoR=totalCortoDe(p);   // 🧮 (18/11) el total corto contra los productos también falta cobrar
   if(falta<=0.005 && _cortoR>0) falta=_cortoR;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
              comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])};
+  if(_mx) linea2={metodo:_mx.metodo, banco:(_mx.metodo==='QR'?_mx.banco:''), monto:monto2, fecha:fecha, nota:nota,
+             recibio:(_mx.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),
+             comps:(metodoConComprobante(_mx.metodo)?compsArr(_mx.comps):[])};
+  var montoTot=r2(monto+monto2);
   /* ⚠️ UNA VENTA YA PAGADA NO CONVIERTE EL PAGO EN FLETE SOLA (§4fk). Antes la condición
      era `CTA_TIPO==='envio' || falta<=0.01`: en una venta sin saldo, un pago registrado con
      «💵 Pago de la venta» elegido se guardaba como **recargo por entrega** sin preguntar
@@ -25069,7 +25157,7 @@ function ctaRegistrarPago(id){
   /* 🔁 (10/10, auditoría de Antigravity y Codex, hallazgo 2) EL MISMO PAGO DOS VECES: si ya hay uno registrado con el mismo monto,
      día, método, banco y N° de recibo, se pregunta antes de anotarlo otra vez (el saldo bajaría dos veces). Solo pregunta: puede
      haber dos pagos iguales de verdad. Si se anotó por error, «🗑 Borrar este pago» (§4hk). */
-  var _rep=pagoRepetido(p, linea);
+  var _rep=pagoRepetido(p, linea) || (linea2 && pagoRepetido(p, linea2));
   if(_rep && !preguntaYa('⚠️ Ya hay un pago IGUAL registrado en esta venta:\n\n'+
       contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota)+'\n\n'+
       '¿Anotarlo IGUAL otra vez? (si es el mismo pago, tocá Cancelar: si no, el saldo baja dos veces)',
@@ -25079,10 +25167,10 @@ function ctaRegistrarPago(id){
         no:'No, es el mismo', si:'Es otro pago: anotarlo' }, _otraP)) return;
   if(!_env && falta<=0.005 && !atcCobra(p)){   // 🔧 (20/11) la ATC contra costo no tiene saldo: cada pago es lo que pagó
     if(!preguntaYa('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
-                '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
+                '¿Anotar igual estos '+fmtBs(montoTot)+' como un cobro de MÁS de la venta?\n\n'+
                 'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.',
         { titulo:'Esta venta ya está pagada', icono:'⚠️', aviso:true,
-          lineas:[ 'No le falta nada por cobrar.', '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?',
+          lineas:[ 'No le falta nada por cobrar.', '¿Anotar igual estos '+fmtBs(montoTot)+' como un cobro de MÁS de la venta?',
                    'Si en realidad es el flete, tocá «No» y usá el botón 🚚 Recargo por entrega.' ],
           no:'No, no anotarlo', si:'Anotarlo como cobro de más' }, _otraP)) return;
   }
@@ -25114,23 +25202,26 @@ function ctaRegistrarPago(id){
     return;
   }
   // Con saldo 0 ya se preguntó arriba (§4fk): no se pregunta dos veces lo mismo.
-  if(falta>0.005 && monto>falta+0.005 && !preguntaYa('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?',
+  if(falta>0.005 && montoTot>falta+0.005 && !preguntaYa('El pago ('+fmtBs(montoTot)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?',
       { titulo:'El pago es mayor que el saldo', icono:'⚠️', aviso:true,
-        lineas:[ 'El pago es de '+fmtBs(monto)+' y lo que falta cobrar es '+fmtBs(falta)+'.', 'Si lo registrás así, la venta queda cobrada de más.' ],
+        lineas:[ 'El pago es de '+fmtBs(montoTot)+(linea2?(' (Pago 1 '+fmtBs(monto)+' + Pago 2 '+fmtBs(monto2)+')'):'')+' y lo que falta cobrar es '+fmtBs(falta)+'.', 'Si lo registrás así, la venta queda cobrada de más.' ],
         no:'✏️ Volver y corregir', si:'💾 Registrarlo igual' }, _otraP)) return;
   var arr=cobrosDe(p).slice();
-  arr.push(linea);
-  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
+  arr.push(linea); if(linea2) arr.push(linea2);
+  var _tst='Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+
+        (linea2?(' + '+linea2.metodo+(linea2.banco?(' '+linea2.banco):'')+' '+fmtBs(monto2)):'')+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
+        ((linea.recibio||(linea2&&linea2.recibio))?(' · el efectivo lo tiene el chofer '+(linea.recibio||linea2.recibio)):'');
+  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO.rEleg=false; CTA_PAGO.mx=null; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   fxSello('COBRADO','plata');
-  var _prP=aplicarCobros(p, arr, _cortoR>0 ? r2(objetivoCobro(p)+Math.min(monto,_cortoR)) : null);   // 🧮 completa el total corto
+  var _prP=aplicarCobros(p, arr, _cortoR>0 ? r2(objetivoCobro(p)+Math.min(montoTot,_cortoR)) : null);   // 🧮 completa el total corto
   sonidoPanel('caja');                          // 🔔 (§4ni, 16) la caja registradora
-  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
-        (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
+  toast(_tst,'ok');
   /* Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
      ⚠️ El índice es el del COBRO recién agregado, no el último de `contaPagos`: los recargos
      van al final, y con un flete ya cobrado la ventana «✅ Guardado» y el WhatsApp mostraban
      el flete (Bs 50) en vez del pago (Bs 700) — e invitaban a registrarlo dos veces (§4ew). */
-  showPagoWhatsapp(id, (anticipoDe(p)?1:0)+cobrosDe(p).length-1);
+  var _iW=(anticipoDe(p)?1:0)+cobrosDe(p).length-1;
+  if(linea2) showPagoWhatsapp(id, _iW-1, _iW); else showPagoWhatsapp(id, _iW);
   pagoWaEstado(_prP);                      // §4fp: si el guardado no entra, la ventana lo dice
 }
 /* 🔁 ¿Ya está este pago? Mismo monto, día, método, banco (QR) y N° de recibo, contra TODO lo cobrado de la venta (adelanto,
@@ -25201,11 +25292,12 @@ function pagoWaEstado(prom){
       'Si querés ver cómo va, mirá <b>⚠️ Guardados rechazados / sin enviar</b> en Administración.</div>';
   });
 }
-function showPagoWhatsapp(id, i){
+function showPagoWhatsapp(id, i, i2){
   var p=findById(id); if(!p) return;
   ctaMontosRecordar();              // 26/09: esta ventana tapa la ficha; al volver, «Corregir precios y montos» sigue como estaba
   var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
-  var text=pagoTexto(p, c);
+  var c2=(i2!=null) ? contaPagos(p)[i2] : null;   // 💳 (20/11) los dos pagos de «Pagó con dos métodos»
+  var text=pagoTexto(p, c)+(c2 ? ('\n\n➕ *Y EL SEGUNDO MÉTODO DEL MISMO PAGO:*\n\n'+pagoTexto(p, c2)) : '');
   /* ⚠️ Antes esta ventana arrancaba con "Copialo y pegalo en el grupo": se leía como una
      TAREA pendiente y las chicas no sabían si el pago ya estaba guardado o si les faltaba
      hacer algo. Ahora lo primero que se ve es la confirmación, con lo que quedó anotado, y
@@ -25221,6 +25313,7 @@ function showPagoWhatsapp(id, i){
         '<div style="font-weight:800;color:var(--green);font-size:.95rem">✅ Listo — '+(esEnvio(c)?'el recargo':'el pago')+' ya quedó guardado</div>'+
         '<div style="font-size:.85rem;margin-top:5px">'+
           esc(contaMetodoTxt(c))+' · <b>'+esc(fmtBs(c.monto))+'</b>'+
+          (c2?(' + '+esc(contaMetodoTxt(c2))+' · <b>'+esc(fmtBs(c2.monto))+'</b>'):'')+
           (limpiaNota(c.nota)?(' · recibo '+esc(limpiaNota(c.nota))):'')+
           (cs.length?(' · '+cs.length+(cs.length===1?' imagen':' imágenes')):'')+
         '</div>'+
