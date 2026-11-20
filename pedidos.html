@@ -14250,6 +14250,17 @@ function atcCobra(p){ return !!p && esATC(p.oc) && atcTipo(p)==='stc'; }
 function atcCobraCaja(p){ return atcCobra(p) && !esFilaSistema(p) && !contaExcluido(p.vendedor); }
 function fueraDeCaja(p){ return fueraDeConta(p) && !atcCobraCaja(p); }
 /* Lo cobrado por ATC contra costo: los pagos con monto (el anticipo no existe en una ATC). */
+/* 🔧 (20/11, revisión de Fable 1) ¿Cambiar el tipo de esta ATC (que ya tiene pagos) la mete o la saca de la caja? {tit, txt} o null. */
+function atcStcCambio(prev, nuevo){
+  if(!prev || !esATC(prev.oc) || ATC_TIPOS.indexOf(nuevo)<0) return null;
+  var antes=atcTipo(prev); if((antes==='stc')===(nuevo==='stc')) return null;
+  var pg=contaPagos(prev).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0.005; });
+  if(!pg.length) return null;
+  var bs=0; pg.forEach(function(c){ bs=r2(bs+(Number(c.monto)||0)); });
+  return antes==='stc'
+    ? { tit:'Tiene pagos como contra costo', txt:'🔧 Esta ATC tiene '+pg.length+' pago'+(pg.length===1?'':'s')+' ('+fmtBs(bs)+') como contra costo. Si deja de serlo, esa plata SALE del Cuadre y del efectivo por retirar.' }
+    : { tit:'Tiene pagos anotados', txt:'🔧 Esta ATC tiene '+pg.length+' pago'+(pg.length===1?'':'s')+' anotado'+(pg.length===1?'':'s')+' ('+fmtBs(bs)+'). Como contra costo, esa plata ENTRA al Cuadre y al efectivo por retirar, en el día de cada pago.' };
+}
 function atcCobrado(p){ var t=0; contaPagos(p).forEach(function(c){ if(!esEnvio(c)) t+=Number(c.monto)||0; }); return r2(t); }
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
@@ -14765,12 +14776,16 @@ function talonarioHuecos(enPeriodo, pe, vend){
      ⚠️ Solo TAPA un hueco, no se suma al talonario: sumado, armaba huecos nuevos con los recibos de un talonario de pagos
      (con la planilla del 30/10 tapaba 6 y abría 6 en otra vendedora: 68 → 68). */
   var usados={};
-  if(pe.modo!=='todo') (STATE||[]).forEach(function(p){
-    if(!p || ids[p.id] || fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
+  (STATE||[]).forEach(function(p){
+    if(!p) return;
+    /* 🔧 (20/11, revisión de Fable 5) el recibo de un pago de una ATC contra costo también es un N° del talonario de la vendedora */
+    var _stc=atcCobraCaja(p);
+    if(!_stc && (pe.modo==='todo' || ids[p.id] || fueraDeConta(p))) return;
+    if(!cuadreEsDe(p, vend)) return;
     var vk=talVendKey(p.vendedor);
     contaPagos(p).forEach(function(c){
       var n=notaNumero(c.nota);
-      if(n && c.fecha && enPeriodoCuadre(c.fecha, pe)) usados[vk+'|'+n]=1;
+      if(n && c.fecha && (pe.modo==='todo' || enPeriodoCuadre(c.fecha, pe))) usados[vk+'|'+n]=1;
     });
   });
   /* (b) Los N° de los retiros de efectivo, por vendedora (quien entregó), desde que empieza el período. */
@@ -19054,11 +19069,17 @@ function pryMezcla(K, f, prom){
    Y la ficha de la marca en el Cuadre = cobrado en el mes de estas ventas + cobros del mes de ventas de OTROS meses + fletes del mes. */
 function pryPlata(ym){
   var ini=ym+'-01', fin=pryFinDeMes(ym), G={};
-  var g0=function(k){ return G[k]||(G[k]={ vendido:0, n:0, mes:0, antes:0, despues:0, sinF:0, faltaMes:0, nFaltaMes:0, faltaAntes:0, nFaltaAntes:0, sinMonto:0, deMas:0, otrasMes:0, fleteMes:0, caja:0 }); };
+  var g0=function(k){ return G[k]||(G[k]={ vendido:0, n:0, mes:0, antes:0, despues:0, sinF:0, faltaMes:0, nFaltaMes:0, faltaAntes:0, nFaltaAntes:0, sinMonto:0, deMas:0, otrasMes:0, fleteMes:0, stcMes:0, caja:0 }); };
   var sumar=function(k, campo, v){ g0(k)[campo]=r2(g0(k)[campo]+v); g0('equipo')[campo]=r2(g0('equipo')[campo]+v); };
   g0('equipo');
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || fueraDeConta(p,'tienda')) return;
+    if(!p || esFilaSistema(p)) return;
+    /* 🔧 (20/11, revisión de Fable 6) la ATC contra costo no es una venta, pero su pago entra al Cuadre: va en su renglón de la caja */
+    if(fueraDeConta(p,'tienda')){
+      if(atcCobraCaja(p)){ var gS=marcaDe(nombreCanonico(p.vendedor)||p.vendedor)||'sin';
+        contaPagos(p).forEach(function(c){ var m=Number(c.monto)||0, fc=c.fecha||''; if(m>0 && fc && fc>=ini && fc<=fin){ sumar(gS,'caja',m); sumar(gS,'stcMes',m); } }); }
+      return;
+    }
     var g=marcaDe(nombreCanonico(p.vendedor)||p.vendedor)||'sin', f=fechaSalida(p), delMes=!!(f && f>=ini && f<=fin);
     var pagos=(contaPagos(p)||[]).filter(function(c){ return (Number(c.monto)||0)>0; }), cob=0;
     pagos.forEach(function(c){
@@ -19112,6 +19133,7 @@ function pryPlataHtml(ym){
     fila('✓ Cobrado en '+esc(mes)+' de estas ventas','mes')+
     fila('＋ Cobrado en '+esc(mes)+' de ventas de OTROS meses <small>(saldos de entregas anteriores, adelantos de las que vienen)</small>','otrasMes','','+')+
     (hay('fleteMes') ? fila('＋ Recargo por entrega cobrado en '+esc(mes),'fleteMes','','+') : '')+
+    (hay('stcMes') ? fila('＋ 🔧 ATC contra costo cobradas en '+esc(mes)+' <small>(no son ventas)</small>','stcMes','','+') : '')+
     fila('<b>= Lo que entró en '+esc(mes)+'</b> <small>(la ficha de cada marca en el Cuadre)</small>','caja','pry-pl-tot')+
     '</tbody></table></div></div>';
   return h;
@@ -20752,7 +20774,7 @@ function cuadreAlertas(pagos){
   }
   /* 🔢 (30/10, propuesta 82) Sin las ventas de las tiendas que se cargan al sistema en otro lado (`porCargarSistema`), y diciéndolo. */
   var sinSistema={}, conPlata={}, _TS=talSet();
-  (pagos||[]).forEach(function(c){ conPlata[c.p.id]=c.p; if(porCargarSistema(c.p, _TS)) sinSistema[c.p.id]=c.p; });
+  (pagos||[]).forEach(function(c){ if(c.stc) return; conPlata[c.p.id]=c.p; if(porCargarSistema(c.p, _TS)) sinSistema[c.p.id]=c.p; });   // 🔧 (20/11) la ATC contra costo no se carga como venta
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
   var _ssFuera=talAfueraTxt(Object.keys(conPlata).map(function(k){ return conPlata[k]; }), _TS);
   if(ss.length) A.push({k:'sistema', sev:'datos', ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>'+(_ssFuera?(' · '+esc(_ssFuera)):''), det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
@@ -20986,7 +21008,7 @@ function renderCuadre(){
     ? { f:_ae.getAttribute('data-forma'), v:_ae.value, s:_ae.selectionStart, e:_ae.selectionEnd } : null;
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos);
   var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
-  var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
+  var ventas={}; pagos.forEach(function(c){ if(!c.stc) ventas[c.p.id]=1; });   // 🔧 (20/11) una ATC contra costo no es una venta
   /* ⚠️ «Sin método anotado» NO es banco (§4ft). Todo lo que no era Efectivo caía en «Bancos
      y tarjeta — para conciliar con el extracto»: un «A cuenta» viejo sin método (casi seguro
      efectivo en la mano de la vendedora) aparecía como plata que tiene que estar en un
@@ -24025,7 +24047,7 @@ function ctaBorrarPago(id, i){
   if(pregActivo()){
     preguntar({ icono:'🗑️', peligro:true, titulo:'¿Borrar '+tipo+' de '+fmtBs(monto)+'?',
       sub:[que, c.fecha?fmtFechaCorta(c.fecha):'', limpiaNota(c.nota)?('recibo '+limpiaNota(c.nota)):'', recibio?('lo recibió '+recibio):'', p.cliente||''].filter(Boolean).join(' · '),
-      lineas:[ esEnvio(c) ? 'El resto de la venta no se toca.' : ('El total de la venta no cambia: lo que falta cobrar pasa de '+fmtBs(Math.max(0,saldoAntes))+' a '+fmtBs(Math.max(0,saldoDesp))+(saldoDesp<-0.009?(' (sigue cobrada de más por '+fmtBs(-saldoDesp)+')'):'')+'.'),
+      lineas:[ esEnvio(c) ? 'El resto de la venta no se toca.' : atcCobra(p) ? ('🔧 Sale de la caja: lo cobrado en esta ATC contra costo baja a '+fmtBs(Math.max(0,r2(atcCobrado(p)-(Number(c.monto)||0))))+'.') : ('El total de la venta no cambia: lo que falta cobrar pasa de '+fmtBs(Math.max(0,saldoAntes))+' a '+fmtBs(Math.max(0,saldoDesp))+(saldoDesp<-0.009?(' (sigue cobrada de más por '+fmtBs(-saldoDesp)+')'):'')+'.'),
         fotos.length ? ((fotos.length===1?'Su imagen de respaldo va':('Sus '+fotos.length+' imágenes de respaldo van'))+' a la papelera si ningún otro pago la'+(fotos.length===1?'':'s')+' usa.') : '',
         regEnSistema(p) ? '⚠️ Esta venta figura ✅ CARGADA en el sistema contable: si este pago ya se cargó allá, corregilo también allá.' : '',
         'No se puede deshacer: habría que registrarlo de nuevo a mano.' ],
@@ -24493,7 +24515,7 @@ function showContaModal(id){
       (_stc ? row('Cobrado', '<b>'+fmtBs(atcCobrado(p))+'</b>') : row('Saldo', falta>0.005?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>')))+
       /* Siempre visible en Contabilidad: si no hubiera recargo, la fila igual da el botón
          para ponerlo — antes, olvidarse el flete al cargar el pedido no tenía arreglo. */
-      row('🚚 Recargo por entrega', envioResumenHtml(p, true))+
+      (_stc ? '' : row('🚚 Recargo por entrega', envioResumenHtml(p, true)))+   // 🔧 (20/11) contra costo: lo que pagó entra por «Registrar el pago»
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
       row('Observaciones', esc(p.observaciones))+
       formPago+
@@ -24513,6 +24535,7 @@ function showContaModal(id){
    foto, y son el respaldo del contador. Lo editable es el adelanto y el saldo.
    ------------------------------------------------------------------------- */
 function ctaEditHtml(p){
+  if(atcCobra(p)) return '';   // 🔧 (20/11, revisión de Fable) la ATC contra costo no tiene precios, «A cuenta» ni saldo que corregir
   var prods=(p.productos||[]);
   /* 26/09: lo tipeado antes de que otro botón repintara (`ctaMontosRecordar`). Vuelve si lo que el panel
      había puesto sigue igual; si cambió abajo, quedó viejo: va lo guardado y se avisa (`_viejos`). */
@@ -25096,8 +25119,9 @@ function pagoTexto(p, c){
      "PAGO A CUENTA (ANTICIPO)" aunque cubriera la venta entera, y abajo decía "PAGADA por
      completo": el mensaje se contradecía solo. */
   var faltaTot=contaFaltaCobrar(p), completo=faltaTot<=0.005;
+  var _stcW=atcCobra(p);   // 🔧 (20/11, revisión de Fable) la ATC contra costo no es una venta
   var L=[esEnvio(c)?'🚚 *RECARGO POR ENTREGA COBRADO*'
-        :(completo?'💰 *PAGO COMPLETO DE LA VENTA*':'💰 *PAGO A CUENTA*'),''];
+        :(_stcW?'🔧 *PAGO DE UNA ATC CONTRA COSTO*':(completo?'💰 *PAGO COMPLETO DE LA VENTA*':'💰 *PAGO A CUENTA*')),''];
   L.push('👤 Cliente: '+(p.cliente||'—'));
   if(p.nota) L.push('🧾 Nota de venta: '+p.nota);
   L.push('📅 '+(c.fecha?fmtFecha(c.fecha):'sin fecha'));
@@ -25110,7 +25134,8 @@ function pagoTexto(p, c){
   if(!esEnvio(c) && c.anticipo && !completo) L.push('📌 Es el adelanto que dejó al comprar');
   L.push('');
   L.push(esEnvio(c) ? '📌 Es el flete: va aparte de la venta, no se factura'
-        : (completo ? '✅ Venta PAGADA por completo' : '⏳ Queda por cobrar: *'+fmtBs(faltaTot)+'*'));
+        : (_stcW ? ('📌 Reparación que paga el cliente: entra a la caja, no suma a las ventas · cobrado en esta ATC: *'+fmtBs(atcCobrado(p))+'*')
+        : (completo ? '✅ Venta PAGADA por completo' : '⏳ Queda por cobrar: *'+fmtBs(faltaTot)+'*')));
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   if(cs.length){
     L.push('');
@@ -25168,8 +25193,9 @@ function showPagoWhatsapp(id, i){
         '</div>'+
         '<div style="font-size:.85rem;margin-top:4px">'+
           (esEnvio(c) ? '🚚 Es el flete: va aparte, no le baja el saldo a la venta'
+            : (atcCobra(p) ? ('🔧 Pago de la reparación (ATC contra costo): entra a la caja, no suma a las ventas · cobrado <b>'+fmtBs(atcCobrado(p))+'</b>')
             : (falta>0.005 ? ('⏳ A esta venta le queda por cobrar <b style="color:var(--red)">'+fmtBs(falta)+'</b>')
-                          : '✅ La venta quedó <b>PAGADA por completo</b>'))+
+                          : '✅ La venta quedó <b>PAGADA por completo</b>')))+
         '</div>'+
         '<div style="font-size:.76rem;color:var(--muted);margin-top:6px">No tenés que hacer nada más. Si querés, pasá el aviso al grupo 👇</div>'+
       '</div>'+
@@ -26766,6 +26792,14 @@ function submitPedido(){
     }
     faltaAtc.forEach(function(x){ markErr(x.id); });
     if(faltaAtc.length) ok=false;
+    /* 🔧 (20/11, revisión de Fable 1) Pasar a «contra costo» o sacarla de ahí una ATC que YA tiene pagos mueve esa plata de la caja: pide la
+       clave y lo pregunta diciendo cuánto (`atcStcCambio`). */
+    var _stcC=atcStcCambio(_prevAtc, segVal('f-atc-tipo'));
+    if(_stcC){
+      if(!UNLOCKED){ toast(_stcC.txt+' Para cambiarlo hace falta la clave de Administración.','err',9000); return; }
+      var _rStc=preguntaYa(_stcC.txt+'\n\n¿Cambiarla igual?', { icono:'🔧', aviso:true, titulo:_stcC.tit, lineas:[_stcC.txt], no:'No, dejarla como estaba', si:'Sí, cambiarla' }, _otraVez);
+      if(_rStc===null || !_rStc) return;
+    }
   }
   pintarAtcFalta(faltaAtc);
   var faltaMotivo=faltaAtc.length>0;
@@ -43387,7 +43421,7 @@ function verAtc(id){
                      ? '<button class="btn btn-sm" style="width:auto;background:#0369a1;color:#fff;font-weight:700" onclick="closeModal();abrirProgramarDevAtc(\''+esc(p.id)+'\')">🔁 '+(atcDevProg(p)?'Cambiar devolución':'Programar devolución')+'</button>'
                      : '<button class="btn btn-sm" style="width:auto;background:#b0257a;color:#fff;font-weight:700" onclick="closeModal();atcRecogidoDesdeAtc(\''+esc(p.id)+'\')" title="Marcarlo recogido y programar la devolución">✓ Recogido</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
-        (atcCobra(p) ? ('<button class="btn btn-sm" id="atc-stc-pago" style="width:auto;background:#4338ca;color:#fff;font-weight:700" onclick="closeModal();showContaModal(\''+esc(p.id)+'\')" title="Contra costo: el cliente paga la reparación. Entra a la caja (Cuadre, efectivo por retirar), no suma a las ventas">💵 Registrar pago'+(atcCobrado(p)>0.005 ? (' · cobrado '+fmtBs(atcCobrado(p))) : '')+'</button>') : '')+   // 🔧 (20/11) ATC contra costo
+        (atcCobraCaja(p) ? ('<button class="btn btn-sm" id="atc-stc-pago" style="width:auto;background:#4338ca;color:#fff;font-weight:700" onclick="closeModal();showContaModal(\''+esc(p.id)+'\')" title="Contra costo: el cliente paga la reparación. Entra a la caja (Cuadre, efectivo por retirar), no suma a las ventas">💵 Registrar pago'+(atcCobrado(p)>0.005 ? (' · cobrado '+fmtBs(atcCobrado(p))) : '')+'</button>') : '')+   // 🔧 (20/11) ATC contra costo
         '<button class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--teal-border);color:#065f5b;font-weight:700" onclick="atcCorreoVer(\''+esc(p.id)+'\')">📧 Correo de la ATC</button>'+   // 📧 (§4li)
         '<button class="btn btn-sm" style="width:auto;background:#1D9DB4;color:#fff;font-weight:700" onclick="bajarAtcExcel(\''+esc(p.id)+'\')">⬇️ Excel de la ATC</button>'+   // 📄 (06/11)
         '<button class="btn btn-ghost btn-sm" id="atc-copiar-una" style="width:auto" onclick="copiarAtcUna(\''+esc(p.id)+'\')" title="Copia esta ATC en una fila, con las mismas columnas de siempre: se pega en el Excel">📋 Copiar</button>'+   // 🧹 (§4lm)
@@ -43414,6 +43448,13 @@ function atcTipoMarcar(id, t){
   var antes=atcTipo(p);
   if(antes===t) return;
   if(antes && !UNLOCKED){ toast('Ya está marcada como '+atcTipoTxt(antes)+'. Para cambiarla hace falta la clave de Administración.','err',6000); return; }
+  var _stcC=atcStcCambio(p, t);   // 🔧 (20/11, revisión de Fable 1) con pagos, la plata entra o sale de la caja
+  if(_stcC){
+    if(!UNLOCKED){ toast(_stcC.txt+' Para cambiarlo hace falta la clave de Administración.','err',9000); return; }
+    var _rS=preguntaYa(_stcC.txt+'\n\n¿Cambiarla igual?', { icono:'🔧', aviso:true, titulo:_stcC.tit, lineas:[_stcC.txt], no:'No, dejarla como estaba', si:'Sí, cambiarla' },
+      function(){ atcTipoMarcar(id, t); });
+    if(_rS===null || !_rS) return;
+  }
   mergeAtcDatos(p, { tipo:t });
   var res=persistPedido(p);
   try{ renderAtc(); }catch(e){}
@@ -44170,7 +44211,7 @@ function renderChofer(){
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=choRechazosHtml(c, todos)+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo (el de ESTE chofer)
   var ent=0, porCobrar=0, cobrado=0, fleteF=0;
-  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=saldoACobrar(p); });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=(noSeCobra(p)?0:totalCobrado(p)); if(!p.pagado) porCobrar+=saldoACobrar(p); });   // §4fs · 🔧 (20/11) sin el pago de una ATC contra costo
   list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
@@ -46565,14 +46606,14 @@ function parteData(){
        parte del día (pantalla y WhatsApp), la tarjeta del chofer, la rendición y el reporte
        no. Mismo patrón en seis lugares; §4ew cambió `p.cobradoBs` por `totalCobrado(p)` en
        todos pero dejó la guarda `p.pagado`. */
-    cob+=totalCobrado(p); if(!p.pagado && !noSeCobra(p)){ pend+=Number(p.saldo)||0; pendN++; }   // (26/09) sin ATC/RPT, como el chip «💰 Por cobrar»: decía «(3 pedidos)» con una sola venta debiendo
+    cob+=(noSeCobra(p)?0:totalCobrado(p)); if(!p.pagado && !noSeCobra(p)){ pend+=Number(p.saldo)||0; pendN++; }   // (26/09) sin ATC/RPT, como el chip «💰 Por cobrar»: decía «(3 pedidos)» con una sola venta debiendo
     if(!vehiculoDe(p)) sinChof++;
   });
   var faltHoy=dh.filter(function(p){ return (p.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
   var am=0, pm=0;
   dm.forEach(function(p){ if(normTurno(p.turno)==='PM') pm++; else am++; if(!p.maps) sinGps++; if(!p.verificado) noVerif++; });
   var byCh={};
-  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); });   // §4fs
+  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=(noSeCobra(p)?0:totalCobrado(p)); });   // §4fs · 🔧 la ATC contra costo no la cobra el chofer
   return {hoy:hoy, man:man, nHoy:dh.length, ent:ent, cob:cob, pend:pend, pendN:pendN, flete:flete, sinChof:sinChof, faltHoy:faltHoy,
           nMan:dm.length, am:am, pm:pm, sinGps:sinGps, noVerif:noVerif, byCh:byCh};
 }
@@ -46840,11 +46881,11 @@ function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(o
 function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
-  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=saldoACobrar(p); });   // §4fs
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=(noSeCobra(p)?0:totalCobrado(p)); if(!p.pagado) pend+=saldoACobrar(p); });   // §4fs
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
   var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=saldoACobrar(p); });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
-  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=saldoACobrar(p); });   // §4fs
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=(noSeCobra(p)?0:totalCobrado(p)); if(!p.pagado) byC[c].pend+=saldoACobrar(p); });   // §4fs
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   document.getElementById('reporte-body').innerHTML=
     '<div class="metrics" style="margin-bottom:16px">'+

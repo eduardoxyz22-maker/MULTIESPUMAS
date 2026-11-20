@@ -1062,6 +1062,13 @@ La página solo lo muestra (`pdfPedidoHtml`: «👁 Ver» y «⬇️ Descargar»
 - 👤 La pestaña ATC: `atcSoloDe()`/`atcEsMia(p)` en `atcLista` y `atcViejasAbiertas`; ven todas la contraseña, Logística, Administración, el aparato de
   Administración (`asisVeAdm`), Contabilidad (rol `conta`) y Eduardo; sin nombre elegido, ninguna (cartel `#atc-solo`, que solo existe cuando filtra). Solo esconde.
   Los números de calidad siguen siendo de la empresa. Playwright: todas salvo `ATC_MIAS_PRUEBA`. `tests/test_atc_mias.js` (10).
+- 🔎 **Revisión de Fable (20/11) y sus arreglos**: cambiar el tipo de una ATC que YA tiene pagos, entrando o saliendo de contra costo, pide la clave y
+  pregunta cuánto entra o sale de la caja (`atcStcCambio`, en `submitPedido` y `atcTipoMarcar`); el recibo de un pago STC tapa su número del talonario
+  (`talonarioHuecos`); «De dónde sale lo vendido» suma «＋ 🔧 ATC contra costo cobradas» a la caja (`pryPlata` → `stcMes`); el botón solo con
+  `atcCobraCaja` (Eduardo/ROHO/internos no); la ficha sin «Corregir precios y montos» ni recargo; el WhatsApp del pago y la confirmación dicen
+  «ATC contra costo»; el Cuadre no la cuenta como «venta» ni como «sin cargar al sistema»; el parte/reporte/vista del chofer no le suma lo de una ATC
+  o RPT (`noSeCobra`). Servidor: la vendedora de Sueña se resuelve por el NÚMERO de usuario (`kSuenaVendedor_` con `kcUsuario_`; `kcMeta_` guarda
+  `ids`), un nombre corto que es de UNO solo vale; el cargador de correos sube el PDF UNA vez y si falla sigue (`post(…, intentos=1)`).
 
 ## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).

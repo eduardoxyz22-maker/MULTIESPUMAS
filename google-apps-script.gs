@@ -10833,12 +10833,32 @@ function kommoRepasoSuena_() {
 /** La vendedora de Sueña por su usuario de Kommo: el nombre del panel si es uno de KC_SUENA_USUARIOS («Alberto Pareja» = Juan Pablo
     Paredes; en Kommo hoy se llama «multiespumas») o si coincide con uno de WA_MARCAS; si no, el de Kommo sin « - Sucursal». */
 function kSuenaVendedor_(uid, nombre) {
-  var buscado = '';
-  for (var k in KC_SUENA_USUARIOS) if (String(KC_SUENA_USUARIOS[k]) === String(uid)) buscado = k;
-  var n = buscado || KC_SUENA_NOMBRES[kcNorm_(nombre)] || kcNorm_(nombre);   // «multiespumas» = Juan Pablo Paredes
-  for (var i = 0; i < WA_MARCAS.length; i++) for (var j = 0; j < WA_MARCAS[i].vendedores.length; j++)
-    if (kcNorm_(WA_MARCAS[i].vendedores[j]) === n) return WA_MARCAS[i].vendedores[j];
-  return nombre;
+  /* (20/11, revisión de Fable 3 y 4) POR EL NÚMERO: el vendedor de Sueña cuyo usuario (la misma cuenta del cierre, kcUsuario_: número de
+     KC_SUENA_USUARIOS, nombre exacto o parecido, «multiespumas» solo si el 13073611 no está) es ESE número. Así «Fernando Peinado Charcas»
+     es Fernando Peinado, y un segundo usuario «multiespumas» no pasa a ser Juan Pablo. */
+  var m = kcMeta_(), hit = '';
+  if (m && !m.error) {
+    for (var i = 0; i < WA_MARCAS.length; i++) {
+      if (!/sue/i.test(WA_MARCAS[i].lbl)) continue;
+      for (var j = 0; j < WA_MARCAS[i].vendedores.length; j++) {
+        var v = WA_MARCAS[i].vendedores[j];
+        if (kcUsuario_(m, v) === String(uid)) { if (hit && hit !== v) return nombre; hit = v; }
+      }
+    }
+  }
+  if (hit) return hit;
+  /* Un nombre más corto en Kommo («Mauricio») que es parte del de UNO solo de los vendedores de Sueña: ése. Con dos posibles, ninguno. */
+  var pal = kcNorm_(nombre).split(' ').filter(function (x) { return x.length > 2; });
+  if (pal.length) {
+    for (var a = 0; a < WA_MARCAS.length; a++) {
+      if (!/sue/i.test(WA_MARCAS[a].lbl)) continue;
+      for (var b = 0; b < WA_MARCAS[a].vendedores.length; b++) {
+        var ws = kcNorm_(WA_MARCAS[a].vendedores[b]).split(' ');
+        if (pal.every(function (w) { return ws.indexOf(w) >= 0; })) { if (hit) return nombre; hit = WA_MARCAS[a].vendedores[b]; }
+      }
+    }
+  }
+  return hit || nombre;
 }
 /** ▶️ (2026-11-20-b) DESDE EL EDITOR, solo lee: los leads de Sueña en «COMPRO» de los últimos 3 días, si ya están en el panel, y los
     borradores que armaría (cuántos, de qué vendedora, cuántos productos y si trae celular). No escribe nada, ni nombres de clientes. */
@@ -11217,7 +11237,11 @@ var KC_SUENA_USUARIOS = { 'juan pablo paredes':'13073611' };
    si ese número no está entre los usuarios de ese Kommo, el usuario con este NOMBRE es el del vendedor (y al revés, para leer el lead). */
 var KC_SUENA_NOMBRES = { 'multiespumas':'juan pablo paredes', 'alberto pareja':'juan pablo paredes' };
 /** El nombre en Kommo de un número de usuario (de kcMeta_), para mostrarlo en las pruebas del editor. */
-function kcUsuarioNombre_(m, uid) { for (var n in (m && m.usuarios) || {}) if (String(m.usuarios[n]) === String(uid)) return n; return ''; }
+function kcUsuarioNombre_(m, uid) {
+  if (m && m.ids) return Object.prototype.hasOwnProperty.call(m.ids, String(uid)) ? (m.ids[String(uid)] || '(sin nombre)') : '';
+  for (var n in (m && m.usuarios) || {}) if (String(m.usuarios[n]) === String(uid)) return n;
+  return '';
+}
 function kcCtaDe_(vend) {
   var v = kcNorm_(vend);
   if (!v) return '';
@@ -11318,7 +11342,8 @@ function kcMeta_(fresco) {
   if (!m.fc) return { error:'no encontré el campo «Fecha contrato» (tipo fecha) de los leads' };
   var us = kPedir_('get', '/users?limit=250');
   if (us.code !== 200 || !us.o) return { error:'no pude leer los usuarios de Kommo (HTTP ' + us.code + ')', code:us.code };
-  kEmb_(us.o, 'users').forEach(function (u) { var nom = kcNorm_(String(u.name || '').split(/\s+[-–]\s+/)[0]); if (nom) m.usuarios[nom] = String(u.id); });
+  m.ids = {};   // (20/11, revisión de Fable 4) id → nombre: con dos usuarios del mismo nombre, `usuarios` guarda uno solo
+  kEmb_(us.o, 'users').forEach(function (u) { var nom = kcNorm_(String(u.name || '').split(/\s+[-–]\s+/)[0]); m.ids[String(u.id)] = nom; if (nom) m.usuarios[nom] = String(u.id); });
   if (cache) { try { cache.put('kc_meta' + KC_CTA, JSON.stringify(m), KC_META_SEG); } catch (e) {} }
   return m;
 }
@@ -11328,7 +11353,7 @@ function kcUsuario_(m, vend) {
   if (!v) return '';
   if (KC_CTA === 'suena' && KC_SUENA_USUARIOS[v]) {
     var uS = KC_SUENA_USUARIOS[v];
-    if (!m.usuarios || kcUsuarioNombre_(m, uS)) return uS;   // el número está entre los usuarios: ése
+    if (!m.usuarios || !m.ids || kcUsuarioNombre_(m, uS)) return uS;   // el número está entre los usuarios (o no se sabe): ése
     for (var nS in KC_SUENA_NOMBRES) if (KC_SUENA_NOMBRES[nS] === v && m.usuarios[nS]) return m.usuarios[nS];   // si no, por el nombre («multiespumas»)
     return uS;
   }

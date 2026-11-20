@@ -43,8 +43,8 @@ VENDEDOR = "Eduardo Añez"
 REINTENTA = ('cupos_llenos', 'dia_cerrado', 'feriado')
 
 
-def post(body):
-    for intento in range(3):
+def post(body, intentos=3):
+    for intento in range(intentos):
         # El cuerpo va por la entrada estándar (`--data-binary @-`): un PDF en base64 no entra en un solo argumento (Linux corta
         # cada argumento en 128 KB).
         r = subprocess.run(["curl", "-sS", "-L", "--max-time", "120", "-H", "Content-Type: text/plain;charset=utf-8",
@@ -109,8 +109,13 @@ def subir_pdf(ruta, cliente, clave):
     if len(datos) > PDF_MAX:
         return None, 'el PDF pesa más de 10 MB'
     nombre = re.sub(r'[^\w.\- ]+', '', ruta.replace('\\', '/').split('/')[-1])[:80] or 'pedido.pdf'
-    r = post({"action": "pdfPedido", "dataUrl": "data:application/pdf;base64," + base64.b64encode(datos).decode('ascii'),
-              "cliente": cliente, "oc": clave, "nombre": nombre})
+    # (20/11, revisión de Fable 2) UNA vez y sin cortar la vuelta: si Google contesta mal, este pedido se carga igual sin el PDF (lo dice
+    # la nota) y los siguientes también; reintentar dejaba hasta 3 copias en Drive.
+    try:
+        r = post({"action": "pdfPedido", "dataUrl": "data:application/pdf;base64," + base64.b64encode(datos).decode('ascii'),
+                  "cliente": cliente, "oc": clave, "nombre": nombre}, intentos=1)
+    except SystemExit as e:
+        return None, 'el servidor no contestó bien al subir el PDF (%s)' % str(e)[:120]
     if r.get('ok') and r.get('fileId'):
         return {"i": r['fileId'], "n": r.get('nombre') or nombre}, None
     return None, 'el servidor no guardó el PDF: ' + str(r.get('error') or r)[:120]
