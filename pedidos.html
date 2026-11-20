@@ -60594,10 +60594,33 @@ function rohoElegidos(){
 function rohoSetFecha(v){
   v=String(v||'').trim();
   if(v && v<todayStr()){ toast('Elegí hoy o un día que viene.','err'); v=''; }
+  if(v && rohoNoSale(v, 'dia')){ toast(rohoNoSale(v, 'dia')+': elegí otro día.','err'); v=''; }
   ROHO_FECHA=v; renderImportRoho();
 }
-/** ¿Este pedido va a un turno sin lugar o a un día cerrado? Entonces se guarda forzado. */
-function rohoForzar(f, t){ return diaCerrado(f) || cuposUsadosTurno(f, t)>=limTurno(f, t); }
+/** 🚫 ¿Ese día (t='dia') o ese turno no sale el camión? Feriado, domingo o la tarde del sábado: eso NUNCA se fuerza
+    (logística elige el día «aunque esté lleno», no un día en que no hay camión). '' = sale. */
+function rohoNoSale(f, t){
+  try{ if(feriadoDe(f)) return 'el '+fmtFecha(f)+' es feriado ('+feriadoDe(f)+') y el camión no sale'; }catch(e){}
+  if(limTurno(f,'AM')+limTurno(f,'PM')<=0) return 'el '+fmtFecha(f)+' el camión no sale';
+  if(t==='AM' || t==='PM'){ if(limTurno(f,t)<=0) return 'el '+fmtFecha(f)+' no hay turno '+(t==='PM'?'de la tarde':'de la mañana'); }
+  return '';
+}
+/** ¿Este pedido va a un turno sin lugar o a un día cerrado? Entonces se guarda forzado (nunca un día o turno en que no sale el camión). */
+function rohoForzar(f, t){ if(rohoNoSale(f, t)) return false; return diaCerrado(f) || cuposUsadosTurno(f, t)>=limTurno(f, t); }
+/** ¿Alguno de la lista va a quedar forzado? Cuenta los que caen en cada día contra lo libre (como la vista previa), no solo cómo está hoy. */
+function rohoHayQueForzar(lista){
+  var por={}; lista.forEach(function(p){ por[p.fecha]=(por[p.fecha]||0)+1; });
+  return Object.keys(por).some(function(f){
+    var n=por[f];
+    if(ROHO_TURNO==='repartir'){
+      if(rohoNoSale(f, 'dia')) return false;
+      var lib=Math.max(0, limTurno(f,'AM')-cuposUsadosTurno(f,'AM'))+Math.max(0, limTurno(f,'PM')-cuposUsadosTurno(f,'PM'));
+      return diaCerrado(f) || n>lib;
+    }
+    if(rohoNoSale(f, ROHO_TURNO)) return false;
+    return diaCerrado(f) || n>Math.max(0, limTurno(f,ROHO_TURNO)-cuposUsadosTurno(f,ROHO_TURNO));
+  });
+}
 function rohoSetTurno(t){ ROHO_TURNO=t; renderImportRoho(); }
 function rohoToggleViejos(){ ROHO_VIEJOS=!ROHO_VIEJOS; renderImportRoho(); }
 function renderImportRoho(){
@@ -60614,6 +60637,8 @@ function renderImportRoho(){
     var lim=limTurno(f,ROHO_TURNO), usados=cuposUsadosTurno(f,ROHO_TURNO), libre=Math.max(0,lim-usados);
     var n=porDia[f], igual=' · <b>se cargan igual</b>', cer=diaCerrado(f) ? ' · el día está cerrado' : '';
     if(feriadoDe(f)) return '<b>'+fmtFecha(f)+'</b>: es feriado ('+esc(feriadoDe(f))+') y el camión no sale · '+n+' pedidos';   // §4gy
+    var _ns=rohoNoSale(f, ROHO_TURNO==='repartir' ? 'dia' : ROHO_TURNO);
+    if(_ns) return '<b>'+fmtFecha(f)+'</b>: '+esc(_ns.replace(/^el \S+ /,''))+' · '+n+' pedidos <b>no se cargan</b> (no se fuerza un día sin camión)';
     if(ROHO_TURNO==='repartir'){
       var lA=limTurno(f,'AM'), lP=limTurno(f,'PM'), uA=cuposUsadosTurno(f,'AM'), uP=cuposUsadosTurno(f,'PM'), libreT=Math.max(0,lA-uA)+Math.max(0,lP-uP);
       if(n<=libreT && !cer) return '';
@@ -60704,7 +60729,7 @@ function confirmarImportRoho(){
   if(!lista.length){ toast('No hay nada para importar.','err'); return; }
   if(ROHO_CREANDO){ toast('⏳ Ya se están creando los pedidos: esperá a que termine.','err'); return; }
   /* 📅 (20/11) Un turno lleno o un día cerrado se fuerza: con la clave del servidor puesta, hace falta la de administración. */
-  if(lista.some(function(p){ return rohoForzar(p.fecha, ROHO_TURNO==='repartir' ? 'PM' : ROHO_TURNO); }) && !asegurarClaveAdmin(function(){ confirmarImportRoho(); })) return;
+  if(rohoHayQueForzar(lista) && !asegurarClaveAdmin(function(){ confirmarImportRoho(); })) return;
   ROHO_CREANDO=true;
   try{ var _bc=document.querySelector('#modal-box .roho-crear'); if(_bc){ _bc.disabled=true; _bc.style.opacity='.5'; } }catch(e){}
   var prog=document.getElementById('roho-progreso');
