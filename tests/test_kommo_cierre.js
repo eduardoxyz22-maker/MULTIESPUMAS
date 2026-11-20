@@ -106,6 +106,10 @@ function cargar(filas, props, K0, opts) {
         return L.length ? resp(200, { _embedded:{ leads:L } }) : resp(204, null);
       }
       let m;
+      // 🛏️ (11-20-b) lo que pide borradorDeLead_: el contacto, el usuario y los productos del catálogo
+      if (metodo === 'get' && (m = /^\/contacts\/(\d+)$/.exec(p))) return K.contactos[m[1]] ? resp(200, K.contactos[m[1]]) : resp(404, {});
+      if (metodo === 'get' && (m = /^\/users\/(\d+)$/.exec(p))) { const u = K.usuarios._embedded.users.find(x => String(x.id) === m[1]); return u ? resp(200, u) : resp(404, {}); }
+      if (metodo === 'get' && (m = /^\/catalogs\/(\d+)\/elements$/.exec(p))) { const els = ((K.catalogos || {})[m[1]] || []).filter(e => (q['filter[id][]'] || []).indexOf(String(e.id)) >= 0); return resp(200, { _embedded:{ elements:els } }); }
       if (metodo === 'get' && (m = /^\/leads\/(\d+)$/.exec(p))) return K.leads[m[1]] ? resp(200, K.leads[m[1]]) : resp(404, {});
       if (metodo === 'patch' && (m = /^\/leads\/(\d+)$/.exec(p))) { const l = K.leads[m[1]]; if (!l) return resp(404, {}); Object.assign(l, cuerpo); return resp(200, { id:l.id, updated_at:1 }); }
       if (metodo === 'post' && (m = /^\/leads\/(\d+)\/notes$/.exec(p))) { (K.notas = K.notas || []).push({ lead:m[1], txt:cuerpo[0].params.text }); return resp(200, { _embedded:{ notes:[{ id:1 }] } }); }
@@ -354,6 +358,50 @@ console.log('\n── 10. 🛏️ Sueña: su venta cierra el lead en el Kommo de
   const rp = d.ctx.probarKommoEscribeSuena(), Wd = escrituras(d), T = rp.lineas.join('\n');
   chk('e. probarKommoEscribeSuena: lee «COMPRO», encuentra a los tres vendedores y escribe solo el MISMO precio a un lead', rp.ok && /COMPRO/.test(T) && /Juan Pablo Paredes → usuario 13073611/.test(T) && /Fernando Peinado → usuario 802/.test(T) &&
     Wd.length === 1 && Wd[0].metodo === 'patch' && /gerenciamultiespumasviscarra/.test(Wd[0].host), rp.lineas);
+}
+
+console.log('\n── 11. 🛏️ (11-20-b) Las ventas de Sueña llegan a la bandeja como las de Heaven ──');
+{
+  const SE = 10989127, COMPRO = 6601, UID_JP = 13073611, UID_MM = 803, CAT_S = 4455;
+  const KH = kommoBase();
+  const KS = kommoBase();
+  KS.pipelines = { _embedded:{ pipelines:[{ id:SE, name:'Embudo de ventas', _embedded:{ statuses:[{ id:6600, name:'ATENDIDO' }, { id:COMPRO, name:'COMPRO' }, { id:142, name:'Logrado con éxito' }] } }] } };
+  KS.campos = { _embedded:{ custom_fields:[{ id:7701, name:'Fecha contrato', type:'date' }] } };
+  KS.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'Alberto Pareja' }, { id:UID_MM, name:'Mauricio Merida - Charcas' }] } };
+  KS.catalogos = { [CAT_S]:[{ id:91, name:'COLCHON SUEÑA LITE 140X190', custom_fields_values:[{ field_id:5550, field_code:'PRICE', values:[{ value:2900 }] }] }] };
+  // los ids de los campos de Sueña son OTROS (el teléfono no es 1685346, la dirección no es 1685406): se leen por código y por nombre
+  KS.contactos[5101] = { id:5101, name:'CLIENTE SUEÑA UNO', custom_fields_values:[{ field_id:9001, field_code:'PHONE', values:[{ value:'+591 70099988' }] }] };
+  KS.contactos[5102] = { id:5102, name:'CLIENTE SUEÑA DOS', custom_fields_values:[{ field_id:9001, field_code:'PHONE', values:[{ value:'71122334' }] }] };
+  lead(KS, 4201, { name:'Lead #4201', pipeline_id:SE, status_id:COMPRO, price:2900, responsible_user_id:UID_JP, updated_at:Math.floor(Date.now() / 1000),
+    custom_fields_values:[{ field_id:9100, field_name:'Dirección de entrega', values:[{ value:'Barrio Inventado calle 3' }] }],
+    _embedded:{ contacts:[{ id:5101, is_main:true }], catalog_elements:[{ id:91, metadata:{ catalog_id:CAT_S, quantity:1, price:2900 } }] } });
+  lead(KS, 4202, { name:'Venta Mauricio', pipeline_id:SE, status_id:COMPRO, price:1500, responsible_user_id:UID_MM, updated_at:Math.floor(Date.now() / 1000), _embedded:{ contacts:[{ id:5102, is_main:true }] } });
+  lead(KS, 4203, { pipeline_id:SE, status_id:6600, responsible_user_id:UID_MM, updated_at:Math.floor(Date.now() / 1000) });   // todavía no compró
+  const props = { KOMMO_TOKEN:'token-de-prueba', KOMMO_TOKEN_SUENA:'token-suena' };
+  const a = cargar([], props, KH, { Ksuena:KS });
+  const res = a.ctx.kommoRepaso();
+  const bor = (id) => { const r = a.row('kommo-' + id); if (!r) return null; return { vend:r[3], cli:r[4], cel:String(r[6]), dir:r[9], saldo:r[12], est:r[17], prods:JSON.parse(r[14] || '[]') }; };
+  const b1 = bor(4201), b2 = bor(4202);
+  chk('⚠️ a. el repaso de cada 5 minutos trae las ventas de Sueña en «COMPRO» (2) y no la que no compró', res.suena && res.suena.vistos === 2 && res.suena.creados === 2 && !a.row('kommo-4203'), res);
+  chk('⚠️ b. el borrador de Juan Pablo: vendedor «Juan Pablo Paredes» (en Kommo «Alberto Pareja»), cliente del contacto, celular por su código, dirección por el nombre del campo',
+    b1 && b1.vend === 'Juan Pablo Paredes' && b1.cli === 'CLIENTE SUEÑA UNO' && /70099988/.test(b1.cel) && b1.dir === 'Barrio Inventado calle 3' && b1.est === 'Borrador Kommo', b1);
+  chk('c. con su producto del catálogo de Sueña y el precio', b1 && b1.prods.length === 1 && /SUEÑA LITE/.test(b1.prods[0].desc) && b1.prods[0].precio === 2900 && b1.saldo === 2900, b1 && b1.prods);
+  chk('d. el de Mauricio sin « - Charcas»', b2 && b2.vend === 'Mauricio Merida' && /71122334/.test(b2.cel), b2);
+  const suena = a.llamadas.filter(x => /gerenciamultiespumasviscarra/.test(x.host)), heaven = a.llamadas.filter(x => /eanez/.test(x.host));
+  chk('⚠️ e. lo de Sueña va al Kommo de Sueña con SU token, y el de Heaven sigue con el suyo', suena.length > 0 && suena.every(x => x.auth === 'Bearer token-suena') && heaven.every(x => x.auth === 'Bearer token-de-prueba') && heaven.length > 0,
+    { suena:suena.length, heaven:heaven.length });
+  const n = a.sh._datos.length, res2 = a.ctx.kommoRepaso();
+  chk('⚠️ f. el repaso siguiente no los duplica', a.sh._datos.length === n && res2.suena.creados === 0, res2.suena);
+  const c = cargar([], { KOMMO_TOKEN:'token-de-prueba' }, KH, { Ksuena:KS });
+  const rc = c.ctx.kommoRepaso();
+  chk('g. sin KOMMO_TOKEN_SUENA: nada de Sueña (ni una llamada a ese Kommo)', rc.suena && rc.suena.apagado === 'sin_token' && !c.llamadas.some(x => /gerenciamultiespumasviscarra/.test(x.host)), rc.suena);
+  const d = cargar([], Object.assign({ KOMMO_SUENA_BANDEJA:'0' }, props), KH, { Ksuena:KS });
+  chk('h. KOMMO_SUENA_BANDEJA = 0 lo apaga sin reimplementar', d.ctx.kommoRepaso().suena.apagado === 'KOMMO_SUENA_BANDEJA' && !d.row('kommo-4201'));
+  const e = cargar([], props, KH, { Ksuena:KS });
+  const L = e.ctx.probarKommoSuenaBandeja().join('\n');
+  chk('i. probarKommoSuenaBandeja solo lee: dice la etapa, cuántos y de qué vendedora, sin escribir nada ni nombrar clientes',
+    /COMPRO/.test(L) && /Juan Pablo Paredes/.test(L) && !/CLIENTE SUEÑA/.test(L) && e.sh._datos.length === 1 && escrituras(e).length === 0, L);
+  chk('j. después de cada pasada, la cuenta vuelve a Heaven (KC_CTA vacío)', a.ctx.KC_CTA === '' && e.ctx.KC_CTA === '');
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');
