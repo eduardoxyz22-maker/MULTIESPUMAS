@@ -42,7 +42,8 @@ function kommo() {
 }
 
 function cargar(K, props, falla) {
-  props = Object.assign({ KOMMO_TOKEN:'tok-inventado' }, props || {});
+  props = Object.assign({ KOMMO_TOKEN:'tok-inventado', KOMMO_TOKEN_SUENA:'tok-suena' }, props || {});
+  Object.keys(props).forEach(k => { if (props[k] == null) delete props[k]; });
   const hojas = {}, llamadas = [], lock = { veces:0 };
   const hoja = (n) => hojas[n] = hojas[n] || { filas:[], appendRow(r) { this.filas.push(r); }, getRange:() => ({ setFontWeight(){}, setNumberFormat(){} }), setFrozenRows(){} };
   const cache = { _m:{}, get(k) { return this._m[k] != null ? this._m[k] : null; }, put(k, v) { this._m[k] = String(v); }, remove(k) { delete this._m[k]; } };
@@ -64,6 +65,7 @@ function cargar(K, props, falla) {
       const metodo = String(op.method || 'get').toLowerCase(), ruta = url.split('/api/v4')[1] || '', p = ruta.split('?')[0], q = qs(ruta);
       llamadas.push({ metodo, p, q, host:url.split('/api/v4')[0] });
       if (metodo !== 'get') return resp(405, {});
+      if (/gerencia/.test(url.split('/api/v4')[0]) && !K.enSuena) return resp(204, null);   // el Kommo de Sueña, vacío
       if (falla && falla(p)) return resp(falla(p), { title:'no' });
       if (p === '/users') return resp(200, K.usuarios);
       if (p === '/leads/pipelines') return resp(200, K.pipelines);
@@ -130,8 +132,8 @@ function servidor() {
   chk('5b · último mensaje del cliente y de una vendedora (el bot no)', l72 && l72.ultCli === S - 20 * D + 30 * H && l72.ultVend && l72.ultVend.quien === 'Maria Flores', l72);
   chk('5c · el nombre del contacto', l71 && l71.cli === 'CLIENTA INVENTADA');
   chk('6 · la tarea abierta con fecha futura va (la vencida no), con quién la puso y SIN su texto', l72 && l72.tarea && l72.tarea.ts === S + 5 * D && l72.tarea.puso === 'Maria Flores' && !('txt' in l72.tarea) && l71 && !l71.tarea, { t72:l72 && l72.tarea, t71:l71 && l71.tarea });
-  const S2 = r.cuentas && r.cuentas[1];
-  chk('7 · Sueña sin token → «sinToken», sin preguntarle a nadie', S2 && S2.marca === 'suena' && S2.sinToken === true && !A.llamadas.some(c => /gerencia/.test(c.host)), S2);
+  const A7 = cargar(k.K, { KOMMO_TOKEN_SUENA:null }), r7 = A7.post({ action:'quienAtiende', cel:'70099999', quien:'Maria Flores' }), S2 = r7.cuentas && r7.cuentas[1];
+  chk('7 · Sueña sin token → «sinToken», sin preguntarle a nadie, e INCOMPLETO (la hoja no dice «Libre»)', S2 && S2.marca === 'suena' && S2.sinToken === true && !A7.llamadas.some(c => /gerencia/.test(c.host)) && r7.incompleto === true && /No se pudo consultar/.test(A7.hojas['Quién atiende'].filas[1][4]), S2);
   const fh = (A.hojas['Quién atiende'] || { filas:[] }).filas;
   chk('8a · la consulta queda anotada: encabezado + una fila (quién buscó, el número, el resultado)', fh.length === 2 && fh[1][1] === 'Maria Flores' && fh[1][2] === '70011122' && fh[1][3] === '' && /^Atiende: Carola Chavez, Maria Flores$/.test(fh[1][4]), fh);
   chk('8b · no toma el candado', A.lock.veces === 0, A.lock.veces);
@@ -185,10 +187,10 @@ function servidor() {
   chk('A1e · la búsqueda falla (401) → error e incompleto', /HTTP 401/.test(rf.cuentas[0].error || '') && rf.incompleto === true, rf.cuentas[0]);
 
   /* A3 · Sueña: el usuario 13073611 («Alberto Pareja» en Kommo) se muestra como Juan Pablo Paredes */
-  const ks = kommo(); ks.K.usuarios._embedded.users.push({ id:13073611, name:'Alberto Pareja' });
+  const ks = kommo(); ks.K.enSuena = true; ks.K.usuarios._embedded.users.push({ id:13073611, name:'Alberto Pareja' });
   ks.contacto(81, 'CLIENTE SUENA', '72220000', [881]); ks.lead(881, { responsible_user_id:13073611 });
   ks.ev(81, 881, 'incoming_chat_message', S - D, 0); ks.ev(81, 881, 'outgoing_chat_message', S - D + H, 13073611);
-  const SU = cargar(ks.K, { KOMMO_TOKEN_SUENA:'tok-suena' });
+  const SU = cargar(ks.K);
   const rsu = SU.post({ action:'quienAtiende', cel:'72220000' });
   const ls = (rsu.cuentas[1].leads || [])[0];
   chk('A3 · en Sueña, Juan Pablo Paredes (no «Alberto Pareja»)', ls && ls.resp === 'Juan Pablo Paredes' && ls.par && ls.par.quien === 'Juan Pablo Paredes', ls && { resp:ls.resp, par:ls.par });

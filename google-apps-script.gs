@@ -11084,8 +11084,12 @@ function kcCtaDe_(vend) {
   }
   return '';
 }
-function kcToken_() { return KC_CTA === 'suena' ? kProp_('KOMMO_TOKEN_SUENA') : kProp_('KOMMO_TOKEN'); }
-function kcSub_() { return KC_CTA === 'suena' ? kProp_('KOMMO_SUBDOMAIN_SUENA', KC_SUENA_SUB) : kProp_('KOMMO_SUBDOMAIN', 'eanez'); }
+/* (2026-11-20-a) Solo mientras corre quienAtiende_ (QA_PROPS_ = {}): el token y el subdominio de cada cuenta se leen UNA vez por búsqueda
+   (kPedir_ los pedía en cada llamada a Kommo, y el cupo de Propiedades es de 50.000 por día para todo el panel). Fuera de ahí, como siempre. */
+var QA_PROPS_ = null;
+function qaProp_(k, def) { if (!QA_PROPS_) return kProp_(k, def); if (!(k in QA_PROPS_)) QA_PROPS_[k] = kProp_(k, def); return QA_PROPS_[k]; }
+function kcToken_() { return KC_CTA === 'suena' ? qaProp_('KOMMO_TOKEN_SUENA') : qaProp_('KOMMO_TOKEN'); }
+function kcSub_() { return KC_CTA === 'suena' ? qaProp_('KOMMO_SUBDOMAIN_SUENA', KC_SUENA_SUB) : qaProp_('KOMMO_SUBDOMAIN', 'eanez'); }
 function kcTokenNombre_() { return KC_CTA === 'suena' ? 'KOMMO_TOKEN_SUENA' : 'KOMMO_TOKEN'; }
 function kcNorm_(t) { return waNorm_(t).replace(/ñ/g, 'n'); }
 function kcCel8_(t) { var d = String(t == null ? '' : t).replace(/\D/g, ''); return d.length >= 7 ? d.slice(-8) : ''; }   // = telClave de la página
@@ -13309,6 +13313,7 @@ var QA_MAX_LEADS = 8;          // por celular: los leads más recientes de ese n
 var QA_LEADS_POR_CLIENTE = 3;  // por nombre: los más recientes de CADA cliente que se llama así (no los 14 primeros de todos juntos)
 var QA_MAX_CONTACTOS = 8;      // por nombre: cuántos clientes distintos con ese nombre (los demás se cuentan)
 var QA_PAGINAS = 5;            // de 100 mensajes cada una (las respuestas del bot también vienen: son más de la mitad)
+var QA_CONT_PAGINAS = 4;       // de 250 contactos cada una (un nombre muy común trae más): si aun así quedan, la búsqueda está «cortada» y no dice «Libre»
 var QA_TAREA_MAX_DIAS = 90;    // una tarea más lejos que esto no es «fecha acordada» (revisión de Fable, M5: si no, una tarea al 2027 lo retiene para siempre)
 var QA_CACHE_SEG = 90;         // la misma búsqueda seguida no vuelve a preguntarle a Kommo (solo si salió COMPLETA)
 var QA_TOPE_DIA = 80;          // búsquedas por persona y día (revisión de Fable, M6: no recorrer la cartera ajena)
@@ -13318,7 +13323,7 @@ var QA_CHAT = ['incoming_chat_message', 'outgoing_chat_message'];
 
 /** Sin tildes ni mayúsculas, también ã õ ç ü ý (kcNorm_ conoce solo áéíóúñ: «João» no encontraba a nadie; Fable M3). */
 function qaNorm_(t) {
-  return kcNorm_(String(t == null ? '' : t).toLowerCase().replace(/[ãåā]/g, 'a').replace(/[õøō]/g, 'o').replace(/ç/g, 'c').replace(/[ýÿ]/g, 'y'))
+  return kcNorm_(String(t == null ? '' : t).toLowerCase().replace(/[\u0300-\u036f]/g, '').replace(/[ãåā]/g, 'a').replace(/[õøō]/g, 'o').replace(/ç/g, 'c').replace(/[ýÿ]/g, 'y'))
     .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 /** id → nombre (sin « - Sucursal») y sucursal, de la cuenta en curso (KC_CTA). 6 h en la caché. En Sueña, Juan Pablo Paredes es el
@@ -13326,8 +13331,8 @@ function qaNorm_(t) {
 function qaUsuarios_() {
   var cache = null, k = 'qa_us2' + KC_CTA;
   try { cache = CacheService.getScriptCache(); var c = cache.get(k); if (c) return JSON.parse(c); } catch (e) { cache = null; }
-  var out = {}, r = kPedir_('get', '/users?limit=250');
-  if (r.code === 200 && r.o) kEmb_(r.o, 'users').forEach(function (u) {
+  var out = {}, r = kPedir_('get', '/users?limit=250'), ok = r.code === 200 && !!r.o;
+  if (ok) kEmb_(r.o, 'users').forEach(function (u) {
     var pz = String(u.name || '').split(/\s+[-–]\s+/);
     out[String(u.id)] = { n:pz[0].trim(), s:(pz[1] || '').trim() };
   });
@@ -13335,16 +13340,22 @@ function qaUsuarios_() {
     var id = String(KC_SUENA_USUARIOS[nom]);
     out[id] = { n:nom.replace(/\b[a-z]/g, function (x) { return x.toUpperCase(); }), s:(out[id] && out[id].s) || '' };
   }
-  try { if (cache && Object.keys(out).length) cache.put(k, JSON.stringify(out), 21600); } catch (e) {}
+  try { if (cache && ok && Object.keys(out).length) cache.put(k, JSON.stringify(out), 21600); } catch (e) {}
+  if (!ok) out._falla = 1;   // sin los nombres no se sabe si «la que lo atiende» es la que pregunta: la búsqueda queda incompleta
   return out;
 }
-/** pipeline|status_id → {n: nombre de la etapa, e: nombre del embudo}. 6 h en la caché. */
+/** pipeline|status_id → {n: nombre de la etapa, e: nombre del embudo, g: 1 si es la etapa de los que COMPRARON}. 6 h en la caché.
+    «Compró» = el estado 142 de Kommo o una etapa llamada «Compradores» / «COMPRO» (las mismas que busca kcMeta_ para cerrar la venta):
+    en Heaven «Compradores» es una etapa común y el lead sigue vivo ahí (medido el 20/11: 0 de 2.331 leads con mensajes en el 142). */
 function qaEtapas_() {
-  var cache = null, k = 'qa_et' + KC_CTA;
+  var cache = null, k = 'qa_et2' + KC_CTA;
   try { cache = CacheService.getScriptCache(); var c = cache.get(k); if (c) return JSON.parse(c); } catch (e) { cache = null; }
   var out = {}, r = kPedir_('get', '/leads/pipelines');
   if (r.code === 200 && r.o) kEmb_(r.o, 'pipelines').forEach(function (p) {
-    kEmb_(p, 'statuses').forEach(function (st) { out[String(p.id) + '|' + String(st.id)] = { n:String(st.name || ''), e:String(p.name || '') }; });
+    kEmb_(p, 'statuses').forEach(function (st) {
+      var nn = kcNorm_(st.name);
+      out[String(p.id) + '|' + String(st.id)] = { n:String(st.name || ''), e:String(p.name || ''), g:(String(st.id) === '142' || nn === 'compradores' || nn === 'compro') ? 1 : 0 };
+    });
   });
   try { if (cache && Object.keys(out).length) cache.put(k, JSON.stringify(out), 21600); } catch (e) {}
   return out;
@@ -13355,8 +13366,8 @@ function qaEtapas_() {
     20/11 con 25 números de verdad: vienen TODOS los del lead (herramientas/inspeccionar_atiende.py, variante D). `ok` = false si Kommo
     falló o quedaron más páginas (puede faltar algo). */
 function qaMensajes_(cids, desde, hasta, paginas) {
-  var out = {}, ok = true, otros = 0;
-  if (!cids.length) return { m:out, ok:ok, otros:0 };
+  var out = {}, sueltos = {}, ok = true, otros = 0;
+  if (!cids.length) return { m:out, c:sueltos, ok:ok, otros:0 };
   var base = '/events?filter[entity][]=contact&' + cids.slice(0, 10).map(function (c) { return 'filter[entity_id][]=' + encodeURIComponent(c); }).join('&') +
              '&filter[type][]=' + QA_CHAT[0] + '&filter[type][]=' + QA_CHAT[1] + '&filter[created_at][from]=' + desde +
              (hasta ? '&filter[created_at][to]=' + hasta : '') + '&limit=100&page=';
@@ -13368,14 +13379,16 @@ function qaMensajes_(cids, desde, hasta, paginas) {
     L.forEach(function (e) {
       var t = e.type === QA_CHAT[0] ? 'in' : (e.type === QA_CHAT[1] ? 'out' : '');
       if (!t) return;
-      if (e.entity_type !== 'lead') { otros++; return; }
-      var k = String(e.entity_id);
-      (out[k] = out[k] || []).push({ t:t, ts:Number(e.created_at) || 0, u:Number(e.created_by) || 0 });
+      var k = String(e.entity_id), m = { t:t, ts:Number(e.created_at) || 0, u:Number(e.created_by) || 0 };
+      /* Un chat que cuelga del CONTACTO (el cliente no tiene un lead abierto): medido el 20/11, 30 mensajes en 2 contactos, los dos con
+         conversación vigente. Antes se contaban en `otros` y no se miraban: a esos clientes les salía «Libre». */
+      if (e.entity_type !== 'lead') { otros++; if (e.entity_type === 'contact') (sueltos[k] = sueltos[k] || []).push(m); return; }
+      (out[k] = out[k] || []).push(m);
     });
     if (L.length < 100 || !(r.o._links && r.o._links.next)) break;
     if (pg === paginas) ok = false;
   }
-  return { m:out, ok:ok, otros:otros };
+  return { m:out, c:sueltos, ok:ok, otros:otros };
 }
 /** La regla del dueño: un mensaje del cliente y uno de una PERSONA (no el bot) a ≤ QA_PAR_H. Devuelve, por vendedora, su conversación
     más nueva (`ts`) y la primera desde `lim` (`desde`, 0 si no tuvo en la ventana): así se ve que Carola conversaba ANTES de que María
@@ -13401,13 +13414,16 @@ function qaCuenta_(q, marca, ahoraS) {
   var res = { marca:marca, leads:[], contactos:0, msgOk:true, tareasOk:true, sinLeads:[] }, c8 = q.c8 || '';
   var pal = q.nom ? q.nom.split(' ').filter(function (w) { return w.length > 1; }) : [];
   if (!kcToken_()) { res.sinToken = true; return res; }
-  /* Por nombre se le pregunta a Kommo por la palabra MÁS LARGA (como la escribió la vendedora y, si no trae nada, sin tildes) y se filtra
-     acá por palabras enteras: «Ana Rojas» = «ANA ROJAS VACA», no «Mariana Rojas» ni «Ana María Soliz». */
+  /* Por nombre se le pregunta a Kommo por TODAS las palabras juntas y, si no trae nada, por la MÁS LARGA; y se filtra acá por palabras
+     enteras: «Ana Rojas» = «ANA ROJAS VACA», no «Mariana Rojas» ni «Ana María Soliz». Medido el 20/11 con la cuenta de verdad: Kommo
+     junta varias palabras (en cualquier orden), no distingue tildes ni mayúsculas, y una palabra sola trae demasiado («Maria» 337
+     contactos, «Carlos» 304: el servidor miraba los primeros 250 y el cliente podía quedar afuera sin aviso). Cada pregunta siguiente
+     se hace solo si la anterior no trajo NADA (204). */
   var preguntas = c8 ? [c8] : [];
   if (!c8) {
-    var largo = function (txt) { return String(txt || '').split(/\s+/).sort(function (a, b) { return b.length - a.length; })[0] || ''; };
-    preguntas.push(largo(q.orig || q.nom));
-    if (qaNorm_(preguntas[0]) !== preguntas[0]) preguntas.push(largo(q.nom));
+    var orig = String(q.orig || '').replace(/\s+/g, ' ').trim(), larga = function (t) { return String(t || '').split(' ').sort(function (a, b) { return b.length - a.length; })[0] || ''; };
+    /* todas las palabras (sin tildes) → como lo escribió la vendedora → la palabra más larga, sin tildes y como la escribió */
+    [pal.join(' '), orig, larga(pal.join(' ')), larga(orig)].forEach(function (x) { if (x && preguntas.indexOf(x) < 0) preguntas.push(x); });
   }
   var r = null;
   for (var pi = 0; pi < preguntas.length; pi++) {
@@ -13416,23 +13432,36 @@ function qaCuenta_(q, marca, ahoraS) {
   }
   if (r.code === 204) return res;
   if (r.code !== 200 || !r.o) { res.error = 'Kommo no contestó la búsqueda (HTTP ' + r.code + ')'; return res; }
-  var ids = [], cdeL = {}, cli = {}, cids = [], t4 = {};
-  kEmb_(r.o, 'contacts').forEach(function (c) {
+  /* Kommo da 250 contactos por página: se siguen las páginas (hasta QA_CONT_PAGINAS); si aun así quedan, la búsqueda está CORTADA
+     (el cliente puede estar en la página que no se miró) y no puede decir «Libre». */
+  var C = kEmb_(r.o, 'contacts');
+  for (var pgc = 2; C.length && r.o._links && r.o._links.next; pgc++) {
+    if (pgc > QA_CONT_PAGINAS) { res.cortado = true; break; }
+    r = kPedir_('get', '/contacts?query=' + encodeURIComponent(preguntas[pi]) + '&with=leads&limit=250&page=' + pgc);
+    if (r.code === 204) break;
+    if (r.code !== 200 || !r.o) { res.error = 'Kommo no contestó la búsqueda (HTTP ' + r.code + ')'; return res; }
+    C = C.concat(kEmb_(r.o, 'contacts'));
+  }
+  var ids = [], cdeL = {}, csDeL = {}, cli = {}, cids = [], t4 = {};
+  C.forEach(function (c) {
     if (c8 && !kcTels_(c).some(function (t) { return qaTelEs_(t, c8); })) return;   // `query` busca en todo: el número se mira de nuevo
     if (!c8) { var nc = ' ' + qaNorm_(c.name) + ' '; if (!pal.length || !pal.every(function (w) { return nc.indexOf(' ' + w + ' ') >= 0; })) return; }
     res.contactos++;
-    if (cids.length >= QA_MAX_CONTACTOS) { res.masContactos = (res.masContactos || 0) + 1; return; }
+    /* Por NÚMERO, los que quedan afuera del tope son contactos del MISMO cliente que no se miraron: incompleto, nunca «Libre». */
+    if (cids.length >= QA_MAX_CONTACTOS) { res.masContactos = (res.masContactos || 0) + 1; if (c8) res.cortado = true; return; }
     var cid = String(c.id), tt = kcTels_(c).map(function (t) { return String(t).replace(/\D/g, ''); }).filter(function (d) { return d.length >= 7; });
     cids.push(cid);
     t4[cid] = tt.length ? tt[0].slice(-4) : '';
     cli[cid] = String(c.name || '').slice(0, 60);
     var n = 0;
-    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); if (!cdeL[id]) { ids.push(id); cdeL[id] = cid; n++; } });
+    /* Un lead puede colgar de DOS contactos con el mismo número (duplicados): es de los dos (la tarea anotada en cualquiera vale). */
+    kEmb_(c, 'leads').forEach(function (l) { var id = String(l.id); (csDeL[id] = csDeL[id] || []).push(cid); if (!cdeL[id]) { ids.push(id); cdeL[id] = cid; } n++; });
     if (!n) res.sinLeads.push({ cli:cli[cid], t4:t4[cid] });
   });
   res.porNombre = !c8;
-  if (!ids.length) return res;
+  if (!cids.length) return res;   // (antes: `!ids.length`) un contacto SIN leads puede tener su chat colgando del contacto
   var L = [];
+  if (ids.length > 120) res.cortado = true;   // más de 120 leads para un cliente: no se miran todos
   for (var k = 0; k < ids.length && k < 120; k += 40) {
     var rl = kPedir_('get', '/leads?' + ids.slice(k, k + 40).map(function (x) { return 'filter[id][]=' + encodeURIComponent(x); }).join('&') + '&limit=50');
     if (rl.code === 204) continue;   // contacto sin leads vivos (Fable B4)
@@ -13445,6 +13474,7 @@ function qaCuenta_(q, marca, ahoraS) {
   else { var cuenta = {}; L = L.filter(function (l) { var c = cdeL[String(l.id)]; cuenta[c] = (cuenta[c] || 0) + 1; return cuenta[c] <= QA_LEADS_POR_CLIENTE; }); }
   res.masLeads = antes - L.length;
   var us = qaUsuarios_(), et = qaEtapas_(), lim = ahoraS - QA_DIAS * 86400;
+  if (us._falla) res.usOk = false;
   function nom(u) { var x = us[String(u)]; return x ? x.n : (u ? 'usuario ' + u : ''); }
   function suc(u) { var x = us[String(u)]; return x ? x.s : ''; }
   /* Las tareas ABIERTAS de esos leads y contactos con fecha futura (≤ QA_TAREA_MAX_DIAS) puestas por una PERSONA = la fecha acordada,
@@ -13467,24 +13497,46 @@ function qaCuenta_(q, marca, ahoraS) {
   var corte = ahoraS - (QA_DIAS + 2) * 86400;
   var M = qaMensajes_(cids, corte, 0, QA_PAGINAS), Hh = qaMensajes_(cids, ahoraS - QA_HISTORIA_DIAS * 86400, corte - 1, 2);
   res.msgOk = M.ok; res.histOk = Hh.ok; res.otros = M.otros + Hh.otros;
-  L.forEach(function (l) {
-    var id = String(l.id), msgs = (M.m[id] || []).concat(Hh.m[id] || []), pares = qaPares_(msgs, lim), cid = cdeL[id];
-    var uIn = 0, uOut = null;
+  /* Lo que dicen los mensajes de un lead (o del chat suelto de un contacto): el último de cada lado y las conversaciones. */
+  function deMsgs(msgs) {
+    var pares = qaPares_(msgs, lim), uIn = 0, uOut = null;
     msgs.forEach(function (m) {
       if (m.t === 'in' && m.ts > uIn) uIn = m.ts;
       if (m.t === 'out' && m.u && (!uOut || m.ts > uOut.ts)) uOut = { ts:m.ts, quien:nom(m.u) };
     });
-    var e = et[String(l.pipeline_id) + '|' + String(l.status_id)] || {};
+    return { ultCli:uIn, ultVend:uOut, nMsg:msgs.length,
+             par:pares.length ? { ts:pares[0].ts, quien:nom(pares[0].u), suc:suc(pares[0].u) } : null,
+             pares:pares.map(function (p) { return { ts:p.ts, desde:p.desde, quien:nom(p.u), suc:suc(p.u) }; }) };
+  }
+  var vivoDe = {};   // contacto → tiene un lead que sigue vivo (ni perdido ni cerrado como ganado)
+  L.forEach(function (l) {
+    var id = String(l.id), cid = cdeL[id], x = deMsgs((M.m[id] || []).concat(Hh.m[id] || []));
+    var e = et[String(l.pipeline_id) + '|' + String(l.status_id)] || {}, st = String(l.status_id);
+    /* «Compró»: el 142 de Kommo (lead CERRADO) o la etapa «Compradores» / «COMPRO» (lead VIVO: ahí siguen llegando sus mensajes; la
+       fecha de la compra es «Fecha contrato», la que pone el cierre del panel y cuenta el dashboard). */
+    var gan = st === '142' || !!e.g, vivo = gan && st !== '142', fcon = 0;
+    if (vivo) (l.custom_fields_values || []).forEach(function (f) {
+      if (/contrato/.test(kcNorm_(f.field_name)) && /^date/.test(String(f.field_type || '')) && f.values && f.values[0]) fcon = Number(f.values[0].value) || 0;
+    });
+    var tC = null;
+    (csDeL[id] || [cid]).forEach(function (c2) { var y = tareasC[c2]; if (y && (!tC || y.ts < tC.ts)) tC = y; });
+    if (st !== '143' && (!gan || vivo)) (csDeL[id] || [cid]).forEach(function (c2) { vivoDe[c2] = 1; });
     res.leads.push({
       id:id, cli:cli[cid] || '', t4:t4[cid] || '',
       resp:nom(l.responsible_user_id), suc:suc(l.responsible_user_id),
-      et:e.n || '', emb:e.e || '', cerrado:String(l.status_id) === '142' ? 'ganado' : (String(l.status_id) === '143' ? 'perdido' : ''),
-      creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:Number(l.closed_at) || 0,
-      ultCli:uIn, ultVend:uOut,
-      par:pares.length ? { ts:pares[0].ts, quien:nom(pares[0].u), suc:suc(pares[0].u) } : null,
-      pares:pares.map(function (p) { return { ts:p.ts, desde:p.desde, quien:nom(p.u), suc:suc(p.u) }; }),
-      nMsg:msgs.length, tarea:tareas[id] || tareasC[cid] || null
+      et:e.n || '', emb:e.e || '', cerrado:gan ? 'ganado' : (st === '143' ? 'perdido' : ''), vivo:vivo ? 1 : 0,
+      creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:vivo ? fcon : (Number(l.closed_at) || 0),
+      ultCli:x.ultCli, ultVend:x.ultVend, par:x.par, pares:x.pares, nMsg:x.nMsg, tarea:tareas[id] || tC || null
     });
+  });
+  /* El chat que cuelga del CONTACTO (sin lead) y la fecha acordada anotada en un contacto que no tiene un lead vivo: una ficha aparte
+     (`sinLead`), con la misma regla. */
+  cids.forEach(function (cid) {
+    var msgs = (M.c[cid] || []).concat(Hh.c[cid] || []), tC = !vivoDe[cid] ? (tareasC[cid] || null) : null;
+    if (!msgs.length && !tC) return;
+    var x = deMsgs(msgs);
+    res.leads.push({ id:'c' + cid, sinLead:1, cli:cli[cid] || '', t4:t4[cid] || '', resp:'', suc:'', et:'', emb:'', cerrado:'', vivo:0, creado:0, tocado:0, cierre:0,
+                     ultCli:x.ultCli, ultVend:x.ultVend, par:x.par, pares:x.pares, nMsg:x.nMsg, tarea:tC });
   });
   return res;
 }
@@ -13499,29 +13551,68 @@ function qaHoja_() {
 }
 /** ¿Kommo contestó TODO? Si no, ni el cartel ni la hoja pueden decir «Libre» (Fable A1). */
 function qaIncompleto_(out) {
-  return (out.cuentas || []).some(function (c) { return c.error || c.msgOk === false || c.tareasOk === false; });
+  /* + la cuenta que NO se consultó (sin su token), la búsqueda cortada (más contactos de los que se miran) y los nombres de las
+     vendedoras que no se pudieron leer (revisión 2 de Fable). */
+  return (out.cuentas || []).some(function (c) { return c.error || c.msgOk === false || c.tareasOk === false || c.sinToken || c.cortado || c.usOk === false; });
 }
 /** Lo que se anota de cada consulta: una línea corta («Libre» / «Atiende: Isabel Robledo» / «No se pudo consultar…»), sin datos del cliente.
     Misma regla que el cartel de la página (qaVeredicto). */
-function qaResumen_(out, ahoraS) {
-  var lim = ahoraS - QA_DIAS * 86400, quien = {}, compro = '';
+function qaResumenDe_(out, soloT4, ahoraS) {
+  var ahora = Number(out.ahora) || ahoraS, lim = ahora - QA_DIAS * 86400, quien = {}, orden = [], compro = null, nCont = 0;
+  function pon(n) { n = n || '(sin asignar)'; var k = qaNorm_(n); if (!quien[k]) { quien[k] = 1; orden.push(n); } }
   (out.cuentas || []).forEach(function (c) {
-    (c.leads || []).forEach(function (l) {
-      if (l.cerrado === 'ganado') { if ((l.cierre || l.tocado) >= lim || (l.par && l.par.ts >= lim)) compro = l.resp || '(sin asignar)'; return; }
+    nCont += Number(c.contactos) || 0;
+    (c.leads || []).forEach(function (l, li) {
+      if (soloT4 != null && (l.t4 || (c.marca + '|' + (l.cli || li))) !== soloT4) return;
+      var pares = l.pares || [];
       if (l.cerrado === 'perdido') return;
-      (l.pares || []).forEach(function (p) { if (p.ts >= lim) quien[p.quien || '(sin asignar)'] = 1; });
-      if (l.tarea && l.tarea.ts > ahoraS) quien[l.tarea.quien || l.resp || '(sin asignar)'] = 1;
+      if (l.cerrado === 'ganado') {
+        /* cerrado en Kommo (142): compró si se cerró o conversó hace poco. Vivo en «Compradores»: compró si la «Fecha contrato» es de hace
+           poco, y sus conversaciones de ahora cuentan como las de cualquier lead (ahí le siguen escribiendo). */
+        var fc = l.vivo ? (l.cierre || 0) : (l.cierre || l.tocado || 0), tc = l.vivo ? fc : Math.max(fc, pares.length ? pares[0].ts : 0);
+        if (tc >= lim && (!compro || tc > compro.ts)) compro = { n:l.resp || '(sin asignar)', ts:tc };
+        if (!l.vivo) return;
+      }
+      pares.forEach(function (p) { if (p.ts >= lim) pon(p.quien); });
+      if (l.tarea && l.tarea.ts > ahora) pon(l.tarea.quien || l.resp);
     });
   });
-  var ks = Object.keys(quien), inc = qaIncompleto_(out);
-  if (ks.length) return 'Atiende: ' + ks.join(', ') + (inc ? ' (Kommo no contestó todo)' : '');
+  var inc = qaIncompleto_(out), cola = inc ? ' (Kommo no contestó todo)' : '';
+  if (orden.length) return 'Atiende: ' + orden.join(', ') + cola;
+  if (compro) return 'Ya compró con ' + compro.n + cola;
   if (inc) return 'No se pudo consultar todo en Kommo';
-  return compro ? 'Ya compró con ' + compro : 'Libre';
+  if (out.nombre && !nCont) return 'Nadie con ese nombre en Kommo (no quiere decir libre)';
+  return 'Libre';
+}
+/** Lo que se anota de cada consulta: una línea corta («Libre» / «Atiende: Isabel Robledo» / «Ya compró con…» / «No se pudo consultar…»),
+    sin datos del cliente. La MISMA cuenta que el cartel de la página (qaVeredicto), con la hora de la respuesta. Por NOMBRE, si salen
+    varios clientes, uno por uno con el final de su celular («…1111: Atiende: Carola · …2222: Libre»), como los ve la vendedora. */
+function qaResumen_(out, ahoraS) {
+  var ks = [], visto = {};
+  if (out.nombre) (out.cuentas || []).forEach(function (c) { (c.leads || []).forEach(function (l, li) { var k = l.t4 || (c.marca + '|' + (l.cli || li)); if (!visto[k]) { visto[k] = 1; ks.push({ k:k, t4:l.t4 || '' }); } }); });
+  if (ks.length < 2) return qaResumenDe_(out, null, ahoraS);
+  return ks.map(function (g) { return '…' + (g.t4 || '(sin celular)') + ': ' + qaResumenDe_(out, g.k, ahoraS); }).join(' · ').slice(0, 900);
 }
 /** El nombre que se puede buscar: nombre y apellido (2 palabras de 2+ letras, una de 3+), sin números. '' si no alcanza. */
 function qaNombre_(t) {
   var n = qaNorm_(t).replace(/[0-9]/g, ' ').replace(/\s+/g, ' ').trim(), w = n.split(' ').filter(function (x) { return x.length > 1; });
   return (w.length >= 2 && w.some(function (x) { return x.length >= 3; })) ? n.slice(0, 60) : '';
+}
+/** Suma una búsqueda a `clave` en el día de Bolivia; false si ya llegó a QA_TOPE_DIA. Propiedad QA_DIA = {d:'2026-11-20', n:{clave: cuántas}}
+    (un día solo; a lo sumo 150 claves). Si las Propiedades no se pueden leer o escribir, deja pasar (no frena a nadie por una falla de Google). */
+function qaTopeSuma_(clave) {
+  try {
+    var sp = PropertiesService.getScriptProperties(), u = null, hoy = waBo_(Date.now()).hoy;
+    try { u = JSON.parse(sp.getProperty('QA_DIA') || 'null'); } catch (e) { u = null; }
+    if (!u || u.d !== hoy || !u.n || typeof u.n !== 'object') u = { d:hoy, n:{} };
+    var n = Number(u.n[clave]) || 0;
+    if (n >= QA_TOPE_DIA) return false;
+    u.n[clave] = n + 1;
+    var ks = Object.keys(u.n);
+    if (ks.length > 150) ks.sort(function (a, b) { return u.n[a] - u.n[b]; }).slice(0, ks.length - 150).forEach(function (k) { delete u.n[k]; });
+    sp.setProperty('QA_DIA', JSON.stringify(u));
+  } catch (e) {}
+  return true;
 }
 function quienAtiende_(body) {
   var c8 = kcCel8_(body && body.cel), nom = c8 ? '' : qaNombre_(body && body.nombre);
@@ -13529,20 +13620,24 @@ function quienAtiende_(body) {
   var ahoraS = Math.floor(Date.now() / 1000), cache = null, ck = c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_'), out = null;
   var quien = String((body && body.quien) || '').slice(0, 60);
   try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
-  /* Tope por persona y día (por el nombre que manda la página, o el aparato): no sirve para recorrer la cartera ajena (Fable M6). */
+  /* Tope por persona y día (por el nombre que manda la página o, sin nombre, por el aparato: la página manda `dispositivo`): no sirve para
+     recorrer la cartera ajena (Fable M6). En la propiedad QA_DIA, como NOTA_DIA: CacheService guarda 6 h como mucho (no el día). */
+  var kt = (qaNorm_(quien) || ('aparato ' + String((body && body.dispositivo) || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 12))).slice(0, 40);
+  if (!qaTopeSuma_(kt)) return { ok:false, error:'tope', tope:QA_TOPE_DIA, version:SCRIPT_VERSION };
   if (cache) {
-    var dia = Utilities.formatDate(new Date(), 'America/La_Paz', 'yyyyMMdd'), kt = 'qa_tope_' + dia + '_' + (qaNorm_(quien) || String(body && body.dev || 'x')).replace(/ /g, '_').slice(0, 40);
-    try { var n = Number(cache.get(kt)) || 0; if (n >= QA_TOPE_DIA) return { ok:false, error:'tope', tope:QA_TOPE_DIA, version:SCRIPT_VERSION }; cache.put(kt, String(n + 1), 86400); } catch (e) {}
     try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) {}
   }
   if (!out) {
     out = { ok:true, version:SCRIPT_VERSION, cel8:c8, nombre:nom, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
-    [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
-      KC_CTA = x[0];
-      try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:String((body && body.nombreOrig) || '').slice(0, 60) }, x[1], ahoraS)); }
-      catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
-      finally { KC_CTA = ''; }
-    });
+    QA_PROPS_ = {};
+    try {
+      [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
+        KC_CTA = x[0];
+        try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:String((body && body.nombreOrig) || '').slice(0, 60) }, x[1], ahoraS)); }
+        catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
+        finally { KC_CTA = ''; }
+      });
+    } finally { QA_PROPS_ = null; }
     out.incompleto = qaIncompleto_(out);
     try { if (cache && !out.incompleto) cache.put(ck, JSON.stringify(out), QA_CACHE_SEG); } catch (e) {}   // un error no se guarda (Fable A1)
   }
