@@ -11691,6 +11691,7 @@ function apiList(opts){
       if(igual) Object.defineProperty(lista, '_igual', { value:true, enumerable:false, configurable:true, writable:true });
     }catch(e){}
     try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
+    try{ if(j.cx) crxTomar(j.cx); }catch(e){}   // 🔀 (20/11) qué ventas nombraron a qué asesora (el cruce), para que la que reclama pida revisión
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
     try{ if(j.gpsDia) gpsDiaTomar(j.gpsDia); }catch(e){}   // 🛰️ (§4kp) y lo que pasó en el día: salidas, registro y paradas
     try{ apartadosTomar(j.apartados, j.ahora); }catch(e){}   // ⏳ (14/11, 267) los lugares que otras ventas tienen apartados (servidor 2026-11-14-b)
@@ -27099,18 +27100,7 @@ function submitPedido(){
      se tocaron — y nadie se enteraba. Se les devuelven las marcas a los que quedaron
      IGUALES; el que la vendedora cambió las pierde a propósito: hay que revisarlo de nuevo. */
   if(isEdit && prev) productos=heredarMarcas(productos, prev.productos);
-  /* 🔎 (20/11) la vendedora pidió revisar de quién es el cliente. Si lo que armó no va a quedar, se le pregunta: nunca se pierde callado
-     (revisión de Fable). */
-  var _crvE=null; try{ _crvE=cruceRevEstado(); }catch(e){ _crvE=null; }
-  if(_crvE && _crvE.mal){
-    var _rCrv=preguntaYa('🔎 '+_crvE.mal+'\n\nAceptar: guardar la venta SIN el pedido de revisión.\nCancelar: volver y pedirlo de nuevo.',
-      { icono:'🔎', aviso:true, titulo:'El pedido de revisión no va a quedar en esta venta', lineas:[_crvE.mal],
-        no:'↩️ Volver y pedirlo de nuevo', si:'💾 Guardar sin el pedido de revisión' }, _otraVez);
-    if(_rCrv===null) return;
-    if(!_rCrv){ setSubmitting(false); try{ document.getElementById('cruce-form').scrollIntoView({block:'center'}); }catch(e){} return; }
-    CRUCE_F.arm=null;
-  }
-  try{ cruceRevPoner(productos); }catch(e){}
+
 
   /* ---- El historial de pagos comparte campo con el método ----
      Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
@@ -30074,7 +30064,6 @@ function resetForm(){
   EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; EDIT_TIENDA_SUC0=null; PAGO_NO_VISTO=null;
   recibioFormOlvidar();                        // 💵 (07/11) quién recibió el efectivo se elige de nuevo en cada pedido
   REPETIR_DE='';                               // 🔁 (§4ok-101)
-  try{ CRUCE_F.arm=null; CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK=''; }catch(e){}   // 🔎 (20/11) el pedido de revisión era de la venta anterior
   COT_VENTA=null; try{ cotVentaPintar(); }catch(e){}   // 🧾 (mejora 251) la venta de una cotización era la de antes
   OBS_REV_MOVIDO=null;                         // 📅 (07/11) lo que propuso el aviso del sábado a la tarde era de ESE pedido
   try{ obsIaFormOlvidar(); }catch(e){}         // 🤖📌 (16/11, 345/349) lo arreglado y lo prometido eran de ese pedido
@@ -45103,6 +45092,7 @@ function misHacerDatos(v, mine){
   /* 🧾 (mejoras 251 y 274) Las cotizaciones: lo que el cliente le pidió al bot (que lo llamen) va arriba de todo, en rojo; lo demás abajo. */
   var _cot={ arriba:[], resto:[], ok:'' }; try{ _cot=cotHacerItems(v); }catch(e){}
   _cot.arriba.forEach(add);
+  try{ add(crxHacer(v)); }catch(e){}   // 🔀 (20/11) otra vendedora le vendió a un cliente que atendía: puede pedir revisión
   /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
   /* 📅 (30/10, §78) lo que es SOLO de la fecha de la foto no es plata: va aparte, en ámbar (`ctaAvSoloFecha`) */
   try{ var av0=ctaAvCuentan(v), avV=ctaAvViejos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
@@ -72289,63 +72279,92 @@ function cruceFormPintar(){
   var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' se le avisa por WhatsApp que su cliente compró y que la venta la cargaste vos.' : '';
   /* (dueño, 20/11) «Puede ser de»: que haya mensajes en Kommo no prueba que lo atendió de verdad → la vendedora puede pedir revisión
      (queda en Administración al guardar la venta, `crv`). */
-  var pidio=!!(CRUCE_F.arm && CRUCE_F.arm.k===k), nArm=pidio ? CRUCE_F.arm.fot.length : 0;
   var h='⚠️ <b>Este cliente puede ser de '+esc(nombres)+'</b> (según Kommo, en los últimos '+QA_DIAS+' días). '+
         '<span class="cruce-s">'+det+'. Que haya mensajes no significa que lo haya atendido de verdad.</span>'+
         '<span class="cruce-s">Podés seguir con la venta: no se frena nada.'+wa+'</span>'+
-        (!servidorTiene(CRUCE_SERVIDOR) ? '' : '<span class="cruce-rev">'+(pidio
-          ? '<span class="cruce-ok">✓ Vas a pedir revisión con '+nArm+' captura'+(nArm===1?'':'s')+': al guardar la venta queda en Administración para que decidan de quién es el cliente.</span><button type="button" onclick="crvFormAbrir()">✏️ Ver o corregir</button><button type="button" onclick="cruceRevPedir(false)">Deshacer</button>'
-          : '<button type="button" onclick="cruceRevPedir(true)">🔎 Pedir revisión</button><span class="cruce-s" style="margin:0">si creés que el cliente es tuyo</span>')+'</span>');
+        '';
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
   box.hidden=false;
 }
 /** 🔎 (dueño, 20/11: «puedes pedir revisión» y «al pedir revisión debes presentar TODOS LOS REQUISITOS DEL INSTRUCTIVO… para demostrar»)
     La vendedora pide que Administración decida de quién es el cliente, demostrándolo con lo que pide la Comunicación Interna 032-2026
     (§7 gestión comercial relevante en 15 días + próximo paso, o una fecha futura acordada y anotada ANTES del reclamo; §8 lo que solo no
-    da derecho) y con capturas. No guarda nada todavía: queda para ESTE celular y vendedora, y `cruceRevPoner` lo escribe al guardar. */
+    da derecho) y con capturas. La pide la asesora que reclama (crxAbrir → crvFormAbrir), sobre la venta ya guardada. */
 var CRV_GESTION=[ ['cot','El cliente respondió mi cotización'], ['cambio','Pidió cambios'], ['medida','Confirmó medida o cantidad'],
   ['consulta','Consultó en concreto pago, stock o entrega'], ['negocia','Negociamos el precio'] ];
 var CRV_EXCEP=[ ['mes','Compra el mes que viene'], ['medida','Tiene que confirmar medida o base'], ['empresa','Espera la aprobación interna de su empresa'],
   ['repo','Espera la reposición del producto'], ['entrega','Entrega agendada'], ['pedido','Pedido confirmado o adelanto pagado'] ];
-var CRV_OTRA=[ ['saludo','Solo un saludo o mensajes sin respuesta del cliente'], ['ultimo','Un mensaje de último momento'],
-  ['paso','No quedó ningún próximo paso'], ['anterior','Fue por una compra anterior'], ['mia','Las dos hablamos, pero la compra salió de mi gestión'] ];
+var CRV_OTRA=[ ['mia','La compra salió de mi gestión'], ['ultimo','Ella le escribió al cliente a último momento'],
+  ['sin','Ella no tuvo ninguna gestión comercial con el cliente'], ['paso','Yo tenía un próximo paso acordado con el cliente'], ['anterior','Ella lo atendió solo en una compra anterior'] ];
 /* (dueño, 20/11) «el requisito de imagen es obligatorio, todos los campos son obligatorios, y mínimo 2 de la conversación, sí o sí 1 tiene que
    ser del Kommo». */
 var CRV_FOTOS_MAX=4, CRV_FOTOS_MIN=2, CRV_DIAS=15;
 function crvTxt(L, k){ for(var i=0;i<L.length;i++) if(L[i][0]===k) return L[i][1]; return k||''; }
 function crvOpts(L){ return '<option value="">— Elegí —</option>'+L.map(function(x){ return '<option value="'+x[0]+'">'+esc(x[1])+'</option>'; }).join(''); }
-function cruceRevPedir(on){
-  var q=cruceFormQue(); if(!q) return;
-  var k=q.c8+'|'+normNombre(q.v);
-  if(!on){ CRUCE_F.arm=null; var b0=document.getElementById('cruce-form'); if(b0) b0._h=''; cruceFormPintar(); return; }
-  crvFormAbrir();
+/** 🔀 (dueño, 20/11: «el que solicita la revisión… ¿el que cree que le están robando la venta? ¿desde dónde lo haría el vendedor que le
+    llegó por WhatsApp?» → «Solo la que reclama») La asesora que según Kommo atendía al cliente (la que recibe el WhatsApp) pide la revisión
+    desde «Mis pedidos → Para hacer». El servidor manda en la lectura (`cx`) qué ventas nombraron a quién (`cruceParaLista_`). */
+var CRX_LISTA=[], CRX_V='', CRX_DIAS=15;
+function crxTomar(L){ CRX_LISTA=Array.isArray(L) ? L.filter(function(e){ return e && e.id && Array.isArray(e.n); }) : []; }
+/** Las ventas de OTRA vendedora a clientes que, según Kommo, atendía `v` (últimos CRX_DIAS días, la venta todavía en la planilla). */
+function crxMios(v){
+  if(!v) return [];
+  var lim=Date.now()-CRX_DIAS*86400000, nv=normNombre(v);
+  return CRX_LISTA.filter(function(e){
+    if((Number(e.t)||0)*1000<lim) return false;
+    if(!e.n.some(function(n){ return normNombre(n)===nv; })) return false;
+    var p=findById(e.id); return !!(p && !esFilaSistema(p) && normNombre(p.vendedor)!==nv);
+  }).sort(function(a,b){ return (Number(b.t)||0)-(Number(a.t)||0); });
 }
-/** La ventana con los requisitos. Lo ya completado (si la vuelve a abrir para corregir) se repone. */
-function crvFormAbrir(){
-  var q=cruceFormQue(); if(!q || !CRUCE_F.r) return;
-  var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return;
-  var nom=L.map(function(o){ return o.n; }).join(' y ');
-  /* (revisión de Fable) La ventana trabaja sobre una COPIA de las capturas: quitar una y «Cancelar» no toca lo ya pedido. */
-  var A=CRUCE_F.arm && CRUCE_F.arm.k===CRUCE_F.k ? CRUCE_F.arm : null;
-  if(A){ CRUCE_F.fot=A.fot.slice(); CRUCE_F.fotKm=A.km.slice(); CRUCE_F.fotK=CRUCE_F.k; }
-  else if(CRUCE_F.fotK!==CRUCE_F.k){ CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK=CRUCE_F.k; }
+function crxPidio(p, v){ var c=crvDe(p); return !!(c && normNombre(c.por)===normNombre(v)); }
+function crxHacer(v){
+  var L=crxMios(v); if(!L.length) return null;
+  CRX_V=v;
+  var sin=L.filter(function(e){ return !crxPidio(findById(e.id), v); });
+  var nom=L.slice(0,3).map(function(e){ var p=findById(e.id); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(p.vendedor||'?')+')'; }).join(' · ')+(L.length>3?' y más':'');
+  return { sev:sin.length?'a':'i', ic:'🔀', n:sin.length||L.length, t:sin.length ? ((sin.length===1?'Otra vendedora le vendió a un cliente':'Otras vendedoras le vendieron a clientes')+' que atendías') : 'Ventas a tus clientes: revisión pedida',
+    s:nom+(sin.length?' · si el cliente era tuyo, pedí revisión':''), b:'🔎 Ver', fn:'crxAbrir()' };
+}
+function crxAbrir(){
+  var v=CRX_V, L=crxMios(v);
+  var it=L.map(function(e){
+    var p=findById(e.id), c=crvDe(p), mio=crxPidio(p, v), id=String(p.id).replace(/'/g,'');
+    return '<div class="crv-it"><b>'+esc(p.vendedor||'—')+' le cargó una venta a '+esc(String(p.cliente||'—').trim())+'</b>'+
+      '<span class="crv-s">'+esc(ocEtiq(p.oc))+' · celular …'+esc(cliCelClave(p.celular||'').slice(-4))+' · el '+esc(fmtFechaCorta(isoDeTsBolivia((Number(e.t)||0)*1000)))+'</span>'+
+      (mio ? '<span class="crv-s" style="font-weight:700;color:'+(c.r?'#065f46':'#92400e')+'">🔎 Pediste revisión el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+' · '+(c.r?('decidido: es de '+esc(c.r)):'pendiente de Administración')+'</span>'
+           : (c ? '<span class="crv-s">Ya hay un pedido de revisión de '+esc(c.por||'otra asesora')+'.</span>'
+                : '<div class="crv-b"><button type="button" class="btn btn-sm" onclick="crvFormAbrir(\''+id+'\')">🔎 Pedir revisión</button></div>'))+
+      '</div>';
+  }).join('');
+  openModal('<div class="modal-h"><h3>🔀 Ventas a clientes que atendías</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b crx-modal"><p class="crv-s" style="margin:0 0 10px">Según Kommo hablaste con estos clientes, y la venta la cargó otra vendedora. Si el cliente era tuyo, pedí revisión: tenés que demostrarlo con lo que pide la Comunicación Interna 032-2026. Administración decide.</p>'+
+    (it || '<p class="rd-vacio">No hay ventas a clientes tuyos en los últimos '+CRX_DIAS+' días.</p>')+
+    '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div></div>');
+}
+/** La ventana con los requisitos, para una venta (`id`) de otra vendedora. */
+function crvFormAbrir(id){
+  var p=findById(id), v=CRX_V; if(!p || !v){ toast('Esa venta ya no está.', 'err'); return; }
+  if(crvDe(p)){ toast('Esa venta ya tiene un pedido de revisión.', 'err'); return crxAbrir(); }
+  var ven=String(p.vendedor||'otra vendedora');
+  if(CRUCE_F.fotK!=='p:'+id){ CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK='p:'+id; }
+  CRUCE_F.revId=String(id);
   var hoy=diaNegocio();
-  var h='<div class="modal-h"><h3>🔎 Pedir revisión del cliente</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+  var h='<div class="modal-h"><h3>🔎 Pedir revisión del cliente</h3><button class="modal-x" onclick="crxAbrir()" aria-label="Volver">✕</button></div>'+
     '<div class="modal-b crvf">'+
-    '<p style="margin:0 0 8px;font-size:.84rem">Según Kommo, <b>'+esc(nom)+'</b> habló con este cliente. Para pedir revisión tenés que <b>demostrar</b> que el cliente es tuyo con lo que pide la <b>Comunicación Interna 032-2026</b>. Marcá lo que corresponde y completá todo.</p>'+
+    '<p style="margin:0 0 8px;font-size:.84rem"><b>'+esc(ven)+'</b> le cargó una venta a <b>'+esc(String(p.cliente||'—').trim())+'</b> ('+esc(ocEtiq(p.oc))+'). Para pedir revisión tenés que <b>demostrar</b> que el cliente es tuyo con lo que pide la <b>Comunicación Interna 032-2026</b>. Completá todo.</p>'+
     '<div class="crvf-op"><label><input type="checkbox" id="crvf-g" onchange="crvFormVer()"> Tuve una gestión comercial con el cliente en los últimos '+CRV_DIAS+' días (§7)</label>'+
       '<div class="crvf-in" id="crvf-g-in" hidden>'+
       '<label>Qué fue<select id="crvf-g-t">'+crvOpts(CRV_GESTION)+'</select></label>'+
       '<label>Fecha<input type="date" id="crvf-g-f" max="'+hoy+'"></label>'+
       '<label style="grid-column:1/-1">Próximo paso que quedó acordado<input type="text" id="crvf-g-p" maxlength="200" placeholder="Ej.: le mando la cotización del 160 el viernes"></label></div></div>'+
-    '<div class="crvf-op"><label><input type="checkbox" id="crvf-e" onchange="crvFormVer()"> Quedó acordada una fecha futura ANTES de este reclamo (excepción a los '+CRV_DIAS+' días)</label>'+
+    '<div class="crvf-op"><label><input type="checkbox" id="crvf-e" onchange="crvFormVer()"> Quedó acordada una fecha futura ANTES de esta venta (excepción a los '+CRV_DIAS+' días)</label>'+
       '<div class="crvf-in" id="crvf-e-in" hidden>'+
       '<label>Qué se acordó<select id="crvf-e-t">'+crvOpts(CRV_EXCEP)+'</select></label>'+
       '<label>Cuándo se acordó<input type="date" id="crvf-e-a" max="'+hoy+'"></label>'+
       '<label>Para qué fecha<input type="date" id="crvf-e-f"></label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-k"> Está anotada en Kommo (tarea o nota)</label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-s"> Hice el seguimiento acordado</label></div></div>'+
-    '<div class="crvf-op"><b>Por qué lo de '+esc(nom)+' no cuenta</b>'+
+    '<div class="crvf-op"><b>Por qué la venta no es de '+esc(ven)+'</b>'+
       '<div class="crvf-in" id="crvf-o-in">'+
       '<label style="grid-column:1/-1">Por qué<select id="crvf-o-t">'+crvOpts(CRV_OTRA)+'</select></label></div></div>'+
     '<div class="crvf-op"><b>📸 Capturas de la conversación</b> <span style="font-size:.76rem;color:#6b7280">(obligatorias: mínimo '+CRV_FOTOS_MIN+', hasta '+CRV_FOTOS_MAX+', y al menos 1 de Kommo; que se vean las fechas)</span>'+
@@ -72354,21 +72373,13 @@ function crvFormAbrir(){
       '<label>Otra captura de la conversación (WhatsApp u otra)<input type="file" id="crvf-file" accept="image/*" multiple onchange="crvFotosElegidas(event, 0)"></label></div></div>'+
     '<label class="crvf-decl"><input type="checkbox" id="crvf-d"> Entiendo que haber creado primero la ficha, tener el contacto asignado en Kommo o haberlo atendido en una compra anterior no da derecho a la venta por sí solo (§8).</label>'+
     '<div class="crvf-falta" id="crvf-falta" hidden></div>'+
-    '<div class="modal-actions"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal()">Cancelar</button><span style="flex:1"></span>'+
+    '<div class="modal-actions"><button type="button" class="btn btn-sm btn-ghost" onclick="crxAbrir()">Cancelar</button><span style="flex:1"></span>'+
     '<button type="button" class="btn btn-sm btn-primary" id="crvf-ok" onclick="crvFormConfirmar()">🔎 Pedir revisión</button></div></div>';
   openModal(h);
-  var R=A ? A.req : null;
-  if(R){
-    var put=function(id,v){ var e=document.getElementById(id); if(e){ if(e.type==='checkbox') e.checked=!!v; else e.value=v||''; } };
-    if(R.g){ put('crvf-g',1); put('crvf-g-t',R.g.t); put('crvf-g-f',R.g.f); put('crvf-g-p',R.g.p); }
-    if(R.e){ put('crvf-e',1); put('crvf-e-t',R.e.t); put('crvf-e-a',R.e.a); put('crvf-e-f',R.e.f); put('crvf-e-k',R.e.k); put('crvf-e-s',R.e.s); }
-    if(R.o){ put('crvf-o-t',R.o.t); }
-    put('crvf-d', R.d);
-  }
   crvFormVer(); crvFotosPintar();
 }
 function crvFormVer(){
-  ['g','e','o'].forEach(function(k){ var c=document.getElementById('crvf-'+k), b=document.getElementById('crvf-'+k+'-in'); if(c && b) b.hidden=!c.checked; });
+  ['g','e'].forEach(function(k){ var c=document.getElementById('crvf-'+k), b=document.getElementById('crvf-'+k+'-in'); if(c && b) b.hidden=!c.checked; });
 }
 function crvFotosPintar(){
   var b=document.getElementById('crvf-fotos'); if(!b) return;
@@ -72381,15 +72392,15 @@ function crvFotosPintar(){
 function crvFotoQuitar(i){ var F=CRUCE_F.fot||[], fid=F[i]; F.splice(i,1); CRUCE_F.fotKm=(CRUCE_F.fotKm||[]).filter(function(x){ return x!==fid; }); crvFotosPintar(); }
 function crvFotosElegidas(ev, deKommo){
   var files=Array.prototype.slice.call((ev && ev.target && ev.target.files)||[]); if(ev && ev.target) ev.target.value='';
-  var k=CRUCE_F.k, cli=String((document.getElementById('f-cliente')||{}).value||'');
+  var k=CRUCE_F.fotK, p=findById(CRUCE_F.revId), cli=String((p && p.cliente)||'');
   var lugar=Math.max(0, CRV_FOTOS_MAX-(CRUCE_F.fot||[]).length-(CRUCE_F.fotSub||0));   // (revisión de Fable) lo que está subiendo también ocupa lugar
   if(files.length>lugar) toast('Máximo '+CRV_FOTOS_MAX+' capturas: '+(lugar ? ('se suben '+lugar+' de '+files.length) : 'quitá una para subir otra')+'.', 'err');
-  files.slice(0, lugar).reduce(function(pr, f){
+  return files.slice(0, lugar).reduce(function(pr, f){
     return pr.then(function(){
       CRUCE_F.fotSub=(CRUCE_F.fotSub||0)+1; crvFotosPintar();
       return fotoCronometro(f, 1600, 0.75).then(function(d){ return subirFoto('form', 'revision_'+cli, d); }).then(function(res){
         CRUCE_F.fotSub=Math.max(0,(CRUCE_F.fotSub||1)-1);
-        if(CRUCE_F.k!==k) return;
+        if(CRUCE_F.fotK!==k){ crvFotosPintar(); return; }
         if(res && res.ok && res.fotoId){ if((CRUCE_F.fot||[]).length<CRV_FOTOS_MAX){ CRUCE_F.fot=(CRUCE_F.fot||[]).concat([res.fotoId]); if(deKommo) CRUCE_F.fotKm=(CRUCE_F.fotKm||[]).concat([res.fotoId]); } }
         else toast('No se pudo subir la captura'+(res && res.error ? (' ('+res.error+')') : ''), 'err');
         crvFotosPintar();
@@ -72416,7 +72427,7 @@ function crvFormLeer(){
     if(!req.e.k) falta.push('la fecha acordada tiene que estar anotada en Kommo');
     if(!req.e.s) falta.push('confirmá que hiciste el seguimiento acordado');
   }
-  req.o={ t:v('crvf-o-t') }; if(!req.o.t) falta.push('por qué lo de la otra asesora no cuenta');
+  req.o={ t:v('crvf-o-t') }; if(!req.o.t) falta.push('por qué la venta no es de la otra vendedora');
   var nF=(CRUCE_F.fot||[]).length, nK=(CRUCE_F.fotKm||[]).filter(function(x){ return (CRUCE_F.fot||[]).indexOf(x)>=0; }).length;
   if(CRUCE_F.fotSub) falta.push('esperá que terminen de subir las capturas');
   else {
@@ -72428,44 +72439,28 @@ function crvFormLeer(){
   return { req:req, falta:falta };
 }
 function crvFormConfirmar(){
-  var q=cruceFormQue(); if(!q){ closeModal(); return; }
+  var p=findById(CRUCE_F.revId), v=CRX_V; if(!p || !v){ closeModal(); return; }
   var R=crvFormLeer(), box=document.getElementById('crvf-falta');
   if(R.falta.length){ if(box){ box.hidden=false; box.innerHTML='Falta: '+R.falta.map(esc).join(' · '); } return; }
-  var F=(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX);
-  CRUCE_F.arm={ k:q.c8+'|'+normNombre(q.v), req:R.req, fot:F, km:(CRUCE_F.fotKm||[]).filter(function(x){ return F.indexOf(x)>=0; }), t:Date.now() };
-  closeModal();
-  var b0=document.getElementById('cruce-form'); if(b0) b0._h='';
-  cruceFormPintar();
-  toast('Listo: al guardar la venta, el pedido de revisión queda en Administración.', 'ok');
+  if(crvDe(p)){ toast('Mientras completabas, esa venta ya recibió un pedido de revisión.', 'err'); return crxAbrir(); }
+  var F=(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX), n=JSON.parse(JSON.stringify(p));
+  if(!(n.productos||[]).length){ toast('Esa venta no tiene productos: no se puede anotar.', 'err'); return; }
+  n.productos[0].crv={ t:Date.now(), por:String(v).slice(0,60), vende:String(p.vendedor||'').slice(0,60), req:R.req, fot:F,
+    fotK:(CRUCE_F.fotKm||[]).filter(function(x){ return F.indexOf(x)>=0; }) };
+  persistPedido(n);
+  CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK='';
+  toast('Listo: pediste revisión. Administración decide de quién es el cliente.', 'ok');
+  try{ renderMis(); }catch(e){}
+  crxAbrir();
 }
 /** Lo que se presentó, en renglones (para el cartel, la lista de Administración y la ficha). */
 function crvReqLineas(c){
   var L=[], r=(c && c.req)||{};
   if(r.g) L.push('Gestión comercial: '+crvTxt(CRV_GESTION, r.g.t)+' el '+fmtFechaCorta(r.g.f)+' · próximo paso: '+r.g.p);
   if(r.e) L.push('Fecha futura acordada el '+fmtFechaCorta(r.e.a)+': '+crvTxt(CRV_EXCEP, r.e.t)+' para el '+fmtFechaCorta(r.e.f)+(r.e.k?' · anotada en Kommo':'')+(r.e.s?' · con seguimiento':''));
-  if(r.o) L.push('Por qué lo de la otra asesora no cuenta: '+crvTxt(CRV_OTRA, r.o.t));
+  if(r.o) L.push('Por qué la venta no es de quien la cargó: '+crvTxt(CRV_OTRA, r.o.t));
   if(r.d) L.push('Leyó la §8 (ficha creada, contacto asignado o compra anterior no dan derecho solos)');
   return L;
-}
-/** Al guardar (desde `submitPedido`): si se pidió revisión para este celular y vendedora, y Kommo nombra a alguien, deja `crv` en el
-    primer producto (es del pedido: `heredarMarcas` lo conserva). Se puede correr dos veces (las preguntas del guardado lo repiten). */
-/** (revisión de Fable) ¿Lo armado va a quedar en esta venta? null = no se pidió; { ok } o { mal: por qué no }. */
-function cruceRevEstado(){
-  var A=CRUCE_F.arm; if(!A) return null;
-  var q=cruceFormQue();
-  if(!q || A.k!==q.c8+'|'+normNombre(q.v)) return { mal:'Pediste revisión, pero después cambiaste el celular o la vendedora: el pedido de revisión era para otro cliente o vendedora.' };
-  if(!CRUCE_F.r) return { mal:'Pediste revisión, pero el panel todavía no pudo volver a confirmar con Kommo quién atendía al cliente.' };
-  var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return { mal:'Pediste revisión, pero Kommo ya no muestra a otra asesora atendiendo a este cliente.' };
-  if(A.fot.length<CRV_FOTOS_MIN || !A.km.length) return { mal:'Al pedido de revisión le faltan capturas (mínimo '+CRV_FOTOS_MIN+', una de Kommo).' };
-  return { ok:true, q:q, L:L };
-}
-function cruceRevPoner(productos){
-  if(!productos || !productos.length) return;
-  var E=cruceRevEstado(); if(!E || !E.ok) return;
-  var A=CRUCE_F.arm, q=E.q, L=E.L;
-  productos[0].crv={ t:A.t||Date.now(), por:q.v, de:L.map(function(o){ return o.n; }),
-    req:JSON.parse(JSON.stringify(A.req)), fot:A.fot.slice(0, CRV_FOTOS_MAX), fotK:A.km.slice(),
-    det:L.map(function(o){ return o.n+(o.por==='fecha' ? (': fecha acordada el '+qaFecha(o.ts)) : (': conversó el '+qaFecha(o.ts))); }).join(' · ').slice(0,300) };
 }
 /** El pedido de revisión de una venta (el primero que aparezca en sus productos). */
 function crvDe(p){ var pr=(p && p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && pr[i].crv && pr[i].crv.t) return pr[i].crv; return null; }
@@ -72483,17 +72478,16 @@ function crvDecididas(){
 function crvHacer(){
   if(typeof UNLOCKED==='undefined' || !UNLOCKED) return null;
   var L=crvLista(); if(!L.length) return null;
-  var nom=L.slice(0,3).map(function(p){ var c=crvDe(p); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(c.por||'?')+' / '+(c.de||[]).join(', ')+')'; }).join(', ')+(L.length>3?(' y '+(L.length-3)+' más'):'');
-  return { k:'crv', sev:'a', ic:'🔎', n:L.length, t:(L.length===1?'Una vendedora pide':'Vendedoras piden')+' revisar de quién es el cliente', s:nom, b:'🔎 Revisar', fn:'crvAbrir()', tag:'revisar cliente' };
+  var nom=L.slice(0,3).map(function(p){ var c=crvDe(p); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(c.vende||p.vendedor||'?')+' / '+(c.por||'?')+')'; }).join(', ')+(L.length>3?(' y '+(L.length-3)+' más'):'');
+  return { k:'crv', sev:'a', ic:'🔎', n:L.length, t:(L.length===1?'Una asesora pide':'Asesoras piden')+' revisar de quién es el cliente', s:nom, b:'🔎 Revisar', fn:'crvAbrir()', tag:'revisar cliente' };
 }
 function crvItemHtml(p){
   var c=crvDe(p), id=String(p.id).replace(/'/g,'');
-  var bot='<button type="button" class="btn btn-sm" onclick="crvResolver(\''+id+'\',\''+esc(String(c.por||'').replace(/'/g,''))+'\')">Es de '+esc(c.por||'quien vendió')+'</button>'+
-    (c.de||[]).map(function(n){ return '<button type="button" class="btn btn-sm btn-ghost" onclick="crvResolver(\''+id+'\',\''+esc(String(n).replace(/'/g,''))+'\')">Es de '+esc(n)+'</button>'; }).join('')+
+  var ven=c.vende||p.vendedor||'';
+  var bot=[ven, c.por].filter(Boolean).map(function(n, i){ return '<button type="button" class="btn btn-sm'+(i?' btn-ghost':'')+'" onclick="crvResolver(\''+id+'\',\''+esc(String(n).replace(/'/g,''))+'\')">Es de '+esc(n)+'</button>'; }).join('')+
     '<button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button>';
   return '<div class="crv-it"><b>'+esc(ocEtiq(p.oc))+' · '+esc(String(p.cliente||'—').trim())+'</b>'+
-    '<span class="crv-s">La vendió <b>'+esc(c.por||'—')+'</b> · pidió revisión el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+'</span>'+
-    '<span class="crv-s">Según Kommo: '+esc(c.det||(c.de||[]).join(', '))+'</span>'+
+    '<span class="crv-s">La cargó <b>'+esc(ven||'—')+'</b> · <b>'+esc(c.por||'—')+'</b> (según Kommo atendía al cliente) pidió revisión el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+'</span>'+
     '<ul class="crv-req">'+crvReqLineas(c).map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul>'+
     ((c.fot||[]).length ? '<div class="crv-fotos">'+c.fot.map(function(fid,i){ var km=(c.fotK||[]).indexOf(fid)>=0; return '<a href="'+esc(fotoVer(fidLimpio(fid)))+'" target="_blank" rel="noopener" title="'+(km?'De Kommo':'De la conversación')+'">'+fotoImgHtml(fid,{alt:(km?'Captura de Kommo ':'Captura ')+(i+1), w:200})+'</a>'; }).join('')+'</div>' : '')+
     (c.r ? '<span class="crv-s" style="color:#065f46;font-weight:700">✓ Decidido: es de '+esc(c.r)+(c.rq?(' · decidió '+esc(c.rq)):'')+(c.rt?(' el '+esc(fmtFechaCorta(isoDeTsBolivia(c.rt)))):'')+'</span>' : '')+
@@ -72504,7 +72498,7 @@ function crvFichaHtml(p){
   var c=crvDe(p); if(!c) return '';
   return '<div class="crv-it" style="margin:8px 0">'+
     '<b>🔎 Revisión del cliente: '+(c.r ? ('es de '+esc(c.r)) : 'pendiente de Administración')+'</b>'+
-    '<span class="crv-s">La pidió '+esc(c.por||'—')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+' · según Kommo: '+esc(c.det||(c.de||[]).join(', '))+'</span>'+
+    '<span class="crv-s">La pidió '+esc(c.por||'—')+' (según Kommo atendía al cliente) el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+' · la venta la cargó '+esc(c.vende||p.vendedor||'—')+'</span>'+
     (c.r ? '<span class="crv-s">Decidió '+esc(c.rq||'Administración')+(c.rt?(' el '+esc(fmtFechaCorta(isoDeTsBolivia(c.rt)))):'')+'</span>' : '')+
     '<ul class="crv-req">'+crvReqLineas(c).map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul>'+
     ((c.fot||[]).length ? '<div class="crv-fotos">'+c.fot.map(function(fid,i){ var km=(c.fotK||[]).indexOf(fid)>=0; return '<a href="'+esc(fotoVer(fidLimpio(fid)))+'" target="_blank" rel="noopener" title="'+(km?'De Kommo':'De la conversación')+'">'+fotoImgHtml(fid,{alt:(km?'Captura de Kommo ':'Captura ')+(i+1), w:200})+'</a>'; }).join('')+'</div>' : '')+
@@ -72513,7 +72507,7 @@ function crvFichaHtml(p){
 function crvAbrir(){
   var L=crvLista();
   openModal('<div class="modal-h"><h3>🔎 ¿De quién es el cliente?</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
-    '<div class="modal-b crv-modal"><p class="crv-s" style="margin:0 0 10px">La vendedora cargó la venta y pidió revisión porque, según Kommo, otra asesora había hablado con el cliente. Elegí de quién es. Solo queda anotado: no cambia la vendedora de la venta ni las comisiones.</p>'+
+    '<div class="modal-b crv-modal"><p class="crv-s" style="margin:0 0 10px">Una vendedora cargó la venta y la asesora que, según Kommo, atendía al cliente pidió revisión con lo que pide la Comunicación Interna 032-2026. Elegí de quién es. Solo queda anotado: no cambia la vendedora de la venta ni las comisiones.</p>'+
     (L.length ? L.map(crvItemHtml).join('') : '<p class="rd-vacio">✅ No queda ningún pedido de revisión.</p>')+
     (function(){ var D=crvDecididas(); return D.length ? '<details style="margin-top:10px"><summary><b>Ya decididas</b> (últimos 30 días: '+D.length+')</summary>'+D.map(crvItemHtml).join('')+'</details>' : ''; })()+
     '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div></div>');
