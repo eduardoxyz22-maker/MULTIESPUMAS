@@ -172,6 +172,49 @@ console.log('\n── 6. Sin el número de la asesora ──');
   chk('6b. Carola sin número en WA_VENDEDORAS: no sale y queda anotado por qué', A.cx().length === 0 && A.hoja().some(f => /no está en WA_VENDEDORAS/.test(f[8] || '')), A.hoja().map(f => f[7] + ' ' + f[8]));
 }
 
+console.log('\n── 9. Revisión de Fable ──');
+{
+  /* 1 · la venta que llega por la bandeja de Kommo: el borrador ya era una fila; al completarlo es la venta nueva */
+  const A = servidor(VEND, kommoHeaven());
+  const b = ped({ id:'kommo-777', estado:'Borrador Kommo', fecha:'', oc:'' }); A.guardar(b);
+  chk('1a. el borrador solo no entra', A.cola().length === 0);
+  b.estado = ''; b.fecha = '2026-11-26'; b.oc = '11-399'; A.guardar(b);
+  chk('⚠️ 1b. completarlo desde «Ventas de Kommo por cargar» SÍ entra (es la venta)', A.cola().length === 1 && A.cola()[0].id === 'kommo-777', A.cola());
+  b.observaciones = 'corrijo'; A.guardar(b);
+  pasar(2); A.ctx.waRepaso();
+  chk('1c. …sale UN aviso a Carola, y corregirla después no agrega otro', A.cx().length === 1 && A.cola().length === 0, A.cx().length);
+  /* 2 · WA_PRUEBA */
+  const P2 = servidor(Object.assign({ WA_PRUEBA:'59179999999' }, VEND), kommoHeaven());
+  P2.guardar(ped()); pasar(2); P2.ctx.waRepaso();
+  chk('⚠️ 2. con WA_PRUEBA el aviso va al número de prueba, no al de Carola', P2.cx().length === 1 && P2.cx()[0].to === '59179999999', P2.cx().map(x => x.to));
+  /* 4 · /users falla: no se adivina quién es quién; se reintenta */
+  const K4 = kommoHeaven(); delete K4.usuarios;
+  const U = servidor(VEND, K4);
+  U.guardar(ped()); pasar(2); U.ctx.waRepaso();
+  chk('4. sin los nombres de los usuarios: nada a «usuario 901» y la venta vuelve a la cola', U.cx().length === 0 && U.cola().length === 1 && U.cola()[0].n === 1 && !U.hoja().some(f => /usuario 9/.test(f[4] || '')), { cola:U.cola(), hoja:U.hoja().map(f => f[4]) });
+  /* 7 · dos pedidos al mismo cliente en 48 h: un aviso */
+  const D2 = servidor(VEND, kommoHeaven());
+  D2.guardar(ped()); D2.guardar(ped({ productos:[{ desc:'SOMIER ORO', medida:'140x190', codigo:'S1', cant:1, precio:1500 }] }));
+  pasar(2); D2.ctx.waRepaso();
+  chk('⚠️ 7. dos pedidos de Isabel a la misma clienta de Carola: UN solo aviso a Carola', D2.cx().length === 1, D2.cx().length);
+  /* 9 · quien conversó no es del equipo de la marca (un administrador): nada, y no le llega a otra con el mismo primer nombre */
+  const K9 = kommoHeaven(); K9.usuarios._embedded.users.push({ id:990, name:'Carola Admin' });
+  K9.eventos.forEach(e => { if (e.created_by === U_CAR) e.created_by = 990; });
+  const N9 = servidor(VEND, K9);
+  N9.guardar(ped()); pasar(2); N9.ctx.waRepaso();
+  chk('9. conversó un usuario que no es vendedora («Carola Admin»): no se avisa a nadie', N9.cx().length === 0 && !N9.hoja().some(f => f[3] === 'Vendedora: su cliente compró con otra'), N9.hoja().map(f => f[3] + ' ' + f[4]));
+  /* 8 · CRUCE_HECHO no pasa el tope de letras */
+  const H8 = servidor(VEND, kommoHeaven());
+  const h = {}; for (let i = 0; i < 400; i++) h['p' + i] = { t:1795000000 + i, c:'7001' + String(i).padStart(4, '0'), a:['Carola Chavez'] };
+  H8.P.CRUCE_HECHO = JSON.stringify(h); H8.guardar(ped()); pasar(2); H8.ctx.waRepaso();
+  chk('8. CRUCE_HECHO queda por debajo de las 7.000 letras', (H8.P.CRUCE_HECHO || '').length > 0 && (H8.P.CRUCE_HECHO || '').length <= 7000, (H8.P.CRUCE_HECHO || '').length);
+  /* 6 · el tope del formulario es aparte */
+  const T6 = servidor(VEND, kommoHeaven());
+  for (let i = 0; i < 80; i++) T6.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel Robledo' });
+  const rm = T6.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel Robledo' }), ra = T6.post({ action:'quienAtiende', cel:'70011122', quien:'Isabel Robledo', auto:1 });
+  chk('6. con las 80 búsquedas a mano gastadas, la del formulario (auto) sigue andando', rm.ok === false && rm.error === 'tope' && ra.ok !== false, { rm:rm.error, ra:ra.ok });
+}
+
 console.log('\n── 7. La plantilla ──');
 {
   const A = servidor(VEND, kommoHeaven());
@@ -195,8 +238,10 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   const res = await pg.evaluate(async (ahora) => {
     SERVER_VER = '2026-11-20-c';
     var llamadas = 0;
+    window.CRUCE_BODY = null;
     window.apiPost = function (b) {
-      llamadas++;
+      if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] });
+      llamadas++; window.CRUCE_BODY = b;
       return Promise.resolve({ ok:true, ahora:ahora, cuentas:[{ marca:'heaven', contactos:1, leads:[{ id:'71', resp:'Carola Chavez', pares:[{ ts:ahora - 3 * 86400 + 7200, desde:ahora - 3 * 86400 + 7200, quien:'Carola Chavez' }] }] }, { marca:'suena', contactos:0, leads:[] }] });
     };
     window.CRUCE_ESPERA_MS = 10;
@@ -210,6 +255,8 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     set('f-vendedor', 'Mauricio Merida'); await new Promise(r => setTimeout(r, 300));
     out.mauricio = box.hidden ? '' : box.textContent;
     set('f-vendedor', 'Isabel Robledo'); await new Promise(r => setTimeout(r, 300));
+    out.auto = window.CRUCE_BODY && window.CRUCE_BODY.auto === 1;
+    out.llamadasTotal = llamadas;
     EDIT_ID = 'x1'; cruceFormPintar(); out.editando = box.hidden;
     return out;
   }, ahora);
@@ -217,6 +264,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('8b. si la que carga es Carola: nada', res.carola === '', res.carola);
   chk('8c. si la que carga es de la otra marca (Mauricio): nada', res.mauricio === '', res.mauricio);
   chk('8d. al editar un pedido: nada', res.editando === true);
+  chk('8f. la consulta del formulario va con `auto` (tope aparte) y el mismo celular no se vuelve a preguntar al cambiar de vendedora', res.auto && res.llamadasTotal === 1, res);
   const g = await pg.evaluate(() => { return { boton:!!document.querySelector('#cruce-form button'), guarda:typeof submitPedido === 'function' }; });
   chk('8e. el cartel no tiene botones ni frena: solo avisa', !g.boton && g.guarda);
   await b.close(); fin();

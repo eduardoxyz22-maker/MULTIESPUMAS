@@ -7399,7 +7399,7 @@ function waArmar_(m, recs, cfg, B) {
   if (!T) return { saltar:'tipo desconocido', anotar:true };
   if (m.k === 'cs' || m.k === 'vl' || m.k === 'csl') return cotArmar_(m, cfg, B);   // 🧾 (2026-11-14-b) una cotización, no un pedido
   if (m.k === 'wp') return wpArmar_(m, recs, cfg, B);   // 🧠 (2026-11-16-a, mejora 356) el porqué de la semana: no es un pedido
-  if (m.k === 'cx') return cruceArmar_(m, recs, B);      // 🔀 (2026-11-20-c) a la vendedora que atendía al cliente
+  if (m.k === 'cx') return cruceArmar_(m, recs, cfg);      // 🔀 (2026-11-20-c) a la vendedora que atendía al cliente
   if (m.id) { p = recs[m.id] || null; if (!p) return { saltar:'el pedido ya no está (lo borraron)', anotar:true }; }
   var out = { plantilla:T.plantilla, p:p };
   if (T.cli) {
@@ -13508,6 +13508,7 @@ var QA_PAGINAS = 5;            // de 100 mensajes cada una (las respuestas del b
 var QA_CONT_PAGINAS = 4;       // de 250 contactos cada una (un nombre muy común trae más): si aun así quedan, la búsqueda está «cortada» y no dice «Libre»
 var QA_TAREA_MAX_DIAS = 90;    // una tarea más lejos que esto no es «fecha acordada» (revisión de Fable, M5: si no, una tarea al 2027 lo retiene para siempre)
 var QA_CACHE_SEG = 90;         // la misma búsqueda seguida no vuelve a preguntarle a Kommo (solo si salió COMPLETA)
+var QA_TOPE_AUTO = 150;        // 🔀 (2026-11-20-c) las del formulario de «Nuevo pedido» (cada venta nueva con celular), aparte
 var QA_TOPE_DIA = 80;          // búsquedas por persona y día (revisión de Fable, M6: no recorrer la cartera ajena)
 var QA_HOJA = 'Quién atiende';
 var QA_HOJA_ENC = ['Fecha', 'Buscó', 'Celular (8)', 'Nombre buscado', 'Resultado'];
@@ -13792,13 +13793,13 @@ function qaNombre_(t) {
 }
 /** Suma una búsqueda a `clave` en el día de Bolivia; false si ya llegó a QA_TOPE_DIA. Propiedad QA_DIA = {d:'2026-11-20', n:{clave: cuántas}}
     (un día solo; a lo sumo 150 claves). Si las Propiedades no se pueden leer o escribir, deja pasar (no frena a nadie por una falla de Google). */
-function qaTopeSuma_(clave) {
+function qaTopeSuma_(clave, tope) {
   try {
     var sp = PropertiesService.getScriptProperties(), u = null, hoy = waBo_(Date.now()).hoy;
     try { u = JSON.parse(sp.getProperty('QA_DIA') || 'null'); } catch (e) { u = null; }
     if (!u || u.d !== hoy || !u.n || typeof u.n !== 'object') u = { d:hoy, n:{} };
     var n = Number(u.n[clave]) || 0;
-    if (n >= QA_TOPE_DIA) return false;
+    if (n >= (tope || QA_TOPE_DIA)) return false;
     u.n[clave] = n + 1;
     var ks = Object.keys(u.n);
     if (ks.length > 150) ks.sort(function (a, b) { return u.n[a] - u.n[b]; }).slice(0, ks.length - 150).forEach(function (k) { delete u.n[k]; });
@@ -13808,8 +13809,9 @@ function qaTopeSuma_(clave) {
 }
 /** 🔀 (2026-11-20-c) Lo que Kommo dice de un celular (o un nombre), con la caché de QA_CACHE_SEG: el corazón de «¿Quién lo atiende?», que usan la
     pestaña (quienAtiende_, con su tope y su hoja) y la revisión de cada venta nueva (cruceElegir_). Solo lee Kommo. */
-function qaConsulta_(c8, nom, orig, ahoraS) {
-  var cache = null, ck = c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_'), out = null;
+function qaConsulta_(c8, nom, orig, ahoraS, solo) {
+  /* `solo` = 'heaven' | 'suena': solo esa cuenta (la revisión de una venta mira la cuenta de su marca; otra clave en la caché). */
+  var cache = null, ck = (c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_')) + (solo ? '_' + solo : ''), out = null;
   try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
   if (cache) {
     try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) {}
@@ -13819,6 +13821,7 @@ function qaConsulta_(c8, nom, orig, ahoraS) {
     QA_PROPS_ = {};
     try {
       [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
+        if (solo && x[1] !== solo) return;
         KC_CTA = x[0];
         try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:orig || '' }, x[1], ahoraS)); }
         catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
@@ -13838,9 +13841,13 @@ function quienAtiende_(body) {
   /* Tope por persona y día (por el nombre que manda la página o, sin nombre, por el aparato: la página manda `dispositivo`): no sirve para
      recorrer la cartera ajena (Fable M6). En la propiedad QA_DIA, como NOTA_DIA: CacheService guarda 6 h como mucho (no el día). */
   var kt = (qaNorm_(quien) || ('aparato ' + String((body && body.dispositivo) || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 12))).slice(0, 40);
-  if (!qaTopeSuma_(kt)) return { ok:false, error:'tope', tope:QA_TOPE_DIA, version:SCRIPT_VERSION };
+  /* 🔀 (2026-11-20-c, revisión de Fable 6) La consulta que hace SOLO el formulario de «Nuevo pedido» (`auto`) va con su propio tope (no le come
+     las búsquedas a mano a la vendedora) y en la hoja dice «(formulario)». */
+  var auto = !!(body && body.auto);
+  if (auto) kt = ('form ' + kt).slice(0, 40);
+  if (!qaTopeSuma_(kt, auto ? QA_TOPE_AUTO : QA_TOPE_DIA)) return { ok:false, error:'tope', tope:auto ? QA_TOPE_AUTO : QA_TOPE_DIA, version:SCRIPT_VERSION };
   out = qaConsulta_(c8, nom, String((body && body.nombreOrig) || '').slice(0, 60), ahoraS);
-  try { qaHoja_().appendRow([new Date(), celdaTexto_(quien), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]); } catch (e) {}
+  try { qaHoja_().appendRow([new Date(), celdaTexto_(quien + (auto ? ' (formulario)' : '')), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]); } catch (e) {}
   return out;
 }
 
@@ -13856,9 +13863,12 @@ function quienAtiende_(body) {
  *   · Si Kommo no contesta, se vuelve a probar en la vuelta siguiente (CRUCE_INTENTOS); después se deja.
  * ========================================================================== */
 var CRUCE_ESPERA_MS = 60000;      // un minuto después de guardar (como el resto del bot: la vendedora puede corregir algo enseguida)
-var CRUCE_POR_VUELTA = 4;         // cada una pregunta a Kommo (3-10 s): pocas por vuelta
+var CRUCE_POR_VUELTA = 4;         // cada una pregunta a Kommo: pocas por vuelta
+var CRUCE_TIEMPO_MS = 40000;      // (revisión de Fable 3) lo que puede tardar la revisión en una vuelta; lo que no llegó, a la próxima
 var CRUCE_INTENTOS = 3;
-var CRUCE_HECHO_MAX = 400;
+var CRUCE_HECHO_MAX = 150;        // (Fable 8) una propiedad aguanta ~9 KB: ids + segundos, con tope de letras
+var CRUCE_HECHO_LETRAS = 7000;
+var CRUCE_MISMO_CLIENTE_MS = 48 * 3600000;   // (Fable 7) dos pedidos al mismo cliente en 48 h: un solo aviso a la misma asesora
 function cruceMarca_(vend) {
   var v = waNorm_(vend);
   for (var i = 0; i < WA_MARCAS.length; i++)
@@ -13873,6 +13883,16 @@ function cruceMismo_(a, b) {
   var cor = A.length <= B2.length ? A : B2, lar = A.length <= B2.length ? B2 : A;
   return cor.every(function (w) { return lar.indexOf(w) >= 0; });
 }
+/** La vendedora del panel (WA_MARCAS de esa marca) que es ese nombre de Kommo; '' si no es del equipo de la marca (Fable 9: un administrador
+    que contestó un chat no recibe nada, ni le llega a otra con el mismo primer nombre). Con dos posibles, ninguna. */
+function cruceVendDe_(nombre, mk) {
+  var hit = '';
+  for (var i = 0; i < WA_MARCAS.length; i++) {
+    if ((/sue/i.test(WA_MARCAS[i].lbl) ? 'suena' : 'heaven') !== mk) continue;
+    for (var j = 0; j < WA_MARCAS[i].vendedores.length; j++) if (cruceMismo_(WA_MARCAS[i].vendedores[j], nombre)) { if (hit && hit !== WA_MARCAS[i].vendedores[j]) return ''; hit = WA_MARCAS[i].vendedores[j]; }
+  }
+  return hit;
+}
 /** ¿Esta venta se mira? Una OC (no ATC ni RPT) de una vendedora de Heaven o Sueña (Eduardo, ROHO y los internos no están en WA_MARCAS), con celular. */
 function cruceEntra_(p) {
   if (!p) return false;
@@ -13882,8 +13902,11 @@ function cruceEntra_(p) {
   if (!cruceMarca_(p.vendedor)) return false;
   return kcCel8_(p.celular).length >= 7;
 }
+/** Desde doSave: una venta NUEVA, o un borrador de Kommo que se completó (Fable 1: la fila ya existía como borrador; es la venta que llega por
+    «Ventas de Kommo por cargar»). Corregir una venta ya cargada NO entra. Sin red. */
 function cruceAlGuardar_(viejo, rec) {
-  if (viejo || !waActivo_() || !cruceEntra_(rec)) return;
+  if (!waActivo_() || !cruceEntra_(rec)) return;
+  if (viejo) { var v = null; try { v = rowToRec_(viejo); } catch (e) { v = null; } if (!v || String(v.estado || '') !== BORRADOR_EST) return; }
   var c = waJsonProp_('CRUCE_COLA', []); if (!Array.isArray(c)) c = [];
   var id = String(rec.id);
   if (c.some(function (x) { return x.id === id; })) return;
@@ -13892,15 +13915,17 @@ function cruceAlGuardar_(viejo, rec) {
   try { PropertiesService.getScriptProperties().setProperty('CRUCE_COLA', JSON.stringify(c)); } catch (e) {}
   try { waDespertar_(); } catch (e) {}
 }
-/** Adentro del candado de waRepaso: saca de la cola lo que ya esperó CRUCE_ESPERA_MS (hasta CRUCE_POR_VUELTA). Sin red. */
+/** Adentro del candado de waRepaso: saca de la cola lo que ya esperó CRUCE_ESPERA_MS (hasta CRUCE_POR_VUELTA). Sin red. Si no pudo guardar la
+    cola sin ellos, no toma nada (Fable 8: si no, la vuelta siguiente los tomaría otra vez). */
 function cruceTomar_(t0) {
   var c = waJsonProp_('CRUCE_COLA', []); if (!Array.isArray(c) || !c.length) return [];
   var tomados = [], quedan = [];
   c.forEach(function (x) { if (tomados.length < CRUCE_POR_VUELTA && t0 - (Number(x.ms) || 0) >= CRUCE_ESPERA_MS) tomados.push(x); else quedan.push(x); });
-  if (tomados.length) { try { PropertiesService.getScriptProperties().setProperty('CRUCE_COLA', JSON.stringify(quedan)); } catch (e) {} }
+  if (!tomados.length) return [];
+  try { PropertiesService.getScriptProperties().setProperty('CRUCE_COLA', JSON.stringify(quedan)); } catch (e) { return []; }
   return tomados;
 }
-/** Lo que Kommo no pudo contestar vuelve a la cola (con su candado corto), hasta CRUCE_INTENTOS. */
+/** Lo que Kommo no pudo contestar (o no llegó a mirarse) vuelve a la cola, con su candado corto. */
 function cruceDevolver_(lista) {
   if (!lista.length) return;
   var l = LockService.getScriptLock();
@@ -13911,14 +13936,13 @@ function cruceDevolver_(lista) {
     PropertiesService.getScriptProperties().setProperty('CRUCE_COLA', JSON.stringify(c));
   } catch (e) {} finally { try { l.releaseLock(); } catch (e2) {} }
 }
-/** Las OTRAS vendedoras que atendían a ese cliente en la cuenta de Kommo de la marca de la venta (la regla de qaResumenDe_ / qaVeredicto):
-    [{n, ts}] sin repetir, sin la que vendió y sin «(sin asignar)». */
-function cruceOtros_(cuenta, vend, ahora) {
+/** Las OTRAS vendedoras que atendían a ese cliente en la cuenta de Kommo de la marca de la venta (la regla de qaResumenDe_ / qaVeredicto),
+    solo las del equipo de esa marca, con el nombre del panel: [{n, ts}] sin repetir y sin la que vendió. */
+function cruceOtros_(cuenta, vend, ahora, mk) {
   var lim = ahora - QA_DIAS * 86400, por = {}, orden = [];
   function pon(n, ts) {
-    n = String(n || '').trim(); if (!n || /sin asignar/i.test(n) || cruceMismo_(n, vend)) return;
-    var k = qaNorm_(n.split(/\s+[-–]\s+/)[0]);
-    if (!por[k]) { por[k] = { n:n.split(/\s+[-–]\s+/)[0].trim(), ts:ts }; orden.push(k); } else if (ts > por[k].ts) por[k].ts = ts;
+    var v = cruceVendDe_(n, mk); if (!v || cruceMismo_(v, vend)) return;
+    if (!por[v]) { por[v] = { n:v, ts:ts }; orden.push(v); } else if (ts > por[v].ts) por[v].ts = ts;
   }
   ((cuenta && cuenta.leads) || []).forEach(function (l) {
     if (l.cerrado === 'perdido') return;
@@ -13928,36 +13952,42 @@ function cruceOtros_(cuenta, vend, ahora) {
   });
   return orden.map(function (k) { return por[k]; });
 }
-/** Afuera del candado: le pregunta a Kommo por cada venta tomada y devuelve los mensajes (uno por cada otra vendedora que lo atendía). */
+function cruceHechoGuardar_(hecho) {
+  var ks = Object.keys(hecho).sort(function (a, b) { return (Number(hecho[a].t) || 0) - (Number(hecho[b].t) || 0); });
+  while (ks.length > CRUCE_HECHO_MAX || (ks.length && JSON.stringify(hecho).length > CRUCE_HECHO_LETRAS)) delete hecho[ks.shift()];
+  try { PropertiesService.getScriptProperties().setProperty('CRUCE_HECHO', JSON.stringify(hecho)); } catch (e) {}
+}
+/** Afuera del candado: le pregunta a Kommo por cada venta tomada y devuelve los mensajes (uno por cada otra vendedora que lo atendía). Con
+    presupuesto de tiempo (CRUCE_TIEMPO_MS): lo que no se alcanza a mirar vuelve a la cola sin sumar intento. */
 function cruceElegir_(tomados, planilla) {
   if (!tomados.length) return [];
-  var msgs = [], devolver = [], hecho = waJsonProp_('CRUCE_HECHO', {}) || {}, cambio = false, R = planilla();
+  var t0 = Date.now(), msgs = [], devolver = [], hecho = waJsonProp_('CRUCE_HECHO', {}) || {}, cambio = false, R = planilla();
+  /* (Fable 7) El mismo cliente y la misma asesora avisados hace poco (`c` = celular, `a` = a quién, en CRUCE_HECHO): no se repite. */
+  var yaAvisado = function (c8, a) { for (var k in hecho) { var h = hecho[k]; if (h && h.c === c8 && (h.a || []).indexOf(a) >= 0 && t0 - (Number(h.t) || 0) * 1000 < CRUCE_MISMO_CLIENTE_MS) return true; } return false; };
   tomados.forEach(function (x) {
+    if (Date.now() - t0 > CRUCE_TIEMPO_MS) { devolver.push(x); return; }
     var p = R[x.id];
     if (hecho[x.id] || !cruceEntra_(p)) return;   // ya mirada, o ya no es una venta que se mire (la borraron, la pasaron a ATC…)
-    var mk = cruceMarca_(p.vendedor), ahoraS = Math.floor(Date.now() / 1000), out = null;
-    try { out = qaConsulta_(kcCel8_(p.celular), '', '', ahoraS); } catch (e) { out = null; }
+    var mk = cruceMarca_(p.vendedor), c8 = kcCel8_(p.celular), ahoraS = Math.floor(Date.now() / 1000), out = null;
+    try { out = qaConsulta_(c8, '', '', ahoraS, mk); } catch (e) { out = null; }
     var cuenta = out ? (out.cuentas || []).filter(function (c) { return c.marca === mk; })[0] : null;
-    var otros = cuenta ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || ahoraS) : [];
-    var fallo = !cuenta || cuenta.error || cuenta.sinToken || cuenta.msgOk === false;
+    if (cuenta && cuenta.sinToken) { hecho[x.id] = { t:ahoraS, s:'sin token' }; cambio = true; return; }   // sin token no va a cambiar
+    /* (Fable 4) Sin los nombres de los usuarios (`usOk` false) no se sabe quién es quién: falla, como si Kommo no contestara. */
+    var fallo = !cuenta || cuenta.error || cuenta.msgOk === false || cuenta.usOk === false;
+    var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || ahoraS, mk) : [];
     if (!otros.length && fallo) {
-      if (cuenta && cuenta.sinToken) { hecho[x.id] = { t:Date.now(), s:'sin token' }; cambio = true; return; }   // sin token no va a cambiar
       if ((Number(x.n) || 0) + 1 < CRUCE_INTENTOS) { devolver.push({ id:x.id, ms:x.ms, n:(Number(x.n) || 0) + 1 }); return; }
-      hecho[x.id] = { t:Date.now(), s:'Kommo no contestó' }; cambio = true; return;
+      hecho[x.id] = { t:ahoraS, s:'Kommo no contestó' }; cambio = true; return;
     }
-    hecho[x.id] = { t:Date.now(), n:otros.length }; cambio = true;
+    var a = [];
     otros.forEach(function (o) {
-      /* El nombre del panel (el de WA_MARCAS de esa marca), para buscar su celular en WA_VENDEDORAS; si no es del equipo, el de Kommo. */
-      var nom = o.n;
-      WA_MARCAS.forEach(function (g) { if ((/sue/i.test(g.lbl) ? 'suena' : 'heaven') !== mk) return; g.vendedores.forEach(function (v) { if (cruceMismo_(v, o.n)) nom = v; }); });
-      msgs.push({ id:x.id, k:'cx', a:nom, n:0, cx:{ ts:o.ts } });
+      if (yaAvisado(c8, o.n)) return;
+      a.push(o.n);
+      msgs.push({ id:x.id, k:'cx', a:o.n, n:0, cx:{ ts:o.ts } });
     });
+    hecho[x.id] = { t:ahoraS, c:c8, a:a }; cambio = true;
   });
-  if (cambio) {
-    var ks = Object.keys(hecho);
-    if (ks.length > CRUCE_HECHO_MAX) ks.sort(function (a, b) { return (hecho[a].t || 0) - (hecho[b].t || 0); }).slice(0, ks.length - CRUCE_HECHO_MAX).forEach(function (k) { delete hecho[k]; });
-    try { PropertiesService.getScriptProperties().setProperty('CRUCE_HECHO', JSON.stringify(hecho)); } catch (e) {}
-  }
+  if (cambio) cruceHechoGuardar_(hecho);
   cruceDevolver_(devolver);
   return msgs;
 }
@@ -13968,14 +13998,16 @@ function cruceParams_(m, p) {
   return [String(m.a || '').trim().split(/\s+/)[0] || String(m.a || ''), String(p.cliente || 'el cliente').trim().slice(0, 60) || 'el cliente', c8.slice(-4),
           String(p.vendedor || '').trim(), waOc_(p.oc), prods, waBo_(carga).txt];
 }
-function cruceArmar_(m, recs, B) {
+function cruceArmar_(m, recs, cfg) {
   var T = WA_TIPOS.cx, p = recs[m.id] || null;
   if (!p) return { saltar:'el pedido ya no está (lo borraron)', anotar:true };
   var cel = waVendCel_(m.a);
   if (!cel) return { saltar:'«' + m.a + '» no está en WA_VENDEDORAS', anotar:true, p:p };
   var params = cruceParams_(m, p);
   var texto = WA_PLANTILLAS.filter(function (x) { return x.n === T.plantilla; })[0].t.replace(/\{\{(\d+)\}\}/g, function (_, i) { return params[Number(i) - 1] || ''; });
-  return { plantilla:T.plantilla, p:p, para:m.a, numero:cel, params:params, viejos:null, texto:texto };
+  var out = { plantilla:T.plantilla, p:p, para:m.a, numero:cel, params:params, viejos:null, texto:texto };
+  if (cfg && cfg.prueba) { out.para = '(prueba) ' + out.para; out.numero = cfg.prueba; }   // (Fable 2) con WA_PRUEBA, como todos los demás
+  return out;
 }
 
 /* 🧷 (2026-11-16-a, revisión de Fable, punto 4) ÚLTIMA LÍNEA DEL ARCHIVO, a propósito: si el pegado quedó cortado, no está, y
