@@ -86,7 +86,7 @@ function servidor(props, K, ops) {
         const E = K.eventos.filter(e => ids.indexOf(String(e.c)) >= 0 && tipos.indexOf(e.type) >= 0 && e.created_at >= desde && e.created_at <= hasta).sort((a, b) => b.created_at - a.created_at);
         return E.length ? resp(200, { _embedded:{ events:E } }) : resp(204, null);
       }
-      if (p === '/tasks') return resp(204, null);
+      if (p === '/tasks') return ops.tareas500 ? resp(500, {}) : resp(204, null);
       return resp(404, {});
     } }
   };
@@ -232,6 +232,11 @@ console.log('\n── 10. Segunda revisión de Fable ──');
   chk('4. Carola sin número: CRUCE_HECHO lo recuerda sin celular ni asesoras (no la da por avisada)', Object.keys(hb).length === 1 && !vb.c && !vb.a, vb);
   B.P.WA_VENDEDORAS = VEND.WA_VENDEDORAS; pasar(5); B.guardar(ped()); pasar(2); B.ctx.waRepaso();
   chk('4b. ya con su número, la venta siguiente a esa clienta SÍ le llega', B.cx().length === 1, B.cx().length);
+  /* (revisión 3) falla la lectura de las TAREAS: no se da por mirada, se reintenta */
+  const KT = kommoHeaven(); KT.eventos = [];   // sin conversación: solo una tarea la podría retener
+  const T = servidor(VEND, KT, { tareas500:true });
+  T.guardar(ped()); pasar(2); T.ctx.waRepaso();
+  chk('3ª. Kommo no deja leer las tareas: la venta vuelve a la cola (intento 1), no se da por mirada', T.cola().length === 1 && T.cola()[0].n === 1, T.cola());
   /* 6 · lo que preguntó el formulario un momento antes sirve: el cruce no vuelve a llamar a Kommo */
   const okSuena = (p) => p === '/users' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ users:[{ id:13073611, name:'Mauricio Merida' }] } }) }
     : p === '/leads/pipelines' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ pipelines:[] } }) } : { getResponseCode:() => 204, getContentText:() => '' };
@@ -299,7 +304,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   /* Segunda revisión de Fable: el borrador de Kommo (vive en BORRADORES), lo incompleto, el tope y el número que cambia */
   const r2 = await pg.evaluate(async (ahora) => {
     var espera = (ms) => new Promise(r => setTimeout(r, ms));
-    var resp = function (inc) { return { ok:true, ahora:ahora, incompleto:inc ? 1 : 0, cuentas:[{ marca:'heaven', contactos:1, leads:inc ? [] : [{ id:'71', resp:'Carola Chavez', pares:[{ ts:ahora - 3 * 86400 + 7200, desde:ahora - 3 * 86400 + 7200, quien:'Carola Chavez' }] }] }] }; };
+    var resp = function (inc) { return { ok:true, ahora:ahora, incompleto:inc ? 1 : 0, cuentas:[{ marca:'heaven', contactos:1, error:inc ? 'falló: 500' : undefined, leads:inc ? [] : [{ id:'71', resp:'Carola Chavez', pares:[{ ts:ahora - 3 * 86400 + 7200, desde:ahora - 3 * 86400 + 7200, quien:'Carola Chavez' }] }] }] }; };
     var set = function (id, v) { var e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles:true })); };
     var box = document.getElementById('cruce-form'), out = {};
     window.CRUCE_REINT_MS = 20; window.CRUCE_ESPERA_MS = 10;
@@ -318,6 +323,15 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; modo = 'inc'; n = 0;
     set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011133'); await espera(300);
     out.inc = { n:n, txt:box.hidden ? '' : box.textContent };
+    /* h2 · la OTRA marca a medias (Sueña sin token o caída) no hace reintentar */
+    resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; n = 0;
+    window.apiPost = function (b) { if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] }); n++;
+      return Promise.resolve({ ok:true, ahora:ahora, incompleto:1, cuentas:[{ marca:'heaven', contactos:0, leads:[] }, { marca:'suena', leads:[], error:'falló: 500' }] }); };
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011177'); await espera(300);
+    out.otraMarca = n;
+    window.apiPost = function (b) { if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] }); n++; cels.push(b.cel);
+      if (modo === 'tope') return Promise.resolve({ ok:false, error:'tope' });
+      return Promise.resolve(resp(false)); };
     /* i · con el tope del día no se insiste */
     resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; modo = 'tope'; n = 0;
     set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011144'); await espera(300);
@@ -330,6 +344,7 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   }, ahora);
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /lo está atendiendo Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
+  chk('8h2. Heaven contestó bien y Sueña está caída: una sola consulta (la otra marca no hace reintentar)', r2.otraMarca === 1, r2.otraMarca);
   chk('8i. con el tope del día gastado: una sola consulta, sin reintentos', r2.tope === 1, r2.tope);
   chk('8j. el celular cambió antes de preguntar: solo se consulta el último', r2.cambia.length === 1 && r2.cambia[0] === '70011166', r2.cambia);
   await b.close(); fin();

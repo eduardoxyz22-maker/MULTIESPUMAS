@@ -72259,11 +72259,14 @@ function cruceFormBuscar(){
     if(g!==CRUCE_F.gen) return;
     CRUCE_F.busy=false;
     var ok=r && r.ok!==false && Array.isArray(r.cuentas);
-    if(ok && !r.incompleto) CRUCE_MEMO[q.c8]={ r:r, ms:Date.now() };
+    /* (revisión 3 de Fable) Lo que cuenta es la cuenta de SU marca, y solo lo que puede cambiar al rato (no `sinToken` ni `cortado`). */
+    var cm=ok ? r.cuentas.filter(function(c){ return c.marca===q.mk; }) : [];
+    var falla=ok && (!cm.length || cm.some(function(c){ return c.error || c.msgOk===false || c.tareasOk===false || c.usOk===false; }));
+    if(ok && !falla) CRUCE_MEMO[q.c8]={ r:r, ms:Date.now() };
     if(k!==CRUCE_F.k) return;
     if(!ok){ if(!(r && r.error==='tope')) cruceFormReintentar(k); return; }   // con el tope del día, reintentar no sirve
     /* Kommo contestó a medias y todavía no se ve a nadie: se vuelve a preguntar (si ya se ve a alguien, eso alcanza para avisar). */
-    if(r.incompleto && !cruceOtros(r, q.v, q.mk).length){ cruceFormReintentar(k); return; }
+    if(falla && !cruceOtros(r, q.v, q.mk).length){ cruceFormReintentar(k); return; }
     CRUCE_F.r=r; cruceFormPintar();
   }).catch(function(){ if(g===CRUCE_F.gen){ CRUCE_F.busy=false; cruceFormReintentar(k); } });
 }

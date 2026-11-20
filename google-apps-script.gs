@@ -13976,7 +13976,7 @@ function cruceElegir_(tomados, planilla) {
     var cuenta = out ? (out.cuentas || []).filter(function (c) { return c.marca === mk; })[0] : null;
     if (cuenta && cuenta.sinToken) { hecho[x.id] = { t:ahoraS, s:'sin token' }; cambio = true; return; }   // sin token no va a cambiar
     /* (Fable 4) Sin los nombres de los usuarios (`usOk` false) no se sabe quién es quién: falla, como si Kommo no contestara. */
-    var fallo = !cuenta || cuenta.error || cuenta.msgOk === false || cuenta.usOk === false;
+    var fallo = !cuenta || cuenta.error || cuenta.msgOk === false || cuenta.tareasOk === false || cuenta.usOk === false;   // + las tareas (revisión 3 de Fable)
     var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || ahoraS, mk) : [];
     if (!otros.length && fallo) {
       if ((Number(x.n) || 0) + 1 < CRUCE_INTENTOS) { devolver.push({ id:x.id, ms:x.ms, n:(Number(x.n) || 0) + 1 }); return; }
