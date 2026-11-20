@@ -188,7 +188,10 @@ def armar(d, P):
         # (14/11, dueño: «es medida especial tal cual dice el correo, no tengo el código aún»): una MEDIDA ESPECIAL va sin
         # código (`"especial": true` en el renglón), como la carga el panel (§4gk: se fabrica a pedido, nunca sale del stock).
         sin_cod = bool(x.get('especial')) and str(x.get('medida') or '').strip()
-        if cant < 1 or precio <= 0 or (not sin_cod and not str(x.get('codigo') or '').strip()):
+        # (20/11, dueño, pedido de Karina Torrico: «ponlo sin precio»): solo cuando el dueño lo dice en el chat, el pedido lleva
+        # `"sin_precio": true` y sus renglones van en 0 (como los carga Eduardo a mano). Una vuelta automática nunca lo pone.
+        sin_precio = bool(d.get('sin_precio')) and precio == 0
+        if cant < 1 or (precio <= 0 and not sin_precio) or (not sin_cod and not str(x.get('codigo') or '').strip()):
             raise ValueError('renglón incompleto: %r' % x)
         prods.append({"desc": str(x['desc']).strip(), "medida": str(x.get('medida') or '').strip(),
                       "codigo": str(x.get('codigo') or '').strip().upper(), "cant": cant, "precio": precio})
