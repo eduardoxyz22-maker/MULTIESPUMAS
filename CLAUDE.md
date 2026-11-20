@@ -1044,6 +1044,19 @@ final de su celular. Tope de 80 por persona y día (propiedad `QA_DIA`); cada co
 Prueba contra el Kommo real (solo lectura, solo cantidades en el registro): Actions → «Probar ¿Quién lo atiende? contra Kommo» (`herramientas/probar_quien_atiende.js`;
 el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_quien_atiende.js` (61). Dos revisiones de Fable (20/11).
 
+## 🔀 Cruce de ventas y «Pedir revisión» (20/11; dueño, con la Comunicación Interna 032-2026; servidor `2026-11-20-c` IMPLEMENTADO 20/11 por el dueño, enlace fijo `1450933…`, 14.038 líneas, termina en `var FIN_DEL_ARCHIVO = '2026-11-20-c';`; página PUBLICADA 20/11, versión 2026-11-20-c, `ab6e4eb`)
+- Al guardar una venta, `doSave` → `cruceAlGuardar_` → `CRUCE_COLA`; `waRepasoBot_` (`cruceTomar_` en el candado, `cruceElegir_` afuera) mira con
+  «¿Quién lo atiende?» si OTRA asesora de la MISMA marca atiende a ese cliente y le manda UNA vez `asesora_cliente_compro` (termina con «pedí
+  revisión desde el panel: Mis pedidos → Para hacer»). Nunca frena la venta. `CRUCE_HECHO` {t, v, n, c, a}; `list.cx` (`cruceParaLista_`, 20 días).
+- Formulario: cartel que SOLO avisa («Este cliente puede ser de X… que haya mensajes no significa que lo haya atendido»), sin botón (`cruceFormPintar`).
+- «Pedir revisión» la pide SOLO la asesora que reclama (la del WhatsApp), desde Mis pedidos → Para hacer (`crxMios`/`crxHacer`, `crvFormAbrir`):
+  TODO obligatorio (gestión, cuándo, la excepción de la 032 si va, detalle) y mínimo 2 capturas, al menos 1 de Kommo (`CRV_FOTOS_MIN`, ≤ 15 días).
+  Se guarda en `productos[0].crv` (pasa por `heredarMarcas`; `idsFotoEnUso_` cuida `crv.fot`). Administración decide con la contraseña (`crvAbrir`,
+  `crvResolver`). `tests/test_cruce_ventas.js` (71). Revisión de solo lectura contra Kommo: workflow «Verificar cruces de ventas».
+- 📅 **Importar ROHO para el día que elige logística** (dueño: *«no importa si está lleno… que muestre 29/15»*): `ROHO_FECHA` (todos a ese día, también
+  notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
+  o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
+
 ## 📄 El PDF del pedido del cliente en la ficha (20/11; dueño: *«cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo pueda descargar… en el pedido en el panel»*; servidor `2026-11-20-b` lo implementa el dueño; página 2026-11-20-b en la rama)
 La revisión de correos pone `"pdf": "<ruta>"` en el JSON de cada pedido de Multicenter y Tienda Amiga; `cargar_pedidos.py` (`subir_pdf`, solo con
 servidor ≥ 20-b) lo sube con la acción **`pdfPedido`** (`guardarPdfPedido_`: solo `%PDF`, ≤ 10 MB, carpeta APARTE «PDF de pedidos MultiEspumas»
