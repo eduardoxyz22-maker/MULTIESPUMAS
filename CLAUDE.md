@@ -3119,7 +3119,7 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
 - **91 en Sueña** (`.gs` **2026-11-17-c**, 17/11, dueño: *«sí ármalo lo de Sueña y publiquemos»*): la venta de un vendedor de Sueña (`WA_MARCAS`) cierra
   su lead en el Kommo de SUEÑA (`gerenciamultiespumasviscarra`, embudo 10989127, la etapa ganada se llama «COMPRO»), con la propiedad
   **`KOMMO_TOKEN_SUENA`** (opcionales `KOMMO_SUBDOMAIN_SUENA`, `KOMMO_EMBUDO_SUENA`). `KC_CTA` = la cuenta de la llamada en curso (la leen
-  `kPedir_` y la caché de `kcMeta_`; vuelve a '' en un `finally`). `kcUsuario_` también junta al revés; **Juan Pablo Paredes = usuario 13073611**, que en ese Kommo se llama «Alberto Pareja»
+  `kPedir_` y la caché de `kcMeta_`; vuelve a '' en un `finally`). `kcUsuario_` también junta al revés; **Juan Pablo Paredes = usuario 13073611**, que en ese Kommo se llama «multiespumas» (antes «Alberto Pareja»; manda el número, `KC_SUENA_NOMBRES` lo encuentra también por el nombre)
   (`KC_SUENA_USUARIOS`, = `USER_RENAME_ID` del generar.py de Sueña; `.gs` **2026-11-17-d**). **IMPLEMENTADO 17/11 por el dueño** (`probarKommoEscribeSuena` ✅ los tres vendedores y el token escribe;
   `KOMMO_TOKEN_SUENA` de una integración privada nueva; enlace fijo `0078708…`, 13.295 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 17-b
   de `b6ca309…`). Sin ese token la de Sueña no hace nada. ▶️ `probarKommoEscribeSuena` desde el editor. ⚠️ Un camino NUEVO que hable con Kommo

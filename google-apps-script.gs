@@ -10831,11 +10831,11 @@ function kommoRepasoSuena_() {
   } finally { KC_CTA = ''; }
 }
 /** La vendedora de Sueña por su usuario de Kommo: el nombre del panel si es uno de KC_SUENA_USUARIOS («Alberto Pareja» = Juan Pablo
-    Paredes) o si coincide con uno de WA_MARCAS; si no, el de Kommo sin « - Sucursal». */
+    Paredes; en Kommo hoy se llama «multiespumas») o si coincide con uno de WA_MARCAS; si no, el de Kommo sin « - Sucursal». */
 function kSuenaVendedor_(uid, nombre) {
   var buscado = '';
   for (var k in KC_SUENA_USUARIOS) if (String(KC_SUENA_USUARIOS[k]) === String(uid)) buscado = k;
-  var n = buscado || kcNorm_(nombre);
+  var n = buscado || KC_SUENA_NOMBRES[kcNorm_(nombre)] || kcNorm_(nombre);   // «multiespumas» = Juan Pablo Paredes
   for (var i = 0; i < WA_MARCAS.length; i++) for (var j = 0; j < WA_MARCAS[i].vendedores.length; j++)
     if (kcNorm_(WA_MARCAS[i].vendedores[j]) === n) return WA_MARCAS[i].vendedores[j];
   return nombre;
@@ -10850,6 +10850,10 @@ function probarKommoSuenaBandeja() {
     var m = kcMeta_(true);
     if (!m || m.error) { L.push('❌ ' + ((m && m.error) || 'no pude leer el embudo de Sueña')); return L; }
     L.push('✅ Embudo «' + m.embudoNombre + '» · etapa ' + m.etapa + ' (' + (m.etapas[m.etapa] || '') + ')');
+    WA_MARCAS.forEach(function (g) { if (!/sue/i.test(g.lbl)) return; g.vendedores.forEach(function (v) {
+      var u = kcUsuario_(m, v), un = u ? kcUsuarioNombre_(m, u) : '';
+      L.push('  👤 ' + v + (u ? ' = usuario ' + u + (un ? ' («' + un + '» en Kommo)' : ' ⚠️ no está entre los usuarios') : ' ❌ no lo encontré'));
+    }); });
     var desde = Math.floor(Date.now() / 1000) - 3 * 86400;
     var r = kGet_('/leads?limit=100&order[updated_at]=desc&filter[statuses][0][pipeline_id]=' + encodeURIComponent(m.embudo) +
                   '&filter[statuses][0][status_id]=' + encodeURIComponent(m.etapa) + '&filter[updated_at][from]=' + desde);
@@ -11209,6 +11213,11 @@ var KC_SUENA_SUB = 'gerenciamultiespumasviscarra', KC_SUENA_EMBUDO = '10989127';
 /* (11-17-d) Vendedores de Sueña cuyo usuario de Kommo tiene OTRO nombre: el mismo USER_RENAME_ID de generar.py del dashboard de Sueña
    (la cuenta de Juan Pablo en Kommo se llama «Alberto Pareja»). */
 var KC_SUENA_USUARIOS = { 'juan pablo paredes':'13073611' };
+/* (2026-11-20-b; dueño 20/11: «juan pablo en kommo se llama multiespumas, lo veías por su código de usuario») Manda el NÚMERO de usuario;
+   si ese número no está entre los usuarios de ese Kommo, el usuario con este NOMBRE es el del vendedor (y al revés, para leer el lead). */
+var KC_SUENA_NOMBRES = { 'multiespumas':'juan pablo paredes', 'alberto pareja':'juan pablo paredes' };
+/** El nombre en Kommo de un número de usuario (de kcMeta_), para mostrarlo en las pruebas del editor. */
+function kcUsuarioNombre_(m, uid) { for (var n in (m && m.usuarios) || {}) if (String(m.usuarios[n]) === String(uid)) return n; return ''; }
 function kcCtaDe_(vend) {
   var v = kcNorm_(vend);
   if (!v) return '';
@@ -11317,7 +11326,12 @@ function kcMeta_(fresco) {
 function kcUsuario_(m, vend) {
   var v = kcNorm_(vend);
   if (!v) return '';
-  if (KC_CTA === 'suena' && KC_SUENA_USUARIOS[v]) return KC_SUENA_USUARIOS[v];
+  if (KC_CTA === 'suena' && KC_SUENA_USUARIOS[v]) {
+    var uS = KC_SUENA_USUARIOS[v];
+    if (!m.usuarios || kcUsuarioNombre_(m, uS)) return uS;   // el número está entre los usuarios: ése
+    for (var nS in KC_SUENA_NOMBRES) if (KC_SUENA_NOMBRES[nS] === v && m.usuarios[nS]) return m.usuarios[nS];   // si no, por el nombre («multiespumas»)
+    return uS;
+  }
   if (m.usuarios[v]) return m.usuarios[v];
   var pal = v.split(' ').filter(function (x) { return x.length > 1; }), hit = '';
   for (var nom in m.usuarios) {
@@ -11574,7 +11588,8 @@ function probarKommoEscribeSuena() {
         L.push('✅ Campo «Fecha contrato» = ' + m.fc + ' (' + m.fcTipo + ')' + (m.canal ? (' · campo «Canal» = ' + m.canal + (m.canalTienda ? ' con «Visita tienda»' : ' ⚠️ sin la opción «Visita tienda»')) : ' · ⚠️ no encontré el campo «Canal» (crear el lead de una visita a la tienda va sin canal)'));
         WA_MARCAS.forEach(function (g) { if (!/sue/i.test(g.lbl)) return; g.vendedores.forEach(function (v) {
           var u = kcUsuario_(m, v); if (!u) ok = false;
-          L.push((u ? '✅ ' : '❌ ') + v + (u ? ' → usuario ' + u : ': no lo encontré entre los usuarios de ese Kommo'));
+          var un = u ? kcUsuarioNombre_(m, u) : '';
+          L.push((u ? '✅ ' : '❌ ') + v + (u ? ' → usuario ' + u + (un ? ' (en Kommo «' + un + '»)' : ' ⚠️ ese número NO está entre los usuarios de este Kommo') : ': no lo encontré entre los usuarios de ese Kommo'));
         }); });
         var r = kPedir_('get', '/leads?filter[statuses][0][pipeline_id]=' + encodeURIComponent(m.embudo) + '&filter[statuses][0][status_id]=' + encodeURIComponent(m.etapa) + '&order[updated_at]=desc&limit=5');
         var lead = (r.code === 200 && r.o) ? kEmb_(r.o, 'leads')[0] : null;
@@ -11646,7 +11661,7 @@ function borradorDeLead_(leadId) {
   var vend = '';
   var us = kGet_('/users/' + lead.responsible_user_id);
   if (us && us.name) vend = String(us.name).split(/\s+[-–]\s+/)[0].trim();
-  if (KC_CTA === 'suena') vend = kSuenaVendedor_(lead.responsible_user_id, vend);   // 🛏️ «Alberto Pareja» = Juan Pablo Paredes
+  if (KC_CTA === 'suena') vend = kSuenaVendedor_(lead.responsible_user_id, vend);   // 🛏️ el usuario 13073611 («multiespumas») = Juan Pablo Paredes
 
   var borrador = {
     id: BORRADOR_PREF + leadId,
