@@ -72195,60 +72195,73 @@ function qaVeredicto(r, yo){
    aviso a la otra por WhatsApp (el servidor 2026-11-20-c: `asesora_cliente_compro`, una vez por venta) y solo dentro de la MISMA marca.
    En una venta NUEVA (OC, no al editar) de una vendedora de Heaven o Sueña, con el celular completo: la MISMA consulta y la MISMA regla de la
    pestaña «¿Quién lo atiende?» (quienAtiende + qaVeredicto). Nunca frena Guardar. En Playwright apagado salvo CRUCE_PRUEBA. */
-var CRUCE_SERVIDOR='2026-11-20-c', CRUCE_ESPERA_MS=900;
-var CRUCE_F={ k:'', r:null, busy:false, err:'', t:0, gen:0 };
+var CRUCE_SERVIDOR='2026-11-20-c', CRUCE_ESPERA_MS=900, CRUCE_MEMO_MS=5*60000, CRUCE_REINT_MS=6000, CRUCE_REINT_MAX=2;
+var CRUCE_F={ k:'', r:null, busy:false, t:0, gen:0, n:0 };
+var CRUCE_MEMO={};   // c8 → {r, ms}: el mismo celular, para otra vendedora o al volver a escribirlo, no se le vuelve a preguntar a Kommo (Fable 6)
 function cruceFormVa(){ try{ return !navigator.webdriver || !!window.CRUCE_PRUEBA; }catch(e){ return true; } }
-/** Lo que se mira ahora: {c8, v, mk} o null (no corresponde). */
+/** Lo que se mira ahora: {c8, v, mk} o null (no corresponde). Una venta nueva, o un borrador de Kommo que se está completando (Fable 1). */
 function cruceFormQue(){
-  if(!cruceFormVa() || EDIT_ID || docTipoSel()!=='OC' || window.PRACTICA) return null;
+  if(!cruceFormVa() || docTipoSel()!=='OC' || window.PRACTICA) return null;
+  if(EDIT_ID){ var ed=(STATE||[]).filter(function(p){ return String(p.id)===String(EDIT_ID); })[0]; if(!ed || String(ed.estado||'')!==BORRADOR_EST) return null; }
   var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), mk=v ? marcaDe(v) : '';
   var c8=cliCelClave((document.getElementById('f-celular')||{}).value||'');
   if(!mk || !c8 || c8.length<8) return null;
   return { c8:c8, v:v, mk:mk };
 }
-/** Las OTRAS vendedoras de la MISMA marca que lo atienden (de qaVeredicto), con el nombre del panel. */
+/** Las OTRAS vendedoras de la MISMA marca que lo atienden (de qaVeredicto), solo las del equipo de esa marca (Fable 9), con el nombre del panel. */
 function cruceOtros(r, v, mk){
-  var V=qaVeredicto(r, v);
-  return (V.otros||[]).filter(function(o){ return o.marca===mk && !/sin asignar/i.test(o.n); }).map(function(o){
-    var n=String(o.n||'').split(/\s+[-–]\s+/)[0].trim();
-    (VENDEDORES||[]).forEach(function(x){ if(qaMismo(x, o.n)) n=x; });
-    return { n:n, por:o.por, ts:o.ts, ahora:V.ahora };
+  var V=qaVeredicto(r, v), g=(MARCAS||[]).filter(function(x){ return x.k===mk; })[0], eq=g ? g.vendedores : [], out=[], vistos={};
+  (V.otros||[]).forEach(function(o){
+    if(o.marca!==mk) return;
+    var hits=eq.filter(function(x){ return qaMismo(x, o.n); }); if(hits.length!==1 || qaMismo(hits[0], v) || vistos[hits[0]]) return;
+    vistos[hits[0]]=1; out.push({ n:hits[0], por:o.por, ts:o.ts, ahora:V.ahora });
   });
+  return out;
 }
 /** Pinta el cartel con lo que ya se sabe (sin red). Si cambió el celular o la vendedora, programa la consulta. */
 function cruceFormPintar(){
   var box=document.getElementById('cruce-form'); if(!box) return;
   var q=cruceFormQue(), k=q ? q.c8+'|'+normNombre(q.v) : '';
-  if(!q){ box.hidden=true; box.innerHTML=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
+  if(!q){ box.hidden=true; box.innerHTML=''; box._h=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
   if(k!==CRUCE_F.k){
-    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.err=''; box.hidden=true; box.innerHTML='';
-    clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS);
-    return;
+    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; box.hidden=true; box.innerHTML=''; box._h='';
+    var m=CRUCE_MEMO[q.c8];
+    if(m && Date.now()-m.ms<CRUCE_MEMO_MS) CRUCE_F.r=m.r;
+    else { clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS); return; }
   }
   if(!CRUCE_F.r){ box.hidden=true; return; }
   var L=cruceOtros(CRUCE_F.r, q.v, q.mk);
-  if(!L.length){ box.hidden=true; box.innerHTML=''; return; }
+  if(!L.length){ box.hidden=true; box.innerHTML=''; box._h=''; return; }
   var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
   var det=L.map(function(o){
     return o.por==='fecha' ? esc(o.n)+' tiene una fecha acordada con el cliente para el '+esc(qaFecha(o.ts)) : esc(o.n)+' conversó con el cliente el '+esc(qaFecha(o.ts))+' ('+qaHace(o.ts, o.ahora)+')';
   }).join(' · ');
-  var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' le'+(nom.length>1?'s':'')+' llega un WhatsApp avisando que su cliente compró y que la venta la cargaste vos.' : '';
+  var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' se le avisa por WhatsApp que su cliente compró y que la venta la cargaste vos.' : '';
   var h='⚠️ <b>Este cliente lo está atendiendo '+esc(nombres)+'</b> (según Kommo, en los últimos '+QA_DIAS+' días). '+
         '<span class="cruce-s">'+det+'.</span><span class="cruce-s">Podés seguir con la venta: no se frena nada.'+wa+'</span>';
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
   box.hidden=false;
 }
+/** Si falló (red, Kommo, tope, todavía sin saber la versión del servidor), lo vuelve a intentar unas veces (Fable 5); nunca frena la venta. */
+function cruceFormReintentar(k){
+  if(k!==CRUCE_F.k || CRUCE_F.n>=CRUCE_REINT_MAX) return;
+  CRUCE_F.n++; clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_REINT_MS);
+}
 function cruceFormBuscar(){
   var q=cruceFormQue(); if(!q) return;
   var k=q.c8+'|'+normNombre(q.v); if(k!==CRUCE_F.k) return;
-  if(!SERVER_VER || !servidorTiene(QA_SERVIDOR)) return;
+  if(!SERVER_VER){ cruceFormReintentar(k); return; }
+  if(!servidorTiene(QA_SERVIDOR)) return;
   var g=++CRUCE_F.gen; CRUCE_F.busy=true;
-  conTopeDuro(apiPost({ action:'quienAtiende', cel:q.c8, quien:q.v }), 60000, 'tardo').then(function(r){
-    if(g!==CRUCE_F.gen || k!==CRUCE_F.k) return;
+  conTopeDuro(apiPost({ action:'quienAtiende', cel:q.c8, quien:q.v, auto:1 }), 60000, 'tardo').then(function(r){
+    if(g!==CRUCE_F.gen) return;
     CRUCE_F.busy=false;
-    CRUCE_F.r=(r && r.ok!==false && Array.isArray(r.cuentas)) ? r : null;
-    cruceFormPintar();
-  }).catch(function(){ if(g===CRUCE_F.gen){ CRUCE_F.busy=false; } });   // si Kommo no contesta, no se muestra nada: nunca frena la venta
+    var ok=r && r.ok!==false && Array.isArray(r.cuentas);
+    if(ok && !r.incompleto) CRUCE_MEMO[q.c8]={ r:r, ms:Date.now() };
+    if(k!==CRUCE_F.k) return;
+    if(!ok){ cruceFormReintentar(k); return; }
+    CRUCE_F.r=r; cruceFormPintar();
+  }).catch(function(){ if(g===CRUCE_F.gen){ CRUCE_F.busy=false; cruceFormReintentar(k); } });
 }
 document.addEventListener('DOMContentLoaded', function(){
   ['f-celular','f-vendedor'].forEach(function(id){ var e=document.getElementById(id); if(e){ e.addEventListener('input', cruceFormPintar); e.addEventListener('change', cruceFormPintar); } });
