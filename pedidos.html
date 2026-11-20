@@ -5039,6 +5039,7 @@ function glSigue(){
       <div class="metrics cta-marcas" id="cta-marcas" data-como="cta-metrics"></div>
       <!-- ✨ (§4jw) A: la barra de cobrado/falta · B: la dona de las marcas · F: cargadas dos veces · D: chips que filtran la tabla -->
       <div id="cx-vivo"></div>
+      <div id="cta-stc"></div><!-- 🔧 (20/11) lo cobrado por ATC contra costo, aparte: no suma a las ventas -->
       <div id="cx-dup"></div>
       <div id="cx-chips"></div>
       <div class="metodos-line" id="cta-resumen"></div>
@@ -9753,7 +9754,7 @@ function m418Avances(list, R){
 function m418PagosMes(){
   var desde=NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01'), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), n=0;
   (STATE||[]).forEach(function(p){
-    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeCaja(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
     contaPagos(p).forEach(function(c){ var f=c.fecha||contaFecha(p); if(f<desde) return; if((Number(c.monto)||0)>0 || c.sinMonto) n++; });
   });
@@ -14239,6 +14240,17 @@ function fueraDeConta(p, ambito){
   if(ambito==='mayor') return !esMayorista(p);
   return contaExcluido(p.vendedor);
 }
+/* 🔧 (20/11, dueño: «atc contra costo, falta la opción de registrar el pago, y que muestre en lo cobrado del vendedor, aparte de solo ATC
+   porque no suma a su global de ventas» · «recuerda que a veces pagan por QR también, o tarjeta») LA ATC CONTRA COSTO (STC) SE COBRA.
+   Sigue siendo una ATC: NO es una venta (`fueraDeConta` la deja afuera de Ventas, la proyección, las metas, la comisión y la cobranza).
+   Pero la plata que paga el cliente por la reparación SÍ entra a la caja: `fueraDeCaja` es la puerta de todo lo que cuenta PAGOS (el Cuadre
+   por forma de pago, el efectivo por retirar y su emparejamiento con los retiros, los comprobantes del mes, los pagos sin recibo), y ahí
+   entra con la marca «🔧 ATC contra costo». ⚠️ Un lugar NUEVO que sume pagos (no ventas) usa `fueraDeCaja`, no `fueraDeConta`. */
+function atcCobra(p){ return !!p && esATC(p.oc) && atcTipo(p)==='stc'; }
+function atcCobraCaja(p){ return atcCobra(p) && !esFilaSistema(p) && !contaExcluido(p.vendedor); }
+function fueraDeCaja(p){ return fueraDeConta(p) && !atcCobraCaja(p); }
+/* Lo cobrado por ATC contra costo: los pagos con monto (el anticipo no existe en una ATC). */
+function atcCobrado(p){ var t=0; contaPagos(p).forEach(function(c){ if(!esEnvio(c)) t+=Number(c.monto)||0; }); return r2(t); }
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
 function llenarSelectContaVendedor(){
@@ -15821,12 +15833,55 @@ function trozosMirar(){
   TROZOS_OBS.disconnect();   // los marcadores que se fueron con un redibujo no quedan anotados
   document.querySelectorAll('[data-trz]').forEach(function(m){ TROZOS_OBS.observe(m); });
 }
+/* 🔧 (20/11) LO COBRADO POR ATC CONTRA COSTO, APARTE (dueño: «que muestre en lo cobrado del vendedor, aparte de solo ATC porque no suma a
+   su global de ventas»). En Contabilidad → 📋 Ventas, debajo de las fichas: los pagos de reparaciones contra costo del período (por el DÍA DEL
+   PAGO, el mismo corte del Cuadre) y las STC que entraron en el período y todavía no tienen pago, con el vendedor elegido y la búsqueda.
+   Nada de esto entra en «Vendido», la proyección, las metas ni la comisión; la plata sí está en el Cuadre y en el efectivo por retirar. */
+function ctaStcDatos(){
+  if(contaAmbito()==='mayor') return null;
+  var modo=segVal('cta-mode')||'mes', dia=((document.getElementById('cta-dia')||{}).value||diaNegocio()), mes=(((document.getElementById('cta-mes')||{}).value)||diaNegocio().slice(0,7));
+  var enP=function(f){ f=String(f||''); if(!f) return false; return modo==='dia' ? f===dia : (modo==='mes' ? f.slice(0,7)===mes : true); };
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), q=sinTildes((document.getElementById('cta-search')||{}).value||'');
+  var D={ items:[], bs:0, n:0, porV:{}, sinPago:0 };
+  STATE.forEach(function(p){
+    if(!atcCobraCaja(p)) return;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    if(q && sinTildes([p.oc,p.vendedor,p.cliente,p.celular,p.nota,p.metodoPago].join(' ')).indexOf(q)<0) return;
+    var pg=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0.005 && enP(c.fecha); });
+    var bs=0; pg.forEach(function(c){ bs=r2(bs+(Number(c.monto)||0)); });
+    var sinPago=!atcCobrado(p) && enP(atcEntro(p));
+    if(!pg.length && !sinPago) return;
+    D.items.push({ p:p, bs:bs, n:pg.length, pagos:pg, sinPago:sinPago, tot:atcCobrado(p) });
+    if(pg.length){ D.bs=r2(D.bs+bs); D.n+=pg.length; var v=nombreCanonico(p.vendedor)||'—'; D.porV[v]=r2((D.porV[v]||0)+bs); }
+    if(sinPago) D.sinPago++;
+  });
+  D.items.sort(function(a,b){ return (Number(b.p.ts)||0)-(Number(a.p.ts)||0); });
+  return D;
+}
+var CTA_STC_AB=false;
+function ctaStcPintar(){
+  var box=document.getElementById('cta-stc'); if(!box) return;
+  var D=null; try{ D=ctaStcDatos(); }catch(e){ D=null; }
+  if(!D || !D.items.length){ box.innerHTML=''; return; }
+  var porV=Object.keys(D.porV).sort(function(a,b){ return D.porV[b]-D.porV[a]; });
+  var fila=function(it){ var p=it.p, id=esc(String(p.id));
+    return '<div class="cstc-r"><div class="cstc-a"><b>'+esc(p.oc)+'</b> · '+esc(p.cliente||'')+'<span>'+esc(nombreCanonico(p.vendedor)||'')+' · entró el '+esc(fmtFechaCorta(atcEntro(p))||'—')+'</span></div>'+
+      '<div class="cstc-m">'+(it.n ? ('<b>'+fmtBs(it.bs)+'</b><span>'+it.pagos.map(function(c){ return esc(cuadreForma(c))+' '+esc(fmtFechaCorta(c.fecha)); }).join(' · ')+'</span>') : '<span class="cstc-sin">sin pago todavía</span>')+'</div>'+
+      '<button type="button" class="btn btn-sm cstc-b" onclick="showContaModal(\''+id+'\')">'+(it.n ? 'Abrir' : '💵 Registrar pago')+'</button></div>'; };
+  box.innerHTML='<details class="cstc"'+(CTA_STC_AB?' open':'')+' ontoggle="CTA_STC_AB=this.open"><summary>'+
+    '<span class="cstc-t">🔧 ATC contra costo</span><span class="cstc-v">cobrado <b>'+fmtBs(D.bs)+'</b> en '+D.n+' pago'+(D.n===1?'':'s')+'</span>'+
+    (D.sinPago ? ('<span class="cstc-p">'+D.sinPago+' sin pago</span>') : '')+
+    '<span class="cstc-x">aparte: no suma a las ventas · sí entra a la caja</span></summary>'+
+    (porV.length>1 ? ('<div class="cstc-v2">Por vendedor: '+porV.map(function(v){ return esc(v)+' <b>'+fmtBs(D.porV[v])+'</b>'; }).join(' · ')+'</div>') : '')+
+    D.items.map(fila).join('')+'</details>';
+}
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   try{ nxPstBoton(); }catch(e){}   // 🧾 (§4js, C2) cuántos pagos sin terminar
   try{ cajaBotonesPintar(); }catch(e){}   // 🏬 (14/11, mejora 254) «Caja de Ventura Sur»
   var list=contaLista();
   try{ ctaOtrosPintar(list); }catch(e){}   // 📅 (298) lo buscado que está en otros meses
+  try{ ctaStcPintar(); }catch(e){}         // 🔧 (20/11) lo cobrado por ATC contra costo, aparte
   try{ rcPintarConta(); }catch(e){}         // 🔁 (mejora 380) las que cambiaron después de cargarlas al sistema
   var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0, nCarg=0, _TS=talSet();
   list.forEach(function(p){
@@ -16457,7 +16512,7 @@ function cxGrupoPago(c){ var m=String(c.metodo||''); return m==='Efectivo'?'ef':
 function cxPagosRango(desde, hasta){
   var vend=cuadreVendedor(), out=[];
   STATE.forEach(function(p){
-    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
+    if(fueraDeCaja(p) || !cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0) || !c.fecha || c.fecha<desde || c.fecha>hasta) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', monto:Number(c.monto)||0 });
@@ -20384,7 +20439,7 @@ function cuadrePagos(pe, vend){
   /* (25/10, FIN-01) `pe`/`vend` opcionales: sin ellos, los de la pantalla del Cuadre. «☀️ Tu día» pide el MES en curso y Todos. */
   if(!pe) pe=cuadrePeriodo(); if(vend==null) vend=cuadreVendedor(); var out=[];
   STATE.forEach(function(p){
-    if(fueraDeConta(p)) return;
+    if(fueraDeCaja(p)) return;   // 🔧 (20/11) con la ATC contra costo: su pago entra a la caja
     if(!cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c, ix){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
@@ -20395,7 +20450,7 @@ function cuadrePagos(pe, vend){
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
                  monto:Number(c.monto)||0, nota:limpiaNota(c.nota), recibio:limpiaRecibio(c.recibio),
                  comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''),
-                 anticipo:!!c.anticipo, envio:esEnvio(c), ix:ix });   // `ix` = su lugar en `contaPagos(p)`: lo usa `efePareo` (07/11)
+                 anticipo:!!c.anticipo, envio:esEnvio(c), ix:ix, stc:atcCobra(p) });   // `ix` = su lugar en `contaPagos(p)`: lo usa `efePareo` (07/11)
     });
   });
   return out.sort(function(a,b){
@@ -20667,7 +20722,7 @@ function cuadreAlertas(pagos){
      solo. No hay nada que no contar dos veces: el bucle de arriba mira las ventas del período y este, las otras. */
   var _sfFuera=0;
   STATE.forEach(function(p){
-    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
+    if(fueraDeCaja(p) || !cuadreEsDe(p, vend)) return;
     if(enPeriodoCuadre(contaFecha(p), pe)) return;              // esas ya las miró el bucle de arriba
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0) || c.fecha) return;
@@ -20983,7 +21038,8 @@ function renderCuadre(){
 
   box.innerHTML=
     mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s')+
-       (recargos>0?(' · 🚚 '+fmtBs(recargos)+' de recargos'):''))+
+       (recargos>0?(' · 🚚 '+fmtBs(recargos)+' de recargos'):'')+
+       (function(){ var t=0; pagos.forEach(function(c){ if(c.stc) t=r2(t+c.monto); }); return t>0.005 ? (' · 🔧 '+fmtBs(t)+' de ATC contra costo (no son ventas)') : ''; })())+   // 🔧 (20/11)
     (efectivo>0.005 ? mcToca('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo',"abrirEfectivo(cuadreVendedor())",'👆 Tocá para ver qué clientes pagaron y cuánto')
                     : mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo'))+
     mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
@@ -21165,7 +21221,7 @@ function renderCuadre(){
             '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+
               compsArr(c.comps!=null?c.comps:c.comp).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del pago" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+'</td>'+
             '<td>'+esc(c.p.vendedor||'—')+'</td>'+
-            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+recibioBadge(c,true)+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+
+            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+recibioBadge(c,true)+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+(c.stc?' <span class="badge b-stc" style="font-size:.6rem" title="Pago de una reparación contra costo: entra a la caja, no es una venta">🔧 ATC CONTRA COSTO</span>':'')+
               (esEnvio(c)?' <span class="badge b-amber" style="font-size:.6rem">🚚 RECARGO</span>':'')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
             '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
@@ -22132,7 +22188,7 @@ function efePareo(){
   if(EFE_MEMO && !efeSinRetiro) return EFE_MEMO;
   var cob={}, porCob={}, porRet={}, ret=[];
   STATE.forEach(function(p){
-    if(fueraDeConta(p)) return;
+    if(fueraDeCaja(p)) return;   // 🔧 (20/11) el efectivo de una ATC contra costo también se retira
     var j=0;
     contaPagos(p).forEach(function(c, ix){
       var m=r2(Number(c.monto)||0);
@@ -24226,6 +24282,11 @@ var CTA_PAGO_POR_ID={};
 var CTA_MAS_AB='';
 function ctaAnchaVe(){ return vdVa('CTA_ANCHA_PRUEBA'); }
 function ctaK3Html(p, falta){
+  /* 🔧 (20/11) ATC contra costo: no es una venta (sin total ni saldo); se ve lo que pagó el cliente por la reparación. */
+  if(atcCobra(p)){ var _ac=atcCobrado(p);
+    return '<div class="cta-k3"><div><i>ATC contra costo</i><b>🔧 Reparación</b></div>'+
+      '<div class="k-ok"><i>Cobrado</i><b>'+fmtBs(_ac)+'</b></div>'+
+      '<div class="k-ok"><i>A las ventas</i><b class="k-gris">No suma</b></div></div>'; }
   var tot=ventaTotal(p), cob=contaCobrado(p), sm=sinMontoAnotado(p) && !noSeCobra(p);
   var f = noSeCobra(p) ? '<b class="k-gris">No se cobra</b>'
         : (falta>0.005 ? ('<b>'+fmtBs(falta)+'</b>') : (sm ? badgeSinMonto() : '<b>✅ Pagado</b>'));
@@ -24338,11 +24399,14 @@ function showContaModal(id){
      monto». Ahora tiene el selector, arranca en «💵 Pago» y ahí dice que primero va el total. */
   var _sinM = sinMontoAnotado(p) && !noSeCobra(p);
   var esEnv = CTA_TIPO==='envio' || (falta<=0.005 && !_sinM) || (CTA_TIPO!=='pago' && envioPendiente(p));
+  /* 🔧 (20/11) Una ATC contra costo: el bloque es SIEMPRE «registrar el pago de la reparación» (sin saldo ni flete: no es una venta). */
+  var _stc=atcCobra(p);
+  if(_stc){ esEnv=false; CTA_TIPO='pago'; }
   CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
-  var formPago = (falta>0.005 || !yaEnv || envioPendiente(p) || _sinM)
+  var formPago = (_stc || falta>0.005 || !yaEnv || envioPendiente(p) || _sinM)
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
          ((falta>0.005 || _sinM)
            ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
@@ -24359,9 +24423,10 @@ function showContaModal(id){
              ? (envioPorCobrar(p)>0.005
                  ? '🚚 Cobrar el recargo por entrega — pactado <b style="color:var(--red)">'+fmtBs(envioPorCobrar(p))+'</b> <span style="font-weight:400;color:var(--muted)">sin cobrar</span>'
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
-             : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
+             : (_stc ? '🔧 Registrar el pago de la reparación <span style="font-weight:400;color:var(--muted)">— ATC contra costo: entra a la caja (Cuadre, efectivo por retirar), no suma a las ventas</span>'
+                     : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>'))+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta)))+'" value="'+esc(_pv.monto!=null?_pv.monto:(_stc?'':(esEnv?(envioPorCobrar(p)>0.005?r2(envioPorCobrar(p)):''):r2(falta))))+'" placeholder="'+(esEnv?'ej. 150':(_stc?'lo que pagó':''))+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -24421,10 +24486,11 @@ function showContaModal(id){
       ((ventaMesPuede(p) || ventaMesMarca(p)) ? row('📅 Mes de la venta', ctaVentaMesHtml(p)) : '')+   // 📅 (08/11) se entrega el mes siguiente
       row('Facturar a', esc(p.facturarA)||'—')+
       row('NIT', esc(p.nit)||'—')+
-      row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
+      (_stc ? row('ATC contra costo', '<b>🔧 Reparación que paga el cliente</b> <span style="color:var(--muted)">· no suma a las ventas</span>')   // 🔧 (20/11)
+            : row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>'))+
       row('Pagos', contaPagosHtml(p))+
       // 25/09: saldo 0 sin NADA anotado no es «PAGADO» (el aviso del Cuadre manda acá a completarla).
-      row('Saldo', falta>0.005?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>'))+
+      (_stc ? row('Cobrado', '<b>'+fmtBs(atcCobrado(p))+'</b>') : row('Saldo', falta>0.005?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>')))+
       /* Siempre visible en Contabilidad: si no hubiera recargo, la fila igual da el botón
          para ponerlo — antes, olvidarse el flete al cargar el pedido no tenía arreglo. */
       row('🚚 Recargo por entrega', envioResumenHtml(p, true))+
@@ -24756,7 +24822,7 @@ function ctaRecibioHtml(p, opts){
 /* 💵 (07/11, dueño: «obligatorio que los vendedores marquen quién recibió la plata») En «Registrar pago» un efectivo no se anota sin decir
    quién lo tiene: tocar la vendedora o el chofer (`rEleg`), o el chofer que se puso solo el día de la entrega (§4ok-112: ya dice cuál y por
    qué). No en una venta de tienda, ATC/RPT, ni para Eduardo, ROHO o los internos (`recibioObligatorio`, como el formulario). */
-function ctaRecibioObliga(p){ return !!p && recibioObligatorio(p.vendedor) && !esVentaTienda(p) && !noSeCobra(p); }
+function ctaRecibioObliga(p){ return !!p && recibioObligatorio(p.vendedor) && !esVentaTienda(p) && (!noSeCobra(p) || atcCobra(p)); }   // 🔧 (20/11) la ATC contra costo también
 function ctaRecibioFalta(p, fecha){
   if(!p || CTA_PAGO.metodo!=='Efectivo' || CTA_PAGO.rEleg || !ctaRecibioObliga(p)) return false;
   return !ctaChoferSugerido(p, fecha);
@@ -24955,7 +25021,7 @@ function ctaRegistrarPago(id){
         sub:contaMetodoTxt(_rep)+' · '+fmtBs(Number(_rep.monto)||0)+' · '+(_rep.fecha?fmtFecha(_rep.fecha):'sin fecha')+' · recibo '+limpiaNota(_rep.nota),
         lineas:[ 'Si es el mismo pago, no lo anotes otra vez: el saldo bajaría dos veces.' ],
         no:'No, es el mismo', si:'Es otro pago: anotarlo' }, _otraP)) return;
-  if(!_env && falta<=0.005){
+  if(!_env && falta<=0.005 && !atcCobra(p)){   // 🔧 (20/11) la ATC contra costo no tiene saldo: cada pago es lo que pagó
     if(!preguntaYa('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
                 '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
                 'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.',
@@ -39962,7 +40028,7 @@ function atcLista(sinEstado){
   var tip=(document.getElementById('atc-tipo')||{}).value||'';   // 🛡️🔧 (§4lj) garantía / contra costo / sin marcar
   var est=sinEstado ? '' : ((document.getElementById('atc-estado')||{}).value||'');   // sinEstado: el «viaje» cuenta todos los estados
   var q=sinTildes((document.getElementById('atc-search')||{}).value||'');   // sin tildes, como Administración (25/09)
-  var list=STATE.filter(function(p){ return esATC(p.oc); });
+  var list=STATE.filter(function(p){ return esATC(p.oc) && atcEsMia(p); });   // 👤 (20/11) cada vendedora, solo las suyas
   /* ⚠️ Corta por cuándo ENTRÓ la ATC, no por la fecha de recojo: la pregunta es
      "qué ATC entraron este mes", y una ATC de agosto que se recoge en septiembre
      sigue siendo una ATC de agosto. */
@@ -39991,16 +40057,40 @@ function atcLista(sinEstado){
 /* 📄 (15/10, §4lm) El informe PDF es para gerencia (dueño: «solo debe salir cuando colocan la clave o ingresan como administración
    o logística»): la misma regla que lo de logística de Bloki (`asisVeAdm`: el rol elegido en «¿Quién está usando el panel?», la clave
    o el aparato de Administración). Un vendedor no ve el botón y, si igual llega, `abrirInformeAtc` no abre. */
+/* 👤 (20/11, dueño: «los vendedores solo deberían ver SUS ATC, las que ellos cargan») En la pestaña ATC una vendedora ve solo las que
+   cargó ella (`p.vendedor`, el nombre elegido en «¿Quién está usando el panel?» / «Tu nombre»). Ven TODAS: la contraseña, Logística,
+   Administración y el aparato de Administración (`asisVeAdm`), Contabilidad (rol `conta`) y Eduardo. Sin nadie elegido no se muestra
+   ninguna: el cartel pide elegir el nombre. Solo esconde: no cambia nada guardado, y los números de calidad (cada 100 vendidos) siguen
+   siendo los de la empresa. En Playwright todas, salvo `window.ATC_MIAS_PRUEBA`. `tests/test_atc_mias.js`. */
+function atcSoloDe(){
+  if(navigator.webdriver && !window.ATC_MIAS_PRUEBA) return '';
+  try{ if(asisVeAdm()) return ''; if(quienRol()==='conta') return ''; }catch(e){}
+  var v=''; try{ v=getVendedorMem(); }catch(e){}
+  if(!v) return '?';
+  if(mismoVendedor(v, 'Eduardo Añez')) return '';
+  return v;
+}
+function atcEsMia(p){ var s=atcSoloDe(); return !s || (s!=='?' && mismoVendedor(p.vendedor, s)); }
+function atcSoloPintar(){
+  var card=document.querySelector('#view-atc > .card'); if(!card) return;
+  var b=document.getElementById('atc-solo'), s=atcSoloDe();
+  if(!s){ if(b) b.remove(); return; }   // quien ve todas no tiene la caja (el orden de las cajas de la pestaña queda como siempre)
+  if(!b){ b=document.createElement('div'); b.id='atc-solo'; b.className='atc-solo'; card.insertBefore(b, card.firstChild); }
+  b.innerHTML = s==='?'
+    ? '👤 Para ver tus ATC, elegí tu nombre. <button type="button" class="btn btn-sm" onclick="try{quienAbrir(true)}catch(e){}">Elegir mi nombre</button>'
+    : '👤 Ves solo <b>tus</b> ATC (las que cargaste vos, '+esc(nombreCanonico(s)||s)+'). <button type="button" class="btn btn-sm" onclick="try{quienAbrir(true)}catch(e){}">¿No sos '+esc((nombreCanonico(s)||s).split(' ')[0])+'?</button>';
+}
 function atcViejasVer(){ try{ return localStorage.getItem('me_atc_viejas')==='1'; }catch(e){ return false; } }
 function atcViejasCambiar(){ try{ localStorage.setItem('me_atc_viejas', atcViejasVer()?'0':'1'); }catch(e){} renderAtc(); }
 /* Cuántas ATC de meses anteriores al elegido siguen abiertas (sin los otros filtros: es para ofrecer sumarlas). */
-function atcViejasAbiertas(mes){ return STATE.filter(function(p){ return esATC(p.oc) && atcEntro(p).slice(0,7)<mes && atcEstado(p)!=='cerrada'; }).length; }
+function atcViejasAbiertas(mes){ return STATE.filter(function(p){ return esATC(p.oc) && atcEsMia(p) && atcEntro(p).slice(0,7)<mes && atcEstado(p)!=='cerrada'; }).length; }
 function atcVeInforme(){ try{ return asisVeAdm(); }catch(e){ return !!UNLOCKED; } }
 function atcInformeVisible(){ var w=document.getElementById('atc-informe-wrap'); if(w) w.style.display=atcVeInforme() ? '' : 'none'; }
 function renderAtc(){
   atcInformeVisible();
   llenarSelectAtcMotivo('atc-motivo', true);
   ATCQ_REP=atcRepMapa();   // 🔁 (179) las ATC de cada celular, una vez por dibujo: el chip «2ª ATC» de cada fila y tarjeta
+  try{ atcSoloPintar(); }catch(e){}   // 👤 (20/11) «Ves solo tus ATC»
   var list=atcLista();
   /* El embudo completo: dónde está trabada cada una. */
   var porRec=0, enFab=0, listas=0, prog=0, recFab=0, cerradas=0, sinMot=0, sumDias=0, nDias=0;
@@ -43297,6 +43387,7 @@ function verAtc(id){
                      ? '<button class="btn btn-sm" style="width:auto;background:#0369a1;color:#fff;font-weight:700" onclick="closeModal();abrirProgramarDevAtc(\''+esc(p.id)+'\')">🔁 '+(atcDevProg(p)?'Cambiar devolución':'Programar devolución')+'</button>'
                      : '<button class="btn btn-sm" style="width:auto;background:#b0257a;color:#fff;font-weight:700" onclick="closeModal();atcRecogidoDesdeAtc(\''+esc(p.id)+'\')" title="Marcarlo recogido y programar la devolución">✓ Recogido</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
+        (atcCobra(p) ? ('<button class="btn btn-sm" id="atc-stc-pago" style="width:auto;background:#4338ca;color:#fff;font-weight:700" onclick="closeModal();showContaModal(\''+esc(p.id)+'\')" title="Contra costo: el cliente paga la reparación. Entra a la caja (Cuadre, efectivo por retirar), no suma a las ventas">💵 Registrar pago'+(atcCobrado(p)>0.005 ? (' · cobrado '+fmtBs(atcCobrado(p))) : '')+'</button>') : '')+   // 🔧 (20/11) ATC contra costo
         '<button class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--teal-border);color:#065f5b;font-weight:700" onclick="atcCorreoVer(\''+esc(p.id)+'\')">📧 Correo de la ATC</button>'+   // 📧 (§4li)
         '<button class="btn btn-sm" style="width:auto;background:#1D9DB4;color:#fff;font-weight:700" onclick="bajarAtcExcel(\''+esc(p.id)+'\')">⬇️ Excel de la ATC</button>'+   // 📄 (06/11)
         '<button class="btn btn-ghost btn-sm" id="atc-copiar-una" style="width:auto" onclick="copiarAtcUna(\''+esc(p.id)+'\')" title="Copia esta ATC en una fila, con las mismas columnas de siempre: se pega en el Excel">📋 Copiar</button>'+   // 🧹 (§4lm)
@@ -48240,6 +48331,8 @@ function aplicarCobros(p, arr, objetivoForzado, opts){
   }
   cobros.forEach(function(c){ total+=Number(c.monto)||0; });
   total=r2(total);
+  /* 🔧 (20/11) Una ATC contra costo no es una venta: no tiene total que saldar. Lo cobrado es lo que pagó (saldo 0, nunca «de más»). */
+  if(atcCobra(p)) objetivo=total;
   // El anticipo se relee ANTES de reescribir el campo y se vuelve a escribir siempre,
   // igual que la marca REGISTRADO: si no, el primer cobro se lo llevaría puesto.
   var ant=anticipoDe(p);
@@ -73129,7 +73222,7 @@ function nxCierreControl(mes){
    la foto (`iacComparar`). Lo usan la ventana del mes (`compsMesDatos`) y la lectura al subir (§78, `iasPagosRecientes`). */
 function compsPagosDe(p){
   var out=[];
-  if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return out;
+  if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeCaja(p)) return out;
   var tieneAnt=!!anticipoDe(p);   // `contaPagos` pone el adelanto (el pago al cargar la venta) PRIMERO
   contaPagos(p).forEach(function(c, i){
     var f=c.fecha||contaFecha(p), m=Number(c.monto)||0;
@@ -76650,7 +76743,7 @@ var NX_PST_DIAS=0;   /* (dueño, 10/10: «solo este mes») 0 = desde el día 1 d
 function nxPstLista(mes){   // mes ('AAAA-MM', opcional): solo los pagos de ese mes (✅ el cierre del mes, §4mg C3)
   var desde=mes ? (mes+'-01') : (NX_PST_DIAS ? stockSumarDias(todayStr(), -NX_PST_DIAS) : (todayStr().slice(0,7)+'-01')), vend=((document.getElementById('cta-vendedor')||{}).value||'').trim(), out=[];
   (STATE||[]).forEach(function(p){
-    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeConta(p)) return;
+    if(!p || esFilaSistema(p) || borradorDe(p.id) || fueraDeCaja(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
     contaPagos(p).forEach(function(c){
       var f=c.fecha||contaFecha(p); if(f<desde || (mes && f.slice(0,7)!==mes)) return;
@@ -82488,6 +82581,24 @@ function vdIniciar(){
 .opdf-n{font-size:.74rem;color:#6b7280;overflow-wrap:anywhere}
 .opdf-b{width:auto!important;text-decoration:none}
 .opdf-d{background:#dc2626!important;color:#fff!important;font-weight:700}
+
+/* 🔧 (20/11) Lo cobrado por ATC contra costo, aparte en Contabilidad */
+.cstc{margin:10px 0;border:1px solid #c7d2fe;border-left:4px solid #4338ca;border-radius:12px;background:#f5f7ff;color:#1e1b4b;padding:0 12px}
+.cstc>summary{cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;padding:10px 0;list-style:none}
+.cstc>summary::-webkit-details-marker{display:none}
+.cstc-t{font-weight:800;color:#4338ca}
+.cstc-v b{font-size:1.02rem}
+.cstc-p{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;border-radius:999px;padding:1px 8px;font-size:.74rem;font-weight:700}
+.cstc-x{font-size:.74rem;color:#64748b;margin-left:auto}
+.cstc-v2{font-size:.8rem;color:#475569;padding:0 0 8px}
+.cstc-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px solid #e0e7ff;padding:8px 0}
+.cstc-a{flex:1 1 220px;min-width:0;font-size:.86rem}
+.cstc-a span,.cstc-m span{display:block;font-size:.74rem;color:#64748b}
+.cstc-m{flex:0 1 220px;text-align:right;font-size:.88rem}
+.cstc-sin{color:#9a3412!important;font-weight:700}
+.cstc-b{width:auto!important;background:#4338ca!important;color:#fff!important;font-weight:700}
+.atc-solo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px;padding:8px 12px;border-radius:10px;background:#e8f7f6;color:#0b4f4b;font-size:.85rem;border:1px solid #b9e6e3}
+.atc-solo .btn{width:auto}
 </style>
 <script>
 /* ---------------------------------------------------------------------------
