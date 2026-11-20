@@ -340,6 +340,10 @@ function main() {
     const rg = api(cH, '/leads?with=contacts&limit=50&filter[statuses][0][pipeline_id]=' + g.p + '&filter[statuses][0][status_id]=' + g.s + '&filter[updated_at][from]=' + LIM + '&order[updated_at]=desc');
     const Lg = rg.code === 200 ? emb(rg.o, 'leads') : [];
     console.log('   etapa «' + g.n + '» (estado ' + g.s + '): ' + (rg.code === 200 ? Lg.length + (rg.o._links && rg.o._links.next ? '+' : '') : (rg.code === 204 ? 0 : 'HTTP ' + rg.code)) + ' leads tocados en los últimos 15 días (primera página)');
+    /* ¿traen la fecha de la compra? (el campo «Fecha contrato» del lead: nombre y tipo del campo, no su valor) */
+    const tipos = {}; let conFc = 0, fcReciente = 0, fcFutura = 0;
+    Lg.forEach((l) => { let fc = 0; (l.custom_fields_values || []).forEach((f) => { if (/contrato/.test(normN(f.field_name))) { tipos[String(f.field_type)] = (tipos[String(f.field_type)] || 0) + 1; if (/^date/.test(String(f.field_type || '')) && f.values && f.values[0]) fc = Number(f.values[0].value) || 0; } }); if (fc) { conFc++; if (fc >= LIM) fcReciente++; if (fc > T0 + D) fcFutura++; } });
+    if (Lg.length) console.log('      con el campo «Fecha contrato» (tipo ' + JSON.stringify(tipos) + '): ' + conFc + ' de ' + Lg.length + ' · con esa fecha en los últimos 15 días: ' + fcReciente + ' · con fecha futura: ' + fcFutura + ' · cerrados (closed_at): ' + Lg.filter((l) => l.closed_at).length);
     for (const l of toma(Lg, 12)) {
       const cs = emb(l, 'contacts'), pr = cs.filter((x) => x.is_main)[0] || cs[0]; if (!pr) continue;
       const rc = api(cH, '/contacts/' + pr.id); if (rc.code !== 200 || !rc.o) continue;
@@ -405,6 +409,15 @@ function main() {
     const w = nom.split(' ').filter((x) => x.length > 1).sort((a, b) => b.length - a.length), l1 = esta(w[0]), en = esta(nom), d2 = esta(w.slice(0, 2).join(' '));
     if (en.si) E.entero++; if (en.si && en.n < l1.n) E.enteroMenos++; if (d2.si) E.dos++;
   });
+  const J = { n: 0, alReves: 0, salteado: 0, conBasura: 0 };
+  nombresMuestra.forEach((m) => {
+    const w = (pag.qaNombreBusca(m.nombre) || '').split(' ').filter((x) => x.length > 1); if (w.length < 3 || /\d/.test(m.nombre) || J.n >= 8) return; J.n++;
+    const esta = (q) => { const r = api(cH, '/contacts?query=' + encodeURIComponent(q) + '&limit=250'); return r.code === 200 && emb(r.o, 'contacts').some((x) => String(x.id) === String(m.cid)); };
+    if (esta(w.slice().reverse().join(' '))) J.alReves++;
+    if (esta(w[0] + ' ' + w[w.length - 1])) J.salteado++;
+    if (esta(w[0] + ' zzqqxx ' + w[w.length - 1])) J.conBasura++;
+  });
+  console.log('   nombres de 3+ palabras (' + J.n + '): Kommo los encuentra con las palabras AL REVÉS: ' + J.alReves + ' · con la primera y la última (salteando las del medio): ' + J.salteado + ' · con una palabra que NO está en el nombre en el medio: ' + J.conBasura + ' (tiene que dar 0 si exige TODAS las palabras)');
   console.log('   preguntándole a Kommo por el nombre ENTERO (sin tildes) encuentra al contacto: ' + E.entero + ' de ' + E.n + ' (y trae menos contactos que con una palabra: ' + E.enteroMenos + ') · por las dos palabras más largas juntas: ' + E.dos + ' de ' + E.n);
   /* nombres y apellidos MUY comunes (palabras elegidas acá, no sacadas de los datos): ¿cuántos contactos trae Kommo? El servidor mira 250. */
   const comunes = ['Maria', 'Carlos', 'Fernando', 'Alejandra', 'Jose', 'Rodriguez', 'Gutierrez', 'Fernandez', 'Mamani', 'Flores', 'Vargas', 'Rojas', 'Justiniano', 'Suarez'];
