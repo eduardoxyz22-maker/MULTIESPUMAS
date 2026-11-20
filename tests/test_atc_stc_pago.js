@@ -127,6 +127,40 @@ function BASE(){
   chk('atcCobra solo para la contra costo', r.gar===false && r.rpt===false && r.venta===false, r);
   chk('fueraDeCaja: garantía y RPT afuera, venta y contra costo adentro', r.cajaG===true && r.cajaR===true && r.cajaV===false && r.cajaS===false, r);
 
+  console.log('\n── 6. Lo que encontró Fable (20/11) ──');
+  r = await ev(async () => {
+    var out={};
+    // (1) pasar a garantía una ATC con pagos: sin la clave no deja; con la clave, pregunta
+    UNLOCKED=false; atcTipoMarcar('s1','gar'); await _esperar();
+    out.sinClave=atcTipo(findById('s1'));
+    out.cambio=atcStcCambio(findById('s1'), 'gar');
+    out.sinPagos=atcStcCambio(findById('g1'), 'stc');
+    // (5) el recibo 8301 de un pago STC tapa el hueco del talonario de Carola
+    STATE.push(_P({ id:'n1', oc:'11-261', nota:'8300', saldo:0, pagado:true, metodoPago:'~Efectivo 100 @2026-11-20 #8300', fecha:'2026-11-20', ts:Date.parse('2026-11-20T09:00:00-04:00') }));
+    STATE.push(_P({ id:'n2', oc:'11-262', nota:'8303', saldo:0, pagado:true, metodoPago:'~Efectivo 100 @2026-11-20 #8303', fecha:'2026-11-20', ts:Date.parse('2026-11-20T09:30:00-04:00') }));
+    var H=talonarioHuecos(null, { modo:'mes', val:'2026-11' }, '');
+    out.huecos=JSON.stringify(H);
+    // (6) «De dónde sale lo vendido»: la caja de la marca suma el pago STC aparte
+    var G=pryPlata('2026-11'); out.stcMes=G.heaven ? G.heaven.stcMes : null; out.vendido=G.heaven ? G.heaven.vendido : null;
+    // (7) STC de Eduardo: sin botón (su pago no aparecería en la caja)
+    STATE.push(_P({ id:'e1', oc:'ATC 11-060', vendedor:'Eduardo Añez', productos:_ATC('stc') }));
+    verAtc('e1'); await _esperar(); out.btnEdu=!!document.getElementById('atc-stc-pago'); closeModal();
+    // textos: el WhatsApp del pago y la ficha sin «Corregir precios y montos» ni recargo
+    var p=findById('s1'); out.wa=pagoTexto ? pagoTexto(p, contaPagos(p)[0]) : '';
+    showContaModal('s1'); await _esperar(); var t=document.getElementById('modal').innerText; closeModal();
+    out.montos=/Corregir precios y montos/i.test(t); out.recargo=/Recargo por entrega/i.test(t);
+    // el Cuadre no cuenta la ATC como «venta»
+    renderCuadre && renderCuadre(); 
+    return out;
+  });
+  chk('1 sin la clave, una ATC contra costo con pagos NO pasa a garantía (sigue stc) y el aviso dice cuánto sale de la caja', r.sinClave==='stc' && r.cambio && /500/.test(r.cambio.txt) && /SALE/.test(r.cambio.txt), r);
+  chk('1b una ATC sin pagos cambia de tipo sin preguntar', r.sinPagos===null, r.sinPagos);
+  chk('5 el recibo 8301 del pago contra costo no sale como N° salteado (8302 tampoco)', !/8301/.test(r.huecos) && !/8302/.test(r.huecos), r.huecos);
+  chk('6 «De dónde sale lo vendido»: el pago contra costo va en su renglón de la caja (500) y no en lo vendido', r.stcMes===500 && !(r.vendido>=500 && r.vendido<4275), r);
+  chk('7 una ATC contra costo de Eduardo no trae «Registrar pago»', r.btnEdu===false, r);
+  chk('el WhatsApp del pago dice «ATC CONTRA COSTO», no «pago completo de la venta»', /ATC CONTRA COSTO/.test(r.wa) && !/PAGO COMPLETO DE LA VENTA/.test(r.wa) && !/Venta PAGADA/.test(r.wa), r.wa);
+  chk('la ficha de Contabilidad no ofrece «Corregir precios y montos» ni el recargo por entrega', !r.montos && !r.recargo, r);
+
   chk('sin errores de página', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

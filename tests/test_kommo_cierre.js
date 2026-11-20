@@ -417,6 +417,17 @@ console.log('\n── 11. 🛏️ (11-20-b) Las ventas de Sueña llegan a la ban
   g.ctx.KC_CTA = 'suena'; const uG = g.ctx.kcUsuario_(g.ctx.kcMeta_(true), 'Juan Pablo Paredes'); g.ctx.KC_CTA = '';
   chk('l. si su número fuera otro, el usuario «multiespumas» igual es Juan Pablo (en la bandeja y para cerrar su lead)', g.row('kommo-4302') && g.row('kommo-4302')[3] === 'Juan Pablo Paredes' && uG === '777001', [g.row('kommo-4302') && g.row('kommo-4302')[3], uG]);
   const hp = cargar([], props, KH, { Ksuena:KS2 }); const T2 = hp.ctx.probarKommoEscribeSuena().lineas.join('\n');
+  // (revisión de Fable 3 y 4) por el NÚMERO: «Fernando Peinado Charcas», «Mauricio» a secas y dos usuarios «multiespumas»
+  const KS4 = kommoBase(); KS4.pipelines = KS.pipelines; KS4.campos = KS.campos;
+  KS4.usuarios = { _embedded:{ users:[{ id:UID_JP, name:'multiespumas' }, { id:999001, name:'Multiespumas - Gerencia' }, { id:802, name:'Fernando Peinado Charcas' }, { id:UID_MM, name:'Mauricio' }] } };
+  KS4.contactos[5101] = KS.contactos[5101];
+  const ld = (id, uid) => lead(KS4, id, { pipeline_id:SE, status_id:COMPRO, price:100, responsible_user_id:uid, updated_at:Math.floor(Date.now() / 1000), _embedded:{ contacts:[{ id:5101, is_main:true }] } });
+  ld(4401, 802); ld(4402, UID_MM); ld(4403, 999001); ld(4404, UID_JP);
+  const h4 = cargar([], Object.assign({}, props), KH, { Ksuena:KS4 }); h4.ctx.kommoRepaso();
+  const vd = (id) => h4.row('kommo-' + id) && h4.row('kommo-' + id)[3];
+  h4.ctx.KC_CTA = 'suena'; const uJ = h4.ctx.kcUsuario_(h4.ctx.kcMeta_(true), 'Juan Pablo Paredes'); h4.ctx.KC_CTA = '';
+  chk('n. «Fernando Peinado Charcas» es Fernando Peinado y «Mauricio» a secas es Mauricio Merida (el borrador va a la bandeja de cada uno)', vd(4401) === 'Fernando Peinado' && vd(4402) === 'Mauricio Merida', [vd(4401), vd(4402)]);
+  chk('o. con dos usuarios «multiespumas», Juan Pablo sigue siendo el 13073611 y el lead del otro NO cae a su nombre', uJ === String(UID_JP) && vd(4404) === 'Juan Pablo Paredes' && vd(4403) !== 'Juan Pablo Paredes', [uJ, vd(4404), vd(4403)]);
   chk('m. probarKommoEscribeSuena dice con qué nombre figura cada número en Kommo', /Juan Pablo Paredes → usuario 13073611 \(en Kommo «multiespumas»\)/.test(T2), T2);
 }
 
