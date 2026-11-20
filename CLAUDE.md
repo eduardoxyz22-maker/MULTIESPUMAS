@@ -1056,6 +1056,11 @@ el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_qu
 - 📅 **Importar ROHO para el día que elige logística** (dueño: *«no importa si está lleno… que muestre 29/15»*): `ROHO_FECHA` (todos a ese día, también
   notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
   o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
+- 🚚 **Un pedido NUEVO forzado entra** (20/11, captura del dueño: *«roho no me deja cargar»*: «3 no entraron», turno lleno y día cerrado): hasta la 20-c el
+  `.gs` miraba `forzar` SOLO al MOVER uno que ya estaba. Servidor **2026-11-20-d** (IMPLEMENTADO 20/11 por el dueño, enlace fijo `f8d5e7a…`, 14.047 líneas;
+  volver atrás: ✏️ a la versión anotada Y pegar la 20-c de `1450933…`): en `doSave`, `esNuevo && forzar` → entra con su N° del día; feriado y turno sin
+  camión siguen afuera. Página 2026-11-20-e PUBLICADA (`5a17cf1`). Las notas de días pasados van a SU fecha sin ✅ (dueño: logística verifica o
+  reprograma); las ya cargadas se saltean por N° de nota. `tests/test_roho_forzar_servidor.js` (12; 5 rojas contra la 20-c).
 
 ## 💵💵 «Pagó con dos métodos» en Contabilidad y editar un pago sin perder fotos (20/11; dueño: *«en la pestaña cargar pago no sale la opción de 2 métodos como en el "pedido"»* y el «SE GUARDÓ INCOMPLETO» al partir un QR en QR + efectivo; PUBLICADO 20/11, versión 2026-11-20-d, `5aff719`)
 - Registrar pago → «➕ Pagó con dos métodos» (`CTA_PAGO.mx`, `ctaMx*`, `ctaMxHtml`): Pago 2 con su monto, método, banco e imagen; `ctaRegistrarPago` anota
