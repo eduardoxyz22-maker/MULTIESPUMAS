@@ -4270,7 +4270,8 @@ function glSigue(){
           <label class="avc-chk" id="f-sinwa-wrap" hidden><input type="checkbox" id="f-sinwa" onchange="celFormPintar()"> 📵 El cliente no tiene WhatsApp</label>
         </div>
       </div>
-      <div id="nx-cli" class="no-print" hidden></div>   <!-- 👋 (§4js, P1) el cliente que ya compró -->
+      <div id="nx-cli" class="no-print" hidden></div>
+      <div id="cruce-form" class="cruce-form no-print" hidden aria-live="polite"></div>   <!-- 🔀 (20/11) otra vendedora atiende a este cliente -->   <!-- 👋 (§4js, P1) el cliente que ya compró -->
       <div id="kbc" class="vd-kbc no-print" hidden></div>   <!-- 📥 (15/11, 307) ese celular ya está en la bandeja de Kommo -->
       <div id="atc-otra" class="atc-otra no-print" hidden></div>   <!-- 🔁 (13/11, 179) en una ATC: ese celular ya tuvo otra (solo avisa) -->
       <div id="atc-compra" class="atc-compra no-print" hidden></div>   <!-- 🛡️ (14/11, 264) en una ATC: las compras de ese celular, para la fecha de compra -->
@@ -7832,6 +7833,10 @@ tr.tj-otro td{ background:#fff7e6; } tr.tj-otro small{ color:#b45309; }
 .atq-r-b{ font:inherit; font-size:.74rem; border:1px solid var(--gray-md); background:#f7f9fa; border-radius:999px; padding:2px 9px; cursor:pointer; margin:2px 0; }
 .badge.b-rep{ background:#fff7ed; color:#9a3412; border:1px solid #fdba74; }
 /* 🔁 (179) el aviso del formulario: ese celular ya tuvo otra ATC */
+.cruce-form{ margin:-4px 0 14px; background:#fffbeb; border:1px solid #fcd34d; border-left:5px solid #d97706; border-radius:10px; padding:9px 12px; font-size:.82rem; color:#451a03; line-height:1.4; }
+.cruce-form b{ color:#78350f; }
+.cruce-form .cruce-s{ display:block; color:#92400e; font-size:.76rem; margin-top:2px; }
+@media print{ .cruce-form{ display:none!important; } }
 .atc-otra{ margin:-4px 0 14px; background:#fff7ed; border:1px solid #fdba74; border-left:5px solid #ea580c; border-radius:10px; padding:9px 12px; font-size:.8rem; color:#431407; }
 .atc-otra-t span{ color:#9a3412; font-size:.74rem; }
 .atc-otra-f{ margin-top:7px; padding-top:7px; border-top:1px dashed #fdba74; display:grid; gap:2px; }
@@ -31622,7 +31627,7 @@ function fxMesPintar(){
     '<div class="s">'+o.n+' venta'+(o.n===1?'':'s')+' este mes'+(o.antes>0?(' · '+o.pct+'% de lo de '+o.mesAnt+' ('+fmtBs0(o.antes)+')'):'')+'</div>';
   if(el._h!==h){ el.innerHTML=h; el._h=h; }
 }
-function fxFormPintar(){ try{ frqPintar(); }catch(e){} try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } try{ fpPintar(); }catch(e){} }
+function fxFormPintar(){ try{ frqPintar(); }catch(e){} try{ cruceFormPintar(); }catch(e){} try{ fxDiasPintar(); fxIzqPintar(); fxCamionPintar(); fxMesPintar(); fxDerPintar(); fxDupPintar(); fxPasosPintar(); fxMapaProgramar(); }catch(e){ /* las escenas nunca rompen el formulario */ } try{ fpPintar(); }catch(e){} }
 /* 🖥️ (§4ig) LOS COSTADOS: solo se arman con la pantalla ancha (en el celular no se ven y no se gasta nada). */
 function fxAncho(){ return !!(window.matchMedia && matchMedia('(min-width:1120px)').matches); }   // (§4ij) el iPad acostado (1180) entra
 var FX_DIAS_NOM=['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
@@ -72185,6 +72190,70 @@ function qaVeredicto(r, yo){
   var k = quien.length ? (otros.length ? 'otro' : 'tuyo') : (compro ? 'compro' : (inc ? 'nose' : ((r && r.nombre && !nCont) ? 'nadie' : 'libre')));
   return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora, inc:inc };
 }
+/* 🔀 (20/11) «OTRA VENDEDORA ATIENDE A ESTE CLIENTE» — dueño: *«al momento de cargar un nuevo pedido… si sale el mismo número de teléfono y está
+   de vigencia que otro asesor lo está atendiendo, le salga la alerta»*; eligió que SOLO AVISE (*«el cliente no tiene que verse perjudicado»*), el
+   aviso a la otra por WhatsApp (el servidor 2026-11-20-c: `asesora_cliente_compro`, una vez por venta) y solo dentro de la MISMA marca.
+   En una venta NUEVA (OC, no al editar) de una vendedora de Heaven o Sueña, con el celular completo: la MISMA consulta y la MISMA regla de la
+   pestaña «¿Quién lo atiende?» (quienAtiende + qaVeredicto). Nunca frena Guardar. En Playwright apagado salvo CRUCE_PRUEBA. */
+var CRUCE_SERVIDOR='2026-11-20-c', CRUCE_ESPERA_MS=900;
+var CRUCE_F={ k:'', r:null, busy:false, err:'', t:0, gen:0 };
+function cruceFormVa(){ try{ return !navigator.webdriver || !!window.CRUCE_PRUEBA; }catch(e){ return true; } }
+/** Lo que se mira ahora: {c8, v, mk} o null (no corresponde). */
+function cruceFormQue(){
+  if(!cruceFormVa() || EDIT_ID || docTipoSel()!=='OC' || window.PRACTICA) return null;
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim(), mk=v ? marcaDe(v) : '';
+  var c8=cliCelClave((document.getElementById('f-celular')||{}).value||'');
+  if(!mk || !c8 || c8.length<8) return null;
+  return { c8:c8, v:v, mk:mk };
+}
+/** Las OTRAS vendedoras de la MISMA marca que lo atienden (de qaVeredicto), con el nombre del panel. */
+function cruceOtros(r, v, mk){
+  var V=qaVeredicto(r, v);
+  return (V.otros||[]).filter(function(o){ return o.marca===mk && !/sin asignar/i.test(o.n); }).map(function(o){
+    var n=String(o.n||'').split(/\s+[-–]\s+/)[0].trim();
+    (VENDEDORES||[]).forEach(function(x){ if(qaMismo(x, o.n)) n=x; });
+    return { n:n, por:o.por, ts:o.ts, ahora:V.ahora };
+  });
+}
+/** Pinta el cartel con lo que ya se sabe (sin red). Si cambió el celular o la vendedora, programa la consulta. */
+function cruceFormPintar(){
+  var box=document.getElementById('cruce-form'); if(!box) return;
+  var q=cruceFormQue(), k=q ? q.c8+'|'+normNombre(q.v) : '';
+  if(!q){ box.hidden=true; box.innerHTML=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
+  if(k!==CRUCE_F.k){
+    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.err=''; box.hidden=true; box.innerHTML='';
+    clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS);
+    return;
+  }
+  if(!CRUCE_F.r){ box.hidden=true; return; }
+  var L=cruceOtros(CRUCE_F.r, q.v, q.mk);
+  if(!L.length){ box.hidden=true; box.innerHTML=''; return; }
+  var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
+  var det=L.map(function(o){
+    return o.por==='fecha' ? esc(o.n)+' tiene una fecha acordada con el cliente para el '+esc(qaFecha(o.ts)) : esc(o.n)+' conversó con el cliente el '+esc(qaFecha(o.ts))+' ('+qaHace(o.ts, o.ahora)+')';
+  }).join(' · ');
+  var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' le'+(nom.length>1?'s':'')+' llega un WhatsApp avisando que su cliente compró y que la venta la cargaste vos.' : '';
+  var h='⚠️ <b>Este cliente lo está atendiendo '+esc(nombres)+'</b> (según Kommo, en los últimos '+QA_DIAS+' días). '+
+        '<span class="cruce-s">'+det+'.</span><span class="cruce-s">Podés seguir con la venta: no se frena nada.'+wa+'</span>';
+  if(box._h!==h){ box.innerHTML=h; box._h=h; }
+  box.hidden=false;
+}
+function cruceFormBuscar(){
+  var q=cruceFormQue(); if(!q) return;
+  var k=q.c8+'|'+normNombre(q.v); if(k!==CRUCE_F.k) return;
+  if(!SERVER_VER || !servidorTiene(QA_SERVIDOR)) return;
+  var g=++CRUCE_F.gen; CRUCE_F.busy=true;
+  conTopeDuro(apiPost({ action:'quienAtiende', cel:q.c8, quien:q.v }), 60000, 'tardo').then(function(r){
+    if(g!==CRUCE_F.gen || k!==CRUCE_F.k) return;
+    CRUCE_F.busy=false;
+    CRUCE_F.r=(r && r.ok!==false && Array.isArray(r.cuentas)) ? r : null;
+    cruceFormPintar();
+  }).catch(function(){ if(g===CRUCE_F.gen){ CRUCE_F.busy=false; } });   // si Kommo no contesta, no se muestra nada: nunca frena la venta
+}
+document.addEventListener('DOMContentLoaded', function(){
+  ['f-celular','f-vendedor'].forEach(function(id){ var e=document.getElementById(id); if(e){ e.addEventListener('input', cruceFormPintar); e.addEventListener('change', cruceFormPintar); } });
+  var fd=document.getElementById('f-doc-tipo'); if(fd) fd.addEventListener('click', function(){ setTimeout(cruceFormPintar, 0); });
+});
 function qaBuscar(){
   var i=document.getElementById('qa-cel'), v=i ? i.value : '', c8=qaCel8(v), nom=(!c8 && !/\d/.test(v)) ? qaNombreBusca(v) : '';
   if(!c8 && !nom){ QA.r=null; QA.err=/\d/.test(v) ? 'Escribí el celular completo (8 números; con o sin 591).' : 'Escribí el celular, o el nombre Y el apellido del cliente (con uno solo salen demasiados).'; qaPintar(); return; }
