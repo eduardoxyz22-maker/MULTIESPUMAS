@@ -1052,6 +1052,17 @@ La página solo lo muestra (`pdfPedidoHtml`: «👁 Ver» y «⬇️ Descargar»
 `heredarMarcas` lo conserva al editar. ⚠️ `post` del cargador manda el cuerpo por la entrada estándar (un argumento de Linux corta en 128 KB).
 `test_servidor` §28, `tests/test_pdf_pedido.js` (7).
 
+## 🔧 La ATC contra costo se cobra, y 👤 cada vendedora ve solo sus ATC (20/11; dueño: *«atc contra costo, falta la opción de registrar el pago… aparte de solo ATC porque no suma a su global de ventas»*, *«a veces pagan por QR también, o tarjeta»*, eligió «Ficha de la ATC + Contabilidad»; y *«los vendedores solo deberían ver SUS atc que ellos cargan»*; página 2026-11-20-b en la rama, el `.gs` 20-b lo implementa el dueño)
+- `atcCobra(p)` = ATC con `atc.tipo='stc'`; **`fueraDeCaja(p)`** = `fueraDeConta(p)` salvo la STC (sin sistema ni `CONTA_EXCLUIR`, `atcCobraCaja`). La usan los caminos de la
+  PLATA (`cuadrePagos` con `stc:true`, `efePareo`, `compsPagosDe`, `cxPagosRango`, `m418PagosMes`, `nxPstLista`, `cuadreAlertas`); ventas, Proyección, metas y comisión siguen
+  con `fueraDeConta` (la STC no suma). ⚠️ Un camino NUEVO de caja usa `fueraDeCaja`; uno de ventas, `fueraDeConta`. La ficha de Contabilidad de una STC trae siempre el
+  formulario de pago (cualquier método), sin total ni saldo («🔧 Reparación que paga el cliente · Cobrado»); `aplicarCobros` la deja con saldo 0 (objetivo = lo cobrado).
+  `noSeCobra` sigue en true (el chofer no la cobra). Contabilidad → `#cta-stc` (`ctaStcDatos`/`ctaStcPintar`: cobrado por vendedor, aparte); la ficha de la ATC
+  «💵 Registrar pago» (`#atc-stc-pago`). En el `.gs` `waAtcStc_` en `waEfeCuentas_` (el efectivo por WhatsApp; `test_wa_efectivo` 2f-2g compara). `tests/test_atc_stc_pago.js` (16).
+- 👤 La pestaña ATC: `atcSoloDe()`/`atcEsMia(p)` en `atcLista` y `atcViejasAbiertas`; ven todas la contraseña, Logística, Administración, el aparato de
+  Administración (`asisVeAdm`), Contabilidad (rol `conta`) y Eduardo; sin nombre elegido, ninguna (cartel `#atc-solo`, que solo existe cuando filtra). Solo esconde.
+  Los números de calidad siguen siendo de la empresa. Playwright: todas salvo `ATC_MIAS_PRUEBA`. `tests/test_atc_mias.js` (10).
+
 ## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
 Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón

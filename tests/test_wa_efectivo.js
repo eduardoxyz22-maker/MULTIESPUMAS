@@ -208,6 +208,18 @@ const FIX = [
   chk('2d dos nombres que la página toma por la misma persona, el servidor también (y al revés: «Fernando» no es Fernando Peinado)', JSON.stringify(igualesSrv) === JSON.stringify(pag.igualesPag) && pag.igualesPag[3] === false, { gs: igualesSrv, pagina: pag.igualesPag });
   chk('2e los cobros sin @fecha: sin día en los dos lados (no se inventa)', JSON.stringify(pag.pagos.q1) === '[["",500,""]]' && JSON.stringify(pag.pagos.q2) === '[["",300,""]]', [pag.pagos.q1, pag.pagos.q2]);
   chk('2b WA_EFE_FUERA = CONTA_EXCLUIR de la página', JSON.stringify(Array.from(S.ctx.WA_EFE_FUERA)) === JSON.stringify(pag.fuera), [S.ctx.WA_EFE_FUERA, pag.fuera]);
+  /* 🔧 (20/11, 11-20-b) Una ATC contra costo (STC) que el cliente paga ES plata en la mano (dueño: «a veces pagan por QR también, o tarjeta»):
+     entra al efectivo igual que en la página (`fueraDeCaja`); la de garantía, la sin marcar y la RPT siguen afuera. */
+  const prodAtc = (tipo) => [{ desc: 'COLCHON TITANIO', medida: '140x190', cant: 1, atc: tipo ? { tipo } : { motivo: 'Hundimiento' } }];
+  const STC = [V('st1', 'Carola Chavez', '~Efectivo 600 @2026-11-02 #8201', { oc: 'ATC 11-090', productos: prodAtc('stc') }),
+    V('st2', 'Carola Chavez', '~Efectivo 700 @2026-11-02 #8202', { oc: 'ATC 11-091', productos: prodAtc('gar') }),
+    V('st3', 'Carola Chavez', '~Efectivo 800 @2026-11-02 #8203', { oc: 'ATC 11-092', productos: prodAtc('') }),
+    V('st4', 'Carola Chavez', '~Efectivo 900 @2026-11-02 #8204', { oc: 'RPT 11-093', productos: prodAtc('stc') })];
+  const Ss = servidor(ON); Ss.cargar(STC);
+  const Es = Ss.ctx.waEfePendiente_(Ss.lista(), '2026-11-06');
+  const pagStc = await page.evaluate((fix) => fix.map(function (p) { return !fueraDeCaja(p); }), STC);
+  chk('2f 🔧 la ATC contra costo entra al efectivo (600); la de garantía, la sin marcar y la RPT no', Es.length === 1 && Es[0].nombre === 'Carola Chavez' && Es[0].bs === 600, Es);
+  chk('2g …y la página dice lo mismo (fueraDeCaja)', JSON.stringify(pagStc) === '[true,false,false,false]', pagStc);
   await browser.close();
 
   console.log('\n── 3. El envío (📅 06-d: el efectivo de CADA DÍA) ──');
