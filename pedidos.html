@@ -7847,6 +7847,8 @@ tr.tj-otro td{ background:#fff7e6; } tr.tj-otro small{ color:#b45309; }
 .crv-req li{ margin:2px 0; }
 .crv-fotos{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
 .crv-fotos img{ width:74px; height:74px; object-fit:cover; border-radius:8px; border:1px solid #e5e7eb; }
+.crv-fotos .foto{ position:relative; display:inline-block; }
+.crvf-tag{ position:absolute; left:3px; bottom:3px; background:rgba(17,24,39,.75); color:#fff; font-size:.62rem; font-weight:700; padding:1px 5px; border-radius:6px; }
 .crvf .crvf-op{ border:1px solid #e5e7eb; border-radius:10px; padding:8px 10px; margin:0 0 8px; background:#fff; }
 .crvf .crvf-op > label{ font-weight:700; display:flex; gap:8px; align-items:flex-start; cursor:pointer; }
 .crvf .crvf-op > label input{ width:auto; margin-top:3px; }
@@ -72294,8 +72296,10 @@ var CRV_GESTION=[ ['cot','El cliente respondió mi cotización'], ['cambio','Pid
 var CRV_EXCEP=[ ['mes','Compra el mes que viene'], ['medida','Tiene que confirmar medida o base'], ['empresa','Espera la aprobación interna de su empresa'],
   ['repo','Espera la reposición del producto'], ['entrega','Entrega agendada'], ['pedido','Pedido confirmado o adelanto pagado'] ];
 var CRV_OTRA=[ ['saludo','Solo un saludo o mensajes sin respuesta del cliente'], ['ultimo','Un mensaje de último momento'],
-  ['paso','No quedó ningún próximo paso'], ['anterior','Fue por una compra anterior'] ];
-var CRV_FOTOS_MAX=4, CRV_DIAS=15;
+  ['paso','No quedó ningún próximo paso'], ['anterior','Fue por una compra anterior'], ['mia','Las dos hablamos, pero la compra salió de mi gestión'] ];
+/* (dueño, 20/11) «el requisito de imagen es obligatorio, todos los campos son obligatorios, y mínimo 2 de la conversación, sí o sí 1 tiene que
+   ser del Kommo». */
+var CRV_FOTOS_MAX=4, CRV_FOTOS_MIN=2, CRV_DIAS=15;
 function crvTxt(L, k){ for(var i=0;i<L.length;i++) if(L[i][0]===k) return L[i][1]; return k||''; }
 function crvOpts(L){ return '<option value="">— Elegí —</option>'+L.map(function(x){ return '<option value="'+x[0]+'">'+esc(x[1])+'</option>'; }).join(''); }
 function cruceRevPedir(on){
@@ -72309,7 +72313,7 @@ function crvFormAbrir(){
   var q=cruceFormQue(); if(!q || !CRUCE_F.r) return;
   var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return;
   var nom=L.map(function(o){ return o.n; }).join(' y ');
-  if(!CRUCE_F.fot || CRUCE_F.fotK!==CRUCE_F.k){ CRUCE_F.fot=[]; CRUCE_F.fotK=CRUCE_F.k; }
+  if(!CRUCE_F.fot || CRUCE_F.fotK!==CRUCE_F.k){ CRUCE_F.fot=[]; CRUCE_F.fotKm=[]; CRUCE_F.fotK=CRUCE_F.k; }
   var hoy=diaNegocio();
   var h='<div class="modal-h"><h3>🔎 Pedir revisión del cliente</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b crvf">'+
@@ -72326,12 +72330,13 @@ function crvFormAbrir(){
       '<label>Para qué fecha<input type="date" id="crvf-e-f"></label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-k"> Está anotada en Kommo (tarea o nota)</label>'+
       '<label class="crvf-ch"><input type="checkbox" id="crvf-e-s"> Hice el seguimiento acordado</label></div></div>'+
-    '<div class="crvf-op"><label><input type="checkbox" id="crvf-o" onchange="crvFormVer()"> Lo de '+esc(nom)+' no fue una gestión comercial relevante</label>'+
-      '<div class="crvf-in" id="crvf-o-in" hidden>'+
+    '<div class="crvf-op"><b>Por qué lo de '+esc(nom)+' no cuenta</b>'+
+      '<div class="crvf-in" id="crvf-o-in">'+
       '<label style="grid-column:1/-1">Por qué<select id="crvf-o-t">'+crvOpts(CRV_OTRA)+'</select></label></div></div>'+
-    '<div class="crvf-op"><b>📸 Capturas de la conversación</b> <span style="font-size:.76rem;color:#6b7280">(al menos 1, hasta '+CRV_FOTOS_MAX+': que se vean las fechas)</span>'+
+    '<div class="crvf-op"><b>📸 Capturas de la conversación</b> <span style="font-size:.76rem;color:#6b7280">(obligatorias: mínimo '+CRV_FOTOS_MIN+', hasta '+CRV_FOTOS_MAX+', y al menos 1 de Kommo; que se vean las fechas)</span>'+
       '<div class="crv-fotos" id="crvf-fotos"></div>'+
-      '<input type="file" id="crvf-file" accept="image/*" multiple onchange="crvFotosElegidas(event)" style="margin-top:6px"></div>'+
+      '<div class="crvf-in" style="margin-left:0"><label>Captura de Kommo<input type="file" id="crvf-file-k" accept="image/*" multiple onchange="crvFotosElegidas(event, 1)"></label>'+
+      '<label>Otra captura de la conversación (WhatsApp u otra)<input type="file" id="crvf-file" accept="image/*" multiple onchange="crvFotosElegidas(event, 0)"></label></div></div>'+
     '<label class="crvf-decl"><input type="checkbox" id="crvf-d"> Entiendo que haber creado primero la ficha, tener el contacto asignado en Kommo o haberlo atendido en una compra anterior no da derecho a la venta por sí solo (§8).</label>'+
     '<div class="crvf-falta" id="crvf-falta" hidden></div>'+
     '<div class="modal-actions"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal()">Cancelar</button><span style="flex:1"></span>'+
@@ -72342,7 +72347,7 @@ function crvFormAbrir(){
     var put=function(id,v){ var e=document.getElementById(id); if(e){ if(e.type==='checkbox') e.checked=!!v; else e.value=v||''; } };
     if(R.g){ put('crvf-g',1); put('crvf-g-t',R.g.t); put('crvf-g-f',R.g.f); put('crvf-g-p',R.g.p); }
     if(R.e){ put('crvf-e',1); put('crvf-e-t',R.e.t); put('crvf-e-a',R.e.a); put('crvf-e-f',R.e.f); put('crvf-e-k',R.e.k); put('crvf-e-s',R.e.s); }
-    if(R.o){ put('crvf-o',1); put('crvf-o-t',R.o.t); }
+    if(R.o){ put('crvf-o-t',R.o.t); }
     put('crvf-d', R.d);
   }
   crvFormVer(); crvFotosPintar();
@@ -72353,12 +72358,13 @@ function crvFormVer(){
 function crvFotosPintar(){
   var b=document.getElementById('crvf-fotos'); if(!b) return;
   var F=CRUCE_F.fot||[];
-  b.innerHTML=F.map(function(fid,i){ return '<span class="foto">'+fotoImgHtml(fid,{alt:'Captura '+(i+1), w:200})+'<button type="button" title="Quitar" onclick="crvFotoQuitar('+i+')">✕</button></span>'; }).join('')+
+  var Km=CRUCE_F.fotKm||[];
+  b.innerHTML=F.map(function(fid,i){ var km=Km.indexOf(fid)>=0; return '<span class="foto" title="'+(km?'De Kommo':'De la conversación')+'">'+fotoImgHtml(fid,{alt:(km?'Captura de Kommo ':'Captura ')+(i+1), w:200})+'<span class="crvf-tag">'+(km?'Kommo':'Chat')+'</span><button type="button" title="Quitar" onclick="crvFotoQuitar('+i+')">✕</button></span>'; }).join('')+
     (CRUCE_F.fotSub ? '<span style="font-size:.76rem;color:#6b7280">⏳ Subiendo '+CRUCE_F.fotSub+'…</span>' : '');
-  var f=document.getElementById('crvf-file'); if(f) f.disabled=F.length>=CRV_FOTOS_MAX;
+  ['crvf-file','crvf-file-k'].forEach(function(id){ var f=document.getElementById(id); if(f) f.disabled=F.length>=CRV_FOTOS_MAX; });
 }
-function crvFotoQuitar(i){ (CRUCE_F.fot||[]).splice(i,1); crvFotosPintar(); }
-function crvFotosElegidas(ev){
+function crvFotoQuitar(i){ var F=CRUCE_F.fot||[], fid=F[i]; F.splice(i,1); CRUCE_F.fotKm=(CRUCE_F.fotKm||[]).filter(function(x){ return x!==fid; }); crvFotosPintar(); }
+function crvFotosElegidas(ev, deKommo){
   var files=Array.prototype.slice.call((ev && ev.target && ev.target.files)||[]); if(ev && ev.target) ev.target.value='';
   var k=CRUCE_F.k, cli=String((document.getElementById('f-cliente')||{}).value||'');
   files.slice(0, Math.max(0, CRV_FOTOS_MAX-(CRUCE_F.fot||[]).length)).reduce(function(pr, f){
@@ -72367,7 +72373,7 @@ function crvFotosElegidas(ev){
       return fotoCronometro(f, 1600, 0.75).then(function(d){ return subirFoto('form', 'revision_'+cli, d); }).then(function(res){
         CRUCE_F.fotSub=Math.max(0,(CRUCE_F.fotSub||1)-1);
         if(CRUCE_F.k!==k) return;
-        if(res && res.ok && res.fotoId){ CRUCE_F.fot=(CRUCE_F.fot||[]).concat([res.fotoId]).slice(0, CRV_FOTOS_MAX); }
+        if(res && res.ok && res.fotoId && (CRUCE_F.fot||[]).length<CRV_FOTOS_MAX){ CRUCE_F.fot=(CRUCE_F.fot||[]).concat([res.fotoId]); if(deKommo) CRUCE_F.fotKm=(CRUCE_F.fotKm||[]).concat([res.fotoId]); }
         else toast('No se pudo subir la captura'+(res && res.error ? (' ('+res.error+')') : ''), 'err');
         crvFotosPintar();
       }).catch(function(){ CRUCE_F.fotSub=Math.max(0,(CRUCE_F.fotSub||1)-1); toast('No se pudo subir la captura: probá de nuevo.', 'err'); crvFotosPintar(); });
@@ -72378,7 +72384,7 @@ function crvFotosElegidas(ev){
 function crvFormLeer(){
   var v=function(id){ var e=document.getElementById(id); return e ? (e.type==='checkbox' ? !!e.checked : String(e.value||'').trim()) : ''; };
   var hoy=diaNegocio(), lim=isoMasDiasSimple(hoy, -CRV_DIAS), falta=[], req={};
-  if(!v('crvf-g') && !v('crvf-e') && !v('crvf-o')) falta.push('marcá por qué el cliente es tuyo (al menos una de las tres)');
+  if(!v('crvf-g') && !v('crvf-e')) falta.push('marcá cómo demostrás que el cliente es tuyo: la gestión de los últimos '+CRV_DIAS+' días o la fecha futura acordada');
   if(v('crvf-g')){
     req.g={ t:v('crvf-g-t'), f:v('crvf-g-f'), p:v('crvf-g-p') };
     if(!req.g.t) falta.push('qué gestión comercial tuviste');
@@ -72393,9 +72399,13 @@ function crvFormLeer(){
     if(!req.e.k) falta.push('la fecha acordada tiene que estar anotada en Kommo');
     if(!req.e.s) falta.push('confirmá que hiciste el seguimiento acordado');
   }
-  if(v('crvf-o')){ req.o={ t:v('crvf-o-t') }; if(!req.o.t) falta.push('por qué lo de la otra asesora no fue una gestión relevante'); }
-  if(!(CRUCE_F.fot||[]).length) falta.push(CRUCE_F.fotSub ? 'esperá que terminen de subir las capturas' : 'al menos una captura de la conversación');
-  else if(CRUCE_F.fotSub) falta.push('esperá que terminen de subir las capturas');
+  req.o={ t:v('crvf-o-t') }; if(!req.o.t) falta.push('por qué lo de la otra asesora no cuenta');
+  var nF=(CRUCE_F.fot||[]).length, nK=(CRUCE_F.fotKm||[]).filter(function(x){ return (CRUCE_F.fot||[]).indexOf(x)>=0; }).length;
+  if(CRUCE_F.fotSub) falta.push('esperá que terminen de subir las capturas');
+  else {
+    if(nF<CRV_FOTOS_MIN) falta.push('mínimo '+CRV_FOTOS_MIN+' capturas de la conversación (tenés '+nF+')');
+    if(!nK) falta.push('al menos 1 captura tiene que ser de Kommo');
+  }
   if(!v('crvf-d')) falta.push('tildá que leíste lo de la §8');
   req.d=v('crvf-d')?1:0;
   return { req:req, falta:falta };
@@ -72415,7 +72425,7 @@ function crvReqLineas(c){
   var L=[], r=(c && c.req)||{};
   if(r.g) L.push('Gestión comercial: '+crvTxt(CRV_GESTION, r.g.t)+' el '+fmtFechaCorta(r.g.f)+' · próximo paso: '+r.g.p);
   if(r.e) L.push('Fecha futura acordada el '+fmtFechaCorta(r.e.a)+': '+crvTxt(CRV_EXCEP, r.e.t)+' para el '+fmtFechaCorta(r.e.f)+(r.e.k?' · anotada en Kommo':'')+(r.e.s?' · con seguimiento':''));
-  if(r.o) L.push('Lo de la otra asesora no fue relevante: '+crvTxt(CRV_OTRA, r.o.t));
+  if(r.o) L.push('Por qué lo de la otra asesora no cuenta: '+crvTxt(CRV_OTRA, r.o.t));
   if(r.d) L.push('Leyó la §8 (ficha creada, contacto asignado o compra anterior no dan derecho solos)');
   return L;
 }
@@ -72423,10 +72433,10 @@ function crvReqLineas(c){
     primer producto (es del pedido: `heredarMarcas` lo conserva). Se puede correr dos veces (las preguntas del guardado lo repiten). */
 function cruceRevPoner(productos){
   var q=cruceFormQue(); if(!q || !productos || !productos.length) return;
-  var k=q.c8+'|'+normNombre(q.v); if(CRUCE_F.pide!==k || !CRUCE_F.r || !CRUCE_F.req || !(CRUCE_F.fot||[]).length) return;
+  var k=q.c8+'|'+normNombre(q.v); if(CRUCE_F.pide!==k || !CRUCE_F.r || !CRUCE_F.req || (CRUCE_F.fot||[]).length<CRV_FOTOS_MIN || !(CRUCE_F.fotKm||[]).length) return;
   var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return;
   productos[0].crv={ t:CRUCE_F.pideT||Date.now(), por:q.v, de:L.map(function(o){ return o.n; }),
-    req:JSON.parse(JSON.stringify(CRUCE_F.req)), fot:(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX),
+    req:JSON.parse(JSON.stringify(CRUCE_F.req)), fot:(CRUCE_F.fot||[]).slice(0, CRV_FOTOS_MAX), fotK:(CRUCE_F.fotKm||[]).filter(function(x){ return (CRUCE_F.fot||[]).indexOf(x)>=0; }),
     det:L.map(function(o){ return o.n+(o.por==='fecha' ? (': fecha acordada el '+qaFecha(o.ts)) : (': conversó el '+qaFecha(o.ts))); }).join(' · ').slice(0,300) };
 }
 /** El pedido de revisión de una venta (el primero que aparezca en sus productos). */
@@ -72451,7 +72461,7 @@ function crvItemHtml(p){
     '<span class="crv-s">La vendió <b>'+esc(c.por||'—')+'</b> · pidió revisión el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+'</span>'+
     '<span class="crv-s">Según Kommo: '+esc(c.det||(c.de||[]).join(', '))+'</span>'+
     '<ul class="crv-req">'+crvReqLineas(c).map(function(l){ return '<li>'+esc(l)+'</li>'; }).join('')+'</ul>'+
-    ((c.fot||[]).length ? '<div class="crv-fotos">'+c.fot.map(function(fid,i){ return '<a href="'+esc(fotoVer(fidLimpio(fid)))+'" target="_blank" rel="noopener">'+fotoImgHtml(fid,{alt:'Captura '+(i+1), w:200})+'</a>'; }).join('')+'</div>' : '')+
+    ((c.fot||[]).length ? '<div class="crv-fotos">'+c.fot.map(function(fid,i){ var km=(c.fotK||[]).indexOf(fid)>=0; return '<a href="'+esc(fotoVer(fidLimpio(fid)))+'" target="_blank" rel="noopener" title="'+(km?'De Kommo':'De la conversación')+'">'+fotoImgHtml(fid,{alt:(km?'Captura de Kommo ':'Captura ')+(i+1), w:200})+'</a>'; }).join('')+'</div>' : '')+
     '<div class="crv-b">'+bot+'</div></div>';
 }
 function crvAbrir(){
