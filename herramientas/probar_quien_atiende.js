@@ -274,7 +274,10 @@ function main() {
     tiempos.push((Date.now() - t) / 1000); nLlam.push(ENV.llamadas.length);
     const hoja = ENV.hoja.length ? String(ENV.hoja[ENV.hoja.length - 1][4]) : '';
     if (!r || r.ok === false || !Array.isArray(r.cuentas)) { mal('muestra ' + R.probados + ': el servidor contestó ' + (r && r.error)); continue; }
-    if (r.incompleto) R.incompletos++;
+    /* Con los arreglos, una cuenta SIN su token (acá, Sueña: este repositorio no tiene ese secreto) deja la búsqueda «incompleta» y sin
+       caché: es lo esperado, y se compara igual (donde la verdad dice «libre», el cartel tiene que decir «no se pudo saber»). */
+    const incReal = r.cuentas.some((x) => x.error || x.msgOk === false || x.tareasOk === false || x.cortado || x.usOk === false), soloSinToken = !!r.incompleto && !incReal;
+    if (incReal) R.incompletos++; if (soloSinToken) R.sinToken = (R.sinToken || 0) + 1;
     const cuH = r.cuentas.filter((x) => x.marca === 'heaven')[0] || {}, cuS = r.cuentas.filter((x) => x.marca === 'suena')[0] || {};
     if (cuH.masLeads) R.masLeads++; if (cuH.masContactos) R.masContactos++; if ((cuH.contactos || 0) > 1) R.variosContactos++; if ((cuS.leads || []).length) R.enSuena++;
     if (!(cuH.leads || []).some((l) => String(l.id) === String(el.lead)) && !cuH.masLeads) { R.noEncuentra++; }
@@ -304,16 +307,16 @@ function main() {
         (W.tareas.contacts[co.id] || []).forEach((x) => { const ts = Number(x.complete_till) || 0; if (Number(x.created_by) && ts > T0 && ts <= T0 + 90 * D) abiertos.forEach((l) => { const u = Number(x.responsible_user_id) || Number(l.responsible_user_id) || 0; at[c.marca + '|' + u] = u ? (W.nomU[String(u)] || 'usuario ' + u) : '(sin asignar)'; }); });
       }
     }
-    const nomsV = Object.keys(at).map((k) => at[k]), kV = nomsV.length ? 'atiende' : ganados.length ? 'compro' : 'libre';
+    const nomsV = Object.keys(at).map((k) => at[k]), kV = nomsV.length ? 'atiende' : ganados.length ? 'compro' : (soloSinToken ? 'nose' : 'libre');
     /* la página REAL */
     const Vp = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), ''), kP = (Vp.k === 'otro' || Vp.k === 'tuyo') ? 'atiende' : Vp.k, nomsP = Array.from(Vp.quien || []).map((q) => q.n);
     const kHj = hoja === 'Libre' ? 'libre' : /^Atiende: /.test(hoja) ? 'atiende' : /^Ya compró con /.test(hoja) ? 'compro' : /^No se pudo consultar/.test(hoja) ? 'nose' : '?';
     const nomsH = (/^Atiende: (.*?)( \(Kommo no contestó todo\))?$/.exec(hoja) || ['', ''])[1].split(', ').filter(Boolean);
     porClase[kV + ' → ' + kP] = (porClase[kV + ' → ' + kP] || 0) + 1;
     if (r.incompleto && (kP === 'libre' || kHj === 'libre')) { R.libreConIncompleto++; mal('muestra ' + R.probados + ': Kommo no contestó todo y dice «Libre»'); }
-    const igualP = !r.incompleto && kP === kV && (kV !== 'atiende' || conj(nomsP) === conj(nomsV)) && (kV !== 'compro' || ganados.map(normN).indexOf(normN(Vp.compro.n)) >= 0);
-    const igualH = !r.incompleto && kHj === kV && (kV !== 'atiende' || conj(nomsH) === conj(nomsV)) && (kV !== 'compro' || ganados.map(normN).indexOf(normN(hoja.replace(/^Ya compró con /, ''))) >= 0);
-    if (r.incompleto || truncado) { /* no se compara: está dicho arriba */ }
+    const igualP = !incReal && kP === kV && (kV !== 'atiende' || conj(nomsP) === conj(nomsV)) && (kV !== 'compro' || ganados.map(normN).indexOf(normN(Vp.compro.n)) >= 0);
+    const igualH = !incReal && kHj === kV && (kV !== 'atiende' || conj(nomsH) === conj(nomsV)) && (kV !== 'compro' || ganados.map(normN).indexOf(normN(hoja.replace(/^Ya compró con /, '').replace(/ \(Kommo no contestó todo\)$/, ''))) >= 0);
+    if (incReal || truncado) { /* no se compara: está dicho arriba */ }
     else {
       if (igualP) R.pagIgual++; else { R.pagDist++; difs.push('muestra ' + R.probados + ' (' + el.grupo + '): la página dice ' + kP + '(' + nomsP.length + ') y la verdad ' + kV + '(' + nomsV.length + ')' + (kP === kV ? ' · otros nombres' : '') + ' · contactos ' + (cuH.contactos || 0) + ', leads ' + (cuH.leads || []).length + ', más leads ' + (cuH.masLeads || 0)); }
       if (igualH) R.hojaIgual++; else { R.hojaDist++; if (igualP) difs.push('muestra ' + R.probados + ' (' + el.grupo + '): la HOJA dice ' + kHj + '(' + nomsH.length + ') y la verdad ' + kV + '(' + nomsV.length + ')'); }
@@ -321,7 +324,7 @@ function main() {
       else mal('muestra ' + R.probados + ': la hoja (' + kHj + ', ' + nomsH.length + ') y el cartel (' + kP + ', ' + nomsP.length + ') no dicen lo mismo');
     }
     /* con el nombre de quien lo atiende (si es una sola), el cartel tiene que decir «lo atendés vos» */
-    if (!r.incompleto && kP === 'atiende' && nomsP.length === 1 && !/^usuario |^\(sin/.test(nomsP[0])) { R.tuyoN++; if (pag.qaVeredicto(JSON.parse(JSON.stringify(r)), nomsP[0]).k === 'tuyo') R.tuyoBien++; else R.tuyoMal++; }
+    if (!incReal && kP === 'atiende' && nomsP.length === 1 && !/^usuario |^\(sin/.test(nomsP[0])) { R.tuyoN++; if (pag.qaVeredicto(JSON.parse(JSON.stringify(r)), nomsP[0]).k === 'tuyo') R.tuyoBien++; else R.tuyoMal++; }
     /* la misma búsqueda seguida: de la caché, sin llamar a Kommo · y con 591, espacios y guiones: lo mismo */
     if (!r.incompleto) {
       const n0 = RED.n; let r2 = null; try { r2 = gs.quienAtiende_({ action: 'quienAtiende', cel: '+591 ' + c8.slice(0, 3) + '-' + c8.slice(3, 5) + ' ' + c8.slice(5), quien: 'Prueba de solo lectura' }); } catch (e) {}
@@ -331,7 +334,7 @@ function main() {
   }
   console.log('\n   números probados: ' + R.probados + ' (sin teléfono: ' + R.sinTel + ') · con más de un teléfono en el contacto: ' + R.masDeUnTel + ' · con 2+ contactos con ese número: ' + R.variosContactos + ' · que también están en Sueña: ' + R.enSuena);
   console.log('   la búsqueda NO encontró el lead de la muestra: ' + R.noEncuentra + (R.noEncuentra ? ' ⚠️' : ''));
-  console.log('   «Kommo no contestó todo» (incompleto): ' + R.incompletos + ' · de esos, dice «Libre»: ' + R.libreConIncompleto);
+  console.log('   «Kommo no contestó todo» (incompleto): ' + R.incompletos + ' · de esos, dice «Libre»: ' + R.libreConIncompleto + (R.sinToken ? ' · sin el token de Sueña en este repositorio (el servidor arreglado lo toma por «no se consultó todo» y no guarda en la caché): ' + R.sinToken + ' — se comparan igual, con «no se pudo saber» donde la verdad dice «libre»' : ''));
   console.log('   EL CARTEL (qaVeredicto de la página) contra la verdad: ' + R.pagIgual + ' iguales, ' + R.pagDist + ' distintos');
   console.log('   LA HOJA (qaResumen_ del servidor) contra la verdad: ' + R.hojaIgual + ' iguales, ' + R.hojaDist + ' distintos');
   console.log('   la hoja y el cartel dicen lo mismo: ' + R.hojaPag + ' de ' + (R.pagIgual + R.pagDist));
