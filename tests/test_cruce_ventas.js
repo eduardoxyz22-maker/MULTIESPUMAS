@@ -284,7 +284,7 @@ console.log('\n── 7. La plantilla ──');
   const pl = A.ctx.WA_PLANTILLAS.filter(x => x.n === 'asesora_cliente_compro')[0];
   const nums = pl ? (pl.t.match(/\{\{(\d+)\}\}/g) || []).map(x => Number(x.replace(/\D/g, ''))) : [];
   chk('a. existe, con los datos 1 a 7 y un ejemplo de 7', pl && Math.max.apply(null, nums) === 7 && new Set(nums).size === 7 && pl.e.length === 7, nums);
-  chk('b. WA_TIPOS.cx la nombra y la versión es la 2026-11-20-c', A.ctx.WA_TIPOS.cx && A.ctx.WA_TIPOS.cx.plantilla === 'asesora_cliente_compro' && A.ctx.SCRIPT_VERSION === '2026-11-20-c' && A.ctx.FIN_DEL_ARCHIVO === '2026-11-20-c');
+  chk('b. WA_TIPOS.cx la nombra y la versión es la 2026-11-20-c o una posterior', A.ctx.WA_TIPOS.cx && A.ctx.WA_TIPOS.cx.plantilla === 'asesora_cliente_compro' && A.ctx.SCRIPT_VERSION >= '2026-11-20-c' && A.ctx.FIN_DEL_ARCHIVO === A.ctx.SCRIPT_VERSION);
   const lleno = pl.t.replace(/\{\{(\d+)\}\}/g, (_, i) => pl.e[i - 1]);
   chk('c. el cuerpo lleno entra en 1.000 letras', lleno.length < 1000, lleno.length);
 }
