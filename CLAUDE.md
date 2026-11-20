@@ -1033,6 +1033,17 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
   `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
 
+## 📞 «¿Quién lo atiende?» (20/11; dueño, con la Comunicación Interna 032-2026: *«un buscador donde coloquen un número de teléfono y salga si otro asesor lo está atendiendo»*; servidor `2026-11-20-a` IMPLEMENTADO 20/11 por el dueño, enlace fijo `aafde03…`, 13.650 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 17-d de `0078708…`; página PUBLICADA 20/11, versión 2026-11-20-a)
+Pestaña `#tab-qa` / `#view-qa`: la vendedora escribe un celular (o nombre y apellido) y el servidor (`quienAtiende_`, SIN candado, solo LEE Kommo de
+Heaven y Sueña) devuelve los leads, de quién son, la última conversación y las tareas; la página (`qaVeredicto`) decide el cartel. **Regla del dueño**:
+15 días (`QA_DIAS`) desde la última conversación = un mensaje del cliente Y uno de una persona (no el bot) a ≤ 24 h (`QA_PAR_H`); una tarea abierta de
+una persona a ≤ 90 días la mantiene; lead perdido no retiene; etapa de compra («Compradores»/«COMPRO» o 142) con «Fecha contrato» ≤ 15 días = «Ya compró»
+(si además conversa, «Lo está atendiendo»). Los mensajes se piden POR CONTACTO (por lead Kommo da 204). **Nunca «Libre» si algo quedó incompleto**
+(una cuenta sin token, `/users` caído, topes): «no se pudo saber». Por nombre: todas las palabras a Kommo, hasta 4 páginas, un cartel por cliente con el
+final de su celular. Tope de 80 por persona y día (propiedad `QA_DIA`); cada consulta queda en la hoja «Quién atiende». Playwright solo con `QA_PRUEBA`.
+Prueba contra el Kommo real (solo lectura, solo cantidades en el registro): Actions → «Probar ¿Quién lo atiende? contra Kommo» (`herramientas/probar_quien_atiende.js`;
+el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_quien_atiende.js` (61). Dos revisiones de Fable (20/11).
+
 ## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
 Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón
