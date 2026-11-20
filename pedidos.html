@@ -7836,6 +7836,13 @@ tr.tj-otro td{ background:#fff7e6; } tr.tj-otro small{ color:#b45309; }
 .cruce-form{ margin:-4px 0 14px; background:#fffbeb; border:1px solid #fcd34d; border-left:5px solid #d97706; border-radius:10px; padding:9px 12px; font-size:.82rem; color:#451a03; line-height:1.4; }
 .cruce-form b{ color:#78350f; }
 .cruce-form .cruce-s{ display:block; color:#92400e; font-size:.76rem; margin-top:2px; }
+.cruce-form .cruce-rev{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:7px; }
+.cruce-form .cruce-rev button{ width:auto; min-height:34px; padding:5px 12px; font-size:.78rem; font-weight:700; border-radius:8px; border:1px solid #d97706; background:#fff; color:#78350f; cursor:pointer; }
+.cruce-form .cruce-rev .cruce-ok{ color:#065f46; font-weight:700; font-size:.78rem; }
+.crv-it{ border:1px solid #e5e7eb; border-left:4px solid #d97706; border-radius:10px; padding:9px 12px; margin:0 0 9px; background:#fff; color:#1f2937; font-size:.84rem; }
+.crv-it .crv-s{ display:block; color:#6b7280; font-size:.76rem; margin-top:2px; }
+.crv-it .crv-b{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.crv-it .crv-b .btn{ width:auto; }
 @media print{ .cruce-form{ display:none!important; } }
 .atc-otra{ margin:-4px 0 14px; background:#fff7ed; border:1px solid #fdba74; border-left:5px solid #ea580c; border-radius:10px; padding:9px 12px; font-size:.8rem; color:#431407; }
 .atc-otra-t span{ color:#9a3412; font-size:.74rem; }
@@ -13345,8 +13352,10 @@ function heredarMarcas(nuevos, viejos){
   var oiaV=null; (viejos||[]).some(function(x){ if(x && x.oia && Array.isArray(x.oia.a)){ oiaV=x.oia; return true; } return false; });
   /* 📄 (20/11) …y el PDF del pedido del cliente (`opdf`): es del pedido. */
   var opdfV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.opdf) && x.opdf.length){ opdfV=x.opdf; return true; } return false; });
+  /* 🔎 (20/11) …y el pedido de revisión de de quién es el cliente (`crv`): es del pedido. */
+  var crvV=null; (viejos||[]).some(function(x){ if(x && x.crv && x.crv.t){ crvV=x.crv; return true; } return false; });
   var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
-    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); if(opdfV && !(Array.isArray(x.opdf) && x.opdf.length)) x.opdf=JSON.parse(JSON.stringify(opdfV)); return x; };
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); if(opdfV && !(Array.isArray(x.opdf) && x.opdf.length)) x.opdf=JSON.parse(JSON.stringify(opdfV)); if(crvV && !(x.crv && x.crv.t)) x.crv=JSON.parse(JSON.stringify(crvV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -27072,6 +27081,7 @@ function submitPedido(){
      se tocaron — y nadie se enteraba. Se les devuelven las marcas a los que quedaron
      IGUALES; el que la vendedora cambió las pierde a propósito: hay que revisarlo de nuevo. */
   if(isEdit && prev) productos=heredarMarcas(productos, prev.productos);
+  try{ cruceRevPoner(productos); }catch(e){}   // 🔎 (20/11) la vendedora pidió revisar de quién es el cliente
 
   /* ---- El historial de pagos comparte campo con el método ----
      Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
@@ -35802,6 +35812,8 @@ function admHacerDatos(){
   try{ add(ubfHacer()); }catch(e){}
   // 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» con un toque
   try{ add(rdHacer()); }catch(e){}
+  // 🔎 (20/11) las vendedoras que pidieron revisar de quién es el cliente (aviso de cruce del formulario)
+  try{ add(crvHacer()); }catch(e){}
   // 🧠 (16/11, mejora 360) lo escrito a mano que el stock no reconoce, con lo que propone Claude
   try{ add(iapHacer()); }catch(e){}
   // ✅ cierre de entregas
@@ -72196,7 +72208,7 @@ function qaVeredicto(r, yo){
    En una venta NUEVA (OC, no al editar) de una vendedora de Heaven o Sueña, con el celular completo: la MISMA consulta y la MISMA regla de la
    pestaña «¿Quién lo atiende?» (quienAtiende + qaVeredicto). Nunca frena Guardar. En Playwright apagado salvo CRUCE_PRUEBA. */
 var CRUCE_SERVIDOR='2026-11-20-c', CRUCE_ESPERA_MS=900, CRUCE_MEMO_MS=5*60000, CRUCE_REINT_MS=6000, CRUCE_REINT_MAX=2;
-var CRUCE_F={ k:'', r:null, busy:false, t:0, gen:0, n:0 };
+var CRUCE_F={ k:'', r:null, busy:false, t:0, gen:0, n:0, pide:'', pideT:0 };
 var CRUCE_MEMO={};   // c8 → {r, ms}: el mismo celular, para otra vendedora o al volver a escribirlo, no se le vuelve a preguntar a Kommo (Fable 6)
 function cruceFormVa(){ try{ return !navigator.webdriver || !!window.CRUCE_PRUEBA; }catch(e){ return true; } }
 /** Lo que se mira ahora: {c8, v, mk} o null (no corresponde). Una venta nueva, o un borrador de Kommo que se está completando (Fable 1). */
@@ -72228,10 +72240,10 @@ function cruceCuentaFalla(r, mk){
 function cruceFormPintar(){
   var box=document.getElementById('cruce-form'); if(!box) return;
   var q=cruceFormQue(), k=q ? q.c8+'|'+normNombre(q.v) : '';
-  if(!q){ box.hidden=true; box.innerHTML=''; box._h=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
+  if(!q){ box.hidden=true; box.innerHTML=''; box._h=''; CRUCE_F.k=''; CRUCE_F.r=null; CRUCE_F.pide=''; clearTimeout(CRUCE_F.t); return; }
   if(k!==CRUCE_F.k){
     clearTimeout(CRUCE_F.t);   // (revisión 2 de Fable) lo programado para el número de antes no corre
-    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; box.hidden=true; box.innerHTML=''; box._h='';
+    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; CRUCE_F.pide=''; box.hidden=true; box.innerHTML=''; box._h='';
     var m=CRUCE_MEMO[q.c8];
     /* (revisión 4 de Fable) La memoria es por celular y sirve a las dos marcas: se usa solo si la cuenta de ESTA marca vino bien. */
     if(m && Date.now()-m.ms<CRUCE_MEMO_MS && !cruceCuentaFalla(m.r, q.mk)) CRUCE_F.r=m.r;
@@ -72245,10 +72257,77 @@ function cruceFormPintar(){
     return o.por==='fecha' ? esc(o.n)+' tiene una fecha acordada con el cliente para el '+esc(qaFecha(o.ts)) : esc(o.n)+' conversó con el cliente el '+esc(qaFecha(o.ts))+' ('+qaHace(o.ts, o.ahora)+')';
   }).join(' · ');
   var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' se le avisa por WhatsApp que su cliente compró y que la venta la cargaste vos.' : '';
-  var h='⚠️ <b>Este cliente lo está atendiendo '+esc(nombres)+'</b> (según Kommo, en los últimos '+QA_DIAS+' días). '+
-        '<span class="cruce-s">'+det+'.</span><span class="cruce-s">Podés seguir con la venta: no se frena nada.'+wa+'</span>';
+  /* (dueño, 20/11) «Puede ser de»: que haya mensajes en Kommo no prueba que lo atendió de verdad → la vendedora puede pedir revisión
+     (queda en Administración al guardar la venta, `crv`). */
+  var pidio=CRUCE_F.pide===k;
+  var h='⚠️ <b>Este cliente puede ser de '+esc(nombres)+'</b> (según Kommo, en los últimos '+QA_DIAS+' días). '+
+        '<span class="cruce-s">'+det+'. Que haya mensajes no significa que lo haya atendido de verdad.</span>'+
+        '<span class="cruce-s">Podés seguir con la venta: no se frena nada.'+wa+'</span>'+
+        '<span class="cruce-rev">'+(pidio
+          ? '<span class="cruce-ok">✓ Vas a pedir revisión: al guardar la venta queda en Administración para que decidan de quién es el cliente.</span><button type="button" onclick="cruceRevPedir(false)">Deshacer</button>'
+          : '<button type="button" onclick="cruceRevPedir(true)">🔎 Pedir revisión</button><span class="cruce-s" style="margin:0">si creés que el cliente es tuyo</span>')+'</span>';
   if(box._h!==h){ box.innerHTML=h; box._h=h; }
   box.hidden=false;
+}
+/** 🔎 (dueño, 20/11: «puedes pedir revisión») La vendedora pide que Administración decida de quién es el cliente. No guarda nada todavía:
+    queda marcado para ESTE celular y vendedora, y `cruceRevPoner` lo escribe en la venta al guardarla. */
+function cruceRevPedir(on){
+  var q=cruceFormQue(); if(!q) return;
+  var k=q.c8+'|'+normNombre(q.v);
+  if(on){ CRUCE_F.pide=k; CRUCE_F.pideT=Date.now(); } else CRUCE_F.pide='';
+  var box=document.getElementById('cruce-form'); if(box) box._h='';
+  cruceFormPintar();
+}
+/** Al guardar (desde `submitPedido`): si se pidió revisión para este celular y vendedora, y Kommo nombra a alguien, deja `crv` en el
+    primer producto (es del pedido: `heredarMarcas` lo conserva). Se puede correr dos veces (las preguntas del guardado lo repiten). */
+function cruceRevPoner(productos){
+  var q=cruceFormQue(); if(!q || !productos || !productos.length) return;
+  var k=q.c8+'|'+normNombre(q.v); if(CRUCE_F.pide!==k || !CRUCE_F.r) return;
+  var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return;
+  productos[0].crv={ t:CRUCE_F.pideT||Date.now(), por:q.v, de:L.map(function(o){ return o.n; }),
+    det:L.map(function(o){ return o.n+(o.por==='fecha' ? (': fecha acordada el '+qaFecha(o.ts)) : (': conversó el '+qaFecha(o.ts))); }).join(' · ').slice(0,300) };
+}
+/** El pedido de revisión de una venta (el primero que aparezca en sus productos). */
+function crvDe(p){ var pr=(p && p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && pr[i].crv && pr[i].crv.t) return pr[i].crv; return null; }
+/** Las que esperan que Administración decida (sin `r`), de la más vieja a la más nueva. */
+function crvLista(){
+  return (STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p)) return false; var c=crvDe(p); return !!(c && !c.r); })
+    .sort(function(a,b){ return (crvDe(a).t||0)-(crvDe(b).t||0); });
+}
+function crvHacer(){
+  if(typeof UNLOCKED==='undefined' || !UNLOCKED) return null;
+  var L=crvLista(); if(!L.length) return null;
+  var nom=L.slice(0,3).map(function(p){ var c=crvDe(p); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(c.por||'?')+' / '+(c.de||[]).join(', ')+')'; }).join(', ')+(L.length>3?(' y '+(L.length-3)+' más'):'');
+  return { k:'crv', sev:'a', ic:'🔎', n:L.length, t:(L.length===1?'Una vendedora pide':'Vendedoras piden')+' revisar de quién es el cliente', s:nom, b:'🔎 Revisar', fn:'crvAbrir()', tag:'revisar cliente' };
+}
+function crvItemHtml(p){
+  var c=crvDe(p), id=String(p.id).replace(/'/g,'');
+  var bot='<button type="button" class="btn btn-sm" onclick="crvResolver(\''+id+'\',\''+esc(String(c.por||'').replace(/'/g,''))+'\')">Es de '+esc(c.por||'quien vendió')+'</button>'+
+    (c.de||[]).map(function(n){ return '<button type="button" class="btn btn-sm btn-ghost" onclick="crvResolver(\''+id+'\',\''+esc(String(n).replace(/'/g,''))+'\')">Es de '+esc(n)+'</button>'; }).join('')+
+    '<button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button>';
+  return '<div class="crv-it"><b>'+esc(ocEtiq(p.oc))+' · '+esc(String(p.cliente||'—').trim())+'</b>'+
+    '<span class="crv-s">La vendió <b>'+esc(c.por||'—')+'</b> · pidió revisión el '+esc(fmtFechaCorta(isoDeTsBolivia(c.t)))+'</span>'+
+    '<span class="crv-s">Según Kommo: '+esc(c.det||(c.de||[]).join(', '))+'</span>'+
+    '<div class="crv-b">'+bot+'</div></div>';
+}
+function crvAbrir(){
+  var L=crvLista();
+  openModal('<div class="modal-h"><h3>🔎 ¿De quién es el cliente?</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b crv-modal"><p class="crv-s" style="margin:0 0 10px">La vendedora cargó la venta y pidió revisión porque, según Kommo, otra asesora había hablado con el cliente. Elegí de quién es. Solo queda anotado: no cambia la vendedora de la venta ni las comisiones.</p>'+
+    (L.length ? L.map(crvItemHtml).join('') : '<p class="rd-vacio">✅ No queda ningún pedido de revisión.</p>')+
+    '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div></div>');
+}
+function crvAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.crv-modal')); }
+/** Administración decide: anota quién (`r`), cuándo (`rt`) y quién lo decidió (`rq`) en la venta. Solo con la contraseña. */
+function crvResolver(id, quien){
+  if(typeof UNLOCKED==='undefined' || !UNLOCKED){ toast('Para decidir hace falta la contraseña de Administración.', 'err'); return; }
+  var p=findById(id); if(!p || !crvDe(p)){ toast('Ese pedido ya no está.', 'err'); return; }
+  var n=JSON.parse(JSON.stringify(p)), t=Date.now(), rq=quienEdita()||'Administración';
+  (n.productos||[]).forEach(function(x){ if(x && x.crv && x.crv.t){ x.crv.r=String(quien||'').slice(0,60); x.crv.rt=t; x.crv.rq=String(rq).slice(0,60); } });
+  persistPedido(n);
+  toast('Anotado: el cliente es de '+quien+'.', 'ok');
+  try{ admHacerPintar(); }catch(e){}
+  try{ if(crvAbierta()) crvAbrir(); }catch(e){}
 }
 /** Si falló (red, Kommo, tope, todavía sin saber la versión del servidor), lo vuelve a intentar unas veces (Fable 5); nunca frena la venta. */
 function cruceFormReintentar(k){

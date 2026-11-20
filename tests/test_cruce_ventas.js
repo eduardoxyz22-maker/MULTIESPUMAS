@@ -293,13 +293,13 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     EDIT_ID = 'x1'; cruceFormPintar(); out.editando = box.hidden;
     return out;
   }, ahora);
-  chk('⚠️ 8a. Isabel con el celular de una clienta de Carola: el cartel lo dice y avisa que a Carola le llega un WhatsApp', /lo está atendiendo Carola Chavez/.test(res.isabel) && /no se frena nada/.test(res.isabel) && /WhatsApp/.test(res.isabel), res.isabel);
+  chk('⚠️ 8a. Isabel con el celular de una clienta de Carola: el cartel lo dice y avisa que a Carola le llega un WhatsApp', /puede ser de Carola Chavez/.test(res.isabel) && /no se frena nada/.test(res.isabel) && /WhatsApp/.test(res.isabel), res.isabel);
   chk('8b. si la que carga es Carola: nada', res.carola === '', res.carola);
   chk('8c. si la que carga es de la otra marca (Mauricio): nada', res.mauricio === '', res.mauricio);
   chk('8d. al editar un pedido: nada', res.editando === true);
   chk('8f. la consulta del formulario va con `auto` (tope aparte) y el mismo celular no se vuelve a preguntar al cambiar de vendedora', res.auto && res.llamadasTotal === 1, res);
-  const g = await pg.evaluate(() => { return { boton:!!document.querySelector('#cruce-form button'), guarda:typeof submitPedido === 'function' }; });
-  chk('8e. el cartel no tiene botones ni frena: solo avisa', !g.boton && g.guarda);
+  const g = await pg.evaluate(async () => { EDIT_ID = null; cruceFormPintar(); await new Promise(r => setTimeout(r, 300)); var bs = Array.from(document.querySelectorAll('#cruce-form button')).map(b => b.textContent.trim()); return { bs:bs, guarda:typeof submitPedido === 'function' }; });
+  chk('8e. el cartel no frena: su único botón es «Pedir revisión»', g.bs.length === 1 && /Pedir revisión/.test(g.bs[0]) && g.guarda, g.bs);
 
   /* Segunda revisión de Fable: el borrador de Kommo (vive en BORRADORES), lo incompleto, el tope y el número que cambia */
   const r2 = await pg.evaluate(async (ahora) => {
@@ -345,7 +345,41 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     out.cambia = cels.slice();
     return out;
   }, ahora);
-  chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /lo está atendiendo Carola Chavez/.test(r2.borrador), r2.borrador);
+  /* (dueño, 20/11) «puede ser de…» y «pedir revisión» → la lista de Administración */
+  const r3 = await pg.evaluate(async (ahora) => {
+    var espera = (ms) => new Promise(r => setTimeout(r, ms));
+    var set = function (id, v) { var e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles:true })); };
+    window.apiPost = function (b) { if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] });
+      return Promise.resolve({ ok:true, ahora:ahora, cuentas:[{ marca:'heaven', contactos:1, leads:[{ id:'71', resp:'Carola Chavez', pares:[{ ts:ahora - 3 * 86400 + 7200, desde:ahora - 3 * 86400 + 7200, quien:'Carola Chavez' }] }] }] }); };
+    resetForm(); CRUCE_MEMO = {}; CRUCE_F.k = ''; window.CRUCE_ESPERA_MS = 10;
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70011188'); await espera(200);
+    var box = document.getElementById('cruce-form'), out = { txt:box.textContent };
+    var P0 = [{ desc:'COLCHON', cant:1 }]; cruceRevPoner(P0); out.sinPedir = !P0[0].crv;
+    box.querySelector('button').click(); await espera(30);
+    out.pedido = box.textContent;
+    var P1 = [{ desc:'COLCHON', cant:1 }, { desc:'SOMIER', cant:1 }]; cruceRevPoner(P1); out.crv = P1[0].crv || null;
+    var her = heredarMarcas([{ desc:'COLCHON', cant:1 }], P1); out.hereda = !!(her[0].crv && her[0].crv.por === 'Isabel Robledo');
+    set('f-celular', '70011199'); await espera(30); var P2 = [{ desc:'X', cant:1 }]; cruceRevPoner(P2); out.otroCel = !P2[0].crv;
+    /* Administración */
+    var ped = { id:'crvP1', oc:'11-777', fecha:'2026-11-25', vendedor:'Isabel Robledo', cliente:'CLIENTA INVENTADA', celular:'70011188', productos:P1, rev:3, ts:Date.now() };
+    STATE.push(ped);
+    UNLOCKED = false; out.sinClave = crvHacer() === null;
+    UNLOCKED = true; var H = crvHacer(); out.hacer = H && H.n === 1 ? H.t : null;
+    var guardados = []; window.guardarDurable = function (p) { guardados.push(JSON.parse(JSON.stringify(p))); return Promise.resolve({ ok:true }); };
+    crvAbrir(); out.lista = (document.querySelector('#modal-box .crv-modal') || {}).textContent || '';
+    crvResolver('crvP1', 'Carola Chavez');
+    out.resuelto = guardados.length ? crvDe(guardados[0]) : null;
+    out.despues = crvHacer() === null;
+    try { closeModal(); } catch (e) {}
+    return out;
+  }, ahora);
+  chk('⚠️ 8k. el cartel dice «puede ser de» y que tener mensajes no prueba que lo atendió', /puede ser de Carola Chavez/.test(r3.txt) && /no significa que lo haya atendido/.test(r3.txt), r3.txt);
+  chk('8l. sin tocar «Pedir revisión» no se anota nada en la venta', r3.sinPedir);
+  chk('⚠️ 8m. «Pedir revisión» lo confirma en el cartel y al guardar deja `crv` (quién vendió, a quién nombra Kommo) en la venta', /Vas a pedir revisión/.test(r3.pedido) && r3.crv && r3.crv.por === 'Isabel Robledo' && r3.crv.de[0] === 'Carola Chavez' && /conversó/.test(r3.crv.det), r3.crv);
+  chk('8n. al corregir la venta el pedido de revisión se conserva; con otro celular no se pide', r3.hereda && r3.otroCel, { hereda:r3.hereda, otro:r3.otroCel });
+  chk('⚠️ 8o. Administración (solo con la contraseña) lo ve en «Para hacer» y en la lista', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacer || '') && /CLIENTA INVENTADA/.test(r3.lista) && /Es de Carola Chavez/.test(r3.lista) && /Es de Isabel Robledo/.test(r3.lista), { sin:r3.sinClave, hacer:r3.hacer });
+  chk('8p. «Es de Carola Chavez» lo anota en la venta (sin cambiar la vendedora) y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);
+  chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /puede ser de Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
   chk('8h2. Heaven contestó bien y Sueña está caída: una sola consulta (la otra marca no hace reintentar)', r2.otraMarca === 1, r2.otraMarca);
   chk('8h3. con ese mismo celular, una vendedora de Sueña no usa la memoria con Sueña caída: vuelve a preguntar', r2.otraMarcaSuena >= 2, r2.otraMarcaSuena);
