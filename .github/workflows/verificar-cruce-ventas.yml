@@ -1,0 +1,38 @@
+name: Verificar cruces de ventas (solo lectura)
+
+# 🔀 (20/11, dueño: «si otro asesor lo está atendiendo, le salga la alerta… procedamos a verificar») Antes de programar la alerta al cargar
+# un pedido, mide con lo de verdad cuántas ventas de los últimos días habrían sacado «lo atiende otra»: cada venta del panel pasa por el
+# MISMO «¿Quién lo atiende?» (quienAtiende_ del .gs + qaVeredicto de la página) con el reloj en el momento en que se cargó.
+# SOLO LECTURA: a Kommo solo GET y al panel solo la lectura. ⚠️ El registro es PÚBLICO: solo cantidades y nombres de vendedoras.
+on:
+  workflow_dispatch:
+    inputs:
+      dias:
+        description: 'Ventas de los últimos N días (máx. 15)'
+        required: false
+        default: '14'
+  push:
+    paths:
+      - 'herramientas/verificar_cruce_ventas.js'
+      - '.github/workflows/verificar-cruce-ventas.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verificar-cruce-ventas
+  cancel-in-progress: false
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cada venta contra Kommo, en el momento en que se cargó
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+          KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
+          CRUCE_DIAS: ${{ github.event.inputs.dias || '14' }}
+        run: node herramientas/verificar_cruce_ventas.js
