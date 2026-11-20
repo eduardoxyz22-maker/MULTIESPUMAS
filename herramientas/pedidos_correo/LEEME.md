@@ -25,6 +25,12 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
    dueño (13/11, OC 260013258: *«roho solo hay que facturarlo ya lo facturé»*). No se carga ni se le pregunta: basta con nombrarla en el resumen.
 2. Por cada PDF de pedido: `get_message` con `messageFormat: "RAW"` → el resultado queda en un archivo JSON →
    `python3 -I extraer_pdf.py <ese_json> <carpeta_nueva_en_el_scratchpad>` → leer los `.txt`.
+   📄 **El PDF va adjunto al pedido** (20/11, dueño: *«cada vez que entre y cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el
+   PDF para que Ernesto lo pueda descargar… en el pedido en el panel»*): en el JSON de cada pedido de **Multicenter y Tienda Amiga** va
+   `"pdf": "<carpeta>/adjunto_N.pdf"` (el de ESA orden). Con `--guardar` el script lo sube a la carpeta «PDF de pedidos MultiEspumas» del
+   Drive del panel (acción `pdfPedido`, servidor ≥ 2026-11-20-b) y queda en la ficha del pedido con «⬇️ Descargar». El resumen dice
+   `"pdf_en_el_pedido": true`; si no pudo (servidor viejo, archivo raro), el pedido se carga igual y la nota lo dice: avisarlo en el resumen.
+   Los demás clientes (ROHO, Copacaba, Luis Franco) no lo llevan: el dueño no lo pidió.
 3. 📦 **El stock, antes de la fecha** (17/11, dueño: *«igual si es por falta de stock debes aclararle porque se movió para X días»*): con el JSON
    armado, bajar la planilla (`python3 -I -c "import sys;sys.path.insert(0,'.');sys.argv=['x'];import cargar_pedidos as c,json;json.dump(c.leer(),open('<carpeta>/planilla.json','w'))"`)
    y correr `node stock_check.js <pedidos.json> <planilla.json>`: la MISMA cuenta del cuadrito del formulario (Excel del día, lo vendido

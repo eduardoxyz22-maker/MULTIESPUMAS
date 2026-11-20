@@ -11356,7 +11356,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-20-a';   // (20/11, 11-20-a) 📞 «¿Quién lo atiende?» (quienAtiende) · antes: (16/11, 11-16-a) 💬 el chat del equipo, 🤖 Claude lee las observaciones, las fotos de las ATC y la nota contra los precios, 🧠 el porqué de la semana, la mano del equipo, las ATC, los productos y el stock de la semana, 🏆 el bono Titanio con la foto del lunes · antes: (15/11, 11-15-a) 💳 el voucher de la tarjeta trae el lote, la autorización y el banco del POS (mejora 331: la página los muestra y compara solo con esta versión); el cierre del día con la meta y las tiendas, por qué se movió la proyección, el cierre del mes, Black Friday y las preguntas del dueño (332, 336, 339, 340, 341)
+var SCRIPT_VERSION_ESPERADA='2026-11-20-a';   // (20/11, 11-20-b: el PDF del pedido del cliente lo sube la revisión de correos; la página solo lo muestra y anda con la 20-a) (20/11, 11-20-a) 📞 «¿Quién lo atiende?» (quienAtiende) · antes: (16/11, 11-16-a) 💬 el chat del equipo, 🤖 Claude lee las observaciones, las fotos de las ATC y la nota contra los precios, 🧠 el porqué de la semana, la mano del equipo, las ATC, los productos y el stock de la semana, 🏆 el bono Titanio con la foto del lunes · antes: (15/11, 11-15-a) 💳 el voucher de la tarjeta trae el lote, la autorización y el banco del POS (mejora 331: la página los muestra y compara solo con esta versión); el cierre del día con la meta y las tiendas, por qué se movió la proyección, el cierre del mes, Black Friday y las preguntas del dueño (332, 336, 339, 340, 341)
 // antes:   // (14/11, 11-14-b) 🏬 la tienda del mall: los toques del mostrador y la rueda (mallToque/mallLeer), cupos de más (__cupos_extra__), apartar el lugar mientras se cobra (apartarCupo), la caja de Ventura (__caja_tienda__ con sello), la venta grande al dueño, las cotizaciones (cotGuardar/cotMarcar/cotLeer) y el bot de las 48 h (apagado: COT_BOT)
 // antes:   // (14/11, 11-14-a) 🧾 «Leer la nota» (mejora 216) y 📅 el cliente elige el día nuevo por el bot (mejora 217): los dos botones aparecen solo con esta versión · (13/11, 11-13-b) 🛰️📚 «🚚 Entregas por camión» pide `gpsHist` (cómo le fue a cada camión según el GPS: la hoja «Historial GPS») solo con esta versión · 🏭⏳ lo vencido de los mayoristas, los lunes a las 08:00 a Contabilidad (solo el servidor) · (13/11, 11-13-a) 🪶 las almohadas no cuentan como productos en el cierre del día · (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
 // antes: '2026-11-07-d' (07/11) 🎙️ al que le manda un audio al bot, le recuerda que es un asistente automático; el cierre con productos y el botón
@@ -13337,8 +13337,10 @@ function heredarMarcas(nuevos, viejos){
   /* 🤖📌 (16/11, mejoras 345 y 349) …y lo que quedó «para después» en la nota (`cmp`) y lo que Claude dijo tarde (`oia`): son del pedido. */
   var cmpV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.cmp) && x.cmp.length){ cmpV=x.cmp; return true; } return false; });
   var oiaV=null; (viejos||[]).some(function(x){ if(x && x.oia && Array.isArray(x.oia.a)){ oiaV=x.oia; return true; } return false; });
+  /* 📄 (20/11) …y el PDF del pedido del cliente (`opdf`): es del pedido. */
+  var opdfV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.opdf) && x.opdf.length){ opdfV=x.opdf; return true; } return false; });
   var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
-    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); return x; };
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); if(opdfV && !(Array.isArray(x.opdf) && x.opdf.length)) x.opdf=JSON.parse(JSON.stringify(opdfV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
@@ -13927,6 +13929,30 @@ function pedHistDatos(p){
 function phxCuando(e){
   if(e.sinHora || !isFinite(e.t)) return 'sin hora';
   return e.h ? entTs(e.t) : fmtFechaCorta(e.dia||isoDeTsBolivia(e.t));
+}
+/* 📄 (20/11, dueño: «cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo pueda descargar…
+   en el pedido en el panel») La revisión de correos sube el PDF de la orden de compra del cliente a Drive (servidor 2026-11-20-b, acción
+   `pdfPedido`, carpeta «PDF de pedidos MultiEspumas») y deja `opdf` = [{i: id del archivo, n: nombre}] adentro de los productos (es del
+   pedido, como `fmov`: `heredarMarcas` lo pasa). La ficha lo muestra con «Ver» y «Descargar». Solo lee. */
+function pdfPedidoDe(p){
+  var out=[], vistos={};
+  (Array.isArray(p && p.productos) ? p.productos : []).forEach(function(x){
+    (x && Array.isArray(x.opdf) ? x.opdf : []).forEach(function(f){
+      var id=String((f && f.i) || '').replace(/[^\w-]/g,'');
+      if(id && !vistos[id]){ vistos[id]=1; out.push({ i:id, n:String((f && f.n) || 'pedido.pdf') }); }
+    });
+  });
+  return out;
+}
+function pdfPedidoHtml(p){
+  var L=pdfPedidoDe(p);
+  if(!L.length) return '';
+  return '<div class="opdf">'+L.map(function(f){
+    var ver='https://drive.google.com/file/d/'+encodeURIComponent(f.i)+'/view', baj='https://drive.google.com/uc?export=download&id='+encodeURIComponent(f.i);
+    return '<div class="opdf-r"><span class="opdf-ico" aria-hidden="true">📄</span><span class="opdf-t"><b>PDF del pedido del cliente</b><span class="opdf-n">'+esc(f.n)+'</span></span>'+
+      '<a class="btn btn-sm btn-ghost opdf-b" href="'+ver+'" target="_blank" rel="noopener">👁 Ver</a>'+
+      '<a class="btn btn-sm opdf-b opdf-d" href="'+baj+'" target="_blank" rel="noopener">⬇️ Descargar</a></div>';
+  }).join('')+'</div>';
 }
 function pedHistHtml(p){
   if(!pedHistVe() || !p) return '';
@@ -46216,7 +46242,7 @@ function misAnchaFichaHtml(p, o){
     '<div class="modal-b cta-anc">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+o.alertas+
       (noSeCobra(p) ? '' : ctaK3Html(p, contaFaltaCobrar(p)))+
       '<div class="cta-g"><section class="cta-c1">'+izq+'</section><section class="cta-c2">'+der+'</section></div>'+
-      entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+certBloqueHtml(p)+
+      pdfPedidoHtml(p)+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+certBloqueHtml(p)+
       '<div class="modal-actions" style="margin-top:16px">'+
         misCobrarBtnHtml(p, 'btn btn-sm', 'ficha')+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
@@ -46292,7 +46318,7 @@ function showMisModal(id){
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+
       ((misVeNota() && p.nota && !esATC(p.oc) && !esRPT(p.oc)) ? (' · Nota '+esc(p.nota)) : '')+   // (07/10) solo a Eduardo
     '</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
+    '<div class="modal-b">'+clfVolverHtml(p.id)+pedidoViajeHtml(p)+alertas+body+fleteSec+ubicSec+pdfPedidoHtml(p)+entHistHtml(p)+pedHistHtml(p)+botonesRpt(p)+clfBotonHtml(p, 'mis')+   // 🛤️ (§4im)
       certBloqueHtml(p)+   // 🛡️ (14/11, 264) el certificado de garantía
       '<div class="modal-actions" style="margin-top:16px">'+
         misCobrarBtnHtml(p, 'btn btn-sm', 'ficha')+   // 💵 (295) la ficha de Contabilidad, ya en «💵 Pago»
@@ -61985,7 +62011,7 @@ function showPedidoModal(id){
   var nav=(vec && vec.n>1) ? ('<div class="fl-nav">'+navB(vec.prev,-1)+'<span class="fl-navt">'+vec.i+' de '+vec.n+' · '+esc(nxDiaTxt(p.fecha))+'</span>'+navB(vec.next,1)+'</div>') : '';
   var html='<div class="modal-h fl-h"><h3>'+(atc?'ATC':rpt?'Reposición':'Pedido')+(p.oc?(' N° '+esc(p.oc)):'')+'</h3>'+nav+'<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b fl-b">'+clfVolverHtml(p.id)+((REV_VOLVER && REV_VOLVER.id===String(p.id)) ? '<button type="button" id="rev-volver" class="btn btn-ghost btn-sm" style="width:auto;margin-bottom:10px" onclick="revVolver()">← Volver a la revisión</button>' : '')+   // 👆 (19/10, §4ls PA-9)
-      top+modHtml+rdFichaHtml(p)+fichaQueHacer(p, N, ret)+atcFichaBoxHtml(p)+   // 📅 (14/11, mejora 217) el cliente pidió otro día por el bot · 🎧 (19/11) la ATC
+      top+modHtml+pdfPedidoHtml(p)+rdFichaHtml(p)+fichaQueHacer(p, N, ret)+atcFichaBoxHtml(p)+   // 📅 (14/11, mejora 217) el cliente pidió otro día por el bot · 🎧 (19/11) la ATC
       /* (24/10, dueño con un dibujo: «optimizar aún más el espacio») dos columnas desde arriba: a la izquierda «Antes de cargar» + lo que
          se carga; a la derecha dónde + camión. Así no queda el hueco debajo de los productos. */
       '<div class="fl-g"><div class="fl-izq">'+obsHtml+colCarga+'</div><div class="fl-lado">'+colDonde+colCamion+'</div></div>'+stockHtml+
@@ -70789,7 +70815,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-20-a';
+var PANEL_V='2026-11-20-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -82452,6 +82478,16 @@ function vdIniciar(){
 .qa-panel{ border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; background:#f8fafc; color:#1f2937; }
 .qa-panel-t{ font-weight:700; margin-bottom:6px; } .qa-p{ display:flex; gap:8px; font-size:.86rem; padding:3px 0; flex-wrap:wrap; } .qa-p span{ color:#475569; }
 .qa-regla{ margin-top:16px; font-size:.86rem; color:#334155; } .qa-regla summary{ cursor:pointer; font-weight:700; } .qa-regla ul{ margin:8px 0 4px 18px; padding:0; display:flex; flex-direction:column; gap:4px; }
+
+/* 📄 (20/11) El PDF del pedido del cliente en la ficha */
+.opdf{display:flex;flex-direction:column;gap:6px;margin:8px 0 10px}
+.opdf-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:9px 12px;border:1px solid #fecaca;border-left:4px solid #dc2626;border-radius:10px;background:#fff7f7;color:#1f2937}
+.opdf-ico{font-size:1.4rem;line-height:1}
+.opdf-t{display:flex;flex-direction:column;min-width:0;flex:1 1 180px}
+.opdf-t b{font-size:.86rem}
+.opdf-n{font-size:.74rem;color:#6b7280;overflow-wrap:anywhere}
+.opdf-b{width:auto!important;text-decoration:none}
+.opdf-d{background:#dc2626!important;color:#fff!important;font-weight:700}
 </style>
 <script>
 /* ---------------------------------------------------------------------------

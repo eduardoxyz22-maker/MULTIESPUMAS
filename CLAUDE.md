@@ -1044,6 +1044,14 @@ final de su celular. Tope de 80 por persona y día (propiedad `QA_DIA`); cada co
 Prueba contra el Kommo real (solo lectura, solo cantidades en el registro): Actions → «Probar ¿Quién lo atiende? contra Kommo» (`herramientas/probar_quien_atiende.js`;
 el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_quien_atiende.js` (61). Dos revisiones de Fable (20/11).
 
+## 📄 El PDF del pedido del cliente en la ficha (20/11; dueño: *«cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo pueda descargar… en el pedido en el panel»*; servidor `2026-11-20-b` lo implementa el dueño; página 2026-11-20-b en la rama)
+La revisión de correos pone `"pdf": "<ruta>"` en el JSON de cada pedido de Multicenter y Tienda Amiga; `cargar_pedidos.py` (`subir_pdf`, solo con
+servidor ≥ 20-b) lo sube con la acción **`pdfPedido`** (`guardarPdfPedido_`: solo `%PDF`, ≤ 10 MB, carpeta APARTE «PDF de pedidos MultiEspumas»
+—la de fotos la barre `barrerFotosHuerfanas`—, id en `PDF_PEDIDOS_FOLDER_ID`, visible con el enlace) y deja `opdf` = [{i, n}] en el primer producto.
+La página solo lo muestra (`pdfPedidoHtml`: «👁 Ver» y «⬇️ Descargar» en la ficha de Administración y la de Mis pedidos) y anda con la 20-a;
+`heredarMarcas` lo conserva al editar. ⚠️ `post` del cargador manda el cuerpo por la entrada estándar (un argumento de Linux corta en 128 KB).
+`test_servidor` §28, `tests/test_pdf_pedido.js` (7).
+
 ## 🧾 ROHO: ningún pedido sin el nombre del cliente (§4qc, 16/11; dueño: *«algunos pedidos salen sin nombre de cliente siendo que están… gravísimo si no tomas todos los datos… cómo no vuelva a pasar»*; PUBLICADO 16/11 con la 2026-11-16-a)
 El sábado 15/11, 21:37-21:47, entraron 18 pedidos de ROHO con el cliente, el celular, la dirección, el NIT y «quién recibe» VACÍOS (todo K-R).
 Con el Excel del dueño (`_7`) el importador publicado y el de la rama leen las 54 notas con nombre: esa carga no vino de ese archivo por el botón

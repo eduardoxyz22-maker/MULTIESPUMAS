@@ -32,9 +32,10 @@ Uso:  python3 -I cargar_pedidos.py <pedidos.json>            (solo muestra lo qu
 Formato de cada pedido del JSON:
   {"clave": "33278", "cliente": "MULTICENTER", "fecha": "2026-11-09", "turno": "PM", "celular": "", "zona": "SUR",
    "direccion": "...", "nota": "33278", "facturarA": "", "observaciones": "...", "total_impreso": 4275,
-   "productos": [{"desc": "COLCHON TITANIO ICE", "medida": "140x190", "codigo": "CH1220", "cant": 1, "precio": 4275}]}
+   "productos": [{"desc": "COLCHON TITANIO ICE", "medida": "140x190", "codigo": "CH1220", "cant": 1, "precio": 4275}],
+   "pdf": "<ruta del PDF de la orden>"}   ← opcional (Multicenter, Tienda Amiga): se sube y queda en el pedido para descargarlo
 """
-import json, re, sys, time, random, datetime, subprocess, unicodedata
+import base64, json, re, sys, time, random, datetime, subprocess, unicodedata
 
 URL = "https://script.google.com/macros/s/AKfycbw3IUxaRvdpvFJOzbuZ78CZIlZNWzMnKbdb91hD27vZfemnWs64fIOYs1-0SV0b8aYkQQ/exec"
 BO = datetime.timezone(datetime.timedelta(hours=-4))
@@ -44,9 +45,11 @@ REINTENTA = ('cupos_llenos', 'dia_cerrado', 'feriado')
 
 def post(body):
     for intento in range(3):
+        # El cuerpo va por la entrada estándar (`--data-binary @-`): un PDF en base64 no entra en un solo argumento (Linux corta
+        # cada argumento en 128 KB).
         r = subprocess.run(["curl", "-sS", "-L", "--max-time", "120", "-H", "Content-Type: text/plain;charset=utf-8",
-                            "-d", json.dumps(body, ensure_ascii=False), URL + "?_=%d" % int(time.time() * 1000)],
-                           capture_output=True, text=True)
+                            "--data-binary", "@-", URL + "?_=%d" % int(time.time() * 1000)],
+                           input=json.dumps(body, ensure_ascii=False), capture_output=True, text=True)
         try:
             return json.loads(r.stdout)
         except Exception:
@@ -76,11 +79,41 @@ def hoy_bo():
     return datetime.datetime.now(BO).date()
 
 
+SERVIDOR = {"v": ""}
+
+
 def leer():
     r = post({"action": "list"})
     if not r.get('ok', True) or 'pedidos' not in r:
         raise SystemExit('No se pudo leer la planilla: ' + json.dumps(r)[:300])
+    SERVIDOR["v"] = str(r.get('version') or SERVIDOR["v"])
     return r['pedidos']
+
+
+PDF_SERVIDOR = '2026-11-20-b'
+PDF_MAX = 10 * 1024 * 1024
+
+
+def subir_pdf(ruta, cliente, clave):
+    """📄 (20/11, dueño: «cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo
+    pueda descargar… en el pedido en el panel») Sube el PDF de la orden del cliente a la carpeta «PDF de pedidos MultiEspumas»
+    (acción `pdfPedido`, servidor ≥ 2026-11-20-b) y devuelve (`{"i": id, "n": nombre}`, None) o (None, motivo)."""
+    if SERVIDOR["v"] < PDF_SERVIDOR:
+        return None, 'el servidor del panel (%s) todavía no guarda PDF: falta implementar la %s' % (SERVIDOR["v"] or '¿?', PDF_SERVIDOR)
+    try:
+        datos = open(ruta, 'rb').read()
+    except Exception as e:
+        return None, 'no se pudo leer el PDF (%s)' % e
+    if not datos.startswith(b'%PDF'):
+        return None, 'el archivo no es un PDF'
+    if len(datos) > PDF_MAX:
+        return None, 'el PDF pesa más de 10 MB'
+    nombre = re.sub(r'[^\w.\- ]+', '', ruta.replace('\\', '/').split('/')[-1])[:80] or 'pedido.pdf'
+    r = post({"action": "pdfPedido", "dataUrl": "data:application/pdf;base64," + base64.b64encode(datos).decode('ascii'),
+              "cliente": cliente, "oc": clave, "nombre": nombre})
+    if r.get('ok') and r.get('fileId'):
+        return {"i": r['fileId'], "n": r.get('nombre') or nombre}, None
+    return None, 'el servidor no guardó el PDF: ' + str(r.get('error') or r)[:120]
 
 
 def next_oc(P):
@@ -249,8 +282,17 @@ def main():
         notas = rec.pop('_notas', [])
         if not guardar:
             resumen.append({"clave": clave, "resultado": "se cargaría", "oc": rec['oc'], "fecha": rec['fecha'],
-                            "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps']), "notas": notas})
+                            "turno": rec['turno'], "total": rec['saldo'], "lugar_guardado": bool(rec['maps']), "notas": notas,
+                            **({"pdf": d['pdf']} if d.get('pdf') else {})})
             continue
+        # 📄 (20/11) El PDF de la orden del cliente (`"pdf": "<ruta>"` en el JSON) se sube ANTES de guardar y queda en el primer
+        # producto como `opdf` (la ficha del panel lo muestra con «⬇️ Descargar»; `heredarMarcas` lo conserva al editar).
+        if d.get('pdf'):
+            f, motivo = subir_pdf(str(d['pdf']), str(rec.get('cliente') or ''), clave)
+            if f:
+                rec['productos'][0]['opdf'] = [f]
+            else:
+                notas.append('📄 El PDF no quedó en el pedido: ' + motivo + '.')
         pedida = rec['fecha']
         turno0 = rec['turno']
         res = None
@@ -301,7 +343,9 @@ def main():
             g = res.get('pedido') or {}
             resumen.append({"clave": clave, "resultado": "CARGADO", "oc": g.get('oc') or rec['oc'], "fecha": rec['fecha'],
                             "turno": rec['turno'], "nroDia": g.get('nroDia') or rec['nroDia'], "total": rec['saldo'],
-                            "pedida": pedida, "lugar_guardado": bool(rec['maps']), "notas": notas, **({"dia_lleno_forzado": forzado} if forzado else {})})
+                            "pedida": pedida, "lugar_guardado": bool(rec['maps']), "notas": notas,
+                            "pdf_en_el_pedido": bool(rec['productos'][0].get('opdf')),
+                            **({"dia_lleno_forzado": forzado} if forzado else {})})
         else:
             resumen.append({"clave": clave, "resultado": "NO cargado", "error": (res or {}).get('error'), "detalle": res})
         time.sleep(2)
