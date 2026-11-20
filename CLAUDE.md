@@ -3124,6 +3124,12 @@ Salieron de mirar SOLO octubre (`scratchpad/reales`, el dueño rechazó 34-73 po
   `KOMMO_TOKEN_SUENA` de una integración privada nueva; enlace fijo `0078708…`, 13.295 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 17-b
   de `b6ca309…`). Sin ese token la de Sueña no hace nada. ▶️ `probarKommoEscribeSuena` desde el editor. ⚠️ Un camino NUEVO que hable con Kommo
   para una venta de Sueña pone `KC_CTA='suena'` y lo devuelve en `finally`. `test_kommo_cierre` §10.
+- **91 en Sueña, la BANDEJA** (`.gs` 2026-11-20-b, 20/11; dueño: *«¿por qué a los de Sueña no les caza sus ventas en Kommo como a los de Heaven?»*): el
+  repaso de cada 5 min (`kommoRepaso`) miraba SOLO el Kommo de Heaven. Ahora además `kommoRepasoSuena_` (con `KOMMO_TOKEN_SUENA`; `KOMMO_SUENA_BANDEJA=0` lo
+  apaga) trae los leads de Sueña en «COMPRO» (etapa y embudo de `kcMeta_`) y arma el borrador con KC_CTA='suena': `kGet_` va a ese Kommo con su token,
+  el teléfono por `field_code` PHONE (`kCampoCod_`), el precio por PRICE, la dirección por el nombre del campo (`kCampoNom_`), la vendedora con
+  `kSuenaVendedor_` (KC_SUENA_USUARIOS). Mismas reglas de no duplicar. El resumen va en `KOMMO_REPASO_ULTIMO.suena` (solo cantidades). Mira las últimas
+  `KOMMO_REPASO_MIN` (6 h): lo de antes de implementar no entra. ▶️ `probarKommoSuenaBandeja` (solo lee). `test_kommo_cierre` §11.
 - **Bot**: 97 `logistica_hoy_falta` 08:45 (la de las 16:00 ya no sale) · 102 vigía de leads en `waRepaso` → `WA_DUENO`
   (propiedad nueva) · 105 `__reclamo_fab__` (en `esFilaSistema`; Playwright solo `RECLAMO_FAB_PRUEBA`) → `reclamo_fabrica` 10:00 · 108 la
   ubicación del cliente = `&wa=1` (`esUbicWa`), «Bot WhatsApp» tiene 17 columnas (Q = ubicación).
