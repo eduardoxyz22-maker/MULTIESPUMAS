@@ -60319,6 +60319,10 @@ function rohoPartirCombo(desc){
 var ROHO_IMP=null;   // lo leído del Excel, esperando que alguien confirme
 var ROHO_TURNO='AM';
 var ROHO_VIEJOS=false;
+/* 📅 (20/11, dueño: «ese botón debería dejar cargar para un día que decida logística, no importa si está lleno; que puedan igual y muestre
+   29/15 si hace falta») `ROHO_FECHA` = el día que eligió logística para TODOS (vacío = la fecha de cada nota del Excel). Un turno lleno o un
+   día cerrado se carga igual, forzado (como Administración con la clave), y la vista previa dice cuántos quedan contra el cupo («29/15»). */
+var ROHO_FECHA='';
 var ROHO_CREANDO=false;      // 🧾 (16/11) «📥 Crear» no corre dos veces a la vez (un doble toque armaba dos tandas en paralelo)
 var ROHO_COMPLETANDO=false;
 
@@ -60333,7 +60337,7 @@ function onRohoArchivo(ev){
     var filas=xlsxHoja(archivos);
     var r=rohoArmarPedidos(filas);
     if(r.error){ toast('❌ '+r.error,'err',15000); return; }
-    ROHO_IMP=r; ROHO_TURNO='AM'; ROHO_VIEJOS=false; ROHO_CREANDO=false;
+    ROHO_IMP=r; ROHO_TURNO='AM'; ROHO_VIEJOS=false; ROHO_CREANDO=false; ROHO_FECHA='';
     renderImportRoho();
   }).catch(function(e){
     toast('❌ No se pudo leer el archivo: '+(e&&e.message?e.message:'error'),'err',8000);
@@ -60583,8 +60587,17 @@ function rohoCompletar(){
 /* Los que se van a crear con lo que está elegido ahora. */
 function rohoElegidos(){
   if(!ROHO_IMP) return [];
-  return ROHO_IMP.nuevos.concat(ROHO_VIEJOS?ROHO_IMP.viejos:[]);
+  var L=ROHO_IMP.nuevos.concat((ROHO_VIEJOS || ROHO_FECHA)?ROHO_IMP.viejos:[]);   // con un día elegido por logística, también las de fechas que ya pasaron
+  if(!ROHO_FECHA) return L;
+  return L.map(function(p){ var q=Object.assign({}, p); q.fechaExcel=p.fecha; q.fecha=ROHO_FECHA; return q; });
 }
+function rohoSetFecha(v){
+  v=String(v||'').trim();
+  if(v && v<todayStr()){ toast('Elegí hoy o un día que viene.','err'); v=''; }
+  ROHO_FECHA=v; renderImportRoho();
+}
+/** ¿Este pedido va a un turno sin lugar o a un día cerrado? Entonces se guarda forzado. */
+function rohoForzar(f, t){ return diaCerrado(f) || cuposUsadosTurno(f, t)>=limTurno(f, t); }
 function rohoSetTurno(t){ ROHO_TURNO=t; renderImportRoho(); }
 function rohoToggleViejos(){ ROHO_VIEJOS=!ROHO_VIEJOS; renderImportRoho(); }
 function renderImportRoho(){
@@ -60599,13 +60612,16 @@ function renderImportRoho(){
   var porDia={}; elegidos.forEach(function(p){ porDia[p.fecha]=(porDia[p.fecha]||0)+1; });
   var avisosDia=Object.keys(porDia).sort().map(function(f){
     var lim=limTurno(f,ROHO_TURNO), usados=cuposUsadosTurno(f,ROHO_TURNO), libre=Math.max(0,lim-usados);
-    var n=porDia[f];
+    var n=porDia[f], igual=' · <b>se cargan igual</b>', cer=diaCerrado(f) ? ' · el día está cerrado' : '';
     if(feriadoDe(f)) return '<b>'+fmtFecha(f)+'</b>: es feriado ('+esc(feriadoDe(f))+') y el camión no sale · '+n+' pedidos';   // §4gy
     if(ROHO_TURNO==='repartir'){
-      var libreT=Math.max(0,limTurno(f,'AM')-cuposUsadosTurno(f,'AM'))+Math.max(0,limTurno(f,'PM')-cuposUsadosTurno(f,'PM'));
-      return n>libreT ? ('<b>'+fmtFecha(f)+'</b>: '+n+' pedidos y quedan '+libreT+' cupos en todo el día') : '';
+      var lA=limTurno(f,'AM'), lP=limTurno(f,'PM'), uA=cuposUsadosTurno(f,'AM'), uP=cuposUsadosTurno(f,'PM'), libreT=Math.max(0,lA-uA)+Math.max(0,lP-uP);
+      if(n<=libreT && !cer) return '';
+      var aA=Math.max(0, Math.min(n, lA-uA)), aP=lP>0 ? n-aA : 0; if(!lP) aA=n;   // se llena la mañana y después la tarde (como al crear)
+      return '<b>'+fmtFecha(f)+'</b>: quedarían 🌅 '+(uA+aA)+'/'+lA+(lP?(' · 🌆 '+(uP+aP)+'/'+lP):'')+' ('+n+' pedidos y quedan '+libreT+' cupos)'+cer+igual;
     }
-    return n>libre ? ('<b>'+fmtFecha(f)+'</b>: '+n+' pedidos al turno '+ROHO_TURNO+' y quedan '+libre+' cupos') : '';
+    if(n<=libre && !cer) return '';
+    return '<b>'+fmtFecha(f)+'</b> turno '+ROHO_TURNO+': quedarían <b>'+(usados+n)+'/'+lim+'</b> ('+n+' pedidos y quedan '+libre+' cupos)'+cer+igual;
   }).filter(function(x){ return x; });
 
   var tb=function(k,l){ return '<button type="button" class="btn btn-sm" style="'+(ROHO_TURNO===k?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="rohoSetTurno(\''+k+'\')">'+l+'</button>'; };
@@ -60636,10 +60652,10 @@ function renderImportRoho(){
     '<div class="modal-b roho-md">'+
       '<p style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Leí <b>'+R.filas+'</b> líneas del Excel. Esto es lo que va a pasar — <b>todavía no se guardó nada</b>.</p>'+
       '<div class="metrics roho-met">'+mc('#6d28d9','Se crean',elegidos.length,'pedidos nuevos')+mc('#0f766e','Ya estaban',R.yaEstan.length,'misma nota: se saltean')+   // ✨ (§4kc)
-        mc(R.viejos.length?'#b45309':'#94a3b8','Para días pasados',R.viejos.length,ROHO_VIEJOS?'se traen también':'no se traen')+
+        mc(R.viejos.length?'#b45309':'#94a3b8','Para días pasados',R.viejos.length,ROHO_FECHA?'van al día elegido':(ROHO_VIEJOS?'se traen también':'no se traen'))+
         mc((R.sinFecha.length||(R.malos&&R.malos.length))?'#c0392b':'#94a3b8','No se pueden',R.sinFecha.length+((R.malos&&R.malos.length)||0),'sin fecha o con un dato ilegible')+'</div>'+
       '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:10px 13px">'+
-        lin('✅ <b>'+R.nuevos.length+'</b> pedido'+(R.nuevos.length===1?'':'s')+' nuevo'+(R.nuevos.length===1?'':'s')+' para entregar del <b>'+esc(fmtFecha(tomorrowStr()))+'</b> en adelante')+
+        lin('✅ <b>'+R.nuevos.length+'</b> pedido'+(R.nuevos.length===1?'':'s')+' nuevo'+(R.nuevos.length===1?'':'s')+(ROHO_FECHA ? (' para entregar el <b>'+esc(fmtFecha(ROHO_FECHA))+'</b> (el día que elegiste)') : (' para entregar del <b>'+esc(fmtFecha(tomorrowStr()))+'</b> en adelante')))+
         (R.yaEstan.length?lin('↩️ <b>'+R.yaEstan.length+'</b> ya estaban cargados — se saltean (misma nota)'):'')+
         (R.viejos.length?lin('🕓 <b>'+R.viejos.length+'</b> para hoy o para días que ya pasaron'):'')+
         (R.sinFecha.length?lin('⚠️ <b>'+R.sinFecha.length+'</b> sin fecha de entrega — no se pueden importar'):'')+
@@ -60654,10 +60670,14 @@ function renderImportRoho(){
         (R.malos.length>6?('<br>… y '+(R.malos.length-6)+' más'):'')+'</div>'):'')+
       rohoCompletarHtml(R)+
       rohoColumnasHtml(R)+
-      (R.viejos.length?('<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.82rem;cursor:pointer">'+
+      ((R.viejos.length && !ROHO_FECHA)?('<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.82rem;cursor:pointer">'+
         '<input type="checkbox" '+(ROHO_VIEJOS?'checked':'')+' onchange="rohoToggleViejos()" style="margin-top:3px">'+
         '<span>Traer también las <b>'+R.viejos.length+'</b> de hoy o de antes (la más vieja: '+esc(fmtFecha(R.viejos.map(function(p){return p.fecha;}).sort()[0]))+'). '+
         '<span style="color:var(--muted)">El camión de esos días ya salió, así que no van a entrar en ninguna ruta: solo sirve si querés tenerlas registradas.</span></span></label>'):'')+
+      '<div style="margin-top:12px"><label class="lb" for="roho-fecha">📅 Día de entrega</label>'+
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input type="date" id="roho-fecha" min="'+todayStr()+'" value="'+esc(ROHO_FECHA)+'" onchange="rohoSetFecha(this.value)" style="width:auto">'+
+        (ROHO_FECHA ? '<button type="button" class="btn btn-sm btn-ghost" onclick="rohoSetFecha(\'\')">Usar la fecha de cada nota</button>' : '')+'</div>'+
+        '<div style="font-size:.76rem;color:var(--muted);margin-top:5px">'+(ROHO_FECHA ? ('Todos se cargan para el <b>'+esc(fmtFecha(ROHO_FECHA))+'</b>, aunque el turno esté lleno.') : 'Vacío: cada pedido va a la fecha de su nota en el Excel. Si elegís un día, todos van a ese día aunque esté lleno.')+'</div></div>'+
       '<div style="margin-top:12px"><label class="lb">Turno de entrega</label>'+
         '<div class="roho-seg" style="display:flex;gap:6px;flex-wrap:wrap">'+tb('AM','🌅 Todos AM')+tb('PM','🌆 Todos PM')+tb('repartir','⚖️ Repartir AM/PM')+'</div>'+
         '<div style="font-size:.76rem;color:var(--muted);margin-top:5px">El Excel de ROHO no dice el turno. Se puede cambiar después, pedido por pedido.</div></div>'+
@@ -60683,6 +60703,8 @@ function confirmarImportRoho(){
   var lista=rohoElegidos();
   if(!lista.length){ toast('No hay nada para importar.','err'); return; }
   if(ROHO_CREANDO){ toast('⏳ Ya se están creando los pedidos: esperá a que termine.','err'); return; }
+  /* 📅 (20/11) Un turno lleno o un día cerrado se fuerza: con la clave del servidor puesta, hace falta la de administración. */
+  if(lista.some(function(p){ return rohoForzar(p.fecha, ROHO_TURNO==='repartir' ? 'PM' : ROHO_TURNO); }) && !asegurarClaveAdmin(function(){ confirmarImportRoho(); })) return;
   ROHO_CREANDO=true;
   try{ var _bc=document.querySelector('#modal-box .roho-crear'); if(_bc){ _bc.disabled=true; _bc.style.opacity='.5'; } }catch(e){}
   var prog=document.getElementById('roho-progreso');
@@ -60733,8 +60755,11 @@ function confirmarImportRoho(){
        Sin planilla conectada no hay a dónde mandarlo: queda en este dispositivo y en la
        cola. Antes se contaba como creado y la pantalla afirmaba «ya está en la planilla»,
        que era falso. Ahora va a `pendientes` y se dice lo que es. */
-    if(!CONNECTED){ queuePending(rec); pendientes.push(rec); setTimeout(uno,0); return; }
-    apiSave(rec).then(function(res){
+    var _fz=rohoForzar(rec.fecha, rec.turno);
+    if(_fz){ try{ STATE=STATE.filter(function(x){ return x.id!==rec.id; }); _fz=rohoForzar(rec.fecha, rec.turno); upsert(rec); }catch(e){} }   // se cuenta SIN el propio
+    var _colaFz=function(){ if(!_fz) return; try{ var q=getPending().filter(function(x){ return x && x.id===rec.id; })[0]; if(q) forzarColaAnotar(rec.id, JSON.stringify(q)); }catch(e){} };   // en la cola sigue forzado
+    if(!CONNECTED){ queuePending(rec); _colaFz(); pendientes.push(rec); setTimeout(uno,0); return; }
+    apiSave(rec, _fz ? { forzar:true } : undefined).then(function(res){
       if(res && res.ok){ creados.push(rec); }
       else{
         STATE=STATE.filter(function(x){ return x.id!==rec.id; });
@@ -60752,7 +60777,7 @@ function confirmarImportRoho(){
       /* Se cayó la red (o falta la clave del equipo): el pedido NO llegó al servidor.
          Queda en la cola y se manda solo al reconectar — pero NO se cuenta como creado:
          nadie puede decir que ocupa lugar en el camión hasta que el servidor lo acepte. */
-      queuePending(rec); pendientes.push(rec); setTimeout(uno,0);
+      queuePending(rec); _colaFz(); pendientes.push(rec); setTimeout(uno,0);
     });
   };
   uno();
