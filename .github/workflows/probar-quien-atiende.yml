@@ -1,0 +1,34 @@
+name: Probar ¿Quién lo atiende? contra Kommo (solo lectura)
+
+# 📞 (20/11, segunda revisión) Corre el `quienAtiende_` REAL de google-apps-script.gs (en Node, con la hoja y la caché de mentira)
+# para una muestra de números y nombres de los mensajes recientes de Kommo y lo compara con una verdad armada aparte
+# (todos los mensajes de chat de la cuenta, cada lead de a uno, todas las tareas abiertas). SOLO LECTURA: únicamente GET.
+#
+# ⚠️ El repositorio es PÚBLICO y este registro también: el script no imprime textos de mensajes, nombres, teléfonos ni ids de
+#    clientes o leads, ni nombres de usuarios de Kommo. Solo cantidades y si coincide o no.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/probar_quien_atiende.js'
+      - '.github/workflows/probar-quien-atiende.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probar-quien-atiende
+  cancel-in-progress: false
+
+jobs:
+  probar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preguntarle a Kommo (solo lectura)
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+          KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
+        run: node herramientas/probar_quien_atiende.js
