@@ -693,7 +693,7 @@ los almacenes»*. Codex (PDF del 05/10) marcó el camino en cuatro etapas; hecha
 - **✅ Un pedido entregado que se mueve a otro día no se entregó** (§4lo, 16/10, dueño eligió la «F»; PUBLICADO 16/10 11:10, `92d08ff`): `entregadoSeMueve(p, f,
   desde)` = ✅, no ATC ni venta de tienda, fecha nueva distinta y **≥ hoy** → `entregadoDeshacer` (sin ✅ ni `eF/eT/eQ`). 📅 Reprogramar y
   ✏️ Editar PREGUNTAN antes (`entregadoMueveTxt`; Cancelar no toca/no guarda); `reproAplicar` (cierre, adelanto) lo aplica solo. A un día que
-  ya pasó = corregir el registro: queda ✅. Destildar a mano (`toggleEntregado`, `quickEntregado`, `choEntregado`) y guardar un pedido no
+  ya pasó = corregir el registro: queda ✅. (21/11, Fable) De la mañana a la TARDE del mismo día también pierde el ✅ (`entregadoSeMueve(p, f, desde, t, tDesde)`); de la tarde a la mañana, no. Destildar a mano (`toggleEntregado`, `quickEntregado`, `choEntregado`) y guardar un pedido no
   entregado sacan el registro del cierre (`entregaRegistroBorrar`: su `eF` manda en las salidas del stock). **`heredarMarcas`** pasa
   `prodU/prodC/prodRm` (misma cantidad, como `prodF/prodR`) y el registro del cierre a TODOS los renglones. `tests/test_reprogramar_entregado.js`
   (26; 18 rojas contra `6a55598`).
@@ -1548,7 +1548,7 @@ en una línea. `tests/test_ficha_auto.js`.
   el botón que toca), `atcCargaHtml` en vez de los botones de stock, `atcChicaLinea` en la chica. ✋ **Desde `ATC_RECOJO_A_MANO_DESDE` (20/11) el
   recojo NO se da por hecho porque pasó el día** (`atcFueRecogida`): lo marca logística, y `atcTrasRecoger` abre `abrirProgramarDevAtc(id,
   {trasRecoger})` con «Más tarde» (`pdevMasTarde`). `cierreEntGps` no propone el recojo (la devolución sí). Los recojos de antes del 20/11 siguen
-  con la regla vieja (§4bs). 📅 **El vendedor agenda el recojo de una ATC solo lunes o martes** (`ATC_DIAS_RECOJO`, `atcDiaMal` en `submitPedido`;
+  con la regla vieja (§4bs). 🚚 En «Salió el camión» el recojo NO viene tildado (`salioRecojoAMano`; 21/11, Fable) y lo recogido ofrece «🔁 Programar devolución» en el resultado (`atcRecogidosHtml`, también en el cierre; `tests/test_logistica_fable_21.js`). 📅 **El vendedor agenda el recojo de una ATC solo lunes o martes** (`ATC_DIAS_RECOJO`, `atcDiaMal` en `submitPedido`;
   con la clave de Administración pregunta; la devolución no se mira). En Playwright: `ATC_RECOGER_PRUEBA`, `ATC_DIA_PRUEBA`. `tests/test_atc_admin.js` (35).
 
 ## 🔎 La auditoría de Astra (27/10) y la revalidación de Codex (28/10) (§4nl, 28/10, PUBLICADO `bb9fa20`; batería 279 suites · 8.945 · 0 mal)
@@ -1732,6 +1732,11 @@ lo de Codex»*. La escena 3D de Codex (`7941fec`) se sacó entera, con sus archi
   cargado de cada uno, y la Lista de carga separa con `cargaSeccionesHtml(o, fecha, k, t)` (cartel `.carga-turno` solo si hay tarde: un
   camión solo de la mañana se ve como siempre). `depCargado`, `cv3dPedidos` y `textoCargaChk` usan el turno del pedido (`normTurno`).
   ⚠️ Todo lo que lea un tilde de carga de un producto tiene que pasar el turno. `tests/test_carga_turnos.js` (16).
+  📦 **La tilde recuerda cuántas unidades se tildaron** (21/11, revisión de Fable): al tildar se anota además `<clave>|#<unidades>`
+  (`cargaChkPoner`, `cargaChkTotal` con las cuentas de `cargaVivaDatos`); si la línea tiene MÁS (entró otro pedido igual al mismo camión),
+  `isCargaChk` dice que no y hay que volver a tildar. Sin cantidad (tildes de antes o de una página vieja) vale como siempre. `adelantoTildesAM`
+  pasa a la mañana lo cargado + lo de ese pedido. ⚠️ Una tilde nueva de producto va por `setCargaChk`/`cargaChkPoner`, nunca `CARGA_CHK[k]=1`
+  a mano. `tests/test_carga_cantidad.js` (12).
 - **🚛 En 3D, por camión (§4jq, 10/10, PUBLICADA 16:21, `e497b11`; dueño: *«publica y veamos»*)**: con `CV_3D` (prendido salvo `me_cv3d`=0; APAGADO en Playwright)
   la imagen se reemplaza por la escena 3D (`cv3dConstruir`: camión en su andén con lo cargado, un montacargas por producto que falta,
   Sin vehículo, Banzer, Moreno) y el panel oscuro por **una ficha clara por camión** abajo (`cv3dColsPintar`, `#cv-cols`) con los

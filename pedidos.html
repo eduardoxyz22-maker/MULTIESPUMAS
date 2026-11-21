@@ -27967,7 +27967,7 @@ function submitPedido(){
   /* ✅ (16/10, §4lo) Un pedido ENTREGADO que se pasa desde ✏️ Editar a hoy o más adelante no se entregó: se pregunta y pierde el ✅
      (ver `entregadoSeMueve`). Cancelar deja el formulario como está, sin guardar. Y un pedido que no está entregado no lleva el
      registro del cierre (`eF`, que manda en las salidas del stock, quedaba de un ✅ destildado). */
-  if(isEdit && prev && entregadoSeMueve(rec, rec.fecha, prev.fecha)){
+  if(isEdit && prev && entregadoSeMueve(rec, rec.fecha, prev.fecha, rec.turno, prev.turno)){
     if(!preguntaYa(entregadoMueveTxt(prev, rec.fecha),
          { lineas:['Si lo pasás al '+fmtFecha(rec.fecha)+' es porque no se entregó: se le saca el ✅ y vuelve a «sin entregar».',
                    'El chofer lo ve, entra al cierre de ese día y el bot le avisa el día nuevo al cliente, como en cualquier cambio.'],
@@ -38934,7 +38934,7 @@ function reproConfirmar(){
     return;
   }
   var avisos=reproAvisos(p,f,t);
-  var _saleEnt=entregadoSeMueve(p, f);
+  var _saleEnt=entregadoSeMueve(p, f, null, t);
   if(_saleEnt){   // ✅ (16/10, §4lo)
     var _ce=cierreEntDe(p);
     if(!preguntaYa(entregadoMueveTxt(p, f), { icono:'✅', aviso:true, titulo:'Este pedido figura ENTREGADO: ¿pasarlo al '+fmtFecha(f)+'?',
@@ -38961,10 +38961,15 @@ function reproConfirmar(){
    daba por salidos. Ahora, movido a HOY o más adelante, pierde el ✅ y el registro del cierre (preguntando antes donde hay una
    persona). Movido a un día que YA PASÓ es corregir el registro: queda ✅. La ATC y la venta de tienda quedan afuera: el ✅ de
    una ATC es el recojo o la devolución (`atcAlMarcarEntregado`) y la venta de tienda no tiene día. */
-function entregadoSeMueve(p, f, desde){
+/* (21/11, revisión de Fable) También el MISMO día de la mañana a la TARDE: si no salió a la mañana, no se entregó (`t` el turno nuevo,
+   `tDesde` el de antes). De la tarde a la mañana no: es corregir el registro (salió antes). */
+function entregadoSeMueve(p, f, desde, t, tDesde){
   var d=(desde!=null) ? desde : (p && p.fecha);
   f=String(f||'');
-  return !!(p && p.entregado && !esATC(p.oc) && !esVentaTienda(p) && /^\d{4}-\d{2}-\d{2}$/.test(f) && f!==String(d||'') && f>=todayStr());
+  if(!(p && p.entregado && !esATC(p.oc) && !esVentaTienda(p) && /^\d{4}-\d{2}-\d{2}$/.test(f) && f>=todayStr())) return false;
+  if(f!==String(d||'')) return true;
+  var ta=normTurno(tDesde!=null ? tDesde : p.turno), tn=normTurno(t);
+  return !!t && ta!=='PM' && tn==='PM';
 }
 function entregaRegistroBorrar(p){ ((p && p.productos)||[]).forEach(function(x){ if(x){ delete x.eF; delete x.eT; delete x.eQ; } }); }
 function entregadoDeshacer(p){ if(!p) return; if(p.entregado) entDonde('📅 cambio de fecha (Reprogramar o Editar)'); p.entregado=false; entregaRegistroBorrar(p); }
@@ -38978,7 +38983,7 @@ function entregadoMueveTxt(p, f){
    que vive en su devolución la sigue, y con avisos confirmados va con `forzar`. Devuelve la promesa del guardado. */
 function reproAplicar(p, f, t, forzar, extra){
   var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
-  if(entregadoSeMueve(p, f)) entregadoDeshacer(p);   // ✅ (16/10, §4lo) movido a otro día: no se entregó
+  if(entregadoSeMueve(p, f, null, t)) entregadoDeshacer(p);   // ✅ (16/10, §4lo) movido a otro día (o a la tarde del mismo): no se entregó
   if(f!==p.fecha){ if(p.fecha && fmovPuede(p)) setFmov(p, fmovDe(p)+1); p.fecha=f; p.nroDia=nextNroDia(f); }   // 📅 (§4ok-96) una vez más que se mueve
   p.turno=t;
   atcSeguirViaje(p, _enDev);
@@ -39072,7 +39077,57 @@ function loadCargaMirror(){
   try{ var o=JSON.parse(localStorage.getItem(LS_CARGA)||'{}'); CARGA_CHK=(o&&typeof o==='object')?o:{}; }catch(e){ CARGA_CHK={}; }
 }
 function getCargaChk(){ return CARGA_CHK; }
-function isCargaChk(k){ return !!CARGA_CHK[k]; }
+/* 📦 (21/11, revisión de Fable: «la tilde no guarda cuántas se tildaron») Una tilde vale por TODAS las unidades de ese producto en ese camión,
+   día y turno; si después se suma otro pedido igual al mismo camión, la línea quedaba «cargada» entera (y «🚚 Ya salió» a la mañana pasaba
+   a la mañana también el pedido que nadie cargó, con «en camino» al cliente). Ahora al tildar se anota además cuántas había (una tilde más,
+   `<clave>|#<unidades>`, que viaja y se poda con las otras; una página vieja la ignora): si hoy la línea tiene MÁS, ya no está cargada y hay
+   que volver a tildarla. Una tilde sin cantidad (de antes o de una página vieja) vale como siempre. */
+var CARGA_QTY_SEP='|#', CARGA_TOT_MEMO={ g:-1, m:{} };
+function cargaChkQtyKeys(k){
+  var pre=k+CARGA_QTY_SEP;
+  return Object.keys(CARGA_CHK).filter(function(x){ return x.indexOf(pre)===0 && /^\d+$/.test(x.slice(pre.length)); });
+}
+function cargaChkQty(k){
+  var ks=cargaChkQtyKeys(k); if(!ks.length) return null;
+  var m=0; ks.forEach(function(x){ m=Math.max(m, Number(x.slice(k.length+CARGA_QTY_SEP.length))||0); });
+  return m;
+}
+/* Las unidades de hoy de la línea de esa clave (las mismas cuentas de `cargaVivaDatos`), o null si no es de un día con pedidos. */
+function cargaChkTotal(k){
+  var f=String(k||'').split('|')[0]; if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return null;
+  var g=(typeof STATE_GEN==='number' ? STATE_GEN : 0)+'|'+STATE.length;
+  /* La cuenta vale para un mismo dibujo (se tira al terminar la tarea de ahora): un pedido cambiado a mano antes de guardarse ya cuenta */
+  if(CARGA_TOT_MEMO.g!==g || !CARGA_TOT_MEMO.vivo){ CARGA_TOT_MEMO={ g:g, m:{}, vivo:true }; setTimeout(function(){ CARGA_TOT_MEMO.vivo=false; }, 0); }
+  var M=CARGA_TOT_MEMO.m;
+  if(!M[f]){
+    var mm={}, list=STATE.filter(function(p){ return p && !esVentaTienda(p) && !esFilaSistema(p) && !esBorrador(p) && p.fecha===f; });
+    ['AM','PM'].forEach(function(t){
+      var G=cargaAgrupar(list.filter(function(p){ return (normTurno(p.turno)==='PM')===(t==='PM'); })).byV;
+      Object.keys(G).forEach(function(v){
+        var o=G[v];
+        Object.keys(o.prod).forEach(function(kk){ var c=cargaChkKey(f,v,kk,'',t); mm[c]=(mm[c]||0)+o.prod[kk]; });
+        Object.keys(o.sale).forEach(function(n){ Object.keys(o.sale[n]).forEach(function(kk){ var c=cargaChkKey(f,v,kk,n,t); mm[c]=(mm[c]||0)+o.sale[n][kk]; }); });
+      });
+    });
+    M[f]=mm;
+  }
+  return Object.prototype.hasOwnProperty.call(M[f], k) ? M[f][k] : null;
+}
+function isCargaChk(k){
+  if(!CARGA_CHK[k]) return false;
+  var q=cargaChkQty(k); if(q==null) return true;
+  var t=cargaChkTotal(k); return t==null || q>=t;
+}
+/* Pone (o saca) la tilde con la cantidad de ahora, sin guardar (el que llama guarda). */
+function cargaChkPoner(k, on, qty){
+  cargaChkQtyKeys(k).forEach(function(x){ delete CARGA_CHK[x]; CARGA_CAMBIOS[x]=false; });
+  if(on){
+    CARGA_CHK[k]=1;
+    var t=(qty!=null) ? qty : cargaChkTotal(k);
+    if(t!=null && t>0){ var qk=k+CARGA_QTY_SEP+Math.round(t); CARGA_CHK[qk]=1; CARGA_CAMBIOS[qk]=true; }
+  } else delete CARGA_CHK[k];
+  CARGA_CAMBIOS[k]=!!on;
+}
 /* 🔁 (26/09) LAS DOS FILAS QUE SE REESCRIBEN ENTERAS —días cerrados y tildes de la carga— las tocan
    varias computadoras y el servidor no las junta (sin sello, en el 20-a y en el 23-b). Cada guardado
    relee la planilla y le aplica SOLO lo tocado acá (clave → true puesta / false sacada), como hace
@@ -39211,7 +39266,7 @@ function guardarCargaChk(){
     else { delete REESCRITA_ESPERA[CARGA_ID]; reescritaEncolar(filaCarga(), CARGA_CAMBIOS); cargaSyncSet('cola'); }
   }, 700);
 }
-function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
+function setCargaChk(k,on){ cargaChkPoner(k, on); guardarCargaChk(); }
 /* 🛣️ «YA SALIÓ EL CAMIÓN» (12/10, dueño: *«falta cómo hacemos que "ya salió el camión" mientras»* — hasta tener el GPS de Monnet).
    Logística lo toca en la ficha del camión. Viaja en la MISMA fila de los tildes de la carga (`__carga_chk__`, con su sello y su
    junta), como una tilde más: `fecha|camión|🚚 SALIÓ|HH:MM` (la hora de Bolivia). Se poda sola con las demás a los 10 días, y una
@@ -39539,7 +39594,10 @@ function adelantoTildesAM(p){
     lugares.forEach(function(l){
       if(!isCargaChk(cargaChkKey(f,v,kk,l,'PM'))) return;
       var k=cargaChkKey(f,v,kk,l,'AM'); if(isCargaChk(k)) return;
-      CARGA_CHK[k]=1; CARGA_CAMBIOS[k]=true; n++;
+      /* (21/11) La mañana queda cargada con lo que ya tenía cargado + lo de este pedido: si la mañana tenía otro igual SIN cargar, sigue pendiente */
+      var uL=l ? (sm[l]||0) : (c-en), tot=cargaChkTotal(k), antes=0;
+      if(CARGA_CHK[k]){ var qa=cargaChkQty(k); antes=(qa!=null) ? qa : Math.max(0, (tot||0)-uL); }
+      cargaChkPoner(k, true, antes+uL); n++;
     });
   });
   return n;
@@ -63352,6 +63410,20 @@ function salFranjaHtml(t, n, sinV, cams, tbs){
       '<button type="button" class="sal-cam sal-fc todo" onclick="salioAbrir(\'\')" title="Lo de la '+salioTurnoTxt(t)+' de todos los camiones juntos: para confirmar de una vez lo que se entregó ('+n[t]+' sin ✅)"><b>✅ Todo el turno</b></button></div>';
 }
 /* ---------- La ventana de un camión (o del turno entero) ---------- */
+/* 🎧 (21/11, revisión de Fable) El RECOJO de una ATC no viene tildado al salir el camión: que el camión salga no quiere decir que lo
+   recogió (dueño, 19/11: «que no se marquen solas… logística debe marcar recogido»). Se tilda a mano, y al confirmar se ofrece programar
+   la devolución (`atcRecogidosHtml`). Los de antes de ATC_RECOJO_A_MANO_DESDE siguen como siempre. */
+function salioRecojoAMano(p){ return !!p && atcViaje(p)==='rec' && String(p.fecha||'')>=ATC_RECOJO_A_MANO_DESDE; }
+/* Las ATC que se acaban de marcar «✓ Recogido» (en el cierre o en «Salió»): un botón para programar su devolución. */
+function atcRecogidosHtml(hechos){
+  var L=(hechos||[]).filter(function(p){ return p && atcViaje(p)==='rec' && p.entregado && !atcDevProg(p) && !atcEntregada(p); });
+  if(!L.length) return '';
+  return '<div style="background:#fdf2f8;border:1px solid #f5c2dc;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:.86rem">'+
+    '<b>🎧 '+(L.length===1?'Una ATC recogida':(L.length+' ATC recogidas'))+': falta programar la devolución</b>'+
+    L.map(function(p){ var id=esc(String(p.id)); return '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap"><span style="flex:1;min-width:0">'+esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||'')+'</span>'+
+      '<button class="btn btn-sm" data-id="'+id+'" onclick="closeModal();abrirProgramarDevAtc(this.dataset.id,{trasRecoger:true})">🔁 Programar devolución</button></div>'; }).join('')+
+    '</div>';
+}
 function salioSecciones(I){
   var veh=SALIO.veh, t=SALIO.t, hoy=todayStr();
   var tardeOk=(t==='AM' && horaBolivia().getHours()<ADELANTO_HORA_MAX && limTurno(hoy,'PM')>0);
@@ -63359,12 +63431,12 @@ function salioSecciones(I){
   I.forEach(function(it){
     if(veh){
       if(it.tu===t){
-        if(it.va===veh){ S.lleva.push(it); S.pre.push(it); }
+        if(it.va===veh){ S.lleva.push(it); if(!salioRecojoAMano(it.p)) S.pre.push(it); }
         else if(!it.v && !it.ret) S.sin.push(it);
       } else if(tardeOk && it.tu==='PM' && it.va===veh) S.tarde.push(it);
     } else if(it.tu===t){
       if(it.ret) S.ret.push(it);
-      else { S.lleva.push(it); if(it.va) S.pre.push(it); }
+      else { S.lleva.push(it); if(it.va && !salioRecojoAMano(it.p)) S.pre.push(it); }
     }
   });
   return S;
@@ -63384,6 +63456,7 @@ function salioTildados(){ return Object.keys(SALIO.sel).filter(function(id){ ret
 function salioFilaHtml(it, dn){
   var p=it.p, id=esc(it.id), on=!!SALIO.sel[it.id], veh=SALIO.veh;
   var tag=it.tu==='PM' ? ('<span class="sal-tag pm">🌆 tarde'+(veh && SALIO.t==='AM'?' · ¿va ahora?':'')+'</span>') : '<span class="sal-tag">🌅 mañana</span>';
+  if(salioRecojoAMano(p)) tag='<span class="sal-tag" style="background:#fdf2f8;color:#9d174d">🎧 recojo · tildalo si lo recogió</span>'+tag;   // (21/11) no viene tildado
   var quien=it.v ? ('🚚 '+esc(it.v)+(p.chofer?(' · '+esc(p.chofer)):'')) : (it.ret ? '🏬 lo retira el cliente' : 'sin camión');
   var prop=(!it.v && it.prop) ? ('<span class="sal-prop">'+esc(it.prop.txt)+((!veh || it.prop.v!==veh)?(': '+esc(it.prop.v)):'')+'</span>') : '';
   var sel=(!veh && !it.v && !it.ret) ? ('<div class="sal-r2"><label for="sal-cam-'+id+'">🚚 Salió en</label> <select id="sal-cam-'+id+'" class="sal-cam-sel" data-id="'+id+'" onchange="salioCamElegir(this.dataset.id, this.value)">'+camOpcionesHtml(salioCamDe(it), '— sin camión —')+'</select></div>') : '';
@@ -63516,7 +63589,7 @@ function salioResultado(r, o){
     (hechos.length ? ('<div class="sal-res-lista">'+hechos.map(function(p){ return esc(ocEtiq(p.oc)||'—')+' · '+esc(p.cliente||'')+(vehiculoDe(p)?(' · 🚚 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')):' · sin camión'); }).join('<br>')+'</div>') : '')+
     (o.veh ? '' : cierreEntSinCamHtml(r))+
     (saltados.length ? ('<div class="sal-sec">No se marcaron · '+saltados.length+'</div><div class="sal-res-lista">'+saltados.map(function(x){ return (x.p ? (esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'')) : esc(String(x.id)))+': <b>'+esc(x.por)+'</b>'; }).join('<br>')+'</div>') : '')+
-    rptFaltaCierreHtml(hechos)+
+    atcRecogidosHtml(hechos)+rptFaltaCierreHtml(hechos)+
     '<div class="modal-actions"><button type="button" class="btn btn-primary btn-sm sal-ok-btn" onclick="closeModal()">Listo</button></div></div>';
   openModal(html, true);
 }
@@ -63695,7 +63768,7 @@ function renderCierreEntResultado(r){
     cierreEntSinCamHtml(r)+   // 🚚 (idea 203) lo tildado que quedó sin camión: se dice y se puede elegir abajo
     (saltados.length ? ('<div style="font-weight:700;font-size:.9rem;margin:8px 0 4px">No se marcaron · '+saltados.length+'</div>'+
       '<div style="font-size:.84rem">'+saltados.map(function(x){ return (x.p ? (esc(ocEtiq(x.p.oc)||'—')+' · '+esc(x.p.cliente||'')) : esc(String(x.id)))+': <b>'+esc(x.por)+'</b>'; }).join('<br>')+'</div>') : '')+
-    rptFaltaCierreHtml(hechos)+   // 🏪 (30/10, propuesta 83) las RPT confirmadas que iban con ✗ o 🏭 sin llegar
+    atcRecogidosHtml(hechos)+rptFaltaCierreHtml(hechos)+   // 🏪 (30/10, propuesta 83) las RPT confirmadas que iban con ✗ o 🏭 sin llegar
     '<div style="font-size:.84rem;color:var(--muted);margin-top:12px">'+(quedan ? ('Quedan <b>'+quedan+'</b> de hoy sin confirmar. Podés volver a abrir el cierre más tarde: muestra solo lo que falta.') : 'No queda ninguno de hoy sin confirmar.')+'</div>'+
     '<div class="modal-actions" style="margin-top:14px">'+
       (quedan ? '<button class="btn btn-sm" style="flex:1" onclick="abrirCierreEntregas()">Ver lo que falta</button>' : '')+
