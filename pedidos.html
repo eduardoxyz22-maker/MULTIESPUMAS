@@ -72453,13 +72453,13 @@ function cruceFormPintar(){
   if(!q){ box.hidden=true; box.innerHTML=''; box._h=''; CRUCE_F.k=''; CRUCE_F.r=null; clearTimeout(CRUCE_F.t); return; }
   if(k!==CRUCE_F.k){
     clearTimeout(CRUCE_F.t);   // (revisión 2 de Fable) lo programado para el número de antes no corre
-    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; box.hidden=true; box.innerHTML=''; box._h='';
+    CRUCE_F.k=k; CRUCE_F.r=null; CRUCE_F.n=0; CRUCE_F.fin=''; CRUCE_F.sinResp=''; box.hidden=true; box.innerHTML=''; box._h='';
     var m=CRUCE_MEMO[q.c8];
     /* (revisión 4 de Fable) La memoria es por celular y sirve a las dos marcas: se usa solo si la cuenta de ESTA marca vino bien. */
     if(m && Date.now()-m.ms<CRUCE_MEMO_MS && !cruceCuentaFalla(m.r, q.mk)) CRUCE_F.r=m.r;
     else { CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_ESPERA_MS); return; }
   }
-  if(!CRUCE_F.r){ box.hidden=true; return; }
+  if(!CRUCE_F.r){ if(CRUCE_F.esp && CRUCE_F.esp.k===k){ if(!/Revisando en Kommo/.test(box._h||'')) cruceEsperaPintar(k); box.hidden=false; return; } box.hidden=true; return; }
   var L=cruceOtros(CRUCE_F.r, q.v, q.mk);
   if(!L.length){ box.hidden=true; box.innerHTML=''; box._h=''; return; }
   var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
@@ -72743,26 +72743,72 @@ function crvResolver(id, quien){
 }
 /** Si falló (red, Kommo, tope, todavía sin saber la versión del servidor), lo vuelve a intentar unas veces (Fable 5); nunca frena la venta. */
 function cruceFormReintentar(k){
-  if(k!==CRUCE_F.k || CRUCE_F.n>=CRUCE_REINT_MAX) return;
+  if(k!==CRUCE_F.k) return;
+  if(CRUCE_F.n>=CRUCE_REINT_MAX){ CRUCE_F.fin=k; return; }   // (Fable, 21/11) ya no se va a volver a preguntar: el «Guardar» que espera no espera de más
   CRUCE_F.n++; clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_REINT_MS);
 }
 /* 🔀 (21/11) La pregunta de antes de guardar: true = seguir; null = esperando a Kommo o la respuesta (vuelve a correr `otraVez`); false = volvió
    al formulario. Si Kommo no contesta a tiempo, se guarda (la revisión del servidor manda el WhatsApp igual al minuto). */
 var CRUCE_GUARDAR_MS=15000;
+/* (Revisión de Fable, 21/11) Mientras espera: lo que se toque en el formulario corta la espera (no se guarda solo algo que cambió después de
+   tocar «Guardar»), salir del formulario también, y el cartel dice que está revisando con «Guardar sin esperar». La espera termina antes si la
+   consulta ya no va a contestar (`fin`: el tope del día o los reintentos agotados). */
+function cruceEsperaPintar(k){
+  var box=document.getElementById('cruce-form'); if(!box) return;
+  var h='🔎 <b>Revisando en Kommo si otra vendedora atiende a este cliente…</b> '+
+        '<span class="cruce-s">La venta se guarda en cuanto Kommo conteste (o a los '+Math.round(CRUCE_GUARDAR_MS/1000)+' segundos).</span>'+
+        '<span class="cruce-s"><button type="button" class="btn btn-sm" onclick="cruceGuardarSinEsperar()">💾 Guardar sin esperar</button></span>';
+  box.innerHTML=h; box._h=h; box.hidden=false;
+}
+function cruceEsperaFin(motivo){
+  var E=CRUCE_F.esp; if(!E) return null;
+  CRUCE_F.esp=null; CRUCE_F.espGuardar=false;
+  var box=document.getElementById('cruce-form'); if(box && box._h && /Revisando en Kommo/.test(box._h)){ box.hidden=true; box.innerHTML=''; box._h=''; }
+  try{ cruceFormPintar(); }catch(e){}
+  if(motivo==='toco') toast('Cambiaste algo mientras revisaba Kommo: revisá el pedido y tocá «Guardar» de nuevo.', '', 5000);
+  return E;
+}
+function cruceEsperaSeguir(E){
+  var antes=PREG_MEMO; PREG_MEMO=E.memo;   // las respuestas que ya dio en este guardado siguen valiendo (si no, se le volvía a preguntar todo)
+  try{ E.otraVez(); }catch(e){ console.error(e); }
+  finally{ PREG_MEMO=antes; }
+}
+function cruceGuardarSinEsperar(){
+  var E=CRUCE_F.esp; if(!E) return;
+  if(!CRUCE_F.r) CRUCE_F.sinResp=E.k;
+  cruceEsperaFin(); cruceEsperaSeguir(E);
+}
+function cruceEsperaTocado(ev){
+  var E=CRUCE_F.esp; if(!E || !ev || !ev.isTrusted) return;
+  var t=ev.target; if(t && t.closest && t.closest('#cruce-form')) return;
+  cruceEsperaFin('toco');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var vf=document.getElementById('view-form');
+  if(vf){ vf.addEventListener('input', cruceEsperaTocado, true); vf.addEventListener('change', cruceEsperaTocado, true); }
+});
 function cruceAntesDeGuardar(otraVez){
   var q=cruceFormQue(); if(!q || !servidorTiene(QA_SERVIDOR)) return true;
   var k=q.c8+'|'+normNombre(q.v);
   if(k!==CRUCE_F.k) cruceFormPintar();   // el número o la vendedora cambiaron sin evento (autocompletado): se arma la consulta
   if(!CRUCE_F.r){
     if(CRUCE_F.sinResp===k) return true;   // ya se esperó y Kommo no contestó: no se frena la venta
-    if(CRUCE_F.espGuardar) return null;    // otro «Guardar» mientras se espera: nada
+    if(CRUCE_F.esp){ toast('🔎 Sigo revisando en Kommo… la venta se guarda en cuanto conteste.', '', 3000); return null; }   // otro «Guardar» mientras se espera
+    CRUCE_F.fin='';
     if(!CRUCE_F.busy){ clearTimeout(CRUCE_F.t); cruceFormBuscar(); }
-    CRUCE_F.espGuardar=true;
+    var E={ k:k, otraVez:otraVez, memo:PREG_MEMO ? Object.assign({}, PREG_MEMO) : {}, g:(CRUCE_F.eg=(CRUCE_F.eg||0)+1) };
+    CRUCE_F.esp=E; CRUCE_F.espGuardar=true;
     toast('🔎 Revisando en Kommo si otra vendedora atiende a este cliente… (unos segundos)', '', 4000);
+    cruceEsperaPintar(k);
     var vueltas=0;   // por vueltas de 250 ms (no por el reloj: con el reloj quieto de las pruebas no avanzaría)
     var mira=function(){
-      if(CRUCE_F.k!==k){ CRUCE_F.espGuardar=false; return; }   // cambió el número: no se guarda solo
-      if(CRUCE_F.r || (++vueltas)*250>=CRUCE_GUARDAR_MS){ CRUCE_F.espGuardar=false; if(!CRUCE_F.r) CRUCE_F.sinResp=k; try{ otraVez(); }catch(e){ console.error(e); } return; }
+      if(CRUCE_F.esp!==E) return;   // ya terminó (Guardar sin esperar, se tocó el formulario)
+      var vf=document.getElementById('view-form');
+      if(CRUCE_F.k!==k || (vf && !vf.classList.contains('active'))){ cruceEsperaFin(); return; }   // cambió el número o salió del formulario: no se guarda solo
+      if(CRUCE_F.r || CRUCE_F.fin===k || (++vueltas)*250>=CRUCE_GUARDAR_MS){
+        if(!CRUCE_F.r) CRUCE_F.sinResp=k;
+        cruceEsperaFin(); cruceEsperaSeguir(E); return;
+      }
       setTimeout(mira, 250);
     };
     setTimeout(mira, 250);
@@ -72775,9 +72821,14 @@ function cruceAntesDeGuardar(otraVez){
     return o.por==='fecha' ? o.n+' tiene una fecha acordada con el cliente para el '+qaFecha(o.ts) : o.n+' conversó con el cliente el '+qaFecha(o.ts)+' ('+qaHace(o.ts, o.ahora)+')';
   });
   var wa='Si guardás, a '+nombres+' le llega un WhatsApp: «tu cliente compró, la venta la cargó '+q.v+'». Si el cliente era de ella, puede pedir revisión.';
-  var r=preguntaYa('⚠️ Este cliente puede ser de '+nombres+' (según Kommo, en los últimos '+QA_DIAS+' días).\n\n'+det.join('\n')+'\n\n'+wa+'\n\nAceptar: guardar la venta igual. Cancelar: volver.',
+  var texto='⚠️ Este cliente puede ser de '+nombres+' (según Kommo, en los últimos '+QA_DIAS+' días).\n\n'+det.join('\n')+'\n\n'+wa+'\n\nAceptar: guardar la venta igual. Cancelar: volver.';
+  /* (Fable, 21/11) Con la pregunta ya abierta, otro camino que vuelve a correr el guardado no abre una segunda ventana igual. */
+  var yaResp=PREG_MEMO && Object.prototype.hasOwnProperty.call(PREG_MEMO, 'c|'+texto);
+  if(!yaResp && CRUCE_F.preg===texto) return null;
+  var r=preguntaYa(texto,
     { icono:'⚠️', aviso:true, titulo:'Este cliente puede ser de '+nombres, lineas:det.concat(['Que haya mensajes no significa que lo haya atendido de verdad.', wa]),
-      no:'✏️ Volver al pedido', si:'💾 Guardar la venta igual' }, otraVez);
+      no:'✏️ Volver al pedido', si:'💾 Guardar la venta igual' }, function(){ CRUCE_F.preg=''; return otraVez.apply(this, arguments); });
+  CRUCE_F.preg=(r===null) ? texto : '';
   if(r===false){ var b=document.getElementById('cruce-form'); if(b && !b.hidden){ try{ b.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){} } }
   return r;
 }
@@ -72787,7 +72838,7 @@ function cruceFormBuscar(){
   if(!SERVER_VER){ cruceFormReintentar(k); return; }
   if(!servidorTiene(QA_SERVIDOR)) return;
   var g=++CRUCE_F.gen; CRUCE_F.busy=true;
-  conTopeDuro(apiPost({ action:'quienAtiende', cel:q.c8, quien:q.v, auto:1 }), 60000, 'tardo').then(function(r){
+  conTopeDuro(apiPost({ action:'quienAtiende', cel:q.c8, quien:q.v, auto:1, solo:q.mk }), 60000, 'tardo').then(function(r){
     if(g!==CRUCE_F.gen) return;
     CRUCE_F.busy=false;
     var ok=r && r.ok!==false && Array.isArray(r.cuentas);
@@ -72795,7 +72846,7 @@ function cruceFormBuscar(){
     var falla=ok && cruceCuentaFalla(r, q.mk);
     if(ok && !falla) CRUCE_MEMO[q.c8]={ r:r, ms:Date.now() };
     if(k!==CRUCE_F.k) return;
-    if(!ok){ if(!(r && r.error==='tope')) cruceFormReintentar(k); return; }   // con el tope del día, reintentar no sirve
+    if(!ok){ if(!(r && r.error==='tope')) cruceFormReintentar(k); else CRUCE_F.fin=k; return; }   // con el tope del día, reintentar no sirve
     /* Kommo contestó a medias y todavía no se ve a nadie: se vuelve a preguntar (si ya se ve a alguien, eso alcanza para avisar). */
     if(falla && !cruceOtros(r, q.v, q.mk).length){ cruceFormReintentar(k); return; }
     CRUCE_F.r=r; cruceFormPintar();

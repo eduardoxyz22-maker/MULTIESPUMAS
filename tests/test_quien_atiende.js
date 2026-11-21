@@ -89,7 +89,8 @@ function cargar(K, props, falla) {
       if (p === '/leads/notes' || p === '/contacts/notes') {   // 📝 (2026-11-21-a) como Kommo: por entidad, tipo y desde cuándo se tocó
         const et = p.split('/')[1], ids = q['filter[entity_id][]'] || [], tipos = q['filter[note_type][]'] || [], desde = Number((q['filter[updated_at][from]'] || ['0'])[0]);
         const N = (K.notas || []).filter(n => (n.et || 'leads') === et && ids.indexOf(String(n.entity_id)) >= 0 && (!tipos.length || tipos.indexOf(n.note_type || 'common') >= 0) && (n.updated_at || n.created_at) >= desde);
-        return N.length ? resp(200, { _embedded:{ notes:N } }) : resp(204, null);
+        const pg = Number((q['page'] || ['1'])[0]), lim = Number((q['limit'] || ['250'])[0]), P = N.slice((pg - 1) * lim, pg * lim);
+        return P.length ? resp(200, Object.assign({ _embedded:{ notes:P } }, N.length > pg * lim ? { _links:{ next:{ href:'x' } } } : {})) : resp(204, null);
       }
       return resp(404, {});
     } }
@@ -255,6 +256,27 @@ function servidor() {
   chk('N10 · una nota en el CONTACTO también vale para su lead', rnN.cuentas[0].leads[0].nota && rnN.cuentas[0].leads[0].nota.quien === 'Carola Chavez', rnN.cuentas[0].leads[0]);
   const Fn = cargar(kn.K, {}, (pp) => /notes$/.test(pp) ? 500 : 0), rf2 = Fn.post({ action:'quienAtiende', cel:'77460001' });
   chk('N11 · Kommo no devuelve las notas → notasOk false e INCOMPLETO (nunca «Libre»)', rf2.cuentas[0].notasOk === false && rf2.incompleto === true && /No se pudo consultar/.test(Fn.hojas['Quién atiende'].filas[1][4]), rf2.cuentas[0]);
+  /* (Revisión de Fable, 21/11) Frases: «pas…» solo con lo que sigue, las que dicen que NO, las de otra tienda o de la competencia, y las del panel */
+  const FR = [['Pasa mañana a ver los colchones', true], ['quiere que le reservemos el de 140', true], ['retira el sábado en Banzer', true],
+              ['se acercará al local de Mia Plaza', true], ['Irá a la tienda el lunes', true],
+              ['el paso siguiente es mandarle la cotización', false], ['le pasé la cotización por WhatsApp', false], ['No va a comprar, está caro', false],
+              ['compró en otra tienda', false], ['compró con la competencia', false], ['No le interesa', false], ['no comprende el precio', false],
+              ['🙅 Cotización COT-12: no compra — caro', false], ['Cotización COT-5: 1 colchón · total Bs 3.000', false]];
+  const malF = FR.filter(([t, si]) => !!otraNota(t, S - D, U_CAR) !== si).map(x => x[0]);
+  chk('N17 · las frases: «pasa mañana/reservar/retira/irá» sí; «el paso siguiente», «le pasé», «no va a comprar», «compró en otra», «competencia», las del panel no', !malF.length, malF);
+  /* Páginas: 300 notas en el lead, la de visita en la segunda página → se lee; con más de 4 páginas llenas → incompleto */
+  kn.K.notas = []; for (let i = 0; i < 260; i++) nota(100 + i, i === 255 ? 'Pasa por Banzer a comprar el sábado' : 'Llamar de nuevo ' + i, S - D - i, U_CAR);
+  let rp = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
+  chk('N18 · la nota de visita en la SEGUNDA página de notas también cuenta', rp.cuentas[0].notasOk === true && rp.cuentas[0].leads[0].nota && /Banzer/.test(rp.cuentas[0].leads[0].nota.txt), rp.cuentas[0].leads[0].nota);
+  kn.K.notas = []; for (let i = 0; i < 1100; i++) nota(100 + i, 'Llamar de nuevo ' + i, S - D, U_CAR);
+  rp = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
+  chk('N19 · más de 4 páginas llenas de notas → notasOk false e INCOMPLETO (nunca «Libre»)', rp.cuentas[0].notasOk === false && rp.incompleto === true, rp.cuentas[0].notasOk);
+  /* La del formulario mira solo la marca de quien vende */
+  kn.K.notas = [];
+  const As = cargar(kn.K), rs = As.post({ action:'quienAtiende', cel:'77460001', quien:'Maria Flores', auto:1, solo:'heaven' });
+  chk('N20 · la del formulario con `solo:heaven` pregunta solo a Heaven (una cuenta)', rs.cuentas.length === 1 && rs.cuentas[0].marca === 'heaven', rs.cuentas.map(c => c.marca));
+  const rs2 = As.post({ action:'quienAtiende', cel:'77460001', quien:'Maria Flores', auto:1, solo:'cualquiera' });
+  chk('N21 · un `solo` que no es una marca se ignora (las dos cuentas)', rs2.cuentas.length === 2, rs2.cuentas.map(c => c.marca));
   kn.K.notas = []; nota(1, 'Pasará por la sucursal Banzer a comprar, acá no hay stock', S - 2 * D, U_CAR);
   global.__RNOTA = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
   return r;

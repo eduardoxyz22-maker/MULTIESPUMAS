@@ -1047,14 +1047,14 @@ el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_qu
 «solo visita o compra»; servidor **2026-11-21-a**, lo implementa el dueño; página 2026-11-21-a): una nota COMÚN de una persona, de los últimos 15 días,
 que nombra pasar / visitar / venir / sucursal / tienda / comprar / stock (`QA_NOTA_RE`, `qaNotaVisita_`; las del panel, «🧾 …», no) retiene para quien
 la ESCRIBIÓ, como la conversación: `l.nota` {ts, quien, txt} → `qaVeredicto` (`por:'nota'`), `qaResumenDe_`, `cruceOtros_` (el WhatsApp a la otra) y el
-cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
+cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». (Fable, 21/11) «pas…» solo con lo que sigue («pasa POR», «pasa MAÑANA»), `QA_NOTA_SI` sin `QA_NOTA_NO` («no va a comprar», «compró en otra», «competencia»); las del panel («🧾», «🙅», «Cotización COT») no; las notas van de a 4 páginas de 250 (`QA_NOTAS_PAGINAS`; más = incompleto); la consulta del formulario manda `solo:<marca>`. Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
 puede pasar por 3 tiendas a cotizar, no hay lío»*). `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir
 guardar»*): `cruceAntesDeGuardar(_otraVez)` en `submitPedido` (antes de las observaciones) → `preguntaYa` «Guardar la venta igual» / «Volver al
 pedido»; si Kommo todavía no contestó espera (toast «Revisando en Kommo…», otro Guardar no hace nada) hasta `CRUCE_GUARDAR_MS`=15 s y, sin respuesta,
-guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto). Cuenta por vueltas de 250 ms, no por el reloj. `tests/test_cruce_guardar.js` (13).
+guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto). Mientras espera, el cartel dice «Revisando en Kommo» con «💾 Guardar sin esperar»; tocar el formulario o salir de él corta la espera (no guarda solo lo cambiado); el tope del día o los reintentos agotados (`CRUCE_F.fin`) terminan la espera antes; las respuestas ya dadas en ese guardado siguen valiendo (`PREG_MEMO`) y no se abren dos ventanas iguales (`CRUCE_F.preg`). Cuenta por vueltas de 250 ms, no por el reloj. `tests/test_cruce_guardar.js` (13).
 
 ## 🔀 Cruce de ventas y «Pedir revisión» (20/11; dueño, con la Comunicación Interna 032-2026; servidor `2026-11-20-c` IMPLEMENTADO 20/11 por el dueño, enlace fijo `1450933…`, 14.038 líneas, termina en `var FIN_DEL_ARCHIVO = '2026-11-20-c';`; página PUBLICADA 20/11, versión 2026-11-20-c, `ab6e4eb`)
 - Al guardar una venta, `doSave` → `cruceAlGuardar_` → `CRUCE_COLA`; `waRepasoBot_` (`cruceTomar_` en el candado, `cruceElegir_` afuera) mira con
