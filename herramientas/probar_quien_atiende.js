@@ -43,6 +43,7 @@ const HDR = {};
 CUENTAS.forEach((c) => { if (c.token) { const f = path.join(TMP, 'h-' + c.marca); fs.writeFileSync(f, 'Authorization: Bearer ' + c.token + '\n', { mode: 0o600 }); HDR[c.token] = f; } });
 process.on('exit', () => { try { fs.rmSync(TMP, { recursive: true, force: true }); } catch (e) {} });
 const RED = { n: 0, n429: 0, errores: 0, ultimo: 0, urlMax: 0, noGet: 0, ajenos: 0 };
+const NOTAS = { n: 0, c: {}, leads: 0, conNota: 0 };   // 📝 (2026-11-21-a) los pedidos de notas que hace el servidor y lo que encuentran
 function kGet(url, token) {
   if (!/^https:\/\/[a-z0-9-]+\.kommo\.com\/api\/v4\//.test(url)) { RED.ajenos++; return { code: 0, body: '' }; }
   if (!HDR[token]) return { code: 401, body: '' };
@@ -108,6 +109,7 @@ function cargarGs() {
       if (metodo !== 'get' || op.payload != null) { RED.noGet++; reg.code = 405; return resp(405, '{}'); }   // SOLO LECTURA
       const tok = String((op.headers || {}).Authorization || '').replace(/^Bearer /, '');
       const r = kGet(url, tok); reg.code = r.code; reg.ms = Date.now() - reg.t;
+      if (/\/notes$/.test(ruta)) { NOTAS.n++; NOTAS.c[r.code] = (NOTAS.c[r.code] || 0) + 1; }
       if (ruta === '/events' && r.code === 200) {   // lo que entró a Kommo después de T0 no se mira (la verdad se bajó hasta T0)
         try { const o = JSON.parse(r.body), E = emb(o, 'events'), antes = E.length; o._embedded.events = E.filter((e) => Number(e.created_at) <= T0); ENV.despues += antes - o._embedded.events.length; return resp(200, JSON.stringify(o)); } catch (e) {}
       }
@@ -276,7 +278,8 @@ function main() {
     if (!r || r.ok === false || !Array.isArray(r.cuentas)) { mal('muestra ' + R.probados + ': el servidor contestó ' + (r && r.error)); continue; }
     /* Con los arreglos, una cuenta SIN su token (acá, Sueña: este repositorio no tiene ese secreto) deja la búsqueda «incompleta» y sin
        caché: es lo esperado, y se compara igual (donde la verdad dice «libre», el cartel tiene que decir «no se pudo saber»). */
-    const incReal = r.cuentas.some((x) => x.error || x.msgOk === false || x.tareasOk === false || x.cortado || x.usOk === false), soloSinToken = !!r.incompleto && !incReal;
+    const incReal = r.cuentas.some((x) => x.error || x.msgOk === false || x.tareasOk === false || x.notasOk === false || x.cortado || x.usOk === false), soloSinToken = !!r.incompleto && !incReal;
+    r.cuentas.forEach((x) => (x.leads || []).forEach((l) => { NOTAS.leads++; if (l.nota) NOTAS.conNota++; }));
     if (incReal) R.incompletos++; if (soloSinToken) R.sinToken = (R.sinToken || 0) + 1;
     const cuH = r.cuentas.filter((x) => x.marca === 'heaven')[0] || {}, cuS = r.cuentas.filter((x) => x.marca === 'suena')[0] || {};
     if (cuH.masLeads) R.masLeads++; if (cuH.masContactos) R.masContactos++; if ((cuH.contactos || 0) > 1) R.variosContactos++; if ((cuS.leads || []).length) R.enSuena++;
@@ -460,6 +463,31 @@ function main() {
   });
   let ambiguos = 0; for (let i = 0; i < todosU.length; i++) for (let j = i + 1; j < todosU.length; j++) if (todosU[i].marca === todosU[j].marca && pag.qaMismo(todosU[i].n, todosU[j].n)) ambiguos++;
   console.log('   pares de usuarios DISTINTOS de la misma cuenta que la página tomaría por la misma persona: ' + ambiguos + (ambiguos ? ' ⚠️' : ''));
+
+  /* ── 5b · 📝 las notas (2026-11-21-a): ¿el filtro que arma el servidor anda contra el Kommo de verdad? Solo cantidades. ── */
+  titulo('5b · Las notas de Kommo (visita o compra): el pedido del servidor y el filtro por lead');
+  console.log('   pedidos de notas que hizo quienAtiende_ en la muestra: ' + NOTAS.n + ' · códigos: ' + JSON.stringify(NOTAS.c) + ' · leads mirados: ' + NOTAS.leads + ' · con una nota de visita o compra: ' + NOTAS.conNota);
+  if (NOTAS.n && Object.keys(NOTAS.c).some((k) => k !== '200' && k !== '204')) mal('el pedido de notas del servidor no da 200/204: ' + JSON.stringify(NOTAS.c));
+  if (!NOTAS.n) mal('el servidor no pidió ninguna nota');
+  {
+    const rn = api(cH, '/leads/notes?filter[note_type][]=common&filter[updated_at][from]=' + LIM + '&limit=250');
+    const N = rn.code === 200 && rn.o ? emb(rn.o, 'notes') : [];
+    const deP = N.filter((n) => Number(n.created_by)), visita = deP.filter((n) => gs.qaNotaVisita_(String((n.params && n.params.text) || '')));
+    console.log('   notas comunes de leads tocadas en 15 días (1.ª página): ' + N.length + ' (HTTP ' + rn.code + ') · de una persona: ' + deP.length + ' · que hablan de visita o compra: ' + visita.length);
+    const viejas = N.filter((n) => Number(n.updated_at) < LIM).length, otroTipo = N.filter((n) => n.note_type !== 'common').length;
+    if (viejas || otroTipo) mal('el filtro de notas no filtra: ' + viejas + ' más viejas que 15 días, ' + otroTipo + ' de otro tipo');
+    const uno = N.length ? String(N[0].entity_id) : '';
+    if (uno) {
+      const r1 = api(cH, '/leads/notes?filter[entity_id][]=' + uno + '&filter[note_type][]=common&filter[updated_at][from]=' + LIM + '&limit=250');
+      const N1 = r1.code === 200 && r1.o ? emb(r1.o, 'notes') : [];
+      const ok = r1.code === 200 && N1.length && N1.every((n) => String(n.entity_id) === uno);
+      console.log('   filtro por lead (filter[entity_id][]): HTTP ' + r1.code + ', ' + N1.length + ' notas, ' + (ok ? 'todas de ese lead ✅' : '❌ no filtra'));
+      if (!ok) mal('filter[entity_id][] de las notas no filtra por lead');
+    }
+    const rc = api(cH, '/contacts/notes?filter[note_type][]=common&filter[updated_at][from]=' + LIM + '&limit=50');
+    console.log('   notas de contactos (el mismo pedido): HTTP ' + rc.code);
+    if (rc.code !== 200 && rc.code !== 204) mal('las notas de contactos dan HTTP ' + rc.code);
+  }
 
   /* ── 6 · cuentas técnicas ── */
   titulo('6 · Límites');
