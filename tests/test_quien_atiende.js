@@ -33,7 +33,7 @@ function kommo() {
   const K = {
     pipelines:{ _embedded:{ pipelines:[{ id:500, name:'Ventas', _embedded:{ statuses:[{ id:101, name:'Nueva consulta' }, { id:103, name:'Cotizacion enviada' }, { id:142, name:'Logrado con éxito' }] } }] } },
     usuarios:{ _embedded:{ users:[{ id:U_CAR, name:'Carola Chavez - Tienda Banzer' }, { id:U_MAR, name:'Maria Flores - Buenos Aires' }] } },
-    contactos:{}, leads:{}, eventos:[], tareas:[]
+    contactos:{}, leads:{}, eventos:[], tareas:[], notas:[]
   };
   const contacto = (id, nombre, tel, leads) => { K.contactos[id] = { id, name:nombre, custom_fields_values:[{ field_code:'PHONE', values:[{ value:tel }] }], _embedded:{ leads:leads.map(x => ({ id:x })) } }; };
   const lead = (id, o) => { K.leads[id] = Object.assign({ id, name:'Lead ' + id, status_id:103, pipeline_id:500, responsible_user_id:U_CAR, created_at:S - 30 * D, updated_at:S - D }, o); };
@@ -85,6 +85,11 @@ function cargar(K, props, falla) {
         const ids = q['filter[entity_id][]'] || [];
         const et = (q['filter[entity_type]'] || ['leads'])[0], T = K.tareas.filter(t => (t.entity_type || 'leads') === et && ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed);
         return T.length ? resp(200, { _embedded:{ tasks:T } }) : resp(204, null);
+      }
+      if (p === '/leads/notes' || p === '/contacts/notes') {   // 📝 (2026-11-21-a) como Kommo: por entidad, tipo y desde cuándo se tocó
+        const et = p.split('/')[1], ids = q['filter[entity_id][]'] || [], tipos = q['filter[note_type][]'] || [], desde = Number((q['filter[updated_at][from]'] || ['0'])[0]);
+        const N = (K.notas || []).filter(n => (n.et || 'leads') === et && ids.indexOf(String(n.entity_id)) >= 0 && (!tipos.length || tipos.indexOf(n.note_type || 'common') >= 0) && (n.updated_at || n.created_at) >= desde);
+        return N.length ? resp(200, { _embedded:{ notes:N } }) : resp(204, null);
       }
       return resp(404, {});
     } }
@@ -228,6 +233,30 @@ function servidor() {
   const kj = kommo(); kj.contacto(31, 'João Peña', '75550000', [311]); kj.lead(311);
   const rj = cargar(kj.K).post({ action:'quienAtiende', nombre:'joao pena', nombreOrig:'João Peña' });
   chk('M3 · «João Peña» se encuentra (ã, ñ)', (rj.cuentas[0].leads || []).length === 1, rj.cuentas[0]);
+  /* 📝 (2026-11-21-a, dueño 21/11: «si la vendedora avisa en notas que pasará por X sucursal a comprar… debería avisar»; eligió «solo visita o compra») */
+  const kn = kommo(); kn.contacto(81, 'LUIS INVENTADO', '77460001', [811]); kn.lead(811, { responsible_user_id:U_CAR, status_id:103 });
+  const nota = (id, txt, ts, quien, o) => kn.K.notas.push(Object.assign({ id, entity_id:811, note_type:'common', params:{ text:txt }, created_at:ts, updated_at:ts, created_by:quien }, o || {}));
+  nota(1, 'Pasará por la sucursal Banzer a comprar, acá no hay stock', S - 2 * D, U_CAR);
+  let An = cargar(kn.K), rnN = An.post({ action:'quienAtiende', cel:'77460001', quien:'Maria Flores' }), ln = rnN.cuentas[0].leads[0];
+  chk('N1 · una nota de VISITA o COMPRA de Carola hace 2 días va en el lead (quién, cuándo, el texto corto)', ln && ln.nota && ln.nota.quien === 'Carola Chavez' && ln.nota.ts === S - 2 * D && /Banzer/.test(ln.nota.txt) && rnN.cuentas[0].notasOk === true, ln && ln.nota);
+  chk('N2 · y la hoja dice «Atiende: Carola Chavez» (sin conversación ni tarea)', /^Atiende: Carola Chavez$/.test(An.hojas['Quién atiende'].filas[1][4]), An.hojas['Quién atiende'].filas[1]);
+  const nq = An.llamadas.filter(c => /notes$/.test(c.p));
+  chk('N3 · las notas se piden comunes y de los últimos 15 días, de los leads y de los contactos', nq.length === 2 && nq.every(c => c.q['filter[note_type][]'][0] === 'common' && Number(c.q['filter[updated_at][from]'][0]) === S - 15 * D), nq.map(c => c.p + ' ' + JSON.stringify(c.q)));
+  const otraNota = (txt, ts, quien, o) => { kn.K.notas = []; nota(9, txt, ts, quien, o); const r9 = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' }); return r9.cuentas[0].leads[0].nota; };
+  chk('N4 · «no contesta» no es una visita ni una compra: no cuenta', otraNota('No contesta, llamar de nuevo', S - D, U_CAR) === null);
+  chk('N5 · una de hace 20 días no cuenta', otraNota('Viene a la tienda el sábado', S - 20 * D, U_CAR, { updated_at:S - D }) === null);
+  chk('N6 · la del sistema (created_by 0) no cuenta', otraNota('Compra en la tienda', S - D, 0) === null);
+  chk('N7 · la que escribe el propio panel («🧾 Venta cargada en el panel de pedidos…») no cuenta', otraNota('🧾 Venta cargada en el panel de pedidos: OC 11-270 · Bs 4.500', S - D, U_CAR) === null);
+  chk('N8 · con tildes y mayúsculas: «VENDRÁ el lunes», «lo compra mañana», «visitó la tienda» sí',
+      !!otraNota('VENDRÁ el lunes', S - D, U_CAR) && !!otraNota('lo compra mañana', S - D, U_CAR) && !!otraNota('visitó la tienda', S - D, U_CAR));
+  chk('N9 · «comprobante» o «pasaje» no son una compra ni una visita', otraNota('mandó el comprobante del pasaje', S - D, U_CAR) === null);
+  kn.K.notas = []; kn.K.notas.push({ id:5, et:'contacts', entity_id:81, note_type:'common', params:{ text:'Pasa por Mia Plaza a comprar' }, created_at:S - D, updated_at:S - D, created_by:U_CAR });
+  rnN = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
+  chk('N10 · una nota en el CONTACTO también vale para su lead', rnN.cuentas[0].leads[0].nota && rnN.cuentas[0].leads[0].nota.quien === 'Carola Chavez', rnN.cuentas[0].leads[0]);
+  const Fn = cargar(kn.K, {}, (pp) => /notes$/.test(pp) ? 500 : 0), rf2 = Fn.post({ action:'quienAtiende', cel:'77460001' });
+  chk('N11 · Kommo no devuelve las notas → notasOk false e INCOMPLETO (nunca «Libre»)', rf2.cuentas[0].notasOk === false && rf2.incompleto === true && /No se pudo consultar/.test(Fn.hojas['Quién atiende'].filas[1][4]), rf2.cuentas[0]);
+  kn.K.notas = []; nota(1, 'Pasará por la sucursal Banzer a comprar, acá no hay stock', S - 2 * D, U_CAR);
+  global.__RNOTA = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
   return r;
 }
 
@@ -319,6 +348,16 @@ async function pagina(respuesta) {
   chk('A2 · en el Modo práctica no pregunta ni dice «Libre»', /Modo práctica/.test(t) && !/Libre/.test(t) && !/LLAMÓ/.test(t), t.slice(0, 200));
   t = await buscar('70011122', 'Isabel Robledo', { ok:true, practica:1, ahora:Date.now() });
   chk('A2b · una respuesta sin «cuentas» no se pinta como «Libre»', !/Libre/.test(t) && /Kommo no contestó/.test(t), t.slice(0, 200));
+  /* 📝 la nota en la página */
+  t = await buscar('77460001', 'Maria Flores', global.__RNOTA, '2026-11-21-a');
+  chk('N12 · María busca: «Lo está atendiendo Carola Chavez» por la nota, con la fecha y lo que dice', /Lo está atendiendo Carola Chavez/.test(t) && /anotó en Kommo el 18\/11/.test(t) && /vale hasta el 03\/12/.test(t) && /Banzer a comprar/.test(t), t.slice(0, 400));
+  chk('N13 · el lead muestra «📝 Nota de visita o compra»', /Nota de visita o compra/.test(t), t);
+  t = await buscar('77460001', 'Carola Chavez', global.__RNOTA, '2026-11-21-a');
+  chk('N14 · Carola busca: «Lo estás atendiendo vos» (lo anotaste)', /Lo estás atendiendo vos/.test(t) && /Lo anotaste en Kommo/.test(t), t.slice(0, 300));
+  const nInc = JSON.parse(JSON.stringify(viejo)); nInc.cuentas[0].notasOk = false;
+  t = await buscar('70011122', 'Isabel Robledo', nInc);
+  chk('N15 · sin las notas: «No se pudo saber», nunca «Libre», y lo dice', /No se pudo saber/.test(t) && /no devolvió las notas/.test(t) && !/Libre/.test(t), t.slice(0, 300));
+  chk('N16 · la regla a la vista nombra la nota de visita o compra', await page.evaluate(() => /visita o una compra/.test(document.querySelector('.qa-regla').textContent)));
   chk('B1 · el campo deja escribir nombres largos (teclado de texto, 60 letras)', await page.evaluate(() => { var i = document.getElementById('qa-cel'); return i.inputMode === 'text' && i.maxLength === 60; }));
   chk('sin errores de la página', !errs.length, errs);
   await browser.close();

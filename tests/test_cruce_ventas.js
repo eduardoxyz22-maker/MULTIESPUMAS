@@ -46,9 +46,9 @@ function kommoHeaven(o) {
     pipelines:{ _embedded:{ pipelines:[{ id:500, name:'Ventas', _embedded:{ statuses:[{ id:103, name:'Cotizacion enviada' }, { id:142, name:'Logrado' }, { id:143, name:'Perdido' }] } }] } },
     contactos:{ 61:{ id:61, name:'CLIENTA INVENTADA', custom_fields_values:[{ field_code:'PHONE', values:[{ value:'+591 70011122' }] }], _embedded:{ leads:[{ id:71 }] } } },
     leads:{ 71:{ id:71, name:'Lead 71', status_id:o.perdido ? 143 : 103, pipeline_id:500, responsible_user_id:U_CAR, created_at:S() - 20 * D, updated_at:S() - 3 * D } },
-    eventos:[{ c:61, type:'incoming_chat_message', entity_type:'lead', entity_id:71, created_at:S() - 3 * D, created_by:0 },
+    eventos:o.sinCharla ? [] : [{ c:61, type:'incoming_chat_message', entity_type:'lead', entity_id:71, created_at:S() - 3 * D, created_by:0 },
              { c:61, type:'outgoing_chat_message', entity_type:'lead', entity_id:71, created_at:S() - 3 * D + 2 * H, created_by:U_CAR }],
-    tareas:[] };
+    tareas:[], notas:o.nota ? [{ id:1, entity_id:71, note_type:'common', params:{ text:o.nota }, created_at:S() - D, updated_at:S() - D, created_by:U_CAR }] : [] };
   return K;
 }
 function servidor(props, K, ops) {
@@ -87,6 +87,11 @@ function servidor(props, K, ops) {
         return E.length ? resp(200, { _embedded:{ events:E } }) : resp(204, null);
       }
       if (p === '/tasks') return ops.tareas500 ? resp(500, {}) : resp(204, null);
+      if (p === '/leads/notes' || p === '/contacts/notes') {   // 📝 (2026-11-21-a)
+        if (ops.notas500) return resp(500, {});
+        const ids = q['filter[entity_id][]'] || [], N = p === '/leads/notes' ? (K.notas || []).filter(n => ids.indexOf(String(n.entity_id)) >= 0) : [];
+        return N.length ? resp(200, { _embedded:{ notes:N } }) : resp(204, null);
+      }
       return resp(404, {});
     } }
   };
@@ -151,6 +156,16 @@ console.log('\n── 2-4. La regla, una sola vez ──');
   const L = servidor(VEND, kommoHeaven({ perdido:true }));
   L.guardar(ped()); pasar(2); L.ctx.waRepaso();
   chk('3e. el lead de Carola está PERDIDO: no retiene → nada', L.cx().length === 0);
+  /* 📝 (2026-11-21-a, dueño 21/11) sin conversación, pero Carola anotó en Kommo que el cliente pasa a comprar */
+  const NT = servidor(VEND, kommoHeaven({ sinCharla:true, nota:'Pasará por Banzer a comprar, no hay stock en Mia Plaza' }));
+  NT.guardar(ped()); pasar(2); NT.ctx.waRepaso();
+  chk('⚠️ 3f. sin charla pero con la NOTA de visita o compra de Carola → UN WhatsApp a Carola', NT.cx().length === 1 && NT.cx()[0].to === '59170000001', NT.cx().map(x => x.to));
+  const NN = servidor(VEND, kommoHeaven({ sinCharla:true, nota:'No contesta, volver a llamar' }));
+  NN.guardar(ped()); pasar(2); NN.ctx.waRepaso();
+  chk('3g. sin charla y con una nota que NO es visita ni compra («no contesta») → nada', NN.cx().length === 0 && NN.cola().length === 0, NN.cx().length);
+  const NF = servidor(VEND, kommoHeaven({ sinCharla:true, nota:'Viene a comprar' }), { notas500:true });
+  NF.guardar(ped()); pasar(2); NF.ctx.waRepaso();
+  chk('3h. Kommo no devuelve las notas: la venta vuelve a la cola (intento 1), no se da por mirada', NF.cx().length === 0 && NF.cola().length === 1 && NF.cola()[0].n === 1, NF.cola());
 }
 
 console.log('\n── 5. Kommo no contesta ──');
@@ -331,6 +346,17 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('8f. la consulta del formulario va con `auto` (tope aparte) y el mismo celular no se vuelve a preguntar al cambiar de vendedora', res.auto && res.llamadasTotal === 1, res);
   const g = await pg.evaluate(async () => { EDIT_ID = null; cruceFormPintar(); await new Promise(r => setTimeout(r, 300)); var bs = Array.from(document.querySelectorAll('#cruce-form button')).map(b => b.textContent.trim()); return { bs:bs, guarda:typeof submitPedido === 'function' }; });
   chk('8e. el cartel no frena ni tiene botones: solo avisa', g.bs.length === 0 && g.guarda, g.bs);
+  const gn = await pg.evaluate(async (ahora) => {
+    CRUCE_MEMO = {}; CRUCE_F.k = '';
+    window.apiPost = function (b) {
+      if (!b || b.action !== 'quienAtiende') return Promise.resolve({ ok:true, pedidos:[] });
+      return Promise.resolve({ ok:true, ahora:ahora, cuentas:[{ marca:'heaven', contactos:1, notasOk:true, leads:[{ id:'71', resp:'Carola Chavez', pares:[], nota:{ ts:ahora - 86400, quien:'Carola Chavez', txt:'Pasará por Banzer a comprar' } }] }, { marca:'suena', contactos:0, leads:[] }] });
+    };
+    var set = function (id, v) { var e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input', { bubbles:true })); };
+    set('f-vendedor', 'Isabel Robledo'); set('f-celular', '70022233'); await new Promise(r => setTimeout(r, 300));
+    var box = document.getElementById('cruce-form'); return box.hidden ? '' : box.textContent;
+  }, ahora);
+  chk('⚠️ 8g. 📝 con la NOTA de Carola (sin charla): el cartel la nombra y dice qué anotó', /puede ser de Carola Chavez/.test(gn) && /anotó en Kommo/.test(gn) && /Banzer a comprar/.test(gn), gn);
 
   /* Segunda revisión de Fable: el borrador de Kommo (vive en BORRADORES), lo incompleto, el tope y el número que cambia */
   const r2 = await pg.evaluate(async (ahora) => {
