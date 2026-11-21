@@ -28004,6 +28004,10 @@ function submitPedido(){
      de ESTA nota, en `rec`; y después de la regla, Claude lee el pedido entero (4 s como mucho, `obsIaEsperar`): sus avisos van en la MISMA
      ventana; sin nada que decir (o si tarda), sigue como siempre. Mientras espera, otro «Guardar» no hace nada. */
   if(OBS_IA.esperando) return;
+  /* 🔀 (21/11, dueño, con la captura: *«tarda en aparecer… antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir
+     guardar»*) Si otra vendedora de la misma marca atiende a este cliente según Kommo, antes de guardar se vuelve a mostrar el aviso y hay que
+     tocar «Guardar igual» (nunca lo impide: el cliente no se perjudica). Si Kommo todavía no contestó, se espera (CRUCE_GUARDAR_MS como mucho). */
+  var _cx=cruceAntesDeGuardar(_otraVez); if(_cx!==true) return;
   try{ obsIaFormAplicar(rec, (isEdit && !_deBorrador) ? prev : null); }catch(eI){ console.error(eI); }
   var _obsRev=[]; try{ _obsRev=obsRevAvisos(rec, (isEdit && !_deBorrador) ? prev : null, docTipoSel()); }catch(eO){ console.error(eO); _obsRev=[]; }
   var _oia=null; try{ _oia=obsIaAntes(rec, (isEdit && !_deBorrador) ? prev : null, docTipoSel(), _obsRev); }catch(eI2){ console.error(eI2); _oia=null; }
@@ -72741,6 +72745,41 @@ function crvResolver(id, quien){
 function cruceFormReintentar(k){
   if(k!==CRUCE_F.k || CRUCE_F.n>=CRUCE_REINT_MAX) return;
   CRUCE_F.n++; clearTimeout(CRUCE_F.t); CRUCE_F.t=setTimeout(cruceFormBuscar, CRUCE_REINT_MS);
+}
+/* 🔀 (21/11) La pregunta de antes de guardar: true = seguir; null = esperando a Kommo o la respuesta (vuelve a correr `otraVez`); false = volvió
+   al formulario. Si Kommo no contesta a tiempo, se guarda (la revisión del servidor manda el WhatsApp igual al minuto). */
+var CRUCE_GUARDAR_MS=15000;
+function cruceAntesDeGuardar(otraVez){
+  var q=cruceFormQue(); if(!q || !servidorTiene(QA_SERVIDOR)) return true;
+  var k=q.c8+'|'+normNombre(q.v);
+  if(k!==CRUCE_F.k) cruceFormPintar();   // el número o la vendedora cambiaron sin evento (autocompletado): se arma la consulta
+  if(!CRUCE_F.r){
+    if(CRUCE_F.sinResp===k) return true;   // ya se esperó y Kommo no contestó: no se frena la venta
+    if(CRUCE_F.espGuardar) return null;    // otro «Guardar» mientras se espera: nada
+    if(!CRUCE_F.busy){ clearTimeout(CRUCE_F.t); cruceFormBuscar(); }
+    CRUCE_F.espGuardar=true;
+    toast('🔎 Revisando en Kommo si otra vendedora atiende a este cliente… (unos segundos)', '', 4000);
+    var vueltas=0;   // por vueltas de 250 ms (no por el reloj: con el reloj quieto de las pruebas no avanzaría)
+    var mira=function(){
+      if(CRUCE_F.k!==k){ CRUCE_F.espGuardar=false; return; }   // cambió el número: no se guarda solo
+      if(CRUCE_F.r || (++vueltas)*250>=CRUCE_GUARDAR_MS){ CRUCE_F.espGuardar=false; if(!CRUCE_F.r) CRUCE_F.sinResp=k; try{ otraVez(); }catch(e){ console.error(e); } return; }
+      setTimeout(mira, 250);
+    };
+    setTimeout(mira, 250);
+    return null;
+  }
+  var L=cruceOtros(CRUCE_F.r, q.v, q.mk); if(!L.length) return true;
+  var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
+  var det=L.map(function(o){
+    if(o.por==='nota') return o.n+' anotó en Kommo el '+qaFecha(o.ts)+(o.txt?': «'+o.txt+'»':'');
+    return o.por==='fecha' ? o.n+' tiene una fecha acordada con el cliente para el '+qaFecha(o.ts) : o.n+' conversó con el cliente el '+qaFecha(o.ts)+' ('+qaHace(o.ts, o.ahora)+')';
+  });
+  var wa='Si guardás, a '+nombres+' le llega un WhatsApp: «tu cliente compró, la venta la cargó '+q.v+'». Si el cliente era de ella, puede pedir revisión.';
+  var r=preguntaYa('⚠️ Este cliente puede ser de '+nombres+' (según Kommo, en los últimos '+QA_DIAS+' días).\n\n'+det.join('\n')+'\n\n'+wa+'\n\nAceptar: guardar la venta igual. Cancelar: volver.',
+    { icono:'⚠️', aviso:true, titulo:'Este cliente puede ser de '+nombres, lineas:det.concat(['Que haya mensajes no significa que lo haya atendido de verdad.', wa]),
+      no:'✏️ Volver al pedido', si:'💾 Guardar la venta igual' }, otraVez);
+  if(r===false){ var b=document.getElementById('cruce-form'); if(b && !b.hidden){ try{ b.scrollIntoView({ block:'center', behavior:'smooth' }); }catch(e){} } }
+  return r;
 }
 function cruceFormBuscar(){
   var q=cruceFormQue(); if(!q) return;
