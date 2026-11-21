@@ -72783,9 +72783,17 @@ function cruceEsperaTocado(ev){
   var t=ev.target; if(t && t.closest && t.closest('#cruce-form')) return;
   cruceEsperaFin('toco');
 }
+/* (Revisión 2 de Fable, 21/11) Los botones del formulario (día de la agenda, turno, OC/ATC/RPT, ✕ de un producto, frases rápidas) cambian el
+   pedido sin `input`: un clic en uno también corta la espera. Guardar y lo del propio cartel no. */
+function cruceEsperaClic(ev){
+  var E=CRUCE_F.esp; if(!E || !ev || !ev.isTrusted) return;
+  var t=ev.target, b=t && t.closest && t.closest('button, [role="button"], a, label, select, input[type="checkbox"], input[type="radio"]'); if(!b) return;
+  if(b.closest('#cruce-form') || b.id==='f-submit' || b.type==='submit' || /submitPedido|tvGuardarProxima/.test(b.getAttribute('onclick')||'')) return;
+  cruceEsperaFin('toco');
+}
 document.addEventListener('DOMContentLoaded', function(){
   var vf=document.getElementById('view-form');
-  if(vf){ vf.addEventListener('input', cruceEsperaTocado, true); vf.addEventListener('change', cruceEsperaTocado, true); }
+  if(vf){ vf.addEventListener('input', cruceEsperaTocado, true); vf.addEventListener('change', cruceEsperaTocado, true); vf.addEventListener('click', cruceEsperaClic, true); }
 });
 function cruceAntesDeGuardar(otraVez){
   var q=cruceFormQue(); if(!q || !servidorTiene(QA_SERVIDOR)) return true;

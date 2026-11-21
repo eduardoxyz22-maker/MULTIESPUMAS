@@ -13537,22 +13537,27 @@ var QA_CHAT = ['incoming_chat_message', 'outgoing_chat_message'];
 var QA_NOTAS_PAGINAS = 4;      // de 250 notas cada una, por tanda de 40 leads o contactos
 var QA_NOTA_DIAS_SEM = '(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)';
 var QA_NOTA_SI = new RegExp('\\b(?:' + [
-  'pas(?:a|o|e|en|an|ar|are|ara|aran|aria|arian|aremos|ando|ado|aron)\\s+(?:por\\b|a\\s+(?:la\\s+|el\\s+)?(?:tienda|sucursal|local|ver|comprar|retirar|recoger|buscar|elegir|probar|conocer|cotizar|pagar)\\b|manana\\b|hoy\\b|el\\s+' + QA_NOTA_DIAS_SEM + '\\b|' + QA_NOTA_DIAS_SEM + '\\b|en\\s+la\\s+(?:tarde|manana|noche)\\b|esta\\s+(?:tarde|semana|noche)\\b|despues\\b|luego\\b|mas\\s+tarde\\b)',
+  'pas(?:a|o|e|en|an|ar|are|ara|aran|aria|arian|aremos|ando|ado|aron)\\s+(?:por\\b|a\\s+(?:la\\s+|el\\s+)?(?:tienda|sucursal|local|ver|comprar|retirar|recoger|buscar|elegir|probar|conocer|cotizar|pagar)\\b|manana\\b|hoy\\b|el\\s+' + QA_NOTA_DIAS_SEM + '\\b|' + QA_NOTA_DIAS_SEM + '\\b|en\\s+la\\s+(?:tarde|manana|noche)\\b|esta\\s+(?:tarde|semana|noche)\\b|despues\\b|luego\\b|mas\\s+tard\\w*|el\\s+\\d+|a\\s+las\\b|(?:la|esta|otra)\\s+(?:proxima\\s+)?semana\\b|(?:el\\s+)?fin\\s+de\\s+semana\\b|(?:el\\s+)?finde\\b|a\\s+fin\\s+de\\s+mes\\b)',
+  '(?:quedo|queda|quedaron|quedamos)\\s+en\\s+(?:pasar|venir|volver)\\b',
   'visit\\w*',
-  '(?:viene|vienen|vendra|vendran|vendria|vendrian|vendre|venir|vino|vinieron|vengo|venga|vengan)\\b',
+  '(?:viene|vienen|vendra|vendran|vendria|vendrian|vendre|venir|vino|vinieron|vengo|venga|vengan|viniendo)\\b',
+  '(?:vuelve|vuelven|volvera|volveran|volveria|vuelva|vuelvan)\\b(?!\\s+a\\s+(?:llamar|escribir|contactar|preguntar|mandar|enviar|consultar|cotizar)\\b)', 'separ(?:e|o|ar|amos|ado|ada)\\b', 'adelanto\\b',
   '(?:ira|iran|ire)\\b', 'va(?:n|mos)?\\s+a\\s+ir\\b',
   'acerc\\w*', 'sucursal\\w*', 'tienda\\w*', 'local\\b',
   'compr(?!ob|omet|end|ens|im)\\w*',
   'stock\\b', 'reserv\\w*', 'retir(?:a|ar|ara|aran|aria|o|e|en|an|ando)\\b', 'apart(?:a|ar|o|e|ado|ada)\\b'
 ].join('|') + ')');
-var QA_NOTA_NO = new RegExp('\\bno\\s+(?:(?:va|van|vamos)\\s+a\\s+|quiere\\s+|quieren\\s+|piensa\\s+|desea\\s+|puede\\s+|podra\\s+|le\\s+interesa\\s+|les\\s+interesa\\s+|' +
-  'lo\\s+va\\s+a\\s+|se\\s+va\\s+a\\s+)?(?:compr(?!ob|omet|end|ens|im)\\w*|ir\\b|venir\\b|viene\\b|vendra\\b|pas(?:a|ar|ara|o)\\b|visit\\w*)' +
-  '|\\bcompr\\w*(?:\\s+\\w+){0,6}\\s+(?:en|con|a)\\s+(?:otr[oa]s?|la\\s+competencia)\\b|\\bcompetencia\\b|\\bno\\s+le\\s+interesa|\\bya\\s+no\\s+(?:quiere|compra|viene)');
+var QA_NOTA_NO = new RegExp('\\b(?:no|nunca)\\s+(?:(?:va|van|vamos)\\s+a\\s+|quiere\\s+|quieren\\s+|piensa\\s+|desea\\s+|puede\\s+|podra\\s+|le\\s+interesa\\s+|les\\s+interesa\\s+|' +
+  'lo\\s+va\\s+a\\s+|se\\s+va\\s+a\\s+|nos\\s+|lo\\s+|la\\s+|le\\s+)?(?:compr(?!ob|omet|end|ens|im)\\w*|ir\\b|venir\\b|viene\\b|vino\\b|vinieron\\b|vendra\\b|pas(?:a|ar|ara|o)\\b|visit\\w*)(?!\\s+(?:hoy|ahora|todavia|aun)\\b)' +
+  '|\\bcompr\\w*(?:\\s+\\w+){0,6}\\s+(?:en|con|a)\\s+(?:otr[oa]s?|la\\s+competencia)\\b|\\bno\\s+le\\s+interesa\\b(?!\\s+(?:el|la|los|las|un|una)\\b)|\\bya\\s+no\\s+(?:quiere|compra|viene)');
+/* (Revisión 2 de Fable, 21/11) Por pedazo de la nota (oración o coma, «pero», «sino»): «No compró hoy, vuelve el sábado a comprar» retiene
+   (el segundo pedazo es una visita sin «no»); un «no» en otra parte de la nota ya no la anula entera. */
 function qaNotaVisita_(txt) {
   var t = String(txt == null ? '' : txt).trim();
   if (!t || /^(?:\uD83E\uDDFE|\uD83D\uDE45)/.test(t) || /panel de pedidos/i.test(t) || /^cotizaci[oó]n\s+COT/i.test(t)) return false;   // lo que escribe el propio panel (kcNota_, cotKommoNota_)
-  var n = qaNorm_(t);
-  return QA_NOTA_SI.test(n) && !QA_NOTA_NO.test(n);
+  var P = t.split(/[.;,:!?\n]+|\s+(?:pero|sino|aunque|porque)\s+/i);
+  for (var i = 0; i < P.length; i++) { var n = qaNorm_(P[i]); if (n && QA_NOTA_SI.test(n) && !QA_NOTA_NO.test(n)) return true; }
+  return false;
 }
 
 /** Sin tildes ni mayúsculas, también ã õ ç ü ý (kcNorm_ conoce solo áéíóúñ: «João» no encontraba a nadie; Fable M3). */

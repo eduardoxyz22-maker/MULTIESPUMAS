@@ -52,7 +52,7 @@ const chk = (n, ok, d) => { if (ok) { PASS++; console.log('✓ ' + n); } else { 
     showView('form'); resetForm();
     document.getElementById('f-fecha').value = '2026-11-04'; segSet('f-turno', 'AM');
     document.getElementById('f-vendedor').value = o.vend || 'Isabel Robledo'; applyVendedorLite();
-    document.getElementById('f-cliente').value = 'CLIENTE INVENTADO ' + 'ABCDEFGHIJ'.charAt(o.cel % 10);   // uno distinto por caso: si no, sale «¿pedido repetido?»
+    document.getElementById('f-cliente').value = 'CLIENTE INVENTADO ' + String(o.cel % 100).split('').map(d => 'ABCDEFGHIJ'.charAt(+d)).join('');   // uno distinto por caso: si no, sale «¿pedido repetido?»
     var c = document.getElementById('f-celular'); c.value = String(o.cel); c.dispatchEvent(new Event('input', { bubbles: true }));
     document.getElementById('f-zona').value = 'Norte';
     document.getElementById('f-direccion').value = 'CALLE FALSA 1';
@@ -130,6 +130,15 @@ const chk = (n, ok, d) => { if (ok) { PASS++; console.log('✓ ' + n); } else { 
   await page.waitForTimeout(3500);
   { const nG = await ev(() => ({ s: window._saves, t: (document.getElementById('toast') || {}).textContent, esp: !!CRUCE_F.esp }));
     chk('⚠️ G2 · cambió la dirección durante la espera: no guarda solo (ni pregunta) y le dice que toque Guardar de nuevo', nG.s === 6 && DLG.msgs.length === 0 && /Guardar» de nuevo/.test(nG.t) && !nG.esp, { nG, m: DLG.msgs }); }
+  /* G3 · tocar un BOTÓN del formulario (el turno) durante la espera también la corta */
+  await llenar({ modo: 'carola', cel: ++celN, ms: 2500 });
+  DLG.msgs = [];
+  const nG30 = await ev(() => window._saves);
+  await ev(() => { try { closeModal(); } catch (e) {} document.querySelectorAll('.modal-overlay.on').forEach(m => m.classList.remove('on')); });
+  g = await guardar(300);
+  await page.click('#f-turno button[data-val="PM"]');
+  await page.waitForTimeout(3500);
+  chk('⚠️ G3 · tocó el turno durante la espera: no guarda solo', await ev(() => window._saves) === nG30 && DLG.msgs.length === 0, { m: DLG.msgs });
   /* H · «Guardar sin esperar» */
   await llenar({ modo: 'nunca', cel: ++celN });
   g = await guardar(300);
@@ -152,7 +161,7 @@ const chk = (n, ok, d) => { if (ok) { PASS++; console.log('✓ ' + n); } else { 
   chk('K · la consulta del formulario manda `solo` con la marca de quien vende', await ev(() => KX.ult && KX.ult.solo === 'heaven' && KX.ult.auto === 1), await ev(() => KX.ult));
   /* L · una pregunta de antes en el mismo guardado no se vuelve a hacer después de la espera */
   await llenar({ modo: 'libre', cel: ++celN, ms: 1200 });
-  const nL0 = await ev(() => window._saves);
+  const nL0 = await ev(() => window._saves); DLG.msgs = [];
   const rL = await ev(async () => {
     window.PREG_PRUEBA = 1; window._preg = 0; var n0 = window._saves;
     var ov = function () { window._preg++; var r = preguntaYa('¿Seguro de prueba?', {}, ov); if (r === null) return; if (!r) return; var c = cruceAntesDeGuardar(ov); if (c !== true) return; window._saves++; };
