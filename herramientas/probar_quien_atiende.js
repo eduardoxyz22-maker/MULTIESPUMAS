@@ -310,9 +310,11 @@ function main() {
         (W.tareas.contacts[co.id] || []).forEach((x) => { const ts = Number(x.complete_till) || 0; if (Number(x.created_by) && ts > T0 && ts <= T0 + 90 * D) abiertos.forEach((l) => { const u = Number(x.responsible_user_id) || Number(l.responsible_user_id) || 0; at[c.marca + '|' + u] = u ? (W.nomU[String(u)] || 'usuario ' + u) : '(sin asignar)'; }); });
       }
     }
-    const nomsV = Object.keys(at).map((k) => at[k]), kV = nomsV.length ? 'atiende' : ganados.length ? 'compro' : (soloSinToken ? 'nose' : 'libre');
+    let nomsV = Object.keys(at).map((k) => at[k]), kV = nomsV.length ? 'atiende' : ganados.length ? 'compro' : (soloSinToken ? 'nose' : 'libre');
     /* la página REAL */
     const Vp = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), ''), kP = (Vp.k === 'otro' || Vp.k === 'tuyo') ? 'atiende' : Vp.k, nomsP = Array.from(Vp.quien || []).map((q) => q.n);
+    /* (21/11) La verdad de acá no lee las notas: lo que retiene SOLO una nota de visita o compra se cuenta aparte, como bien */
+    if (kV !== 'atiende' && kP === 'atiende' && Array.from(Vp.quien || []).length && Array.from(Vp.quien).every((q) => q.por === 'nota')) { R.porNota = (R.porNota || 0) + 1; kV = 'atiende'; nomsV = nomsP.slice(); }
     const kHj = hoja === 'Libre' ? 'libre' : /^Atiende: /.test(hoja) ? 'atiende' : /^Ya compró con /.test(hoja) ? 'compro' : /^No se pudo consultar/.test(hoja) ? 'nose' : '?';
     const nomsH = (/^Atiende: (.*?)( \(Kommo no contestó todo\))?$/.exec(hoja) || ['', ''])[1].split(', ').filter(Boolean);
     porClase[kV + ' → ' + kP] = (porClase[kV + ' → ' + kP] || 0) + 1;
@@ -341,7 +343,7 @@ function main() {
   console.log('   EL CARTEL (qaVeredicto de la página) contra la verdad: ' + R.pagIgual + ' iguales, ' + R.pagDist + ' distintos');
   console.log('   LA HOJA (qaResumen_ del servidor) contra la verdad: ' + R.hojaIgual + ' iguales, ' + R.hojaDist + ' distintos');
   console.log('   la hoja y el cartel dicen lo mismo: ' + R.hojaPag + ' de ' + (R.pagIgual + R.pagDist));
-  console.log('   verdad → cartel: ' + JSON.stringify(porClase));
+  console.log('   verdad → cartel: ' + JSON.stringify(porClase) + (R.porNota ? ' · retenidos SOLO por una nota de visita o compra (cuentan como bien): ' + R.porNota : ''));
   console.log('   con el nombre de la que lo atiende dice «lo atendés vos»: ' + R.tuyoBien + ' de ' + R.tuyoN + (R.tuyoMal ? ' ⚠️' : ''));
   console.log('   la segunda búsqueda sale de la caché: ' + R.cache + ' · con +591, guion y espacio da lo mismo: ' + R.formato);
   console.log('   topes: «… y N leads más viejos» en ' + R.masLeads + ' · «… y N clientes más» en ' + R.masContactos);
