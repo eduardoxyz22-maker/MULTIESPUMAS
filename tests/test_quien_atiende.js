@@ -261,7 +261,11 @@ function servidor() {
               ['se acercará al local de Mia Plaza', true], ['Irá a la tienda el lunes', true],
               ['el paso siguiente es mandarle la cotización', false], ['le pasé la cotización por WhatsApp', false], ['No va a comprar, está caro', false],
               ['compró en otra tienda', false], ['compró con la competencia', false], ['No le interesa', false], ['no comprende el precio', false],
-              ['🙅 Cotización COT-12: no compra — caro', false], ['Cotización COT-5: 1 colchón · total Bs 3.000', false]];
+              ['🙅 Cotización COT-12: no compra — caro', false], ['Cotización COT-5: 1 colchón · total Bs 3.000', false],
+              /* revisión 2 de Fable: un «no» en otro pedazo de la nota no la anula; «pasará el 25», «quedó en pasar»; «no vino» no */
+              ['No compró hoy, vuelve el sábado a comprar', true], ['Cliente no viene hoy sino el lunes', true], ['Pasará el 25', true],
+              ['quedó en pasar', true], ['Pasará el sábado a comprar, no le interesa el somier', true], ['La competencia le ofrece más barato, viene mañana a comparar', true],
+              ['quedó en venir y nunca vino', false], ['no nos visitó', false]];
   const malF = FR.filter(([t, si]) => !!otraNota(t, S - D, U_CAR) !== si).map(x => x[0]);
   chk('N17 · las frases: «pasa mañana/reservar/retira/irá» sí; «el paso siguiente», «le pasé», «no va a comprar», «compró en otra», «competencia», las del panel no', !malF.length, malF);
   /* Páginas: 300 notas en el lead, la de visita en la segunda página → se lee; con más de 4 páginas llenas → incompleto */
