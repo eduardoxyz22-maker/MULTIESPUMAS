@@ -474,6 +474,14 @@ function main() {
     const N = rn.code === 200 && rn.o ? emb(rn.o, 'notes') : [];
     const deP = N.filter((n) => Number(n.created_by)), visita = deP.filter((n) => gs.qaNotaVisita_(String((n.params && n.params.text) || '')));
     console.log('   notas comunes de leads tocadas en 15 días (1.ª página): ' + N.length + ' (HTTP ' + rn.code + ') · de una persona: ' + deP.length + ' · que hablan de visita o compra: ' + visita.length);
+    /* (21/11, revisión de Fable) cuántas dicen que NO o «en otra tienda» y cuántas escribió el panel (solo cantidades) */
+    const txtN = (n) => String((n.params && n.params.text) || ''), normN = (n) => gs.qaNorm_(txtN(n));
+    const conSi = deP.filter((n) => gs.QA_NOTA_SI.test(normN(n))), conNo = conSi.filter((n) => gs.QA_NOTA_NO.test(normN(n)));
+    const delPanel = deP.filter((n) => /^(?:\uD83E\uDDFE|\uD83D\uDE45)/.test(txtN(n).trim()) || /panel de pedidos/i.test(txtN(n))).length;
+    console.log('   de esas, nombran visita o compra: ' + conSi.length + ' · pero dicen que NO o en otro lado: ' + conNo.length + ' · escritas por el panel: ' + delPanel);
+    const pg2 = N.length === 250 ? api(cH, '/leads/notes?filter[note_type][]=common&filter[updated_at][from]=' + LIM + '&limit=250&page=2') : null;
+    if (pg2) console.log('   segunda página de notas (&page=2): HTTP ' + pg2.code + ' · ' + (pg2.code === 200 && pg2.o ? emb(pg2.o, 'notes').length : 0) + ' notas');
+    if (pg2 && pg2.code !== 200 && pg2.code !== 204) mal('la segunda página de notas no da 200/204');
     const viejas = N.filter((n) => Number(n.updated_at) < LIM).length, otroTipo = N.filter((n) => n.note_type !== 'common').length;
     if (viejas || otroTipo) mal('el filtro de notas no filtra: ' + viejas + ' más viejas que 15 días, ' + otroTipo + ' de otro tipo');
     const uno = N.length ? String(N[0].entity_id) : '';
