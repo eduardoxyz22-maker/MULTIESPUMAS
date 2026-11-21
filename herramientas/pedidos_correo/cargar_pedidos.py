@@ -51,9 +51,16 @@ def post(body, intentos=3):
                             "--data-binary", "@-", URL + "?_=%d" % int(time.time() * 1000)],
                            input=json.dumps(body, ensure_ascii=False), capture_output=True, text=True)
         try:
-            return json.loads(r.stdout)
+            j = json.loads(r.stdout)
         except Exception:
             time.sleep(3 * (intento + 1))
+            continue
+        # 🔀 (21/11, revisión de Fable; §4fx) Google a veces convierte el POST en GET: contesta `doGet` (la planilla entera, `pedidos`)
+        # y `doPost` nunca corre. Para una acción que no es `list` eso NO es un guardado: se reintenta (no se escribió nada).
+        if body.get('action') != 'list' and isinstance(j, dict) and 'pedidos' in j:
+            time.sleep(3 * (intento + 1))
+            continue
+        return j
     raise SystemExit('El servidor del panel no contestó bien: ' + (r.stdout or r.stderr)[:300])
 
 
@@ -151,9 +158,14 @@ def next_dia(P, f):
 
 
 def ya_esta(P, clave, nota):
+    """¿Ya está cargado? (21/11, revisión de Fable) Solo entre los pedidos de EDUARDO (cada vendedor tiene su numeración de notas, §4jd) y
+    con el número ENTERO: «33278» no es la nota «133278», ni el celular «73327811», ni la OC de ROHO «260332781»."""
+    pat = re.compile(r'(?<![0-9A-Za-z])' + re.escape(clave) + r'(?![0-9A-Za-z])', re.I) if clave else None
     for p in P:
+        if nn(p.get('vendedor')) != nn(VENDEDOR):
+            continue
         txt = str(p.get('nota') or '') + ' ' + str(p.get('observaciones') or '')
-        if (clave and clave in txt) or (nota and str(p.get('nota') or '').strip() == nota):
+        if (pat and pat.search(txt)) or (nota and str(p.get('nota') or '').strip() == nota):
             return p
     return None
 
@@ -304,11 +316,16 @@ def main():
         lleno = None   # 🎟️ (16/11) el día pedido estaba lleno: después de guardarlo se mueve ahí con `forzar`
         for intento in range(6):
             res = post({"action": "save", "pedido": rec, "av": 1, "tr4": 1})   # tr4: el bot le avisa al dueño que lo suba al TR4 (servidor 07-f)
+            # (21/11, revisión de Fable) El guardado llegó pero se perdió la respuesta y `post` lo reenvió: el servidor contesta
+            # `conflicto` con la fila que YA escribió. El id es nuevo de esta vuelta (`uid`), así que esa fila es la nuestra: quedó cargado.
+            if res.get('error') == 'conflicto' and str((res.get('pedido') or {}).get('id') or '') == rec['id']:
+                res = {"ok": True, "pedido": res.get('pedido')}
             if res.get('ok'):
                 break
             if res.get('error') not in REINTENTA:
                 break
-            if intento == 0 and res.get('error') == 'cupos_llenos' and d.get('dia_del_dueno') is True:
+            # (21/11, revisión de Fable) Con 0 cupos (domingo, sábado a la tarde: no sale camión) NO es «lleno»: no se fuerza nunca.
+            if intento == 0 and res.get('error') == 'cupos_llenos' and d.get('dia_del_dueno') is True and int(res.get('cupos') or 0) > 0:
                 lleno = {"usados": res.get('usados'), "cupos": res.get('cupos')}
             # 🛒 (17/11, dueño: «tienda amiga se puede am o pm») Tienda Amiga recibe de 09:00 a 16:00: lleno a la mañana → la tarde del MISMO día
             # (el sábado no hay tarde); recién si la tarde también está llena, el día siguiente a la mañana.

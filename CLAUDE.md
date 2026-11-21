@@ -3277,6 +3277,9 @@ precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06
 sábado 6:47, 8:47, 11:47, 15:47, 17:47, 19:47 y 21:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*; 14/11: *«Sí, agrega las de 19:47 y 21:47»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
+🧪 **El cargador revisado por Fable** (21/11): «ya estaba» solo entre los pedidos de Eduardo y con el número ENTERO (`ya_esta`); una respuesta de
+lectura (§4fx) a un `save` se reintenta en `post`; un `conflicto` con la fila del MISMO id (`uid` de esta vuelta) es «CARGADO»; `dia_del_dueno` con
+0 cupos (domingo, sábado PM) no se fuerza. `tests/test_correo_cargar.py` (18; el `.gs` real detrás de `tests/correo_gs_http.js`).
 🛒 **Tienda Amiga** (09/11; dueño: *«cuando lleguen a mi correo mensajes de Denisse… con pedidos recuerda cárgalos»*): la rutina busca también
 `from:denisse.navarro@tiendaamiga.com.bo` (PDF «OC_Marketplace_N», cliente `TIENDA AMIGA ER S.A.`, Almacenes Ferrotodo Bodega 14, el día hábil
 siguiente AM; ⚠️ el PDF trae dos precios encimados: vale el MENOR; sus `COLT00N` no son los nuestros: tabla en LEEME.md). ⚠️ El 09/11 esos

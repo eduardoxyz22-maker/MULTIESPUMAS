@@ -38,7 +38,7 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
    primer día en que llega todo) y el `motivo` va en las observaciones («Se movió del <día> al <día> por stock: …»). Eso no es
    `dia_del_dueno`: el script igual busca cupo desde ahí. Un producto `noRec` (el panel no lo reconoce) se carga en la fecha pedida y se dice en el resumen.
    Armar un JSON con los pedidos (formato en `cargar_pedidos.py`) y correr primero SIN `--guardar` (muestra qué haría y cuáles
-   «ya estaban»), después con `--guardar`. El script relee la planilla, salta lo que ya está por su número (OC / «OP-…»), saca la OC
+   «ya estaban»), después con `--guardar`. El script relee la planilla, salta lo que ya está por su número (OC / «OP-…»; desde el 21/11 solo entre los pedidos de Eduardo y con el número entero), saca la OC
    del panel y el N° del día, calcula el total, y si el día está lleno/cerrado/feriado lo pasa al siguiente día hábil y lo anota (va
    para cuando haya cupo). 🎟️ **Solo cuando el dueño dice el día** (16/11: *«solo cuando yo te instruya para tal día, es tal día; si no,
    para cuando haya cupo»*) el pedido lleva `"dia_del_dueno": true` en el JSON y, si ese día está LLENO, queda en ese día igual (lo guarda
