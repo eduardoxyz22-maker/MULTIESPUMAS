@@ -13529,12 +13529,30 @@ var QA_CHAT = ['incoming_chat_message', 'outgoing_chat_message'];
 /* 📝 (2026-11-21-a) Dueño, 21/11: *«si hay una visita y la vendedora avisa en notas que pasará por X sucursal a comprar porque no traen stock… debería
    avisar en caso de "robo" de cliente»*; eligió «solo visita o compra» (no cualquier nota: «no contesta» no es atenderlo). Una NOTA de Kommo
    (común, escrita por una PERSONA, no el sistema) de los últimos QA_DIAS días que nombra una visita o una compra cuenta como la conversación:
-   retiene al cliente para quien la ESCRIBIÓ. Las que escribe el propio panel («🧾 Venta cargada en el panel…») no cuentan. = QA_NOTA_RE de la página. */
-var QA_NOTA_RE = /\b(pas(a|o|e|en|an|ar|ara|aran|aria|arian|aremos|ando)|visit\w*|vien(e|en)|vendr(a|an|ia|ian|e)|venir|sucursal\w*|tienda\w*|compr(a|as|o|e|en|an|ar|ara|aran|aria|arian|aremos|ando|ado|ada)|stock)\b/;
+   retiene al cliente para quien la ESCRIBIÓ. Las que escribe el propio panel («🧾 Venta cargada en el panel…», «🙅 Cotización … no compra»,
+   «🧾 Cotización COT-…») no cuentan. Solo lo decide el servidor (la página recibe `l.nota` ya filtrada).
+   (Revisión de Fable, 21/11) «pas…» solo con lo que sigue («pasa POR», «pasará A COMPRAR», «pasa MAÑANA»: «el paso siguiente» y «pasaje» no);
+   «comprobante», «compromiso», «comprende» no son una compra; y una nota que dice que NO va a venir o a comprar, o que compró en OTRO lado,
+   no retiene a nadie. */
+var QA_NOTAS_PAGINAS = 4;      // de 250 notas cada una, por tanda de 40 leads o contactos
+var QA_NOTA_DIAS_SEM = '(?:lunes|martes|miercoles|jueves|viernes|sabado|domingo)';
+var QA_NOTA_SI = new RegExp('\\b(?:' + [
+  'pas(?:a|o|e|en|an|ar|are|ara|aran|aria|arian|aremos|ando|ado|aron)\\s+(?:por\\b|a\\s+(?:la\\s+|el\\s+)?(?:tienda|sucursal|local|ver|comprar|retirar|recoger|buscar|elegir|probar|conocer|cotizar|pagar)\\b|manana\\b|hoy\\b|el\\s+' + QA_NOTA_DIAS_SEM + '\\b|' + QA_NOTA_DIAS_SEM + '\\b|en\\s+la\\s+(?:tarde|manana|noche)\\b|esta\\s+(?:tarde|semana|noche)\\b|despues\\b|luego\\b|mas\\s+tarde\\b)',
+  'visit\\w*',
+  '(?:viene|vienen|vendra|vendran|vendria|vendrian|vendre|venir|vino|vinieron|vengo|venga|vengan)\\b',
+  '(?:ira|iran|ire)\\b', 'va(?:n|mos)?\\s+a\\s+ir\\b',
+  'acerc\\w*', 'sucursal\\w*', 'tienda\\w*', 'local\\b',
+  'compr(?!ob|omet|end|ens|im)\\w*',
+  'stock\\b', 'reserv\\w*', 'retir(?:a|ar|ara|aran|aria|o|e|en|an|ando)\\b', 'apart(?:a|ar|o|e|ado|ada)\\b'
+].join('|') + ')');
+var QA_NOTA_NO = new RegExp('\\bno\\s+(?:(?:va|van|vamos)\\s+a\\s+|quiere\\s+|quieren\\s+|piensa\\s+|desea\\s+|puede\\s+|podra\\s+|le\\s+interesa\\s+|les\\s+interesa\\s+|' +
+  'lo\\s+va\\s+a\\s+|se\\s+va\\s+a\\s+)?(?:compr(?!ob|omet|end|ens|im)\\w*|ir\\b|venir\\b|viene\\b|vendra\\b|pas(?:a|ar|ara|o)\\b|visit\\w*)' +
+  '|\\bcompr\\w*(?:\\s+\\w+){0,6}\\s+(?:en|con|a)\\s+(?:otr[oa]s?|la\\s+competencia)\\b|\\bcompetencia\\b|\\bno\\s+le\\s+interesa|\\bya\\s+no\\s+(?:quiere|compra|viene)');
 function qaNotaVisita_(txt) {
   var t = String(txt == null ? '' : txt).trim();
-  if (!t || /^\uD83E\uDDFE/.test(t) || /panel de pedidos/i.test(t)) return false;   // lo que escribe el propio panel (kcNota_, cotKommoNota_)
-  return QA_NOTA_RE.test(qaNorm_(t));
+  if (!t || /^(?:\uD83E\uDDFE|\uD83D\uDE45)/.test(t) || /panel de pedidos/i.test(t) || /^cotizaci[oó]n\s+COT/i.test(t)) return false;   // lo que escribe el propio panel (kcNota_, cotKommoNota_)
+  var n = qaNorm_(t);
+  return QA_NOTA_SI.test(n) && !QA_NOTA_NO.test(n);
 }
 
 /** Sin tildes ni mayúsculas, también ã õ ç ü ý (kcNorm_ conoce solo áéíóúñ: «João» no encontraba a nadie; Fable M3). */
@@ -13714,15 +13732,22 @@ function qaCuenta_(q, marca, ahoraS) {
   res.notasOk = true;
   [['leads', L.map(function (l) { return String(l.id); }), notas], ['contacts', cids, notasC]].forEach(function (x) {
     for (var kn = 0; kn < x[1].length && res.notasOk; kn += 40) {
-      var rn = kPedir_('get', '/' + x[0] + '/notes?' + x[1].slice(kn, kn + 40).map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
-                              '&filter[note_type][]=common&filter[updated_at][from]=' + lim + '&limit=250');
-      if (rn.code === 204) continue;
-      if (rn.code !== 200 || !rn.o) { res.notasOk = false; return; }
-      kEmb_(rn.o, 'notes').forEach(function (n) {
-        var id = String(n.entity_id), ts = Number(n.created_at) || 0, u = Number(n.created_by) || 0, txt = String((n.params && n.params.text) || '');
-        if (!u || ts < lim || ts > ahoraS + 3600 || !qaNotaVisita_(txt)) return;
-        if (!x[2][id] || ts > x[2][id].ts) x[2][id] = { ts:ts, quien:nom(u), txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
-      });
+      /* (Revisión de Fable, 21/11) De a QA_NOTAS_PAGINAS páginas de 250: un cliente con muchas notas no deja afuera las de la otra página;
+         si aun así siguen, la consulta queda INCOMPLETA (nunca «Libre» por no haber leído todo). */
+      for (var pgN = 1; ; pgN++) {
+        var rn = kPedir_('get', '/' + x[0] + '/notes?' + x[1].slice(kn, kn + 40).map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
+                                '&filter[note_type][]=common&filter[updated_at][from]=' + lim + '&limit=250' + (pgN > 1 ? '&page=' + pgN : ''));
+        if (rn.code === 204) break;
+        if (rn.code !== 200 || !rn.o) { res.notasOk = false; return; }
+        var NN = kEmb_(rn.o, 'notes');
+        NN.forEach(function (n) {
+          var id = String(n.entity_id), ts = Number(n.created_at) || 0, u = Number(n.created_by) || 0, txt = String((n.params && n.params.text) || '');
+          if (!u || ts < lim || ts > ahoraS + 3600 || !qaNotaVisita_(txt)) return;
+          if (!x[2][id] || ts > x[2][id].ts) x[2][id] = { ts:ts, quien:nom(u), txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
+        });
+        if (NN.length < 250 || !(rn.o._links && rn.o._links.next)) break;
+        if (pgN >= QA_NOTAS_PAGINAS) { res.notasOk = false; return; }
+      }
     }
   });
   /* Los mensajes: lo que decide el cartel (los últimos QA_DIAS + 2 días) aparte de la historia, así una historia larga nunca deja afuera
@@ -13890,7 +13915,10 @@ function quienAtiende_(body) {
   var auto = !!(body && body.auto);
   if (auto) kt = ('form ' + kt).slice(0, 40);
   if (!qaTopeSuma_(kt, auto ? QA_TOPE_AUTO : QA_TOPE_DIA)) return { ok:false, error:'tope', tope:auto ? QA_TOPE_AUTO : QA_TOPE_DIA, version:SCRIPT_VERSION };
-  out = qaConsulta_(c8, nom, String((body && body.nombreOrig) || '').slice(0, 60), ahoraS);
+  /* (Revisión de Fable, 21/11) La del formulario mira solo la marca de quien vende (la otra marca no avisa): la mitad de llamadas a Kommo y
+     contesta antes; la caché queda con `_<marca>`, la misma que usa después la revisión de la venta (cruceElegir_). */
+  var solo = auto && /^(heaven|suena)$/.test(String(body.solo || '')) ? String(body.solo) : '';
+  out = qaConsulta_(c8, nom, String((body && body.nombreOrig) || '').slice(0, 60), ahoraS, solo);
   try { qaHoja_().appendRow([new Date(), celdaTexto_(quien + (auto ? ' (formulario)' : '')), celdaTexto_(c8), celdaTexto_(nom), celdaTexto_(qaResumen_(out, ahoraS))]); } catch (e) {}
   return out;
 }
