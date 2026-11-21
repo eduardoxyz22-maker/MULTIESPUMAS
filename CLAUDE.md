@@ -2327,6 +2327,11 @@ ve en la ficha de Administración y en la de Mis pedidos (`entHistHtml`). ⚠️
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
+- **🔎 La revisión de Fable de Contabilidad (21/11)**: una venta YA pagada que se vuelve a cargar «SÍ, pagado» (partir un QR en QR + efectivo,
+  cambiar el reparto) rehace los renglones con el día del primer pago de antes (`_diaPagoPrev`), nunca con hoy (se mudaba de mes en el Cuadre);
+  «¿ya lo cobraste?» del recargo recuerda el «SÍ» mientras no hay cobro a la vista (`pintarEnvioCobrado` → `w._sinCobro`; fijarlo a propósito va
+  con `envioCobPoner`); bajarle el monto al único pago de una «SÍ, pagado» deja «A cuenta» = ese pago (`_sigPagada`); el bot compara el saldo
+  contra 0.005 (`waSaldo_`). `tests/test_conta_fable_21.js` (13; 8 rojas contra lo de antes).
 - **⏳ «Falta cobrar» se toca y dice quiénes son** (§4hr, 06/10, PUBLICADO 06/10 12:37, `3443703`; dueño: *«contabilidad no sabe qué clientes son»*): la ficha
   «Falta cobrar» de Ventas, «⏳ Con saldo» del resumen y «Por cobrar» del Cuadre (`mcToca`) abren **`abrirPorCobrar(origen)`**
   con la MISMA cuenta que la ficha (`porCobrarDatos`: Ventas = `contaFaltaCobrar` sobre `contaLista()`; Cuadre =
