@@ -23972,7 +23972,10 @@ function ctaGuardarPago(id, i, igual){
     /* `p.acuenta` = TODO el adelanto (anticipo + segundo método, §4ej) — salvo que la venta se
        haya cargado «SÍ, pagado»: ahí queda en 0 a propósito (§4cb) y no se toca. Antes
        corregirle la fecha al anticipo de una venta pagada le inventaba un «A cuenta» (§4eu). */
-    if(!(p.pagado && !((Number(p.acuenta)||0)>0.005))) p.acuenta=r2(monto+mxM);
+    /* (21/11, revisión de Fable de Contabilidad) …pero si la corrección la deja con saldo (bajó el monto del único pago), ya no es «SÍ,
+       pagado»: el adelanto vuelve a ser «A cuenta». Antes quedaba en 0 hasta un segundo guardado (el formulario mostraba «A cuenta 0»). */
+    var _sigPagada = r2(cobros.reduce(function(t,x){ return t+(x && !x.sinMonto ? (Number(x.monto)||0) : 0); },0)) >= r2(ventaAntes-monto)-0.005;
+    if(!(p.pagado && _sigPagada && !((Number(p.acuenta)||0)>0.005))) p.acuenta=r2(monto+mxM);
     // aplicarCobros relee el anticipo del ledger, que ya quedó actualizado arriba.
     _prG=aplicarCobros(p, cobros, r2(ventaAntes-monto));
   }else{
@@ -25584,6 +25587,8 @@ function renderCompForm(pide){
     'Hasta '+COMP_MAX+' im\u00e1genes: '+nombreComprobante(segVal('f-metodo'))+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>');
   iasPintarForm();                                  // 🔎 (§78)
 }
+/* Fijar «¿ya lo cobraste?» a propósito (formulario nuevo, editar, recargo de la nota): olvida el «SÍ» recordado por `pintarEnvioCobrado`. */
+function envioCobPoner(v){ var w=document.getElementById('wrap-envio-cob'); if(w) w._sinCobro=null; segSet('f-envio-cob', v); }
 /* El "¿ya lo cobraste?" solo tiene sentido si hay un monto de flete puesto. */
 function pintarEnvioCobrado(){
   var el=document.getElementById('f-envio'), w=document.getElementById('wrap-envio-cob');
@@ -25594,7 +25599,11 @@ function pintarEnvioCobrado(){
   var wm=document.getElementById('wrap-metodo');
   var hayCobro = !!(wm && wm.style.display!=='none' && segVal('f-metodo'));
   w.style.display=(hay && hayCobro)?'block':'none';
-  if(!hayCobro) segSet('f-envio-cob','NO');
+  /* 🚚 (21/11, revisión de Fable de Contabilidad) Sin cobro a la vista se fuerza «NO», pero se RECUERDA un «SÍ» que venía de antes (el
+     recargo ya cobrado de una venta sin adelanto, que `editPedido` marca): al tocar «SÍ, pagado» vuelve a «SÍ». Antes quedaba en «NO» y al
+     guardar preguntaba «¿Cambiarlo igual?»: aceptar pasaba el flete cobrado a pactado (salía del Cuadre y el chofer lo volvía a cobrar). */
+  if(!hayCobro){ if(segVal('f-envio-cob')==='SI') w._sinCobro='SI'; segSet('f-envio-cob','NO'); }
+  else if(w._sinCobro){ segSet('f-envio-cob', w._sinCobro); w._sinCobro=null; }
   var h=document.getElementById('f-envio-hint');
   /* 💸 Editando un pedido con una parte del flete YA COBRADA y otra pactada (§4eu): lo
      cobrado no se toca desde acá, el formulario solo mueve lo que falta. */
@@ -26553,7 +26562,7 @@ function obsIaArreglar(r){
   if(r.tipo==='recargo'){
     var e=document.getElementById('f-envio'), m=r2(Number(r.monto)||0); if(!e || !(m>0)) return false;
     e.value=String(m); e.classList.remove('err');
-    try{ segSet('f-envio-cob','NO'); pintarEnvioCobrado(); }catch(x2){}
+    try{ envioCobPoner('NO'); pintarEnvioCobrado(); }catch(x2){}
     toast('🚚 Recargo por entrega: '+fmtBs(m)+' (se cobra al entregar).','ok',6000);
     return true;
   }
@@ -27275,7 +27284,12 @@ function submitPedido(){
       _fvAntes=_antes; _fvNueva=isoDeTsBolivia(_tsVenta);
     }
   }
-  var _diaSI = (prev && prev.pagado && cobrosDe(prev).some(function(c){ return c.sinMonto; })) ? (_fvNueva||contaFecha(prev)||todayStr()) : todayStr();
+  /* 📅 (21/11, revisión de Fable de Contabilidad) Una venta que YA estaba pagada y se vuelve a cargar «SÍ, pagado» (cambiar el reparto de
+     los dos métodos, partir un QR en QR + efectivo) no es plata nueva: los renglones rehechos van con el día del primer pago de antes, no
+     con HOY. Si no, el pago de una venta del 20/10 se mudaba al Cuadre de noviembre y su efectivo, ya cerrado, volvía a figurar sin retirar. */
+  var _diaPagoPrev = (prev && prev.pagado) ? (parseCobros(prev.metodoPago).filter(function(c){ return c.fecha && !esEnvio(c); })
+        .map(function(c){ return c.fecha; }).sort()[0] || '') : '';
+  var _diaSI = (prev && prev.pagado && cobrosDe(prev).some(function(c){ return c.sinMonto; })) ? (_fvNueva||contaFecha(prev)||todayStr()) : (_diaPagoPrev||todayStr());
   var _metForm = _mixOn
         ? (function(){
             var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), dia=_pagSI?_diaSI:todayStr(), nota=document.getElementById('f-nota').value;
@@ -30258,7 +30272,7 @@ function resetForm(){
   pintarMixto();
   var _fcb=document.getElementById('f-cobrado'); if(_fcb){ _fcb.value=''; _fcb.classList.remove('err'); }
   var _fen=document.getElementById('f-envio'); if(_fen) _fen.value='';
-  segSet('f-envio-cob','NO'); pintarEnvioCobrado();
+  envioCobPoner('NO'); pintarEnvioCobrado();
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
@@ -30372,7 +30386,7 @@ function editPedido(id){
   updateMetodoVisibility();
   segSet('f-banco', _mf.banco);
   // 🚚 Recién ahora, con el método a la vista (ver arriba, §4eu).
-  segSet('f-envio-cob', (envioTotal(rec)>0 && !envioPendiente(rec))?'SI':'NO');
+  envioCobPoner((envioTotal(rec)>0 && !envioPendiente(rec))?'SI':'NO');
   pintarEnvioCobrado();
   /* 💳 Si la venta ya tiene un pago mixto (§4ej), se muestra el segundo método con su
      monto y sus imágenes, y el monto cobrado es la SUMA de los dos (el anticipo solo era

@@ -393,7 +393,10 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
     chk('⚠️ al escribir se podan las tildes SIN fecha que ya no puede tildar nadie (antes quedaban para siempre)',
         r.viejas.every(function(k){ return r.texto.indexOf(k)<0; }), r.texto);
     chk('control: la de más de 10 días se sigue podando', r.texto.indexOf(r.vieja10)<0, r.texto);
-    chk('⚠️ de punta a punta: tildar el colchón de hoy escribe SOLO esa tilde en la planilla', r.hayTilde && r.escrita===r.kHoy, J(r.escrita));
+    /* (21/11) Desde la revisión de Fable de logística la tilde lleva además su cantidad (`<clave>|#<unidades>`, `cargaChkPoner`): «SOLO esa
+       tilde» = la clave y su cantidad, nada más. */
+    chk('⚠️ de punta a punta: tildar el colchón de hoy escribe SOLO esa tilde (y su cantidad) en la planilla',
+        r.hayTilde && (r.escrita===r.kHoy || r.escrita===r.kHoy+' ; '+r.kHoy+'|#1'), J(r.escrita));
     chk('control: …y el cambio se confirma (no queda nada por mandar ni en la cola)', r.cambios.length===0 && r.cola===0, J([r.cambios, r.cola]));
     chk('control: la tilde de un pedido SIN fecha que no es de tienda (dato viejo, sale en «Todos») se guarda y se confirma',
         r.hayTildeL1 && r.escrita2.indexOf(r.kL1)>=0 && r.escrita2.indexOf(r.kHoy)>=0 && r.cambios2.length===0 && r.cola2===0, J([r.escrita2, r.cambios2, r.cola2]));

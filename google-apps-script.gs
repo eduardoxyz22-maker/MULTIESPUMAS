@@ -3896,9 +3896,10 @@ function waFletePendiente_(mp) {
 /* Sin el 💵: la plantilla ya lo trae. Lo mismo que `nxSaldoCliente` de la página. */
 function waSaldo_(p) {
   var falta = p.pagado ? 0 : (Number(p.saldo) || 0), flete = waFletePendiente_(p.metodoPago);
-  if (falta <= 0.01 && flete <= 0.01) return 'Tu compra ya está pagada';
-  if (falta <= 0.01) return 'Recargo por entrega a pagar al recibir: ' + waBs_(flete);
-  return 'Saldo a pagar al recibir: ' + waBs_(falta) + (flete > 0.01 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '');
+  /* 🪙 (2026-11-21-a, revisión de Fable) contra 0.005 como la página (§4mm, `nxSaldoCliente`): con 0.01 un saldo de Bs 0,01 decía «pagada». */
+  if (falta <= 0.005 && flete <= 0.005) return 'Tu compra ya está pagada';
+  if (falta <= 0.005) return 'Recargo por entrega a pagar al recibir: ' + waBs_(flete);
+  return 'Saldo a pagar al recibir: ' + waBs_(falta) + (flete > 0.005 ? ' + ' + waBs_(flete) + ' del recargo por entrega' : '');
 }
 /** 📥 (2026-11-07-f) Los 6 datos de `pedido_correo_tr4`: el N° del panel (y el del día), el cliente (y a quién se factura), su número de
     pedido (la OC en «nota»; Copacaba no la trae: el «OP-…» de las observaciones), los productos con código, cantidad y precio, el total
