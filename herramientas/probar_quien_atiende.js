@@ -365,13 +365,17 @@ function main() {
       const tt = tels(rc.o).map((t) => t.replace(/\D/g, '')).filter((d) => d.length >= 7); if (!tt.length) continue;
       olvidar(); let r = null; try { r = gs.quienAtiende_({ action: 'quienAtiende', cel: tt[0].slice(-8), quien: 'Prueba de solo lectura' }); } catch (e) { continue; }
       if (!r || !Array.isArray(r.cuentas)) continue;
-      const k = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), '').k, kk = k === 'otro' || k === 'tuyo' ? 'atiende' : k; Cb.n++; Cb[kk]++;
+      const Vb = pag.qaVeredicto(JSON.parse(JSON.stringify(r)), ''), k = Vb.k, kk = k === 'otro' || k === 'tuyo' ? 'atiende' : k; Cb.n++; Cb[kk]++;
+      /* (21/11) lo retiene una nota de visita o compra, o una tarea con fecha: la verdad de acá solo mira la conversación de este lead */
+      const porNotaTarea = kk === 'atiende' && (Vb.quien || []).length && Array.from(Vb.quien).every((q) => q.por === 'nota' || q.por === 'fecha');
       const cvl = conversaciones(H1.porLead[l.id] || []); if (Object.keys(cvl).length) Cb.conPar++;
       const fc = fContrato(l), esp = Object.keys(cvl).some((u) => cvl[u] >= LIM) ? 'atiende' : (fc >= LIM ? 'compro' : 'libre'); if (fc < LIM) Cb.fcVieja++;
       if (kk === esp || (esp !== 'libre' && kk === 'atiende')) Cb.igual++;
+      else if (esp === 'libre' && porNotaTarea) { Cb.igual++; Cb.porNota = (Cb.porNota || 0) + 1; }
+      else console.log('      distinto: el panel dice ' + kk + ' (por: ' + Array.from(Vb.quien || []).map((q) => q.por).join('+') + ') y acá se esperaba ' + esp);
     }
   }
-  console.log('   probados: ' + Cb.n + ' → el panel dice «Ya compró»: ' + Cb.compro + ' · «Lo está atendiendo…»: ' + Cb.atiende + ' · «Libre»: ' + Cb.libre + (Cb.libre > Cb.fcVieja ? ' ⚠️ (compraron hace ≤ 15 días y a otra vendedora le sale Libre)' : '') + ' · no se pudo saber: ' + Cb.nose + ' · (con alguna conversación en 17 días: ' + Cb.conPar + ' · con «Fecha contrato» de hace más de 15 días: ' + Cb.fcVieja + ')');
+  console.log('   probados: ' + Cb.n + ' → el panel dice «Ya compró»: ' + Cb.compro + ' · «Lo está atendiendo…»: ' + Cb.atiende + ' · «Libre»: ' + Cb.libre + (Cb.libre > Cb.fcVieja ? ' ⚠️ (compraron hace ≤ 15 días y a otra vendedora le sale Libre)' : '') + ' · no se pudo saber: ' + Cb.nose + ' · (con alguna conversación en 17 días: ' + Cb.conPar + ' · con «Fecha contrato» de hace más de 15 días: ' + Cb.fcVieja + ')' + (Cb.porNota ? ' · retenidos por una nota de visita o compra o una tarea con fecha (cuentan como bien): ' + Cb.porNota : ''));
   if (REGLA2) { console.log('   con la regla 2 (compró hace ≤ 15 días por su «Fecha contrato» → «Ya compró»; si además conversa → «Lo está atendiendo»): coinciden ' + Cb.igual + ' de ' + Cb.n); if (Cb.igual !== Cb.n) mal('los que compraron: ' + (Cb.n - Cb.igual) + ' de ' + Cb.n + ' no dicen lo que marca la regla 2'); }
 
   /* ── 3c · los chats que cuelgan del CONTACTO y no de un lead ── */
