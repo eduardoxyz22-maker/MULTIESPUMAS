@@ -1043,6 +1043,12 @@ una persona a ≤ 90 días la mantiene; lead perdido no retiene; etapa de compra
 final de su celular. Tope de 80 por persona y día (propiedad `QA_DIA`); cada consulta queda en la hoja «Quién atiende». Playwright solo con `QA_PRUEBA`.
 Prueba contra el Kommo real (solo lectura, solo cantidades en el registro): Actions → «Probar ¿Quién lo atiende? contra Kommo» (`herramientas/probar_quien_atiende.js`;
 el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_quien_atiende.js` (61). Dos revisiones de Fable (20/11).
+📝 **La nota de Kommo de visita o compra** (21/11, dueño: *«si la vendedora avisa en notas que pasará por X sucursal a comprar… debería avisar»*; eligió
+«solo visita o compra»; servidor **2026-11-21-a**, lo implementa el dueño; página 2026-11-21-a): una nota COMÚN de una persona, de los últimos 15 días,
+que nombra pasar / visitar / venir / sucursal / tienda / comprar / stock (`QA_NOTA_RE`, `qaNotaVisita_`; las del panel, «🧾 …», no) retiene para quien
+la ESCRIBIÓ, como la conversación: `l.nota` {ts, quien, txt} → `qaVeredicto` (`por:'nota'`), `qaResumenDe_`, `cruceOtros_` (el WhatsApp a la otra) y el
+cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
+puede pasar por 3 tiendas a cotizar, no hay lío»*). `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
 
 ## 🔀 Cruce de ventas y «Pedir revisión» (20/11; dueño, con la Comunicación Interna 032-2026; servidor `2026-11-20-c` IMPLEMENTADO 20/11 por el dueño, enlace fijo `1450933…`, 14.038 líneas, termina en `var FIN_DEL_ARCHIVO = '2026-11-20-c';`; página PUBLICADA 20/11, versión 2026-11-20-c, `ab6e4eb`)
 - Al guardar una venta, `doSave` → `cruceAlGuardar_` → `CRUCE_COLA`; `waRepasoBot_` (`cruceTomar_` en el candado, `cruceElegir_` afuera) mira con
