@@ -4268,6 +4268,7 @@ function glSigue(){
           <!-- 📱 (§4ok-95, 05/11) En una venta a domicilio el celular se guarda en 8 números para que el bot le escriba al cliente; uno de otro país, con «+» y su código (§4ok-95b, 06/11). -->
           <div id="f-cel-aviso" class="cel-aviso" hidden></div>
           <label class="avc-chk" id="f-sinwa-wrap" hidden><input type="checkbox" id="f-sinwa" onchange="celFormPintar()"> 📵 El cliente no tiene WhatsApp</label>
+          <div id="cli-debe" class="cli-debe no-print" hidden aria-live="polite"></div>   <!-- ⚠️ (22/11, 465) ese cliente debe o tiene una ATC abierta (solo avisa) -->
         </div>
       </div>
       <div id="nx-cli" class="no-print" hidden></div>
@@ -10327,6 +10328,24 @@ function m416Poner(R){
 /* 307 · la bandeja de Kommo */
 .vd-kbc{margin:2px 0 14px;border:2px solid #7c3aed;background:#f5f0ff;border-radius:12px;padding:11px 13px;font-size:.86rem;color:#2e1065}
 .vd-kbc b{color:#5b21b6}.vd-kbc-s{font-size:.78rem;color:#4c4570;margin-top:5px}.vd-kbc-b{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+/* 👁 458 · quién vio cada aviso (solo con la contraseña) */
+.vis-l{display:inline-block;font-size:.74rem;font-weight:700;border-radius:999px;padding:1px 9px;margin:4px 6px 0 0}
+.vis-si{background:#e9f8ef;color:#0a6b47}.vis-no{background:#fff4e5;color:#8a4b00}
+.vis-anu{margin:8px 0 10px;border:1px solid #d5e2e2;background:#f7fbfb;border-radius:12px;padding:9px 12px;font-size:.82rem;color:#13302e}
+.vis-anu-l{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.vis-anu-l span{border-radius:999px;padding:2px 9px;font-weight:700;font-size:.76rem}.vis-anu-l small{color:#4a6670;font-weight:600}
+.vis-anu-p{font-size:.72rem}
+/* 💬 464 · clientes que esperan respuesta */
+.sinr-it{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border:1px solid #f5c2c7;border-left:5px solid #dc2626;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff}
+.sinr-tx{flex:1 1 260px;min-width:0;font-size:.86rem;color:#13302e}.sinr-h{color:#b91c1c;font-weight:800;font-size:.78rem;white-space:nowrap}
+.sinr-q{margin:4px 0;color:#334155;overflow-wrap:anywhere}.sinr-tx small{color:#4a6670}
+.sinr-b{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.sinr-b a{text-decoration:none}.sinr-sin{font-size:.76rem;color:#64748b}
+/* ⚠️ 465 · el cliente debe o tiene una ATC abierta (solo avisa) */
+.cli-debe{margin-top:8px;background:#fff8e1;border:1px solid #f5d98a;border-left:5px solid #d97706;border-radius:10px;padding:8px 11px;font-size:.8rem;color:#4a3405}
+.cli-debe-l+.cli-debe-l{margin-top:4px}.cli-debe b{color:#7a4a00}.cli-debe-p{font-size:.72rem;color:#6b5310;margin-top:5px}
+.cli-debe-v{border:1px solid #d97706;background:#fff;color:#7a4a00;border-radius:999px;padding:1px 10px;font-weight:800;font-size:.74rem;cursor:pointer;font-family:inherit;margin-left:4px}
+.cli-debe-o{color:#6b5310;font-size:.74rem}
+@media print{ .cli-debe{ display:none!important; } }
 /* 308 · cómo paga lo que falta */
 .vd-pc-ops{display:flex;gap:8px;flex-wrap:wrap}
 .vd-pc-ops button{flex:1;min-width:120px;border:2px solid #d5e2e2;border-radius:12px;padding:9px;text-align:center;font-weight:800;font-size:.86rem;background:#fff;cursor:pointer;font-family:inherit;color:#14313a}
@@ -30747,7 +30766,7 @@ function resetForm(){
   avisaFormPintar();                           // 📦 (propuesta 76) sin la casilla: «Fecha de entrega» y el turno de siempre
   clearErr();
   try{ celFormPintar(); }catch(e){}            // 📱 (§4ok-95)
-  try{ kbcLimpiar(); }catch(e){} try{ rptVendioLimpiar(); }catch(e){} try{ pcobCargar(null); }catch(e){} try{ flotaCargar(null); }catch(e){}   // 🧑‍💼 (15/11, 307, 305, 308, 311) al final: con el saldo ya en 0
+  try{ kbcLimpiar(); }catch(e){} try{ cliDebePintar(); }catch(e){} try{ rptVendioLimpiar(); }catch(e){} try{ pcobCargar(null); }catch(e){} try{ flotaCargar(null); }catch(e){}   // 🧑‍💼 (15/11, 307, 305, 308, 311) al final: con el saldo ya en 0
   renderCupoForm();
   FORM_NUEVO_BASE=formNuevoHuella();
 }
@@ -30880,6 +30899,7 @@ function editPedido(id){
   document.getElementById('f-submit').textContent='Guardar cambios';
   showView('form'); window.scrollTo(0,0);
   fxFormPintar();   // ✨ (§4if) el camión con el pedido ya adentro, sin la barra del mes
+  try{ cliDebePintar(); }catch(e){}   // ⚠️ (22/11, 465) ¿ese cliente debe otra venta o tiene una ATC abierta?
 }
 function cancelEdit(){ resetForm(); }
 /* ✏️ (27/09, revisión en el celular) «＋ NUEVO PEDIDO» CON UNA EDICIÓN QUE QUEDÓ ABIERTA. La vendedora abre ✏️ Editar, se
@@ -34100,13 +34120,14 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===AL_DIA_SEM_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===AL_DIA_SEM_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || String(p.id)===VISTOS_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
 var ENSENA_ID='__ensena__';              // 🎓 (mejora 381/382) lo que el dueño pidió que Bloki enseñe (desde «📊 Uso del panel»)
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
+var VISTOS_ID='__vistos__';             // 👁 (22/11, mejora 458) quién vio cada aviso de Contabilidad y el anuncio (ver «QUIÉN VIO CADA AVISO»)
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
 function filaSistema(id, titulo, texto){
@@ -36554,6 +36575,8 @@ function admNombres(L, n){ n=n||3; var t=L.slice(0,n).map(function(p){ return St
 function admHacerDatos(){
   var I=[], hoy=todayStr(), prox=proximoDiaEntrega();
   var add=function(o){ if(o && o.n>0) I.push(o); };
+  // 💬 (22/11, 464) clientes que le escribieron al bot y llevan más de 4 horas hábiles sin respuesta: arriba de todo
+  try{ add(sinRespHacerAdm()); }catch(e){}
   // 🚚 sin camión (hoy y el próximo reparto): la MISMA lista de «💡 Sugerir camión»
   try{
     var sH=diaHabil(hoy) ? nxSugSin(hoy) : [], sM=nxSugSin(prox);
@@ -46195,15 +46218,18 @@ function misHacerDatos(v, mine){
   var q=misPendientes(mine);
   /* 🧾 (mejoras 251 y 274) Las cotizaciones: lo que el cliente le pidió al bot (que lo llamen) va arriba de todo, en rojo; lo demás abajo. */
   var _cot={ arriba:[], resto:[], ok:'' }; try{ _cot=cotHacerItems(v); }catch(e){}
+  /* 💬 (22/11, 464) el cliente que le escribió al bot y lleva más de 2 horas hábiles sin respuesta: arriba de todo */
+  var _sr=null; try{ _sr=sinRespHacerVend(v); }catch(e){ _sr=null; } add(_sr);
   _cot.arriba.forEach(add);
   try{ add(crxHacer(v)); }catch(e){}   // 🔀 (20/11) otra vendedora le vendió a un cliente que atendía: puede pedir revisión
   /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
   /* 📅 (30/10, §78) lo que es SOLO de la fecha de la foto no es plata: va aparte, en ámbar (`ctaAvSoloFecha`) */
   try{ var av0=ctaAvCuentan(v), avV=ctaAvViejos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
+    /* 👁 (22/11, 458) `av` = los avisos del renglón: si se ve, quedan «vistos» (`misTopPintar` → `vistosAvisosVio`) */
     add({ sev:'r', ic:'📣', n:av.length, t:'Contabilidad te pide revisar '+(av.length===1?'un pago':'pagos'),
-      s:av.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(av.length>3?' y más':''), b:'Ver', p:1, fn:_avFn, ok:avF.length?'Ningún pago con la plata mal':'Sin avisos de Contabilidad' });
-    add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn });
-    add({ sev:'i', ic:'🗂️', n:avV.length, t:(avV.length===1?'Un aviso':'Avisos')+' de antes de noviembre', s:'no cuentan para tu panel al día · revisalos cuando puedas', b:'Ver', fn:_avFn }); }catch(e){}
+      s:av.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(av.length>3?' y más':''), b:'Ver', p:1, fn:_avFn, ok:avF.length?'Ningún pago con la plata mal':'Sin avisos de Contabilidad', av:av });
+    add({ sev:'a', ic:'📅', n:avF.length, t:(avF.length===1?'Un pago':'Pagos')+' con otra fecha en la foto', s:'no es plata · '+avF.slice(0,3).map(function(a){ return a.cli; }).join(' · ')+(avF.length>3?' y más':''), b:'Ver', fn:_avFn, av:avF });
+    add({ sev:'i', ic:'🗂️', n:avV.length, t:(avV.length===1?'Un aviso':'Avisos')+' de antes de noviembre', s:'no cuentan para tu panel al día · revisalos cuando puedas', b:'Ver', fn:_avFn, av:avV }); }catch(e){}
   add({ sev:'r', ic:'🔴', n:q.sinStock.length, t:'Productos que no hay', s:misNom2(q.sinStock.map(function(x){ return x.p; }))+' · avisales que hay que esperar', b:'Ver qué hacer', p:1, fn:'abrirMisAvisos()', ok:'Todos tus productos tienen stock' });
   var atr=mine.filter(function(p){ return minutosAtraso(p)>0; });
   /* 📍 (mejora 387) los que el GPS vio con el camión en la puerta: casi seguro se entregaron, falta el ✅ de logística (no van en rojo) */
@@ -46240,7 +46266,9 @@ function misHacerDatos(v, mine){
   ant.forEach(function(p){ aBs=r2(aBs+contaFaltaCobrar(p)); });
   MIS_LISTAS.saldoAnt={ t:'🗓️ Saldo de meses anteriores · '+fmtBs(aBs), s:'Ya las entregaste y siguen sin cobrarse. No son ventas de este mes.', L:ant, m:function(p){ return fmtBs(contaFaltaCobrar(p)); } };
   add({ sev:'a', ic:'🗓️', n:ant.length, t:'Saldo de meses anteriores', s:fmtBs(aBs)+' · '+misNom2(ant)+' · ya entregadas', b:'Ver', fn:"misVerLista('saldoAnt')" });
-  try{ var w=waRespDeVend(v); add({ sev:'i', ic:'💬', n:w.length, t:'Clientes que contestaron al bot', s:'leelos y tocá «Ya lo atendí»', b:'Leer', fn:"misIrA('wa-resp-mis')", ok:'Sin respuestas del bot' }); }catch(e){}
+  try{ var w=waRespDeVend(v), _srW={}; ((_sr && _sr.sinresp)||[]).forEach(function(x){ _srW[x]=1; });   // 💬 (464) las que esperan ya van arriba, en rojo
+    w=w.filter(function(r){ return !_srW[String(r.w||'')]; });
+    add({ sev:'i', ic:'💬', n:w.length, t:'Clientes que contestaron al bot', s:'leelos y tocá «Ya lo atendí»', b:'Leer', fn:"misIrA('wa-resp-mis')", ok:'Sin respuestas del bot' }); }catch(e){}
   try{ add(flotaGuiaItem(mine)); }catch(e){}   // 🚌 (15/11, 311) «📸 Subí la foto de la guía»
   var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
   I.ok=OK; return I;
@@ -46749,6 +46777,9 @@ function misTopPintar(v, mine){
       '<div class="t2-pie">Recibiste '+fmtBs0(E.cobrado)+' − rendiste '+fmtBs0(E.retirado)+' = '+fmtBs0(r2(E.cobrado-E.retirado))+'. Es lo mismo que «Le queda en la mano» del Cuadre de '+esc(mesN(E.mes))+'.</div></div>') : '';
   var h=izq+der+det;
   if(el._h!==h){ el.innerHTML=h; el._h=h; plataEnNodo(el); }   // 💵 (15/11, mejora 291)
+  /* 👁 (22/11, 458) los avisos de Contabilidad que quedaron A LA VISTA en «Para hacer» (los primeros cinco, o todos con «Ver más»): ella los vio */
+  try{ var _mv=document.getElementById('view-mis'); if(vistosActivo() && _mv && _mv.classList.contains('active') && document.visibilityState!=='hidden')
+    (MIS_HACER_MAS?I:V).forEach(function(o){ if(o.av) vistosAvisosVio(o.av, v); }); }catch(e){}
   try{ antesIrteQuizas(v); }catch(e){}               // 🌙 (15/11, 310) desde las 19:00, una vez por día
   try{ ensenaMirar(); }catch(e){}                    // 🎓 (mejora 381) Bloki enseña lo que nunca hizo
   try{ mallRecoLeer(); }catch(e){}                   // 🎯 (14/11, 273) lo del mall para la mejor conversión, como mucho cada 5 min
@@ -75727,7 +75758,7 @@ function ctaAvEstadoHtml(a){
   if(!a) return '';
   if(a.ok) return ctaAvCerradoHtml(a);   // §4ok-92 quién, cómo y por qué se cerró
   if(a.qt) return '';
-  return '<div class="iac-av">📣 Avisado a '+esc(String(a.vend||'').split(' ')[0])+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+' · todavía sin corregir</div>';
+  return '<div class="iac-av">📣 Avisado a '+esc(String(a.vend||'').split(' ')[0])+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+' · todavía sin corregir'+(function(){ var h=''; try{ h=vistosAvisoHtml(a); }catch(e){} return h ? (' · '+h) : ''; })()+'</div>';   // 👁 (458)
 }
 function iacAvisarPanel(){
   if(!iacPuede()) return Promise.resolve();
@@ -75757,7 +75788,7 @@ function ctaAvVer(v){
   var LP=L0.filter(function(a){ return !ctaAvSoloFecha(a); }), LF=L0.filter(ctaAvSoloFecha), L=LP.concat(LF).concat(LV);
   CTA_AV_VER={ v:String(v||'') };   // §4ok-92 para repintar la lista después de un arreglo
   var fila=function(a){ return '<div class="ctav-it'+(ctaAvSoloFecha(a)?' ctav-fecha':'')+'" data-av="'+esc(a.id)+'"><div class="ctav-tx"><b>'+esc(a.cli)+'</b>'+(a.nota?(' · nota '+esc(a.nota)):'')+' · '+esc(fmtFechaCorta(a.f))+' · '+fmtBs(a.m)+' '+esc(a.met)+
-      '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small>'+ctaAvFilaExtraHtml(a, v)+'</div>'+
+      '<div class="ctav-q">→ '+esc(a.txt)+'</div><small>Avisó '+esc(a.por||'Contabilidad')+' el '+esc(fmtFechaCorta(isoDeTsBolivia(a.t)))+'</small>'+vistosAvisoHtml(a)+ctaAvFilaExtraHtml(a, v)+'</div>'+
       '<div class="ctav-bt"><button type="button" class="ah-go" onclick="closeModal();showMisModal(\''+esc(String(a.pid).replace(/'/g,''))+'\')">Abrir la venta</button>'+
       '<button type="button" class="ah-go ah-go-p" onclick="ctaAvCorregi(\''+esc(a.id)+'\',\''+esc(String(v||'').replace(/'/g,''))+'\')">✓ Ya lo corregí</button></div></div>'; };
   openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>📣 Contabilidad te pide revisar</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -75769,6 +75800,7 @@ function ctaAvVer(v){
       (LV.length ? ('<div class="ctav-sub ctav-sub-v">🗂️ <b>De antes de noviembre</b> — no cuentan para tu panel al día ni para el bono. Revisalos cuando puedas.</div><div class="ctav-viejos">'+LV.map(fila).join('')+'</div>') : ''))
       : '<div class="iac-vacio">✅ No tenés nada pendiente de Contabilidad.</div>')+'</div>', true);
   ctaAvLeerFotos(L);   // §4ok-92 lo que la IA ya leyó de esas fotos (sin gastar), para el arreglo de un toque
+  try{ vistosAvisosVio(L, v); }catch(e){}   // 👁 (22/11, 458) abrió su lista: los vio todos
 }
 function ctaAvOk(id, v, extra){
   var quien=String(v||'') || (typeof getVendedorMem==='function' ? getVendedorMem() : '') || '';
@@ -78817,6 +78849,7 @@ function nxBadges(){
     nxA3Pintar();
   }catch(e){}
   try{ waRespTraer(); }catch(e){}   // 💬 (12/10, §4kk) lo que contestaron los clientes, una vez por minuto
+  try{ vistosTic(); }catch(e){}     // 👁 (22/11, 458) lo visto que quedó sin mandar (o que pisó otro aparato) sale ahora
   try{ botTabPintar(); }catch(e){}   // 🤖 (24/10) la pestaña Bot aparece con la clave o como logística
   try{ asisRefrescar(); }catch(e){}   // 🧑‍💼 §4jx
   try{ asisPreguntasMandar(); }catch(e){}   // ❓ (K) lo que quedó esperando señal
@@ -79263,6 +79296,15 @@ function asisAvisos(){
       b:['Ver', vis==='mis' ? "asisIr('#wa-resp-mis')" : "asisIr('#wa-resp-adm', function(){ showView('bot'); })"] });   // 🤖 (24/10) vive en la pestaña Bot
   }catch(e){}
   try{ var SI=semImgAviso(); if(SI) A.push(SI); }catch(e){}   // 📊 (467) los lunes, la semana pasada en una imagen (con la contraseña)
+  /* 💬 (22/11, 464) el que espera respuesta hace más de 2 horas hábiles (a su vendedora) o 4 (a quien ve la pestaña Bot): primero */
+  try{
+    var _srL = (vis==='mis' && v) ? (contaExcluido(v) || esVendedorLite(v) ? [] : waSinResp(SINRESP_H_VEND, v))
+             : ((((vis==='admin' || vis==='bot') && botVe()) || (esLog && botVe())) && asisVeAdm() ? waSinResp(SINRESP_H_ADM, '') : []);
+    if(_srL.length) A.unshift({ k:'sinresp|'+_srL.map(function(x){ return x.w; }).join(','), sev:'ro', ico:'💬',
+      t:sinRespTitulo(_srL),
+      x:'Le escribió al bot de WhatsApp y pasaron más de '+((vis==='mis' && v) ? SINRESP_H_VEND : SINRESP_H_ADM)+' horas hábiles sin respuesta. Contestale por su WhatsApp y después tocá «✓ Ya lo atendí».',
+      b:['Contestar', "waSinRespVer('"+((vis==='mis' && v) ? esc(String(v).replace(/'/g,'')) : '')+"')"] });
+  }catch(e){}
   try{ var R=asisResumenDia(); if(R) A.unshift(R); }catch(e){}   // ☀️ (E) el resumen del día va primero
   try{ var AN=anuncioAviso(); if(AN) A.unshift(AN); }catch(e){}   // 📢 (13/10) y el anuncio de Administración, antes que todo
   var vistos=asisVistos();
@@ -81302,6 +81344,7 @@ function anuncioGrito(a){
   box.classList.remove('ag-va'); void box.offsetWidth; box.classList.add('ag-va');
   document.body.classList.add('anu-grita');
   ANUNCIO.t0=Date.now(); ANUNCIO.gen++; ANUNCIO.cur=a;
+  if(!a.semana && a.ts){ try{ vistosAnotar('an:'+a.ts, vistosQuienAparato()); }catch(e){} }   // 👁 (22/11, 458) le salió en grande: lo vio
   anuncioTemblar();
   anuncioCierraEn(ANUNCIO_GRITO_MS);
   ANUNCIO.sinVoz=0;
@@ -81420,6 +81463,7 @@ function anuncioAbrir(){
     '<div class="anu-b">'+
       (a ? ('<div class="anu-hoy"><b>🔴 Ahora están escuchando:</b><q>'+esc(a.t)+'</q><small>'+esc([des ? ('desde '+des) : '', a.por].filter(Boolean).join(' · '))+'</small></div>')
          : '<div class="anu-hoy anu-no">No hay ningún anuncio. Escribilo abajo.</div>')+
+      (a ? (function(){ try{ return vistosAnuncioHtml(a); }catch(e){ return ''; } })() : '')+   // 👁 (22/11, 458) quién lo vio y quién todavía no
       '<label for="anu-txt">'+(a ? 'Cambiarlo por' : 'Qué querés que diga')+'</label>'+
       '<textarea id="anu-txt" maxlength="'+ANUNCIO_MAX+'" rows="3" placeholder="Ej.: No hay insumos para el ICE hasta nuevo aviso." oninput="anuncioContar()">'+esc(a ? a.t : '')+'</textarea>'+
       '<div class="anu-n"><span id="anu-n">'+(a ? a.t.length : 0)+'</span> de '+ANUNCIO_MAX+' letras</div>'+
@@ -83445,6 +83489,347 @@ document.addEventListener('DOMContentLoaded',function(){
   if(CONNECTED) flushPending();
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
   nxBadges(); nxRelojArrancar();   // ✨ (§4js) los números de las pestañas, y cada minuto (las 15:00 y las 17:00)
+});
+/* ============================================================================
+   👁 458 · QUIÉN VIO CADA AVISO (22/11; el dueño la eligió con la muestra de las ideas 441-470).
+   Los avisos de Contabilidad (`__avisos_conta__`, `ctaAv*`) y el anuncio de «📢 Decir anuncio» (`__anuncio__`): cuando la vendedora VE un
+   aviso suyo se anota cuándo lo vio por PRIMERA vez, y Administración (con la contraseña) ve quién lo vio y quién no.
+   · «Lo vio» = el aviso está a la vista en su «📋 Para hacer» de Mis pedidos (los primeros cinco renglones, o todos con «Ver más»), o abrió
+     su lista («📣 Contabilidad te pide revisar», `ctaAvVer`), o el anuncio le salió en grande (`anuncioGrito`). Solo en SU aparato: con la
+     contraseña puesta, mirar los pedidos de otra no cuenta como que ella lo vio (`vistosEsElla`).
+   · DÓNDE SE GUARDA: una fila del sistema NUEVA, `__vistos__` (`VISTOS_ID`, en `esFilaSistema`), JSON `{v:1, k:[claves]}`; cada clave es
+     `["v", <aviso>, <quién>, <ms>]` con <aviso> = `cta:<id del aviso>` o `an:<ts del anuncio>`. Va por `REESCRITAS` (sello + `juntar`): se
+     relee la planilla, se le suma lo de acá y se guarda (`vistosMandar`). ⚠️ NO en `__anuncio__` (sin sello: gana el último y un «visto»
+     pisaría el texto que Administración acaba de cambiar) ni adentro de `__avisos_conta__` (una página vieja sin F5 la reescribe entera
+     cada vez que alguien toca «Ya lo corregí» o la IA deja avisos nuevos: lo de cada aparato quedaría a merced de la última).
+     ⚠️ El servidor 2026-11-21-a no conoce esta fila: no está en `SISTEMA_JUNTA_OPCIONAL`, así que NO compara el sello (gana el último, como
+     el anuncio). Se cubre así: (1) se relee justo antes de escribir; (2) cada aparato recuerda lo que anotó (`me_vistos`, 45 días) y, si una
+     lectura de la planilla ya no lo trae (lo pisó otro aparato en el mismo segundo), lo vuelve a mandar, como mucho cada 10 minutos
+     (`vistosRecuperar`). Con un servidor que la agregue a `SISTEMA_JUNTA_OPCIONAL` el conflicto se junta solo (`reescritaJuntarYGuardar`).
+   · Una vez por aviso y persona: lo ya anotado (en la planilla, en memoria o en `me_vistos`) no se vuelve a escribir, y se manda en LOTE
+     a los `VISTOS_ESPERA_MS` (20 s) del primero: pintar el panel cada minuto no escribe nada. Sin conexión no entra a la cola (no ensucia
+     «N sin enviar»): queda en el aparato y sale con la próxima lectura buena.
+   · Poda: lo de más de `VISTOS_DIAS` (45; los avisos se van a los 40) y, si pasa de `VISTOS_TOPE` letras, lo más viejo.
+   · Se ve (con la contraseña): en «📣 Contabilidad te pide revisar» de todas (`ctaAvVer('')`) y en la revisión de las fotos (`ctaAvEstadoHtml`):
+     «👁 Lo vio el 21/11 10:32» o «🙈 No lo abrió · hace 3 días»; en «📢 Decir anuncio»: quiénes lo vieron (y cuándo) y qué vendedoras todavía no.
+   · En Playwright apagado salvo `window.VISTOS_PRUEBA`. `tests/test_avisos_vistos.js`.
+   ========================================================================== */
+var VISTOS_CAMBIOS={}, VISTOS_VER=0, VISTOS_MEMO={ k:null, s:null, m:null }, VISTOS_DIAS=45, VISTOS_TOPE=30000, VISTOS_ESPERA_MS=20000,
+    VISTOS_REINTENTO_MS=10*60000, VISTOS_LS='me_vistos', _vistosT=null, VISTOS_ENVIA=false, VISTOS_RECUP_T=0;
+function vistosActivo(){ return vdVa('VISTOS_PRUEBA'); }
+function vistosClavesDeFila(fila){
+  try{ var o=JSON.parse((fila && fila.observaciones)||'{}')||{}; return Array.isArray(o.k) ? o.k.filter(function(k){ return typeof k==='string' && !!k; }) : []; }catch(e){ return []; }
+}
+function vistosFila(){ return (STATE||[]).filter(function(p){ return p && String(p.id)===VISTOS_ID; })[0]||null; }
+function vistosClave(av, quien, t){ return JSON.stringify(['v', String(av), String(quien), Number(t)||0]); }
+function vistosLeerClave(k){
+  try{ var a=JSON.parse(k); if(!Array.isArray(a) || a[0]!=='v' || !a[1] || !a[2]) return null; return { k:k, av:String(a[1]), q:String(a[2]), t:Number(a[3])||0 }; }catch(e){ return null; }
+}
+function vistosSet(){
+  var f=vistosFila(), k=(f ? (String(f.rev||'')+'|'+String(f.observaciones||'')) : '')+'#'+VISTOS_VER;
+  if(VISTOS_MEMO.k===k && VISTOS_MEMO.s) return VISTOS_MEMO.s;
+  var s=reescritaAplicar(vistosClavesDeFila(f), reescritaCambios(VISTOS_ID, VISTOS_CAMBIOS));
+  VISTOS_MEMO={ k:k, s:s, m:null }; return s;
+}
+/* aviso → { persona (normalizada) → {q, t} } con la PRIMERA vez (dos aparatos de la misma persona: la más vieja) */
+function vistosMapa(){
+  var s=vistosSet(); if(VISTOS_MEMO.m) return VISTOS_MEMO.m;
+  var M={}; Object.keys(s).forEach(function(k){ var x=vistosLeerClave(k); if(!x) return; var A=M[x.av]||(M[x.av]={}), n=normNombre(x.q), y=A[n]; if(!y || x.t<y.t) A[n]={ q:x.q, t:x.t }; });
+  VISTOS_MEMO.m=M; return M;
+}
+/* Los que vieron un aviso, el primero arriba: [{q, t}] */
+function vistosDe(av){ var A=vistosMapa()[String(av)]||{}; return Object.keys(A).map(function(n){ return A[n]; }).sort(function(a,b){ return a.t-b.t; }); }
+function vistosVio(av, quien){ var A=vistosMapa()[String(av)]; return A ? (A[normNombre(quien)]||null) : null; }
+function vistosLsLeer(){ try{ var o=JSON.parse(localStorage.getItem(VISTOS_LS)||'{}'); return (o && typeof o==='object') ? o : {}; }catch(e){ return {}; } }
+function vistosLsPoner(o){ try{ localStorage.setItem(VISTOS_LS, JSON.stringify(o)); }catch(e){} }
+/* ¿Lo que se mira es de quien usa este aparato? Sin la contraseña ni un rol elegido sí (es su panel); si no, solo si este aparato es de ella. */
+function vistosEsElla(v){
+  if(!v) return false;
+  var mem=''; try{ mem=getVendedorMem(); }catch(e){}
+  if(mem && mismoVendedor(mem, v)) return true;
+  var rol=''; try{ rol=quienRol(); }catch(e){}
+  return !UNLOCKED && !rol;
+}
+/* Quién usa este aparato, para el anuncio: la vendedora elegida, o Logística / Administración / Contabilidad. '' = no se sabe. */
+function vistosQuienAparato(){
+  var r=''; try{ r=quienRol(); }catch(e){}
+  if(r==='logistica') return 'Logística'; if(r==='admin') return 'Administración'; if(r==='conta') return 'Contabilidad';
+  var v=''; try{ v=asisVendedor() || getVendedorMem(); }catch(e){}
+  return v ? (nombreCanonico(v)||v) : '';
+}
+/* Anota que `quien` vio el aviso `av` (si no estaba). Se manda en lote. */
+function vistosAnotar(av, quien){
+  if(!vistosActivo() || !av || !String(quien||'').trim()) return false;
+  quien=nombreCanonico(quien)||String(quien).trim();
+  if(vistosVio(av, quien)) return false;
+  var ls=vistosLsLeer(), n=normNombre(quien), ya=null;
+  Object.keys(ls).forEach(function(k){ var x=vistosLeerClave(k); if(x && x.av===String(av) && normNombre(x.q)===n) ya=k; });
+  var k=ya || vistosClave(av, quien, Date.now());
+  if(VISTOS_CAMBIOS[k]) return false;               // ya espera el lote
+  VISTOS_CAMBIOS[k]=true; VISTOS_VER++;
+  if(!ya){ ls[k]=Date.now(); vistosLsPoner(ls); }
+  vistosProgramar();
+  return true;
+}
+function vistosProgramar(ms){ if(_vistosT) return; _vistosT=setTimeout(function(){ _vistosT=null; vistosMandar(); }, ms==null ? VISTOS_ESPERA_MS : ms); }
+/* La fila a guardar: lo de la planilla + lo de acá, sin lo viejo y sin pasarse de letras (se va lo más viejo). */
+function vistosArmar(s){
+  var lim=Date.now()-VISTOS_DIAS*864e5, L=[];
+  Object.keys(s||{}).forEach(function(k){ var x=vistosLeerClave(k); if(x && x.t>=lim) L.push(x); });
+  L.sort(function(a,b){ return a.t-b.t; });
+  var ks=L.map(function(x){ return x.k; });
+  while(ks.length>1 && JSON.stringify({ v:1, k:ks }).length>VISTOS_TOPE) ks.shift();
+  return filaSistema(VISTOS_ID, '👁 QUIÉN VIO CADA AVISO (no tocar: la lee el panel)', JSON.stringify({ v:1, k:ks.sort() }));
+}
+function vistosPonerEnState(f){
+  if(!f) return;
+  var c=JSON.parse(JSON.stringify(f)); delete c._cambios;
+  var i=-1; for(var j=0;j<STATE.length;j++) if(STATE[j] && String(STATE[j].id)===VISTOS_ID){ i=j; break; }
+  if(i>=0) STATE[i]=c; else STATE.push(c);
+  VISTOS_VER++;
+}
+REESCRITAS[VISTOS_ID]={
+  cambios:function(){ return VISTOS_CAMBIOS; },
+  claves:function(fila){ return vistosClavesDeFila(fila); },
+  armar:function(s){ VISTOS_VER++; return vistosArmar(s); },
+  listo:function(fila){ if(fila && String(fila.id)===VISTOS_ID) vistosPonerEnState(fila); }
+};
+/* Relee la planilla, junta y guarda con sello y `juntar`. Sin conexión o si falla, lo de acá se queda para la próxima. */
+function vistosMandar(){
+  if(VISTOS_ENVIA || !Object.keys(VISTOS_CAMBIOS).length) return Promise.resolve(false);
+  if(!CONNECTED) return Promise.resolve(false);
+  VISTOS_ENVIA=true;
+  var fin=function(v){ VISTOS_ENVIA=false; return v; };
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) throw new Error('sin_lectura');
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===VISTOS_ID) srv=p; });
+    reescritaRevAnotar(srv); if(srv) vistosPonerEnState(srv);
+    var cam=reescritaCambios(VISTOS_ID, VISTOS_CAMBIOS);
+    var fila=reescritaConSello(vistosArmar(reescritaAplicar(vistosClavesDeFila(srv), cam)));
+    return apiSave(fila, { juntar:true }).then(function(r){
+      if(r && r.ok){ var g=(r.pedido && String(r.pedido.id)===VISTOS_ID) ? r.pedido : fila; vistosPonerEnState(g); reescritaConfirmada(VISTOS_ID, cam, g); return fin(true); }
+      return fin(false);
+    });
+  }).catch(function(){ return fin(false); });
+}
+/* Con cada lectura buena (`vistosTic`, desde `nxBadges`): lo que este aparato anotó y la planilla ya no trae (lo pisó otro en el mismo
+   segundo) vuelve a salir, como mucho cada VISTOS_REINTENTO_MS; lo de más de VISTOS_DIAS se olvida. Y sale lo que quedó sin mandar. */
+function vistosRecuperar(){
+  if(!vistosActivo()) return;
+  var ls=vistosLsLeer(), lim=Date.now()-VISTOS_DIAS*864e5, toca=false, hay=false;
+  Object.keys(ls).forEach(function(k){ var x=vistosLeerClave(k); if(!x || x.t<lim){ delete ls[k]; toca=true; } });
+  if(toca) vistosLsPoner(ls);
+  if(Object.keys(VISTOS_CAMBIOS).length) hay=true;
+  if(Date.now()-VISTOS_RECUP_T>=VISTOS_REINTENTO_MS){
+    var M=vistosMapa();
+    Object.keys(ls).forEach(function(k){ var x=vistosLeerClave(k); if(!x || VISTOS_CAMBIOS[k]) return;
+      var A=M[x.av]; if(A && A[normNombre(x.q)]) return;   // ya está (también si otro aparato de ella lo anotó antes)
+      VISTOS_CAMBIOS[k]=true; VISTOS_VER++; hay=true; });
+    VISTOS_RECUP_T=Date.now();
+  }
+  if(hay) vistosProgramar(Math.min(VISTOS_ESPERA_MS, 3000));
+}
+function vistosTic(){ try{ vistosRecuperar(); }catch(e){} }
+/* Los avisos de Contabilidad de una vendedora que ve ella misma. */
+function vistosAvisosVio(L, v){
+  if(!vistosActivo() || !vistosEsElla(v)) return;
+  (L||[]).forEach(function(a){ if(a && a.id && mismoVendedor(a.vend, v)) vistosAnotar('cta:'+a.id, a.vend); });
+}
+/* «hoy 10:32» / «el 21/11 10:32» (hora de Bolivia) */
+function vistosCuando(t){ if(!t) return ''; var f=isoDeTsBolivia(t), h=hhmmDeTs(t); return (f===diaNegocio() ? 'hoy' : ('el '+fmtFechaCorta(f)))+' '+h; }
+function vistosHace(t){
+  var ms=Date.now()-(Number(t)||0), d=Math.floor(ms/864e5);
+  if(d>=1) return 'hace '+d+' día'+(d===1?'':'s');
+  var h=Math.floor(ms/36e5); return h>=1 ? ('hace '+h+' h') : 'hace un rato';
+}
+/* Para Administración, un aviso de Contabilidad: «👁 Lo vio …» o «🙈 No lo abrió · hace N días». */
+function vistosAvisoHtml(a){
+  if(!vistosActivo() || !UNLOCKED || !a || !a.id) return '';
+  var x=vistosVio('cta:'+a.id, a.vend) || vistosDe('cta:'+a.id)[0] || null;
+  return x ? ('<span class="vis-l vis-si">👁 Lo vio '+esc(vistosCuando(x.t))+'</span>')
+           : ('<span class="vis-l vis-no">🙈 No lo abrió · '+esc(vistosHace(a.t))+'</span>');
+}
+/* Las vendedoras que tienen que ver el anuncio: las de la lista, sin Eduardo, ROHO ni los internos. */
+function vistosVendedoras(){ return VENDEDORES.filter(function(v){ return !contaExcluido(v) && !esVendedorLite(v); }); }
+function vistosAnuncioHtml(a){
+  if(!vistosActivo() || !UNLOCKED || !a || !a.ts) return '';
+  var L=vistosDe('an:'+a.ts), vis={}; L.forEach(function(x){ vis[normNombre(x.q)]=1; });
+  var V=vistosVendedoras(), falta=V.filter(function(v){ return !vis[normNombre(v)]; }), nV=V.length-falta.length;
+  var nom=function(q){ return String(q).split(' ')[0]; };
+  return '<div class="vis-anu"><div><b>👁 Lo vieron '+nV+' de '+V.length+' vendedoras</b>'+(L.length>nV ? (' · y '+(L.length-nV)+' más del equipo') : '')+'</div>'+
+    (L.length ? ('<div class="vis-anu-l">'+L.map(function(x){ return '<span class="vis-si">✓ '+esc(nom(x.q))+' <small>'+esc(vistosCuando(x.t))+'</small></span>'; }).join('')+'</div>') : '')+
+    (falta.length ? ('<div class="vis-anu-l">'+falta.map(function(v){ return '<span class="vis-no">🙈 '+esc(nom(v))+'</span>'; }).join('')+'<small class="vis-anu-p">todavía no lo vieron</small></div>')
+                  : '<div class="vis-anu-l"><span class="vis-si">✅ Lo vieron todas</span></div>')+'</div>';
+}
+
+/* ============================================================================
+   💬 464 · CLIENTE QUE ESCRIBIÓ AL BOT Y NADIE LE CONTESTÓ (22/11; el dueño la eligió con la muestra).
+   Las respuestas de los clientes al bot (`waRespuestas`, `WA_RESP`): una SIN atender (`waRespPend`: sin «✓ Ya lo atendí» ni «🤖 Claude»)
+   que lleva más de `SINRESP_H_VEND` (2) horas HÁBILES sube a «📋 Para hacer» de su vendedora en ROJO arriba de todo («💬 Carmen Ortiz
+   espera respuesta hace 3 h»), con «Contestar» (la lista: «💬 Contestar» abre su WhatsApp con `misWaCliente` —el panel no manda nada— y
+   «✓ Ya lo atendí» = `waRespAtender`, el de siempre). Pasadas `SINRESP_H_ADM` (4) horas hábiles, también en «📋 Para hacer» de Administración
+   (solo `asisVeAdm`). Bloki lo dice.
+   · HORAS HÁBILES (`horasHabilesEntre`): lunes a sábado de 08:30 a 19:00 de Bolivia, sin feriados (`pryDiaHabil`: también los ya pasados).
+     Lo que escribió un sábado a las 18:30 recién «espera 2 h» el lunes a las 10:00.
+   · Solo de clientes: lo del equipo ya no llega (el servidor lo saltea, 09/11). Tampoco cuenta una reacción (👍: Claude la marca «—») ni la
+     ubicación que ya quedó sola en el pedido.
+   · Sin pedido: no es de ninguna vendedora; le llega a Administración a las 4 h. Eduardo, ROHO y los internos no tienen este renglón.
+   · En Playwright apagado salvo `window.SINRESP_PRUEBA`. `tests/test_wa_sin_respuesta.js`.
+   ========================================================================== */
+var SINRESP_H_VEND=2, SINRESP_H_ADM=4, SINRESP_DESDE_MIN=8*60+30, SINRESP_HASTA_MIN=19*60, SINRESP_VER=null;
+function sinRespActivo(){ return vdVa('SINRESP_PRUEBA'); }
+/* Horas hábiles (con fracción) entre dos instantes: lo que cae de lunes a sábado, de 08:30 a 19:00 de Bolivia (UTC−4 fijo), sin feriados. */
+function horasHabilesEntre(ms0, ms1){
+  ms0=Number(ms0)||0; ms1=Number(ms1)||0; if(!(ms1>ms0)) return 0;
+  var B=4*36e5, a=ms0-B, b=ms1-B, min=0, n=0;
+  if(b-a>90*864e5) a=b-90*864e5;   // tope: 90 días
+  for(var dia=Math.floor(a/864e5)*864e5; dia<=b && n<100; dia+=864e5, n++){
+    var f=new Date(dia).toISOString().slice(0,10);
+    if(!pryDiaHabil(f)) continue;
+    var ini=Math.max(a, dia+SINRESP_DESDE_MIN*6e4), fin=Math.min(b, dia+SINRESP_HASTA_MIN*6e4);
+    if(fin>ini) min+=(fin-ini)/6e4;
+  }
+  return min/60;
+}
+/* Cuándo escribió: `ms` del servidor; si no, la hora escrita («Tue Oct 13 2026 09:41:00 GMT-0400» o «12/10 17:09», hora de Bolivia). */
+function waRespMs(r){
+  var ms=Number(r && r.ms)||0; if(ms>1e11) return ms;
+  var t=String((r && r.t)||'');
+  if(/GMT|^\d{4}-\d{2}-\d{2}T/.test(t)){ var d=Date.parse(t); if(isFinite(d)) return d; }
+  var m=/^(\d{1,2})\/(\d{1,2})\s+(\d{1,2}):(\d{2})/.exec(t);
+  if(m){
+    var y=+diaNegocio().slice(0,4), z=function(n){ return (n<10?'0':'')+n; };
+    var arma=function(yy){ return Date.parse(yy+'-'+z(+m[2])+'-'+z(+m[1])+'T'+z(+m[3])+':'+m[4]+':00-04:00'); };
+    var x=arma(y); if(isFinite(x) && x>Date.now()+864e5) x=arma(y-1);
+    if(isFinite(x)) return x;
+  }
+  return 0;
+}
+/* ¿Esta respuesta pide que alguien le conteste? */
+function sinRespCuenta(r){
+  if(!r || r.at) return false;
+  if(String(r.ia||'').charAt(0)==='—') return false;                                   // una reacción
+  if(r.ubi && (r.ubi.r==='guardada' || r.ubi.r==='igual') && !String(r.txt||'').replace(/📍|ubicaci[oó]n|\s/gi,'')) return false;   // la ubicación ya quedó sola
+  return true;
+}
+/* Las que esperan más de `minH` horas hábiles; con `v`, solo las de sus pedidos. [{r, p, h, cli, w}] la que más espera primero. */
+function waSinResp(minH, v){
+  if(!sinRespActivo()) return [];
+  var ahora=Date.now(), out=[];
+  (WA_RESP||[]).forEach(function(r){
+    if(!sinRespCuenta(r)) return;
+    var p=waRespPed(r);
+    if(v && !(p && mismoVendedor(p.vendedor, v))) return;
+    var ms=waRespMs(r); if(!ms) return;
+    var h=horasHabilesEntre(ms, ahora); if(h<minH) return;
+    out.push({ r:r, p:p, h:h, w:String(r.w||''), cli:String(r.nom || (p && p.cliente) || (r.num ? ('+'+r.num) : 'Un cliente')).trim() });
+  });
+  return out.sort(function(a,b){ return b.h-a.h; });
+}
+function sinRespHTxt(h){ return h<1 ? (Math.max(1, Math.round(h*60))+' min') : (Math.floor(h)+' h'); }
+function sinRespTitulo(L){ return L.length===1 ? (L[0].cli+' espera respuesta hace '+sinRespHTxt(L[0].h)) : (L.length+' clientes esperan respuesta · el que más, hace '+sinRespHTxt(L[0].h)); }
+function sinRespSub(L, conVend){
+  return L.slice(0,3).map(function(x){ return String(x.cli).split(' ').slice(0,2).join(' ')+' ('+sinRespHTxt(x.h)+(conVend ? (' · '+(x.p && x.p.vendedor ? String(x.p.vendedor).split(' ')[0] : 'sin pedido')) : '')+')'; }).join(' · ')+
+    (L.length>3 ? (' y '+(L.length-3)+' más') : '')+' · horas hábiles sin contestar';
+}
+/* El renglón de «Para hacer» de la vendedora (null si no hay o no le corresponde) */
+function sinRespHacerVend(v){
+  if(!v || contaExcluido(v) || esVendedorLite(v) || cliEsInterno(v)) return null;
+  var L=waSinResp(SINRESP_H_VEND, v); if(!L.length) return null;
+  return { sev:'r', ic:'💬', n:L.length, t:sinRespTitulo(L), s:sinRespSub(L, false), b:'Contestar', p:1, fn:"waSinRespVer('"+esc(String(v).replace(/'/g,''))+"')", sinresp:L.map(function(x){ return x.w; }) };
+}
+/* …y el de Administración, a las 4 h */
+function sinRespHacerAdm(){
+  var ve=false; try{ ve=asisVeAdm(); }catch(e){} if(!ve) return null;
+  var L=waSinResp(SINRESP_H_ADM, ''); if(!L.length) return null;
+  return { k:'sinresp', sev:'r', ic:'💬', n:L.length, t:sinRespTitulo(L), s:sinRespSub(L, true), b:'Contestar', p:1, fn:"waSinRespVer('')", tag:'sin respuesta del bot' };
+}
+/* La lista: cada cliente con lo que escribió, «💬 Contestar» (su WhatsApp) y «✓ Ya lo atendí». */
+function waSinRespVer(v){
+  v=String(v||''); SINRESP_VER={ v:v };
+  var L=waSinResp(v ? SINRESP_H_VEND : SINRESP_H_ADM, v);
+  var fila=function(x){
+    var r=x.r, p=x.p, wa=misWaCliente(r.num||(p && p.celular)||'');
+    var ped=p ? [p.oc ? ocEtiq(p.oc) : '', p.vendedor||'', p.fecha ? ('entrega '+fmtFechaCorta(p.fecha)) : ''].filter(Boolean).join(' · ') : (r.oc ? ('OC '+r.oc) : 'sin pedido');
+    return '<div class="sinr-it" data-w="'+esc(x.w)+'"><div class="sinr-tx"><b>'+esc(x.cli)+'</b> <span class="sinr-h">⏱ hace '+esc(sinRespHTxt(x.h))+'</span>'+
+        '<div class="sinr-q">«'+esc(String(r.txt||'').slice(0,240))+'»</div><small>'+esc(waRespHora(r.t))+' · '+esc(ped)+'</small></div>'+
+      '<div class="sinr-b">'+(wa ? '<a class="ah-go ah-go-p" href="'+esc(wa)+'" target="_blank" rel="noopener">💬 Contestar</a>' : '<span class="sinr-sin">sin número de WhatsApp</span>')+
+        '<button type="button" class="ah-go" onclick="waSinRespAtender(\''+esc(x.w.replace(/'/g,''))+'\')">✓ Ya lo atendí</button></div></div>';
+  };
+  openModal('<div class="modal-h nx-modal-h nx-azul-h"><h3>💬 Clientes que esperan respuesta</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b"><p class="ctav-sub">Le escribieron al bot de WhatsApp y pasaron más de '+(v ? SINRESP_H_VEND : SINRESP_H_ADM)+' horas hábiles (lunes a sábado, de 08:30 a 19:00) sin que nadie les conteste. '+
+    'Tocá <b>«💬 Contestar»</b> (se abre su WhatsApp: el panel no manda nada) y, cuando le hayas contestado, <b>«✓ Ya lo atendí»</b>.</p>'+
+    (L.length ? L.map(fila).join('') : '<div class="iac-vacio">✅ Nadie espera respuesta.</div>')+'</div>', true);
+}
+function waSinRespAtender(w){
+  try{ waRespAtender(w); }catch(e){}
+  setTimeout(function(){ try{ if(SINRESP_VER && document.querySelector('#modal.on .sinr-it, #modal.on .iac-vacio')) waSinRespVer(SINRESP_VER.v); }catch(e){} try{ renderMis(); }catch(e){} }, 0);
+}
+
+/* ============================================================================
+   ⚠️ 465 · AL CARGAR: EL CLIENTE DEBE O TIENE UNA ATC ABIERTA (22/11; el dueño la eligió con la muestra).
+   En el formulario de un 📄 OC (nuevo o al editar), al escribir el celular (`cliCelClave`, los últimos 8 números), si ESE cliente tiene:
+   (a) saldo por cobrar (`contaFaltaCobrar` > 0.005) en OTRA venta ya entregada (`docVentaEntregada`: ✅, venta de tienda o fecha pasada; sin
+   ATC, RPT, Eduardo, ROHO ni internos: `fueraDeConta`), o (b) una ATC sin cerrar (`atcEstado` ≠ «cerrada»), sale el cartel ámbar debajo
+   del celular: «⚠️ Este cliente debe Bs 1.200 de la 10-288 (entregada el 14/10)» y/o «tiene la ATC 11-004 abierta (desde el 03/11)».
+   · SOLO AVISA: nunca frena el guardado ni cambia nada. La venta que se está editando no cuenta.
+   · «Ver» abre esa venta (la ficha de Mis pedidos) o la ATC ENCIMA del formulario: al cerrarla («✕») se vuelve al pedido tal como estaba.
+     Si la otra venta es de OTRA vendedora, sin la contraseña solo se dicen el número y el monto («· de otra vendedora»), sin «Ver».
+   · No sale si el vendedor es Eduardo, ROHO o un interno (`contaExcluido`), ni en una RPT, ATC o cotización.
+   · En Playwright apagado salvo `window.CLI_DEBE_PRUEBA`. `tests/test_cliente_debe.js`.
+   ========================================================================== */
+var CLI_DEBE_T=0;
+function cliDebeActivo(){ return vdVa('CLI_DEBE_PRUEBA'); }
+/* Lo que debe y las ATC abiertas de un celular, sin el pedido `sinId`. {deudas:[{p, bs, f}], atcs:[{p, f}], bs} o null */
+function cliDebeDatos(cel, sinId){
+  var k=cliCelClave(cel); if(!k) return null;
+  var D={ deudas:[], atcs:[], bs:0 };
+  (STATE||[]).forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || (sinId && String(p.id)===String(sinId))) return;
+    if(cliCelClave(p.celular)!==k) return;
+    if(esATC(p.oc)){ if(atcEstado(p)!=='cerrada') D.atcs.push({ p:p, f:atcEntro(p)||'' }); return; }
+    if(fueraDeConta(p) || entregaAConfirmar(p) || !docVentaEntregada(p)) return;
+    var bs=contaFaltaCobrar(p); if(!(bs>0.005)) return;
+    D.deudas.push({ p:p, bs:bs, f:fechaSalida(p)||'' }); D.bs=r2(D.bs+bs);
+  });
+  D.deudas.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
+  D.atcs.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); });
+  return (D.deudas.length || D.atcs.length) ? D : null;
+}
+function cliDebeProgramar(){ clearTimeout(CLI_DEBE_T); CLI_DEBE_T=setTimeout(cliDebePintar, 250); }
+function cliDebePintar(){
+  var el=document.getElementById('cli-debe'); if(!el) return;
+  var nada=function(){ if(!el.hidden){ el.hidden=true; el.innerHTML=''; } el._h=''; };
+  if(!cliDebeActivo() || docTipoSel()!=='OC') return nada();
+  var v=String((document.getElementById('f-vendedor')||{}).value||'').trim();
+  if(v && (contaExcluido(v) || esVendedorLite(v) || cliEsInterno(v))) return nada();
+  var D=cliDebeDatos((document.getElementById('f-celular')||{}).value||'', EDIT_ID||'');
+  if(!D) return nada();
+  var puede=function(p){ return UNLOCKED || !v || mismoVendedor(p.vendedor, v); };
+  var ver=function(p, fn){ return puede(p) ? (' <button type="button" class="cli-debe-v" data-id="'+esc(String(p.id))+'" onclick="'+fn+'(this.getAttribute(\'data-id\'))">Ver</button>') : ' <span class="cli-debe-o">· de otra vendedora</span>'; };
+  var num=function(p){ return esc(String(p.oc||'').trim() || 'sin N°'); };
+  var bs=function(n){ return fmtBs(n).replace(/,00$/,''); };   // «Bs 1.200» (con centavos, si los hay)
+  var h='';
+  if(D.deudas.length){
+    var d0=D.deudas[0];
+    h+='<div class="cli-debe-l">⚠️ <b>Este cliente debe '+bs(D.bs)+'</b> '+(D.deudas.length===1
+        ? ('de la '+num(d0.p)+' (entregada el '+esc(fmtFechaCorta(d0.f))+')'+ver(d0.p, 'cliDebeVer'))
+        : ('en '+D.deudas.length+' ventas: '+D.deudas.slice(0,3).map(function(d){ return num(d.p)+' '+bs(d.bs)+' (entregada el '+esc(fmtFechaCorta(d.f))+')'+ver(d.p, 'cliDebeVer'); }).join(' · ')+(D.deudas.length>3?(' y '+(D.deudas.length-3)+' más'):'')))+'</div>';
+  }
+  D.atcs.slice(0,2).forEach(function(a){
+    h+='<div class="cli-debe-l">🎧 '+(D.deudas.length ? 'También tiene' : '<b>Este cliente tiene</b>')+' la <b>'+num(a.p)+'</b> abierta'+(a.f?(' (desde el '+esc(fmtFechaCorta(a.f))+')'):'')+ver(a.p, 'cliDebeVerAtc')+'</div>';
+  });
+  if(D.atcs.length>2) h+='<div class="cli-debe-l">🎧 y '+(D.atcs.length-2)+' ATC abiertas más</div>';
+  h+='<div class="cli-debe-p">Solo es un aviso: podés guardar igual. Si ya pagó, pasale el comprobante a Contabilidad.</div>';
+  el.hidden=false;
+  if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function cliDebeVer(id){ try{ showMisModal(id); }catch(e){} }
+function cliDebeVerAtc(id){ try{ verAtc(id); }catch(e){ try{ showMisModal(id); }catch(x){} } }
+document.addEventListener('DOMContentLoaded', function(){
+  var fc=document.getElementById('f-celular'); if(fc){ fc.addEventListener('input', cliDebeProgramar); fc.addEventListener('change', cliDebeProgramar); }
+  var fv=document.getElementById('f-vendedor'); if(fv){ fv.addEventListener('change', cliDebeProgramar); fv.addEventListener('input', cliDebeProgramar); }
+  var fd=document.getElementById('f-doc-tipo'); if(fd) fd.addEventListener('click', function(){ setTimeout(cliDebePintar, 0); });
 });
 /* ============================================================================
    🧑‍💼 LAS MEJORAS PARA VENDEDORAS 304-311 (15/11/2026; el dueño, de la página «Mejoras 282 a 343»: 304, 305, 306, 307, 308, 309, 310 y
