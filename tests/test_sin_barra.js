@@ -99,7 +99,8 @@ function pngTam(f) { const d = fs.readFileSync(f); return [d.readUInt32BE(16), d
   }
 
   // ---------- 4 y 5. sin barra ----------
-  const CUBIERTOS_EXTRA = ['#fx-escena', '.nx-confeti', '.bienv'];   // pantalla completa a propósito: la escena al guardar (se toca en cualquier lado), el papel picado (no se toca) y la bienvenida del panel instalado (§4pj, 172: un segundo y medio, sin botones; tocarla en cualquier lado la saca)
+  const CUBIERTOS_EXTRA = ['#fx-escena', '.nx-confeti', '.bienv', 'body.pfc-pres #cta-pane-proy'];   // (22/11) la presentación de Proyección suma la franja en su propio relleno (como #pap-overlay)
+  //   // pantalla completa a propósito: la escena al guardar (se toca en cualquier lado), el papel picado (no se toca) y la bienvenida del panel instalado (§4pj, 172: un segundo y medio, sin botones; tocarla en cualquier lado la saca)
   for (const w of [1440, 1280, 1000, 800, 500]) {
     const { ctx, page } = await abrir({ wco: true, vp: { width: w, height: 860 } });
     const r = await page.evaluate(({ CTL, BARRA }) => {

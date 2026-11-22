@@ -7287,7 +7287,7 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 @media (prefers-reduced-motion:reduce){ .ay-globo{ transition:none; transform:none; } }
 /* 📈 (17/11) La Proyección completa de Fable: el título del mes, el titular, leads y conversión, la tabla de los vendedores y «▶ Presentar». */
 .pfc-cab{ display:flex; flex-wrap:wrap; gap:10px 14px; align-items:center; justify-content:space-between; margin:0 0 12px; }
-.pfc-cab h2{ margin:0; font-size:clamp(1.25rem,2.6vw,1.7rem); letter-spacing:-.02em; color:#12262b; }
+.pfc-cab h2{ margin:0; font-size:clamp(1.25rem,calc(2.6vw / var(--vz,1)),1.7rem); letter-spacing:-.02em; color:#12262b; }
 .pfc-cs{ font-size:.86rem; color:#4b6361; margin-top:2px; } .pfc-cs b{ color:#12262b; }
 .pfc-pres-b{ font:inherit; font-weight:800; color:#fff; background:#00A09A; border:0; border-radius:10px; padding:9px 18px; min-height:42px; cursor:pointer; }
 .pfc-pres-b:hover{ background:#008f89; }
@@ -7296,13 +7296,13 @@ body.ficha-costado #adm-chips.qc-cos > :last-child{ margin-right:44px; }
 .pfc-st small{ font-weight:500; color:#5b7177; font-size:.82rem; }
 .pfc-corte{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px; background:#e3f6f5; color:#0b6f6a; border:1px solid #bfe7e4; border-radius:999px;
   padding:3px 10px; font-size:.76rem; font-weight:700; line-height:1.35; }
-.pfc-frase{ font-size:clamp(1.02rem,2vw,1.3rem); font-weight:800; margin:0 0 12px; letter-spacing:-.01em; }
+.pfc-frase{ font-size:clamp(1.02rem,calc(2vw / var(--vz,1)),1.3rem); font-weight:800; margin:0 0 12px; letter-spacing:-.01em; }
 .pfc-tit{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:10px; }
 .pfc-tc{ border:1px solid #e3ebec; border-top:5px solid var(--c); border-radius:14px; padding:12px 14px; min-width:0; }
 .pfc-tn{ font-weight:800; font-size:.9rem; }
 .pfc-d{ font-weight:800; white-space:nowrap; } .pfc-d small{ font-weight:600; font-size:.8em; }
 .pfc-up{ color:#17994f; } .pfc-dn{ color:#c62f2f; } .pfc-eq{ color:#5b7177; } .pfc-nv{ color:#6d3fd6; }
-.pfc-big{ display:block; font-size:clamp(1.9rem,4vw,2.6rem); letter-spacing:-.03em; line-height:1.1; margin:2px 0; }
+.pfc-big{ display:block; font-size:clamp(1.9rem,calc(4vw / var(--vz,1)),2.6rem); letter-spacing:-.03em; line-height:1.1; margin:2px 0; }
 .pfc-ts{ font-size:.82rem; color:#5b7177; } .pfc-tx{ font-size:.78rem; color:#5b7177; margin-top:4px; }
 .pfc-ls{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr)); gap:10px; }
 .pfc-lc{ border:1px solid #e3ebec; border-top:4px solid var(--c); border-radius:14px; padding:12px; min-width:0; }
@@ -7346,14 +7346,14 @@ table.pfc-vt{ width:100%; border-collapse:collapse; font-size:.84rem; font-varia
 /* ▶ Presentar: la pestaña a pantalla entera, una sección por vez, con la barrita de abajo. */
 body.pfc-pres{ overflow:hidden; }
 body.pfc-pres #cta-pane-proy{ position:fixed; inset:0; z-index:6000; overflow:auto; background:var(--bg-app,#f2f6f6);
-  padding:calc(20px + var(--sa-t,0px)) clamp(14px,4vw,56px) 104px; display:block!important; }
+  padding:calc(20px + var(--sa-t,0px) + var(--wco-h,0px)) clamp(14px,calc(4vw / var(--vz,1)),56px) 104px; display:block!important; }   /* (22/11) su propia franja de arriba, como #pap-overlay */
 body.pfc-pres #cta-pane-proy > :not(.pix-s):not(#pfc-presbar){ display:none!important; }
 body.pfc-pres #cta-pane-proy > .pix-s:not(.pfc-cur){ display:none!important; }
 body.pfc-pres #cta-pane-proy > .pix-s.pfc-cur{ max-width:1280px; margin:0 auto; }
 body.pfc-pres .pix-s.pfc-cur > .pix-b{ display:block!important; }
 body.pfc-pres .pix-s.pfc-cur > .pix-h{ pointer-events:none; background:none; border:0; box-shadow:none; padding:0 0 6px; border-bottom:2px solid #00B5AD; border-radius:0; }
-body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-t > b{ font-size:clamp(1.4rem,3.2vw,2.2rem); }
-body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-k{ font-size:clamp(.9rem,1.6vw,1.1rem); }
+body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-t > b{ font-size:clamp(1.4rem,calc(3.2vw / var(--vz,1)),2.2rem); }
+body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-k{ font-size:clamp(.9rem,calc(1.6vw / var(--vz,1)),1.1rem); }
 body.pfc-pres .pix-s.pfc-cur > .pix-h .pix-v{ display:none; }
 body.pfc-pres #asis-yo, body.pfc-pres .asis-globo{ display:none!important; }
 /* (19/11, revisión de Fable P3) lo que se abre desde la presentación (metas, Ctrl+K, ventanas) va ENCIMA, no detrás */
