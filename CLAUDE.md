@@ -1033,6 +1033,95 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
   `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
 
+## 🔐🛏️📷 Las ideas 451-470 elegidas por el dueño (22/11; «Quiero las ideas 451, 452, 453, 456, 457, 458, 459, 461, 462, 464, 465, 466, 467, 469, 470» y la 455 con las fotos reales; EN LA RAMA, sin publicar; la 451-453 piden el servidor `2026-11-22-a`, lo implementa el dueño)
+Muestra de las ideas: https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk. Cinco agentes en ramas aparte (`ag-a`…`ag-e`) juntadas a mano; todo lo nuevo de la página apagado en
+Playwright salvo su bandera.
+### 📷 455 La foto de cada producto (22/11; dueño: «Si ármalo», «Si conviértelas y si tb no olvides sueña»)
+- Una foto por LÍNEA en lugar del dibujito de la 211 (`prodIcoHtml` → `prodFotoDe`/`prodFotoImg`): renglón del formulario (`.prod-foto`, `prodFotoFila`, desde
+  `pintarTotalProds` y los `input`/`change` del renglón), ficha, Lista de carga, Mis pedidos, `#fx-der`. Solo colchón y somier (`prodIcoTipo`); combos, ROHO
+  (Carioca/Bahía/Flex) y lo de tienda siguen con el dibujo. `alt=""` (no suma letras). Tocar = `pfotoVer` (la grande; en la Lista de carga NO cambia el tilde).
+- `PFOTO_LINEAS` (25: 15 Heaven, 10 Sueña —Lite y Smart (22/11, dueño: *«te faltó el lite y el smart»*) salen de la «segunda sesión de fotos» de Sueña, en la tienda: el delgado de borde café = Lite, el de costados negros = Smart; falta que el dueño lo confirme—; el somier ANTES que el colchón de la misma línea; el somier de Sueña por el COLOR escrito, beige/plomo; sin color, sin foto).
+  ⚠️ Una foto nueva = el archivo en `fotos-productos/` (360 px) y `fotos-productos/grande/` (1000 px) + un renglón en `PFOTO_LINEAS` + subir `PFOTO_V`.
+- 🤖 Las fotos vienen del Drive con el robot «Fotos de productos desde el Drive» (`fotos-drive.yml`, solo en una rama, nunca main): `herramientas/fotos_drive/bajar.py`
+  pide la MINIATURA de Drive (desde la sesión no se llega al Drive y la conexión no baja más de 10 MB; las de Heaven son TIF de 140-210 MB). `carpetas.txt` (Heaven
+  «FOTOS HEAVEN 2026», Sueña «SUEÑA - FOTOS» y «Fotos Colchones Sueña», las tres compartidas con el enlace) → hojas para elegir en `salida/` (`HOJAS_DE_NUEVO=1`
+  para rehacerlas); `elegidas.txt` (`clave|id`, y `|abajo:NN` para quedarse con el NN % de abajo: saca gente o escritorios del fondo) → las fotos. Playwright: `FOTO_PRUEBA`. `tests/test_prod_foto.js` (16). Muestra: https://claude.ai/artifact/EvgFM189kumuVZPdUcA6CR
+### 🔐🗑💾 La puerta GET, la Papelera y el respaldo probado (451, 452 y 453, 22/11; dueño: «451, 452 y 453» con la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; servidor `2026-11-22-a`, lo implementa el dueño)
+- 🚪 **451** `herramientas/cerrar_puerta_get.gs` = archivo APARTE del proyecto (Propiedades es de solo lectura): ▶ `cerrarPuertaGetUnaVez` pone `GET_CERRADO=1` (`doGet` → `get_cerrado` sin leer la hoja), `abrirPuertaGetUnaVez` la saca, `verPuertaGetUnaVez` solo mira. Nada del repo lee por GET; la verificación de Meta (`hub.challenge`) va ANTES de la puerta. Lo que Google convierte de POST a GET (§4fx) vuelve `get_cerrado` y se reintenta: página (`respuesta_de_lectura`), `traer_kommo.es_lectura`, `cargar_pedidos.post`; el diagnóstico lo dice «bien». Probar (§26) dice si está cerrada. `tests/test_puerta_get.js` (16).
+- 🗑 **452** `doDelete` → `borradoAnotar_` → `papeleraAnotar_`: la fila entera (`rowToRec_`) en la hoja **«Papelera»** (aparte de «Borrados», que sigue sin celulares; poda a 35 días, tope 3.000). Sin filas del sistema salvo retiros (`papeleraRecuperable_`). `borradosLeer` (sin candado) = 30 días, lo de antes de la 22-a sale de «Borrados» con `sinCopia`. `borradoRecuperar` {id, t} (con el candado): `ya_esta` si el id existe; si no, la fila tal cual con sello NUEVO, `recientesAnotar_('r')`, fuera de KOMMO_DESCARTADOS (`kNoDescartar_`), fotos de vuelta de la papelera de Drive / «Fotos huérfanas» (`papeleraFotosVolver_`; las que no están, `fotosPerdidas`), `ocRepetida` si otro tomó el N°. Sin bot ni reservas. Página: «🗑 Lo borrado» en «⚙️ Ajustes y claves», solo con la contraseña (`lbrBotonPintar`), `#lbr-overlay` (adm-ov, `lbr*`), «↩️ Recuperar» con `preguntaYa` → `refrescarEstadoYa`; con servidor < 22-a, un cartel. `apiDelete` manda `quien: quienEdita()` (y `apiPost` lo respeta para `delete`/`borradoRecuperar`). Playwright solo `LBR_PRUEBA`. `tests/test_papelera.js` (35).
+- 💾 **453** `probarRespaldo()` (también desde el editor) abre la última copia de «Backups Pedidos MultiEspumas» (`SpreadsheetApp.openById`) y compara fila por fila: mismo sello = igual (si no, `distintas`), sello y carga anteriores a la copia = tiene que estar (`faltan`), lo de después no es error; copia ≤ 36 h y sumas de control iguales. Resultado en `RESPALDO_PRUEBA`; la `list` lo lleva chico (`rp`, de `cfgProp_`: sin operaciones de propiedades de más). `probarRespaldoAuto` (disparador de los lunes 5 am, `onWeekDay` o cada madrugada) corre el primer lunes del mes, o si la última falló o tiene > 31 días. Ningún WhatsApp. Página: «Para hacer» de Administración `rspHacer` (🔴 falló, 🟡 nunca o > 40 días; `ADM_AV.resp`; solo `asisVeAdm` y servidor ≥ 22-a) y la línea en «📊 Uso del panel» (`rspLinea`). Playwright solo `RSP_PRUEBA`. `tests/test_respaldo_prueba.js` (32).
+- ⚠️ Una lectura de la planilla NUEVA en una herramienta: por POST y aceptando `get_cerrado` como «reintentar». Un camino nuevo que borre filas pasa por `doDelete` (si no, no hay Papelera). `test_servidor` §11 A/H, `test_avisa_cuando` 1a, `test_wa_mayoristas` 6a y `test_wa_pedir_hoy` aceptan la página en 21-a con el servidor 22-a.
+### 🗑️💵🏷️ Cuidar la plata y los precios: 461, 462 y 466 (22/11; el dueño las eligió de la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; en la rama `ag-b-precios`)
+- **🗑️🔑 461 Borrar una venta con pagos pide la contraseña**: `borrarPagosPuede(id, otraVez)` al empezar `borrarConDeshacer` (por ahí pasan TODOS los botones de
+  borrar un pedido). Con pagos (`borrarPagosDe`: `contaPagos` con monto > 0.005, flete cobrado incluido, o una «PAGADA sin monto»), la ventana del panel dice
+  cuánto, de qué fecha y con qué, y que sale del Cuadre; sin `UNLOCKED` pide la contraseña del PANEL (`LS_ADMIN`, como `cupxClave`; `asegurarClaveAdmin` es la
+  ADMIN_KEY del servidor, hoy sin poner: no protegería nada); con ella, solo confirma. Contabilidad con pagos ya no hace además su «Última confirmación».
+  Retiros, filas del sistema y borradores de Kommo no. Playwright: `BORRAR_CLAVE_PRUEBA`. `tests/test_borrar_con_pagos.js` (18).
+- **✏️ 462 `prH` = quién cambió el precio después de cargar** (`prhHistAnotar` en `guardarDurable`/`apiSave`, ANTES de `pagHistAnotar`: comparte `PAG_DONDE`;
+  contra `PRH_SRV`, el texto de la planilla de `mergePending`/`aplicarSello`/`conflicto`; en camino, `PRH_LOC`): {t, q, d, r:[{c, n, de, a, u}], tot:{de, a}, k}.
+  ⚠️ Un precio puesto POR PRIMERA VEZ (renglón en 0) no es un cambio, ni el total que se movió por eso; cambiar el producto por otro tampoco (eso es `mod`/`rc`).
+  Sin ATC/RPT (`pagNoVa`). `heredarMarcas` lo pasa, `deshDevolver` lo saltea. Historia del pedido + Contabilidad → «💵 Precios del mes» (`prmAbrir`, botón
+  `#prm-btn` solo con la contraseña; Copiar y Excel con la plata `{v,t:'n',s:2}`). Playwright: `PRH_PRUEBA`. `tests/test_precio_historia.js` (21).
+- **🏷️ 466 Precio muy por debajo del de siempre** (`dscRevisar`, en `submitPedido` DESPUÉS de todas las validaciones, antes de «¿se entregó?»): venta del equipo
+  (sin ATC/RPT, Eduardo, ROHO, internos ni mayoristas), un renglón NUEVO o con el precio CAMBIADO más de `DSC_UMBRAL`=15 % debajo de la mediana del EQUIPO para
+  ese código en `DSC_DIAS`=90 días (≥ `DSC_MIN_VENTAS`=3; no `precioTipico` a secas: mezcla los precios de mayorista de Eduardo) → `preguntaOpcionYa` (nueva:
+  la ventana con varios botones, `o.opciones`) con promoción · cliente antiguo · combo · otro (pide escribirlo) · «Corregir el precio». Nunca frena. Un combo
+  con ≥ 2 renglones cuya suma no baja 15 % no pregunta. El motivo: `dsc` {m, x, tip, t, q} en el renglón (`heredarMarcas` lo pasa con el mismo precio).
+  Con la planilla real: 8 de 229 ventas de noviembre (casi todas el CONFORT PLUS a 1.230 de la promoción). Playwright: `DSC_PRUEBA`. `tests/test_precio_bajo.js` (25).
+### ⚠️▤🔁 Las mejoras 459, 469 y 470: logística y Administración (22/11; dueño las eligió con la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; en la rama `ag-c-logistica`)
+- **⚠️ 459 Entregas de mañana en riesgo** (`riesgo*`): desde `RIESGO_HORA`=15:00 de Bolivia, los pedidos del próximo día con camión (`proximoDiaEntrega`, los de
+  `cierreEntEntra`: ATC y RPT sí, la ATC no mira stock) con (a) stock ⬜/🔴 (`semanaLinea` rev/nohay), (b) sin ubicación (`ubfEntra` + `ubfEstado`, la ≈ no cuenta) o
+  (c) sin camión (`vehiculoDe` vacío y no `fichaRetira`) → «Para hacer» en rojo («N entregas de mañana en riesgo»); (d) `saldoACobrar` > 0.005 va aparte, solo informativo
+  (azul si es lo único). ⚠️ Si NINGÚN pedido de ese día tiene camión todavía (`camG`), «sin camión» no hace a cada uno «en riesgo»: la lista lo dice una vez arriba (con la
+  planilla real los camiones se asignan esa mañana; el renglón «🚚 Sin camión para …» de siempre ya lo cuenta). Lista `riesgoAbrir` con «📦 Abrir el pedido» (← Volver),
+  «💬 Pedir ubicación» (`ubfWaUrl`), «✏️ Pegar» y «🚚 Asignar camión…» (`cvAsignar`). Bloki a logística: `l-riesgo|…` en `asisLogistica`. Solo mira. `RIESGO_PRUEBA`.
+  `tests/test_riesgo_manana.js` (13).
+- **▤ 469 Compacta**: tercera vista de Administración (`admVista()` → 'compacta'; `me_adm_vista`), una línea por pedido (`admCompactaHtml`: N° del día, `admFichaColor`,
+  `clfNombre`, productos sin lo de tienda, `pedidoLugaresHtml`, camión), en `admFichasPintar` con los mismos grupos y la misma lista. ⚠️ Lo que decía `admVista()==='fichas'`
+  ahora es `admVista()!=='tabla'` (la compacta tampoco arma la tabla). En el celular (≤700 px, `admCelu`) se ve como fichas y no se ofrece. Playwright: la tabla salvo
+  `ADM_FICHAS_PRUEBA`/`ADM_COMPACTA_PRUEBA`. `tests/test_adm_compacta.js` (10).
+- **🔁 470 Qué cambió hoy** (`chv*`, barrita `#adm-chv` + «Para hacer» con lo sin ver + `chvAbrir`): pedidos de hoy en adelante (o «avisa cuándo») sin entregar. Día y turno de
+  `fH`; lo marcado «⚠️ Modificado» de `mod` (con `por`); lo demás (productos, dirección, zona, ubicación, observaciones de un pedido que nadie revisó) NO deja historia: lo nota
+  ESTE aparato comparando con su foto (`me_cambio_foto`, ~28 KB con la planilla real; `me_cambio_hoy` solo lo de hoy) y dice la hora en que lo notó, no quién. La primera vez
+  solo toma la foto. Lo guardado desde este aparato (`chvPropio`, al lado de `fhHistAnotar` en `guardarDurable`/`apiSave`) o con el mismo nombre de `quienEdita()` no cuenta.
+  Visto = «✓ Visto» (`me_cambio_visto`) o abrir la ficha (`me_ficha_vista`; `showPedidoModal` corre `chvMirar(true)` antes de anotarla). `CAMBIOS_PRUEBA`. `tests/test_cambio_hoy.js` (11).
+### 👁💬⚠️ Las mejoras 458, 464 y 465: quién vio cada aviso, el cliente que espera respuesta y el cliente que debe (22/11; dueño, con la muestra de las ideas 441-470; en la rama)
+- **👁 458 Quién vio cada aviso**: el aviso de Contabilidad a la vista en «📋 Para hacer» de SU vendedora (los 5 de arriba, o todos con «Ver más»),
+  abrir su lista (`ctaAvVer`) o el anuncio en grande (`anuncioGrito`, no el de la semana) anota la PRIMERA vez (`vistosAnotar`). Fila del sistema
+  NUEVA **`__vistos__`** (`VISTOS_ID`, en `esFilaSistema`), `{v:1, k:[["v","cta:<id>"|"an:<ts>",quién,ms]…]}`, por `REESCRITAS` (relee + sello + `juntar`),
+  en LOTE a los 20 s, una vez por aviso y persona; poda a 45 días y 30.000 letras. ⚠️ NO va en `__anuncio__` (gana el último: pisaría el texto) ni
+  en `__avisos_conta__` (una página vieja la reescribe entera). ⚠️ El `.gs` 21-a no la tiene en `SISTEMA_JUNTA_OPCIONAL` (no compara el sello): lo
+  anotado vive también en `me_vistos` y `vistosRecuperar` (desde `nxBadges`) lo reenvía si una lectura ya no lo trae, cada 10 min como mucho. Sin
+  conexión no entra a la cola. Con la contraseña puesta, mirar la lista de otra no cuenta (`vistosEsElla`). Se ve con la contraseña: «👁 Lo vio el …» /
+  «🙈 No lo abrió · hace N días» en `ctaAvVer('')` y `ctaAvEstadoHtml`; «📢 Decir anuncio» dice quiénes lo vieron y qué vendedoras no
+  (`vistosVendedoras`). `VISTOS_PRUEBA`. `tests/test_avisos_vistos.js` (22).
+- **💬 464 Cliente que espera respuesta del bot**: `waSinResp(minH, v)` sobre `WA_RESP` sin atender (sin reacciones «—» ni la ubicación que ya quedó
+  sola) con `horasHabilesEntre` (lunes a sábado 08:30-19:00 de Bolivia, `pryDiaHabil`). Más de 2 h hábiles → «Para hacer» de su vendedora, ROJO
+  arriba de todo («💬 Carmen Ortiz espera respuesta hace 3 h», `sinRespHacerVend`); más de 4 → «Para hacer» de Administración (`sinRespHacerAdm`, solo
+  `asisVeAdm`); Bloki igual. «Contestar» = `waSinRespVer` (su WhatsApp con `misWaCliente` + «✓ Ya lo atendí» = `waRespAtender`). El renglón azul de
+  siempre ya no cuenta las que van en rojo. Eduardo, ROHO e internos no. `SINRESP_PRUEBA`. `tests/test_wa_sin_respuesta.js` (17).
+- **⚠️ 465 El cliente debe o tiene una ATC abierta**: en un 📄 OC (nuevo o al editar), `#cli-debe` debajo del celular (`cliDebeDatos`: mismo
+  `cliCelClave`, otra venta `docVentaEntregada` con `contaFaltaCobrar` > 0.005 y sin `fueraDeConta`; o una ATC con `atcEstado` ≠ cerrada; la que se edita
+  no cuenta). Solo avisa. «Ver» (ficha de Mis pedidos / `verAtc`, encima del formulario) solo si es suya o con la contraseña; si no, «· de otra
+  vendedora». No con Eduardo, ROHO, internos ni RPT. `CLI_DEBE_PRUEBA`. `tests/test_cliente_debe.js` (11). Con la planilla del 22/11: de 213 clientes
+  con ventas de noviembre, 4 lo habrían visto (2 por deuda, Bs 10.300 en total; 2 por una ATC abierta).
+### 📸🔥📊 Mi día en una imagen (456), el mapa de calor de las ATC (457) y la semana en una imagen (467) (22/11; el dueño las eligió con la muestra; en la rama `ag-e-visual`)
+- **📸 Una sola ventana para las dos imágenes** (`imgVentana`): vista previa + «⬇️ Bajar la imagen» + «📤 Compartir» (solo con `navigator.canShare({files})`) +
+  «📋 Copiar la imagen» (solo con `ClipboardItem`). El panel no manda nada. Se dibuja con Canvas 2D (`imgTexto` achica la letra si no entra, `imgParrafo`,
+  `imgDegrade`, `imgLogoPoner` recorta el margen y el marco del `LOGO_B64`), con Inter cargada (`imgPreparar`) y SIN emojis adentro (sin su letra salen cuadraditos).
+- **456** (`midiaDatos`/`midiaDibujar`/`midiaAbrir`, botón `#midia-btn` en «☀️ Tu día»; no Eduardo, ROHO, internos ni «👑 Ver todos»): HOY = lo cargado hoy (`pryVentas`
+  con `x.reg`, = `recoVentasPorDia` y `metaDiaDatos().hoy`); EL MES = su fila de «Por vendedor» (`proyeccionMes`), el puesto = su lugar en esa marca; la meta =
+  `ccmMetas` (presupuesto, si no la mínima; = `misComisionDatos().meta/falta`). Sin metas del mes, sin barra ni «te faltan». Playwright: `MIDIA_PRUEBA`.
+- **457** (`atcCalorHtml` en `atcqPintar`, caja `#atq-calor` a lo ancho): la MISMA cuenta de «⏳ A cuántos meses» (`atcqEdades`, que ahora guarda `l.ids[tramo]`), «Sin fecha»
+  en gris aparte; tocar una celda (`ATC_CALOR`, `atcCalorSel`) filtra `atcLista` (2° argumento `sinCalor` para la cuenta sin la celda) con el cartel `#atc-calor-chip`;
+  frase con ≥ `ATC_CALOR_MIN_FRASE`=3. Playwright: `ATC_CALOR_PRUEBA`.
+- **467** (`semImgDatos`/`semImgCosas`/`semImgDibujar`/`semImgAbrir`, botón `#pry-semimg-w` en Proyección): lunes a sábado por el DÍA DE CARGA (`x.reg`), por marca (`x.g`) y tienda
+  (`x.st`), mayoristas y ROHO aparte, el domingo aparte; «3 cosas para mirar» solo con datos (las entregas que cambiaron de día salen de `fH`, desde `FH_DESDE`). ‹ › con
+  `SEMIMG.off` (0 = la semana pasada, no hay más nueva). Alto de la imagen variable (≥ 1350). Bloki (`semImgAviso` en `asisAvisos`): lunes desde las 08:00, con
+  `UNLOCKED`, una vez por semana y aparato (`me_semimg_lun`, lo marca abrir la imagen). Playwright: `SEMANA_IMG_PRUEBA`.
+- ⚠️ Nada se calcula aparte: si cambia `pryVentas`, `proyeccionMes`, `ccmMetas` o `atcqEdades`, las imágenes y la grilla cambian solas.
+  `tests/test_mi_dia_imagen.js` (16), `tests/test_atc_calor.js` (15), `tests/test_semana_imagen.js` (23).
+
 ## 📞 «¿Quién lo atiende?» (20/11; dueño, con la Comunicación Interna 032-2026: *«un buscador donde coloquen un número de teléfono y salga si otro asesor lo está atendiendo»*; servidor `2026-11-20-a` IMPLEMENTADO 20/11 por el dueño, enlace fijo `aafde03…`, 13.650 líneas; volver atrás: ✏️ a la versión anotada Y pegar la 17-d de `0078708…`; página PUBLICADA 20/11, versión 2026-11-20-a)
 Pestaña `#tab-qa` / `#view-qa`: la vendedora escribe un celular (o nombre y apellido) y el servidor (`quienAtiende_`, SIN candado, solo LEE Kommo de
 Heaven y Sueña) devuelve los leads, de quién son, la última conversación y las tareas; la página (`qaVeredicto`) decide el cartel. **Regla del dueño**:
