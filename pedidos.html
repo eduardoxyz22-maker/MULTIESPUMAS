@@ -18915,7 +18915,7 @@ var PICO_MEMO={};
    Solo colchón y somier (`prodIcoTipo`): un protector o un combo «TITANIO LATEX + SOMIER» siguen con el dibujo. SOLO MIRA: el `alt` va vacío
    (no suma letras a lo que leen las pruebas y las copias). ⚠️ Una foto NUEVA = el archivo en las dos carpetas + un renglón en `PFOTO_LINEAS`
    (el somier ANTES que el colchón de la misma línea) + subir `PFOTO_V`. En Playwright apagado salvo `FOTO_PRUEBA`. */
-var PFOTO_V='20261122b';
+var PFOTO_V='20261122c';
 var PFOTO_LINEAS=[
   /* Heaven: los somieres primero (si no, «SOMIER ORO» caería en el colchón ORO…) */
   [/^SOMIER TITANIO LATEX\b/, 'somier-titanio-latex', 'Somier Titanio Latex'],
@@ -18943,7 +18943,9 @@ var PFOTO_LINEAS=[
   [/^(?:SUENA )?PREMIER DELUXE\b/, 'suena-premier-deluxe', 'Colchón Sueña Premier Deluxe'],
   [/^(?:ORTOPEDICO SUENA|SUENA ORTOPEDICO)\b/, 'suena-ortopedico', 'Colchón Sueña Ortopédico'],
   [/^(?:SUENA )?SEMI ?ORTOP(?:EDICO|\.)?(?:\s|$)(?!.*\bHEAVEN\b)/, 'suena-semiortopedico', 'Colchón Sueña Semiortopédico'],
-  [/^(?:SUENA )?SOFT\b/, 'suena-soft', 'Colchón Sueña Soft Ice']
+  [/^(?:SUENA )?SOFT\b/, 'suena-soft', 'Colchón Sueña Soft Ice'],
+  [/^(?:SUENA )?LITE\b/, 'suena-lite', 'Colchón Sueña Lite'],
+  [/^(?:SUENA )?SMART\b/, 'suena-smart', 'Colchón Smart']
 ];
 function prodFotoVa(){
   try{ if(navigator.webdriver && !window.FOTO_PRUEBA) return false; }catch(e){}
@@ -29345,7 +29347,7 @@ function pintarDocTipo(limpiar){
      lunes o martes: se propone el próximo lunes o martes hábil. Lo que escribió la persona no se toca. */
   try{ if(limpiar && tipo==='ATC' && !EDIT_ID){ var _ff=document.getElementById('f-fecha'); if(_ff && (!_ff.value || _ff.value===proximoDiaEntrega()) && !atcDiaPermitido(_ff.value||'1970-01-05')){
     var _d=proximoDiaEntrega(), _n=0; while(_n++<14 && (!atcDiaPermitido(_d) || !diaHabil(_d))) _d=sigDiaHabil(_d);
-    if(atcDiaPermitido(_d)){ _ff.value=_d; _ff.dispatchEvent(new Event('change',{bubbles:true})); } } } }catch(e){}
+    if(atcDiaPermitido(_d)){ _ff.value=_d; window.PR_AUTO=1; try{ _ff.dispatchEvent(new Event('change',{bubbles:true})); }finally{ window.PR_AUTO=0; } } } } }catch(e){}
   DOC_TIPO_PINTADO=tipo;
   try{ apartoMirar(); }catch(e){}   // ⏳ (14/11, 267) ATC y RPT no apartan: lo apartado para un pedido se suelta
   try{ precioObligPintar(); }catch(e){}   // 💵 (31/10)
@@ -44221,6 +44223,8 @@ function practicaMontar(){
   }, true);
   var mirar=function(e){
     if(!window.PRACTICA) return;
+    /* (22/11) el cambio que dispara el panel solo (elegir ATC propone el lunes o martes, PR_AUTO) no tapa la explicación de la ATC */
+    if(window.PR_AUTO) return;
     var t=e.target; if(!t || !t.id && !t.classList) return;
     if(t.id==='f-fecha') practicaDecir('fecha');
     else if(t.id==='f-acuenta') practicaDecir('cobro');

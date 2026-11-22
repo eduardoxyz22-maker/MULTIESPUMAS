@@ -37,8 +37,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   const llenar = (o) => ev(async (o) => {
     showView('form'); resetForm();
-    document.getElementById('f-fecha').value='2026-10-16'; segSet('f-turno','AM');
     segSet('f-doc-tipo', o.tipo||'ATC'); setDocTipo();
+    /* (22/11) la fecha DESPUÉS de elegir ATC: desde el 19/11 elegir ATC propone el próximo lunes o martes (ATC_DIAS_RECOJO) */
+    document.getElementById('f-fecha').value='2026-10-16'; segSet('f-turno','AM');
     document.getElementById('f-vendedor').value='Mirian Salazar'; applyVendedorLite();
     document.getElementById('f-cliente').value=o.cliente;
     document.getElementById('f-celular').value='70011122';

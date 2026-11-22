@@ -45,10 +45,13 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
       [{ codigo:'', desc:'COLCHON ORTOPEDICO SUEÑA', medida:'140x190' }, 'suena-ortopedico'],
       [{ codigo:'', desc:'SOMIER SUEÑA BEIGE', medida:'140x190' }, 'suena-somier-beige'],
       [{ codigo:'', desc:'SOMIER SUEÑA PLOMO', medida:'140x190' }, 'suena-somier-plomo'],
+      [{ codigo:'CH2531', desc:'COLCHON SUEÑA LITE', medida:'105x190' }, 'suena-lite'],
+      [{ codigo:'', desc:'SUEÑA LITE', medida:'140x190' }, 'suena-lite'],
+      [{ codigo:'CH2522', desc:'COLCHON SMART', medida:'140x190' }, 'suena-smart'],
+      [{ codigo:'', desc:'COLCHON CONFORT ELITE 2,0 [140X190] T.A.', medida:'140x190' }, ''],
       /* sin foto: sin color, otra cosa con el mismo nombre, el combo, lo que el código dice que es otro, una línea sin foto */
       [{ codigo:'CS1004', desc:'SOMIER SUEÑA', medida:'140x190' }, ''],
       [{ codigo:'', desc:'CARIOCA PREMIER', medida:'140x190' }, ''],
-      [{ codigo:'', desc:'COLCHON SUEÑA LITE', medida:'105x190' }, ''],
       [{ codigo:'', desc:'PROTECTOR TITANIO LATEX', medida:'140x190' }, ''],
       [{ codigo:'CD1403', desc:'TITANIO LATEX', medida:'50x70' }, ''],
       [{ codigo:'CMBSE002', desc:'COMBO SUEÑA ESSENTIAL', medida:'140x190' }, ''],
@@ -62,11 +65,11 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   /* ── 2. La foto en lugar del dibujito: sin letras, con su archivo ── */
   const r2 = await page.evaluate(()=>{
     var h=prodIcoHtml({ codigo:'CH1129' }), d=new DOMParser().parseFromString('<div>'+h+'</div>','text/html'), im=d.querySelector('img');
-    var h2=prodIcoHtml({ desc:'COLCHON SUEÑA LITE', medida:'105x190' });
+    var h2=prodIcoHtml({ desc:'CARIOCA PREMIER', medida:'140x190' });
     return { img:!!im, src:im&&im.getAttribute('src'), alt:im&&im.getAttribute('alt'), txt:d.body.textContent, cls:im&&im.className, ice:/^<svg/.test(h2), lineas:PFOTO_LINEAS.map(function(a){ return a[1]; }) };
   });
   chk('2a · un Titanio Latex lleva su foto (img, alt vacío, sin letras)', r2.img && r2.alt==='' && r2.txt==='' && /^fotos-productos\/titanio-latex\.jpg\?v=/.test(r2.src) && /\bpfoto\b/.test(r2.cls), r2);
-  chk('2b · un Sueña Lite (sin foto) sigue con el dibujito', r2.ice, r2);
+  chk('2b · un Carioca (sin foto) sigue con el dibujito', r2.ice, r2);
   const raiz = path.resolve(__dirname, '..');
   const faltan = r2.lineas.filter(k=>!fs.existsSync(path.join(raiz,'fotos-productos',k+'.jpg')) || !fs.existsSync(path.join(raiz,'fotos-productos','grande',k+'.jpg')));
   chk('2c · cada línea de PFOTO_LINEAS tiene su foto chica y la grande', faltan.length===0, faltan);
