@@ -191,7 +191,7 @@ console.log('\n── 5. doPost y probarAntesDeImplementar ──');
   chk('b. probarAntesDeImplementar: con todo puesto dice cuántas van de 150', /Claude lee las observaciones al guardar: hoy 0 de 150/.test(lin(PROPS())), lin(PROPS()));
   chk('c. sin IA_ACTIVA dice que está apagada; sin la clave, ⚠️', /apagadas: falta IA_ACTIVA/.test(lin({})) && /⚠️ 🤖 IA_ACTIVA está puesta pero falta ANTHROPIC_API_KEY/.test(lin({ IA_ACTIVA: '1' })));
   chk('d. probarAntesDeImplementar llama a probarIaObsAtc_', /probarIaObsAtc_\(bien, ojo\)/.test(SRC.slice(SRC.indexOf('function probarAntesDeImplementar'), SRC.indexOf('var veredicto'))));
-  chk('e. la versión del servidor NO la cambia este bloque (la sube quien junta las ramas)', /var SCRIPT_VERSION = '2026-11-1[5-9]-[a-z]'/.test(SRC));
+  chk('e. la versión del servidor NO la cambia este bloque (la sube quien junta las ramas)', /var SCRIPT_VERSION = '2026-11-(1[5-9]|2[0-9])-[a-z]'/.test(SRC));
 }
 
 console.log('\n' + PASS + ' bien · ' + FAIL + ' mal');

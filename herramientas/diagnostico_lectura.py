@@ -1082,8 +1082,13 @@ def main():
         leer("lectura con la dirección del SECRETO (POST list)", PANEL_URL)
     # 2b) La lectura nueva (servidor 2026-09-30-a, §4he): comprimida y solo lo cambiado.
     lectura_nueva(pagina or PANEL_URL)
-    # 3) La puerta GET (doGet), la misma dirección sin cuerpo.
-    contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
+    # 3) La puerta GET (doGet), la misma dirección sin cuerpo. 🚪 (22/11, mejora 451) Con GET_CERRADO contesta `get_cerrado`: es lo
+    #    que se quiere (nada del panel lee por GET), no una falla.
+    crudo_get = pedir("puerta GET (doGet) de la página", pagina or PANEL_URL)
+    if crudo_get is not None and b'"get_cerrado"' in crudo_get:
+        print("   🚪 la puerta GET está CERRADA (GET_CERRADO): bien, nadie de afuera lee la planilla por ahí; el panel usa POST")
+    else:
+        contar(crudo_get)
     # 4) Dónde se va el tiempo: correr el script o entregar los datos.
     en_dos_tramos(pagina or PANEL_URL)
     # 4b) 🛰️ (13/10) El GPS de hoy y las entregas marcadas, con la primera lectura buena.

@@ -1083,7 +1083,9 @@ console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes d
       src.indexOf('function probarAntesDeImplementar') > 0 && src.indexOf('function probarAntesDeImplementar') < src.indexOf('function jsonOut'));
   {
     // A. El archivo entero, con disparadores y un repaso reciente
-    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-2*60000).toISOString(), cola:0, vistos:0, creados:0, error:'' }) };
+    /* (22/11, 2026-11-22-a) «todo en orden» = también la puerta GET cerrada y el respaldo probado: si no, probar lo avisa (⚠️, no frena). */
+    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-2*60000).toISOString(), cola:0, vistos:0, creados:0, error:'' }),
+                    GET_CERRADO:'1', RESPALDO_PRUEBA: JSON.stringify({ t:Date.now()-86400000, ok:true, detalle:'la copia se abre' }) };
     const a = cargar([HDR, fila({id:'p1'}), fila({id:'p2'})], props);
     if (!hay(a)) chk('A · la prueba existe', false, 'no está en este .gs');
     else {
@@ -1184,7 +1186,8 @@ console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes d
     const sistema = (id, largo) => { const f = HDR30.map(() => ''); f[0] = id; f[iObs] = 'x'.repeat(largo); return f; };
     const prueba = (largoStock) => {
       const a = cargar([HDR30, fila({id:'p1'}), sistema('__stock__', largoStock), sistema('__arqueo_cuadre__', 1200)],
-                       { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) });
+                       { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }),
+                         GET_CERRADO:'1', RESPALDO_PRUEBA: JSON.stringify({ t:Date.now()-86400000, ok:true, detalle:'la copia se abre' }) });   // (22/11, 2026-11-22-a) ver A
       if (!hay(a)) return null;
       a.ctx.instalarDisparadores();
       return a.ctx.probarAntesDeImplementar();
@@ -1707,9 +1710,10 @@ console.log('\n── 21. 📦 Las reservas de stock: el que guarda segundo se e
   /* (20/11, 2026-11-20-b) el PDF del pedido del cliente lo sube la revisión de correos: la página solo lo muestra, sigue esperando la 20-a. */
   /* (20/11, 2026-11-20-c) «tu cliente acaba de comprar»: lo hace el servidor solo; la página puede seguir esperando la 20-b (el cartel anda con ella). */
   /* (21/11, 2026-11-21-a) 📝 la nota de Kommo de visita o compra cuenta; la página puede seguir esperando la 20-d. */
+  /* (22/11, 2026-11-22-a) 🔐🗑💾 la puerta GET, la Papelera y la prueba del respaldo: la página usa lo nuevo con servidorTiene('2026-11-22-a'), puede seguir esperando la 21-a. */
   /* (20/11, 2026-11-20-d) un pedido NUEVO forzado (Importar ROHO) entra: la página ya manda `forzar`; puede seguir esperando la 20-c. */
   chk('⚠️ l. SCRIPT_VERSION y ESTA_VERSION (adentro de probarAntesDeImplementar) son la misma: 2026-11-17-a; la página espera esa o la 16-a (que la 17-a trae entera)',
-      (vG==='2026-11-17-a' || vG==='2026-11-17-b' || vG==='2026-11-17-c' || vG==='2026-11-17-d' || vG==='2026-11-20-a' || vG==='2026-11-20-b' || vG==='2026-11-20-c' || vG==='2026-11-20-d' || vG==='2026-11-21-a') && vE===vG && (vP===vG || vP==='2026-11-16-a' || (vG==='2026-11-20-b' && vP==='2026-11-20-a') || (vG==='2026-11-20-c' && vP==='2026-11-20-b') || (vG==='2026-11-20-d' && vP==='2026-11-20-c') || (vG==='2026-11-21-a' && vP==='2026-11-20-d')), JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
+      (vG==='2026-11-17-a' || vG==='2026-11-17-b' || vG==='2026-11-17-c' || vG==='2026-11-17-d' || vG==='2026-11-20-a' || vG==='2026-11-20-b' || vG==='2026-11-20-c' || vG==='2026-11-20-d' || vG==='2026-11-21-a' || vG==='2026-11-22-a') && vE===vG && (vP===vG || vP==='2026-11-16-a' || (vG==='2026-11-22-a' && vP==='2026-11-21-a') || (vG==='2026-11-20-b' && vP==='2026-11-20-a') || (vG==='2026-11-20-c' && vP==='2026-11-20-b') || (vG==='2026-11-20-d' && vP==='2026-11-20-c') || (vG==='2026-11-21-a' && vP==='2026-11-20-d')), JSON.stringify({ gs:vG, prueba:vE, pagina:vP }));   // (30/10) 📦 «el cliente avisa cuándo» (propuesta 76)
   const sinComentarios = srcL.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');   // los comentarios nombran variables con `…`
   chk('l. …y el .gs sigue siendo ES5 (sin let/const/=>/` en el código), que es lo que corre Apps Script',
       !/^\s*(let|const)\s/m.test(sinComentarios) && !/=>/.test(sinComentarios) && !/`/.test(sinComentarios));

@@ -96,8 +96,12 @@ def es_lectura(res):
     `{ok, version, pedidos:[…]}`— y el `doPost` del repaso NUNCA corrió. Pasó en las corridas
     131 y 136 (22 y 23/09); se veía como «no vino del repaso de Kommo» y parecía que PANEL_URL
     apuntaba a otra implementación o que el script publicado era viejo — no era ninguna de las
-    dos. ⚠️ Esa respuesta trae los datos de TODOS los clientes: no se imprime nada de ella."""
-    return isinstance(res, dict) and isinstance(res.get("pedidos"), list) and not res.get("origen")
+    dos. ⚠️ Esa respuesta trae los datos de TODOS los clientes: no se imprime nada de ella.
+    🚪 (22/11, mejora 451) Con la puerta GET cerrada (GET_CERRADO), esa misma lectura vuelve como `{error:'get_cerrado'}`: es
+    lo mismo (el aviso no corrió) y se reintenta igual."""
+    if not isinstance(res, dict):
+        return False
+    return (isinstance(res.get("pedidos"), list) and not res.get("origen")) or res.get("error") == "get_cerrado"
 
 
 def pasajero(res):

@@ -33,6 +33,9 @@ const PREP_ATC = srcA.slice(srcA.indexOf('function PREPARAR(){'), srcA.indexOf('
     const ctx = await browser.newContext({ viewport:{ width:W, height:H }, timezoneId:'America/La_Paz', reducedMotion:'reduce', hasTouch:true });
     await ctx.route(/^https?:/, r=>r.abort());
     await ctx.addInitScript(() => { try{ sessionStorage.setItem('me_quien_ok','1'); localStorage.setItem('me_asis_tour','1'); }catch(e){}
+      /* el Chromium de las pruebas ahora SÍ entra a pantalla completa desde un evaluate, y después Playwright no puede girar el iPad:
+         acá la pantalla completa no hace nada (lo que se prueba es que Presentar no repinte ni suba) */
+      try{ Element.prototype.requestFullscreen=function(){ return Promise.resolve(); }; }catch(e){}
       window.PFC_PRUEBA=1; window.PRY_KPI_PRUEBA=1; window.PRY_ENT_PRUEBA=1; window.PRY_LINEAS_PRUEBA=1; window.PRY_TMETA_PRUEBA=1; });
     const page = await ctx.newPage(); page.on('pageerror', e=>errores.push(e.message)); page.on('dialog', d=>d.accept());
     await page.clock.setFixedTime(new Date('2026-11-12T10:00:00-04:00'));

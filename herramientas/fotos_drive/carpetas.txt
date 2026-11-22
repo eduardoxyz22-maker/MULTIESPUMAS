@@ -1,0 +1,4 @@
+# marca|id de la carpeta del Drive (compartida con el enlace). Se recorre con sus subcarpetas.
+heaven|1od6XFMcNoWYrHaml6f-RCy9shOK99bm7
+suena|1G_dwOp-NO1KMYTzOqxfXxMGMdEiFzxTG
+suena|1hkJc-t2XVqCJNDlhCnxjQpw2ppWShUps
