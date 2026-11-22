@@ -4737,6 +4737,7 @@ function glSigue(){
         <div class="qa-fila"><input id="qa-cel" type="text" inputmode="text" placeholder="Celular (71234567) o nombre y apellido" maxlength="60" oninput="qaEscribe()"><button type="submit" id="qa-btn" class="btn btn-primary">🔎 Buscar</button></div>
       </form>
       <div id="qa-res"></div>
+      <div id="qa-pugna" hidden></div>
       <details class="qa-regla"><summary>📜 La regla (Comunicación Interna 032-2026)</summary>
         <ul>
           <li>Una vendedora tiene la oportunidad mientras haya <b>conversado con el cliente en los últimos <span class="qa-dias">15</span> días</b>.</li>
@@ -35988,8 +35989,8 @@ function admHacerDatos(){
   try{ add(ubfHacer()); }catch(e){}
   // 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» con un toque
   try{ add(rdHacer()); }catch(e){}
-  // 🔎 (20/11) las vendedoras que pidieron revisar de quién es el cliente (aviso de cruce del formulario)
-  try{ add(crvHacer()); }catch(e){}
+  // 🔎 (22/11, dueño: «No en administración, eso más lo usa logística, que esté en quien atendió pero salga solo con la clave») los pedidos
+  //    de revisión y los cruces viven en «¿Quién lo atiende?» → «🔀 Ventas en pugna» (qaPugnaPintar), solo con la contraseña.
   // 🧠 (16/11, mejora 360) lo escrito a mano que el stock no reconoce, con lo que propone Claude
   try{ add(iapHacer()); }catch(e){}
   // ✅ cierre de entregas
@@ -44360,6 +44361,7 @@ function mostrarBotonesTodos(){
   // 📈 (28/09) La pestaña «Proyección del mes» de Contabilidad, solo con la contraseña de Administración.
   var py=document.getElementById('cta-tab-proy'); if(py) py.style.display = UNLOCKED ? '' : 'none';
   try{ atcInformeVisible(); }catch(e){}   // 📄 (§4lm) el informe de ATC, solo gerencia
+  try{ qaPugnaPintar(); }catch(e){}       // 🔀 (22/11) «Ventas en pugna» de «¿Quién lo atiende?», solo con la contraseña
   if(!UNLOCKED && contaTab()==='proy'){ segSet('cta-tab','ventas'); setContaTab('ventas'); }
   if(!UNLOCKED){ MIS_TODOS=false; CHO_TODOS=false; }
   pintarBotonTodos('mis-todos-btn', MIS_TODOS);
@@ -72588,7 +72590,7 @@ function crvOpts(L){ return '<option value="">— Elegí —</option>'+L.map(fun
     llegó por WhatsApp?» → «Solo la que reclama») La asesora que según Kommo atendía al cliente (la que recibe el WhatsApp) pide la revisión
     desde «Mis pedidos → Para hacer». El servidor manda en la lectura (`cx`) qué ventas nombraron a quién (`cruceParaLista_`). */
 var CRX_LISTA=[], CRX_V='', CRX_DIAS=15;
-function crxTomar(L){ CRX_LISTA=Array.isArray(L) ? L.filter(function(e){ return e && e.id && Array.isArray(e.n); }) : []; }
+function crxTomar(L){ CRX_LISTA=Array.isArray(L) ? L.filter(function(e){ return e && e.id && Array.isArray(e.n); }) : []; try{ setTimeout(function(){ try{ qaPugnaPintar(); }catch(e){} }, 400); }catch(e){} }
 /** Las ventas de OTRA vendedora a clientes que, según Kommo, atendía `v` (últimos CRX_DIAS días, la venta todavía en la planilla). */
 function crxMios(v){
   if(!v) return [];
@@ -72778,18 +72780,6 @@ function crvDecididas(){
   return (STATE||[]).filter(function(p){ if(!p || esFilaSistema(p) || esBorrador(p)) return false; var c=crvDe(p); return !!(c && c.r && (Number(c.rt)||0)>=lim); })
     .sort(function(a,b){ return (crvDe(b).rt||0)-(crvDe(a).rt||0); });
 }
-function crvHacer(){
-  if(typeof UNLOCKED==='undefined' || !UNLOCKED) return null;
-  var L=crvLista();
-  if(!L.length){
-    /* 🔀 (22/11, dueño: «¿y Eduardo dónde ve lo que está en pugna… y de quiénes?» → «Sí») sin reclamos pendientes, igual se ven los cruces avisados */
-    var X=crvCruces(); if(!X.length) return null;
-    var nx=X.slice(0,3).map(function(e){ return String(e.p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(e.p.vendedor||e.v||'?')+' / '+e.n.join(', ')+')'; }).join(', ')+(X.length>3?(' y '+(X.length-3)+' más'):'');
-    return { k:'crx', sev:'i', ic:'🔀', n:X.length, t:'Ventas a clientes que atendía otra asesora ('+CRX_DIAS+' días)', s:nx+' · nadie pidió revisión', b:'🔀 Ver', fn:'crvAbrir()', tag:'cruces de ventas' };
-  }
-  var nom=L.slice(0,3).map(function(p){ var c=crvDe(p); return String(p.cliente||'—').trim().split(/\s+/).slice(0,2).join(' ')+' ('+(c.vende||p.vendedor||'?')+' / '+(c.por||'?')+')'; }).join(', ')+(L.length>3?(' y '+(L.length-3)+' más'):'');
-  return { k:'crv', sev:'a', ic:'🔎', n:L.length, t:(L.length===1?'Una asesora pide':'Asesoras piden')+' revisar de quién es el cliente', s:nom, b:'🔎 Revisar', fn:'crvAbrir()', tag:'revisar cliente' };
-}
 function crvItemHtml(p){
   var c=crvDe(p), id=String(p.id).replace(/'/g,'');
   var ven=c.vende||p.vendedor||'';
@@ -72833,16 +72823,36 @@ function crvCruceHtml(x){
       esc(fmtFechaCorta(isoDeTsBolivia(x.t*1000)))+')</span>'+
     '<div class="crv-b"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button></div></div>';
 }
-function crvAbrir(){
+/** Lo de adentro: los pedidos de revisión (con «Es de …»), las ya decididas y todos los cruces avisados. Lo usan la ventana y el bloque
+    «🔀 Ventas en pugna» de «¿Quién lo atiende?». */
+function crvCuerpoHtml(){
   var L=crvLista();
-  openModal('<div class="modal-h"><h3>🔎 ¿De quién es el cliente?</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
-    '<div class="modal-b crv-modal"><p class="crv-s" style="margin:0 0 10px">Una vendedora cargó la venta y la asesora que, según Kommo, atendía al cliente pidió revisión con lo que pide la Comunicación Interna 032-2026. Elegí de quién es. Solo queda anotado: no cambia la vendedora de la venta ni las comisiones.</p>'+
+  return '<p class="crv-s" style="margin:0 0 10px">Una vendedora cargó la venta y la asesora que, según Kommo, atendía al cliente pidió revisión con lo que pide la Comunicación Interna 032-2026. Elegí de quién es. Solo queda anotado: no cambia la vendedora de la venta ni las comisiones.</p>'+
     (L.length ? L.map(crvItemHtml).join('') : '<p class="rd-vacio">✅ No queda ningún pedido de revisión.</p>')+
     (function(){ var D=crvDecididas(); return D.length ? '<details style="margin-top:10px"><summary><b>Ya decididas</b> (últimos 30 días: '+D.length+')</summary>'+D.map(crvItemHtml).join('')+'</details>' : ''; })()+
     (function(){ var X=crvCruces(); return '<details class="crv-cxs" style="margin-top:10px"'+(L.length?'':' open')+'><summary><b>🔀 Cruces avisados</b> (últimos '+CRX_DIAS+' días: '+X.length+')</summary>'+
       '<p class="crv-s" style="margin:6px 0 8px">Todas las ventas en las que, al guardarlas, Kommo mostraba que otra asesora de la misma marca atendía al cliente. A esa asesora se le avisó por WhatsApp; si no pidió revisión, queda como «sin reclamo».</p>'+
-      (X.length ? X.map(crvCruceHtml).join('') : '<p class="rd-vacio">No hubo cruces en estos días.</p>')+'</details>'; })()+
+      (X.length ? X.map(crvCruceHtml).join('') : '<p class="rd-vacio">No hubo cruces en estos días.</p>')+'</details>'; })();
+}
+function crvAbrir(){
+  openModal('<div class="modal-h"><h3>🔎 ¿De quién es el cliente?</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b crv-modal">'+crvCuerpoHtml()+
     '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div></div>');
+}
+/** 🔀 (22/11) «Ventas en pugna» en la pestaña «¿Quién lo atiende?», SOLO con la contraseña de Administración (dueño: «eso más lo usa
+    logística… que salga solo con la clave»). Plegado: arriba cuántos pedidos de revisión esperan y cuántos cruces hubo. Solo con la vista
+    a la vista; se repinta al leer la planilla, al decidir y al poner o sacar la contraseña. Lo abierto/cerrado se recuerda mientras dure la página. */
+var QA_PUGNA_ABIERTO=null;
+function qaPugnaPintar(){
+  var box=document.getElementById('qa-pugna'); if(!box) return;
+  if(typeof UNLOCKED==='undefined' || !UNLOCKED){ box.hidden=true; box.innerHTML=''; return; }
+  var v=document.getElementById('view-qa'); if(v && !v.classList.contains('active') && box.hidden) return;
+  var L=crvLista(), X=crvCruces();
+  var abre=QA_PUGNA_ABIERTO===null ? !!L.length : QA_PUGNA_ABIERTO;
+  var res=(L.length ? '<b class="qa-pg-n">'+L.length+' '+(L.length===1?'pedido':'pedidos')+' de revisión</b>' : '✅ sin pedidos de revisión')+' · '+X.length+' '+(X.length===1?'cruce':'cruces')+' en '+CRX_DIAS+' días';
+  box.hidden=false;
+  box.innerHTML='<details class="qa-pugna"'+(abre?' open':'')+' ontoggle="QA_PUGNA_ABIERTO=this.open"><summary><b>🔀 Ventas en pugna</b> <span class="qa-pg-res">'+res+'</span> <span class="qa-pg-clave">🔒 solo con la contraseña</span></summary>'+
+    '<div class="qa-pg-cuerpo crv-modal">'+crvCuerpoHtml()+'</div></details>';
 }
 function crvAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.crv-modal')); }
 /** Administración decide: anota quién (`r`), cuándo (`rt`) y quién lo decidió (`rq`) en la venta. Solo con la contraseña. */
@@ -72861,6 +72871,7 @@ function crvResolver(id, quien){
   toast('Anotado: el cliente es de '+quien+'.', 'ok');
   try{ admHacerPintar(); }catch(e){}
   try{ if(crvAbierta()) crvAbrir(); }catch(e){}
+  try{ qaPugnaPintar(); }catch(e){}
 }
 /** Si falló (red, Kommo, tope, todavía sin saber la versión del servidor), lo vuelve a intentar unas veces (Fable 5); nunca frena la venta. */
 function cruceFormReintentar(k){
@@ -73043,6 +73054,7 @@ function qaCartel(V, chico){
   return '<div class="qa-ver qa-v-otro'+cls+'"><div class="qa-v-ic">⚠️</div><div><b>Lo está atendiendo '+V.otros.map(function(q){ return esc(q.n); }).join(' y ')+(yoV.length?' (y vos)':'')+'</b><span>'+V.quien.map(linea).join(' · ')+'. Antes de atenderlo, hablalo con '+(V.otros.length>1?'ellas':(/^(\(|usuario \d)/.test(V.otros[0].n)?'quien lo tiene':esc(V.otros[0].n.split(' ')[0])))+' o con tu encargado.'+ojoInc+'</span></div></div>';
 }
 function qaPintar(){
+  try{ qaPugnaPintar(); }catch(e){}
   var box=document.getElementById('qa-res'); if(!box) return;
   document.querySelectorAll('.qa-dias').forEach(function(e){ e.textContent=QA_DIAS; });
   var b=document.getElementById('qa-btn'); if(b){ b.disabled=QA.busy; b.textContent=QA.busy?'⏳ Buscando…':'🔎 Buscar'; }
@@ -83386,6 +83398,15 @@ function vdIniciar(){
 
 /* 📞 (20/11) ¿Quién lo atiende? */
 #view-qa .qa-card{ max-width:860px; margin:0 auto; }
+#qa-pugna{ margin:12px 0 4px; }
+#qa-pugna .qa-pugna{ border:1px solid #c7d2fe; border-left:4px solid #6366f1; border-radius:12px; background:#f8faff; color:#1f2937; padding:8px 12px; }
+#qa-pugna summary{ cursor:pointer; display:flex; flex-wrap:wrap; gap:4px 10px; align-items:baseline; padding:2px 0; }
+#qa-pugna .qa-pg-res{ font-size:.82rem; color:#374151; }
+#qa-pugna .qa-pg-n{ color:#b45309; }
+#qa-pugna .qa-pg-clave{ font-size:.72rem; color:#6b7280; margin-left:auto; }
+#qa-pugna .qa-pg-cuerpo{ margin-top:8px; }
+#qa-pugna .qa-pg-cuerpo > p.crv-s, #qa-pugna .crv-cxs > p.crv-s{ font-size:.8rem; color:#4b5563; line-height:1.4; }
+#qa-pugna .qa-pg-cuerpo details > summary{ font-size:.88rem; }
 .qa-cab{ display:flex; flex-direction:column; gap:2px; margin-bottom:12px; } .qa-cab b{ font-size:1.12rem; } .qa-cab span{ color:var(--txt-2,#5b6b7a); font-size:.88rem; }
 .qa-form .lb{ display:block; margin-bottom:4px; }
 .qa-fila{ display:flex; gap:8px; flex-wrap:wrap; } .qa-fila input{ flex:1 1 220px; min-width:0; font-size:1.15rem; padding:10px 12px; letter-spacing:.04em; } .qa-fila button{ flex:0 0 auto; width:auto; min-height:44px; padding-inline:22px; }

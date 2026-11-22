@@ -482,13 +482,16 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     closeModal();
     var her = heredarMarcas([{ desc:'COLCHON', cant:1 }], STATE.find(x => x.id === 'crvP1').productos); out.hereda = !!(her[0].crv && her[0].crv.por === 'Carola Chavez');
     /* Administración */
-    UNLOCKED = false; out.sinClave = crvHacer() === null;
-    UNLOCKED = true; var HA = crvHacer(); out.hacerAdm = HA && HA.n === 1 ? HA.t : null;
+    var vqa = document.getElementById('view-qa'); vqa.classList.add('active');
+    var pug = function () { qaPugnaPintar(); var bx = document.getElementById('qa-pugna'); return { oculto: bx.hidden, txt: bx.textContent, html: bx.innerHTML, abierto: !!(bx.querySelector('details') || {}).open, items: bx.querySelectorAll('.crv-cx').length }; };
+    var hacerAdm = function () { try { return (admHacerDatos() || []).filter(function (x) { return x && /^cr[vx]$/.test(x.k); }).length; } catch (e) { return 'err:' + e.message; } };
+    UNLOCKED = false; var P0 = pug(); out.sinClave = P0.oculto && P0.txt === '';
+    UNLOCKED = true; var P1 = pug(); out.pugna = P1; out.hacerAdmN = hacerAdm();
     guardados = [];
     crvAbrir(); var cm = document.querySelector('#modal-box .crv-modal'); out.listaAdm = cm ? cm.textContent : ''; out.listaAdmH = cm ? cm.innerHTML : '';
     crvResolver('crvP1', 'Carola Chavez');
     out.resuelto = guardados.length ? crvDe(guardados[0]) : null;
-    var HD = crvHacer(); out.despues = !HD || HD.k !== 'crv'; out.despuesInfo = HD ? { k:HD.k, sev:HD.sev, t:HD.t, s:HD.s, n:HD.n } : null;
+    var PD = pug(); out.despues = /sin pedidos de revisión/.test(PD.txt); out.despuesTxt = PD.txt.slice(0, 200);
     if (guardados.length) { var ix2 = STATE.findIndex(x => x.id === 'crvP1'); STATE[ix2] = guardados[0]; }
     out.ficha = crvFichaHtml(findById('crvP1'));
     crvAbrir(); out.decididas = (document.querySelector('#modal-box .crv-modal') || {}).textContent || '';
@@ -498,10 +501,10 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
               { id:'crvP3', v:'Mirian Salazar', n:['Isabel Robledo'], t:Math.floor(Date.now() / 1000) - 86400 },
               { id:'crvViejo', v:'X', n:['Y'], t:Math.floor(Date.now() / 1000) - 3 * 86400 },
               { id:'crvP3', v:'Mirian Salazar', n:['Isabel Robledo'], t:Math.floor(Date.now() / 1000) - 40 * 86400 }]);
-    var HX = crvHacer(); out.cxHacer = HX ? { k:HX.k, sev:HX.sev, n:HX.n, t:HX.t, s:HX.s, fn:HX.fn } : null;
+    var PX = pug(); out.cxPugna = PX;
     crvAbrir(); var cxs = document.querySelector('#modal-box .crv-cxs');
     out.cxTxt = cxs ? cxs.textContent : ''; out.cxAbierto = !!(cxs && cxs.open); out.cxItems = cxs ? cxs.querySelectorAll('.crv-cx').length : -1;
-    UNLOCKED = false; out.cxSinClave = crvHacer() === null; UNLOCKED = true;
+    UNLOCKED = false; out.cxSinClave = pug().oculto; UNLOCKED = true; out.cxHacerAdm = hacerAdm(); vqa.classList.remove('active');
     try { closeModal(); } catch (e) {}
     return out;
   }, ahora);
@@ -521,9 +524,9 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('8c3. (Fable 4) a otra asesora nombrada en una venta que ya tiene pedido de revisión no se le pide de nuevo', r3.maria && r3.maria.sev === 'i' && /revisión pedida/.test(r3.maria.t), r3.maria);
   chk('⚠️ 8c4. (Fable 2) los 15 días se cuentan desde el día de la venta: 8 días antes de una venta de hace 10 vale; después de la venta, no', !/15 días/.test(r3.f8antes) && !/antes de la venta/.test(r3.f8antes) && /antes de la venta/.test(r3.fDespues) && /el <b>|el \d{2}\/\d{2}\/\d{4}/.test(r3.ventanaDia), { a:r3.f8antes, d:r3.fDespues });
   chk('8n. si Isabel corrige la venta, el pedido de revisión se conserva', r3.hereda);
-  chk('⚠️ 8o. Administración (solo con la contraseña) lo ve con todo lo presentado y las capturas', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacerAdm || '') && /CLIENTA INVENTADA/.test(r3.listaAdm) && /Es de Isabel Robledo/.test(r3.listaAdm) && /Es de Carola Chavez/.test(r3.listaAdm) && /respondió mi cotización/.test(r3.listaAdm) && /salió de mi gestión/.test(r3.listaAdm) && /Captura de Kommo/.test(r3.listaAdmH), { sin:r3.sinClave, hacer:r3.hacerAdm });
+  chk('⚠️ 8o. «¿Quién lo atiende?» → «🔀 Ventas en pugna» (solo con la contraseña) lo muestra con todo lo presentado; en «Para hacer» de Administración, nada', r3.sinClave && !r3.pugna.oculto && r3.pugna.abierto && /Ventas en pugna/.test(r3.pugna.txt) && /1 pedido de revisión/.test(r3.pugna.txt) && /CLIENTA INVENTADA/.test(r3.pugna.txt) && /Es de Isabel Robledo/.test(r3.pugna.txt) && /Es de Carola Chavez/.test(r3.pugna.txt) && r3.hacerAdmN === 0 && /CLIENTA INVENTADA/.test(r3.listaAdm) && /respondió mi cotización/.test(r3.pugna.txt) && /salió de mi gestión/.test(r3.pugna.txt) && /Captura de Kommo/.test(r3.pugna.html) && /Captura de Kommo/.test(r3.listaAdmH), { p:r3.pugna.txt.slice(0, 300), adm:r3.hacerAdmN });
   chk('8p. «Es de Carola Chavez» (con confirmación) lo anota y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);
-  chk('🔀 8z4. sin reclamos pendientes, «Para hacer» de Administración igual avisa los cruces (informativo, sin la contraseña nada)', r3.cxHacer && r3.cxHacer.k === 'crx' && r3.cxHacer.sev === 'i' && r3.cxHacer.n === 2 && r3.cxHacer.fn === 'crvAbrir()' && /CLIENTE SIN/.test(r3.cxHacer.s) && /Mirian Salazar \/ Isabel Robledo/.test(r3.cxHacer.s) && r3.cxSinClave, r3.cxHacer);
+  chk('🔀 8z4. sin reclamos pendientes, «Ventas en pugna» igual muestra los cruces (plegado, solo con la contraseña); Administración no los avisa', !r3.cxPugna.oculto && !r3.cxPugna.abierto && /sin pedidos de revisión · 2 cruces en 15 días/.test(r3.cxPugna.txt) && r3.cxPugna.items === 2 && /CLIENTE SIN RECLAMO/.test(r3.cxPugna.txt) && r3.cxSinClave && r3.cxHacerAdm === 0, { t:r3.cxPugna.txt.slice(0, 200), adm:r3.cxHacerAdm });
   chk('🔀 8z5. «Cruces avisados» lista los de los 15 días (sin los viejos ni los que ya no están), quién cargó, a quién se avisó y el estado', r3.cxItems === 2 && r3.cxAbierto && /Cruces avisados/.test(r3.cxTxt) && /11-701 · CLIENTE SIN RECLAMO/.test(r3.cxTxt) && /sin reclamo/.test(r3.cxTxt) && /La cargó Mirian Salazar · según Kommo lo atendía Isabel Robledo/.test(r3.cxTxt) && /decidido: es de Carola Chavez/.test(r3.cxTxt), r3.cxTxt.slice(0, 500));
   chk('⚠️ 8z3. la decisión se ve en la ficha del pedido y en «Ya decididas», con «Cambiar»', /Revisión del cliente: es de Carola Chavez/.test(r3.ficha) && /Ya decididas/.test(r3.decididas) && /Decidido: es de Carola Chavez/.test(r3.decididas) && /Cambiar/.test(r3.decididas), { ficha:r3.ficha.slice(0, 200) });
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /puede ser de Carola Chavez/.test(r2.borrador), r2.borrador);
