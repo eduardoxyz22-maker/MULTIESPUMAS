@@ -106,14 +106,20 @@ def elegidas():
     os.makedirs(os.path.join(RAIZ, 'fotos-productos', 'grande'), exist_ok=True)
     hechas = 0
     for f in filas:
-        clave, fid = [p.strip() for p in f.split('|', 1)]
+        partes = [p.strip() for p in f.split('|')]
+        clave, fid = partes[0], partes[1]
+        # tercer pedazo opcional «abajo:58» = quedarse con el 58 % de abajo (saca gente o escritorios del fondo)
+        recorte = []
+        m = re.match(r'^abajo:(\d{2})$', partes[2]) if len(partes) > 2 else None
+        if m:
+            recorte = ['-gravity', 'South', '-crop', '100%%x%s%%+0+0' % m.group(1), '+repage', '-gravity', 'NorthWest']
         if not re.match(r'^[a-z0-9-]+$', clave):
             print('clave rara, salteada'); continue
         src = os.path.join(TMP, 'o-' + clave + '.jpg')
         miniatura(fid, 1600, src)
         for ancho, dest in ((360, os.path.join(RAIZ, 'fotos-productos', clave + '.jpg')),
                             (1000, os.path.join(RAIZ, 'fotos-productos', 'grande', clave + '.jpg'))):
-            subprocess.run(['convert', src, '-background', 'white', '-alpha', 'remove', '-alpha', 'off', '-fuzz', '7%', '-trim', '+repage', '-bordercolor', 'white', '-border', '3%',
+            subprocess.run(['convert', src] + recorte + ['-background', 'white', '-alpha', 'remove', '-alpha', 'off', '-fuzz', '7%', '-trim', '+repage', '-bordercolor', 'white', '-border', '3%',
                             '-resize', '%dx%d' % (ancho, ancho), '-quality', '76' if ancho == 360 else '74',
                             '-strip', '-interlace', 'JPEG', dest], check=True)
         hechas += 1

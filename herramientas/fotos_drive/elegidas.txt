@@ -1,4 +1,4 @@
-# clave de la foto en el panel|id del archivo del Drive (la idea 455). Elegidas el 22/11 de las hojas de `salida/`.
+# clave de la foto en el panel|id del archivo del Drive[|abajo:NN = quedarse con el NN % de abajo] (la idea 455). Elegidas el 22/11 de las hojas de `salida/`.
 titanio-latex|12ZSJJE1Kw8KvTDsaT7RL5Hv424hVeiRG
 titanio-ice|1oM-3TbepPPcsIx1fj5aS82XnLvqqSwT8
 oro-viscoelastico|1QxOC84dhk0bif7s6xjk4j46kX4IHVqPP
@@ -22,5 +22,5 @@ suena-semiortopedico|1xm6oebtMuB-m0YWgOHWJYPDpGvLk-Gr6
 suena-soft|1i8-duOGKSVKG8xaOriyBT9phduoCOmmO
 suena-somier-plomo|1M52GJ9AW5n7nTVu1iNowGxu9_oKmQcSo
 suena-somier-beige|1c9bnfDRHBBshviEGG3yWxIgyZzRcgZam
-suena-lite|1ZXnS6uRbfB9pjmY4AFDIY2j2nBa4thGU
-suena-smart|1vn2ZYTSo_4cDe_mrsRHadeaVimiKXTYW
+suena-lite|1ZXnS6uRbfB9pjmY4AFDIY2j2nBa4thGU|abajo:58
+suena-smart|1vn2ZYTSo_4cDe_mrsRHadeaVimiKXTYW|abajo:70
