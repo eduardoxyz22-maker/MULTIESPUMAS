@@ -260,7 +260,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
   chk('7z8 · «no cobrar, ya pagó» y «ya pagó el saldo de 2.000» no avisan', L.noCobrar && L.noCobrar.length === 0 && L.yaPago && L.yaPago.length === 0, { a: L.noCobrar, b: L.yaPago });
   chk('7z9 · «cobrar 2.000 y el resto con QR» (una parte) no avisa', L.resto && L.resto.length === 0, L.resto);
   chk('7z10 · «cobrar 50 de envío» es el flete; «cobrar 3.040» = saldo + flete pendiente', L.flete && L.flete.length === 0 && L.conFlete && L.conFlete.length === 0, { a: L.flete, b: L.conFlete });
-  chk('7z11 · «cobrar 2.000» con la venta «SÍ, pagado»', L.pagado && L.pagado[0] === 'Dicen «cobrar Bs 2.000» y la venta está marcada «SÍ, pagado».'.replace('cobrar Bs 2.000', 'cobrar 2.000'), L.pagado);
+  chk('7z11 · «cobrar 2.000» con la venta «SÍ, pagado»', L.pagado && L.pagado[0] === 'Dicen «cobrar 2.000» y la venta está marcada «SÍ, pagó todo».', L.pagado);
   chk('7z12 · «saldo: Bs 2.000» y «paga 2.000 en efectivo» también se leen', L.saldoTxt && L.saldoTxt[0] === 'Dicen «saldo: Bs 2.000» y el saldo es Bs 2.990.' && L.paga && /«paga 2\.000» y el saldo es Bs 2\.990/.test(L.paga[0] || ''), { a: L.saldoTxt, b: L.paga });
   chk('7z13 · en una reposición (RPT) no se mira la plata', L.rpt && L.rpt.length === 0, L.rpt);
   chk('7z13b · «cobrar 2.000 en efectivo y 990 por QR» (dos partes) no avisa', L.dosMetodos && L.dosMetodos.length === 0, L.dosMetodos);

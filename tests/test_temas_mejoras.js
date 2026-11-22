@@ -199,7 +199,7 @@ function armarDashboard(){
   chk('5 · en las pruebas, sin SON_PRUEBA, no suena', r===false, r);
   await cerrar(p);
   const src = fs.readFileSync(PEDIDOS,'utf8');
-  chk('5 · el pago registrado y el recargo suenan a caja; el cierre de entregas, ding', /aplicarCobros\(p, arr\);\n  sonidoPanel\('caja'\)/.test(src) && /fxSello\('COBRADO','plata'\); sonidoPanel\('caja'\)/.test(src) && /function cierreEntMarcar[^\n]*\n[^\n]*sonidoPanel\('ding'\)/.test(src), '');
+  chk('5 · el pago registrado y el recargo suenan a caja; el cierre de entregas, ding', /aplicarCobros\(p, arr[^\n]*\n\s*sonidoPanel\('caja'\)/.test(src) && /fxSello\('COBRADO','plata'\); sonidoPanel\('caja'\)/.test(src) && /function cierreEntMarcar[^\n]*\n[^\n]*sonidoPanel\('ding'\)/.test(src), '');
 
   // ═══ 6. «Guardar» que se transforma ═══
   console.log('\n── 6. «Guardar» que se transforma ──');

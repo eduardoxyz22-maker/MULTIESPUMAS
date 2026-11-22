@@ -148,7 +148,8 @@ function PREPARAR(){
   const fab = await cuad('2026-12-22T10:00:00-04:00', () => _dia(saldoVeredicto(K.ORO, 1, '', '', true)));
   chk('2c. 🏭 no hay, el martes 22/12: sale de fábrica el jueves 24 y se entrega desde el sábado 26/12', fab.sale==='2026-12-24' && fab.desde==='2026-12-26', fab);
   const esp = await cuad('2026-12-22T10:00:00-04:00', () => _dia(saldoVeredictoEspecial({ k:'esp', total:1, x:{ desc:'TITANIO ICE', medida:'150x200', codigo:'' }, codOtro:null }, '', '')));
-  chk('2d. 📐 medida especial, el martes 22/12: también desde el sábado 26/12', esp.desde==='2026-12-26', esp);
+  /* (22/11) desde el 18/11 la medida especial lleva más días en noviembre y diciembre (ESP_TEMPORADA): sale el lunes 28 y se entrega desde el 29; lo que se cuida acá es que no caiga en Navidad */
+  chk('2d. 📐 medida especial, el martes 22/12: sale el lunes 28/12 (la temporada) y nunca promete el 25', esp.sale==='2026-12-28' && esp.desde==='2026-12-29' && !/25\/12/.test(esp.titulo||''), esp);
   const pil = await cuad('2026-12-23T10:00:00-04:00', () => _dia(saldoVeredicto(K.PIL, 1, '', '', true)), { qf:'2026-12-22' });
   chk('2e. ⏳ pedido a fábrica el martes 22/12 (sale el jueves 24): desde el sábado 26/12', pil.desde==='2026-12-26', pil);
   const eur = await cuad('2026-12-23T10:00:00-04:00', () => _dia(saldoVeredicto(K.EUR, 3, '', '', true)), { rec:'2026-12-24' });
