@@ -4875,6 +4875,10 @@ function glSigue(){
           <div class="field" id="pry-porque-w" hidden>
             <button class="btn btn-sm imes-btn" id="pry-porque-btn" onclick="pqsIr('pry-porque')">🧠 El porqué de la semana</button>
           </div>
+          <!-- 📊 (22/11, idea 467) La semana pasada en una imagen para mandar por WhatsApp: por marca, por tienda y 3 cosas para mirar (`semImgAbrir`). -->
+          <div class="field" id="pry-semimg-w" hidden>
+            <button class="btn btn-sm imes-btn" id="pry-semimg-btn" onclick="semImgAbrir()">📊 La semana en una imagen</button>
+          </div>
           <div class="field" id="pry-mano-w" hidden>
             <button class="btn btn-sm imes-btn" id="pry-mano-btn" onclick="pqsIr('pry-mano')">🤝 Quién necesita una mano</button>
           </div>
@@ -20355,6 +20359,7 @@ document.addEventListener('click', function(e){
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
   if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
+  try{ semImgBotonPintar(); }catch(e){}   // 📊 (467) «La semana en una imagen»
   var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=diaNegocio().slice(0,7);
   var R=proyeccionMes((inp && inp.value) || diaNegocio().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
   var pc=function(bs){ return E.vendido>0.009 ? Math.round(bs/E.vendido*100)+'%' : '—'; };
@@ -41181,7 +41186,7 @@ function refreshAtc(){
     if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); ULTIMO_REFRESCO=Date.now(); saveMirror(); renderAtc(); }
   }).catch(function(){});
 }
-function atcLista(sinEstado){
+function atcLista(sinEstado, sinCalor){
   var mode=segVal('atc-mode')||'todo';
   var mes=(document.getElementById('atc-mes')||{}).value||'';
   var mot=(document.getElementById('atc-motivo')||{}).value||'';
@@ -41210,6 +41215,7 @@ function atcLista(sinEstado){
             atcMotivo(p),atcDetalle(p),atcQueSeHizo(p),p.observaciones,atcTipoTxt(atcTipo(p))]
            .join(' ')).indexOf(q)>=0;
   });
+  if(!sinCalor){ var _cs=atcCalorSel(); if(_cs) list=list.filter(function(p){ return !!_cs.ids[String(p.id)]; }); }   // 🔥 (457) una celda del mapa de calor
   /* Las más nuevas arriba: lo que entró recién es lo que se está mirando. */
   list.sort(function(a,b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y?1:-1; return (b.ts||0)-(a.ts||0); });
   return list;
@@ -41374,6 +41380,7 @@ function renderAtc(){
   try{ atcqPintar(list); }catch(e){ console.error(e); }   // 📉🔁⏳ (178-180)
   try{ atcIaPintar(); }catch(e){ console.error(e); }       // 🧠 (16/11, mejora 359) lo que dicen las ATC
   try{ atcLaPintar(); }catch(e){ console.error(e); }      // 🎧 (16/11, mejora 375) la lista arriba, la calidad plegada
+  try{ atcCalorChipPintar(); }catch(e){ console.error(e); }   // 🔥 (457) «Viendo las N de …», arriba de la lista
 }
 /* ==========================================================================
    🎧 ATC CON EL ESTILO NUEVO (12/10, dueño: «falta modernizar la pestaña de ATC al nuevo estilo»). Solo presentación: las cuentas
@@ -41656,7 +41663,8 @@ function atcqEdades(list, M){
     if(!ps.length) sinProd++;
     ps.forEach(function(x){
       var k=x.marca+'|'+x.lin; if(vis[k]) return; vis[k]=1;
-      var l=L[k]||(L[k]={ lbl:(ico[x.marca]||ico[''])+' '+(x.lin===ATCI_SIN_LINEA ? 'Sin línea' : x.lin), sin:(x.lin===ATCI_SIN_LINEA), n:0, t:cero() }); l.n++; l.t[t]++;
+      var l=L[k]||(L[k]={ lbl:(ico[x.marca]||ico[''])+' '+(x.lin===ATCI_SIN_LINEA ? 'Sin línea' : x.lin), sin:(x.lin===ATCI_SIN_LINEA), n:0, t:cero(),
+                          k:k, marca:x.marca, lin:x.lin, ids:ATCQ_TRAMOS.map(function(){ return []; }) }); l.n++; l.t[t]++; l.ids[t].push(String(p.id));   // 🔥 (457) qué ATC son, para el mapa de calor
     });
   });
   var porN=function(a, b){ return (a.sin-b.sin) || (b.n-a.n) || (a.lbl<b.lbl ? -1 : 1); };
@@ -41718,8 +41726,12 @@ function atcqRepHtml(list){
 function atcqPintar(list){
   var box=document.getElementById('atc-calidad'); if(!box) return;
   if(!ATCQ_REP) ATCQ_REP=atcRepMapa();
+  /* 🔥 (457) con una celda del mapa de calor elegida, la lista de abajo muestra solo esas; los números de calidad siguen con todo lo demás */
+  if(atcCalorSel()) list=atcLista(false, true);
   var T=atcqTasa(), E=atcqEdades(list||[]); ATCQ_ULT={ T:T, E:E };   // 📉 (16/11, mejora 375) el renglón plegado lee estos mismos números
-  box.innerHTML='<div class="atq-grid">'+atcqTasaHtml(T)+atcqEdadesHtml(E)+atcqRepHtml(list||[])+'</div>';
+  var _ch=''; try{ _ch=atcCalorHtml(E); }catch(e){ console.error(e); }
+  box.innerHTML='<div class="atq-grid">'+atcqTasaHtml(T)+atcqEdadesHtml(E)+_ch+atcqRepHtml(list||[])+'</div>';
+  try{ atcCalorChipPintar(); }catch(e){}
 }
 /* ============================================================================
    🎧 ATC: LA LISTA ARRIBA, LOS NÚMEROS DE CALIDAD PLEGADOS (16/11, mejora 375; el dueño la eligió).
@@ -46730,7 +46742,7 @@ function misTopPintar(v, mine){
     ((am!=null||pm!=null) ? ('<div class="td-cupo">🎟️ <b>'+esc(may(nxDiaTxt(prox)))+'</b>'+(am!=null?('<span>🌅 '+cupoLibresTxt(am)+'</span>'):'')+(pm!=null?('<span>🌆 '+cupoLibresTxt(pm)+'</span>'):'')+'</div>') : '')+
     '<div class="td-acc"><button type="button" class="ah-go ah-go-p" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>'+
       '<button type="button" class="ah-go" onclick="NX_M1_ABIERTA=true;renderMis();misIrA(\'nx-m1\')">🔔 Avisar a los del '+esc(nxDiaTxt(prox).split(' ')[0])+'</button>'+
-      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+antesIrteBotonHtml(v)+'</div></div>';   // 🌙 (15/11, 310) «Me voy»   // 🏬 (254) «Caja de hoy» en el aparato del mall
+      '<button type="button" class="ah-go" onclick="setMisFiltro(\'pend\');misIrA(\'mis-chips\')">⏳ Mis pendientes</button>'+cajaBotonesHtml('ah-go', true)+antesIrteBotonHtml(v)+midiaBotonHtml(v)+'</div></div>';   // 🌙 (15/11, 310) «Me voy»   // 🏬 (254) «Caja de hoy» en el aparato del mall
   var det=(MIS_EF_ABIERTO && (E.nuevos.length || E.retiros.length)) ? ('<div class="t2-det" style="grid-column:1/-1"><div class="t2-cab">💵 Tu efectivo de '+esc(mesN(E.mes))+' · '+fmtBs0(E.tot)+' para rendir a Contabilidad</div>'+
       E.nuevos.slice().reverse().map(function(c){ return '<div class="t2-f" onclick="showMisModal(\''+esc(String(c.p.id))+'\')"><span>'+esc(fmtFechaCorta(c.f))+'</span><b>'+esc(c.p.cliente||'—')+(c.envio?' · 🚚 flete':'')+'</b><span class="t2-m">'+fmtBs(c.m)+'</span></div>'; }).join('')+
       E.retiros.slice().reverse().map(function(r){ return '<div class="t2-f"><span>'+esc(fmtFechaCorta(r.fecha))+'</span><b>↩ Rendiste'+(r.retira?(' a '+esc(r.retira)):'')+'</b><span class="t2-m">− '+fmtBs(r.monto)+'</span></div>'; }).join('')+
@@ -79250,6 +79262,7 @@ function asisAvisos(){
                     : ('«'+String(rsp[0].txt||'').slice(0,90)+'». El bot no lee: escribile por el WhatsApp de siempre y después tocá «✓ Ya lo atendí».'),
       b:['Ver', vis==='mis' ? "asisIr('#wa-resp-mis')" : "asisIr('#wa-resp-adm', function(){ showView('bot'); })"] });   // 🤖 (24/10) vive en la pestaña Bot
   }catch(e){}
+  try{ var SI=semImgAviso(); if(SI) A.push(SI); }catch(e){}   // 📊 (467) los lunes, la semana pasada en una imagen (con la contraseña)
   try{ var R=asisResumenDia(); if(R) A.unshift(R); }catch(e){}   // ☀️ (E) el resumen del día va primero
   try{ var AN=anuncioAviso(); if(AN) A.unshift(AN); }catch(e){}   // 📢 (13/10) y el anuncio de Administración, antes que todo
   var vistos=asisVistos();
@@ -84596,6 +84609,562 @@ function mnoHable(v, si){
     .then(function(r){ if(r && r.ok && r.hab){ it.hab=r.hab; } else { it.hab=JSON.parse(antes); toast('❌ No se guardó «Ya hablé» ('+((r && r.error) || 'sin respuesta')+').','err'); } })
     .catch(function(e){ it.hab=JSON.parse(antes); toast('❌ No se guardó «Ya hablé»: sin conexión.','err'); })
     .then(function(){ pqsRepintar(); });
+}
+</script>
+<style>
+/* 📸 (456 y 467) La ventana de la imagen para compartir: clara, con los colores del panel */
+.imgc{ display:flex; flex-direction:column; gap:12px; }
+.imgc-nav{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; font-size:.88rem; color:#0f766e; font-weight:700; }
+.imgc-nav button{ width:auto; min-width:44px; min-height:40px; border-radius:10px; border:1px solid #99DDD9; background:#E6F7F6; color:#007a74; font:inherit; font-weight:800; cursor:pointer; }
+.imgc-nav button:disabled{ opacity:.4; cursor:default; }
+.imgc-prev{ display:flex; justify-content:center; background:#f1f5f4; border-radius:14px; padding:10px; }
+.imgc-prev img{ display:block; width:100%; max-width:420px; height:auto; max-height:calc(62vh / var(--vz,1)); object-fit:contain; border-radius:10px; box-shadow:0 8px 24px -12px rgba(15,23,42,.45); }
+.imgc-acc{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+.imgc-acc .btn{ width:auto; font-weight:800; }
+.imgc-acc .imgc-p{ background:#00B5AD; color:#fff; border:none; }
+.imgc-nota{ font-size:.76rem; color:#64748b; text-align:center; line-height:1.4; }
+/* 🔥 (457) El mapa de calor de las ATC */
+#atq-calor{ grid-column:1/-1; }
+#atq-calor .acal-w{ overflow-x:auto; }
+.acal{ border-collapse:separate; border-spacing:4px; width:100%; min-width:560px; font-size:.8rem; }
+.acal thead th{ background:none; color:#475569; font-weight:700; font-size:.74rem; text-transform:none; letter-spacing:0; text-align:center; padding:2px 4px; white-space:nowrap; border:none; position:static; }
+.acal th:first-child, .acal td:first-child{ text-align:left; }
+.acal td:first-child{ font-weight:700; color:#0f172a; white-space:nowrap; padding-right:6px; }
+.acal tr.sin td:first-child{ color:#64748b; font-weight:600; }
+.acal td{ text-align:center; padding:0; vertical-align:middle; }
+.acal .acal-gap{ width:6px; padding:0; }
+.acal-c{ width:100%; min-width:44px; min-height:36px; border:none; border-radius:8px; font:inherit; font-weight:800; font-size:.86rem; cursor:pointer; transition:transform .12s, box-shadow .12s; }
+.acal-c:hover{ transform:translateY(-1px); box-shadow:0 3px 8px -3px rgba(127,29,29,.45); }
+.acal-c.on{ outline:3px solid #0f766e; outline-offset:1px; }
+.acal-0{ display:block; min-height:36px; line-height:36px; border-radius:8px; background:#f8fafc; color:#cbd5e1; }
+.acal-tot{ font-weight:800; color:#334155; }
+.acal-frase{ margin-top:8px; padding:8px 12px; border-radius:10px; background:#fff1f2; color:#7f1d1d; font-size:.84rem; border:1px solid #fecdd3; }
+.acal-ley{ display:flex; align-items:center; gap:6px; margin-top:8px; font-size:.72rem; color:#64748b; flex-wrap:wrap; }
+.acal-ley i{ display:inline-block; width:22px; height:12px; border-radius:4px; }
+.atc-calor-chip{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px; padding:8px 12px; border-radius:10px; background:#fff1f2; color:#7f1d1d; font-size:.85rem; border:1px solid #fecdd3; }
+.atc-calor-chip .btn{ width:auto; }
+#pry-semimg-w[hidden]{ display:none !important; }
+</style>
+<script>
+/* ============================================================================
+   📸 LA IMAGEN PARA COMPARTIR (22/11, ideas 456 y 467; el dueño las eligió con la muestra). UNA ventana para las dos: la vista previa,
+   «⬇️ Bajar la imagen», «📤 Compartir» (solo si el navegador comparte archivos: `navigator.canShare({files})`) y «📋 Copiar la imagen»
+   (solo si deja copiar imágenes: `ClipboardItem`). El panel NO manda nada solo: la persona elige qué hacer con la imagen.
+   Se dibuja con Canvas 2D directo (no html2canvas), con la letra Inter ya cargada (`document.fonts`), sin emojis adentro (en una compu
+   sin la letra de los emojis salen cuadraditos) y siempre clara, con el degradé del panel.
+   ========================================================================== */
+var IMGC={ cv:null, nombre:'', titulo:'' };
+var IMG_LETRA='Inter, "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif';
+function imgFuente(peso, px){ return peso+' '+px+'px '+IMG_LETRA; }
+function imgCanvas(w, h){ var c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+function imgRedondo(ctx, x, y, w, h, r){
+  r=Math.min(r, w/2, h/2);
+  ctx.beginPath(); ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r); ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+/* Escribe una línea; si no entra en `maxW`, achica la letra (nunca la corta). Devuelve el tamaño que usó. */
+function imgTexto(ctx, t, x, y, maxW, peso, px, color, align){
+  t=String(t==null?'':t); ctx.fillStyle=color; ctx.textAlign=align||'left'; ctx.textBaseline='alphabetic';
+  var s=px; ctx.font=imgFuente(peso, s);
+  while(maxW && s>12 && ctx.measureText(t).width>maxW){ s--; ctx.font=imgFuente(peso, s); }
+  ctx.fillText(t, x, y); return s;
+}
+/* Parte el texto en renglones de `maxW`; devuelve los renglones (sin dibujar). */
+function imgRenglones(ctx, t, maxW, peso, px){
+  ctx.font=imgFuente(peso, px);
+  var P=String(t||'').split(/\s+/).filter(Boolean), L=[], cur='';
+  P.forEach(function(w){ var p=cur ? (cur+' '+w) : w; if(cur && ctx.measureText(p).width>maxW){ L.push(cur); cur=w; } else cur=p; });
+  if(cur) L.push(cur);
+  return L;
+}
+function imgParrafo(ctx, t, x, y, maxW, lh, peso, px, color, align){
+  var L=imgRenglones(ctx, t, maxW, peso, px); ctx.fillStyle=color; ctx.textAlign=align||'left'; ctx.font=imgFuente(peso, px);
+  L.forEach(function(l, i){ ctx.fillText(l, x, y+i*lh); });
+  return y+L.length*lh;
+}
+/* El degradé del encabezado del panel (`--grad-header`) y dos círculos suaves. */
+function imgDegrade(ctx, x, y, w, h){
+  var g=ctx.createLinearGradient(x, y, x+w, y+h);
+  g.addColorStop(0, '#00B5AD'); g.addColorStop(0.45, '#0f766e'); g.addColorStop(1, '#1e3a5f');
+  ctx.fillStyle=g; ctx.fillRect(x, y, w, h);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  ctx.fillStyle='rgba(255,255,255,.07)'; ctx.beginPath(); ctx.arc(x+w*0.92, y+h*0.08, w*0.32, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.05)'; ctx.beginPath(); ctx.arc(x+w*0.04, y+h*0.96, w*0.4, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+function imgBs(n){ return 'Bs '+Math.round(Number(n)||0).toLocaleString('es-BO'); }
+function imgPct(a, b){ if(!(b>0.009)) return a>0.009 ? 'nuevo' : '—'; var r=Math.round((a-b)/b*100); return (r>0?'+':(r<0?'−':''))+Math.abs(r)+' %'; }
+function imgPctN(a, b){ return b>0.009 ? (a-b)/b : null; }
+function imgFechaLarga(f){ var w=dowDe(f), m=String(f||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return String(f||''); return ccmCap((w>=0?DIAS_SEM[w]+' ':'')+(+m[3])+' de '+MESES_ES[+m[2]-1]); }
+/* El logo (`LOGO_B64`) como imagen, una vez; sin él, la tarjeta sale igual. */
+var IMG_LOGO=null;
+function imgLogo(){
+  if(IMG_LOGO) return IMG_LOGO;
+  IMG_LOGO=new Promise(function(res){
+    try{ if(typeof LOGO_B64==='undefined'){ res(null); return; } var i=new Image(); i.onload=function(){ imgLogoCaja(i); res(i); }; i.onerror=function(){ res(null); }; i.src='data:image/png;base64,'+LOGO_B64; setTimeout(function(){ res(null); }, 2500); }catch(e){ res(null); }
+  });
+  return IMG_LOGO;
+}
+/* El logo trae mucho margen blanco: se busca una vez dónde está el dibujo, para recortarlo. */
+function imgLogoCaja(i){
+  i._bb={ x:0, y:0, w:i.width, h:i.height };
+  try{
+    var c=imgCanvas(i.width, i.height), x=c.getContext('2d'); x.drawImage(i, 0, 0);
+    var d=x.getImageData(0, 0, i.width, i.height).data, x0=i.width, y0=i.height, x1=-1, y1=-1;
+    for(var y=5;y<i.height-5;y++) for(var k=5;k<i.width-5;k++){   /* sin el marco fino del borde */ var o=(y*i.width+k)*4; if(d[o+3]>20 && (d[o]<190 || d[o+1]<190 || d[o+2]<190)){ if(k<x0) x0=k; if(k>x1) x1=k; if(y<y0) y0=y; if(y>y1) y1=y; } }
+    if(x1>x0 && y1>y0) i._bb={ x:Math.max(0, x0-6), y:Math.max(0, y0-6), w:Math.min(i.width, x1-x0+12), h:Math.min(i.height, y1-y0+12) };
+  }catch(e){}
+}
+/* El logo recortado en su pastilla blanca, pegado a la derecha (`xd` = el borde derecho). */
+function imgLogoPoner(ctx, logo, xd, y, h){
+  if(!logo) return;
+  var b=logo._bb||{ x:0, y:0, w:logo.width, h:logo.height }, w=Math.round(b.w*h/b.h), pad=Math.round(h*0.28);
+  ctx.fillStyle='#fff'; imgRedondo(ctx, xd-w-2*pad, y, w+2*pad, h+2*pad, Math.round((h+2*pad)/2.4)); ctx.fill();
+  try{ ctx.drawImage(logo, b.x, b.y, b.w, b.h, xd-w-pad, y+pad, w, h); }catch(e){}
+}
+/* Antes de dibujar: la letra del panel cargada (sin internet, la del sistema) y el logo. */
+function imgPreparar(){
+  var f=Promise.resolve();
+  try{ if(document.fonts && document.fonts.load) f=Promise.all([document.fonts.load('800 60px Inter'), document.fonts.load('600 30px Inter'), document.fonts.load('400 24px Inter')]).then(function(){ return document.fonts.ready; }); }catch(e){}
+  var tope=new Promise(function(r){ setTimeout(r, 2500); });
+  return Promise.all([Promise.race([f.catch(function(){}), tope]), imgLogo()]).then(function(a){ return a[1]; });
+}
+function imgPuedeCompartir(){
+  try{ if(!navigator.canShare || !navigator.share || typeof File!=='function') return false; return !!navigator.canShare({ files:[new File([new Blob(['x'], { type:'image/png' })], 'x.png', { type:'image/png' })] }); }catch(e){ return false; }
+}
+function imgPuedeCopiar(){ try{ return !!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write); }catch(e){ return false; } }
+function imgBlob(){ return new Promise(function(res, rej){ try{ IMGC.cv.toBlob(function(b){ b ? res(b) : rej(new Error('sin imagen')); }, 'image/png'); }catch(e){ rej(e); } }); }
+/* La ventana: `extra` va arriba de la vista previa (las flechas de la semana). */
+function imgVentana(cv, o){
+  IMGC.cv=cv; IMGC.nombre=o.nombre||'imagen'; IMGC.titulo=o.titulo||'';
+  var src=''; try{ src=cv.toDataURL('image/png'); }catch(e){ src=''; }
+  var acc='<button type="button" class="btn btn-sm imgc-p" id="imgc-bajar" onclick="imgBajar()">⬇️ Bajar la imagen</button>'+
+    (imgPuedeCompartir() ? '<button type="button" class="btn btn-sm btn-ghost" id="imgc-compartir" onclick="imgCompartir()">📤 Compartir</button>' : '')+
+    (imgPuedeCopiar() ? '<button type="button" class="btn btn-sm btn-ghost" id="imgc-copiar" onclick="imgCopiar()">📋 Copiar la imagen</button>' : '');
+  openModal('<div class="modal-h" style="background:#0f766e"><h3>'+esc(o.titulo||'📸 Imagen')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b imgc" id="imgc">'+(o.extra||'')+
+      '<div class="imgc-prev"><img id="imgc-img" src="'+src+'" alt="'+esc(o.alt||o.titulo||'Imagen')+'" width="'+cv.width+'" height="'+cv.height+'"></div>'+
+      '<div class="imgc-acc">'+acc+'</div>'+
+      '<div class="imgc-nota">'+esc(o.nota||'El panel no manda nada solo: bajala, compartila o copiala y mandala vos por WhatsApp.')+'</div></div>');
+}
+function imgBajar(){
+  if(!IMGC.cv) return;
+  imgBlob().then(function(b){
+    var url=URL.createObjectURL(b), a=document.createElement('a'); a.href=url; a.download=IMGC.nombre+'.png'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    toast('⬇️ Bajé la imagen: '+IMGC.nombre+'.png', 'ok', 3500);
+  }).catch(function(){ toast('No pude armar el archivo de la imagen.', 'err', 5000); });
+}
+function imgCompartir(){
+  if(!IMGC.cv) return;
+  imgBlob().then(function(b){
+    var f=new File([b], IMGC.nombre+'.png', { type:'image/png' });
+    if(!navigator.canShare || !navigator.canShare({ files:[f] })){ toast('Este navegador no deja compartir la imagen: bajala y mandala por WhatsApp.', 'err', 6000); return; }
+    return navigator.share({ files:[f], title:IMGC.titulo }).catch(function(e){ if(e && e.name==='AbortError') return; toast('No se pudo compartir: bajala y mandala por WhatsApp.', 'err', 6000); });
+  }).catch(function(){ toast('No pude armar la imagen.', 'err', 5000); });
+}
+function imgCopiar(){
+  if(!IMGC.cv || !imgPuedeCopiar()) return;
+  try{
+    navigator.clipboard.write([new ClipboardItem({ 'image/png':imgBlob() })])
+      .then(function(){ toast('📋 Imagen copiada: pegala en el chat de WhatsApp.', 'ok', 4000); })
+      .catch(function(){ toast('El navegador no dejó copiar la imagen: usá «⬇️ Bajar la imagen».', 'err', 6000); });
+  }catch(e){ toast('El navegador no dejó copiar la imagen: usá «⬇️ Bajar la imagen».', 'err', 6000); }
+}
+
+/* ============================================================================
+   📸 456 · MI DÍA EN UNA IMAGEN (22/11; el dueño la eligió con la muestra). En Mis pedidos, con una vendedora elegida (no Eduardo, ROHO,
+   los internos ni «👑 Ver todos»), «☀️ Tu día» trae «📸 Mi día en una imagen»: una tarjeta de 1080×1350 para mandar por WhatsApp.
+   · HOY = lo que cargó hoy (el día de carga, `x.reg` de `pryVentas`), como «🏆 Vendedor del día» y «🎯 Hoy: llevás…» de «Tu día».
+   · EL MES = su fila de «👤 Por vendedor» de Proyección (`proyeccionMes(ym).marcas[].filas`: entrega agendada en el mes, también la venta de
+     tienda), y lo que llegaría a este ritmo (`proy`). El PUESTO = el lugar de su fila dentro de SU marca (las filas ya vienen ordenadas).
+   · LA META = la de `ccmMetas` (su presupuesto; sin presupuesto, su mínima). Sin metas guardadas del mes, ni barra ni «te faltan».
+   ⚠️ Nada se calcula aparte. Solo mira: no guarda nada. En Playwright, solo con `window.MIDIA_PRUEBA`. `tests/test_mi_dia_imagen.js`.
+   ========================================================================== */
+function midiaVe(){ return vdVa('MIDIA_PRUEBA'); }
+function midiaPuede(v){ return !!v && !contaExcluido(v) && !esVendedorLite(v); }
+function midiaBotonHtml(v){
+  if(!midiaVe() || !midiaPuede(v)) return '';
+  return '<button type="button" class="ah-go" id="midia-btn" data-v="'+esc(v)+'" onclick="midiaAbrir(this.getAttribute(\'data-v\'))">📸 Mi día en una imagen</button>';
+}
+function midiaDatos(v, hoy){
+  hoy=hoy||diaNegocio();
+  var ym=hoy.slice(0,7), k=normNombre(v);
+  var o={ v:nombreCanonico(v)||v, hoy:hoy, ym:ym, tienda:(sucursalDeVendedor(v, hoy)||''), hoyBs:0, hoyN:0, hoyU:0,
+          mes:{ bs:0, n:0, u:0, proy:0 }, curso:false, puesto:0, de:0, marca:null, meta:0, metaQue:'', falta:0, llego:false, pct:0, deMas:0 };
+  pryVentas().forEach(function(x){
+    if(x.amb!=='tienda' || normNombre(x.v)!==k || x.reg!==hoy) return;
+    o.hoyBs=r2(o.hoyBs+(Number(x.bs)||0)); o.hoyN++; o.hoyU+=(x.u||0);
+  });
+  var R=proyeccionMes(ym); o.curso=(R.estado==='curso');
+  R.marcas.forEach(function(m){
+    m.filas.forEach(function(f, i){
+      if(normNombre(f.vendedor)!==k) return;
+      o.mes={ bs:f.vendido, n:f.n, u:f.u, proy:f.proy }; o.puesto=i+1; o.de=m.filas.length; o.marca={ k:m.g.k, lbl:m.g.lbl, col:m.g.col };
+    });
+  });
+  if(!o.marca){
+    var g=marcaDe(v), mg=null; MARCAS.forEach(function(x){ if(x.k===g) mg=x; });
+    if(mg) o.marca={ k:mg.k, lbl:mg.lbl, col:mg.col };
+    (R.sinMarca.filas||[]).forEach(function(f){ if(normNombre(f.vendedor)===k) o.mes={ bs:f.vendido, n:f.n, u:f.u, proy:f.proy }; });
+  }
+  var mt=ccmMetas(ym);
+  if(mt.ok){ var mm=ccmMetaDe(mt.vd, v); if(mm[1]>0){ o.meta=mm[1]; o.metaQue='pres'; } else if(mm[0]>0){ o.meta=mm[0]; o.metaQue='min'; } }
+  if(o.meta>0){
+    o.llego=o.mes.bs>=o.meta-0.005; o.falta=o.llego ? 0 : r2(o.meta-o.mes.bs); o.deMas=o.llego ? r2(o.mes.bs-o.meta) : 0;
+    o.pct=Math.max(0, o.mes.bs/o.meta);
+  }
+  return o;
+}
+function midiaDibujar(D, logo){
+  var W=1080, H=1350, cv=imgCanvas(W, H), ctx=cv.getContext('2d');
+  imgDegrade(ctx, 0, 0, W, H);
+  var M=70, CW=W-2*M, mes=mesNombre(D.ym).replace(/ de \d{4}$/,'');
+  /* arriba: el logo en su pastilla blanca y la fecha */
+  imgLogoPoner(ctx, logo, W-M, 56, 64);
+  imgTexto(ctx, 'MI DÍA', M, 104, 400, 800, 30, 'rgba(255,255,255,.8)');
+  imgTexto(ctx, imgFechaLarga(D.hoy), M, 152, CW-300, 600, 40, '#fff');
+  /* el nombre y la tienda */
+  imgTexto(ctx, D.v, M, 280, CW, 800, 84, '#fff');
+  imgTexto(ctx, [D.tienda, D.marca ? D.marca.lbl : ''].filter(Boolean).join(' · ') || ' ', M, 336, CW, 500, 36, 'rgba(255,255,255,.88)');
+  /* 1 · hoy */
+  var y=380;
+  ctx.fillStyle='#fff'; imgRedondo(ctx, M, y, CW, 232, 36); ctx.fill();
+  imgTexto(ctx, 'HOY VENDISTE', M+44, y+62, CW-88, 800, 28, '#0f766e');
+  imgTexto(ctx, imgBs(D.hoyBs), M+44, y+156, CW-88, 800, 92, '#0f172a');
+  imgTexto(ctx, D.hoyN ? (D.hoyN+(D.hoyN===1?' venta':' ventas')+' · '+D.hoyU+(D.hoyU===1?' colchón o somier':' colchones y somieres')) : 'Todavía no cargaste ventas hoy',
+    M+44, y+204, CW-88, 500, 32, '#475569');
+  /* 2 · el mes */
+  y=638;
+  var conRitmo=!!(D.curso && D.mes.proy>0.5), alto=(D.meta>0 ? 420 : 250)+(conRitmo ? 64 : 0);
+  ctx.fillStyle='#fff'; imgRedondo(ctx, M, y, CW, alto, 36); ctx.fill();
+  imgTexto(ctx, ('Lo vendido en '+mes).toUpperCase(), M+44, y+66, CW-88, 800, 28, '#0f766e');
+  imgTexto(ctx, imgBs(D.mes.bs), M+44, y+160, CW-88, 800, 84, '#0f172a');
+  imgTexto(ctx, D.mes.n+(D.mes.n===1?' venta':' ventas')+' · '+D.mes.u+(D.mes.u===1?' colchón o somier':' colchones y somieres'), M+44, y+210, CW-88, 500, 30, '#475569');
+  var yy=y+210;
+  if(D.meta>0){
+    var bx=M+44, bw=CW-88, by=yy+40, bh=34, p=Math.min(1, D.pct);
+    ctx.fillStyle='#e2f4f3'; imgRedondo(ctx, bx, by, bw, bh, bh/2); ctx.fill();
+    if(p>0.004){ var gb=ctx.createLinearGradient(bx, 0, bx+bw, 0); gb.addColorStop(0, '#00B5AD'); gb.addColorStop(1, '#0f766e'); ctx.fillStyle=gb; imgRedondo(ctx, bx, by, Math.max(bh, bw*p), bh, bh/2); ctx.fill(); }
+    var q=D.metaQue==='pres' ? 'tu presupuesto' : 'tu mínima';
+    imgTexto(ctx, Math.round(D.pct*100)+' % de '+q+' ('+imgBs(D.meta)+')', bx, by+bh+44, bw, 600, 30, '#334155');
+    if(D.llego) imgTexto(ctx, 'Llegaste a '+q+(D.deMas>=0.5 ? (' · '+imgBs(D.deMas)+' de más') : ''), bx, by+bh+100, bw, 800, 42, '#15803d');
+    else imgTexto(ctx, 'Te faltan '+imgBs(Math.ceil(D.falta-1e-9)), bx, by+bh+100, bw, 800, 42, '#b45309');
+    yy=by+bh+100;
+  }
+  if(conRitmo) imgTexto(ctx, 'A este ritmo, '+mes+' cierra en '+imgBs(D.mes.proy), M+44, yy+58, CW-88, 500, 30, '#475569');
+  /* 3 · el puesto en su marca */
+  y=638+alto+26;
+  if(D.puesto>0 && D.marca){
+    ctx.fillStyle='rgba(255,255,255,.16)'; imgRedondo(ctx, M, y, CW, 100, 50); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(M+52, y+50, 38, 0, Math.PI*2); ctx.fill();
+    imgTexto(ctx, D.puesto+'°', M+52, y+64, 68, 800, 38, '#0f766e', 'center');
+    imgTexto(ctx, 'Puesto '+D.puesto+' de '+D.de+' en '+D.marca.lbl+' este mes', M+116, y+63, CW-146, 700, 36, '#fff');
+  }
+  /* abajo, en chico, de dónde salen los números */
+  imgParrafo(ctx, 'Hoy = lo que cargaste hoy. El mes = lo vendido con entrega en '+mes+', también la venta de tienda, como Proyección. '+
+    'Hecho el '+fmtFechaCorta(D.hoy)+' a las '+pryHoraTxt(pryMinBo(Date.now()))+'.', M, H-72, CW, 32, 400, 23, 'rgba(255,255,255,.82)');
+  return cv;
+}
+function midiaAbrir(v){
+  v=v || ((document.getElementById('mis-vendedor')||{}).value||'');
+  if(!midiaPuede(v)){ toast('📸 La imagen es de una vendedora: elegí tu nombre arriba.', 'err', 5000); return Promise.resolve(null); }
+  return imgPreparar().then(function(logo){
+    var D=midiaDatos(v), cv=midiaDibujar(D, logo);
+    imgVentana(cv, { titulo:'📸 Mi día en una imagen', nombre:'mi-dia-'+normNombre(D.v).replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'-'+D.hoy, alt:'El día de '+D.v });
+    return D;
+  });
+}
+
+/* ============================================================================
+   📊 467 · LA SEMANA EN UNA IMAGEN, LOS LUNES (22/11; el dueño la eligió con la muestra). En Proyección (que ya es con la contraseña),
+   «📊 La semana en una imagen»: una imagen para mandarle por WhatsApp al dueño y a su jefe con la semana pasada (lunes a sábado) contra la
+   de antes. ‹ › cambia de semana.
+   · Lo vendido = por el DÍA EN QUE SE CARGÓ la venta (`x.reg` de `pryVentas`, como Black Friday y la carrera), con las MISMAS ventas de
+     Proyección: el equipo de tiendas por marca (`x.g`) y por tienda (`x.st`, la tienda de quien vendió); los mayoristas aparte; ROHO aparte
+     en unidades. La plata es `x.bs` (= `ventaTotal`) y las unidades `x.u` (= `pryUnidadesDe`: colchones y somieres). La imagen lo dice abajo.
+   · El domingo va APARTE (la Tienda Banzer y Mia Plaza abren): se muestra solo si hubo algo.
+   · «3 cosas para mirar» con reglas simples y verdaderas: la tienda que más subió y la que más bajó, la marca que más cambió, cuántas entregas
+     cambiaron de día (de la historia del pedido, `fH`, que existe desde `FH_DESDE`: antes no se dice nada), el mejor día y si la plata y las
+     unidades fueron para lados distintos. Lo que no tiene datos no se dice.
+   · Bloki se lo recuerda al dueño los lunes desde las 08:00 (con la contraseña), una vez por semana y aparato (`me_semimg_lun`).
+   Solo mira. En Playwright, solo con `window.SEMANA_IMG_PRUEBA`. `tests/test_semana_imagen.js`.
+   ========================================================================== */
+var SEMIMG={ off:0 };
+function semImgVe(){ return vdVa('SEMANA_IMG_PRUEBA'); }
+function semImgBotonPintar(){ var w=document.getElementById('pry-semimg-w'); if(w) w.hidden=!semImgVe(); }
+function semImgLunesDe(f){ var w=dowDe(f); return stockSumarDias(f, -((w+6)%7)); }
+/* El lunes de la semana `off` (0 = la semana pasada, 1 = la de antes…). */
+function semImgLunes(off, hoy){ return stockSumarDias(semImgLunesDe(hoy||diaNegocio()), -7*(1+Math.max(0, off|0))); }
+function semImgRangoTxt(a, b){
+  var ma=+a.slice(5,7), mb=+b.slice(5,7);
+  return (ma===mb) ? ('del lunes '+(+a.slice(8))+' al sábado '+(+b.slice(8))+' de '+MESES_ES[mb-1])
+                   : ('del lunes '+(+a.slice(8))+' de '+MESES_ES[ma-1]+' al sábado '+(+b.slice(8))+' de '+MESES_ES[mb-1]);
+}
+function semImgTsBo(f){ return new Date(f+'T00:00:00-04:00').getTime(); }
+function semImgDatos(off, hoy){
+  hoy=hoy||diaNegocio();
+  var L=semImgLunes(off, hoy), P=stockSumarDias(L, -7);
+  var nuevo=function(){ return { bs:0, n:0, u:0 }; }, sumar=function(t, x){ t.bs=r2(t.bs+(Number(x.bs)||0)); t.n++; t.u+=(x.u||0); };
+  var semana=function(lun){
+    var o={ lun:lun, sab:stockSumarDias(lun, 5), dom:stockSumarDias(lun, 6), tot:nuevo(), marcas:{}, tiendas:{}, dias:[], mayor:nuevo(), roho:nuevo(),
+            domTot:nuevo(), domTiendas:{}, domMayor:nuevo(), domRoho:nuevo() };
+    for(var i=0;i<6;i++) o.dias.push({ f:stockSumarDias(lun, i), bs:0, n:0 });
+    return o;
+  };
+  var A=semana(L), B=semana(P), idx={};
+  [A, B].forEach(function(S){ for(var i=0;i<7;i++) idx[stockSumarDias(S.lun, i)]={ S:S, i:i }; });
+  pryVentas().forEach(function(x){
+    var w=idx[x.reg||'']; if(!w) return;
+    var S=w.S, dom=(w.i===6);
+    if(x.amb==='mayor'){ sumar(dom ? S.domMayor : S.mayor, x); return; }
+    if(x.amb==='roho'){ sumar(dom ? S.domRoho : S.roho, x); return; }
+    if(x.amb!=='tienda') return;
+    var st=x.st||'Sin tienda';
+    if(dom){ sumar(S.domTot, x); sumar(S.domTiendas[st]||(S.domTiendas[st]=nuevo()), x); return; }
+    sumar(S.tot, x);
+    sumar(S.marcas[x.g]||(S.marcas[x.g]=nuevo()), x);
+    sumar(S.tiendas[st]||(S.tiendas[st]=nuevo()), x);
+    var d=S.dias[w.i]; d.bs=r2(d.bs+(Number(x.bs)||0)); d.n++;
+  });
+  var vacio={ bs:0, n:0, u:0 };
+  var marcas=MARCAS.map(function(g){ return { k:g.k, lbl:g.lbl, col:g.col, a:A.marcas[g.k]||vacio, b:B.marcas[g.k]||vacio }; });
+  if((A.marcas.sin && A.marcas.sin.n) || (B.marcas.sin && B.marcas.sin.n)) marcas.push({ k:'sin', lbl:'Sin marca', col:'#f59e0b', a:A.marcas.sin||vacio, b:B.marcas.sin||vacio });
+  var tk={}; Object.keys(A.tiendas).concat(Object.keys(B.tiendas)).forEach(function(k){ tk[k]=1; });
+  var tiendas=Object.keys(tk).map(function(k){ return { k:k, a:A.tiendas[k]||vacio, b:B.tiendas[k]||vacio }; })
+    .sort(function(x, y){ return (y.a.bs-x.a.bs) || (y.b.bs-x.b.bs) || x.k.localeCompare(y.k, 'es'); });
+  /* 📅 las entregas que cambiaron de día en la semana (la historia del pedido, `fH`): solo si la semana cae después de `FH_DESDE` */
+  var cambios=null, t0=semImgTsBo(L), t1=semImgTsBo(stockSumarDias(L, 7));
+  if(typeof FH_DESDE==='undefined' || stockSumarDias(L, 6)>=FH_DESDE){
+    cambios={ ped:0, veces:0 };
+    (STATE||[]).forEach(function(p){
+      if(!p || esFilaSistema(p) || esBorrador(p)) return;
+      var n=0; fhHistDe(p).forEach(function(e){ var t=Number(e && e.t)||0; if(t>=t0 && t<t1 && fhDia(e.de) && fhDia(e.de)!==fhDia(e.a)) n++; });
+      if(n){ cambios.ped++; cambios.veces+=n; }
+    });
+  }
+  var D={ hoy:hoy, off:off, A:A, B:B, marcas:marcas, tiendas:tiendas, cambios:cambios };
+  D.cosas=semImgCosas(D);
+  return D;
+}
+var SEMIMG_TRAMO_TXT={};
+function semImgCosas(D){
+  var C=[], nom=function(k){ return k; };
+  /* 1 · la tienda que más subió y la que más bajó (en Bs) */
+  var sube=null, baja=null;
+  D.tiendas.forEach(function(t){
+    if(t.k==='Sin tienda') return;
+    var d=r2(t.a.bs-t.b.bs);
+    if(d>0.5 && (!sube || d>sube.d)) sube={ t:t, d:d };
+    if(d<-0.5 && (!baja || d<baja.d)) baja={ t:t, d:d };
+  });
+  var tTxt=function(o){ return nom(o.t.k)+' ('+(o.d>0?'+':'−')+imgBs(Math.abs(o.d))+(o.t.b.bs>0.009 ? (', '+imgPct(o.t.a.bs, o.t.b.bs)) : '')+')'; };
+  if(sube && baja) C.push({ k:'tienda', t:'La tienda que más subió fue '+tTxt(sube)+' y la que más bajó, '+tTxt(baja)+'.' });
+  else if(sube) C.push({ k:'tienda', t:'La tienda que más subió fue '+tTxt(sube)+'.' });
+  else if(baja) C.push({ k:'tienda', t:'La tienda que más bajó fue '+tTxt(baja)+'.' });
+  /* 2 · la marca que más cambió (en %) */
+  var mm=null;
+  D.marcas.forEach(function(m){ var p=imgPctN(m.a.bs, m.b.bs); if(p==null || m.k==='sin') return; if(!mm || Math.abs(p)>Math.abs(mm.p)) mm={ m:m, p:p }; });
+  if(mm && Math.round(mm.p*100)!==0) C.push({ k:'marca', t:mm.m.lbl+' '+(mm.p>0?'subió':'bajó')+' '+Math.abs(Math.round(mm.p*100))+' %: '+imgBs(mm.m.a.bs)+' contra '+imgBs(mm.m.b.bs)+' la semana anterior.' });
+  /* 3 · las entregas que cambiaron de día */
+  if(D.cambios && D.cambios.ped) C.push({ k:'fh', t:D.cambios.ped+(D.cambios.ped===1?' entrega cambió':' entregas cambiaron')+' de día durante la semana'+(D.cambios.veces>D.cambios.ped ? (' ('+D.cambios.veces+' cambios en total)') : '')+'.' });
+  /* para completar: la plata y las unidades para lados distintos, y el mejor día */
+  var pb=imgPctN(D.A.tot.bs, D.B.tot.bs), pu=imgPctN(D.A.tot.u, D.B.tot.u);
+  if(pb!=null && pu!=null && Math.round(pb*100)*Math.round(pu*100)<0)
+    C.push({ k:'unid', t:(pb<0 ? 'Entró menos plata ('+imgPct(D.A.tot.bs, D.B.tot.bs)+') pero se vendieron más colchones y somieres ('+imgPct(D.A.tot.u, D.B.tot.u)+').'
+                               : 'Entró más plata ('+imgPct(D.A.tot.bs, D.B.tot.bs)+') con menos colchones y somieres ('+imgPct(D.A.tot.u, D.B.tot.u)+').') });
+  var mejor=null; D.A.dias.forEach(function(d){ if(d.bs>0.009 && (!mejor || d.bs>mejor.bs)) mejor=d; });
+  if(mejor) C.push({ k:'dia', t:'El mejor día fue el '+DIAS_SEM[dowDe(mejor.f)]+' '+(+mejor.f.slice(8))+': '+imgBs(mejor.bs)+' en '+mejor.n+(mejor.n===1?' venta':' ventas')+'.' });
+  return C.slice(0, 3);
+}
+function semImgDibujar(D, logo){
+  var W=1080, M=60, CW=W-2*M;
+  /* el alto depende de cuántas tiendas y cosas hay: se mide antes de dibujar */
+  var nT=Math.min(D.tiendas.length, 8), aparte=[];
+  if(D.A.mayor.n || D.B.mayor.n) aparte.push('Mayoristas (aparte): '+imgBs(D.A.mayor.bs)+' · antes '+imgBs(D.B.mayor.bs));
+  if(D.A.roho.n || D.B.roho.n) aparte.push('ROHO (en unidades): '+D.A.roho.u+' · antes '+D.B.roho.u);
+  var domA=D.A.domTot, domTxt='';
+  if(domA.n || D.B.domTot.n){
+    var dts=Object.keys(D.A.domTiendas).sort(function(a, b){ return D.A.domTiendas[b].bs-D.A.domTiendas[a].bs; }).map(function(k){ return k+' '+imgBs(D.A.domTiendas[k].bs); });
+    domTxt='Domingo '+(+D.A.dom.slice(8))+' (aparte): '+imgBs(domA.bs)+(dts.length ? (' · '+dts.join(' · ')) : '')+' · el domingo anterior '+imgBs(D.B.domTot.bs);
+    if(D.A.domMayor.n) domTxt+=' · mayoristas '+imgBs(D.A.domMayor.bs);
+  }
+  var tmp=imgCanvas(10, 10).getContext('2d');
+  var cosasL=D.cosas.map(function(c){ return imgRenglones(tmp, c.t, CW-110, 500, 30); });
+  var hCosas=D.cosas.length ? (90+cosasL.reduce(function(s, l){ return s+l.length*40+16; }, 0)) : 0;
+  var hAparte=(aparte.length ? aparte.length*44 : 0)+(domTxt ? imgRenglones(tmp, domTxt, CW, 500, 28).length*38+10 : 0);
+  var H=250+30+200+30+(56+D.marcas.length*84)+30+(56+Math.max(1, nT)*62+(D.tiendas.length>nT?40:0))+30+(hAparte ? hAparte+20 : 0)+(hCosas ? hCosas+30 : 0)+110;
+  H=Math.max(1350, Math.ceil(H));
+  var cv=imgCanvas(W, H), ctx=cv.getContext('2d');
+  ctx.fillStyle='#f4f7f7'; ctx.fillRect(0, 0, W, H);
+  /* el encabezado con el degradé */
+  imgDegrade(ctx, 0, 0, W, 250);
+  imgLogoPoner(ctx, logo, W-M, 26, 40);
+  imgTexto(ctx, 'LA SEMANA EN NÚMEROS', M, 82, 560, 800, 30, 'rgba(255,255,255,.85)');
+  imgTexto(ctx, ccmCap(semImgRangoTxt(D.A.lun, D.A.sab)), M, 152, CW, 800, 52, '#fff');
+  imgTexto(ctx, 'contra la semana '+semImgRangoTxt(D.B.lun, D.B.sab), M, 206, CW, 500, 30, 'rgba(255,255,255,.88)');
+  var y=280, sb=function(a, b){ var p=imgPctN(a, b); return p==null ? '#64748b' : (p>=0.005 ? '#15803d' : (p<=-0.005 ? '#b91c1c' : '#64748b')); };
+  /* el total del equipo */
+  ctx.fillStyle='#fff'; imgRedondo(ctx, M, y, CW, 200, 30); ctx.fill();
+  imgTexto(ctx, 'EQUIPO DE TIENDAS · LUNES A SÁBADO', M+36, y+52, CW-72, 800, 26, '#0f766e');
+  imgTexto(ctx, imgBs(D.A.tot.bs), M+36, y+132, CW-320, 800, 76, '#0f172a');
+  var pt=imgPct(D.A.tot.bs, D.B.tot.bs), pcol=sb(D.A.tot.bs, D.B.tot.bs);
+  ctx.fillStyle=pcol==='#15803d' ? '#dcfce7' : (pcol==='#b91c1c' ? '#fee2e2' : '#f1f5f9'); imgRedondo(ctx, W-M-36-220, y+76, 220, 70, 35); ctx.fill();
+  imgTexto(ctx, pt, W-M-36-110, y+124, 200, 800, 38, pcol, 'center');
+  imgTexto(ctx, D.A.tot.n+(D.A.tot.n===1?' venta':' ventas')+' · '+D.A.tot.u+' colchones y somieres ('+imgPct(D.A.tot.u, D.B.tot.u)+') · antes '+imgBs(D.B.tot.bs)+' y '+D.B.tot.u,
+    M+36, y+176, CW-72, 500, 26, '#475569');
+  y+=230;
+  /* por marca */
+  imgTexto(ctx, 'POR MARCA', M, y+34, CW, 800, 26, '#0f766e'); y+=56;
+  D.marcas.forEach(function(m){
+    ctx.fillStyle='#fff'; imgRedondo(ctx, M, y, CW, 72, 20); ctx.fill();
+    ctx.fillStyle=m.col; imgRedondo(ctx, M, y, 12, 72, 6); ctx.fill();
+    imgTexto(ctx, m.lbl, M+32, y+46, 210, 800, 32, '#0f172a');
+    imgTexto(ctx, imgBs(m.a.bs), M+250, y+46, 230, 800, 32, '#0f172a');
+    imgTexto(ctx, m.a.u+' unid. · antes '+imgBs(m.b.bs)+' y '+m.b.u+' unid.', M+490, y+46, 300, 500, 23, '#64748b');
+    imgTexto(ctx, imgPct(m.a.bs, m.b.bs), W-M-24, y+46, 120, 800, 30, sb(m.a.bs, m.b.bs), 'right');
+    y+=84;
+  });
+  y+=30;
+  /* por tienda */
+  imgTexto(ctx, 'POR TIENDA · la tienda de quien vendió', M, y+34, CW, 800, 26, '#0f766e'); y+=56;
+  var maxT=0; D.tiendas.forEach(function(t){ maxT=Math.max(maxT, t.a.bs, t.b.bs); });
+  if(!D.tiendas.length){ imgTexto(ctx, 'Sin ventas en las dos semanas.', M, y+40, CW, 500, 28, '#64748b'); y+=62; }
+  D.tiendas.slice(0, nT).forEach(function(t){
+    ctx.fillStyle='#fff'; imgRedondo(ctx, M, y, CW, 52, 16); ctx.fill();
+    imgTexto(ctx, t.k, M+22, y+35, 220, 700, 26, '#0f172a');
+    var bx=M+250, bw=240, wa=maxT>0 ? bw*t.a.bs/maxT : 0, wb=maxT>0 ? bw*t.b.bs/maxT : 0;
+    ctx.fillStyle='#e2e8f0'; imgRedondo(ctx, bx, y+32, Math.max(4, wb), 8, 4); ctx.fill();
+    ctx.fillStyle='#00B5AD'; imgRedondo(ctx, bx, y+14, Math.max(4, wa), 14, 7); ctx.fill();
+    imgTexto(ctx, imgBs(t.a.bs), M+670, y+35, 160, 800, 26, '#0f172a', 'right');
+    imgTexto(ctx, 'antes '+imgBs(t.b.bs), W-M-128, y+35, 150, 400, 21, '#64748b', 'right');
+    imgTexto(ctx, imgPct(t.a.bs, t.b.bs), W-M-18, y+35, 100, 800, 24, sb(t.a.bs, t.b.bs), 'right');
+    y+=62;
+  });
+  if(D.tiendas.length>nT){ imgTexto(ctx, 'y '+(D.tiendas.length-nT)+' más', M, y+26, CW, 500, 24, '#64748b'); y+=40; }
+  y+=30;
+  /* aparte: mayoristas, ROHO y el domingo */
+  if(hAparte){
+    aparte.forEach(function(t){ imgTexto(ctx, t, M, y+30, CW, 600, 28, '#334155'); y+=44; });
+    if(domTxt){ y=imgParrafo(ctx, domTxt, M, y+30, CW, 38, 500, 28, '#334155')+10; }
+    y+=20;
+  }
+  /* 3 cosas para mirar */
+  if(D.cosas.length){
+    ctx.fillStyle='#e6f7f6'; imgRedondo(ctx, M, y, CW, hCosas, 26); ctx.fill();
+    ctx.strokeStyle='#99DDD9'; ctx.lineWidth=2; imgRedondo(ctx, M, y, CW, hCosas, 26); ctx.stroke();
+    imgTexto(ctx, D.cosas.length===1 ? 'UNA COSA PARA MIRAR' : (D.cosas.length+' COSAS PARA MIRAR'), M+36, y+56, CW-72, 800, 26, '#0f766e');
+    var yc=y+90;
+    D.cosas.forEach(function(c, i){
+      ctx.fillStyle='#00B5AD'; ctx.beginPath(); ctx.arc(M+56, yc+18, 20, 0, Math.PI*2); ctx.fill();
+      imgTexto(ctx, String(i+1), M+56, yc+28, 30, 800, 24, '#fff', 'center');
+      ctx.fillStyle='#0f172a'; ctx.font=imgFuente(500, 30); ctx.textAlign='left';
+      cosasL[i].forEach(function(l, j){ ctx.fillText(l, M+92, yc+30+j*40); });
+      yc+=cosasL[i].length*40+16;
+    });
+    y+=hCosas+30;
+  }
+  /* abajo, en chico */
+  imgParrafo(ctx, 'Lo vendido por el día en que se cargó la venta (como Black Friday), sin ATC ni reposiciones; la tienda es la de quien vendió. '+
+    'Mayoristas y ROHO van aparte. Hecho el '+fmtFechaCorta(D.hoy)+' a las '+pryHoraTxt(pryMinBo(Date.now()))+'.', M, H-70, CW, 30, 400, 22, '#64748b');
+  return cv;
+}
+function semImgAbrir(off){
+  if(!UNLOCKED){ toast('🔒 «La semana en una imagen» es con la contraseña de Administración (como la Proyección).', 'err', 6000); return Promise.resolve(null); }
+  SEMIMG.off=Math.max(0, (off==null ? 0 : off)|0);
+  try{ localStorage.setItem('me_semimg_lun', semImgLunesDe(diaNegocio())); }catch(e){}   // Bloki ya no lo recuerda esta semana
+  return imgPreparar().then(function(logo){
+    var D=semImgDatos(SEMIMG.off), cv=semImgDibujar(D, logo);
+    var nav='<div class="imgc-nav"><button type="button" id="semimg-ant" onclick="semImgAbrir('+(SEMIMG.off+1)+')" aria-label="La semana de antes">‹</button>'+
+      '<span id="semimg-sem">'+esc(ccmCap(semImgRangoTxt(D.A.lun, D.A.sab)))+'</span>'+
+      '<button type="button" id="semimg-sig" onclick="semImgAbrir('+(SEMIMG.off-1)+')" aria-label="La semana siguiente"'+(SEMIMG.off<=0?' disabled':'')+'>›</button></div>';
+    imgVentana(cv, { titulo:'📊 La semana en una imagen', nombre:'semana-'+D.A.lun, extra:nav, alt:'La semana '+semImgRangoTxt(D.A.lun, D.A.sab),
+      nota:'Para mandarla por WhatsApp al dueño y a su jefe. El panel no manda nada solo: bajala, compartila o copiala.' });
+    return D;
+  });
+}
+/* 🧽 Bloki: los lunes desde las 08:00, con la contraseña, una vez por semana y aparato. */
+function semImgAviso(){
+  if(!semImgVe() || !UNLOCKED) return null;
+  var hoy=diaNegocio(); if(dowDe(hoy)!==1 || horaBolivia().getHours()<8) return null;
+  var lun=''; try{ lun=localStorage.getItem('me_semimg_lun')||''; }catch(e){}
+  if(lun===hoy) return null;
+  return { k:'semimg|'+hoy, sev:'', ico:'📊', t:'Es lunes: la semana pasada en una imagen',
+    x:'Armala en un toque y mandásela por WhatsApp a tu jefe: lo vendido por marca y por tienda contra la semana anterior y 3 cosas para mirar.',
+    b:['📊 Armar la imagen', 'semImgAbrir()'] };
+}
+
+/* ============================================================================
+   🔥 457 · EL MAPA DE CALOR DE LAS ATC (22/11; el dueño lo eligió con la muestra). En la pestaña ATC, en la caja de calidad (`atcqPintar`):
+   filas = la línea del producto (marca · línea, `atciProdDe` a través de `atcqEdades`), columnas = los meses desde la compra en los tramos
+   de siempre (`atcqMeses`/`ATCQ_TRAMOS`) y «Sin fecha» aparte; en cada celda cuántas ATC, de más claro a más rojo. Es la MISMA cuenta de la
+   tabla «⏳ A cuántos meses de la compra falla» (mismo período y filtros de la pestaña), en colores.
+   · Tocar una celda deja la lista de abajo con SOLO esas ATC (`atcLista` con `atcCalorSel`) y un cartel «✕ Ver todas»; tocarla otra vez la saca.
+   · Debajo, una frase con lo que más se repite («El Titanio junta reclamos entre los 3 y 6 meses») solo si hay al menos 3 en una celda.
+   Solo mira. En Playwright, solo con `window.ATC_CALOR_PRUEBA`. `tests/test_atc_calor.js`.
+   ========================================================================== */
+var ATC_CALOR={ k:'', t:-1 }, ATC_CALOR_MIN_FRASE=3;
+var ATC_CALOR_FRASE={ '0-3':'en los primeros 3 meses', '3-6':'entre los 3 y 6 meses', '6-12':'entre los 6 y 12 meses', '12-24':'entre el primer y el segundo año', '+24':'después de los 2 años' };
+function atcCalorVe(){ return vdVa('ATC_CALOR_PRUEBA'); }
+function atcCalorLin(l){ return l.lin===ATCI_SIN_LINEA ? 'Sin línea' : ccmCap(String(l.lin||'').toLowerCase()); }
+/* La celda elegida, con sus ATC (de la lista con los filtros de la pestaña, sin la celda). null si no hay o ya no tiene ninguna. */
+function atcCalorSel(){
+  if(!ATC_CALOR.k || ATC_CALOR.t<0 || !atcCalorVe()) return null;
+  var E=atcqEdades(atcLista(false, true)), l=null;
+  E.lineas.forEach(function(x){ if(x.k===ATC_CALOR.k) l=x; });
+  if(!l || !l.ids || !(l.ids[ATC_CALOR.t]||[]).length) return null;
+  var ids={}; l.ids[ATC_CALOR.t].forEach(function(id){ ids[id]=1; });
+  return { k:ATC_CALOR.k, t:ATC_CALOR.t, l:l, ids:ids, n:l.ids[ATC_CALOR.t].length };
+}
+function atcCalorElegir(b){
+  var k=b.getAttribute('data-k')||'', t=+b.getAttribute('data-t');
+  if(ATC_CALOR.k===k && ATC_CALOR.t===t) ATC_CALOR={ k:'', t:-1 }; else ATC_CALOR={ k:k, t:t };
+  renderAtc();
+  if(ATC_CALOR.k){ var c=document.getElementById('atc-calor-chip'); if(c) try{ c.scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){} }
+}
+function atcCalorLimpiar(){ ATC_CALOR={ k:'', t:-1 }; renderAtc(); }
+function atcCalorColor(v, gris){
+  v=Math.max(0, Math.min(1, v));
+  var a=gris ? [241,245,249] : [254,226,226], b=gris ? [100,116,139] : [185,28,28];
+  var c=a.map(function(x, i){ return Math.round(x+(b[i]-x)*v); });
+  return { bg:'rgb('+c.join(',')+')', fg:(v>0.5 ? '#fff' : (gris ? '#334155' : '#7f1d1d')) };
+}
+/* La frase de lo que más se repite: la celda con más ATC (sin «Sin línea» ni «Sin fecha»), si tiene al menos ATC_CALOR_MIN_FRASE. */
+function atcCalorFrase(E){
+  var best=null, sf=ATCQ_TRAMOS.length-1;
+  E.lineas.forEach(function(l){ if(l.sin) return; l.t.forEach(function(n, i){ if(i===sf) return; if(n>=ATC_CALOR_MIN_FRASE && (!best || n>best.n)) best={ l:l, i:i, n:n }; }); });
+  if(!best) return '';
+  return 'El '+atcCalorLin(best.l)+' junta reclamos '+(ATC_CALOR_FRASE[ATCQ_TRAMOS[best.i].c]||ATCQ_TRAMOS[best.i].t)+': '+best.n+' de sus '+best.l.n+' ATC.';
+}
+function atcCalorHtml(E){
+  if(!atcCalorVe() || !E || !E.lineas.length) return '';
+  var sf=ATCQ_TRAMOS.length-1, max=0, maxS=0, sel=atcCalorSel();
+  E.lineas.forEach(function(l){ l.t.forEach(function(n, i){ if(i===sf) maxS=Math.max(maxS, n); else max=Math.max(max, n); }); });
+  var celda=function(l, i){
+    var n=l.t[i]; if(!n) return '<td><span class="acal-0" aria-hidden="true">·</span></td>';
+    var c=atcCalorColor(i===sf ? (maxS ? n/maxS : 0) : (max ? n/max : 0), i===sf), on=(sel && sel.k===l.k && sel.t===i);
+    return '<td><button type="button" class="acal-c'+(on?' on':'')+'" style="background:'+c.bg+';color:'+c.fg+'" data-k="'+esc(l.k)+'" data-t="'+i+'" onclick="atcCalorElegir(this)" '+
+      'aria-pressed="'+(on?'true':'false')+'" aria-label="'+esc(atcCalorLin(l)+' · '+ATCQ_TRAMOS[i].t+': '+n+' ATC')+'" title="'+esc('Ver solo esas '+n+' ATC')+'">'+n+'</button></td>';
+  };
+  var filas=E.lineas.map(function(l){
+    var tds=''; for(var i=0;i<sf;i++) tds+=celda(l, i);
+    return '<tr'+(l.sin?' class="sin"':'')+'><td>'+esc(l.lbl)+'</td>'+tds+'<td class="acal-gap"></td>'+celda(l, sf)+'<td class="acal-tot">'+l.n+'</td></tr>';
+  }).join('');
+  var cab='<th>Línea</th>'+ATCQ_TRAMOS.slice(0, sf).map(function(o){ return '<th>'+esc(o.c)+' m</th>'; }).join('')+'<th class="acal-gap"></th><th>Sin fecha</th><th>Total</th>';
+  var fr=atcCalorFrase(E), ley='';
+  [0.15, 0.4, 0.7, 1].forEach(function(v){ ley+='<i style="background:'+atcCalorColor(v).bg+'"></i>'; });
+  return '<div class="atq-caja" id="atq-calor"><div class="atv-t">🔥 Dónde se juntan los reclamos <small>línea × meses desde la compra · '+E.n+' ATC de la lista · tocá una celda para ver solo esas</small></div>'+
+    '<div class="acal-w"><table class="acal"><thead><tr>'+cab+'</tr></thead><tbody>'+filas+'</tbody></table></div>'+
+    (fr ? '<div class="acal-frase" id="acal-frase">🔎 '+esc(fr)+'</div>' : '')+
+    '<div class="acal-ley"><span>menos</span>'+ley+'<span>más</span><span>· «Sin fecha»: no se anotó la fecha de compra (en gris) · sigue los filtros de arriba</span></div></div>';
+}
+function atcCalorChipPintar(){
+  var c=document.getElementById('atc-calor-chip'), S=atcCalorSel();
+  if(!S){ if(c) c.remove(); if(ATC_CALOR.k && atcCalorVe()) ATC_CALOR={ k:'', t:-1 }; return; }
+  var cards=document.getElementById('atv-cards'); if(!cards || !cards.parentNode) return;
+  if(!c){ c=document.createElement('div'); c.id='atc-calor-chip'; c.className='atc-calor-chip'; }
+  if(c.nextSibling!==cards) cards.parentNode.insertBefore(c, cards);
+  c.innerHTML='🔥 Ves solo las <b>'+S.n+'</b> ATC de <b>'+esc(S.l.lbl)+'</b> · '+esc(ATCQ_TRAMOS[S.t].t.toLowerCase())+
+    ' <button type="button" class="btn btn-sm btn-ghost" onclick="atcCalorLimpiar()">✕ Ver todas</button>';
 }
 </script>
 </body>
