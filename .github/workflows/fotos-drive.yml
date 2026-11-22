@@ -1,0 +1,34 @@
+name: Fotos de productos desde el Drive
+
+# 📷 (22/11, idea 455) Baja la MINIATURA de las fotos de los productos de las carpetas del Drive compartidas con el enlace
+# (`herramientas/fotos_drive/carpetas.txt`) y arma hojas para elegir; con `elegidas.txt` deja las fotos del panel en
+# `fotos-productos/`. Solo lee el Drive. Corre al cambiar sus archivos y guarda el resultado en ESA rama (nunca en main).
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'herramientas/fotos_drive/**.py'
+      - 'herramientas/fotos_drive/**.txt'
+      - '.github/workflows/fotos-drive.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fotos:
+    if: github.ref_name != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null
+      - name: Hojas para elegir
+        run: python3 herramientas/fotos_drive/bajar.py hojas
+      - name: Las fotos elegidas
+        run: python3 herramientas/fotos_drive/bajar.py elegidas
+      - name: Guardar en la rama
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add herramientas/fotos_drive/salida fotos-productos
+          git commit -m "Fotos de productos desde el Drive (auto)" || exit 0
+          for i in 1 2 3 4; do git pull --rebase -q && git push && exit 0; sleep $((i*5)); done; exit 1
