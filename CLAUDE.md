@@ -1065,6 +1065,9 @@ guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto).
   TODO obligatorio (gestión, cuándo, la excepción de la 032 si va, detalle) y mínimo 2 capturas, al menos 1 de Kommo (`CRV_FOTOS_MIN`, ≤ 15 días).
   Se guarda en `productos[0].crv` (pasa por `heredarMarcas`; `idsFotoEnUso_` cuida `crv.fot`). Administración decide con la contraseña (`crvAbrir`,
   `crvResolver`). `tests/test_cruce_ventas.js` (71). Revisión de solo lectura contra Kommo: workflow «Verificar cruces de ventas».
+  🔀 **Todos los cruces a la vista de Administración** (22/11, dueño: *«¿Eduardo dónde ve lo que está en pugna… y de quiénes?»* → «Sí»): «¿De quién es
+  el cliente?» (`crvAbrir`) suma «🔀 Cruces avisados» (`crvCruces`/`crvCruceHtml`: los `cx` de 15 días con la venta en la planilla: quién cargó, a quién se
+  avisó, «sin reclamo» / «revisión pedida» / «decidido»), y sin reclamos pendientes «Para hacer» lo avisa igual (`crvHacer` → `k:'crx'`, informativo). Solo con la contraseña. Página 2026-11-22-a.
 - 📅 **Importar ROHO para el día que elige logística** (dueño: *«no importa si está lleno… que muestre 29/15»*): `ROHO_FECHA` (todos a ese día, también
   notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
   o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
