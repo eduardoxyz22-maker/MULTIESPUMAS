@@ -39975,7 +39975,7 @@ function cvVer(v){ CV_VISTA=v||''; cargaVivaPintar(); }
 /* 🏙️ (§4kn, 13/10, dueño: «Me gusta, publica y vemos cómo queda») el Patio de carga 3D: la muestra de la ciudad con los camiones,
    la carga y las paradas de verdad. Vive en patio.js y se baja recién al tocar el botón; dibuja con el mismo lienzo de la fábrica
    de Eduardo y de los camiones (DEP.w3.alt). Cambiar patio.js = subir el ?v=. */
-var PATIO_V='20261021b';
+var PATIO_V='20261122a';
 function patioAbrirCiudad(){
   if(window.patioAbrir){ window.patioAbrir(); return; }
   var B=['cv-ciudad','adm-ciudad-btn'].map(function(id){ return document.getElementById(id); }).filter(Boolean);
@@ -69209,13 +69209,16 @@ function cv3dColsPintar(D){
   el.innerHTML=arriba+'<div class="cvc-grid">'+cols+'</div>';
   abiertos.forEach(function(k){ var a=el.querySelector('.cvc[data-k="'+CSS.escape(k)+'"] .cvc-paradas'); if(a) a.open=true; });
 }
-/* 🛣️ «Ya salió» en la ficha del camión: solo hoy y con pedidos (§ salió, 12/10) */
+/* 🛣️ «Ya salió» en la ficha del camión: solo hoy y con pedidos (§ salió, 12/10).
+   🙈 (22/11, dueño: «Ya salió a mano quítalo si nunca se usó en los últimos 20 días»; el último fue el 26/10, «📊 Uso del panel») el botón
+   «🚚 Ya salió» ya no sale: la salida la marca el GPS. Una marca a mano que ya estaba se sigue leyendo (`camionSalio`) y se puede deshacer;
+   `camionSalioMarcar` queda para el cierre de entregas y la ciudad no la ofrece más. */
 function cvSalioHtml(D, c){
   if(!c || c.sin || !c.stops || !c.stops.length || !D || D.fecha!==todayStr()) return '';
   var hs=camionSalio(D.fecha, c.k), kq=esc(JSON.stringify(c.k)), aMano=!!salioClave(D.fecha, c.k), gl=cvGpsLinea(camionGps(c.k));
   return (hs ? (aMano ? ('<div class="cvc-salio si">🛣️ <b>Salió a las '+esc(hs)+'</b> · en camino<button type="button" onclick="camionSalioMarcar('+kq+',false)">deshacer</button></div>')
                       : ('<div class="cvc-salio si">🛰️ <b>Salió a las '+esc(hs)+'</b> · lo dice el GPS</div>'))
-             : ('<button type="button" class="cvc-salio-btn'+((c.total && c.dentro>=c.total)?' listo':'')+'" onclick="camionSalioMarcar('+kq+',true)">🚚 Ya salió</button>'))+gl;
+             : '')+gl;
 }
 function cv3dTildar(inp){
   setCargaChk(inp.getAttribute('data-k'), inp.checked);
@@ -69237,7 +69240,7 @@ function cv3dCamPanel(c){
   /* 🛣️ (12/10, dueño: «la idea es dar clic al camión, revisar y marcar ya salió, y el camión se vaya del 3D») */
   var sal=c.sin ? '' : cvSalioHtml(CV3D.D||cargaVivaDatos(), c);
   cv3dAbrir({ peds:c.stops.slice(), tit:c.sin?'⚠️ Sin camión':('🚚 '+esc(c.k)), sub:esc(lis), abrir:'showPedidoModal',
-    pie:sal ? ('<div class="dep-md-salio">'+sal+'</div>Revisá los pedidos y tocá «Ya salió» cuando el camión se vaya.') : '' });
+    pie:sal ? ('<div class="dep-md-salio">'+sal+'</div>La salida la marca el GPS.') : '' });
 }
 function cv3dLugarPanel(v){
   var D=CV3D.D||cargaVivaDatos(), peds=[], vistos={}, kks={};
@@ -79999,7 +80002,7 @@ function blokiGps(o){
   if(!elegidos.length){ var ch=''; Object.keys(VEHICULOS).forEach(function(v){ (VEHICULOS[v]||[]).forEach(function(c){ var w=normNombre(c).split(' ')[0]; if(w && new RegExp('\\b'+w+'\\b').test(t)) ch=v; }); }); if(ch) elegidos=[ch]; }
   if(!elegidos.length) elegidos=V;
   if(!gpsVigente()) return { h:'🛰️ Ahora no tengo el GPS de los camiones: el servidor no lo trae o hace más de '+Math.round(GPS_VIGENCIA_MS/60000)+' minutos que no hay noticias.', mal:1,
-    sub:['Lo marcado a mano sigue valiendo: «🚚 Ya salió» en los camiones de Administración.'] };
+    sub:['Cuando vuelva el GPS, la salida de cada camión se marca sola.'] };
   var hoy=todayStr(), filas=elegidos.map(function(v){
     var x=camionGps(v), sal=camionSalio(hoy, v);
     if(!x) return { t:'🚚 '+v+' ('+VEHICULO_PLACA[v]+')', s:'el GPS no dice nada de este camión ahora', m:sal ? ('salió '+sal) : '', sev:'a' };
@@ -80815,7 +80818,7 @@ function ensenaPedir(k){
    ========================================================================== */
 var USO_LS='me_uso', USO_DIAS=30;
 /* el botón de cada herramienta que «🙈 Sacarla de la vista» esconde (solo las que tienen un botón propio) */
-var USO_OCULTA={ tst:'#stk-tst-btn', ccm:'#pry-cierre-btn', tal:'.cx-av-btn[onclick*="talAbrir"]', dest:'.clf-dest', cierre:'#view-admin [onclick="abrirCierreEntregas()"]', salio:'.cv-salio' };
+var USO_OCULTA={ tst:'#stk-tst-btn', ccm:'#pry-cierre-btn', tal:'.cx-av-btn[onclick*="talAbrir"]', dest:'.clf-dest', cierre:'#view-admin [onclick="abrirCierreEntregas()"]' };
 function usoVa(){ try{ return !navigator.webdriver || !!window.USO_PRUEBA; }catch(e){ return true; } }
 function usoLeer(){ try{ var o=JSON.parse(localStorage.getItem(USO_LS)||'{}'); return (o && typeof o==='object') ? { o:o.o||{}, b:o.b||{} } : { o:{}, b:{} }; }catch(e){ return { o:{}, b:{} }; } }
 function usoPoner(campo, k, on){ var U=usoLeer(); if(on) U[campo][k]=Date.now(); else delete U[campo][k]; try{ localStorage.setItem(USO_LS, JSON.stringify(U)); }catch(e){} usoAplicarOcultas(); }
@@ -80852,7 +80855,7 @@ function usoDatos(){
     var s=String(k).indexOf(CARGA_SALIO)>=0; if(s){ if(f>ultS) ultS=f; if(enVentana(f)) diasS[f]=1; } else { if(f>ultT) ultT=f; if(enVentana(f)) diasT[f]=1; } });
   var nT=Object.keys(diasT).length, nS=Object.keys(diasS).length;
   L.push({ k:'carga', ic:'📦', t:'Tildes de la Lista de carga', est:usoEst(nT, 10), pesa:0, d:(nT ? (nT+' día'+(nT===1?'':'s')+' con tildes en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultT ? (' · el último el '+fmtFechaCorta(ultT)) : ' · nunca') });
-  L.push({ k:'salio', ic:'🚚', t:'«Ya salió» del camión (a mano)', est:usoEst(nS, 10), pesa:0, d:(nS ? (nS+' día'+(nS===1?'':'s')+' en '+USO_DIAS+' días') : 'nada en '+USO_DIAS+' días')+(ultS ? (' · el último el '+fmtFechaCorta(ultS)) : ' · nunca')+' (el GPS lo marca solo)' });
+  /* 🙈 (22/11) «🚚 Ya salió» a mano se sacó del panel: ya no se mide acá. */
   /* 🚚 El camión anotado en las entregas de los últimos 14 días */
   var d14=isoDeTsBolivia(Date.now()-14*864e5), ent=P.filter(function(p){ return p.fecha && p.fecha>=d14 && p.fecha<=hoy && !esVentaTienda(p) && !esATC(p.oc) && !(typeof fichaRetira==='function' && fichaRetira(p)); });
   var conCam=ent.filter(function(p){ return !!String(p.vehiculo||'').trim(); }).length, pc=ent.length ? conCam/ent.length : 0;

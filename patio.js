@@ -777,7 +777,7 @@ function jefeTarde(){ var d=D0.dia, T=d.tarde;
   var cuando=T.turno==='PM' ? 'de la tarde' : 'de la mañana';
   var e=c && !c.chofer ? 'Jefe… el '+T.p+' no tiene chofer. Estoy llamando.'
     : falta ? 'Le faltan '+falta+' bulto'+(falta===1?'':'s')+', jefe. En diez minutos sale.'
-    : 'Ya sale, jefe. Y que alguien toque «🚚 Ya salió» en el panel.';
+    : 'Ya sale, jefe. El GPS avisa cuando arranque.';
   return { d:'¡ERNESTO! Son las '+horaYa()+' y el '+T.p+' con '+T.n+' entrega'+(T.n===1?'':'s')+' '+cuando+' todavía no salió. '+(T.cams>1?'¡Y no es el único! ':'')+'¡Los clientes esperan!', e:e }; }
 var JEFE=[
   jefeTarde,
@@ -1242,7 +1242,7 @@ function pintarFicha(){
         return '<label><input type="checkbox" data-key="'+escH(it.key)+'"'+(it.st==='camion'?' checked':'')+(it.st==='falta'?' disabled':'')+'><span style="flex:1;min-width:0">'+escH(it.prod)+' <b>×'+it.u+'</b> <small style="color:var(--suave)">· '+info+'</small></span></label>'; }).join('')+'</div>'+
         '<div class="nota-gps">✅ Cada tilde es <b>la misma de la Lista de carga</b>: tildar acá lo marca allá y al revés. El montacargas sube al camión lo que se tilda.</div>';
       if(c.paradas.length) h+='<div class="paradas">'+c.paradas.map(function(p){ return '<div data-id="'+escH(p.id)+'" title="Tocá para ver el pedido"><span>'+(p.rpt?'🏪':'📍')+'</span><span><b>'+escH(p.n)+'</b><small>'+escH(p.z)+(p.turno?' · '+escH(p.turno):'')+'</small></span><small></small></div>'; }).join('')+'</div>';
-      if(hoy) h+='<button class="boton" type="button" id="pt-b-salio">🚚 Ya salió</button>';
+      /* 🙈 (22/11, dueño) sin «🚚 Ya salió» a mano: la salida la marca el GPS */
     } else h+='<div class="vacio">Sin pedidos '+(hoy?'hoy':'para ese día')+'.</div>';
   }
   el.innerHTML=h;
