@@ -9237,6 +9237,17 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 /* 🛏️ (14/11, idea 211) el dibujito de qué es cada producto (`prodIcoHtml`): colchón, somier, combo, almohada, respaldar, tela u otro.
    Solo dibujo (sin letras): no cambia el texto de ninguna vista. */
 .pico{display:inline-block;flex:none;width:24px;height:17px;vertical-align:-4px;margin-right:5px;overflow:visible}
+/* 📷 (idea 455) la foto en lugar del dibujito: un poco más grande, en un recuadro blanco, y se toca para verla grande */
+img.pfoto{display:inline-block;flex:none;width:40px;height:26px;object-fit:contain;background:#fff;border:1px solid #dbe7ec;border-radius:6px;padding:1px;vertical-align:middle;margin-right:6px;cursor:zoom-in}
+.prod-foto{flex:none;display:flex}
+.prod-foto[hidden]{display:none}
+img.pfoto.pf-form{width:64px;height:40px;margin:0}
+.af-pl img.pfoto{width:40px;height:26px;margin:0;align-self:center}
+.fl-prod > img.pfoto{width:64px;height:40px;margin:0;align-self:center;order:0}
+#carga-overlay label > img.pfoto,[data-carga-lugar] label > img.pfoto{width:58px;height:36px;margin:0;align-self:center}
+.fx-pr img.pfoto{width:30px;height:20px;margin-right:4px}
+.cpl img.pfoto{width:30px;height:20px;margin:1px 0 0}
+@media print{ img.pfoto{width:36px;height:23px;border:0} }
 .af-pl .pico{width:22px;height:15px;margin:0;align-self:center}
 .fl-prod > .pico{width:28px;height:20px;margin:0;align-self:center;order:0}
 /* En la ficha de Administración los renglones se parten en dos líneas cuando no entran (`flex-wrap`): el nombre cede el lugar del dibujo
@@ -12812,6 +12823,11 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; if(desc)d.value=desc;   // (§4ih) sin `list`: el buscador propio muestra el saldo (fxBuscaAbrir)
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
   del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); pintarTotalProds(); saldoAvisosProgramar(); });
+  if(prodFotoVa()){   // 📷 (idea 455) la foto del producto, a la izquierda del nombre (vacía hasta que se elige uno que la tenga)
+    var fo=document.createElement('span'); fo.className='prod-foto'; fo.hidden=true; top.appendChild(fo);
+    var foTic=function(){ setTimeout(function(){ prodFotoFila(card); }, 0); };
+    card.addEventListener('input', foTic); card.addEventListener('change', foTic);   // nombre, código o medida: lo que cambie
+  }
   top.appendChild(d); top.appendChild(del);
   // sub: medida | código | cantidad
   var sub=document.createElement('div'); sub.className='prod-sub';
@@ -12972,6 +12988,7 @@ function pagadoTotPintar(){
   el.textContent = !S.con ? '' : (S.sin ? ('(falta el precio de '+S.sin+' producto'+(S.sin===1?'':'s')+')') : ('(total: '+fmtBs(S.t)+')'));
 }
 function pintarTotalProds(){
+  try{ prodFotoFilas(); }catch(e){}   // 📷 (idea 455)
   try{ pagadoTotPintar(); }catch(e){}
   var cja=document.getElementById('f-prods-total'); if(!cja) return;
   try{ totalAutoPoner(); }catch(e){}   // 🧮 (06/11) primero el monto, después la caja que lo dice
@@ -18547,8 +18564,86 @@ var PICO_SVG={
   otro:'<path d="M13 10l10-5 10 5v13l-10 5-10-5z" fill="#fbf3e4" stroke="#8a6d3b" stroke-width="2" stroke-linejoin="round"/><path d="M13 10l10 5 10-5M23 15v13" fill="none" stroke="#8a6d3b" stroke-width="2" stroke-linejoin="round"/>'
 };
 var PICO_MEMO={};
+/* 📷 (22/11, idea 455; dueño, con la muestra de las fotos del Drive: «Si ármalo») La FOTO del producto en lugar del dibujito, cuando hay:
+   una foto por LÍNEA (no por medida: el 90x190 y el 160x200 se ven iguales), sacada de la carpeta «FOTOS HEAVEN 2026» del Drive, achicada
+   (`fotos-productos/<línea>.jpg`, ~10 KB; la grande para tocar, `fotos-productos/grande/`). Lo que no tiene foto sigue con el dibujito.
+   Solo colchón y somier (`prodIcoTipo`): un protector o un combo «TITANIO LATEX + SOMIER» siguen con el dibujo. SOLO MIRA: el `alt` va vacío
+   (no suma letras a lo que leen las pruebas y las copias). ⚠️ Una foto NUEVA = el archivo en las dos carpetas + un renglón en `PFOTO_LINEAS`
+   (el somier ANTES que el colchón de la misma línea) + subir `PFOTO_V`. En Playwright apagado salvo `FOTO_PRUEBA`. */
+var PFOTO_V='20261122a';
+var PFOTO_LINEAS=[
+  [/^SOMIER TITANIO LATEX\b/, 'somier-titanio-latex', 'Somier Titanio Latex'],
+  [/^SOMIER ESPECIAL\b(?! TROPICAL)/, 'somier-especial', 'Somier Especial'],
+  [/^TITANIO LATEX\b/, 'titanio-latex', 'Colchón Titanio Latex']
+];
+function prodFotoVa(){
+  try{ if(navigator.webdriver && !window.FOTO_PRUEBA) return false; }catch(e){}
+  return true;
+}
+/* La línea con foto de un renglón ('' si no tiene): el nombre del catálogo (el código manda) o el escrito, sin «COLCHON» adelante. */
+function prodFotoDe(x){
+  if(!x || !prodFotoVa()) return '';
+  var t=prodIcoTipo(x); if(t!=='colchon' && t!=='somier') return '';
+  var cod=String(x.codigo||'').trim().toUpperCase(), d=(cod && CODIGOS[cod]) ? CODIGOS[cod].d : String(x.desc||'');
+  var s=stockNorm(d).replace(/^(?:COLCHON(?:ES)?|COL\.?)\s+/,'');
+  for(var i=0;i<PFOTO_LINEAS.length;i++){
+    var L=PFOTO_LINEAS[i]; if(!L[0].test(s)) continue;
+    if((t==='somier') !== /^SOMIER\b/.test(s)) return '';   // el somier con la foto del somier, el colchón con la del colchón
+    return L[1];
+  }
+  return '';
+}
+function prodFotoSrc(k, grande){ return 'fotos-productos/'+(grande?'grande/':'')+k+'.jpg?v='+PFOTO_V; }
+function prodFotoImg(k, cls){
+  var L=PFOTO_LINEAS.filter(function(a){ return a[1]===k; })[0];
+  return '<img class="pfoto'+(cls?' '+cls:'')+'" data-foto="'+k+'" data-nombre="'+esc(L?L[2]:'')+'" src="'+prodFotoSrc(k)+'" alt="" loading="lazy" decoding="async">';
+}
+/* Tocar una foto la muestra grande, sin tocar lo de abajo (en la Lista de carga la foto está dentro del tilde: no lo cambia). */
+function pfotoVer(k){
+  var L=PFOTO_LINEAS.filter(function(a){ return a[1]===k; })[0]; if(!L) return;
+  var ov=document.getElementById('pfoto-ov');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='pfoto-ov'; ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true');
+    ov.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(15,42,51,.6);display:flex;align-items:center;justify-content:center;'+
+      'padding:calc(16px + var(--sa-t,0px) + var(--wco-h,0px)) 16px 16px';
+    ov.innerHTML='<div style="background:#fff;border-radius:16px;padding:12px;width:min(760px,100%);max-height:100%;display:flex;flex-direction:column;gap:8px;box-shadow:0 18px 50px rgba(0,0,0,.3)">'+
+      '<img id="pfoto-ov-img" alt="" style="width:100%;height:auto;max-height:calc(78vh / var(--vz,1));object-fit:contain;border-radius:10px;background:#fff">'+
+      '<div style="display:flex;align-items:center;gap:8px"><b id="pfoto-ov-n" style="flex:1"></b>'+
+      '<button type="button" class="btn" id="pfoto-ov-x" style="min-height:40px">Cerrar</button></div></div>';
+    ov.addEventListener('click',function(e){ if(e.target===ov || e.target.id==='pfoto-ov-x') pfotoCerrar(); });
+    document.body.appendChild(ov);
+  }
+  document.getElementById('pfoto-ov-img').src=prodFotoSrc(k, true);
+  document.getElementById('pfoto-ov-img').alt=L[2];
+  document.getElementById('pfoto-ov-n').textContent='📷 '+L[2];
+  ov.style.display='flex';
+  try{ document.getElementById('pfoto-ov-x').focus(); }catch(e){}
+}
+function pfotoCerrar(){ var ov=document.getElementById('pfoto-ov'); if(ov) ov.style.display='none'; }
+document.addEventListener('click',function(e){
+  var im=e.target && e.target.closest && e.target.closest('img.pfoto[data-foto]'); if(!im) return;
+  e.preventDefault(); e.stopPropagation(); pfotoVer(im.getAttribute('data-foto'));
+}, true);
+document.addEventListener('keydown',function(e){
+  if(e.key!=='Escape') return; var ov=document.getElementById('pfoto-ov');
+  if(ov && ov.style.display!=='none'){ e.stopPropagation(); pfotoCerrar(); }
+}, true);
+/* El renglón del formulario: la foto a la izquierda del nombre, cuando la hay. */
+function prodFotoFila(card){
+  var fo=card && card.querySelector('.prod-foto'); if(!fo) return;
+  var g=function(c){ var el=card.querySelector(c); return el ? el.value : ''; };
+  var k=prodFotoDe({ desc:g('.prod-desc'), codigo:g('.prod-codigo'), medida:g('.prod-medida') });
+  if(fo.getAttribute('data-k')===k) return;
+  fo.setAttribute('data-k', k);
+  fo.innerHTML=k ? prodFotoImg(k, 'pf-form') : '';
+  fo.hidden=!k;
+}
+function prodFotoFilas(){
+  var cs=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cs.length;i++) prodFotoFila(cs[i]);
+}
 function prodIcoHtml(x){
   var t=prodIcoTipo(x); if(!t || !PICO_SVG[t]) return '';
+  var fk=prodFotoDe(x); if(fk) return prodFotoImg(fk, 'pico');
   return PICO_MEMO[t] || (PICO_MEMO[t]='<svg class="pico pico-'+t+'" data-pico="'+t+'" viewBox="0 0 46 32" width="24" height="17" aria-hidden="true" focusable="false">'+PICO_SVG[t]+'</svg>');
 }
 /* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
