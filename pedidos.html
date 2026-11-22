@@ -4657,6 +4657,8 @@ function glSigue(){
         </div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div id="adm-semana" class="sem" hidden></div>
+        <!-- 🔁 (22/11, mejora 470) «Cambió hoy: N pedidos · M sin ver» (`chvPintar`). -->
+        <div id="adm-chv" class="no-print" hidden></div>
         <!-- 🏪 (15/11, mejora 317) con el chip «🏪 Reposiciones»: las tiendas con 2 o más RPT sin entregar (`rptTiendasPintar`). -->
         <div id="adm-rpt-tiendas" class="no-print" hidden></div>
         <div id="adm-gps-ent" hidden></div>
@@ -5346,6 +5348,45 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .ah-mas:hover{background:var(--teal-lt)}
 .ah-vacio{display:flex;align-items:center;gap:12px;padding:16px 14px;border-radius:14px;background:linear-gradient(135deg,#ecfdf3,#f3fbfa);border:1px solid #c9eedb;flex:1}
 .ah-vacio>span{font-size:1.8rem}.ah-vacio b{display:block;color:#15803d;font-size:.95rem}.ah-vacio small{color:#4b6b5b;font-size:.78rem}
+/* ⚠️ (22/11, mejora 459) Las entregas de mañana en riesgo (`riesgoAbrir`) */
+.rsg{display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px}
+.rsg-res{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:5px;background:#FDF0F1;border:1px solid #f3c3c9;font-size:.86rem}
+.rsg-res b{font-size:1.6rem;font-weight:900;line-height:1;margin-right:4px;color:#c0283a}.rsg-res.k-ok{background:var(--teal-lt);border-color:var(--teal-border)}.rsg-res.k-ok b{color:var(--teal-dk)}
+.rsg-res small{color:#5b4547;font-size:.78rem}.rsg-res .rsg-cob{color:#7c4b00}
+.rsg-sec{margin:4px 0 0;font-size:.9rem;font-weight:800;color:#17302f}
+.rsg-l{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px}
+.rsg-f{padding:10px 12px;display:flex;flex-direction:column;gap:6px}.rsg-f + .rsg-f{border-top:1px solid var(--line)}
+.rsg-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:.88rem}.rsg-h small{color:var(--muted);font-size:.74rem;flex:1;min-width:120px}
+.rsg-n{min-width:30px;height:24px;border-radius:999px;display:grid;place-items:center;background:#eef3f3;color:var(--muted);font-size:.74rem;font-weight:800;padding:0 6px}
+.rsg-tu{font-size:.7rem;font-weight:800;border-radius:6px;padding:1px 7px;background:#eef3f3;color:#24504e;white-space:nowrap}
+.rsg-ab{width:auto}
+.rsg-p{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;border-radius:10px;padding:6px 9px;font-size:.8rem;background:#FDF0F1;border:1px solid #f6d0d5}
+.rsg-p>span{flex:1;min-width:160px;display:flex;flex-direction:column}.rsg-p small{color:var(--muted);font-size:.72rem}
+.rsg-p.rsg-a{background:#FEF7EC;border-color:#f6d9a8}
+.rsg-p .btn{width:auto}.rsg-p a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.rsg-cam{width:auto;max-width:230px;font-size:.8rem;padding:5px 8px;border-radius:9px}
+.rsg-det summary{cursor:pointer;font-weight:800;font-size:.86rem;color:#7c4b00;padding:4px 2px}
+.rsg-nota{margin:0;font-size:.76rem;line-height:1.45;color:var(--muted);background:#f6f8f8;border-radius:10px;padding:8px 11px}
+/* 🔁 (22/11, mejora 470) Qué cambió hoy (`chvPintar`, `chvAbrir`) */
+#adm-chv{margin:6px 0 8px}
+.chv-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;background:#fff;border:1px solid #e3ecea;border-radius:12px;padding:7px 12px;font-size:.84rem;color:#24504e}
+.chv-bar.chv-sv{background:#FEF7EC;border-color:#f6d9a8;color:#5c3b00}.chv-bar .ah-go{margin-left:auto}
+.chv-pill{font-size:.72rem;font-weight:800;border-radius:999px;padding:2px 9px;background:#F7A928;color:#2b1700;white-space:nowrap}
+.chv-ok{font-size:.72rem;font-weight:800;color:#15803d;white-space:nowrap}
+.chv{display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px}
+.chv-res{border-radius:14px;padding:10px 14px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:var(--teal-lt);border:1px solid var(--teal-border);font-size:.86rem}
+.chv-res.k-a{background:#FEF7EC;border-color:#f6d9a8}.chv-res b{font-size:1.2rem;font-weight:900}.chv-todos{width:auto;margin-left:auto}
+.chv-l{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px}
+.chv-f{padding:10px 12px;display:flex;flex-direction:column;gap:6px}.chv-f + .chv-f{border-top:1px solid var(--line)}.chv-f.chv-nuevo{background:#fffaf0}
+.chv-h{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:.88rem}.chv-h small{color:var(--muted);font-size:.74rem}
+.chv-n{min-width:30px;height:24px;border-radius:999px;display:grid;place-items:center;background:#eef3f3;color:var(--muted);font-size:.74rem;font-weight:800;padding:0 6px}
+.chv-dia{font-size:.7rem;font-weight:800;border-radius:6px;padding:1px 7px;background:#eef3f3;color:#24504e;white-space:nowrap}
+.chv-cs{list-style:none;margin:0;padding:0 0 0 38px;display:flex;flex-direction:column;gap:4px}
+.chv-c{display:flex;flex-direction:column;font-size:.8rem;color:var(--text);overflow-wrap:anywhere}.chv-c small{color:var(--muted);font-size:.71rem}.chv-c.chv-mio{opacity:.65}
+.chv-acc{display:flex;gap:6px;align-items:center;padding-left:38px}.chv-acc .btn{width:auto}
+.chv-ya{background:var(--teal-lt);border:1px solid var(--teal-border);color:var(--teal-dk)}
+.chv-vacio{margin:0;padding:18px;text-align:center;color:#15803d;font-weight:700;font-size:.9rem;border:1px dashed #c9eedb;border-radius:12px;background:#f3fbf6}
+.chv-nota{margin:0;font-size:.76rem;line-height:1.45;color:var(--muted);background:#f6f8f8;border-radius:10px;padding:8px 11px}
 /* 📍 (13/11, mejora 185) Las ubicaciones que faltan para hoy y el próximo camión (`ubfAbrir`), desde «Para hacer» y Bloki. */
 .ubf{display:flex;flex-direction:column;gap:10px;padding:16px 18px 18px}
 .ubf-res{border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:7px;background:#FDF0F1;border:1px solid #f3c3c9}
@@ -5903,6 +5944,22 @@ tr.stk-late td{ animation:stkLate 1.1s ease-in-out 4; }
 .af-sw2{display:inline-flex;background:#e9f1f0;border-radius:11px;padding:3px;gap:2px}
 .af-sw2 button{border:0;background:transparent;font:inherit;font-weight:800;font-size:.79rem;color:#5d7473;padding:6px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
 .af-sw2 button.on{background:#fff;color:var(--teal-dk);box-shadow:0 1px 4px rgba(0,0,0,.09)}
+/* ▤ (mejora 469) la vista compacta: una línea por pedido */
+.acp-l{display:flex;flex-direction:column;gap:4px;margin:0 0 8px}
+.acp-r{--kc:#c9d6d4;display:grid;grid-template-columns:34px 9px minmax(150px,1.15fr) minmax(170px,2.1fr) minmax(90px,.75fr) minmax(120px,.9fr) auto;align-items:center;gap:9px;
+  background:#fff;border:1px solid #e3ecea;border-left:4px solid var(--kc);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.82rem;min-height:40px;color:#1f3b3a}
+.acp-r:hover,.acp-r:focus-visible{border-color:var(--teal,#00B5AD);border-left-color:var(--kc);box-shadow:0 3px 10px -6px rgba(0,80,76,.45);outline:none}
+.acp-r.acp-k-nohay{--kc:#dc2626}.acp-r.acp-k-stock{--kc:#34c27a}.acp-r.acp-k-atc{--kc:var(--atc,#d63384);background:#fffbfe}.acp-r.acp-k-rpt{--kc:#7b4a24}
+.acp-r.acp-ent{opacity:.72}
+.acp-n{font-weight:900;color:var(--teal-dk,#00A09A);background:#e9f6f5;border-radius:8px;text-align:center;padding:3px 0;font-size:.86rem}
+.acp-dot{width:9px;height:9px;border-radius:50%;background:var(--kc)}
+.acp-who{display:flex;flex-direction:column;min-width:0}.acp-who b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acp-who small{color:var(--muted,#6b7f7e);font-size:.72rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.acp-tu{font-style:normal}
+.acp-pr{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2c4847}
+.acp-lg{display:flex;gap:4px;flex-wrap:wrap;min-width:0}.acp-lg .lug{font-size:.72rem}
+.acp-cam{font-size:.76rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#35514f}.acp-cam.acp-sin{color:#c0262d;font-weight:800}.acp-cam.acp-ret{color:#7b4a24}
+.acp-e{font-size:.7rem;white-space:nowrap}
+@media (max-width:1100px){ .acp-r{grid-template-columns:30px 8px minmax(120px,1fr) minmax(130px,1.6fr) minmax(80px,.7fr) minmax(100px,.8fr)} .acp-e{display:none} }
 #adm-chips .qchip .n{display:inline-block;background:#edf3f3;border-radius:999px;padding:0 7px;margin-left:3px;opacity:1;color:#5d7473;font-weight:800;font-size:.7rem}
 #adm-chips .qchip.active .n{background:rgba(255,255,255,.25);color:#fff}
 /* la cabecera de cada día y turno */
@@ -10887,6 +10944,7 @@ function guardarDurable(rec, opts){
   delete NO_ENCOLAR[rec.id];
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) quién le cambió el día o el turno
+  try{ chvPropio(rec); }catch(e){}           // 🔁 (mejora 470) lo que guarda este aparato no es «cambió y no lo viste»
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) cambió después de cargarla al sistema · quién corrigió un pago
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
@@ -11746,6 +11804,7 @@ function apiSave(rec, opts){
   var id=rec&&rec.id;
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
+  try{ chvPropio(rec); }catch(e){}           // 🔁 (mejora 470) lo que guarda este aparato no es «cambió y no lo viste»
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return pgSeguir(id, apiSaveAhora(rec, opts));   // 🎨 (16/11, mejora 433) la ficha dice «Guardando…»
@@ -35638,9 +35697,20 @@ function admFilter(){
    ficha grande. La tabla de siempre queda con «☰ Ver como tabla» (por aparato, `me_adm_vista`). En Playwright la tabla manda (las
    pruebas leen `#tbl-pedidos`) salvo `window.ADM_FICHAS_PRUEBA`. */
 var LS_ADM_VISTA='me_adm_vista';
+/* ▤ (22/11, mejora 469; dueño la eligió con la muestra) «▤ COMPACTA»: UNA LÍNEA POR PEDIDO EN LA COMPU. Una tercera vista junto a «🃏 Fichas |
+   ☰ Tabla»: N° del día, el color de la ficha (`admFichaColor`), el cliente (`clfNombre`), los productos resumidos, de dónde sale
+   (`pedidoLugaresHtml`) y el camión, agrupada por día y turno como las fichas y con la MISMA lista (Hoy, chips, búsqueda, período: lo que
+   filtra `admFilter`). Tocar la línea abre la ficha de siempre (`showPedidoModal`). Se recuerda por compu en `me_adm_vista`. En el celular
+   (≤700 px) se ve como fichas: una línea a lo ancho no entra. En Playwright la tabla salvo `ADM_FICHAS_PRUEBA`/`ADM_COMPACTA_PRUEBA`.
+   `tests/test_adm_compacta.js`. */
+function admCompactaVa(){ try{ return !(navigator.webdriver && !window.ADM_COMPACTA_PRUEBA); }catch(e){ return true; } }
+function admCelu(){ try{ return !!(window.matchMedia && window.matchMedia('(max-width:700px)').matches); }catch(e){ return false; } }
+function admVistaGuardada(){ try{ var v=localStorage.getItem(LS_ADM_VISTA); return (v==='tabla' || v==='compacta') ? v : 'fichas'; }catch(e){ return 'fichas'; } }
 function admVista(){
-  if(navigator.webdriver && !window.ADM_FICHAS_PRUEBA) return 'tabla';
-  try{ return localStorage.getItem(LS_ADM_VISTA)==='tabla' ? 'tabla' : 'fichas'; }catch(e){ return 'fichas'; }
+  if(navigator.webdriver && !window.ADM_FICHAS_PRUEBA && !window.ADM_COMPACTA_PRUEBA) return 'tabla';
+  var v=admVistaGuardada();
+  if(v==='compacta') return (admCompactaVa() && !admCelu()) ? 'compacta' : 'fichas';
+  return v;
 }
 function admVistaPoner(v){ try{ localStorage.setItem(LS_ADM_VISTA, v); }catch(e){} renderAdmin(); }
 function admFichaEstado(p){
@@ -35723,6 +35793,28 @@ function admFichaHtml(p, dn){
   if(chica){ var cut=html.indexOf('<div class="af-ps">'); if(cut>0) return html.slice(0, cut)+admChicaLinea(p, carga, ret)+'</div>'; }
   return html;
 }
+/* ▤ (mejora 469) Una línea por pedido: lo mismo que dice la ficha, en una fila. Las cuentas son las de la ficha: el color (`admFichaColor`),
+   el estado de arriba (`admFichaEstado`), lo que NO va de lo de tienda (`deTiendaNoViaja`), `fichaRetira` y `pedidoLugaresHtml`. */
+function admCompactaProd(x){ var m=String(x.medida||'').trim(); return (Number(x.cant)||0)+'× '+String(x.desc||'—').trim()+(m?(' '+m.replace(/x/gi,'×')):''); }
+function admCompactaHtml(p, dn){
+  var pid=String(p.id).replace(/'/g,"\\'"), N=dn[p.id], E=admFichaEstado(p), rk=admFichaColor(p);
+  var tipo=esATC(p.oc)?'🎧 ':esRPT(p.oc)?'🏪 ':'';
+  var pr=(p.productos||[]), carga=pr.filter(function(x){ return !deTiendaNoViaja(p, x); });
+  var txt=carga.map(admCompactaProd), prods=txt.length ? txt.join(' · ') : (pr.length ? 'Nada para cargar' : 'Sin productos');
+  var ret=null; try{ ret=fichaRetira(p); }catch(e){}
+  var t=normTurno(p.turno), tu='<i class="acp-tu" title="'+(t==='PM'?'Turno tarde':t==='AM'?'Turno mañana':'Sin turno')+'">'+(t==='PM'?'🌆':t==='AM'?'🌅':'🕓')+'</i>';
+  var cam=ret ? '<span class="acp-cam acp-ret">🏪 lo retira</span>'
+    : entregaAConfirmar(p) ? '<span class="acp-cam">📦 avisa cuándo</span>'
+    : vehiculoDe(p) ? ('<span class="acp-cam">🚛 '+esc(vehiculoDe(p))+(p.chofer?(' · '+esc(p.chofer)):'')+'</span>')
+    : '<span class="acp-cam acp-sin">🚛 Sin camión</span>';
+  var lug=esATC(p.oc) ? ('<span class="lug lug-sr">🎧 '+esc(({rec:'recojo', dev:'devolución'})[atcViaje(p)]||'ATC')+'</span>') : pedidoLugaresHtml(p).replace(/<br>/g,' ');
+  var est=/^(ent|mod|sal|ok)\b/.test(E.c) ? ('<span class="af-e acp-e '+E.c+'"'+(E.title?(' title="'+esc(E.title)+'"'):'')+'>'+esc(E.t)+'</span>') : '';
+  return '<div class="acp-r'+(rk?(' acp-k-'+rk):'')+(p.entregado?' acp-ent':'')+'" data-pid="'+esc(String(p.id))+'" onclick="showPedidoModal(\''+pid+'\')" role="button" tabindex="0" aria-label="'+esc('Abrir el pedido de '+(p.cliente||'—')+(N?(' (N° '+N+' del día)'):''))+'">'+
+    '<span class="acp-n">'+(N||'—')+'</span><span class="acp-dot" aria-hidden="true"></span>'+
+    '<span class="acp-who"><b>'+clfNombre(p, p.cliente||'—', 'admin')+'</b><small>'+tipo+esc(p.oc||'—')+' · '+esc(p.vendedor||'—')+' '+tu+'</small></span>'+
+    '<span class="acp-pr" title="'+esc(txt.join('\n'))+'">'+esc(prods)+'</span>'+
+    '<span class="acp-lg">'+lug+'</span>'+cam+est+'</div>';
+}
 /* 🎨 (16/11, mejora 407; dueño: «me gustan todas… menos la 403») LO QUE YA ESTÁ LISTO, EN UNA FICHA CHICA. Una ficha «✅ Listo» (verificada y
    en verde: todo para cargar) ya no le pide nada a logística, pero medía lo mismo que una con faltantes. Pasa a: N° del día, cliente,
    «✅ Listo» y UNA línea «📦 N bultos · 📍 zona · 🚛 camión». Tocarla abre la ficha grande como siempre (ahí están los botones). Las que tienen
@@ -35767,14 +35859,16 @@ var ADM_PASADOS_VER=false;   // (§4mo) ver los días pasados con todo entregado
 function admPasadosVer(si){ ADM_PASADOS_VER=!!si; renderAdmin(); }
 function admFichasPintar(list, dn){
   var box=document.getElementById('adm-fichas'), tw=document.getElementById('tbl-pedidos-w'), sw=document.getElementById('adm-vista');
-  var v=admVista();
-  /* (§4me) Fichas | Tabla, las dos a la vista dentro de la barra de filtros */
+  var v=admVista(), cmp=(v==='compacta');
+  /* (§4me) Fichas | Tabla, las dos a la vista dentro de la barra de filtros · ▤ (mejora 469) y la compacta, en la compu */
   if(sw) sw.innerHTML='<span class="af-sw2" role="group" aria-label="Ver como"><button type="button" class="'+(v==='fichas'?'on':'')+'" onclick="admVistaPoner(\'fichas\')" title="Ver como fichas">🃏 Fichas</button>'+
+    ((admCompactaVa() && !admCelu()) ? ('<button type="button" class="'+(cmp?'on':'')+'" onclick="admVistaPoner(\'compacta\')" title="Una línea por pedido: N°, cliente, productos, de dónde sale y el camión">▤ Compacta</button>') : '')+
     '<button type="button" class="'+(v==='tabla'?'on':'')+'" onclick="admVistaPoner(\'tabla\')" title="Ver como tabla">☰ Tabla</button></span>';
-  if(tw) tw.hidden=(v==='fichas');
+  if(tw) tw.hidden=(v!=='tabla');
   if(!box) return;
-  box.hidden=(v!=='fichas');
-  if(v!=='fichas'){ box.innerHTML=''; return; }
+  box.hidden=(v==='tabla');
+  box.classList.toggle('acp-on', cmp);
+  if(v==='tabla'){ box.innerHTML=''; return; }
   /* Por día y turno, en el orden del día (N° 1, 2, 3…). Sin fecha (ventas de tienda) al final. */
   var tOrd=function(p){ var t=normTurno(p.turno); return t==='AM'?0:t==='PM'?1:2; };
   /* 📦 (propuesta 76) Las que «avisan cuándo» van al final, en su propio grupo (por el día de volver a llamar). */
@@ -35824,9 +35918,11 @@ function admFichasPintar(list, dn){
     var n=g.ps.length, listos=g.ps.filter(function(p){ return p.verificado || p.entregado; }).length;
     var sal=g.ps.filter(function(p){ return p.entregado || (p.vehiculo && p.fecha===todayStr() && camionSalio(p.fecha, p.vehiculo)); }).length;
     var tt=g.t===0?'🌅 Mañana':g.t===1?'🌆 Tarde':'sin turno';
+    var cuerpo=function(){ return cmp ? ('<div class="acp-l">'+g.ver.map(function(p){ return admCompactaHtml(p, dn); }).join('')+'</div>')
+                                      : ('<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>'); };   // ▤ (mejora 469)
     if(g.av) return afPegG('', '<div class="af-g"><span class="af-gt">📦 El cliente avisa cuándo</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+
       '<span class="af-gc af-gc-gris">sin día · no ocupan cupo · el stock queda apartado</span></div>'+
-      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>');   // 📦 (propuesta 76) · 📌 (mejora 286) afPegG
+      cuerpo());   // 📦 (propuesta 76) · 📌 (mejora 286) afPegG
     /* ✨ (§4me, dueño: «¿y qué onda esas barras?») En vez de la barrita: cuántos están listos y cuántos cupos quedan en ese turno
        (los de `cuposUsadosTurno`/`limTurno`, los mismos del formulario); un día que ya pasó dice cuántos se entregaron. */
     var pasado=g.f && g.f<todayStr(), ent=g.ps.filter(function(p){ return p.entregado; }).length, gc=[];
@@ -35841,12 +35937,12 @@ function admFichasPintar(list, dn){
         if(lim>0) gc.push('<span class="af-gc '+(lib<0?'af-gc-mal':lib===0?'af-gc-lleno':lib<=3?'af-gc-poco':'af-gc-cupo')+'" title="'+us+' de '+lim+' lugares ocupados en este turno">🎟️ '+
           (lib<0?((-lib)+' de más (forzado'+(-lib===1?'':'s')+')'):lib===0?'turno lleno':('queda'+(lib===1?'':'n')+' '+lib+' cupo'+(lib===1?'':'s')))+'</span>'); }
     }
-    if(!pasado) gc.push(admChicasGrupoHtml(g.ver));   // 🎨 (mejora 407)
+    if(!pasado && !cmp) gc.push(admChicasGrupoHtml(g.ver));   // 🎨 (mejora 407) · en la compacta todas son una línea
     return antesGps+afPegG(g.f, '<div class="af-g"><span class="af-gt">'+(g.f?esc(nxDiaTxt(g.f)):'Sin fecha')+' · '+tt+'</span><i>'+n+' pedido'+(n===1?'':'s')+'</i>'+gc.join('')+
       afPegBarra(pasado ? ent : listos, n, pasado)+'</div>'+   // 📌 (15/11, mejora 286) el título pegado arriba y la barrita
-      '<div class="af-cg">'+g.ver.map(function(p){ return admFichaHtml(p, dn); }).join('')+'</div>');
+      cuerpo());
   }).join('');
-  ccEntrar('adm', box, '.af-f', admCcClave());   // 🌊 (15/11, mejora 293) al cambiar de filtro, de a una (antes de las columnas: en el orden del día)
+  ccEntrar('adm', box, cmp ? '.acp-r' : '.af-f', admCcClave());   // 🌊 (15/11, mejora 293) al cambiar de filtro, de a una (antes de las columnas: en el orden del día)
   try{ afMasonry(box); }catch(e){ console.error(e); }   // 🧱 (15/11, mejora 292) sin huecos entre las fichas
   try{ if(afMasonryActivo()) afMasMirar(box); }catch(e){}
   afPegMedir(); arribaLuego();   // 📌 (15/11, mejora 286) el título debajo de la barra de filtros · «↑ Arriba» según lo que hay ahora
@@ -36082,6 +36178,10 @@ function admHacerDatos(){
   add({ k:'rev', sev:'a', ic:'📝', n:R.n||0, t:'Les faltan datos a los de '+nxCuandoTxt(R.dia||prox), s:R.resumen||'', b:'Ver cuáles', fn:'admRevisarVer()', tag:'faltan datos' });
   // 📍 (13/11, mejora 185) las ubicaciones que faltan para hoy y el próximo camión: pedírselas al cliente por WhatsApp
   try{ add(ubfHacer()); }catch(e){}
+  // ⚠️ (22/11, mejora 459) desde las 15:00, las entregas del próximo camión con algo que las puede frenar
+  try{ add(riesgoHacer()); }catch(e){}
+  // 🔁 (22/11, mejora 470) lo que cambiaron hoy en pedidos ya cargados y este aparato no vio
+  try{ add(chvHacer()); }catch(e){}
   // 📅 (14/11, mejora 217) los clientes que eligieron otro día por el bot: «Mover» con un toque
   try{ add(rdHacer()); }catch(e){}
   // 🔎 (22/11, dueño: «No en administración, eso más lo usa logística, que esté en quien atendió pero salga solo con la clave») los pedidos
@@ -37501,6 +37601,285 @@ function ubfAbrir(){
     '</div>';
   openModal(h);
 }
+/* ============================================================================
+   ⚠️ LAS ENTREGAS DE MAÑANA EN RIESGO (22/11, mejora 459; dueño la eligió con la muestra).
+   Desde las RIESGO_HORA (15:00, Bolivia) «Para hacer» de Administración junta, pedido por pedido, lo que puede hacer que una entrega del
+   PRÓXIMO día con camión (`proximoDiaEntrega`) no salga: (a) un producto con el stock sin revisar o «✗ no hay» sin pedir (la MISMA lectura
+   de «Semana», `semanaLinea` rev/nohay), (b) sin ubicación (la regla de la 185: `ubfEntra` + `ubfEstado`, la ≈ aproximada no cuenta),
+   (c) sin camión (`vehiculoDe` vacío y no `fichaRetira`). Y (d) el saldo a cobrar al entregar (`saldoACobrar` > 0.005), en ámbar y SOLO
+   informativo: no lo hace «en riesgo». Los pedidos son los del cierre y la carga (`cierreEntEntra`: sin filas del sistema, borradores ni
+   venta de tienda; ATC y RPT sí; la ATC no mira stock: no sale del depósito).
+   · «⚠️ N entregas de mañana en riesgo» en rojo con a/b/c; si solo queda lo de cobrar, en azul. Abre la lista (`riesgoAbrir`): cada pedido
+     con sus problemas y el botón al arreglo de siempre (abrir el pedido: ahí están los botones de stock; «💬 Pedir ubicación» = el mensaje
+     de la 185; «🚚 Asignar camión…» = `cvAsignar`, el de «Sin vehículo»). Bloki se lo dice a logística (`l-riesgo|…`).
+   · 🚚 Si ningún pedido de ese día tiene camión todavía (con la planilla del 21-22/11, los 18 del lunes seguían sin camión el sábado a
+     la noche: los camiones se asignan esa mañana), «sin camión» no hace a cada uno «en riesgo»: la lista lo dice una vez arriba y el
+     renglón «🚚 Sin camión para …» de siempre (`nxSugSin`) ya lo cuenta. Con al menos uno asignado, el que quedó sin camión sí está en riesgo.
+   · Solo mira. En Playwright apagado salvo `window.RIESGO_PRUEBA`. `tests/test_riesgo_manana.js`.
+   ========================================================================== */
+var RIESGO_HORA='15:00';
+function riesgoActivo(){ try{ return !(navigator.webdriver && !window.RIESGO_PRUEBA); }catch(e){ return true; } }
+function riesgoCuando(f){ return f===tomorrowStr() ? 'de mañana' : ('del '+nxDiaTxt(f)); }
+function riesgoDatos(){
+  if(!riesgoActivo() || hhmmBolivia()<RIESGO_HORA) return null;
+  var dia=proximoDiaEntrega(), F=[], P=(STATE||[]).filter(function(p){ return cierreEntEntra(p) && String(p.fecha)===dia && !entregaAConfirmar(p); });
+  var camG=P.length>0 && !P.some(function(p){ return !!vehiculoDe(p); });   // todavía no se asignó ningún camión para ese día
+  var nSinCamG=0;
+  P.forEach(function(p){
+    var L=[];
+    if(!esATC(p.oc)) (p.productos||[]).forEach(function(x, i){ var e=''; try{ e=semanaLinea(p, x); }catch(err){} if(e==='rev' || e==='nohay') L.push({ x:x, i:i, e:e }); });
+    var ret=null; try{ ret=fichaRetira(p); }catch(e){}
+    var ubE=null; try{ if(ubfEntra(p, [dia])){ var u=ubfEstado(p.maps); if(u.k!=='ok' && u.k!=='aprox') ubE=u; } }catch(e){}
+    var sinCam=!vehiculoDe(p) && !ret, cob=0; try{ cob=saldoACobrar(p); }catch(e){}
+    if(sinCam && camG) nSinCamG++;
+    cob=cob>0.005 ? r2(cob) : 0;
+    var rojo=L.length>0 || !!ubE || (sinCam && !camG);
+    if(!rojo && !cob) return;
+    F.push({ p:p, id:String(p.id), L:L, rev:L.filter(function(l){ return l.e==='rev'; }).length, nohay:L.filter(function(l){ return l.e==='nohay'; }).length,
+             ub:ubE, sinCam:sinCam && !camG, cob:cob, rojo:rojo, wa:(function(){ try{ return misWaCliente(p.celular); }catch(e){ return ''; } })() });
+  });
+  var dn=dayNumMap(), tO=function(p){ var t=normTurno(p.turno); return t==='AM'?0:t==='PM'?1:2; };
+  F.sort(function(a, b){ return tO(a.p)-tO(b.p) || (Number(dn[a.id])||999)-(Number(dn[b.id])||999); });
+  var R=F.filter(function(x){ return x.rojo; }), C=F.filter(function(x){ return !x.rojo; }), bs=0;
+  F.forEach(function(x){ bs=r2(bs+x.cob); });
+  return { dia:dia, cuando:riesgoCuando(dia), F:F, R:R, C:C, bs:bs, nCob:F.filter(function(x){ return x.cob; }).length, total:P.length, camG:camG, nSinCamG:nSinCamG,
+           nStk:R.filter(function(x){ return x.L.length; }).length, nUb:R.filter(function(x){ return x.ub; }).length, nCam:R.filter(function(x){ return x.sinCam; }).length };
+}
+function riesgoResumen(D){
+  var a=[];
+  if(D.nStk) a.push(D.nStk+' con el stock sin revisar o sin pedir');
+  if(D.nUb) a.push(D.nUb+' sin ubicación');
+  if(D.nCam) a.push(D.nCam+' sin camión');
+  return a.join(' · ');
+}
+/* El renglón de «Para hacer». */
+function riesgoHacer(){
+  var D=riesgoDatos(); if(!D || !D.F.length) return null;
+  var cob=D.nCob ? ('cobrar '+fmtBs(D.bs)+' al entregar en '+D.nCob) : '';
+  if(D.R.length) return { k:'riesgo', sev:'r', ic:'⚠️', n:D.R.length, t:(D.R.length===1?'Una entrega':(D.R.length+' entregas'))+' '+D.cuando+' en riesgo',
+    s:riesgoResumen(D)+' · '+admNombres(D.R.map(function(x){ return x.p; }))+(cob?(' · además, '+cob):''), b:'⚠️ Ver cuáles', p:1, fn:'riesgoAbrir()', tag:'entregas en riesgo' };
+  return { k:'riesgo-c', sev:'i', ic:'💵', n:D.C.length, t:'Entregas '+D.cuando+' con saldo a cobrar al entregar',
+    s:cob+' · '+admNombres(D.C.map(function(x){ return x.p; })), b:'Ver cuáles', fn:'riesgoAbrir()', tag:'cobrar al entregar' };
+}
+/* Bloki se lo dice a logística (lo arma `asisLogistica`). */
+function riesgoAsis(){
+  var D=riesgoDatos(); if(!D || !D.R.length) return null;
+  return { k:'l-riesgo|'+todayStr()+'|'+D.R.map(function(x){ return x.id; }).join(','), sev:'ro', ico:'⚠️', ped:1,
+    t:D.R.length+' entrega'+(D.R.length===1?'':'s')+' '+D.cuando+' en riesgo', x:riesgoResumen(D)+'. Arreglalo hoy, antes de que salga el camión.',
+    lista:asisPedLista(D.R.map(function(x){ return x.p; })), b:['⚠️ Ver cuáles', 'riesgoAbrir()'] };
+}
+function riesgoAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.rsg')); }
+function riesgoAbrirPedido(id){
+  if(!findById(id)){ toast('Este pedido ya no está en la lista. Actualizá el panel.','err'); return; }
+  showPedidoModal(id);
+  var b=document.querySelector('#modal-box .fl-b');
+  if(b && !b.querySelector('.rsg-volver')) b.insertAdjacentHTML('afterbegin', '<button type="button" class="btn btn-ghost btn-sm rsg-volver" onclick="riesgoAbrir()">← Volver a las entregas en riesgo</button>');
+}
+function riesgoAsignar(id, v){ if(!v) return; cvAsignar(id, v); setTimeout(function(){ if(riesgoAbierta()) riesgoAbrir(); try{ admHacerPintar(); }catch(e){} }, 250); }
+function riesgoPegar(id){ editarUbicacion(id, function(){ riesgoAbrir(); }); }
+function riesgoFilaHtml(x, dn){
+  var p=x.p, idA=esc(x.id), N=dn[p.id], t=normTurno(p.turno), pr=[];
+  if(x.L.length){
+    var nom=x.L.slice(0, 3).map(function(l){ return (l.e==='nohay'?'🔴 ':'⬜ ')+semanaProdTxt(l.x); }).join(' · ')+(x.L.length>3?(' y '+(x.L.length-3)+' más'):'');
+    pr.push('<div class="rsg-p rsg-r"><span>📦 <b>'+(x.rev?(x.rev+' sin revisar el stock'):'')+(x.rev&&x.nohay?' · ':'')+(x.nohay?(x.nohay+' no hay y no se pidió'):'')+'</b><small>'+esc(nom)+'</small></span>'+
+      '<button type="button" class="btn btn-sm rsg-b" data-id="'+idA+'" onclick="riesgoAbrirPedido(this.getAttribute(\'data-id\'))" title="En la ficha están los botones de stock de cada producto">📦 Abrir el pedido</button></div>');
+  }
+  if(x.ub) pr.push('<div class="rsg-p rsg-r"><span>📍 <b>'+esc(x.ub.t||'sin ubicación')+'</b>'+(x.wa?'':('<small>📵 sin celular de WhatsApp: llamá a '+esc(String(p.vendedor||'').trim()||'la vendedora')+'</small>'))+'</span>'+
+    (x.wa ? ('<a class="btn btn-sm wa-btn rsg-b" href="'+esc(ubfWaUrl(p))+'" target="_blank" rel="noopener" title="Abre el chat del cliente con el mensaje ya escrito: lo mandás vos">💬 Pedir ubicación</a>') : '')+
+    '<button type="button" class="btn btn-sm btn-ghost rsg-b" data-id="'+idA+'" onclick="riesgoPegar(this.getAttribute(\'data-id\'))">✏️ Pegar</button></div>');
+  if(x.sinCam) pr.push('<div class="rsg-p rsg-r"><span>🚛 <b>Sin camión</b><small>sin camión no sale en la lista de carga</small></span>'+
+    '<select class="rsg-cam" data-id="'+idA+'" aria-label="Asignar camión" onchange="riesgoAsignar(this.getAttribute(\'data-id\'), this.value)">'+camOpcionesHtml('', '🚚 Asignar camión…')+'</select></div>');
+  if(x.cob) pr.push('<div class="rsg-p rsg-a"><span>💵 <b>Cobrar '+esc(fmtBs(x.cob))+' al entregar</b><small>solo para saber: no frena la entrega</small></span></div>');
+  return '<li class="rsg-f'+(x.rojo?'':' rsg-ok')+'" data-id="'+idA+'"><div class="rsg-h"><span class="rsg-n">'+(N?('#'+N):'—')+'</span>'+
+    '<b class="rsg-cli">'+esc(String(p.cliente||'').trim()||'(sin cliente)')+'</b><span class="rsg-tu">'+(t==='PM'?'🌆 tarde':t==='AM'?'🌅 mañana':'sin turno')+'</span>'+
+    '<small>'+esc([ocEtiq(p.oc), String(p.vendedor||'').trim(), String(p.zona||'').trim()].filter(Boolean).join(' · '))+'</small>'+
+    '<button type="button" class="btn btn-sm btn-ghost rsg-ab" data-id="'+idA+'" onclick="riesgoAbrirPedido(this.getAttribute(\'data-id\'))">Abrir</button></div>'+pr.join('')+'</li>';
+}
+function riesgoAbrir(){
+  var D=riesgoDatos(), dn=dayNumMap();
+  if(!D){ toast('La lista de las entregas en riesgo sale desde las '+RIESGO_HORA+'.', 'ok'); return; }
+  var h='<div class="modal-h"><h3>⚠️ Entregas '+esc(D.cuando)+' en riesgo</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b rsg">'+
+      '<div class="rsg-res '+(D.R.length?'k-r':'k-ok')+'"><div><b>'+D.R.length+'</b> de '+D.total+' con algo que puede frenar la entrega del '+esc(nxDiaTxt(D.dia))+'</div>'+
+        (D.R.length?('<small>'+esc(riesgoResumen(D))+'</small>'):'<small>✅ Ninguna en riesgo</small>')+
+        (D.camG?('<small class="rsg-cob">🚚 Todavía no se asignó ningún camión para el '+esc(nxDiaTxt(D.dia))+' ('+D.nSinCamG+' pedido'+(D.nSinCamG===1?'':'s')+'): <button type="button" class="ah-link rsg-sug" onclick="closeModal();admSugIr(\'manana\')">💡 Sugerir camión</button></small>'):'')+
+        (D.nCob?('<small class="rsg-cob">💵 Cobrar al entregar: '+esc(fmtBs(D.bs))+' en '+D.nCob+' entrega'+(D.nCob===1?'':'s')+'</small>'):'')+'</div>'+
+      (D.R.length?('<h4 class="rsg-sec">⚠️ En riesgo · '+D.R.length+'</h4><ol class="rsg-l">'+D.R.map(function(x){ return riesgoFilaHtml(x, dn); }).join('')+'</ol>'):'')+
+      (D.C.length?('<details class="rsg-det"><summary>💵 Solo cobrar al entregar · '+D.C.length+'</summary><ol class="rsg-l">'+D.C.map(function(x){ return riesgoFilaHtml(x, dn); }).join('')+'</ol></details>'):'')+
+      '<p class="rsg-nota">Solo mira: cada botón lleva al arreglo de siempre. El stock se marca en la ficha (o con la 🤖 revisión automática), la ubicación se le pide al cliente por WhatsApp y el camión se asigna acá o en «Sin vehículo».</p>'+
+      '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div>'+
+    '</div>';
+  openModal(h);
+}
+/* fin mejora 459 */
+/* ============================================================================
+   🔁 QUÉ CAMBIÓ HOY (22/11, mejora 470; dueño la eligió con la muestra). Para logística: los cambios que hicieron HOY en pedidos ya cargados
+   que todavía no salieron (día de entrega de hoy en adelante, o «el cliente avisa cuándo»).
+   De dónde sale, en este orden (lo que ya existía primero):
+   · el día y el turno: la historia `fH` (mejora 212), con quién y desde dónde;
+   · la marca «⚠️ Modificado» (`mod`, §4bc: la pone el formulario cuando cambia algo de un pedido que logística ya había revisado), con
+     qué cambió (productos ➕➖🔢, ubicación, dirección, zona, día) y quién (`por`);
+   · lo demás (productos, dirección, zona, ubicación, observaciones de un pedido que nadie había revisado) no deja historia en la planilla:
+     ESTE aparato guarda cómo vio cada pedido la última vez (`me_cambio_foto`) y, si una lectura trae otra cosa, anota el cambio
+     (`me_cambio_hoy`, solo lo de hoy) con la hora en que lo notó. La primera vez que corre solo toma la foto: no inventa cambios.
+   · Lo hecho desde este aparato (un guardado propio, o un renglón con el mismo nombre que eligió este aparato) se lista pero no cuenta.
+   «Sin ver» = un cambio más nuevo que el «✓ Visto» de este aparato (`me_cambio_visto`) y que la última vez que se abrió la ficha acá
+   (`me_ficha_vista`, la de «MODIFICADO… DESPUÉS de que lo viste»). Solo mira. En Playwright apagado salvo `window.CAMBIOS_PRUEBA`.
+   `tests/test_cambio_hoy.js`.
+   ========================================================================== */
+var CHV_FOTO='me_cambio_foto', CHV_HOY='me_cambio_hoy', CHV_VISTO='me_cambio_visto', CHV_PROPIO={}, CHV_GEN=-1, CHV_TOPE=400, CHV_PROPIO_MS=15*60000;
+function chvActivo(){ try{ return !(navigator.webdriver && !window.CAMBIOS_PRUEBA); }catch(e){ return true; } }
+function chvPropio(rec){ try{ if(rec && rec.id!=null) CHV_PROPIO[String(rec.id)]=Date.now(); }catch(e){} }   // lo llaman `guardarDurable` y `apiSave`
+function chvEntra(p){
+  if(!p || p.id==null || p.entregado) return false;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p) || esVentaTienda(p) || String(p.id).indexOf('__')===0) return false; }catch(e){ return false; }
+  return entregaAConfirmar(p) || (!!p.fecha && String(p.fecha)>=todayStr());
+}
+function chvCorta(t, n){ t=String(t==null?'':t).replace(/\s+/g,' ').trim(); return t.length>n ? (t.slice(0, n-1)+'…') : t; }
+function chvFirma(p){
+  var pr=[]; (p.productos||[]).forEach(function(x){ if(!x || !(String(x.desc||'').trim() || String(x.codigo||'').trim())) return;
+    pr.push([prodClave(x), chvCorta(String(x.desc||'').trim()+(String(x.medida||'').trim()?(' '+String(x.medida).trim()):''), 70), Number(x.cant)||0]); });
+  return { f:fhClave(p), pr:pr, di:chvCorta(p.direccion, 140), zo:chvCorta(p.zona, 50), mp:chvCorta(p.maps, 220), ob:chvCorta(p.observaciones, 240) };
+}
+function chvDif(a, b){
+  var c=[];
+  if(!fhMismo(a.f||'', b.f||'')) c.push({ k:'dia', de:a.f||'', a:b.f||'' });
+  var mA={}, mB={}; (a.pr||[]).forEach(function(x){ mA[x[0]]=x; }); (b.pr||[]).forEach(function(x){ mB[x[0]]=x; });
+  (b.pr||[]).forEach(function(x){ var v=mA[x[0]]; if(!v) c.push({ k:'prod', t:'➕ '+x[1]+' × '+x[2] }); else if(v[2]!==x[2]) c.push({ k:'prod', t:'🔢 '+x[1]+' — de '+v[2]+' a '+x[2] }); });
+  (a.pr||[]).forEach(function(x){ if(!mB[x[0]]) c.push({ k:'prod', t:'➖ '+x[1]+' × '+x[2] }); });
+  if((a.mp||'')!==(b.mp||'')) c.push({ k:'ubic', t:b.mp ? (a.mp?'📍 cambió la ubicación':'📍 le pusieron ubicación') : '📍 le sacaron la ubicación' });
+  if((a.di||'')!==(b.di||'')) c.push({ k:'dir', de:a.di||'', a:b.di||'' });
+  if((a.zo||'')!==(b.zo||'')) c.push({ k:'zona', de:a.zo||'', a:b.zo||'' });
+  if((a.ob||'')!==(b.ob||'')) c.push({ k:'obs', de:a.ob||'', a:b.ob||'' });
+  return c;
+}
+function chvHoyLeer(){ var o=nxLS(CHV_HOY); return (o && o.d===todayStr() && o.p && typeof o.p==='object') ? o : { d:todayStr(), p:{} }; }
+/* Compara lo que hay con la foto de este aparato. Corre al dibujar Administración (y al abrir una ficha si ya hay foto), una vez por cambio
+   de STATE (`STATE_GEN`). `siHay`: solo si este aparato ya tiene foto (los de las vendedoras no la arman). */
+function chvMirar(siHay){
+  if(!chvActivo() || !Array.isArray(STATE) || !STATE.length) return;
+  var gen=(typeof STATE_GEN!=='undefined') ? STATE_GEN : 0; if(gen===CHV_GEN) return;
+  var F=nxLS(CHV_FOTO); if(siHay && !(F && F.p)) return;
+  CHV_GEN=gen;
+  if(!F || typeof F!=='object' || !F.p) F={ v:1, p:{} };
+  var fp=F.p, H=chvHoyLeer(), ahora=Date.now(), cH=false, cF=false, vivos={};
+  STATE.forEach(function(p){
+    if(!chvEntra(p)) return;
+    var id=String(p.id), n=chvFirma(p), o=fp[id]; vivos[id]=1;
+    if(!o){ n.t=ahora; fp[id]=n; cF=true; return; }
+    var d=chvDif(o, n); if(!d.length) return;
+    var pr=!!(CHV_PROPIO[id] && ahora-CHV_PROPIO[id]<CHV_PROPIO_MS);
+    (H.p[id]=H.p[id]||[]).push({ t:ahora, c:d, desde:Number(o.t)||0, pr:pr?1:0 }); H.p[id]=H.p[id].slice(-6); cH=true;
+    n.t=ahora; fp[id]=n; cF=true;
+  });
+  Object.keys(fp).forEach(function(id){ if(!vivos[id]){ delete fp[id]; cF=true; } });   // ya salió, se entregó o se borró
+  var ks=Object.keys(fp); if(ks.length>CHV_TOPE){ ks.sort(function(a, b){ return (fp[a].t||0)-(fp[b].t||0); }).slice(0, ks.length-CHV_TOPE).forEach(function(k){ delete fp[k]; }); }
+  try{ if(cF) lsPoner(CHV_FOTO, JSON.stringify(F)); if(cH) lsPoner(CHV_HOY, JSON.stringify(H)); }catch(e){}
+}
+function chvVistos(){ var o=nxLS(CHV_VISTO); return (o && typeof o==='object' && !Array.isArray(o)) ? o : {}; }
+function chvVistoDe(id, V){ var a=Number((V||chvVistos())[String(id)])||0, b=0; try{ b=fichaVistaDe(id); }catch(e){} return Math.max(a, b); }
+/* La hora de la marca «Modificado» (la escribe el aparato que editó, en hora de Bolivia). */
+function chvModT(m){ var t=new Date(String(m.f)+'T'+(/^\d{2}:\d{2}$/.test(String(m.h||''))?m.h:'00:00')+':00-04:00').getTime(); return isFinite(t) ? t : 0; }
+function chvModK(s){ s=String(s||''); return /^(➕|➖|🔢)/.test(s) ? 'prod' : /^📍/.test(s) ? 'ubic' : /^🏠/.test(s) ? 'dir' : /^🗺️/.test(s) ? 'zona' : /^(📅|🕐)/.test(s) ? 'dia' : 'otro'; }
+function chvFhTxt(e){
+  var de=String(e.de||''), a=String(e.a||'');
+  if(!de) return '📅 le pusieron día: el '+fhTxt(a)+' (el cliente avisaba cuándo)';
+  if(!a) return '📅 pasó a «el cliente avisa cuándo» (estaba para el '+fhTxt(de)+')';
+  if(fhDia(de)===fhDia(a)) return '🕐 pasó a la '+(a.slice(11)==='PM'?'tarde 🌆':'mañana 🌅')+' del '+fmtFechaCorta(fhDia(a));
+  return '📅 del '+fhTxt(de)+' al '+fhTxt(a);
+}
+function chvCTxt(c){
+  if(c.k==='dia') return chvFhTxt({ de:c.de, a:c.a });
+  if(c.k==='dir') return '🏠 dirección: «'+(c.de||'—')+'» → «'+(c.a||'—')+'»';
+  if(c.k==='zona') return '🗺️ zona: '+(c.de||'—')+' → '+(c.a||'—');
+  if(c.k==='obs') return '📝 observaciones: «'+(c.de||'—')+'» → «'+(c.a||'—')+'»';
+  return String(c.t||'');
+}
+function chvDatos(){
+  try{ chvMirar(); }catch(e){ console.error(e); }
+  var hoy=todayStr(), H=chvHoyLeer().p, V=chvVistos(), yo=normNombre(quienEdita()||''), R=[];
+  (STATE||[]).forEach(function(p){
+    if(!chvEntra(p)) return;
+    var id=String(p.id), it=[], cub={};
+    fhHistDe(p).forEach(function(e){ if(isoDeTsBolivia(Number(e.t))!==hoy) return; cub.dia=1; it.push({ t:Number(e.t)||0, q:String(e.q||'?'), k:'dia', txt:chvFhTxt(e), d:e.d||'' }); });
+    var m=modDe(p);
+    if(m && m.f===hoy){ var tm=chvModT(m);
+      (m.d||[]).forEach(function(s){ var k=chvModK(s); if(k==='dia' && cub.dia) return; it.push({ t:tm, q:String(m.por||'?'), k:k, txt:String(s) }); });
+      (m.d||[]).forEach(function(s){ cub[chvModK(s)]=1; }); }
+    (H[id]||[]).forEach(function(e){ (e.c||[]).forEach(function(c){ if(cub[c.k]) return; it.push({ t:Number(e.t)||0, q:'', k:c.k, txt:chvCTxt(c), ap:1, desde:Number(e.desde)||0, pr:!!e.pr }); }); });
+    if(!it.length) return;
+    it.forEach(function(x){ x.mio=!!x.pr || (!!yo && !!x.q && x.q!=='?' && normNombre(x.q)===yo); });
+    it.sort(function(a, b){ return b.t-a.t; });
+    var vis=chvVistoDe(id, V), sv=it.filter(function(x){ return !x.mio && x.t>vis; }).length;
+    var qs=[]; it.forEach(function(x){ var q=x.q && x.q!=='?' ? x.q : ''; if(q && qs.indexOf(q)<0) qs.push(q); });
+    R.push({ p:p, id:id, it:it, t:it[0].t, sinVer:sv>0, nSv:sv, quien:qs, mio:it.every(function(x){ return x.mio; }) });
+  });
+  R.sort(function(a, b){ return (b.sinVer?1:0)-(a.sinVer?1:0) || b.t-a.t; });
+  return { R:R, n:R.length, sinVer:R.filter(function(x){ return x.sinVer; }) };
+}
+/* El renglón de «Para hacer» (solo con algo sin ver). */
+function chvHacer(){
+  if(!chvActivo()) return null;
+  var D=chvDatos(); if(!D.sinVer.length) return null;
+  var k={}; D.sinVer.forEach(function(x){ x.it.forEach(function(i){ if(!i.mio) k[i.k]=1; }); });
+  var nom={ dia:'día o turno', prod:'productos', ubic:'ubicación', dir:'dirección', zona:'zona', obs:'observaciones', otro:'otros datos' };
+  return { k:'chv', sev:'a', ic:'🔁', n:D.sinVer.length, t:'Cambió hoy · '+D.sinVer.length+' sin ver',
+    s:Object.keys(k).map(function(x){ return nom[x]||x; }).join(', ')+' · '+admNombres(D.sinVer.map(function(x){ return x.p; })), b:'🔁 Ver qué cambió', fn:'chvAbrir()', tag:'cambió hoy' };
+}
+/* La barrita arriba de la lista de pedidos (`#adm-chv`). */
+function chvPintar(){
+  var el=document.getElementById('adm-chv'); if(!el) return;
+  var h='';
+  if(chvActivo()){ var D=chvDatos();
+    if(D.n) h='<div class="chv-bar'+(D.sinVer.length?' chv-sv':'')+'"><span class="chv-ic" aria-hidden="true">🔁</span><b>Cambió hoy: '+D.n+' pedido'+(D.n===1?'':'s')+'</b>'+
+      (D.sinVer.length?('<span class="chv-pill">'+D.sinVer.length+' sin ver</span>'):'<span class="chv-ok">✓ todo visto</span>')+
+      '<button type="button" class="ah-go'+(D.sinVer.length?' ah-go-a':'')+'" onclick="chvAbrir()">Ver qué cambió</button></div>'; }
+  el.hidden=!h; if(el._h!==h){ el.innerHTML=h; el._h=h; }
+}
+function chvAbierta(){ var mo=document.getElementById('modal'), b=document.getElementById('modal-box'); return !!(mo && mo.classList.contains('on') && b && b.querySelector('.chv')); }
+function chvVisto(id, todos){
+  var V=chvVistos(), ahora=Date.now();
+  if(todos) chvDatos().R.forEach(function(x){ V[x.id]=ahora; }); else V[String(id)]=ahora;
+  Object.keys(V).forEach(function(k){ if(!(ahora-Number(V[k])<3*86400000)) delete V[k]; });   // lo de hace más de 3 días se va
+  if(!lsPoner(CHV_VISTO, JSON.stringify(V))){ toast('No pude anotarlo en este aparato (el navegador no deja guardar).', 'err'); return; }
+  if(chvAbierta()) chvAbrir();
+  try{ chvPintar(); admHacerPintar(); }catch(e){}
+}
+function chvAbrirPedido(id){
+  if(!findById(id)){ toast('Este pedido ya no está en la lista. Actualizá el panel.','err'); return; }
+  showPedidoModal(id);
+  var b=document.querySelector('#modal-box .fl-b');
+  if(b && !b.querySelector('.chv-volver')) b.insertAdjacentHTML('afterbegin', '<button type="button" class="btn btn-ghost btn-sm chv-volver" onclick="chvAbrir()">← Volver a lo que cambió hoy</button>');
+  try{ chvPintar(); admHacerPintar(); }catch(e){}
+}
+function chvFilaHtml(x, dn){
+  var p=x.p, idA=esc(x.id), N=dn[p.id], t=normTurno(p.turno), hoy=todayStr();
+  var dia=entregaAConfirmar(p) ? '📦 avisa cuándo' : ((p.fecha===hoy?'HOY':(p.fecha===tomorrowStr()?'MAÑANA':nxDiaTxt(p.fecha)))+' · '+(t==='PM'?'🌆 tarde':t==='AM'?'🌅 mañana':'sin turno'));
+  var li=x.it.map(function(i){
+    var hora=asisHoraTxt(i.t), quien=i.ap ? ('lo notó este aparato '+(i.desde && isoDeTsBolivia(i.desde)!==hoy ? ('(lo había visto el '+fmtFechaCorta(isoDeTsBolivia(i.desde))+') ') : '')+'a las '+hora)
+                                         : (phxQuien(i.q)+' · '+hora+(i.d?(' · desde '+i.d):''));
+    return '<li class="chv-c'+(i.mio?' chv-mio':'')+'"><span>'+esc(i.txt)+'</span><small>'+esc(quien)+(i.mio?' · lo hiciste vos':'')+'</small></li>';
+  }).join('');
+  return '<li class="chv-f'+(x.sinVer?' chv-nuevo':'')+'" data-id="'+idA+'"><div class="chv-h"><span class="chv-n">'+(N?('#'+N):'—')+'</span>'+
+    '<b>'+esc(String(p.cliente||'').trim()||'(sin cliente)')+'</b><span class="chv-dia">'+esc(dia)+'</span>'+
+    '<small>'+esc([ocEtiq(p.oc), String(p.vendedor||'').trim()].filter(Boolean).join(' · '))+'</small>'+
+    (x.sinVer?'<span class="chv-pill">sin ver</span>':'')+'</div><ul class="chv-cs">'+li+'</ul>'+
+    '<div class="chv-acc"><button type="button" class="btn btn-sm btn-ghost" data-id="'+idA+'" onclick="chvAbrirPedido(this.getAttribute(\'data-id\'))">Abrir</button>'+
+    (x.sinVer ? ('<button type="button" class="btn btn-sm chv-ya" data-id="'+idA+'" onclick="chvVisto(this.getAttribute(\'data-id\'))" title="Queda anotado en este aparato">✓ Visto</button>') : '<span class="chv-ok">✓ visto</span>')+'</div></li>';
+}
+function chvAbrir(){
+  var D=chvDatos(), dn=dayNumMap();
+  var h='<div class="modal-h"><h3>🔁 Qué cambió hoy</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
+    '<div class="modal-b chv">'+
+      '<div class="chv-res'+(D.sinVer.length?' k-a':' k-ok')+'"><span><b>'+D.n+'</b> pedido'+(D.n===1?'':'s')+' cambiado'+(D.n===1?'':'s')+' hoy'+(D.sinVer.length?(' · <b>'+D.sinVer.length+'</b> sin ver'):' · todo visto')+'</span>'+
+        (D.sinVer.length>1?'<button type="button" class="btn btn-sm btn-ghost chv-todos" onclick="chvVisto(\'\', true)">✓ Marcar todos vistos</button>':'')+'</div>'+
+      (D.n ? ('<ol class="chv-l">'+D.R.map(function(x){ return chvFilaHtml(x, dn); }).join('')+'</ol>') : '<p class="chv-vacio">✅ Hoy nadie cambió pedidos que estén por salir.</p>')+
+      '<p class="chv-nota">El día y el turno salen de la historia de cada pedido, y lo marcado «⚠️ Modificado» trae quién lo cambió. Lo demás (productos, dirección, observaciones de un pedido que nadie había revisado) lo nota ESTE aparato al comparar con lo que vio la última vez: dice a qué hora lo notó, no quién. «✓ Visto» queda anotado en este aparato, y abrir la ficha también cuenta.</p>'+
+      '<div class="modal-actions"><span style="flex:1"></span><button type="button" class="btn btn-sm" onclick="closeModal()">Cerrar</button></div>'+
+    '</div>';
+  openModal(h);
+}
+/* fin mejora 470 */
 /* 🎨 (25/10, §4mg, V5; dueño: «unificar colores… con más vida… el rojo de antes») UN estilo de botón en las tres listas «Para hacer»
    (Mis pedidos, Contabilidad, Administración): el color lo da lo que pide el renglón. ROJO sólido (#CE2939, el de siempre) = hay que
    arreglarlo; ÁMBAR sólido = hay que revisarlo; TURQUESA sólido = lo que se hace seguido; turquesa claro = lo demás. */
@@ -37630,6 +38009,7 @@ function renderAdmin(){
   ADM_AV.nLista=list.length;
   try{ nxA3Pintar(); if(admSecVisible('cam')) nxSugPintar(); }catch(e){ console.error(e); }   // 🔔🚚 (§4js, A3 y A1)
   try{ if(admSecVisible('cam')) cargaVivaPintar(); }catch(e){ console.error(e); }   // (§4me) con su pestaña escondida no se dibuja (3D y mapa miden la caja)
+  try{ chvPintar(); }catch(e){ console.error(e); }   // 🔁 (mejora 470) arma la foto de este aparato y dice lo que cambió hoy
   admArribaPintar();   // ✨ (§4me) «Para hacer», «Hoy» y las pestañas, con lo que acaban de dejar los carteles
   try{ salioBarPintar(); }catch(e){ console.error(e); }   // 🚚 (mejora 312) «🚚 Salió el …» arriba de «Hoy»
   try{ diaLogPintar(); }catch(e){ console.error(e); }   // 🕘 (mejora 406) el día de logística, debajo
@@ -37645,8 +38025,8 @@ function renderAdmin(){
   var dn=dayNumMap();
   var deMas=Math.max(0, list.length-ADM_TOPE);
   try{ rptTiendasPintar(); }catch(e){ console.error(e); }   // 🏪 (mejora 317) con el chip «Reposiciones», las tiendas que piden dos veces
-  try{ admGpsEntPintar(list, admVista()==='fichas'); }catch(e){ console.error(e); }   // §4ok-106 (con las fichas va adentro, arriba del día de hoy)
-  if(admVista()==='fichas'){   // 🃏 (24/10) con las fichas, la tabla ni se arma (se arma al volver a «Ver como tabla»)
+  try{ admGpsEntPintar(list, admVista()!=='tabla'); }catch(e){ console.error(e); }   // §4ok-106 (con las fichas va adentro, arriba del día de hoy)
+  if(admVista()!=='tabla'){   // 🃏 (24/10) con las fichas (o la compacta, mejora 469), la tabla ni se arma (se arma al volver a «Ver como tabla»)
     if(deMas) list=list.slice(0, ADM_TOPE);
     admFichasPintar(list, dn); admMasPintar(deMas);
     try{ pgPintar(); }catch(e){}   // 🎨 (16/11, mejora 433) cómo va el guardado de cada ficha
@@ -62439,6 +62819,7 @@ function showPedidoModal(id){
   var vec=fichaVecinos(p); FICHA_VEC=vec;
   var N=fichaNota(p), contras=fichaContras(p, N);
   // 3 · cuándo se vio antes en este aparato (se anota una vez por apertura: tildar una etiqueta repinta y no lo pisa)
+  try{ chvMirar(true); }catch(e){}   // 🔁 (mejora 470) lo que cambió se anota ANTES de dar la ficha por vista
   if(FICHA_ABIERTA_ID!==String(p.id) || !document.getElementById('modal').classList.contains('on')){ FICHA_VISTO_ANT=fichaVistaDe(p.id); FICHA_ABIERTA_ID=String(p.id); fichaVistaAnotar(p.id); }
   var despues=fichaCambioDespues(p, FICHA_VISTO_ANT);
   var mapaPt=ret ? null : fichaMapaPunto(p, N);
@@ -78494,6 +78875,7 @@ function asisLogistica(){
       t:ubP.length+' entrega'+(ubP.length===1?'':'s')+' de '+Ub.diasTxt+' sin ubicación',
       x:((Ub.n ? 'Pedíselas al cliente por WhatsApp: el mensaje sale armado. ' : '')+(Ub.nSinCel ? (Ub.nSinCel+' sin celular: llamá a la vendedora.') : '')).trim(),
       lista:asisPedLista(ubP.map(function(x){ return x.p; })), b:['📍 Pedir las ubicaciones', 'ubfAbrir()'] }); }catch(e){}
+  try{ var Rg=riesgoAsis(); if(Rg) A.push(Rg); }catch(e){}   // ⚠️ (22/11, mejora 459) las entregas de mañana en riesgo
   /* 🗓️ (27/10) lo sin revisar o sin pedir que se entrega dentro del plazo de producción (`semanaUrgentes`, la cuenta del botón «Semana») */
   try{ var U=semanaUrgentes();
     if(U.length){ var ps=[]; U.forEach(function(l){ if(ps.indexOf(l.p)<0) ps.push(l.p); });
