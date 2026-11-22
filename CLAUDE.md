@@ -1930,7 +1930,10 @@ ruta (`nxRutaOrdenar`). Sin ningún camión asignado el panel lo dice (`.mrp-vac
   del camión (`cvSalioHtml`, 3D y 2D, solo hoy y con pedidos) → `camionSalioMarcar`: una tilde más en `__carga_chk__`,
   `fecha|camión|🚚 SALIÓ|HH:MM` (hora de Bolivia; `salioClave`/`camionSalio`), con sello y junta como las demás; pregunta si falta carga;
   «deshacer». En 3D el andén queda vacío con «🛣️ salió a las…» (la firma de la escena incluye `camionSalio`); en Mis pedidos el viaje dice
-  «Salió HH:MM» (`pedidoViajeDatos`). El cartel «⚠️ SIN CAMIÓN» se toca → `cv3dSinCamion` (lista con `cvAsignar`). `tests/test_camion_salio.js` (10).
+  «Salió HH:MM» (`pedidoViajeDatos`).
+  🙈 **El BOTÓN se sacó el 22/11** (dueño: *«Ya salió a mano quítalo si nunca se usó en los últimos 20 días»*; el último, el 26/10, según
+  «📊 Uso del panel»): ni la ficha del camión (`cvSalioHtml`) ni la ciudad (`patio.js`, `PATIO_V`) lo ofrecen; la salida la marca el GPS. Una
+  marca a mano que ya estaba se lee y se deshace; `camionSalioMarcar` sigue para el cierre de entregas. No volver a ponerlo sin que lo pida. El cartel «⚠️ SIN CAMIÓN» se toca → `cv3dSinCamion` (lista con `cvAsignar`). `tests/test_camion_salio.js` (10).
   🛰️ GPS: Monnet i-monnet 5.0, `VEHICULO_PLACA`; ya tiene las geocercas «Centro de Dist. MULTIESPUMAS» y «Centro de dist. BANZER» con alertas
   «Unidad <placa> Generó ALERTA FUERA/DENTRO DE GEOCERCA <nombre> el AAAA/MM/DD HH:MM:SS» (rebotan en segundos: hace falta filtrar). Bitácora §4kg.
 - **Bot (`.gs` 2026-10-11-a, sin implementar)**: el borrador se reconoce por `estado`, no por `kommo-` (una venta de Kommo completada no

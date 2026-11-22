@@ -6,6 +6,8 @@
    2. En Mis pedidos, el viaje de un pedido de ese camión pasa a «Salió HH:MM» (en camino); el de otro camión, no.
    3. Si al camión le falta tildar carga, pregunta antes; «deshacer» lo saca.
    4. «⚠️ SIN CAMIÓN»: `cv3dSinCamion` lista esos pedidos con «🚚 Asignar camión…»; asignar uno lo saca de la lista.
+   🙈 (22/11, dueño: «Ya salió a mano quítalo si nunca se usó en los últimos 20 días») el BOTÓN ya no sale: la salida la marca el GPS.
+   Una marca a mano que ya estaba se sigue leyendo y se puede deshacer (§1, §1b cambiaron a conciencia).
    Datos SINTÉTICOS, reloj clavado en el miércoles 14/10/2026 10:42 de Bolivia.  Se corre:  node tests/test_camion_salio.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 const path = require('path');
@@ -47,15 +49,15 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     var D2=cargaVivaDatos(), despues=cvSalioHtml(D2, D2.porK['Carry']);
     return { antes:antes, despues:despues, hora:camionSalio(todayStr(), 'Carry'), celda:textoCargaChk(CARGA_CHK), guardo:(typeof CARGA_CAMBIOS!=='undefined') };
   });
-  chk('el botón «🚚 Ya salió»: claro con carga pendiente, lleno con todo cargado', /^<button type="button" class="cvc-salio-btn" /.test(r.antes||'') && /‖ <button type="button" class="cvc-salio-btn listo"/.test(r.antes||''), r.antes);
+  chk('🙈 sin el botón «🚚 Ya salió» (con o sin la carga tildada)', !/cvc-salio-btn|Ya salió/.test(r.antes||''), r.antes);
   chk('al tocarlo queda la hora de Bolivia y va en la fila de los tildes de la carga', r.hora==='10:42' && /\|Carry\|🚚 SALIÓ\|10:42/.test(r.celda||''), r);
-  chk('la ficha dice «Salió a las 10:42» con «deshacer»', /Salió a las 10:42/.test(r.despues||'') && /deshacer/.test(r.despues||''), r.despues);
+  chk('una marca a mano que ya estaba: la ficha dice «Salió a las 10:42» con «deshacer»', /Salió a las 10:42/.test(r.despues||'') && /deshacer/.test(r.despues||''), r.despues);
 
-  console.log('\n── 1b. La ventana que se abre al tocar el camión en 3D trae «Ya salió» ──');
+  console.log('\n── 1b. La ventana que se abre al tocar el camión en 3D ya no trae «Ya salió» ──');
   r = await ev(() => { var D=cargaVivaDatos(); cv3dCamPanel(D.porK['Foton nuevo']);
     var m=document.getElementById('dep-modal'), b=m && m.querySelector('.cvc-salio-btn');
     var out={ btn:!!b, txt:m ? m.innerText.replace(/\s+/g,' ') : '' }; depPanel(null); return out; });
-  chk('tocar el camión abre sus pedidos con «🚚 Ya salió» abajo', r.btn && /Ya salió/.test(r.txt) && /Revisá los pedidos/.test(r.txt), r.txt.slice(0,200));
+  chk('tocar el camión abre sus pedidos sin «🚚 Ya salió»', !r.btn && !/Ya salió/.test(r.txt) && /CLI 2/.test(r.txt), r.txt.slice(0,200));
 
   console.log('\n── 2. Mis pedidos: el viaje del pedido ──');
   r = await ev(() => ({ carry:pedidoViajeDatos(findById('v1')), foton:pedidoViajeDatos(findById('v2')) }));
