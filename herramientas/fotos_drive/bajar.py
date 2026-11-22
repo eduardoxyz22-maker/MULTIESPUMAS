@@ -62,6 +62,8 @@ def miniatura(fid, ancho, dest):
 
 
 def hojas():
+    if os.path.exists(os.path.join(SALIDA, 'indice.json')) and not os.environ.get('HOJAS_DE_NUEVO'):
+        print('hojas: ya están (HOJAS_DE_NUEVO=1 para rehacerlas)'); return
     filas = [l.strip() for l in open(os.path.join(AQUI, 'carpetas.txt')) if l.strip() and not l.startswith('#')]
     todo = []
     for f in filas:
@@ -111,7 +113,7 @@ def elegidas():
         miniatura(fid, 1600, src)
         for ancho, dest in ((360, os.path.join(RAIZ, 'fotos-productos', clave + '.jpg')),
                             (1000, os.path.join(RAIZ, 'fotos-productos', 'grande', clave + '.jpg'))):
-            subprocess.run(['convert', src, '-fuzz', '7%', '-trim', '+repage', '-bordercolor', 'white', '-border', '3%',
+            subprocess.run(['convert', src, '-background', 'white', '-alpha', 'remove', '-alpha', 'off', '-fuzz', '7%', '-trim', '+repage', '-bordercolor', 'white', '-border', '3%',
                             '-resize', '%dx%d' % (ancho, ancho), '-quality', '76' if ancho == 360 else '74',
                             '-strip', '-interlace', 'JPEG', dest], check=True)
         hechas += 1

@@ -1,1 +1,24 @@
-# clave de la foto en el panel|id del archivo del Drive (la idea 455). Vacío = solo arma las hojas para elegir.
+# clave de la foto en el panel|id del archivo del Drive (la idea 455). Elegidas el 22/11 de las hojas de `salida/`.
+titanio-latex|12ZSJJE1Kw8KvTDsaT7RL5Hv424hVeiRG
+titanio-ice|1oM-3TbepPPcsIx1fj5aS82XnLvqqSwT8
+oro-viscoelastico|1QxOC84dhk0bif7s6xjk4j46kX4IHVqPP
+oro-birelax|1fl5q1vwtW1MOnMKqwEULGr-gaT3gDZIB
+oro-ortopedico|1TKuh5cKar8IIZDxvFWVQjsxL2y95m7ay
+especial-ortopedico|18JtwAB8IP6SRQYmo6Aileu2yboaINcjS
+especial-semiortopedico|1nUI26ADeXPKHGUx3dzthrqZU-l5oPnIA
+especial-tropical|1vD1HkONBZlabS_hc3ns41CPn-spFzmCS
+especial-antialergico|16mgsfP0Xmu9r2XR9_tTC5H1GEqGz9doG
+somier-birelax|15krkufctQeQpu7V9_SPhWvkwnD2d_EsV
+somier-especial|1AYp5XoJbh4CM38q3kFrFJ2aRKfeBoPvo
+somier-oro|1Wo9c42u5hYIxmpAK9TOnACqjXYXIolSr
+somier-titanio-ice|1xeQEik5gETARw9GoGDjeJMaocyTz6G_q
+somier-titanio-latex|15CvTOMxNxKjufG4NFJfGYJzUIm2c-b0d
+somier-tropical|1gzavLpkSLgF2ZMb7n5Bq_TU2a9PC1_Gr
+suena-confort-plus|1rpwejQ3Q65g4gXO9Ru9_k9PWeWSPZ4fh
+suena-essential|1H54itiI6H1qGoOiZhix6PLN2sgC17jTD
+suena-ortopedico|1Z_Qyuz1ExG28i6ArJGG0y1sMOK33yMUz
+suena-premier-deluxe|1T3kcuTd27pZyHvNJZxjkMgLKmC3uS-pr
+suena-semiortopedico|1xm6oebtMuB-m0YWgOHWJYPDpGvLk-Gr6
+suena-soft|1i8-duOGKSVKG8xaOriyBT9phduoCOmmO
+suena-somier-plomo|1M52GJ9AW5n7nTVu1iNowGxu9_oKmQcSo
+suena-somier-beige|1c9bnfDRHBBshviEGG3yWxIgyZzRcgZam
