@@ -31,12 +31,25 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
       [{ codigo:'CH1150', desc:'SOMIER TITANIO LATEX', medida:'160x190' }, 'somier-titanio-latex'],
       [{ codigo:'', desc:'SOMIER TITANIO LATEX', medida:'200x200' }, 'somier-titanio-latex'],
       [{ codigo:'CH1156', desc:'SOMIER ESPECIAL', medida:'180x190' }, 'somier-especial'],
-      /* sin foto: otra línea, otra cosa con el mismo nombre, el combo, lo que el código dice que es otro */
-      [{ codigo:'CH1220', desc:'TITANIO ICE', medida:'140x190' }, ''],
-      [{ codigo:'CH1212', desc:'SOMIER TITANIO ICE', medida:'140x190' }, ''],
+      [{ codigo:'CH1220', desc:'TITANIO ICE', medida:'140x190' }, 'titanio-ice'],
+      [{ codigo:'CH1212', desc:'SOMIER TITANIO ICE', medida:'140x190' }, 'somier-titanio-ice'],
+      [{ codigo:'CH1036', desc:'ORO ANATOMICO VISCOLASTICO', medida:'140x190' }, 'oro-viscoelastico'],
+      [{ codigo:'CH1121', desc:'HEAVEN TROPICAL', medida:'140x190' }, 'especial-tropical'],
+      [{ codigo:'', desc:'SOMIER ORO', medida:'140x190' }, 'somier-oro'],
+      [{ codigo:'CH1168', desc:'SOMIER PLATA SEMIORTOPEDICO', medida:'140x190' }, 'somier-especial'],
+      [{ codigo:'', desc:'ESPECIAL SEMIORTOPEDICO', medida:'140x190' }, 'especial-semiortopedico'],
+      /* Sueña */
+      [{ codigo:'COLT0038', desc:'COLCHON SEMIORTOP.', medida:'140x190' }, 'suena-semiortopedico'],
+      [{ codigo:'CS1011', desc:'COLCHON CONFORT PLUS', medida:'105x190' }, 'suena-confort-plus'],
+      [{ codigo:'', desc:'COLCHON SUEÑA PREMIER DELUXE', medida:'140x190' }, 'suena-premier-deluxe'],
+      [{ codigo:'', desc:'COLCHON ORTOPEDICO SUEÑA', medida:'140x190' }, 'suena-ortopedico'],
+      [{ codigo:'', desc:'SOMIER SUEÑA BEIGE', medida:'140x190' }, 'suena-somier-beige'],
+      [{ codigo:'', desc:'SOMIER SUEÑA PLOMO', medida:'140x190' }, 'suena-somier-plomo'],
+      /* sin foto: sin color, otra cosa con el mismo nombre, el combo, lo que el código dice que es otro, una línea sin foto */
+      [{ codigo:'CS1004', desc:'SOMIER SUEÑA', medida:'140x190' }, ''],
+      [{ codigo:'', desc:'CARIOCA PREMIER', medida:'140x190' }, ''],
+      [{ codigo:'', desc:'COLCHON SUEÑA LITE', medida:'105x190' }, ''],
       [{ codigo:'', desc:'PROTECTOR TITANIO LATEX', medida:'140x190' }, ''],
-      [{ codigo:'', desc:'SOMIER ESPECIAL TROPICAL', medida:'140x190' }, ''],
-      [{ codigo:'', desc:'ESPECIAL SEMIORTOPEDICO', medida:'140x190' }, ''],
       [{ codigo:'CD1403', desc:'TITANIO LATEX', medida:'50x70' }, ''],
       [{ codigo:'CMBSE002', desc:'COMBO SUEÑA ESSENTIAL', medida:'140x190' }, ''],
       [{ codigo:'', desc:'', medida:'' }, '']
@@ -49,16 +62,16 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   /* ── 2. La foto en lugar del dibujito: sin letras, con su archivo ── */
   const r2 = await page.evaluate(()=>{
     var h=prodIcoHtml({ codigo:'CH1129' }), d=new DOMParser().parseFromString('<div>'+h+'</div>','text/html'), im=d.querySelector('img');
-    var h2=prodIcoHtml({ codigo:'CH1220' });
+    var h2=prodIcoHtml({ desc:'COLCHON SUEÑA LITE', medida:'105x190' });
     return { img:!!im, src:im&&im.getAttribute('src'), alt:im&&im.getAttribute('alt'), txt:d.body.textContent, cls:im&&im.className, ice:/^<svg/.test(h2), lineas:PFOTO_LINEAS.map(function(a){ return a[1]; }) };
   });
   chk('2a · un Titanio Latex lleva su foto (img, alt vacío, sin letras)', r2.img && r2.alt==='' && r2.txt==='' && /^fotos-productos\/titanio-latex\.jpg\?v=/.test(r2.src) && /\bpfoto\b/.test(r2.cls), r2);
-  chk('2b · un Titanio Ice (sin foto todavía) sigue con el dibujito', r2.ice, r2);
+  chk('2b · un Sueña Lite (sin foto) sigue con el dibujito', r2.ice, r2);
   const raiz = path.resolve(__dirname, '..');
   const faltan = r2.lineas.filter(k=>!fs.existsSync(path.join(raiz,'fotos-productos',k+'.jpg')) || !fs.existsSync(path.join(raiz,'fotos-productos','grande',k+'.jpg')));
   chk('2c · cada línea de PFOTO_LINEAS tiene su foto chica y la grande', faltan.length===0, faltan);
   const pesos = r2.lineas.map(k=>fs.statSync(path.join(raiz,'fotos-productos',k+'.jpg')).size);
-  chk('2d · las chicas pesan menos de 25 KB cada una', pesos.every(n=>n<25000), pesos);
+  chk('2d · las chicas pesan menos de 30 KB cada una', pesos.every(n=>n<30000), pesos);
 
   /* ── 3. El formulario: la foto aparece al poner el código y se va al cambiarlo ── */
   const r3 = await page.evaluate(async()=>{

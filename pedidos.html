@@ -18874,11 +18874,35 @@ var PICO_MEMO={};
    Solo colchón y somier (`prodIcoTipo`): un protector o un combo «TITANIO LATEX + SOMIER» siguen con el dibujo. SOLO MIRA: el `alt` va vacío
    (no suma letras a lo que leen las pruebas y las copias). ⚠️ Una foto NUEVA = el archivo en las dos carpetas + un renglón en `PFOTO_LINEAS`
    (el somier ANTES que el colchón de la misma línea) + subir `PFOTO_V`. En Playwright apagado salvo `FOTO_PRUEBA`. */
-var PFOTO_V='20261122a';
+var PFOTO_V='20261122b';
 var PFOTO_LINEAS=[
+  /* Heaven: los somieres primero (si no, «SOMIER ORO» caería en el colchón ORO…) */
   [/^SOMIER TITANIO LATEX\b/, 'somier-titanio-latex', 'Somier Titanio Latex'],
-  [/^SOMIER ESPECIAL\b(?! TROPICAL)/, 'somier-especial', 'Somier Especial'],
-  [/^TITANIO LATEX\b/, 'titanio-latex', 'Colchón Titanio Latex']
+  [/^SOMIER TITANIO ICE\b/, 'somier-titanio-ice', 'Somier Titanio Ice'],
+  [/^SOMIER (?:BI ?RELAX|ORO BI ?RELAX)\b/, 'somier-birelax', 'Somier Bi Relax'],
+  [/^SOMIER ORO\b/, 'somier-oro', 'Somier Oro'],
+  [/^SOMIER (?:ESPECIAL\b(?! TROPICAL)|PLATA SEMI ?ORTOPEDICO\b)/, 'somier-especial', 'Somier Especial'],   // el del Drive es el CH1159 = PLATA SEMIORTOPÉDICO
+  [/^SOMIER (?:ESPECIAL |HEAVEN )?TROPICAL\b/, 'somier-tropical', 'Somier Tropical'],
+  /* Sueña: el somier va por el color (gris con hojas = el del Essential; beige = el del Premier Deluxe); sin color, sin foto */
+  [/^SOMM?IER (?:SUENA )?(?:DELUXE|.*\b(?:PLOMO|GRIS)\b)/, 'suena-somier-plomo', 'Somier Sueña (plomo)'],
+  [/^SOMM?IER (?:SUENA )?(?:PREMIER\b(?! DELUXE)|.*\bBEIGE\b)/, 'suena-somier-beige', 'Somier Sueña (beige)'],
+  /* Heaven: los colchones */
+  [/^TITANIO LATEX\b/, 'titanio-latex', 'Colchón Titanio Latex'],
+  [/^TITANIO ICE\b/, 'titanio-ice', 'Colchón Titanio Ice'],
+  [/^ORO (?:ANATOMICO )?VISCO(?:E?LASTICO)?\b/, 'oro-viscoelastico', 'Colchón Oro Viscoelástico'],
+  [/^ORO BI ?RELAX\b/, 'oro-birelax', 'Colchón Oro Bi Relax'],
+  [/^ORO ORTOPEDICO\b/, 'oro-ortopedico', 'Colchón Oro Ortopédico'],
+  [/^ESPECIAL ORTOPEDICO\b/, 'especial-ortopedico', 'Colchón Especial Ortopédico'],
+  [/^ESPECIAL SEMI ?ORTOPEDICO\b/, 'especial-semiortopedico', 'Colchón Especial Semiortopédico'],
+  [/^(?:ESPECIAL|HEAVEN) TROPICAL\b/, 'especial-tropical', 'Colchón Especial Tropical'],
+  [/^(?:ESPECIAL )?ANTIALERGICO\b/, 'especial-antialergico', 'Colchón Especial Antialérgico'],
+  /* Sueña: los colchones */
+  [/^(?:SUENA )?CONFORT PLUS\b/, 'suena-confort-plus', 'Colchón Sueña Confort Plus'],
+  [/^(?:SUENA )?ESSENTIAL\b/, 'suena-essential', 'Colchón Sueña Essential'],
+  [/^(?:SUENA )?PREMIER DELUXE\b/, 'suena-premier-deluxe', 'Colchón Sueña Premier Deluxe'],
+  [/^(?:ORTOPEDICO SUENA|SUENA ORTOPEDICO)\b/, 'suena-ortopedico', 'Colchón Sueña Ortopédico'],
+  [/^(?:SUENA )?SEMI ?ORTOP(?:EDICO|\.)?(?:\s|$)(?!.*\bHEAVEN\b)/, 'suena-semiortopedico', 'Colchón Sueña Semiortopédico'],
+  [/^(?:SUENA )?SOFT\b/, 'suena-soft', 'Colchón Sueña Soft Ice']
 ];
 function prodFotoVa(){
   try{ if(navigator.webdriver && !window.FOTO_PRUEBA) return false; }catch(e){}
