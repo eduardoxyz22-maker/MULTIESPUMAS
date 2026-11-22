@@ -488,10 +488,20 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
     crvAbrir(); var cm = document.querySelector('#modal-box .crv-modal'); out.listaAdm = cm ? cm.textContent : ''; out.listaAdmH = cm ? cm.innerHTML : '';
     crvResolver('crvP1', 'Carola Chavez');
     out.resuelto = guardados.length ? crvDe(guardados[0]) : null;
-    out.despues = crvHacer() === null;
+    var HD = crvHacer(); out.despues = !HD || HD.k !== 'crv'; out.despuesInfo = HD ? { k:HD.k, sev:HD.sev, t:HD.t, s:HD.s, n:HD.n } : null;
     if (guardados.length) { var ix2 = STATE.findIndex(x => x.id === 'crvP1'); STATE[ix2] = guardados[0]; }
     out.ficha = crvFichaHtml(findById('crvP1'));
     crvAbrir(); out.decididas = (document.querySelector('#modal-box .crv-modal') || {}).textContent || '';
+    /* 🔀 (22/11) los cruces avisados, haya reclamo o no: uno sin reclamo (crvP3) y el decidido (crvP1) */
+    STATE.push({ id:'crvP3', oc:'11-701', fecha:'2026-11-26', vendedor:'Mirian Salazar', cliente:'CLIENTE SIN RECLAMO', celular:'70011188', productos:[{ desc:'X', cant:1 }], rev:1, ts:Date.now() - 86400000 });
+    crxTomar([{ id:'crvP1', v:'Isabel Robledo', n:['Carola Chavez'], t:Math.floor(Date.now() / 1000) - 3600 },
+              { id:'crvP3', v:'Mirian Salazar', n:['Isabel Robledo'], t:Math.floor(Date.now() / 1000) - 86400 },
+              { id:'crvViejo', v:'X', n:['Y'], t:Math.floor(Date.now() / 1000) - 3 * 86400 },
+              { id:'crvP3', v:'Mirian Salazar', n:['Isabel Robledo'], t:Math.floor(Date.now() / 1000) - 40 * 86400 }]);
+    var HX = crvHacer(); out.cxHacer = HX ? { k:HX.k, sev:HX.sev, n:HX.n, t:HX.t, s:HX.s, fn:HX.fn } : null;
+    crvAbrir(); var cxs = document.querySelector('#modal-box .crv-cxs');
+    out.cxTxt = cxs ? cxs.textContent : ''; out.cxAbierto = !!(cxs && cxs.open); out.cxItems = cxs ? cxs.querySelectorAll('.crv-cx').length : -1;
+    UNLOCKED = false; out.cxSinClave = crvHacer() === null; UNLOCKED = true;
     try { closeModal(); } catch (e) {}
     return out;
   }, ahora);
@@ -513,6 +523,8 @@ console.log('\n── 8. La página: el cartel en «Nuevo pedido» ──');
   chk('8n. si Isabel corrige la venta, el pedido de revisión se conserva', r3.hereda);
   chk('⚠️ 8o. Administración (solo con la contraseña) lo ve con todo lo presentado y las capturas', r3.sinClave && /revisar de quién es el cliente/.test(r3.hacerAdm || '') && /CLIENTA INVENTADA/.test(r3.listaAdm) && /Es de Isabel Robledo/.test(r3.listaAdm) && /Es de Carola Chavez/.test(r3.listaAdm) && /respondió mi cotización/.test(r3.listaAdm) && /salió de mi gestión/.test(r3.listaAdm) && /Captura de Kommo/.test(r3.listaAdmH), { sin:r3.sinClave, hacer:r3.hacerAdm });
   chk('8p. «Es de Carola Chavez» (con confirmación) lo anota y sale de la lista', r3.resuelto && r3.resuelto.r === 'Carola Chavez' && r3.resuelto.rt > 0 && r3.despues, r3.resuelto);
+  chk('🔀 8z4. sin reclamos pendientes, «Para hacer» de Administración igual avisa los cruces (informativo, sin la contraseña nada)', r3.cxHacer && r3.cxHacer.k === 'crx' && r3.cxHacer.sev === 'i' && r3.cxHacer.n === 2 && r3.cxHacer.fn === 'crvAbrir()' && /CLIENTE SIN/.test(r3.cxHacer.s) && /Mirian Salazar \/ Isabel Robledo/.test(r3.cxHacer.s) && r3.cxSinClave, r3.cxHacer);
+  chk('🔀 8z5. «Cruces avisados» lista los de los 15 días (sin los viejos ni los que ya no están), quién cargó, a quién se avisó y el estado', r3.cxItems === 2 && r3.cxAbierto && /Cruces avisados/.test(r3.cxTxt) && /11-701 · CLIENTE SIN RECLAMO/.test(r3.cxTxt) && /sin reclamo/.test(r3.cxTxt) && /La cargó Mirian Salazar · según Kommo lo atendía Isabel Robledo/.test(r3.cxTxt) && /decidido: es de Carola Chavez/.test(r3.cxTxt), r3.cxTxt.slice(0, 500));
   chk('⚠️ 8z3. la decisión se ve en la ficha del pedido y en «Ya decididas», con «Cambiar»', /Revisión del cliente: es de Carola Chavez/.test(r3.ficha) && /Ya decididas/.test(r3.decididas) && /Decidido: es de Carola Chavez/.test(r3.decididas) && /Cambiar/.test(r3.decididas), { ficha:r3.ficha.slice(0, 200) });
   chk('⚠️ 8g. completando un borrador de Kommo (está en BORRADORES, no en la lista): el cartel sale', /puede ser de Carola Chavez/.test(r2.borrador), r2.borrador);
   chk('8h. Kommo contestó a medias y sin nadie: vuelve a preguntar y el cartel aparece', r2.inc.n === 2 && /Carola Chavez/.test(r2.inc.txt), r2.inc);
