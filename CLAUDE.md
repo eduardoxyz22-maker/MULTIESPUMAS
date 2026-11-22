@@ -1033,7 +1033,7 @@ habla con el servidor nuevo, solo con `servidorTiene('2026-11-16-a')`.
   esa línea, ya no «`}` con `return borrador;`». Un `.gs` nuevo cambia las TRES (`SCRIPT_VERSION`, `ESTA_VERSION`, `FIN_DEL_ARCHIVO`).
   `tests/test_gs_fable.js` (34), `tests/test_gs_texto_seguro.js` (53).
 
-## 🔐🛏️📷 Las ideas 451-470 elegidas por el dueño (22/11; «Quiero las ideas 451, 452, 453, 456, 457, 458, 459, 461, 462, 464, 465, 466, 467, 469, 470» y la 455 con las fotos reales; EN LA RAMA, sin publicar; la 451-453 piden el servidor `2026-11-22-a`, lo implementa el dueño)
+## 🔐🛏️📷 Las ideas 451-470 elegidas por el dueño (22/11; «Quiero las ideas 451, 452, 453, 456, 457, 458, 459, 461, 462, 464, 465, 466, 467, 469, 470» y la 455 con las fotos reales; PÁGINA PUBLICADA 22/11, versión 2026-11-22-c (dueño: «1,2,3,4 si»: la Papelera 30 días, el «sin camión» de mañana una vez arriba, 2 h / 4 h hábiles del cliente que espera, publicar); la 451-453 piden el servidor `2026-11-22-a`, lo implementa el dueño (enlace fijo `5b9059f…`, 14.430 líneas); volver atrás: ✏️ a la versión anotada Y pegar la 21-a de `92c7cfa…`, 14.111 líneas)
 Muestra de las ideas: https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk. Cinco agentes en ramas aparte (`ag-a`…`ag-e`) juntadas a mano; todo lo nuevo de la página apagado en
 Playwright salvo su bandera.
 ### 📷 455 La foto de cada producto (22/11; dueño: «Si ármalo», «Si conviértelas y si tb no olvides sueña»)
