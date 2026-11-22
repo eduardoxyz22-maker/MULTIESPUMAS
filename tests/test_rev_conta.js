@@ -387,8 +387,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
      la contadora leía que estaba pagada una venta que nadie cobró. La tabla ya decía bien
      «⚠️ SIN MONTO ANOTADO». */
   r = await page.evaluate(async () => {
-    STATE=[ P({ id:'N1', nota:'95', oc:'09-095', cliente:'NADIE ANOTÓ NADA', pagado:false, saldo:0, acuenta:0, metodoPago:'' }),
-            P({ id:'N2', nota:'96', oc:'09-096', cliente:'PAGADA', pagado:true, metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:900,fecha:hoy,nota:'96',comps:['V96']}]) }) ];
+    STATE=[ P({ id:'N1', nota:'95', oc:'09-095', cliente:'NADIE ANOTÓ NADA', pagado:false, saldo:0, acuenta:0, metodoPago:'', productos:[{desc:'COLCHON SOFT',medida:'140x190',cant:1}] }),   /* (22/11) sin precio: con precio el panel ya sabe el total */
+            P({ id:'N2', nota:'96', oc:'09-096', cliente:'PAGADA', pagado:true, productos:[{desc:'COLCHON SOFT',medida:'140x190',cant:1,precio:900}], metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:900,fecha:hoy,nota:'96',comps:['V96']}]) }) ];
     RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
     var saldo=function(id){ CTA_ULTIMA=''; showContaModal(id);
       var f=[].slice.call(document.querySelectorAll('#modal-box .dl-row')).map(function(e){ return e.textContent.replace(/\s+/g,' '); })
