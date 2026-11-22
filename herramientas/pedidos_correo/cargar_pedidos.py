@@ -60,6 +60,10 @@ def post(body, intentos=3):
         if body.get('action') != 'list' and isinstance(j, dict) and 'pedidos' in j:
             time.sleep(3 * (intento + 1))
             continue
+        # 🚪 (22/11, mejora 451) Con la puerta GET cerrada (GET_CERRADO) esa misma lectura vuelve como `get_cerrado`: tampoco corrió.
+        if isinstance(j, dict) and j.get('error') == 'get_cerrado':
+            time.sleep(3 * (intento + 1))
+            continue
         return j
     raise SystemExit('El servidor del panel no contestó bien: ' + (r.stdout or r.stderr)[:300])
 

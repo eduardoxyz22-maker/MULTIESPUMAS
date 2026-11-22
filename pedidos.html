@@ -2724,6 +2724,21 @@ html.tema-halloween .h-ruta::after{content:'';position:absolute;left:-50%;width:
 .uso-top{background:#fff8e6;border:1px solid #f3d38b;border-radius:10px;padding:8px 11px;margin-bottom:10px;font-size:.86rem;color:#4a3400}
 .uso-sub{font-size:.8rem;color:var(--muted);margin:0 0 9px}
 .uso-t{width:100%;border-collapse:collapse;font-size:.84rem}
+/* 🗑 (22/11, mejora 452) Lo borrado */
+#lbr-body .lbr-f{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5edf0;border-left:4px solid #9f1239;border-radius:10px;padding:9px 12px;margin:0 auto 8px;max-width:980px}
+#lbr-body .lbr-f.lbr-hecho{border-left-color:#22A06B;opacity:.85}
+#lbr-body .lbr-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+#lbr-body .lbr-t b{font-size:.9rem;color:#0f172a}
+#lbr-body .lbr-s,#lbr-body .lbr-p,#lbr-body .lbr-q{font-size:.76rem;color:#475569}
+#lbr-body .lbr-q{color:#9f1239}
+#lbr-body .lbr-tag{font-size:.7rem;background:#eef6ff;color:#1d4ed8;border-radius:6px;padding:1px 6px;font-weight:600}
+#lbr-body .lbr-a{flex:none}
+#lbr-body .lbr-rec{background:#9f1239;color:#fff;font-weight:700;border:none}
+#lbr-body .lbr-ok{font-size:.78rem;color:#15803d;font-weight:700}
+#lbr-body .lbr-gr{font-size:.74rem;color:#64748b}
+#lbr-body .lbr-av{max-width:980px;margin:12px auto;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;border-radius:10px;padding:12px 14px;font-size:.86rem}
+#lbr-body .lbr-av.lbr-gris{background:#fff;border-color:#e5edf0;color:#475569}
+@media (max-width:560px){#lbr-body .lbr-f{flex-direction:column;align-items:flex-start}}
 .uso-t td{border-top:1px solid #e5edf0;padding:7px 6px;vertical-align:top}
 .uso-t td.uso-n{width:34%}
 .uso-e{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
@@ -2968,7 +2983,7 @@ html.wco.practica .pr-franja{padding-left:calc(14px + var(--wco-l,0px));padding-
 (function(){
   var K='me_practica', SP=window.Storage && Storage.prototype, LS=null, SS=null, on=false;
   /* Las lecturas puras que pueden ir a la planilla de verdad (todo lo demás, también lo que no tiene `action` —para el servidor es «save»—, NO) */
-  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1, iaSemana:1, chatLeer:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones · iaSemana (16-a): el porqué y la mano guardados · chatLeer (16-a, 344): el chat del equipo se lee (en práctica no manda el «visto» ni mensajes) */
+  window.PRACTICA_LECTURAS={ list:1, histStockLeer:1, gpsRuta:1, gpsHist:1, waRespuestas:1, rechazos:1, getlog:1, mallLeer:1, cotLeer:1, iaSemana:1, chatLeer:1, borradosLeer:1 };   /* mallLeer/cotLeer (servidor 14-b): lecturas puras de la rueda del mall y de las cotizaciones · iaSemana (16-a): el porqué y la mano guardados · chatLeer (16-a, 344): el chat del equipo se lee (en práctica no manda el «visto» ni mensajes) */
   window.PRACTICA=false;
   if(!SP) return;
   var G=SP.getItem, S=SP.setItem, R=SP.removeItem;
@@ -8805,6 +8820,7 @@ html.con-pasos{ scroll-padding-bottom:84px; }
 </div>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <!-- 🚚 (13/11, idea 204) Entregas por camión: cuántas entregas hizo cada camión o chofer en el mes, de cada tienda (`abrirEntregasCamion`). -->
+<div id="lbr-overlay" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="lbr-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#9f1239;color:#fff;display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap"><b id="lbr-tit" style="font-size:.95rem">🗑 Lo borrado</b><span id="lbr-info" style="font-size:.78rem;opacity:.92"></span><label for="lbr-q" class="sr-only" style="position:absolute;left:-9999px">Buscar en lo borrado</label><input id="lbr-q" type="search" placeholder="🔎 Buscar: N°, cliente, vendedora, producto, quién borró" oninput="lbrBuscar(this.value)" style="margin-left:auto;flex:1 1 220px;max-width:360px;border:none;border-radius:7px;padding:6px 9px;font-size:.84rem"><button class="btn btn-sm" style="background:#fff;color:#9f1239;font-weight:700" onclick="lbrCargar()">🔄 Releer</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="lbrCerrar()">✕ Cerrar</button></div><div id="lbr-body" style="flex:1;overflow:auto;padding:12px"></div></div>
 <div id="ec-overlay" class="adm-ov" role="dialog" aria-modal="true" aria-labelledby="ec-tit" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#1d4ed8;color:#fff;display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap"><b id="ec-tit" style="font-size:.95rem">🚚 Entregas por camión</b><span id="ec-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" id="ec-copiar" style="margin-left:auto;background:#fff;color:#1d4ed8;font-weight:700" onclick="ecCopiar()">📋 Copiar</button><button class="btn btn-sm" id="ec-bajar" style="background:#fff;color:#1d4ed8;font-weight:700" onclick="ecBajar()">⬇️ Excel</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="ecCerrar()">✕ Cerrar</button></div>
 <div class="no-print ec-ctl">
   <div class="ec-mes"><button type="button" id="ec-ant" onclick="ecMes(-1)" aria-label="Mes anterior">‹</button><b id="ec-mes-txt"></b><button type="button" id="ec-sig" onclick="ecMes(1)" aria-label="Mes siguiente">›</button></div>
@@ -11573,7 +11589,7 @@ function apiPost(payload){
   try {
     /* 💬 (07/11, idea 118) La pregunta a Claude lleva su propio `quien` («Administración», «Logística»…): no se pisa. */
     /* ⏳ (14/11, 267) …y el lugar apartado también (`apartarCupo` dice quién lo apartó: la vendedora, o Logística / Administración). */
-    payload.quien = ((payload.action==='bloki' || payload.action==='apartarCupo') && payload.quien) ? String(payload.quien) : (getVendedorMem()||'');
+    payload.quien = ((payload.action==='bloki' || payload.action==='apartarCupo' || payload.action==='delete' || payload.action==='borradoRecuperar') && payload.quien) ? String(payload.quien) : (getVendedorMem()||'');
     payload.dispositivo = dispositivoId();
     if(payload.action==='list'){ var _pq=getPending(); payload.cola=_pq.length; payload.colaIds=_pq.slice(0,5).map(function(x){ return String(x.id||''); }); }
     /* 🧪 (271) En práctica, Administración ve «🧪 <nombre>» y la cola de VERDAD de este aparato (la de práctica no existe para nadie más) */
@@ -11805,6 +11821,7 @@ function apiList(opts){
       if(igual) Object.defineProperty(lista, '_igual', { value:true, enumerable:false, configurable:true, writable:true });
     }catch(e){}
     try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
+    try{ rspTomar(j.rp); }catch(e){}   // 💾 (22/11, mejora 453) la última prueba del respaldo (servidor 2026-11-22-a)
     try{ if(j.cx) crxTomar(j.cx); }catch(e){}   // 🔀 (20/11) qué ventas nombraron a qué asesora (el cruce), para que la que reclama pida revisión
     try{ if(j.gps) gpsTomar(j.gps, j.ahora); }catch(e){}   // 🛰️ (§4ko) las posiciones de los camiones vienen con la lectura
     try{ if(j.gpsDia) gpsDiaTomar(j.gpsDia); }catch(e){}   // 🛰️ (§4kp) y lo que pasó en el día: salidas, registro y paradas
@@ -12271,7 +12288,8 @@ function rechazoFirme(rec, res, colaTxt){
 /* `rev` = el sello con el que se VIO la fila (§4fz). El servidor nuevo no borra si ya no es el
    de la hoja; uno viejo lo ignora y borra como siempre. Sin `rev` (null) no se manda. */
 function apiDelete(id, rev){
-  var b={action:'delete', id:id};
+  /* 🗑 (22/11, mejora 452) Quién borra (el nombre elegido, o Administración / Logística / Contabilidad): queda en «Borrados» y en la Papelera. */
+  var b={action:'delete', id:id, quien:(function(){ try{ return quienEdita()||''; }catch(e){ return ''; } })()};
   if(rev!=null) b.rev=Number(rev)||0;
   return apiPost(b);
 }
@@ -36640,6 +36658,8 @@ function admHacerDatos(){
     var u=tr.reduce(function(a,r){ return a+r.u; },0);
     add({ k:'busca', sev:'i', ic:'📥', n:u, t:'Hoy hay que ir a buscar', s:Object.keys(por).map(function(k){ return k+' '+por[k]; }).join(' · '), b:'Ver', fn:"ADM_LUG_DIA='hoy';admLugaresPintar();admIrA('adm-lugares')", tag:'ir a buscar hoy', nTxt:stockUnid(u) });
   }catch(e){}
+  // 💾 (22/11, mejora 453) el respaldo de la planilla: si la última prueba falló o hace más de 40 días que no se prueba
+  try{ add(rspHacer()); }catch(e){}
   // 📅 entregas fuera del mes que no se ven en la lista
   var F=ADM_AV.fuera||{};
   add({ k:'fuera', sev:'i', ic:'📅', n:F.n||0, t:'Entregas fuera de '+(F.mes||'este mes')+' que no se ven en la lista', s:F.txt||'', b:'Ver', fn:"admSecPoner('ped');admIrA('adm-fuera')", tag:'fuera de '+(F.mes||'este mes') });
@@ -38429,6 +38449,7 @@ function renderAdmin(){
   admCalPintar();   // 📅 (§4im)
   try{ ensenaMirar(); }catch(e){}   // 🎓 (mejora 381) Bloki le enseña a logística lo que nunca usó
   try{ usoBotonPintar(); }catch(e){}   // 📊 (mejora 382) «Uso del panel», con la contraseña
+  try{ lbrBotonPintar(); }catch(e){}   // 🗑 (22/11, mejora 452) «Lo borrado», con la contraseña
   admLugaresPintar();   // 📍 (§4ir)
   renderChips(); renderRevisar(); renderFueraDelMes(); try{ waRespPintar(); }catch(e){} renderRptAtrasadas(); renderCierreEntAviso(); renderStockAviso(); renderBorradoresHuerfanos(); autoAbrirParte(); pintarBotonCierre();
   try{ cupPronAdmPintar(); }catch(e){ console.error(e); }   // 📈 (14/11, 266) los turnos que se van a llenar (deja sus números en ADM_AV.cupos)
@@ -81769,6 +81790,164 @@ function usoBotonPintar(){
   if(!b){ b=document.createElement('button'); b.id='uso-btn'; b.className='btn btn-sm at-t'; b.style.setProperty('--c','#334155'); b.setAttribute('data-d','qué se usa y qué no');
     b.title='Qué herramientas del panel se usan y cuáles no, de lo que ya guarda la planilla'; b.textContent='📊 Uso del panel'; b.onclick=function(){ usoAbrir(); }; g.insertBefore(b, g.firstChild); }
 }
+/* ============================================================================
+   🗑 LO BORRADO: VER Y RECUPERAR (22/11, mejora 452; el dueño la eligió con la muestra del 22/11)
+   Administración → Herramientas → «🗑 Lo borrado» (con la contraseña; botón en «⚙️ Ajustes y claves», `lbrBotonPintar`). Ventana
+   `#lbr-overlay` (adm-ov): lo borrado en los últimos 30 días (qué pedido, cliente, productos, total, quién lo borró y cuándo), con un
+   buscador, y «↩️ Recuperar» que pregunta (`preguntaYa`), le pide al servidor que lo vuelva a escribir (`borradoRecuperar`, con el
+   candado y revalidando adentro: si ya hay una fila con ese id no hace nada) y relee la planilla (`refrescarEstadoYa`).
+   · Lo da el servidor 2026-11-22-a (`borradosLeer`, hoja «Papelera»): con uno anterior la ventana lo dice y no pide nada.
+   · Lo borrado antes de esa versión se ve (de la hoja «Borrados») pero no se puede recuperar: no quedó la fila.
+   · El borrado manda quién borró (`quienEdita()`, ver `apiDelete`): eso es lo que se ve acá.
+   · Recuperar le devuelve el pedido con un sello nuevo: una copia vieja abierta en otro aparato choca y relee, no lo vuelve a borrar.
+   · Solo mira y recupera: nunca borra nada. En Playwright el botón no aparece salvo `window.LBR_PRUEBA`.
+   `tests/test_papelera.js`.
+   ========================================================================== */
+var LBR_SERVIDOR='2026-11-22-a', LBR={ L:null, q:'', cargando:false, err:'', hechos:{} };
+function lbrVa(){ try{ return !navigator.webdriver || !!window.LBR_PRUEBA; }catch(e){ return true; } }
+function lbrBotonPintar(){
+  var g=document.querySelector('.adm-tools .at-aj .at-b'); if(!g) return;
+  var b=document.getElementById('lbr-btn'), ve=lbrVa() && UNLOCKED;
+  if(!ve){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement('button'); b.id='lbr-btn'; b.className='btn btn-sm at-t'; b.style.setProperty('--c','#9f1239'); b.setAttribute('data-d','ver y recuperar lo borrado');
+    b.title='Los pedidos borrados en los últimos 30 días: quién los borró y cuándo, y «Recuperar» para volverlos a la planilla'; b.textContent='🗑 Lo borrado';
+    b.onclick=function(){ abrirLoBorrado(); }; g.insertBefore(b, g.firstChild); }
+}
+function abrirLoBorrado(){
+  if(!UNLOCKED){ toast('🔒 Con la contraseña de Administración.','err'); return; }
+  var ov=document.getElementById('lbr-overlay'); if(!ov) return;
+  ov.style.display='flex';
+  LBR.q=''; var q=document.getElementById('lbr-q'); if(q) q.value='';
+  lbrCargar();
+}
+function lbrCerrar(){ var ov=document.getElementById('lbr-overlay'); if(ov) ov.style.display='none'; }
+function lbrCargar(){
+  LBR.err=''; LBR.L=null;
+  if(!servidorTiene(LBR_SERVIDOR)){ LBR.err='servidor'; lbrRender(); return Promise.resolve(); }
+  LBR.cargando=true; lbrRender();
+  return conTopeDuro(apiPost({ action:'borradosLeer' }), 45000, 'tardo_datos').then(function(r){
+    if(r && r.ok && Array.isArray(r.borrados)) LBR.L=r.borrados;
+    else LBR.err=(r && r.error) ? motivoDelServidor(r.error) : 'el servidor no contestó la lista';
+  }, function(e){ LBR.err=motivoCorto(e); }).then(function(){ LBR.cargando=false; lbrRender(); });
+}
+/* Lo que se muestra de un borrado: de la fila guardada (`rec`) o, sin copia, de lo que anotó «Borrados». */
+function lbrDatos(x){
+  var p=x.rec||null, prods=[], total=0;
+  if(p){
+    (p.productos||[]).forEach(function(r){ if(!r) return; prods.push(String(r.desc||r.codigo||'?')+(r.medida?(' '+r.medida):'')+' ×'+(Number(r.cant)||1)); });
+    try{ total=ventaTotal(p); }catch(e){ total=0; }
+    if(!(total>0)) (p.productos||[]).forEach(function(r){ total+=(Number(r&&r.precio)||0)*(Number(r&&r.cant)||1); });
+  }
+  var id=String(x.id||''), tipo=id.indexOf('__ret_')===0 ? 'retiro' : (id.indexOf('kommo-')===0 ? 'kommo' : 'pedido');
+  return { id:id, tipo:tipo, oc:p ? cleanOC(p.oc) : (x.oc||''), cliente:p ? (p.cliente||'') : (x.cliente||''), vendedor:p ? (p.vendedor||'') : (x.vendedor||''),
+    entrega:p ? (p.fecha||'') : (x.entrega||''), prods:prods, total:r2(total), quien:x.quien||'', t:Number(x.t)||0, sinCopia:!!x.sinCopia || !p,
+    ya:!!x.ya, rcp:x.rcp||LBR.hechos[id+'|'+x.t]||'', monto:(p && tipo==='retiro') ? (Number(p.saldo)||0) : 0 };
+}
+function lbrCuando(t){ return t ? (fmtFecha(isoDeTsBolivia(t))+' '+hhmmDeTs(t)) : '—'; }
+function lbrBuscar(v){ LBR.q=String(v||''); lbrRender(true); }
+function lbrRender(soloLista){
+  var cu=document.getElementById('lbr-body'), info=document.getElementById('lbr-info'); if(!cu) return;
+  if(LBR.err==='servidor'){ if(info) info.textContent=''; cu.innerHTML='<div class="lbr-av">🗑 Para ver y recuperar lo borrado hace falta el servidor <b>'+esc(LBR_SERVIDOR)+'</b> (el de ahora es '+esc(SERVER_VER||'?')+'). El dueño lo pega en Apps Script e implementa; hasta entonces lo borrado se sigue anotando en la hoja «Borrados» como siempre.</div>'; return; }
+  if(LBR.cargando){ if(info) info.textContent='leyendo…'; cu.innerHTML='<div class="lbr-av lbr-gris">⏳ Leyendo lo borrado de los últimos 30 días…</div>'; return; }
+  if(LBR.err){ if(info) info.textContent=''; cu.innerHTML='<div class="lbr-av">No se pudo leer lo borrado ('+esc(LBR.err)+'). <button type="button" class="btn btn-sm" onclick="lbrCargar()">🔄 Probar de nuevo</button></div>'; return; }
+  var L=(LBR.L||[]).map(function(x, i){ var d=lbrDatos(x); d.i=i; return d; });
+  var q=sinTildes(String(LBR.q||'').toLowerCase()).trim(), V=L;
+  if(q){ var ws=q.split(/\s+/); V=L.filter(function(d){ var h=sinTildes([d.oc, d.cliente, d.vendedor, d.quien, d.prods.join(' '), d.id].join(' ').toLowerCase()); return ws.every(function(w){ return h.indexOf(w)>=0; }); }); }
+  if(info) info.textContent=L.length+' borrado'+(L.length===1?'':'s')+' en los últimos 30 días'+(q?(' · '+V.length+' con «'+LBR.q+'»'):'');
+  if(!L.length){ cu.innerHTML='<div class="lbr-av lbr-gris">✅ No se borró nada en los últimos 30 días.</div>'; return; }
+  var fila=function(d){
+    var tit=d.tipo==='retiro' ? ('💵 Retiro'+(d.monto?(' de '+fmtBs(d.monto)):'')+(d.vendedor?(' · '+d.vendedor):'')) : ((d.oc||'Sin N°')+(d.cliente?(' · '+d.cliente):''));
+    var est=d.rcp ? '<span class="lbr-ok">↩️ Recuperado'+(d.rcp.indexOf('↩️')===0?(' '+esc(d.rcp.slice(2).trim())):'')+'</span>'
+      : (d.ya ? '<span class="lbr-ok">Ya está en la planilla</span>'
+      : (d.sinCopia ? '<span class="lbr-gr" title="Se borró antes de la versión del servidor que guarda la fila entera">Sin copia: no se puede recuperar</span>'
+      : '<button type="button" class="btn btn-sm lbr-rec" data-i="'+d.i+'" onclick="lbrRecuperar(+this.getAttribute(\'data-i\'))">↩️ Recuperar</button>'));
+    return '<div class="lbr-f'+(d.rcp||d.ya?' lbr-hecho':'')+'" data-id="'+esc(d.id)+'"><div class="lbr-t"><b>'+esc(tit)+'</b>'+(d.tipo==='kommo'?' <span class="lbr-tag">📥 venta de Kommo</span>':'')+
+      '<span class="lbr-s">'+[d.vendedor && d.tipo!=='retiro' ? ('vendió '+esc(d.vendedor)) : '', d.entrega ? ('entrega '+esc(fmtFecha(d.entrega))) : '', d.total>0 && d.tipo!=='retiro' ? ('total '+fmtBs(d.total)) : ''].filter(Boolean).join(' · ')+'</span>'+
+      (d.prods.length?('<span class="lbr-p">'+esc(d.prods.slice(0,4).join(' · ')+(d.prods.length>4?(' y '+(d.prods.length-4)+' más'):''))+'</span>'):'')+
+      '<span class="lbr-q">🗑 Lo borró <b>'+esc(d.quien||'(no se sabe)')+'</b> el '+esc(lbrCuando(d.t))+'</span></div><div class="lbr-a">'+est+'</div></div>';
+  };
+  cu.innerHTML=V.length ? V.map(fila).join('') : '<div class="lbr-av lbr-gris">Nada con «'+esc(LBR.q)+'».</div>';
+}
+function lbrRecuperar(i, _otraVez){
+  var x=(LBR.L||[])[i]; if(!x) return;
+  var d=lbrDatos(x);
+  if(d.sinCopia || d.ya || d.rcp) return;
+  var nom=d.tipo==='retiro' ? ('el retiro'+(d.monto?(' de '+fmtBs(d.monto)):'')) : ((d.oc||'el pedido')+(d.cliente?(' de '+d.cliente):''));
+  var si=preguntaYa('↩️ ¿Recuperar '+nom+'?\n\nVuelve a la planilla tal cual estaba cuando lo borró '+(d.quien||'alguien')+' el '+lbrCuando(d.t)+': productos, pagos y fotos.\nSi mientras tanto se cargó de nuevo, va a quedar dos veces: fijate antes.',
+    { titulo:'¿Recuperar '+nom+'?', icono:'↩️', sub:'borrado el '+lbrCuando(d.t)+(d.quien?(' por '+d.quien):''), no:'No, dejarlo', si:'↩️ Sí, recuperarlo' },
+    function(){ lbrRecuperar(i, true); });
+  if(si===null || !si) return;
+  var btn=document.querySelector('#lbr-body .lbr-f[data-id="'+(window.CSS && CSS.escape ? CSS.escape(d.id) : d.id)+'"] .lbr-rec'); if(btn){ btn.disabled=true; btn.textContent='⏳ Recuperando…'; }
+  return conTopeDuro(apiPost({ action:'borradoRecuperar', id:d.id, t:d.t, quien:quienEdita() }), 60000, 'tardo').then(function(r){
+    if(r && r.ok){
+      x.rcp='↩️ '+lbrCuando(Date.now())+' · '+(quienEdita()||'?'); LBR.hechos[d.id+'|'+d.t]=x.rcp;
+      delete BORRADO_AQUI[String(d.id)];
+      try{ borrarPendPoner(d.id, null); }catch(e){}
+      var m='↩️ '+nom+' volvió a la planilla ✓';
+      if(r.fotosPerdidas) m+=' · ⚠️ '+r.fotosPerdidas+' foto'+(r.fotosPerdidas===1?'':'s')+' ya no se pudo'+(r.fotosPerdidas===1?'':'ieron')+' recuperar de Drive';
+      if(r.ocRepetida) m+=' · ⚠️ el N° '+r.ocRepetida.oc+' ya lo tiene otro pedido'+(r.ocRepetida.cliente?(' ('+r.ocRepetida.cliente+')'):'')+': corregilo desde Editar';
+      toast(m, (r.fotosPerdidas||r.ocRepetida)?'err':'ok', 9000);
+      lbrRender();
+      return refrescarEstadoYa();
+    }
+    var motivo=(r && r.error==='ya_esta') ? 'ya hay un pedido con ese número interno en la planilla (alguien lo recuperó o se volvió a crear)' :
+               (r && r.error==='sin_copia') ? 'no quedó la fila guardada' : (r && r.error==='no_se_recupera') ? 'es una fila del sistema' : motivoDelServidor(r && r.error);
+    if(r && r.error==='ya_esta') x.ya=1;
+    toast('No se recuperó: '+motivo+'.','err',9000);
+    lbrRender();
+  }, function(e){ toast('No se recuperó ('+motivoCorto(e)+'). Probá de nuevo con señal: si había llegado, el segundo intento dice «ya está».','err',9000); lbrRender(); });
+}
+/* ============================================================================
+   💾 EL RESPALDO, PROBADO (22/11, mejora 453)
+   El servidor 2026-11-22-a prueba el primer lunes del mes que la última copia de la planilla en Drive SIRVA (`probarRespaldo`: la abre
+   y la compara fila por fila) y la lectura `list` trae el resultado chico (`rp`). Acá:
+   · «Para hacer» de Administración (`rspHacer`, en `admHacerDatos`; los números en `ADM_AV.resp`): 🔴 si la última prueba dijo que no
+     sirve; 🟡 si nunca se probó o la última tiene más de RSP_DIAS_AVISO (40) días. Solo con la contraseña o en un aparato de
+     administración (`asisVeAdm`), y solo con el servidor nuevo (con uno anterior no se sabe nada y no se dice nada).
+   · «📊 Uso del panel» dice «💾 Respaldo probado el …: ✅ sirve» (`rspLinea`).
+   · Solo mira. En Playwright apagado salvo `window.RSP_PRUEBA`. `tests/test_respaldo_prueba.js`.
+   ========================================================================== */
+var RSP_SERVIDOR='2026-11-22-a', RSP_DIAS_AVISO=40, RESPALDO_SRV=null, RESPALDO_VISTO=false;
+function rspVa(){ try{ return !navigator.webdriver || !!window.RSP_PRUEBA; }catch(e){ return true; } }
+/* Lo que trajo la lectura (o nada: con un servidor nuevo, «nunca se probó»). */
+function rspTomar(rp){
+  if(!servidorTiene(RSP_SERVIDOR)){ RESPALDO_SRV=null; RESPALDO_VISTO=false; return; }
+  RESPALDO_SRV=(rp && rp.t) ? rp : null; RESPALDO_VISTO=true;
+}
+function rspEstado(){
+  if(!RESPALDO_VISTO || !servidorTiene(RSP_SERVIDOR)) return null;
+  var R=RESPALDO_SRV;
+  if(!R) return { est:'nunca' };
+  var dias=Math.floor((Date.now()-Number(R.t))/864e5);
+  if(!R.ok) return { est:'mal', R:R, dias:dias };
+  if(dias>RSP_DIAS_AVISO) return { est:'viejo', R:R, dias:dias };
+  return { est:'bien', R:R, dias:dias };
+}
+function rspHacer(){
+  ADM_AV.resp=null;
+  if(!rspVa()) return null;
+  var ve=false; try{ ve=asisVeAdm(); }catch(e){ ve=!!UNLOCKED; }
+  if(!ve) return null;
+  var E=rspEstado(); if(!E || E.est==='bien') return null;
+  ADM_AV.resp={ est:E.est, dias:E.dias||0 };
+  if(E.est==='mal') return { k:'resp', sev:'r', ic:'💾', n:1, t:'El respaldo de la planilla NO sirve', s:String(E.R.d||'la última prueba falló')+' · probado el '+lbrCuando(E.R.t), b:'💾 Qué hacer', fn:'rspVer()', tag:'respaldo', nTxt:'❌' };
+  return { k:'resp', sev:'a', ic:'💾', n:1, t:(E.est==='nunca' ? 'El respaldo de la planilla nunca se probó' : ('Hace '+E.dias+' días que no se prueba el respaldo')),
+    s:'que la copia de cada noche en Drive se pueda abrir y tenga todo', b:'💾 Qué hacer', fn:'rspVer()', tag:'respaldo', nTxt:'!' };
+}
+function rspLinea(){
+  var E=rspEstado(); if(!E) return '';
+  if(E.est==='nunca') return '💾 El respaldo de la planilla todavía no se probó nunca.';
+  return '💾 Respaldo probado el '+lbrCuando(E.R.t)+': '+(E.R.ok ? ('✅ sirve ('+(E.R.fr||0)+' filas en la copia)') : ('❌ NO sirve — '+String(E.R.d||'')))+(E.est==='viejo'?(' · hace '+E.dias+' días'):'');
+}
+function rspVer(){
+  var E=rspEstado(); if(!E) return;
+  var L=[];
+  if(E.est==='mal') L.push('La última prueba ('+lbrCuando(E.R.t)+') dijo: '+String(E.R.d||'falló')+'.', 'Hay que mirarlo con el dueño: si la planilla se rompe, la copia de Drive es lo único que hay.');
+  else if(E.est==='nunca') L.push('El servidor todavía no probó ninguna copia de la planilla.');
+  else L.push('La última prueba es del '+lbrCuando(E.R.t)+' (hace '+E.dias+' días) y dijo que sirve.', 'Desde entonces no se volvió a probar: ¿está el disparador?');
+  L.push('Qué hacer: en el editor de Apps Script, ▶ «probarRespaldo» (abre la última copia y la compara con la planilla; no toca nada). Si falta el disparador de los lunes, ▶ «instalarDisparadores» una vez.');
+  avisoVentana('💾 El respaldo de la planilla\n\n'+L.join('\n'), { titulo:'El respaldo de la planilla', icono:'💾' });
+}
 function usoDias(){ return isoDeTsBolivia(Date.now()-USO_DIAS*864e5); }
 function usoQuien(L){ var c={}; L.forEach(function(q){ q=String(q||'').trim(); if(q && q!=='?') c[q]=(c[q]||0)+1; }); return Object.keys(c).sort(function(a,b){ return c[b]-c[a]; }).slice(0,3).join(', '); }
 function usoEst(n, umbral){ return !(n>0) ? 'gris' : (n<umbral ? 'ambar' : 'verde'); }
@@ -81851,6 +82030,7 @@ function usoAbrir(){
   openModal('<div class="modal-h"><h3>📊 Uso del panel · '+esc(mesNombre(todayStr().slice(0,7)))+'</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
     '<div class="modal-b" id="uso-ov"><p class="uso-sub">Sale de lo que ya guarda la planilla (los últimos '+USO_DIAS+' días). Nadie es vigilado: solo dice qué se usa. '+
       '🟢 '+n.verde+' se usan · 🟡 '+n.ambar+' poco · ⚪ '+n.gris+' nunca.</p>'+
+    (rspVa() && rspLinea() ? ('<p class="uso-sub" id="rsp-linea">'+esc(rspLinea())+'</p>') : '')+   // 💾 (22/11, mejora 453)
     (top ? ('<div class="uso-top" id="uso-top">💡 Lo que más trabajo ahorraría si se usara: <b>'+top.ic+' '+esc(top.t)+'</b> — '+esc(top.d)+'.</div>') : '')+
     '<table class="uso-t"><tbody>'+V.map(fila).join('')+'</tbody></table>'+
     '<p class="uso-sub" style="margin-top:9px">«🎓 Que Bloki la enseñe» le llega a quien todavía no la usa, en su aparato. «🙈 Sacarla de la vista» y «👍 Está bien así» quedan en ESTE aparato.</p></div>', true);
