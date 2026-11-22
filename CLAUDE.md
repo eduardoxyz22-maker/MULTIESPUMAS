@@ -1040,7 +1040,7 @@ Playwright salvo su bandera.
 - Una foto por LÍNEA en lugar del dibujito de la 211 (`prodIcoHtml` → `prodFotoDe`/`prodFotoImg`): renglón del formulario (`.prod-foto`, `prodFotoFila`, desde
   `pintarTotalProds` y los `input`/`change` del renglón), ficha, Lista de carga, Mis pedidos, `#fx-der`. Solo colchón y somier (`prodIcoTipo`); combos, ROHO
   (Carioca/Bahía/Flex) y lo de tienda siguen con el dibujo. `alt=""` (no suma letras). Tocar = `pfotoVer` (la grande; en la Lista de carga NO cambia el tilde).
-- `PFOTO_LINEAS` (25: 15 Heaven, 10 Sueña —Lite y Smart (22/11, dueño: *«te faltó el lite y el smart»*) salen de la «segunda sesión de fotos» de Sueña, en la tienda: el delgado de borde café = Lite, el de costados negros = Smart; falta que el dueño lo confirme—; el somier ANTES que el colchón de la misma línea; el somier de Sueña por el COLOR escrito, beige/plomo; sin color, sin foto).
+- `PFOTO_LINEAS` (25: 15 Heaven, 10 Sueña —Lite y Smart (22/11, dueño: *«te faltó el lite y el smart»*): las fotos de estudio que MANDÓ el dueño por el chat, puestas a mano en `fotos-productos/` (no están en `elegidas.txt`: el robot las pisaría)—; el somier ANTES que el colchón de la misma línea; el somier de Sueña por el COLOR escrito, beige/plomo; sin color, sin foto).
   ⚠️ Una foto nueva = el archivo en `fotos-productos/` (360 px) y `fotos-productos/grande/` (1000 px) + un renglón en `PFOTO_LINEAS` + subir `PFOTO_V`.
 - 🤖 Las fotos vienen del Drive con el robot «Fotos de productos desde el Drive» (`fotos-drive.yml`, solo en una rama, nunca main): `herramientas/fotos_drive/bajar.py`
   pide la MINIATURA de Drive (desde la sesión no se llega al Drive y la conexión no baja más de 10 MB; las de Heaven son TIF de 140-210 MB). `carpetas.txt` (Heaven

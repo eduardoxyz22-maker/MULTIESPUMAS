@@ -22,5 +22,4 @@ suena-semiortopedico|1xm6oebtMuB-m0YWgOHWJYPDpGvLk-Gr6
 suena-soft|1i8-duOGKSVKG8xaOriyBT9phduoCOmmO
 suena-somier-plomo|1M52GJ9AW5n7nTVu1iNowGxu9_oKmQcSo
 suena-somier-beige|1c9bnfDRHBBshviEGG3yWxIgyZzRcgZam
-suena-lite|1ZXnS6uRbfB9pjmY4AFDIY2j2nBa4thGU|abajo:58
-suena-smart|1vn2ZYTSo_4cDe_mrsRHadeaVimiKXTYW|abajo:70
+# suena-lite y suena-smart: las mandó el dueño por el chat el 22/11 (fotos de estudio); NO van acá: el robot las pisaría.
