@@ -5032,6 +5032,7 @@ function glSigue(){
           <button id="cx-dup-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cxDupAbrir()">👯 Dos veces</button>
           <button id="cx-deben-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="abrirPorCobrar('ventas')">⏳ Deben</button>
           <button id="cbz-btn" class="btn btn-sm cx-rev" style="width:auto" onclick="cbzAbrir()" title="Lo que va a entrar; en Mayoristas, además, el estado de cuenta de cada cliente y la antigüedad de saldos">📅 Cobranza</button>
+          <button id="prm-btn" class="btn btn-sm cx-rev" style="width:auto" hidden onclick="prmAbrir()" title="Los precios que cambiaron después de cargar la venta y los descuentos confirmados (con la contraseña)">💵 Precios del mes</button><!-- 💵 (mejoras 462 y 466) -->
           <span id="cjt-btns" class="cjt-btns" hidden></span><!-- 🏬 (14/11, mejora 254) la caja de Ventura Sur (`cajaBotonesPintar`) -->
         </div>
         <div class="cx-gr cx-gr-cargar"><span class="cx-gr-t">➕ Cargar</span>
@@ -9232,6 +9233,19 @@ html{ scroll-padding-top:calc(var(--hdr-h) * var(--vz,1) + 8px); }   /* lo que s
 @media (max-width:600px){ .fl-qh-s{ display:none; } .fl-qh > span:not(.fl-qh-k){ flex:1 1 100%; } }
 /* ⏳ (13/11, ideas 136, 143 y 129) La ventana de Cobranza. Colores del panel, tabla que parte renglones, todo entra en 390 px. */
 .cbz .cbz-tabs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px}
+/* 💵 (mejoras 462 y 466) Precios del mes · 🏷️ precio muy por debajo del de siempre */
+.prm .prm-cab{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
+.prm .prm-n{font-size:.8rem;color:var(--muted);flex:1 1 220px}
+.prm .prm-l{display:flex;flex-direction:column;gap:8px}
+.prm .prm-i{background:#fff;border:1px solid var(--border,#e5e7eb);border-left:4px solid #b45309;border-radius:10px;padding:9px 12px;cursor:pointer}
+.prm .prm-i:hover{background:#fffbeb}
+.prm .prm-t{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+.prm .prm-t span{font-size:.78rem;color:var(--muted)}
+.prm .prm-d{font-size:.86rem;margin:3px 0}
+.prm .prm-i small{font-size:.74rem;color:var(--muted)}
+.prm .prm-vacio{padding:18px;text-align:center;color:var(--muted)}
+.prm .prm-pie{margin-top:12px;font-size:.74rem;color:var(--muted)}
+.preg-a .preg-op{flex:1 1 auto}
 .cbz .cbz-tabs>button{border:1px solid var(--gray-lt,#dbe6ee);background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.82rem;font-weight:700;color:#0f2333;cursor:pointer}
 .cbz .cbz-tabs>button.on{background:#0f766e;border-color:#0f766e;color:#fff}
 .cbz .cbz-vend{margin-left:auto;font-size:.8rem;color:var(--muted);display:flex;gap:6px;align-items:center}
@@ -10945,6 +10959,7 @@ function guardarDurable(rec, opts){
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) quién puso o sacó el «Entregado»                  // un nuevo intento explícito, no el rechazo anterior
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) quién le cambió el día o el turno
   try{ chvPropio(rec); }catch(e){}           // 🔁 (mejora 470) lo que guarda este aparato no es «cambió y no lo viste»
+  try{ prhHistAnotar(rec); }catch(e){}       // 💵 (mejora 462) quién le cambió el precio (antes que `pagHistAnotar`: usa su `PAG_DONDE`)
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) cambió después de cargarla al sistema · quién corrigió un pago
   /* Un retiro nuevo corregido después de perder su respuesta necesita reconocer el alta
      propia. La prueba viaja SOLO en la cola local; nunca se manda como campo a la hoja. */
@@ -11805,6 +11820,7 @@ function apiSave(rec, opts){
   try{ entHistAnotar(rec); }catch(e){}       // 🧾 (10/11) los caminos que guardan sin `guardarDurable` (no suma dos veces)
   try{ fhHistAnotar(rec); }catch(e){}        // 📅 (mejora 212) …y lo mismo con el día y el turno
   try{ chvPropio(rec); }catch(e){}           // 🔁 (mejora 470) lo que guarda este aparato no es «cambió y no lo viste»
+  try{ prhHistAnotar(rec); }catch(e){}       // 💵 (mejora 462) …y con el precio
   try{ pagHistAnotar(rec); }catch(e){}       // 🔁💵 (mejoras 380 y 386) …y lo mismo con lo que ve Contabilidad
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
   if(!id || (opts&&opts.forzar)) return pgSeguir(id, apiSaveAhora(rec, opts));   // 🎨 (16/11, mejora 433) la ficha dice «Guardando…»
@@ -12020,6 +12036,7 @@ function verificarEcoForm(srv, rec, prev){
 function aplicarSello(rec, srv, ahora){
   try{ entSrvAnotar(srv && srv.id!=null ? srv : rec); }catch(e){}   // 🧾 (10/11) lo que quedó en la planilla
   try{ pagSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 🔁💵 (mejoras 380 y 386)
+  try{ prhSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 💵 (mejora 462) …y sus precios
   try{ fhSrvAnotar(srv && srv.id!=null && srv.productos ? srv : rec); }catch(e){}   // 📅 (mejora 212) …el día, el turno y su último renglón
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
@@ -12200,6 +12217,7 @@ function rechazoFirme(rec, res, colaTxt){
       try{ fhSrvAnotar(actual); }catch(e){}   // 📅 (mejora 212) la fila de la planilla es la que queda en pantalla: el próximo cambio de día sale de ahí
       try{ entSrvAnotar(actual); }catch(e){}   // 🧾 (14/11) …y su «Entregado»: si no, el ✅ que traía la planilla se le anotaba al que guarda después
       try{ pagSrvAnotar(actual); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y sus pagos y la marca de «cargada al sistema»
+      try{ prhSrvAnotar(actual); }catch(e){}   // 💵 (mejora 462) …y sus precios
       if(typeof esBorrador==='function' && esBorrador(actual)){
         STATE=STATE.filter(function(p){ return p.id!==actual.id; });
         BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(actual.id); }).concat([actual]);
@@ -13449,6 +13467,8 @@ function heredarMarcas(nuevos, viejos){
   /* 🔁💵 (mejoras 380 y 386) …y lo que cambió después de cargarla al sistema (`rc`) y quién corrigió cada pago (`pH`): son del pedido. */
   var rcV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.rc) && x.rc.length){ rcV=x.rc; return true; } return false; });
   var pHV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.pH) && x.pH.length){ pHV=x.pH; return true; } return false; });
+  /* 💵 (mejora 462) …y quién le cambió el precio (`prH`): es del pedido. */
+  var prHV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.prH) && x.prH.length){ prHV=x.prH; return true; } return false; });
   /* 🤖📌 (16/11, mejoras 345 y 349) …y lo que quedó «para después» en la nota (`cmp`) y lo que Claude dijo tarde (`oia`): son del pedido. */
   var cmpV=null; (viejos||[]).some(function(x){ if(x && Array.isArray(x.cmp) && x.cmp.length){ cmpV=x.cmp; return true; } return false; });
   var oiaV=null; (viejos||[]).some(function(x){ if(x && x.oia && Array.isArray(x.oia.a)){ oiaV=x.oia; return true; } return false; });
@@ -13457,10 +13477,13 @@ function heredarMarcas(nuevos, viejos){
   /* 🔎 (20/11) …y el pedido de revisión de de quién es el cliente (`crv`): es del pedido. */
   var crvV=null; (viejos||[]).some(function(x){ if(x && x.crv && x.crv.t){ crvV=x.crv; return true; } return false; });
   var conReg=function(x){ if(reg){ x.eF=reg.eF; x.eT=reg.eT; x.eQ=reg.eQ; } if(rpf) x.rpf=rpf; if(fmov) x.fmov=fmov; if(eH) x.eH=eH.slice(); if(fH) x.fH=fH.slice(); if(cotV) x.cot=cotV;
-    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); if(opdfV && !(Array.isArray(x.opdf) && x.opdf.length)) x.opdf=JSON.parse(JSON.stringify(opdfV)); if(crvV && !(x.crv && x.crv.t)) x.crv=JSON.parse(JSON.stringify(crvV)); return x; };
+    if(rcV && !(Array.isArray(x.rc) && x.rc.length)) x.rc=JSON.parse(JSON.stringify(rcV)); if(pHV && !(Array.isArray(x.pH) && x.pH.length)) x.pH=JSON.parse(JSON.stringify(pHV)); if(prHV && !(Array.isArray(x.prH) && x.prH.length)) x.prH=JSON.parse(JSON.stringify(prHV)); if(cmpV) x.cmp=cmpV.map(function(c){ return Object.assign({}, c); }); if(oiaV) x.oia=JSON.parse(JSON.stringify(oiaV)); if(opdfV && !(Array.isArray(x.opdf) && x.opdf.length)) x.opdf=JSON.parse(JSON.stringify(opdfV)); if(crvV && !(x.crv && x.crv.t)) x.crv=JSON.parse(JSON.stringify(crvV)); return x; };
   return (nuevos||[]).map(function(x){
     var v=porClave[prodClave(x)];
     if(!v) return conReg(x);                           // producto nuevo: nadie lo revisó
+    /* 🏷️ (mejora 466) El motivo del descuento (`dsc`) es de ESE precio: con el mismo producto y el mismo precio sigue (otra cantidad
+       no lo cambia); con otro precio, se vuelve a mirar al guardar. */
+    if(v.dsc && !x.dsc && Math.abs(prodPrecio(v)-prodPrecio(x))<=0.005) x.dsc=JSON.parse(JSON.stringify(v.dsc));
     /* ⚠️ La CANTIDAD también cuenta. El almacén no dijo "hay ALMOHADA", dijo "hay 2
        almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
     if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return conReg(x); }
@@ -13905,6 +13928,221 @@ function phSemanaHtml(v, mine){
       '<small>'+esc(String(o.e.q||'?')==='?' ? 'alguien' : String(o.e.q))+' · '+esc(entTs(o.e.t))+'</small></div>'; }).join('')+
     (D.top && PH_CONSEJO[D.top] ? ('<div class="ph-sem-c">💡 '+(D.L.length>1 && D.por[D.top]>1 ? (D.por[D.top]+' de '+D.L.length+' fueron por '+(PH_TIPO[D.top]||D.top)+': ') : '')+esc(PH_CONSEJO[D.top])+'.</div>') : '')+'</div>';
 }
+/* ============================================================================
+   💵 QUIÉN LE CAMBIÓ EL PRECIO DESPUÉS DE CARGARLA (mejora 462, 22/11; el dueño la eligió de la muestra «cuidar la plata y los precios»)
+   La misma idea que `fH` (el día) y `pH` (los pagos), para los PRECIOS: cada guardado que cambia el precio de un renglón o el total de la
+   venta deja un renglón adentro del pedido (`prH` en cada producto; los últimos `PRH_MAX`): {t, q (`quienEdita()`), d (desde dónde: el
+   `pagDonde` de cada camino o la pestaña), r:[{c: código o producto, n: el producto, de, a, u: cuántos}], tot:{de, a} (el total de la venta,
+   `ventaTotal`, si cambió), k (con la contraseña)}.
+   · Se anota al GUARDAR (`guardarDurable` y `apiSave`, antes que `pagHistAnotar`: comparte su `PAG_DONDE`) contra lo último que dijo la
+     planilla (`PRH_SRV`, de `mergePending`, `aplicarSello` y la fila de un «conflicto»); con un renglón de acá en camino (la planilla todavía
+     no lo tiene), contra lo último que mandó este aparato (`PRH_LOC`), como `pH`. Sin lectura o una venta NUEVA: nada (cargarla no es cambiarla).
+   · ⚠️ Un precio puesto POR PRIMERA VEZ (el renglón estaba en 0 / sin precio: una venta vieja que ahora pide el precio obligatorio, §4oe)
+     NO es un cambio: el renglón de antes tiene que tener precio > 0. Y si lo único distinto es eso, tampoco se anota el total que se movió
+     por ese precio nuevo.
+   · Un producto que se cambia por otro (otro nombre, medida o código) no es un cambio de precio: eso lo dicen `mod` y `rc`. Los renglones se
+     emparejan con `prodClave`, como `heredarMarcas`.
+   · No van: filas del sistema, retiros, borradores de Kommo, ATC ni RPT (`pagNoVa`). Una venta de tienda sí.
+   · `heredarMarcas` lo pasa; `deshDevolver` lo saltea. Se ve en la 🕓 Historia del pedido y en Contabilidad → «💵 Precios del mes» (con la
+     contraseña), junto con los descuentos de la 466 (`dsc`). En Playwright apagado salvo `PRH_PRUEBA` (las pruebas de siempre comparan los
+     productos tal cual). `tests/test_precio_historia.js`. */
+var PRH_SRV={}, PRH_LOC={}, PRH_MAX=8;
+function prhActivo(){ try{ return !(navigator.webdriver && !window.PRH_PRUEBA); }catch(e){ return true; } }
+function prhDe(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++) if(pr[i] && Array.isArray(pr[i].prH) && pr[i].prH.length) return pr[i].prH; return []; }
+function prhNombre(x){ return (String((x&&x.desc)||'').trim()+(String((x&&x.medida)||'').trim()?(' '+String(x.medida).trim()):'')).trim(); }
+/* El total de la venta sin `cobradoBs` (vive solo en el navegador: con él, la copia de la planilla y la de acá darían totales distintos). */
+function prhTotal(p){ try{ return r2(ventaTotal(Object.assign({}, p, { cobradoBs:0 }))); }catch(e){ return 0; } }
+function prhFirma(p){
+  var pr=[];
+  (p.productos||[]).forEach(function(x){ if(!x || !(String(x.desc||'').trim() || String(x.codigo||'').trim())) return;
+    pr.push({ k:prodClave(x), p:prodPrecio(x), u:Number(x.cant)||0, n:prhNombre(x), c:String(x.codigo||'').trim().toUpperCase() }); });
+  return { pr:pr, tot:prhTotal(p) };
+}
+function prhSrvAnotar(x){
+  if(!x || x.id==null) return;
+  var id=String(x.id); if(pagNoVa(x)){ delete PRH_SRV[id]; return; }
+  try{ PRH_SRV[id]=JSON.stringify(x); }catch(e){ delete PRH_SRV[id]; }   // el texto (un objeto de STATE se cambia en el lugar al editar); la firma, recién al guardar
+}
+/* Qué cambió entre dos firmas: { r:[renglones con otro precio], tot:{de,a}|null }. null = nada que anotar. */
+function prhCambios(a, b){
+  var mA={}, r=[], primera=false;
+  a.pr.forEach(function(x){ (mA[x.k]||(mA[x.k]=[])).push(x); });
+  b.pr.forEach(function(x){
+    var L=mA[x.k], v=L && L.shift(); if(!v || Math.abs(v.p-x.p)<=0.005) return;
+    if(!(v.p>0.005)){ primera=true; return; }                         // precio puesto por primera vez: no es un cambio
+    r.push({ c:x.c||x.n, n:x.n, de:v.p, a:x.p, u:x.u });
+  });
+  var tot=null;
+  if(Math.abs(a.tot-b.tot)>0.005 && a.tot>0.005 && !(primera && !r.length)) tot={ de:a.tot, a:b.tot };
+  return (r.length || tot) ? { r:r, tot:tot } : null;
+}
+function prhHistAnotar(rec){
+  if(!prhActivo() || pagNoVa(rec)) return;
+  var id=String(rec.id), sj=PRH_SRV[id]; if(!sj) return;               // sin lectura, o todavía no está en la planilla
+  var S=null; try{ S=JSON.parse(sj); }catch(e){ return; }
+  var H=prhDe(rec), last=H[H.length-1];
+  var enCamino=!!last && prhDe(S).map(function(e){ return Number(e && e.t)||0; }).indexOf(Number(last.t)||0)<0;
+  var base=enCamino ? PRH_LOC[id] : prhFirma(S), F=prhFirma(rec);
+  if(!base){ PRH_LOC[id]=F; return; }                                  // un renglón en camino de antes de un F5: no se adivina
+  var C=prhCambios(base, F);
+  if(C){
+    var ahora=Date.now(), e={ t:ahora, q:quienEdita()||'?', d:(PAG_DONDE && ahora-PAG_DONDE.t<20000) ? PAG_DONDE.d : entVista(), r:C.r };
+    if(C.tot) e.tot=C.tot;
+    if(typeof UNLOCKED!=='undefined' && UNLOCKED) e.k=1;
+    if(last && e.t<=(Number(last.t)||0)) e.t=(Number(last.t)||0)+1;
+    pagPonerEn(rec, 'prH', H.concat([e]).slice(-PRH_MAX));
+  }
+  PRH_LOC[id]=F;
+}
+/* «Titanio Latex 160x200: Bs 4.750 → Bs 3.900 · el total Bs 9.500 → Bs 8.650» */
+function prhLinea(e){
+  var L=(e.r||[]).map(function(x){ return String(x.n||x.c||'un producto')+(Number(x.u)>1?(' (×'+x.u+')'):'')+': '+phxBs(x.de)+' → '+phxBs(x.a); });
+  if(e.tot) L.push('el total '+phxBs(e.tot.de)+' → '+phxBs(e.tot.a));
+  return L.join(' · ');
+}
+/* «Promoción», «Cliente antiguo», «Combo», «Otro: …» */
+function dscMotivoTxt(d){
+  if(!d) return '';
+  var m=({ promo:'Promoción', antiguo:'Cliente antiguo', combo:'Combo', otro:'Otro motivo' })[d.m]||String(d.m||'—');
+  return m+(d.x?(': '+String(d.x)):'');
+}
+/* ============================================================================
+   💵 PRECIOS DEL MES (mejoras 462 y 466, Contabilidad, solo con la contraseña): los cambios de precio después de cargar (`prH`) y los
+   descuentos que la vendedora confirmó al guardar (`dsc`, la 466), de un mes (por el día del cambio o de la confirmación). Solo mira. */
+var PRM={ ym:'' };
+function prmVe(){ return !!UNLOCKED && (prhActivo() || dscActivo()); }
+function prmBotonPintar(){ var b=document.getElementById('prm-btn'); if(b) b.hidden=!prmVe(); }
+function prmDatos(ym){
+  var L=[];
+  (STATE||[]).forEach(function(p){
+    if(pagNoVa(p)) return;
+    var base={ p:p, v:String(p.vendedor||'').trim(), oc:ocEtiq(p.oc||'')||String(p.oc||''), cli:String(p.cliente||'').trim() };
+    prhDe(p).forEach(function(e){ if(!e || isoDeTsBolivia(Number(e.t)||0).slice(0,7)!==ym) return;
+      L.push(Object.assign({ tp:'cambio', t:Number(e.t)||0, q:String(e.q||'?'), d:String(e.d||''), k:!!e.k, r:e.r||[], tot:e.tot||null }, base)); });
+    var vistos={};
+    (p.productos||[]).forEach(function(x){
+      var d=x && x.dsc; if(!d || !(Number(d.t)>0) || isoDeTsBolivia(Number(d.t)).slice(0,7)!==ym) return;
+      var cl=prodClave(x)+'|'+d.t; if(vistos[cl]) return; vistos[cl]=1;
+      L.push(Object.assign({ tp:'dsc', t:Number(d.t), q:String(d.q||'?'), d:'', k:false, mot:dscMotivoTxt(d),
+        r:[{ c:String(x.codigo||'').trim().toUpperCase()||prhNombre(x), n:prhNombre(x), de:Number(d.tip)||0, a:prodPrecio(x), u:Number(x.cant)||0 }], tot:null }, base));
+    });
+  });
+  L.sort(function(a, b){ return b.t-a.t; });
+  return L;
+}
+function prmMes(d){ var ym=PRM.ym||diaNegocio().slice(0,7), y=Number(ym.slice(0,4)), m=Number(ym.slice(5,7))-1+d; y+=Math.floor(m/12); m=((m%12)+12)%12; PRM.ym=y+'-'+('0'+(m+1)).slice(-2); prmPintar(); }
+function prmAbrir(){
+  if(!UNLOCKED){ toast('💵 «Precios del mes» es con la contraseña de Administración.','err'); return; }
+  PRM.ym=diaNegocio().slice(0,7);
+  openModal('<div class="modal-h" style="background:#854d0e"><h3>💵 Precios del mes</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b prm" id="prm"></div>', true);
+  prmPintar();
+}
+function prmPct(r){ return (r.de>0.005 && r.a<r.de) ? (' · '+Math.round((1-r.a/r.de)*100)+' % menos') : ''; }
+function prmPintar(){
+  var box=document.getElementById('prm'); if(!box) return;
+  var L=prmDatos(PRM.ym), nC=L.filter(function(x){ return x.tp==='cambio'; }).length, nD=L.length-nC;
+  var h='<div class="prm-cab"><button type="button" class="btn btn-sm btn-ghost" style="width:auto" onclick="prmMes(-1)" aria-label="Mes anterior">‹</button>'+
+    '<b>'+esc(mesNombre(PRM.ym))+'</b><button type="button" class="btn btn-sm btn-ghost" style="width:auto" onclick="prmMes(1)" aria-label="Mes siguiente">›</button>'+
+    '<span class="prm-n">✏️ '+nC+' cambio'+(nC===1?'':'s')+' de precio después de cargar · 🏷️ '+nD+' descuento'+(nD===1?'':'s')+' confirmado'+(nD===1?'':'s')+'</span>'+
+    (L.length ? ('<button type="button" class="btn btn-sm" style="width:auto" onclick="prmCopiar()">📋 Copiar</button>'+
+      '<button type="button" class="btn btn-sm btn-primary" style="width:auto;background:#0f766e" onclick="prmExcel()">⬇️ Excel</button>') : '')+'</div>';
+  if(!L.length) h+='<div class="prm-vacio">En '+esc(mesNombre(PRM.ym))+' nadie cambió un precio después de cargar la venta ni confirmó un precio muy por debajo del de siempre.</div>';
+  else h+='<div class="prm-l">'+L.map(function(x){
+    var qq=x.q==='?' ? 'alguien que no eligió su nombre' : x.q;
+    var det=x.tp==='dsc'
+      ? ('🏷️ <b>'+esc(x.r[0].n)+'</b> a <b>'+esc(phxBs(x.r[0].a))+'</b> · se cobra normalmente '+esc(phxBs(x.r[0].de))+esc(prmPct(x.r[0]))+' · motivo: <b>'+esc(x.mot||'—')+'</b>')
+      : ('✏️ '+esc(prhLinea(x)));
+    return '<div class="prm-i" onclick="showContaModal(\''+esc(String(x.p.id))+'\')" role="button" tabindex="0">'+
+      '<div class="prm-t"><b>'+esc([x.oc, x.cli].filter(Boolean).join(' · ')||'—')+'</b><span>'+esc(x.v||'—')+'</span></div>'+
+      '<div class="prm-d">'+det+'</div>'+
+      '<small>'+esc(qq)+(x.k?' 🔑':'')+' · '+esc(entTs(x.t))+(x.d?(' · desde '+esc(x.d)):'')+'</small></div>';
+  }).join('')+'</div>';
+  h+='<div class="prm-pie">✏️ = un precio que cambió DESPUÉS de cargar la venta (poner el precio por primera vez no cuenta). 🏷️ = la vendedora guardó un precio más de '+
+    Math.round(DSC_UMBRAL*100)+' % por debajo del de siempre y dijo por qué.</div>';
+  box.innerHTML=h;
+}
+function prmFilas(L){
+  var out=[];
+  L.forEach(function(x){
+    var rr=x.r.length ? x.r : [null];
+    rr.forEach(function(r, i){ out.push({ x:x, r:r, tot:(i===0 && x.tot) ? x.tot : null }); });
+  });
+  return out;
+}
+function prmCopiar(){
+  var L=prmDatos(PRM.ym); if(!L.length) return;
+  copyText('💵 Precios de '+mesNombre(PRM.ym)+'\n'+L.map(function(x){
+    var qq=x.q==='?' ? 'sin nombre' : x.q;
+    return '• '+fmtFechaCorta(isoDeTsBolivia(x.t))+' · '+[x.oc, x.cli].filter(Boolean).join(' · ')+' ('+(x.v||'—')+'): '+
+      (x.tp==='dsc' ? (x.r[0].n+' a '+phxBs(x.r[0].a)+', se cobra normalmente '+phxBs(x.r[0].de)+prmPct(x.r[0])+' · motivo: '+(x.mot||'—')) : prhLinea(x))+' · '+qq;
+  }).join('\n'));
+}
+function prmExcel(){
+  var L=prmDatos(PRM.ym); if(!L.length) return;
+  var H=1, BS=2, num=function(v){ return (v==null || v==='') ? '' : {v:r2(Number(v)||0), t:'n', s:BS}; };
+  var rows=[['FECHA','QUÉ','N° OC','CLIENTE','VENDEDOR','PRODUCTO','CÓDIGO','CANTIDAD','PRECIO ANTES (Bs)','PRECIO AHORA (Bs)','TOTAL ANTES (Bs)','TOTAL AHORA (Bs)','MOTIVO','QUIÉN','DESDE'].map(function(t){ return {v:t,s:H}; })];
+  prmFilas(L).forEach(function(f){
+    var x=f.x, r=f.r;
+    rows.push([ entTs(x.t), x.tp==='dsc' ? 'Descuento confirmado' : 'Cambio de precio', x.oc||'', x.cli||'', x.v||'',
+      r ? (r.n||'') : '(solo el total)', r ? (r.c||'') : '', r ? {v:Number(r.u)||0, t:'n'} : '', r ? num(r.de) : '', r ? num(r.a) : '',
+      f.tot ? num(f.tot.de) : '', f.tot ? num(f.tot.a) : '', x.mot||'', x.q==='?' ? 'sin nombre' : x.q, x.d||'' ]);
+  });
+  var bytes=buildXlsx([{ name:'Precios', cols:[{w:16},{w:20},{w:11},{w:24},{w:20},{w:30},{w:11},{w:10},{w:16},{w:16},{w:16},{w:16},{w:22},{w:20},{w:22}], matrix:rows }]);
+  downloadBlob(bytes, 'precios-'+PRM.ym+'.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('💵 Precios de '+mesNombre(PRM.ym)+' descargados ✓','ok');
+}
+/* ============================================================================
+   🗑️ BORRAR UNA VENTA CON PAGOS PIDE LA CONTRASEÑA (mejora 461, 22/11; el dueño la eligió de la muestra)
+   Una venta (un pedido: no un retiro, una fila del sistema ni un borrador de Kommo) que ya tiene plata registrada —el adelanto, los pagos
+   y el flete cobrado con monto (`contaPagos`, > 0.005) o una «PAGADA sin monto» con su comprobante— no se borra sin la contraseña de
+   Administración (la del panel, la misma que abre Administración: `asegurarClaveAdmin` es la ADMIN_KEY del SERVIDOR, que hoy no está
+   puesta y dejaría pasar todo). La ventana dice cuánto se cobró, de qué fecha y con qué, y que esos pagos salen del Cuadre. Con la
+   contraseña puesta (`UNLOCKED`) igual pregunta, sin pedirla. Sin pagos, como siempre.
+   · La puerta está en `borrarConDeshacer`, por donde pasan TODOS los botones de borrar un pedido (ficha y tabla de Administración, la
+     Lista de carga, Contabilidad, Mis pedidos). «Descartar» un borrador de Kommo va por otro lado y no pasa por acá.
+   · La pregunta va con `preguntaYa`/`preguntaTextoYa`: al contestar vuelve a correr `borrarConDeshacer(id, …)` (lo de antes solo lee).
+   · En Playwright apagado salvo `BORRAR_CLAVE_PRUEBA`. `tests/test_borrar_con_pagos.js`. */
+function borrarClaveActivo(){ try{ return !(navigator.webdriver && !window.BORRAR_CLAVE_PRUEBA); }catch(e){ return true; } }
+function borrarPagosDe(p){
+  var L=[], bs=0, sinM=false;
+  if(!p || esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p)) return { L:L, bs:0, sinM:false };
+  try{ contaPagos(p).forEach(function(c){
+    if(!c) return;
+    if(c.sinMonto){ if(p.pagado) sinM=true; return; }
+    var m=r2(Number(c.monto)||0); if(!(m>0.005)) return;
+    bs=r2(bs+m); L.push({ f:String(c.fecha||''), m:m, me:cobroMetodoTxt(c)||'sin método', fl:esEnvio(c), an:!!c.anticipo });
+  }); }catch(e){}
+  return { L:L, bs:bs, sinM:sinM };
+}
+function borrarPagosTxt(x){ return (x.f?fmtFechaCorta(x.f):'sin fecha')+' · '+x.me+' · '+phxBs(x.m)+(x.fl?' (flete)':x.an?' (a cuenta)':''); }
+/* true = se puede borrar · false = no (cancelado o contraseña mala) · null = esperando la respuesta (la vuelta vuelve a llamar). */
+function borrarPagosPuede(id, otraVez){
+  if(!borrarClaveActivo()) return true;
+  var p=findById(id), B=borrarPagosDe(p);
+  if(!B.L.length && !B.sinM) return true;
+  var quien=(p.cliente||'esta venta')+(p.oc?(' · '+(ocEtiq(p.oc)||p.oc)):'');
+  var lin=[];
+  if(B.L.length) lin.push('Tiene '+phxBs(B.bs)+' en pagos registrados: '+B.L.slice(0,4).map(borrarPagosTxt).join(' | ')+(B.L.length>4?(' y '+(B.L.length-4)+' más'):'')+'.');
+  if(B.sinM) lin.push('Está marcada PAGADA (sin el monto anotado), con su comprobante.');
+  lin.push('Si la borrás, esos pagos SALEN del Cuadre y de Contabilidad: la caja deja de cuadrar con lo que entró.');
+  if(regEnSistema(p)) lin.push('Ya está CARGADA en el sistema contable: allá hay que anularla aparte.');
+  var txt='🗑️ Esta venta tiene pagos registrados\n\n'+quien+'\n'+lin.join('\n');
+  if(UNLOCKED){
+    var r=preguntaYa(txt, { icono:'🗑️', peligro:true, titulo:'Esta venta tiene pagos registrados', sub:quien, lineas:lin,
+      no:'No, dejarla', si:'🗑 Sí, borrarla con sus pagos' }, otraVez);
+    return r;   // null esperando · true / false
+  }
+  var n0=PREG_ABIERTAS;
+  var c=preguntaTextoYa(txt+'\nPara borrarla hace falta la contraseña de Administración.', '', { icono:'🔑', peligro:true, titulo:'Borrar una venta con pagos pide la contraseña',
+    sub:quien, lineas:lin.concat(['Una vendedora no puede borrarla: pedíselo a Administración.']), campoAyuda:'La contraseña de Administración', campoClave:true,
+    no:'No, dejarla', si:'🗑 Borrarla' }, otraVez);
+  if(c==null) return (PREG_ABIERTAS>n0) ? null : false;
+  var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
+  if(sha256(String(c||''))===stored) return true;
+  toast('🔑 Esa no es la contraseña de Administración: la venta NO se borró (tiene '+(B.L.length?phxBs(B.bs)+' en pagos':'su pago marcado')+').','err',8000);
+  return false;
+}
 /* «12/11 🌅» · «12/11 🌆» · «12/11» (sin turno) · «sin día» */
 function fhTxt(k){
   k=String(k||''); if(!k) return 'sin día';
@@ -14029,6 +14267,13 @@ function pedHistDatos(p){
   /* 💵 (mejora 386) quién corrigió cada pago · 🔁 (mejora 380) lo que cambió después de cargarla al sistema */
   try{ phDe(p).forEach(function(e){ if(!e) return;
     poner({ t:Number(e.t), h:true, k:'pagoC', ico:'💵', html:'<b>'+esc(phxQuien(e.q))+'</b> corrigió un pago: '+esc(phLinea(e))+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') }); });
+    /* 💵 (mejora 462) quién le cambió el precio · 🏷️ (mejora 466) el precio por debajo del de siempre que se confirmó al guardar */
+    prhDe(p).forEach(function(e){ if(!e) return;
+      poner({ t:Number(e.t), h:true, k:'precio', ico:'✏️', html:'<b>'+esc(phxQuien(e.q))+'</b> cambió el precio: '+esc(prhLinea(e))+(e.k?' 🔑':'')+(e.d?(' · desde '+esc(e.d)):'') }); });
+    var _dscV={};
+    (p.productos||[]).forEach(function(x){ var d=x && x.dsc; if(!d || !(Number(d.t)>0) || _dscV[prodClave(x)+'|'+d.t]) return; _dscV[prodClave(x)+'|'+d.t]=1;
+      poner({ t:Number(d.t), h:true, k:'dsc', ico:'🏷️', html:'<b>'+esc(phxQuien(d.q))+'</b> guardó '+esc(prhNombre(x))+' a <b>'+esc(phxBs(prodPrecio(x)))+'</b> (se cobra normalmente '+
+        esc(phxBs(d.tip))+') · motivo: <b>'+esc(dscMotivoTxt(d))+'</b>' }); });
     rcDe(p).forEach(function(e){ if(!e) return;
       poner({ t:Number(e.t), h:true, k:'rc', ico:'🔁', html:'Cambió después de cargarla al sistema ('+esc((e.c||[]).join(' · '))+') · <b>'+esc(phxQuien(e.q))+'</b>'+
         (e.ok ? (' · ✓ corregido en el sistema por '+esc(phxQuien(e.ok.q))+' el '+esc(entTs(e.ok.t))) : ' · volvió a «sin cargar»') }); }); }catch(e){}
@@ -25043,7 +25288,9 @@ function ctaEliminarVenta(id){
       no:'No, dejarla', si:'🗑 Sí, eliminar la venta' }, _otraE)) return;
   /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
      lo que más duele si el clic fue por error. */
-  if((plata>0.005 || pagSinMonto || regEnSistema(p) || p.entregado) &&
+  /* 🗑️🔑 (mejora 461) con pagos, la segunda pregunta la hace `borrarConDeshacer` (pide la contraseña, o confirma si ya está puesta) */
+  var _conPuerta=borrarClaveActivo() && (plata>0.005 || pagSinMonto);
+  if(!_conPuerta && (plata>0.005 || pagSinMonto || regEnSistema(p) || p.entregado) &&
      !preguntaYa('Última confirmación.\n\nSe van a borrar '+
               (plata>0.005?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?',
        { titulo:'Última confirmación: ¿seguro?', icono:'🗑️', peligro:true,
@@ -27365,6 +27612,7 @@ function submitPedido(){
   if(isEdit && prev) productos=heredarMarcas(productos, prev.productos);
 
 
+
   /* ---- El historial de pagos comparte campo con el método ----
      Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
      NO tocó ningún número de plata, se conserva TAL CUAL: reescribirlo con el método
@@ -28137,6 +28385,36 @@ function submitPedido(){
     // (26/09) …también con el ✅ puesto (`atcViajeDevolucion`): con `atcEnDevolucion` la entregada quedaba en el día viejo
     if(prev && atcViajeDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
     setAtcDatos(rec, _n);
+  }
+  /* 🏷️ (mejora 466) Un precio MUY por debajo del de siempre pregunta por qué (nunca frena: «Corregir» vuelve al formulario). Solo los
+     renglones nuevos o con el precio cambiado (`dscRevisar`). Va acá, con todas las validaciones de arriba ya pasadas (cupos, día cerrado…): no pregunta por algo que igual no se iba a guardar; el motivo queda en el renglón (`dsc`, lo pasa `heredarMarcas`). */
+  var _dsc=[]; try{ _dsc=dscRevisar(vendedor, cliente, rec.productos, (isEdit && prev) ? prev : null); }catch(e){ _dsc=[]; }
+  if(_dsc.length){
+    var _dLin=_dsc.map(dscRenglonTxt);
+    var _dTxt='🏷️ Precio muy por debajo del de siempre\n\n'+_dLin.join('\n')+'\n\n¿Por qué va más barato?';
+    var _dR=preguntaOpcionYa(_dTxt, { icono:'🏷️', aviso:true, titulo:'Precio muy por debajo del de siempre', sub:'¿Por qué va más barato?',
+      lineas:_dLin.concat(['«Normalmente» = lo que el equipo cobró por ese código en los últimos '+DSC_DIAS+' días (la mitad de las ventas, más; la otra mitad, menos).',
+        'Elegí el motivo y se guarda; o corregí el precio si fue un error de tipeo.']),
+      opciones:DSC_MOTIVOS, no:'✏️ Corregir el precio' }, _otraVez);
+    if(_dR===null) return;   // ❓ esperando la respuesta
+    if(!_dR){
+      var _dCards=Array.prototype.filter.call(document.querySelectorAll('#f-productos .prod-card'), function(c){ var d=c.querySelector('.prod-desc'); return d && String(d.value||'').trim(); });
+      var _dPri=null;
+      _dsc.forEach(function(f){ var c=_dCards[f.i], e=c && c.querySelector('.prod-precio'); if(e){ e.classList.add('err'); if(!_dPri) _dPri=e; } });
+      toast('🏷️ Corregí el precio marcado en rojo y volvé a guardar.','err',6000);
+      try{ if(_dPri){ _dPri.focus(); _dPri.scrollIntoView({block:'center'}); } }catch(e){}
+      return;
+    }
+    var _dX='';
+    if(_dR==='otro'){
+      var _dN0=PREG_ABIERTAS;
+      var _dO=preguntaTextoYa('📝 ¿Cuál es el motivo del precio más bajo?', '', { icono:'📝', titulo:'¿Cuál es el motivo?', sub:_dLin[0],
+        campoAyuda:'p. ej. tenía una falla, pagó todo al contado…', no:'Seguir sin escribirlo', si:'💾 Guardar con este motivo' }, _otraVez);
+      if(_dO==null && PREG_ABIERTAS>_dN0) return;   // ❓ esperando
+      _dX=String(_dO||'').replace(/\s+/g,' ').trim().slice(0, 80);
+    }
+    var _dT=Date.now(), _dQ=quienEdita()||vendedor||'?';
+    _dsc.forEach(function(f){ f.x.dsc={ m:String(_dR), tip:f.tip, t:_dT, q:_dQ }; if(_dX) f.x.dsc.x=_dX; });
   }
   /* ✅ (16/10, §4lo) Un pedido ENTREGADO que se pasa desde ✏️ Editar a hoy o más adelante no se entregó: se pregunta y pierde el ✅
      (ver `entregadoSeMueve`). Cancelar deja el formulario como está, sin guardar. Y un pedido que no está entregado no lleva el
@@ -31393,7 +31671,7 @@ function deshDevolver(cur, antes, despues){
   var J=function(v){ return v===undefined ? '·' : JSON.stringify(v); }, claves={};
   [antes, despues].forEach(function(o){ for(var k in (o||{})) claves[k]=1; });
   Object.keys(claves).forEach(function(k){
-    if(k==='eH' || k==='fH' || k==='rc' || k==='pH') return;                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
+    if(k==='eH' || k==='fH' || k==='rc' || k==='pH' || k==='prH') return;   // 💵 (mejora 462) quién cambió el precio, también                              // 🧾 (10/11) quién tocó el «Entregado» · 📅 (mejora 212) quién cambió el día: deshacer no los borra
     var a=antes ? antes[k] : undefined, d=despues ? despues[k] : undefined;
     if(J(a)===J(d)) return;
     var obj=function(v){ return !!v && typeof v==='object' && !Array.isArray(v); };
@@ -31479,6 +31757,9 @@ function borrarPendRetomar(){
   }, Promise.resolve()).then(fin, fin));
 }
 function borrarConDeshacer(id){
+  /* 🗑️🔑 (mejora 461) una venta con pagos registrados pide la contraseña (o, con ella puesta, pregunta): al contestar vuelve a entrar */
+  var _okP=borrarPagosPuede(id, function(){ borrarConDeshacer(id); });
+  if(_okP!==true) return;
   if(!deshVa()) return realDelete(id);
   var loc=findById(id); if(!loc) return realDelete(id);
   var copia=JSON.parse(JSON.stringify(loc));
@@ -33476,14 +33757,19 @@ function preguntar(o){
       '<div class="preg-h"><div class="preg-i" aria-hidden="true">'+esc(o.icono||'❓')+'</div><div class="preg-ht"><h4 id="preg-tit">'+esc(o.titulo||'¿Seguro?')+'</h4>'+(o.sub?('<small>'+esc(o.sub)+'</small>'):'')+'</div></div>'+
       (L.length ? ('<ul class="preg-b">'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>') : '')+
       (o.campo ? ('<div class="preg-cp"><input type="'+(o.campoClave?'password':'text')+'" autocomplete="off" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'"></div>') : '')+
-      '<div class="preg-a">'+(o.solo?'':('<button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button>'))+'<button type="button" class="preg-si">'+esc(o.si||(o.solo?'Entendido':'Sí'))+'</button></div></div>';
+      '<div class="preg-a">'+(o.solo?'':('<button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button>'))+
+        /* 🏷️ (22/11, mejora 466) `o.opciones` = [{v, t}]: varios botones de «sí», cada uno con su respuesta (la promesa da `v`; «no» da false) */
+        (Array.isArray(o.opciones) && o.opciones.length
+          ? o.opciones.map(function(op){ return '<button type="button" class="preg-op" data-v="'+esc(String(op.v))+'">'+esc(op.t||op.v)+'</button>'; }).join('')
+          : ('<button type="button" class="preg-si">'+esc(o.si||(o.solo?'Entendido':'Sí'))+'</button>'))+'</div></div>';
     document.body.appendChild(ov);
     PREG_ABIERTAS++;
-    var bNo=ov.querySelector('.preg-no'), bSi=ov.querySelector('.preg-si'), inp=ov.querySelector('.preg-in'), hecho=false;
+    var ops=Array.prototype.slice.call(ov.querySelectorAll('.preg-op'));
+    var bNo=ov.querySelector('.preg-no'), bSi=ov.querySelector('.preg-si')||ops[0], inp=ov.querySelector('.preg-in'), hecho=false;
     if(inp && o.campoValor!=null) inp.value=String(o.campoValor);
     var fin=function(v){ if(hecho) return; hecho=true; PREG_ABIERTAS=Math.max(0,PREG_ABIERTAS-1); document.removeEventListener('keydown', kd, true); ov.remove(); try{ if(antes && antes.focus && antes.isConnected) antes.focus(); }catch(e){}
-      res(o.campo ? (v ? inp.value : null) : (o.solo ? true : !!v)); };
-    var foc=[inp, bNo, bSi].filter(Boolean);
+      res(o.campo ? (v ? inp.value : null) : ops.length ? (v||false) : (o.solo ? true : !!v)); };
+    var foc=[inp, bNo].concat(ops.length ? ops : [bSi]).filter(Boolean);
     var kd=function(e){
       if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fin(false); return; }
       if(e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation(); var i=foc.indexOf(document.activeElement); foc[(i+(e.shiftKey?foc.length-1:1))%foc.length].focus(); return; }
@@ -33492,7 +33778,8 @@ function preguntar(o){
     };
     document.addEventListener('keydown', kd, true);
     if(bNo) bNo.addEventListener('click', function(){ fin(false); });
-    bSi.addEventListener('click', function(){ fin(true); });
+    if(ops.length) ops.forEach(function(b){ b.addEventListener('click', function(){ fin(b.getAttribute('data-v')); }); });
+    else bSi.addEventListener('click', function(){ fin(true); });
     // (16/11) Un doble clic en el botón que abrió la pregunta (p. ej. «Guardar») dejaba el 2º clic en el fondo = «no» callado: en el primer
     // medio segundo, tocar el fondo no contesta nada.
     var t0=relojMs();
@@ -33553,6 +33840,23 @@ function pregSeguir(memo, k, v, otraVez){
   var antes=PREG_MEMO; PREG_MEMO=memo;
   try{ otraVez(v); }catch(e){ try{ console.error(e); }catch(_){} }
   finally{ PREG_MEMO=antes; }
+}
+/* 🏷️ (22/11, mejora 466) = `preguntaYa` con varios botones de «sí» (`o.opciones` = [{v, t}]): null mientras espera; al contestar, la `v`
+   del botón tocado, o false con «no». Fuera de la bandera: el `confirm` de siempre y, si acepta, un `prompt` con las opciones numeradas
+   (sin número que se entienda, la última). */
+function preguntaOpcionYa(texto, o, otraVez){
+  o=o||{}; var ops=Array.isArray(o.opciones) ? o.opciones : [];
+  if(!pregActivo()){
+    if(!confirm(texto)) return false;
+    var r=prompt(ops.map(function(op, i){ return (i+1)+'. '+(op.t||op.v); }).join('\n'), '1');
+    var n=parseInt(String(r||''), 10);
+    return ops.length ? ((n>=1 && n<=ops.length) ? ops[n-1].v : ops[ops.length-1].v) : true;
+  }
+  var k='o|'+String(texto);
+  if(PREG_MEMO && Object.prototype.hasOwnProperty.call(PREG_MEMO,k)) return PREG_MEMO[k];
+  var memo=PREG_MEMO ? Object.assign({}, PREG_MEMO) : {};
+  preguntar(pregDeTexto(texto, o)).then(function(v){ pregSeguir(memo, k, v, otraVez); });
+  return null;
 }
 function avisoVentana(texto, o){
   if(!pregActivo()){ alert(texto); return; }
@@ -33679,6 +33983,7 @@ function mergePending(serverList){
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   try{ serverList.forEach(function(p){ if(p) entSrvAnotar(p); }); }catch(e){}   // 🧾 (10/11) lo que dice la planilla del «Entregado» (`entHistAnotar`)
   try{ if(pagHistActivo()) serverList.forEach(function(p){ if(p) pagSrvAnotar(p); }); }catch(e){}   // 🔁💵 (mejoras 380 y 386) …y de los pagos (`pagHistAnotar`)
+  try{ if(prhActivo()) serverList.forEach(function(p){ if(p) prhSrvAnotar(p); }); }catch(e){}   // 💵 (mejora 462) …y de los precios (`prhHistAnotar`)
   try{ serverList.forEach(function(p){ if(p) fhSrvAnotar(p); }); }catch(e){}    // 📅 (mejora 212) …y del día y el turno (`fhHistAnotar`)
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
@@ -34061,6 +34366,76 @@ function precioTipico(codigo){
   /* (25/10, §4ml, auditoría Codex OPS-22) La mediana de siempre: con un número par de ventas, el promedio de las dos del medio
      (100, 200, 300, 400 → 250; antes daba 300). */
   return b.length%2 ? b[m] : r2((b[m-1]+b[m])/2);
+}
+/* ============================================================================
+   🏷️ PRECIO MUY POR DEBAJO DEL DE SIEMPRE (mejora 466, 22/11; el dueño la eligió de la muestra «cuidar la plata y los precios»)
+   Al GUARDAR una venta del equipo (📄 OC, también la de tienda; no ATC ni RPT, ni Eduardo, ROHO, los internos ni a un mayorista) que tiene
+   un producto con precio > 0 más de `DSC_UMBRAL` (15 %) por debajo del precio de siempre de su código, el panel pregunta por qué
+   (🏷️ promoción · 👴 cliente antiguo · 🛏️ combo · 📝 otro) o deja corregirlo. NUNCA frena la venta: con el motivo, se guarda.
+   · «El de siempre» = la MEDIANA (como `precioTipico`) de lo que cobró EL EQUIPO por ese código en los últimos `DSC_DIAS` (90) días por el
+     día de la venta (`contaFecha`), sin esta misma venta, con al menos `DSC_MIN_VENTAS` (3). No sale de `precioTipico` a secas porque ese
+     mezcla los precios de mayorista de Eduardo (más bajos) y todo el historial.
+   · Solo los renglones NUEVOS o con el precio CAMBIADO: volver a guardar una venta sin tocar el precio no pregunta (un renglón con el mismo
+     producto —`prodClave`— y el mismo precio que antes queda afuera), y uno que ya tiene su motivo (`dsc`) tampoco.
+   · 🛏️ Un combo que suma bien no pregunta: con 2 o más renglones con precio de siempre, si lo que suman los precios cargados no baja más
+     de `DSC_UMBRAL` de lo que sumarían los de siempre, el descuento está repartido (colchón caro + somier barato) y no es una rebaja.
+   · El motivo queda en el renglón: `dsc` = {m: promo|antiguo|combo|otro, x: lo escrito en «otro», tip: el precio de siempre, t: cuándo,
+     q: quién (`quienEdita`)}; `heredarMarcas` lo pasa mientras el precio sea el mismo. Se ve en la 🕓 Historia del pedido y en
+     Contabilidad → «💵 Precios del mes».
+   · Con la planilla real del 22/11 (las mismas funciones), de las 229 ventas del equipo de noviembre lo dispararían 8 (con 15 %; con 20 %, 4;
+     con 10 %, 13); sin la regla del combo serían 14. Casi todas son el CONFORT PLUS a 1.230 contra 1.480 (la promoción de noviembre).
+   · En Playwright apagado salvo `DSC_PRUEBA`. `tests/test_precio_bajo.js`. */
+var DSC_UMBRAL=0.15, DSC_DIAS=90, DSC_MIN_VENTAS=3;
+var DSC_MOTIVOS=[{ v:'promo', t:'🏷️ Promoción' }, { v:'antiguo', t:'👴 Cliente antiguo' }, { v:'combo', t:'🛏️ Combo' }, { v:'otro', t:'📝 Otro motivo' }];
+function dscActivo(){ try{ return !(navigator.webdriver && !window.DSC_PRUEBA); }catch(e){ return true; } }
+/* ¿Una venta del equipo? (la base del precio de siempre y a quién se le pregunta) */
+function dscVentaEquipo(p){
+  if(!p || esATC(p.oc) || esRPT(p.oc)) return false;
+  try{ if(esFilaSistema(p) || esFilaRetiro(p) || esBorrador(p)) return false; }catch(e){ return false; }
+  if(fueraDeConta(p, 'tienda') || cliEsInterno(p.vendedor) || esVendedorLite(p.vendedor)) return false;
+  try{ if(stockClienteFuera(p)) return false; }catch(e){}
+  return true;
+}
+/* Los precios del equipo por código, de los últimos DSC_DIAS días: { COD:[{v, id}] }. */
+function dscIdx(){
+  var desde=diasAtras(DSC_DIAS-1), hoy=diaNegocio(), m={};
+  (STATE||[]).forEach(function(p){
+    if(!dscVentaEquipo(p)) return;
+    var f=''; try{ f=contaFecha(p)||''; }catch(e){}
+    if(!f || f<desde || f>hoy) return;
+    (p.productos||[]).forEach(function(x){ var c=String((x&&x.codigo)||'').trim().toUpperCase(), v=prodPrecio(x); if(c && v>0) (m[c]||(m[c]=[])).push({ v:v, id:String(p.id) }); });
+  });
+  return m;
+}
+function dscDeSiempre(idx, cod, exId){
+  var a=(idx[String(cod||'').trim().toUpperCase()]||[]).filter(function(o){ return o.id!==String(exId||''); }).map(function(o){ return o.v; });
+  if(a.length<DSC_MIN_VENTAS) return 0;
+  var b=a.sort(function(x,y){ return x-y; }), k=Math.floor(b.length/2);
+  return b.length%2 ? b[k] : r2((b[k-1]+b[k])/2);
+}
+/* Los renglones que hay que preguntar: [{x, i (su lugar en `productos`), tip, pct}]. [] = nada. */
+function dscRevisar(vendedor, cliente, productos, prev){
+  if(!dscActivo() || docTipoSel()!=='OC') return [];
+  var yo={ oc:'', vendedor:vendedor, cliente:cliente, productos:productos, id:prev ? prev.id : '' };
+  if(fueraDeConta(yo, 'tienda') || cliEsInterno(vendedor) || esVendedorLite(vendedor)) return [];
+  try{ if(stockClienteFuera(yo)) return []; }catch(e){}
+  var idx=dscIdx(), antes={}, out=[], sP=0, sR=0, nR=0;
+  ((prev && prev.productos)||[]).forEach(function(x){ if(x) (antes[prodClave(x)]||(antes[prodClave(x)]=[])).push(prodPrecio(x)); });
+  (productos||[]).forEach(function(x, i){
+    if(!x) return;
+    var cod=String(x.codigo||'').trim().toUpperCase(), pr=prodPrecio(x); if(!cod || !(pr>0)) return;
+    var tip=dscDeSiempre(idx, cod, prev ? prev.id : ''); if(!(tip>0)) return;
+    var u=Math.max(1, Number(x.cant)||1); sP=r2(sP+pr*u); sR=r2(sR+tip*u); nR++;
+    var L=antes[prodClave(x)], j=L ? L.findIndex(function(v){ return Math.abs(v-pr)<=0.005; }) : -1;
+    if(j>=0){ L.splice(j,1); return; }                                    // el mismo precio que ya tenía: no se vuelve a preguntar
+    if(x.dsc) return;                                                     // ya dijo por qué (lo pasó `heredarMarcas`)
+    if(pr < tip*(1-DSC_UMBRAL)-0.005) out.push({ x:x, i:i, tip:tip, pct:Math.round((1-pr/tip)*100) });
+  });
+  if(out.length && nR>=2 && sP >= sR*(1-DSC_UMBRAL)-0.005) return [];    // 🛏️ combo: el descuento está repartido y la suma da
+  return out;
+}
+function dscRenglonTxt(f){
+  return prhNombre(f.x)+' a '+phxBs(prodPrecio(f.x))+'; se cobra normalmente '+phxBs(f.tip)+': '+f.pct+' % menos';
 }
 /* ⚠️ KOMMO ESCRIBE TODO JUNTO EN EL NOMBRE (§4cc).
    El panel guarda producto y medida por separado («TITANIO LATEX» + «180x190»), pero en
@@ -44837,6 +45212,7 @@ function mostrarBotonesTodos(){
   var py=document.getElementById('cta-tab-proy'); if(py) py.style.display = UNLOCKED ? '' : 'none';
   try{ atcInformeVisible(); }catch(e){}   // 📄 (§4lm) el informe de ATC, solo gerencia
   try{ qaPugnaPintar(); }catch(e){}       // 🔀 (22/11) «Ventas en pugna» de «¿Quién lo atiende?», solo con la contraseña
+  try{ prmBotonPintar(); }catch(e){}      // 💵 (mejoras 462 y 466) «Precios del mes», solo con la contraseña
   if(!UNLOCKED && contaTab()==='proy'){ segSet('cta-tab','ventas'); setContaTab('ventas'); }
   if(!UNLOCKED){ MIS_TODOS=false; CHO_TODOS=false; }
   pintarBotonTodos('mis-todos-btn', MIS_TODOS);
