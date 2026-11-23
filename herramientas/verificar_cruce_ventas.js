@@ -186,10 +186,13 @@ function ventasARevisar(P, pg, VEND, desde, hasta) {
      pendiente aunque el cartel haya salido (son dos resultados distintos). El bot además no repite el mismo aviso en 48 h.
    La cobertura se cuenta por CUENTA de Kommo y con el motivo. */
 const NO_CONTESTO = { 'sin respuesta': 1, 'sin token': 1, 'error': 1 };
+const noContesto = (m) => !!NO_CONTESTO[m] || /^error\b/.test(m);
 const motivosDe = (c, dudas, mk, T) => {
   if (!c) return ['sin respuesta'];
   if (c.sinToken) return ['sin token'];
-  const m = [c.error && 'error', c.msgOk === false && 'mensajes incompletos', c.tareasOk === false && 'tareas', c.notasOk === false && 'notas',
+  /* el código HTTP de Kommo, sin nada más del mensaje (401 = el token no vale para esa cuenta; 0 = no hubo respuesta) */
+  const cod = /HTTP (\d+)/.exec(String(c.error || ''));
+  const m = [c.error && ('error' + (cod ? ' HTTP ' + cod[1] : '')), c.msgOk === false && 'mensajes incompletos', c.tareasOk === false && 'tareas', c.notasOk === false && 'notas',
     c.cortado && 'búsqueda cortada', c.usOk === false && 'nombres de usuarios', Number(c.masLeads) > 0 && 'más leads de los que se miran'].filter(Boolean);
   // El .gs resuelve vivo con las etapas de esta cuenta después de leer los leads, también en la primera consulta.
   if ((c.leads || []).some((l) => l.vivo && Number(l.tocado) > T)) m.push('estado histórico');
@@ -221,7 +224,7 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     const parcial = (mk) => mot[mk].length > 0;
     ['heaven', 'suena'].forEach((mk) => {
       (mot[mk].length ? mot[mk] : ['completa']).forEach((m) => { R.cob[mk][m] = (R.cob[mk][m] || 0) + 1; });
-      if (mot[mk].some((m) => NO_CONTESTO[m])) R.noContesto[mk]++;
+      if (mot[mk].some(noContesto)) R.noContesto[mk]++;
     });
     const motTxt = (mks) => mks.filter(parcial).map((mk) => (mk === 'heaven' ? 'Heaven' : 'Sueña') + ' ' + mot[mk].join(', ')).join(' + ') || 'incompleto';
     // Un ID de otra cuenta prueba actividad en ella. Por sí solo no permite comparar personas entre cuentas.
@@ -309,7 +312,7 @@ function informe(R) {
   L.push('Pedidos elegibles: ' + R.total + ' (' + R.tienda + ' ventas de tienda: su hora es la de la venta; si se le corrigió la fecha, no es la de la carga)');
   ['heaven', 'suena'].forEach((mk) => { const c = R.cob[mk], ok = c.completa || 0;
     L.push('Cuenta de Kommo ' + NOMBRE_CTA[mk] + ': completa en ' + ok + ' de ' + R.total + (ok < R.total ? ' · ' + Object.keys(c).filter((k) => k !== 'completa').map((k) => k + ' ' + c[k]).join(' · ') : '')); });
-  cuentasCaidas(R).forEach((mk) => L.push('❌ La cuenta de ' + NOMBRE_CTA[mk] + ' no contestó en NINGÚN pedido (' + Object.keys(R.cob[mk]).filter((k) => NO_CONTESTO[k]).join(', ') + '): el informe no puede comparar.'));
+  cuentasCaidas(R).forEach((mk) => L.push('❌ La cuenta de ' + NOMBRE_CTA[mk] + ' no contestó en NINGÚN pedido (' + Object.keys(R.cob[mk]).filter(noContesto).join(', ') + '): el informe no puede comparar.'));
   L.push('ℹ️ Es una reconstrucción de lo que había en Kommo al cargar cada venta: puede haber omisiones y atribuciones erróneas.');
   L.push('');
   L.push(linea('🔀 Indicio de cruce (otra persona atendía al cliente)', R.ind, R.total));

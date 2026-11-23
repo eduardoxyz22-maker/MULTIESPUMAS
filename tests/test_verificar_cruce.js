@@ -107,7 +107,7 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   nuevo(); K.suena.falla['*'] = 401;
   const a = cliente('heaven', '71100002', 12); charla('heaven', a.lid, 12, T - 3 * D);
   const R = correr([venta('o', 'Isabel Robledo', '71100002')], '2d');
-  chk(V.salidaDe(R) === 1 && /Sueña no contestó en NINGÚN pedido \(error\)/.test(V.informe(R).join('\n')) && /INCOMPLETA/.test(V.informe(R).join('\n')), '2d con 401 de Sueña también rojo y con «INCOMPLETA»');
+  chk(V.salidaDe(R) === 1 && /Sueña no contestó en NINGÚN pedido \(error HTTP 401\)/.test(V.informe(R).join('\n')) && /INCOMPLETA/.test(V.informe(R).join('\n')), '2d con 401 de Sueña también rojo, con el código y «INCOMPLETA»: ' + V.informe(R).filter((l) => /Sueña/.test(l)).join(' | '));
 }
 /* 2e · tuyo y compro incompletos quedan pendientes; compro con fecha de contrato válida */
 {
