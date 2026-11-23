@@ -38066,7 +38066,7 @@ function ubfAbrir(){
 }
 /* ============================================================================
    ⚠️ LAS ENTREGAS DE MAÑANA EN RIESGO (22/11, mejora 459; dueño la eligió con la muestra).
-   Desde las RIESGO_HORA (15:00, Bolivia) «Para hacer» de Administración junta, pedido por pedido, lo que puede hacer que una entrega del
+   Desde las RIESGO_HORA (11:00, Bolivia; dueño 23/11: «a las 11 am», antes 15:00) «Para hacer» de Administración junta, pedido por pedido, lo que puede hacer que una entrega del
    PRÓXIMO día con camión (`proximoDiaEntrega`) no salga: (a) un producto con el stock sin revisar o «✗ no hay» sin pedir (la MISMA lectura
    de «Semana», `semanaLinea` rev/nohay), (b) sin ubicación (la regla de la 185: `ubfEntra` + `ubfEstado`, la ≈ aproximada no cuenta),
    (c) sin camión (`vehiculoDe` vacío y no `fichaRetira`). Y (d) el saldo a cobrar al entregar (`saldoACobrar` > 0.005), en ámbar y SOLO
@@ -38080,7 +38080,7 @@ function ubfAbrir(){
      renglón «🚚 Sin camión para …» de siempre (`nxSugSin`) ya lo cuenta. Con al menos uno asignado, el que quedó sin camión sí está en riesgo.
    · Solo mira. En Playwright apagado salvo `window.RIESGO_PRUEBA`. `tests/test_riesgo_manana.js`.
    ========================================================================== */
-var RIESGO_HORA='15:00';
+var RIESGO_HORA='11:00';
 function riesgoActivo(){ try{ return !(navigator.webdriver && !window.RIESGO_PRUEBA); }catch(e){ return true; } }
 function riesgoCuando(f){ return f===tomorrowStr() ? 'de mañana' : ('del '+nxDiaTxt(f)); }
 function riesgoDatos(){

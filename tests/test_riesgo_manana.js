@@ -1,4 +1,4 @@
-/* ⚠️ (22/11, mejora 459) LAS ENTREGAS DE MAÑANA EN RIESGO: desde las 15:00, los pedidos del próximo día con camión con el stock sin revisar
+/* ⚠️ (22/11, mejora 459) LAS ENTREGAS DE MAÑANA EN RIESGO: desde las 11:00 (dueño, 23/11; antes 15:00), los pedidos del próximo día con camión con el stock sin revisar
    o «no hay» sin pedir, sin ubicación o sin camión, en «Para hacer» de Administración, con la lista y los botones al arreglo de siempre.
    El saldo a cobrar va aparte, solo para saber. Si ningún pedido de ese día tiene camión todavía, «sin camión» se dice una vez arriba.
    Se corre:  node tests/test_riesgo_manana.js */
@@ -77,9 +77,12 @@ const PREPARAR = _src.slice(_src.indexOf('function PREPARAR(){'), _src.indexOf('
   });
   chk('5 · sin ningún camión asignado todavía para ese día, «sin camión» no hace a cada uno «en riesgo»: se dice una vez arriba', G.camG && G.nG>=6 && G.R==='r2,r3,r9' && G.cam===0 && G.t, G);
 
-  await page.clock.setFixedTime(new Date('2026-11-19T14:30:00-04:00'));
+  await page.clock.setFixedTime(new Date('2026-11-19T10:50:00-04:00'));
   const T14=await page.evaluate(()=>({ d:riesgoDatos(), n:admHacerDatos().filter(function(o){ return /^riesgo/.test(o.k); }).length }));
-  chk('6 · antes de las 15:00 no sale', T14.d===null && T14.n===0, T14);
+  chk('6 · antes de las 11:00 no sale', T14.d===null && T14.n===0, T14);
+  await page.clock.setFixedTime(new Date('2026-11-19T11:05:00-04:00'));
+  const T11=await page.evaluate(()=>({ d:!!riesgoDatos(), n:admHacerDatos().filter(function(o){ return o.k==='riesgo'; }).length }));
+  chk('6b · desde las 11:00 sí sale (dueño, 23/11)', T11.d && T11.n===1, T11);
 
   await page.clock.setFixedTime(new Date('2026-11-21T15:20:00-04:00'));   // sábado: el próximo camión es el lunes 23/11
   const S=await page.evaluate(async()=>{
