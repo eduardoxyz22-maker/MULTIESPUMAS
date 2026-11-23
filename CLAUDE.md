@@ -1173,6 +1173,12 @@ afuera uno que retiene: tareas, notas y mensajes se miran en todos (hasta 120) y
 esa hora, notas y tareas creadas antes; caché solo de una consulta de antes de la venta, nunca la deja); (3) `qaVeredicto` junta las notas
 de una persona por la MÁS NUEVA (con su tipo, texto y lead; la conversación y la fecha acordada siguen ganando); (4) «🗑 Lo borrado» sin botón
 si el servidor no es 22-x. Sus pruebas, tal cual: `tests/test_jarvis_23h_{hora_aviso,leads_omitidos,vigencia_notas}.cjs`. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+🔎 **Segunda revisión de Jarvis (23/11), también en la 23-h**: (1) el cruce usa la caché solo de una consulta del MISMO segundo que la venta y
+evalúa con `alVender` (una de antes no veía la nota nueva ni la que vencía en el medio); (2) los leads de otra persona que quedan fuera de la lista
+por el tope viajan en `recientes` (sin mensajes ni notas) y el «🟡 Ojo» de `qaVeredicto` los mira; (3) con `hist`, un lead cerrado (142/143) después
+de la venta cuenta abierto, uno creado después no existe y una nota EDITADA después no prueba una visita (`notasDudosas`; «creó y anota» sí);
+(4) las tareas siguen las páginas de cada lote de 40 (`QA_NOTAS_PAGINAS`; pasado el tope, `tareasOk:false` = incompleto). Sus pruebas:
+`tests/test_jarvis_23h_r2_{cache_al_guardar,ojo_segun_cantidad,cierre_y_tareas,nota_editada}.cjs`.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir

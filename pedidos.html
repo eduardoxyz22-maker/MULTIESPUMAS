@@ -73493,7 +73493,8 @@ function qaVeredicto(r, yo){
      cambia: el aviso al guardar, el WhatsApp a la otra vendedora y la revisión siguen con la regla de siempre). */
   var rec=[];
   if(k==='libre') ((r && r.cuentas)||[]).forEach(function(c){
-    (c.leads||[]).forEach(function(l){
+    /* (revisión 2 de Jarvis, 23/11) + `recientes`: los que el servidor no muestra por el tope de la lista (8 por celular, 3 por cliente). */
+    (c.leads||[]).concat(c.recientes||[]).forEach(function(l){
       if(l.sinLead || l.cerrado==='perdido' || (l.cerrado==='ganado' && !l.vivo)) return;
       var n=qaN(l.resp), t=Math.max(Number(l.creado)||0, Number(l.tocado)||0);
       if(n==='(sin asignar)' || t<lim || (yo && qaMismo(n, yo))) return;
@@ -74160,6 +74161,12 @@ function qaPintar(){
         var k=r.nombre ? (l.t4 || (c.marca+'|'+(l.cli||li))) : 'uno';
         if(!porC[k]){ porC[k]={ k:k, t4:l.t4, cli:l.cli, cuentas:{} }; grupos.push(porC[k]); }
         (porC[k].cuentas[c.marca]=porC[k].cuentas[c.marca]||{ marca:c.marca, contactos:1, leads:[], msgOk:c.msgOk, tareasOk:c.tareasOk, error:c.error }).leads.push(l);
+      });
+      /* 🟡 (revisión 2 de Jarvis) los recientes que no se muestran van con su cliente, solo para el «Ojo» de ese cartel */
+      (c.recientes||[]).forEach(function(l){
+        var k=r.nombre ? (l.t4 || (c.marca+'|'+(l.cli||''))) : 'uno';
+        if(!porC[k]) return;   // un cliente sin ningún lead a la vista no tiene cartel propio
+        var cu=porC[k].cuentas[c.marca]; if(cu) (cu.recientes=cu.recientes||[]).push(l);
       });
     });
     var varios=r.nombre && grupos.length>1;

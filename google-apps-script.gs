@@ -13718,6 +13718,12 @@ function qaCuenta_(q, marca, ahoraS) {
     if (rl.code !== 200 || !rl.o) { res.error = 'Kommo no contestó los leads (HTTP ' + rl.code + ')'; return res; }
     L = L.concat(kEmb_(rl.o, 'leads'));
   }
+  /* (revisión 2 de Jarvis, 23/11) A la hora de una venta (`hist`): un lead creado después no existía, y uno cerrado (142/143) después seguía
+     abierto (como el verificador: Kommo no dice en qué etapa estaba, se toma abierto sin comprar). */
+  if (q.hist) {
+    L = L.filter(function (l) { return !((Number(l.created_at) || 0) > ahoraS); });
+    L.forEach(function (l) { var st0 = String(l.status_id); if ((st0 === '142' || st0 === '143') && (Number(l.closed_at) || 0) > ahoraS) { l.status_id = 0; l.closed_at = 0; } });
+  }
   L.sort(function (a, b) { return (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0); });
   /* (revisión de Jarvis, 23/11) Se MUESTRAN los más recientes (QA_MAX_LEADS por celular, QA_LEADS_POR_CLIENTE por nombre), pero las tareas,
      las notas y los mensajes se miran en TODOS (hasta 120): un lead más viejo que retiene al cliente (conversación, fecha acordada, nota de
@@ -13740,16 +13746,23 @@ function qaCuenta_(q, marca, ahoraS) {
   var tareas = {}, tareasC = {}, tope = ahoraS + QA_TAREA_MAX_DIAS * 86400;
   [['leads', L.map(function (l) { return l.id; }), tareas], ['contacts', cids, tareasC]].forEach(function (x) {
     for (var kt = 0; kt < x[1].length && res.tareasOk; kt += 40) {   // de a 40 (ahora van todos los leads, no solo los que se muestran)
-      var rt = kPedir_('get', '/tasks?filter[entity_type]=' + x[0] + '&' + x[1].slice(kt, kt + 40).map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
-                              '&filter[is_completed]=0&limit=250');
-      if (rt.code === 204) continue;
-      if (rt.code !== 200 || !rt.o) { res.tareasOk = false; return; }
-      kEmb_(rt.o, 'tasks').forEach(function (t) {
-        var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
-        if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
-        if (hist && (Number(t.created_at) || 0) > ahoraS) return;   // puesta después de la venta
-        if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
-      });
+      /* (revisión 2 de Jarvis, 23/11) Se siguen las páginas de cada lote, como las notas: con 250 tareas abiertas vencidas la que retiene podía
+         estar en la segunda. Pasadas QA_NOTAS_PAGINAS páginas, la consulta queda INCOMPLETA (nunca «Libre»). */
+      for (var pgT = 1; ; pgT++) {
+        var rt = kPedir_('get', '/tasks?filter[entity_type]=' + x[0] + '&' + x[1].slice(kt, kt + 40).map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
+                                '&filter[is_completed]=0&limit=250' + (pgT > 1 ? '&page=' + pgT : ''));
+        if (rt.code === 204) break;
+        if (rt.code !== 200 || !rt.o) { res.tareasOk = false; return; }
+        var TT = kEmb_(rt.o, 'tasks');
+        TT.forEach(function (t) {
+          var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
+          if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
+          if (hist && (Number(t.created_at) || 0) > ahoraS) return;   // puesta después de la venta
+          if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
+        });
+        if (!(rt.o._links && rt.o._links.next)) break;
+        if (pgT >= QA_NOTAS_PAGINAS) { res.tareasOk = false; return; }
+      }
     }
   });
   /* 📝 (2026-11-21-a) Las NOTAS de esos leads y contactos de los últimos QA_DIAS días que hablan de una visita o una compra (qaNotaVisita_),
@@ -13769,6 +13782,9 @@ function qaCuenta_(q, marca, ahoraS) {
         NN.forEach(function (n) {
           var id = String(n.entity_id), ts = Number(n.created_at) || 0, u = Number(n.created_by) || 0, txt = String((n.params && n.params.text) || '');
           if (!u || ts < lim || ts > ahoraS + (hist ? 0 : 3600)) return;   // (hist) una nota escrita después de la venta no cuenta
+          /* (revisión 2 de Jarvis, 23/11) Editada DESPUÉS de la venta: Kommo no guarda el texto de antes, así que el de ahora no prueba nada (como el
+             verificador). La nota existía, así que «creó el lead y anota» sigue valiendo; una visita, no. */
+          if (hist && (Number(n.updated_at) || 0) > ahoraS && txt) { txt = ''; res.notasDudosas = (res.notasDudosas || 0) + 1; }
           if (x[0] === 'leads' && !qaNotaPanel_(txt)) {   // ✍️ (2026-11-23-h) cualquier nota de esa persona en el lead
             var ks = id + '|' + u;
             if (!segL[ks] || ts > segL[ks].ts) segL[ks] = { ts:ts, txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
@@ -13825,6 +13841,10 @@ function qaCuenta_(q, marca, ahoraS) {
       crea:nom(Number(l.created_by) || 0), creoNota:st === '143' ? null : creoYNota(l)   // ✍️ (2026-11-23-h) quién lo creó y su última nota
     };
     if (verL[id] || qaRetiene_(ent, lim, ahoraS)) res.leads.push(ent);
+    /* 🟡 (revisión 2 de Jarvis, 23/11) Los que quedan afuera de la lista pero son de alguien, recientes y sin perder ni cerrados: lo poco que
+       necesita el «Ojo» de la página (qaVeredicto), sin mensajes ni notas. No cambia ningún resultado: solo el cartel amarillo. */
+    else if (st !== '143' && (!gan || vivo) && l.responsible_user_id && Math.max(ent.creado, ent.tocado) >= lim)
+      (res.recientes = res.recientes || []).push({ id:id, t4:ent.t4, cli:ent.cli, resp:ent.resp, suc:ent.suc, et:ent.et, emb:ent.emb, cerrado:ent.cerrado, vivo:ent.vivo, creado:ent.creado, tocado:ent.tocado });
   });
   res.masLeads = L.length - res.leads.length;
   /* El chat que cuelga del CONTACTO (sin lead) y la fecha acordada anotada en un contacto que no tiene un lead vivo: una ficha aparte
@@ -13930,7 +13950,9 @@ function qaConsulta_(c8, nom, orig, ahoraS, solo, hist) {
   try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
   /* (revisión de Jarvis, 23/11) La consulta a la hora de una venta (`hist`, el cruce) no deja caché, y de la caché solo toma una consulta hecha
      ANTES de guardar la venta (la del formulario de esa venta): una de después podría traer lo que pasó después de la venta. */
-  var cacheOk = function (o) { return !!o && (!hist || (Number(o.ahora) || 0) <= ahoraS); };
+  /* (revisión 2 de Jarvis, 23/11) Y solo la del MISMO segundo: una de antes no ve lo que pasó entre la consulta y la venta (una nota nueva, una
+     que venció), así que para el cruce se vuelve a preguntar. */
+  var cacheOk = function (o) { return !!o && (!hist || (Number(o.ahora) || 0) === ahoraS); };
   if (cache) {
     try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; if (!cacheOk(out)) out = null; } } catch (e) {}
     /* (revisión 2 de Fable) Con `solo`, sirve también la consulta COMPLETA de hace un momento (la del formulario de esa misma venta). */
@@ -14106,7 +14128,7 @@ function cruceElegir_(tomados, planilla) {
     if (cuenta && cuenta.sinToken) { hecho[x.id] = { t:ahoraS, s:'sin token' }; cambio = true; return; }   // sin token no va a cambiar
     /* (Fable 4) Sin los nombres de los usuarios (`usOk` false) no se sabe quién es quién: falla, como si Kommo no contestara. */
     var fallo = !cuenta || cuenta.error || cuenta.msgOk === false || cuenta.tareasOk === false || cuenta.notasOk === false || cuenta.usOk === false;   // + las tareas (revisión 3 de Fable)
-    var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || alVender, mk) : [];
+    var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, alVender, mk) : [];
     if (!otros.length && fallo) {
       if ((Number(x.n) || 0) + 1 < CRUCE_INTENTOS) { devolver.push({ id:x.id, ms:x.ms, n:(Number(x.n) || 0) + 1 }); return; }
       hecho[x.id] = { t:ahoraS, s:'Kommo no contestó' }; cambio = true; return;
