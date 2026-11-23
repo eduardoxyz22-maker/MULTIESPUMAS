@@ -22,6 +22,11 @@ function PREPARAR(){
   try{ clearTimeout(CARGA_TIMER); clearInterval(CARGA_TIC); }catch(e){}
   if(typeof AUTO_TIMER!=='undefined' && AUTO_TIMER) clearInterval(AUTO_TIMER);
   loadFromServer=function(){};
+  /* 📐 (23/11) desde la 2026-11-23-g cada vendedor proyecta SU PARTE de la marca (`test_proyeccion` lo cuida). Esta prueba cuida la cuenta de
+     las COMISIONES con la proyección que reciba: sus casos (a Bs 100 de la mínima, a Bs 2.000 del 3 %…) están armados con la cuenta de cada
+     vendedor sola, así que acá se la pide así (`proyRitmo`), sin tocar las comisiones. */
+  var _pm=proyeccionMes;
+  window.proyeccionMes=proyeccionMes=function(ym){ var R=_pm(ym); if(R.estado==='curso') R.marcas.forEach(function(m){ m.filas.forEach(function(r){ if(r.metodo==='ritmo') r.proy=r.proyRitmo; }); }); return R; };
   var n=0;
   window.V=function(vend, fecha, reg, bs, prods){ n++;
     return { id:'p'+n, oc:fecha.slice(5,7)+'-'+(100+n), nota:String(500+n), vendedor:vend, cliente:'CLIENTE '+n, fecha:fecha, turno:'AM', zona:'', direccion:'',
