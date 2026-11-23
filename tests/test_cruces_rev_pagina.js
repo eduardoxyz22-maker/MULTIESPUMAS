@@ -32,9 +32,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
       ts:new Date(dia+'T10:00:00-04:00').getTime(), metodoPago:'' }; };
     var T=function(d){ return new Date(d+'T10:00:00-04:00').getTime(); };
     var rev={ v:1, t:T('2026-11-23'), d:14, n:164, i:[
-      { id:'s1', v:'Fernando Peinado', m:'s', o:[['Juan Pablo Paredes','s','c',1]], mm:1, wa:1, yo:1, td:0, ts:T('2026-11-12') },
+      { id:'s1', v:'Fernando Peinado', m:'s', o:[['Juan Pablo Paredes','s','c',1,'27372541']], mm:1, wa:1, yo:1, td:0, ts:T('2026-11-12') },
       { id:'s2', v:'Fernando Peinado', m:'s', o:[['Juan Pablo Paredes','s','c',0]], mm:1, wa:1, yo:0, td:1, ts:T('2026-11-14') },
-      { id:'h1', v:'Isabel Robledo', m:'h', o:[['Maria Flores','h','t',0]], mm:1, wa:1, yo:0, td:0, ts:T('2026-11-18') },
+      { id:'h1', v:'Isabel Robledo', m:'h', o:[['Maria Flores','h','t',0,'c9001']], mm:1, wa:1, yo:0, td:0, ts:T('2026-11-18') },
       { id:'h2', v:'Isabel Robledo', m:'h', o:[['Mauricio Merida','s','c',0]], mm:0, wa:0, yo:0, td:0, ts:T('2026-11-19') },
       { id:'ya-no-esta', v:'Isabel Robledo', m:'h', o:[['Maria Flores','h','c',0]], mm:1, wa:1, yo:0, td:0, ts:T('2026-11-10') } ] };
     var L=[ P('s1','Fernando Peinado','CLIENTE ALFA','2026-11-12'), P('s2','Fernando Peinado','CLIENTE BETA','2026-11-14'),
@@ -52,6 +52,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
     UNLOCKED=true; QA_PUGNA_ABIERTO=true; qaPugnaPintar(); await esperar(50);
     out.txt=box ? box.textContent.replace(/\s+/g,' ') : '';
     out.items=box ? box.querySelectorAll('.crv-rev').length : 0;
+    out.links=box ? Array.prototype.map.call(box.querySelectorAll('.crv-rev a[href]'), function(x){ return x.getAttribute('href')+' | '+x.textContent.trim(); }) : [];
     STATE=STATE.filter(function(p){ return String(p.id)!==CRUREV_ID; }); qaPugnaPintar();
     out.sinFila=box ? box.textContent.replace(/\s+/g,' ') : '';
     return out;
@@ -65,6 +66,10 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve(__dirname, '..', 'pedidos.ht
   chk('2e · marcas útiles: «la otra empezó primero», «la que vendió también conversaba», venta de tienda', /la otra empezó primero/.test(r.txt) && /la que vendió también conversaba/.test(r.txt) && /venta de tienda/.test(r.txt));
   chk('2f · la de la otra marca va aparte, con la marca', /Con alguien de la OTRA marca \(1\)/.test(r.txt) && /Mauricio Merida \(Sueña\) conversaba/.test(r.txt));
   chk('3a · la que ya no está en la planilla no se muestra y se dice', !/ya-no-esta/.test(r.txt) && /1 venta de la revisión ya no está en la planilla/.test(r.txt) && r.items===4, r.items);
+  chk('5a · (23/11, dueño: «¿cómo sé que lo hizo por celular?») cada venta dice que se encontró por el celular y en qué Kommo', /Se encontró por el celular 70001001 \(no por el nombre\) en el Kommo de Sueña/.test(r.txt) && /en el Kommo de Heaven/.test(r.txt), r.txt.slice(0,600));
+  chk('5b · con el lead guardado, el enlace al chat en el Kommo de esa marca', r.links.some(function(l){ return l.indexOf('https://gerenciamultiespumasviscarra.kommo.com/leads/detail/27372541 | 💬 Ver el chat de Juan Pablo Paredes en Kommo')===0; }), r.links);
+  chk('5c · un contacto sin lead lleva a su ficha de contacto', r.links.some(function(l){ return l.indexOf('https://eanez.kommo.com/contacts/detail/9001 |')===0; }), r.links);
+  chk('5d · sin el lead (una revisión de antes), dice que lo busquen por ese número', /buscá ese número en Kommo: el contacto puede tener otro nombre/.test(r.txt) && r.links.length===2, r.links);
   chk('3b · sin la fila: «todavía no corrió»', /Revisión de ventas anteriores \(todavía no corrió\)/.test(r.sinFila), r.sinFila.slice(-200));
   chk('sin errores en la página', !errores.length, errores);
   await browser.close();
