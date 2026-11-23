@@ -1,191 +1,258 @@
 /* El verificador de cruces (herramientas/verificar_cruce_ventas.js), sin red (23/11, revisiones de Jarvis).
-   Pasa por el «¿Quién lo atiende?» REAL del .gs (quienAtiende_, cruceOtros_) y el qaVeredicto REAL de pedidos.html, contra un Kommo DE
-   MENTIRA (contactos, leads, mensajes paginados, tareas y notas), con el reloj puesto en el momento de cada venta.
-   1 cada pedido cuenta por su id
-   2 Heaven completo + Sueña sin token: «tuyo» y «compro» incompletos quedan pendientes; un «otro» con evidencia válida es un cruce parcial;
-     la alerta del formulario de una venta de Heaven igual se decide (solo mira Heaven)
-   3 solo la otra marca atendía: cruce entre marcas, cero destinatarias de la alerta
-   4 otra asesora de la misma marca: una alerta; con dos, sigue siendo UNA venta (dos destinatarias)
-   5 una tarea creada después de la venta o una nota escrita 30 min después no respaldan un cruce
-   6 mensajes válidos en una página posterior (más de 100 mensajes más nuevos): se encuentran
-   7 cero pedidos elegibles / todos pendientes: mensajes distintos y sin porcentaje
-   8 umbral: 30 pendientes de 100 = verde, 31 = rojo */
+   Pasa por el «¿Quién lo atiende?» REAL del .gs (quienAtiende_, cruceOtros_) y el qaVeredicto / cruceOtros REALES de pedidos.html, contra
+   un Kommo DE MENTIRA (subdominios inventados: contactos, leads, mensajes de a 100, tareas y notas de a 250, con `_links.next`), con el reloj
+   puesto en el momento de cada venta. En cada caso, sí + no + pendientes = pedidos, en las cuatro preguntas. */
 'use strict';
 const path = require('path');
 const V = require(path.join(__dirname, '..', 'herramientas', 'verificar_cruce_ventas.js'));
 let ok = 0, mal = 0;
 const chk = (c, m) => { if (c) ok++; else { mal++; console.log('  ✗ ' + m); } };
 
-const T = 1795000000, H = 3600, D = 86400;          // el momento de las ventas
+const T = 1795000000, D = 86400;          // el momento de las ventas
 const pg = V.cargarPagina();
 const SUENA = ['Juan Pablo Paredes', 'Fernando Peinado', 'Mauricio Merida'];
 const marcaDe = (v) => SUENA.some((s) => pg.qaMismo(s, v)) ? 'suena' : 'heaven';
+const SUB = { heaven: 'heaven-prueba', suena: 'suena-prueba' };   // nunca los de verdad
+const PROPS_BASE = { KOMMO_TOKEN: 'falso-h', KOMMO_TOKEN_SUENA: 'falso-s', KOMMO_SUBDOMAIN: SUB.heaven, KOMMO_SUBDOMAIN_SUENA: SUB.suena };
 
-/* ── el Kommo de mentira: una cuenta por subdominio ── */
-function cuentaVacia(usuarios) { return { users: usuarios, contacts: [], leads: [], events: [], tasks: [], notes: [] }; }
+/* ── el Kommo de mentira ── */
 const USU_H = [{ id: 11, name: 'Isabel Robledo - Central' }, { id: 12, name: 'Maria Flores - Buenos Aires' }, { id: 13, name: 'Mirian Salazar - Central' }];
-const USU_S = [{ id: 21, name: 'Fernando Peinado' }, { id: 22, name: 'Mauricio Merida' }];
-function armarKommo() { return { heaven: cuentaVacia(USU_H), suena: cuentaVacia(USU_S) }; }
-let K = armarKommo(), LLAMADAS = [];
-let nid = 1000;
-/* un cliente con un lead en esa cuenta; devuelve el id del lead */
-function cliente(mk, cel, resp, estado) {
-  const cid = ++nid, lid = ++nid;
-  K[mk].contacts.push({ id: cid, name: 'Cliente ' + cid, custom_fields_values: [{ field_code: 'PHONE', values: [{ value: '+591 ' + cel }] }], _embedded: { leads: [{ id: lid }] } });
-  K[mk].leads.push({ id: lid, pipeline_id: 1, status_id: estado || 10, responsible_user_id: resp, created_at: T - 30 * D, updated_at: T - D });
-  return { cid, lid };
+const USU_S = [{ id: 21, name: 'Fernando Peinado' }, { id: 22, name: 'Mauricio Merida' }, { id: 13073611, name: 'multiespumas' }];
+const vacia = (users) => ({ users, contacts: [], leads: [], events: [], tasks: [], notes: [], falla: {} });
+let K, LLAMADAS, nid = 1000;
+const nuevo = () => { K = { heaven: vacia(USU_H), suena: vacia(USU_S) }; LLAMADAS = []; PROPS = Object.assign({}, PROPS_BASE); };
+function cliente(mk, cel, resp, lead) {
+  let c = K[mk].contacts.filter((x) => x.custom_fields_values[0].values[0].value.replace(/\D/g, '').slice(-8) === cel)[0];
+  if (!c) { c = { id: ++nid, name: 'Cliente', custom_fields_values: [{ field_code: 'PHONE', values: [{ value: '+591 ' + cel }] }], _embedded: { leads: [] } }; K[mk].contacts.push(c); }
+  const l = Object.assign({ id: ++nid, pipeline_id: 1, status_id: 10, responsible_user_id: resp, created_at: T - 30 * D, updated_at: T - D, closed_at: 0 }, lead || {});
+  K[mk].leads.push(l); c._embedded.leads.push({ id: l.id });
+  return { cid: c.id, lid: l.id };
 }
-/* una conversación: el cliente escribe y la persona contesta media hora después */
 function charla(mk, lid, u, ts) {
   K[mk].events.push({ type: 'incoming_chat_message', entity_type: 'lead', entity_id: lid, created_at: ts, created_by: 0 });
   K[mk].events.push({ type: 'outgoing_chat_message', entity_type: 'lead', entity_id: lid, created_at: ts + 1800, created_by: u });
 }
-const subMk = (url) => /\/\/eanez\./.test(url) ? 'heaven' : (/\/\/gerenciamultiespumasviscarra\./.test(url) ? 'suena' : '');
+const tarea = (mk, lid, u, creada) => K[mk].tasks.push({ entity_type: 'leads', entity_id: lid, complete_till: T + 5 * D, created_by: u, responsible_user_id: u, created_at: creada, is_completed: false });
+const nota = (mk, lid, u, creada, editada) => K[mk].notes.push({ entity_type: 'leads', entity_id: lid, created_at: creada, updated_at: editada || creada, created_by: u, params: { text: 'Pasará por la sucursal a comprar el sábado' } });
+const paginar = (x, q, lim, clave) => {
+  const pag = Number(q.get('page')) || 1, trozo = x.slice((pag - 1) * lim, pag * lim);
+  if (!trozo.length) return { code: 204, body: '' };
+  return { code: 200, body: JSON.stringify({ _embedded: { [clave]: trozo }, _links: x.length > pag * lim ? { next: { href: 'x' } } : {} }) };
+};
 function pedir(url) {
   LLAMADAS.push(url);
-  const mk = subMk(url), C = K[mk]; if (!C) return { code: 401, body: '' };
+  const mk = url.indexOf('//' + SUB.heaven + '.') >= 0 ? 'heaven' : (url.indexOf('//' + SUB.suena + '.') >= 0 ? 'suena' : '');
+  const C = K[mk]; if (!C) return { code: 401, body: '' };
   const u = new URL(url), ruta = u.pathname.replace('/api/v4', ''), q = u.searchParams, todos = (k) => q.getAll(k).map(String);
-  const json = (o) => ({ code: 200, body: JSON.stringify(o) });
+  if (C.falla[ruta] || C.falla['*']) return { code: C.falla[ruta] || C.falla['*'], body: '' };
+  const json = (o) => ({ code: 200, body: JSON.stringify(o) }), copia = (x) => JSON.parse(JSON.stringify(x));
   if (ruta === '/users') return json({ _embedded: { users: C.users } });
   if (ruta === '/leads/pipelines') return json({ _embedded: { pipelines: [{ id: 1, name: 'Embudo', _embedded: { statuses: [{ id: 10, name: 'Nueva consulta' }, { id: 20, name: 'Compradores' }, { id: 142, name: 'Ganado' }, { id: 143, name: 'Perdido' }] } }] } });
-  if (ruta === '/contacts') { const x = C.contacts.filter((c) => c.custom_fields_values[0].values[0].value.replace(/\D/g, '').indexOf(q.get('query')) >= 0); return x.length ? json({ _embedded: { contacts: x } }) : { code: 204, body: '' }; }
-  if (ruta === '/leads') { const ids = todos('filter[id][]'), x = C.leads.filter((l) => ids.indexOf(String(l.id)) >= 0); return x.length ? json({ _embedded: { leads: x } }) : { code: 204, body: '' }; }
+  if (ruta === '/contacts') { const x = C.contacts.filter((c) => c.custom_fields_values[0].values[0].value.replace(/\D/g, '').indexOf(q.get('query')) >= 0); return x.length ? json({ _embedded: { contacts: copia(x) } }) : { code: 204, body: '' }; }
+  if (ruta === '/leads') { const ids = todos('filter[id][]'), x = C.leads.filter((l) => ids.indexOf(String(l.id)) >= 0); return x.length ? json({ _embedded: { leads: copia(x) } }) : { code: 204, body: '' }; }
   if (ruta === '/tasks') {
     const ids = todos('filter[entity_id][]'), et = q.get('filter[entity_type]');
-    const x = C.tasks.filter((t) => t.entity_type === et && ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed);
-    return x.length ? json({ _embedded: { tasks: x } }) : { code: 204, body: '' };
+    return paginar(copia(C.tasks.filter((t) => t.entity_type === et && ids.indexOf(String(t.entity_id)) >= 0 && !t.is_completed)), q, 250, 'tasks');
   }
   if (/\/notes$/.test(ruta)) {
     const et = ruta.split('/')[1], ids = todos('filter[entity_id][]'), desde = Number(q.get('filter[updated_at][from]')) || 0;
-    const x = C.notes.filter((n) => n.entity_type === et && ids.indexOf(String(n.entity_id)) >= 0 && n.created_at >= desde).map((n) => JSON.parse(JSON.stringify(n)));
-    return x.length ? json({ _embedded: { notes: x } }) : { code: 204, body: '' };
+    return paginar(copia(C.notes.filter((n) => n.entity_type === et && ids.indexOf(String(n.entity_id)) >= 0 && n.updated_at >= desde).sort((a, b) => b.created_at - a.created_at)), q, 250, 'notes');
   }
   if (ruta === '/events') {
     const cids = todos('filter[entity_id][]'), tipos = todos('filter[type][]'), desde = Number(q.get('filter[created_at][from]')) || 0;
     const hasta = q.get('filter[created_at][to]') != null ? Number(q.get('filter[created_at][to]')) : Infinity;
-    const leadsDe = {}; C.contacts.filter((c) => cids.indexOf(String(c.id)) >= 0).forEach((c) => c._embedded.leads.forEach((l) => { leadsDe[l.id] = 1; }));
-    const x = C.events.filter((e) => leadsDe[e.entity_id] && tipos.indexOf(e.type) >= 0 && e.created_at >= desde && e.created_at <= hasta).sort((a, b) => b.created_at - a.created_at);
-    const lim = Number(q.get('limit')) || 100, pag = Number(q.get('page')) || 1, trozo = x.slice((pag - 1) * lim, pag * lim);
-    if (!trozo.length) return { code: 204, body: '' };
-    return json({ _embedded: { events: trozo }, _links: x.length > pag * lim ? { next: { href: 'x' } } : {} });
+    const de = {}; C.contacts.filter((c) => cids.indexOf(String(c.id)) >= 0).forEach((c) => c._embedded.leads.forEach((l) => { de[l.id] = 1; }));
+    return paginar(C.events.filter((e) => de[e.entity_id] && tipos.indexOf(e.type) >= 0 && e.created_at >= desde && e.created_at <= hasta).sort((a, b) => b.created_at - a.created_at), q, 100, 'events');
   }
   return { code: 404, body: '' };
 }
-let PROPS = { KOMMO_TOKEN: 'tok-h', KOMMO_TOKEN_SUENA: 'tok-s' };
-const gs = V.cargarGs({ pedir, props: new Proxy({}, { get: (o, k) => PROPS[k], has: (o, k) => k in PROPS, ownKeys: () => Object.keys(PROPS), getOwnPropertyDescriptor: (o, k) => (k in PROPS ? { enumerable: true, configurable: true, value: PROPS[k] } : undefined) }) });
+let PROPS = Object.assign({}, PROPS_BASE);
+const propsVivas = new Proxy({}, { get: (o, k) => PROPS[k], has: (o, k) => k in PROPS, ownKeys: () => Object.keys(PROPS), getOwnPropertyDescriptor: (o, k) => (k in PROPS ? { enumerable: true, configurable: true, value: PROPS[k] } : undefined) });
+const gs = V.cargarGs({ pedir, props: propsVivas });
 const evaluar = (p) => {
   V.ENV.T = Math.floor(Number(p.ts) / 1000);
   Object.keys(V.ENV.cache).forEach((k) => { delete V.ENV.cache[k]; });
-  return gs.quienAtiende_({ cel: String(p.celular).replace(/\D/g, '').slice(-8), quien: String(p.vendedor) });
+  V.ENV.dudas = new Set();
+  const r = gs.quienAtiende_({ cel: String(p.celular).replace(/\D/g, '').slice(-8), quien: String(p.vendedor) });
+  if (r) r._dudas = Array.from(V.ENV.dudas);
+  return r;
 };
-const correr = (ventas) => V.resumir(ventas, evaluar, pg, marcaDe, gs.cruceOtros_);
-const venta = (id, v, cel, ts, extra) => Object.assign({ id, vendedor: v, celular: cel, ts: (ts || T) * 1000, oc: '11-' + id }, extra || {});
-const nuevo = () => { K = armarKommo(); LLAMADAS = []; };
+const cuadra = (R) => ['ind', 'marca', 'cartel', 'wa'].every((k) => R[k].si + R[k].no + R[k].pend === R.total);
+const correr = (ventas, nombre) => { const R = V.resumir(ventas, evaluar, pg, marcaDe, gs.cruceOtros_); chk(cuadra(R), (nombre || '') + ' sí + no + pendientes = pedidos en las cuatro preguntas'); return R; };
+const venta = (id, v, cel, extra) => Object.assign({ id, vendedor: v, celular: cel, ts: T * 1000, oc: '11-' + id }, extra || {});
+const J = (x) => JSON.stringify(x);
 
-/* 0 */
-chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'function' && typeof pg.qaVeredicto === 'function', '0 carga el .gs y la página reales');
+chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'function' && typeof pg.cruceOtros === 'function' && pg.MARCAS.length === 2, '0 carga el .gs y la página reales');
 
-/* 1 */
+/* 1 · cada pedido por su id */
 {
   const VEND = pg.VENDEDORES.filter((v) => !/eduardo|roho/i.test(v));
-  const P = [venta('a', 'Isabel Robledo', '70011111', T - 5000), venta('b', 'Isabel Robledo', '70011111', T - 1000), venta('b', 'Isabel Robledo', '70011111', T - 1000),
-    venta('c', 'Eduardo Añez', '70022222', T - 900), venta('d', 'Isabel Robledo', '123', T - 900), Object.assign(venta('e', 'Isabel Robledo', '70033333', T - 900), { oc: 'ATC 11-001' })];
+  const P = [venta('a', 'Isabel Robledo', '70011111', { ts: (T - 5000) * 1000 }), venta('b', 'Isabel Robledo', '70011111', { ts: (T - 1000) * 1000 }), venta('b', 'Isabel Robledo', '70011111', { ts: (T - 1000) * 1000 }),
+    venta('c', 'Eduardo Añez', '70022222'), venta('d', 'Isabel Robledo', '123'), venta('e', 'Isabel Robledo', '70033333', { oc: 'ATC 11-001' })];
   const L = V.ventasARevisar(P, pg, VEND, T - D, T);
   chk(L.length === 2 && L[0].id === 'a' && L[1].id === 'b', '1 dos pedidos del mismo cliente y asesora + una fila repetida = 2 ventas: ' + L.map((p) => p.id));
 }
 
-/* 2 · Sueña sin token */
+/* 2 · Sueña sin token (Jarvis, alta 1) */
 {
-  nuevo(); PROPS = { KOMMO_TOKEN: 'tok-h' };
-  const a = cliente('heaven', '71100001', 11); charla('heaven', a.lid, 11, T - 2 * D);               // tuyo: la que vende conversaba
-  const b = cliente('heaven', '71100002', 12); charla('heaven', b.lid, 12, T - 3 * D);               // otro: Maria conversaba, vende Isabel
-  const c = cliente('heaven', '71100003', 11, 20);                                                     // compro (Compradores, sin fecha de contrato)
-  const R = correr([venta('t', 'Isabel Robledo', '71100001'), venta('o', 'Isabel Robledo', '71100002'), venta('c', 'Isabel Robledo', '71100003')]);
-  chk(R.ind.si === 1 && R.ind.parcial === 1 && R.ind.pend === 2, '2a con Sueña sin token: 1 cruce parcial y 2 pendientes (tuyo/compro incompletos): ' + JSON.stringify(R.ind));
-  chk(R.cob.suena['sin token'] === 3 && R.cob.heaven.completa === 3, '2b la cobertura se cuenta por cuenta: Heaven completa 3, Sueña sin token 3: ' + JSON.stringify(R.cob));
-  chk(R.alerta.si === 1 && R.alerta.no === 2 && R.alerta.pend === 0, '2c la alerta de una venta de Heaven se decide igual (solo mira Heaven): ' + JSON.stringify(R.alerta));
-  chk(R.marca.pend === 3 && R.marca.sinCuenta === 3, '2d la comparación Heaven ↔ Sueña queda incompleta: ' + JSON.stringify(R.marca));
-  chk(V.salidaDe(R) === 1 && V.informe(R).some((l) => /INCOMPLETA/.test(l)), '2e con 2 de 3 pendientes sale en rojo y dice que la comparación está incompleta');
-  PROPS = { KOMMO_TOKEN: 'tok-h', KOMMO_TOKEN_SUENA: 'tok-s' };
+  nuevo(); delete PROPS.KOMMO_TOKEN_SUENA;
+  const a = cliente('heaven', '71100001', 12); charla('heaven', a.lid, 12, T - 3 * D);              // Maria conversaba, vende Isabel
+  const R = correr([venta('o', 'Isabel Robledo', '71100001')], '2');
+  chk(R.ind.si === 1 && R.ind.parcial === 1 && R.cartel.si === 1 && R.wa.si === 1, '2a el cruce que sí se vio se conserva: ' + J(R.ind));
+  chk(V.salidaDe(R) === 1 && V.cuentasCaidas(R).join() === 'suena', '2b una cuenta sin token en TODOS los pedidos → rojo, aunque no haya pendientes en el indicio');
+  chk(/Sueña no contestó en NINGÚN pedido \(sin token\)/.test(V.informe(R).join('\n')) && /mirando Sueña: 0 sí · 0 no · 1 pendientes → INCOMPLETA/.test(V.informe(R).join('\n')), '2c el informe nombra la cuenta, el motivo y el sentido incompleto');
+}
+/* 2d · Sueña contesta 401 */
+{
+  nuevo(); K.suena.falla['*'] = 401;
+  const a = cliente('heaven', '71100002', 12); charla('heaven', a.lid, 12, T - 3 * D);
+  const R = correr([venta('o', 'Isabel Robledo', '71100002')], '2d');
+  chk(V.salidaDe(R) === 1 && /Sueña no contestó en NINGÚN pedido \(error\)/.test(V.informe(R).join('\n')) && /INCOMPLETA/.test(V.informe(R).join('\n')), '2d con 401 de Sueña también rojo y con «INCOMPLETA»');
+}
+/* 2e · tuyo y compro incompletos quedan pendientes; compro con fecha de contrato válida */
+{
+  nuevo(); delete PROPS.KOMMO_TOKEN_SUENA;
+  const a = cliente('heaven', '71100003', 11); charla('heaven', a.lid, 11, T - 2 * D);              // tuyo
+  cliente('heaven', '71100004', 11, { status_id: 20, updated_at: T - 3 * D, custom_fields_values: [{ field_name: 'Fecha contrato', field_type: 'date', values: [{ value: T - 3 * D }] }] });   // compró hace 3 días
+  const R = correr([venta('t', 'Isabel Robledo', '71100003'), venta('c', 'Isabel Robledo', '71100004')], '2e');
+  chk(R.ind.pend === 2 && R.ind.motivos['tuyo · Sueña sin token'] === 1 && R.ind.motivos['compro · Sueña sin token'] === 1, '2e «tuyo» y «compro» con Sueña sin token quedan pendientes: ' + J(R.ind.motivos));
+  PROPS.KOMMO_TOKEN_SUENA = 'falso-s';
+  const R2 = correr([venta('c', 'Isabel Robledo', '71100004')], '2f');
+  chk(R2.ind.no === 1 && R2.ind.pend === 0 && V.salidaDe(R2) === 0, '2f el mismo «compro» con las dos cuentas completas queda decidido');
 }
 
-/* 3 · solo la otra marca */
+/* 3 · identidad (Jarvis, alta 2) */
+{
+  nuevo(); K.heaven.falla['/users'] = 500;
+  const a = cliente('heaven', '72200001', 11); charla('heaven', a.lid, 11, T - 2 * D);              // solo conversó la que vende, sin nombres
+  const R = correr([venta('x', 'Isabel Robledo', '72200001')], '3a');
+  chk(R.ind.si === 0 && R.ind.pend === 1 && /identidad desconocida/.test(Object.keys(R.ind.motivos)[0]), '3a «usuario 11» sin los nombres no es un cruce: pendiente: ' + J(R.ind));
+  chk(R.wa.si === 0 && R.wa.pend === 1, '3b y el WhatsApp tampoco (el bot no avisa sin los nombres)');
+  nuevo();
+  const b = cliente('heaven', '72200002', 11); cliente('suena', '72200002', 21);
+  const s = K.suena.leads[0].id; charla('suena', s, 901, T - 2 * D); charla('suena', s, 902, T - D);  // dos usuarios que no están en la lista
+  const R2 = correr([venta('y', 'Isabel Robledo', '72200002')], '3c');
+  chk(R2.marca.si === 1 && R2.marca.asesores === 2, '3c «usuario 901» y «usuario 902» son dos asesores: ' + J(R2.marca));
+}
+
+/* 4 · más leads de los que se miran (Jarvis, alta 3) */
 {
   nuevo();
-  cliente('heaven', '72200001', 11);                                                                   // en Heaven, sin charla
-  const s = cliente('suena', '72200001', 21); charla('suena', s.lid, 21, T - 2 * D); charla('suena', s.lid, 22, T - D);   // dos asesores de Sueña
-  const R = correr([venta('x', 'Isabel Robledo', '72200001')]);
-  chk(R.ind.si === 1 && R.marca.si === 1 && R.marca.asesores === 2, '3a una venta con dos asesores de Sueña = 1 venta entre marcas y 2 asesores: ' + JSON.stringify(R.marca));
-  chk(R.alerta.si === 0 && R.alerta.no === 1 && R.alerta.destinatarios === 0, '3b y cero destinatarias de la alerta del formulario: ' + JSON.stringify(R.alerta));
+  const a = cliente('heaven', '73300001', 12, { updated_at: T - 20 * D }); charla('heaven', a.lid, 12, T - 3 * D);   // la conversación, en el lead más viejo
+  for (let i = 0; i < 8; i++) cliente('heaven', '73300001', 11, { updated_at: T - D - i });
+  const R = correr([venta('x', 'Isabel Robledo', '73300001')], '4');
+  chk(R.ind.si === 0 && R.ind.pend === 1 && /más leads de los que se miran/.test(Object.keys(R.ind.motivos)[0]), '4a nueve leads y el de la charla afuera: pendiente, no negativo: ' + J(R.ind.motivos));
+  chk(!/Heaven: completa en 1 de 1/.test(V.informe(R).join('\n')) && /más leads de los que se miran 1/.test(V.informe(R).join('\n')), '4b la cuenta no dice «completa»');
+  chk(R.cartel.pend === 1 && R.wa.pend === 1, '4c el cartel y el WhatsApp también quedan pendientes');
 }
 
-/* 4 · la misma marca */
+/* 5 · el estado de los leads y las notas a la fecha (Jarvis, alta 4) */
 {
   nuevo();
-  const a = cliente('heaven', '73300001', 12); charla('heaven', a.lid, 12, T - 2 * D);
-  const b = cliente('heaven', '73300002', 12); charla('heaven', b.lid, 12, T - 2 * D); charla('heaven', b.lid, 13, T - D);
-  const R = correr([venta('a', 'Isabel Robledo', '73300001'), venta('b', 'Isabel Robledo', '73300002')]);
-  chk(R.alerta.si === 2 && R.alerta.destinatarios === 3, '4a dos ventas con alerta; la segunda con dos asesoras = 3 destinatarias: ' + JSON.stringify(R.alerta));
-  chk(R.porVend['Maria Flores'].avisos === 2 && R.porVend['Mirian Salazar'].avisos === 1 && R.porVend['Isabel Robledo'].alerta === 2, '4b los avisos potenciales van a quien atendía');
+  const a = cliente('heaven', '74400001', 12, { status_id: 142, closed_at: T + D, updated_at: T + D }); charla('heaven', a.lid, 12, T - 2 * D);   // se ganó al día siguiente
+  const R = correr([venta('x', 'Isabel Robledo', '74400001')], '5a');
+  chk(R.ind.si === 1 && R.wa.si === 1 && R.wa.destinatarias === 1, '5a cerrado como ganado DESPUÉS: el cruce de antes sigue: ' + J(R.ind));
+  nuevo();
+  const b = cliente('heaven', '74400002', 12, { created_at: T + 3600 }); charla('heaven', b.lid, 12, T - 2 * D);   // el lead se creó después de la venta
+  const R2 = correr([venta('y', 'Isabel Robledo', '74400002')], '5b');
+  chk(R2.ind.si === 0 && R2.ind.no === 1, '5b un lead creado después de la venta no cuenta: ' + J(R2.ind));
+  nuevo();
+  const c = cliente('heaven', '74400003', 12); nota('heaven', c.lid, 12, T - 2 * D, T + D);           // nota escrita antes y editada después
+  const R3 = correr([venta('z', 'Isabel Robledo', '74400003')], '5c');
+  chk(R3.ind.si === 0 && R3.ind.pend === 1 && /nota editada después/.test(Object.keys(R3.ind.motivos)[0]), '5c nota editada después: no se usa su texto y queda pendiente: ' + J(R3.ind.motivos));
+  nuevo();
+  cliente('heaven', '74400004', 11, { status_id: 20, updated_at: T + D });                              // hoy en «Compradores», tocado después
+  const R4 = correr([venta('w', 'Isabel Robledo', '74400004')], '5d');
+  chk(R4.ind.pend === 1 && /estado histórico/.test(Object.keys(R4.ind.motivos)[0]), '5d etapa de compra cambiada después: pendiente por estado histórico: ' + J(R4.ind.motivos));
 }
 
-/* 5 · tarea creada después, nota escrita después */
+/* 6 · tareas y notas: lo de después no cuenta, lo de antes sí, y las páginas (Jarvis, pruebas) */
 {
   nuevo();
-  const a = cliente('heaven', '74400001', 12);
-  K.heaven.tasks.push({ entity_type: 'leads', entity_id: a.lid, complete_till: T + 5 * D, created_by: 12, responsible_user_id: 12, created_at: T + 600, is_completed: false });
-  const b = cliente('heaven', '74400002', 12);
-  K.heaven.notes.push({ entity_type: 'leads', entity_id: b.lid, created_at: T + 1800, created_by: 12, params: { text: 'Pasará por la sucursal a comprar el sábado' } });
-  const c = cliente('heaven', '74400003', 12);
-  K.heaven.tasks.push({ entity_type: 'leads', entity_id: c.lid, complete_till: T + 5 * D, created_by: 12, responsible_user_id: 12, created_at: T - 600, is_completed: false });
-  const R = correr([venta('a', 'Isabel Robledo', '74400001'), venta('b', 'Isabel Robledo', '74400002'), venta('c', 'Isabel Robledo', '74400003')]);
-  chk(R.ind.si === 1 && R.ind.tarea === 1 && R.ind.no === 2, '5 la tarea creada después y la nota de 30 min después no cuentan; la tarea de antes sí: ' + JSON.stringify(R.ind));
+  const a = cliente('heaven', '75500001', 12); tarea('heaven', a.lid, 12, T + 600);
+  const b = cliente('heaven', '75500002', 12); nota('heaven', b.lid, 12, T + 1800);
+  const c = cliente('heaven', '75500003', 12); tarea('heaven', c.lid, 12, T - 600);
+  const d = cliente('heaven', '75500004', 12); tarea('heaven', d.lid, 12, T - 600); nota('heaven', d.lid, 13, T - 900);
+  const R = correr(['75500001', '75500002', '75500003', '75500004'].map((c8, k) => venta('t' + k, 'Isabel Robledo', c8)), '6a');
+  chk(R.ind.si === 2 && R.ind.no === 2 && R.ind.tarea === 1 && R.ind.tareaNota === 1, '6a tarea y nota de después no; tarea de antes «solo tarea»; tarea de una + nota de otra = «tarea y nota»: ' + J(R.ind));
+  nuevo();
+  const e = cliente('heaven', '75500005', 12); nota('heaven', e.lid, 12, T - 2 * D);
+  for (let i = 0; i < 250; i++) nota('heaven', e.lid, 13, T + 60 + i);
+  const R2 = correr([venta('n', 'Isabel Robledo', '75500005')], '6b');
+  chk(R2.ind.si === 1 && R2.ind.nota === 1, '6b con 250 notas posteriores, la nota válida de la página siguiente aparece: ' + J(R2.ind));
+  nuevo();
+  const f = cliente('heaven', '75500006', 11);
+  for (let i = 0; i < 251; i++) tarea('heaven', f.lid, 11, T - 600);
+  const R3 = correr([venta('m', 'Isabel Robledo', '75500006')], '6c');
+  chk(R3.ind.pend === 1 && /tareas con más de una página/.test(Object.keys(R3.ind.motivos)[0]), '6c más de una página de tareas (el .gs lee una): pendiente: ' + J(R3.ind.motivos));
 }
 
-/* 6 · los mensajes que valen están en una página posterior */
+/* 7 · los mensajes que valen están en una página posterior */
 {
   nuevo();
-  const a = cliente('heaven', '75500001', 12); charla('heaven', a.lid, 12, T - 3 * D);
-  for (let i = 0; i < 160; i++) K.heaven.events.push({ type: 'outgoing_chat_message', entity_type: 'lead', entity_id: a.lid, created_at: T + 60 + i * 60, created_by: 0 });   // el bot, DESPUÉS
-  const R = correr([venta('a', 'Isabel Robledo', '75500001')]);
-  chk(R.ind.si === 1 && R.ind.conv === 1, '6a con 160 mensajes más nuevos que la venta, la charla de antes aparece: ' + JSON.stringify(R.ind));
-  chk(LLAMADAS.filter((u) => /\/events\?/.test(u)).every((u) => /filter\[created_at\]\[to\]=\d+/.test(u)), '6b toda pregunta de mensajes lleva el corte de la venta');
-  chk(LLAMADAS.filter((u) => /\/events\?/.test(u)).every((u) => { const m = /filter\[created_at\]\[to\]=(\d+)/.exec(u); return !!m && Number(m[1]) <= T; }), '6c y el corte nunca pasa del momento de la venta');
+  const a = cliente('heaven', '76600001', 12); charla('heaven', a.lid, 12, T - 3 * D);
+  for (let i = 0; i < 160; i++) K.heaven.events.push({ type: 'outgoing_chat_message', entity_type: 'lead', entity_id: a.lid, created_at: T + 60 + i * 60, created_by: 0 });
+  const R = correr([venta('a', 'Isabel Robledo', '76600001')], '7');
+  chk(R.ind.si === 1 && R.ind.conv === 1, '7a con 160 mensajes más nuevos que la venta, la charla de antes aparece');
+  const ev = LLAMADAS.filter((u) => /\/events\?/.test(u));
+  chk(ev.length && ev.every((u) => { const m = /filter\[created_at\]\[to\]=(\d+)/.exec(u); return !!m && Number(m[1]) <= T; }), '7b toda pregunta de mensajes lleva el corte y nunca pasa del momento de la venta');
 }
 
-/* 7 · sin pedidos / todos pendientes */
+/* 8 · otra marca, cartel y WhatsApp por separado */
+{
+  nuevo();
+  cliente('heaven', '77700001', 11); const s = cliente('suena', '77700001', 21); charla('suena', s.lid, 21, T - 2 * D); charla('suena', s.lid, 22, T - D);
+  const R = correr([venta('x', 'Isabel Robledo', '77700001')], '8a');
+  chk(R.marca.si === 1 && R.marca.asesores === 2 && R.marca.dir['heaven→suena'].si === 1 && R.cartel.no === 1 && R.wa.no === 1 && R.wa.destinatarias === 0,
+    '8a solo la otra marca: 1 venta entre marcas, 2 asesores, sin cartel ni WhatsApp: ' + J([R.marca.si, R.marca.asesores, R.cartel, R.wa.destinatarias]));
+  nuevo();
+  const a = cliente('heaven', '77700002', 12); charla('heaven', a.lid, 12, T - 2 * D); charla('heaven', a.lid, 13, T - D);
+  const R2 = correr([venta('y', 'Isabel Robledo', '77700002')], '8b');
+  chk(R2.cartel.si === 1 && R2.wa.si === 1 && R2.wa.destinatarias === 2 && R2.porVend['Maria Flores'].avisos === 1 && R2.porVend['Mirian Salazar'].avisos === 1, '8b dos asesoras de la misma marca: una venta, dos destinatarias');
+  /* (Jarvis, media) en Sueña fallan los nombres de los usuarios, pero el alias fijo reconoce a Juan Pablo: el cartel sale, el bot no avisa */
+  nuevo(); K.suena.falla['/users'] = 500;
+  const j = cliente('suena', '77700003', 13073611); charla('suena', j.lid, 13073611, T - 2 * D);
+  const R3 = correr([venta('z', 'Fernando Peinado', '77700003')], '8c');
+  chk(R3.cartel.si === 1 && R3.wa.si === 0 && R3.wa.pend === 1 && R3.wa.destinatarias === 0, '8c cartel con el alias y WhatsApp pendiente: dos resultados distintos: ' + J([R3.cartel, R3.wa]));
+}
+
+/* 9 · ventas de tienda, aparte */
+{
+  nuevo();
+  const a = cliente('heaven', '78800001', 12); charla('heaven', a.lid, 12, T - 2 * D);
+  const R = correr([venta('x', 'Isabel Robledo', '78800001', { direccion: 'SALIÓ DE TIENDA · Central' })], '9');
+  const t = V.informe(R).join('\n');
+  chk(R.tienda === 1 && R.ind.tienda === 1 && R.cartel.tienda === 1 && R.wa.tienda === 1 && /WhatsApp[^\n]*en ventas de tienda: 1/.test(t), '9 las ventas de tienda se cuentan e imprimen en cada pregunta');
+}
+
+/* 10 · sin pedidos / todos pendientes / el umbral */
 {
   const R0 = V.resumir([], () => null, pg, marcaDe, gs.cruceOtros_);
-  chk(V.salidaDe(R0) === 0 && V.informe(R0).join(' ').indexOf('Sin pedidos elegibles') >= 0 && !/%/.test(V.informe(R0).join(' ')), '7a cero pedidos: «Sin pedidos elegibles», sin porcentaje');
-  const R1 = V.resumir([venta('a', 'Isabel Robledo', '76600001'), venta('b', 'Isabel Robledo', '76600002')], () => null, pg, marcaDe, gs.cruceOtros_);
+  chk(V.salidaDe(R0) === 0 && /Sin pedidos elegibles/.test(V.informe(R0).join(' ')) && !/%/.test(V.informe(R0).join(' ')), '10a cero pedidos: «Sin pedidos elegibles», sin porcentaje');
+  const R1 = V.resumir([venta('a', 'Isabel Robledo', '79900001'), venta('b', 'Isabel Robledo', '79900002')], () => null, pg, marcaDe, gs.cruceOtros_);
   const t1 = V.informe(R1).join('\n');
-  chk(V.salidaDe(R1) === 1 && /sin porcentaje calculable/.test(t1) && !/Indicio[^\n]*%/.test(t1), '7b todos pendientes: «sin porcentaje calculable» y en rojo');
+  chk(V.salidaDe(R1) === 1 && /sin porcentaje calculable/.test(t1) && !/Indicio[^\n]*%/.test(t1) && cuadra(R1), '10b todos pendientes: «sin porcentaje calculable» y en rojo');
+  const U = (pend) => ({ total: 100, ind: { si: 5, no: 95 - pend, pend }, noContesto: { heaven: 0, suena: 0 } });
+  chk(V.salidaDe(U(30)) === 0 && V.salidaDe(U(31)) === 1, '10c con 30 pendientes de 100 verde, con 31 rojo');
+  chk(V.salidaDe(Object.assign(U(0), { noContesto: { heaven: 0, suena: 100 } })) === 1, '10d cero pendientes pero una cuenta caída en los 100 pedidos: rojo');
 }
 
-/* 8 · el umbral */
-{
-  const R = (pend) => ({ total: 100, ind: { si: 5, no: 95 - pend, pend } });
-  chk(V.salidaDe(R(30)) === 0 && V.salidaDe(R(31)) === 1, '8 con 30 pendientes de 100 verde, con 31 rojo');
-}
-
-/* 9 · el mismo nombre con o sin tilde */
+/* 11 · el mismo nombre con o sin tilde */
 {
   nuevo();
-  const R = correr([venta('m1', 'Maria Flores', '77700001'), venta('m2', 'María Flores', '77700002')]);
-  chk(Object.keys(R.porVend).length === 1 && R.porVend['Maria Flores'] && R.porVend['Maria Flores'].ventas === 2, '9 «María Flores» y «Maria Flores» en una fila: ' + Object.keys(R.porVend));
+  const R = correr([venta('m1', 'Maria Flores', '70100001'), venta('m2', 'María Flores', '70100002')], '11');
+  chk(Object.keys(R.porVend).length === 1 && R.porVend['Maria Flores'].ventas === 2, '11 «María Flores» y «Maria Flores» en una fila');
 }
 
-/* 10 · las piezas del corte */
-{
-  chk(V.cortarPregunta('https://x.kommo.com/api/v4/events?filter[created_at][from]=1&limit=100&page=1', 50).indexOf('filter[created_at][to]=50&limit=') > 0, '10a el corte se agrega a la pregunta');
-  chk(/\[to\]=40&/.test(V.cortarPregunta('https://x/api/v4/events?a=1&filter[created_at][to]=40&limit=100', 50)) && /\[to\]=50&/.test(V.cortarPregunta('https://x/api/v4/events?a=1&filter[created_at][to]=90&limit=100', 50)), '10b un corte que ya estaba queda en el menor');
-  const n = V.cortarRespuesta('/leads/notes', 200, JSON.stringify({ _embedded: { notes: [{ created_at: 10, params: { text: 'a' } }, { created_at: 60, params: { text: 'b' } }] } }), 50);
-  const nn = JSON.parse(n.body)._embedded.notes;
-  chk(nn.length === 2 && nn[0].params.text === 'a' && nn[1].params.text === '', '10c la nota de después se vacía pero la página sigue del mismo largo');
-}
+/* 12 · ningún pedido a un subdominio de verdad */
+chk(LLAMADAS.length > 0 && LLAMADAS.every((u) => u.indexOf('heaven-prueba') >= 0 || u.indexOf('suena-prueba') >= 0), '12 las pruebas solo hablan con los subdominios inventados');
 
-if (process.env.CRUCE_EJEMPLO) { nuevo(); PROPS = { KOMMO_TOKEN: 'tok-h' };
-  const a = cliente('heaven', '71100001', 11); charla('heaven', a.lid, 11, T - 2 * D); const b = cliente('heaven', '71100002', 12); charla('heaven', b.lid, 12, T - 3 * D); cliente('heaven', '71100003', 11, 20);
-  console.log(V.informe(correr([venta('t', 'Isabel Robledo', '71100001'), venta('o', 'Isabel Robledo', '71100002'), venta('c', 'Isabel Robledo', '71100003')])).join('\n')); }
+if (process.env.CRUCE_EJEMPLO) {
+  nuevo(); delete PROPS.KOMMO_TOKEN_SUENA;
+  const a = cliente('heaven', '71100001', 12); charla('heaven', a.lid, 12, T - 3 * D);
+  const b = cliente('heaven', '71100003', 11); charla('heaven', b.lid, 11, T - 2 * D);
+  const R = V.resumir([venta('o', 'Isabel Robledo', '71100001'), venta('t', 'Isabel Robledo', '71100003')], evaluar, pg, marcaDe, gs.cruceOtros_);
+  console.log(V.informe(R).join('\n'));
+}
 console.log('test_verificar_cruce: ' + ok + ' bien, ' + mal + ' mal');
 process.exit(mal ? 1 : 0);
