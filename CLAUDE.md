@@ -1069,7 +1069,7 @@ Playwright salvo su bandera.
   con ≥ 2 renglones cuya suma no baja 15 % no pregunta. El motivo: `dsc` {m, x, tip, t, q} en el renglón (`heredarMarcas` lo pasa con el mismo precio).
   Con la planilla real: 8 de 229 ventas de noviembre (casi todas el CONFORT PLUS a 1.230 de la promoción). Playwright: `DSC_PRUEBA`. `tests/test_precio_bajo.js` (25).
 ### ⚠️▤🔁 Las mejoras 459, 469 y 470: logística y Administración (22/11; dueño las eligió con la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; en la rama `ag-c-logistica`)
-- **⚠️ 459 Entregas de mañana en riesgo** (`riesgo*`): desde `RIESGO_HORA`=15:00 de Bolivia, los pedidos del próximo día con camión (`proximoDiaEntrega`, los de
+- **⚠️ 459 Entregas de mañana en riesgo** (`riesgo*`): desde `RIESGO_HORA`=11:00 de Bolivia (dueño, 23/11: «a las 11 am»; antes 15:00), los pedidos del próximo día con camión (`proximoDiaEntrega`, los de
   `cierreEntEntra`: ATC y RPT sí, la ATC no mira stock) con (a) stock ⬜/🔴 (`semanaLinea` rev/nohay), (b) sin ubicación (`ubfEntra` + `ubfEstado`, la ≈ no cuenta) o
   (c) sin camión (`vehiculoDe` vacío y no `fichaRetira`) → «Para hacer» en rojo («N entregas de mañana en riesgo»); (d) `saldoACobrar` > 0.005 va aparte, solo informativo
   (azul si es lo único). ⚠️ Si NINGÚN pedido de ese día tiene camión todavía (`camG`), «sin camión» no hace a cada uno «en riesgo»: la lista lo dice una vez arriba (con la
