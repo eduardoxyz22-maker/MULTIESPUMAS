@@ -1217,6 +1217,7 @@ guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto).
   los pedidos con «Es de …», «Ya decididas» y «🔀 Cruces avisados» (`crvCruces`/`crvCruceHtml`: los `cx` de 15 días con la venta en la planilla: quién
   cargó, a quién se avisó, «sin reclamo» / «revisión pedida» / «decidido»). 🚫 Nada de esto en «Para hacer» de Administración (`crvHacer` ya no existe).
   Página 2026-11-22-a PUBLICADA 22/11 (`a2ea59e`).
+- ⚖️ **El importador de ROHO viene con «Repartir AM/PM» marcado** (23/11, dueño: «si»; página 2026-11-23-f): `ROHO_TURNO_DE_ENTRADA='repartir'`, cada Excel nuevo vuelve a eso.
 - 📅 **Importar ROHO para el día que elige logística** (dueño: *«no importa si está lleno… que muestre 29/15»*): `ROHO_FECHA` (todos a ese día, también
   notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
   o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
@@ -2850,6 +2851,12 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
     NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
     Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
+- **📐 Cada vendedor = su parte de la marca, también con el ritmo** (23/11, dueño: *«¿no se debería tomar la global que sí acierta y repartir
+  según lo que cada vendedor…?»* → «hazlo»; página 2026-11-23-g): en Heaven y Sueña (equipo de tiendas) la marca sigue siendo la suma de
+  `proyRitmo` de sus vendedores, pero `r.proy` = `r.vendido` × esa suma ÷ lo vendido de la marca (`pryRep`), como con la curva; `r.proyRitmo` queda
+  con la cuenta de cada uno. Backtest vendedor por vendedor con septiembre y octubre (cada día hábil, lo cargado hasta ese día): error promedio
+  21 % → 17 % (días 1-10: 38 → 29 %; 11-20: 16 → 13 %; 21+: 5,5 → 5 %). Con el TOTAL REAL repartido igual se equivoca lo mismo: el error por
+  vendedor viene de que su parte cambia en el mes, no del total. Sin «±» en pantalla hasta tener más meses (dueño). Mayoristas y sin marca, igual.
 - **📊 A esta altura y 📦 unidades (§4gv, publicada 29/09 01:10, `040e1df`)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
   anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
   - **Unidad = colchón (también colchoneta y colchón de cuna) o somier**, con su cantidad (dueño: *«quitá las almohadas,
