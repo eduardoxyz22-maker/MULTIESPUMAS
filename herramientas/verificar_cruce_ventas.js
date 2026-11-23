@@ -238,7 +238,8 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     ind: preg({ parcial: 0, conv: 0, tarea: 0, nota: 0, tareaNota: 0, ambas: 0, otraPrimero: 0, sinConvYo: 0, sinConvObs: 0 }),
     marca: preg({ asesores: 0, parcial: 0, dir: { 'heaven→suena': { si: 0, no: 0, pend: 0 }, 'suena→heaven': { si: 0, no: 0, pend: 0 } } }),
     cartel: preg({ parcial: 0 }), wa: preg({ destinatarias: 0, parcial: 0 }),
-    cob: { heaven: {}, suena: {} }, infoEtapas: { heaven: {}, suena: {} }, noContesto: { heaven: 0, suena: 0 }, pares: {}, porVend: {}, porDia: {} };
+    cob: { heaven: {}, suena: {} }, infoEtapas: { heaven: {}, suena: {} }, noContesto: { heaven: 0, suena: 0 }, pares: {}, porVend: {}, porDia: {},
+    items: [] };   // (23/11) pedido por pedido, lo que va al panel (`__cruces_rev__`): solo ids y nombres del equipo, nunca del cliente
   const nombre = (n) => pg.VENDEDORES.filter((x) => pg.qaMismo(x, n))[0] || n;          // «María Flores» = «Maria Flores»
   const fila = (n) => R.porVend[n] = R.porVend[n] || { ventas: 0, pend: 0, indicio: 0, cartel: 0, wa: 0, avisos: 0 };
   const pendiente = (q, m) => { q.pend++; q.motivos[m] = (q.motivos[m] || 0) + 1; };
@@ -288,11 +289,13 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
 
     /* 2 · otra marca */
     const co = cta(ot), dir = R.marca.dir[mv + '→' + ot];
+    let qsOtra = [];
     if (!resp || !co) { pendiente(R.marca, 'sin respuesta'); dir.pend++; }
     else {
       const Vo = pg.qaVeredicto({ cuentas: [co], ahora: r.ahora }, vr);
       const hayAutor = (o) => identificado(o) || (usuarioSinNombre(o) && co.usOk !== false);
       const qs = Array.from(new Set(Vo.otros.filter(hayAutor).map(clave)));
+      qsOtra = Vo.otros.filter(identificado);
       if (qs.length) {
         R.marca.si++; dir.si++; R.marca.asesores += qs.length;
         if (tienda) R.marca.tienda++;
@@ -316,10 +319,59 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     else if (!resp || !cm) pendiente(R.wa, 'sin respuesta');
     else if (parcial(mv)) pendiente(R.wa, motTxt([mv]));
     else R.wa.no++;
+
+    /* 🔎 (23/11, dueño: «se supone que debería salirme acá, en el panel») lo que va al panel, un renglón por pedido con indicio. Quién, por
+       qué (conversación / tarea / nota) y de qué marca; el cliente lo pone el panel con el id (la planilla). */
+    if (ov.length || Lf.length || qsOtra.length) {
+      const yo = V ? V.quien.filter((q) => pg.qaMismo(q.n, vr) && q.por === 'conv')[0] : null;
+      const vistos = {}, o = [];
+      ov.concat(qsOtra).forEach((x) => {
+        const n = pg.VENDEDORES.filter((y) => pg.qaMismo(y, x.n))[0] || String(x.n || '');
+        const k = n + '|' + x.marca; if (vistos[k]) return; vistos[k] = 1;
+        o.push([n.slice(0, 40), x.marca === 'suena' ? 's' : 'h', x.por === 'conv' ? 'c' : (x.por === 'fecha' ? 't' : 'n'),
+                (yo && x.por === 'conv' && (x.desde || x.ts) < (yo.desde || yo.ts)) ? 1 : 0]);
+      });
+      R.items.push({ id: String(p.id), v: v.slice(0, 40), m: mv === 'suena' ? 's' : 'h', o: o.slice(0, 6), mm: Lf.length ? 1 : 0, wa: Lb.length ? 1 : 0,
+                     yo: yo ? 1 : 0, td: tienda ? 1 : 0, ts: Number(p.ts) || 0 });
+    }
   });
   return R;
 }
 const UMBRAL_PEND = 0.30;   // más del 30 % de los pedidos sin poder decidir el indicio = el informe no sirve (Jarvis, 23/11)
+/* 🔎 (23/11) EL RESULTADO VA AL PANEL: una sola fila del sistema, `__cruces_rev__` (la lee «Ventas en pugna», con la contraseña). Nunca toca
+   pedidos ni otra fila. Solo ids de pedidos y nombres del equipo (el cliente lo pone el panel). Sin sello: es una fila que solo escribe esto
+   y se reescribe entera. Del registro (público) sale solo cuántas. CRUCE_GUARDAR=0 no guarda (el workflow lo apaga en los push). */
+const REV_ID = '__cruces_rev__', REV_TOPE = 300, REV_LETRAS = 45000;
+function filaRevision(R, total, dias, ahoraMs) {
+  let items = R.items.slice().sort((a, b) => (b.mm - a.mm) || (b.ts - a.ts)).slice(0, REV_TOPE), txt = '';
+  for (;;) {
+    txt = JSON.stringify({ v: 1, t: ahoraMs, d: dias, n: total, i: items });
+    if (txt.length <= REV_LETRAS || !items.length) break;
+    items = items.slice(0, Math.floor(items.length * 0.8));
+  }
+  return { id: REV_ID, fecha: '', turno: '', vendedor: '', productos: [], cliente: '🔎 REVISIÓN DE CRUCES DE VENTAS (no tocar: la lee el panel)',
+           celular: '', zona: '', direccion: '', maps: '', pagado: false, saldo: 0, ts: ahoraMs, metodoPago: '', observaciones: txt, estado: '',
+           entregado: false, vehiculo: '', chofer: '', garantia: '', nota: '', acuenta: 0, facturarA: '', nit: '', nroDia: 0, verificado: false, fotos: [], rev: 0 };
+}
+function guardarRevision(fila, P, mandar) {
+  const ya = (P || []).filter((x) => x && String(x.id) === REV_ID)[0];
+  if (ya && Number(ya.rev)) fila.rev = Number(ya.rev);
+  const cuerpo = { action: 'save', pedido: fila, av: 1 };
+  if (PANEL_KEY) cuerpo.key = PANEL_KEY;
+  let r = null;
+  for (let i = 0; i < 2; i++) {
+    let out = ''; try { out = mandar(JSON.stringify(cuerpo)); } catch (e) { out = ''; }
+    try { r = JSON.parse(out); } catch (e) { r = null; }
+    if (r && (Array.isArray(r.pedidos) || r.error === 'get_cerrado')) { r = null; dormir(4000); continue; }   // Google lo convirtió en GET (§4fx): no se guardó
+    if (r && r.ok) return { ok: true };
+    break;
+  }
+  return { ok: false, error: r ? String(r.error || 'sin motivo').replace(/[^\w-]/g, '').slice(0, 30) : 'sin respuesta' };
+}
+function mandarPanel(cuerpo) {
+  return execFileSync('curl', ['-sS', '-L', '--max-time', '120', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '@-', PANEL + '?_=' + Date.now()],
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, input: cuerpo });
+}
 const pct = (a, b) => (b ? (100 * a / b).toFixed(1) : '0.0') + ' %';
 const NOMBRE_CTA = { heaven: 'Heaven', suena: 'Sueña' };
 /* Cuentas que no contestaron en NINGÚN pedido (sin token, error o sin respuesta): con eso no hay comparación posible. */
@@ -410,6 +462,13 @@ function main() {
   if (Object.keys(R.porDia).length) console.log('\nIndicios por día de carga: ' + JSON.stringify(R.porDia));
   console.log('\nℹ️ Kommo devuelve las tareas que siguen abiertas. Las que se cerraron después de la venta pueden faltar en la reconstrucción.');
   const sal = salidaDe(R);
+  if (process.env.CRUCE_GUARDAR === '0') console.log('\n🔎 Esta corrida no guarda el resultado en el panel (CRUCE_GUARDAR=0).');
+  else if (sal) console.log('\n🔎 El resultado NO se guardó en el panel: no sirve para decidir (ver abajo).');
+  else {
+    const g = guardarRevision(filaRevision(R, ventas.length, DIAS, Date.now()), P, mandarPanel);
+    console.log(g.ok ? '\n🔎 Guardado en el panel («Ventas en pugna» → Revisión de ventas anteriores): ' + R.items.length + ' pedidos con indicio.'
+                     : '\n⚠️ No se pudo guardar el resultado en el panel (' + g.error + '). El informe de arriba vale igual.');
+  }
   if (sal) { const caidas = cuentasCaidas(R).map((mk) => NOMBRE_CTA[mk]);
     console.log('\n❌ No sirve para decidir: ' + (caidas.length ? 'la cuenta de ' + caidas.join(' y ') + ' no contestó en ningún pedido' :
       (R.ind.si + R.ind.no) ? 'quedó pendiente más del ' + Math.round(UMBRAL_PEND * 100) + ' % (' + R.ind.pend + ' de ' + R.total + ')' : 'no se pudo decidir ningún pedido') +
@@ -417,4 +476,4 @@ function main() {
   process.exitCode = sal;
 }
 if (require.main === module) main();
-else module.exports = { ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, errorDe, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND, leerPanel, panelNoSirve, LEER_INTENTOS };
+else module.exports = { filaRevision, guardarRevision, REV_ID, ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, errorDe, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND, leerPanel, panelNoSirve, LEER_INTENTOS };

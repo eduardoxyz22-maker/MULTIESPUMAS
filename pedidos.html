@@ -34154,13 +34154,14 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===AL_DIA_SEM_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || String(p.id)===VISTOS_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || String(p.id)===ASIS_PREG_ID || String(p.id)===ANUNCIO_ID || String(p.id)===PRY_HIST_ID || String(p.id)===CTA_AV_ID || String(p.id)===TST_ID || String(p.id)===META_ID || String(p.id)===CCM_ID || String(p.id)===TAL_ID || String(p.id)===DEST_ID || String(p.id)===AL_DIA_SEM_ID || String(p.id)===ENSENA_ID || String(p.id)===RECLAMO_FAB_ID || String(p.id)===CAJA_ID || String(p.id)===CUPX_ID || String(p.id)===PUB_ID || String(p.id)===VISTOS_ID || String(p.id)===CRUREV_ID || esFilaIag(p) || esFilaRetiro(p)); }   // §4ok-110 + §4ok-105 + 254 · ➕ (14/11, 266)
 var CUPX_ID='__cupos_extra__';           // ➕ (14/11, mejora 266) los cupos que administración abrió de más por día y turno: {v:1, d:{"AAAA-MM-DD|AM": n}}
 var TAL_ID='__talonario__';              // 🔢 (30/10, propuesta 82) N° de nota anulados / ya vistos y tiendas que se cargan al sistema en otro lado
 var CAJA_ID='__caja_tienda__';           // 🏬 (14/11, mejora 254) la caja de Ventura Sur: lo contado, los tildes del extracto y los cierres de cada día
 var ENSENA_ID='__ensena__';              // 🎓 (mejora 381/382) lo que el dueño pidió que Bloki enseñe (desde «📊 Uso del panel»)
 var DEST_ID='__destinos__';              // §4ok-110 📌 el lugar de entrega guardado de un cliente fijo (por nombre + vendedor)
 var ASIS_PREG_ID='__asis_preguntas__';   // ❓ (12/10, K) lo que le preguntaron a Eduardo y no supo
+var CRUREV_ID='__cruces_rev__';       // 🔎 (23/11) lo que encontró la revisión de cruces de GitHub (herramientas/verificar_cruce_ventas.js): la escribe SOLO ella
 var VISTOS_ID='__vistos__';             // 👁 (22/11, mejora 458) quién vio cada aviso de Contabilidad y el anuncio (ver «QUIÉN VIO CADA AVISO»)
 var ANUNCIO_ID='__anuncio__';            // 📢 (13/10) el anuncio que Eduardo les repite a los vendedores (ver «EL ANUNCIO DE ADMINISTRACIÓN»)
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
@@ -46330,11 +46331,19 @@ function misEfectivoDatos(v){
   /* 💵🔗 (07/11) Igual que «Le queda en la mano» del Cuadre: lo cobrado en el mes que todavía no tapó ningún retiro, y «eran de lo cobrado el
      mes pasado» = lo que de sus retiros del mes fue por plata de antes (`efePareo`). Antes la resta del mes: Mirian rindió el 03/11 los 5.440
      del 30/10 y le contaba esos 5.440 contra lo de noviembre. */
+  /* 🗓️ (23/11, captura del dueño con Fernando: «una cosa acá y otra acá») Desde CUÁNDO tiene esa plata = el cobro MÁS VIEJO que todavía
+     no tapó ningún retiro (el mismo emparejamiento que «Efectivo por retirar», `efeManoDatos`). Antes salía del primer cobro del mes si no
+     había ninguno DESPUÉS del último retiro: con un retiro del 23/11 que tapó otros cobros, decía «desde el 05/11 · 18 días» y la ventana,
+     bien, «el más viejo del 21/11». */
+  var viejo=null;
   try{
     var E=cuadreEfectivo(pe, ''), o=E.filas.filter(function(x){ return mismoVendedor(x.nombre, v); })[0];
-    if(E.pareo){ tot=o ? Math.max(0, o.falta) : 0; deMas=o ? r2(o.antes+o.sobra) : 0; }
-  }catch(e){}
-  return { tot:tot, deMas:deMas, cobrado:cobrado, retirado:retirado, mes:pe.val,
+    if(E.pareo){
+      tot=o ? Math.max(0, o.falta) : 0; deMas=o ? r2(o.antes+o.sobra) : 0; viejo='';
+      if(o) (o.cobs||[]).forEach(function(x){ var c=x.c, pc=x.pc; if(!c || efeCerrado(c.fecha)) return; var fa=pc ? Math.max(0, r2(pc.m-pc.cub)) : (Number(c.monto)||0); if(fa>0.005 && c.fecha && (!viejo || c.fecha<viejo)) viejo=c.fecha; });
+    }
+  }catch(e){ viejo=null; }
+  return { tot:tot, deMas:deMas, cobrado:cobrado, retirado:retirado, mes:pe.val, viejo:viejo,
            nuevos:cob.sort(function(a,b){ return a.f<b.f?-1:(a.f>b.f?1:0); }), retiros:ret, ult:ret[ret.length-1]||null };
 }
 var MIS_EF_ABIERTO=false;
@@ -73776,6 +73785,56 @@ function crvCruces(){
   });
   return out.sort(function(a,b){ return b.t-a.t; });
 }
+/* 🔎 (23/11, dueño: «se supone que debería salirme acá, en el panel» → «SI») LA REVISIÓN DE VENTAS ANTERIORES. La revisión de GitHub
+   («Verificar cruces de ventas», los lunes 07:00 y a mano) mira cada venta de los últimos días con lo que había en Kommo al cargarla y deja el
+   resultado en la fila del sistema `__cruces_rev__` (`CRUREV_ID`): {v, t, d, n, i:[{id, v, m, o:[[nombre, 'h'|'s', 'c'|'t'|'n', otraPrimero]],
+   mm, wa, yo, td, ts}]}. Solo ids y nombres del equipo: el cliente sale de la planilla. Acá solo se MUESTRA (con la contraseña). */
+var CRUREV_POR={ c:'conversaba con el cliente', t:'tenía una tarea abierta', n:'anotó una visita o compra' };
+function crvRevDatos(){
+  var f=(STATE||[]).filter(function(p){ return p && String(p.id)===CRUREV_ID; })[0]; if(!f) return null;
+  var o=null; try{ o=JSON.parse(f.observaciones||'{}'); }catch(e){ o=null; }
+  if(!o || !Array.isArray(o.i)) return null;
+  var avis={}; (CRX_LISTA||[]).forEach(function(e){ if(e && e.id) avis[String(e.id)]=1; });
+  var L=[], fuera=0;
+  o.i.forEach(function(x){
+    var p=x && findById(x.id); if(!p || esFilaSistema(p) || esBorrador(p)){ fuera++; return; }
+    var oo=(x.o||[]).map(function(a){ return { n:String(a[0]||''), m:a[1]==='s'?'suena':'heaven', por:a[2]||'c', pri:!!a[3] }; });
+    L.push({ p:p, v:String(x.v||p.vendedor||''), m:x.m==='s'?'suena':'heaven', o:oo, mm:!!x.mm, wa:!!x.wa, yo:!!x.yo, td:!!x.td, ts:Number(x.ts)||Number(p.ts)||0, av:!!avis[String(p.id)] });
+  });
+  L.sort(function(a,b){ return b.ts-a.ts; });
+  var mm=L.filter(function(x){ return x.mm; }), om=L.filter(function(x){ return !x.mm; }), pares={};
+  mm.forEach(function(x){ x.o.filter(function(a){ return a.m===x.m; }).forEach(function(a){ var k=x.v+' → '+a.n; pares[k]=(pares[k]||0)+1; }); });
+  return { t:Number(o.t)||0, d:Number(o.d)||14, n:Number(o.n)||0, L:L, mm:mm, om:om, fuera:fuera,
+           pares:Object.keys(pares).map(function(k){ return { k:k, n:pares[k] }; }).sort(function(a,b){ return b.n-a.n; }) };
+}
+function crvRevItemHtml(x, soloOtra){
+  var p=x.p, id=String(p.id).replace(/'/g,'');
+  var quien=x.o.filter(function(a){ return soloOtra ? a.m!==x.m : a.m===x.m; });
+  if(!quien.length) quien=x.o;
+  var marcaTx=function(m){ return m==='suena' ? 'Sueña' : 'Heaven'; };
+  var chips=(x.av ? '<span class="crv-est">avisado por WhatsApp</span>' : '')+(x.yo ? '<span class="crv-est">la que vendió también conversaba</span>' : '')+
+    (quien.some(function(a){ return a.pri; }) ? '<span class="crv-est pend">la otra empezó primero</span>' : '')+(x.td ? '<span class="crv-est">venta de tienda</span>' : '');
+  return '<div class="crv-it crv-cx crv-rev"><b>'+esc(ocEtiq(p.oc))+' · '+esc(String(p.cliente||'—').trim())+'</b>'+chips+
+    '<span class="crv-s">Cargada el '+esc(fmtFechaCorta(isoDeTsBolivia(x.ts)))+' por <b>'+esc(x.v||'—')+'</b> · según Kommo, '+
+      quien.map(function(a){ return '<b>'+esc(a.n||'—')+'</b>'+(soloOtra?(' ('+marcaTx(a.m)+')'):'')+' '+esc(CRUREV_POR[a.por]||CRUREV_POR.c); }).join(' · ')+'</span>'+
+    '<div class="crv-b"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button></div></div>';
+}
+function crvRevHtml(){
+  var R=crvRevDatos();
+  if(!R) return '<details class="crv-rev-box" style="margin-top:10px"><summary><b>🔎 Revisión de ventas anteriores</b> (todavía no corrió)</summary>'+
+    '<p class="crv-s" style="margin:6px 0">La revisión corre sola los lunes a las 07:00 y mira las ventas de los últimos 14 días con lo que había en Kommo al cargarlas. Cuando corra, acá aparecen las que tenían a otra asesora atendiendo al cliente.</p></details>';
+  var cuando=R.t ? (fmtFechaCorta(isoDeTsBolivia(R.t))+' '+hhmmDeTs(R.t)) : '—';
+  return '<details class="crv-rev-box" style="margin-top:10px" open><summary><b>🔎 Revisión de ventas anteriores</b> ('+R.mm.length+' de la misma marca'+(R.om.length?(' · '+R.om.length+' con la otra marca'):'')+')</summary>'+
+    '<p class="crv-s" style="margin:6px 0 8px">La revisión del '+esc(cuando)+' miró '+R.n+' ventas de los últimos '+R.d+' días con lo que había en Kommo en el momento de cargarlas. '+
+      'Incluye las de antes del 20/11, cuando todavía no existía el aviso automático. Es una reconstrucción: puede tener errores. Solo muestra: no cambia ninguna venta.</p>'+
+    (R.pares.length ? '<p class="crv-s" style="margin:0 0 8px"><b>Lo que más se repite:</b> '+R.pares.slice(0,5).map(function(x){ return esc(x.k)+' <b>×'+x.n+'</b>'; }).join(' · ')+'</p>' : '')+
+    (R.mm.length ? R.mm.map(function(x){ return crvRevItemHtml(x, false); }).join('') : '<p class="rd-vacio">✅ Ninguna venta con otra asesora de la misma marca atendiendo al cliente.</p>')+
+    (R.om.length ? '<details style="margin-top:8px"><summary><b>Con alguien de la OTRA marca</b> ('+R.om.length+')</summary>'+
+      '<p class="crv-s" style="margin:6px 0">El cliente también hablaba con una asesora de la otra marca. La regla de la 032 no aplica entre marcas: es solo para mirar.</p>'+
+      R.om.map(function(x){ return crvRevItemHtml(x, true); }).join('')+'</details>' : '')+
+    (R.fuera ? '<p class="crv-s" style="margin:8px 0 0">'+R.fuera+' venta'+(R.fuera===1?'':'s')+' de la revisión ya no está'+(R.fuera===1?'':'n')+' en la planilla.</p>' : '')+
+    '</details>';
+}
 function crvCruceHtml(x){
   var p=x.p, c=crvDe(p), id=String(p.id).replace(/'/g,'');
   var est=!c ? '<span class="crv-est">sin reclamo</span>'
@@ -73794,7 +73853,8 @@ function crvCuerpoHtml(){
     (function(){ var D=crvDecididas(); return D.length ? '<details style="margin-top:10px"><summary><b>Ya decididas</b> (últimos 30 días: '+D.length+')</summary>'+D.map(crvItemHtml).join('')+'</details>' : ''; })()+
     (function(){ var X=crvCruces(); return '<details class="crv-cxs" style="margin-top:10px"'+(L.length?'':' open')+'><summary><b>🔀 Cruces avisados</b> (últimos '+CRX_DIAS+' días: '+X.length+')</summary>'+
       '<p class="crv-s" style="margin:6px 0 8px">Todas las ventas en las que, al guardarlas, Kommo mostraba que otra asesora de la misma marca atendía al cliente. A esa asesora se le avisó por WhatsApp; si no pidió revisión, queda como «sin reclamo».</p>'+
-      (X.length ? X.map(crvCruceHtml).join('') : '<p class="rd-vacio">No hubo cruces en estos días.</p>')+'</details>'; })();
+      (X.length ? X.map(crvCruceHtml).join('') : '<p class="rd-vacio">No hubo cruces en estos días.</p>')+'</details>'; })()+
+    crvRevHtml();
 }
 function crvAbrir(){
   openModal('<div class="modal-h"><h3>🔎 ¿De quién es el cliente?</h3><button class="modal-x" onclick="closeModal()" aria-label="Cerrar">✕</button></div>'+
@@ -73811,7 +73871,9 @@ function qaPugnaPintar(){
   var v=document.getElementById('view-qa'); if(v && !v.classList.contains('active') && box.hidden) return;
   var L=crvLista(), X=crvCruces();
   var abre=QA_PUGNA_ABIERTO===null ? !!L.length : QA_PUGNA_ABIERTO;
-  var res=(L.length ? '<b class="qa-pg-n">'+L.length+' '+(L.length===1?'pedido':'pedidos')+' de revisión</b>' : '✅ sin pedidos de revisión')+' · '+X.length+' '+(X.length===1?'cruce':'cruces')+' en '+CRX_DIAS+' días';
+  var RV=crvRevDatos();
+  var res=(L.length ? '<b class="qa-pg-n">'+L.length+' '+(L.length===1?'pedido':'pedidos')+' de revisión</b>' : '✅ sin pedidos de revisión')+' · '+X.length+' '+(X.length===1?'cruce':'cruces')+' en '+CRX_DIAS+' días'+
+    (RV ? (' · 🔎 revisión: '+RV.mm.length+' de la misma marca') : '');
   box.hidden=false;
   box.innerHTML='<details class="qa-pugna"'+(abre?' open':'')+' ontoggle="QA_PUGNA_ABIERTO=this.open"><summary><b>🔀 Ventas en pugna</b> <span class="qa-pg-res">'+res+'</span> <span class="qa-pg-clave">🔒 solo con la contraseña</span></summary>'+
     '<div class="qa-pg-cuerpo crv-modal">'+crvCuerpoHtml()+'</div></details>';
@@ -84525,7 +84587,10 @@ function alDiaCalcular(v){
     s:br.length ? (br.length+(br.length===1?' venta':' ventas')+' de Kommo para completar') : 'sin ventas de Kommo pendientes' });
   var E=null; try{ E=misEfectivoDatos(v); }catch(e){ E=null; }
   var tot=E ? (Number(E.tot)||0) : 0, viejo='';
-  if(E && tot>0.005){ var ult=E.ult ? String(E.ult.fecha||'') : ''; var pend=(E.nuevos||[]).filter(function(c){ return !ult || c.f>ult; }); viejo=((pend[0]||(E.nuevos||[])[0])||{}).f||''; }
+  if(E && tot>0.005){
+    if(E.viejo!=null) viejo=E.viejo;   // 🗓️ (23/11) el cobro más viejo que ningún retiro tapó, como «Efectivo por retirar»
+    else { var ult=E.ult ? String(E.ult.fecha||'') : ''; var pend=(E.nuevos||[]).filter(function(c){ return !ult || c.f>ult; }); viejo=((pend[0]||(E.nuevos||[])[0])||{}).f||''; }
+  }
   var dEf=viejo ? diasEntre(viejo, hoy) : 0;
   D.push({ k:'ef', ic:'💵', t:'Efectivo', n:tot>0.005 ? 1 : 0, bs:tot, dias:dEf, sev:!(tot>0.005) ? 'v' : (dEf>AL_DIA_VIEJO ? 'r' : 'a'),
     s:tot>0.005 ? (fmtBs0(tot)+' en efectivo sin entregar'+(viejo ? (' (desde el '+fmtFechaCorta(viejo)+')') : '')) : 'todo el efectivo entregado' });
