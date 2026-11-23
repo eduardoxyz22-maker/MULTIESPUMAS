@@ -19704,13 +19704,29 @@ function proyeccionMes(ym){
   });
   /* (08/11) Se probó darle a quien EMPIEZA en el mes (Andrea, Fabián) un ritmo con todo lo vendido para el mes y el dueño lo descartó:
      «si ya aparecen como los demás al cargar sus ventas o entregas, está bien que sea igual que los demás». Todos con el ritmo de §4gt. */
-  var lista=Object.keys(filas).map(function(k){
-    var r=filas[k], mt=metodos[r.g];
+  /* 📐 (23/11, dueño: «¿no se debería tomar la global que sí acierta y repartir según lo que cada vendedor…?») Con el RITMO, la marca se
+     proyecta igual que siempre (la suma de lo de cada vendedor) pero a cada vendedor le toca su PARTE de lo vendido de la marca, como ya
+     se hacía con la curva. Probado hacia atrás con septiembre y octubre, vendedor por vendedor, día por día: el error promedio bajó de 21 % a
+     17 % (días 1-10: 38 → 29 %; 11-20: 16 → 13 %; del 21 en adelante: 5,5 → 5 %), y la suma de los vendedores da justo la de la marca.
+     Antes, con mucho agendado (lo de después de hoy mayor que el ritmo × los días que quedan) la cuenta daba por hecho que no vendía nada más. */
+  Object.keys(filas).forEach(function(k){
+    var r=filas[k];
     r.vendido=r2(r.a+r.b);
     r.ritmo = dt>0 ? r.a/dt : 0;
     r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+  });
+  var pryRep={};
+  ['suena','heaven'].forEach(function(g){
+    var o={ K:0, P:0 };
+    Object.keys(filas).forEach(function(k){ var r=filas[k]; if(r.g===g && r.amb==='tienda'){ o.K+=r.vendido; o.P+=r.proyRitmo; } });
+    pryRep[g]=o;
+  });
+  var lista=Object.keys(filas).map(function(k){
+    var r=filas[k], mt=metodos[r.g], R=pryRep[r.g];
     r.metodo=mt.m;
-    r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
+    if(estado==='curso' && mt.m==='curva') r.proy = mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0;
+    else if(estado==='curso' && R && r.amb==='tienda') r.proy = R.K>0.009 ? r2(r.vendido*R.P/R.K) : 0;
+    else r.proy = r.proyRitmo;
     return r;
   }).sort(function(x,y){ return y.vendido-x.vendido || x.vendedor.localeCompare(y.vendedor,'es'); });
   var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0, u:0, c:0, s:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.u+=r.u; s.c+=r.c; s.s+=r.s; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
@@ -20573,7 +20589,7 @@ function renderProyeccion(){
     '• Es lo <b>VENDIDO</b>, no lo cobrado: cada venta vale su total y cuenta en el mes de su <b>entrega agendada</b>, igual que Ventas → 🚚 Entrega agendada. Una venta pagada en agosto que se entrega en septiembre es de septiembre.<br>'+
     '• <b>📈 Proyección, con la curva de cada marca</b>: se mira cómo se llenaron los meses cerrados — a la misma altura (los mismos días hábiles antes del cierre), qué parte de lo que terminaron vendiendo ya estaba vendida. Con eso, dos cuentas con lo ya vendido para el mes (lo entregado y lo agendado): (1) si sigue en esa proporción, lo vendido ÷ esa parte; (2) lo vendido más lo que en esos meses entró desde esta altura hasta el cierre. Al principio del mes pesa más la (2) y al final, la (1): así entra el empujón de fin de mes, y un principio de mes flojo o fuerte no dispara el número. Heaven y Sueña tienen cada una su curva, y cada vendedor lleva la proporción de su marca.<br>'+
     '• <b>🏁 Elige la prueba</b>: con dos meses cerrados o más, cada marca va con la forma (la curva o el ritmo) que menos se equivocó en «🧪 ¿Qué tan bien proyecta?». Con un solo mes cerrado, va la curva. El ritmo, aunque gane, recién desde el '+PRY_DIAS_RITMO+'° día hábil del mes.<br>'+
-    '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor.<br>'+
+    '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor. En Heaven y Sueña, el total de la marca es la suma de esas cuentas y a cada vendedor le toca <b>su parte</b> de lo que la marca vendió en el mes (como con la curva): probado con septiembre y octubre, se equivoca menos por vendedor que su propio ritmo.<br>'+
     '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
     '• No entran las ATC ni las reposiciones de tienda (no son ventas). Los mayoristas van aparte. <b>ROHO</b> también va aparte y en unidades (sus pedidos no traen precio), sin lo que manda a sus tiendas.<br>'+
     '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
@@ -72246,7 +72262,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-23-f';
+var PANEL_V='2026-11-23-g';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

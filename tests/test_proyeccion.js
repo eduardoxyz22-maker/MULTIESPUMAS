@@ -194,8 +194,8 @@ function PREPARAR(){
   chk('días hábiles: pasaron 16 (del 1 al 18, sin los domingos 6 y 13) y faltan 10', r.dt===16 && r.dr===10 && r.estado==='curso', [r.dt, r.dr, r.estado, r.__error]);
   chk('Mauricio: la cargada en AGOSTO que se entrega en septiembre cuenta, la de octubre no, y la venta de tienda cuenta por el día que se cargó → vendido Bs 28.000 (hasta hoy 24.000 + agendado 4.000)',
       r.mau && r.mau.vendido===28000 && r.mau.a===24000 && r.mau.b===4000 && r.mau.n===5, r.mau);
-  chk('Mauricio: ritmo 24.000 ÷ 16 = 1.500 por día × 10 = 15.000, más que lo agendado → proyección 24.000 + 15.000 = Bs 39.000', r.mau && r.mau.proy===39000, r.mau);
-  chk('Juan Pablo: lo agendado (9.000) es más que el ritmo (125 × 10) → se toma lo agendado: proyección Bs 11.000', r.jp && r.jp.proy===11000 && r.jp.vendido===11000, r.jp);
+  chk('Mauricio: su ritmo solo daría 24.000 + 1.500 × 10 = Bs 39.000 (proyRitmo), pero (23/11) le toca su parte de la marca: 28.000 ÷ 39.000 × 50.000 = Bs 35.897,44', r.mau && r.mau.proyRitmo===39000 && r.mau.proy===35897.44, r.mau);
+  chk('Juan Pablo: su ritmo solo daría lo agendado (Bs 11.000), pero (23/11) le toca su parte: 11.000 ÷ 39.000 × 50.000 = Bs 14.102,56, y los dos suman la marca (50.000)', r.jp && r.jp.proyRitmo===11000 && r.jp.vendido===11000 && r.jp.proy===14102.56 && r.mau && Math.abs(r.mau.proy+r.jp.proy-50000)<0.02, r.jp);
   chk('Maria Flores: su venta de agosto no es de septiembre y la ATC no es venta → vendido Bs 8.000, proyección Bs 13.000', r.mf && r.mf.vendido===8000 && r.mf.n===1 && r.mf.proy===13000, r.mf);
   chk('no entran ni la RPT (Carola) ni ROHO en el equipo, las marcas ni los mayoristas', !r.cc && !r.roho, [r.cc, r.roho]);
   chk('ROHO va APARTE (20/10, dueño: «te sirve para medir sus ventas»): su venta del 10/09 en `R.roho`, en unidades', r.rohoT && r.rohoT.n===1, r.rohoT);
@@ -236,8 +236,8 @@ function PREPARAR(){
       /SUEÑA Bs 39\.000,00 \d+ ventas · \d+ unidades · 81% del equipo · 📈 proyección Bs 50\.000/i.test(r.met) && /HEAVEN Bs 8\.000,00 2 ventas · 2 unidades · 17% del equipo · 📈 proyección Bs 13\.000/i.test(r.met), r.met);
   chk('fichas «Sin marca» y «🏭 Mayoristas» (aparte del equipo, con su proyección)',
       /SIN MARCA Bs 1\.000,00/i.test(r.met) && /MAYORISTAS Bs 25\.000,00 2 ventas · 2 unidades de Eduardo Añez · aparte del equipo · 📈 proyección Bs 32\.500/i.test(r.met), r.met);
-  chk('lista por vendedor: Mauricio Merida Bs 28.000,00 con «agendado Bs 4.000,00» y 📈 Bs 39.000',
-      /Mauricio Merida 5 ventas · 5 unidades · 58% del equipo · agendado Bs 4\.000,00 Bs 28\.000,00 📈 Bs 39\.000/.test(r.vend), r.vend);
+  chk('lista por vendedor: Mauricio Merida Bs 28.000,00 con «agendado Bs 4.000,00» y 📈 Bs 35.897 (su parte de la marca, 23/11)',
+      /Mauricio Merida 5 ventas · 5 unidades · 58% del equipo · agendado Bs 4\.000,00 Bs 28\.000,00 📈 Bs 35\.897/.test(r.vend), r.vend);
   chk('…agrupada por marca, con el TOTAL EQUIPO y los mayoristas aparte, abajo',
       /Sueña Bs 39\.000,00 · 📈 Bs 50\.000/.test(r.vend) && /Heaven Bs 8\.000,00 · 📈 Bs 13\.000/.test(r.vend) &&
       /TOTAL EQUIPO 10 ventas · 10 unidades Bs 48\.000,00 📈 Bs 64\.625/.test(r.vend) && /Mayoristas \(aparte del equipo\) Bs 25\.000,00 · 📈 Bs 32\.500 Eduardo Añez/.test(r.vend) &&
