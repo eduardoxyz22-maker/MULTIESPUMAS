@@ -356,6 +356,25 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
 /* 12 · ningún pedido a un subdominio de verdad */
 chk(LLAMADAS.length > 0 && LLAMADAS.every((u) => u.indexOf('heaven-prueba') >= 0 || u.indexOf('suena-prueba') >= 0), '12 las pruebas solo hablan con los subdominios inventados');
 
+/* 13 · la lectura del panel (23/11, Jarvis): un `get_cerrado` o una respuesta sin lista se reintenta, con tope, y nunca es «vacía» */
+{
+  const lista = JSON.stringify({ ok:true, pedidos:[{ id:'p1' }, { id:'p2' }] });
+  const correr = (resps) => { const espera = []; let n = 0;
+    const pedir = () => { const r = resps[n++]; if (r instanceof Error) throw r; return r; };
+    let res, err = ''; try { res = V.leerPanel(pedir, (ms) => espera.push(ms)); } catch (e) { err = e.message; }
+    return { res, err, n, espera }; };
+  let r = correr([JSON.stringify({ ok:false, error:'get_cerrado' }), lista]);
+  chk(r.res && r.res.length === 2 && r.n === 2 && r.espera.length === 1, '13a get_cerrado y después la lista: reintenta UNA vez y lee 2 pedidos', JSON.stringify(r));
+  r = correr([JSON.stringify({ ok:true, version:'x' }), new Error('red'), lista]);
+  chk(r.res && r.res.length === 2 && r.n === 3, '13b sin lista y sin red: reintenta hasta leer', JSON.stringify(r));
+  r = correr([JSON.stringify({ ok:false, error:'get_cerrado' }), JSON.stringify({ ok:false, error:'get_cerrado' }), JSON.stringify({ ok:false, error:'get_cerrado' }), lista]);
+  chk(!r.res && r.n === V.LEER_INTENTOS && /no se pudo leer la planilla/.test(r.err) && /get_cerrado/.test(r.err), '13c con tope: tres get_cerrado seguidos = la corrida falla (no sigue con una lista vacía)', JSON.stringify(r));
+  r = correr(['<html>Clientes: JUAN PEREZ 71234567</html>', '<html>x</html>', '<html>x</html>']);
+  chk(!r.res && !/JUAN|7123/.test(r.err) && /JSON/.test(r.err), '13d una página de Google no se copia al registro (solo «no contestó JSON»)', r.err);
+  r = correr([JSON.stringify({ ok:true, pedidos:[] })]);
+  chk(Array.isArray(r.res) && r.res.length === 0 && r.n === 1, '13e una lista de verdad vacía se acepta sin reintentar', JSON.stringify(r));
+}
+
 if (process.env.CRUCE_EJEMPLO) {
   nuevo(); delete PROPS.KOMMO_TOKEN_SUENA;
   const a = cliente('heaven', '71100001', 12); charla('heaven', a.lid, 12, T - 3 * D);
