@@ -1166,7 +1166,13 @@ puede pasar por 3 tiendas a cotizar, no hay lío»*). 🟡 **Pero si hay un lead
 de Kommo no deja escribirle primero, *«un cliente creado en visita tienda, sería por las notas nomás»*): en un lead que CREÓ una persona (`created_by`
 ≠ 0), cada nota de ESA persona en ese lead (cualquiera, menos las del panel, `qaNotaPanel_`) de los últimos 15 días la deja atendiéndolo 15 días desde
 la nota: `l.creoNota` {ts, quien, txt, cre} → `qaResumenDe_`, `cruceOtros_` (WhatsApp), `qaVeredicto` (`por:'creo'`, `qaCreoTxt`), el aviso al guardar,
-y la revisión (letra `l`). La de otra persona en ese lead sigue la regla de la nota de visita. Sin nota, el «🟡 Ojo». `test_quien_atiende` W1-W14. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+y la revisión (letra `l`). La de otra persona en ese lead sigue la regla de la nota de visita. Sin nota, el «🟡 Ojo». `test_quien_atiende` W1-W14.
+🔎 **Revisión de Jarvis (23/11), arreglada en la misma 23-h**: (1) el tope de leads que se MUESTRAN (8 por celular, 3 por nombre) ya no deja
+afuera uno que retiene: tareas, notas y mensajes se miran en todos (hasta 120) y un lead con algo que retiene se muestra igual (`verL`,
+`qaRetiene_`); (2) el cruce mira Kommo como estaba al GUARDAR la venta (`x.ms` → `qaConsulta_(…, alVender, mk, true)`, `hist`: mensajes hasta
+esa hora, notas y tareas creadas antes; caché solo de una consulta de antes de la venta, nunca la deja); (3) `qaVeredicto` junta las notas
+de una persona por la MÁS NUEVA (con su tipo, texto y lead; la conversación y la fecha acordada siguen ganando); (4) «🗑 Lo borrado» sin botón
+si el servidor no es 22-x. Sus pruebas, tal cual: `tests/test_jarvis_23h_{hora_aviso,leads_omitidos,vigencia_notas}.cjs`. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir

@@ -13719,10 +13719,18 @@ function qaCuenta_(q, marca, ahoraS) {
     L = L.concat(kEmb_(rl.o, 'leads'));
   }
   L.sort(function (a, b) { return (Number(b.updated_at) || 0) - (Number(a.updated_at) || 0); });
-  var antes = L.length;
-  if (c8) L = L.slice(0, QA_MAX_LEADS);
-  else { var cuenta = {}; L = L.filter(function (l) { var c = cdeL[String(l.id)]; cuenta[c] = (cuenta[c] || 0) + 1; return cuenta[c] <= QA_LEADS_POR_CLIENTE; }); }
-  res.masLeads = antes - L.length;
+  /* (revisión de Jarvis, 23/11) Se MUESTRAN los más recientes (QA_MAX_LEADS por celular, QA_LEADS_POR_CLIENTE por nombre), pero las tareas,
+     las notas y los mensajes se miran en TODOS (hasta 120): un lead más viejo que retiene al cliente (conversación, fecha acordada, nota de
+     visita, «creó y anota», compra reciente) se muestra igual. Antes quedaba afuera y el cartel decía «Libre». */
+  var verL = {}, cuentaV = {};
+  L.forEach(function (l, i) {
+    var id = String(l.id);
+    if (c8) { if (i < QA_MAX_LEADS) verL[id] = 1; }
+    else { var c = cdeL[id]; cuentaV[c] = (cuentaV[c] || 0) + 1; if (cuentaV[c] <= QA_LEADS_POR_CLIENTE) verL[id] = 1; }
+  });
+  /* (revisión de Jarvis, 23/11) Para el cruce de ventas `ahoraS` es la hora en que se GUARDÓ la venta: lo que pasó después (un mensaje, una nota,
+     una tarea) no cuenta. La consulta de la pestaña usa la hora de ahora (hist = false). */
+  var hist = !!q.hist;
   var us = qaUsuarios_(), et = qaEtapas_(), lim = ahoraS - QA_DIAS * 86400;
   if (us._falla) res.usOk = false;
   function nom(u) { var x = us[String(u)]; return x ? x.n : (u ? 'usuario ' + u : ''); }
@@ -13731,16 +13739,18 @@ function qaCuenta_(q, marca, ahoraS) {
      la excepción de los 15 días. Las del bot no (Fable M5). */
   var tareas = {}, tareasC = {}, tope = ahoraS + QA_TAREA_MAX_DIAS * 86400;
   [['leads', L.map(function (l) { return l.id; }), tareas], ['contacts', cids, tareasC]].forEach(function (x) {
-    if (!x[1].length) return;
-    var rt = kPedir_('get', '/tasks?filter[entity_type]=' + x[0] + '&' + x[1].map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
-                            '&filter[is_completed]=0&limit=250');
-    if (rt.code === 204) return;
-    if (rt.code !== 200 || !rt.o) { res.tareasOk = false; return; }
-    kEmb_(rt.o, 'tasks').forEach(function (t) {
-      var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
-      if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
-      if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
-    });
+    for (var kt = 0; kt < x[1].length && res.tareasOk; kt += 40) {   // de a 40 (ahora van todos los leads, no solo los que se muestran)
+      var rt = kPedir_('get', '/tasks?filter[entity_type]=' + x[0] + '&' + x[1].slice(kt, kt + 40).map(function (id) { return 'filter[entity_id][]=' + encodeURIComponent(id); }).join('&') +
+                              '&filter[is_completed]=0&limit=250');
+      if (rt.code === 204) continue;
+      if (rt.code !== 200 || !rt.o) { res.tareasOk = false; return; }
+      kEmb_(rt.o, 'tasks').forEach(function (t) {
+        var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
+        if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
+        if (hist && (Number(t.created_at) || 0) > ahoraS) return;   // puesta después de la venta
+        if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
+      });
+    }
   });
   /* 📝 (2026-11-21-a) Las NOTAS de esos leads y contactos de los últimos QA_DIAS días que hablan de una visita o una compra (qaNotaVisita_),
      escritas por una persona: la más nueva de cada uno. Si Kommo no las devuelve, la consulta queda incompleta (nunca «Libre»). */
@@ -13758,7 +13768,7 @@ function qaCuenta_(q, marca, ahoraS) {
         var NN = kEmb_(rn.o, 'notes');
         NN.forEach(function (n) {
           var id = String(n.entity_id), ts = Number(n.created_at) || 0, u = Number(n.created_by) || 0, txt = String((n.params && n.params.text) || '');
-          if (!u || ts < lim || ts > ahoraS + 3600) return;
+          if (!u || ts < lim || ts > ahoraS + (hist ? 0 : 3600)) return;   // (hist) una nota escrita después de la venta no cuenta
           if (x[0] === 'leads' && !qaNotaPanel_(txt)) {   // ✍️ (2026-11-23-h) cualquier nota de esa persona en el lead
             var ks = id + '|' + u;
             if (!segL[ks] || ts > segL[ks].ts) segL[ks] = { ts:ts, txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
@@ -13774,7 +13784,7 @@ function qaCuenta_(q, marca, ahoraS) {
   /* Los mensajes: lo que decide el cartel (los últimos QA_DIAS + 2 días) aparte de la historia, así una historia larga nunca deja afuera
      lo reciente (Fable M4). */
   var corte = ahoraS - (QA_DIAS + 2) * 86400;
-  var M = qaMensajes_(cids, corte, 0, QA_PAGINAS), Hh = qaMensajes_(cids, ahoraS - QA_HISTORIA_DIAS * 86400, corte - 1, 2);
+  var M = qaMensajes_(cids, corte, hist ? ahoraS : 0, QA_PAGINAS), Hh = qaMensajes_(cids, ahoraS - QA_HISTORIA_DIAS * 86400, corte - 1, 2);
   res.msgOk = M.ok; res.histOk = Hh.ok; res.otros = M.otros + Hh.otros;
   /* Lo que dicen los mensajes de un lead (o del chat suelto de un contacto): el último de cada lado y las conversaciones. */
   function deMsgs(msgs) {
@@ -13806,15 +13816,17 @@ function qaCuenta_(q, marca, ahoraS) {
     (csDeL[id] || [cid]).forEach(function (c2) { var y = tareasC[c2]; if (y && (!tC || y.ts < tC.ts)) tC = y; });
     (csDeL[id] || [cid]).forEach(function (c2) { var y = notasC[c2]; if (y && (!nC || y.ts > nC.ts)) nC = y; });
     if (st !== '143' && (!gan || vivo)) (csDeL[id] || [cid]).forEach(function (c2) { vivoDe[c2] = 1; });
-    res.leads.push({
+    var ent = {
       id:id, cli:cli[cid] || '', t4:t4[cid] || '',
       resp:nom(l.responsible_user_id), suc:suc(l.responsible_user_id),
       et:e.n || '', emb:e.e || '', cerrado:gan ? 'ganado' : (st === '143' ? 'perdido' : ''), vivo:vivo ? 1 : 0,
       creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:vivo ? fcon : (Number(l.closed_at) || 0),
       ultCli:x.ultCli, ultVend:x.ultVend, par:x.par, pares:x.pares, nMsg:x.nMsg, tarea:tareas[id] || tC || null, nota:nC,
       crea:nom(Number(l.created_by) || 0), creoNota:st === '143' ? null : creoYNota(l)   // ✍️ (2026-11-23-h) quién lo creó y su última nota
-    });
+    };
+    if (verL[id] || qaRetiene_(ent, lim, ahoraS)) res.leads.push(ent);
   });
+  res.masLeads = L.length - res.leads.length;
   /* El chat que cuelga del CONTACTO (sin lead) y la fecha acordada anotada en un contacto que no tiene un lead vivo: una ficha aparte
      (`sinLead`), con la misma regla. */
   cids.forEach(function (cid) {
@@ -13840,6 +13852,14 @@ function qaIncompleto_(out) {
   /* + la cuenta que NO se consultó (sin su token), la búsqueda cortada (más contactos de los que se miran) y los nombres de las
      vendedoras que no se pudieron leer (revisión 2 de Fable). */
   return (out.cuentas || []).some(function (c) { return c.error || c.msgOk === false || c.tareasOk === false || c.notasOk === false || c.sinToken || c.cortado || c.usOk === false; });
+}
+/** (revisión de Jarvis, 23/11) ¿Este lead, aunque no se muestre por el tope, retiene al cliente? Lo mismo que cuentan qaResumenDe_ y qaVeredicto. */
+function qaRetiene_(l, lim, ahoraS) {
+  if (l.cerrado === 'perdido') return false;
+  if (l.cerrado === 'ganado' && (l.cierre || l.tocado || 0) >= lim) return true;
+  if (l.cerrado === 'ganado' && !l.vivo) return false;
+  return (l.pares || []).some(function (p) { return p.ts >= lim; }) || !!(l.tarea && l.tarea.ts > ahoraS) ||
+         !!(l.nota && l.nota.ts >= lim) || !!(l.creoNota && l.creoNota.ts >= lim);
 }
 /** Lo que se anota de cada consulta: una línea corta («Libre» / «Atiende: Isabel Robledo» / «No se pudo consultar…»), sin datos del cliente.
     Misma regla que el cartel de la página (qaVeredicto). */
@@ -13904,14 +13924,17 @@ function qaTopeSuma_(clave, tope) {
 }
 /** 🔀 (2026-11-20-c) Lo que Kommo dice de un celular (o un nombre), con la caché de QA_CACHE_SEG: el corazón de «¿Quién lo atiende?», que usan la
     pestaña (quienAtiende_, con su tope y su hoja) y la revisión de cada venta nueva (cruceElegir_). Solo lee Kommo. */
-function qaConsulta_(c8, nom, orig, ahoraS, solo) {
+function qaConsulta_(c8, nom, orig, ahoraS, solo, hist) {
   /* `solo` = 'heaven' | 'suena': solo esa cuenta (la revisión de una venta mira la cuenta de su marca; otra clave en la caché). */
   var cache = null, ck = (c8 ? 'qa_' + c8 : 'qa_n_' + nom.replace(/ /g, '_')) + (solo ? '_' + solo : ''), out = null;
   try { cache = CacheService.getScriptCache(); } catch (e) { cache = null; }
+  /* (revisión de Jarvis, 23/11) La consulta a la hora de una venta (`hist`, el cruce) no deja caché, y de la caché solo toma una consulta hecha
+     ANTES de guardar la venta (la del formulario de esa venta): una de después podría traer lo que pasó después de la venta. */
+  var cacheOk = function (o) { return !!o && (!hist || (Number(o.ahora) || 0) <= ahoraS); };
   if (cache) {
-    try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; } } catch (e) {}
+    try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; if (!cacheOk(out)) out = null; } } catch (e) {}
     /* (revisión 2 de Fable) Con `solo`, sirve también la consulta COMPLETA de hace un momento (la del formulario de esa misma venta). */
-    if (!out && solo) { try { var cf = cache.get(ck.slice(0, ck.length - solo.length - 1)); if (cf) { out = JSON.parse(cf); out.cache = true; } } catch (e) {} }
+    if (!out && solo) { try { var cf = cache.get(ck.slice(0, ck.length - solo.length - 1)); if (cf) { out = JSON.parse(cf); out.cache = true; if (!cacheOk(out)) out = null; } } catch (e) {} }
   }
   if (!out) {
     out = { ok:true, version:SCRIPT_VERSION, cel8:c8, nombre:nom, ahora:ahoraS, dias:QA_DIAS, parH:QA_PAR_H, cuentas:[] };
@@ -13920,13 +13943,13 @@ function qaConsulta_(c8, nom, orig, ahoraS, solo) {
       [['', 'heaven'], ['suena', 'suena']].forEach(function (x) {
         if (solo && x[1] !== solo) return;
         KC_CTA = x[0];
-        try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:orig || '' }, x[1], ahoraS)); }
+        try { out.cuentas.push(qaCuenta_({ c8:c8, nom:nom, orig:orig || '', hist:!!hist }, x[1], ahoraS)); }
         catch (err) { out.cuentas.push({ marca:x[1], leads:[], error:'falló: ' + String(err && err.message || err).slice(0, 120) }); }
         finally { KC_CTA = ''; }
       });
     } finally { QA_PROPS_ = null; }
     out.incompleto = qaIncompleto_(out);
-    try { if (cache && !out.incompleto) cache.put(ck, JSON.stringify(out), QA_CACHE_SEG); } catch (e) {}   // un error no se guarda (Fable A1)
+    try { if (cache && !hist && !out.incompleto) cache.put(ck, JSON.stringify(out), QA_CACHE_SEG); } catch (e) {}   // un error no se guarda (Fable A1); la de una venta tampoco
   }
   return out;
 }
@@ -14076,12 +14099,14 @@ function cruceElegir_(tomados, planilla) {
     var p = R[x.id];
     if (hecho[x.id] || !cruceEntra_(p)) return;   // ya mirada, o ya no es una venta que se mire (la borraron, la pasaron a ATC…)
     var mk = cruceMarca_(p.vendedor), c8 = kcCel8_(p.celular), ahoraS = Math.floor(Date.now() / 1000), out = null;
-    try { out = qaConsulta_(c8, '', '', ahoraS, mk); } catch (e) { out = null; }
+    /* (revisión de Jarvis, 23/11) La regla mira Kommo como estaba cuando se GUARDÓ la venta (`x.ms`), no a la hora del repaso. */
+    var alVender = Number(x.ms) > 0 ? Math.min(ahoraS, Math.floor(Number(x.ms) / 1000)) : ahoraS;
+    try { out = qaConsulta_(c8, '', '', alVender, mk, true); } catch (e) { out = null; }
     var cuenta = out ? (out.cuentas || []).filter(function (c) { return c.marca === mk; })[0] : null;
     if (cuenta && cuenta.sinToken) { hecho[x.id] = { t:ahoraS, s:'sin token' }; cambio = true; return; }   // sin token no va a cambiar
     /* (Fable 4) Sin los nombres de los usuarios (`usOk` false) no se sabe quién es quién: falla, como si Kommo no contestara. */
     var fallo = !cuenta || cuenta.error || cuenta.msgOk === false || cuenta.tareasOk === false || cuenta.notasOk === false || cuenta.usOk === false;   // + las tareas (revisión 3 de Fable)
-    var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || ahoraS, mk) : [];
+    var otros = (cuenta && cuenta.usOk !== false) ? cruceOtros_(cuenta, p.vendedor, Number(out.ahora) || alVender, mk) : [];
     if (!otros.length && fallo) {
       if ((Number(x.n) || 0) + 1 < CRUCE_INTENTOS) { devolver.push({ id:x.id, ms:x.ms, n:(Number(x.n) || 0) + 1 }); return; }
       hecho[x.id] = { t:ahoraS, s:'Kommo no contestó' }; cambio = true; return;

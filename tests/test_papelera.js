@@ -284,7 +284,7 @@ function INIT() {
     /* servidor anterior */
     const viejo = await page.evaluate(async () => { var v = SERVER_VER; SERVER_VER = '2026-11-21-a'; var n = window.__log.length; abrirLoBorrado(); await esperar(300);
       var r = { txt: document.getElementById('lbr-body').innerText, pidio: window.__log.slice(n).some(function (p) { return p.action === 'borradosLeer'; }) }; SERVER_VER = v; lbrCerrar(); return r; });
-    chk('⚠️ con un servidor anterior la ventana dice que hace falta el nuevo y no pide nada', /hace falta el servidor/.test(viejo.txt) && !viejo.pidio, viejo);
+    chk('⚠️ con un servidor sin la Papelera la ventana lo dice (sin mandar a implementar nada) y no pide nada', /no está en el servidor que usa el panel/.test(viejo.txt) && !viejo.pidio, viejo);
     await context.close();
   }
   chk('sin errores de la página', errores.length === 0, errores.slice(0, 3));

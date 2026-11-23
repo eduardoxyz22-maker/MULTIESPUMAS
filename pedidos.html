@@ -73478,7 +73478,11 @@ function qaVeredicto(r, yo){
     var k=qaNom(v.n)+'|'+String(v.n).replace(/\D/g,''), o=por[k];   // con los números: «usuario 901» y «usuario 902» son dos (qaNom los dejaba en «usuario»)
     if(!o){ por[k]=v; return; }
     if(v.por==='conv' && o.por!=='conv'){ por[k]=v; return; }
-    if(v.por==='conv' && o.por==='conv'){ o.ts=Math.max(o.ts, v.ts); o.desde=Math.min(o.desde||v.desde, v.desde||o.desde); }
+    if(v.por==='conv' && o.por==='conv'){ o.ts=Math.max(o.ts, v.ts); o.desde=Math.min(o.desde||v.desde, v.desde||o.desde); return; }
+    /* (revisión de Jarvis, 23/11) sin conversación: la fecha acordada gana; entre notas (de visita o «creó y anota»), la MÁS NUEVA, con su
+       tipo, texto y lead (si no, «vale hasta» salía con la nota vieja y la revisión guardaba otro motivo) */
+    if(o.por==='conv' || o.por==='fecha') return;
+    if(v.por==='fecha' || v.ts>o.ts) por[k]=v;
   });
   var quien=Object.keys(por).map(function(k){ return por[k]; }).sort(function(a,b){ return (a.por==='conv'?0:1)-(b.por==='conv'?0:1) || (a.desde||a.ts)-(b.desde||b.ts); });
   var otros=quien.filter(function(v){ return !yo || !qaMismo(v.n, yo); });
@@ -81941,7 +81945,7 @@ var LBR_SERVIDOR='2026-11-22-a', LBR={ L:null, q:'', cargando:false, err:'', hec
 function lbrVa(){ try{ return !navigator.webdriver || !!window.LBR_PRUEBA; }catch(e){ return true; } }
 function lbrBotonPintar(){
   var g=document.querySelector('.adm-tools .at-aj .at-b'); if(!g) return;
-  var b=document.getElementById('lbr-btn'), ve=lbrVa() && UNLOCKED;
+  var b=document.getElementById('lbr-btn'), ve=lbrVa() && UNLOCKED && servidorPapelera(LBR_SERVIDOR);   // (revisión de Jarvis, 23/11) sin la Papelera en el servidor, sin botón
   if(!ve){ if(b) b.remove(); return; }
   if(!b){ b=document.createElement('button'); b.id='lbr-btn'; b.className='btn btn-sm at-t'; b.style.setProperty('--c','#9f1239'); b.setAttribute('data-d','ver y recuperar lo borrado');
     b.title='Los pedidos borrados en los últimos 30 días: quién los borró y cuándo, y «Recuperar» para volverlos a la planilla'; b.textContent='🗑 Lo borrado';
@@ -81981,7 +81985,7 @@ function lbrCuando(t){ return t ? (fmtFecha(isoDeTsBolivia(t))+' '+hhmmDeTs(t)) 
 function lbrBuscar(v){ LBR.q=String(v||''); lbrRender(true); }
 function lbrRender(soloLista){
   var cu=document.getElementById('lbr-body'), info=document.getElementById('lbr-info'); if(!cu) return;
-  if(LBR.err==='servidor'){ if(info) info.textContent=''; cu.innerHTML='<div class="lbr-av">🗑 Para ver y recuperar lo borrado hace falta el servidor <b>'+esc(LBR_SERVIDOR)+'</b> (el de ahora es '+esc(SERVER_VER||'?')+'). El dueño lo pega en Apps Script e implementa; hasta entonces lo borrado se sigue anotando en la hoja «Borrados» como siempre.</div>'; return; }
+  if(LBR.err==='servidor'){ if(info) info.textContent=''; cu.innerHTML='<div class="lbr-av">🗑 «Lo borrado» no está en el servidor que usa el panel (el de ahora es '+esc(SERVER_VER||'?')+'). Lo borrado se sigue anotando en la hoja «Borrados» como siempre.</div>'; return; }
   if(LBR.cargando){ if(info) info.textContent='leyendo…'; cu.innerHTML='<div class="lbr-av lbr-gris">⏳ Leyendo lo borrado de los últimos 30 días…</div>'; return; }
   if(LBR.err){ if(info) info.textContent=''; cu.innerHTML='<div class="lbr-av">No se pudo leer lo borrado ('+esc(LBR.err)+'). <button type="button" class="btn btn-sm" onclick="lbrCargar()">🔄 Probar de nuevo</button></div>'; return; }
   var L=(LBR.L||[]).map(function(x, i){ var d=lbrDatos(x); d.i=i; return d; });
