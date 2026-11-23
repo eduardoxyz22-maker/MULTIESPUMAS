@@ -100,7 +100,7 @@ Propiedades del script.
   pedidos por correo (`cargar_pedidos.py`, corre en la sesión de Claude) de `PANEL_KEY`/`ADMIN_KEY` o `~/.claves_panel.json` (fuera del
   repo; `adminKey` solo al forzar) y corta con un mensaje si el servidor dice `clave`. `traer_kommo.py` no cambia (`kommoLeads` va con su
   propia clave, antes de la del equipo). Pruebas: `tests/test_clave_equipo.js` (el archivo aparte + el `.gs`, 29; también con GS=la 21-a),
-  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). Página 2026-11-23-b (el botón, sobre la 23-a publicada), SIN publicar.
+  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). Página 2026-11-23-c (el botón, sobre la 23-b publicada), SIN publicar.
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además
