@@ -73484,7 +73484,7 @@ function qaVeredicto(r, yo){
   var otros=quien.filter(function(v){ return !yo || !qaMismo(v.n, yo); });
   /* Por NOMBRE y sin ningún contacto con ese nombre: «nadie» (no «libre»: en Kommo puede estar con el nombre de su WhatsApp). */
   var k = quien.length ? (otros.length ? 'otro' : 'tuyo') : (compro ? 'compro' : (inc ? 'nose' : ((r && r.nombre && !nCont) ? 'nadie' : 'libre')));
-  /* 🟡 (23/11, dueño eligió «Ojo, en amarillo»: MARIA ISABEL salía «Libre» con un lead de Mirian creado el 19/11 en «Agendado / Visita» y sin
+  /* 🟡 (23/11, dueño eligió «Ojo, en amarillo»: una clienta salía «Libre» con un lead de Mirian creado el 19/11 en «Agendado / Visita» y sin
      ningún mensaje en Kommo) los leads de OTRA persona creados o tocados en la ventana, sin perder ni cerrados: solo para el cartel (`k` no
      cambia: el aviso al guardar, el WhatsApp a la otra vendedora y la revisión siguen con la regla de siempre). */
   var rec=[];
