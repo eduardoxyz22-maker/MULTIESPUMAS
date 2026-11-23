@@ -74158,13 +74158,13 @@ function qaPintar(){
       if(c.cortado) html+='<div class="qa-nota qa-ojo">⚠️ En el Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' hay más contactos con '+(r.nombre?'ese nombre':'ese número')+' de los que se pudieron mirar'+(r.nombre?': buscalo por el celular.':'.')+'</div>';
       if(c.usOk===false) html+='<div class="qa-nota qa-ojo">⚠️ No se pudieron leer los nombres de las vendedoras del Kommo de '+esc(QA_MARCA[c.marca]||c.marca)+' (salen como «usuario N»): probá de nuevo en un rato.</div>';
       (c.leads||[]).forEach(function(l, li){
-        var k=r.nombre ? (l.t4 || (c.marca+'|'+(l.cli||li))) : 'uno';
+        var k=r.nombre ? (l.g || l.t4 || (c.marca+'|'+(l.cli||li))) : 'uno';   // `g` = el celular entero (revisión 3 de Jarvis)
         if(!porC[k]){ porC[k]={ k:k, t4:l.t4, cli:l.cli, cuentas:{} }; grupos.push(porC[k]); }
         (porC[k].cuentas[c.marca]=porC[k].cuentas[c.marca]||{ marca:c.marca, contactos:1, leads:[], msgOk:c.msgOk, tareasOk:c.tareasOk, error:c.error }).leads.push(l);
       });
       /* 🟡 (revisión 2 de Jarvis) los recientes que no se muestran van con su cliente, solo para el «Ojo» de ese cartel */
       (c.recientes||[]).forEach(function(l){
-        var k=r.nombre ? (l.t4 || (c.marca+'|'+(l.cli||''))) : 'uno';
+        var k=r.nombre ? (l.g || l.t4 || (c.marca+'|'+(l.cli||''))) : 'uno';
         if(!porC[k]) return;   // un cliente sin ningún lead a la vista no tiene cartel propio
         var cu=porC[k].cuentas[c.marca]; if(cu) (cu.recientes=cu.recientes||[]).push(l);
       });

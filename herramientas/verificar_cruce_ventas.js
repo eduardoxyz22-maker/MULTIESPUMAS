@@ -87,12 +87,22 @@ function cortarRespuesta(ruta, code, body, T, est) {
     });
     if (!E.leads.length) return { code:204, body:'' };
   } else if (ruta === '/tasks' && Array.isArray(E.tasks)) {
-    if ((o._links && o._links.next) || E.tasks.length >= 250) duda('tareas con más de una página');
-    E.tasks = E.tasks.filter((t) => Number(t.created_at) <= T); if (!E.tasks.length) return { code:204, body:'' };
+    /* (revisión 3 de Jarvis) El servidor ya sigue las páginas y avisa si quedaron sin leer: acá NO se corta la lista. Con todo filtrado y otra
+       página por delante se contesta una página vacía CON su enlace (un 204 le decía «se terminó»). Una tarea cambiada después de la
+       venta no prueba nada (Kommo no guarda cómo estaba). */
+    const sigue = !!(o._links && o._links.next);
+    E.tasks = E.tasks.filter((t) => {
+      if (Number(t.created_at) > T) return false;
+      if (Number(t.updated_at) > T) { duda('tarea cambiada después'); return false; }
+      return true;
+    });
+    if (!E.tasks.length && !sigue) return { code:204, body:'' };
   } else if (/\/notes$/.test(ruta) && Array.isArray(E.notes)) E.notes.forEach((n) => {
     if (!n.params) return;
     if (Number(n.created_at) > T) n.params.text = '';
-    else if (Number(n.updated_at) > T && n.params.text) { n.params.text = ''; duda('nota editada después'); }
+    /* (revisión 3 de Jarvis) editada después: el texto nuevo no prueba una visita, pero la nota existía («creó y anota»); la del panel sigue
+       siendo del panel */
+    else if (Number(n.updated_at) > T && n.params.text) { if (!/^(?:\uD83E\uDDFE|\uD83D\uDE45)|panel de pedidos|^cotizaci[oó]n\s+COT/i.test(String(n.params.text).trim())) n.params.text = '(editada)'; duda('nota editada después'); }
   });
   else return { code, body };
   return { code, body:JSON.stringify(o) };

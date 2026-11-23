@@ -1179,6 +1179,11 @@ por el tope viajan en `recientes` (sin mensajes ni notas) y el «🟡 Ojo» de `
 de la venta cuenta abierto, uno creado después no existe y una nota EDITADA después no prueba una visita (`notasDudosas`; «creó y anota» sí);
 (4) las tareas siguen las páginas de cada lote de 40 (`QA_NOTAS_PAGINAS`; pasado el tope, `tareasOk:false` = incompleto). Sus pruebas:
 `tests/test_jarvis_23h_r2_{cache_al_guardar,ojo_segun_cantidad,cierre_y_tareas,nota_editada}.cjs`.
+🔎 **Tercera revisión de Jarvis (23/11), también en la 23-h**: el cruce NUNCA usa la caché (`cacheOk` = `!hist`; la del formulario queda para
+la consulta en vivo); una nota editada después de la venta no prueba visita pero sí «creó y anota» (el texto de ahora decide si es del panel;
+no se muestra); una tarea cambiada después de la venta no prueba nada (`tareasDudosas`); por nombre, los clientes se separan por el celular
+ENTERO (`g` = huella de los últimos 8, `qaClaveCli_`/`qaGrupo_`; en la página, `l.g || l.t4 …`); el verificador ya no corta las tareas en
+una página (vacía con enlace, no 204) y marca «tarea cambiada después». `tests/test_jarvis_23h_r3_{cache,hist,tareas,recientes,verificador}.cjs`.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir

@@ -13692,7 +13692,7 @@ function qaCuenta_(q, marca, ahoraS) {
     if (r.code !== 200 || !r.o) { res.error = 'Kommo no contestó la búsqueda (HTTP ' + r.code + ')'; return res; }
     C = C.concat(kEmb_(r.o, 'contacts'));
   }
-  var ids = [], cdeL = {}, csDeL = {}, cli = {}, cids = [], t4 = {};
+  var ids = [], cdeL = {}, csDeL = {}, cli = {}, cids = [], t4 = {}, gk = {};
   C.forEach(function (c) {
     if (c8 && !kcTels_(c).some(function (t) { return qaTelEs_(t, c8); })) return;   // `query` busca en todo: el número se mira de nuevo
     if (!c8) { var nc = ' ' + qaNorm_(c.name) + ' '; if (!pal.length || !pal.every(function (w) { return nc.indexOf(' ' + w + ' ') >= 0; })) return; }
@@ -13702,6 +13702,7 @@ function qaCuenta_(q, marca, ahoraS) {
     var cid = String(c.id), tt = kcTels_(c).map(function (t) { return String(t).replace(/\D/g, ''); }).filter(function (d) { return d.length >= 7; });
     cids.push(cid);
     t4[cid] = tt.length ? tt[0].slice(-4) : '';
+    gk[cid] = tt.length ? qaGrupo_(tt[0].slice(-8)) : '';   // (revisión 3 de Jarvis) separa a dos clientes con el mismo final de celular
     cli[cid] = String(c.name || '').slice(0, 60);
     var n = 0;
     /* Un lead puede colgar de DOS contactos con el mismo número (duplicados): es de los dos (la tarea anotada en cualquiera vale). */
@@ -13758,6 +13759,8 @@ function qaCuenta_(q, marca, ahoraS) {
           var id = String(t.entity_id), ts = Number(t.complete_till) || 0;
           if (!(Number(t.created_by) || 0) || ts <= ahoraS || ts > tope) return;
           if (hist && (Number(t.created_at) || 0) > ahoraS) return;   // puesta después de la venta
+          /* (revisión 3 de Jarvis) cambiada después de la venta (otra fecha u otra responsable): Kommo no guarda cómo estaba → no prueba nada */
+          if (hist && (Number(t.updated_at) || 0) > ahoraS) { res.tareasDudosas = (res.tareasDudosas || 0) + 1; return; }
           if (!x[2][id] || ts < x[2][id].ts) x[2][id] = { ts:ts, quien:nom(t.responsible_user_id), puso:nom(t.created_by) };
         });
         if (!(rt.o._links && rt.o._links.next)) break;
@@ -13784,12 +13787,15 @@ function qaCuenta_(q, marca, ahoraS) {
           if (!u || ts < lim || ts > ahoraS + (hist ? 0 : 3600)) return;   // (hist) una nota escrita después de la venta no cuenta
           /* (revisión 2 de Jarvis, 23/11) Editada DESPUÉS de la venta: Kommo no guarda el texto de antes, así que el de ahora no prueba nada (como el
              verificador). La nota existía, así que «creó el lead y anota» sigue valiendo; una visita, no. */
-          if (hist && (Number(n.updated_at) || 0) > ahoraS && txt) { txt = ''; res.notasDudosas = (res.notasDudosas || 0) + 1; }
+          /* (revisión 3 de Jarvis) …pero la nota EXISTÍA: si el texto de ahora no es del panel, «creó el lead y anota» vale (sin mostrar el
+             texto nuevo); una nota del panel editada sigue siendo del panel. */
+          var editada = hist && (Number(n.updated_at) || 0) > ahoraS;
+          if (editada) res.notasDudosas = (res.notasDudosas || 0) + 1;
           if (x[0] === 'leads' && !qaNotaPanel_(txt)) {   // ✍️ (2026-11-23-h) cualquier nota de esa persona en el lead
             var ks = id + '|' + u;
-            if (!segL[ks] || ts > segL[ks].ts) segL[ks] = { ts:ts, txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
+            if (!segL[ks] || ts > segL[ks].ts) segL[ks] = { ts:ts, txt:editada ? '' : txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
           }
-          if (!qaNotaVisita_(txt)) return;
+          if (editada || !qaNotaVisita_(txt)) return;
           if (!x[2][id] || ts > x[2][id].ts) x[2][id] = { ts:ts, quien:nom(u), txt:txt.replace(/\s+/g, ' ').trim().slice(0, 140) };
         });
         if (NN.length < 250 || !(rn.o._links && rn.o._links.next)) break;
@@ -13833,7 +13839,7 @@ function qaCuenta_(q, marca, ahoraS) {
     (csDeL[id] || [cid]).forEach(function (c2) { var y = notasC[c2]; if (y && (!nC || y.ts > nC.ts)) nC = y; });
     if (st !== '143' && (!gan || vivo)) (csDeL[id] || [cid]).forEach(function (c2) { vivoDe[c2] = 1; });
     var ent = {
-      id:id, cli:cli[cid] || '', t4:t4[cid] || '',
+      id:id, cli:cli[cid] || '', t4:t4[cid] || '', g:gk[cid] || '',
       resp:nom(l.responsible_user_id), suc:suc(l.responsible_user_id),
       et:e.n || '', emb:e.e || '', cerrado:gan ? 'ganado' : (st === '143' ? 'perdido' : ''), vivo:vivo ? 1 : 0,
       creado:Number(l.created_at) || 0, tocado:Number(l.updated_at) || 0, cierre:vivo ? fcon : (Number(l.closed_at) || 0),
@@ -13844,7 +13850,7 @@ function qaCuenta_(q, marca, ahoraS) {
     /* 🟡 (revisión 2 de Jarvis, 23/11) Los que quedan afuera de la lista pero son de alguien, recientes y sin perder ni cerrados: lo poco que
        necesita el «Ojo» de la página (qaVeredicto), sin mensajes ni notas. No cambia ningún resultado: solo el cartel amarillo. */
     else if (st !== '143' && (!gan || vivo) && l.responsible_user_id && Math.max(ent.creado, ent.tocado) >= lim)
-      (res.recientes = res.recientes || []).push({ id:id, t4:ent.t4, cli:ent.cli, resp:ent.resp, suc:ent.suc, et:ent.et, emb:ent.emb, cerrado:ent.cerrado, vivo:ent.vivo, creado:ent.creado, tocado:ent.tocado });
+      (res.recientes = res.recientes || []).push({ id:id, t4:ent.t4, g:ent.g, cli:ent.cli, resp:ent.resp, suc:ent.suc, et:ent.et, emb:ent.emb, cerrado:ent.cerrado, vivo:ent.vivo, creado:ent.creado, tocado:ent.tocado });
   });
   res.masLeads = L.length - res.leads.length;
   /* El chat que cuelga del CONTACTO (sin lead) y la fecha acordada anotada en un contacto que no tiene un lead vivo: una ficha aparte
@@ -13853,7 +13859,7 @@ function qaCuenta_(q, marca, ahoraS) {
     var msgs = (M.c[cid] || []).concat(Hh.c[cid] || []), tC = !vivoDe[cid] ? (tareasC[cid] || null) : null, nC = !vivoDe[cid] ? (notasC[cid] || null) : null;
     if (!msgs.length && !tC && !nC) return;
     var x = deMsgs(msgs);
-    res.leads.push({ id:'c' + cid, sinLead:1, cli:cli[cid] || '', t4:t4[cid] || '', resp:'', suc:'', et:'', emb:'', cerrado:'', vivo:0, creado:0, tocado:0, cierre:0,
+    res.leads.push({ id:'c' + cid, sinLead:1, cli:cli[cid] || '', t4:t4[cid] || '', g:gk[cid] || '', resp:'', suc:'', et:'', emb:'', cerrado:'', vivo:0, creado:0, tocado:0, cierre:0,
                      ultCli:x.ultCli, ultVend:x.ultVend, par:x.par, pares:x.pares, nMsg:x.nMsg, tarea:tC, nota:nC });
   });
   return res;
@@ -13874,6 +13880,10 @@ function qaIncompleto_(out) {
   return (out.cuentas || []).some(function (c) { return c.error || c.msgOk === false || c.tareasOk === false || c.notasOk === false || c.sinToken || c.cortado || c.usOk === false; });
 }
 /** (revisión de Jarvis, 23/11) ¿Este lead, aunque no se muestre por el tope, retiene al cliente? Lo mismo que cuentan qaResumenDe_ y qaVeredicto. */
+/** (revisión 3 de Jarvis) El cliente de un lead en una búsqueda por NOMBRE: el número entero (en `g`, una huella corta: el celular no viaja),
+    si no los 4 últimos, si no el nombre. Dos clientes con el mismo final de celular ya no se juntan. Igual en la página (qaPintar). */
+function qaClaveCli_(l, marca, li) { return l.g || l.t4 || (marca + '|' + (l.cli || li)); }
+function qaGrupo_(d8) { var h = 5381; d8 = String(d8 || ''); for (var i = 0; i < d8.length; i++) h = ((h * 33) ^ d8.charCodeAt(i)) >>> 0; return d8 ? 'g' + h.toString(36) : ''; }
 function qaRetiene_(l, lim, ahoraS) {
   if (l.cerrado === 'perdido') return false;
   if (l.cerrado === 'ganado' && (l.cierre || l.tocado || 0) >= lim) return true;
@@ -13889,7 +13899,7 @@ function qaResumenDe_(out, soloT4, ahoraS) {
   (out.cuentas || []).forEach(function (c) {
     nCont += Number(c.contactos) || 0;
     (c.leads || []).forEach(function (l, li) {
-      if (soloT4 != null && (l.t4 || (c.marca + '|' + (l.cli || li))) !== soloT4) return;
+      if (soloT4 != null && qaClaveCli_(l, c.marca, li) !== soloT4) return;
       var pares = l.pares || [];
       if (l.cerrado === 'perdido') return;
       if (l.cerrado === 'ganado') {
@@ -13917,7 +13927,7 @@ function qaResumenDe_(out, soloT4, ahoraS) {
     varios clientes, uno por uno con el final de su celular («…1111: Atiende: Carola · …2222: Libre»), como los ve la vendedora. */
 function qaResumen_(out, ahoraS) {
   var ks = [], visto = {};
-  if (out.nombre) (out.cuentas || []).forEach(function (c) { (c.leads || []).forEach(function (l, li) { var k = l.t4 || (c.marca + '|' + (l.cli || li)); if (!visto[k]) { visto[k] = 1; ks.push({ k:k, t4:l.t4 || '' }); } }); });
+  if (out.nombre) (out.cuentas || []).forEach(function (c) { (c.leads || []).forEach(function (l, li) { var k = qaClaveCli_(l, c.marca, li); if (!visto[k]) { visto[k] = 1; ks.push({ k:k, t4:l.t4 || '' }); } }); });
   if (ks.length < 2) return qaResumenDe_(out, null, ahoraS);
   return ks.map(function (g) { return '…' + (g.t4 || '(sin celular)') + ': ' + qaResumenDe_(out, g.k, ahoraS); }).join(' · ').slice(0, 900);
 }
@@ -13952,7 +13962,9 @@ function qaConsulta_(c8, nom, orig, ahoraS, solo, hist) {
      ANTES de guardar la venta (la del formulario de esa venta): una de después podría traer lo que pasó después de la venta. */
   /* (revisión 2 de Jarvis, 23/11) Y solo la del MISMO segundo: una de antes no ve lo que pasó entre la consulta y la venta (una nota nueva, una
      que venció), así que para el cruce se vuelve a preguntar. */
-  var cacheOk = function (o) { return !!o && (!hist || (Number(o.ahora) || 0) === ahoraS); };
+  /* (revisión 3 de Jarvis, 23/11) Ni siquiera la del mismo segundo: la hora guardada es la de INICIO de la consulta y Kommo pudo contestar
+     algo escrito segundos después. La caché queda solo para las consultas en vivo. */
+  var cacheOk = function (o) { return !!o && !hist; };
   if (cache) {
     try { var c = cache.get(ck); if (c) { out = JSON.parse(c); out.cache = true; if (!cacheOk(out)) out = null; } } catch (e) {}
     /* (revisión 2 de Fable) Con `solo`, sirve también la consulta COMPLETA de hace un momento (la del formulario de esa misma venta). */

@@ -187,7 +187,9 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   const f = cliente('heaven', '75500006', 11);
   for (let i = 0; i < 251; i++) tarea('heaven', f.lid, 11, T - 600);
   const R3 = correr([venta('m', 'Isabel Robledo', '75500006')], '6c');
-  chk(R3.ind.pend === 1 && /tareas con más de una página/.test(Object.keys(R3.ind.motivos)[0]), '6c más de una página de tareas (el .gs lee una): pendiente: ' + J(R3.ind.motivos));
+  /* (revisión 3 de Jarvis) el .gs ya sigue las páginas de tareas (hasta 4): las 251 (de Isabel, la que vendió) se leen enteras y el negativo
+     es verificable, ya no «pendiente» */
+  chk(R3.ind.no === 1 && R3.ind.pend === 0, '6c más de una página de tareas: el .gs las lee todas y queda un «no» verificado: ' + J(R3.ind));
 }
 
 /* 7 · los mensajes que valen están en una página posterior */
