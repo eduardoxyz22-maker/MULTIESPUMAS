@@ -383,7 +383,7 @@ chk(LLAMADAS.length > 0 && LLAMADAS.every((u) => u.indexOf('heaven-prueba') >= 0
   const R = correr([venta('o', 'Isabel Robledo', '71100001', { cliente: 'JUAN PEREZ', direccion: 'CALLE FALSA 123' }), venta('n', 'Isabel Robledo', '71100009', { cliente: 'OTRO CLIENTE' })], '14');
   const it = R.items[0] || {};
   chk(R.items.length === 1 && it.id === 'o' && it.v === 'Isabel Robledo' && it.m === 'h' && it.mm === 1 && it.wa === 1, '14a un renglón para el pedido con indicio (y ninguno para el otro): ' + J(R.items));
-  chk(J(it.o) === J([['Maria Flores', 'h', 'c', 0]]), '14b quién atendía, de qué marca y por qué (conversaba): ' + J(it.o));
+  chk(J(it.o) === J([['Maria Flores', 'h', 'c', 0, String(a.lid)]]), '14b quién atendía, de qué marca, por qué (conversaba) y en qué lead: ' + J(it.o));
   const f = V.filaRevision(R, 2, 14, 1763900000000), o = JSON.parse(f.observaciones);
   chk(f.id === V.REV_ID && f.fecha === '' && /^🔎/.test(f.cliente) && o.n === 2 && o.d === 14 && o.i.length === 1, '14c una fila del sistema sin fecha, con cuántas se miraron: ' + J({ id: f.id, n: o.n, d: o.d }));
   chk(!/JUAN|PEREZ|CALLE|71100001|OTRO CLIENTE/.test(JSON.stringify(f)), '14d nada del cliente: ni el nombre, ni la dirección, ni el celular');

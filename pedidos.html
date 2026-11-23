@@ -72225,7 +72225,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-23-b';
+var PANEL_V='2026-11-23-c';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -73444,10 +73444,10 @@ function qaVeredicto(r, yo){
         if(tc>=lim && (!compro || tc>compro.ts)) compro={ n:qaN(l.resp), ts:tc, marca:c.marca, vivo:!!l.vivo };
         if(!l.vivo) return;
       }
-      pares.forEach(function(p){ if(p.ts>=lim) vig.push({ n:qaN(p.quien), por:'conv', ts:p.ts, desde:p.desde||p.ts, marca:c.marca, et:l.et }); });
-      if(l.tarea && l.tarea.ts>ahora) vig.push({ n:qaN(l.tarea.quien||l.resp), por:'fecha', ts:l.tarea.ts, desde:0, marca:c.marca, et:l.et });
+      pares.forEach(function(p){ if(p.ts>=lim) vig.push({ n:qaN(p.quien), por:'conv', ts:p.ts, desde:p.desde||p.ts, marca:c.marca, et:l.et, lid:l.id }); });
+      if(l.tarea && l.tarea.ts>ahora) vig.push({ n:qaN(l.tarea.quien||l.resp), por:'fecha', ts:l.tarea.ts, desde:0, marca:c.marca, et:l.et, lid:l.id });
       /* 📝 (21/11, servidor 2026-11-21-a) una nota de Kommo de los últimos QA_DIAS días que habla de una visita o una compra, de quien la escribió */
-      if(l.nota && l.nota.ts>=lim) vig.push({ n:qaN(l.nota.quien||l.resp), por:'nota', ts:l.nota.ts, desde:0, txt:String(l.nota.txt||''), marca:c.marca, et:l.et });
+      if(l.nota && l.nota.ts>=lim) vig.push({ n:qaN(l.nota.quien||l.resp), por:'nota', ts:l.nota.ts, desde:0, txt:String(l.nota.txt||''), marca:c.marca, et:l.et, lid:l.id });
     });
   });
   /* una sola línea por vendedora: la conversación gana sobre la fecha acordada; de la conversación, la más nueva y la primera */
@@ -73776,6 +73776,15 @@ function crvCruces(){
    resultado en la fila del sistema `__cruces_rev__` (`CRUREV_ID`): {v, t, d, n, i:[{id, v, m, o:[[nombre, 'h'|'s', 'c'|'t'|'n', otraPrimero]],
    mm, wa, yo, td, ts}]}. Solo ids y nombres del equipo: el cliente sale de la planilla. Acá solo se MUESTRA (con la contraseña). */
 var CRUREV_POR={ c:'conversaba con el cliente', t:'tenía una tarea abierta', n:'anotó una visita o compra' };
+/* 🔗 (23/11, dueño: «¿y yo soy adivino? ¿cómo sé que lo hizo por celular?») cada venta dice POR QUÉ dato se la encontró (el celular, en qué
+   Kommo) y lleva al lead donde está la conversación. El subdominio de cada cuenta de Kommo (el mismo de CLAUDE.md); un id «c<n>» es un
+   contacto sin lead. Una revisión guardada antes del 23/11 no trae el lead: queda el celular para buscarlo. */
+var CRUREV_KOMMO={ heaven:'https://eanez.kommo.com', suena:'https://gerenciamultiespumasviscarra.kommo.com' };
+function crvRevLeadUrl(m, lid){
+  lid=String(lid||''); var base=CRUREV_KOMMO[m]; if(!base || !lid) return '';
+  var c=/^c(\d+)$/.exec(lid); if(c) return base+'/contacts/detail/'+c[1];
+  return /^\d+$/.test(lid) ? base+'/leads/detail/'+lid : '';
+}
 function crvRevDatos(){
   var f=(STATE||[]).filter(function(p){ return p && String(p.id)===CRUREV_ID; })[0]; if(!f) return null;
   var o=null; try{ o=JSON.parse(f.observaciones||'{}'); }catch(e){ o=null; }
@@ -73784,7 +73793,7 @@ function crvRevDatos(){
   var L=[], fuera=0;
   o.i.forEach(function(x){
     var p=x && findById(x.id); if(!p || esFilaSistema(p) || esBorrador(p)){ fuera++; return; }
-    var oo=(x.o||[]).map(function(a){ return { n:String(a[0]||''), m:a[1]==='s'?'suena':'heaven', por:a[2]||'c', pri:!!a[3] }; });
+    var oo=(x.o||[]).map(function(a){ return { n:String(a[0]||''), m:a[1]==='s'?'suena':'heaven', por:a[2]||'c', pri:!!a[3], lid:String(a[4]||'') }; });
     L.push({ p:p, v:String(x.v||p.vendedor||''), m:x.m==='s'?'suena':'heaven', o:oo, mm:!!x.mm, wa:!!x.wa, yo:!!x.yo, td:!!x.td, ts:Number(x.ts)||Number(p.ts)||0, av:!!avis[String(p.id)] });
   });
   L.sort(function(a,b){ return b.ts-a.ts; });
@@ -73803,7 +73812,19 @@ function crvRevItemHtml(x, soloOtra){
   return '<div class="crv-it crv-cx crv-rev"><b>'+esc(ocEtiq(p.oc))+' · '+esc(String(p.cliente||'—').trim())+'</b>'+chips+
     '<span class="crv-s">Cargada el '+esc(fmtFechaCorta(isoDeTsBolivia(x.ts)))+' por <b>'+esc(x.v||'—')+'</b> · según Kommo, '+
       quien.map(function(a){ return '<b>'+esc(a.n||'—')+'</b>'+(soloOtra?(' ('+marcaTx(a.m)+')'):'')+' '+esc(CRUREV_POR[a.por]||CRUREV_POR.c); }).join(' · ')+'</span>'+
-    '<div class="crv-b"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button></div></div>';
+    crvRevBuscoHtml(x, quien)+
+    '<div class="crv-b"><button type="button" class="btn btn-sm btn-ghost" onclick="closeModal();showPedidoModal(\''+id+'\')">📄 Abrir el pedido</button>'+
+      quien.filter(function(a){ return crvRevLeadUrl(a.m, a.lid); }).map(function(a){
+        return '<a class="btn btn-sm btn-ghost" target="_blank" rel="noopener" href="'+esc(crvRevLeadUrl(a.m, a.lid))+'">💬 Ver el chat de '+esc(a.n||'—')+' en Kommo</a>';
+      }).join('')+'</div></div>';
+}
+/** «Se encontró por el celular 76600434 en el Kommo de Sueña»: el celular del pedido (los últimos 8 números, los mismos que busca la revisión). */
+function crvRevBuscoHtml(x, quien){
+  var c8=cliCelClave(x.p.celular||''), ms={}; quien.forEach(function(a){ ms[a.m]=1; });
+  var ctas=Object.keys(ms).map(function(m){ return m==='suena' ? 'Sueña' : 'Heaven'; }).join(' y ');
+  if(!c8) return '';
+  return '<span class="crv-s crv-busco">🔎 Se encontró por el <b>celular '+esc(c8)+'</b> (no por el nombre) en el Kommo de <b>'+esc(ctas||'—')+'</b>.'+
+    (quien.some(function(a){ return crvRevLeadUrl(a.m, a.lid); }) ? '' : ' Para verlo, buscá ese número en Kommo: el contacto puede tener otro nombre (el de su WhatsApp).')+'</span>';
 }
 function crvRevHtml(){
   var R=crvRevDatos();

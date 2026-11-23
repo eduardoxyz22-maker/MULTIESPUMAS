@@ -329,7 +329,8 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
         const n = pg.VENDEDORES.filter((y) => pg.qaMismo(y, x.n))[0] || String(x.n || '');
         const k = n + '|' + x.marca; if (vistos[k]) return; vistos[k] = 1;
         o.push([n.slice(0, 40), x.marca === 'suena' ? 's' : 'h', x.por === 'conv' ? 'c' : (x.por === 'fecha' ? 't' : 'n'),
-                (yo && x.por === 'conv' && (x.desde || x.ts) < (yo.desde || yo.ts)) ? 1 : 0]);
+                (yo && x.por === 'conv' && (x.desde || x.ts) < (yo.desde || yo.ts)) ? 1 : 0,
+                /^c?\d+$/.test(String(x.lid || '')) ? String(x.lid) : '']);   // 🔗 (23/11) el lead (o «c<n>» = contacto) donde se vio: el panel lleva al chat
       });
       R.items.push({ id: String(p.id), v: v.slice(0, 40), m: mv === 'suena' ? 's' : 'h', o: o.slice(0, 6), mm: Lf.length ? 1 : 0, wa: Lb.length ? 1 : 0,
                      yo: yo ? 1 : 0, td: tienda ? 1 : 0, ts: Number(p.ts) || 0 });

@@ -1159,7 +1159,9 @@ guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto).
   el resultado en la fila del sistema **`__cruces_rev__`** (`CRUREV_ID`, en `esFilaSistema`; `filaRevision`/`guardarRevision` del verificador:
   solo ids de pedidos y nombres del equipo, nunca del cliente; sin sello, la escribe solo él). El panel (`crvRevDatos`/`crvRevHtml`, al final
   de `crvCuerpoHtml`) la muestra con la contraseña: cada venta de la misma marca con su cliente (de la planilla), quién atendía y por qué,
-  «lo que más se repite» y las de la otra marca aparte. Solo muestra. `test_verificar_cruce` §14, `tests/test_cruces_rev_pagina.js` (11).
+  «lo que más se repite» y las de la otra marca aparte. Solo muestra. 🔗 (23/11, dueño: *«¿y yo soy adivino? ¿cómo sé que lo hizo por celular?»*)
+  cada venta dice «Se encontró por el celular N (no por el nombre) en el Kommo de X» y lleva al chat (`crvRevLeadUrl`: el lead que guarda el
+  verificador en `o[4]`, que sale de `lid` en `qaVeredicto`; «c<n>» = contacto). `test_verificar_cruce` §14, `tests/test_cruces_rev_pagina.js` (15).
   🗓️ **El efectivo «desde el …» de «Tu día» / al día** = el cobro más viejo que ningún retiro tapó (`misEfectivoDatos().viejo`, el mismo
   emparejamiento que «Efectivo por retirar»); antes, con un retiro que tapó otros cobros, salía el primero del mes («18 días» contra «2 días»).
   `tests/test_efectivo_desde.js` (5; 2 rojas contra lo de antes). La foto del lunes 23/11 no cambia con el arreglo.
