@@ -142,9 +142,11 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   const a = cliente('heaven', '73300001', 12, { updated_at: T - 20 * D }); charla('heaven', a.lid, 12, T - 3 * D);   // la conversación, en el lead más viejo
   for (let i = 0; i < 8; i++) cliente('heaven', '73300001', 11, { updated_at: T - D - i });
   const R = correr([venta('x', 'Isabel Robledo', '73300001')], '4');
-  chk(R.ind.si === 0 && R.ind.pend === 1 && /más leads de los que se miran/.test(Object.keys(R.ind.motivos)[0]), '4a nueve leads y el de la charla afuera: pendiente, no negativo: ' + J(R.ind.motivos));
-  chk(!/Heaven: completa en 1 de 1/.test(V.informe(R).join('\n')) && /más leads de los que se miran 1/.test(V.informe(R).join('\n')), '4b la cuenta no dice «completa»');
-  chk(R.cartel.pend === 1 && R.wa.pend === 1, '4c el cartel y el WhatsApp también quedan pendientes');
+  /* (revisión de Jarvis, 23/11, servidor 2026-11-23-h) el servidor ya no deja afuera un lead que retiene al cliente por estar más allá del tope:
+     la conversación del lead más viejo se encuentra (antes quedaba «pendiente»). */
+  chk(R.ind.si === 1 && R.ind.pend === 0, '4a nueve leads y la charla en el más viejo: se encuentra (el servidor lo trae aunque pase el tope): ' + J(R.ind));
+  chk(!/más leads de los que se miran/.test(V.informe(R).join('\n')), '4b y no queda nada sin mirar');
+  chk(R.cartel.pend === 0 && R.wa.pend === 0, '4c el cartel y el WhatsApp tampoco quedan pendientes');
 }
 
 /* 5 · el estado de los leads y las notas a la fecha (Jarvis, alta 4) */
@@ -185,7 +187,9 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   const f = cliente('heaven', '75500006', 11);
   for (let i = 0; i < 251; i++) tarea('heaven', f.lid, 11, T - 600);
   const R3 = correr([venta('m', 'Isabel Robledo', '75500006')], '6c');
-  chk(R3.ind.pend === 1 && /tareas con más de una página/.test(Object.keys(R3.ind.motivos)[0]), '6c más de una página de tareas (el .gs lee una): pendiente: ' + J(R3.ind.motivos));
+  /* (revisión 3 de Jarvis) el .gs ya sigue las páginas de tareas (hasta 4): las 251 (de Isabel, la que vendió) se leen enteras y el negativo
+     es verificable, ya no «pendiente» */
+  chk(R3.ind.no === 1 && R3.ind.pend === 0, '6c más de una página de tareas: el .gs las lee todas y queda un «no» verificado: ' + J(R3.ind));
 }
 
 /* 7 · los mensajes que valen están en una página posterior */

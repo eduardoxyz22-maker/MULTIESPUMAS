@@ -88,6 +88,19 @@ Propiedades del script.
   antes de sustituir un pedido nuevo a medio llenar al editar o completar uno de Kommo; Cancelar
   vuelve al formulario intacto. `tests/test_guardado_durable.js`: 41 comprobaciones aisladas.
   No cambia el `.gs`: sigue `2026-09-30-a`; basta recargar la página publicada.
+- 🔐 **La clave del equipo, preparada para el VIERNES 27/11** (23/11, dueño: *«ok anotalo y tengo listo para el viernes, ese día lo haré»*;
+  explicación con capturas: https://claude.ai/artifact/XVAshNjCFQZ1z1oMyNrUuy). El servidor NO cambia (la 21-a ya sabe pedirla). En DOS FASES:
+  `herramientas/clave_equipo.gs` (archivo APARTE del proyecto) ▶ `generarClavesUnaVez` inventa `PANEL_KEY_PROXIMA` y `ADMIN_KEY_PROXIMA`
+  (10 letras sin 0/o/1/l/i; si ya había ADMIN_KEY, esa) y las muestra en una ventana de la planilla, nunca en el registro; el servidor
+  todavía NO las pide → cada uno la carga con **Mis pedidos → 🔐 Clave del equipo** (`#mis-clave-btn`, `misClaveBtnPintar`; con el servidor
+  abierto dice «todavía no la pide»; el botón de Administración está detrás de la contraseña) → ▶ `activarClavesUnaVez` (ADMIN_KEY y después
+  PANEL_KEY) · ▶ `desactivarClavesUnaVez` vuelve a como hoy · `cambiarClaveEquipoUnaVez` si alguien se va. Las herramientas mandan la clave:
+  `generar.py` y el diagnóstico y el verificador con el secreto **`PANEL_KEY`** de GitHub (en `panel.yml`, `diagnostico-lectura.yml`,
+  `verificar-cruce-ventas.yml`; sin él, el dashboard pierde las metas y las ventas sin ficha del panel pero publica igual); la carga de
+  pedidos por correo (`cargar_pedidos.py`, corre en la sesión de Claude) de `PANEL_KEY`/`ADMIN_KEY` o `~/.claves_panel.json` (fuera del
+  repo; `adminKey` solo al forzar) y corta con un mensaje si el servidor dice `clave`. `traer_kommo.py` no cambia (`kommoLeads` va con su
+  propia clave, antes de la del equipo). Pruebas: `tests/test_clave_equipo.js` (el archivo aparte + el `.gs`, 29; también con GS=la 21-a),
+  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). El botón y las herramientas PUBLICADOS el 23/11 con la página 2026-11-23-e (la de la 23-h); `cargar_pedidos.py` y su prueba siguen solo en la rama.
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además
@@ -1047,6 +1060,15 @@ Playwright salvo su bandera.
   «FOTOS HEAVEN 2026», Sueña «SUEÑA - FOTOS» y «Fotos Colchones Sueña», las tres compartidas con el enlace) → hojas para elegir en `salida/` (`HOJAS_DE_NUEVO=1`
   para rehacerlas); `elegidas.txt` (`clave|id`, y `|abajo:NN` para quedarse con el NN % de abajo: saca gente o escritorios del fondo) → las fotos. Playwright: `FOTO_PRUEBA`. `tests/test_prod_foto.js` (16). Muestra: https://claude.ai/artifact/EvgFM189kumuVZPdUcA6CR
 ### 🔐🗑💾 La puerta GET, la Papelera y el respaldo probado (451, 452 y 453, 22/11; dueño: «451, 452 y 453» con la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; servidor `2026-11-22-a`, lo implementa el dueño)
+- 🛑 **DESCARTADO (23/11, dueño: «dejarlo como está… dejar la 21-a»)**: la Papelera (452) y la prueba del respaldo (453) NO se implementan. Siete
+  revisiones de Jarvis (23-a … 23-g) siguieron encontrando casos de recuperación a medias y de reconstrucción del historial; Jarvis recomendó
+  mantener la 21-a. **En producción queda la `2026-11-21-a`.** Desde el 23/11 el `.gs` del repo es la **`2026-11-23-h` = la 21-a + «✍️ creó
+  el lead y anota»** (sin Papelera ni prueba del respaldo); la 22-a vive en el historial (`254f324…`), y `test_papelera`, `test_respaldo_prueba`
+  y `test_puerta_get` la prueban desde ahí. La página prende «🗑 Lo borrado» y el aviso del respaldo SOLO con un servidor 2026-11-22-x
+  (`servidorPapelera`): «≥ 22-a» ya no alcanza.
+  Lo de la página («🗑 Lo borrado», el aviso del respaldo) queda inerte: se prende solo con un servidor ≥ 22-a. Las versiones 23-a … 23-g están
+  en la rama LOCAL `respaldo-papelera-23g` (no subida), por si algún día se retoma. La puerta GET (451) sigue sirviendo sin tocar el servidor:
+  la 21-a ya respeta `GET_CERRADO` (archivo aparte `herramientas/cerrar_puerta_get.gs`).
 - 🚪 **451** `herramientas/cerrar_puerta_get.gs` = archivo APARTE del proyecto (Propiedades es de solo lectura): ▶ `cerrarPuertaGetUnaVez` pone `GET_CERRADO=1` (`doGet` → `get_cerrado` sin leer la hoja), `abrirPuertaGetUnaVez` la saca, `verPuertaGetUnaVez` solo mira. Nada del repo lee por GET; la verificación de Meta (`hub.challenge`) va ANTES de la puerta. Lo que Google convierte de POST a GET (§4fx) vuelve `get_cerrado` y se reintenta: página (`respuesta_de_lectura`), `traer_kommo.es_lectura`, `cargar_pedidos.post`; el diagnóstico lo dice «bien». Probar (§26) dice si está cerrada. `tests/test_puerta_get.js` (16).
 - 🗑 **452** `doDelete` → `borradoAnotar_` → `papeleraAnotar_`: la fila entera (`rowToRec_`) en la hoja **«Papelera»** (aparte de «Borrados», que sigue sin celulares; poda a 35 días, tope 3.000). Sin filas del sistema salvo retiros (`papeleraRecuperable_`). `borradosLeer` (sin candado) = 30 días, lo de antes de la 22-a sale de «Borrados» con `sinCopia`. `borradoRecuperar` {id, t} (con el candado): `ya_esta` si el id existe; si no, la fila tal cual con sello NUEVO, `recientesAnotar_('r')`, fuera de KOMMO_DESCARTADOS (`kNoDescartar_`), fotos de vuelta de la papelera de Drive / «Fotos huérfanas» (`papeleraFotosVolver_`; las que no están, `fotosPerdidas`), `ocRepetida` si otro tomó el N°. Sin bot ni reservas. Página: «🗑 Lo borrado» en «⚙️ Ajustes y claves», solo con la contraseña (`lbrBotonPintar`), `#lbr-overlay` (adm-ov, `lbr*`), «↩️ Recuperar» con `preguntaYa` → `refrescarEstadoYa`; con servidor < 22-a, un cartel. `apiDelete` manda `quien: quienEdita()` (y `apiPost` lo respeta para `delete`/`borradoRecuperar`). Playwright solo `LBR_PRUEBA`. `tests/test_papelera.js` (35).
 - 💾 **453** `probarRespaldo()` (también desde el editor) abre la última copia de «Backups Pedidos MultiEspumas» (`SpreadsheetApp.openById`) y compara fila por fila: mismo sello = igual (si no, `distintas`), sello y carga anteriores a la copia = tiene que estar (`faltan`), lo de después no es error; copia ≤ 36 h y sumas de control iguales. Resultado en `RESPALDO_PRUEBA`; la `list` lo lleva chico (`rp`, de `cfgProp_`: sin operaciones de propiedades de más). `probarRespaldoAuto` (disparador de los lunes 5 am, `onWeekDay` o cada madrugada) corre el primer lunes del mes, o si la última falló o tiene > 31 días. Ningún WhatsApp. Página: «Para hacer» de Administración `rspHacer` (🔴 falló, 🟡 nunca o > 40 días; `ADM_AV.resp`; solo `asisVeAdm` y servidor ≥ 22-a) y la línea en «📊 Uso del panel» (`rspLinea`). Playwright solo `RSP_PRUEBA`. `tests/test_respaldo_prueba.js` (32).
@@ -1137,7 +1159,31 @@ el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_qu
 que nombra pasar / visitar / venir / sucursal / tienda / comprar / stock (`QA_NOTA_RE`, `qaNotaVisita_`; las del panel, «🧾 …», no) retiene para quien
 la ESCRIBIÓ, como la conversación: `l.nota` {ts, quien, txt} → `qaVeredicto` (`por:'nota'`), `qaResumenDe_`, `cruceOtros_` (el WhatsApp a la otra) y el
 cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». (Fable, 21/11) «pas…» solo con lo que sigue («pasa POR», «pasa MAÑANA»), `QA_NOTA_SI` sin `QA_NOTA_NO` («no va a comprar», «compró en otra», «competencia»); las del panel («🧾», «🙅», «Cotización COT») no; las notas van de a 4 páginas de 250 (`QA_NOTAS_PAGINAS`; más = incompleto); la consulta del formulario manda `solo:<marca>`. Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
-puede pasar por 3 tiendas a cotizar, no hay lío»*). `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+puede pasar por 3 tiendas a cotizar, no hay lío»*). 🟡 **Pero si hay un lead de OTRA asesora creado o tocado en los últimos
+15 días** (no perdido, no el propio) el cartel dice «Ojo: el lead es de X… preguntale antes» en vez de «Libre» (23/11, dueño: «Ojo, en amarillo»;
+`qaVeredicto` → `V.rec`, `qaCartel`). SOLO el cartel: `k` sigue «libre», así que el aviso al guardar, el WhatsApp y la revisión no cambian. `test_quien_atiende` L0-L4.
+✍️ **Creó el lead y anota** (servidor **`2026-11-23-h`**, 23/11, después de tres revisiones de Jarvis; dueño: «decide tu y publica»; PÁGINA PUBLICADA 23/11, versión 2026-11-23-e, con `SCRIPT_VERSION_ESPERADA` 23-h; el `.gs` lo implementa el dueño: volver atrás = ✏️ a la versión anotada Y pegar la 21-a de `42b7722…`, 14.111 líneas; dueño: *«si un cliente visita la tienda y ellos lo crean…»* y, al comprobar que el chat
+de Kommo no deja escribirle primero, *«un cliente creado en visita tienda, sería por las notas nomás»*): en un lead que CREÓ una persona (`created_by`
+≠ 0), cada nota de ESA persona en ese lead (cualquiera, menos las del panel, `qaNotaPanel_`) de los últimos 15 días la deja atendiéndolo 15 días desde
+la nota: `l.creoNota` {ts, quien, txt, cre} → `qaResumenDe_`, `cruceOtros_` (WhatsApp), `qaVeredicto` (`por:'creo'`, `qaCreoTxt`), el aviso al guardar,
+y la revisión (letra `l`). La de otra persona en ese lead sigue la regla de la nota de visita. Sin nota, el «🟡 Ojo». `test_quien_atiende` W1-W14.
+🔎 **Revisión de Jarvis (23/11), arreglada en la misma 23-h**: (1) el tope de leads que se MUESTRAN (8 por celular, 3 por nombre) ya no deja
+afuera uno que retiene: tareas, notas y mensajes se miran en todos (hasta 120) y un lead con algo que retiene se muestra igual (`verL`,
+`qaRetiene_`); (2) el cruce mira Kommo como estaba al GUARDAR la venta (`x.ms` → `qaConsulta_(…, alVender, mk, true)`, `hist`: mensajes hasta
+esa hora, notas y tareas creadas antes; caché solo de una consulta de antes de la venta, nunca la deja); (3) `qaVeredicto` junta las notas
+de una persona por la MÁS NUEVA (con su tipo, texto y lead; la conversación y la fecha acordada siguen ganando); (4) «🗑 Lo borrado» sin botón
+si el servidor no es 22-x. Sus pruebas, tal cual: `tests/test_jarvis_23h_{hora_aviso,leads_omitidos,vigencia_notas}.cjs`. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+🔎 **Segunda revisión de Jarvis (23/11), también en la 23-h**: (1) el cruce usa la caché solo de una consulta del MISMO segundo que la venta y
+evalúa con `alVender` (una de antes no veía la nota nueva ni la que vencía en el medio); (2) los leads de otra persona que quedan fuera de la lista
+por el tope viajan en `recientes` (sin mensajes ni notas) y el «🟡 Ojo» de `qaVeredicto` los mira; (3) con `hist`, un lead cerrado (142/143) después
+de la venta cuenta abierto, uno creado después no existe y una nota EDITADA después no prueba una visita (`notasDudosas`; «creó y anota» sí);
+(4) las tareas siguen las páginas de cada lote de 40 (`QA_NOTAS_PAGINAS`; pasado el tope, `tareasOk:false` = incompleto). Sus pruebas:
+`tests/test_jarvis_23h_r2_{cache_al_guardar,ojo_segun_cantidad,cierre_y_tareas,nota_editada}.cjs`.
+🔎 **Tercera revisión de Jarvis (23/11), también en la 23-h**: el cruce NUNCA usa la caché (`cacheOk` = `!hist`; la del formulario queda para
+la consulta en vivo); una nota editada después de la venta no prueba visita pero sí «creó y anota» (el texto de ahora decide si es del panel;
+no se muestra); una tarea cambiada después de la venta no prueba nada (`tareasDudosas`); por nombre, los clientes se separan por el celular
+ENTERO (`g` = huella de los últimos 8, `qaClaveCli_`/`qaGrupo_`; en la página, `l.g || l.t4 …`); el verificador ya no corta las tareas en
+una página (vacía con enlace, no 204) y marca «tarea cambiada después». `tests/test_jarvis_23h_r3_{cache,hist,tareas,recientes,verificador}.cjs`.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir
@@ -1170,10 +1216,21 @@ guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto).
   desde `qaPintar`, `mostrarBotonesTodos`, `crxTomar` y `crvResolver`), plegado salvo con pedidos de revisión, con lo mismo de la ventana (`crvCuerpoHtml`):
   los pedidos con «Es de …», «Ya decididas» y «🔀 Cruces avisados» (`crvCruces`/`crvCruceHtml`: los `cx` de 15 días con la venta en la planilla: quién
   cargó, a quién se avisó, «sin reclamo» / «revisión pedida» / «decidido»). 🚫 Nada de esto en «Para hacer» de Administración (`crvHacer` ya no existe).
-  Página 2026-11-22-a.
+  Página 2026-11-22-a PUBLICADA 22/11 (`a2ea59e`).
 - 📅 **Importar ROHO para el día que elige logística** (dueño: *«no importa si está lleno… que muestre 29/15»*): `ROHO_FECHA` (todos a ese día, también
   notas pasadas); un turno lleno o un día cerrado va con `forzar:true` (la vista previa dice «quedarían 15/12… se cargan igual»), pero **nunca** un día
   o turno sin camión (`rohoNoSale`: feriado, domingo, sábado a la tarde). La clave se pide si alguno VA a quedar forzado (`rohoHayQueForzar`). `tests/test_roho_fecha.js` (9).
+- 🚚 **Un pedido NUEVO forzado entra** (20/11, captura del dueño: *«roho no me deja cargar»*: «3 no entraron», turno lleno y día cerrado): hasta la 20-c el
+  `.gs` miraba `forzar` SOLO al MOVER uno que ya estaba. Servidor **2026-11-20-d** (IMPLEMENTADO 20/11 por el dueño, enlace fijo `f8d5e7a…`, 14.047 líneas;
+  volver atrás: ✏️ a la versión anotada Y pegar la 20-c de `1450933…`): en `doSave`, `esNuevo && forzar` → entra con su N° del día; feriado y turno sin
+  camión siguen afuera. Página 2026-11-20-e PUBLICADA (`5a17cf1`). Las notas de días pasados van a SU fecha sin ✅ (dueño: logística verifica o
+  reprograma); las ya cargadas se saltean por N° de nota. `tests/test_roho_forzar_servidor.js` (12; 5 rojas contra la 20-c).
+
+## 💵💵 «Pagó con dos métodos» en Contabilidad y editar un pago sin perder fotos (20/11; dueño: *«en la pestaña cargar pago no sale la opción de 2 métodos como en el "pedido"»* y el «SE GUARDÓ INCOMPLETO» al partir un QR en QR + efectivo; PUBLICADO 20/11, versión 2026-11-20-d, `5aff719`)
+- Registrar pago → «➕ Pagó con dos métodos» (`CTA_PAGO.mx`, `ctaMx*`, `ctaMxHtml`): Pago 2 con su monto, método, banco e imagen; `ctaRegistrarPago` anota
+  DOS renglones (frena el mismo método, `mixtoMismoMetodo`); el efectivo de cualquiera de los dos pide quién lo recibió (`ctaHayEfe`). `tests/test_cta_dos_metodos.js` (13).
+- Editar: el rescate del método de antes (§4jd A2-3) ya no corre con el mixto prendido ni cuando las fotos de antes se quitaron; y una red al final de
+  `submitPedido` pega en un pago con lugar (`COMP_MAX`) toda imagen subida que no quedó en `metodoPago` (sin lugar, no guarda y lo dice). `tests/test_editar_partir_pago.js` (7).
 
 ## 📄 El PDF del pedido del cliente en la ficha (20/11; dueño: *«cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo pueda descargar… en el pedido en el panel»*; servidor `2026-11-20-b` lo implementa el dueño; página 2026-11-20-b en la rama)
 La revisión de correos pone `"pdf": "<ruta>"` en el JSON de cada pedido de Multicenter y Tienda Amiga; `cargar_pedidos.py` (`subir_pdf`, solo con
@@ -3380,6 +3437,9 @@ precio unitario; el «TOTAL» impreso no vale (si difiere, se anota). Ej.: el 06
 sábado 6:47, 8:47, 11:47, 15:47, 17:47, 19:47 y 21:47 de Bolivia (dueño: *«a veces entran pedidos en las tardes a las 17:47 añade y otra a las 6:47 am»*; 14/11: *«Sí, agrega las de 19:47 y 21:47»*), que se ejecuta en ESTA sesión (las que abren una sesión nueva no pueden llevar el conector de Gmail en
 esta cuenta). Sigue `herramientas/pedidos_correo/LEEME.md` + `extraer_pdf.py` + `cargar_pedidos.py` (relee la planilla, saltea lo que ya está
 por su número, calcula OC/N° del día/total, día lleno → siguiente hábil anotado, nunca fuerza). Una regla nueva de un cliente va en LEEME.md.
+🧪 **El cargador revisado por Fable** (21/11): «ya estaba» solo entre los pedidos de Eduardo y con el número ENTERO (`ya_esta`); una respuesta de
+lectura (§4fx) a un `save` se reintenta en `post`; un `conflicto` con la fila del MISMO id (`uid` de esta vuelta) es «CARGADO»; `dia_del_dueno` con
+0 cupos (domingo, sábado PM) no se fuerza. `tests/test_correo_cargar.py` (18; el `.gs` real detrás de `tests/correo_gs_http.js`).
 🛒 **Tienda Amiga** (09/11; dueño: *«cuando lleguen a mi correo mensajes de Denisse… con pedidos recuerda cárgalos»*): la rutina busca también
 `from:denisse.navarro@tiendaamiga.com.bo` (PDF «OC_Marketplace_N», cliente `TIENDA AMIGA ER S.A.`, Almacenes Ferrotodo Bodega 14, el día hábil
 siguiente AM; ⚠️ el PDF trae dos precios encimados: vale el MENOR; sus `COLT00N` no son los nuestros: tabla en LEEME.md). ⚠️ El 09/11 esos

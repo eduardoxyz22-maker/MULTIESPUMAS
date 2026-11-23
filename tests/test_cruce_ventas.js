@@ -252,7 +252,8 @@ console.log('\n── 10. Segunda revisión de Fable ──');
   const T = servidor(VEND, KT, { tareas500:true });
   T.guardar(ped()); pasar(2); T.ctx.waRepaso();
   chk('3ª. Kommo no deja leer las tareas: la venta vuelve a la cola (intento 1), no se da por mirada', T.cola().length === 1 && T.cola()[0].n === 1, T.cola());
-  /* 6 · lo que preguntó el formulario un momento antes sirve: el cruce no vuelve a llamar a Kommo */
+  /* 6 · (revisión 3 de Jarvis, 23/11) la consulta del formulario NO sirve para el cruce: su hora es la del inicio y Kommo pudo contestar algo
+     escrito después de la venta. El cruce vuelve a preguntarle a Kommo (con la hora de la venta) y avisa igual. */
   const okSuena = (p) => p === '/users' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ users:[{ id:13073611, name:'Mauricio Merida' }] } }) }
     : p === '/leads/pipelines' ? { getResponseCode:() => 200, getContentText:() => JSON.stringify({ _embedded:{ pipelines:[] } }) } : { getResponseCode:() => 204, getContentText:() => '' };
   const C = servidor(Object.assign({ KOMMO_TOKEN_SUENA:'k-suena' }, VEND), kommoHeaven(), { suena:okSuena });
@@ -260,7 +261,7 @@ console.log('\n── 10. Segunda revisión de Fable ──');
   chk('6a. (la consulta completa de las dos cuentas salió entera)', rf.ok !== false && !rf.incompleto && rf.cuentas.length === 2, { inc:rf.incompleto, c:(rf.cuentas || []).map(c => c.marca) });
   const antes = C.kommo.length;
   C.guardar(ped()); pasar(1.2); C.ctx.waRepaso();
-  chk('6. con la consulta completa del formulario a la mano, el cruce no le pregunta nada a Kommo y avisa igual', C.kommo.length === antes && C.cx().length === 1, { antes, despues:C.kommo.length, cx:C.cx().length });
+  chk('6. aunque el formulario ya preguntó, el cruce vuelve a mirar Kommo a la hora de la venta y avisa igual', C.kommo.length > antes && C.cx().length === 1, { antes, despues:C.kommo.length, cx:C.cx().length });
 }
 
 console.log('\n── 12. La lectura dice qué ventas nombraron a quién (para pedir revisión) ──');

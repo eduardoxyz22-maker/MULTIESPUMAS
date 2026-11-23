@@ -87,12 +87,22 @@ function cortarRespuesta(ruta, code, body, T, est) {
     });
     if (!E.leads.length) return { code:204, body:'' };
   } else if (ruta === '/tasks' && Array.isArray(E.tasks)) {
-    if ((o._links && o._links.next) || E.tasks.length >= 250) duda('tareas con más de una página');
-    E.tasks = E.tasks.filter((t) => Number(t.created_at) <= T); if (!E.tasks.length) return { code:204, body:'' };
+    /* (revisión 3 de Jarvis) El servidor ya sigue las páginas y avisa si quedaron sin leer: acá NO se corta la lista. Con todo filtrado y otra
+       página por delante se contesta una página vacía CON su enlace (un 204 le decía «se terminó»). Una tarea cambiada después de la
+       venta no prueba nada (Kommo no guarda cómo estaba). */
+    const sigue = !!(o._links && o._links.next);
+    E.tasks = E.tasks.filter((t) => {
+      if (Number(t.created_at) > T) return false;
+      if (Number(t.updated_at) > T) { duda('tarea cambiada después'); return false; }
+      return true;
+    });
+    if (!E.tasks.length && !sigue) return { code:204, body:'' };
   } else if (/\/notes$/.test(ruta) && Array.isArray(E.notes)) E.notes.forEach((n) => {
     if (!n.params) return;
     if (Number(n.created_at) > T) n.params.text = '';
-    else if (Number(n.updated_at) > T && n.params.text) { n.params.text = ''; duda('nota editada después'); }
+    /* (revisión 3 de Jarvis) editada después: el texto nuevo no prueba una visita, pero la nota existía («creó y anota»); la del panel sigue
+       siendo del panel */
+    else if (Number(n.updated_at) > T && n.params.text) { if (!/^(?:\uD83E\uDDFE|\uD83D\uDE45)|panel de pedidos|^cotizaci[oó]n\s+COT/i.test(String(n.params.text).trim())) n.params.text = '(editada)'; duda('nota editada después'); }
   });
   else return { code, body };
   return { code, body:JSON.stringify(o) };
@@ -273,7 +283,7 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     if (ov.length) {
       R.ind.si++; pv.indicio++; if (ov.length < V.otros.length || parcial('heaven') || parcial('suena')) R.ind.parcial++; if (tienda) R.ind.tienda++;
       const por = ov.map((o) => o.por);
-      if (por.indexOf('conv') >= 0) R.ind.conv++; else if (por.indexOf('fecha') >= 0 && por.indexOf('nota') >= 0) R.ind.tareaNota++; else if (por.indexOf('fecha') >= 0) R.ind.tarea++; else R.ind.nota++;
+      if (por.indexOf('conv') >= 0) R.ind.conv++; else if (por.indexOf('creo') >= 0) R.ind.creo = (R.ind.creo || 0) + 1; else if (por.indexOf('fecha') >= 0 && por.indexOf('nota') >= 0) R.ind.tareaNota++; else if (por.indexOf('fecha') >= 0) R.ind.tarea++; else R.ind.nota++;
       const yo = V.quien.filter((q) => pg.qaMismo(q.n, vr) && q.por === 'conv')[0];
       if (yo) { R.ind.ambas++; if (ov.some((o) => o.por === 'conv' && (o.desde || o.ts) < (yo.desde || yo.ts))) R.ind.otraPrimero++; }
       else if (parcial(mv)) R.ind.sinConvObs++; else R.ind.sinConvYo++;
@@ -328,7 +338,7 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
       ov.concat(qsOtra).forEach((x) => {
         const n = pg.VENDEDORES.filter((y) => pg.qaMismo(y, x.n))[0] || String(x.n || '');
         const k = n + '|' + x.marca; if (vistos[k]) return; vistos[k] = 1;
-        o.push([n.slice(0, 40), x.marca === 'suena' ? 's' : 'h', x.por === 'conv' ? 'c' : (x.por === 'fecha' ? 't' : 'n'),
+        o.push([n.slice(0, 40), x.marca === 'suena' ? 's' : 'h', x.por === 'conv' ? 'c' : (x.por === 'fecha' ? 't' : (x.por === 'creo' ? 'l' : 'n')),
                 (yo && x.por === 'conv' && (x.desde || x.ts) < (yo.desde || yo.ts)) ? 1 : 0,
                 /^c?\d+$/.test(String(x.lid || '')) ? String(x.lid) : '']);   // 🔗 (23/11) el lead (o «c<n>» = contacto) donde se vio: el panel lleva al chat
       });
@@ -410,7 +420,7 @@ function informe(R) {
   L.push('');
   L.push(linea('🔀 Indicio de cruce (otra persona atendía al cliente)', R.ind, R.total));
   if (R.ind.si) {
-    L.push('   · por conversación: ' + R.ind.conv + ' · solo por una tarea abierta: ' + R.ind.tarea + ' · solo por una nota de visita o compra: ' + R.ind.nota + ' · por tarea y nota: ' + R.ind.tareaNota);
+    L.push('   · por conversación: ' + R.ind.conv + ' · solo por una tarea abierta: ' + R.ind.tarea + ' · solo por una nota de visita o compra: ' + R.ind.nota + ' · por tarea y nota: ' + R.ind.tareaNota + ' · creó el lead y anota: ' + (R.ind.creo || 0));
     L.push('   · la que vendió también conversaba: ' + R.ind.ambas + ' (en ' + R.ind.otraPrimero + ' la otra empezó primero) · la que vendió no había conversado: ' + R.ind.sinConvYo +
       ' · sin conversación observada (su cuenta no contestó todo): ' + R.ind.sinConvObs);
     L.push('   · vistos con cobertura parcial: ' + R.ind.parcial + ' · en ventas de tienda: ' + R.ind.tienda);

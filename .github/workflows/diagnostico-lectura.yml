@@ -27,4 +27,5 @@ jobs:
       - name: Pedir la planilla como el navegador
         env:
           PANEL_URL: ${{ secrets.PANEL_URL }}
+          PANEL_KEY: ${{ secrets.PANEL_KEY }}
         run: python herramientas/diagnostico_lectura.py
