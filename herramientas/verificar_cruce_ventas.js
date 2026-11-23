@@ -154,9 +154,12 @@ function cargarPagina() {
    cerrada, contesta `get_cerrado`; o devuelve una página, o nada. Eso NO es «la planilla está vacía»: se reintenta, con tope
    (LEER_INTENTOS, esperando LEER_ESPERAS), y si no se puede leer la corrida falla. Del registro (público) no sale nada de la respuesta. */
 const LEER_INTENTOS = 3, LEER_ESPERAS = [5000, 15000];
+/* 🔐 (23/11) La clave del equipo (secreto PANEL_KEY), si el servidor la pide; va por la entrada estándar, no como argumento. Nunca se imprime. */
+const PANEL_KEY = (process.env.PANEL_KEY || '').trim();
 function pedirPanel() {
-  return execFileSync('curl', ['-sS', '-L', '--max-time', '180', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '{"action":"list"}', PANEL + '?_=' + Date.now()],
-    { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+  const cuerpo = PANEL_KEY ? { action: 'list', key: PANEL_KEY } : { action: 'list' };
+  return execFileSync('curl', ['-sS', '-L', '--max-time', '180', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '@-', PANEL + '?_=' + Date.now()],
+    { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, input: JSON.stringify(cuerpo) });
 }
 /** Por qué una respuesta no sirve ('' = sirve). Solo palabras nuestras: nunca un pedazo de lo que contestó Google. */
 function panelNoSirve(out) {

@@ -88,6 +88,19 @@ Propiedades del script.
   antes de sustituir un pedido nuevo a medio llenar al editar o completar uno de Kommo; Cancelar
   vuelve al formulario intacto. `tests/test_guardado_durable.js`: 41 comprobaciones aisladas.
   No cambia el `.gs`: sigue `2026-09-30-a`; basta recargar la página publicada.
+- 🔐 **La clave del equipo, preparada para el VIERNES 27/11** (23/11, dueño: *«ok anotalo y tengo listo para el viernes, ese día lo haré»*;
+  explicación con capturas: https://claude.ai/artifact/XVAshNjCFQZ1z1oMyNrUuy). El servidor NO cambia (la 21-a ya sabe pedirla). En DOS FASES:
+  `herramientas/clave_equipo.gs` (archivo APARTE del proyecto) ▶ `generarClavesUnaVez` inventa `PANEL_KEY_PROXIMA` y `ADMIN_KEY_PROXIMA`
+  (10 letras sin 0/o/1/l/i; si ya había ADMIN_KEY, esa) y las muestra en una ventana de la planilla, nunca en el registro; el servidor
+  todavía NO las pide → cada uno la carga con **Mis pedidos → 🔐 Clave del equipo** (`#mis-clave-btn`, `misClaveBtnPintar`; con el servidor
+  abierto dice «todavía no la pide»; el botón de Administración está detrás de la contraseña) → ▶ `activarClavesUnaVez` (ADMIN_KEY y después
+  PANEL_KEY) · ▶ `desactivarClavesUnaVez` vuelve a como hoy · `cambiarClaveEquipoUnaVez` si alguien se va. Las herramientas mandan la clave:
+  `generar.py` y el diagnóstico y el verificador con el secreto **`PANEL_KEY`** de GitHub (en `panel.yml`, `diagnostico-lectura.yml`,
+  `verificar-cruce-ventas.yml`; sin él, el dashboard pierde las metas y las ventas sin ficha del panel pero publica igual); la carga de
+  pedidos por correo (`cargar_pedidos.py`, corre en la sesión de Claude) de `PANEL_KEY`/`ADMIN_KEY` o `~/.claves_panel.json` (fuera del
+  repo; `adminKey` solo al forzar) y corta con un mensaje si el servidor dice `clave`. `traer_kommo.py` no cambia (`kommoLeads` va con su
+  propia clave, antes de la del equipo). Pruebas: `tests/test_clave_equipo.js` (el archivo aparte + el `.gs`, 29; también con GS=la 21-a),
+  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). Página 2026-11-23-a (solo el botón), SIN publicar.
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además

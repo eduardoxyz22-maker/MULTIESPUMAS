@@ -35,15 +35,37 @@ Formato de cada pedido del JSON:
    "productos": [{"desc": "COLCHON TITANIO ICE", "medida": "140x190", "codigo": "CH1220", "cant": 1, "precio": 4275}],
    "pdf": "<ruta del PDF de la orden>"}   ← opcional (Multicenter, Tienda Amiga): se sube y queda en el pedido para descargarlo
 """
-import base64, json, re, sys, time, random, datetime, subprocess, unicodedata
+import base64, json, os, re, sys, time, random, datetime, subprocess, unicodedata
 
 URL = "https://script.google.com/macros/s/AKfycbw3IUxaRvdpvFJOzbuZ78CZIlZNWzMnKbdb91hD27vZfemnWs64fIOYs1-0SV0b8aYkQQ/exec"
 BO = datetime.timezone(datetime.timedelta(hours=-4))
 VENDEDOR = "Eduardo Añez"
 REINTENTA = ('cupos_llenos', 'dia_cerrado', 'feriado')
 
+# 🔐 (23/11) Las claves del servidor, cuando el dueño las prenda: la del equipo (`key`, para todo) y la de administración (`adminKey`,
+# para mover al día que pidió el dueño aunque esté lleno). NUNCA en el repositorio: de las variables PANEL_KEY / ADMIN_KEY o del archivo
+# ~/.claves_panel.json ({"key": "…", "adminKey": "…"}), fuera del repo. Sin claves, como siempre (el servidor sin clave no las pide).
+def _claves():
+    k = (os.environ.get('PANEL_KEY') or '').strip()
+    a = (os.environ.get('ADMIN_KEY') or '').strip()
+    if not k or not a:
+        try:
+            with open(os.path.expanduser('~/.claves_panel.json'), encoding='utf-8') as f:
+                d = json.load(f) or {}
+            k = k or str(d.get('key') or '').strip()
+            a = a or str(d.get('adminKey') or '').strip()
+        except Exception:
+            pass
+    return k, a
+CLAVE, CLAVE_ADMIN = _claves()
+
 
 def post(body, intentos=3):
+    body = dict(body)
+    if CLAVE:
+        body['key'] = CLAVE
+    if CLAVE_ADMIN and body.get('forzar'):
+        body['adminKey'] = CLAVE_ADMIN
     for intento in range(intentos):
         # El cuerpo va por la entrada estándar (`--data-binary @-`): un PDF en base64 no entra en un solo argumento (Linux corta
         # cada argumento en 128 KB).
@@ -64,6 +86,10 @@ def post(body, intentos=3):
         if isinstance(j, dict) and j.get('error') == 'get_cerrado':
             time.sleep(3 * (intento + 1))
             continue
+        # 🔐 (23/11) El servidor pide la clave del equipo y esta máquina no la tiene (o es otra): no se reintenta, se corta y se dice.
+        if isinstance(j, dict) and j.get('ok') is False and j.get('error') == 'clave':
+            raise SystemExit('El servidor del panel pide la clave del equipo y esta máquina ' + ('tiene otra' if CLAVE else 'no la tiene') +
+                             ': falta PANEL_KEY (variable o ~/.claves_panel.json). No se cargó nada.')
         return j
     raise SystemExit('El servidor del panel no contestó bien: ' + (r.stdout or r.stderr)[:300])
 

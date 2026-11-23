@@ -89,13 +89,19 @@ def vendor_cfg(name):
 #    de la respuesta solo se usa la fila `__metas__` y solo se imprime CUÁNTAS vendedoras tienen meta. Nunca la dirección del panel.
 # ─────────────────────────────────────────────────────────────────────────────
 PANEL_URL = (os.environ.get("PANEL_URL", "") or "").strip()
+# 🔐 (23/11) La clave del equipo (secreto PANEL_KEY): cuando el servidor la pide, sin ella la lectura vuelve `clave` y queda VENDOR_CFG.
+# Con el servidor todavía abierto, mandarla no cambia nada. Nunca se imprime.
+PANEL_KEY = (os.environ.get("PANEL_KEY", "") or "").strip()
 META_FILA = "__metas__"
 
 def _panel_leer_lista():
     """La lectura del panel como la hace el navegador (POST `{"action":"list"}` en texto plano). Dos intentos: Google a veces
     pierde el redirect (404) o contesta con la lectura del GET (que también trae `pedidos`, y sirve igual). Devuelve la lista
     de filas o lanza una excepción SIN la dirección adentro."""
-    cuerpo = json.dumps({"action": "list", "quien": "", "dispositivo": "dashboard-github", "cola": 0, "colaIds": []}).encode("utf-8")
+    _c = {"action": "list", "quien": "", "dispositivo": "dashboard-github", "cola": 0, "colaIds": []}
+    if PANEL_KEY:
+        _c["key"] = PANEL_KEY
+    cuerpo = json.dumps(_c).encode("utf-8")
     ult = "sin respuesta"
     for intento in range(2):
         sep = "&" if "?" in PANEL_URL else "?"
