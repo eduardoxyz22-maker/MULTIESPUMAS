@@ -228,6 +228,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       (vpCombos.match(/\d+ combos? partidos?[^·]*/)||[''])[0].slice(0,70));
   chk('⚠️ avisa de los que quedan sin zona', /sin zona/.test(vp.txt), '');
   chk('deja elegir el turno', /Todos AM/.test(vp.txt) && /Repartir/.test(vp.txt), '');
+  // ⚖️ (23/11, dueño) de entrada viene «Repartir AM/PM», no «Todos AM»
+  var turnoEntrada=await page.evaluate(()=>ROHO_TURNO_DE_ENTRADA);
+  chk('⚖️ de entrada reparte AM/PM', turnoEntrada==='repartir', turnoEntrada);
 
   // ══ 8. Importar de verdad ══════════════════════════════════════════════════
   console.log('\n── 8. Crear los pedidos ──');

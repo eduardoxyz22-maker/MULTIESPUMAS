@@ -61505,7 +61505,10 @@ function rohoPartirCombo(desc){
 }
 
 var ROHO_IMP=null;   // lo leído del Excel, esperando que alguien confirme
-var ROHO_TURNO='AM';
+/* ⚖️ (23/11, dueño: «si») de entrada «Repartir AM/PM»: llena la mañana y lo que no entra va a la tarde. Con «Todos AM» el 24/11 quedaron
+   24 de 12 en la mañana y la tarde con 6 libres. Los otros dos botones siguen. */
+var ROHO_TURNO_DE_ENTRADA='repartir';
+var ROHO_TURNO=ROHO_TURNO_DE_ENTRADA;
 var ROHO_VIEJOS=false;
 /* 📅 (20/11, dueño: «ese botón debería dejar cargar para un día que decida logística, no importa si está lleno; que puedan igual y muestre
    29/15 si hace falta») `ROHO_FECHA` = el día que eligió logística para TODOS (vacío = la fecha de cada nota del Excel). Un turno lleno o un
@@ -61525,7 +61528,7 @@ function onRohoArchivo(ev){
     var filas=xlsxHoja(archivos);
     var r=rohoArmarPedidos(filas);
     if(r.error){ toast('❌ '+r.error,'err',15000); return; }
-    ROHO_IMP=r; ROHO_TURNO='AM'; ROHO_VIEJOS=false; ROHO_CREANDO=false; ROHO_FECHA='';
+    ROHO_IMP=r; ROHO_TURNO=ROHO_TURNO_DE_ENTRADA; ROHO_VIEJOS=false; ROHO_CREANDO=false; ROHO_FECHA='';
     renderImportRoho();
   }).catch(function(e){
     toast('❌ No se pudo leer el archivo: '+(e&&e.message?e.message:'error'),'err',8000);
@@ -72243,7 +72246,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-23-e';
+var PANEL_V='2026-11-23-f';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
