@@ -14,7 +14,11 @@
 'use strict';
 const fs = require('fs'), vm = require('vm'), path = require('path'), os = require('os'), { execFileSync } = require('child_process');
 const RAIZ = path.resolve(__dirname, '..'), GS = path.join(RAIZ, 'google-apps-script.gs'), PEDIDOS = path.join(RAIZ, 'pedidos.html');
-const PANEL = (fs.readFileSync(path.join(RAIZ, 'herramientas/pedidos_correo/cargar_pedidos.py'), 'utf8').match(/URL = "([^"]+)"/) || [])[1];
+/* La dirección del panel sale del secreto PANEL_URL (el mismo de panel.yml). Solo si no está, de la herramienta de los correos
+   (que vive en la rama, no en main). Nunca se imprime. */
+const PANEL_ARCH = path.join(RAIZ, 'herramientas/pedidos_correo/cargar_pedidos.py');
+const PANEL = (process.env.PANEL_URL || '').trim()
+  || (fs.existsSync(PANEL_ARCH) ? ((fs.readFileSync(PANEL_ARCH, 'utf8').match(/URL = "([^"]+)"/) || [])[1] || '') : '');
 const DIAS = Number(process.env.CRUCE_DIAS) || 14;            // ventas de los últimos N días (Kommo guarda los mensajes; la ventana es de 15)
 const D = 86400, T0 = Math.floor(Date.now() / 1000);
 const CUENTAS = [
@@ -99,7 +103,7 @@ function leerPanel() {
 
 function main() {
   if (!CUENTAS[0].token) { console.log('❌ Falta KOMMO_TOKEN'); process.exit(1); }
-  if (!PANEL) { console.log('❌ No encontré la dirección del panel'); process.exit(1); }
+  if (!PANEL) { console.log('❌ Falta la dirección del panel: poné el secreto PANEL_URL en el paso del workflow'); process.exit(1); }
   const gs = cargarGs(), pg = cargarPagina();
   const VEND = pg.VENDEDORES.filter((v) => !/eduardo|roho/i.test(v));
   const SUENA = ['Juan Pablo Paredes', 'Fernando Peinado', 'Mauricio Merida'];

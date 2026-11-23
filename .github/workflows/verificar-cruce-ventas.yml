@@ -34,5 +34,6 @@ jobs:
           KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
           KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
           KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
+          PANEL_URL: ${{ secrets.PANEL_URL }}
           CRUCE_DIAS: ${{ github.event.inputs.dias || '14' }}
         run: node herramientas/verificar_cruce_ventas.js
