@@ -101,6 +101,63 @@ function leerPanel() {
   return r.pedidos;
 }
 
+/* La lista de ventas a revisar: cada PEDIDO una vez, por su id (23/11, revisión de Jarvis: con «el mismo cliente y vendedora, una
+   vez» la segunda compra del mismo cliente quedaba afuera, y el cruce podía estar justo en esa). */
+function ventasARevisar(P, pg, VEND, desde, hasta) {
+  const vistos = {};
+  return P.filter((p) => {
+    const id = String(p.id || ''), oc = String(p.oc || ''), v = String(p.vendedor || '');
+    if (!id || id.indexOf('__') === 0 || /orrador/i.test(String(p.estado || '')) || !/^\d/.test(oc)) return false;   // solo OC (sin ATC, RPT, borradores ni filas del sistema)
+    if (!VEND.some((x) => pg.qaMismo(x, v))) return false;                                                          // sin Eduardo, ROHO ni internos
+    const ts = Math.floor((Number(p.ts) || 0) / 1000), c8 = String(p.celular || '').replace(/\D/g, '').slice(-8);
+    if (ts < desde || ts > hasta || c8.length !== 8) return false;
+    if (vistos[id]) return false; vistos[id] = 1;                                                                   // cada pedido una vez
+    return true;
+  }).sort((a, b) => Number(a.ts) - Number(b.ts));
+}
+
+/* Las cuentas. `evaluar(p)` = lo que contestó «¿Quién lo atiende?» (o null si falló).
+   · Solo cuenta como VERIFICADA una venta con respuesta completa: un error o un «no se pudo saber» (nose / incompleto) va a PENDIENTES
+     y nunca entra en el porcentaje (si no, una caída de Kommo parecía «pocos cruces»).
+   · Heaven ↔ Sueña cuenta VENTAS con algún asesor de la otra marca, y aparte cuántos asesores de la otra marca había. */
+function resumir(ventas, evaluar, pg, marcaDe, alAvanzar) {
+  const R = { total: ventas.length, verif: 0, pend: 0, error: 0, k: {}, otro: 0, soloOtra: 0, ambas: 0, otraPrimero: 0,
+    otraMarcaVentas: 0, otraMarcaAsesores: 0, compro: 0, pares: {}, porVend: {}, porDia: {}, pendPorMarca: {} };
+  const nombre = (n) => pg.VENDEDORES.filter((x) => pg.qaMismo(x, n))[0] || n;                    // «María Flores» = «Maria Flores»
+  ventas.forEach((p, i) => {
+    const v = nombre(String(p.vendedor)), mv = marcaDe(v);
+    const pv = R.porVend[v] = R.porVend[v] || { ventas: 0, verif: 0, pend: 0, alerta: 0, leAvisan: 0 }; pv.ventas++;
+    if (alAvanzar && (i + 1) % 25 === 0) alAvanzar(i + 1);
+    let r = null; try { r = evaluar(p); } catch (e) { r = null; }
+    const pendiente = (motivo) => { R.pend++; pv.pend++; R.k[motivo] = (R.k[motivo] || 0) + 1; R.pendPorMarca[mv] = (R.pendPorMarca[mv] || 0) + 1; };
+    if (!r || r.ok === false) { R.error++; pendiente('error'); return; }
+    const V = pg.qaVeredicto(r, v);
+    // con datos incompletos, un cruce visto sigue siendo un cruce; «tuyo», «compro» o nada pueden estar escondiendo uno: pendientes
+    if (V.k === 'nose' || (V.inc && V.k !== 'otro')) { pendiente(V.k === 'nose' ? 'nose' : 'incompleto'); return; }
+    R.verif++; pv.verif++; R.k[V.k] = (R.k[V.k] || 0) + 1;
+    if (V.k === 'compro') R.compro++;
+    if (V.k !== 'otro') return;
+    R.otro++; pv.alerta++;
+    const yo = V.quien.filter((q) => pg.qaMismo(q.n, v) && q.por === 'conv')[0];
+    if (yo) R.ambas++; else R.soloOtra++;
+    let otraMarca = 0, empezoOtra = false;
+    V.otros.forEach((o) => {
+      const on = pg.VENDEDORES.filter((x) => pg.qaMismo(x, o.n))[0] || 'otro usuario de Kommo';
+      const k = v + ' → le vendió a un cliente de ' + on; R.pares[k] = (R.pares[k] || 0) + 1;
+      const po = R.porVend[on] = R.porVend[on] || { ventas: 0, verif: 0, pend: 0, alerta: 0, leAvisan: 0 }; po.leAvisan++;
+      if (o.marca !== mv) otraMarca++;
+      if (yo && (o.desde || o.ts) < (yo.desde || yo.ts)) empezoOtra = true;
+    });
+    if (otraMarca) { R.otraMarcaVentas++; R.otraMarcaAsesores += otraMarca; }
+    if (empezoOtra) R.otraPrimero++;
+    const dia = new Date((Math.floor(Number(p.ts) / 1000) - 4 * 3600) * 1000).toISOString().slice(5, 10); R.porDia[dia] = (R.porDia[dia] || 0) + 1;
+  });
+  return R;
+}
+const pct = (a, b) => (b ? (100 * a / b).toFixed(1) : '0.0') + ' %';
+/* Termina en ROJO si no se pudo verificar ninguna venta, o si quedó pendiente más de la mitad: un informe así no sirve para decidir. */
+function salidaDe(R) { return R.total && (!R.verif || R.pend * 2 > R.total) ? 1 : 0; }
+
 function main() {
   if (!CUENTAS[0].token) { console.log('❌ Falta KOMMO_TOKEN'); process.exit(1); }
   if (!PANEL) { console.log('❌ Falta la dirección del panel: poné el secreto PANEL_URL en el paso del workflow'); process.exit(1); }
@@ -108,62 +165,37 @@ function main() {
   const VEND = pg.VENDEDORES.filter((v) => !/eduardo|roho/i.test(v));
   const SUENA = ['Juan Pablo Paredes', 'Fernando Peinado', 'Mauricio Merida'];
   const marcaDe = (v) => SUENA.some((s) => pg.qaMismo(s, v)) ? 'suena' : 'heaven';
-  const P = leerPanel(), desde = T0 - DIAS * D;
-  const vistos = {};
-  const ventas = P.filter((p) => {
-    const id = String(p.id || ''), oc = String(p.oc || ''), v = String(p.vendedor || '');
-    if (!id || id.indexOf('__') === 0 || /orrador/i.test(String(p.estado || '')) || !/^\d/.test(oc)) return false;   // solo OC (sin ATC, RPT, borradores ni filas del sistema)
-    if (!VEND.some((x) => pg.qaMismo(x, v))) return false;                                                          // sin Eduardo, ROHO ni internos
-    const ts = Math.floor((Number(p.ts) || 0) / 1000), c8 = String(p.celular || '').replace(/\D/g, '').slice(-8);
-    if (ts < desde || ts > T0 || c8.length !== 8) return false;
-    const k = c8 + '|' + v; if (vistos[k]) return false; vistos[k] = 1;                                              // el mismo cliente y vendedora, una vez
-    return true;
-  }).sort((a, b) => Number(a.ts) - Number(b.ts));
-  console.log('Panel: ' + P.length + ' filas · ventas a revisar (OC de una vendedora, con celular, últimos ' + DIAS + ' días): ' + ventas.length +
-    ' · Sueña con token: ' + (CUENTAS[1].token ? 'sí' : 'NO (sus ventas salen «no se pudo saber»)'));
-
-  const R = { total: 0, k: {}, otro: 0, soloOtra: 0, ambas: 0, otraPrimero: 0, otraMarca: 0, compro: 0, pares: {}, porVend: {}, porDia: {}, inc: 0 };
+  const P = leerPanel(), ventas = ventasARevisar(P, pg, VEND, T0 - DIAS * D, T0);
+  console.log('Panel: ' + P.length + ' filas · ventas a revisar (cada pedido OC de una vendedora, con celular, últimos ' + DIAS + ' días): ' + ventas.length +
+    ' · Sueña con token: ' + (CUENTAS[1].token ? 'sí' : 'NO (sus ventas quedan pendientes)'));
   const t0 = Date.now();
-  ventas.forEach((p, i) => {
-    const v = String(p.vendedor), c8 = String(p.celular).replace(/\D/g, '').slice(-8);
+  const R = resumir(ventas, (p) => {
     ENV.T = Math.floor(Number(p.ts) / 1000);
     Object.keys(ENV.cache).forEach((k) => { if (/^qa_(?!us|et)/.test(k)) delete ENV.cache[k]; });   // cada venta con su propio momento
-    let r = null; try { r = gs.quienAtiende_({ cel: c8, quien: v }); } catch (e) { r = null; }
-    R.total++;
-    const pv = R.porVend[v] = R.porVend[v] || { ventas: 0, alerta: 0, leAvisan: 0 }; pv.ventas++;
-    if (!r || r.ok === false) { R.k.error = (R.k.error || 0) + 1; return; }
-    const V = pg.qaVeredicto(r, v); R.k[V.k] = (R.k[V.k] || 0) + 1; if (V.inc) R.inc++;
-    if (V.k === 'compro') R.compro++;
-    if (V.k !== 'otro') return;
-    R.otro++; pv.alerta++;
-    const yoConv = V.quien.some((q) => pg.qaMismo(q.n, v) && q.por === 'conv');
-    if (yoConv) R.ambas++; else R.soloOtra++;
-    const yo = V.quien.filter((q) => pg.qaMismo(q.n, v) && q.por === 'conv')[0];
-    V.otros.forEach((o) => {
-      const on = pg.VENDEDORES.filter((x) => pg.qaMismo(x, o.n))[0] || 'otro usuario de Kommo';
-      const k = v + ' → le vendió a un cliente de ' + on; R.pares[k] = (R.pares[k] || 0) + 1;
-      const po = R.porVend[on] = R.porVend[on] || { ventas: 0, alerta: 0, leAvisan: 0 }; po.leAvisan++;
-      if (o.marca !== marcaDe(v)) R.otraMarca++;
-      if (yo && (o.desde || o.ts) < (yo.desde || yo.ts)) R.otraPrimero++;
-    });
-    const dia = new Date((ENV.T - 4 * 3600) * 1000).toISOString().slice(5, 10); R.porDia[dia] = (R.porDia[dia] || 0) + 1;
-    if ((i + 1) % 25 === 0) console.log('   … ' + (i + 1) + ' de ' + ventas.length + ' (' + ((Date.now() - t0) / 1000).toFixed(0) + ' s)');
-  });
+    return gs.quienAtiende_({ cel: String(p.celular).replace(/\D/g, '').slice(-8), quien: String(p.vendedor) });
+  }, pg, marcaDe, (n) => console.log('   … ' + n + ' de ' + ventas.length + ' (' + ((Date.now() - t0) / 1000).toFixed(0) + ' s)'));
 
-  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('RESULTADO (cada venta mirada en el momento en que se cargó, con la regla de 15 días y cliente + vendedora a ≤ 24 h)');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Ventas revisadas: ' + R.total + ' · llamadas a Kommo: ' + RED.n + ' · ' + ((Date.now() - t0) / 60000).toFixed(1) + ' min · escrituras intentadas: ' + RED.noGet);
-  console.log('Cartel que habría salido: ' + JSON.stringify(R.k) + '   (tuyo = la vendedora que vendió era la que conversaba · libre = nadie · otro = ⚠️ ALERTA · compro = ya compró hace poco · nose = Kommo no contestó todo)');
-  console.log('⚠️ Habrían sacado la ALERTA: ' + R.otro + ' de ' + R.total + ' (' + (R.total ? (100 * R.otro / R.total).toFixed(1) : 0) + ' %)');
+  console.log('Ventas a revisar: ' + R.total + ' · VERIFICADAS: ' + R.verif + ' · PENDIENTES (Kommo no contestó todo o falló): ' + R.pend +
+    ' (' + pct(R.pend, R.total) + ') · llamadas a Kommo: ' + RED.n + ' · ' + ((Date.now() - t0) / 60000).toFixed(1) + ' min · escrituras intentadas: ' + RED.noGet);
+  console.log('Pendientes por marca de quien vendió: ' + JSON.stringify(R.pendPorMarca));
+  console.log('Cartel: ' + JSON.stringify(R.k) + '   (tuyo = la que vendió era la que conversaba · libre = nadie · otro = ⚠️ ALERTA · compro = ya compró hace poco · nose / incompleto / error = PENDIENTE, no cuenta)');
+  console.log('⚠️ Habrían sacado la ALERTA: ' + R.otro + ' de ' + R.verif + ' ventas verificadas (' + pct(R.otro, R.verif) + ')' +
+    (R.pend ? ' · faltan ' + R.pend + ' por verificar: el número real puede ser mayor' : ''));
   console.log('   · la otra conversaba y la que vendió NO había conversado en Kommo (cruce claro): ' + R.soloOtra);
   console.log('   · conversaban LAS DOS en los 15 días: ' + R.ambas + ' (en ' + R.otraPrimero + ' la otra empezó primero)');
-  console.log('   · la otra era de la OTRA marca (Heaven ↔ Sueña): ' + R.otraMarca);
-  console.log('\nQuién le vendió a un cliente que atendía otra (vendedora que cargó → la que conversaba):');
+  console.log('   · ventas con un asesor de la OTRA marca (Heaven ↔ Sueña): ' + R.otraMarcaVentas + ' ventas · ' + R.otraMarcaAsesores + ' asesores de la otra marca');
+  console.log('\nQuién le vendió a un cliente que atendía otra (vendedora que cargó → la que conversaba; una venta puede tener más de una):');
   Object.keys(R.pares).sort((a, b) => R.pares[b] - R.pares[a]).forEach((k) => console.log('   ' + R.pares[k] + ' × ' + k));
-  console.log('\nPor vendedora: ventas revisadas · alertas al cargar · avisos que le habrían llegado («tu cliente acaba de comprar»):');
-  Object.keys(R.porVend).sort().forEach((k) => { const x = R.porVend[k]; console.log('   ' + k.padEnd(22) + String(x.ventas).padStart(4) + ' ventas · ' + String(x.alerta).padStart(3) + ' alertas · ' + String(x.leAvisan).padStart(3) + ' avisos'); });
+  console.log('\nPor vendedora: ventas · verificadas · pendientes · alertas al cargar · avisos que le habrían llegado («tu cliente acaba de comprar»):');
+  Object.keys(R.porVend).sort().forEach((k) => { const x = R.porVend[k]; console.log('   ' + k.padEnd(22) + String(x.ventas).padStart(4) + ' ventas · ' + String(x.verif).padStart(3) + ' verif. · ' + String(x.pend).padStart(3) + ' pend. · ' + String(x.alerta).padStart(3) + ' alertas · ' + String(x.leAvisan).padStart(3) + ' avisos'); });
   console.log('\nAlertas por día de carga: ' + JSON.stringify(R.porDia));
   console.log('\nℹ️ Es un piso, no un techo: Kommo no guarda cómo estaba un lead el día de la venta (uno marcado «perdido» después ya no retiene), ni las tareas que se cerraron después.');
+  const sal = salidaDe(R);
+  if (sal) console.log('\n❌ No sirve para decidir: ' + (R.verif ? 'quedó pendiente más de la mitad (' + R.pend + ' de ' + R.total + ')' : 'no se pudo verificar ninguna venta') + '. Volvé a correrlo más tarde.');
+  process.exitCode = sal;
 }
-main();
+if (require.main === module) main();
+else module.exports = { ventasARevisar, resumir, salidaDe, cargarPagina };
