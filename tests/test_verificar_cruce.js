@@ -107,7 +107,7 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   nuevo(); K.suena.falla['*'] = 401;
   const a = cliente('heaven', '71100002', 12); charla('heaven', a.lid, 12, T - 3 * D);
   const R = correr([venta('o', 'Isabel Robledo', '71100002')], '2d');
-  chk(V.salidaDe(R) === 1 && /Sueña no contestó en NINGÚN pedido \(error HTTP 401\)/.test(V.informe(R).join('\n')) && /INCOMPLETA/.test(V.informe(R).join('\n')), '2d con 401 de Sueña también rojo, con el código y «INCOMPLETA»: ' + V.informe(R).filter((l) => /Sueña/.test(l)).join(' | '));
+  chk(V.salidaDe(R) === 1 && /Sueña no contestó en NINGÚN pedido \(error búsqueda HTTP 401\)/.test(V.informe(R).join('\n')) && /INCOMPLETA/.test(V.informe(R).join('\n')), '2d con 401 de Sueña también rojo, con el código y «INCOMPLETA»: ' + V.informe(R).filter((l) => /Sueña/.test(l)).join(' | '));
 }
 /* 2e · tuyo y compro incompletos quedan pendientes; compro con fecha de contrato válida */
 {
@@ -164,7 +164,7 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   nuevo();
   cliente('heaven', '74400004', 11, { status_id: 20, updated_at: T + D });                              // hoy en «Compradores», tocado después
   const R4 = correr([venta('w', 'Isabel Robledo', '74400004')], '5d');
-  chk(R4.ind.pend === 1 && /estado histórico/.test(Object.keys(R4.ind.motivos)[0]), '5d etapa de compra cambiada después: pendiente por estado histórico: ' + J(R4.ind.motivos));
+  chk(R4.ind.no === 1 && R4.infoEtapas.heaven['estado histórico'] === 1, '5d etapa de compra tocada después: se informa y el cruce queda decidido');
 }
 
 /* 6 · tareas y notas: lo de después no cuenta, lo de antes sí, y las páginas (Jarvis, pruebas) */
@@ -272,23 +272,74 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
     const p = venta('etapa', vendedor, '70200002');
     const resumen = () => V.resumir([p], (venta) => evaluar(venta, contexto), pg, marcaDe, contexto.cruceOtros_);
     const primera = resumen(), segunda = resumen();
-    chk(primera.cob[mk]['estado histórico'] === 1 && primera.ind.pend === 1 && primera.cartel.pend === 1 &&
-      segunda.ind.pend === primera.ind.pend && segunda.cob[mk]['estado histórico'] === 1,
-      'la primera consulta y la siguiente reconocen la etapa histórica en ' + mk);
+    const todasNo = (R) => ['ind', 'marca', 'cartel', 'wa'].every((k) => R[k].no === 1 && R[k].pend === 0);
+    chk([primera, segunda].every((R) => R.infoEtapas[mk]['estado histórico'] === 1 && todasNo(R) && R.cob[mk].completa === 1 && V.salidaDe(R) === 0),
+      'la etapa histórica se informa desde la primera consulta y las cuatro preguntas se deciden en ' + mk);
     K[mk].falla['/leads/pipelines'] = 503;
     const sinEtapas = resumen();
-    chk(sinEtapas.ind.pend === 1 && sinEtapas.cob[mk]['catálogo de etapas no disponible'] === 1,
-      'una cuenta sin catálogo de etapas informa cobertura parcial en ' + mk);
+    chk(todasNo(sinEtapas) && sinEtapas.infoEtapas[mk]['catálogo de etapas no disponible'] === 1 &&
+      V.salidaDe(sinEtapas) === 0 && V.informe(sinEtapas).some((l) => l.includes('catálogo de etapas no disponible 1')),
+      'el catálogo ausente se informa aunque las cuatro preguntas estén decididas en ' + mk);
     delete K[mk].falla['/leads/pipelines'];
     const recuperada = resumen();
-    chk(recuperada.cob[mk]['estado histórico'] === 1 && !recuperada.cob[mk]['catálogo de etapas no disponible'],
+    chk(recuperada.infoEtapas[mk]['estado histórico'] === 1 && !recuperada.infoEtapas[mk]['catálogo de etapas no disponible'],
       'se recupera el catálogo de etapas en ' + mk);
     const tercero = mk === 'heaven' ? 12 : 22;
     charla(mk, K[mk].leads[0].id, tercero, T - D);
     const conCharla = resumen();
-    chk(conCharla.ind.si === 1 && conCharla.ind.parcial === 1 && conCharla.cartel.si === 1,
-      'la duda histórica conserva la conversación previa de otra persona en ' + mk);
+    chk(['ind', 'cartel', 'wa'].every((k) => conCharla[k].si === 1 && conCharla[k].parcial === 0),
+      'la conversación de otra persona mantiene los tres positivos con cobertura completa en ' + mk);
   }
+}
+
+/* Las observaciones de etapas se cuentan una vez por pedido, incluso si otra cuenta falla o hay varios leads. */
+{
+  nuevo();
+  K.suena.falla['*'] = 401;
+  const historico = { status_id: 20, updated_at: T + 10 };
+  cliente('heaven', '70200004', 11, historico);
+  cliente('heaven', '70200004', 11, historico);
+  const b = cliente('heaven', '70200005', 12, historico);
+  charla('heaven', b.lid, 12, T - D);
+  const R = correr([venta('a', 'Isabel Robledo', '70200004'), venta('b', 'Isabel Robledo', '70200005')], 'etapa y cuenta caída');
+  chk(R.infoEtapas.heaven['estado histórico'] === 2 && R.cob.heaven.completa === 2 && R.cob.suena['error búsqueda HTTP 401'] === 2,
+    'tres leads en dos pedidos dan dos observaciones de Heaven y los dos errores de Sueña se conservan, con la operación y el código: ' + J(R.cob.suena));
+  chk(R.ind.pend === 1 && R.ind.si === 1 && R.ind.parcial === 1 && R.marca.pend === 2 && V.salidaDe(R) === 1,
+    'la cuenta caída deja pendiente la comparación y el positivo sigue siendo parcial');
+  chk(['cartel', 'wa'].every((k) => R[k].si === 1 && R[k].no === 1 && R[k].pend === 0 && R[k].parcial === 0),
+    'las dos preguntas locales conservan su denominador y su cobertura');
+  chk(V.informe(R).some((l) => l.includes('Etapas de Heaven') && l.includes('estado histórico 2')) &&
+    !V.informe(R).some((l) => l.includes('pendientes:') && l.includes('estado histórico')),
+    'la observación de Heaven se imprime aparte de los motivos de los pendientes');
+}
+
+/* Un catálogo ausente no invalida la conversación intermarca. Una nota editada sí impide descartar un cruce. */
+{
+  for (const [mk, vendedor] of [['heaven', 'Fernando Peinado'], ['suena', 'Isabel Robledo']]) {
+    nuevo();
+    K[mk].falla['/leads/pipelines'] = 503;
+    const u = mk === 'heaven' ? 12 : 22;
+    const a = cliente(mk, '70200006', u, { status_id: 20 });
+    charla(mk, a.lid, u, T - D);
+    const p = venta('inter', vendedor, '70200006');
+    const R = correr([p], 'catálogo y charla en ' + mk);
+    chk(R.ind.si === 1 && R.ind.parcial === 0 && R.marca.si === 1 && R.marca.parcial === 0 &&
+      R.marca.asesores === 1 && R.cartel.no === 1 && R.wa.no === 1 && V.salidaDe(R) === 0,
+      'con una conversación y sin catálogo, la venta entre marcas queda decidida en ' + mk);
+    K[mk].events = [];
+    nota(mk, a.lid, u, T - D, T + D);
+    const sinTexto = correr([p], 'catálogo y nota editada en ' + mk);
+    chk(sinTexto.ind.pend === 1 && sinTexto.marca.pend === 1 && sinTexto.cob[mk]['nota editada después'] === 1 &&
+      sinTexto.infoEtapas[mk]['catálogo de etapas no disponible'] === 1 && V.salidaDe(sinTexto) === 1,
+      'la nota editada mantiene pendientes las preguntas afectadas en ' + mk);
+  }
+}
+
+/* El tipo de error de una cuenta: la operación y el código, sin el mensaje */
+{
+  const e = V.errorDe;
+  chk(e('Kommo no contestó la búsqueda (HTTP 401)') === 'error búsqueda HTTP 401' && e('Kommo no contestó los leads (HTTP 0)') === 'error leads sin respuesta de red' &&
+    e('falló: algo raro') === 'error local', 'el error dice la operación y el código: búsqueda 401 / leads sin red / local');
 }
 
 /* El subtotal de tienda cuenta una venta con evidencia intermarca. */

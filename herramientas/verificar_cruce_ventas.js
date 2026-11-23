@@ -50,8 +50,8 @@ function kGet(url, token) {
 /* ── el .gs REAL, con el reloj movible (ENV.T = el momento de la venta) ── */
 const ENV = { T: T0, cache: {}, dudas: new Set() };
 /* Lo que existía en el MOMENTO DE LA VENTA (ENV.T), antes de que el .gs lo lea (23/11, revisiones de Jarvis). Es una RECONSTRUCCIÓN:
-   Kommo no guarda cómo estaba todo ese día. Lo que no se puede reconstruir se anota en ENV.dudas («<marca>: <motivo>») y ese pedido no
-   puede salir negativo (queda pendiente).
+   Kommo no guarda cómo estaba todo ese día. ENV.dudas registra los límites de la reconstrucción por cuenta («<marca>: <motivo>»).
+   Las dudas sobre la etapa se informan aparte: no cambian ninguna de las cuatro preguntas de atención (Jarvis, 23/11).
    · mensajes: el corte va en la PREGUNTA (filter[created_at][to]), no se filtra la respuesta: si no, la primera página (la más nueva) quedaba
      corta o vacía y el .gs dejaba de pedir las siguientes, donde estaban los mensajes que sí valían;
    · leads: uno creado después de la venta no existía; uno ganado o perdido DESPUÉS (closed_at) estaba abierto; uno que hoy está en una
@@ -178,7 +178,7 @@ function ventasARevisar(P, pg, VEND, desde, hasta) {
    · 🔀 INDICIO DE CRUCE (qaVeredicto con las dos cuentas): otra PERSONA atendía al cliente (conversación, tarea o nota). Cuenta si la otra
      persona se puede distinguir de quien vendió: sin los nombres de los usuarios de esa cuenta, un «usuario 11» puede ser la misma vendedora
      (pendiente «identidad desconocida»). Un positivo con datos incompletos sigue siendo un cruce visto (y se dice cuántos); un negativo con
-     algo incompleto (una cuenta que no contestó, más leads de los que se miran, el estado de un lead que cambió después) es PENDIENTE.
+     algo incompleto sobre la atención (una cuenta que no contestó, más leads de los que se miran) es PENDIENTE.
    · 🛏️💚 OTRA MARCA (qaVeredicto solo con la cuenta de la otra marca): VENDIDAS con alguien de la otra marca y, aparte, cuántos asesores
      (por cuenta y nombre; «usuario 901» y «usuario 902» son dos). En los dos sentidos: Heaven → Sueña y Sueña → Heaven.
    · 📋 CARTEL DEL FORMULARIO (cruceOtros de pedidos.html, solo la cuenta de la marca de quien vende: lo que la regla habría mostrado al cargar).
@@ -187,12 +187,20 @@ function ventasARevisar(P, pg, VEND, desde, hasta) {
    La cobertura se cuenta por CUENTA de Kommo y con el motivo. */
 const NO_CONTESTO = { 'sin respuesta': 1, 'sin token': 1, 'error': 1 };
 const noContesto = (m) => !!NO_CONTESTO[m] || /^error\b/.test(m);
+/* «estado histórico» y «catálogo de etapas no disponible»: una oportunidad viva en «Compradores»/«COMPRO» aporta conversaciones, tareas y
+   notas igual que una abierta; la etapa solo cambia «libre» por «compro» (las dos, sin cruce). Se informan por cuenta, sin pendientes. */
+const INFO_ETAPAS = new Set(['estado histórico', 'catálogo de etapas no disponible']);
+/* El error de una cuenta: la operación y el código HTTP de Kommo, nada más del mensaje. HTTP 0 = no hubo respuesta (red);
+   «local» = falló el programa antes de preguntar. */
+function errorDe(e) {
+  const t = String(e || ''), cod = /HTTP (\d+)/.exec(t);
+  const op = /búsqueda/.test(t) ? 'búsqueda' : /leads/.test(t) ? 'leads' : /^falló/.test(t) ? 'local' : 'otra';
+  return 'error ' + op + (cod ? (cod[1] === '0' ? ' sin respuesta de red' : ' HTTP ' + cod[1]) : '');
+}
 const motivosDe = (c, dudas, mk, T) => {
   if (!c) return ['sin respuesta'];
   if (c.sinToken) return ['sin token'];
-  /* el código HTTP de Kommo, sin nada más del mensaje (401 = el token no vale para esa cuenta; 0 = no hubo respuesta) */
-  const cod = /HTTP (\d+)/.exec(String(c.error || ''));
-  const m = [c.error && ('error' + (cod ? ' HTTP ' + cod[1] : '')), c.msgOk === false && 'mensajes incompletos', c.tareasOk === false && 'tareas', c.notasOk === false && 'notas',
+  const m = [c.error && errorDe(c.error), c.msgOk === false && 'mensajes incompletos', c.tareasOk === false && 'tareas', c.notasOk === false && 'notas',
     c.cortado && 'búsqueda cortada', c.usOk === false && 'nombres de usuarios', Number(c.masLeads) > 0 && 'más leads de los que se miran'].filter(Boolean);
   // El .gs resuelve vivo con las etapas de esta cuenta después de leer los leads, también en la primera consulta.
   if ((c.leads || []).some((l) => l.vivo && Number(l.tocado) > T)) m.push('estado histórico');
@@ -206,7 +214,7 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     ind: preg({ parcial: 0, conv: 0, tarea: 0, nota: 0, tareaNota: 0, ambas: 0, otraPrimero: 0, sinConvYo: 0, sinConvObs: 0 }),
     marca: preg({ asesores: 0, parcial: 0, dir: { 'heaven→suena': { si: 0, no: 0, pend: 0 }, 'suena→heaven': { si: 0, no: 0, pend: 0 } } }),
     cartel: preg({ parcial: 0 }), wa: preg({ destinatarias: 0, parcial: 0 }),
-    cob: { heaven: {}, suena: {} }, noContesto: { heaven: 0, suena: 0 }, pares: {}, porVend: {}, porDia: {} };
+    cob: { heaven: {}, suena: {} }, infoEtapas: { heaven: {}, suena: {} }, noContesto: { heaven: 0, suena: 0 }, pares: {}, porVend: {}, porDia: {} };
   const nombre = (n) => pg.VENDEDORES.filter((x) => pg.qaMismo(x, n))[0] || n;          // «María Flores» = «Maria Flores»
   const fila = (n) => R.porVend[n] = R.porVend[n] || { ventas: 0, pend: 0, indicio: 0, cartel: 0, wa: 0, avisos: 0 };
   const pendiente = (q, m) => { q.pend++; q.motivos[m] = (q.motivos[m] || 0) + 1; };
@@ -217,12 +225,16 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     let r = null; try { r = evaluar(p); } catch (e) { r = null; }
     const resp = !!(r && r.ok !== false), cs = resp ? (r.cuentas || []) : [], dudas = resp ? (r._dudas || []) : [];
     const cta = (mk) => cs.filter((c) => c.marca === mk)[0] || null;
-    const mot = { heaven: resp ? motivosDe(cta('heaven'), dudas, 'heaven', r.ahora) : ['sin respuesta'], suena: resp ? motivosDe(cta('suena'), dudas, 'suena', r.ahora) : ['sin respuesta'] };
+    const mot = { heaven: [], suena: [] };
     const V = resp ? pg.qaVeredicto(r, vr) : null;
     const usuarioSinNombre = (o) => /^usuario \d+$/i.test(o.n);
-    if (V && V.otros.some((o) => o.marca === mv && usuarioSinNombre(o))) mot[mv].push('autor sin identificar');
     const parcial = (mk) => mot[mk].length > 0;
     ['heaven', 'suena'].forEach((mk) => {
+      for (const m of (resp ? motivosDe(cta(mk), dudas, mk, r.ahora) : ['sin respuesta'])) {
+        if (INFO_ETAPAS.has(m)) { const info = R.infoEtapas[mk]; info[m] = (info[m] || 0) + 1; }
+        else mot[mk].push(m);
+      }
+      if (mk === mv && V && V.otros.some((o) => o.marca === mv && usuarioSinNombre(o))) mot[mk].push('autor sin identificar');
       (mot[mk].length ? mot[mk] : ['completa']).forEach((m) => { R.cob[mk][m] = (R.cob[mk][m] || 0) + 1; });
       if (mot[mk].some(noContesto)) R.noContesto[mk]++;
     });
@@ -310,8 +322,12 @@ function informe(R) {
   const L = [];
   if (!R.total) { L.push('Sin pedidos elegibles en el período: no hay porcentaje que calcular.'); return L; }
   L.push('Pedidos elegibles: ' + R.total + ' (' + R.tienda + ' ventas de tienda: su hora es la de la venta; si se le corrigió la fecha, no es la de la carga)');
-  ['heaven', 'suena'].forEach((mk) => { const c = R.cob[mk], ok = c.completa || 0;
-    L.push('Cuenta de Kommo ' + NOMBRE_CTA[mk] + ': completa en ' + ok + ' de ' + R.total + (ok < R.total ? ' · ' + Object.keys(c).filter((k) => k !== 'completa').map((k) => k + ' ' + c[k]).join(' · ') : '')); });
+  ['heaven', 'suena'].forEach((mk) => {
+    const c = R.cob[mk], ok = c.completa || 0;
+    L.push('Cuenta de Kommo ' + NOMBRE_CTA[mk] + ': completa en ' + ok + ' de ' + R.total + (ok < R.total ? ' · ' + Object.keys(c).filter((k) => k !== 'completa').map((k) => k + ' ' + c[k]).join(' · ') : ''));
+    const info = Object.entries(R.infoEtapas[mk]);
+    if (info.length) L.push('   · Etapas de ' + NOMBRE_CTA[mk] + ' (pedidos por observación; no cambian las cuatro preguntas): ' + info.map(([m, n]) => m + ' ' + n).join(' · '));
+  });
   cuentasCaidas(R).forEach((mk) => L.push('❌ La cuenta de ' + NOMBRE_CTA[mk] + ' no contestó en NINGÚN pedido (' + Object.keys(R.cob[mk]).filter(noContesto).join(', ') + '): el informe no puede comparar.'));
   L.push('ℹ️ Es una reconstrucción de lo que había en Kommo al cargar cada venta: puede haber omisiones y atribuciones erróneas.');
   L.push('');
@@ -377,4 +393,4 @@ function main() {
   process.exitCode = sal;
 }
 if (require.main === module) main();
-else module.exports = { ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND };
+else module.exports = { ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, errorDe, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND };
