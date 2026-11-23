@@ -69,11 +69,11 @@ function pedir(url) {
 let PROPS = Object.assign({}, PROPS_BASE);
 const propsVivas = new Proxy({}, { get: (o, k) => PROPS[k], has: (o, k) => k in PROPS, ownKeys: () => Object.keys(PROPS), getOwnPropertyDescriptor: (o, k) => (k in PROPS ? { enumerable: true, configurable: true, value: PROPS[k] } : undefined) });
 const gs = V.cargarGs({ pedir, props: propsVivas });
-const evaluar = (p) => {
+const evaluar = (p, contexto = gs) => {
   V.ENV.T = Math.floor(Number(p.ts) / 1000);
   Object.keys(V.ENV.cache).forEach((k) => { delete V.ENV.cache[k]; });
   V.ENV.dudas = new Set();
-  const r = gs.quienAtiende_({ cel: String(p.celular).replace(/\D/g, '').slice(-8), quien: String(p.vendedor) });
+  const r = contexto.quienAtiende_({ cel: String(p.celular).replace(/\D/g, '').slice(-8), quien: String(p.vendedor) });
   if (r) r._dudas = Array.from(V.ENV.dudas);
   return r;
 };
@@ -132,6 +132,7 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   const b = cliente('heaven', '72200002', 11); cliente('suena', '72200002', 21);
   const s = K.suena.leads[0].id; charla('suena', s, 901, T - 2 * D); charla('suena', s, 902, T - D);  // dos usuarios que no están en la lista
   const R2 = correr([venta('y', 'Isabel Robledo', '72200002')], '3c');
+  chk(R2.ind.si === 0 && R2.ind.pend === 1, 'un ID de otra cuenta prueba actividad en esa cuenta, pero no quién la realizó');
   chk(R2.marca.si === 1 && R2.marca.asesores === 2, '3c «usuario 901» y «usuario 902» son dos asesores: ' + J(R2.marca));
 }
 
@@ -242,6 +243,63 @@ chk(typeof gs.quienAtiende_ === 'function' && typeof gs.cruceOtros_ === 'functio
   nuevo();
   const R = correr([venta('m1', 'Maria Flores', '70100001'), venta('m2', 'María Flores', '70100002')], '11');
   chk(Object.keys(R.porVend).length === 1 && R.porVend['Maria Flores'].ventas === 2, '11 «María Flores» y «Maria Flores» en una fila');
+}
+
+/* Un catálogo HTTP 200 puede omitir al vendedor. Un tercero identificado en el mismo caso sigue contando. */
+{
+  nuevo();
+  K.heaven.users = USU_H.filter((u) => u.id !== 11);
+  const a = cliente('heaven', '70200001', 11);
+  charla('heaven', a.lid, 11, T - 2 * D);
+  const p = venta('autor', 'Isabel Robledo', '70200001');
+  const R = correr([p], 'identidad propia');
+  chk(R.ind.si === 0 && R.ind.pend === 1 && R.cob.heaven['autor sin identificar'] === 1,
+    'el ID propio omitido en una lista de usuarios exitosa queda pendiente');
+  charla('heaven', a.lid, 12, T - D);
+  const R2 = correr([p], 'tercero conocido');
+  chk(R2.ind.si === 1 && R2.ind.parcial === 1 && R2.cartel.si === 1,
+    'la presencia de un autor sin nombre conserva la conversación identificada de otra asesora');
+}
+
+/* La primera venta con etapa de compra se evalúa igual con o sin un catálogo cargado previamente. */
+{
+  for (const mk of ['heaven', 'suena']) {
+    nuevo();
+    const contexto = V.cargarGs({ pedir, props: propsVivas });
+    const responsable = mk === 'heaven' ? 11 : 21;
+    const vendedor = mk === 'heaven' ? 'Isabel Robledo' : 'Fernando Peinado';
+    cliente(mk, '70200002', responsable, { status_id: 20, updated_at: T + D });
+    const p = venta('etapa', vendedor, '70200002');
+    const resumen = () => V.resumir([p], (venta) => evaluar(venta, contexto), pg, marcaDe, contexto.cruceOtros_);
+    const primera = resumen(), segunda = resumen();
+    chk(primera.cob[mk]['estado histórico'] === 1 && primera.ind.pend === 1 && primera.cartel.pend === 1 &&
+      segunda.ind.pend === primera.ind.pend && segunda.cob[mk]['estado histórico'] === 1,
+      'la primera consulta y la siguiente reconocen la etapa histórica en ' + mk);
+    K[mk].falla['/leads/pipelines'] = 503;
+    const sinEtapas = resumen();
+    chk(sinEtapas.ind.pend === 1 && sinEtapas.cob[mk]['catálogo de etapas no disponible'] === 1,
+      'una cuenta sin catálogo de etapas informa cobertura parcial en ' + mk);
+    delete K[mk].falla['/leads/pipelines'];
+    const recuperada = resumen();
+    chk(recuperada.cob[mk]['estado histórico'] === 1 && !recuperada.cob[mk]['catálogo de etapas no disponible'],
+      'se recupera el catálogo de etapas en ' + mk);
+    const tercero = mk === 'heaven' ? 12 : 22;
+    charla(mk, K[mk].leads[0].id, tercero, T - D);
+    const conCharla = resumen();
+    chk(conCharla.ind.si === 1 && conCharla.ind.parcial === 1 && conCharla.cartel.si === 1,
+      'la duda histórica conserva la conversación previa de otra persona en ' + mk);
+  }
+}
+
+/* El subtotal de tienda cuenta una venta con evidencia intermarca. */
+{
+  nuevo();
+  const s = cliente('suena', '70200003', 21);
+  charla('suena', s.lid, 21, T - D);
+  const p = venta('tienda', 'Isabel Robledo', '70200003', { zona: 'TIENDA' });
+  const R = correr([p], 'tienda intermarca');
+  chk(R.marca.tienda === 1 && V.informe(R).some((l) => l.includes('Con alguien de la OTRA marca') && l.includes('en ventas de tienda: 1')),
+    'el informe imprime el subtotal de tienda en la pregunta intermarca');
 }
 
 /* 12 · ningún pedido a un subdominio de verdad */

@@ -64,27 +64,26 @@ function cortarPregunta(url, T) {
   if (m) return url.replace(m[0], m[1] + Math.min(Number(m[2]), T));
   return url.replace(/([?&])limit=/, '$1filter[created_at][to]=' + T + '&limit=');
 }
-const normEtapa = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, '');
-/* est = { marca: 'heaven'|'suena', ganados: {marca: {status_id: 1}}, dudas: Set } */
 function cortarRespuesta(ruta, code, body, T, est) {
-  est = est || { marca: '', ganados: {}, dudas: new Set() };
+  est = est || { marca: '', dudas: new Set() };
   const duda = (m) => est.dudas.add((est.marca || '?') + ': ' + m);
-  if (code !== 200 || !body) return { code, body };
-  let o; try { o = JSON.parse(body); } catch (e) { return { code, body }; }
+  let o;
+  if (code === 200 && body) {
+    try { o = JSON.parse(body); } catch (e) {}
+  }
   const E = (o && o._embedded) || {};
-  if (ruta === '/leads/pipelines' && Array.isArray(E.pipelines)) {
-    const g = est.ganados[est.marca] = est.ganados[est.marca] || {};
-    E.pipelines.forEach((pl) => (((pl && pl._embedded) || {}).statuses || []).forEach((st) => { const n = normEtapa(st.name); if (String(st.id) === '142' || n === 'compradores' || n === 'compro') g[String(st.id)] = 1; }));
+  if (ruta === '/leads/pipelines') {
+    const tieneEtapas = Array.isArray(E.pipelines) && E.pipelines.some((p) => Array.isArray(p?._embedded?.statuses) && p._embedded.statuses.length > 0);
+    if (!tieneEtapas) duda('catálogo de etapas no disponible');
     return { code, body };
   }
+  if (!o) return { code, body };
   if (ruta === '/events' && Array.isArray(E.events)) E.events = E.events.filter((e) => Number(e.created_at) <= T);   // por si Kommo no respetó el corte
   else if (ruta === '/leads' && Array.isArray(E.leads)) {
-    const g = est.ganados[est.marca] || {};
     E.leads = E.leads.filter((l) => !(Number(l.created_at) > T));
     E.leads.forEach((l) => {
       const st = String(l.status_id);
       if ((st === '142' || st === '143') && Number(l.closed_at) > T) { l.status_id = 0; l.closed_at = 0; }          // se cerró después: estaba abierto
-      else if (g[st] && st !== '142' && Number(l.updated_at) > T) { l.status_id = 0; duda('estado histórico'); }  // ¿ya estaba en «Compradores»?
     });
     if (!E.leads.length) return { code:204, body:'' };
   } else if (ruta === '/tasks' && Array.isArray(E.tasks)) {
@@ -101,7 +100,6 @@ function cortarRespuesta(ruta, code, body, T, est) {
 function cargarGs(opt) {
   opt = opt || {};
   const pedir = opt.pedir || kGet;
-  const est = { marca: '', ganados: {}, dudas: ENV.dudas };
   const props = opt.props || {};
   if (!opt.props) {
     CUENTAS.forEach((c) => { if (c.token) props[c.prop] = c.token; });
@@ -127,9 +125,8 @@ function cargarGs(opt) {
       const ruta = (url.split('/api/v4')[1] || '').split('?')[0];
       if (ruta === '/events') url = cortarPregunta(url, ENV.T);
       const r0 = pedir(url, String((op.headers || {}).Authorization || '').replace(/^Bearer /, ''));
-      const subS = String(props.KOMMO_SUBDOMAIN_SUENA || 'gerenciamultiespumasviscarra');
-      est.marca = url.indexOf('//' + subS + '.') >= 0 ? 'suena' : 'heaven'; est.dudas = ENV.dudas;
-      const r = cortarRespuesta(ruta, r0.code, r0.body, ENV.T, est);
+      const marca = ctx.KC_CTA === 'suena' ? 'suena' : 'heaven';
+      const r = cortarRespuesta(ruta, r0.code, r0.body, ENV.T, { marca, dudas: ENV.dudas });
       return resp(r.code, r.body);
     } }
   };
@@ -184,16 +181,18 @@ function ventasARevisar(P, pg, VEND, desde, hasta) {
      algo incompleto (una cuenta que no contestó, más leads de los que se miran, el estado de un lead que cambió después) es PENDIENTE.
    · 🛏️💚 OTRA MARCA (qaVeredicto solo con la cuenta de la otra marca): VENDIDAS con alguien de la otra marca y, aparte, cuántos asesores
      (por cuenta y nombre; «usuario 901» y «usuario 902» son dos). En los dos sentidos: Heaven → Sueña y Sueña → Heaven.
-   · 📋 CARTEL DEL FORMULARIO (cruceOtros de pedidos.html, solo la cuenta de la marca de quien vende: lo que vio la vendedora al cargar).
+   · 📋 CARTEL DEL FORMULARIO (cruceOtros de pedidos.html, solo la cuenta de la marca de quien vende: lo que la regla habría mostrado al cargar).
    · 💬 WHATSAPP (cruceOtros_ del .gs, la regla del bot): DESTINATARIAS POTENCIALES. Sin los nombres de los usuarios el bot no avisa: queda
      pendiente aunque el cartel haya salido (son dos resultados distintos). El bot además no repite el mismo aviso en 48 h.
    La cobertura se cuenta por CUENTA de Kommo y con el motivo. */
 const NO_CONTESTO = { 'sin respuesta': 1, 'sin token': 1, 'error': 1 };
-const motivosDe = (c, dudas, mk) => {
+const motivosDe = (c, dudas, mk, T) => {
   if (!c) return ['sin respuesta'];
   if (c.sinToken) return ['sin token'];
   const m = [c.error && 'error', c.msgOk === false && 'mensajes incompletos', c.tareasOk === false && 'tareas', c.notasOk === false && 'notas',
     c.cortado && 'búsqueda cortada', c.usOk === false && 'nombres de usuarios', Number(c.masLeads) > 0 && 'más leads de los que se miran'].filter(Boolean);
+  // El .gs resuelve vivo con las etapas de esta cuenta después de leer los leads, también en la primera consulta.
+  if ((c.leads || []).some((l) => l.vivo && Number(l.tocado) > T)) m.push('estado histórico');
   (dudas || []).forEach((d) => { if (d.indexOf(mk + ': ') === 0) m.push(d.slice(mk.length + 2)); });
   return m.filter((x, k, a) => a.indexOf(x) === k);
 };
@@ -215,21 +214,24 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     let r = null; try { r = evaluar(p); } catch (e) { r = null; }
     const resp = !!(r && r.ok !== false), cs = resp ? (r.cuentas || []) : [], dudas = resp ? (r._dudas || []) : [];
     const cta = (mk) => cs.filter((c) => c.marca === mk)[0] || null;
-    const mot = { heaven: resp ? motivosDe(cta('heaven'), dudas, 'heaven') : ['sin respuesta'], suena: resp ? motivosDe(cta('suena'), dudas, 'suena') : ['sin respuesta'] };
+    const mot = { heaven: resp ? motivosDe(cta('heaven'), dudas, 'heaven', r.ahora) : ['sin respuesta'], suena: resp ? motivosDe(cta('suena'), dudas, 'suena', r.ahora) : ['sin respuesta'] };
+    const V = resp ? pg.qaVeredicto(r, vr) : null;
+    const usuarioSinNombre = (o) => /^usuario \d+$/i.test(o.n);
+    if (V && V.otros.some((o) => o.marca === mv && usuarioSinNombre(o))) mot[mv].push('autor sin identificar');
     const parcial = (mk) => mot[mk].length > 0;
     ['heaven', 'suena'].forEach((mk) => {
       (mot[mk].length ? mot[mk] : ['completa']).forEach((m) => { R.cob[mk][m] = (R.cob[mk][m] || 0) + 1; });
       if (mot[mk].some((m) => NO_CONTESTO[m])) R.noContesto[mk]++;
     });
     const motTxt = (mks) => mks.filter(parcial).map((mk) => (mk === 'heaven' ? 'Heaven' : 'Sueña') + ' ' + mot[mk].join(', ')).join(' + ') || 'incompleto';
-    /* quién es quién: sin los nombres de los usuarios de esa cuenta, «usuario N» puede ser quien vendió */
-    const sabe = (o) => !(o.n === '(sin asignar)' || (/^usuario \d+$/i.test(o.n) && (cta(o.marca) || {}).usOk === false));
+    // Un ID de otra cuenta prueba actividad en ella. Por sí solo no permite comparar personas entre cuentas.
+    const identificado = (o) => o.n !== '(sin asignar)' && !usuarioSinNombre(o);
     const clave = (o) => o.marca + '|' + pg.qaNom(o.n) + '|' + String(o.n).replace(/\D/g, '');
 
     /* 1 · indicio de cruce */
-    const V = resp ? pg.qaVeredicto(r, vr) : null, ov = V ? V.otros.filter(sabe) : [];
+    const ov = V ? V.otros.filter(identificado) : [];
     if (ov.length) {
-      R.ind.si++; pv.indicio++; if (parcial('heaven') || parcial('suena')) R.ind.parcial++; if (tienda) R.ind.tienda++;
+      R.ind.si++; pv.indicio++; if (ov.length < V.otros.length || parcial('heaven') || parcial('suena')) R.ind.parcial++; if (tienda) R.ind.tienda++;
       const por = ov.map((o) => o.por);
       if (por.indexOf('conv') >= 0) R.ind.conv++; else if (por.indexOf('fecha') >= 0 && por.indexOf('nota') >= 0) R.ind.tareaNota++; else if (por.indexOf('fecha') >= 0) R.ind.tarea++; else R.ind.nota++;
       const yo = V.quien.filter((q) => pg.qaMismo(q.n, vr) && q.por === 'conv')[0];
@@ -238,7 +240,10 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
       ov.forEach((o) => { const k = v + ' → ' + (pg.VENDEDORES.filter((x) => pg.qaMismo(x, o.n))[0] || 'otro usuario de Kommo'); R.pares[k] = (R.pares[k] || 0) + 1; });
       const dia = new Date((Math.floor(Number(p.ts) / 1000) - 4 * 3600) * 1000).toISOString().slice(5, 10); R.porDia[dia] = (R.porDia[dia] || 0) + 1;
     } else if (!V) { pendiente(R.ind, 'sin respuesta'); pv.pend++; }
-    else if (V.otros.length) { pendiente(R.ind, 'identidad desconocida (' + motTxt([mv, ot]) + ')'); pv.pend++; }
+    else if (V.otros.length) {
+      const cuentas = Array.from(new Set(V.otros.map((o) => NOMBRE_CTA[o.marca])));
+      pendiente(R.ind, 'identidad desconocida (' + cuentas.join(' y ') + ')'); pv.pend++;
+    }
     else if (parcial('heaven') || parcial('suena') || V.k === 'nose') { pendiente(R.ind, V.k + ' · ' + motTxt([mv, ot])); pv.pend++; }
     else R.ind.no++;
 
@@ -246,8 +251,14 @@ function resumir(ventas, evaluar, pg, marcaDe, cruceOtrosBot, alAvanzar) {
     const co = cta(ot), dir = R.marca.dir[mv + '→' + ot];
     if (!resp || !co) { pendiente(R.marca, 'sin respuesta'); dir.pend++; }
     else {
-      const Vo = pg.qaVeredicto({ cuentas: [co], ahora: r.ahora }, vr), qs = Vo.otros.filter(sabe).map(clave).filter((x, k, a) => a.indexOf(x) === k);
-      if (qs.length) { R.marca.si++; dir.si++; R.marca.asesores += qs.length; if (parcial(ot)) R.marca.parcial++; }
+      const Vo = pg.qaVeredicto({ cuentas: [co], ahora: r.ahora }, vr);
+      const hayAutor = (o) => identificado(o) || (usuarioSinNombre(o) && co.usOk !== false);
+      const qs = Array.from(new Set(Vo.otros.filter(hayAutor).map(clave)));
+      if (qs.length) {
+        R.marca.si++; dir.si++; R.marca.asesores += qs.length;
+        if (tienda) R.marca.tienda++;
+        if (parcial(ot)) R.marca.parcial++;
+      }
       else if (Vo.otros.length) { pendiente(R.marca, 'identidad desconocida (' + motTxt([ot]) + ')'); dir.pend++; }
       else if (parcial(ot)) { pendiente(R.marca, motTxt([ot])); dir.pend++; }
       else { R.marca.no++; dir.no++; }
@@ -309,11 +320,11 @@ function informe(R) {
     L.push('   · vistos con cobertura parcial: ' + R.ind.parcial + ' · en ventas de tienda: ' + R.ind.tienda);
   }
   if (R.ind.pend) L.push('   · pendientes: ' + motivos(R.ind));
-  L.push(linea('🛏️💚 Con alguien de la OTRA marca', R.marca, R.total) + (R.marca.si ? ' · ' + R.marca.asesores + ' asesores de la otra marca · ' + R.marca.parcial + ' con cobertura parcial' : ''));
+  L.push(linea('🛏️💚 Con alguien de la OTRA marca', R.marca, R.total) + (R.marca.si ? ' · ' + R.marca.asesores + ' asesores de la otra marca · ' + R.marca.parcial + ' con cobertura parcial · en ventas de tienda: ' + R.marca.tienda : ''));
   Object.keys(R.marca.dir).forEach((k) => { const d = R.marca.dir[k], [a, b] = k.split('→');
     if (d.si + d.no + d.pend) L.push('   · ventas de ' + NOMBRE_CTA[a] + ' mirando ' + NOMBRE_CTA[b] + ': ' + d.si + ' sí · ' + d.no + ' no · ' + d.pend + ' pendientes' + (d.pend && !(d.si + d.no) ? ' → INCOMPLETA' : '')); });
   if (R.marca.pend) L.push('   · pendientes: ' + motivos(R.marca));
-  L.push(linea('📋 Cartel del formulario (otra asesora de la MISMA marca, lo que vio la vendedora al cargar)', R.cartel, R.total) +
+  L.push(linea('📋 Cartel del formulario (otra asesora de la MISMA marca, lo que la regla habría mostrado al cargar)', R.cartel, R.total) +
     (R.cartel.si ? ' · ' + R.cartel.parcial + ' con cobertura parcial · en ventas de tienda: ' + R.cartel.tienda : ''));
   if (R.cartel.pend) L.push('   · pendientes: ' + motivos(R.cartel));
   L.push(linea('💬 WhatsApp a la otra asesora (la regla del bot)', R.wa, R.total) +
@@ -354,7 +365,7 @@ function main() {
   console.log('\nPor vendedora: pedidos · indicio pendiente · con indicio · cartel al cargar · WhatsApp a otra · avisos potenciales que le habrían llegado:');
   Object.keys(R.porVend).sort().forEach((k) => { const x = R.porVend[k]; console.log('   ' + k.padEnd(22) + String(x.ventas).padStart(4) + ' pedidos · ' + String(x.pend).padStart(3) + ' pend. · ' + String(x.indicio).padStart(3) + ' indicio · ' + String(x.cartel).padStart(3) + ' cartel · ' + String(x.wa).padStart(3) + ' WhatsApp · ' + String(x.avisos).padStart(3) + ' avisos'); });
   if (Object.keys(R.porDia).length) console.log('\nIndicios por día de carga: ' + JSON.stringify(R.porDia));
-  console.log('\nℹ️ Es un piso, no un techo: Kommo no guarda cómo estaba un lead el día de la venta (uno marcado «perdido» después ya no retiene), ni las tareas que se cerraron después.');
+  console.log('\nℹ️ Kommo devuelve las tareas que siguen abiertas. Las que se cerraron después de la venta pueden faltar en la reconstrucción.');
   const sal = salidaDe(R);
   if (sal) { const caidas = cuentasCaidas(R).map((mk) => NOMBRE_CTA[mk]);
     console.log('\n❌ No sirve para decidir: ' + (caidas.length ? 'la cuenta de ' + caidas.join(' y ') + ' no contestó en ningún pedido' :
