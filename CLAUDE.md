@@ -1157,7 +1157,9 @@ el 20/11 con los arreglos: 39/39 por número, 12/12 compradores). `tests/test_qu
 que nombra pasar / visitar / venir / sucursal / tienda / comprar / stock (`QA_NOTA_RE`, `qaNotaVisita_`; las del panel, «🧾 …», no) retiene para quien
 la ESCRIBIÓ, como la conversación: `l.nota` {ts, quien, txt} → `qaVeredicto` (`por:'nota'`), `qaResumenDe_`, `cruceOtros_` (el WhatsApp a la otra) y el
 cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». (Fable, 21/11) «pas…» solo con lo que sigue («pasa POR», «pasa MAÑANA»), `QA_NOTA_SI` sin `QA_NOTA_NO` («no va a comprar», «compró en otra», «competencia»); las del panel («🧾», «🙅», «Cotización COT») no; las notas van de a 4 páginas de 250 (`QA_NOTAS_PAGINAS`; más = incompleto); la consulta del formulario manda `solo:<marca>`. Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
-puede pasar por 3 tiendas a cotizar, no hay lío»*). `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+puede pasar por 3 tiendas a cotizar, no hay lío»*). 🟡 **Pero si hay un lead de OTRA asesora creado o tocado en los últimos
+15 días** (no perdido, no el propio) el cartel dice «Ojo: el lead es de X… preguntale antes» en vez de «Libre» (23/11, dueño: «Ojo, en amarillo»;
+`qaVeredicto` → `V.rec`, `qaCartel`). SOLO el cartel: `k` sigue «libre», así que el aviso al guardar, el WhatsApp y la revisión no cambian. `test_quien_atiende` L0-L4. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir

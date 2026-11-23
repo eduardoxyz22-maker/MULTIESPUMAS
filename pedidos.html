@@ -73475,7 +73475,20 @@ function qaVeredicto(r, yo){
   var otros=quien.filter(function(v){ return !yo || !qaMismo(v.n, yo); });
   /* Por NOMBRE y sin ningún contacto con ese nombre: «nadie» (no «libre»: en Kommo puede estar con el nombre de su WhatsApp). */
   var k = quien.length ? (otros.length ? 'otro' : 'tuyo') : (compro ? 'compro' : (inc ? 'nose' : ((r && r.nombre && !nCont) ? 'nadie' : 'libre')));
-  return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora, inc:inc };
+  /* 🟡 (23/11, dueño eligió «Ojo, en amarillo»: MARIA ISABEL salía «Libre» con un lead de Mirian creado el 19/11 en «Agendado / Visita» y sin
+     ningún mensaje en Kommo) los leads de OTRA persona creados o tocados en la ventana, sin perder ni cerrados: solo para el cartel (`k` no
+     cambia: el aviso al guardar, el WhatsApp a la otra vendedora y la revisión siguen con la regla de siempre). */
+  var rec=[];
+  if(k==='libre') ((r && r.cuentas)||[]).forEach(function(c){
+    (c.leads||[]).forEach(function(l){
+      if(l.sinLead || l.cerrado==='perdido' || (l.cerrado==='ganado' && !l.vivo)) return;
+      var n=qaN(l.resp), t=Math.max(Number(l.creado)||0, Number(l.tocado)||0);
+      if(n==='(sin asignar)' || t<lim || (yo && qaMismo(n, yo))) return;
+      rec.push({ n:n, marca:c.marca, et:String(l.et||''), creado:Number(l.creado)||0, t:t });
+    });
+  });
+  rec.sort(function(a,b){ return b.t-a.t; });
+  return { k:k, quien:quien, otros:otros, compro:compro, ultimo:ultimo, ahora:ahora, inc:inc, rec:rec };
 }
 /* 🔀 (20/11) «OTRA VENDEDORA ATIENDE A ESTE CLIENTE» — dueño: *«al momento de cargar un nuevo pedido… si sale el mismo número de teléfono y está
    de vigencia que otro asesor lo está atendiendo, le salga la alerta»*; eligió que SOLO AVISE (*«el cliente no tiene que verse perjudicado»*), el
@@ -74090,6 +74103,12 @@ function qaCartel(V, chico){
   var ojoInc=V.inc ? ' <i>Ojo: Kommo no contestó todo; puede haber más.</i>' : '';
   if(V.k==='nose') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">❓</div><div><b>No se pudo saber</b><span>Kommo no contestó todo (la búsqueda, los mensajes, las tareas o una de las dos cuentas). No es «libre»: probá de nuevo en un rato.</span></div></div>';
   if(V.k==='nadie') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">🔎</div><div><b>No encontré a nadie con ese nombre en Kommo</b><span>Eso <b>no</b> quiere decir que esté libre: en Kommo el cliente puede estar con el nombre de su WhatsApp («Anita», «Mamá de Luis»…) o con otro apellido. Buscalo por el <b>celular</b>.</span></div></div>';
+  if(V.k==='libre' && V.rec && V.rec.length){
+    var R0=V.rec[0], quienes=V.rec.filter(function(x, i, A){ return A.map(function(y){ return y.n; }).indexOf(x.n)===i; });
+    return '<div class="qa-ver qa-v-ojo qa-v-lead'+cls+'"><div class="qa-v-ic">🟡</div><div><b>Ojo: el lead es de '+quienes.map(function(x){ return esc(x.n); }).join(' y ')+'</b><span>'+
+      V.rec.slice(0,3).map(function(x){ return 'Lead de <b>'+esc(x.n)+'</b> en '+esc(QA_MARCA[x.marca]||x.marca)+(x.et?', etapa «'+esc(x.et)+'»':'')+(x.creado?', creado el '+fc(x.creado):'')+(x.t>x.creado?' (lo tocaron el '+fc(x.t)+')':''); }).join(' · ')+
+      '. En Kommo no hay conversación, fecha acordada ni nota en los últimos '+QA_DIAS+' días, pero lo cargaron hace poco: puede haberlo atendido en la tienda o por su WhatsApp. <b>Preguntale antes de atenderlo.</b></span></div></div>';
+  }
   if(V.k==='libre') return '<div class="qa-ver qa-v-libre'+cls+'"><div class="qa-v-ic">✅</div><div><b>Libre: nadie lo está atendiendo</b><span>En los últimos '+QA_DIAS+' días no hubo conversación (cliente y vendedora a ≤ '+QA_PAR_H+' h), ni una fecha acordada, ni una nota de visita o compra en Kommo.'+(U?' La última fue con <b>'+esc(U.n)+'</b> el '+esc(qaFecha(U.ts))+' ('+qaHace(U.ts, V.ahora)+').':'')+'</span></div></div>';
   if(V.k==='compro') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">🛒</div><div><b>Ya compró con '+esc(V.compro.n)+'</b><span>Compró hace poco ('+(V.compro.vivo ? fc(V.compro.ts) : esc(qaFecha(V.compro.ts)))+', '+qaHace(Math.min(V.compro.ts, V.ahora), V.ahora)+'). Si es una compra nueva, hablalo con tu encargado.'+ojoInc+'</span></div></div>';
   var notaTxt=function(q){ return 'anotó en Kommo el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')'+(q.txt?': «'+esc(q.txt)+'»':''); };

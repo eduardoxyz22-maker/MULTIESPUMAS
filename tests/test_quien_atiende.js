@@ -348,10 +348,10 @@ async function pagina(respuesta) {
   /* 15 · la página por NOMBRE */
   t = await buscar('Ana Rojas', 'Isabel Robledo', global.__RN);
   chk('15a · dos «Ana Rojas»: lo dice y pide fijarse el final del celular', /Hay 2 clientes que se llaman «ANA ROJAS»/.test(t) && /final del celular/.test(t), t.slice(0, 300));
-  chk('15b · cada una con su cartel: la …1111 la atiende Carola, la …2222 libre', /Cliente 1 · ANA ROJAS VACA · 📱 celular terminado en …1111 ⚠️ Lo está atendiendo Carola Chavez/.test(t) && /Cliente 2 · Ana Rojas · 📱 celular terminado en …2222 ✅ Libre/.test(t), t);
+  chk('15b · cada una con su cartel: la …1111 la atiende Carola; la …2222 sin charla pero con un lead de Maria tocado hace poco → «Ojo» (23/11)', /Cliente 1 · ANA ROJAS VACA · 📱 celular terminado en …1111 ⚠️ Lo está atendiendo Carola Chavez/.test(t) && /Cliente 2 · Ana Rojas · 📱 celular terminado en …2222 🟡 Ojo: el lead es de Maria Flores/.test(t), t);
   const una = JSON.parse(JSON.stringify(global.__RN)); una.cuentas[0].leads = una.cuentas[0].leads.filter(l => l.id === '921');
   t = await buscar('ana rojas', 'Isabel Robledo', una);
-  chk('15c · si hay una sola: el cartel de siempre + «un cliente con ese nombre (terminado en …2222)»', /Libre: nadie lo está atendiendo/.test(t) && /un cliente con ese nombre \(celular terminado en …2222\)/.test(t) && !/Hay 2 clientes/.test(t), t.slice(0, 300));
+  chk('15c · si hay una sola: el cartel de siempre + «un cliente con ese nombre (terminado en …2222)»', /Ojo: el lead es de Maria Flores/.test(t) && /un cliente con ese nombre \(celular terminado en …2222\)/.test(t) && !/Hay 2 clientes/.test(t), t.slice(0, 300));
   t = await page.evaluate(async () => { document.getElementById('qa-cel').value = 'Ana'; qaBuscar(); return document.getElementById('qa-res').innerText; });
   chk('15d · con una sola palabra pide nombre Y apellido', /nombre Y el apellido/.test(t), t);
   t = await page.evaluate(async () => {
@@ -384,6 +384,19 @@ async function pagina(respuesta) {
   t = await buscar('70011122', 'Isabel Robledo', nInc);
   chk('N15 · sin las notas: «No se pudo saber», nunca «Libre», y lo dice', /No se pudo saber/.test(t) && /no devolvió las notas/.test(t) && !/Libre/.test(t), t.slice(0, 300));
   chk('N16 · la regla a la vista nombra la nota de visita o compra', await page.evaluate(() => /visita o una compra/.test(document.querySelector('.qa-regla').textContent)));
+  /* 🟡 (23/11, dueño: «¿por qué sale libre y abajo muestra que sí lo están atendiendo?» → «Ojo, en amarillo») */
+  t = await buscar('70011122', 'Isabel Robledo', viejo);
+  chk('L0 · sin leads recientes de otra persona, sigue «Libre»', /Libre: nadie lo está atendiendo/.test(t) && !/Ojo: el lead es de/.test(t), t.slice(0, 200));
+  const reciente = JSON.parse(JSON.stringify(viejo)), lr = reciente.cuentas[0].leads[0];
+  lr.resp = 'Mirian Salazar'; lr.et = 'Agendado / Visita'; lr.creado = reciente.ahora - 4 * 86400; lr.tocado = lr.creado; lr.cerrado = '';
+  t = await buscar('70011122', 'Isabel Robledo', reciente);
+  chk('L1 · un lead de otra creado hace 4 días, sin chat: «Ojo: el lead es de Mirian Salazar», con la etapa y la fecha, nunca «Libre»', /Ojo: el lead es de Mirian Salazar/.test(t) && /etapa «Agendado \/ Visita»/.test(t) && /Preguntale antes de atenderlo/.test(t) && !/Libre: nadie/.test(t), t.slice(0, 400));
+  t = await buscar('70011122', 'Mirian Salazar', reciente);
+  chk('L2 · la dueña del lead busca: no se avisa a sí misma', !/Ojo: el lead es de/.test(t), t.slice(0, 200));
+  lr.cerrado = 'perdido'; t = await buscar('70011122', 'Isabel Robledo', reciente);
+  chk('L3 · un lead perdido no cuenta: «Libre»', /Libre: nadie lo está atendiendo/.test(t), t.slice(0, 200));
+  const vr = await page.evaluate((r) => { const V = qaVeredicto(r, 'Isabel Robledo'); return V.k; }, (() => { const x = JSON.parse(JSON.stringify(reciente)); x.cuentas[0].leads[0].cerrado = ''; return x; })());
+  chk('L4 · la regla no cambia (k sigue «libre»: el aviso al guardar, el WhatsApp y la revisión no se mueven)', vr === 'libre', vr);
   chk('B1 · el campo deja escribir nombres largos (teclado de texto, 60 letras)', await page.evaluate(() => { var i = document.getElementById('qa-cel'); return i.inputMode === 'text' && i.maxLength === 60; }));
   chk('sin errores de la página', !errs.length, errs);
   await browser.close();
