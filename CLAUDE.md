@@ -1154,6 +1154,15 @@ guarda igual (la venta nunca se frena; el servidor manda el WhatsApp al minuto).
   TODO obligatorio (gestión, cuándo, la excepción de la 032 si va, detalle) y mínimo 2 capturas, al menos 1 de Kommo (`CRV_FOTOS_MIN`, ≤ 15 días).
   Se guarda en `productos[0].crv` (pasa por `heredarMarcas`; `idsFotoEnUso_` cuida `crv.fot`). Administración decide con la contraseña (`crvAbrir`,
   `crvResolver`). `tests/test_cruce_ventas.js` (71). Revisión de solo lectura contra Kommo: workflow «Verificar cruces de ventas».
+  🔎 **La revisión de ventas anteriores en «Ventas en pugna»** (23/11, dueño: *«se supone que debería salirme acá, en el panel»* → «SI»): el
+  workflow «Verificar cruces de ventas» (los lunes 07:00 de Bolivia y a mano; GUARDA solo desde main y fuera de un push, `CRUCE_GUARDAR`) deja
+  el resultado en la fila del sistema **`__cruces_rev__`** (`CRUREV_ID`, en `esFilaSistema`; `filaRevision`/`guardarRevision` del verificador:
+  solo ids de pedidos y nombres del equipo, nunca del cliente; sin sello, la escribe solo él). El panel (`crvRevDatos`/`crvRevHtml`, al final
+  de `crvCuerpoHtml`) la muestra con la contraseña: cada venta de la misma marca con su cliente (de la planilla), quién atendía y por qué,
+  «lo que más se repite» y las de la otra marca aparte. Solo muestra. `test_verificar_cruce` §14, `tests/test_cruces_rev_pagina.js` (11).
+  🗓️ **El efectivo «desde el …» de «Tu día» / al día** = el cobro más viejo que ningún retiro tapó (`misEfectivoDatos().viejo`, el mismo
+  emparejamiento que «Efectivo por retirar»); antes, con un retiro que tapó otros cobros, salía el primero del mes («18 días» contra «2 días»).
+  `tests/test_efectivo_desde.js` (5; 2 rojas contra lo de antes). La foto del lunes 23/11 no cambia con el arreglo.
   🔀 **«Ventas en pugna» en «¿Quién lo atiende?», solo con la contraseña** (22/11, dueño: *«¿Eduardo dónde ve lo que está en pugna… y de quiénes?»*
   → «Sí» → *«No en administración, eso más lo usa logística, que esté en quien atendió pero salga solo con la clave»*): `#qa-pugna` (`qaPugnaPintar`,
   desde `qaPintar`, `mostrarBotonesTodos`, `crxTomar` y `crvResolver`), plegado salvo con pedidos de revisión, con lo mismo de la ventana (`crvCuerpoHtml`):

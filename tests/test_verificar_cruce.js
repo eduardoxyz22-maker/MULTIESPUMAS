@@ -375,6 +375,30 @@ chk(LLAMADAS.length > 0 && LLAMADAS.every((u) => u.indexOf('heaven-prueba') >= 0
   chk(Array.isArray(r.res) && r.res.length === 0 && r.n === 1, '13e una lista de verdad vacía se acepta sin reintentar', JSON.stringify(r));
 }
 
+/* 14 · (23/11) lo que va al panel: un renglón por pedido con indicio, solo id y nombres del equipo; una fila del sistema, sin el cliente */
+{
+  nuevo();
+  const a = cliente('heaven', '71100001', 12); charla('heaven', a.lid, 12, T - 3 * D);              // Maria conversaba, vende Isabel
+  cliente('heaven', '71100009', 11);                                                                 // sin cruce
+  const R = correr([venta('o', 'Isabel Robledo', '71100001', { cliente: 'JUAN PEREZ', direccion: 'CALLE FALSA 123' }), venta('n', 'Isabel Robledo', '71100009', { cliente: 'OTRO CLIENTE' })], '14');
+  const it = R.items[0] || {};
+  chk(R.items.length === 1 && it.id === 'o' && it.v === 'Isabel Robledo' && it.m === 'h' && it.mm === 1 && it.wa === 1, '14a un renglón para el pedido con indicio (y ninguno para el otro): ' + J(R.items));
+  chk(J(it.o) === J([['Maria Flores', 'h', 'c', 0]]), '14b quién atendía, de qué marca y por qué (conversaba): ' + J(it.o));
+  const f = V.filaRevision(R, 2, 14, 1763900000000), o = JSON.parse(f.observaciones);
+  chk(f.id === V.REV_ID && f.fecha === '' && /^🔎/.test(f.cliente) && o.n === 2 && o.d === 14 && o.i.length === 1, '14c una fila del sistema sin fecha, con cuántas se miraron: ' + J({ id: f.id, n: o.n, d: o.d }));
+  chk(!/JUAN|PEREZ|CALLE|71100001|OTRO CLIENTE/.test(JSON.stringify(f)), '14d nada del cliente: ni el nombre, ni la dirección, ni el celular');
+  const mandados = []; let resp = [JSON.stringify({ ok: true, pedidos: [] }), JSON.stringify({ ok: true })];
+  const g = V.guardarRevision(V.filaRevision(R, 2, 14, 1), [{ id: V.REV_ID, rev: 55 }], (c) => { mandados.push(JSON.parse(c)); return resp.shift(); });
+  chk(g.ok && mandados.length === 2 && mandados[1].action === 'save' && mandados[1].pedido.id === V.REV_ID && mandados[1].pedido.rev === 55,
+    '14e guarda UNA fila (si Google contesta la lectura, reintenta) con el sello que ya tenía: ' + J({ g, n: mandados.length, rev: (mandados[1] || {}).pedido && mandados[1].pedido.rev }));
+  chk(mandados.every((c) => c.pedido.id === V.REV_ID), '14f nunca manda otra fila');
+  const g2 = V.guardarRevision(V.filaRevision(R, 2, 14, 1), [], () => JSON.stringify({ ok: false, error: 'clave<script>' }));
+  chk(!g2.ok && g2.error === 'clavescript', '14g un «no» del servidor se informa con su código, sin copiar nada más: ' + J(g2));
+  const muchos = { items: Array.from({ length: 900 }, (_, i) => ({ id: 'id' + i, v: 'Isabel Robledo', m: 'h', o: [['Maria Flores', 'h', 'c', 0]], mm: 1, wa: 1, yo: 0, td: 0, ts: i })) };
+  const fm = V.filaRevision(muchos, 900, 14, 1);
+  chk(fm.observaciones.length <= 45000 && JSON.parse(fm.observaciones).i.length > 0, '14h con muchísimos, la fila entra en la celda: ' + fm.observaciones.length);
+}
+
 if (process.env.CRUCE_EJEMPLO) {
   nuevo(); delete PROPS.KOMMO_TOKEN_SUENA;
   const a = cliente('heaven', '71100001', 12); charla('heaven', a.lid, 12, T - 3 * D);

@@ -1,10 +1,15 @@
-name: Verificar cruces de ventas (solo lectura)
+name: Verificar cruces de ventas
 
 # 🔀 (20/11, dueño: «si otro asesor lo está atendiendo, le salga la alerta… procedamos a verificar») Antes de programar la alerta al cargar
 # un pedido, mide con lo de verdad cuántas ventas de los últimos días habrían sacado «lo atiende otra»: cada venta del panel pasa por el
 # MISMO «¿Quién lo atiende?» (quienAtiende_ del .gs + qaVeredicto de la página) con el reloj en el momento en que se cargó.
-# SOLO LECTURA: a Kommo solo GET y al panel solo la lectura. ⚠️ El registro es PÚBLICO: solo cantidades y nombres de vendedoras.
+# A Kommo solo GET. Al panel, la lectura y UNA escritura (23/11, dueño: «se supone que debería salirme acá, en el panel» → «SI»): la fila
+# del sistema `__cruces_rev__` con el resultado pedido por pedido (ids y nombres del equipo, nunca del cliente), que «Ventas en pugna» muestra
+# con la contraseña. Guarda SOLO desde main y fuera de un push (los lunes y a mano); un push o otra rama solo informa.
+# ⚠️ El registro es PÚBLICO: solo cantidades y nombres de vendedoras.
 on:
+  schedule:
+    - cron: '0 11 * * 1'      # lunes 07:00 de Bolivia (UTC-4)
   workflow_dispatch:
     inputs:
       dias:
@@ -35,5 +40,7 @@ jobs:
           KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
           KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
           PANEL_URL: ${{ secrets.PANEL_URL }}
+          PANEL_KEY: ${{ secrets.PANEL_KEY }}
           CRUCE_DIAS: ${{ github.event.inputs.dias || '14' }}
+          CRUCE_GUARDAR: ${{ (github.event_name != 'push' && github.ref == 'refs/heads/main') && '1' || '0' }}
         run: node herramientas/verificar_cruce_ventas.js
