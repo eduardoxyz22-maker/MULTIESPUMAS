@@ -1062,8 +1062,10 @@ Playwright salvo su bandera.
 ### 🔐🗑💾 La puerta GET, la Papelera y el respaldo probado (451, 452 y 453, 22/11; dueño: «451, 452 y 453» con la muestra https://claude.ai/artifact/AS5G5Tp85Bmq7d2VDKq1rk; servidor `2026-11-22-a`, lo implementa el dueño)
 - 🛑 **DESCARTADO (23/11, dueño: «dejarlo como está… dejar la 21-a»)**: la Papelera (452) y la prueba del respaldo (453) NO se implementan. Siete
   revisiones de Jarvis (23-a … 23-g) siguieron encontrando casos de recuperación a medias y de reconstrucción del historial; Jarvis recomendó
-  mantener la 21-a. **En producción queda la `2026-11-21-a` y ningún `.gs` posterior se implementa.** ⚠️ El `.gs` del repo dice 22-a (lleva la
-  Papelera): NO dárselo al dueño para pegar. Un cambio NUEVO del servidor parte de la 21-a (`92c7cfa…`, 14.111 líneas), no del archivo del repo.
+  mantener la 21-a. **En producción queda la `2026-11-21-a`.** Desde el 23/11 el `.gs` del repo es la **`2026-11-23-h` = la 21-a + «✍️ creó
+  el lead y anota»** (sin Papelera ni prueba del respaldo); la 22-a vive en el historial (`254f324…`), y `test_papelera`, `test_respaldo_prueba`
+  y `test_puerta_get` la prueban desde ahí. La página prende «🗑 Lo borrado» y el aviso del respaldo SOLO con un servidor 2026-11-22-x
+  (`servidorPapelera`): «≥ 22-a» ya no alcanza.
   Lo de la página («🗑 Lo borrado», el aviso del respaldo) queda inerte: se prende solo con un servidor ≥ 22-a. Las versiones 23-a … 23-g están
   en la rama LOCAL `respaldo-papelera-23g` (no subida), por si algún día se retoma. La puerta GET (451) sigue sirviendo sin tocar el servidor:
   la 21-a ya respeta `GET_CERRADO` (archivo aparte `herramientas/cerrar_puerta_get.gs`).
@@ -1159,7 +1161,12 @@ la ESCRIBIÓ, como la conversación: `l.nota` {ts, quien, txt} → `qaVeredicto`
 cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Libre». (Fable, 21/11) «pas…» solo con lo que sigue («pasa POR», «pasa MAÑANA»), `QA_NOTA_SI` sin `QA_NOTA_NO` («no va a comprar», «compró en otra», «competencia»); las del panel («🧾», «🙅», «Cotización COT») no; las notas van de a 4 páginas de 250 (`QA_NOTAS_PAGINAS`; más = incompleto); la consulta del formulario manda `solo:<marca>`. Sin charla, sin tarea y sin nota no avisa (dueño: *«un cliente
 puede pasar por 3 tiendas a cotizar, no hay lío»*). 🟡 **Pero si hay un lead de OTRA asesora creado o tocado en los últimos
 15 días** (no perdido, no el propio) el cartel dice «Ojo: el lead es de X… preguntale antes» en vez de «Libre» (23/11, dueño: «Ojo, en amarillo»;
-`qaVeredicto` → `V.rec`, `qaCartel`). SOLO el cartel: `k` sigue «libre», así que el aviso al guardar, el WhatsApp y la revisión no cambian. `test_quien_atiende` L0-L4. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
+`qaVeredicto` → `V.rec`, `qaCartel`). SOLO el cartel: `k` sigue «libre», así que el aviso al guardar, el WhatsApp y la revisión no cambian. `test_quien_atiende` L0-L4.
+✍️ **Creó el lead y anota** (servidor **`2026-11-23-h`**, 23/11; dueño: *«si un cliente visita la tienda y ellos lo crean…»* y, al comprobar que el chat
+de Kommo no deja escribirle primero, *«un cliente creado en visita tienda, sería por las notas nomás»*): en un lead que CREÓ una persona (`created_by`
+≠ 0), cada nota de ESA persona en ese lead (cualquiera, menos las del panel, `qaNotaPanel_`) de los últimos 15 días la deja atendiéndolo 15 días desde
+la nota: `l.creoNota` {ts, quien, txt, cre} → `qaResumenDe_`, `cruceOtros_` (WhatsApp), `qaVeredicto` (`por:'creo'`, `qaCreoTxt`), el aviso al guardar,
+y la revisión (letra `l`). La de otra persona en ese lead sigue la regla de la nota de visita. Sin nota, el «🟡 Ojo». `test_quien_atiende` W1-W14. `test_quien_atiende` N1-N16, `test_cruce_ventas` 3f-3h y 8g.
 Medido contra el Kommo real (21/11, «Probar ¿Quién lo atiende?» §5b): el pedido de notas da 200/204, el filtro por lead anda, y de 158 notas de
 personas en 15 días, 57 hablan de visita o compra.
 ⚠️ **Antes de guardar, el aviso se vuelve a mostrar** (21/11, dueño: *«antes de guardar debería volver a este mensaje, mostrarlo y de ahí recién permitir

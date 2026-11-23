@@ -283,6 +283,24 @@ function servidor() {
   chk('N21 · un `solo` que no es una marca se ignora (las dos cuentas)', rs2.cuentas.length === 2, rs2.cuentas.map(c => c.marca));
   kn.K.notas = []; nota(1, 'Pasará por la sucursal Banzer a comprar, acá no hay stock', S - 2 * D, U_CAR);
   global.__RNOTA = cargar(kn.K).post({ action:'quienAtiende', cel:'77460001' });
+  /* ✍️ (2026-11-23-h, dueño 23/11: «un cliente creado en visita tienda, sería por las notas nomás»; el chat de Kommo no deja escribirle primero) */
+  const kc = kommo(); kc.contacto(82, 'ROSA INVENTADA', '77460002', [821]); kc.lead(821, { responsible_user_id:U_CAR, created_by:U_CAR, created_at:S - 40 * D, status_id:103 });
+  const notaC = (id, txt, ts, quien) => kc.K.notas.push({ id, entity_id:821, note_type:'common', params:{ text:txt }, created_at:ts, updated_at:ts, created_by:quien });
+  notaC(1, 'Le mandé la cotización del Titanio 140', S - 3 * D, U_CAR);
+  const Ac = cargar(kc.K), rc = Ac.post({ action:'quienAtiende', cel:'77460002', quien:'Maria Flores' }), lc = rc.cuentas[0].leads[0];
+  chk('W1 · lead CREADO por Carola + una nota suya cualquiera («le mandé la cotización») hace 3 días → creoNota con quién, cuándo y el texto', lc.creoNota && lc.creoNota.quien === 'Carola Chavez' && lc.creoNota.ts === S - 3 * D && /cotizaci/.test(lc.creoNota.txt) && lc.crea === 'Carola Chavez' && !lc.nota, lc);
+  chk('W2 · y la hoja dice «Atiende: Carola Chavez» (sin conversación, tarea ni nota de visita)', /^Atiende: Carola Chavez$/.test(Ac.hojas['Quién atiende'].filas[1][4]), Ac.hojas['Quién atiende'].filas[1]);
+  const otraC = (o, notas) => { kc.K.notas = []; (notas || [['No contesta', S - D, U_CAR]]).forEach((n, i) => notaC(10 + i, n[0], n[1], n[2])); kc.lead(821, Object.assign({ responsible_user_id:U_CAR, created_by:U_CAR, created_at:S - 40 * D, status_id:103 }, o)); return cargar(kc.K).post({ action:'quienAtiende', cel:'77460002' }).cuentas[0].leads[0].creoNota; };
+  chk('W3 · «no contesta» también cuenta (cualquier nota de quien lo creó)', !!otraC({}), otraC({}));
+  chk('W4 · el lead lo creó el BOT (created_by 0): la nota de Carola no basta (sigue la regla de la nota de visita)', otraC({ created_by:0 }) === null);
+  chk('W5 · la nota la escribió OTRA persona (María) en el lead que creó Carola: no', otraC({}, [['Llamar el lunes', S - D, U_MAR]]) === null);
+  chk('W6 · la nota de Carola es de hace 20 días: no', otraC({}, [['Llamar el lunes', S - 20 * D, U_CAR]]) === null);
+  chk('W7 · la que escribe el propio panel («🧾 …») no cuenta', otraC({}, [['🧾 Venta cargada en el panel de pedidos: OC 11-270', S - D, U_CAR]]) === null);
+  chk('W8 · lead PERDIDO: no', otraC({ status_id:143 }) === null);
+  const ultC = otraC({}, [['Llamar el lunes', S - 5 * D, U_CAR], ['Quedó en pensarlo', S - D, U_CAR]]);
+  chk('W9 · con varias notas suyas vale la más nueva (vale hasta 15 días desde esa)', ultC && ultC.ts === S - D && /pensarlo/.test(ultC.txt), ultC);
+  kc.K.notas = []; notaC(1, 'Le mandé la cotización del Titanio 140', S - 3 * D, U_CAR); kc.lead(821, { responsible_user_id:U_CAR, created_by:U_CAR, created_at:S - 40 * D, status_id:103 });
+  global.__RCREO = cargar(kc.K).post({ action:'quienAtiende', cel:'77460002' });
   return r;
 }
 
@@ -383,6 +401,14 @@ async function pagina(respuesta) {
   const nInc = JSON.parse(JSON.stringify(viejo)); nInc.cuentas[0].notasOk = false;
   t = await buscar('70011122', 'Isabel Robledo', nInc);
   chk('N15 · sin las notas: «No se pudo saber», nunca «Libre», y lo dice', /No se pudo saber/.test(t) && /no devolvió las notas/.test(t) && !/Libre/.test(t), t.slice(0, 300));
+  t = await buscar('77460002', 'Maria Flores', global.__RCREO, '2026-11-23-h');
+  chk('W10 · María busca: «Lo está atendiendo Carola Chavez» porque creó el lead y anotó, con las fechas y lo que dice', /Lo está atendiendo Carola Chavez/.test(t) && /creó el lead el 11\/10 y anotó en Kommo el 17\/11/.test(t) && /vale hasta el 02\/12/.test(t) && /cotización del Titanio/.test(t) && !/Libre/.test(t), t.slice(0, 500));
+  chk('W11 · el lead muestra «✍️ Creó el lead y anotó»', /Creó el lead y anotó/.test(t), t);
+  t = await buscar('77460002', 'Carola Chavez', global.__RCREO, '2026-11-23-h');
+  chk('W12 · Carola busca: «Lo estás atendiendo vos» (creaste el lead y anotaste)', /Lo estás atendiendo vos/.test(t) && /Creaste el lead el 11\/10 y anotaste en Kommo/.test(t), t.slice(0, 300));
+  chk('W13 · la regla a la vista explica lo del cliente que vino a la tienda', await page.evaluate(() => /creó el lead/.test(document.querySelector('.qa-regla').textContent) && /cualquier nota suya/.test(document.querySelector('.qa-regla').textContent)));
+  const vC = await page.evaluate((r) => { var V = qaVeredicto(r, 'Maria Flores'); return { k:V.k, por:V.otros.map(function (o) { return o.por; }) }; }, global.__RCREO);
+  chk('W14 · la regla (k) la cuenta: «otro», por «creo» (el aviso al guardar y la revisión la ven igual)', vC.k === 'otro' && vC.por.join() === 'creo', vC);
   chk('N16 · la regla a la vista nombra la nota de visita o compra', await page.evaluate(() => /visita o una compra/.test(document.querySelector('.qa-regla').textContent)));
   /* 🟡 (23/11, dueño: «¿por qué sale libre y abajo muestra que sí lo están atendiendo?» → «Ojo, en amarillo») */
   t = await buscar('70011122', 'Isabel Robledo', viejo);

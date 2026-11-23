@@ -4766,6 +4766,7 @@ function glSigue(){
           <li>Una vendedora tiene la oportunidad mientras haya <b>conversado con el cliente en los últimos <span class="qa-dias">15</span> días</b>.</li>
           <li><b>Conversar</b> = un mensaje del cliente y uno de la vendedora con <b>no más de 24 horas</b> entre los dos. Un mensaje solo (el cliente escribió y nadie contestó, o la vendedora escribió y el cliente no contestó) no cuenta. Las respuestas del bot tampoco.</li>
           <li><b>Una nota en Kommo</b> de la vendedora, de los últimos <span class="qa-dias">15</span> días, que habla de una <b>visita o una compra</b> («pasará por Banzer a comprar», «viene a la tienda», «no hay stock, lo compra el lunes») cuenta igual que conversar. Otras notas («no contesta») no.</li>
+          <li><b>El cliente que vino a la tienda</b> (23/11): si la vendedora <b>creó el lead</b> en Kommo, <b>cualquier nota suya en ese lead</b> de los últimos <span class="qa-dias">15</span> días («le mandé la cotización», «llamar el lunes», «no contesta») cuenta igual que conversar: el chat de Kommo no deja escribirle primero. Si creó el lead y no anotó nada, el cartel dice «Ojo, preguntale antes».</li>
           <li><b>Excepción:</b> una fecha acordada y anotada en Kommo como tarea (compra el mes que viene, espera la reposición, una entrega agendada…) la mantiene aunque pasen los 15 días. La vendedora tiene que hacer el seguimiento acordado.</li>
           <li>Que pasen los 15 días <b>no pasa la venta a otra</b> automáticamente; un mensaje suelto de último momento (sin respuesta del cliente) tampoco revive la oportunidad. Un lead marcado como perdido no retiene a nadie. Si el cliente <b>compró hace <span class="qa-dias">15</span> días o menos</b>, el cartel dice con quién. Crear la ficha primero, tener el contacto asignado o haberlo atendido en otra compra no da derecho por sí solo.</li>
         </ul>
@@ -11523,7 +11524,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-11-21-a';   // (21/11, 11-21-a) 📝 la nota de Kommo de visita o compra cuenta en «¿Quién lo atiende?» y en el cruce de ventas · (20/11, 11-20-d) 📅 un pedido NUEVO forzado (Importar ROHO para el día elegido, aunque esté lleno o cerrado) entra · (20/11, 11-20-c, IMPLEMENTADO por el dueño) 🔀 el cruce de ventas («tu cliente acaba de comprar» a la asesora que lo atendía, list.cx para «Pedir revisión») · (20/11, 11-20-b) 📄 el PDF del pedido del cliente (pdfPedido), 🔧 la ATC contra costo en el efectivo del WhatsApp y 📥 las ventas de Sueña desde su Kommo a la bandeja (20/11, 11-20-a) 📞 «¿Quién lo atiende?» (quienAtiende) · antes: (16/11, 11-16-a) 💬 el chat del equipo, 🤖 Claude lee las observaciones, las fotos de las ATC y la nota contra los precios, 🧠 el porqué de la semana, la mano del equipo, las ATC, los productos y el stock de la semana, 🏆 el bono Titanio con la foto del lunes · antes: (15/11, 11-15-a) 💳 el voucher de la tarjeta trae el lote, la autorización y el banco del POS (mejora 331: la página los muestra y compara solo con esta versión); el cierre del día con la meta y las tiendas, por qué se movió la proyección, el cierre del mes, Black Friday y las preguntas del dueño (332, 336, 339, 340, 341)
+var SCRIPT_VERSION_ESPERADA='2026-11-23-h';   // (23/11, 11-23-h) ✍️ «¿Quién lo atiende?» y el cruce: quien CREÓ el lead y anota en él (cualquier nota) lo atiende 15 días desde la nota; es la 21-a + eso, SIN la Papelera ni la prueba del respaldo (22-a, descartadas) · (21/11, 11-21-a) 📝 la nota de Kommo de visita o compra cuenta en «¿Quién lo atiende?» y en el cruce de ventas · (20/11, 11-20-d) 📅 un pedido NUEVO forzado (Importar ROHO para el día elegido, aunque esté lleno o cerrado) entra · (20/11, 11-20-c, IMPLEMENTADO por el dueño) 🔀 el cruce de ventas («tu cliente acaba de comprar» a la asesora que lo atendía, list.cx para «Pedir revisión») · (20/11, 11-20-b) 📄 el PDF del pedido del cliente (pdfPedido), 🔧 la ATC contra costo en el efectivo del WhatsApp y 📥 las ventas de Sueña desde su Kommo a la bandeja (20/11, 11-20-a) 📞 «¿Quién lo atiende?» (quienAtiende) · antes: (16/11, 11-16-a) 💬 el chat del equipo, 🤖 Claude lee las observaciones, las fotos de las ATC y la nota contra los precios, 🧠 el porqué de la semana, la mano del equipo, las ATC, los productos y el stock de la semana, 🏆 el bono Titanio con la foto del lunes · antes: (15/11, 11-15-a) 💳 el voucher de la tarjeta trae el lote, la autorización y el banco del POS (mejora 331: la página los muestra y compara solo con esta versión); el cierre del día con la meta y las tiendas, por qué se movió la proyección, el cierre del mes, Black Friday y las preguntas del dueño (332, 336, 339, 340, 341)
 // antes:   // (14/11, 11-14-b) 🏬 la tienda del mall: los toques del mostrador y la rueda (mallToque/mallLeer), cupos de más (__cupos_extra__), apartar el lugar mientras se cobra (apartarCupo), la caja de Ventura (__caja_tienda__ con sello), la venta grande al dueño, las cotizaciones (cotGuardar/cotMarcar/cotLeer) y el bot de las 48 h (apagado: COT_BOT)
 // antes:   // (14/11, 11-14-a) 🧾 «Leer la nota» (mejora 216) y 📅 el cliente elige el día nuevo por el bot (mejora 217): los dos botones aparecen solo con esta versión · (13/11, 11-13-b) 🛰️📚 «🚚 Entregas por camión» pide `gpsHist` (cómo le fue a cada camión según el GPS: la hoja «Historial GPS») solo con esta versión · 🏭⏳ lo vencido de los mayoristas, los lunes a las 08:00 a Contabilidad (solo el servidor) · (13/11, 11-13-a) 🪶 las almohadas no cuentan como productos en el cierre del día · (11/11, 11-11-a) 🛏️💚 el cierre del día con la proyección de Heaven y de Sueña (solo el servidor)   // (09/11, 11-09-a) 👥 lo que escribe un número del equipo no es un cliente (solo el servidor)   // (07/11, 11-07-f) 📍📉💬 la ubicación 2 días antes, «cómo va cada vendedor» los lunes y el dueño le pregunta al bot (solo el servidor)
 // antes: '2026-11-07-d' (07/11) 🎙️ al que le manda un audio al bot, le recuerda que es un asistente automático; el cierre con productos y el botón
@@ -11539,6 +11540,9 @@ var SCRIPT_VERSION_ESPERADA='2026-11-21-a';   // (21/11, 11-21-a) 📝 la nota d
 var SCRIPT_CANDADO_DESDE='2026-08-21-a';   // el servidor rechaza días cerrados y turnos llenos (§4ce)
 var SCRIPT_GEO_DESDE='2026-07-27-c';       // sabe resolver enlaces cortos y buscar por dirección
 function servidorTiene(desde){ return !!SERVER_VER && String(SERVER_VER)>=String(desde); }
+/** 🗑💾 (23/11) La Papelera y la prueba del respaldo vinieron SOLO en la 2026-11-22-a, que nunca se implementó (dueño, 23/11: «dejarlo como está»).
+    La 2026-11-23-h y las que siguen salen de la 21-a, SIN ellas: «≥ 22-a» ya no alcanza para prenderlas. */
+function servidorPapelera(desde){ return servidorTiene(desde) && String(SERVER_VER).slice(0,10)==='2026-11-22'; }
 /* Lo que falta publicar, cuando el servidor anda pero no es la última: una línea en gris. */
 function scriptPendienteHtml(){
   if(!SERVER_VER || SERVER_VER===SCRIPT_VERSION_ESPERADA) return '';
@@ -73434,6 +73438,8 @@ function qaPanelPedidos(c8, nom){
 /** ¿Kommo contestó TODO? (= qaIncompleto_ del .gs) Si no, el cartel nunca dice «Libre» en verde (revisión de Fable, A1). */
 function qaIncompleto(r){ return ((r && r.cuentas)||[]).some(function(c){ return c.error || c.msgOk===false || c.tareasOk===false || c.notasOk===false || c.sinToken || c.cortado || c.usOk===false; }); }
 function qaN(n){ return String(n||'').trim() || '(sin asignar)'; }
+/** ✍️ (23/11) «creó el lead el 19/11 y anotó el 21/11 10:00: «…»» (sin HTML: quien lo usa lo escapa) */
+function qaCreoTxt(o){ return 'creó el lead'+(o.cre?' el '+fmtFechaCorta(isoDeTsBolivia(o.cre*1000)):'')+' y anotó en Kommo el '+qaFecha(o.ts)+(o.txt?': «'+o.txt+'»':''); }
 /** El cartel, con la regla (= qaResumen_ del .gs). Entra la respuesta del servidor (o la parte de UN cliente); sale
     {k:'libre'|'tuyo'|'otro'|'compro'|'nose', quien:[{n, por:'conv'|'fecha', ts, desde}], otros, compro, ultimo, inc}.
     · Cada vendedora que conversó en la ventana cuenta, aunque sea en el MISMO lead (Fable A4), con desde cuándo (`desde`).
@@ -73462,6 +73468,9 @@ function qaVeredicto(r, yo){
       if(l.tarea && l.tarea.ts>ahora) vig.push({ n:qaN(l.tarea.quien||l.resp), por:'fecha', ts:l.tarea.ts, desde:0, marca:c.marca, et:l.et, lid:l.id });
       /* 📝 (21/11, servidor 2026-11-21-a) una nota de Kommo de los últimos QA_DIAS días que habla de una visita o una compra, de quien la escribió */
       if(l.nota && l.nota.ts>=lim) vig.push({ n:qaN(l.nota.quien||l.resp), por:'nota', ts:l.nota.ts, desde:0, txt:String(l.nota.txt||''), marca:c.marca, et:l.et, lid:l.id });
+      /* ✍️ (23/11, servidor 2026-11-23-h; dueño: «un cliente creado en visita tienda, sería por las notas nomás») quien CREÓ el lead y anotó algo
+         en ese lead en los últimos QA_DIAS días (cualquier nota): lo atiende desde esa nota */
+      if(l.creoNota && l.creoNota.ts>=lim) vig.push({ n:qaN(l.creoNota.quien||l.resp), por:'creo', ts:l.creoNota.ts, desde:0, txt:String(l.creoNota.txt||''), cre:Number(l.creoNota.cre)||0, marca:c.marca, et:l.et, lid:l.id });
     });
   });
   /* una sola línea por vendedora: la conversación gana sobre la fecha acordada; de la conversación, la más nueva y la primera */
@@ -73515,7 +73524,7 @@ function cruceOtros(r, v, mk){
   (V.otros||[]).forEach(function(o){
     if(o.marca!==mk) return;
     var hits=eq.filter(function(x){ return qaMismo(x, o.n); }); if(hits.length!==1 || qaMismo(hits[0], v) || vistos[hits[0]]) return;
-    vistos[hits[0]]=1; out.push({ n:hits[0], por:o.por, ts:o.ts, txt:o.txt||'', ahora:V.ahora });
+    vistos[hits[0]]=1; out.push({ n:hits[0], por:o.por, ts:o.ts, txt:o.txt||'', cre:o.cre||0, ahora:V.ahora });
   });
   return out;
 }
@@ -73543,6 +73552,7 @@ function cruceFormPintar(){
   var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
   var det=L.map(function(o){
     if(o.por==='nota') return esc(o.n)+' anotó en Kommo el '+esc(qaFecha(o.ts))+' ('+qaHace(o.ts, o.ahora)+')'+(o.txt?': «'+esc(o.txt)+'»':'');
+    if(o.por==='creo') return esc(o.n)+' '+esc(qaCreoTxt(o))+' ('+qaHace(o.ts, o.ahora)+')';
     return o.por==='fecha' ? esc(o.n)+' tiene una fecha acordada con el cliente para el '+esc(qaFecha(o.ts)) : esc(o.n)+' conversó con el cliente el '+esc(qaFecha(o.ts))+' ('+qaHace(o.ts, o.ahora)+')';
   }).join(' · ');
   var wa=servidorTiene(CRUCE_SERVIDOR) ? ' Al guardar, a '+esc(nombres)+' se le avisa por WhatsApp que su cliente compró y que la venta la cargaste vos.' : '';
@@ -73802,7 +73812,7 @@ function crvCruces(){
    («Verificar cruces de ventas», los lunes 07:00 y a mano) mira cada venta de los últimos días con lo que había en Kommo al cargarla y deja el
    resultado en la fila del sistema `__cruces_rev__` (`CRUREV_ID`): {v, t, d, n, i:[{id, v, m, o:[[nombre, 'h'|'s', 'c'|'t'|'n', otraPrimero]],
    mm, wa, yo, td, ts}]}. Solo ids y nombres del equipo: el cliente sale de la planilla. Acá solo se MUESTRA (con la contraseña). */
-var CRUREV_POR={ c:'conversaba con el cliente', t:'tenía una tarea abierta', n:'anotó una visita o compra' };
+var CRUREV_POR={ c:'conversaba con el cliente', t:'tenía una tarea abierta', n:'anotó una visita o compra', l:'creó el lead y anotó un seguimiento' };
 /* 🔗 (23/11, dueño: «¿y yo soy adivino? ¿cómo sé que lo hizo por celular?») cada venta dice POR QUÉ dato se la encontró (el celular, en qué
    Kommo) y lleva al lead donde está la conversación. El subdominio de cada cuenta de Kommo (el mismo de CLAUDE.md); un id «c<n>» es un
    contacto sin lead. Una revisión guardada antes del 23/11 no trae el lead: queda el celular para buscarlo. */
@@ -74016,6 +74026,7 @@ function cruceAntesDeGuardar(otraVez){
   var nom=L.map(function(o){ return o.n; }), nombres=nom.length>1 ? nom.slice(0,-1).join(', ')+' y '+nom[nom.length-1] : nom[0];
   var det=L.map(function(o){
     if(o.por==='nota') return o.n+' anotó en Kommo el '+qaFecha(o.ts)+(o.txt?': «'+o.txt+'»':'');
+    if(o.por==='creo') return o.n+' '+qaCreoTxt(o);
     return o.por==='fecha' ? o.n+' tiene una fecha acordada con el cliente para el '+qaFecha(o.ts) : o.n+' conversó con el cliente el '+qaFecha(o.ts)+' ('+qaHace(o.ts, o.ahora)+')';
   });
   var wa='Si guardás, a '+nombres+' le llega un WhatsApp: «tu cliente compró, la venta la cargó '+q.v+'». Si el cliente era de ella, puede pedir revisión.';
@@ -74091,6 +74102,7 @@ function qaLeadHtml(l, marca, r){
   if(pares.length>1) filas.push('<div class="qa-l-f"><span>👥 Conversaron en estos '+QA_DIAS+' días</span><b>'+pares.slice().sort(function(a,b){ return (a.desde||a.ts)-(b.desde||b.ts); }).map(function(p, i){ return esc(qaN(p.quien))+' <small>(desde el '+esc(fmtFechaCorta(isoDeTsBolivia((p.desde||p.ts)*1000)))+(i===0?', primera':'')+')</small>'; }).join(' · ')+'</b></div>');
   filas.push('<div class="qa-l-f"><span>🙋 Último mensaje del cliente</span><b>'+(l.ultCli ? esc(qaFecha(l.ultCli))+' <small>('+qaHace(l.ultCli, ahora)+')</small>' : '—')+'</b></div>');
   filas.push('<div class="qa-l-f"><span>👩‍💼 Último mensaje de una vendedora</span><b>'+(l.ultVend ? esc(qaFecha(l.ultVend.ts))+' · '+esc(qaN(l.ultVend.quien))+' <small>('+qaHace(l.ultVend.ts, ahora)+')</small>' : '—')+'</b></div>');
+  if(l.creoNota) filas.push('<div class="qa-l-f"><span>✍️ Creó el lead y anotó</span><b>'+esc(qaFecha(l.creoNota.ts))+' · '+esc(qaN(l.creoNota.quien))+' <small>('+qaHace(l.creoNota.ts, ahora)+')</small>'+(l.creoNota.txt?'<br><small>«'+esc(l.creoNota.txt)+'»</small>':'')+'</b></div>');
   if(l.nota) filas.push('<div class="qa-l-f"><span>📝 Nota de visita o compra</span><b>'+esc(qaFecha(l.nota.ts))+' · '+esc(qaN(l.nota.quien))+' <small>('+qaHace(l.nota.ts, ahora)+')</small>'+(l.nota.txt?'<br><small>«'+esc(l.nota.txt)+'»</small>':'')+'</b></div>');
   if(l.tarea) filas.push('<div class="qa-l-f"><span>📅 Fecha acordada (tarea en Kommo)</span><b>'+esc(fmtFechaCorta(isoDeTsBolivia(l.tarea.ts*1000)))+' · '+esc(qaN(l.tarea.quien))+(l.tarea.puso && l.tarea.puso!==l.tarea.quien?' <small>(la puso '+esc(l.tarea.puso)+')</small>':'')+'</b></div>');
   return '<div class="qa-lead'+(vale?' qa-lead-vale':'')+'">'+
@@ -74112,8 +74124,9 @@ function qaCartel(V, chico){
   if(V.k==='libre') return '<div class="qa-ver qa-v-libre'+cls+'"><div class="qa-v-ic">✅</div><div><b>Libre: nadie lo está atendiendo</b><span>En los últimos '+QA_DIAS+' días no hubo conversación (cliente y vendedora a ≤ '+QA_PAR_H+' h), ni una fecha acordada, ni una nota de visita o compra en Kommo.'+(U?' La última fue con <b>'+esc(U.n)+'</b> el '+esc(qaFecha(U.ts))+' ('+qaHace(U.ts, V.ahora)+').':'')+'</span></div></div>';
   if(V.k==='compro') return '<div class="qa-ver qa-v-ojo'+cls+'"><div class="qa-v-ic">🛒</div><div><b>Ya compró con '+esc(V.compro.n)+'</b><span>Compró hace poco ('+(V.compro.vivo ? fc(V.compro.ts) : esc(qaFecha(V.compro.ts)))+', '+qaHace(Math.min(V.compro.ts, V.ahora), V.ahora)+'). Si es una compra nueva, hablalo con tu encargado.'+ojoInc+'</span></div></div>';
   var notaTxt=function(q){ return 'anotó en Kommo el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')'+(q.txt?': «'+esc(q.txt)+'»':''); };
-  var linea=function(q){ return q.por==='conv' ? esc(q.n)+': conversa desde el '+fc(q.desde||q.ts)+', la última el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')' : (q.por==='nota' ? esc(q.n)+': '+notaTxt(q) : esc(q.n)+': fecha acordada para el '+fc(q.ts)); };
-  if(V.k==='tuyo') return '<div class="qa-ver qa-v-tuyo'+cls+'"><div class="qa-v-ic">👍</div><div><b>Lo estás atendiendo vos</b><span>'+V.quien.map(function(q){ return q.por==='conv' ? 'Última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+')' : (q.por==='nota' ? 'Lo '+notaTxt(q).replace(/^anotó/,'anotaste') : 'Fecha acordada para el '+fc(q.ts)+': hacé el seguimiento'); }).join(' · ')+'.'+ojoInc+'</span></div></div>';
+  var creoTxt=function(q){ return esc(qaCreoTxt(q))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')'; };
+  var linea=function(q){ return q.por==='conv' ? esc(q.n)+': conversa desde el '+fc(q.desde||q.ts)+', la última el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+'; vale hasta el '+fc(q.ts+QA_DIAS*86400)+')' : (q.por==='nota' ? esc(q.n)+': '+notaTxt(q) : (q.por==='creo' ? esc(q.n)+': '+creoTxt(q) : esc(q.n)+': fecha acordada para el '+fc(q.ts))); };
+  if(V.k==='tuyo') return '<div class="qa-ver qa-v-tuyo'+cls+'"><div class="qa-v-ic">👍</div><div><b>Lo estás atendiendo vos</b><span>'+V.quien.map(function(q){ return q.por==='conv' ? 'Última conversación el '+esc(qaFecha(q.ts))+' ('+qaHace(q.ts, V.ahora)+')' : (q.por==='nota' ? 'Lo '+notaTxt(q).replace(/^anotó/,'anotaste') : (q.por==='creo' ? creoTxt(q).replace(/^creó/,'Creaste').replace(' y anotó',' y anotaste') : 'Fecha acordada para el '+fc(q.ts)+': hacé el seguimiento')); }).join(' · ')+'.'+ojoInc+'</span></div></div>';
   var yoV=V.quien.filter(function(q){ return V.otros.indexOf(q)<0; });
   return '<div class="qa-ver qa-v-otro'+cls+'"><div class="qa-v-ic">⚠️</div><div><b>Lo está atendiendo '+V.otros.map(function(q){ return esc(q.n); }).join(' y ')+(yoV.length?' (y vos)':'')+'</b><span>'+V.quien.map(linea).join(' · ')+'. Antes de atenderlo, hablalo con '+(V.otros.length>1?'ellas':(/^(\(|usuario \d)/.test(V.otros[0].n)?'quien lo tiene':esc(V.otros[0].n.split(' ')[0])))+' o con tu encargado.'+ojoInc+'</span></div></div>';
 }
@@ -81944,7 +81957,7 @@ function abrirLoBorrado(){
 function lbrCerrar(){ var ov=document.getElementById('lbr-overlay'); if(ov) ov.style.display='none'; }
 function lbrCargar(){
   LBR.err=''; LBR.L=null;
-  if(!servidorTiene(LBR_SERVIDOR)){ LBR.err='servidor'; lbrRender(); return Promise.resolve(); }
+  if(!servidorPapelera(LBR_SERVIDOR)){ LBR.err='servidor'; lbrRender(); return Promise.resolve(); }
   LBR.cargando=true; lbrRender();
   return conTopeDuro(apiPost({ action:'borradosLeer' }), 45000, 'tardo_datos').then(function(r){
     if(r && r.ok && Array.isArray(r.borrados)) LBR.L=r.borrados;
@@ -82032,11 +82045,11 @@ var RSP_SERVIDOR='2026-11-22-a', RSP_DIAS_AVISO=40, RESPALDO_SRV=null, RESPALDO_
 function rspVa(){ try{ return !navigator.webdriver || !!window.RSP_PRUEBA; }catch(e){ return true; } }
 /* Lo que trajo la lectura (o nada: con un servidor nuevo, «nunca se probó»). */
 function rspTomar(rp){
-  if(!servidorTiene(RSP_SERVIDOR)){ RESPALDO_SRV=null; RESPALDO_VISTO=false; return; }
+  if(!servidorPapelera(RSP_SERVIDOR)){ RESPALDO_SRV=null; RESPALDO_VISTO=false; return; }
   RESPALDO_SRV=(rp && rp.t) ? rp : null; RESPALDO_VISTO=true;
 }
 function rspEstado(){
-  if(!RESPALDO_VISTO || !servidorTiene(RSP_SERVIDOR)) return null;
+  if(!RESPALDO_VISTO || !servidorPapelera(RSP_SERVIDOR)) return null;
   var R=RESPALDO_SRV;
   if(!R) return { est:'nunca' };
   var dias=Math.floor((Date.now()-Number(R.t))/864e5);

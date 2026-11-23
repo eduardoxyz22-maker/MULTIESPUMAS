@@ -16,7 +16,11 @@
 const fs = require('fs'), vm = require('vm'), path = require('path');
 let PASS = 0, FAIL = 0;
 const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'), l, e != null ? ('· ' + (typeof e === 'string' ? e : JSON.stringify(e)).slice(0, 400)) : ''); };
-const GS = process.env.GS || path.resolve('google-apps-script.gs');
+const GS = process.env.GS || (() => {   // 🗑💾 (23/11) la Papelera y la prueba del respaldo están SOLO en la 2026-11-22-a (descartada por el dueño): se prueba esa, del historial
+  const f = require('path').join(require('os').tmpdir(), 'gs_22a_papelera.gs');
+  require('fs').writeFileSync(f, require('child_process').execSync('git show 254f324383c81050352c85dba9005cfdc2b63fae:google-apps-script.gs', { cwd: require('path').resolve(__dirname, '..'), maxBuffer: 1e8 }));
+  return f;
+})();
 const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 const CLAVE = 'clave-de-prueba';
 
