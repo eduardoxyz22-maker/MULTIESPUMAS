@@ -100,7 +100,7 @@ Propiedades del script.
   pedidos por correo (`cargar_pedidos.py`, corre en la sesión de Claude) de `PANEL_KEY`/`ADMIN_KEY` o `~/.claves_panel.json` (fuera del
   repo; `adminKey` solo al forzar) y corta con un mensaje si el servidor dice `clave`. `traer_kommo.py` no cambia (`kommoLeads` va con su
   propia clave, antes de la del equipo). Pruebas: `tests/test_clave_equipo.js` (el archivo aparte + el `.gs`, 29; también con GS=la 21-a),
-  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). Página 2026-11-23-d (el botón, sobre la 23-c publicada), SIN publicar.
+  `tests/test_clave_equipo_pagina.js` (5), `tests/test_claves_herramientas.py` (7). El botón y las herramientas PUBLICADOS el 23/11 con la página 2026-11-23-e (la de la 23-h); `cargar_pedidos.py` y su prueba siguen solo en la rama.
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además
@@ -1162,7 +1162,7 @@ cartel del formulario. Sin las notas (`notasOk:false`) = incompleto, nunca «Lib
 puede pasar por 3 tiendas a cotizar, no hay lío»*). 🟡 **Pero si hay un lead de OTRA asesora creado o tocado en los últimos
 15 días** (no perdido, no el propio) el cartel dice «Ojo: el lead es de X… preguntale antes» en vez de «Libre» (23/11, dueño: «Ojo, en amarillo»;
 `qaVeredicto` → `V.rec`, `qaCartel`). SOLO el cartel: `k` sigue «libre», así que el aviso al guardar, el WhatsApp y la revisión no cambian. `test_quien_atiende` L0-L4.
-✍️ **Creó el lead y anota** (servidor **`2026-11-23-h`**, 23/11; dueño: *«si un cliente visita la tienda y ellos lo crean…»* y, al comprobar que el chat
+✍️ **Creó el lead y anota** (servidor **`2026-11-23-h`**, 23/11, después de tres revisiones de Jarvis; dueño: «decide tu y publica»; PÁGINA PUBLICADA 23/11, versión 2026-11-23-e, con `SCRIPT_VERSION_ESPERADA` 23-h; el `.gs` lo implementa el dueño: volver atrás = ✏️ a la versión anotada Y pegar la 21-a de `42b7722…`, 14.111 líneas; dueño: *«si un cliente visita la tienda y ellos lo crean…»* y, al comprobar que el chat
 de Kommo no deja escribirle primero, *«un cliente creado en visita tienda, sería por las notas nomás»*): en un lead que CREÓ una persona (`created_by`
 ≠ 0), cada nota de ESA persona en ese lead (cualquiera, menos las del panel, `qaNotaPanel_`) de los últimos 15 días la deja atendiéndolo 15 días desde
 la nota: `l.creoNota` {ts, quien, txt, cre} → `qaResumenDe_`, `cruceOtros_` (WhatsApp), `qaVeredicto` (`por:'creo'`, `qaCreoTxt`), el aviso al guardar,
