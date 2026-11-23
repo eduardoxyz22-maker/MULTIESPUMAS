@@ -150,11 +150,32 @@ function cargarPagina() {
     '\nvar VENDEDORES=' + lista('VENDEDORES') + ';\nvar MARCAS=' + bloque('MARCAS') + ';', ctx, { filename: 'pedidos.html(qa)' });
   return ctx;
 }
-function leerPanel() {
-  const out = execFileSync('curl', ['-sS', '-L', '--max-time', '180', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '{"action":"list"}', PANEL + '?_=' + Date.now()],
+/* La lectura del panel (23/11, revisión de Jarvis): Google a veces convierte el POST en GET (CLAUDE.md §4fx) y, con la puerta GET
+   cerrada, contesta `get_cerrado`; o devuelve una página, o nada. Eso NO es «la planilla está vacía»: se reintenta, con tope
+   (LEER_INTENTOS, esperando LEER_ESPERAS), y si no se puede leer la corrida falla. Del registro (público) no sale nada de la respuesta. */
+const LEER_INTENTOS = 3, LEER_ESPERAS = [5000, 15000];
+function pedirPanel() {
+  return execFileSync('curl', ['-sS', '-L', '--max-time', '180', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '{"action":"list"}', PANEL + '?_=' + Date.now()],
     { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
-  const r = JSON.parse(out); if (!r || !Array.isArray(r.pedidos)) throw new Error('no se pudo leer la planilla');
-  return r.pedidos;
+}
+/** Por qué una respuesta no sirve ('' = sirve). Solo palabras nuestras: nunca un pedazo de lo que contestó Google. */
+function panelNoSirve(out) {
+  let r; try { r = JSON.parse(out); } catch (e) { return 'no contestó JSON'; }
+  if (r && r.error === 'get_cerrado') return 'Google la convirtió en GET (get_cerrado)';
+  if (r && r.ok === false) return 'el servidor dijo que no (' + String(r.error || 'sin motivo').replace(/[^\w-]/g, '').slice(0, 30) + ')';
+  if (!r || !Array.isArray(r.pedidos)) return 'la respuesta no trae la lista';
+  return '';
+}
+function leerPanel(pedir, esperar) {
+  pedir = pedir || pedirPanel; esperar = esperar || dormir;
+  let ultimo = '';
+  for (let i = 0; i < LEER_INTENTOS; i++) {
+    if (i) { console.log('↻ La lectura del panel no sirvió (' + ultimo + '): reintento ' + (i + 1) + ' de ' + LEER_INTENTOS); esperar(LEER_ESPERAS[i - 1] || LEER_ESPERAS[LEER_ESPERAS.length - 1]); }
+    let out; try { out = pedir(); } catch (e) { ultimo = 'sin respuesta de red'; continue; }
+    ultimo = panelNoSirve(out);
+    if (!ultimo) return JSON.parse(out).pedidos;
+  }
+  throw new Error('no se pudo leer la planilla (' + LEER_INTENTOS + ' intentos; el último: ' + ultimo + ')');
 }
 
 /* La lista de ventas a revisar: cada PEDIDO una vez, por su id (23/11, revisión de Jarvis: con «el mismo cliente y vendedora, una
@@ -393,4 +414,4 @@ function main() {
   process.exitCode = sal;
 }
 if (require.main === module) main();
-else module.exports = { ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, errorDe, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND };
+else module.exports = { ventasARevisar, resumir, salidaDe, informe, cuentasCaidas, errorDe, cargarPagina, cargarGs, cortarPregunta, cortarRespuesta, ENV, UMBRAL_PEND, leerPanel, panelNoSirve, LEER_INTENTOS };
