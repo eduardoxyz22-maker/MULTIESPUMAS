@@ -789,7 +789,7 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   `tests/test_producir_reparto.js` (67).
   · ⬇️ **Excel del pedido a cada fábrica** (24/11, dueño: *«no se supone que generaba un Excel?»* → «sí así»; página 2026-11-24-a, en la rama): «⬇️ Excel» al lado
   de «📋 Copiar para <fábrica>» (`papExcelFab`, `data-pap-excel-fab`) baja el MISMO pedido del plazo elegido: CÓDIGO, PRODUCTO, MEDIDA, MARCA y CANTIDAD
-  (sale de `papOrden`/`papSumaFab`, nada aparte) + TOTAL; `pedido-a-<fábrica>-<plazo>-<día>.xlsx`. Solo baja el archivo: no anota «¿Lo mandaste?».
+  (sale de `papOrden`/`papSumaFab`, nada aparte) + TOTAL; `pedido-a-<fábrica>-<plazo>-<día>.xlsx`. Antes de bajar abre un cuadro con las cantidades para corregir (`papExcelHtml`, `PAP_EXCEL`, mismo diseño que «¿Lo mandaste?»; 0 = ese producto no va, el total se recalcula; «Bajar el Excel» = `papExcelBajar`, «Cancelar» no baja nada) (24/11, dueño: *«antes de que baje no me sale el cuadro para editar como el de WhatsApp»*; página 2026-11-24-b); al bajar deja abajo «¿Lo mandaste?» con esas cantidades, como después de «Copiar». Bajar el archivo no anota nada como pedido.
   · **👥 Para clientes de cada tienda y las tiendas en 0** (§4lt-d, 20/10; dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*; PUBLICADO
   06/11 con la 06-c, `51b4896`): la columna de una tienda es lo de su LOCAL; Mia Plaza vende casi todo a domicilio (sale de PTF/Banzer). Lo de PTF y Banzer se muestra «para
   clientes de» la tienda de quien vendió (`producirTiendaCliente`, `D.C`, `r.CP`/`r.CB`, solo para mostrar) y las tiendas sin nada para su local salen con

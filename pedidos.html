@@ -56708,6 +56708,7 @@ function abrirPap(){
   PAP_FOCO_ANTES=document.activeElement;   // al cerrar, el foco vuelve al botón que la abrió
   PAP_S=papEstadoNuevo();   // siempre abre en «Qué pedir · 7 días», sin nada abierto (como el ejemplo)
   PAP_MANDE=null;           // ✓ (mejora 313) «¿Lo mandaste?» es de la copia de ESTA vez
+  PAP_EXCEL=null;           // ✏️ el cuadro de antes de bajar el Excel, también
   ov.style.display='flex';
   var sc=document.getElementById('pap-cuerpo'); if(sc) sc.scrollTop=0;
   papCalcularLuego(false);
@@ -56883,6 +56884,7 @@ function papFabHtml(F, p){
     '<div class="pap-facc"><button type="button" class="pap-btn'+(F.sinFab?' pap-claro':'')+'" data-pap-copiar-fab="'+F.k+'">📋 '+
     (F.sinFab?'Copiar la lista':'Copiar para '+esc(F.nombre))+'</button>'+
     '<button type="button" class="pap-btn pap-claro" data-pap-excel-fab="'+F.k+'" title="Baja el mismo pedido en un Excel: código, producto, medida, marca y cantidad.">⬇️ Excel</button></div></div>';
+  h+=papExcelHtml(F, p);   // ✏️ (24/11) antes de bajar el Excel: las cantidades para corregir
   h+=papMandeHtml(F, p);   // ✓ (15/11, mejora 313) después de copiar: «¿Lo mandaste?»
   h+='<div class="pap-fcue" id="pap-fabc-'+F.k+'"'+(abierta?'':' hidden')+'>';
   if(F.sinFab) h+='<p class="pap-aviso">Todavía no tienen fábrica: decí a cuál van para sumarlos a su pedido.</p>';
@@ -57162,8 +57164,11 @@ function papTextoFab(F, p){
 /* ⬇️ (24/11, dueño: «no se supone que generaba un Excel?» → «sí así») El MISMO pedido de «Copiar para <fábrica>» en un Excel: código, producto,
    medida, marca y cantidad, con el total abajo. Sale de `papOrden`/`papSumaFab` (nada se calcula aparte). Solo baja el archivo: no anota nada
    como pedido (eso es «¿Lo mandaste?»). */
-function papExcelFab(F, p){
-  var P=papPlazo(p), H=1, BS=2, rows=[];
+function papExcelFab(F, p, over){
+  /* `over` = {id: unidades} (24/11, dueño: «antes de que baje no me sale el cuadro para editar como el de WhatsApp»): lo que la persona corrigió
+     en el cuadro; 0 = ese producto no va. Sin `over`, todo como lo calculó el panel. */
+  var P=papPlazo(p), H=1, BS=2, rows=[], tot=0;
+  var qd=function(f){ return (over && over[f.id]!=null) ? over[f.id] : f[p]; };
   rows.push([{ v:(F.sinFab ? 'PRODUCTOS SIN FÁBRICA ASIGNADA' : 'PEDIDO A PRODUCCIÓN · '+F.nombre.toUpperCase()), s:H }]);
   rows.push([papPlazoLinea(P)]); rows.push([papHoyTxt(PAP)]);
   var vj=papViejoTxt(); if(vj) rows.push([vj]);
@@ -57172,17 +57177,58 @@ function papExcelFab(F, p){
   var bls=F.bloques.filter(function(b){ return papSuma(b.filas, p)>0; }), n=0;
   bls.forEach(function(b){
     papOrden(b.filas, p).forEach(function(f){
-      rows.push([f.cod||'', f.base||f.nombre, f.medida||'', b.marca||'', { v:f[p], t:'n', s:BS }]); n++;
+      var u=qd(f); if(!(u>0)) return;
+      rows.push([f.cod||'', f.base||f.nombre, f.medida||'', b.marca||'', { v:u, t:'n', s:BS }]); n++; tot+=u;
     });
   });
+  if(!n){ toast('Todo quedó en 0: no se bajó ningún Excel.','ok',4000); return null; }
   rows.push([]);
-  rows.push([{ v:'TOTAL', s:H }, '', '', '', { v:papSumaFab(F, p), t:'n', s:BS }]);
+  rows.push([{ v:'TOTAL', s:H }, '', '', '', { v:tot, t:'n', s:BS }]);
   var sc=[]; F.bloques.forEach(function(b){ sc=sc.concat(b.sinC||[]); });
   if(sc.length) rows.push(['Sin contar (no están en el Excel de PTF, no entran en este pedido): '+sc.join(' · ')]);
   var bytes=buildXlsx([{ name:'Pedido', cols:[{w:12},{w:46},{w:12},{w:12},{w:11}], matrix:rows }]);
   var nom='pedido-a-'+sinTildes(String(F.sinFab ? 'sin-fabrica' : F.nombre).toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+sinTildes(String(P.frase||p).toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+diaNegocio()+'.xlsx';
   downloadBlob(bytes, nom, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('⬇️ Excel descargado: '+(F.sinFab ? 'la lista sin fábrica' : 'el pedido a '+F.nombre)+' ('+n+(n===1?' producto':' productos')+') ✓','ok');
+  return nom;
+}
+/* ✏️ El cuadro de antes de bajar (24/11, dueño: «antes de que baje no me sale el cuadro para editar o modificar como el de WhatsApp»): mismo diseño que
+   «¿Lo mandaste?» (`pap-mande`), con las cantidades listas para corregir (0 = ese producto no va). «Bajar el Excel» lee lo escrito, baja el archivo y,
+   si la fábrica tiene nombre, deja abajo «¿Lo mandaste?» con esas mismas cantidades (como después de «Copiar»). «Cancelar» no baja nada. */
+var PAP_EXCEL=null;   // { fk, plazo, cant:{id:texto} } mientras el cuadro está abierto
+function papExcelCant(id, v){ if(PAP_EXCEL) PAP_EXCEL.cant[String(id)]=String(v==null?'':v); }
+function papExcelHtml(F, p){
+  var X=PAP_EXCEL; if(!X || X.fk!==F.k) return '';
+  var q=X.plazo||p, L=papMandeFilas(F, q); if(!L.length) return '';
+  var P=papPlazo(q);
+  return '<div class="pap-mande" id="pap-exbox" role="group" aria-label="Revisar antes de bajar el Excel"><div class="pap-mn-t"><b>✏️ Revisá el Excel '+(F.sinFab?'de la lista sin fábrica':'para '+esc(F.nombre))+' antes de bajarlo</b> <span>'+esc(P.frase)+'. Si querés otra cantidad de alguno, corregila (0 = ese producto no va en el Excel).</span></div>'+
+    '<div class="pap-mn-l">'+L.map(function(f){
+      var v=(X.cant[f.id]!=null) ? X.cant[f.id] : String(f[q]);
+      return '<label class="pap-mn-r"><span>'+esc(f.base)+(f.medida?(' <i>'+esc(f.medida)+'</i>'):'')+'</span><input type="text" inputmode="numeric" class="pap-mn-u pap-ex-u" data-id="'+esc(f.id)+'" value="'+esc(v)+'" onchange="papExcelCant(this.dataset.id, this.value)" aria-label="'+esc('Cuántos '+f.nombre+' van en el Excel')+'"></label>';
+    }).join('')+'</div>'+
+    '<div class="pap-mn-acc"><button type="button" class="pap-btn" data-pap="excel-bajar">⬇️ Bajar el Excel</button>'+
+      '<button type="button" class="pap-btn pap-claro" data-pap="excel-no">Cancelar</button></div></div>';
+}
+function papExcelBajar(){
+  var X=PAP_EXCEL; if(!X || !PAP || !PAP.FABS) return null;
+  var F=PAP.FABS.filter(function(x){ return x.k===X.fk; })[0]; if(!F){ PAP_EXCEL=null; papPintar(); return null; }
+  [].forEach.call(document.querySelectorAll('#pap-exbox .pap-ex-u'), function(i){ X.cant[i.getAttribute('data-id')]=i.value; });
+  var p=X.plazo, mal=[], over={};
+  papMandeFilas(F, p).forEach(function(f){
+    var t=String(X.cant[f.id]!=null ? X.cant[f.id] : f[p]).trim();
+    if(!/^\d{1,4}$/.test(t)){ mal.push(f); return; }
+    over[f.id]=parseInt(t, 10);
+  });
+  [].forEach.call(document.querySelectorAll('#pap-exbox .pap-ex-u'), function(i){ i.classList.toggle('err', mal.some(function(f){ return f.id===i.getAttribute('data-id'); })); });
+  if(mal.length){ toast('Corregí la cantidad de '+mal[0].nombre+': tiene que ser un número entero (0 si no va).','err',7000); return null; }
+  var nom=papExcelFab(F, p, over); if(!nom) return null;
+  PAP_EXCEL=null;
+  if(!F.sinFab && papMandeActivo()){   // como después de «Copiar»: «¿Lo mandaste?» con las cantidades del Excel
+    var c={}; Object.keys(over).forEach(function(id){ c[id]=String(over[id]); });
+    PAP_MANDE={ fk:F.k, plazo:p, cant:c }; delete PAP_S.cerradas[F.k];
+  }
+  papPintar();
+  var mc=document.getElementById('pap-mande'); if(mc) try{ mc.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){}
   return nom;
 }
 /* Para la copia: de qué día es el Excel, si no es de hoy. */
@@ -57325,15 +57371,23 @@ function papClick(ev){
   if(que==='mande-si'){ papMandeAnotar(); return; }
   if(que==='mande-no'){ PAP_MANDE=null; papPintar(); return; }
   if(que==='mande-deshacer'){ papMandeDeshacer(); return; }
-  if(a('data-pap-excel-fab')){
+  if(que==='excel-bajar'){ papExcelBajar(); return; }
+  if(que==='excel-no'){ PAP_EXCEL=null; papPintar(); return; }
+  if(a('data-pap-excel-fab')){   // ✏️ abre el cuadro para corregir cantidades; el archivo baja con «Bajar el Excel»
     var FE=null; PAP.FABS.forEach(function(x){ if(x.k===a('data-pap-excel-fab')) FE=x; });
-    if(FE) papExcelFab(FE, PAP_S.plazo);
+    if(FE && papMandeFilas(FE, PAP_S.plazo).length){
+      PAP_EXCEL={ fk:FE.k, plazo:PAP_S.plazo, cant:{} }; delete PAP_S.cerradas[FE.k];
+      if(PAP_MANDE && !PAP_MANDE.hecho) PAP_MANDE=null;   // un solo cuadro abierto por vez
+      papPintar();
+      var ec=document.getElementById('pap-exbox'); if(ec) try{ ec.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){}
+    } else if(FE) toast('No hay nada para pedir en este plazo.','ok',3000);
     return;
   }
   if(a('data-pap-copiar-fab')){
     var F=null; PAP.FABS.forEach(function(x){ if(x.k===a('data-pap-copiar-fab')) F=x; });
     if(F) papCopiar(papTextoFab(F, PAP_S.plazo), (F.sinFab ? 'la lista sin fábrica' : 'el pedido a '+F.nombre)+', '+papPlazo(PAP_S.plazo).frase);
     if(F && !F.sinFab && papMandeActivo() && papMandeFilas(F, PAP_S.plazo).length){   // ✓ (mejora 313) debajo, «¿Lo mandaste?»
+      PAP_EXCEL=null;
       PAP_MANDE={ fk:F.k, plazo:PAP_S.plazo, cant:{} }; delete PAP_S.cerradas[F.k]; papPintar();
       var mc=document.getElementById('pap-mande'); if(mc) try{ mc.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){}
     }
@@ -72294,7 +72348,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-24-a';
+var PANEL_V='2026-11-24-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

@@ -350,11 +350,30 @@ const ERRS=[];
     ov.querySelector('[data-pap-tab="pedir"]').click(); ov.querySelector('[data-pap-plazo="quin"]').click();
     PAP.FABS.forEach(function(F){ out.hay.push(!!ov.querySelector('[data-pap-excel-fab="'+F.k+'"]')); });
     var F=null; PAP.FABS.forEach(function(x){ if(x.nombre==='Multiespumas') F=x; });
-    var cap=null, orig=window.downloadBlob; window.downloadBlob=function(b,n,m){ cap={ n:n, m:m, b:Array.prototype.slice.call(b) }; };
+    var cap=null, orig=window.downloadBlob; window.downloadBlob=function(bb,n,m){ cap={ n:n, m:m, b:Array.prototype.slice.call(bb) }; };
     var antes=JSON.stringify(typeof PAP_MANDE==='undefined' ? null : PAP_MANDE);
+    /* ✏️ el botón abre el cuadro para corregir cantidades: NO baja nada todavía */
     ov.querySelector('[data-pap-excel-fab="'+F.k+'"]').click();
+    out.cuadro=!!document.getElementById('pap-exbox'); out.sinBajar=!cap;
+    var ins=[].slice.call(document.querySelectorAll('#pap-exbox .pap-ex-u'));
+    out.nIns=ins.length; out.valores=ins.map(function(i){ return i.value; });
+    /* Cancelar: cierra sin bajar */
+    document.querySelector('#pap-exbox [data-pap="excel-no"]').click();
+    out.cancelado=!document.getElementById('pap-exbox') && !cap;
+    ov.querySelector('[data-pap-excel-fab="'+F.k+'"]').click();
+    ins=[].slice.call(document.querySelectorAll('#pap-exbox .pap-ex-u'));
+    /* una cantidad mal escrita frena y no baja */
+    ins[0].value='abc'; document.querySelector('#pap-exbox [data-pap="excel-bajar"]').click();
+    out.frenaMal=!cap && !!document.getElementById('pap-exbox') && ins[0].classList.contains('err');
+    /* el primero en 0 (no va) y al segundo se le suma 5 */
+    var v1=parseInt(ins[1].value,10); ins[0].value='0'; ins[1].value=String(v1+5);
+    var esperado=0; ins.forEach(function(i){ esperado+=parseInt(i.value,10)||0; });
+    var idCero=ins[0].getAttribute('data-id'), fCero=null; F.bloques.forEach(function(b){ b.filas.forEach(function(f){ if(f.id===idCero) fCero=f; }); });
+    out.cero=fCero && (fCero.cod||''); out.esperado=esperado; out.v1=v1+5;
+    document.querySelector('#pap-exbox [data-pap="excel-bajar"]').click();
     window.downloadBlob=orig;
-    out.cap=cap; out.n=F && papSumaFab(F,'quin'); out.nProd=0; F.bloques.forEach(function(b){ out.nProd+=papOrden(b.filas,'quin').length; });
+    out.cap=cap; out.cerro=!document.getElementById('pap-exbox');
+    out.n=esperado; out.nProd=ins.length-1;
     out.mande=JSON.stringify(typeof PAP_MANDE==='undefined' ? null : PAP_MANDE)===antes;
     return out;
   });
@@ -362,12 +381,15 @@ const ERRS=[];
   if(X && X.cap){ const f=path.join(require('os').tmpdir(),'pap_x_'+process.pid+'.xlsx'); fs.writeFileSync(f, Buffer.from(X.cap.b));
     try{ xml=require('child_process').execFileSync('unzip',['-p',f,'xl/worksheets/sheet1.xml'],{encoding:'utf8'}); }catch(e){ xml='ERR '+e.message; } try{ fs.unlinkSync(f); }catch(e){} }
   const celdas=(xml.match(/<c [^>]*>(?:<is><t[^>]*>[^<]*<\/t><\/is>|<v>[^<]*<\/v>)<\/c>/g)||[]).length;
-  chk('RP7c «⬇️ Excel» en cada fábrica: baja un .xlsx con el pedido (título, plazo, CÓDIGO/PRODUCTO/MEDIDA/MARCA/CANTIDAD, un renglón por producto y el TOTAL)',
-    X && X.hay.length>0 && X.hay.every(Boolean) && X.cap && /^pedido-a-multiespumas-.*\.xlsx$/.test(X.cap.n) && /spreadsheetml/.test(X.cap.m)
+  chk('RP7c «⬇️ Excel» en cada fábrica: abre el cuadro para corregir las cantidades (con todos los productos), no baja nada hasta «Bajar el Excel» y «Cancelar» cierra sin bajar',
+    X && X.hay.length>0 && X.hay.every(Boolean) && X.cuadro && X.sinBajar && X.nIns>0 && X.valores.every(function(v){ return /^\d+$/.test(v); }) && X.cancelado,
+    X && { hay:X.hay, cuadro:X.cuadro, sinBajar:X.sinBajar, nIns:X.nIns, cancelado:X.cancelado });
+  chk('RP7c2 una cantidad mal escrita frena el Excel y se marca; con otra cantidad y un 0 baja el archivo con lo corregido (el 0 no va, el total se recalcula)',
+    X && X.frenaMal && X.cap && X.cerro && /^pedido-a-multiespumas-.*\.xlsx$/.test(X.cap.n) && /spreadsheetml/.test(X.cap.m)
     && /PEDIDO A PRODUCCIÓN · MULTIESPUMAS/.test(xml) && /CÓDIGO/.test(xml) && /PRODUCTO/.test(xml) && /MEDIDA/.test(xml) && /MARCA/.test(xml) && /CANTIDAD/.test(xml)
-    && /COLT0048/.test(xml) && /SUEÑA/i.test(xml) && /TOTAL/.test(xml) && new RegExp('>'+X.n+'<').test(xml) && celdas>=X.nProd*5,
-    X && { hay:X.hay, nombre:X.cap && X.cap.n, n:X.n, nProd:X.nProd, celdas, xml:xml.slice(0,300) });
-  chk('RP7d el Excel solo baja el archivo: no anota nada como pedido ni abre «¿Lo mandaste?»', X && X.mande, X);
+    && /TOTAL/.test(xml) && new RegExp('>'+X.esperado+'<').test(xml) && new RegExp('>'+X.v1+'<').test(xml) && !(X.cero && xml.indexOf('>'+X.cero+'<')>=0) && celdas>=X.nProd*5,
+    X && { frenaMal:X.frenaMal, nombre:X.cap && X.cap.n, esperado:X.esperado, v1:X.v1, cero:X.cero, nProd:X.nProd, celdas, xml:xml.slice(0,300) });
+  chk('RP7d el Excel solo baja el archivo: no anota nada como pedido (en la prueba, sin «¿Lo mandaste?»)', X && X.mande, X);
 
   chk('RP7b «📋 Copiar todo el reparto»: «QUÉ VA A DÓNDE», PTF, BANZER y cada tienda con su lista, y el total partido', /^QUÉ VA A DÓNDE/.test(r.todo) && /\nPTF \(\d+\):/.test(r.todo) && /\nTIENDA CHARCAS \(\d+\):/.test(r.todo) && /TOTAL: \d+ unidades \(PTF \d+ · Banzer \d+ · tiendas \d+\)$/.test(r.todo), r.todo.slice(0,500));
   chk('RP7c «📋 Copiar lo de Charcas»: «QUÉ VA A LA TIENDA CHARCAS», por marca, y su total', /^QUÉ VA A LA TIENDA CHARCAS/.test(r.lugar) && /SUEÑA · MULTIESPUMAS \(\d+\):/.test(r.lugar) && /TOTAL: \d+ unidades$/.test(r.lugar), r.lugar);
