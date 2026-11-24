@@ -342,6 +342,33 @@ const ERRS=[];
   });
   chk('RP7a «📋 Copiar para Multiespumas»: «PEDIDO A PRODUCCIÓN · MULTIESPUMAS», el plazo con fechas, SUEÑA, cada producto y el TOTAL',
     /^PEDIDO A PRODUCCIÓN · MULTIESPUMAS\nPara los próximos 15 días \(del 20\/10 al 04\/11\)\nMartes 20\/10\/2026/.test(r.fab) && /SUEÑA:/.test(r.fab) && /• COLCHON SOFT · 140x190 \(cód COLT0048\): \d+/.test(r.fab) && new RegExp('TOTAL: '+r.fabN+' unidades$').test(r.fab), r.fab.slice(0,400));
+  /* RP7c (24/11, dueño: «no se supone que generaba un Excel?» → «sí así»): «⬇️ Excel» al lado de «Copiar para <fábrica>» baja el MISMO pedido
+     (código, producto, medida, marca, cantidad y el TOTAL de «Copiar»); no anota nada como pedido. */
+  const X = await page.evaluate(() => {
+    if(typeof PAP==='undefined' || !PAP || !PAP.TODAS) return null;
+    var ov=document.getElementById('pap-overlay'), out={ hay:[] };
+    ov.querySelector('[data-pap-tab="pedir"]').click(); ov.querySelector('[data-pap-plazo="quin"]').click();
+    PAP.FABS.forEach(function(F){ out.hay.push(!!ov.querySelector('[data-pap-excel-fab="'+F.k+'"]')); });
+    var F=null; PAP.FABS.forEach(function(x){ if(x.nombre==='Multiespumas') F=x; });
+    var cap=null, orig=window.downloadBlob; window.downloadBlob=function(b,n,m){ cap={ n:n, m:m, b:Array.prototype.slice.call(b) }; };
+    var antes=JSON.stringify(typeof PAP_MANDE==='undefined' ? null : PAP_MANDE);
+    ov.querySelector('[data-pap-excel-fab="'+F.k+'"]').click();
+    window.downloadBlob=orig;
+    out.cap=cap; out.n=F && papSumaFab(F,'quin'); out.nProd=0; F.bloques.forEach(function(b){ out.nProd+=papOrden(b.filas,'quin').length; });
+    out.mande=JSON.stringify(typeof PAP_MANDE==='undefined' ? null : PAP_MANDE)===antes;
+    return out;
+  });
+  let xml='';
+  if(X && X.cap){ const f=path.join(require('os').tmpdir(),'pap_x_'+process.pid+'.xlsx'); fs.writeFileSync(f, Buffer.from(X.cap.b));
+    try{ xml=require('child_process').execFileSync('unzip',['-p',f,'xl/worksheets/sheet1.xml'],{encoding:'utf8'}); }catch(e){ xml='ERR '+e.message; } try{ fs.unlinkSync(f); }catch(e){} }
+  const celdas=(xml.match(/<c [^>]*>(?:<is><t[^>]*>[^<]*<\/t><\/is>|<v>[^<]*<\/v>)<\/c>/g)||[]).length;
+  chk('RP7c «⬇️ Excel» en cada fábrica: baja un .xlsx con el pedido (título, plazo, CÓDIGO/PRODUCTO/MEDIDA/MARCA/CANTIDAD, un renglón por producto y el TOTAL)',
+    X && X.hay.length>0 && X.hay.every(Boolean) && X.cap && /^pedido-a-multiespumas-.*\.xlsx$/.test(X.cap.n) && /spreadsheetml/.test(X.cap.m)
+    && /PEDIDO A PRODUCCIÓN · MULTIESPUMAS/.test(xml) && /CÓDIGO/.test(xml) && /PRODUCTO/.test(xml) && /MEDIDA/.test(xml) && /MARCA/.test(xml) && /CANTIDAD/.test(xml)
+    && /COLT0048/.test(xml) && /SUEÑA/i.test(xml) && /TOTAL/.test(xml) && new RegExp('>'+X.n+'<').test(xml) && celdas>=X.nProd*5,
+    X && { hay:X.hay, nombre:X.cap && X.cap.n, n:X.n, nProd:X.nProd, celdas, xml:xml.slice(0,300) });
+  chk('RP7d el Excel solo baja el archivo: no anota nada como pedido ni abre «¿Lo mandaste?»', X && X.mande, X);
+
   chk('RP7b «📋 Copiar todo el reparto»: «QUÉ VA A DÓNDE», PTF, BANZER y cada tienda con su lista, y el total partido', /^QUÉ VA A DÓNDE/.test(r.todo) && /\nPTF \(\d+\):/.test(r.todo) && /\nTIENDA CHARCAS \(\d+\):/.test(r.todo) && /TOTAL: \d+ unidades \(PTF \d+ · Banzer \d+ · tiendas \d+\)$/.test(r.todo), r.todo.slice(0,500));
   chk('RP7c «📋 Copiar lo de Charcas»: «QUÉ VA A LA TIENDA CHARCAS», por marca, y su total', /^QUÉ VA A LA TIENDA CHARCAS/.test(r.lugar) && /SUEÑA · MULTIESPUMAS \(\d+\):/.test(r.lugar) && /TOTAL: \d+ unidades$/.test(r.lugar), r.lugar);
   chk('RP7d la copia «todo hasta el 30/11» de todas las fábricas (función; la ventana copia por fábrica): cada producto con «15 días N + noviembre M»', /PRODUCIR TODO HASTA EL 30\/11 \(15 DÍAS \+ NOVIEMBRE\)/.test(r.tot) && /15 días \d+ \+ noviembre \d+/.test(r.tot) && /HEAVEN/.test(r.tot) && /SUEÑA/.test(r.tot), r.tot.slice(0,400));

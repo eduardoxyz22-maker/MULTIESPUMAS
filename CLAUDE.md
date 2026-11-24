@@ -786,7 +786,10 @@ Revisión de 81 agentes con la planilla real (59 hallazgos, cada uno verificado 
   Industrias Moreno = Heaven + ROHO, Multiespumas = Sueña; «📋 Copiar para <fábrica>») y «🗺️ Qué va a dónde» (PTF / Banzer / cada tienda con
   `producirRepartoFila`: suma exacto; tiendas por su venta de tienda de 30 días + la RPT pendiente; el resto con la regla de «📍 Banzer o PTF»).
   Solo mira. ⚠️ Clases `pap-*` (no reusar nombres del panel); la cuenta sale de `stockProducirCalc`/`STOCK_TP`, nunca aparte.
-  `tests/test_producir_reparto.js` (64).
+  `tests/test_producir_reparto.js` (67).
+  · ⬇️ **Excel del pedido a cada fábrica** (24/11, dueño: *«no se supone que generaba un Excel?»* → «sí así»; página 2026-11-24-a, en la rama): «⬇️ Excel» al lado
+  de «📋 Copiar para <fábrica>» (`papExcelFab`, `data-pap-excel-fab`) baja el MISMO pedido del plazo elegido: CÓDIGO, PRODUCTO, MEDIDA, MARCA y CANTIDAD
+  (sale de `papOrden`/`papSumaFab`, nada aparte) + TOTAL; `pedido-a-<fábrica>-<plazo>-<día>.xlsx`. Solo baja el archivo: no anota «¿Lo mandaste?».
   · **👥 Para clientes de cada tienda y las tiendas en 0** (§4lt-d, 20/10; dueño: *«no aparece Mia Plaza ni en 7 ni en 15 ni en 30?»*; PUBLICADO
   06/11 con la 06-c, `51b4896`): la columna de una tienda es lo de su LOCAL; Mia Plaza vende casi todo a domicilio (sale de PTF/Banzer). Lo de PTF y Banzer se muestra «para
   clientes de» la tienda de quien vendió (`producirTiendaCliente`, `D.C`, `r.CP`/`r.CB`, solo para mostrar) y las tiendas sin nada para su local salen con
