@@ -56881,7 +56881,8 @@ function papFabHtml(F, p){
     '<span class="pap-fnum" style="color:'+F.col+'">'+papFmt(n)+'<small>unidades</small></span>'+
     '<span class="pap-chev">'+PAP_CHEV+'</span></button>'+
     '<div class="pap-facc"><button type="button" class="pap-btn'+(F.sinFab?' pap-claro':'')+'" data-pap-copiar-fab="'+F.k+'">📋 '+
-    (F.sinFab?'Copiar la lista':'Copiar para '+esc(F.nombre))+'</button></div></div>';
+    (F.sinFab?'Copiar la lista':'Copiar para '+esc(F.nombre))+'</button>'+
+    '<button type="button" class="pap-btn pap-claro" data-pap-excel-fab="'+F.k+'" title="Baja el mismo pedido en un Excel: código, producto, medida, marca y cantidad.">⬇️ Excel</button></div></div>';
   h+=papMandeHtml(F, p);   // ✓ (15/11, mejora 313) después de copiar: «¿Lo mandaste?»
   h+='<div class="pap-fcue" id="pap-fabc-'+F.k+'"'+(abierta?'':' hidden')+'>';
   if(F.sinFab) h+='<p class="pap-aviso">Todavía no tienen fábrica: decí a cuál van para sumarlos a su pedido.</p>';
@@ -57158,6 +57159,32 @@ function papTextoFab(F, p){
   if(sc.length) L.push('Sin contar (no están en el Excel de PTF, no entran en este pedido): '+sc.join(' · '));
   return L.join('\n');
 }
+/* ⬇️ (24/11, dueño: «no se supone que generaba un Excel?» → «sí así») El MISMO pedido de «Copiar para <fábrica>» en un Excel: código, producto,
+   medida, marca y cantidad, con el total abajo. Sale de `papOrden`/`papSumaFab` (nada se calcula aparte). Solo baja el archivo: no anota nada
+   como pedido (eso es «¿Lo mandaste?»). */
+function papExcelFab(F, p){
+  var P=papPlazo(p), H=1, BS=2, rows=[];
+  rows.push([{ v:(F.sinFab ? 'PRODUCTOS SIN FÁBRICA ASIGNADA' : 'PEDIDO A PRODUCCIÓN · '+F.nombre.toUpperCase()), s:H }]);
+  rows.push([papPlazoLinea(P)]); rows.push([papHoyTxt(PAP)]);
+  var vj=papViejoTxt(); if(vj) rows.push([vj]);
+  rows.push([]);
+  rows.push(['CÓDIGO','PRODUCTO','MEDIDA','MARCA','CANTIDAD'].map(function(t){ return { v:t, s:H }; }));
+  var bls=F.bloques.filter(function(b){ return papSuma(b.filas, p)>0; }), n=0;
+  bls.forEach(function(b){
+    papOrden(b.filas, p).forEach(function(f){
+      rows.push([f.cod||'', f.base||f.nombre, f.medida||'', b.marca||'', { v:f[p], t:'n', s:BS }]); n++;
+    });
+  });
+  rows.push([]);
+  rows.push([{ v:'TOTAL', s:H }, '', '', '', { v:papSumaFab(F, p), t:'n', s:BS }]);
+  var sc=[]; F.bloques.forEach(function(b){ sc=sc.concat(b.sinC||[]); });
+  if(sc.length) rows.push(['Sin contar (no están en el Excel de PTF, no entran en este pedido): '+sc.join(' · ')]);
+  var bytes=buildXlsx([{ name:'Pedido', cols:[{w:12},{w:46},{w:12},{w:12},{w:11}], matrix:rows }]);
+  var nom='pedido-a-'+sinTildes(String(F.sinFab ? 'sin-fabrica' : F.nombre).toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+sinTildes(String(P.frase||p).toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')+'-'+diaNegocio()+'.xlsx';
+  downloadBlob(bytes, nom, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('⬇️ Excel descargado: '+(F.sinFab ? 'la lista sin fábrica' : 'el pedido a '+F.nombre)+' ('+n+(n===1?' producto':' productos')+') ✓','ok');
+  return nom;
+}
 /* Para la copia: de qué día es el Excel, si no es de hoy. */
 function papViejoTxt(){
   var v=(PAP && PAP.viejos) || [];
@@ -57298,6 +57325,11 @@ function papClick(ev){
   if(que==='mande-si'){ papMandeAnotar(); return; }
   if(que==='mande-no'){ PAP_MANDE=null; papPintar(); return; }
   if(que==='mande-deshacer'){ papMandeDeshacer(); return; }
+  if(a('data-pap-excel-fab')){
+    var FE=null; PAP.FABS.forEach(function(x){ if(x.k===a('data-pap-excel-fab')) FE=x; });
+    if(FE) papExcelFab(FE, PAP_S.plazo);
+    return;
+  }
   if(a('data-pap-copiar-fab')){
     var F=null; PAP.FABS.forEach(function(x){ if(x.k===a('data-pap-copiar-fab')) F=x; });
     if(F) papCopiar(papTextoFab(F, PAP_S.plazo), (F.sinFab ? 'la lista sin fábrica' : 'el pedido a '+F.nombre)+', '+papPlazo(PAP_S.plazo).frase);
@@ -72262,7 +72294,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-23-g';
+var PANEL_V='2026-11-24-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
