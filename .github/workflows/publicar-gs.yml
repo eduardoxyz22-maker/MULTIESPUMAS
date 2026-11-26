@@ -1,0 +1,125 @@
+name: Publicar el .gs en el Apps Script (a mano)
+
+# 🚀 (26/11/2026; dueño: «que modifiques el archivo directamente sin que yo tenga que copiar y pegar el código»)
+# SOLO A MANO: Actions → «Publicar el .gs en el Apps Script» → Run workflow, y hay que ESCRIBIR la versión que se va a publicar (así no sale nada por error).
+#
+# Qué hace: baja el proyecto de Google (`clasp pull`, y lo deja como copia de seguridad), cambia SOLO el archivo principal por google-apps-script.gs
+# (herramientas/gs_publicar/preparar.py; los archivos aparte del dueño y el manifiesto no se tocan), lo sube (`clasp push`), crea una versión
+# y la pone en la implementación de siempre (`clasp deploy -i`): la dirección /exec NO cambia. Después lee la versión que contesta el servidor.
+#
+# 🔐 El repositorio es PÚBLICO: nada de claves ni del ID del script en el código. Secretos de GitHub: APPS_SCRIPT_ID (el ID del proyecto), PANEL_URL (ya existe) y
+#    CLASPRC_JSON (el contenido de ~/.clasprc.json después de `npx @google/clasp@2.4.2 login`). El registro solo imprime versiones y nombres de archivo.
+# ⚠️ Los disparadores corren el código guardado en el editor: el push lo actualiza. Un permiso nuevo (scope) sigue pidiendo aprobarse una vez en el editor.
+# ↩️ Volver atrás = correr esto con la versión anterior del .gs (git) o ✏️ en Google a la versión anotada.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Escribí la SCRIPT_VERSION que vas a publicar (ej. 2026-11-23-h). Tiene que ser igual a la del .gs.'
+        required: true
+        type: string
+      descripcion:
+        description: 'Descripción de la versión en Google (corta, sin datos de clientes)'
+        required: false
+        default: 'Publicado desde GitHub'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publicar-gs
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Revisar que el .gs es el que dijiste y no está cortado
+        env:
+          VERSION_PEDIDA: ${{ inputs.version }}
+        run: |
+          set -e
+          node --check google-apps-script.gs
+          V=$(sed -n "s/^var SCRIPT_VERSION *= *'\([^']*\)'.*/\1/p" google-apps-script.gs | head -1)
+          F=$(tail -n 1 google-apps-script.gs | sed -n "s/^var FIN_DEL_ARCHIVO = '\([^']*\)';$/\1/p")
+          echo "SCRIPT_VERSION del archivo: $V · última línea: $F · pediste: $VERSION_PEDIDA"
+          [ -n "$V" ] && [ "$V" = "$F" ] && [ "$V" = "$VERSION_PEDIDA" ] || { echo "❌ Las tres versiones tienen que ser iguales"; exit 1; }
+          python3 -I tests/test_gs_publicar.py
+
+      - name: Bajar el proyecto de Google (copia de seguridad)
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+        run: |
+          set -e
+          [ -n "$CLASPRC_JSON" ] && [ -n "$APPS_SCRIPT_ID" ] || { echo "❌ Faltan los secretos CLASPRC_JSON y/o APPS_SCRIPT_ID"; exit 1; }
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          mkdir -p "$RUNNER_TEMP/gas"
+          cd "$RUNNER_TEMP/gas"
+          printf '{"scriptId":"%s"}' "$APPS_SCRIPT_ID" > .clasp.json
+          npx --yes @google/clasp@2.4.2 pull 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g'
+          ls -1 | grep -v '^\.clasp\.json$'
+          mkdir -p "$RUNNER_TEMP/respaldo"
+          cp -r . "$RUNNER_TEMP/respaldo/"
+          rm -f "$RUNNER_TEMP/respaldo/.clasp.json"
+
+      - name: Guardar la copia de seguridad (30 días)
+        uses: actions/upload-artifact@v4
+        with:
+          name: respaldo-apps-script
+          path: ${{ runner.temp }}/respaldo
+          retention-days: 30
+
+      - name: Cambiar solo el archivo principal, subir y poner en la implementación de siempre
+        env:
+          APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
+          PANEL_URL: ${{ secrets.PANEL_URL }}
+          DESCRIPCION: ${{ inputs.descripcion }}
+        run: |
+          set -e
+          cd "$RUNNER_TEMP/gas"
+          # la implementación de siempre = la de la dirección /exec del panel (secreto PANEL_URL, el mismo de panel.yml)
+          DEPLOY_ID=$(printf '%s' "$PANEL_URL" | sed -n 's#.*/macros/s/\([^/]*\)/exec.*#\1#p')
+          [ -n "$DEPLOY_ID" ] || { echo "❌ No pude sacar la implementación del secreto PANEL_URL"; exit 1; }
+          python3 -I "$GITHUB_WORKSPACE/herramientas/gs_publicar/preparar.py" . "$GITHUB_WORKSPACE/google-apps-script.gs"
+          npx --yes @google/clasp@2.4.2 push -f 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g'
+          SALIDA=$(npx --yes @google/clasp@2.4.2 version "$DESCRIPCION (${{ inputs.version }})" 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g')
+          echo "$SALIDA"
+          N=$(echo "$SALIDA" | sed -n 's/.*[Cc]reated version \([0-9][0-9]*\).*/\1/p' | tail -1)
+          [ -n "$N" ] || { echo "❌ No pude leer el número de versión creada"; exit 1; }
+          npx --yes @google/clasp@2.4.2 deploy -i "$DEPLOY_ID" -V "$N" -d "$DESCRIPCION (${{ inputs.version }})" 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g'
+          echo "✅ Versión $N de Google puesta en la implementación de siempre"
+
+      - name: Preguntarle al servidor qué versión contesta
+        env:
+          PANEL_URL: ${{ secrets.PANEL_URL }}
+        run: |
+          python3 -I - <<'PY'
+          import json, urllib.request, time
+          import os
+          URL = os.environ["PANEL_URL"]
+          esperada = "${{ inputs.version }}"
+          ultima = None
+          for i in range(6):
+              try:
+                  req = urllib.request.Request(URL + "?_=%d" % int(time.time()), data=json.dumps({"action": "list"}).encode(), headers={"Content-Type": "text/plain;charset=utf-8"})
+                  r = urllib.request.urlopen(req, timeout=90).read().decode("utf-8", "replace")
+                  j = json.loads(r)
+                  ultima = j.get("version") or ("clave" if j.get("error") == "clave" else None)
+                  if ultima == esperada: break
+              except Exception as e:
+                  ultima = "sin respuesta (%s)" % type(e).__name__
+              time.sleep(20)
+          print("versión que contesta el servidor:", ultima, "· esperada:", esperada)
+          raise SystemExit(0 if ultima == esperada else 1)
+          PY

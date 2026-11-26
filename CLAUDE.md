@@ -3251,6 +3251,14 @@ correo + el mensaje de **WhatsApp**.
   selector se esconde y el formulario quedaba sin salida. (3) Verificado: 25 productos en
   una RPT (la hoja crece), y los Excel de siempre siguen saliendo.
 
+## 🚀 Publicar el `.gs` sin copiar y pegar (26/11, dueño: *«que modifiques el archivo directamente sin que yo tenga que copiar y pegar»*; en la rama, NO en main)
+Workflow **`publicar-gs.yml`** (solo a mano; hay que escribir la `SCRIPT_VERSION`): `clasp pull` (copia de seguridad como artefacto 30 días) → `herramientas/gs_publicar/preparar.py`
+cambia SOLO el archivo principal (el de `function doPost(`, con su nombre en Google) y deja los archivos aparte del dueño y `appsscript.json` →
+`clasp push` → `clasp version` → `clasp deploy -i <la implementación de la /exec del secreto PANEL_URL>` (la dirección no cambia) → lee la versión que contesta el servidor.
+⚠️ `clasp push` BORRA lo que no esté en la carpeta: nunca subir el `.gs` suelto. Secretos de GitHub (el repo es PÚBLICO, nada en el código): `APPS_SCRIPT_ID`
+y `CLASPRC_JSON` (`~/.clasprc.json` tras `npx @google/clasp@2.4.2 login`), más `PANEL_URL` que ya existe; en Google, la API de Apps Script activada. Un permiso nuevo del `.gs` sigue pidiendo aprobarse en el editor.
+`tests/test_gs_publicar.py` (11). Sin los secretos no corre. NO se publicó a main ni se corrió nunca.
+
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
 ("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)
