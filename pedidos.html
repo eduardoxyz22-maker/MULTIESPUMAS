@@ -19667,6 +19667,9 @@ function proyeccionMes(ym){
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
   var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
   var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
+  // Para las marcas de tiendas, el día comercial termina a las 21:00 Bolivia, como en el bot.
+  var min=pryMinBo(Date.now()), abierto=estado==='curso' && pryDiaHabil(hoy) && min<21*60,
+      base=abierto?stockSumarDias(hoy,-1):hoy, dtT=dt-(abierto?1:0), drT=dr+(abierto?1:0);
   var V=pryVentas(), hist=pryMesesCerrados(hoy), metodos={};
   /* 🧪 La prueba, una sola vez por pantalla: los últimos meses cerrados (para elegir) y el que está en curso (para ver). */
   var curYm=hoy.slice(0,7), pruebas={};
@@ -19675,10 +19678,11 @@ function proyeccionMes(ym){
   var filas={};
   V.forEach(function(x){
     if(x.ym!==ym) return;
-    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0, ua:0, ub:0 });
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0, ua:0, ub:0, aP:0, bP:0 });
     r.n++; if(!(x.bs>0.009)) r.sinMonto++;
     r.u+=x.u; r.c+=x.c; r.s+=x.s;
     if(x.f<=hoy){ r.a=r2(r.a+x.bs); r.ua+=x.u; } else { r.b=r2(r.b+x.bs); r.ub+=x.u; }
+    if(x.f<=(x.amb==='tienda'?base:hoy)) r.aP=r2(r.aP+x.bs); else r.bP=r2(r.bP+x.bs);
   });
   /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
      la marca ENTERA (K = lo que vendió la marca este mes), y cada vendedor lleva la misma proporción; salvo que en la
@@ -19689,14 +19693,14 @@ function proyeccionMes(ym){
       if(g==='mayor' || g==='sin' || g==='roho') o.porque=g;
       else{
         var c=pryCurva(V, g, hist);
-        if(!c.ok) o.porque='historia';
+        if(!c.ok || drT===0) o.porque='historia';
         else{
           var K=0; Object.keys(filas).forEach(function(k){ if(filas[k].g===g) K+=r2(filas[k].a+filas[k].b); });
           /* (30/09, R3-1) La hora solo en un día hábil: un domingo o un feriado no se vende, y la curva «a esta hora» subía sola
              de la mañana a la noche (hasta 3,6 %) sin que entrara ninguna venta. */
-          var f=pryCurvaF(c, dr, pryDiaHabil(hoy) ? pryMinBo(Date.now()) : null), z=pryMezcla(K, f, c.prom), e=errores[g];
-          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
-          if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
+          var f=pryCurvaF(c, drT, null), z=pryMezcla(K, f, c.prom), e=errores[g];
+          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(Math.max(K,z.proy)), porque:'', err:e };
+          if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dtT>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
       }
     }
@@ -19713,7 +19717,8 @@ function proyeccionMes(ym){
     var r=filas[k];
     r.vendido=r2(r.a+r.b);
     r.ritmo = dt>0 ? r.a/dt : 0;
-    r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+    var t=r.amb==='tienda', d=t?dtT:dt, queda=t?drT:dr;
+    r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.aP + Math.max(r.bP, (d>0?r.aP/d:0)*queda));
   });
   var pryRep={};
   ['suena','heaven'].forEach(function(g){
@@ -19734,7 +19739,7 @@ function proyeccionMes(ym){
   var marcas=MARCAS.map(function(g){
     var rs=tienda.filter(function(r){ return r.marca===g.k; }), t=suma(rs), mt=metodos[g.k];
     /* La marca es la cuenta de la marca (la suma de los vendedores puede diferir en centavos por el redondeo). */
-    if(estado==='curso' && mt.m==='curva') t.proy=mt.proy;
+    if(estado==='curso') t.proy=mt.m==='curva'?mt.proy:r2(pryRep[g.k].P);
     return { g:g, filas:rs, tot:t };
   });
   var sinMarca=tienda.filter(function(r){ return !r.marca; }), sinTot=suma(sinMarca), equipo=suma(tienda);
@@ -19755,7 +19760,7 @@ function proyeccionMes(ym){
     });
   });
   rohoTot.prods=Object.keys(rohoProd).map(function(k){ return rohoProd[k]; }).sort(function(a,b){ return (b.u-a.u) || (a.k<b.k?-1:1); });
-  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
+  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, drPronostico:drT, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
            equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, roho:{ filas:roho, tot:rohoTot }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
 }
 /* Cuánto se equivocó cada forma en los meses CERRADOS de la prueba, marca por marca: el promedio del error (sin signo)
@@ -20441,7 +20446,7 @@ function renderProyeccion(){
   var proyLbl = R.estado==='cerrado' ? 'Cerró el mes' : '📈 Proyección al cierre';
   var proySub = R.estado==='cerrado' ? ('el mes terminó: es lo vendido con entrega en '+mes)
               : R.estado==='futuro' ? ('todavía no empezó: es lo que ya está agendado ('+R.dr+' días hábiles)')
-              : (pryComoTxt(R)+' · '+pryFaltanTxt(R.dr));
+              : (pryComoTxt(R)+' · '+pryFaltanTxt(R.drPronostico));
   var conProy=(R.estado!=='cerrado'), curso=(R.estado==='curso');
   var h=mc('var(--teal)','Vendido en '+esc(mes), fmtBs(E.vendido),
            nV(E.n)+' · '+nU(E.u)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
