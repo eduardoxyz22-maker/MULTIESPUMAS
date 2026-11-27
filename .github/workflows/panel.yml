@@ -47,6 +47,7 @@ jobs:
           # 🎯 (13/11, mejora 175) de ahí salen las metas en Bs de cada vendedora (las del panel de pedidos); sin él, las de VENDOR_CFG
           PANEL_URL: ${{ secrets.PANEL_URL }}
           PANEL_KEY: ${{ secrets.PANEL_KEY }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
         run: |
           # IA horneada PAUSADA temporalmente para acelerar el ciclo de cambios.
           # Restaurar con: python generar.py --bake-ai

@@ -201,7 +201,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-11-26-pry-b';   // ⬅️ ✍️ (11-23-h, dueño 23/11: «un cliente creado en visita tienda sería por las notas nomás»; el chat de Kommo no deja escribirle primero) «¿Quién lo atiende?» y el cruce de ventas: en un lead que CREÓ una persona (no el bot), cada nota de esa misma persona en ese lead —cualquiera, no solo de visita o compra— hace que lo atienda 15 días desde la nota (creoYNota). Es la 21-a + esto: SIN la Papelera ni la prueba del respaldo (22-a, descartadas por el dueño el 23/11). Lleva todo lo de la 21-a  //   // ⬅️ 📝 (11-21-a, dueño 21/11: «si la vendedora avisa en notas que pasará por X sucursal a comprar… debería avisar») «¿Quién lo atiende?» y el cruce de ventas cuentan también una NOTA de Kommo escrita por una vendedora en los últimos 15 días que habla de una visita o una compra (pasar, visitar, venir, sucursal, tienda, comprar, stock: qaNotaVisita_); el dueño eligió «solo visita o compra», no cualquier nota. Lleva todo lo de la 20-d   // ⬅️ 📅 (11-20-d, dueño 20/11: «roho no me deja cargar») un pedido NUEVO que la página manda forzado (Importar ROHO para el día que eligió logística, aunque esté lleno o cerrado) entra y toma su N° del día; antes `forzar` solo valía para mover uno que ya estaba. Feriado y turno sin camión siguen sin entrar. Lleva todo lo de la 20-c   // ⬅️ 🔀 (11-20-c, dueño 20/11) «tu cliente acaba de comprar»: cuando una vendedora carga una venta NUEVA a un cliente que según Kommo atendía OTRA de la misma marca (la regla de «¿Quién lo atiende?»), a esa otra le llega un WhatsApp, una sola vez (asesora_cliente_compro, cruce*). La venta nunca se frena. Lleva todo lo de la 20-b   // ⬅️ 🛏️ (11-20-b, dueño 20/11) las ventas de SUEÑA en «COMPRO» de su Kommo llegan a la bandeja «Ventas de Kommo por cargar» como las de Heaven (kommoRepasoSuena_)   // ⬅️ 🔧 (11-20-b) la plata de una ATC CONTRA COSTO entra al efectivo por retirar como la de una venta (waAtcStc_)   // ⬅️ 📄 (11-20-b, dueño 20/11) el PDF de la orden de compra de Multicenter y Tienda Amiga queda en el pedido: la revisión de correos lo sube a la carpeta «PDF de pedidos MultiEspumas» (acción pdfPedido) y Ernesto lo descarga desde la ficha. Lleva todo lo de la 20-a   // ⬅️ 📞 (11-20-a, dueño 20/11) «¿Quién lo atiende?»: la vendedora escribe un celular y el servidor le pregunta a Kommo (Heaven y Sueña) qué leads tiene ese número, de quién son, la última conversación (un mensaje del cliente y uno de la vendedora a ≤ 24 h) y las tareas abiertas; solo lee, y anota la consulta en la hoja «Quién atiende» (quienAtiende_). Lleva todo lo de la 17-d   // ⬅️ 🛏️ (11-17-d) en el Kommo de Sueña, Juan Pablo Paredes es el usuario 13073611 (en Kommo se llama «Alberto Pareja»; el dashboard de Sueña lo renombra igual)   // ⬅️   // ⬅️ 🛏️ (11-17-c, dueño 17/11: «sí ármalo lo de Sueña») la venta de un vendedor de SUEÑA también cierra su lead, en el Kommo de Sueña (gerenciamultiespumasviscarra, propiedad KOMMO_TOKEN_SUENA; etapa «COMPRO»); lleva todo lo de la 17-b   // ⬅️ ☀️ (11-17-b, dueño 17/11: «prográmalo apagado hasta el 1/12») desde el 01/12 «cómo va cada vendedor» de los lunes y los mayoristas comparan también los mismos DOMINGOS (el 1.º contra el 1.º; la Tienda Banzer desde que abrió el domingo, 02/11): waVbCorte_ / waEnAltura_. Lleva todo lo de la 17-a   // ⬅️ 📶 (11-17-a, dueño 17/11) las comisiones con los ESCALONES en Bs de cada vendedora (los asigna el dueño cada mes; noviembre, sus tablas): el cierre del mes por WhatsApp calcula como el 🏁 Cierre comercial (waCcmEmVend_)   // ⬅️ ⬅️ 🧠💬🏆 (11-16-a, dueño 16/11, mejoras 344-389; lleva TODO lo de la 15-a) 💬 el CHAT del equipo (344: hojas «Chat» y «Chat vistos», chatEnviar/chatLeer/chatBorrar/chatFoto afuera del candado, lo sin leer adentro de `list`, 90 días con `chatPodar`) · 🤖 Claude lee las observaciones al guardar (345/349, obsIa) y las fotos de una ATC (347, atcFotos), y la nota de venta contra los precios (353, IAC_PREGUNTA_V 5) · 🧠 el porqué de la semana los lunes 08:00 y el día 1 (356, porque_semana) y «Quién necesita una mano» (362) · 🧠 Claude lee las ATC, los productos escritos a mano y el stock de la semana (359, 360, 364: iaAtc / iaProductos / iaStockSemana) · 🏆 el bono Titanio del cierre del mes con la foto del lunes (376 b: la mínima y el panel al día cada lunes, desde el 23/11) · ⏸️ «mayoristas_vencido» de los lunes APAGADO (el dueño, 16/11: «A»; se prende con WA_MV_ACTIVO = 1)   // ⬅️ 🎯🏬🛍️📈📅💬💳🌙 (11-15-a, dueño 15/11, mejoras 321, 331, 332, 336, 339, 340 y 341; lleva TODO lo de la 14-b, que no se implementó sola) el cierre del día de las 21:15 suma la meta de cada marca (lo vendido, se proyecta, lo que falta por día hábil; __metas__) y lo de hoy por tienda (cierre_del_dia_v3, la v2 de respaldo) · en Black Friday la campaña contra los días de antes (cierre_del_dia_bf; el viernes y el último día también a las 15:00) · el «mes» dice por qué se movió la proyección (ventas nuevas o la cuenta) · el día 1 a las 10:00 el mes que cerró (cierre_del_mes, con «Ver por vendedora» y «Ver por tienda»: meta, mes anterior, marcas, tiendas, quién más vendió, mayoristas, comisiones con la escala guardada y si falta el Cierre comercial) · el dueño le pregunta al bot «tiendas», «tienda charcas», «mayoristas», «meta» y «mes cerrado» (y Claude ve esos números) · a logística a las 19:00, con el cierre de entregas hecho, si falta el Excel de la TARDE (logistica_excel_tarde, la de las 10:00 de respaldo) · Claude lee del voucher de la tarjeta el lote, la autorización y el banco del POS (IAC_PREGUNTA_V 4)   // ⬅️ 🏬 (11-14-b, dueño 14/11, mejoras 252/253, 266, 267 y 277 para la tienda del mall) el mostrador anota sus «toques» (llegué, me fui, pausa, volví, atiendo, es mío, fin, miro) en la hoja «Mall» (mallToque, sin repetir por id) y la pantalla los lee (mallLeer, hoy desde la caché) · abrir más cupos un día y turno (la fila __cupos_extra__: el portero suma esos lugares) · apartar un lugar 10 minutos mientras se cobra (apartarCupo / soltarCupo; la lectura dice qué está apartado y el portero lo cuenta como ocupado para los demás) · la venta grande, al dueño enseguida (venta_grande, desde VENTA_GRANDE_BS, 8.000 de entrada) · __cupos_extra__ y __caja_tienda__ con sello · 🧾 las COTIZACIONES (251) en la hoja «Cotizaciones» (cotGuardar / cotMarcar / cotLeer, «COT 11-014» sin repetir; Kommo con KOMMO_COT = 1) y 🤖 el seguimiento a las 48 h (274, APAGADO salvo COT_BOT = prueba (solo a los celulares de COT_PRUEBA) o 1, y solo a las de 48 a 96 h que todavía valen: cotizacion_seguimiento con «Que me llamen» / «Ya compré» / «No, gracias»; vendedora_llamar_cliente y, a las 2 h sin llamada, cotizacion_sin_llamar al dueño)   // ⬅️ 🧾 (11-14-a, dueño 14/11, mejora 216) «Leer la nota»: la página manda la foto de la nota de venta y Claude devuelve lo que dice (cliente, celular, NIT, productos, montos), sin guardar nada (notaLeer_, tope NOTA_TOPE_DIA) · 📅 (11-14-a, mejora 217) el cliente que le escribe que no va a estar recibe hasta 3 botones con días que tienen lugar; al tocar uno, logística recibe el aviso y el panel lo muestra para «Mover» (rd*): la fila del pedido no se toca   // ⬅️ 🛰️📚 (11-13-b, dueño 13/11, mejora 204) cómo le fue a cada camión: el GPS suma cada día los kilómetros y las horas fuera de PTF, Banzer y Moreno, y al cerrar el horario (21 h) deja una fila por día y camión en la hoja «Historial GPS» (primera salida, última vuelta, horas fuera, salidas, paradas, km); el panel la lee con `gpsHist` (gpsHist*) · 🏭⏳ (11-13-b, dueño 13/11, mejora 181) a Contabilidad SOLA (WA_CONTABILIDAD; al dueño no), los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo VENCIDO de los mayoristas —el total, cuántas OC y, por cliente, lo vencido, cuántas OC y los días de atraso de la más atrasada— y lo que vence en los próximos 7 días, con la cuenta de Contabilidad → 🏭 Mayoristas → 📅 Cobranza y el plazo de cada uno (mayoristas_vencido; waMvDatos_)   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-11-27-a';   // ⬅️ 👤 (11-27-a, dueño 27/11: «cada usuario de los vendedores debe tener su propio ingreso de login y clave y no pueden ver lo del otro») el login por usuario: USUARIOS y SESIONES en Propiedades, `login` / `salir` / `miClave` / `usuarios` (con ADMIN_KEY), y con LOGIN_ACTIVO = 1 todo pide sesión; a una vendedora lo ajeno le llega tapado (sin cliente, celular, dirección, NIT, pagos ni precios) y no guarda ni borra lo ajeno. APAGADO hasta que Administración lo prenda. Lleva todo lo de la 26-pry-b   // ⬅️ ✍️ (11-23-h, dueño 23/11: «un cliente creado en visita tienda sería por las notas nomás»; el chat de Kommo no deja escribirle primero) «¿Quién lo atiende?» y el cruce de ventas: en un lead que CREÓ una persona (no el bot), cada nota de esa misma persona en ese lead —cualquiera, no solo de visita o compra— hace que lo atienda 15 días desde la nota (creoYNota). Es la 21-a + esto: SIN la Papelera ni la prueba del respaldo (22-a, descartadas por el dueño el 23/11). Lleva todo lo de la 21-a  //   // ⬅️ 📝 (11-21-a, dueño 21/11: «si la vendedora avisa en notas que pasará por X sucursal a comprar… debería avisar») «¿Quién lo atiende?» y el cruce de ventas cuentan también una NOTA de Kommo escrita por una vendedora en los últimos 15 días que habla de una visita o una compra (pasar, visitar, venir, sucursal, tienda, comprar, stock: qaNotaVisita_); el dueño eligió «solo visita o compra», no cualquier nota. Lleva todo lo de la 20-d   // ⬅️ 📅 (11-20-d, dueño 20/11: «roho no me deja cargar») un pedido NUEVO que la página manda forzado (Importar ROHO para el día que eligió logística, aunque esté lleno o cerrado) entra y toma su N° del día; antes `forzar` solo valía para mover uno que ya estaba. Feriado y turno sin camión siguen sin entrar. Lleva todo lo de la 20-c   // ⬅️ 🔀 (11-20-c, dueño 20/11) «tu cliente acaba de comprar»: cuando una vendedora carga una venta NUEVA a un cliente que según Kommo atendía OTRA de la misma marca (la regla de «¿Quién lo atiende?»), a esa otra le llega un WhatsApp, una sola vez (asesora_cliente_compro, cruce*). La venta nunca se frena. Lleva todo lo de la 20-b   // ⬅️ 🛏️ (11-20-b, dueño 20/11) las ventas de SUEÑA en «COMPRO» de su Kommo llegan a la bandeja «Ventas de Kommo por cargar» como las de Heaven (kommoRepasoSuena_)   // ⬅️ 🔧 (11-20-b) la plata de una ATC CONTRA COSTO entra al efectivo por retirar como la de una venta (waAtcStc_)   // ⬅️ 📄 (11-20-b, dueño 20/11) el PDF de la orden de compra de Multicenter y Tienda Amiga queda en el pedido: la revisión de correos lo sube a la carpeta «PDF de pedidos MultiEspumas» (acción pdfPedido) y Ernesto lo descarga desde la ficha. Lleva todo lo de la 20-a   // ⬅️ 📞 (11-20-a, dueño 20/11) «¿Quién lo atiende?»: la vendedora escribe un celular y el servidor le pregunta a Kommo (Heaven y Sueña) qué leads tiene ese número, de quién son, la última conversación (un mensaje del cliente y uno de la vendedora a ≤ 24 h) y las tareas abiertas; solo lee, y anota la consulta en la hoja «Quién atiende» (quienAtiende_). Lleva todo lo de la 17-d   // ⬅️ 🛏️ (11-17-d) en el Kommo de Sueña, Juan Pablo Paredes es el usuario 13073611 (en Kommo se llama «Alberto Pareja»; el dashboard de Sueña lo renombra igual)   // ⬅️   // ⬅️ 🛏️ (11-17-c, dueño 17/11: «sí ármalo lo de Sueña») la venta de un vendedor de SUEÑA también cierra su lead, en el Kommo de Sueña (gerenciamultiespumasviscarra, propiedad KOMMO_TOKEN_SUENA; etapa «COMPRO»); lleva todo lo de la 17-b   // ⬅️ ☀️ (11-17-b, dueño 17/11: «prográmalo apagado hasta el 1/12») desde el 01/12 «cómo va cada vendedor» de los lunes y los mayoristas comparan también los mismos DOMINGOS (el 1.º contra el 1.º; la Tienda Banzer desde que abrió el domingo, 02/11): waVbCorte_ / waEnAltura_. Lleva todo lo de la 17-a   // ⬅️ 📶 (11-17-a, dueño 17/11) las comisiones con los ESCALONES en Bs de cada vendedora (los asigna el dueño cada mes; noviembre, sus tablas): el cierre del mes por WhatsApp calcula como el 🏁 Cierre comercial (waCcmEmVend_)   // ⬅️ ⬅️ 🧠💬🏆 (11-16-a, dueño 16/11, mejoras 344-389; lleva TODO lo de la 15-a) 💬 el CHAT del equipo (344: hojas «Chat» y «Chat vistos», chatEnviar/chatLeer/chatBorrar/chatFoto afuera del candado, lo sin leer adentro de `list`, 90 días con `chatPodar`) · 🤖 Claude lee las observaciones al guardar (345/349, obsIa) y las fotos de una ATC (347, atcFotos), y la nota de venta contra los precios (353, IAC_PREGUNTA_V 5) · 🧠 el porqué de la semana los lunes 08:00 y el día 1 (356, porque_semana) y «Quién necesita una mano» (362) · 🧠 Claude lee las ATC, los productos escritos a mano y el stock de la semana (359, 360, 364: iaAtc / iaProductos / iaStockSemana) · 🏆 el bono Titanio del cierre del mes con la foto del lunes (376 b: la mínima y el panel al día cada lunes, desde el 23/11) · ⏸️ «mayoristas_vencido» de los lunes APAGADO (el dueño, 16/11: «A»; se prende con WA_MV_ACTIVO = 1)   // ⬅️ 🎯🏬🛍️📈📅💬💳🌙 (11-15-a, dueño 15/11, mejoras 321, 331, 332, 336, 339, 340 y 341; lleva TODO lo de la 14-b, que no se implementó sola) el cierre del día de las 21:15 suma la meta de cada marca (lo vendido, se proyecta, lo que falta por día hábil; __metas__) y lo de hoy por tienda (cierre_del_dia_v3, la v2 de respaldo) · en Black Friday la campaña contra los días de antes (cierre_del_dia_bf; el viernes y el último día también a las 15:00) · el «mes» dice por qué se movió la proyección (ventas nuevas o la cuenta) · el día 1 a las 10:00 el mes que cerró (cierre_del_mes, con «Ver por vendedora» y «Ver por tienda»: meta, mes anterior, marcas, tiendas, quién más vendió, mayoristas, comisiones con la escala guardada y si falta el Cierre comercial) · el dueño le pregunta al bot «tiendas», «tienda charcas», «mayoristas», «meta» y «mes cerrado» (y Claude ve esos números) · a logística a las 19:00, con el cierre de entregas hecho, si falta el Excel de la TARDE (logistica_excel_tarde, la de las 10:00 de respaldo) · Claude lee del voucher de la tarjeta el lote, la autorización y el banco del POS (IAC_PREGUNTA_V 4)   // ⬅️ 🏬 (11-14-b, dueño 14/11, mejoras 252/253, 266, 267 y 277 para la tienda del mall) el mostrador anota sus «toques» (llegué, me fui, pausa, volví, atiendo, es mío, fin, miro) en la hoja «Mall» (mallToque, sin repetir por id) y la pantalla los lee (mallLeer, hoy desde la caché) · abrir más cupos un día y turno (la fila __cupos_extra__: el portero suma esos lugares) · apartar un lugar 10 minutos mientras se cobra (apartarCupo / soltarCupo; la lectura dice qué está apartado y el portero lo cuenta como ocupado para los demás) · la venta grande, al dueño enseguida (venta_grande, desde VENTA_GRANDE_BS, 8.000 de entrada) · __cupos_extra__ y __caja_tienda__ con sello · 🧾 las COTIZACIONES (251) en la hoja «Cotizaciones» (cotGuardar / cotMarcar / cotLeer, «COT 11-014» sin repetir; Kommo con KOMMO_COT = 1) y 🤖 el seguimiento a las 48 h (274, APAGADO salvo COT_BOT = prueba (solo a los celulares de COT_PRUEBA) o 1, y solo a las de 48 a 96 h que todavía valen: cotizacion_seguimiento con «Que me llamen» / «Ya compré» / «No, gracias»; vendedora_llamar_cliente y, a las 2 h sin llamada, cotizacion_sin_llamar al dueño)   // ⬅️ 🧾 (11-14-a, dueño 14/11, mejora 216) «Leer la nota»: la página manda la foto de la nota de venta y Claude devuelve lo que dice (cliente, celular, NIT, productos, montos), sin guardar nada (notaLeer_, tope NOTA_TOPE_DIA) · 📅 (11-14-a, mejora 217) el cliente que le escribe que no va a estar recibe hasta 3 botones con días que tienen lugar; al tocar uno, logística recibe el aviso y el panel lo muestra para «Mover» (rd*): la fila del pedido no se toca   // ⬅️ 🛰️📚 (11-13-b, dueño 13/11, mejora 204) cómo le fue a cada camión: el GPS suma cada día los kilómetros y las horas fuera de PTF, Banzer y Moreno, y al cerrar el horario (21 h) deja una fila por día y camión en la hoja «Historial GPS» (primera salida, última vuelta, horas fuera, salidas, paradas, km); el panel la lee con `gpsHist` (gpsHist*) · 🏭⏳ (11-13-b, dueño 13/11, mejora 181) a Contabilidad SOLA (WA_CONTABILIDAD; al dueño no), los lunes a las 08:00 (si el lunes es feriado, el primer día hábil de la semana): lo VENCIDO de los mayoristas —el total, cuántas OC y, por cliente, lo vencido, cuántas OC y los días de atraso de la más atrasada— y lo que vence en los próximos 7 días, con la cuenta de Contabilidad → 🏭 Mayoristas → 📅 Cobranza y el plazo de cada uno (mayoristas_vencido; waMvDatos_)   // ⬅️ 🪶 (11-13-a, dueño 12/11) las ALMOHADAS no cuentan como productos en el cierre del día ni en «Qué vendió cada uno» (se siguen viendo aparte; la plata no cambia; waCdEsAlmohada_)   // ⬅️ (11-11-a) 🛏️💚 (11-11-a, dueño 10/11) el cierre del día dice la proyección del mes de cada marca: «proyección Bs 1.014.135 (Heaven Bs … · Sueña Bs …)» (waCdPry_)   // ⬅️ 👥 (11-09-a, dueño 09/11: «si hazlo») lo que escribe un número del EQUIPO (vendedoras, logística, Contabilidad, el dueño) no es un cliente: el saludo automático del WhatsApp Business de una vendedora que contesta el «Buen día» queda anotado como «👥 Del equipo» y nada más (ni la pestaña Bot, ni Claude, ni la respuesta automática; waEquipoQuien_)   // ⬅️ 💵✅ (11-07-f, dueño 08/11) «Ya lo recibí»: Contabilidad toca el botón del efectivo de los choferes (o escribe «recibí») y el bot carga el retiro en el panel (waEr*) · 📥 cada pedido que carga la revisión de correos, al dueño para subirlo al TR4 (pedido_correo_tr4) · 💵🔒 la regla del efectivo (octubre cerrado, un día de gracia, la hora del retiro, los cobros tildados) · 📍📉💬 (ideas 13 A, 25 C y 26 A) al cliente, a las 10:00 y 2 días antes de la entrega, que mande su ubicación si el pedido no tiene pin (pedir_ubicacion); al dueño, los lunes a las 08:00, quién va más de 20 % abajo de su mes pasado a esta altura, a los mismos días hábiles (vendedoras_bajan, con «Ver el detalle»); y el dueño le pregunta al bot por WhatsApp: el menú sin IA, lo demás Claude con los números del panel (el jefe, todo menos el efectivo)   // ⬅️ 👔 (11-07-e) WA_DUENO con varios (el dueño y su jefe): a todos el cierre del día, el reclamo a la fábrica y la alerta de leads; el efectivo de los vendedores, solo al primero (dueño, 07/11: «todo menos lo del efectivo»)   // ⬅️ 🎙️ (11-07-d) al cliente que le manda un AUDIO (o un video) al bot, Claude le recuerda cordial que es un asistente automático (un bot) y no puede escucharlo, y le da el contacto de su vendedor/a; si Claude no lo dice, sale un texto fijo que sí (dueño, 07/11)   // ⬅️ 🧾 (11-07-c) un retiro que es JUSTO lo último que esa persona tenía sin recoger se lleva eso (no el efectivo de octubre que nadie cargó como retiro): el aviso del efectivo ya no muestra a quien recogió lo de noviembre (dueño, 07/11)   // ⬅️ ☀️ (11-07-b) el «Buen día» también el DOMINGO, solo a las vendedoras de las tiendas que abren el domingo (Mia Plaza y Tienda Banzer, WA_SUC_DOMINGO), con la tienda que dice su usuario de Kommo («Nombre - Sucursal»); sin Kommo, nadie (dueño, 07/11)   // ⬅️ ☀️🌙🧽 (11-07-a, ideas 114, 115 y la mitad del servidor de la 118) el «Buen día» a cada vendedora a las 08:30 (vendedora_buen_dia), el cierre del día al dueño a las 21:15 (cierre_del_dia) y la acción `bloki` (Bloki le pregunta a Claude con lo que el panel ya calculó; tope BLOKI_TOPE_DIA)   // ⬅️ 🗓️ (11-06-e) el efectivo del día cuenta solo ventas cargadas desde el 01/11 (lo de octubre ya se recogió)   // ⬅️ 📅 (11-06-d) el efectivo de CADA DÍA (efectivo_del_dia): lo que ingresó y lo acumulado sin recoger, a las 9:00 y a las 18:00, aunque esté en 0   // ⬅️ 🚚 (11-06-c) el efectivo que recibieron los CHOFERES va a Contabilidad (WA_CONTABILIDAD), no al dueño   // ⬅️ 💵 (11-06-b) al dueño (WA_DUENO), a las 9:00 y a las 18:00: el efectivo cobrado hace 48 h o más que todavía no tiene su retiro cargado (efectivo_sin_retirar, desde el 01/11) · 🧹 (11-06-a) los ARMAZONES fuera del WhatsApp de las 08:45 a logística (§4ok-104c) · 🗓️ (11-05-a, el plan del jueves §4ok) el bot: dos celulares con guion (E4), el celular como texto (95), «lo de hoy que falta» a las 08:45 (97), vigía de leads (102), reclamo a la fábrica a las 10:00 (105) y la ubicación que manda el cliente (108) · Kommo: la venta del panel cierra su lead (91, APAGADO salvo KOMMO_CIERRE=1) · la IA acepta el voucher de tarjeta (E3) · «cómo llegar» por su destino (E6) · __destinos__ con sello (110)   // ⬅️ 👥 (11-02-a) dos vendedores nuevos de Heaven: Andrea Orias y Fabián Godoy (WA_MARCAS: el bot firma «Heaven Colchones»; Fabián es «tu vendedor»). Nada más cambia   // ⬅️ 📦 (30-a) «el cliente avisa cuándo»: una venta SIN fecha de entrega con `avisa` adentro de los productos (entregaAConfirmar_) no ocupa cupo ni recibe mensajes del bot; al ponerle el día sale la CONFIRMACIÓN; una página sin F5 que le pone una fecha (no sabe de la marca) recibe `actualizar`; Claude le dice al cliente que avisa cuándo   // ⬅️ 📸 (29-b) el repaso de Kommo lee la planilla UNA vez por repaso (kSnapshot_), no una o dos veces por lead, y cada aviso de Meta lee solo las últimas WA_HOOK_FILAS filas de «Bot WhatsApp» (no la hoja entera)   // ⬅️ 📥✅ (29-a) a logística por WhatsApp: a las 10:00 si falta el Excel del día y a las 19:00 si falta el cierre de entregas · 💾 el respaldo diario de la planilla, prendido por instalarDisparadores · 🏭 (27-a) el formato del stock no vuelve atrás (una página de formato 3 no pisa el de una de formato 4: listo para prender «en producción» automático) · «pedir hoy»: media hora antes del corte de producción, a los de WA_PEDIR_HOY (Ernesto y Alba), lo que hay que revisar o pedir a producción hoy — la misma lista del botón «Semana» del panel (logistica_pedir_hoy)   // ⬅️ 🧾 (26-b) Claude reconoce la NOTA DE VENTA y lee cuánto se pagó con cada medio (efectivo, QR, tarjeta): la página ve que la plata está aunque se haya anotado todo como QR   // ⬅️ ⚡🤖 (26-a) la carpeta de comprobantes de a varias fotos a la vez (API de Drive, ~1 min el mes) y Claude leyendo las fotos de los comprobantes (iaComprobantes_: monto, banco, fecha, referencia; la página compara con lo anotado)   // ⬅️ 📁 (25-a) los comprobantes del mes en una carpeta para el contador (compsCarpeta_: copia y renombra, no toca la planilla)   // ⬅️ 📍 (15-a) los enlaces de ubicación que pegan las vendedoras: Waze con la coma codificada, el Plus Code sin codificar en «maps?q=» y, si no hay coordenadas, el nombre y la dirección de `q=` (lugares con nombre y búsquedas de Google) por el geocodificador, aproximado   // ⬅️ ⚡ (14-c) Claude contesta al vuelo: el webhook espera 5 s por si el cliente manda otro mensaje y contesta ahí mismo (~15 s en vez de 1-5 min); el disparador queda de respaldo   // ⬅️ 🧠 (14-b) Claude le contesta al cliente que le escribe al bot: entiende qué quiere, contesta con los datos de su pedido, deriva a la vendedora lo que necesita una persona y avisa a logística lo urgente de hoy (iaRepaso, ANTHROPIC_API_KEY + IA_ACTIVA)   // ⬅️ 🚀 (14-a) un pedido de la TARDE que sale cargado a la mañana: el panel lo pasa a AM con `adelanto` y el bot le manda al cliente «cargado y en camino» (pedido_en_camino), sin aviso a logística   // ⬅️ 🚪 (13-c) quieto en la puerta de PTF, Banzer o Moreno sin pedido cerca no es una parada (ni convierte un traslado en «salió»)   // ⬅️ 🛰️ (13-b) paradas cerca de los pedidos del día, Moreno = recoger (no cuenta «salió»), el registro y el recorrido del día (gpsRuta)   // ⬅️ 🛰️ el GPS de los camiones: posiciones cada minuto en la lectura (`gps`) y «salió» de PTF/Banzer (gpsRepaso, §4ko)   // ⬅️ (12-f) recordatorio en dos tandas: 17:00 los de la mañana y 19:00 los del turno PM (12/10; la «12-e» no existe: así se llamó por error la implementación de la 12-b)   // ⬅️ plantillas «_v2» con emojis y el WhatsApp de la vendedora (WA_VENDEDORAS), con la vieja de respaldo (§4kl)   // ⬅️ lo que contesta un cliente: con su pedido, respuesta automática y al panel (waRespuestas / waRespAtendida, §4kk)   // ⬅️ «sin camión» con nombres enteros + avisos de Meta con otra clave, contados (§4ki)   // ⬅️ el bot escucha a Meta: entregado / leído / falló y lo que contesta el cliente (waHook_, §4ki)   // ⬅️ el bot de WhatsApp: confirmación, cambio de día y recordatorio al cliente; pedido nuevo, cambio y «sin camión» a logística (waAlGuardar_ / waRepaso, §4jt)   // ⬅️ la hoja «Historial stock»: una fila por día con los saldos de cada Excel (histStock / histStockLeer, §4in)   // ⬅️ el stock solo lo guarda una página al día (`sf` ≥ STOCK_FORMATO_MIN): una sin F5 recibe `actualizar` y ya no vuelve atrás un Excel ni borra el control del corte (§4hs)   // ⬅️ el libro de reservas de stock: cada guardado del formulario anota lo que aparta (`reserva`) y, si otro pedido que esa lectura no conocía apartó lo mismo, contesta `saldo` — nunca frena (§4hj)   // ⬅️ la lectura dice de cuándo es (`ahora`), viaja comprimida (`z`) y puede traer solo lo cambiado (`desde`); los retiros piden sello; el portero conoce los feriados; los borradores de Kommo nacen sellados; los borrados quedan anotados (§4he)   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -231,7 +231,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-11-26-pry-b';
+  var ESTA_VERSION = '2026-11-27-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -1250,6 +1250,7 @@ function jsonOut(obj) {
   if (obj && obj.auth == null) obj.auth = authTxt_(panelKey_());          // 🔐 (16-a) sin poder leer, «?» (no «abierto»)
   if (obj && obj.adminAuth == null) obj.adminAuth = authTxt_(adminKey_());
   if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
+  if (obj && obj.login == null && typeof loginActivo_ === 'function') obj.login = loginActivo_() ? 1 : 0;   // 👤 (2026-11-27-a)
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
@@ -1358,7 +1359,8 @@ function doGet(e) {
   /* 📬 (2026-10-12-a) Meta verifica la dirección del webhook del bot con un GET: va ANTES de la clave y del GET_CERRADO. */
   var vMeta = waHookVerificar_(e); if (vMeta) return vMeta;
   if (!claveOk_(e && e.parameter && e.parameter.k)) { getRegistrar_(e, 'clave'); return claveNo_(); }
-  if (getCerrado_()) { getRegistrar_(e, 'cerrado'); return jsonOut({ ok:false, error:'get_cerrado', version:SCRIPT_VERSION }); }
+  /* 👤 (2026-11-27-a) con el login prendido, la puerta GET (sin sesión) queda cerrada */
+  if (getCerrado_() || loginActivo_()) { getRegistrar_(e, 'cerrado'); return jsonOut({ ok:false, error:'get_cerrado', version:SCRIPT_VERSION }); }
   var txt = getCacheLeer_();
   getRegistrar_(e, txt ? 'cache' : 'hoja');
   if (!txt) {
@@ -1470,6 +1472,7 @@ function jsonTexto_(obj) {
   if (obj && obj.auth == null) obj.auth = authTxt_(panelKey_());          // 🔐 (16-a) sin poder leer, «?» (no «abierto»)
   if (obj && obj.adminAuth == null) obj.adminAuth = authTxt_(adminKey_());
   if (obj && obj.wa == null && typeof waActivo_ === 'function') obj.wa = waActivo_() ? 1 : 0;   // 🤖 (2026-10-11-a) la página dice «lo manda el bot»
+  if (obj && obj.login == null && typeof loginActivo_ === 'function') obj.login = loginActivo_() ? 1 : 0;   // 👤 (2026-11-27-a)
   return JSON.stringify(obj);
 }
 function getCache_() {
@@ -1666,7 +1669,7 @@ function doPost(e) {
   return out;
 }
 /* 🏬🧾 (revisión del 14/11) Las acciones cuyos «no» NO van a la hoja «Rechazos» (no son guardados de pedidos; ver doPost). */
-var RECHAZOS_NO_ANOTAR = { apartarCupo:1, soltarCupo:1, cotGuardar:1, cotMarcar:1, cotLeer:1, mallToque:1, mallLeer:1 };
+var RECHAZOS_NO_ANOTAR = { apartarCupo:1, soltarCupo:1, cotGuardar:1, cotMarcar:1, cotLeer:1, mallToque:1, mallLeer:1, login:1, salir:1, miClave:1, usuarios:1 };   // 👤 (2026-11-27-a) el login tampoco
 function doPostCuerpo_(e) {
   /* 📥 EL AVISO DE KOMMO (§4cc).
      Kommo NO manda JSON: manda un formulario con claves tipo
@@ -1686,6 +1689,19 @@ function doPostCuerpo_(e) {
      nombres, celulares y direcciones de clientes; guardar y borrar, ni hablar. El panel
      trata este "no" como si no hubiera red: encola y reintenta cuando le den la clave. */
   if (!claveOk_(body.key)) return claveNo_();   // 🔐 (16-a) `busy` si no se pudo leer la configuración
+  /* 👤 (2026-11-27-a) El login de cada usuario (ver «USUARIOS Y SESIONES» al final). Entrar, salir y cambiar la contraseña van antes de
+     pedir la sesión; con LOGIN_ACTIVO, todo lo demás la pide. Una vendedora no pide lo de Administración y solo escribe lo suyo. */
+  if (action === 'login') return jsonOut(usuLogin_(body));
+  if (action === 'salir') return jsonOut(usuSalir_(body));
+  if (action === 'miClave') return jsonOut(usuMiClave_(body));
+  if (action === 'usuarios') return jsonOut(usuAdmin_(body));
+  var USU = usuDe_(body);
+  if (!USU && loginActivo_()) return jsonOut({ ok:false, error:'login', version:SCRIPT_VERSION });
+  if (USU && USU.r === 'v' && USU_SOLO_TODO[action]) return jsonOut({ ok:false, error:'permiso', version:SCRIPT_VERSION });
+  if (USU && USU.r === 'v' && (action === 'save' || action === 'delete')) {
+    var noPuede = usuPuedeEscribir_(USU, action, body);
+    if (noPuede) return jsonOut({ ok:false, error:noPuede, version:SCRIPT_VERSION });
+  }
   if (body.forzar) {
     var fz = forzarOk_(body);
     if (!fz.ok) return jsonOut({ ok:false, error:'admin', motivo:fz.motivo, version:SCRIPT_VERSION });
@@ -1745,14 +1761,18 @@ function doPostCuerpo_(e) {
     try { lst.apartados = apartadosParaLista_(); } catch (eAp) {}   // 🎟️ (2026-11-14-b, mejora 267) los lugares apartados ahora (una propiedad: sin red ni planilla)
     try { var cht = chatParaLista_(body); if (cht) lst.chat = cht; } catch (eCh) {}   // 💬 (2026-11-16-a, mejora 344) cuántos sin leer del chat (de la caché: sin leer la hoja)
     try { var cxl = cruceParaLista_(); if (cxl.length) lst.cx = cxl; } catch (eCx) {}   // 🔀 (2026-11-20-c) las ventas que nombraron a otra asesora: ella puede pedir revisión
-    return listaResponder_(lst, body);
+    return listaResponder_(usuFiltrarLista_(USU, lst), body);   // 👤 (2026-11-27-a) una vendedora: lo ajeno tapado
   }
   // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
   if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
   if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
   // 💬 (2026-10-12-c) Lo que contestaron los clientes al bot (hoja «Bot WhatsApp»). Sin candado: no toca «Pedidos».
-  if (action === 'waRespuestas') return jsonOut({ ok:true, version:SCRIPT_VERSION, resp: waRespuestasLeer_(), rd: rdLeer_() });   // 📅 (2026-11-14-a, mejora 217) `rd`: los clientes que eligieron otro día
+  if (action === 'waRespuestas') {
+    var wResp = waRespuestasLeer_(), wRd = rdLeer_();
+    if (USU && USU.r === 'v') { var mios = usuIdsSuyos_(USU); wResp = wResp.filter(function (x) { return x && mios[String(x.id)]; }); wRd = wRd.filter(function (x) { return x && mios[String(x.id)]; }); }   // 👤 (2026-11-27-a) solo sus clientes
+    return jsonOut({ ok:true, version:SCRIPT_VERSION, resp: wResp, rd: wRd });
+  }   // 📅 (2026-11-14-a, mejora 217) `rd`: los clientes que eligieron otro día
   if (action === 'waRespAtendida') return waRespAtendida_(body);
   if (action === 'rdMarcar') return jsonOut(rdMarcar_(body));   // 📅 (2026-11-14-a, mejora 217) «Mover» / «No, dejarlo» / «Quitar» (su propio candado corto)
   // 📚 (2026-10-09-a) El historial del stock: leer va sin candado; guardar, adentro (dos equipos pueden mandar el mismo día).
@@ -1773,7 +1793,7 @@ function doPostCuerpo_(e) {
      (cotLeer). Kommo, si está prendido (KOMMO_COT = 1), afuera de todo candado. */
   if (action === 'cotGuardar') return jsonOut(cotGuardar_(body));
   if (action === 'cotMarcar') return jsonOut(cotMarcar_(body));
-  if (action === 'cotLeer') return jsonOut(cotLeer_(body));
+  if (action === 'cotLeer') { if (USU && USU.r === 'v') body.vendedor = USU.n; return jsonOut(cotLeer_(body)); }   // 👤 (2026-11-27-a) solo las suyas
   /* 🎟️ (revisión del 14/11) Abrir cupos de más (`__cupos_extra__`) es pasarse del cupo con otro nombre: pide lo mismo que forzar un turno
      lleno (`forzarOk_`: con PANEL_KEY puesta, la clave de Administración en `adminKey`). Sin claves configuradas, como siempre. */
   if (action === 'save' && body.pedido && String(body.pedido.id) === CUPOS_EXTRA_ID) {
@@ -2292,7 +2312,7 @@ function listaResponder_(obj, body) {
     try {
       var d = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(txt, 'application/json')).getBytes());
       // `auth`/`adminAuth` ya los calculó jsonTexto_: se copian, así jsonOut no vuelve a leer las propiedades.
-      return jsonOut({ ok:true, version:SCRIPT_VERSION, z:'gzip64', d:d, largo:txt.length, auth:obj.auth, adminAuth:obj.adminAuth });
+      return jsonOut({ ok:true, version:SCRIPT_VERSION, z:'gzip64', d:d, largo:txt.length, auth:obj.auth, adminAuth:obj.adminAuth, login:obj.login });
     } catch (e) {}
   }
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
@@ -14316,6 +14336,195 @@ function cruceArmar_(m, recs, cfg) {
   return out;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   👤 USUARIOS Y SESIONES (2026-11-27-a; dueño 27/11: «cada usuario de los vendedores debe tener su propio ingreso de login y clave
+   y no pueden ver lo del otro»; eligió «correo + contraseña del panel» y «solo números, sin clientes»; «administración, Eduardo,
+   contabilidad, logística y ROHO VEN TODO»).
+   · Los usuarios viven en la propiedad USUARIOS (JSON { <correo o usuario>: { n:nombre, r:'v'|'t', s:sal, h:huella, t:creado, k:cambió } }):
+     los correos NO van al código (el repo es público). La contraseña se guarda cifrada (SHA-256 con sal, USU_VUELTAS vueltas).
+     r = 'v' vendedora: ve lo suyo entero y de los demás solo lo que hace falta para cupos y stock (`usuTapar_`); 't' = ve todo.
+   · `login` {u, p} → una sesión (SESIONES: { <token>: [usuario, vence] }) de LOGIN_SES_DIAS días. Cada llamada del panel manda `ses`.
+   · Con LOGIN_ACTIVO = 1 TODO (salvo `login` y lo que va antes de la clave del equipo) pide sesión; sin sesión → `login`. Las
+     herramientas (dashboard, cargador de correos, verificadores) entran con la clave de Administración (`adminKey` = ADMIN_KEY).
+     Sin LOGIN_ACTIVO, todo como antes (las sesiones se aceptan igual: así se crean los usuarios y se prueba antes de prender).
+   · Crear, cambiar y borrar usuarios, y prender/apagar el login, piden ADMIN_KEY (`usuarios`). Cada uno cambia su contraseña (`miClave`).
+   · 5 contraseñas mal seguidas para un usuario lo frenan 10 minutos (caché). Nunca se anota una contraseña ni un token en un registro.
+   ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+var LOGIN_SES_DIAS = 30, LOGIN_FALLAS_MAX = 5, LOGIN_BLOQUEO_SEG = 600, USU_VUELTAS = 200, USU_CLAVE_MIN = 6, LOGIN_SES_TOPE = 120;
+/* Lo que una vendedora ve de un pedido AJENO (todo lo demás va vacío): lo que usan los cupos del camión, el stock y el N° del día. */
+var USU_VE_AJENO = { id:1, fecha:1, oc:1, vendedor:1, turno:1, estado:1, entregado:1, vehiculo:1, chofer:1, nroDia:1, verificado:1, ts:1, rev:1, productos:1 };
+/* Lo que se saca de cada producto de un pedido ajeno: precios, pagos, quién cambió qué y lo que nombra al cliente. */
+var USU_PROD_TAPA = { precio:1, pH:1, prH:1, dsc:1, crv:1, opdf:1, oia:1, cmp:1, atc:1, fdoc:1, fdocn:1, robs:1, sinwa:1, avisa:1, rc:1, mod:1, fH:1, eH:1 };
+/* Lo que una vendedora NO puede pedir (es de Administración, Contabilidad o logística, y trae datos de todos). */
+var USU_SOLO_TODO = { rechazos:1, getlog:1, compsCarpeta:1, iaComprobantes:1, gpsHist:1, mallLeer:1, iaSemana:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1,
+  iaAtc:1, iaStockSemana:1, histStock:1 };
+function loginActivo_() { var v = cfgProp_('LOGIN_ACTIVO'); if (v === null) return true; v = String(v).toLowerCase(); return !!v && v !== '0' && v !== 'no'; }
+function usuNorm_(u) { return String(u || '').trim().toLowerCase(); }
+function usuLeer_() { try { var o = JSON.parse(prop_('USUARIOS') || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
+function usuGuardar_(o) { PropertiesService.getScriptProperties().setProperty('USUARIOS', JSON.stringify(o)); }
+function sesLeer_() { try { var o = JSON.parse(prop_('SESIONES') || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
+function sesGuardar_(o) { PropertiesService.getScriptProperties().setProperty('SESIONES', JSON.stringify(o)); }
+function usuHex_(bytes) { var s = ''; for (var i = 0; i < bytes.length; i++) { var b = (bytes[i] + 256) % 256; s += (b < 16 ? '0' : '') + b.toString(16); } return s; }
+function usuHuella_(sal, clave) {
+  var h = String(sal) + '|' + String(clave);
+  for (var i = 0; i < USU_VUELTAS; i++) h = usuHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + '|' + sal));
+  return h;
+}
+function usuAzar_(n) { var s = ''; while (s.length < n) s += String(Utilities.getUuid()).replace(/-/g, ''); return s.slice(0, n); }
+/* Una contraseña para entregar: 10 letras y números que no se confunden (sin 0/o/1/l/i). */
+function usuClaveNueva_() { var a = 'abcdefghjkmnpqrstuvwxyz23456789', h = usuAzar_(40), s = ''; for (var i = 0; i < 10; i++) s += a.charAt(parseInt(h.substr(i * 2, 2), 16) % a.length); return s; }
+function usuIgual_(a, b) { a = String(a); b = String(b); if (a.length !== b.length) return false; var d = 0; for (var i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
+/* ¿Quién es esta llamada? { u, n, r } (r 'v' o 't'), o null. `adminKey` correcta = las herramientas y Administración: ve todo. */
+function usuDe_(body) {
+  var ak = adminKey_();
+  if (ak && body && body.adminKey && usuIgual_(body.adminKey, ak)) return { u:'(administración)', n:'', r:'t', srv:1 };
+  var t = String(body && body.ses || ''); if (!t) return null;
+  var S = sesLeer_(), x = S[t]; if (!x || !(Number(x[1]) > Date.now())) return null;
+  var U = usuLeer_(), y = U[x[0]]; if (!y) return null;
+  return { u:x[0], n:String(y.n || ''), r:(y.r === 't' ? 't' : 'v') };
+}
+/* ¿Es suyo? Por el vendedor del pedido (también un retiro: `vendedor` = quien entregó la plata). */
+function usuEsSuyo_(U, rec) { return !!U && !!rec && !!U.n && waEfeNorm_(rec.vendedor) === waEfeNorm_(U.n); }
+/* El pedido de OTRA persona, para una vendedora: solo lo de USU_VE_AJENO; un retiro ajeno, ni eso (solo id y sello). */
+function usuTapar_(rec) {
+  var id = String(rec.id || '');
+  if (id.indexOf('__ret_') === 0) return { id:id, rev:rec.rev, fecha:'', oc:'', vendedor:'', cliente:'', productos:[], celular:'', turno:'', zona:'', direccion:'', maps:'',
+    pagado:false, saldo:0, ts:rec.ts, metodoPago:'', observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
+    nroDia:0, verificado:false, fotos:[], oculto:1 };
+  var o = {};
+  for (var k in rec) if (Object.prototype.hasOwnProperty.call(rec, k)) {
+    if (USU_VE_AJENO[k]) o[k] = rec[k];
+    else if (typeof rec[k] === 'number') o[k] = 0;
+    else if (typeof rec[k] === 'boolean') o[k] = false;
+    else if (Array.isArray(rec[k])) o[k] = [];
+    else o[k] = '';
+  }
+  o.productos = (Array.isArray(rec.productos) ? rec.productos : []).map(function (x) {
+    var y = {}; if (!x || typeof x !== 'object') return x;
+    for (var j in x) if (Object.prototype.hasOwnProperty.call(x, j) && !USU_PROD_TAPA[j]) y[j] = x[j];
+    return y;
+  });
+  o.oculto = 1;
+  return o;
+}
+/* La lista para una vendedora: lo suyo entero, las filas del sistema tal cual, lo ajeno tapado. Mismos ids y sellos (la cuenta de control no cambia). */
+function usuFiltrarLista_(U, lst) {
+  if (!U || U.r === 't' || !lst || !Array.isArray(lst.pedidos)) return lst;
+  lst.pedidos = lst.pedidos.map(function (p) {
+    var id = String(p && p.id || '');
+    if (filaFijaSistema_(id)) return p;
+    return usuEsSuyo_(U, p) ? p : usuTapar_(p);
+  });
+  lst.yo = { n:U.n, r:U.r };
+  return lst;
+}
+/* Los ids de los pedidos de esta vendedora (para filtrar lo que viene de otras hojas: respuestas al bot, días que eligió el cliente). */
+function usuIdsSuyos_(U) {
+  var sh = getSheet(), last = sh.getLastRow(), out = {}; if (last < 2) return out;
+  var v = sh.getRange(2, 1, last - 1, 4).getValues(), n = waEfeNorm_(U.n);
+  for (var i = 0; i < v.length; i++) if (v[i][0] && waEfeNorm_(v[i][3]) === n) out[String(v[i][0])] = 1;
+  return out;
+}
+/* Guardar o borrar: una vendedora solo lo suyo (las filas del sistema, como siempre). Devuelve '' si puede, o el motivo. */
+function usuPuedeEscribir_(U, action, body) {
+  if (!U || U.r === 't') return '';
+  var id = String(action === 'delete' ? (body.id || '') : (body.pedido && body.pedido.id || ''));
+  if (!id) return 'ajeno';
+  if (filaFijaSistema_(id)) return '';
+  if (action !== 'delete' && waEfeNorm_(body.pedido.vendedor) !== waEfeNorm_(U.n)) return 'ajeno';
+  var sh = getSheet(), last = sh.getLastRow(); if (last < 2) return '';
+  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) {
+    var v = sh.getRange(i + 2, 4).getValue();
+    return waEfeNorm_(v) === waEfeNorm_(U.n) ? '' : 'ajeno';
+  }
+  return '';
+}
+function loginFallas_(u, sumar) {
+  var c = getCache_(), k = 'login_f_' + Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, u)).slice(0, 20), n = 0;
+  try { n = Number(c && c.get(k)) || 0; } catch (e) { n = 0; }
+  if (sumar) { n++; try { if (c) c.put(k, String(n), LOGIN_BLOQUEO_SEG); } catch (e) {} }
+  if (sumar === false) { try { if (c) c.remove(k); } catch (e) {} n = 0; }
+  return n;
+}
+/* 🔑 Entrar: { u, p } → { ok, ses, vence, n, r } · { ok:false, error:'login_mal' | 'login_frenado' } (nunca dice si existe el usuario). */
+function usuLogin_(body) {
+  var u = usuNorm_(body.u), p = String(body.p || '');
+  if (!u || !p) return { ok:false, error:'login_mal', version:SCRIPT_VERSION };
+  if (loginFallas_(u) >= LOGIN_FALLAS_MAX) return { ok:false, error:'login_frenado', min:Math.round(LOGIN_BLOQUEO_SEG / 60), version:SCRIPT_VERSION };
+  var U = usuLeer_(), y = U[u];
+  if (!y || !usuIgual_(usuHuella_(y.s, p), y.h)) { loginFallas_(u, true); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
+  loginFallas_(u, false);
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
+  try {
+    var S = sesLeer_(), ahora = Date.now(), t = usuAzar_(40), vence = ahora + LOGIN_SES_DIAS * 86400000, vivas = [];
+    for (var k in S) if (Number(S[k][1]) > ahora && U[S[k][0]]) vivas.push([k, S[k]]);
+    vivas.sort(function (a, b) { return Number(b[1][1]) - Number(a[1][1]); });
+    S = {}; vivas.slice(0, LOGIN_SES_TOPE - 1).forEach(function (x) { S[x[0]] = x[1]; });
+    S[t] = [u, vence];
+    sesGuardar_(S);
+    return { ok:true, ses:t, vence:vence, u:u, n:String(y.n || ''), r:(y.r === 't' ? 't' : 'v'), cambiar:!y.k, version:SCRIPT_VERSION };
+  } finally { lock.releaseLock(); }
+}
+function usuSalir_(body) {
+  var t = String(body.ses || ''); if (!t) return { ok:true, version:SCRIPT_VERSION };
+  var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
+  try { var S = sesLeer_(); if (S[t]) { delete S[t]; sesGuardar_(S); } return { ok:true, version:SCRIPT_VERSION }; } finally { lock.releaseLock(); }
+}
+/* Cada uno cambia la suya: { ses, actual, nueva }. */
+function usuMiClave_(body) {
+  var Y = usuDe_({ ses:body.ses }); if (!Y) return { ok:false, error:'login', version:SCRIPT_VERSION };
+  var nueva = String(body.nueva || '');
+  if (nueva.length < USU_CLAVE_MIN) return { ok:false, error:'corta', min:USU_CLAVE_MIN, version:SCRIPT_VERSION };
+  var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
+  try {
+    var U = usuLeer_(), y = U[Y.u]; if (!y) return { ok:false, error:'login', version:SCRIPT_VERSION };
+    if (!usuIgual_(usuHuella_(y.s, String(body.actual || '')), y.h)) { loginFallas_(Y.u, true); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
+    y.s = usuAzar_(24); y.h = usuHuella_(y.s, nueva); y.k = Date.now(); usuGuardar_(U);
+    return { ok:true, version:SCRIPT_VERSION };
+  } finally { lock.releaseLock(); }
+}
+/* 👥 Administración (con ADMIN_KEY): { op:'lista' | 'crear' {u, n, r} | 'clave' {u} | 'borrar' {u} | 'activar' | 'apagar' }.
+   'crear' y 'clave' devuelven la contraseña NUEVA una sola vez (se la pasás a la persona; la primera vez que entra se la pide cambiar). */
+function usuAdmin_(body) {
+  var ak = adminKey_();
+  if (ak === null) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+  if (!ak) return { ok:false, error:'admin', motivo:'sin_clave', version:SCRIPT_VERSION };
+  if (!body.adminKey || !usuIgual_(body.adminKey, ak)) return { ok:false, error:'admin', motivo:'clave_mal', version:SCRIPT_VERSION };
+  var op = String(body.op || 'lista');
+  var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
+  try {
+    var U = usuLeer_(), u = usuNorm_(body.u), out = { ok:true, op:op, version:SCRIPT_VERSION };
+    if (op === 'activar' || op === 'apagar') {
+      if (op === 'activar' && !Object.keys(U).some(function (k) { return U[k].r === 't'; })) return { ok:false, error:'sin_admin', version:SCRIPT_VERSION };
+      PropertiesService.getScriptProperties().setProperty('LOGIN_ACTIVO', op === 'activar' ? '1' : '0');
+      out.activo = op === 'activar' ? 1 : 0;
+    } else if (op === 'crear' || op === 'clave') {
+      if (!u || u.length > 80 || /[\s<>"']/.test(u)) return { ok:false, error:'usuario', version:SCRIPT_VERSION };
+      if (op === 'crear') {
+        var n = String(body.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
+        if (!n) return { ok:false, error:'nombre', version:SCRIPT_VERSION };
+        if (U[u] && !body.reemplazar) return { ok:false, error:'existe', version:SCRIPT_VERSION };
+        U[u] = { n:n, r:(body.r === 't' ? 't' : 'v'), t:Date.now() };
+      } else if (!U[u]) return { ok:false, error:'no_existe', version:SCRIPT_VERSION };
+      var c = usuClaveNueva_();
+      U[u].s = usuAzar_(24); U[u].h = usuHuella_(U[u].s, c); delete U[u].k;
+      usuGuardar_(U); usuCerrarSesiones_(u);
+      out.u = u; out.clave = c;
+    } else if (op === 'borrar') {
+      if (!U[u]) return { ok:false, error:'no_existe', version:SCRIPT_VERSION };
+      delete U[u]; usuGuardar_(U); usuCerrarSesiones_(u);
+    }
+    out.activo = (op === 'activar') ? 1 : (op === 'apagar' ? 0 : (prop_('LOGIN_ACTIVO') === '1' ? 1 : 0));
+    var S = sesLeer_(), ahora = Date.now(), ult = {};
+    for (var t in S) if (Number(S[t][1]) > ahora) ult[S[t][0]] = (ult[S[t][0]] || 0) + 1;
+    out.usuarios = Object.keys(U).sort().map(function (k) { return { u:k, n:U[k].n, r:U[k].r, cambio:!!U[k].k, ses:ult[k] || 0 }; });
+    return out;
+  } finally { lock.releaseLock(); }
+}
+function usuCerrarSesiones_(u) { var S = sesLeer_(), cambio = false; for (var t in S) if (S[t][0] === u) { delete S[t]; cambio = true; } if (cambio) sesGuardar_(S); }
+
 /* 🧷 (2026-11-16-a, revisión de Fable, punto 4) ÚLTIMA LÍNEA DEL ARCHIVO, a propósito: si el pegado quedó cortado, no está, y
    «probarAntesDeImplementar» lo dice con una ❌. Va igual a SCRIPT_VERSION (tests/test_gs_fable.js §4 lo compara). No agregar nada DEBAJO. */
-var FIN_DEL_ARCHIVO = '2026-11-26-pry-b';
+var FIN_DEL_ARCHIVO = '2026-11-27-a';

@@ -28,6 +28,7 @@ jobs:
         env:
           PANEL_URL: ${{ secrets.PANEL_URL }}
           PANEL_KEY: ${{ secrets.PANEL_KEY }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
         run: python herramientas/diagnostico_lectura.py
       # 🔐 (16/10) Si el script dejó la planilla CIFRADA (solo se lee con la llave privada, que no está en el repo), se guarda en la
       # rama que lo corrió para poder bajarla. Nunca en main.

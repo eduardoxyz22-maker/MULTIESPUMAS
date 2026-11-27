@@ -92,6 +92,8 @@ PANEL_URL = (os.environ.get("PANEL_URL", "") or "").strip()
 # 🔐 (23/11) La clave del equipo (secreto PANEL_KEY): cuando el servidor la pide, sin ella la lectura vuelve `clave` y queda VENDOR_CFG.
 # Con el servidor todavía abierto, mandarla no cambia nada. Nunca se imprime.
 PANEL_KEY = (os.environ.get("PANEL_KEY", "") or "").strip()
+# 👤 (27/11) Con el login por usuario prendido, las herramientas entran con la clave de Administración (secreto ADMIN_KEY). Nunca se imprime.
+ADMIN_KEY = (os.environ.get("ADMIN_KEY", "") or "").strip()
 META_FILA = "__metas__"
 
 def _panel_leer_lista():
@@ -101,6 +103,8 @@ def _panel_leer_lista():
     _c = {"action": "list", "quien": "", "dispositivo": "dashboard-github", "cola": 0, "colaIds": []}
     if PANEL_KEY:
         _c["key"] = PANEL_KEY
+    if ADMIN_KEY:
+        _c["adminKey"] = ADMIN_KEY
     cuerpo = json.dumps(_c).encode("utf-8")
     ult = "sin respuesta"
     for intento in range(2):

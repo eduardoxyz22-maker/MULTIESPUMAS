@@ -41,6 +41,7 @@ jobs:
           KOMMO_TOKEN_SUENA: ${{ secrets.KOMMO_TOKEN_SUENA }}
           PANEL_URL: ${{ secrets.PANEL_URL }}
           PANEL_KEY: ${{ secrets.PANEL_KEY }}
+          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
           CRUCE_DIAS: ${{ github.event.inputs.dias || '14' }}
           CRUCE_GUARDAR: ${{ (github.event_name != 'push' && github.ref == 'refs/heads/main') && '1' || '0' }}
         run: node herramientas/verificar_cruce_ventas.js

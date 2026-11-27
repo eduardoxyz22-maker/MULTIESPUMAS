@@ -64,7 +64,7 @@ def post(body, intentos=3):
     body = dict(body)
     if CLAVE:
         body['key'] = CLAVE
-    if CLAVE_ADMIN and body.get('forzar'):
+    if CLAVE_ADMIN:   # 👤 (27/11) siempre: con el login por usuario prendido, sin ella el servidor contesta `login`
         body['adminKey'] = CLAVE_ADMIN
     for intento in range(intentos):
         # El cuerpo va por la entrada estándar (`--data-binary @-`): un PDF en base64 no entra en un solo argumento (Linux corta
@@ -90,6 +90,9 @@ def post(body, intentos=3):
         if isinstance(j, dict) and j.get('ok') is False and j.get('error') == 'clave':
             raise SystemExit('El servidor del panel pide la clave del equipo y esta máquina ' + ('tiene otra' if CLAVE else 'no la tiene') +
                              ': falta PANEL_KEY (variable o ~/.claves_panel.json). No se cargó nada.')
+        if isinstance(j, dict) and j.get('ok') is False and j.get('error') == 'login':
+            raise SystemExit('El servidor del panel tiene el login por usuario prendido y esta máquina no tiene la clave de Administración'
+                             ' (ADMIN_KEY o adminKey en ~/.claves_panel.json). No se cargó nada.')
         return j
     raise SystemExit('El servidor del panel no contestó bien: ' + (r.stdout or r.stderr)[:300])
 

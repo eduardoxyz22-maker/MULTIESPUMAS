@@ -2329,6 +2329,22 @@ cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista 
 cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.
 Volver atrás: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
 
+## 👤 El login de cada usuario (27/11; dueño: *«cada usuario de los vendedores debe tener su propio ingreso de login y clave y no pueden ver lo del otro»*; eligió «correo + contraseña del panel» y «solo números, sin clientes»; Administración, Eduardo, Contabilidad, logística y ROHO ven todo; servidor `2026-11-27-a` y página 2026-11-27-j, EN LA RAMA)
+- 🔒 **Lo que cuida es el SERVIDOR** («USUARIOS Y SESIONES» al final del `.gs`): propiedades `USUARIOS` (`{usuario:{n, r:'v'|'t', s, h, k}}`, la contraseña con sal y
+  `USU_VUELTAS` SHA-256, nunca en claro) y `SESIONES` (`{token:[usuario, vence]}`, `LOGIN_SES_DIAS`=30). Acciones `login` / `salir` / `miClave` / `usuarios` (esta con
+  ADMIN_KEY: lista, crear, clave nueva, borrar, activar, apagar; crear y clave devuelven la contraseña UNA vez). Con **`LOGIN_ACTIVO`=1** todo lo demás pide `ses` (o
+  `adminKey` = las herramientas) y si no, `login`; la puerta GET queda cerrada. Sin LOGIN_ACTIVO, como antes (las sesiones valen igual, para probar).
+- 🙋 A una vendedora (`r:'v'`) `usuFiltrarLista_` le tapa lo AJENO (`usuTapar_`: queda id, día, turno, OC, vendedora, estado, camión, N° del día, sello y los productos sin
+  `USU_PROD_TAPA`; `oculto:1`; un retiro ajeno, solo id y sello): mismos ids y sellos, la cuenta de control no cambia. No guarda ni borra lo ajeno (`ajeno`), no pide
+  `USU_SOLO_TODO` (`permiso`), y `waRespuestas`/`cotLeer` le llegan solo con lo suyo. Las filas del sistema van tal cual. 5 contraseñas malas = 10 min frenado.
+- 🖥️ Página: `loginAbrir` (la pantalla de entrada, sale sola con `login`; `.login-ov[hidden]` lleva su `display:none!important`), `SES` (me_ses_v1, viaja como `ses` en
+  `apiPost` y el beacon), `loginIdentidad` (vendedora = su nombre; si no, el rol por el nombre: Logística / Contabilidad / Administración), `loginAplicar` (una vendedora:
+  sin Administración, su nombre fijo en Mis pedidos y Contabilidad), «🚪 Salir» y «🔐 Mi contraseña» en Mis pedidos, la primera vez pide poner la suya, y al entrar
+  otra persona se borra la copia del aparato (`loginLimpiarCopia`). Administración → «👥 Usuarios» (`usuAbrir`, con la 🛡️ Clave para forzar). Playwright: `LOGIN_PRUEBA`.
+- 🧰 Las herramientas mandan `adminKey` (secreto **ADMIN_KEY** de GitHub en `panel.yml`, `diagnostico-lectura.yml`, `verificar-cruce-ventas.yml`; el cargador de correos,
+  siempre). ⚠️ Antes de prender el login el dueño tiene que cargar ese secreto, o el dashboard pierde las metas (publica igual).
+- ⚠️ Los correos de las vendedoras NO van al repo (es público): se cargan en «👥 Usuarios». `tests/test_login_servidor.js` (35), `tests/test_login_pagina.js` (13).
+
 ## 📅 «Te cambiaron el día o el turno»: el aviso a la vendedora (27/11; dueño: *«¿dónde sale el aviso al vendedor que se modificó el turno o la fecha de entrega? A Isabel le modifiqué una entrega y no sale»* → *«solo en el panel por el momento»*; página 2026-11-27-e)
 Antes el cambio solo quedaba en `fH` (la historia del pedido). Ahora `fcvDatos(v, mine)`: pedido SUYO sin entregar, con día de hoy en adelante, cuyo ÚLTIMO
 renglón de `fH` es de los últimos `FCV_DIAS`=7 días, lo hizo OTRA persona (`e.q` no es ella) y sigue siendo el día de ahora (`fhClave`) → «Para hacer» en

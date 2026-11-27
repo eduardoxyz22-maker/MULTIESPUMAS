@@ -24,7 +24,8 @@ import urllib.request as _rq
 from datetime import datetime, timedelta, timezone
 
 PANEL_URL = os.environ.get("PANEL_URL", "").strip()
-PANEL_KEY = os.environ.get("PANEL_KEY", "").strip()   # 🔐 (23/11) la clave del equipo, si el servidor la pide. Nunca se imprime.
+PANEL_KEY = os.environ.get("PANEL_KEY", "").strip()
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "").strip()   # 👤 (27/11) con el login por usuario prendido, entra con la de Administración. Nunca se imprime.   # 🔐 (23/11) la clave del equipo, si el servidor la pide. Nunca se imprime.
 ORIGEN = "https://eduardoxyz22-maker.github.io"
 
 
@@ -45,6 +46,8 @@ def pedir(nombre, url, cuerpo=None, comprimido=False):
         hdr["Content-Type"] = "text/plain;charset=utf-8"
         if PANEL_KEY and isinstance(cuerpo, dict):
             cuerpo = dict(cuerpo, key=PANEL_KEY)
+        if ADMIN_KEY and isinstance(cuerpo, dict):
+            cuerpo = dict(cuerpo, adminKey=ADMIN_KEY)
     req = _rq.Request(url, data=(json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None),
                       method=("POST" if cuerpo is not None else "GET"), headers=hdr)
     t0 = time.time()
@@ -474,6 +477,8 @@ def en_dos_tramos(base, veces=5):
         _c = {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []}
         if PANEL_KEY:
             _c["key"] = PANEL_KEY
+        if ADMIN_KEY:
+            _c["adminKey"] = ADMIN_KEY
         cuerpo = json.dumps(_c).encode()
         req = _rq.Request(base + sep + "_=" + str(int(time.time() * 1000)), data=cuerpo, method="POST",
                           headers={"Content-Type": "text/plain;charset=utf-8", "Origin": ORIGEN})

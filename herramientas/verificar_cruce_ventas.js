@@ -166,8 +166,10 @@ function cargarPagina() {
 const LEER_INTENTOS = 3, LEER_ESPERAS = [5000, 15000];
 /* 🔐 (23/11) La clave del equipo (secreto PANEL_KEY), si el servidor la pide; va por la entrada estándar, no como argumento. Nunca se imprime. */
 const PANEL_KEY = (process.env.PANEL_KEY || '').trim();
+const ADMIN_KEY = (process.env.ADMIN_KEY || '').trim();   // 👤 (27/11) con el login por usuario prendido, entra con la de Administración. Nunca se imprime.
 function pedirPanel() {
   const cuerpo = PANEL_KEY ? { action: 'list', key: PANEL_KEY } : { action: 'list' };
+  if (ADMIN_KEY) cuerpo.adminKey = ADMIN_KEY;
   return execFileSync('curl', ['-sS', '-L', '--max-time', '180', '-H', 'Content-Type: text/plain;charset=utf-8', '--data-binary', '@-', PANEL + '?_=' + Date.now()],
     { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, input: JSON.stringify(cuerpo) });
 }
@@ -369,6 +371,7 @@ function guardarRevision(fila, P, mandar) {
   if (ya && Number(ya.rev)) fila.rev = Number(ya.rev);
   const cuerpo = { action: 'save', pedido: fila, av: 1 };
   if (PANEL_KEY) cuerpo.key = PANEL_KEY;
+  if (ADMIN_KEY) cuerpo.adminKey = ADMIN_KEY;
   let r = null;
   for (let i = 0; i < 2; i++) {
     let out = ''; try { out = mandar(JSON.stringify(cuerpo)); } catch (e) { out = ''; }

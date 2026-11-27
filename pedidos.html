@@ -2062,6 +2062,17 @@ body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
 .preg-a{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; padding:14px 20px 18px; }
 .preg-a button{ font:inherit; font-weight:800; font-size:.88rem; border-radius:12px; padding:11px 16px; cursor:pointer; border:1.5px solid #99DDD9; background:#fff; color:#00706b; min-height:44px; }
 .preg-a .preg-si{ background:#00A09A; border-color:#00A09A; color:#fff; }
+.login-ov{ position:fixed; inset:0; z-index:10060; background:linear-gradient(160deg,#e6f7f6,#f4f8f8); display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; }
+.login-ov[hidden]{ display:none!important; }
+.login-c{ width:min(420px,100%); background:#fff; border-radius:18px; box-shadow:0 10px 40px rgba(0,80,76,.18); padding:22px 22px 18px; display:flex; flex-direction:column; gap:8px; color:#132626; }
+.login-h{ display:flex; gap:12px; align-items:center; margin-bottom:6px; } .login-h b{ font-size:1.2rem; display:block; } .login-h small{ color:#4d6b6a; }
+.login-l{ font-weight:600; font-size:.85rem; margin-top:4px; } .login-c input{ font:inherit; font-size:1rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; min-height:44px; width:100%; box-sizing:border-box; }
+.login-pr{ display:flex; gap:8px; align-items:center; } .login-pr input{ flex:1; min-width:0; }
+.login-msg{ background:#fdecec; color:#8a1c1c; border-radius:10px; padding:9px 11px; font-size:.88rem; } .login-b{ min-height:46px; font-size:1rem; margin-top:6px; } .login-pie{ color:#5b6b7d; text-align:center; }
+.usu-t{ width:100%; border-collapse:collapse; font-size:.86rem; } .usu-t td,.usu-t th{ padding:7px 6px; border-bottom:1px solid #e3eeee; text-align:left; vertical-align:top; }
+.usu-form{ display:grid; gap:8px; } .usu-form label{ display:flex; flex-direction:column; gap:3px; font-weight:600; font-size:.85rem; } .usu-form input,.usu-form select{ font:inherit; padding:9px 10px; border:1.5px solid #99DDD9; border-radius:10px; }
+.usu-nueva{ background:#e6f7f6; border:1.5px solid #00B5AD; border-radius:12px; padding:10px 12px; margin:8px 0; } .usu-nueva code{ font-size:1.15rem; font-weight:700; letter-spacing:.06em; background:#fff; padding:2px 8px; border-radius:6px; }
+.usu-est{ margin:6px 0 10px; } .usu-pie{ color:#5b6b7d; display:block; margin-top:8px; }
 .preg-cp{ padding:8px 20px 0 78px; display:flex; gap:8px; align-items:center; } .preg-ver{ flex:none; min-height:44px; padding:0 12px; border:1.5px solid #99DDD9; border-radius:11px; background:#fff; color:#00756F; font:inherit; font-size:.85rem; font-weight:600; cursor:pointer; } .preg-ver:focus{ outline:3px solid #00B5AD; outline-offset:1px; } .preg-in{ width:100%; box-sizing:border-box; font:inherit; font-size:.95rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; color:#132626; background:#fff; min-height:44px; } .preg-in:focus{ outline:3px solid #00B5AD; outline-offset:1px; }
 @media (max-width:520px){ .preg-cp{ padding-left:20px; } }
 .preg-pel .preg-a .preg-si{ background:#CE2939; border-color:#CE2939; }
@@ -4615,6 +4626,7 @@ function glSigue(){
             <button class="btn btn-ghost btn-sm" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
             <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveEquipo()" title="La clave que el servidor exige para leer y guardar pedidos (PANEL_KEY). Se ingresa una vez por dispositivo.">🔐 Clave del equipo</button>
+            <button class="btn btn-ghost btn-sm" id="usu-btn" onclick="usuAbrir()" title="Crear los usuarios del panel (cada vendedora con su contraseña) y prender el login. Pide la 🛡️ Clave para forzar.">👥 Usuarios</button>
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración. No es la contraseña del candado 🔒.">🛡️ Clave para forzar</button>
             <button class="btn btn-ghost btn-sm" id="mall-ap-btn" aria-pressed="false" onclick="mallAparatoCambiar()" title="La compu del mostrador de la tienda del mall: arriba de todo aparece la barra de la rueda (quién atiende, a quién le toca, «Solo miró»). Se marca una vez en esa compu.">🏬 Esta compu es la del mall</button>
           </div></section>
@@ -4705,6 +4717,8 @@ function glSigue(){
         <!-- 🔐 (23/11, dueño: «tengo listo para el viernes») la clave del equipo, para que cada uno la cargue ANTES de que el servidor la pida
              (el botón de Administración está detrás de la contraseña: las vendedoras no llegan) -->
         <div class="field">
+          <button class="btn btn-ghost btn-sm" id="login-salir" hidden onclick="loginSalir()" title="Salir de tu usuario en esta compu">🚪 Salir</button>
+          <button class="btn btn-ghost btn-sm" id="login-mi-clave" onclick="loginCambiarClave()" title="Cambiar tu contraseña del panel">🔐 Mi contraseña</button>
           <button class="btn btn-ghost btn-sm" id="mis-clave-btn" onclick="pedirClaveEquipo()" title="La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.">🔐 Clave del equipo</button>
         </div>
         <!-- 🛡️ (27/11, dueño: «falta la clave de admin») la de administración, para cargarla ANTES (solo logística y Administración: forzar un turno lleno) -->
@@ -11598,6 +11612,7 @@ function apiPost(payload){
      SÍ sale: `PRACTICA_LECTURAS`). Si algo se escapara de acá, el `fetch` de la práctica igual lo frena (script del <head>). */
   if(window.PRACTICA && !practicaEsLectura(payload)) return practicaResponder(payload);
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
+  if(SES && SES.t && payload.action!=='login') payload.ses=SES.t;   // 👤 (27/11) la sesión de quien entró
   /* 🫀 Quién guarda y cuánto tiene sin enviar (§4el): el servidor lo anota para que
      Administración vea desde SU pantalla qué dispositivo tiene una cola trabada y de quién es. */
   try {
@@ -11663,6 +11678,9 @@ function apiPost(payload){
          casualidad el primero sí se guardó, el segundo choca con su propia fila y `rechazoFirme`
          lo toma como un ok tardío (§4fd). */
       if(j && (Array.isArray(j.pedidos) || j.error==='get_cerrado') && (payload.action!=='list' || j.error==='get_cerrado')) throw new Error('respuesta_de_lectura');
+      if(j && j.login!=null) LOGIN_ON=(Number(j.login)===1);   // 👤 (27/11) el servidor dice si el login está prendido
+      if(j && j.ok===false && j.error==='login'){ loginPedir(); throw new Error('login'); }   // 👤 sin sesión (o venció): la pantalla de entrada
+      if(j && j.ok===false && j.error==='ajeno'){ toast('🔒 Ese pedido es de otra vendedora: no se puede cambiar desde tu usuario.','err',8000); }
       if(j && j.ok===false && j.error==='clave'){
         var primera=!CLAVE_RECHAZADA;
         CLAVE_RECHAZADA=true; renderConnEstado();
@@ -12814,6 +12832,198 @@ function misClaveBtnPintar(){
   b.title=CLAVE_EQUIPO ? 'Este aparato ya tiene la clave del equipo. Tocá para cambiarla.' : 'La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.';
   var a=document.getElementById('mis-clave-adm-btn'); if(a) a.textContent=ADMIN_KEY_LOCAL ? '🛡️ Clave para forzar ✓' : '🛡️ Clave para forzar';
 }
+/* ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+   👤 (27/11, dueño: «cada usuario de los vendedores debe tener su propio ingreso de login y clave y no pueden ver lo del otro»;
+   «correo + contraseña del panel»; «solo números, sin clientes»; Administración, Eduardo, Contabilidad, logística y ROHO ven todo)
+   EL LOGIN DE CADA USUARIO. Lo que de verdad cuida es el SERVIDOR (servidor ≥ 2026-11-27-a, «USUARIOS Y SESIONES»): a una vendedora le
+   manda lo ajeno TAPADO (sin cliente, celular, dirección, NIT, pagos ni precios; `p.oculto`) y no le deja guardar ni borrar lo ajeno.
+   La página: la pantalla de entrada (`loginAbrir`, sale sola cuando el servidor contesta `login`), la sesión en este aparato (`SES`,
+   me_ses_v1, viaja como `ses` en cada llamada), quién es (`loginIdentidad`), «🚪 Salir», cambiar la contraseña (la primera vez la pide) y
+   «👥 Usuarios» en Administración (con la 🛡️ Clave para forzar). Al cambiar de usuario en el mismo aparato se borra la copia del anterior.
+   En Playwright la pantalla no sale salvo LOGIN_PRUEBA.
+   ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
+var SES_LS='me_ses_v1', SES_ULT_LS='me_ses_ultimo', SES=null, LOGIN_PIDE=false, LOGIN_ON=false;
+try{ SES=JSON.parse(localStorage.getItem(SES_LS)||'null'); if(!SES || !SES.t || !(Number(SES.vence)>Date.now())) SES=null; }catch(e){ SES=null; }
+function loginActivoPag(){ try{ return !(navigator.webdriver && !window.LOGIN_PRUEBA); }catch(e){ return true; } }
+function sesGuardar(s){ SES=s||null; try{ if(SES) localStorage.setItem(SES_LS, JSON.stringify(SES)); else localStorage.removeItem(SES_LS); }catch(e){} }
+function sesEsVend(){ return !!(SES && SES.r==='v'); }
+/* El servidor dice `login`: esta llamada no tiene sesión (o venció). */
+function loginPedir(){
+  if(SES){ sesGuardar(null); }
+  if(LOGIN_PIDE || !loginActivoPag()) return;
+  LOGIN_PIDE=true; loginAbrir();
+}
+function loginAbrir(msg){
+  if(!loginActivoPag()) return;
+  var box=document.getElementById('login-ov');
+  if(!box){ box=document.createElement('div'); box.id='login-ov'; box.className='login-ov no-print'; document.body.appendChild(box); }
+  var ult=''; try{ ult=localStorage.getItem(SES_ULT_LS)||''; }catch(e){}
+  var yo=(typeof blokiSrc==='function') ? '<img src="'+blokiSrc('bloki')+'" alt="" width="64" height="56">' : '';
+  box.innerHTML='<form class="login-c" role="dialog" aria-modal="true" aria-labelledby="login-t" onsubmit="event.preventDefault();loginEntrar()">'+
+    '<div class="login-h">'+yo+'<div><b id="login-t">🔐 Entrar al panel</b><small>Cada uno con su usuario y su contraseña.</small></div></div>'+
+    '<label class="login-l" for="login-u">Usuario o correo</label>'+
+    '<input id="login-u" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" value="'+esc(ult)+'" placeholder="nombre.apellido@colchonesheaven.com">'+
+    '<label class="login-l" for="login-p">Contraseña</label>'+
+    '<div class="login-pr"><input id="login-p" type="password" autocomplete="current-password" placeholder="Tu contraseña">'+
+      '<button type="button" class="preg-ver" aria-label="Ver lo escrito" onclick="var i=document.getElementById(\'login-p\'),v=i.type===\'password\';i.type=v?\'text\':\'password\';this.textContent=v?\'🙈 Tapar\':\'👁 Ver\';i.focus()">👁 Ver</button></div>'+
+    '<div id="login-msg" class="login-msg"'+(msg?'':' hidden')+'>'+esc(msg||'')+'</div>'+
+    '<button type="submit" id="login-btn" class="btn btn-primary login-b">Entrar</button>'+
+    '<small class="login-pie">¿No tenés usuario o te olvidaste la contraseña? Pedíselo a Administración.</small>'+
+  '</form>';
+  box.hidden=false;
+  setTimeout(function(){ try{ var u=document.getElementById('login-u'), pw=document.getElementById('login-p'); ((u && u.value) ? pw : u).focus(); }catch(e){} }, 60);
+}
+function loginCerrar(){ var b=document.getElementById('login-ov'); if(b) b.hidden=true; LOGIN_PIDE=false; }
+function loginMsg(t){ var m=document.getElementById('login-msg'); if(m){ m.textContent=t||''; m.hidden=!t; } }
+function loginEntrar(){
+  var u=String((document.getElementById('login-u')||{}).value||'').trim().toLowerCase(), pw=String((document.getElementById('login-p')||{}).value||'');
+  if(!u || !pw){ loginMsg('Escribí tu usuario y tu contraseña.'); return; }
+  var b=document.getElementById('login-btn'); if(b){ b.disabled=true; b.textContent='⏳ Entrando…'; }
+  apiPost({ action:'login', u:u, p:pw }).then(function(j){
+    if(b){ b.disabled=false; b.textContent='Entrar'; }
+    if(!j || !j.ok){
+      var e=j && j.error;
+      loginMsg(e==='login_frenado' ? ('Muchos intentos con una contraseña equivocada: esperá '+(j.min||10)+' minutos y probá de nuevo.')
+        : e==='login_mal' ? 'Usuario o contraseña incorrectos.' : 'No se pudo entrar ahora ('+(e||'sin respuesta')+'). Probá de nuevo.');
+      return;
+    }
+    loginListo(j, pw);
+  }, function(err){
+    if(b){ b.disabled=false; b.textContent='Entrar'; }
+    loginMsg(/login/.test(String(err&&err.message)) ? 'Usuario o contraseña incorrectos.' : 'No hay conexión con el servidor. Probá de nuevo en un momento.');
+  });
+}
+function loginListo(j, pw){
+  var antes=''; try{ antes=localStorage.getItem(SES_ULT_LS)||''; }catch(e){}
+  if(antes!==j.u) loginLimpiarCopia();   // otra persona en este aparato (o la primera vez): lo de antes no queda
+  try{ localStorage.setItem(SES_ULT_LS, j.u); }catch(e){}
+  sesGuardar({ t:j.ses, u:j.u, n:j.n, r:j.r, vence:j.vence });
+  loginCerrar();
+  loginIdentidad();
+  toast('👋 ¡Hola, '+String(j.n||j.u).split(' ')[0]+'!','ok');
+  try{ refrescarEstadoYa(); }catch(e){}
+  if(j.cambiar) setTimeout(function(){ loginCambiarClave(pw); }, 600);
+}
+/* La copia del aparato es de quien estaba: al entrar otra persona se borra (pedidos, lo cambiado, la sesión de la lectura). */
+function loginLimpiarCopia(){
+  try{ STATE=[]; LISTA_BASE=null; localStorage.removeItem(LS_KEY); }catch(e){}
+  try{ saveMirror(); }catch(e){}
+  try{ setVendedorMem(''); quienRol(''); quienSesion(''); }catch(e){}
+}
+/* Quién es: una vendedora (su nombre de VENDEDORES) o, para quien ve todo, el rol que dice su nombre. */
+function loginIdentidad(){
+  if(!SES) return;
+  var n=String(SES.n||''), esVend=false;
+  try{ esVend=(VENDEDORES||[]).some(function(v){ return mismoVendedor(v, n); }); }catch(e){}
+  try{
+    if(esVend){ setVendedorMem(n); quienRol(''); quienSesion(n); }
+    else { var rol=/log[ií]stic/i.test(n) ? 'logistica' : (/contab/i.test(n) ? 'conta' : 'admin'); setVendedorMem(''); quienRol(rol); quienSesion(rol); }
+    quienCerrar();
+  }catch(e){}
+  loginAplicar();
+}
+/* Lo que la página hace con una vendedora: su nombre fijo en Mis pedidos y Contabilidad, sin Administración ni la pestaña Bot. */
+function loginAplicar(){
+  var v=sesEsVend();
+  var ta=document.getElementById('tab-admin'); if(ta) ta.hidden=v;   // una vendedora no ve Administración (lo de las demás le llega tapado)
+  ['mis-vendedor','cta-vendedor','cua-vendedor','f-vendedor'].forEach(function(id){ var el=document.getElementById(id); if(!el) return;
+    if(v){ if(id!=='f-vendedor' || !EDIT_ID) { try{ el.value=SES.n; }catch(e){} } el.disabled=true; el.title='Entraste como '+SES.n; }
+    else if(el.title && el.title.indexOf('Entraste como')===0){ el.disabled=false; el.title=''; } });
+  var sb=document.getElementById('login-salir'); if(sb){ sb.hidden=!SES; sb.textContent='🚪 Salir'+(SES ? (' ('+String(SES.n||SES.u).split(' ')[0]+')') : ''); }
+  var ub=document.getElementById('usu-btn'); if(ub) ub.hidden=!!v;
+}
+function loginSalir(){
+  var t=SES && SES.t;
+  var r=preguntaYa('¿Salir del panel en esta compu?', { icono:'🚪', titulo:'¿Salir del panel?', lineas:['Para volver a entrar vas a necesitar tu usuario y tu contraseña.'], no:'Cancelar', si:'🚪 Salir' }, loginSalir);
+  if(r!==true) return;
+  if(t) apiPost({ action:'salir' }).then(function(){}, function(){});
+  sesGuardar(null); loginLimpiarCopia(); loginAplicar();
+  if(LOGIN_ON) loginPedir(); else toast('Saliste del panel.','ok');
+}
+/* Cambiar la contraseña: la primera vez (con la que le pasó Administración) se la pide sola. */
+function loginCambiarClave(actual, _otraVez){
+  if(!SES) return;
+  var primera=!!actual;
+  var a=actual || preguntaTextoYa('Tu contraseña de ahora:', '', { icono:'🔐', titulo:'Cambiar tu contraseña', sub:'Primero, la de ahora', campoAyuda:'La contraseña de ahora', campoClave:true, no:'Cancelar', si:'Seguir' },
+    function(){ loginCambiarClave('', true); });
+  if(a==null || a==='') return;
+  var n1=preguntaTextoYa('Tu contraseña nueva (6 letras o más):', '', { icono:'🔐', titulo:primera?'Poné tu propia contraseña':'Tu contraseña nueva',
+    sub:primera?'La que te pasó Administración es para entrar la primera vez':'6 letras o números o más', lineas:['No la compartas con nadie: con ella se ven tus clientes.'],
+    campoAyuda:'6 o más', campoClave:true, no:primera?'Más tarde':'Cancelar', si:'Seguir' }, function(){ loginCambiarClave(actual, true); });
+  if(n1==null) return;
+  if(String(n1).length<6){ avisoVentana('Muy corta.', { icono:'⚠️', aviso:true, titulo:'Muy corta', lineas:['Tiene que tener 6 letras o números o más.'] }); return; }
+  var n2=preguntaTextoYa('Repetila:', '', { icono:'🔐', titulo:'Repetí la contraseña nueva', campoClave:true, no:'Cancelar', si:'💾 Cambiar' }, function(){ loginCambiarClave(actual, true); });
+  if(n2==null) return;
+  if(n1!==n2){ avisoVentana('No coinciden.', { icono:'⚠️', aviso:true, titulo:'No coinciden', lineas:['Las dos tienen que ser iguales. Probá otra vez.'] }); return; }
+  apiPost({ action:'miClave', actual:a, nueva:n1 }).then(function(j){
+    if(j && j.ok) toast('🔐 Listo: tu contraseña nueva quedó guardada.','ok');
+    else toast(j && j.error==='login_mal' ? 'La contraseña de ahora no es esa: no se cambió.' : 'No se pudo cambiar ('+((j&&j.error)||'sin respuesta')+').','err',8000);
+  }, function(){ toast('Sin conexión: la contraseña no se cambió.','err'); });
+}
+/* ── 👥 Usuarios (Administración, con la 🛡️ Clave para forzar) ── */
+var USU_V={ lista:[], activo:0, nueva:null };
+function usuAbrir(){
+  if(!ADMIN_KEY_LOCAL){ pedirClaveAdmin(function(){ pedirClaveAdmin(); if(ADMIN_KEY_LOCAL) usuAbrir(); }); return; }
+  usuPedir({ op:'lista' });
+}
+function usuPedir(o){
+  o=Object.assign({ action:'usuarios', adminKey:ADMIN_KEY_LOCAL }, o||{});
+  return apiPost(o).then(function(j){
+    if(!j || !j.ok){
+      var e=j&&j.error;
+      if(e==='admin'){ toast(j.motivo==='sin_clave' ? 'El servidor todavía no tiene la 🛡️ Clave para forzar puesta.' : 'La 🛡️ Clave para forzar de esta compu no es la del servidor.','err',9000); return; }
+      toast({ existe:'Ese usuario ya existe.', no_existe:'Ese usuario no existe.', usuario:'El usuario no puede tener espacios ni comillas.', nombre:'Falta el nombre.',
+        sin_admin:'Primero creá un usuario que vea todo (Administración): si no, nadie podría entrar a manejar esto.' }[e] || ('No se pudo ('+(e||'sin respuesta')+'). ¿El servidor ya es la versión 2026-11-27-a?'),'err',9000);
+      return;
+    }
+    USU_V.lista=j.usuarios||[]; USU_V.activo=j.activo?1:0; USU_V.nueva=(j.clave ? { u:j.u, c:j.clave } : null);
+    usuPintar();
+  }, function(){ toast('Sin conexión con el servidor.','err'); });
+}
+function usuPintar(){
+  var V=USU_V, filas=V.lista.map(function(x){
+    return '<tr><td><b>'+esc(x.u)+'</b><br><small>'+esc(x.n)+'</small></td><td>'+(x.r==='t'?'👁 Ve todo':'🙋 Solo lo suyo')+'</td>'+
+      '<td>'+(x.cambio?'✓ ya puso la suya':'⏳ todavía con la inicial')+(x.ses?(' · '+x.ses+' sesión'+(x.ses===1?'':'es')):'')+'</td>'+
+      '<td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="usuClave(\''+esc(x.u)+'\')">🔑 Contraseña nueva</button> <button class="btn btn-ghost btn-sm" onclick="usuBorrar(\''+esc(x.u)+'\')">🗑</button></td></tr>';
+  }).join('');
+  var nueva=V.nueva ? ('<div class="usu-nueva">🔑 Contraseña para <b>'+esc(V.nueva.u)+'</b>: <code id="usu-clave">'+esc(V.nueva.c)+'</code> '+
+    '<button class="btn btn-ghost btn-sm" onclick="usuCopiar()">📋 Copiar</button><br><small>Se muestra UNA sola vez: pasásela a la persona. Al entrar la primera vez el panel le pide poner la suya.</small></div>') : '';
+  var html='<h3>👥 Usuarios del panel</h3>'+
+    '<p class="usu-est">'+(V.activo ? '🟢 <b>El login está PRENDIDO</b>: todos entran con su usuario.' : '⚪ <b>El login está APAGADO</b>: el panel anda como siempre. Creá los usuarios, pasales las contraseñas y recién ahí prendelo.')+
+      ' <button class="btn btn-sm '+(V.activo?'btn-ghost':'btn-primary')+'" onclick="usuActivar('+(V.activo?0:1)+')">'+(V.activo?'Apagar el login':'🟢 Prender el login')+'</button></p>'+
+    nueva+
+    '<div style="overflow-x:auto"><table class="usu-t"><thead><tr><th>Usuario</th><th>Ve</th><th>Estado</th><th></th></tr></thead><tbody>'+(filas||'<tr><td colspan="4">Todavía no hay usuarios.</td></tr>')+'</tbody></table></div>'+
+    '<h4>➕ Nuevo usuario</h4>'+
+    '<div class="usu-form"><label>Usuario o correo<input id="usu-u" type="text" autocapitalize="none" spellcheck="false" placeholder="nombre.apellido@colchonesheaven.com"></label>'+
+      '<label>Nombre<input id="usu-n" type="text" list="dl-vendedores" placeholder="Como en el panel: Isabel Robledo · Administración · Logística · Contabilidad"></label>'+
+      '<label>Qué ve<select id="usu-r"><option value="v">🙋 Solo lo suyo (vendedora)</option><option value="t">👁 Todo (Administración, Eduardo, Contabilidad, logística, ROHO)</option></select></label>'+
+      '<button class="btn btn-primary" onclick="usuCrear()">➕ Crear y generar su contraseña</button></div>'+
+    '<small class="usu-pie">Una vendedora ve lo suyo entero y de las demás solo el día, el turno y los productos (para los cupos y el stock), nunca el cliente ni la plata. El nombre de una vendedora tiene que ser el mismo del panel.</small>'+
+    '<div class="modal-actions"><button class="btn btn-ghost" onclick="closeModal()">Cerrar</button></div>';
+  openModal(html, true);
+}
+function usuCrear(){
+  var u=String((document.getElementById('usu-u')||{}).value||'').trim().toLowerCase(), n=String((document.getElementById('usu-n')||{}).value||'').trim(), r=(document.getElementById('usu-r')||{}).value||'v';
+  if(!u || !n){ toast('Falta el usuario o el nombre.','err'); return; }
+  if(r==='v' && !(VENDEDORES||[]).some(function(v){ return mismoVendedor(v, n); })){ toast('«'+n+'» no es un nombre de vendedora del panel: elegilo de la lista.','err',8000); return; }
+  usuPedir({ op:'crear', u:u, n:n, r:r });
+}
+function usuClave(u){
+  var r=preguntaYa('¿Generar otra contraseña para '+u+'?', { icono:'🔑', titulo:'¿Contraseña nueva?', sub:u, lineas:['La de ahora deja de servir y se cierran sus sesiones abiertas.'], no:'Cancelar', si:'🔑 Generar' }, function(){ usuClave(u); });
+  if(r===true) usuPedir({ op:'clave', u:u });
+}
+function usuBorrar(u){
+  var r=preguntaYa('¿Borrar el usuario '+u+'?', { icono:'🗑', peligro:true, titulo:'¿Borrar el usuario?', sub:u, lineas:['Ya no va a poder entrar. Sus pedidos no se tocan.'], no:'Cancelar', si:'🗑 Borrar' }, function(){ usuBorrar(u); });
+  if(r===true) usuPedir({ op:'borrar', u:u });
+}
+function usuActivar(on){
+  var r=preguntaYa(on?'¿Prender el login?':'¿Apagar el login?', { icono:on?'🟢':'⚪', titulo:on?'¿Prender el login para todos?':'¿Apagar el login?',
+    lineas:on?['Desde ahora TODOS entran con su usuario y contraseña. Antes de prender: cada uno tiene que tener su usuario creado y su contraseña.','Vos (Administración) también: si no tenés usuario, no vas a poder entrar.']
+             :['El panel vuelve a andar como antes, sin usuario ni contraseña (y cada una ve todo).'], no:'Cancelar', si:on?'🟢 Prender':'Apagar' }, function(){ usuActivar(on); });
+  if(r===true) usuPedir({ op:on?'activar':'apagar' });
+}
+function usuCopiar(){ var c=document.getElementById('usu-clave'); if(!c) return; try{ navigator.clipboard.writeText(c.textContent).then(function(){ toast('Copiada.','ok'); }); }catch(e){} }
+document.addEventListener('DOMContentLoaded', function(){ setTimeout(function(){ try{ if(SES) loginIdentidad(); else loginAplicar(); }catch(e){} }, 950); });
 /* 🔐 (27/11, dueño: «quiero que salga la alerta si no pusieron la clave y les salga para colocar») La ventana para poner la clave sale SOLA:
    · 'pide': el servidor ya pide la clave y este aparato no la tiene (o la tiene mal) → al primer rechazo, una vez por apertura.
    · 'antes': el servidor todavía no la pide y este aparato no la tiene → una vez por día (me_clave_aviso), para que nadie quede afuera el día que se prenda.
@@ -43850,7 +44060,7 @@ function quienLista(){
 function quienIni(v){ return String(v||'').split(/\s+/).filter(Boolean).slice(0,2).map(function(w){ return w.charAt(0).toUpperCase(); }).join(''); }
 var QUIEN_COL=['#00B5AD','#2d6fd6','#7c3aed','#e9609a','#f08a24','#16a34a','#0369a1','#b45309','#1f3b73','#c0392b'];
 function quienAbrir(cambiar){
-  if(!quienActivo()) return;
+  if(!quienActivo() || sesEsVend()) return;   // 👤 (27/11) una vendedora con su usuario no cambia de nombre
   try{ if(typeof asisCerrar==='function') asisCerrar(); }catch(e){}
   var box=document.getElementById('quien');
   if(!box){ box=document.createElement('div'); box.id='quien'; box.className='quien no-print'; document.body.appendChild(box); }
@@ -43974,7 +44184,7 @@ function quienClaveAdmPedir(v, rol){
     try{ pedirClaveAdmin(function(){ pedirClaveAdmin(); try{ misClaveBtnPintar(); }catch(e){} }); }catch(e){}
   }, 400);
 }
-function quienAlEntrar(){ if(!quienActivo() || quienSesion()) return; quienAbrir(false); }
+function quienAlEntrar(){ if(!quienActivo() || quienSesion() || SES) return; quienAbrir(false); }   // 👤 (27/11) quien entró con su usuario ya dijo quién es
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntrar, 900); });
 /* ==========================================================================
    🧪 MODO PRÁCTICA PARA LOS NUEVOS (271, 14/11; el dueño abre una tienda en el mall con 4 vendedores nuevos y la aprobó: «que puedan
@@ -72541,7 +72751,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-i';
+var PANEL_V='2026-11-27-j';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -78908,6 +79118,7 @@ function apartoSoltarId(id, beacon){
 function apartoBeacon(pl){
   try{
     if(CLAVE_EQUIPO) pl.key=CLAVE_EQUIPO;
+    if(SES && SES.t) pl.ses=SES.t;   // 👤 (27/11)
     try{ pl.quien=getVendedorMem()||''; pl.dispositivo=dispositivoId(); }catch(e){}
     var url=SHEETS_URL+(SHEETS_URL.indexOf('?')>=0?'&':'?')+'_='+Date.now(), body=JSON.stringify(pl);
     if(navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type:'text/plain;charset=utf-8' }))) return;

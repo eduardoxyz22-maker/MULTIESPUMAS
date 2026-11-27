@@ -37,7 +37,7 @@ def run(args, input=None, capture_output=None, text=None):
 m.subprocess.run = run
 m.post({'action': 'list'}); m.post({'action': 'save', 'pedido': {'id': 'x'}}); m.post({'action': 'save', 'pedido': {'id': 'x'}, 'forzar': True})
 chk('con PANEL_KEY: toda llamada lleva `key`', all(c.get('key') == 'eqk7m2p9xq' for c in mandado), [c.get('action') for c in mandado])
-chk('`adminKey` solo en la que fuerza', [bool(c.get('adminKey')) for c in mandado] == [False, False, True])
+chk('`adminKey` en todas (27/11: con el login por usuario prendido, las herramientas entran con ella)', [bool(c.get('adminKey')) for c in mandado] == [True, True, True])
 with open(os.path.join(casa, '.claves_panel.json'), 'w') as f:
     json.dump({'key': 'archk2m3p4', 'adminKey': 'arad5n6w7r'}, f)
 m2 = cargar(CP, 'cp_arch', {'HOME': casa})
