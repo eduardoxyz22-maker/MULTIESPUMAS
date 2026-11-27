@@ -4615,7 +4615,7 @@ function glSigue(){
             <button class="btn btn-ghost btn-sm" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
             <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
             <button class="btn btn-ghost btn-sm" onclick="pedirClaveEquipo()" title="La clave que el servidor exige para leer y guardar pedidos (PANEL_KEY). Se ingresa una vez por dispositivo.">🔐 Clave del equipo</button>
-            <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración.">🛡️ Clave de administración</button>
+            <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración. No es la contraseña del candado 🔒.">🛡️ Clave para forzar</button>
             <button class="btn btn-ghost btn-sm" id="mall-ap-btn" aria-pressed="false" onclick="mallAparatoCambiar()" title="La compu del mostrador de la tienda del mall: arriba de todo aparece la barra de la rueda (quién atiende, a quién le toca, «Solo miró»). Se marca una vez en esa compu.">🏬 Esta compu es la del mall</button>
           </div></section>
         </div>
@@ -4709,7 +4709,7 @@ function glSigue(){
         </div>
         <!-- 🛡️ (27/11, dueño: «falta la clave de admin») la de administración, para cargarla ANTES (solo logística y Administración: forzar un turno lleno) -->
         <div class="field">
-          <button class="btn btn-ghost btn-sm" id="mis-clave-adm-btn" onclick="pedirClaveAdmin();misClaveBtnPintar()" title="Solo logística y Administración: la clave para forzar un turno lleno o un día cerrado. Se carga una vez por aparato.">🛡️ Clave de administración</button>
+          <button class="btn btn-ghost btn-sm" id="mis-clave-adm-btn" onclick="pedirClaveAdmin();misClaveBtnPintar()" title="Solo logística y Administración: la clave para forzar un turno lleno o un día cerrado. Se carga una vez por aparato. No es la contraseña del candado 🔒.">🛡️ Clave para forzar</button>
         </div>
       </div>
       <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
@@ -12294,7 +12294,7 @@ function rechazoFirme(rec, res, colaTxt){
            borrado:(String(rec.id||'').indexOf('__ret_')===0 ? 'ese retiro' : 'ese pedido')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja), y el servidor no lo vuelve a crear. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron',
            admin:(res.motivo==='sin_clave'
              ? 'el servidor no tiene ADMIN_KEY configurada, así que nadie puede forzar un día cerrado o un turno lleno. Reabrí el día desde 🔒 Cerrar día, o configurá ADMIN_KEY en Apps Script'
-             : 'la clave de administración no es la del servidor')}[res.error]||res.error;
+             : 'la clave para forzar no es la del servidor')}[res.error]||res.error;
     toast('❌ El servidor no aceptó el cambio: '+m+'. Se recargó la planilla.','err',9000);
     /* En try: si el refresco falla, este «no» tiene que seguir siendo un «no». Una
        excepción acá rechazaría la promesa de apiSave y la cola lo REENCOLARÍA. */
@@ -12774,7 +12774,7 @@ function renderConnEstadoBase(){
       : '')+
     (SERVER_AUTH==='clave' && SERVER_ADMIN_AUTH==='abierto'
       ? '<br><span style="color:#7c4b00">🛡️ Falta <code>ADMIN_KEY</code> en el servidor: nadie puede forzar un pedido a un día cerrado o turno lleno. '+
-        'Se reabre el día desde 🔒 Cerrar día, o se configura esa clave en Apps Script y se ingresa acá con 🛡️ Clave de administración.</span>'
+        'Se reabre el día desde 🔒 Cerrar día, o se configura esa clave en Apps Script y se ingresa acá con 🛡️ Clave para forzar.</span>'
       : '');
 }
 /* 🛡️ Antes de mandar un guardado que FUERZA el portero (día cerrado, domingo, sábado PM,
@@ -12791,28 +12791,28 @@ function asegurarClaveAdmin(otraVez){
   if(!ADMIN_KEY_LOCAL) _esp=(pedirClaveAdmin(otraVez || function(){ asegurarClaveAdmin(); })==='espera');
   if(!ADMIN_KEY_LOCAL){
     if(_esp) return false;
-    toast('Para forzar un día cerrado o un turno lleno hace falta la clave de administración del servidor. Si no la tenés, reabrí el día desde 🔒 Cerrar día.','err',8000);
+    toast('Para forzar un día cerrado o un turno lleno hace falta la 🛡️ clave para forzar (la del servidor). Si no la tenés, reabrí el día desde 🔒 Cerrar día.','err',8000);
     return false;
   }
   return true;
 }
 function pedirClaveAdmin(otraVez){
   var _n0=PREG_ABIERTAS;
-  var c=preguntaTextoYa('Clave de administración del servidor (ADMIN_KEY):','',
-    { titulo:'Clave de administración del servidor', icono:'🛡️', lineas:['Es la que exige el servidor para forzar un pedido a un día cerrado o a un turno lleno (ADMIN_KEY).', 'Se guarda en este dispositivo.'],
-      campoAyuda:'La clave de administración', campoClave:true, no:'Cancelar', si:'💾 Guardar la clave' },
+  var c=preguntaTextoYa('Clave para forzar días y turnos (ADMIN_KEY):','',
+    { titulo:'🛡️ Clave para forzar días y turnos', icono:'🛡️', lineas:['Es la que exige el servidor para forzar un pedido a un día cerrado o a un turno lleno (ADMIN_KEY, la de 10 letras).', 'NO es la contraseña del candado 🔒 de Administración (esa abre el panel con clave y sirve para borrar ventas con pagos).', 'Se guarda en este dispositivo.'],
+      campoAyuda:'La clave para forzar (10 letras)', campoClave:true, no:'Cancelar', si:'💾 Guardar la clave' },
     (typeof otraVez==='function') ? otraVez : function(){ pedirClaveAdmin(); });
   if(c==null) return (PREG_ABIERTAS>_n0) ? 'espera' : undefined;
   c=c.trim(); if(!c) return;
   ADMIN_KEY_LOCAL=c; try{ localStorage.setItem(LS_ADMIN_KEY,c); }catch(e){}
-  toast('Clave de administración guardada en este dispositivo.','ok');
+  toast('🛡️ Clave para forzar guardada en este dispositivo.','ok');
 }
 /* 🔐 (23/11) El botón de Mis pedidos dice si este aparato ya tiene la clave */
 function misClaveBtnPintar(){
   var b=document.getElementById('mis-clave-btn'); if(!b) return;
   b.textContent=CLAVE_EQUIPO ? '🔐 Clave del equipo ✓' : '🔐 Clave del equipo';
   b.title=CLAVE_EQUIPO ? 'Este aparato ya tiene la clave del equipo. Tocá para cambiarla.' : 'La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.';
-  var a=document.getElementById('mis-clave-adm-btn'); if(a) a.textContent=ADMIN_KEY_LOCAL ? '🛡️ Clave de administración ✓' : '🛡️ Clave de administración';
+  var a=document.getElementById('mis-clave-adm-btn'); if(a) a.textContent=ADMIN_KEY_LOCAL ? '🛡️ Clave para forzar ✓' : '🛡️ Clave para forzar';
 }
 /* 🔐 (27/11, dueño: «quiero que salga la alerta si no pusieron la clave y les salga para colocar») La ventana para poner la clave sale SOLA:
    · 'pide': el servidor ya pide la clave y este aparato no la tiene (o la tiene mal) → al primer rechazo, una vez por apertura.
@@ -14221,7 +14221,7 @@ function borrarPagosPuede(id, otraVez){
   }
   var n0=PREG_ABIERTAS;
   var c=preguntaTextoYa(txt+'\nPara borrarla hace falta la contraseña del candado 🔒 del panel (no la clave del equipo).', '', { icono:'🔑', peligro:true, titulo:'Borrar una venta con pagos pide la contraseña',
-    sub:quien, lineas:lin.concat(['Va la contraseña del candado 🔒 de Administración del panel, la misma que abre el panel con clave. NO la «🛡️ Clave de administración» del equipo (la de 10 letras).','Una vendedora no puede borrarla: pedíselo a Administración.']), campoAyuda:'La contraseña del candado 🔒 del panel', campoClave:true,
+    sub:quien, lineas:lin.concat(['Va la contraseña del candado 🔒 de Administración del panel, la misma que abre el panel con clave. NO la «🛡️ Clave para forzar» (la de 10 letras).','Una vendedora no puede borrarla: pedíselo a Administración.']), campoAyuda:'La contraseña del candado 🔒 del panel', campoClave:true,
     no:'No, dejarla', si:'🗑 Borrarla' }, otraVez);
   if(c==null) return (PREG_ABIERTAS>n0) ? null : false;
   var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
@@ -33656,7 +33656,7 @@ function refreshCupos(){
    todavía no llegaron a la planilla y por qué, y los últimos que el servidor rechazó. */
 function rechazoTxt(err){
   return { conflicto:'lo modificó otra persona antes', dia_cerrado:'el día estaba cerrado', cupos_llenos:'el turno estaba lleno',
-           oc_repetida:'el N° de OC ya existía', admin:'faltaba la clave de administración', clave:'faltaba la clave del equipo',
+           oc_repetida:'el N° de OC ya existía', admin:'faltaba la 🛡️ clave para forzar', clave:'faltaba la clave del equipo',
            busy:'el servidor estaba ocupado', actualizar:'página vieja: esa computadora tiene que recargar (F5)',
            celda_llena:'no entraba en la celda de la planilla (más de 50.000 letras)',
            borrado:'lo habían borrado desde otro equipo (no se volvió a crear)',
@@ -72541,7 +72541,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-h';
+var PANEL_V='2026-11-27-i';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

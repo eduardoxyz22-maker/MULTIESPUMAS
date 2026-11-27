@@ -25,7 +25,7 @@ const ARCH='file://'+(process.env.PEDIDOS||path.resolve('pedidos.html'));
       var oc=bs.map(function(b){ return b.getAttribute('onclick')||''; }).join(' ');
       var esperados=['📦 Lista de carga','🧾 Hoja de ruta','🗺️ Mapa de entregas','📍 Revisar ubicaciones','🚚 Entregado','✅ Cierre de entregas','🔒 Cerrar día',
         '📋 Parte del día','📤 Cierre del día','📤 Mañana','📊 Reporte','📦 Stock y reposición','🏭 Faltantes / producción','🛏️ Productos más entregados',
-        '🔎 Quién vendió qué','📥 Importar ROHO','🖨 Imprimir','💾 Respaldar (JSON)','❓ Guía','🔑 Cambiar contraseña','🔐 Clave del equipo','🛡️ Clave de administración'];
+        '🔎 Quién vendió qué','📥 Importar ROHO','🖨 Imprimir','💾 Respaldar (JSON)','❓ Guía','🔑 Cambiar contraseña','🔐 Clave del equipo','🛡️ Clave para forzar'];
       var faltan=esperados.filter(function(t){ return txt.indexOf(t)<0; });
       var desc=[].every.call(tools.querySelectorAll('.at-t'), function(b){ return !!b.getAttribute('data-d'); });
       var ov=['mapa','ruta','entregas','carga','faltantes','parte','envio','retiros','busca','prods','reporte'].filter(function(i){ var o=document.getElementById(i+'-overlay'); return !o || !o.classList.contains('adm-ov'); });
