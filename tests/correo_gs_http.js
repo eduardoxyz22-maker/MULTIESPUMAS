@@ -57,7 +57,9 @@ let nSave = 0;
 const srv = http.createServer((req, res) => { let b = ''; req.on('data', d => b += d); req.on('end', () => {
   let modo = 'ok'; try { modo = fs.readFileSync(path.join(dir, 'modo.txt'), 'utf8').trim(); } catch (e) { }
   let P = {}; try { P = JSON.parse(b); } catch (e) { }
-  if (req.url.startsWith('/filas')) { res.end(JSON.stringify(S.filas().map(f => ({ id: f.id, oc: f.oc, cliente: f.cliente, fecha: f.fecha, turno: f.turno, nota: f.nota, nroDia: f.nroDia, saldo: f.saldo, vendedor: f.vendedor })))); return; }
+  if (req.url.startsWith('/filas')) { res.end(JSON.stringify(S.filas().map(f => ({ id: f.id, oc: f.oc, cliente: f.cliente, fecha: f.fecha, turno: f.turno, nota: f.nota, nroDia: f.nroDia, saldo: f.saldo, vendedor: f.vendedor, opdf: (f.productos || []).map(x => x && x.opdf).filter(Boolean) })))); return; }
+  /* (27/11) Drive no existe acá: el PDF «se sube» y vuelve un id de mentira (lo que importa es que quede pegado en el pedido). */
+  if (P.action === 'pdfPedido') { res.end(JSON.stringify({ ok: true, fileId: 'PDF-' + String(P.oc || ''), nombre: P.nombre || 'pedido.pdf' })); return; }
   if (P.action === 'save') { nSave++;
     if (modo === 'perder1' && nSave === 1) { S.post(b); res.statusCode = 200; res.end('<html><body>Error 500 de Google</body></html>'); return; }
     if (modo === 'get1' && nSave === 1) { res.end(S.post(JSON.stringify({ action: 'list' }))); return; } }

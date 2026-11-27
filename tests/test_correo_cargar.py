@@ -141,5 +141,18 @@ print('— 7. fecha pasada / renglón sin precio / cantidad 0 —')
 o, f = caso('varios', [base()], [mc('70001', fecha='2026-01-05'), mc('70002', productos=[{"desc": "X", "medida": "1", "codigo": "CH1", "cant": 1, "precio": 0}]), mc('70003', productos=[{"desc": "X", "medida": "1", "codigo": "", "cant": 2, "precio": 10}])])
 ok('7a fecha pasada → un día que viene; sin precio y sin código NO se cargan', o[0][0]['resultado'] == 'CARGADO' and o[0][0]['fecha'] > datetime.date.today().isoformat() and o[0][1]['resultado'].startswith('NO') and o[0][2]['resultado'].startswith('NO'), o)
 
+print('— 8. el PDF: se pega al cargar y se AGREGA a uno ya cargado sin PDF —')
+pdf = os.path.join(TMP, 'orden.pdf'); open(pdf, 'wb').write(b'%PDF-1.4 inventado')
+o, f = caso('pdf_nuevo', [base()], [mc('80001', pdf=pdf)])
+m = [x for x in f if x['cliente'] == 'MULTICENTER']
+ok('8a nuevo: CARGADO con el PDF en el pedido', o[0][0]['resultado'] == 'CARGADO' and o[0][0].get('pdf_en_el_pedido') is True and m and m[0]['opdf'], (o, m))
+ya = base(id='y1', oc='11-050', vendedor='Eduardo Añez', cliente='MULTICENTER', nota='80002', observaciones='OC Multicenter 80002')
+o, f = caso('pdf_ya', [ya], [mc('80002', pdf=pdf)], veces=2)
+m = [x for x in f if x['cliente'] == 'MULTICENTER']
+ok('8b ya cargado sin PDF: «ya estaba» + «PDF agregado», sigue UNA fila con el mismo N° y el PDF', o[0][0]['resultado'] == 'ya estaba' and o[0][0].get('pdf') == 'PDF agregado' and len(m) == 1 and m[0]['oc'] == '11-050' and m[0]['opdf'], (o, m))
+ok('8c la segunda vuelta no lo vuelve a subir (ya lo tiene)', 'pdf' not in o[1][0], o[1])
+o, f = caso('pdf_sin', [ya], [mc('80002')])
+ok('8d sin PDF en la vuelta: «ya estaba» y nada más', o[0][0]['resultado'] == 'ya estaba' and 'pdf' not in o[0][0], o)
+
 print('\n%d bien · %d mal' % (BIEN, MAL))
 sys.exit(1 if MAL else 0)

@@ -20,6 +20,12 @@ nueva con el conector de Gmail (cuenta **mithoseg@gmail.com**). No hace falta ni
 3. Armar un JSON con los pedidos (formato en `cargar_pedidos.py`) y correr primero SIN `--guardar` (muestra qué haría y cuáles
    «ya estaban»), después con `--guardar`. El script relee la planilla, salta lo que ya está por su número (OC / «OP-…»), saca la OC
    del panel y el N° del día, calcula el total, y si el día está lleno/cerrado/feriado lo pasa al siguiente día hábil y lo anota.
+   📄 **EL PDF VA EN EL PEDIDO — OBLIGATORIO en TODO pedido que llega por correo con PDF** (Multicenter, Tienda Amiga, Copacaba, Luis Franco, ROHO) (dueño, 20/11 y otra vez el 27/11: *«todos los pedidos que se
+   ingresan por correo y traen PDF… se adjunte en el panel… para que Ernesto lo pueda descargar»*). En el JSON de cada pedido va `"pdf": "<carpeta>/adjunto_N.pdf"` — el archivo que dejó `extraer_pdf.py` de ESA orden (no el de otra) — y `"pdf_nombre": "<el nombre original que imprimió extraer_pdf>"` (así se ve «OC 34036 - MULTIESPUMAS.pdf» y no «adjunto_0.pdf»). Sin botón nuevo en la página (dueño, 27/11): el PDF se ve en la ficha con «👁 Ver» y «⬇️ Descargar». Hasta el 27/11 este paso no estaba escrito acá y de ~30 pedidos de noviembre solo 2 quedaron con el PDF.
+   · En el resumen de `--guardar` cada CARGADO tiene que decir `"pdf_en_el_pedido": true`; si dice `false`, la nota dice por qué: decirlo
+     en el resumen final.
+   · Si el pedido «ya estaba» y no tenía PDF, el mismo script se lo AGREGA (`"pdf": "PDF agregado"`): por eso hay que mandar el `"pdf"`
+     también en lo que ya estaba. No toca nada más del pedido.
 4. Terminar con un resumen corto: qué se cargó (N° del panel, cliente, fecha, total), qué ya estaba y qué NO se pudo cargar y por qué.
 
 📥 **El aviso al dueño para subirlo al TR4** (08/11, dueño: *«por cada pedido que generes en el panel, necesito que el bot me envíe un mensaje

@@ -134,7 +134,7 @@ PDF_SERVIDOR = '2026-11-20-b'
 PDF_MAX = 10 * 1024 * 1024
 
 
-def subir_pdf(ruta, cliente, clave):
+def subir_pdf(ruta, cliente, clave, nombre_orig=''):
     """📄 (20/11, dueño: «cada vez que cargues un pedido de Multicenter, Tienda Amiga, debes adjuntar el PDF para que Ernesto lo
     pueda descargar… en el pedido en el panel») Sube el PDF de la orden del cliente a la carpeta «PDF de pedidos MultiEspumas»
     (acción `pdfPedido`, servidor ≥ 2026-11-20-b) y devuelve (`{"i": id, "n": nombre}`, None) o (None, motivo)."""
@@ -148,7 +148,7 @@ def subir_pdf(ruta, cliente, clave):
         return None, 'el archivo no es un PDF'
     if len(datos) > PDF_MAX:
         return None, 'el PDF pesa más de 10 MB'
-    nombre = re.sub(r'[^\w.\- ]+', '', ruta.replace('\\', '/').split('/')[-1])[:80] or 'pedido.pdf'
+    nombre = re.sub(r'[^\w.\- ]+', '', (nombre_orig or ruta).replace('\\', '/').split('/')[-1])[:80] or 'pedido.pdf'
     # (20/11, revisión de Fable 2) UNA vez y sin cortar la vuelta: si Google contesta mal, este pedido se carga igual sin el PDF (lo dice
     # la nota) y los siguientes también; reintentar dejaba hasta 3 copias en Drive.
     try:
@@ -159,6 +159,50 @@ def subir_pdf(ruta, cliente, clave):
     if r.get('ok') and r.get('fileId'):
         return {"i": r['fileId'], "n": r.get('nombre') or nombre}, None
     return None, 'el servidor no guardó el PDF: ' + str(r.get('error') or r)[:120]
+
+
+def prods_de(p):
+    pr = p.get('productos')
+    if isinstance(pr, str):
+        try:
+            pr = json.loads(pr or '[]')
+        except Exception:
+            pr = []
+    return pr if isinstance(pr, list) else []
+
+
+def tiene_pdf(p):
+    return any(isinstance(x, dict) and x.get('opdf') for x in prods_de(p))
+
+
+def adjuntar_pdf(ya, d, clave):
+    """📄 (27/11) Sube el PDF y lo pega en el primer producto de un pedido YA cargado (`opdf`), guardando la fila tal cual la trajo la
+    lectura (con su sello `rev`: si alguien la tocó en el medio, el servidor contesta `conflicto` y no se pisa nada). Devuelve un texto."""
+    pr = prods_de(ya)
+    if not pr or not isinstance(pr[0], dict):
+        return 'NO: el pedido no tiene productos'
+    f, motivo = subir_pdf(str(d['pdf']), str(ya.get('cliente') or ''), clave, str(d.get('pdf_nombre') or ''))
+    if not f:
+        return 'NO: ' + motivo
+    for vuelta in range(2):
+        g = dict(ya)
+        pr = json.loads(json.dumps(prods_de(ya)))
+        if not pr or not isinstance(pr[0], dict):
+            return 'NO: el pedido no tiene productos'
+        pr[0]['opdf'] = [f]
+        g['productos'] = pr
+        r = post({"action": "save", "pedido": g, "av": 1}, intentos=1)
+        if r.get('ok'):
+            return 'PDF agregado'
+        if r.get('error') != 'conflicto' or vuelta:
+            break
+        # Alguien lo tocó en el medio: se relee esa fila y se prueba UNA vez más con el mismo PDF ya subido (no se sube otra copia).
+        ya = next((p for p in leer() if str(p.get('id')) == str(g.get('id'))), None)
+        if not ya:
+            return 'NO: el pedido ya no está en la planilla; el PDF quedó en Drive (%s)' % f['i']
+        if tiene_pdf(ya):
+            return 'ya tenía el PDF'
+    return 'NO: el servidor no lo guardó (%s); el PDF quedó en Drive (%s)' % (str(r.get('error') or r)[:80], f['i'])
 
 
 def next_oc(P):
@@ -322,7 +366,12 @@ def main():
         clave = str(d.get('clave') or '').strip()
         ya = ya_esta(P, clave, str(d.get('nota') or '').strip())
         if ya:
-            resumen.append({"clave": clave, "resultado": "ya estaba", "oc": ya.get('oc'), "fecha": ya.get('fecha')})
+            # 📄 (27/11, dueño: «todos los pedidos que se ingresan por correo y traen PDF… se adjunte en el panel») Si ya estaba cargado
+            # SIN el PDF y la vuelta trae el PDF, se le agrega (solo eso: el pedido queda como estaba, con su sello).
+            r_ya = {"clave": clave, "resultado": "ya estaba", "oc": ya.get('oc'), "fecha": ya.get('fecha')}
+            if d.get('pdf') and not tiene_pdf(ya):
+                r_ya["pdf"] = adjuntar_pdf(ya, d, clave) if guardar else 'se agregaría el PDF'
+            resumen.append(r_ya)
             continue
         try:
             rec = armar(d, P)
@@ -338,7 +387,7 @@ def main():
         # 📄 (20/11) El PDF de la orden del cliente (`"pdf": "<ruta>"` en el JSON) se sube ANTES de guardar y queda en el primer
         # producto como `opdf` (la ficha del panel lo muestra con «⬇️ Descargar»; `heredarMarcas` lo conserva al editar).
         if d.get('pdf'):
-            f, motivo = subir_pdf(str(d['pdf']), str(rec.get('cliente') or ''), clave)
+            f, motivo = subir_pdf(str(d['pdf']), str(rec.get('cliente') or ''), clave, str(d.get('pdf_nombre') or ''))
             if f:
                 rec['productos'][0]['opdf'] = [f]
             else:
