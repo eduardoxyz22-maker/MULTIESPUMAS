@@ -2,7 +2,7 @@
    1. Servidor TODAVÍA sin clave y aparato sin clave: sale sola la ventana para ponerla (una vez por día).
    2. Al volver a abrir el mismo día, no sale de nuevo; con la clave puesta, nunca.
    3. Servidor que YA pide la clave y aparato sin ella: sale sola; con la clave buena, conecta.
-   4. «🛡️ Clave de administración» en Mis pedidos la guarda en el aparato.
+   4. «🛡️ Clave para forzar» en Mis pedidos la guarda en el aparato.
    Servidor de mentira (ninguna llamada sale). Se corre:  node tests/test_clave_auto.js */
 const path = require('path');
 const { chromium } = require('playwright');
@@ -48,7 +48,7 @@ const chk = (l, c, e) => { c ? PASS++ : FAIL++; console.log((c ? '✓' : '✗'),
     await p.evaluate(() => showView('mis'));
     await p.waitForTimeout(200);
     const t0 = await p.evaluate(() => { const x = document.getElementById('mis-clave-adm-btn'); return x && x.offsetParent ? x.textContent : null; });
-    chk('4. Mis pedidos tiene «🛡️ Clave de administración»', t0 === '🛡️ Clave de administración', t0);
+    chk('4. Mis pedidos tiene «🛡️ Clave para forzar»', t0 === '🛡️ Clave para forzar', t0);
     p.removeAllListeners('dialog'); p.on('dialog', d => d.type() === 'prompt' ? d.accept('adm9q3w7z2') : d.accept());
     await p.click('#mis-clave-adm-btn'); await p.waitForTimeout(400);
     const st = await p.evaluate(() => ({ ls: localStorage.getItem('ME_CLAVE_ADMIN_V1'), txt: document.getElementById('mis-clave-adm-btn').textContent }));

@@ -202,16 +202,16 @@ function PREPARAR(){
     window._forz=[]; window._toasts=[];
     window._forzar=function(){ if(!asegurarClaveAdmin(window._forzar)) return 'corta'; window._forz.push('forzado con '+ADMIN_KEY_LOCAL); return 'sigue'; };
     var x=window._forzar(); await new Promise(function(r){ setTimeout(r,60); });
-    return { x, forz:window._forz.slice(), rojo:window._toasts.filter(function(t){ return /hace falta la clave/.test(t); }).length, p:window._preg(), foco:document.activeElement && document.activeElement.className };
+    return { x, forz:window._forz.slice(), rojo:window._toasts.filter(function(t){ return /hace falta la .*clave/.test(t); }).length, p:window._preg(), foco:document.activeElement && document.activeElement.className };
   });
-  chk('4 · pide la clave en la ventana del panel (con su campo y el foco ahí)', r.p && r.p.tit==='Clave de administración del servidor' && r.p.campo==='' && r.p.si==='💾 Guardar la clave' && /preg-in/.test(r.foco), r);
+  chk('4 · pide la clave en la ventana del panel (con su campo y el foco ahí)', r.p && r.p.tit==='🛡️ Clave para forzar días y turnos' && r.p.campo==='' && r.p.si==='💾 Guardar la clave' && /preg-in/.test(r.foco), r);
   chk('4 · mientras espera, lo que la pidió corta SIN el aviso rojo', r.x==='corta' && !r.forz.length && r.rojo===0, r);
   await page.fill('.preg-in', 'CLAVE-INVENTADA'); await page.keyboard.press('Enter'); await page.waitForTimeout(120);
-  r = await page.evaluate(() => ({ k:ADMIN_KEY_LOCAL, forz:window._forz.slice(), g:window._toasts.filter(function(t){ return /Clave de administración guardada/.test(t); }).length, p:window._preg() }));
+  r = await page.evaluate(() => ({ k:ADMIN_KEY_LOCAL, forz:window._forz.slice(), g:window._toasts.filter(function(t){ return /Clave para forzar guardada/.test(t); }).length, p:window._preg() }));
   chk('4 · con la clave escrita: se guarda y lo que la pidió sigue UNA vez', r.k==='CLAVE-INVENTADA' && r.forz.join()==='forzado con CLAVE-INVENTADA' && r.g===1 && !r.p, r);
   r = await page.evaluate(async () => { ADMIN_KEY_LOCAL=''; window._toasts=[]; var x=asegurarClaveAdmin(); await new Promise(function(r){ setTimeout(r,60); }); return x; });
   await page.keyboard.press('Escape'); await page.waitForTimeout(120);
-  r = await page.evaluate(() => ({ k:ADMIN_KEY_LOCAL, rojo:window._toasts.filter(function(t){ return /hace falta la clave/.test(t); }).length, p:window._preg() }));
+  r = await page.evaluate(() => ({ k:ADMIN_KEY_LOCAL, rojo:window._toasts.filter(function(t){ return /hace falta la .*clave/.test(t); }).length, p:window._preg() }));
   chk('4 · cancelar: sin clave y con el aviso rojo de siempre (una vez)', r.k==='' && r.rojo===1 && !r.p, r);
   await page.evaluate(() => { SERVER_AUTH=''; });
 

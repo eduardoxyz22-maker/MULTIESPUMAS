@@ -266,7 +266,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('la clave guardada viaja sin volver a preguntar', r.prompts===0, r.prompts);
   chk('⚠️ si el servidor dice que la clave está MAL, no se reencola', r.pend===0, r.pend);
   chk('…y la clave mala se olvida, para pedirla de nuevo la próxima', r.clave==='' && !r.guardada, JSON.stringify({clave:r.clave, guardada:r.guardada}));
-  chk('…y avisa que la clave no es la del servidor', /clave de administración/.test(r.toasts), r.toasts.slice(0,160));
+  chk('…y avisa que la clave no es la del servidor', /clave para forzar/.test(r.toasts), r.toasts.slice(0,160));
   chk('…y el pedido vuelve a su fecha de antes (se recargó la planilla)', r.fecha===r.esperada, r.fecha+' vs '+r.esperada);
 
   r = await page.evaluate(async (dom) => {
