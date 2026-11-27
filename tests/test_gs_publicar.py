@@ -60,6 +60,15 @@ try:
     pr5 = os.path.join(d, 'pull5'); os.makedirs(pr5); escribir(os.path.join(pr5, 'Código.gs'), gs('0'))
     rc, out = run(pr5, os.path.join(RAIZ, 'google-apps-script.gs'))
     chk(rc == 0, '6 el google-apps-script.gs del repo se puede publicar: ' + out)
+    # 7. clasp 2.x baja los archivos como .js (no .gs): igual se reconoce el principal y se conserva el resto
+    pr6 = os.path.join(d, 'pull6'); os.makedirs(pr6)
+    escribir(os.path.join(pr6, 'Código.js'), gs('2026-11-21-a'))
+    escribir(os.path.join(pr6, 'prender_cierre.js'), 'function prenderKommoCierreUnaVez(){}\n')
+    rc, out = run(pr6, nuevo)
+    chk(rc == 0 and leer(os.path.join(pr6, 'Código.js')) == gs('2026-11-23-h') and leer(os.path.join(pr6, 'prender_cierre.js')) == 'function prenderKommoCierreUnaVez(){}\n', '7 con archivos .js reemplaza solo el principal: ' + out)
+    # 8. si no hay principal, el error nombra los archivos bajados (solo nombres)
+    rc, out = run(pr4, nuevo)
+    chk(rc == 1 and 'solo.gs' in out, '8 el error lista los archivos bajados: ' + out)
 finally:
     shutil.rmtree(d, ignore_errors=True)
 print('%d bien · %d mal' % (bien, mal))

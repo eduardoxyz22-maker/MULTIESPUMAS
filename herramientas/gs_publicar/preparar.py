@@ -5,7 +5,7 @@ sin que yo tenga que copiar y pegar el código»).
 
 ⚠️ `clasp push` REEMPLAZA todo el proyecto: un archivo que no esté en la carpeta se borra de Google. El proyecto del dueño tiene archivos
 aparte (herramientas/*.gs que él agregó) y el manifiesto `appsscript.json`. Por eso el workflow primero BAJA el proyecto (`clasp pull`)
-y este script cambia SOLO el archivo principal (el que tiene `function doPost(`), con el nombre que ya tiene en Google, y deja todo lo demás igual.
+y este script cambia SOLO el archivo principal (el que tiene `function doPost(`; clasp 2.x baja los archivos como `.js`, no `.gs`), con el nombre que ya tiene en Google, y deja todo lo demás igual.
 
 Uso:  python3 -I preparar.py <carpeta_del_pull> <google-apps-script.gs>
 Sale con 1 y no toca nada si: el .gs nuevo está cortado (la última línea no es `var FIN_DEL_ARCHIVO = '<SCRIPT_VERSION>';`), SCRIPT_VERSION
@@ -32,10 +32,10 @@ def main(carpeta, nuevo):
         print('❌ SCRIPT_VERSION (%s) y FIN_DEL_ARCHIVO (%s) no coinciden' % (sv, fin)); return 1
     principales = []
     for n in sorted(os.listdir(carpeta)):
-        if n.endswith('.gs') and 'function doPost(' in leer(os.path.join(carpeta, n)):
+        if n.endswith(('.gs', '.js')) and 'function doPost(' in leer(os.path.join(carpeta, n)):
             principales.append(n)
     if len(principales) != 1:
-        print('❌ En el proyecto bajado hay %d archivos con doPost (%s): no se sabe cuál reemplazar. No se sube nada.' % (len(principales), ', '.join(principales))); return 1
+        print('❌ En el proyecto bajado hay %d archivos con doPost (%s): no se sabe cuál reemplazar. No se sube nada. Archivos bajados: %s' % (len(principales), ', '.join(principales), ', '.join(n for n in sorted(os.listdir(carpeta)) if not n.startswith('.')) or '(ninguno)')); return 1
     destino = os.path.join(carpeta, principales[0])
     antes_sv, _ = versiones(leer(destino))
     with open(destino, 'w', encoding='utf-8', newline='\n') as f:
