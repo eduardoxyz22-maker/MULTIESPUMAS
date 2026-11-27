@@ -46384,6 +46384,7 @@ function misHacerDatos(v, mine){
   var _sr=null; try{ _sr=sinRespHacerVend(v); }catch(e){ _sr=null; } add(_sr);
   _cot.arriba.forEach(add);
   try{ add(crxHacer(v)); }catch(e){}   // 🔀 (20/11) otra vendedora le vendió a un cliente que atendía: puede pedir revisión
+  try{ add(fcvHacerItem(v, mine)); }catch(e){}   // 📅 (27/11) otra persona le cambió el día o el turno de una entrega suya
   /* 📣 (26/10) lo que Contabilidad le pidió revisar de sus pagos (`ctaAvAbiertos`), primero */
   /* 📅 (30/10, §78) lo que es SOLO de la fecha de la foto no es plata: va aparte, en ámbar (`ctaAvSoloFecha`) */
   try{ var av0=ctaAvCuentan(v), avV=ctaAvViejos(v), av=av0.filter(function(a){ return !ctaAvSoloFecha(a); }), avF=av0.filter(ctaAvSoloFecha), _avFn="ctaAvVer('"+esc(String(v||'').replace(/'/g,''))+"')";
@@ -46434,6 +46435,75 @@ function misHacerDatos(v, mine){
   try{ add(flotaGuiaItem(mine)); }catch(e){}   // 🚌 (15/11, 311) «📸 Subí la foto de la guía»
   var ord={ r:0, a:1, i:2 }; I.sort(function(a,b){ return ord[a.sev]-ord[b.sev]; });
   I.ok=OK; return I;
+}
+/* 📅 (27/11, dueño: «¿dónde sale el aviso al vendedor que se modificó el turno o la fecha de entrega? A Isabel le modifiqué una entrega y no
+   sale» → «solo en el panel por el momento») TE CAMBIARON EL DÍA O EL TURNO. El cambio ya quedaba anotado en `fH` (mejora 212: de dónde, a
+   dónde, quién y desde dónde), pero solo se veía abriendo «🕓 Historia del pedido». Ahora va en «Para hacer» de la vendedora del pedido, en
+   rojo, y Bloki se lo dice una vez:
+   · un pedido SUYO sin entregar, con día de hoy en adelante, cuyo ÚLTIMO renglón de `fH` es de los últimos `FCV_DIAS` días y lo hizo OTRA
+     persona (`e.q` no es ella: logística, Administración, otra compu con otro nombre). Lo que cambió ella misma no avisa.
+   · el renglón tiene que seguir siendo el día de ahora (`fhClave`): si después lo cambiaron sin dejar renglón, no se dice algo viejo.
+   · «✓ Visto» (y abrir el pedido desde la lista) lo saca en ESTE aparato (`me_fcv_visto`: id → hora del cambio visto); un cambio nuevo del
+     mismo pedido vuelve a avisar. No va a la planilla.
+   · No cuenta para «tu panel al día» ni el bono (eso es `alDiaDatos`, aparte). Nada se manda por WhatsApp (dueño: por ahora no).
+   En Playwright apagado salvo `FCV_PRUEBA`. `tests/test_cambio_dia_vendedora.js`. */
+var FCV_DIAS=7, FCV_LS='me_fcv_visto';
+function fcvActivo(){ return !(navigator.webdriver && !window.FCV_PRUEBA); }
+function fcvVistos(){ try{ return JSON.parse(localStorage.getItem(FCV_LS)||'{}')||{}; }catch(e){ return {}; } }
+function fcvVer(id, t){
+  var V=fcvVistos(), lim=Date.now()-30*86400000; V[String(id)]=Math.max(Number(V[String(id)])||0, Number(t)||Date.now());
+  Object.keys(V).forEach(function(k){ if((Number(V[k])||0)<lim) delete V[k]; });
+  try{ localStorage.setItem(FCV_LS, JSON.stringify(V)); }catch(e){}
+}
+function fcvDatos(v, mine){
+  if(!fcvActivo() || !v) return [];
+  var hoy=todayStr(), lim=Date.now()-FCV_DIAS*86400000, V=fcvVistos(), R=[];
+  (mine||[]).forEach(function(p){
+    try{
+      if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado || esVentaTienda(p)) return;
+      var f=String(p.fecha||'').slice(0,10); if(!f || f<hoy) return;
+      var H=fhHistDe(p); if(!H.length) return;
+      var e=H[H.length-1], t=Number(e && e.t)||0; if(!(t>=lim)) return;
+      if(t<=(Number(V[String(p.id)])||0)) return;
+      if(!fhMismo(e.a, fhClave(p))) return;
+      var q=String(e.q||'').trim(); if(q && q!=='?' && mismoVendedor(q, v)) return;
+      R.push({ p:p, e:e, t:t });
+    }catch(err){}
+  });
+  R.sort(function(a, b){ return b.t-a.t; });
+  return R;
+}
+function fcvCambioTxt(e){ try{ return chvFhTxt(e); }catch(err){ return '📅 del '+fhTxt(e.de)+' al '+fhTxt(e.a); } }
+function fcvQuienTxt(e){
+  var q=String(e.q||'').trim(), t=Number(e.t)||0;
+  return (q && q!=='?' ? ('lo cambió '+q) : 'lo cambió otra persona')+(t ? (' · '+fmtFechaCorta(isoDeTsBolivia(t))+' '+hhmmDeTs(t)) : '')+(e.d ? (' · desde '+String(e.d)) : '');
+}
+function fcvHacerItem(v, mine){
+  var R=fcvDatos(v, mine); if(!R.length) return null;
+  var vq=esc(String(v||'').replace(/'/g,''));
+  return { sev:'r', ic:'📅', n:R.length, t:'Te cambiaron el día o el turno de '+(R.length===1?'una entrega':(R.length+' entregas')),
+    s:(R.length===1 ? (misNom2([R[0].p])+': '+fcvCambioTxt(R[0].e).replace(/^[^\wÁÉÍÓÚÑáéíóúñ]+\s*/,'')) : misNom2(R.map(function(x){ return x.p; })))+' · avisale al cliente si hace falta',
+    b:'Ver', p:1, fn:"fcvAbrir('"+vq+"')" };
+}
+function fcvAbrir(v){
+  var mine=(STATE||[]).filter(function(p){ return p && mismoVendedor(p.vendedor, v); }), R=fcvDatos(v, mine);
+  if(!R.length){ toast('✅ No hay entregas tuyas cambiadas sin ver.'); try{ renderMis(); }catch(e){} return; }
+  var vq=esc(String(v||'').replace(/'/g,''));
+  openModal('<div class="modal-h"><h3>📅 Te cambiaron el día o el turno</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">'+
+    '<div style="font-size:.84rem;color:var(--muted);margin-bottom:10px">Otra persona (logística o Administración) movió estas entregas tuyas. Mirá si hay que avisarle al cliente y tocá «✓ Visto».</div>'+
+    R.map(function(x){ var p=x.p, id=esc(String(p.id));
+      return '<div class="t2-f fcv-f" style="flex-wrap:wrap;gap:4px 10px"><b>'+esc(p.cliente||'—')+'</b><span style="color:var(--muted)">'+esc([ocEtiq(p.oc||''), p.nota?('nota '+p.nota):''].filter(Boolean).join(' · '))+'</span>'+
+        '<div style="flex-basis:100%;font-weight:600">'+esc(fcvCambioTxt(x.e))+'</div>'+
+        '<div style="flex-basis:100%;font-size:.8rem;color:var(--muted)">'+esc(fcvQuienTxt(x.e))+'</div>'+
+        '<div style="display:flex;gap:8px;margin-top:4px"><button type="button" class="btn btn-sm" onclick="event.stopPropagation();fcvVer(\''+id+'\','+x.t+');closeModal();showMisModal(\''+id+'\')">Ver el pedido</button>'+
+        '<button type="button" class="btn btn-sm btn-ghost" onclick="event.stopPropagation();fcvVer(\''+id+'\','+x.t+');fcvAbrir(\''+vq+'\');try{renderMis()}catch(e){}">✓ Visto</button></div></div>'; }).join('')+
+    (R.length>1 ? ('<div style="margin-top:12px;text-align:right"><button type="button" class="btn btn-sm" onclick="fcvTodosVistos(\''+vq+'\')">✓ Ya los vi todos</button></div>') : '')+
+  '</div>');
+}
+function fcvTodosVistos(v){
+  var mine=(STATE||[]).filter(function(p){ return p && mismoVendedor(p.vendedor, v); });
+  fcvDatos(v, mine).forEach(function(x){ fcvVer(x.p.id, x.t); });
+  closeModal(); try{ renderMis(); }catch(e){}
 }
 /* 💵 (T2) Lo cobrado en efectivo DESDE SU ÚLTIMO RETIRO: no la resta de todo lo cobrado menos todo lo retirado, que con retiros viejos sin
    anotar da números que no cierran (24/10: a Carola le quedaban Bs 15.610 sin ningún cobro después de su último retiro). Lo que tiene un
@@ -72450,7 +72520,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-d';
+var PANEL_V='2026-11-27-e';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
@@ -79626,6 +79696,13 @@ function asisAvisos(){
       if(D.n && D.faltan && D.tarde) A.push({ k:'m1|'+D.dia+'|'+D.faltan, sev:'am', ico:'🔔',
         t:asisCuando(D.dia)+' se entrega'+(D.n===1?'':'n')+' '+D.n+' pedido'+(D.n===1?'':'s')+' tuyo'+(D.n===1?'':'s'),
         x:'Te falta avisar a '+D.faltan+' cliente'+(D.faltan===1?'':'s')+' a qué hora pasa el camión.', b:['Ver cuáles', "asisIr('#nx-m1', nxM1Toggle)"] });
+    }catch(e){}
+    try{   // 📅 (27/11) otra persona le cambió el día o el turno de una entrega suya
+      var FC=fcvDatos(v, (STATE||[]).filter(function(p){ return p && mismoVendedor(p.vendedor, v); }));
+      if(FC.length) A.push({ k:'fcv|'+FC.map(function(x){ return x.p.id+':'+x.t; }).join(','), sev:'ro', ico:'📅',
+        t:'Te cambiaron el día o el turno de '+(FC.length===1?'una entrega':(FC.length+' entregas')),
+        x:(FC.length===1 ? (String(FC[0].p.cliente||'')+': '+fcvCambioTxt(FC[0].e)+' ('+fcvQuienTxt(FC[0].e)+'). ') : '')+'Mirá si hay que avisarle al cliente y tocá «✓ Visto».',
+        b:['Ver cuáles', "fcvAbrir('"+esc(String(v).replace(/'/g,''))+"')"] });
     }catch(e){}
     try{ var MD=metaDiaAviso(v); if(MD) A.push(MD); }catch(e){}   // 🎯 (14/11, mejora 256) desde las 17 h, si va por debajo de la mitad de la meta de hoy
     var deben=(STATE||[]).filter(function(p){
