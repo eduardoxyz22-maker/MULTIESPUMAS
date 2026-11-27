@@ -2329,6 +2329,14 @@ cierre y el «N prod.» de cada vendedor) y «Qué vendió cada uno» las lista 
 cambia. Sábanas, protectores y lo demás siguen contando (el dueño solo nombró las almohadas). `test_wa_buen_dia_cierre` 5k2, 5a-alm, 5b13.
 Volver atrás: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
 
+## 📅 «Te cambiaron el día o el turno»: el aviso a la vendedora (27/11; dueño: *«¿dónde sale el aviso al vendedor que se modificó el turno o la fecha de entrega? A Isabel le modifiqué una entrega y no sale»* → *«solo en el panel por el momento»*; página 2026-11-27-e)
+Antes el cambio solo quedaba en `fH` (la historia del pedido). Ahora `fcvDatos(v, mine)`: pedido SUYO sin entregar, con día de hoy en adelante, cuyo ÚLTIMO
+renglón de `fH` es de los últimos `FCV_DIAS`=7 días, lo hizo OTRA persona (`e.q` no es ella) y sigue siendo el día de ahora (`fhClave`) → «Para hacer» en
+ROJO (`fcvHacerItem`, después de `crxHacer`) + Bloki (`k:'fcv|…'` en `asisAvisos`). La lista (`fcvAbrir`) dice de qué a qué (`chvFhTxt`), quién, cuándo y
+desde dónde, con «Ver el pedido» y «✓ Visto» (`me_fcv_visto`, por aparato: id → hora del cambio visto; un cambio NUEVO vuelve a avisar) y «Ya los vi
+todos». No cuenta para el «al día» ni el bono (`alDiaDatos` es aparte). Sin WhatsApp (dueño: por ahora no). Playwright solo con `FCV_PRUEBA`.
+`tests/test_cambio_dia_vendedora.js` (9).
+
 ## 🧾 Quién puso o sacó el «Entregado» (§4pl, 10/11; dueño: *«quiero ver quién lo puso o qué pasó»* → *«si armalo»*; PUBLICADO 10/11, versión 2026-11-10-g, `4f830a3`)
 El 11-096 (entrega 13/11) salió ENTREGADO en Mis pedidos y no había forma de saber quién: la planilla no guarda historia del ✅. Ahora cada guardado
 que cambia `entregado` deja `eH` en cada producto (últimas 8: puesto/sacado, cuándo, quién = `quienEdita()`, aparato `entAparato`, desde dónde
