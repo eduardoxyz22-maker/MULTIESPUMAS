@@ -119,6 +119,21 @@ console.log('\n── 3. FASE 2: activar ──');
   chk('cambiar sin ventana: no cambia nada', N.ctx.cambiarClaveEquipoUnaVez() === 'sin ventana' && N.P.PANEL_KEY_PROXIMA === p0);
 }
 
+console.log('\n── 4b. Proyecto sin planilla pegada: generar SIN ventana ──');
+{
+  const S = montar({}, { sinUi: true });
+  chk('con generarClavesUnaVez sin ventana no se crea nada', S.ctx.generarClavesUnaVez() === 'sin ventana' && !S.P.PANEL_KEY_PROXIMA);
+  const r = S.ctx.generarClavesSinVentanaUnaVez(), eq = S.P.PANEL_KEY_PROXIMA, ad = S.P.ADMIN_KEY_PROXIMA;
+  chk('sin ventana: genera las dos claves próximas', r === 'generadas' && ABC.test(eq || '') && ABC.test(ad || '') && eq !== ad, { r });
+  chk('sin ventana: el servidor todavía NO las pide', !S.P.PANEL_KEY && S.post({ action: 'list' }).ok === true);
+  chk('sin ventana: las claves NO van al registro', S.LOG.every(l => l.indexOf(eq) < 0 && l.indexOf(ad) < 0) && S.LOG.some(l => /Propiedades del script/.test(l)));
+  chk('sin ventana: si ya estaban, no las cambia', S.ctx.generarClavesSinVentanaUnaVez() === 'ya estaban' && S.P.PANEL_KEY_PROXIMA === eq && S.P.ADMIN_KEY_PROXIMA === ad);
+  const A = montar({ ADMIN_KEY: 'mi4dm1nk3y' }, { sinUi: true }); A.ctx.generarClavesSinVentanaUnaVez();
+  chk('sin ventana: si ya había ADMIN_KEY, esa es la de administración', A.P.ADMIN_KEY_PROXIMA === 'mi4dm1nk3y');
+  S.ctx.activarClavesUnaVez();
+  chk('después se activan como siempre', S.P.PANEL_KEY === eq && S.P.ADMIN_KEY === ad && S.post({ action: 'list' }).error === 'clave' && S.post({ action: 'list', key: eq }).ok === true);
+}
+
 console.log('\n── 5. Las claves ──');
 {
   const S = montar({}), vistas = new Set();
