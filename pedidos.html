@@ -2062,7 +2062,7 @@ body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
 .preg-a{ display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap; padding:14px 20px 18px; }
 .preg-a button{ font:inherit; font-weight:800; font-size:.88rem; border-radius:12px; padding:11px 16px; cursor:pointer; border:1.5px solid #99DDD9; background:#fff; color:#00706b; min-height:44px; }
 .preg-a .preg-si{ background:#00A09A; border-color:#00A09A; color:#fff; }
-.preg-cp{ padding:8px 20px 0 78px; } .preg-in{ width:100%; box-sizing:border-box; font:inherit; font-size:.95rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; color:#132626; background:#fff; min-height:44px; } .preg-in:focus{ outline:3px solid #00B5AD; outline-offset:1px; }
+.preg-cp{ padding:8px 20px 0 78px; display:flex; gap:8px; align-items:center; } .preg-ver{ flex:none; min-height:44px; padding:0 12px; border:1.5px solid #99DDD9; border-radius:11px; background:#fff; color:#00756F; font:inherit; font-size:.85rem; font-weight:600; cursor:pointer; } .preg-ver:focus{ outline:3px solid #00B5AD; outline-offset:1px; } .preg-in{ width:100%; box-sizing:border-box; font:inherit; font-size:.95rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; color:#132626; background:#fff; min-height:44px; } .preg-in:focus{ outline:3px solid #00B5AD; outline-offset:1px; }
 @media (max-width:520px){ .preg-cp{ padding-left:20px; } }
 .preg-pel .preg-a .preg-si{ background:#CE2939; border-color:#CE2939; }
 .preg-a button:focus-visible{ outline:3px solid #00B5AD; outline-offset:2px; }
@@ -4509,7 +4509,7 @@ function glSigue(){
         <div class="lock-ico">🔒</div>
         <h2>Panel de administración</h2>
         <p>Ingresá la contraseña para ver y editar la lista consolidada de todos los pedidos.</p>
-        <div class="field"><input type="password" id="admin-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryUnlock()"></div>
+        <div class="field" style="display:flex;gap:8px;align-items:center"><input type="password" id="admin-pass" placeholder="Contraseña" onkeydown="if(event.key==='Enter')tryUnlock()" style="flex:1;min-width:0"><button type="button" class="preg-ver" aria-label="Ver lo escrito" onclick="var i=document.getElementById('admin-pass'),v=i.type==='password';i.type=v?'text':'password';this.textContent=v?'🙈 Tapar':'👁 Ver';i.focus()">👁 Ver</button></div>
         <button class="btn btn-primary" onclick="tryUnlock()">Ingresar</button>
         <p id="admin-err" style="color:var(--red);margin-top:12px;display:none">Contraseña incorrecta.</p>
       </div>
@@ -33952,7 +33952,7 @@ function preguntar(o){
     ov.innerHTML='<div class="preg-c'+(o.peligro?' preg-pel':'')+(o.aviso?' preg-av':'')+'">'+
       '<div class="preg-h"><div class="preg-i" aria-hidden="true">'+esc(o.icono||'❓')+'</div><div class="preg-ht"><h4 id="preg-tit">'+esc(o.titulo||'¿Seguro?')+'</h4>'+(o.sub?('<small>'+esc(o.sub)+'</small>'):'')+'</div></div>'+
       (L.length ? ('<ul class="preg-b">'+L.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join('')+'</ul>') : '')+
-      (o.campo ? ('<div class="preg-cp"><input type="'+(o.campoClave?'password':'text')+'" autocomplete="off" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'"></div>') : '')+
+      (o.campo ? ('<div class="preg-cp"><input type="'+(o.campoClave?'password':'text')+'" autocomplete="off" class="preg-in" aria-labelledby="preg-tit"'+(o.campoTipo?(' inputmode="'+esc(o.campoTipo)+'"'):'')+' placeholder="'+esc(o.campoAyuda||'')+'">'+(o.campoClave?'<button type="button" class="preg-ver" aria-label="Ver lo escrito" aria-pressed="false">👁 Ver</button>':'')+'</div>') : '')+
       '<div class="preg-a">'+(o.solo?'':('<button type="button" class="preg-no">'+esc(o.no||'Cancelar')+'</button>'))+
         /* 🏷️ (22/11, mejora 466) `o.opciones` = [{v, t}]: varios botones de «sí», cada uno con su respuesta (la promesa da `v`; «no» da false) */
         (Array.isArray(o.opciones) && o.opciones.length
@@ -33965,7 +33965,11 @@ function preguntar(o){
     if(inp && o.campoValor!=null) inp.value=String(o.campoValor);
     var fin=function(v){ if(hecho) return; hecho=true; PREG_ABIERTAS=Math.max(0,PREG_ABIERTAS-1); document.removeEventListener('keydown', kd, true); ov.remove(); try{ if(antes && antes.focus && antes.isConnected) antes.focus(); }catch(e){}
       res(o.campo ? (v ? inp.value : null) : ops.length ? (v||false) : (o.solo ? true : !!v)); };
-    var foc=[inp, bNo].concat(ops.length ? ops : [bSi]).filter(Boolean);
+    // 👁 (27/11) «Ver» muestra lo escrito o pegado en un campo de clave, para revisar que se pegó bien
+    var bVer=ov.querySelector('.preg-ver');
+    if(bVer && inp) bVer.onclick=function(ev){ if(ev) ev.preventDefault(); var ver=inp.type==='password'; inp.type=ver?'text':'password';
+      bVer.textContent=ver?'🙈 Tapar':'👁 Ver'; bVer.setAttribute('aria-pressed', ver?'true':'false'); bVer.setAttribute('aria-label', ver?'Tapar lo escrito':'Ver lo escrito'); try{ inp.focus(); }catch(e){} };
+    var foc=[inp, bVer, bNo].concat(ops.length ? ops : [bSi]).filter(Boolean);
     var kd=function(e){
       if(e.key==='Escape'){ e.preventDefault(); e.stopImmediatePropagation(); fin(false); return; }
       if(e.key==='Tab'){ e.preventDefault(); e.stopImmediatePropagation(); var i=foc.indexOf(document.activeElement); foc[(i+(e.shiftKey?foc.length-1:1))%foc.length].focus(); return; }
@@ -72521,7 +72525,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-f';
+var PANEL_V='2026-11-27-g';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
