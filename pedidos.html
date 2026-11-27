@@ -43957,6 +43957,22 @@ function quienElegir(v, rol){
   try{ if(document.getElementById('view-conta').classList.contains('active')) renderConta(); }catch(e){}
   try{ if(typeof ASIS!=='undefined' && ASIS.montado){ asisRefrescar(); } }catch(e){}
   quienSaludo(v, rol);
+  quienClaveAdmPedir(v, rol);
+}
+/* 🛡️ (27/11, dueño: «al seleccionar administración, contabilidad, roho o soy logística… salga la ventana para colocar la clave de
+   administración») Si este aparato todavía no tiene la 🛡️ Clave de administración, al elegir uno de esos sale sola la ventana para ponerla
+   (la misma de Mis pedidos, `pedirClaveAdmin`). Con la clave ya guardada no sale. Cancelar no rompe nada. En Playwright solo con QUIEN_CLAVE_PRUEBA. */
+function quienClaveAdmQuiere(v, rol){
+  if(rol==='admin' || rol==='conta' || rol==='logistica') return true;
+  return !!v && /^ROHO\b/i.test(String(v).trim());
+}
+function quienClaveAdmPedir(v, rol){
+  try{ if(navigator.webdriver && !window.QUIEN_CLAVE_PRUEBA) return; }catch(e){}
+  if(ADMIN_KEY_LOCAL || !quienClaveAdmQuiere(v, rol)) return;
+  setTimeout(function(){
+    if(ADMIN_KEY_LOCAL) return;
+    try{ pedirClaveAdmin(function(){ pedirClaveAdmin(); try{ misClaveBtnPintar(); }catch(e){} }); }catch(e){}
+  }, 400);
 }
 function quienAlEntrar(){ if(!quienActivo() || quienSesion()) return; quienAbrir(false); }
 document.addEventListener('DOMContentLoaded', function(){ setTimeout(quienAlEntrar, 900); });
@@ -72525,7 +72541,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-g';
+var PANEL_V='2026-11-27-h';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
