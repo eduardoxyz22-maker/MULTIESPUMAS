@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Escribí la SCRIPT_VERSION que vas a publicar (ej. 2026-11-23-h). Tiene que ser igual a la del .gs.'
+        description: 'Escribí la SCRIPT_VERSION que vas a publicar (ej. 2026-11-26-pry-b). Tiene que ser igual a la del .gs.'
         required: true
         type: string
       descripcion:
@@ -48,7 +48,7 @@ jobs:
           VERSION_PEDIDA: ${{ inputs.version }}
         run: |
           set -e
-          node --check google-apps-script.gs
+          cp google-apps-script.gs "$RUNNER_TEMP/gs_check.js" && node --check "$RUNNER_TEMP/gs_check.js"
           V=$(sed -n "s/^var SCRIPT_VERSION *= *'\([^']*\)'.*/\1/p" google-apps-script.gs | head -1)
           F=$(tail -n 1 google-apps-script.gs | sed -n "s/^var FIN_DEL_ARCHIVO = '\([^']*\)';$/\1/p")
           echo "SCRIPT_VERSION del archivo: $V · última línea: $F · pediste: $VERSION_PEDIDA"
