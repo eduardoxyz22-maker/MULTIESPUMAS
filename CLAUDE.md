@@ -2234,6 +2234,11 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**🧷 Al tildar los cobros de un retiro** (27/11, dueño: *«cómo podemos evitar que pasen estos errores al tildar»*, tras el 21/11: la venta de Bs 2.730
+con factura quedó partida 800 / 1.930 entre el recibo no facturado y el facturado; PUBLICADO 27/11, versión 2026-11-27-a): lo tildado que suma MÁS que el
+retiro (o que uno de los dos recibos de «Las dos») NO se guarda sin la contraseña (`avisoVentana`; con `UNLOCKED`, pregunta); una venta con remisión
+tildada en un recibo Facturado (o con factura en uno No facturado) se marca ⛔ en su renglón y pregunta al guardar (`retDocCruzado`/`retCruzados`); y una
+venta que ya está en parte en otro recibo lo dice con el N° de ese recibo (`retCobroAvisos`). `retSetTipo` repinta los renglones. `tests/test_retiro_tildar.js` (11).
 **🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.

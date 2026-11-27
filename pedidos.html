@@ -22234,6 +22234,33 @@ function retEntregaCambio(){
    cambia; al guardar, lo tildado queda en la fila del retiro (`tick`) y manda sobre la regla, en el panel y en el WhatsApp del efectivo. */
 function retTickDe(c){ return { id:c.id, f:c.f, m:r2(c.m) }; }
 function retTickClave(k){ return k.id+'|'+k.f+'|'+r2(k.m); }
+/* 🧷 (27/11) Lo que hay que decir de un cobro en la lista del retiro: (1) parte de la venta ya está en OTRO recibo (c.cub, con los N° de
+   recibo de c.de) y (2) la venta tiene factura y el recibo es No facturado, o tiene remisión y el recibo es Facturado (solo si está tildado). */
+function retCobroAvisos(c, dv, tipo){
+  var h='', mal=false;
+  if(c && c.cub>0.005){
+    var nros=[]; (c.de||[]).forEach(function(d){ var r=d && d.x && d.x.r; (r && r.notas || []).forEach(function(n){ if(nros.indexOf(n)<0) nros.push(n); }); });
+    h+='<br><span class="ret-cob-parte" style="font-size:.74rem;font-weight:700;color:#8a4b00">⚠️ '+fmtBs(c.cub)+' de esta venta (de '+fmtBs(c.m)+') ya está en '+
+       (nros.length ? ('el recibo '+esc(nros.join(', '))) : 'otro retiro')+': acá queda '+fmtBs(r2(c.m-c.cub))+'. Si eso está mal, corregí ese recibo primero.</span>';
+  }
+  var cruz=retDocCruzado(dv, tipo);
+  if(cruz){ mal=true; h+='<br><span class="ret-cob-cruz" style="font-size:.74rem;font-weight:800;color:#b42318">⛔ '+esc(cruz)+'</span>'; }
+  return { html:h, mal:mal };
+}
+function retDocCruzado(dv, tipo){
+  if(tipo==='Facturado' && dv==='R') return 'Es con nota de remisión y el recibo es Facturado: va en el recibo No facturado.';
+  if(tipo==='No facturado' && dv==='F') return 'Es con factura y el recibo es No facturado: va en el recibo Facturado.';
+  return '';
+}
+/* Los cobros tildados que no van con el tipo del recibo (para preguntar al guardar). */
+function retCruzados(R){
+  var D=retCobrosDatos(R), out=[]; if(!D) return out;
+  D.sim.pend.forEach(function(c){
+    if(!D.set[retTickClave(retTickDe(c))]) return;
+    var t=retDocCruzado(docVentaDe(c.p), R.tipo); if(t) out.push((c.p.cliente||'—')+' ('+fmtBs(r2(c.m-c.cub))+'): '+t);
+  });
+  return out;
+}
 function retCobrosDatos(R){
   var monto=parseMonto(R.monto||'');
   if(!R.entrega || !R.fecha) return null;
@@ -22244,7 +22271,7 @@ function retCobrosDatos(R){
   var suma=0; sim.pend.forEach(function(c){ if(set[retTickClave(retTickDe(c))]) suma=r2(suma+r2(c.m-c.cub)); });
   return { sim:sim, tick:tick, set:set, suma:suma, monto:monto>0 ? r2(monto) : 0 };
 }
-function retCobrosPintar(){ retCobrosPintar0(); try{ retTipoPintar(); }catch(e){} }
+function retCobrosPintar(){ try{ if(RET_FORM){ retLeerForm(); retTipoPintar(); } }catch(e){} retCobrosPintar0(); try{ retTipoPintar(); }catch(e){} }   // 🧷 (27/11) el tipo primero: el ⛔ de cada renglón depende de él
 function retCobrosPintar0(){
   var box=document.getElementById('ret-cobros'); if(!box || !RET_FORM) return;
   retLeerForm();
@@ -22265,9 +22292,12 @@ function retCobrosPintar0(){
     var doc=dv==='F' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#0b5e59;background:#e3f6f4;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">🧾 con factura</span>'
       : dv==='R' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#5b3f99;background:#efe9fb;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">📄 con remisión</span>'
       : '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:700;color:var(--muted);background:var(--soft,#f1f4f6);border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">sin factura ni remisión anotada</span>';
-    return '<label class="ret-cob" style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #d6e9e7;cursor:pointer">'+
+    /* 🧷 (27/11, dueño: «cómo podemos evitar que pasen estos errores al tildar») parte de esta venta YA está en otro recibo, y la venta con
+       factura o remisión tildada en un recibo del otro tipo: se dice en el renglón (retCobroAvisos) */
+    var avR=retCobroAvisos(c, dv, D.set[k] ? RET_FORM.tipo : '');
+    return '<label class="ret-cob'+(avR.mal?' ret-cob-mal':'')+'" style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #d6e9e7;cursor:pointer'+(avR.mal?';background:#fff4f2':'')+'">'+
       '<input type="checkbox" data-k="'+esc(k)+'"'+(D.set[k]?' checked':'')+' onchange="retTickToggle()" style="width:18px;height:18px;margin-top:2px">'+
-      '<span><b>'+esc(p.cliente||'—')+'</b>'+doc+'<br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span></span>'+
+      '<span><b>'+esc(p.cliente||'—')+'</b>'+doc+'<br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span>'+avR.html+'</span>'+
       '<b style="white-space:nowrap">'+fmtBs(r2(c.m-c.cub))+'</b></label>';
   }).join('');
   var dif=r2(D.suma-D.monto), ok=D.monto>0 && Math.abs(dif)<0.005;
@@ -22301,7 +22331,7 @@ function retLeerForm(){
   if(!RET_FORM.notasR) RET_FORM.notasR=[];
   return RET_FORM;
 }
-function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; RET_FORM.tipoMano=true; retTipoPintar(); }
+function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; RET_FORM.tipoMano=true; retCobrosPintar(); }   // 🧷 (27/11) repinta también los renglones: el ⛔ depende del tipo
 function retAgregarNota(){
   retLeerForm();
   var inp=document.getElementById('ret-nota-nueva'); if(!inp) return;
@@ -22416,6 +22446,14 @@ function guardarRetiroAmbos(r){
   if(comun.length) return falla('ret-nota-nueva-r','El recibo '+comun.join(', ')+' está en los dos: cada recibo va en uno solo');
   var tickF=T.F.k.slice(), tickR=T.R.k.concat(T.X.k);
   var sF=0; tickF.forEach(function(t){ sF=r2(sF+t.m); }); var sR=0; tickR.forEach(function(t){ sR=r2(sR+t.m); });
+  /* 🧷 (27/11) también con dos recibos: si lo tildado de un lado suma MÁS que lo de ese recibo, una venta quedaría partida. No se guarda. */
+  if((r2(sF-mf)>0.005 || r2(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) && !UNLOCKED){
+    avisoVentana('💵 Lo tildado suma más que uno de los recibos.',
+      { titulo:'Lo tildado suma más que el recibo', icono:'⛔', aviso:true,
+        lineas:[ 'Facturado: tildado con factura '+fmtBs(sF)+' · recibo '+fmtBs(mf)+'.', 'No facturado: tildado con remisión (o sin anotar) '+fmtBs(sR)+' · recibo '+fmtBs(mr)+'.',
+                 'Así una venta quedaría partida entre los dos recibos. Corregí lo facturado o destildá lo que no entrega.' ] });
+    return false;
+  }
   if((Math.abs(sF-mf)>0.005 || Math.abs(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
      /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr «Registrar retiro» entero: hasta acá solo leyó el formulario */
      !preguntaYa('💵 Lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+' de lo facturado; lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+' de lo no facturado.\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)',
@@ -22499,6 +22537,24 @@ function guardarRetiroForm(){
   var esNuevo=!r.id;
   /* 💵☑️ (07/11) los cobros que entrega: lo tildado (o lo que tildó la regla). Si no da justo con el monto, se pregunta. */
   var _D=retCobrosDatos(r), _tick=_D ? _D.tick.slice() : [];
+  /* 🧷 (27/11, dueño) SOBRAN: lo tildado suma MÁS que el retiro = alguna venta tildada quedaría partida entre dos recibos (pasó el 21/11:
+     Bs 800 de una venta de 2.730 en el recibo no facturado y el resto en el otro). No se guarda: destildar. Con la contraseña, se pregunta. */
+  if(_D && _D.sim.pend.length && r2(_D.suma-monto)>0.005 && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) && !UNLOCKED){
+    var _sobra=r2(_D.suma-monto);
+    avisoVentana('💵 Tildaste '+fmtBs(_D.suma)+' y el retiro es de '+fmtBs(monto)+': sobran '+fmtBs(_sobra)+'.',
+      { titulo:'Lo tildado suma más que el retiro', icono:'⛔', aviso:true,
+        lineas:[ 'Tildaste '+fmtBs(_D.suma)+' y el retiro es de '+fmtBs(monto)+': sobran '+fmtBs(_sobra)+'.',
+                 'Así una venta quedaría partida entre dos recibos. Destildá las ventas que NO entrega en este recibo hasta que dé justo.',
+                 'Si de verdad entregó solo una parte de una venta, lo carga administración (con la contraseña).' ] });
+    return false;
+  }
+  var _cruz=retCruzados(r);
+  if(_cruz.length && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
+     !preguntaYa('🧾 '+_cruz.join('\n')+'\n\n¿Guardar igual?',
+       { titulo:'Hay ventas en el recibo equivocado', icono:'🧾', aviso:true,
+         lineas:_cruz.concat(['Facturado = ventas con factura · No facturado = ventas con nota de remisión. Si entrega de las dos, son dos recibos.']),
+         no:'✏️ Volver y corregir', si:'💾 Guardar igual' },
+       function(){ guardarRetiroForm(); })) return false;
   if(_D && _D.sim.pend.length && Math.abs(r2(_D.suma-monto))>0.005 && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
      /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr: hasta acá solo leyó el formulario y calculó */
      !preguntaYa('💵 El retiro es de '+fmtBs(monto)+' y los cobros tildados suman '+fmtBs(_D.suma)+'.\n\n'+
@@ -72353,7 +72409,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-24-b';
+var PANEL_V='2026-11-27-a';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
