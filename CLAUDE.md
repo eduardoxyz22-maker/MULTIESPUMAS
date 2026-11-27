@@ -3251,13 +3251,13 @@ correo + el mensaje de **WhatsApp**.
   selector se esconde y el formulario quedaba sin salida. (3) Verificado: 25 productos en
   una RPT (la hoja crece), y los Excel de siempre siguen saliendo.
 
-## 🚀 Publicar el `.gs` sin copiar y pegar (26/11, dueño: *«que modifiques el archivo directamente sin que yo tenga que copiar y pegar»*; en la rama, NO en main)
+## 🚀 Publicar el `.gs` sin copiar y pegar (26/11, dueño: *«que modifiques el archivo directamente sin que yo tenga que copiar y pegar»*; EN MAIN y PROBADO el 27/11: run #4 puso la `2026-11-26-pry-b` = versión 89 de Google, el servidor contestó esa versión)
 Workflow **`publicar-gs.yml`** (solo a mano; hay que escribir la `SCRIPT_VERSION`): `clasp pull` (copia de seguridad como artefacto 30 días) → `herramientas/gs_publicar/preparar.py`
 cambia SOLO el archivo principal (el de `function doPost(`, con su nombre en Google) y deja los archivos aparte del dueño y `appsscript.json` →
 `clasp push` → `clasp version` → `clasp deploy -i <la implementación de la /exec del secreto PANEL_URL>` (la dirección no cambia) → lee la versión que contesta el servidor.
 ⚠️ `clasp push` BORRA lo que no esté en la carpeta: nunca subir el `.gs` suelto. Secretos de GitHub (el repo es PÚBLICO, nada en el código): `APPS_SCRIPT_ID`
 y `CLASPRC_JSON` (`~/.clasprc.json` tras `npx @google/clasp@2.4.2 login`), más `PANEL_URL` que ya existe; en Google, la API de Apps Script activada. Un permiso nuevo del `.gs` sigue pidiendo aprobarse en el editor.
-`tests/test_gs_publicar.py` (11). Sin los secretos no corre. NO se publicó a main ni se corrió nunca.
+`tests/test_gs_publicar.py` (13). ⚠️ clasp 2.x BAJA los archivos como `.js` (no `.gs`): `preparar.py` busca el principal en los dos; `node --check` no abre `.gs` (el workflow copia a `.js`). El proyecto del dueño tiene solo 2 archivos (el principal y `appsscript.json`): `herramientas/clave_equipo.gs` y demás archivos aparte NO están ahí; si se agregan al proyecto, `preparar.py` los conserva. Secretos `CLASPRC_JSON` y `APPS_SCRIPT_ID` cargados el 27/11.
 
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
