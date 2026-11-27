@@ -14220,13 +14220,14 @@ function borrarPagosPuede(id, otraVez){
     return r;   // null esperando · true / false
   }
   var n0=PREG_ABIERTAS;
-  var c=preguntaTextoYa(txt+'\nPara borrarla hace falta la contraseña de Administración.', '', { icono:'🔑', peligro:true, titulo:'Borrar una venta con pagos pide la contraseña',
-    sub:quien, lineas:lin.concat(['Una vendedora no puede borrarla: pedíselo a Administración.']), campoAyuda:'La contraseña de Administración', campoClave:true,
+  var c=preguntaTextoYa(txt+'\nPara borrarla hace falta la contraseña del candado 🔒 del panel (no la clave del equipo).', '', { icono:'🔑', peligro:true, titulo:'Borrar una venta con pagos pide la contraseña',
+    sub:quien, lineas:lin.concat(['Va la contraseña del candado 🔒 de Administración del panel, la misma que abre el panel con clave. NO la «🛡️ Clave de administración» del equipo (la de 10 letras).','Una vendedora no puede borrarla: pedíselo a Administración.']), campoAyuda:'La contraseña del candado 🔒 del panel', campoClave:true,
     no:'No, dejarla', si:'🗑 Borrarla' }, otraVez);
   if(c==null) return (PREG_ABIERTAS>n0) ? null : false;
   var stored=''; try{ stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH; }catch(e){ stored=DEFAULT_HASH; }
-  if(sha256(String(c||''))===stored) return true;
-  toast('🔑 Esa no es la contraseña de Administración: la venta NO se borró (tiene '+(B.L.length?phxBs(B.bs)+' en pagos':'su pago marcado')+').','err',8000);
+  // ✂️ (27/11) pegada con un espacio o un salto de línea de más también vale
+  if(sha256(String(c||''))===stored || sha256(String(c||'').trim())===stored) return true;
+  toast('🔑 Esa no es la contraseña del candado 🔒 del panel EN ESTA COMPU: la venta NO se borró (tiene '+(B.L.length?phxBs(B.bs)+' en pagos':'su pago marcado')+'). Probá entrar con ella por el candado 🔒 de Administración: si tampoco entra, en esta compu la cambiaron.','err',12000);
   return false;
 }
 /* «12/11 🌅» · «12/11 🌆» · «12/11» (sin turno) · «sin día» */
@@ -72520,7 +72521,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-e';
+var PANEL_V='2026-11-27-f';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
