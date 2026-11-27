@@ -23079,6 +23079,8 @@ function retDocDeRetiro(r, PAR){
   o.otras=o.tapa.filter(function(t){ return t.d===otro; });
   var propio = r.tipo==='Facturado' ? o.F : r2(o.R+o.X);
   o.est = !(o.malDoc>0.005) ? 'ok' : (propio>0.005 ? 'partir' : 'pasar');
+  /* 🚚 (27/11, dueño: «saca a los choferes del aviso») el chofer le rinde TODO a Contabilidad: su retiro no se mira por factura o remisión */
+  if(esChoferNombre(r.entrega)){ o.chofer=true; o.malBs=0; o.malDoc=0; o.otras=[]; o.est='ok'; }
   return o;
 }
 /* El Cuadre: por persona y los retiros que no coinciden (del período, con el filtro de vendedora). */
@@ -23089,7 +23091,7 @@ function retDocDatos(pe, vend){
   retirosDe(pe, vend).forEach(function(r){
     var o=retDocDeRetiro(r, PAR); if(!o) return;
     var k=normNombre(r.entrega)||'(sin)', e=P[k];
-    if(!e){ e=P[k]={ nombre:r.entrega||'—', F:0, R:0, X:0, fac:0, nofac:0, malBs:0, n:0 }; orden.push(k); }
+    if(!e){ e=P[k]={ nombre:r.entrega||'—', F:0, R:0, X:0, fac:0, nofac:0, malBs:0, n:0, chofer:!!o.chofer }; orden.push(k); }
     e.F=r2(e.F+o.F); e.R=r2(e.R+o.R); e.X=r2(e.X+o.X); e.n++;
     if(r.tipo==='Facturado') e.fac=r2(e.fac+r.monto); else e.nofac=r2(e.nofac+r.monto);
     if(o.est!=='ok'){ e.malBs=r2(e.malBs+o.malDoc); mal.push(o); }
@@ -23115,7 +23117,8 @@ function retDocRetHtml(o){
 }
 function retDocHtml(D){
   if(!D || (!D.filas.length && !D.mal.length)) return '';
-  var ok=function(e){ return e.malBs>0.005 ? '<span class="rdc-mal">⚠️ '+fmtBs(e.malBs)+' en el otro tipo</span>' : '<span class="rdc-ok">✓</span>'; };
+  var ok=function(e){ return e.chofer ? '<span class="rdc-ok" title="El chofer rinde todo a Contabilidad: no se mira por factura o remisión">✓ chofer</span>'
+    : e.malBs>0.005 ? '<span class="rdc-mal">⚠️ '+fmtBs(e.malBs)+' en el otro tipo</span>' : '<span class="rdc-ok">✓</span>'; };
   var h='<div class="cua-box rdc" id="cua-doc-box"><div class="cua-t">🧾 Retirado con factura y sin factura — '+esc(cuadrePeriodoTxt())+'</div>'+
     '<div class="rdc-s">De lo que tapó cada retiro (la regla del efectivo): cuánto era de ventas con <b>factura</b> y con <b>nota de remisión</b>, contra el tipo con que se retiró.</div>'+
     '<div class="tw"><table class="mini rdc-t"><thead><tr><th>Quién</th><th class="r">De ventas con factura</th><th class="r">Retirado «Facturado»</th><th class="r">De ventas con remisión</th><th class="r">Retirado «No facturado»</th><th class="r">Sin anotar</th><th></th></tr></thead><tbody>'+
@@ -72420,7 +72423,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-b';
+var PANEL_V='2026-11-27-c';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

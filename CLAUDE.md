@@ -2243,6 +2243,7 @@ venta que ya está en parte en otro recibo lo dice con el N° de ese recibo (`re
 de la factura»*; versión 2026-11-27-b): `docRemisionNoVa` en `ctaDocGuardar` y `ctaRegDocGuardar` no deja anotar «remisión» si el pedido
 tiene NIT (`ventaTieneNit`: 5+ dígitos); para una remisión de verdad, primero se borra el NIT. En el retiro, una venta con NIT anotada con remisión (de
 antes) sale ⛔. Con la planilla del 27/11: 147 ventas con factura tienen NIT y solo 3 con remisión lo tenían. `tests/test_remision_nit.js` (7).
+**🚚 Los choferes fuera de «Retirado con factura y sin factura»** (27/11, dueño: «saca a los choferes del aviso»; versión 2026-11-27-c): `retDocDeRetiro` con `esChoferNombre(r.entrega)` da `ok` (el chofer rinde todo a Contabilidad) y la fila dice «✓ chofer». `test_retiro_doc` §7.
 **🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
