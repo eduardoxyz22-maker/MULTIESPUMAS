@@ -1,9 +1,11 @@
 name: Reporte Semanal ATC
 
+# 🛑 APAGADO el 31/10/2026 (dueño: «olvidate de trello ya no lo usamos» → «apagá el reporte semanal atc»): ya no corre solo.
+#    Bajaba el tablero de Trello todos los días a las 17:00 y lo guardaba en atc-semanal.csv y reporte-semanal-atc.html.
+#    El panel lee atc-semanal.csv como foto final (🔗 Completar con Trello y la fecha de compra del informe de ATC): queda como está.
+#    Para correrlo una vez: Actions → «Reporte Semanal ATC» → Run workflow.
 on:
-  schedule:
-    - cron: '0 21 * * *'   # Todos los días 17:00 Bolivia (UTC-4)
-  workflow_dispatch:         # Ejecución manual desde GitHub → Actions
+  workflow_dispatch:         # solo a mano
 
 concurrency:
   group: reporte-atc

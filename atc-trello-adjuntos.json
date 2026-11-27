@@ -1,9 +1,9 @@
 {
- "generado": "2026-10-15T15:07:37Z",
+ "generado": "2026-10-15T15:15:41Z",
  "resumen": {
   "adjuntos": 124,
   "con_fecha": 37,
-  "de_antes": 91,
+  "de_antes": 108,
   "errores": 0,
   "excel": 0,
   "excel_casillero": {
@@ -12,9 +12,9 @@
    "texto": 1,
    "vacio": 3
   },
-  "fotos": 32,
+  "fotos": 15,
   "grandes": 0,
-  "leidos_ia": 17,
+  "leidos_ia": 0,
   "otros": 1,
   "pdf": 0,
   "pendientes": 0,

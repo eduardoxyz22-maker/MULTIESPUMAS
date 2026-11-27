@@ -2234,6 +2234,16 @@ mes no cerrado sale como «⚠️ Faltante de <mes>». El formulario del retiro 
 los tomaría la regla (`efeSimular`); los tildados van en la columna «Garantía» de la fila (`efe:id|día|monto;…`, `retTicksDe`/`retTicksTxt`). Los
 avisos del `.gs` cuentan desde `WA_EFE_DESDE` por la fecha del cobro (sin `c.v`). ⚠️ `hhmmBolivia()` es la hora de AHORA (parte del día); la hora de
 un `ts` es `hhmmDeTs(t)`. `tests/test_efe_regla.js` (`REAL=<copia>` compara página y `.gs` con la planilla real).
+**🧷 Al tildar los cobros de un retiro** (27/11, dueño: *«cómo podemos evitar que pasen estos errores al tildar»*, tras el 21/11: la venta de Bs 2.730
+con factura quedó partida 800 / 1.930 entre el recibo no facturado y el facturado; PUBLICADO 27/11, versión 2026-11-27-a): lo tildado que suma MÁS que el
+retiro (o que uno de los dos recibos de «Las dos») NO se guarda sin la contraseña (`avisoVentana`; con `UNLOCKED`, pregunta); una venta con remisión
+tildada en un recibo Facturado (o con factura en uno No facturado) se marca ⛔ en su renglón y pregunta al guardar (`retDocCruzado`/`retCruzados`); y una
+venta que ya está en parte en otro recibo lo dice con el N° de ese recibo (`retCobroAvisos`). `retSetTipo` repinta los renglones. `tests/test_retiro_tildar.js` (11).
+**🧾 Una venta con NIT es con FACTURA** (27/11, dueño: *«no deberían anotar en remisión si es una venta facturada, por algo en el pedido tiene datos
+de la factura»*; versión 2026-11-27-b): `docRemisionNoVa` en `ctaDocGuardar` y `ctaRegDocGuardar` no deja anotar «remisión» si el pedido
+tiene NIT (`ventaTieneNit`: 5+ dígitos); para una remisión de verdad, primero se borra el NIT. En el retiro, una venta con NIT anotada con remisión (de
+antes) sale ⛔. Con la planilla del 27/11: 147 ventas con factura tienen NIT y solo 3 con remisión lo tenían. `tests/test_remision_nit.js` (7).
+**🚚 Los choferes fuera de «Retirado con factura y sin factura»** (27/11, dueño: «saca a los choferes del aviso»; versión 2026-11-27-c): `retDocDeRetiro` con `esChoferNombre(r.entrega)` da `ok` (el chofer rinde todo a Contabilidad) y la fila dice «✓ chofer». `test_retiro_doc` §7.
 **🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.
@@ -3251,13 +3261,13 @@ correo + el mensaje de **WhatsApp**.
   selector se esconde y el formulario quedaba sin salida. (3) Verificado: 25 productos en
   una RPT (la hoja crece), y los Excel de siempre siguen saliendo.
 
-## 🚀 Publicar el `.gs` sin copiar y pegar (26/11, dueño: *«que modifiques el archivo directamente sin que yo tenga que copiar y pegar»*; en la rama, NO en main)
+## 🚀 Publicar el `.gs` sin copiar y pegar (26/11, dueño: *«que modifiques el archivo directamente sin que yo tenga que copiar y pegar»*; EN MAIN y PROBADO el 27/11: run #4 puso la `2026-11-26-pry-b` = versión 89 de Google, el servidor contestó esa versión)
 Workflow **`publicar-gs.yml`** (solo a mano; hay que escribir la `SCRIPT_VERSION`): `clasp pull` (copia de seguridad como artefacto 30 días) → `herramientas/gs_publicar/preparar.py`
 cambia SOLO el archivo principal (el de `function doPost(`, con su nombre en Google) y deja los archivos aparte del dueño y `appsscript.json` →
 `clasp push` → `clasp version` → `clasp deploy -i <la implementación de la /exec del secreto PANEL_URL>` (la dirección no cambia) → lee la versión que contesta el servidor.
 ⚠️ `clasp push` BORRA lo que no esté en la carpeta: nunca subir el `.gs` suelto. Secretos de GitHub (el repo es PÚBLICO, nada en el código): `APPS_SCRIPT_ID`
 y `CLASPRC_JSON` (`~/.clasprc.json` tras `npx @google/clasp@2.4.2 login`), más `PANEL_URL` que ya existe; en Google, la API de Apps Script activada. Un permiso nuevo del `.gs` sigue pidiendo aprobarse en el editor.
-`tests/test_gs_publicar.py` (11). Sin los secretos no corre. NO se publicó a main ni se corrió nunca.
+`tests/test_gs_publicar.py` (13). ⚠️ clasp 2.x BAJA los archivos como `.js` (no `.gs`): `preparar.py` busca el principal en los dos; `node --check` no abre `.gs` (el workflow copia a `.js`). El proyecto del dueño tiene solo 2 archivos (el principal y `appsscript.json`): `herramientas/clave_equipo.gs` y demás archivos aparte NO están ahí; si se agregan al proyecto, `preparar.py` los conserva. Secretos `CLASPRC_JSON` y `APPS_SCRIPT_ID` cargados el 27/11.
 
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`

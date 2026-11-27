@@ -4707,6 +4707,10 @@ function glSigue(){
         <div class="field">
           <button class="btn btn-ghost btn-sm" id="mis-clave-btn" onclick="pedirClaveEquipo()" title="La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.">🔐 Clave del equipo</button>
         </div>
+        <!-- 🛡️ (27/11, dueño: «falta la clave de admin») la de administración, para cargarla ANTES (solo logística y Administración: forzar un turno lleno) -->
+        <div class="field">
+          <button class="btn btn-ghost btn-sm" id="mis-clave-adm-btn" onclick="pedirClaveAdmin();misClaveBtnPintar()" title="Solo logística y Administración: la clave para forzar un turno lleno o un día cerrado. Se carga una vez por aparato.">🛡️ Clave de administración</button>
+        </div>
       </div>
       <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
            Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
@@ -11645,6 +11649,7 @@ function apiPost(payload){
       if(j && j.adminAuth) SERVER_ADMIN_AUTH=String(j.adminAuth);
       if(j && j.wa!=null) WA_BOT=(Number(j.wa)===1);   // 🤖 (11/10, §4jt) el servidor dice si el bot de WhatsApp está prendido
       if(j && j.auth && String(j.auth)!==SERVER_AUTH){ SERVER_AUTH=String(j.auth); renderConnEstado(); }
+      if(j && String(j.auth||'')==='abierto' && !CLAVE_EQUIPO) claveAvisoAuto('antes');   // 🔐 (27/11) antes de prenderla: el aparato sin clave
       /* 🔀 GOOGLE CAMBIÓ EL ENVÍO POR UNA LECTURA (§4fx). A veces un POST al `/exec` llega al
          script como GET: contesta `doGet` —`{ok:true, version, pedidos:[…]}`, la planilla
          entera— y `doPost` NUNCA corrió. Quedó escrito en el registro del respaldo de Kommo
@@ -11662,6 +11667,7 @@ function apiPost(payload){
         var primera=!CLAVE_RECHAZADA;
         CLAVE_RECHAZADA=true; renderConnEstado();
         if(primera) toast('🔐 El servidor pide la clave del equipo. Lo que guardes queda en esta compu hasta que la ingreses.','err',8000);
+        if(primera) claveAvisoAuto('pide');   // 🔐 (27/11, dueño: «que salga la alerta si no pusieron la clave y les salga para colocar»)
         throw new Error('clave');
       }
       if(CLAVE_RECHAZADA){ CLAVE_RECHAZADA=false; renderConnEstado(); }
@@ -12806,12 +12812,33 @@ function misClaveBtnPintar(){
   var b=document.getElementById('mis-clave-btn'); if(!b) return;
   b.textContent=CLAVE_EQUIPO ? '🔐 Clave del equipo ✓' : '🔐 Clave del equipo';
   b.title=CLAVE_EQUIPO ? 'Este aparato ya tiene la clave del equipo. Tocá para cambiarla.' : 'La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.';
+  var a=document.getElementById('mis-clave-adm-btn'); if(a) a.textContent=ADMIN_KEY_LOCAL ? '🛡️ Clave de administración ✓' : '🛡️ Clave de administración';
 }
-function pedirClaveEquipo(){
+/* 🔐 (27/11, dueño: «quiero que salga la alerta si no pusieron la clave y les salga para colocar») La ventana para poner la clave sale SOLA:
+   · 'pide': el servidor ya pide la clave y este aparato no la tiene (o la tiene mal) → al primer rechazo, una vez por apertura.
+   · 'antes': el servidor todavía no la pide y este aparato no la tiene → una vez por día (me_clave_aviso), para que nadie quede afuera el día que se prenda.
+   Cancelar no rompe nada (queda el cartel rojo con «🔐 Ingresar clave» y el botón de Mis pedidos). En Playwright solo con CLAVE_AUTO_PRUEBA. */
+var CLAVE_AVISO_YA=false;
+function claveAvisoAuto(modo){
+  try{ if(navigator.webdriver && !window.CLAVE_AUTO_PRUEBA) return; }catch(e){}
+  if(CLAVE_AVISO_YA) return;
+  if(modo==='antes'){
+    var hoy=(typeof diaNegocio==='function') ? diaNegocio() : todayStr(), ya='';
+    try{ ya=localStorage.getItem('me_clave_aviso')||''; }catch(e){}
+    if(ya===hoy) return;
+    try{ localStorage.setItem('me_clave_aviso', hoy); }catch(e){}
+  }
+  CLAVE_AVISO_YA=true;
+  setTimeout(function(){ pedirClaveEquipo(modo); }, 600);
+}
+function pedirClaveEquipo(modo){
+  var lin = modo==='pide' ? ['⛔ Desde ahora el panel pide la clave del equipo y este aparato no la tiene: sin ella no ve ni guarda pedidos.', 'Pedísela al administrador y ponela acá una sola vez. Lo que guardaste queda en este aparato y se manda solo apenas la pongas.']
+          : modo==='antes' ? ['⚠️ Este aparato todavía NO tiene la clave del equipo.', 'Muy pronto el panel la va a pedir para ver y guardar pedidos: ponela ahora una sola vez y ese día no te quedás afuera.', 'Te la da el administrador.']
+          : ['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'];
   var c=preguntaTextoYa('Clave del equipo (te la da el administrador):','',
-    { titulo:'Clave del equipo', icono:'🔐', lineas:['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'],
+    { titulo:'Clave del equipo', icono:'🔐', lineas:lin,
       campoAyuda:'La clave del equipo', campoClave:true, no:'Cancelar', si:'💾 Guardar y probar' },
-    function(){ pedirClaveEquipo(); });
+    function(){ pedirClaveEquipo(modo); });
   if(c==null) return;
   c=c.trim(); if(!c){ toast('Sin clave no se puede.','err'); return; }
   CLAVE_EQUIPO=c; try{ localStorage.setItem(LS_CLAVE,c); }catch(e){}
@@ -19667,6 +19694,9 @@ function proyeccionMes(ym){
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
   var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
   var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
+  // Para las marcas de tiendas, el día comercial termina a las 21:00 Bolivia, como en el bot.
+  var min=pryMinBo(Date.now()), abierto=estado==='curso' && pryDiaHabil(hoy) && min<21*60,
+      base=abierto?stockSumarDias(hoy,-1):hoy, dtT=dt-(abierto?1:0), drT=dr+(abierto?1:0);
   var V=pryVentas(), hist=pryMesesCerrados(hoy), metodos={};
   /* 🧪 La prueba, una sola vez por pantalla: los últimos meses cerrados (para elegir) y el que está en curso (para ver). */
   var curYm=hoy.slice(0,7), pruebas={};
@@ -19675,10 +19705,11 @@ function proyeccionMes(ym){
   var filas={};
   V.forEach(function(x){
     if(x.ym!==ym) return;
-    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0, ua:0, ub:0 });
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0, ua:0, ub:0, aP:0, bP:0 });
     r.n++; if(!(x.bs>0.009)) r.sinMonto++;
     r.u+=x.u; r.c+=x.c; r.s+=x.s;
     if(x.f<=hoy){ r.a=r2(r.a+x.bs); r.ua+=x.u; } else { r.b=r2(r.b+x.bs); r.ub+=x.u; }
+    if(x.f<=(x.amb==='tienda'?base:hoy)) r.aP=r2(r.aP+x.bs); else r.bP=r2(r.bP+x.bs);
   });
   /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
      la marca ENTERA (K = lo que vendió la marca este mes), y cada vendedor lleva la misma proporción; salvo que en la
@@ -19689,14 +19720,14 @@ function proyeccionMes(ym){
       if(g==='mayor' || g==='sin' || g==='roho') o.porque=g;
       else{
         var c=pryCurva(V, g, hist);
-        if(!c.ok) o.porque='historia';
+        if(!c.ok || drT===0) o.porque='historia';
         else{
           var K=0; Object.keys(filas).forEach(function(k){ if(filas[k].g===g) K+=r2(filas[k].a+filas[k].b); });
           /* (30/09, R3-1) La hora solo en un día hábil: un domingo o un feriado no se vende, y la curva «a esta hora» subía sola
              de la mañana a la noche (hasta 3,6 %) sin que entrara ninguna venta. */
-          var f=pryCurvaF(c, dr, pryDiaHabil(hoy) ? pryMinBo(Date.now()) : null), z=pryMezcla(K, f, c.prom), e=errores[g];
-          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
-          if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
+          var f=pryCurvaF(c, drT, null), z=pryMezcla(K, f, c.prom), e=errores[g];
+          o={ m:'curva', f:f, meses:c.meses, sinDatos:c.sinDatos, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(Math.max(K,z.proy)), porque:'', err:e };
+          if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dtT>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
       }
     }
@@ -19713,7 +19744,8 @@ function proyeccionMes(ym){
     var r=filas[k];
     r.vendido=r2(r.a+r.b);
     r.ritmo = dt>0 ? r.a/dt : 0;
-    r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+    var t=r.amb==='tienda', d=t?dtT:dt, queda=t?drT:dr;
+    r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.aP + Math.max(r.bP, (d>0?r.aP/d:0)*queda));
   });
   var pryRep={};
   ['suena','heaven'].forEach(function(g){
@@ -19734,7 +19766,7 @@ function proyeccionMes(ym){
   var marcas=MARCAS.map(function(g){
     var rs=tienda.filter(function(r){ return r.marca===g.k; }), t=suma(rs), mt=metodos[g.k];
     /* La marca es la cuenta de la marca (la suma de los vendedores puede diferir en centavos por el redondeo). */
-    if(estado==='curso' && mt.m==='curva') t.proy=mt.proy;
+    if(estado==='curso') t.proy=mt.m==='curva'?mt.proy:r2(pryRep[g.k].P);
     return { g:g, filas:rs, tot:t };
   });
   var sinMarca=tienda.filter(function(r){ return !r.marca; }), sinTot=suma(sinMarca), equipo=suma(tienda);
@@ -19755,7 +19787,7 @@ function proyeccionMes(ym){
     });
   });
   rohoTot.prods=Object.keys(rohoProd).map(function(k){ return rohoProd[k]; }).sort(function(a,b){ return (b.u-a.u) || (a.k<b.k?-1:1); });
-  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
+  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, drPronostico:drT, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
            equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, roho:{ filas:roho, tot:rohoTot }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
 }
 /* Cuánto se equivocó cada forma en los meses CERRADOS de la prueba, marca por marca: el promedio del error (sin signo)
@@ -20441,7 +20473,7 @@ function renderProyeccion(){
   var proyLbl = R.estado==='cerrado' ? 'Cerró el mes' : '📈 Proyección al cierre';
   var proySub = R.estado==='cerrado' ? ('el mes terminó: es lo vendido con entrega en '+mes)
               : R.estado==='futuro' ? ('todavía no empezó: es lo que ya está agendado ('+R.dr+' días hábiles)')
-              : (pryComoTxt(R)+' · '+pryFaltanTxt(R.dr));
+              : (pryComoTxt(R)+' · '+pryFaltanTxt(R.drPronostico));
   var conProy=(R.estado!=='cerrado'), curso=(R.estado==='curso');
   var h=mc('var(--teal)','Vendido en '+esc(mes), fmtBs(E.vendido),
            nV(E.n)+' · '+nU(E.u)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
@@ -22229,6 +22261,34 @@ function retEntregaCambio(){
    cambia; al guardar, lo tildado queda en la fila del retiro (`tick`) y manda sobre la regla, en el panel y en el WhatsApp del efectivo. */
 function retTickDe(c){ return { id:c.id, f:c.f, m:r2(c.m) }; }
 function retTickClave(k){ return k.id+'|'+k.f+'|'+r2(k.m); }
+/* 🧷 (27/11) Lo que hay que decir de un cobro en la lista del retiro: (1) parte de la venta ya está en OTRO recibo (c.cub, con los N° de
+   recibo de c.de) y (2) la venta tiene factura y el recibo es No facturado, o tiene remisión y el recibo es Facturado (solo si está tildado). */
+function retCobroAvisos(c, dv, tipo){
+  var h='', mal=false;
+  if(c && c.cub>0.005){
+    var nros=[]; (c.de||[]).forEach(function(d){ var r=d && d.x && d.x.r; (r && r.notas || []).forEach(function(n){ if(nros.indexOf(n)<0) nros.push(n); }); });
+    h+='<br><span class="ret-cob-parte" style="font-size:.74rem;font-weight:700;color:#8a4b00">⚠️ '+fmtBs(c.cub)+' de esta venta (de '+fmtBs(c.m)+') ya está en '+
+       (nros.length ? ('el recibo '+esc(nros.join(', '))) : 'otro retiro')+': acá queda '+fmtBs(r2(c.m-c.cub))+'. Si eso está mal, corregí ese recibo primero.</span>';
+  }
+  if(dv==='R' && c && c.p && ventaTieneNit(c.p)){ mal=true; h+='<br><span class="ret-cob-nit" style="font-size:.74rem;font-weight:800;color:#b42318">⛔ Anotada con remisión pero tiene NIT '+esc(String(c.p.nit).trim())+': es con factura. Corregila en Contabilidad.</span>'; }
+  var cruz=retDocCruzado(dv, tipo);
+  if(cruz){ mal=true; h+='<br><span class="ret-cob-cruz" style="font-size:.74rem;font-weight:800;color:#b42318">⛔ '+esc(cruz)+'</span>'; }
+  return { html:h, mal:mal };
+}
+function retDocCruzado(dv, tipo){
+  if(tipo==='Facturado' && dv==='R') return 'Es con nota de remisión y el recibo es Facturado: va en el recibo No facturado.';
+  if(tipo==='No facturado' && dv==='F') return 'Es con factura y el recibo es No facturado: va en el recibo Facturado.';
+  return '';
+}
+/* Los cobros tildados que no van con el tipo del recibo (para preguntar al guardar). */
+function retCruzados(R){
+  var D=retCobrosDatos(R), out=[]; if(!D) return out;
+  D.sim.pend.forEach(function(c){
+    if(!D.set[retTickClave(retTickDe(c))]) return;
+    var t=retDocCruzado(docVentaDe(c.p), R.tipo); if(t) out.push((c.p.cliente||'—')+' ('+fmtBs(r2(c.m-c.cub))+'): '+t);
+  });
+  return out;
+}
 function retCobrosDatos(R){
   var monto=parseMonto(R.monto||'');
   if(!R.entrega || !R.fecha) return null;
@@ -22239,7 +22299,7 @@ function retCobrosDatos(R){
   var suma=0; sim.pend.forEach(function(c){ if(set[retTickClave(retTickDe(c))]) suma=r2(suma+r2(c.m-c.cub)); });
   return { sim:sim, tick:tick, set:set, suma:suma, monto:monto>0 ? r2(monto) : 0 };
 }
-function retCobrosPintar(){ retCobrosPintar0(); try{ retTipoPintar(); }catch(e){} }
+function retCobrosPintar(){ try{ if(RET_FORM){ retLeerForm(); retTipoPintar(); } }catch(e){} retCobrosPintar0(); try{ retTipoPintar(); }catch(e){} }   // 🧷 (27/11) el tipo primero: el ⛔ de cada renglón depende de él
 function retCobrosPintar0(){
   var box=document.getElementById('ret-cobros'); if(!box || !RET_FORM) return;
   retLeerForm();
@@ -22260,9 +22320,12 @@ function retCobrosPintar0(){
     var doc=dv==='F' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#0b5e59;background:#e3f6f4;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">🧾 con factura</span>'
       : dv==='R' ? '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:800;color:#5b3f99;background:#efe9fb;border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">📄 con remisión</span>'
       : '<span class="ret-cob-doc" style="font-size:.7rem;font-weight:700;color:var(--muted);background:var(--soft,#f1f4f6);border-radius:6px;padding:1px 6px;margin-left:6px;white-space:nowrap">sin factura ni remisión anotada</span>';
-    return '<label class="ret-cob" style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #d6e9e7;cursor:pointer">'+
+    /* 🧷 (27/11, dueño: «cómo podemos evitar que pasen estos errores al tildar») parte de esta venta YA está en otro recibo, y la venta con
+       factura o remisión tildada en un recibo del otro tipo: se dice en el renglón (retCobroAvisos) */
+    var avR=retCobroAvisos(c, dv, D.set[k] ? RET_FORM.tipo : '');
+    return '<label class="ret-cob'+(avR.mal?' ret-cob-mal':'')+'" style="display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:6px 0;border-top:1px dashed #d6e9e7;cursor:pointer'+(avR.mal?';background:#fff4f2':'')+'">'+
       '<input type="checkbox" data-k="'+esc(k)+'"'+(D.set[k]?' checked':'')+' onchange="retTickToggle()" style="width:18px;height:18px;margin-top:2px">'+
-      '<span><b>'+esc(p.cliente||'—')+'</b>'+doc+'<br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span></span>'+
+      '<span><b>'+esc(p.cliente||'—')+'</b>'+doc+'<br><span style="font-size:.76rem;color:var(--muted)">'+esc(fmtFechaCorta(c.f))+esc(hora)+(p.nota?(' · nota '+esc(p.nota)):'')+esc(otro)+'</span>'+avR.html+'</span>'+
       '<b style="white-space:nowrap">'+fmtBs(r2(c.m-c.cub))+'</b></label>';
   }).join('');
   var dif=r2(D.suma-D.monto), ok=D.monto>0 && Math.abs(dif)<0.005;
@@ -22296,7 +22359,7 @@ function retLeerForm(){
   if(!RET_FORM.notasR) RET_FORM.notasR=[];
   return RET_FORM;
 }
-function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; RET_FORM.tipoMano=true; retTipoPintar(); }
+function retSetTipo(t){ retLeerForm(); RET_FORM.tipo=t; RET_FORM.tipoMano=true; retCobrosPintar(); }   // 🧷 (27/11) repinta también los renglones: el ⛔ depende del tipo
 function retAgregarNota(){
   retLeerForm();
   var inp=document.getElementById('ret-nota-nueva'); if(!inp) return;
@@ -22411,6 +22474,14 @@ function guardarRetiroAmbos(r){
   if(comun.length) return falla('ret-nota-nueva-r','El recibo '+comun.join(', ')+' está en los dos: cada recibo va en uno solo');
   var tickF=T.F.k.slice(), tickR=T.R.k.concat(T.X.k);
   var sF=0; tickF.forEach(function(t){ sF=r2(sF+t.m); }); var sR=0; tickR.forEach(function(t){ sR=r2(sR+t.m); });
+  /* 🧷 (27/11) también con dos recibos: si lo tildado de un lado suma MÁS que lo de ese recibo, una venta quedaría partida. No se guarda. */
+  if((r2(sF-mf)>0.005 || r2(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) && !UNLOCKED){
+    avisoVentana('💵 Lo tildado suma más que uno de los recibos.',
+      { titulo:'Lo tildado suma más que el recibo', icono:'⛔', aviso:true,
+        lineas:[ 'Facturado: tildado con factura '+fmtBs(sF)+' · recibo '+fmtBs(mf)+'.', 'No facturado: tildado con remisión (o sin anotar) '+fmtBs(sR)+' · recibo '+fmtBs(mr)+'.',
+                 'Así una venta quedaría partida entre los dos recibos. Corregí lo facturado o destildá lo que no entrega.' ] });
+    return false;
+  }
   if((Math.abs(sF-mf)>0.005 || Math.abs(sR-mr)>0.005) && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
      /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr «Registrar retiro» entero: hasta acá solo leyó el formulario */
      !preguntaYa('💵 Lo tildado con factura suma '+fmtBs(sF)+' y pusiste '+fmtBs(mf)+' de lo facturado; lo tildado con remisión (o sin anotar) suma '+fmtBs(sR)+' y queda '+fmtBs(mr)+' de lo no facturado.\n\n¿Guardar igual? (lo que no da justo se reparte con la regla)',
@@ -22494,6 +22565,24 @@ function guardarRetiroForm(){
   var esNuevo=!r.id;
   /* 💵☑️ (07/11) los cobros que entrega: lo tildado (o lo que tildó la regla). Si no da justo con el monto, se pregunta. */
   var _D=retCobrosDatos(r), _tick=_D ? _D.tick.slice() : [];
+  /* 🧷 (27/11, dueño) SOBRAN: lo tildado suma MÁS que el retiro = alguna venta tildada quedaría partida entre dos recibos (pasó el 21/11:
+     Bs 800 de una venta de 2.730 en el recibo no facturado y el resto en el otro). No se guarda: destildar. Con la contraseña, se pregunta. */
+  if(_D && _D.sim.pend.length && r2(_D.suma-monto)>0.005 && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) && !UNLOCKED){
+    var _sobra=r2(_D.suma-monto);
+    avisoVentana('💵 Tildaste '+fmtBs(_D.suma)+' y el retiro es de '+fmtBs(monto)+': sobran '+fmtBs(_sobra)+'.',
+      { titulo:'Lo tildado suma más que el retiro', icono:'⛔', aviso:true,
+        lineas:[ 'Tildaste '+fmtBs(_D.suma)+' y el retiro es de '+fmtBs(monto)+': sobran '+fmtBs(_sobra)+'.',
+                 'Así una venta quedaría partida entre dos recibos. Destildá las ventas que NO entrega en este recibo hasta que dé justo.',
+                 'Si de verdad entregó solo una parte de una venta, lo carga administración (con la contraseña).' ] });
+    return false;
+  }
+  var _cruz=retCruzados(r);
+  if(_cruz.length && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
+     !preguntaYa('🧾 '+_cruz.join('\n')+'\n\n¿Guardar igual?',
+       { titulo:'Hay ventas en el recibo equivocado', icono:'🧾', aviso:true,
+         lineas:_cruz.concat(['Facturado = ventas con factura · No facturado = ventas con nota de remisión. Si entrega de las dos, son dos recibos.']),
+         no:'✏️ Volver y corregir', si:'💾 Guardar igual' },
+       function(){ guardarRetiroForm(); })) return false;
   if(_D && _D.sim.pend.length && Math.abs(r2(_D.suma-monto))>0.005 && (!navigator.webdriver || window.RETIRO_TICK_PRUEBA) &&
      /* ❓ (16/11, la 282 en todo el panel) al contestar vuelve a correr: hasta acá solo leyó el formulario y calculó */
      !preguntaYa('💵 El retiro es de '+fmtBs(monto)+' y los cobros tildados suman '+fmtBs(_D.suma)+'.\n\n'+
@@ -23017,6 +23106,8 @@ function retDocDeRetiro(r, PAR){
   o.otras=o.tapa.filter(function(t){ return t.d===otro; });
   var propio = r.tipo==='Facturado' ? o.F : r2(o.R+o.X);
   o.est = !(o.malDoc>0.005) ? 'ok' : (propio>0.005 ? 'partir' : 'pasar');
+  /* 🚚 (27/11, dueño: «saca a los choferes del aviso») el chofer le rinde TODO a Contabilidad: su retiro no se mira por factura o remisión */
+  if(esChoferNombre(r.entrega)){ o.chofer=true; o.malBs=0; o.malDoc=0; o.otras=[]; o.est='ok'; }
   return o;
 }
 /* El Cuadre: por persona y los retiros que no coinciden (del período, con el filtro de vendedora). */
@@ -23027,7 +23118,7 @@ function retDocDatos(pe, vend){
   retirosDe(pe, vend).forEach(function(r){
     var o=retDocDeRetiro(r, PAR); if(!o) return;
     var k=normNombre(r.entrega)||'(sin)', e=P[k];
-    if(!e){ e=P[k]={ nombre:r.entrega||'—', F:0, R:0, X:0, fac:0, nofac:0, malBs:0, n:0 }; orden.push(k); }
+    if(!e){ e=P[k]={ nombre:r.entrega||'—', F:0, R:0, X:0, fac:0, nofac:0, malBs:0, n:0, chofer:!!o.chofer }; orden.push(k); }
     e.F=r2(e.F+o.F); e.R=r2(e.R+o.R); e.X=r2(e.X+o.X); e.n++;
     if(r.tipo==='Facturado') e.fac=r2(e.fac+r.monto); else e.nofac=r2(e.nofac+r.monto);
     if(o.est!=='ok'){ e.malBs=r2(e.malBs+o.malDoc); mal.push(o); }
@@ -23053,7 +23144,8 @@ function retDocRetHtml(o){
 }
 function retDocHtml(D){
   if(!D || (!D.filas.length && !D.mal.length)) return '';
-  var ok=function(e){ return e.malBs>0.005 ? '<span class="rdc-mal">⚠️ '+fmtBs(e.malBs)+' en el otro tipo</span>' : '<span class="rdc-ok">✓</span>'; };
+  var ok=function(e){ return e.chofer ? '<span class="rdc-ok" title="El chofer rinde todo a Contabilidad: no se mira por factura o remisión">✓ chofer</span>'
+    : e.malBs>0.005 ? '<span class="rdc-mal">⚠️ '+fmtBs(e.malBs)+' en el otro tipo</span>' : '<span class="rdc-ok">✓</span>'; };
   var h='<div class="cua-box rdc" id="cua-doc-box"><div class="cua-t">🧾 Retirado con factura y sin factura — '+esc(cuadrePeriodoTxt())+'</div>'+
     '<div class="rdc-s">De lo que tapó cada retiro (la regla del efectivo): cuánto era de ventas con <b>factura</b> y con <b>nota de remisión</b>, contra el tipo con que se retiró.</div>'+
     '<div class="tw"><table class="mini rdc-t"><thead><tr><th>Quién</th><th class="r">De ventas con factura</th><th class="r">Retirado «Facturado»</th><th class="r">De ventas con remisión</th><th class="r">Retirado «No facturado»</th><th class="r">Sin anotar</th><th></th></tr></thead><tbody>'+
@@ -34763,11 +34855,20 @@ function ctaDocTipo(id, v){
     x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
   var e=document.getElementById('cta-doc-num'); if(e) e.focus();
 }
+/* 🧾 (27/11, dueño: «no deberían anotar en remisión si es una venta facturada… en el pedido tiene datos de la factura») una venta con NIT es con
+   FACTURA: no se puede anotar como nota de remisión. Si de verdad fue con remisión, primero se borra el NIT del pedido (✏️ Editar). */
+function ventaTieneNit(p){ return String((p && p.nit) || '').replace(/\D/g,'').length >= 5; }
+function docRemisionNoVa(p, t){
+  if(t!=='R' || !ventaTieneNit(p)) return '';
+  return 'Esta venta tiene NIT '+String(p.nit).trim()+(p.facturarA ? (' a nombre de '+String(p.facturarA).trim()) : '')+': va con FACTURA, no con nota de remisión. '+
+         'Si de verdad fue con remisión, primero borrá el NIT del pedido (✏️ Editar).';
+}
 function ctaDocGuardar(id){
   var p=findById(id); if(!p) return;
   var t=(CTA_DOC.id===id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), e=document.getElementById('cta-doc-num'), num=String((e&&e.value)||'').replace(/\s+/g,' ').trim().slice(0,40);
   if(t!=='F' && t!=='R'){ toast('🧾 Elegí si la venta va con FACTURA o con NOTA DE REMISIÓN.','err'); return; }
   if(!num){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° de la '+(t==='F'?'factura':'nota de remisión')+'.','err'); return; }
+  var _rem=docRemisionNoVa(p, t); if(_rem){ toast('🧾 '+_rem,'err',10000); return; }
   if(!(p.productos||[]).length){ toast('Esta venta no tiene productos donde guardarlo.','err'); return; }
   if(docVentaDe(p)===t && docNumDe(p)===num){ ctaDocOlvidar(); toast('Ya estaba así ✓','ok'); return; }
   try{ ctaPagoRecordar(); }catch(x){}   // §4fy: guardar esto con un pago a medio cargar no se lo borra
@@ -34829,6 +34930,7 @@ function ctaRegDocGuardar(id, solo){
   if(solo && !num) t='';
   if(num && t!=='F' && t!=='R'){ toast('🧾 Elegí si es FACTURA o NOTA DE REMISIÓN (o tocá «Solo marcar cargada»).','err',6000); return; }
   if(!num && !solo){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° (o tocá «Solo marcar cargada»).','err'); return; }
+  var _rem=num ? docRemisionNoVa(p, t) : ''; if(_rem){ toast('🧾 '+_rem,'err',10000); return; }
   if(num){
     var otra=docNumOtraVenta(p, t, num);
     if(otra && !preguntaYa('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
@@ -72348,7 +72450,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-24-b';
+var PANEL_V='2026-11-27-d';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca

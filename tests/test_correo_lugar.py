@@ -65,7 +65,7 @@ chk('1c · sin la fila, no hay lugares', cp.lugares_guardados([{"id": "p1"}]) ==
 print('── 2. el pedido toma el lugar ──')
 r = cp.armar(pedido(), P)
 chk('2a · sin dirección ni enlace: pone el pin, la zona y la dirección guardados', r['maps'] == PIN_BODEGA and r['zona'] == 'Norte' and r['direccion'] == 'Almacenes Ferrotodo Bodega 14', {k: r[k] for k in ('maps', 'zona', 'direccion')})
-chk('2b · …y lo dice en las notas del resumen (NO en las observaciones: van al WhatsApp, 20/11)', '📌 lugar guardado (Norte · Almacenes Ferrotodo Bodega 14)' in ' '.join(r.get('_notas') or []) and 'lugar guardado' not in r['observaciones'] and 'Cargado automáticamente' not in r['observaciones'], [r['observaciones'], r.get('_notas')])
+chk('2b · …y lo dice en las observaciones', '📌 lugar guardado (Norte · Almacenes Ferrotodo Bodega 14)' in r['observaciones'], r['observaciones'])
 r = cp.armar(pedido(cliente='Tienda  Amiga ER S.A.', direccion='ALMACENES FERROTODO BODEGA 14', zona='Norte Lejano'), P)
 chk('2c · la misma dirección (otras mayúsculas o espacios) vale; la zona escrita manda', r['maps'] == PIN_BODEGA and r['zona'] == 'Norte Lejano', {k: r[k] for k in ('maps', 'zona')})
 

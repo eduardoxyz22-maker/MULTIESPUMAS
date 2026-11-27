@@ -107,6 +107,13 @@ const L=[ P('f1','CLIENTE FACTURA UNO',1000,'2026-11-10','F','55'), P('f2','CLIE
     abrirRetiros(); o.badge=/sus cobros/.test(_txt('#ret-lista')); closeRetiros(); return o; });
   chk('6a. sin `RET_DOC_PRUEBA` (Playwright): ni la caja ni la marca (las pruebas de siempre no cambian)', r.box==='' && r.badge===false, r);
 
+  console.log('\n── 7. Los choferes no se miran (rinden todo a Contabilidad) ──');
+  r = await ev(() => { window.RET_DOC_PRUEBA=1; var antes=esChoferNombre; esChoferNombre=function(){ return true; };
+    try{ var o={}; retirosTodos().forEach(function(x){ var d=retDocDeRetiro(x); o[x.id]=d && d.est+'/'+d.malBs; });
+      var D=retDocDatos(); return { o:o, mal:D ? D.mal.length : -1, html:retDocHtml(D) }; } finally { esChoferNombre=antes; } });
+  chk('7. con quien entrega como chofer: ningún retiro sale «en el otro tipo» y la fila dice «✓ chofer»',
+      Object.keys(r.o).every(k => /^ok\/0$/.test(r.o[k])) && r.mal===0 && /✓ chofer/.test(r.html) && !/en el otro tipo/.test(r.html), r.o);
+
   chk('la página no tiró errores', errores.length===0, errores);
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

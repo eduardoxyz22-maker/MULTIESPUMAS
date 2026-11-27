@@ -15,13 +15,18 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Escribí la SCRIPT_VERSION que vas a publicar (ej. 2026-11-23-h). Tiene que ser igual a la del .gs.'
+        description: 'Escribí la SCRIPT_VERSION que vas a publicar (ej. 2026-11-26-pry-b). Tiene que ser igual a la del .gs.'
         required: true
         type: string
       descripcion:
         description: 'Descripción de la versión en Google (corta, sin datos de clientes)'
         required: false
         default: 'Publicado desde GitHub'
+        type: string
+      agregar:
+        description: 'Archivos aparte de herramientas/ para agregar o actualizar en el proyecto, separados por coma (ej. clave_equipo.gs). Vacío = ninguno.'
+        required: false
+        default: ''
         type: string
 
 permissions:
@@ -48,7 +53,7 @@ jobs:
           VERSION_PEDIDA: ${{ inputs.version }}
         run: |
           set -e
-          node --check google-apps-script.gs
+          cp google-apps-script.gs "$RUNNER_TEMP/gs_check.js" && node --check "$RUNNER_TEMP/gs_check.js"
           V=$(sed -n "s/^var SCRIPT_VERSION *= *'\([^']*\)'.*/\1/p" google-apps-script.gs | head -1)
           F=$(tail -n 1 google-apps-script.gs | sed -n "s/^var FIN_DEL_ARCHIVO = '\([^']*\)';$/\1/p")
           echo "SCRIPT_VERSION del archivo: $V · última línea: $F · pediste: $VERSION_PEDIDA"
@@ -85,13 +90,21 @@ jobs:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
           PANEL_URL: ${{ secrets.PANEL_URL }}
           DESCRIPCION: ${{ inputs.descripcion }}
+          AGREGAR: ${{ inputs.agregar }}
         run: |
           set -e
           cd "$RUNNER_TEMP/gas"
           # la implementación de siempre = la de la dirección /exec del panel (secreto PANEL_URL, el mismo de panel.yml)
           DEPLOY_ID=$(printf '%s' "$PANEL_URL" | sed -n 's#.*/macros/s/\([^/]*\)/exec.*#\1#p')
           [ -n "$DEPLOY_ID" ] || { echo "❌ No pude sacar la implementación del secreto PANEL_URL"; exit 1; }
-          python3 -I "$GITHUB_WORKSPACE/herramientas/gs_publicar/preparar.py" . "$GITHUB_WORKSPACE/google-apps-script.gs"
+          EXTRAS=()
+          for n in $(printf '%s' "$AGREGAR" | tr ',' ' '); do
+            case "$n" in *[!A-Za-z0-9_.]*|"") echo "❌ Nombre no válido en «agregar»"; exit 1;; esac
+            [ -f "$GITHUB_WORKSPACE/herramientas/$n" ] || { echo "❌ No existe herramientas/$n"; exit 1; }
+            cp "$GITHUB_WORKSPACE/herramientas/$n" "$RUNNER_TEMP/chk_$n.js" && node --check "$RUNNER_TEMP/chk_$n.js"
+            EXTRAS+=("$GITHUB_WORKSPACE/herramientas/$n")
+          done
+          python3 -I "$GITHUB_WORKSPACE/herramientas/gs_publicar/preparar.py" . "$GITHUB_WORKSPACE/google-apps-script.gs" "${EXTRAS[@]}"
           npx --yes @google/clasp@2.4.2 push -f 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g'
           SALIDA=$(npx --yes @google/clasp@2.4.2 version "$DESCRIPCION (${{ inputs.version }})" 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g')
           echo "$SALIDA"

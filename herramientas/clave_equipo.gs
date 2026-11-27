@@ -10,6 +10,7 @@
  *                             ADMIN_KEY_PROXIMA) y las muestra en una VENTANA de la planilla (tené la planilla abierta en otra pestaña:
  *                             la ventana aparece ahí). El servidor todavía NO las pide: cada uno las carga en su aparato con tiempo.
  *                             Si ya estaban generadas, no las cambia (para verlas otra vez: mostrarClavesUnaVez).
+ *   ▶ generarClavesSinVentanaUnaVez — lo mismo SIN ventana, si el proyecto no está pegado a la planilla (las lees en Configuración del proyecto → Propiedades del script).
  *   ▶ mostrarClavesUnaVez   — vuelve a mostrar las claves (las próximas o, si ya se prendieron, las que rigen).
  *
  *   FASE 2 (el día elegido, temprano)
@@ -50,6 +51,21 @@ function generarClavesUnaVez() {
     return 'sin ventana';
   }
   Logger.log('✅ Claves generadas y mostradas en la ventana de la planilla (acá no se escriben). El servidor todavía NO las pide.');
+  return 'generadas';
+}
+
+/** Cuando el proyecto NO está pegado a la planilla (el editor no puede abrir la ventana: «Cannot call SpreadsheetApp.getUi()»), esta hace lo
+ *  mismo sin ventana: guarda las dos claves «próximas» y NO las escribe en el registro. Se leen en ⚙️ Configuración del proyecto →
+ *  Propiedades del script (PANEL_KEY_PROXIMA y ADMIN_KEY_PROXIMA; esa pantalla solo la ve quien edita el proyecto). */
+function generarClavesSinVentanaUnaVez() {
+  var pr = PropertiesService.getScriptProperties();
+  var eq = claveEqLeer_(pr, CLAVE_EQ_PROX), ad = claveEqLeer_(pr, CLAVE_ADM_PROX);
+  if (eq && ad) { Logger.log('✅ Las claves ya estaban generadas: no las cambié. Miralas en ⚙️ Configuración del proyecto → Propiedades del script: PANEL_KEY_PROXIMA y ADMIN_KEY_PROXIMA.'); return 'ya estaban'; }
+  if (!eq) pr.setProperty(CLAVE_EQ_PROX, claveEqNueva_());
+  if (!ad) pr.setProperty(CLAVE_ADM_PROX, claveEqLeer_(pr, 'ADMIN_KEY') || claveEqNueva_());
+  eq = claveEqLeer_(pr, CLAVE_EQ_PROX); ad = claveEqLeer_(pr, CLAVE_ADM_PROX);
+  if (!eq || !ad) { Logger.log('⚠️ No se pudieron guardar las claves: probá de nuevo en un minuto.'); return 'fallo'; }
+  Logger.log('✅ Claves generadas y guardadas (acá no se escriben). Miralas en ⚙️ Configuración del proyecto → Propiedades del script: PANEL_KEY_PROXIMA (la del equipo) y ADMIN_KEY_PROXIMA (la de administración). El servidor todavía NO las pide.');
   return 'generadas';
 }
 
