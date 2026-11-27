@@ -3518,6 +3518,22 @@ html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo b{ color:#fde68a
 html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) .pix-grupo{ border-top-color:rgba(253,230,138,.35); }
 html.af-peg-on.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) #adm-fichas .af-gr > .af-g{ background:rgba(10,20,18,.9); box-shadow:0 8px 18px -12px rgba(0,0,0,.7); }
 @media(prefers-reduced-motion:reduce){ html.v-noche-dic:is(.tema-navidad, .tema-anio-nuevo) body::after, html.v-noche-dic.tema-navidad::after{ animation:none !important; } }
+/* ❄️ (27/11, dueño: «¡Que haya nieve en todo!») LA NIEVE EN TODO, en diciembre (tema de Navidad): cae por ENCIMA de toda la pantalla
+   — tarjetas, tablas, ventanas — sin tapar nada para tocar (pointer-events:none) y con un montoncito abajo. Copos blancos con borde gris
+   suave: se ven también sobre lo blanco. Solo dibujo: va en `#nv-todo`, que pone `nieveTodoPoner()` (con «reducir movimiento», quieta). */
+.nv-todo{position:fixed;inset:0;z-index:19500;pointer-events:none;overflow:hidden}
+.nv-todo[hidden]{display:none!important}
+.nv-todo i{position:absolute;left:-40px;right:-40px;top:-380px;bottom:0;will-change:transform}
+.nv-todo i.a{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27260%27%20height%3D%27260%27%20viewBox%3D%270%200%20260%20260%27%3E%3Ccircle%20cx%3D%2786%27%20cy%3D%2742%27%20r%3D%271.9%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2722%27%20cy%3D%27139%27%20r%3D%271.6%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2719%27%20cy%3D%27132%27%20r%3D%271.2%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27113%27%20cy%3D%2722%27%20r%3D%271.3%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27111%27%20cy%3D%27212%27%20r%3D%271.3%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2760%27%20cy%3D%27162%27%20r%3D%272.1%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27149%27%20cy%3D%27104%27%20r%3D%272.2%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2716%27%20cy%3D%27220%27%20r%3D%271.5%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2740%27%20cy%3D%2734%27%20r%3D%271.5%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Cg%20transform%3D%27translate%28205%2055%29%20scale%280.99%29%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.5%27%20stroke-width%3D%273%27/%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27/%3E%3C/g%3E%3C/svg%3E") 0 0/260px 260px;animation:nv-todo-a 22s linear infinite;opacity:.95}
+.nv-todo i.b{background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27380%27%20height%3D%27380%27%20viewBox%3D%270%200%20380%20380%27%3E%3Ccircle%20cx%3D%27242%27%20cy%3D%27143%27%20r%3D%272.8%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2727%27%20cy%3D%2726%27%20r%3D%272.3%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27257%27%20cy%3D%27163%27%20r%3D%272.4%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27222%27%20cy%3D%27173%27%20r%3D%272.4%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27300%27%20cy%3D%27264%27%20r%3D%272.3%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27218%27%20cy%3D%27199%27%20r%3D%273.2%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%27275%27%20cy%3D%27111%27%20r%3D%273.4%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Ccircle%20cx%3D%2748%27%20cy%3D%27160%27%20r%3D%273.1%27%20fill%3D%27%23fff%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.55%27%20stroke-width%3D%27.7%27/%3E%3Cg%20transform%3D%27translate%2866%20186%29%20scale%280.72%29%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.5%27%20stroke-width%3D%273%27/%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27/%3E%3C/g%3E%3Cg%20transform%3D%27translate%28250%20284%29%20scale%280.99%29%27%20stroke%3D%27%23fff%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27%20stroke%3D%27%2394a3b8%27%20stroke-opacity%3D%27.5%27%20stroke-width%3D%273%27/%3E%3Cpath%20d%3D%27M0%20-8V8M-7%20-4L7%204M-7%204L7%20-4%27/%3E%3C/g%3E%3C/svg%3E") 0 0/380px 380px;animation:nv-todo-b 34s linear infinite;opacity:.85}
+@keyframes nv-todo-a{from{transform:translate(0,0)}50%{transform:translate(18px,130px)}to{transform:translate(0,260px)}}
+@keyframes nv-todo-b{from{transform:translate(0,0)}50%{transform:translate(-24px,190px)}to{transform:translate(0,380px)}}
+.nv-todo b{position:absolute;left:0;right:0;bottom:0;height:16px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27160%27%20height%3D%2716%27%20viewBox%3D%270%200%20160%2016%27%3E%3Cpath%20d%3D%27M0%2016V9%20Q12%203%2026%208%20T52%207%20T80%209%20T108%206%20T136%208%20T160%208%20V16Z%27%20fill%3D%27%23fff%27%20stroke%3D%27%23cbd5e1%27%20stroke-width%3D%271%27/%3E%3C/svg%3E") repeat-x 0 100%/160px 16px;
+  filter:drop-shadow(0 -2px 3px rgba(148,163,184,.35))}
+@media(max-width:700px){ .nv-todo b{display:none} }
+@media(prefers-reduced-motion:reduce){ .nv-todo i{animation:none!important} }
+@media print{ .nv-todo{display:none!important} }
 @media print{ html.v-noche-dic.tema-navidad::after{ display:none; } }
 /* 432 · Bot: cada cliente que contestó, como una conversación de WhatsApp (`.wz`): su nombre e iniciales arriba en verde, lo que escribió en
    globos blancos a la izquierda con la hora, el resumen de Claude en el medio y lo que le contestó el bot en globo verde a la derecha (✓✓);
@@ -86395,6 +86411,21 @@ function atcCalorChipPintar(){
   c.innerHTML='🔥 Ves solo las <b>'+S.n+'</b> ATC de <b>'+esc(S.l.lbl)+'</b> · '+esc(ATCQ_TRAMOS[S.t].t.toLowerCase())+
     ' <button type="button" class="btn btn-sm btn-ghost" onclick="atcCalorLimpiar()">✕ Ver todas</button>';
 }
+</script>
+<script>
+/* ❄️ (27/11, dueño: «¡Que haya nieve en todo!») La nieve que cae por encima de todo en diciembre (tema de Navidad). Solo dibujo. En las
+   pruebas (navigator.webdriver) no sale salvo window.NIEVE_PRUEBA. */
+function nieveTodoPoner(){
+  try{
+    if(!document.documentElement.classList.contains('tema-navidad')) return;
+    if(navigator.webdriver && !window.NIEVE_PRUEBA) return;
+    if(!document.body || document.getElementById('nv-todo')) return;
+    var d=document.createElement('div'); d.id='nv-todo'; d.className='nv-todo'; d.setAttribute('aria-hidden','true');
+    d.innerHTML='<i class="a"></i><i class="b"></i><b></b>';
+    document.body.appendChild(d);
+  }catch(e){}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', nieveTodoPoner); else nieveTodoPoner();
 </script>
 </body>
 </html>
