@@ -4707,6 +4707,10 @@ function glSigue(){
         <div class="field">
           <button class="btn btn-ghost btn-sm" id="mis-clave-btn" onclick="pedirClaveEquipo()" title="La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.">🔐 Clave del equipo</button>
         </div>
+        <!-- 🛡️ (27/11, dueño: «falta la clave de admin») la de administración, para cargarla ANTES (solo logística y Administración: forzar un turno lleno) -->
+        <div class="field">
+          <button class="btn btn-ghost btn-sm" id="mis-clave-adm-btn" onclick="pedirClaveAdmin();misClaveBtnPintar()" title="Solo logística y Administración: la clave para forzar un turno lleno o un día cerrado. Se carga una vez por aparato.">🛡️ Clave de administración</button>
+        </div>
       </div>
       <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
            Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
@@ -11645,6 +11649,7 @@ function apiPost(payload){
       if(j && j.adminAuth) SERVER_ADMIN_AUTH=String(j.adminAuth);
       if(j && j.wa!=null) WA_BOT=(Number(j.wa)===1);   // 🤖 (11/10, §4jt) el servidor dice si el bot de WhatsApp está prendido
       if(j && j.auth && String(j.auth)!==SERVER_AUTH){ SERVER_AUTH=String(j.auth); renderConnEstado(); }
+      if(j && String(j.auth||'')==='abierto' && !CLAVE_EQUIPO) claveAvisoAuto('antes');   // 🔐 (27/11) antes de prenderla: el aparato sin clave
       /* 🔀 GOOGLE CAMBIÓ EL ENVÍO POR UNA LECTURA (§4fx). A veces un POST al `/exec` llega al
          script como GET: contesta `doGet` —`{ok:true, version, pedidos:[…]}`, la planilla
          entera— y `doPost` NUNCA corrió. Quedó escrito en el registro del respaldo de Kommo
@@ -11662,6 +11667,7 @@ function apiPost(payload){
         var primera=!CLAVE_RECHAZADA;
         CLAVE_RECHAZADA=true; renderConnEstado();
         if(primera) toast('🔐 El servidor pide la clave del equipo. Lo que guardes queda en esta compu hasta que la ingreses.','err',8000);
+        if(primera) claveAvisoAuto('pide');   // 🔐 (27/11, dueño: «que salga la alerta si no pusieron la clave y les salga para colocar»)
         throw new Error('clave');
       }
       if(CLAVE_RECHAZADA){ CLAVE_RECHAZADA=false; renderConnEstado(); }
@@ -12806,12 +12812,33 @@ function misClaveBtnPintar(){
   var b=document.getElementById('mis-clave-btn'); if(!b) return;
   b.textContent=CLAVE_EQUIPO ? '🔐 Clave del equipo ✓' : '🔐 Clave del equipo';
   b.title=CLAVE_EQUIPO ? 'Este aparato ya tiene la clave del equipo. Tocá para cambiarla.' : 'La clave que el servidor va a pedir para leer y guardar pedidos. Se carga una vez por aparato.';
+  var a=document.getElementById('mis-clave-adm-btn'); if(a) a.textContent=ADMIN_KEY_LOCAL ? '🛡️ Clave de administración ✓' : '🛡️ Clave de administración';
 }
-function pedirClaveEquipo(){
+/* 🔐 (27/11, dueño: «quiero que salga la alerta si no pusieron la clave y les salga para colocar») La ventana para poner la clave sale SOLA:
+   · 'pide': el servidor ya pide la clave y este aparato no la tiene (o la tiene mal) → al primer rechazo, una vez por apertura.
+   · 'antes': el servidor todavía no la pide y este aparato no la tiene → una vez por día (me_clave_aviso), para que nadie quede afuera el día que se prenda.
+   Cancelar no rompe nada (queda el cartel rojo con «🔐 Ingresar clave» y el botón de Mis pedidos). En Playwright solo con CLAVE_AUTO_PRUEBA. */
+var CLAVE_AVISO_YA=false;
+function claveAvisoAuto(modo){
+  try{ if(navigator.webdriver && !window.CLAVE_AUTO_PRUEBA) return; }catch(e){}
+  if(CLAVE_AVISO_YA) return;
+  if(modo==='antes'){
+    var hoy=(typeof diaNegocio==='function') ? diaNegocio() : todayStr(), ya='';
+    try{ ya=localStorage.getItem('me_clave_aviso')||''; }catch(e){}
+    if(ya===hoy) return;
+    try{ localStorage.setItem('me_clave_aviso', hoy); }catch(e){}
+  }
+  CLAVE_AVISO_YA=true;
+  setTimeout(function(){ pedirClaveEquipo(modo); }, 600);
+}
+function pedirClaveEquipo(modo){
+  var lin = modo==='pide' ? ['⛔ Desde ahora el panel pide la clave del equipo y este aparato no la tiene: sin ella no ve ni guarda pedidos.', 'Pedísela al administrador y ponela acá una sola vez. Lo que guardaste queda en este aparato y se manda solo apenas la pongas.']
+          : modo==='antes' ? ['⚠️ Este aparato todavía NO tiene la clave del equipo.', 'Muy pronto el panel la va a pedir para ver y guardar pedidos: ponela ahora una sola vez y ese día no te quedás afuera.', 'Te la da el administrador.']
+          : ['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'];
   var c=preguntaTextoYa('Clave del equipo (te la da el administrador):','',
-    { titulo:'Clave del equipo', icono:'🔐', lineas:['Te la da el administrador. Se guarda en este dispositivo y el panel vuelve a probar la conexión.'],
+    { titulo:'Clave del equipo', icono:'🔐', lineas:lin,
       campoAyuda:'La clave del equipo', campoClave:true, no:'Cancelar', si:'💾 Guardar y probar' },
-    function(){ pedirClaveEquipo(); });
+    function(){ pedirClaveEquipo(modo); });
   if(c==null) return;
   c=c.trim(); if(!c){ toast('Sin clave no se puede.','err'); return; }
   CLAVE_EQUIPO=c; try{ localStorage.setItem(LS_CLAVE,c); }catch(e){}
@@ -72423,7 +72450,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-c';
+var PANEL_V='2026-11-27-d';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
