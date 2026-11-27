@@ -2239,6 +2239,10 @@ con factura quedó partida 800 / 1.930 entre el recibo no facturado y el factura
 retiro (o que uno de los dos recibos de «Las dos») NO se guarda sin la contraseña (`avisoVentana`; con `UNLOCKED`, pregunta); una venta con remisión
 tildada en un recibo Facturado (o con factura en uno No facturado) se marca ⛔ en su renglón y pregunta al guardar (`retDocCruzado`/`retCruzados`); y una
 venta que ya está en parte en otro recibo lo dice con el N° de ese recibo (`retCobroAvisos`). `retSetTipo` repinta los renglones. `tests/test_retiro_tildar.js` (11).
+**🧾 Una venta con NIT es con FACTURA** (27/11, dueño: *«no deberían anotar en remisión si es una venta facturada, por algo en el pedido tiene datos
+de la factura»*; versión 2026-11-27-b): `docRemisionNoVa` en `ctaDocGuardar` y `ctaRegDocGuardar` no deja anotar «remisión» si el pedido
+tiene NIT (`ventaTieneNit`: 5+ dígitos); para una remisión de verdad, primero se borra el NIT. En el retiro, una venta con NIT anotada con remisión (de
+antes) sale ⛔. Con la planilla del 27/11: 147 ventas con factura tienen NIT y solo 3 con remisión lo tenían. `tests/test_remision_nit.js` (7).
 **🧾 El retiro pide el N° del RECIBO de entrega** (13/11, dueño: *«ahí va el número del recibo que suben la imagen, porque es el recibo donde firma el
 vendedor a Eduardo que entregó el dinero… arriba en la lista va tildado qué ventas cubre»*): el campo de siempre (`nota` → `r.notas`, lo usa el control del
 talonario) ahora se llama «N° del recibo de entrega»; las ventas que cubre son los cobros tildados (`efe:` en `garantia`). Solo cambian los textos.

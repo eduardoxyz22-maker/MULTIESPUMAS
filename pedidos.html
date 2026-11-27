@@ -22243,6 +22243,7 @@ function retCobroAvisos(c, dv, tipo){
     h+='<br><span class="ret-cob-parte" style="font-size:.74rem;font-weight:700;color:#8a4b00">⚠️ '+fmtBs(c.cub)+' de esta venta (de '+fmtBs(c.m)+') ya está en '+
        (nros.length ? ('el recibo '+esc(nros.join(', '))) : 'otro retiro')+': acá queda '+fmtBs(r2(c.m-c.cub))+'. Si eso está mal, corregí ese recibo primero.</span>';
   }
+  if(dv==='R' && c && c.p && ventaTieneNit(c.p)){ mal=true; h+='<br><span class="ret-cob-nit" style="font-size:.74rem;font-weight:800;color:#b42318">⛔ Anotada con remisión pero tiene NIT '+esc(String(c.p.nit).trim())+': es con factura. Corregila en Contabilidad.</span>'; }
   var cruz=retDocCruzado(dv, tipo);
   if(cruz){ mal=true; h+='<br><span class="ret-cob-cruz" style="font-size:.74rem;font-weight:800;color:#b42318">⛔ '+esc(cruz)+'</span>'; }
   return { html:h, mal:mal };
@@ -34824,11 +34825,20 @@ function ctaDocTipo(id, v){
     x.style.background=on?'':'#fff'; x.style.border=on?'':'1px solid var(--gray-md)'; x.style.color=on?'':'var(--text)'; });
   var e=document.getElementById('cta-doc-num'); if(e) e.focus();
 }
+/* 🧾 (27/11, dueño: «no deberían anotar en remisión si es una venta facturada… en el pedido tiene datos de la factura») una venta con NIT es con
+   FACTURA: no se puede anotar como nota de remisión. Si de verdad fue con remisión, primero se borra el NIT del pedido (✏️ Editar). */
+function ventaTieneNit(p){ return String((p && p.nit) || '').replace(/\D/g,'').length >= 5; }
+function docRemisionNoVa(p, t){
+  if(t!=='R' || !ventaTieneNit(p)) return '';
+  return 'Esta venta tiene NIT '+String(p.nit).trim()+(p.facturarA ? (' a nombre de '+String(p.facturarA).trim()) : '')+': va con FACTURA, no con nota de remisión. '+
+         'Si de verdad fue con remisión, primero borrá el NIT del pedido (✏️ Editar).';
+}
 function ctaDocGuardar(id){
   var p=findById(id); if(!p) return;
   var t=(CTA_DOC.id===id && CTA_DOC.t) ? CTA_DOC.t : docVentaDe(p), e=document.getElementById('cta-doc-num'), num=String((e&&e.value)||'').replace(/\s+/g,' ').trim().slice(0,40);
   if(t!=='F' && t!=='R'){ toast('🧾 Elegí si la venta va con FACTURA o con NOTA DE REMISIÓN.','err'); return; }
   if(!num){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° de la '+(t==='F'?'factura':'nota de remisión')+'.','err'); return; }
+  var _rem=docRemisionNoVa(p, t); if(_rem){ toast('🧾 '+_rem,'err',10000); return; }
   if(!(p.productos||[]).length){ toast('Esta venta no tiene productos donde guardarlo.','err'); return; }
   if(docVentaDe(p)===t && docNumDe(p)===num){ ctaDocOlvidar(); toast('Ya estaba así ✓','ok'); return; }
   try{ ctaPagoRecordar(); }catch(x){}   // §4fy: guardar esto con un pago a medio cargar no se lo borra
@@ -34890,6 +34900,7 @@ function ctaRegDocGuardar(id, solo){
   if(solo && !num) t='';
   if(num && t!=='F' && t!=='R'){ toast('🧾 Elegí si es FACTURA o NOTA DE REMISIÓN (o tocá «Solo marcar cargada»).','err',6000); return; }
   if(!num && !solo){ if(e){ e.classList.add('err'); e.focus(); } toast('🧾 Poné el N° (o tocá «Solo marcar cargada»).','err'); return; }
+  var _rem=num ? docRemisionNoVa(p, t) : ''; if(_rem){ toast('🧾 '+_rem,'err',10000); return; }
   if(num){
     var otra=docNumOtraVenta(p, t, num);
     if(otra && !preguntaYa('⚠️ La '+(t==='F'?'factura':'nota de remisión')+' N° '+num+' ya está anotada en otra venta: '+
@@ -72409,7 +72420,7 @@ window.addEventListener('beforeunload', function(e){
       `tests/test_version_nueva.js` §1 compara los dos. Si se olvida subirlos, no pasa nada malo: el cartel no sale.
    No mira la fecha ni el ETag del archivo: cada corrida del dashboard vuelve a publicar todo el sitio y los cambiaría.
    ========================================================================== */
-var PANEL_V='2026-11-27-a';
+var PANEL_V='2026-11-27-b';
 var VER_CADA_MS=5*60000, VER_MIN_MS=60000, VER_DESPUES_MS=30*60000;
 var VER={ nueva:'', ult:0, despues:{}, corre:false };
 /* La dirección de la recarga lleva `?nv=<versión>` para que GitHub no conteste con una copia guardada de la vieja; se saca
