@@ -69,6 +69,27 @@ try:
     # 8. si no hay principal, el error nombra los archivos bajados (solo nombres)
     rc, out = run(pr4, nuevo)
     chk(rc == 1 and 'solo.gs' in out, '8 el error lista los archivos bajados: ' + out)
+    # 9. archivos aparte: se AGREGAN (con la extensión del proyecto), se actualizan, y no se aceptan doPost ni funciones repetidas
+    pr7 = os.path.join(d, 'pull7'); os.makedirs(pr7)
+    escribir(os.path.join(pr7, 'Código.js'), gs('2026-11-21-a'))
+    ex = os.path.join(d, 'clave_equipo.gs'); escribir(ex, 'var K = 1;\nfunction generarClaves(){}\n')
+    def run2(carpeta, nuevo, *extras):
+        r = subprocess.run([sys.executable, '-I', PREP, carpeta, nuevo] + list(extras), capture_output=True, text=True)
+        return r.returncode, r.stdout + r.stderr
+    rc, out = run2(pr7, nuevo, ex)
+    chk(rc == 0 and leer(os.path.join(pr7, 'clave_equipo.js')) == 'var K = 1;\nfunction generarClaves(){}\n' and 'AGREGADO' in out, '9 agrega el archivo aparte como .js: ' + out)
+    escribir(ex, 'var K = 2;\nfunction generarClaves(){}\n')
+    rc, out = run2(pr7, nuevo, ex)
+    chk(rc == 0 and 'actualizado' in out and leer(os.path.join(pr7, 'clave_equipo.js')).startswith('var K = 2'), '9b lo vuelve a correr y lo actualiza: ' + out)
+    malo = os.path.join(d, 'malo.gs'); escribir(malo, 'function doPost(e){}\n')
+    rc, out = run2(pr7, nuevo, malo)
+    chk(rc == 1 and not os.path.exists(os.path.join(pr7, 'malo.js')), '9c un extra con doPost se rechaza: ' + out)
+    rep = os.path.join(d, 'repite.gs'); escribir(rep, 'function otra(){}\n')
+    escribir(os.path.join(pr7, 'otro.js'), 'function otra(){}\n')
+    rc, out = run2(pr7, nuevo, rep)
+    chk(rc == 1 and not os.path.exists(os.path.join(pr7, 'repite.js')), '9d una función repetida en otro archivo se rechaza: ' + out)
+    rc, out = run2(pr7, nuevo, os.path.join(RAIZ, 'herramientas', 'clave_equipo.gs'))
+    chk(rc == 0 and os.path.exists(os.path.join(pr7, 'clave_equipo.js')), '9e el clave_equipo.gs real se puede agregar: ' + out)
 finally:
     shutil.rmtree(d, ignore_errors=True)
 print('%d bien · %d mal' % (bien, mal))

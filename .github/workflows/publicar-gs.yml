@@ -23,6 +23,11 @@ on:
         required: false
         default: 'Publicado desde GitHub'
         type: string
+      agregar:
+        description: 'Archivos aparte de herramientas/ para agregar o actualizar en el proyecto, separados por coma (ej. clave_equipo.gs). Vacío = ninguno.'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -85,13 +90,21 @@ jobs:
           APPS_SCRIPT_ID: ${{ secrets.APPS_SCRIPT_ID }}
           PANEL_URL: ${{ secrets.PANEL_URL }}
           DESCRIPCION: ${{ inputs.descripcion }}
+          AGREGAR: ${{ inputs.agregar }}
         run: |
           set -e
           cd "$RUNNER_TEMP/gas"
           # la implementación de siempre = la de la dirección /exec del panel (secreto PANEL_URL, el mismo de panel.yml)
           DEPLOY_ID=$(printf '%s' "$PANEL_URL" | sed -n 's#.*/macros/s/\([^/]*\)/exec.*#\1#p')
           [ -n "$DEPLOY_ID" ] || { echo "❌ No pude sacar la implementación del secreto PANEL_URL"; exit 1; }
-          python3 -I "$GITHUB_WORKSPACE/herramientas/gs_publicar/preparar.py" . "$GITHUB_WORKSPACE/google-apps-script.gs"
+          EXTRAS=()
+          for n in $(printf '%s' "$AGREGAR" | tr ',' ' '); do
+            case "$n" in *[!A-Za-z0-9_.]*|"") echo "❌ Nombre no válido en «agregar»"; exit 1;; esac
+            [ -f "$GITHUB_WORKSPACE/herramientas/$n" ] || { echo "❌ No existe herramientas/$n"; exit 1; }
+            cp "$GITHUB_WORKSPACE/herramientas/$n" "$RUNNER_TEMP/chk_$n.js" && node --check "$RUNNER_TEMP/chk_$n.js"
+            EXTRAS+=("$GITHUB_WORKSPACE/herramientas/$n")
+          done
+          python3 -I "$GITHUB_WORKSPACE/herramientas/gs_publicar/preparar.py" . "$GITHUB_WORKSPACE/google-apps-script.gs" "${EXTRAS[@]}"
           npx --yes @google/clasp@2.4.2 push -f 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g'
           SALIDA=$(npx --yes @google/clasp@2.4.2 version "$DESCRIPCION (${{ inputs.version }})" 2>&1 | sed 's/[A-Za-z0-9_-]\{40,\}/<id>/g')
           echo "$SALIDA"
