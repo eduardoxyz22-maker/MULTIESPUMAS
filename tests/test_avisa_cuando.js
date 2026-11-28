@@ -116,7 +116,7 @@ const gem = (Srv, p) => (typeof Srv.ctx.entregaAConfirmar_ === 'function') ? Srv
     const ph = fs.readFileSync(PEDIDOS, 'utf8');
     const vG = (SRC.match(/var SCRIPT_VERSION = '([^']+)'/) || [])[1], vE = (SRC.match(/var ESTA_VERSION = '([^']+)'/) || [])[1], vP = (ph.match(/var SCRIPT_VERSION_ESPERADA='([^']+)'/) || [])[1];
     chk('⚠️ 1a. la versión es la MISMA (2026-11-09-a o una posterior) en SCRIPT_VERSION, ESTA_VERSION (adentro de probarAntesDeImplementar) y SCRIPT_VERSION_ESPERADA de la página',
-        vG >= '2026-11-09-a' && vE === vG && (vP === vG || (vG === '2026-11-15-a' && vP === '2026-11-14-b') || ((vG === '2026-11-17-a' || vG === '2026-11-17-b') && vP === '2026-11-16-a') || (vG === '2026-11-22-a' && vP === '2026-11-21-a')), { vG, vE, vP });   // (22/11) la puerta GET, la Papelera y el respaldo: la página usa lo nuevo con servidorTiene  // la página pasa a 15-a cuando use lo nuevo del servidor
+        vG >= '2026-11-09-a' && vE === vG && (vP === vG || (vG === '2026-11-15-a' && vP === '2026-11-14-b') || ((vG === '2026-11-17-a' || vG === '2026-11-17-b') && vP === '2026-11-16-a') || (vG === '2026-11-22-a' && vP === '2026-11-21-a') || (vG === '2026-11-27-a' && vP === '2026-11-23-h')), { vG, vE, vP });   // (22/11) la puerta GET, la Papelera y el respaldo: la página usa lo nuevo con servidorTiene  // la página pasa a 15-a cuando use lo nuevo del servidor
   }
   poner(HOY + ' 10:00');
   let S = servidor(SRC, ON);

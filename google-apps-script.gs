@@ -1695,12 +1695,20 @@ function doPostCuerpo_(e) {
   if (action === 'salir') return jsonOut(usuSalir_(body));
   if (action === 'miClave') return jsonOut(usuMiClave_(body));
   if (action === 'usuarios') return jsonOut(usuAdmin_(body));
+  USU_ACTUAL_ = null;
   var USU = usuDe_(body);
+  if (USU && USU.error) return jsonOut({ ok:false, error:'busy', motivo:'propiedades', version:SCRIPT_VERSION });   // 🧯 no se pudo leer: ni pasa ni borra
   if (!USU && loginActivo_()) return jsonOut({ ok:false, error:'login', version:SCRIPT_VERSION });
-  if (USU && USU.r === 'v' && USU_SOLO_TODO[action]) return jsonOut({ ok:false, error:'permiso', version:SCRIPT_VERSION });
-  if (USU && USU.r === 'v' && (action === 'save' || action === 'delete')) {
-    var noPuede = usuPuedeEscribir_(USU, action, body);
-    if (noPuede) return jsonOut({ ok:false, error:noPuede, version:SCRIPT_VERSION });
+  USU_ACTUAL_ = USU;
+  var VEND = (USU && USU.r === 'v') ? USU : null;
+  if (VEND && USU_SOLO_TODO[action]) return jsonOut({ ok:false, error:'permiso', version:SCRIPT_VERSION });
+  if (VEND) {
+    /* 👤 (revisión de Fable 28/11) Lo que dice quién es sale de la sesión, nunca del cuerpo. Y lo que toca un pedido, solo uno suyo. */
+    body.quien = VEND.n; body.cq = VEND.n;
+    if (body.cot && typeof body.cot === 'object') body.cot.vendedor = VEND.n;
+    if (action === 'kommoCierre' && !usuPedidoSuyo_(VEND, body.id)) return jsonOut({ ok:false, error:'ajeno', version:SCRIPT_VERSION });
+    if (action === 'borrarFoto' && usuFotoAjena_(VEND, body.fotoId)) return jsonOut({ ok:false, error:'ajeno', version:SCRIPT_VERSION });
+    if (action === 'iaComprobantes') body.fotos = usuFotosSuyas_(VEND, body.fotos);
   }
   if (body.forzar) {
     var fz = forzarOk_(body);
@@ -1803,9 +1811,15 @@ function doPostCuerpo_(e) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'delete') return doDelete(body.id, body.rev, body);
+    /* 👤 (revisión de Fable 28/11, GRAVE) Toda acción que llega acá termina en doSave (una acción desconocida también): la vendedora pasa
+       por el control de dueño SIEMPRE, adentro del candado (nadie cambia la fila entre el control y el guardado). */
+    if (VEND && action !== 'histStock') {
+      var noPuede = usuPuedeEscribir_(VEND, action === 'delete' ? 'delete' : 'save', body);
+      if (noPuede) return jsonOut({ ok:false, error:noPuede, version:SCRIPT_VERSION });
+    }
+    if (action === 'delete') return usuRespFiltrar_(VEND, doDelete(body.id, body.rev, body));
     if (action === 'histStock') return histGuardar_(body);   // 📚 (2026-10-09-a)
-    return doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto, !!body.av, !!body.tr4, body.aparto ? String(body.aparto) : '', body.aparato ? String(body.aparato) : '');   // 🎟️ (revisión del 14/11) `aparato`: quién guarda (su propio apartado no lo frena)   // 🎟️ (2026-11-14-b) `aparto`: el lugar apartado mientras se cobraba (apartarCupo_)   // 📥 (2026-11-07-f) `tr4`: lo cargó la revisión de correos (cargar_pedidos.py): al dueño, «subilo al TR4» (waAlGuardar_)   // (2026-10-30-a) `av`: la página sabe de «el cliente avisa cuándo» (ver entregaAConfirmar_)   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
+    return usuRespFiltrar_(VEND, doSave(body.pedido, !!body.forzar, !!body.juntar, body.reserva, body.sf, !!body.adelanto, !!body.av, !!body.tr4, body.aparto ? String(body.aparto) : '', body.aparato ? String(body.aparato) : ''));   // 🎟️ (revisión del 14/11) `aparato`: quién guarda (su propio apartado no lo frena)   // 🎟️ (2026-11-14-b) `aparto`: el lugar apartado mientras se cobraba (apartarCupo_)   // 📥 (2026-11-07-f) `tr4`: lo cargó la revisión de correos (cargar_pedidos.py): al dueño, «subilo al TR4» (waAlGuardar_)   // (2026-10-30-a) `av`: la página sabe de «el cliente avisa cuándo» (ver entregaAConfirmar_)   // (2026-10-14-a) `adelanto`: el camión salió a la mañana con este pedido de la tarde (waAlGuardar_) · (2026-10-02-a) `reserva`: lo que el pedido saca del saldo (ver RESERVAS) · (2026-10-06-a) `sf`: ver STOCK_FORMATO_MIN
   } finally {
     lock.releaseLock();
   }
@@ -8319,6 +8333,7 @@ function waRespAtendida_(body) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(WA_HOJA); if (!sh) return jsonOut({ ok:false, error:'no hay hoja', version:SCRIPT_VERSION });
   var last = sh.getLastRow(), ids = last > 1 ? sh.getRange(2, 9, last - 1, 1).getValues() : [];
   for (var i = ids.length - 1; i >= 0; i--) if (String(ids[i][0]) === w) {
+    if (usuSoloDe_() && !usuPedidoSuyo_(usuSoloDe_(), String(sh.getRange(i + 2, 2).getValue() || ''))) return jsonOut({ ok:false, error:'ajeno', version:SCRIPT_VERSION });   // 👤 el cliente de otra
     var val = body.deshacer ? '' : (String(body.quien || 'alguien').slice(0, 40) + ' · ' + waBo_(Date.now()).txt);
     sh.getRange(i + 2, 11).setValue(celdaTexto_(val));   // 🧾 (2026-11-16-a) quién, como lo escribió (ver `celdaTexto_`)
     return jsonOut({ ok:true, at:val, version:SCRIPT_VERSION });
@@ -9060,6 +9075,7 @@ function rdMarcar_(body) {
     var a = rdPendLeer_(), x = null;
     a.forEach(function (y) { if (y.k === k) x = y; });
     if (!x) return { ok:false, error:'no está', version:SCRIPT_VERSION };
+    if (usuSoloDe_() && !usuPedidoSuyo_(usuSoloDe_(), x.id)) return { ok:false, error:'ajeno', version:SCRIPT_VERSION };   // 👤 el cliente de otra
     if (x.est) return { ok:true, k:k, est:x.est, ya:true, version:SCRIPT_VERSION };   // otro aparato ya lo resolvió
     x.est = est; x.por = quien; x.at = Date.now();
     rdPendGuardar_(a);
@@ -10072,6 +10088,7 @@ function cotGuardar_(body) {
                  total:cotTotal_(P.prods), entregaDesde:String(c.entregaDesde || ''), prox:String(c.prox || '') };
     if (f) {
       var ya = cotDeFila_(T.vals[f - 1]);
+      if (usuSoloDe_() && usuVend_(ya.vendedor) !== usuVend_(usuSoloDe_().n)) return { ok:false, error:'ajeno' };   // 👤 una cotización de otra
       if (!rev) return { ok:true, cot:ya, ya:true };                                   // el mismo alta otra vez (se perdió la respuesta)
       if (rev !== ya.rev) return { ok:false, error:'conflicto', actual:ya };
       for (var k in base) ya[k] = base[k];
@@ -10114,6 +10131,7 @@ function cotMarcar_(body) {
     var sh = cotHoja_(false); if (!sh) return { ok:false, error:'no_esta' };
     var T = cotTodas_(sh), f = T.por[id]; if (!f) return { ok:false, error:'no_esta' };
     var c = cotDeFila_(T.vals[f - 1]);
+    if (usuSoloDe_() && usuVend_(c.vendedor) !== usuVend_(usuSoloDe_().n)) return { ok:false, error:'ajeno' };   // 👤 una cotización de otra
     if (body.estado) { pasoANo = body.estado === 'no' && c.estado !== 'no'; c.estado = String(body.estado); }
     if (body.motivo != null) c.motivo = mallTxt_(body.motivo);
     if (body.pedido != null) c.pedido = mallTxt_(body.pedido);
@@ -14350,47 +14368,80 @@ function cruceArmar_(m, recs, cfg) {
    · Crear, cambiar y borrar usuarios, y prender/apagar el login, piden ADMIN_KEY (`usuarios`). Cada uno cambia su contraseña (`miClave`).
    · 5 contraseñas mal seguidas para un usuario lo frenan 10 minutos (caché). Nunca se anota una contraseña ni un token en un registro.
    ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════ */
-var LOGIN_SES_DIAS = 30, LOGIN_FALLAS_MAX = 5, LOGIN_BLOQUEO_SEG = 600, USU_VUELTAS = 200, USU_CLAVE_MIN = 6, LOGIN_SES_TOPE = 120;
+var LOGIN_SES_DIAS = 30, LOGIN_FALLAS_MAX = 5, LOGIN_FALLAS_USU = 25, LOGIN_BLOQUEO_SEG = 600, USU_VUELTAS = 200, USU_CLAVE_MIN = 6, LOGIN_SES_TOPE = 60, LOGIN_SES_LETRAS = 8000, USU_AP_TOPE = 6;
 /* Lo que una vendedora ve de un pedido AJENO (todo lo demás va vacío): lo que usan los cupos del camión, el stock y el N° del día. */
-var USU_VE_AJENO = { id:1, fecha:1, oc:1, vendedor:1, turno:1, estado:1, entregado:1, vehiculo:1, chofer:1, nroDia:1, verificado:1, ts:1, rev:1, productos:1 };
-/* Lo que se saca de cada producto de un pedido ajeno: precios, pagos, quién cambió qué y lo que nombra al cliente. */
-var USU_PROD_TAPA = { precio:1, pH:1, prH:1, dsc:1, crv:1, opdf:1, oia:1, cmp:1, atc:1, fdoc:1, fdocn:1, robs:1, sinwa:1, avisa:1, rc:1, mod:1, fH:1, eH:1 };
+/* 🔢 (28/11, revisión de Fable) Con los MONTOS (el dueño eligió «solo números, sin clientes»): sin ellos la proyección del equipo, el puesto
+   de cada una y el «al día» salían en 0 en la página de una vendedora. Los pagos (método, recibos, fotos) y el cliente siguen tapados. */
+var USU_VE_AJENO = { id:1, fecha:1, oc:1, vendedor:1, turno:1, estado:1, entregado:1, vehiculo:1, chofer:1, nroDia:1, verificado:1, ts:1, rev:1, productos:1, saldo:1, acuenta:1, pagado:1 };
+/* Lo que se saca de cada producto de un pedido ajeno: precios, pagos, quién cambió qué y lo que nombra al cliente. (`avisa` queda: sin
+   él una venta «el cliente avisa cuándo» parecía un pedido sin fecha, y el cuadrito de stock contaba mal — revisión de Fable 28/11). */
+var USU_PROD_TAPA = { pH:1, prH:1, dsc:1, crv:1, opdf:1, oia:1, cmp:1, atc:1, robs:1, sinwa:1, rc:1, mod:1, fH:1, eH:1 };
 /* Lo que una vendedora NO puede pedir (es de Administración, Contabilidad o logística, y trae datos de todos). */
-var USU_SOLO_TODO = { rechazos:1, getlog:1, compsCarpeta:1, iaComprobantes:1, gpsHist:1, mallLeer:1, iaSemana:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1,
+var USU_SOLO_TODO = { rechazos:1, getlog:1, compsCarpeta:1, gpsHist:1, iaSemana:1, iaPorque:1, iaEquipo:1, iaEquipoHable:1,
   iaAtc:1, iaStockSemana:1, histStock:1 };
+/* Las filas del sistema que una vendedora NO escribe (metas, comisiones, la foto del bono, la proyección, la revisión de cruces, el anuncio). */
+var USU_SIS_NO_ESCRIBE = { '__metas__':1, '__cierre_comercial__':1, '__al_dia_sem__':1, '__pry_hist__':1, '__cruces_rev__':1, '__anuncio__':1 };
+/* La persona de ESTA llamada (la pone doPostCuerpo_; null = sin sesión o con todo). Las funciones de otras hojas la miran. */
+var USU_ACTUAL_ = null;
+function usuSoloDe_() { return (USU_ACTUAL_ && USU_ACTUAL_.r === 'v') ? USU_ACTUAL_ : null; }
 function loginActivo_() { var v = cfgProp_('LOGIN_ACTIVO'); if (v === null) return true; v = String(v).toLowerCase(); return !!v && v !== '0' && v !== 'no'; }
 function usuNorm_(u) { return String(u || '').trim().toLowerCase(); }
-function usuLeer_() { try { var o = JSON.parse(prop_('USUARIOS') || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
+function usuVend_(t) { return waEfeNorm_(t).replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
+/* 🧯 (revisión de Fable 28/11) Leer USUARIOS o SESIONES que FALLA da null, nunca {}: con {} el guardado siguiente borraba a todos.
+   Afuera del candado (cada llamada) sale de la configuración de la ejecución (una sola lectura); adentro, fresca. */
+function usuParse_(s) { if (s === null) return null; try { var o = JSON.parse(s || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : null; } catch (e) { return null; } }
+function propFresca_(k) { try { var v = PropertiesService.getScriptProperties().getProperty(k); return v == null ? '' : String(v); } catch (e) { return null; } }
+function usuLeer_(fresco) { return usuParse_(fresco ? propFresca_('USUARIOS') : cfgProp_('USUARIOS')); }
+function sesLeer_(fresco) { return usuParse_(fresco ? propFresca_('SESIONES') : cfgProp_('SESIONES')); }
 function usuGuardar_(o) { PropertiesService.getScriptProperties().setProperty('USUARIOS', JSON.stringify(o)); }
-function sesLeer_() { try { var o = JSON.parse(prop_('SESIONES') || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (e) { return {}; } }
 function sesGuardar_(o) { PropertiesService.getScriptProperties().setProperty('SESIONES', JSON.stringify(o)); }
 function usuHex_(bytes) { var s = ''; for (var i = 0; i < bytes.length; i++) { var b = (bytes[i] + 256) % 256; s += (b < 16 ? '0' : '') + b.toString(16); } return s; }
 function usuHuella_(sal, clave) {
-  var h = String(sal) + '|' + String(clave);
-  for (var i = 0; i < USU_VUELTAS; i++) h = usuHex_(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + '|' + sal));
+  var h = String(sal) + '|' + String(clave), cs = Utilities.Charset && Utilities.Charset.UTF_8;
+  for (var i = 0; i < USU_VUELTAS; i++) h = usuHex_(cs ? Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + '|' + sal, cs) : Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, h + '|' + sal));
   return h;
 }
 function usuAzar_(n) { var s = ''; while (s.length < n) s += String(Utilities.getUuid()).replace(/-/g, ''); return s.slice(0, n); }
 /* Una contraseña para entregar: 10 letras y números que no se confunden (sin 0/o/1/l/i). */
 function usuClaveNueva_() { var a = 'abcdefghjkmnpqrstuvwxyz23456789', h = usuAzar_(40), s = ''; for (var i = 0; i < 10; i++) s += a.charAt(parseInt(h.substr(i * 2, 2), 16) % a.length); return s; }
 function usuIgual_(a, b) { a = String(a); b = String(b); if (a.length !== b.length) return false; var d = 0; for (var i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
-/* ¿Quién es esta llamada? { u, n, r } (r 'v' o 't'), o null. `adminKey` correcta = las herramientas y Administración: ve todo. */
+function usuAp_(body) { return String(body && body.ap || '').replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 24); }
+/* ¿Quién es esta llamada? { u, n, r } (r 'v' o 't'), null (sin sesión) o { error:'busy' } (no se pudo leer). `adminKey` correcta = las herramientas. */
 function usuDe_(body) {
   var ak = adminKey_();
   if (ak && body && body.adminKey && usuIgual_(body.adminKey, ak)) return { u:'(administración)', n:'', r:'t', srv:1 };
   var t = String(body && body.ses || ''); if (!t) return null;
-  var S = sesLeer_(), x = S[t]; if (!x || !(Number(x[1]) > Date.now())) return null;
-  var U = usuLeer_(), y = U[x[0]]; if (!y) return null;
+  var S = sesLeer_(); if (!S) return { error:'busy' };
+  var x = S[t]; if (!x || !(Number(x[1]) > Date.now())) return null;
+  var U = usuLeer_(); if (!U) return { error:'busy' };
+  var y = U[x[0]]; if (!y || y.off) return null;
   return { u:x[0], n:String(y.n || ''), r:(y.r === 't' ? 't' : 'v') };
 }
 /* ¿Es suyo? Por el vendedor del pedido (también un retiro: `vendedor` = quien entregó la plata). */
-function usuEsSuyo_(U, rec) { return !!U && !!rec && !!U.n && waEfeNorm_(rec.vendedor) === waEfeNorm_(U.n); }
+function usuEsSuyo_(U, rec) {
+  if (!U || !rec || !U.n) return false;
+  var yo = usuVend_(U.n);
+  if (usuVend_(rec.vendedor) === yo) return true;
+  return String(rec.id || '').indexOf('__ret_') === 0 && usuVend_(rec.chofer) === yo;   // un retiro: también quien lo RETIRÓ (`chofer`)
+}
+/* 🏷️ (revisión de Fable 28/11) Del cliente de un pedido ajeno sale solo LA CLASE que usan las cuentas del stock (mayorista, Multicenter,
+   consignación, la tienda de ROHO): con el nombre vacío el cuadrito contaba esas ventas como demanda del equipo. Nunca el nombre. */
+function usuClaseCli_(c) {
+  var s = waEfeNorm_(c).toUpperCase(), t = [];
+  if (/\bMULTICENTER\b/.test(s)) t.push('MULTICENTER');
+  if (/\bCONSIGNACI/.test(s)) t.push('CONSIGNACION'); else if (/\bCONSIG/.test(s)) t.push('CONSIG.');
+  if (/\bTIENDA AMIGA\b/.test(s)) t.push('TIENDA AMIGA');
+  if (/CO(?:PA|AP)CABA/.test(s)) t.push('COPACABA');
+  if (/\bLUIS FRANCO\b/.test(s)) t.push('LUIS FRANCO');
+  var m = s.match(/\bTIENDA\s*(\d)\b/); if (m) t.push('TIENDA ' + m[1]);
+  return t.join(' ');
+}
 /* El pedido de OTRA persona, para una vendedora: solo lo de USU_VE_AJENO; un retiro ajeno, ni eso (solo id y sello). */
 function usuTapar_(rec) {
   var id = String(rec.id || '');
   if (id.indexOf('__ret_') === 0) return { id:id, rev:rec.rev, fecha:'', oc:'', vendedor:'', cliente:'', productos:[], celular:'', turno:'', zona:'', direccion:'', maps:'',
     pagado:false, saldo:0, ts:rec.ts, metodoPago:'', observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
-    nroDia:0, verificado:false, fotos:[], oculto:1 };
+    nroDia:0, verificado:false, fotos:[], oculto:1, retiro:1 };
   var o = {};
   for (var k in rec) if (Object.prototype.hasOwnProperty.call(rec, k)) {
     if (USU_VE_AJENO[k]) o[k] = rec[k];
@@ -14399,6 +14450,11 @@ function usuTapar_(rec) {
     else if (Array.isArray(rec[k])) o[k] = [];
     else o[k] = '';
   }
+  /* La venta de TIENDA se reconoce por la dirección o la zona (esVentaTienda): sin esto la contaban como pedido del camión. */
+  var dir = String(rec.direccion || ''), zn = String(rec.zona || '');
+  if (waEfeNorm_(dir).indexOf('salio de tienda') === 0) o.direccion = dir.slice(0, 60);
+  if (waEfeNorm_(zn) === 'tienda') o.zona = zn;
+  o.cliente = usuClaseCli_(rec.cliente);
   o.productos = (Array.isArray(rec.productos) ? rec.productos : []).map(function (x) {
     var y = {}; if (!x || typeof x !== 'object') return x;
     for (var j in x) if (Object.prototype.hasOwnProperty.call(x, j) && !USU_PROD_TAPA[j]) y[j] = x[j];
@@ -14407,86 +14463,224 @@ function usuTapar_(rec) {
   o.oculto = 1;
   return o;
 }
-/* La lista para una vendedora: lo suyo entero, las filas del sistema tal cual, lo ajeno tapado. Mismos ids y sellos (la cuenta de control no cambia). */
+/* 📋 (revisión de Fable 28/11) Las filas del sistema que traen cosas de cada vendedora: a una vendedora, solo lo suyo. */
+function usuSisJson_(rec) { try { var o = JSON.parse(String(rec.observaciones || '') || '{}'); return (o && typeof o === 'object') ? o : null; } catch (e) { return null; } }
+function usuSisFiltrar_(U, rec) {
+  if (!U || U.r === 't' || !rec) return rec;
+  var id = String(rec.id || ''), yo = usuVend_(U.n), o, c;
+  var poner = function (obj) { c = JSON.parse(JSON.stringify(rec)); c.observaciones = JSON.stringify(obj); c.filtrada = 1; return c; };
+  if (id === '__avisos_conta__') {
+    o = usuSisJson_(rec); if (!o || !Array.isArray(o.a)) return rec;
+    o.a = o.a.filter(function (a) { return a && usuVend_(a.vend) === yo; }); return poner(o);
+  }
+  if (id === '__destinos__') {
+    o = usuSisJson_(rec); if (!o || !Array.isArray(o.k)) return rec;
+    o.k = o.k.filter(function (k) { try { var a = JSON.parse(k); return usuVend_(a[2]) === yo || usuVend_(a[8]) === yo; } catch (e) { return false; } }); return poner(o);
+  }
+  if (id === '__metas__') {
+    o = usuSisJson_(rec); if (!o || !o.m || typeof o.m !== 'object') return rec;
+    Object.keys(o.m).forEach(function (ym) { var M = o.m[ym]; if (M && M.vd && typeof M.vd === 'object') { var vd = {}; Object.keys(M.vd).forEach(function (n) { if (usuVend_(n) === yo) vd[n] = M.vd[n]; }); M.vd = vd; } });
+    return poner(o);
+  }
+  if (id === '__cierre_comercial__') {
+    o = usuSisJson_(rec); if (!o || !o.m || typeof o.m !== 'object') return rec;
+    Object.keys(o.m).forEach(function (ym) {
+      var C = o.m[ym]; if (!C) return;
+      var vt = Array.isArray(C.vt) ? C.vt : [], mio = {};
+      C.vt = vt.map(function (r, i) { if (r && usuVend_(r.v) === yo) { mio[i] = 1; return r; } return { v:'', g:(r && r.g) || '' }; });
+      ['s', 'aj'].forEach(function (q) { if (C[q] && typeof C[q] === 'object') { var z = {}; Object.keys(C[q]).forEach(function (pid) { var a = C[q][pid]; if (a && mio[a[0]]) z[pid] = a; }); C[q] = z; } });
+    });
+    return poner(o);
+  }
+  return rec;
+}
+/* La lista para una vendedora: lo suyo entero, las filas del sistema (las que traen de todas, solo con lo suyo), lo ajeno tapado. Mismos ids y sellos. */
+function usuFiltrarRec_(U, p) {
+  if (!U || U.r === 't' || !p) return p;
+  var id = String(p.id || '');
+  if (filaFijaSistema_(id)) return usuSisFiltrar_(U, p);
+  return usuEsSuyo_(U, p) ? p : usuTapar_(p);
+}
 function usuFiltrarLista_(U, lst) {
   if (!U || U.r === 't' || !lst || !Array.isArray(lst.pedidos)) return lst;
-  lst.pedidos = lst.pedidos.map(function (p) {
-    var id = String(p && p.id || '');
-    if (filaFijaSistema_(id)) return p;
-    return usuEsSuyo_(U, p) ? p : usuTapar_(p);
-  });
+  lst.pedidos = lst.pedidos.map(function (p) { return usuFiltrarRec_(U, p); });
   lst.yo = { n:U.n, r:U.r };
   return lst;
+}
+/* La respuesta de un guardado o un borrado para una vendedora: la fila que vuelve (`pedido`, `actual`), con su filtro; de una OC repetida, sin el cliente. */
+function usuRespFiltrar_(U, out) {
+  if (!U || U.r === 't' || !out) return out;
+  var txt = (typeof out.getContent === 'function') ? out.getContent() : out._t, o;
+  try { o = JSON.parse(txt); } catch (e) { return out; }
+  if (!o || typeof o !== 'object') return out;
+  var tocado = false;
+  ['pedido', 'actual'].forEach(function (q) { if (o[q] && typeof o[q] === 'object') { o[q] = usuFiltrarRec_(U, o[q]); tocado = true; } });
+  if (o.otro && typeof o.otro === 'object') { o.otro = { id:o.otro.id, fecha:o.otro.fecha }; tocado = true; }
+  if (o.ocCambiada && typeof o.ocCambiada === 'object' && o.ocCambiada.con) { delete o.ocCambiada.con; tocado = true; }
+  return tocado ? jsonOut(o) : out;
 }
 /* Los ids de los pedidos de esta vendedora (para filtrar lo que viene de otras hojas: respuestas al bot, días que eligió el cliente). */
 function usuIdsSuyos_(U) {
   var sh = getSheet(), last = sh.getLastRow(), out = {}; if (last < 2) return out;
-  var v = sh.getRange(2, 1, last - 1, 4).getValues(), n = waEfeNorm_(U.n);
-  for (var i = 0; i < v.length; i++) if (v[i][0] && waEfeNorm_(v[i][3]) === n) out[String(v[i][0])] = 1;
+  var v = sh.getRange(2, 1, last - 1, 4).getValues(), n = usuVend_(U.n);
+  for (var i = 0; i < v.length; i++) if (v[i][0] && usuVend_(v[i][3]) === n) out[String(v[i][0])] = 1;
   return out;
 }
-/* Guardar o borrar: una vendedora solo lo suyo (las filas del sistema, como siempre). Devuelve '' si puede, o el motivo. */
+/* 📷 ¿Esta foto la usa un pedido AJENO? (una vendedora no la borra). Mira la fila entera como texto: fotos, pagos (%IMG) y productos. */
+function usuFotoAjena_(U, fid) {
+  fid = String(fid || '').replace(/[^A-Za-z0-9_\-]/g, ''); if (!fid) return false;
+  var sh = getSheet(), last = sh.getLastRow(); if (last < 2) return false;
+  var v = sh.getRange(2, 1, last - 1, HEADERS.length).getValues(), yo = usuVend_(U.n);
+  for (var i = 0; i < v.length; i++) { if (usuVend_(v[i][3]) === yo) continue; if (v[i].join('\u0001').indexOf(fid) >= 0) return true; }
+  return false;
+}
+/* 🤖 Las fotos que una vendedora puede mandar a leer: solo las de SUS pedidos. */
+function usuFotosSuyas_(U, L) {
+  L = Array.isArray(L) ? L : []; if (!L.length) return [];
+  var sh = getSheet(), last = sh.getLastRow(); if (last < 2) return [];
+  var v = sh.getRange(2, 1, last - 1, HEADERS.length).getValues(), yo = usuVend_(U.n), txt = [];
+  for (var i = 0; i < v.length; i++) if (usuVend_(v[i][3]) === yo) txt.push(v[i].join('\u0001'));
+  var todo = txt.join('\u0002');
+  return L.filter(function (x) { var id = String(x == null ? '' : x).replace(/[^A-Za-z0-9_\-]/g, ''); return id.length >= 10 && todo.indexOf(id) >= 0; });
+}
+/* La fila de la planilla de un id (o null). */
+function usuFilaDe_(id) {
+  var sh = getSheet(), last = sh.getLastRow(); if (last < 2 || !id) return null;
+  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === String(id)) return { n:i + 2, rec:rowToRec_(sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0]) };
+  return null;
+}
+function usuPedidoSuyo_(U, id) { var f = usuFilaDe_(id); return !!f && usuEsSuyo_(U, f.rec); }
+/* 🔀 (revisión de Fable 28/11) Una vendedora guarda los avisos de Contabilidad o los lugares de entrega con lo SUYO (la lista le llegó
+   filtrada): se junta con lo de la planilla para no borrarle nada a las demás. De los avisos, solo «corregido» de los suyos. */
+function usuSisJuntar_(U, p) {
+  var id = String(p.id), yo = usuVend_(U.n), f = usuFilaDe_(id);
+  var srv = f ? (usuSisJson_(f.rec) || {}) : {}, mio = usuSisJson_(p) || {};
+  if (id === '__avisos_conta__') {
+    var A = Array.isArray(srv.a) ? srv.a : [], M = {};
+    (Array.isArray(mio.a) ? mio.a : []).forEach(function (c) { if (c && c.id) M[c.id] = c; });
+    A.forEach(function (a) {
+      var c = a && M[a.id]; if (!c || usuVend_(a.vend) !== yo) return;
+      if (c.ok && !a.ok) { a.ok = c.ok; a.okPor = c.okPor || ''; if (c.okRaz) a.okRaz = c.okRaz; if (c.okArr) a.okArr = c.okArr; if (c.au) a.au = c.au; }
+    });
+    srv.v = srv.v || 1; srv.a = A;
+  } else {
+    var K = (Array.isArray(srv.k) ? srv.k : []).filter(function (k) { try { var a = JSON.parse(k); return !(usuVend_(a[2]) === yo || usuVend_(a[8]) === yo); } catch (e) { return true; } });
+    (Array.isArray(mio.k) ? mio.k : []).forEach(function (k) { try { var a = JSON.parse(k); if ((usuVend_(a[2]) === yo || usuVend_(a[8]) === yo) && K.indexOf(k) < 0) K.push(k); } catch (e) {} });
+    srv.v = srv.v || 1; srv.k = K.sort();
+  }
+  p.observaciones = JSON.stringify(srv);
+  if (f) p.rev = f.rec.rev;   // ya se juntó con lo de ahora: el sello es el de la planilla
+  return p;
+}
+/* ¿Puede escribir? '' = sí; si no, el motivo. Corre ADENTRO del candado, justo antes de guardar o borrar: TODO lo que llega a doSave pasa. */
 function usuPuedeEscribir_(U, action, body) {
   if (!U || U.r === 't') return '';
-  var id = String(action === 'delete' ? (body.id || '') : (body.pedido && body.pedido.id || ''));
-  if (!id) return 'ajeno';
-  if (filaFijaSistema_(id)) return '';
-  if (action !== 'delete' && waEfeNorm_(body.pedido.vendedor) !== waEfeNorm_(U.n)) return 'ajeno';
-  var sh = getSheet(), last = sh.getLastRow(); if (last < 2) return '';
-  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
-  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) {
-    var v = sh.getRange(i + 2, 4).getValue();
-    return waEfeNorm_(v) === waEfeNorm_(U.n) ? '' : 'ajeno';
+  var esBorrar = action === 'delete', p = body && body.pedido;
+  var id = String(esBorrar ? (body.id || '') : (p && p.id || ''));
+  if (!id || (!esBorrar && (!p || typeof p !== 'object'))) return 'ajeno';
+  if (filaFijaSistema_(id)) {
+    if (USU_SIS_NO_ESCRIBE[id]) return 'permiso';
+    if (esBorrar) return 'permiso';
+    if (!/^__[a-z0-9_]+__$/.test(id) && !usuFilaDe_(id)) return 'permiso';   // un «__algo» inventado no es una fila del sistema
+    if (id === '__avisos_conta__' || id === '__destinos__') usuSisJuntar_(U, p);
+    return '';
   }
-  return '';
+  var f = usuFilaDe_(id), yo = usuVend_(U.n);
+  if (esBorrar) return (f && usuEsSuyo_(U, f.rec)) ? '' : (f ? 'ajeno' : '');
+  /* Un retiro que entregó un chofer: vale si ella entregó (`vendedor`) o retiró (`chofer`) la plata. */
+  var vale = function (r) { return usuEsSuyo_(U, r); };
+  if (!vale(p)) return 'ajeno';
+  if (!f) return '';
+  if (vale(f.rec)) return '';
+  /* Un borrador de Kommo sin vendedora: lo completa quien lo toma. */
+  if (id.indexOf('kommo-') === 0 && !usuVend_(f.rec.vendedor)) return '';
+  return 'ajeno';
 }
-function loginFallas_(u, sumar) {
-  var c = getCache_(), k = 'login_f_' + Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, u)).slice(0, 20), n = 0;
-  try { n = Number(c && c.get(k)) || 0; } catch (e) { n = 0; }
-  if (sumar) { n++; try { if (c) c.put(k, String(n), LOGIN_BLOQUEO_SEG); } catch (e) {} }
-  if (sumar === false) { try { if (c) c.remove(k); } catch (e) {} n = 0; }
-  return n;
+/* El freno: por aparato (5) y por usuario (25). Con el del usuario, solo entra un aparato que ya entró antes con esa cuenta. */
+function loginFallasK_(u, ap) { return 'login_f_' + Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, u + '|' + (ap || ''))).slice(0, 20); }
+function loginFallas_(u, sumar, ap) {
+  var c = getCache_(), ks = [loginFallasK_(u, ap || ''), loginFallasK_(u, '*')], n = [0, 0];
+  ks.forEach(function (k, i) { try { n[i] = Number(c && c.get(k)) || 0; } catch (e) { n[i] = 0; } });
+  if (sumar) ks.forEach(function (k, i) { n[i]++; try { if (c) c.put(k, String(n[i]), LOGIN_BLOQUEO_SEG); } catch (e) {} });
+  if (sumar === false) { try { if (c) c.remove(ks[0]); } catch (e) {} n[0] = 0; }
+  return { ap:n[0], u:n[1] };
 }
-/* 🔑 Entrar: { u, p } → { ok, ses, vence, n, r } · { ok:false, error:'login_mal' | 'login_frenado' } (nunca dice si existe el usuario). */
+function loginFrenado_(u, ap, y) {
+  var f = loginFallas_(u, undefined, ap);
+  if (f.ap >= LOGIN_FALLAS_MAX) return true;
+  if (f.u >= LOGIN_FALLAS_USU) return !(ap && y && Array.isArray(y.ap) && y.ap.indexOf(ap) >= 0);
+  return false;
+}
+/* SESIONES con tope (la propiedad aguanta 9 KB): una por usuario y aparato, las más nuevas primero, LOGIN_SES_TOPE y LOGIN_SES_LETRAS. */
+function sesPodar_(S, U, ahora) {
+  var vivas = [], vistas = {};
+  for (var k in S) if (S[k] && Number(S[k][1]) > ahora && U[S[k][0]] && !U[S[k][0]].off) vivas.push([k, S[k]]);
+  vivas.sort(function (a, b) { return Number(b[1][1]) - Number(a[1][1]); });
+  /* Primero la más nueva de CADA cuenta (alguien que entra desde muchos aparatos no echa a las demás), después las otras. */
+  var out = {}, n = 0, cuenta = {}, prim = {};
+  vivas.forEach(function (x) { if (!cuenta[x[1][0]]) { cuenta[x[1][0]] = 1; prim[x[0]] = 1; } });
+  var tomar = function (x) {
+    var ap = x[1][2] || '', clave = x[1][0] + '|' + (ap || x[0]);
+    if (vistas[clave] || n >= LOGIN_SES_TOPE) return;
+    vistas[clave] = 1; out[x[0]] = x[1]; n++;
+  };
+  vivas.forEach(function (x) { if (prim[x[0]]) tomar(x); });
+  vivas.forEach(function (x) { if (!prim[x[0]]) tomar(x); });
+  while (n > 1 && JSON.stringify(out).length > LOGIN_SES_LETRAS) {
+    var ks = Object.keys(out).filter(function (k) { return !prim[k]; }); if (!ks.length) ks = Object.keys(out);
+    var viejo = ks[0]; ks.forEach(function (k) { if (Number(out[k][1]) < Number(out[viejo][1])) viejo = k; }); delete out[viejo]; n--;
+  }
+  return out;
+}
+/* 🔑 Entrar: { u, p, ap } → { ok, ses, vence, n, r } · { ok:false, error:'login_mal' | 'login_frenado' } (nunca dice si existe el usuario). */
 function usuLogin_(body) {
-  var u = usuNorm_(body.u), p = String(body.p || '');
+  var u = usuNorm_(body.u), p = String(body.p || ''), ap = usuAp_(body);
   if (!u || !p) return { ok:false, error:'login_mal', version:SCRIPT_VERSION };
-  if (loginFallas_(u) >= LOGIN_FALLAS_MAX) return { ok:false, error:'login_frenado', min:Math.round(LOGIN_BLOQUEO_SEG / 60), version:SCRIPT_VERSION };
-  var U = usuLeer_(), y = U[u];
-  if (!y || !usuIgual_(usuHuella_(y.s, p), y.h)) { loginFallas_(u, true); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
-  loginFallas_(u, false);
+  var U0 = usuLeer_(); if (!U0) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+  if (loginFrenado_(u, ap, U0[u])) return { ok:false, error:'login_frenado', min:Math.round(LOGIN_BLOQUEO_SEG / 60), version:SCRIPT_VERSION };
+  var y0 = U0[u];
+  if (!y0 || y0.off || !usuIgual_(usuHuella_(y0.s, p), y0.h)) { loginFallas_(u, true, ap); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
+  loginFallas_(u, false, ap);
   var lock = LockService.getScriptLock();
   try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
   try {
-    var S = sesLeer_(), ahora = Date.now(), t = usuAzar_(40), vence = ahora + LOGIN_SES_DIAS * 86400000, vivas = [];
-    for (var k in S) if (Number(S[k][1]) > ahora && U[S[k][0]]) vivas.push([k, S[k]]);
-    vivas.sort(function (a, b) { return Number(b[1][1]) - Number(a[1][1]); });
-    S = {}; vivas.slice(0, LOGIN_SES_TOPE - 1).forEach(function (x) { S[x[0]] = x[1]; });
-    S[t] = [u, vence];
-    sesGuardar_(S);
+    var U = usuLeer_(true), S = sesLeer_(true); if (!U || !S) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+    var y = U[u]; if (!y || y.off || y.h !== y0.h) return { ok:false, error:'login_mal', version:SCRIPT_VERSION };
+    var ahora = Date.now(), t = usuAzar_(32), vence = ahora + LOGIN_SES_DIAS * 86400000;
+    if (ap) for (var k in S) if (S[k] && S[k][0] === u && S[k][2] === ap) delete S[k];   // la de antes de este aparato
+    S[t] = ap ? [u, vence, ap] : [u, vence];
+    sesGuardar_(sesPodar_(S, U, ahora));
+    if (ap) { var L = Array.isArray(y.ap) ? y.ap.filter(function (a) { return a !== ap; }) : []; L.unshift(ap); y.ap = L.slice(0, USU_AP_TOPE); try { usuGuardar_(U); } catch (e) {} }
     return { ok:true, ses:t, vence:vence, u:u, n:String(y.n || ''), r:(y.r === 't' ? 't' : 'v'), cambiar:!y.k, version:SCRIPT_VERSION };
   } finally { lock.releaseLock(); }
 }
 function usuSalir_(body) {
   var t = String(body.ses || ''); if (!t) return { ok:true, version:SCRIPT_VERSION };
   var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
-  try { var S = sesLeer_(); if (S[t]) { delete S[t]; sesGuardar_(S); } return { ok:true, version:SCRIPT_VERSION }; } finally { lock.releaseLock(); }
+  try { var S = sesLeer_(true); if (!S) return { ok:false, error:'busy', version:SCRIPT_VERSION }; if (S[t]) { delete S[t]; sesGuardar_(S); } return { ok:true, version:SCRIPT_VERSION }; } finally { lock.releaseLock(); }
 }
-/* Cada uno cambia la suya: { ses, actual, nueva }. */
+/* Cada uno cambia la suya: { ses, actual, nueva, ap }. Respeta el freno y cierra las OTRAS sesiones de esa cuenta (esta sigue). */
 function usuMiClave_(body) {
-  var Y = usuDe_({ ses:body.ses }); if (!Y) return { ok:false, error:'login', version:SCRIPT_VERSION };
-  var nueva = String(body.nueva || '');
+  var Y = usuDe_({ ses:body.ses }); if (Y && Y.error) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+  if (!Y) return { ok:false, error:'login', version:SCRIPT_VERSION };
+  var nueva = String(body.nueva || ''), ap = usuAp_(body);
   if (nueva.length < USU_CLAVE_MIN) return { ok:false, error:'corta', min:USU_CLAVE_MIN, version:SCRIPT_VERSION };
+  var U0 = usuLeer_(); if (!U0) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+  if (loginFrenado_(Y.u, ap, U0[Y.u])) return { ok:false, error:'login_frenado', min:Math.round(LOGIN_BLOQUEO_SEG / 60), version:SCRIPT_VERSION };
   var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
   try {
-    var U = usuLeer_(), y = U[Y.u]; if (!y) return { ok:false, error:'login', version:SCRIPT_VERSION };
-    if (!usuIgual_(usuHuella_(y.s, String(body.actual || '')), y.h)) { loginFallas_(Y.u, true); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
+    var U = usuLeer_(true); if (!U) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+    var y = U[Y.u]; if (!y) return { ok:false, error:'login', version:SCRIPT_VERSION };
+    if (!usuIgual_(usuHuella_(y.s, String(body.actual || '')), y.h)) { loginFallas_(Y.u, true, ap); return { ok:false, error:'login_mal', version:SCRIPT_VERSION }; }
     y.s = usuAzar_(24); y.h = usuHuella_(y.s, nueva); y.k = Date.now(); usuGuardar_(U);
+    usuCerrarSesiones_(Y.u, String(body.ses || ''));
     return { ok:true, version:SCRIPT_VERSION };
   } finally { lock.releaseLock(); }
 }
 /* 👥 Administración (con ADMIN_KEY): { op:'lista' | 'crear' {u, n, r} | 'clave' {u} | 'borrar' {u} | 'activar' | 'apagar' }.
-   'crear' y 'clave' devuelven la contraseña NUEVA una sola vez (se la pasás a la persona; la primera vez que entra se la pide cambiar). */
+   'crear' y 'clave' devuelven la contraseña NUEVA una sola vez (se la pasás a la persona; la primera vez que entra se la pide cambiar).
+   Con el login prendido no se puede dejar sin ningún usuario que ve todo (borrar o volver vendedora al último). */
 function usuAdmin_(body) {
   var ak = adminKey_();
   if (ak === null) return { ok:false, error:'busy', version:SCRIPT_VERSION };
@@ -14495,17 +14689,22 @@ function usuAdmin_(body) {
   var op = String(body.op || 'lista');
   var lock = LockService.getScriptLock(); try { lock.waitLock(10000); } catch (e) { return { ok:false, error:'busy', version:SCRIPT_VERSION }; }
   try {
-    var U = usuLeer_(), u = usuNorm_(body.u), out = { ok:true, op:op, version:SCRIPT_VERSION };
+    var U = usuLeer_(true); if (!U) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+    var act = propFresca_('LOGIN_ACTIVO'); if (act === null) return { ok:false, error:'busy', version:SCRIPT_VERSION };
+    var activo = !!act && act !== '0' && act.toLowerCase() !== 'no';
+    var u = usuNorm_(body.u), out = { ok:true, op:op, version:SCRIPT_VERSION };
+    var quedanT = function (sin, comoV) { return Object.keys(U).some(function (k) { return k !== sin && U[k] && U[k].r === 't' && !(k === comoV); }); };
     if (op === 'activar' || op === 'apagar') {
-      if (op === 'activar' && !Object.keys(U).some(function (k) { return U[k].r === 't'; })) return { ok:false, error:'sin_admin', version:SCRIPT_VERSION };
+      if (op === 'activar' && !quedanT('', '')) return { ok:false, error:'sin_admin', version:SCRIPT_VERSION };
       PropertiesService.getScriptProperties().setProperty('LOGIN_ACTIVO', op === 'activar' ? '1' : '0');
-      out.activo = op === 'activar' ? 1 : 0;
+      activo = op === 'activar';
     } else if (op === 'crear' || op === 'clave') {
       if (!u || u.length > 80 || /[\s<>"']/.test(u)) return { ok:false, error:'usuario', version:SCRIPT_VERSION };
       if (op === 'crear') {
         var n = String(body.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
         if (!n) return { ok:false, error:'nombre', version:SCRIPT_VERSION };
         if (U[u] && !body.reemplazar) return { ok:false, error:'existe', version:SCRIPT_VERSION };
+        if (activo && U[u] && U[u].r === 't' && body.r !== 't' && !quedanT('', u)) return { ok:false, error:'ultimo_admin', version:SCRIPT_VERSION };
         U[u] = { n:n, r:(body.r === 't' ? 't' : 'v'), t:Date.now() };
       } else if (!U[u]) return { ok:false, error:'no_existe', version:SCRIPT_VERSION };
       var c = usuClaveNueva_();
@@ -14514,16 +14713,18 @@ function usuAdmin_(body) {
       out.u = u; out.clave = c;
     } else if (op === 'borrar') {
       if (!U[u]) return { ok:false, error:'no_existe', version:SCRIPT_VERSION };
+      if (activo && U[u].r === 't' && !quedanT(u, '')) return { ok:false, error:'ultimo_admin', version:SCRIPT_VERSION };
       delete U[u]; usuGuardar_(U); usuCerrarSesiones_(u);
     }
-    out.activo = (op === 'activar') ? 1 : (op === 'apagar' ? 0 : (prop_('LOGIN_ACTIVO') === '1' ? 1 : 0));
-    var S = sesLeer_(), ahora = Date.now(), ult = {};
-    for (var t in S) if (Number(S[t][1]) > ahora) ult[S[t][0]] = (ult[S[t][0]] || 0) + 1;
+    out.activo = activo ? 1 : 0;
+    var S = sesLeer_(true) || {}, ahora = Date.now(), ult = {};
+    for (var t in S) if (S[t] && Number(S[t][1]) > ahora) ult[S[t][0]] = (ult[S[t][0]] || 0) + 1;
     out.usuarios = Object.keys(U).sort().map(function (k) { return { u:k, n:U[k].n, r:U[k].r, cambio:!!U[k].k, ses:ult[k] || 0 }; });
     return out;
   } finally { lock.releaseLock(); }
 }
-function usuCerrarSesiones_(u) { var S = sesLeer_(), cambio = false; for (var t in S) if (S[t][0] === u) { delete S[t]; cambio = true; } if (cambio) sesGuardar_(S); }
+/* Cierra las sesiones de una cuenta (menos `salvo`). Sin poder leer SESIONES no escribe nada. */
+function usuCerrarSesiones_(u, salvo) { var S = sesLeer_(true), cambio = false; if (!S) return; for (var t in S) if (S[t] && S[t][0] === u && t !== salvo) { delete S[t]; cambio = true; } if (cambio) sesGuardar_(S); }
 
 /* 🧷 (2026-11-16-a, revisión de Fable, punto 4) ÚLTIMA LÍNEA DEL ARCHIVO, a propósito: si el pegado quedó cortado, no está, y
    «probarAntesDeImplementar» lo dice con una ❌. Va igual a SCRIPT_VERSION (tests/test_gs_fable.js §4 lo compara). No agregar nada DEBAJO. */

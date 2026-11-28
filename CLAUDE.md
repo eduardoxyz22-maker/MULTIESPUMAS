@@ -2343,7 +2343,22 @@ Volver atrás: ✏️ a la versión anotada Y pegar la 11-a de `0bd8588…`.
   otra persona se borra la copia del aparato (`loginLimpiarCopia`). Administración → «👥 Usuarios» (`usuAbrir`, con la 🛡️ Clave para forzar). Playwright: `LOGIN_PRUEBA`.
 - 🧰 Las herramientas mandan `adminKey` (secreto **ADMIN_KEY** de GitHub en `panel.yml`, `diagnostico-lectura.yml`, `verificar-cruce-ventas.yml`; el cargador de correos,
   siempre). ⚠️ Antes de prender el login el dueño tiene que cargar ese secreto, o el dashboard pierde las metas (publica igual).
-- ⚠️ Los correos de las vendedoras NO van al repo (es público): se cargan en «👥 Usuarios». `tests/test_login_servidor.js` (35), `tests/test_login_pagina.js` (13).
+- 🔎 **Revisión de Fable (28/11), arreglada en la misma 27-a**: (GRAVE) toda acción que llega al candado final termina en `doSave`: una vendedora
+  pasa SIEMPRE por `usuPuedeEscribir_` adentro del candado (antes, una acción inventada se salteaba el control); `USU_SIS_NO_ESCRIBE` (metas, cierre
+  comercial, foto del bono, proyección, cruces, anuncio) y un «__algo» inventado no los escribe; `__avisos_conta__`, `__destinos__`, `__metas__`
+  (`vd`) y `__cierre_comercial__` le llegan solo con lo suyo (`usuSisFiltrar_`) y al guardar avisos/lugares se juntan con lo de la planilla
+  (`usuSisJuntar_`: no borra lo de las demás); la respuesta del guardado va filtrada (`usuRespFiltrar_`, la OC repetida sin el cliente). De lo
+  ajeno llegan también los MONTOS (precio, saldo, a cuenta, factura: «solo números»), `avisa`, la venta de tienda y la CLASE del cliente
+  (`usuClaseCli_`: Multicenter, mayorista, consignación, «TIENDA n»), para que stock, proyección y «al día» den lo mismo. USUARIOS/SESIONES que
+  no se pueden leer = `busy`, nunca {} (`usuParse_`, `propFresca_` adentro del candado). SESIONES: 60, 8.000 letras, una por usuario y aparato,
+  la más nueva de cada cuenta primero (`sesPodar_`). Freno por aparato (`ap`, `loginAp`) y por cuenta (25: solo entra un aparato que ya entró);
+  `miClave` lo respeta y cierra las otras sesiones. No se borra el último que ve todo con el login prendido (`ultimo_admin`). Identidad del
+  chat/cotizaciones/bot de la sesión; `kommoCierre`, `borrarFoto`, `rdMarcar`, `waRespAtendida`, cotizaciones: solo lo suyo; `iaComprobantes` solo
+  con sus fotos; `mallLeer` sí. Retiro: suyo si entregó o retiró; borrador de Kommo sin vendedora: lo completa. Página: la cola es de quien la
+  armó (`LS_PEND_DE`, `getPending`/`getPendingTodo`; salir avisa lo sin enviar), `ajeno`/`permiso` firmes, al cambiar de persona se borran la clave
+  para forzar, la contraseña abierta y las copias (`loginLimpiarCopia`), una vendedora no saca la foto del bono, la de la proyección ni el
+  historial del stock, «🛡️ Soy Administración» en la pantalla de entrada (`loginAdmin`), retiros tapados fuera de `RETIROS`.
+- ⚠️ Los correos de las vendedoras NO van al repo (es público): se cargan en «👥 Usuarios». `tests/test_login_servidor.js` (62), `tests/test_login_pagina.js` (18).
 
 ## 📅 «Te cambiaron el día o el turno»: el aviso a la vendedora (27/11; dueño: *«¿dónde sale el aviso al vendedor que se modificó el turno o la fecha de entrega? A Isabel le modifiqué una entrega y no sale»* → *«solo en el panel por el momento»*; página 2026-11-27-e)
 Antes el cambio solo quedaba en `fH` (la historia del pedido). Ahora `fcvDatos(v, mine)`: pedido SUYO sin entregar, con día de hoy en adelante, cuyo ÚLTIMO

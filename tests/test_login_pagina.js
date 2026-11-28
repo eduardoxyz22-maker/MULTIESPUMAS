@@ -91,7 +91,7 @@ J({ action:'usuarios', op:'activar', adminKey:'adminclave10' });
     return { ses: !!(SES && SES.t), n: SES && SES.n, adm: document.getElementById('tab-admin').hidden, mis: document.getElementById('mis-vendedor').value, dis: document.getElementById('mis-vendedor').disabled,
       a: a && a.cliente, m: m && { c: m.cliente, cel: m.celular, o: m.oculto, f: m.fecha, pr: m.productos[0].precio } }; });
   chk('3a · entra: la pantalla se va y queda la sesión', !(await vis()) && R.ses && R.n === 'Isabel Robledo', R);
-  chk('3b · lo suyo entero, lo de María tapado (sin cliente, celular ni precio; con el día)', R.a === 'CLIENTA UNO' && R.m && !R.m.c && !R.m.cel && R.m.o === 1 && R.m.f === '2026-12-02' && R.m.pr == null, R.m);
+  chk('3b · lo suyo entero, lo de María tapado (sin cliente ni celular; con el día y el monto: «solo números»)', R.a === 'CLIENTA UNO' && R.m && !R.m.c && !R.m.cel && R.m.o === 1 && R.m.f === '2026-12-02' && R.m.pr === 2500, R.m);
   chk('3c · sin la pestaña Administración y con su nombre fijo en Mis pedidos', R.adm === true && R.mis === 'Isabel Robledo' && R.dis === true, R);
   const tit = await p.evaluate(() => { const o = document.querySelector('.preg-ov'); return o ? (o.querySelector('#preg-tit') || {}).textContent : null; });
   chk('4a · la primera vez le pide poner su propia contraseña', /propia contraseña/.test(tit || ''), tit);
@@ -115,6 +115,33 @@ J({ action:'usuarios', op:'activar', adminKey:'adminclave10' });
   chk('7b · crea uno nuevo y muestra su contraseña, que sirve para entrar', /^[a-z2-9]{10}$/.test(R8) && s8.ok && s8.n === 'Mirian Salazar', [R8.length, s8.ok]);
   await p.evaluate(() => { document.getElementById('usu-u').value = 'x@x.com'; document.getElementById('usu-n').value = 'Nadie Inventada'; document.getElementById('usu-r').value = 'v'; usuCrear(); }); await p.waitForTimeout(400);
   chk('7c · una vendedora con un nombre que no es del panel, no', !J({ action:'usuarios', op:'lista', adminKey:'adminclave10' }).usuarios.some(x => x.u === 'x@x.com'));
+  /* 8. La revisión de Fable (28/11) */
+  const R9 = await p.evaluate(() => {
+    const out = {}, antes = SES;
+    sesGuardar({ t:'tA', u:'a@x', n:'Isabel Robledo', r:'v', vence:Date.now() + 1e9 });
+    setPending([{ id:'x1', cliente:'A' }]);
+    sesGuardar({ t:'tB', u:'b@x', n:'Maria Flores', r:'v', vence:Date.now() + 1e9 });
+    out.bVe = getPending().map(x => x.id); out.todo = getPendingTodo().length;
+    setPending([{ id:'y1', cliente:'B' }]);
+    out.todo2 = getPendingTodo().map(x => x.id).sort();
+    sesGuardar({ t:'tA', u:'a@x', n:'Isabel Robledo', r:'v', vence:Date.now() + 1e9 });
+    out.aVe = getPending().map(x => x.id);
+    out.bono = alDiaSemAuto(); let guardo = 0; const g = window.pryHistGuardar; window.pryHistGuardar = () => { guardo++; }; pryHistAuto(); window.pryHistGuardar = g; out.pry = guardo;
+    out.firme = !!(RECHAZOS_FIRMES.ajeno && RECHAZOS_FIRMES.permiso);
+    ADMIN_KEY_LOCAL = 'zzz'; try { localStorage.setItem('ME_CLAVE_ADMIN_V1', 'zzz'); localStorage.setItem('ME_RETIROS_V1', '[1]'); localStorage.setItem('me_cambio_foto', '{}'); } catch (e) {}
+    loginLimpiarCopia();
+    out.limpio = !ADMIN_KEY_LOCAL && !localStorage.getItem('ME_CLAVE_ADMIN_V1') && !localStorage.getItem('ME_RETIROS_V1') && !localStorage.getItem('me_cambio_foto') && !UNLOCKED;
+    out.colaQueda = getPendingTodo().length === 2;
+    setPending([]); sesGuardar({ t:'tB', u:'b@x', n:'Maria Flores', r:'v', vence:Date.now() + 1e9 }); setPending([]); sesGuardar(antes);
+    loginAbrir(); out.adm = !!document.querySelector('#login-ov .login-adm'); loginCerrar();
+    out.ap = /^[a-z0-9]{16}$/.test(loginAp());
+    return out;
+  });
+  chk('8a · la cola es de quien la armó: la siguiente persona no la ve ni la manda, y no se le borra', R9.bVe.length === 0 && R9.todo === 1 && R9.todo2.join() === 'x1,y1' && R9.aVe.join() === 'x1', R9);
+  chk('8b · una vendedora no saca la foto del bono ni la de la proyección', R9.bono === null && R9.pry === 0, R9);
+  chk('8c · «ajeno» y «permiso» son un «no» firme (no quedan de zombi en la cola)', R9.firme);
+  chk('8d · al cambiar de persona se borran la clave para forzar, la contraseña abierta y las copias (la cola queda)', R9.limpio && R9.colaQueda, R9);
+  chk('8e · la pantalla de entrada tiene «Soy Administración» y el aparato tiene su id para el freno', R9.adm && R9.ap, R9);
   chk('sin errores en la página', !errs.length, errs);
   console.log(`\n${PASS} bien · ${FAIL} mal`);
   await b.close(); process.exit(FAIL ? 1 : 0);

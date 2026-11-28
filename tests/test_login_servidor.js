@@ -104,7 +104,7 @@ chk('4d · la puerta GET queda cerrada', !r.ok && r.error === 'get_cerrado', r);
 r = J({ action:'list', ses:sI.ses });
 const p1 = r.pedidos.find(p => p.id === 'p1'), p2 = r.pedidos.find(p => p.id === 'p2');
 chk('5a · Isabel ve lo suyo entero', p1 && p1.cliente === 'CLIENTA UNO' && p1.celular && p1.productos[0].precio === 2500 && !p1.oculto, p1);
-chk('5b · de María: sin cliente, celular, dirección, NIT, pagos ni precios', p2 && p2.oculto === 1 && !p2.cliente && !p2.celular && !p2.direccion && !p2.nit && !p2.metodoPago && !p2.acuenta && !p2.observaciones && p2.productos[0].precio == null, p2);
+chk('5b · de María: sin cliente, celular, dirección, NIT, pagos ni notas; los MONTOS sí («solo números, sin clientes»: la proyección y el puesto)', p2 && p2.oculto === 1 && !p2.cliente && !p2.celular && !p2.direccion && !p2.nit && !p2.metodoPago && !p2.observaciones && p2.acuenta === 500 && p2.productos[0].precio === 2500, p2);
 chk('5c · …pero con día, turno, vendedora y productos (los cupos y el stock siguen andando)', p2 && p2.fecha === '2026-12-02' && p2.turno === 'AM' && p2.vendedor === 'María Flores' && p2.productos[0].codigo === 'CH1' && p2.productos[0].cant === 1, p2);
 chk('5d · la misma cantidad de filas y los mismos sellos (la cuenta de control no cambia)', r.pedidos.length === 3 && r.n === 3, { n:r.n, l:r.pedidos.length });
 chk('5e · dice quién es', r.yo && r.yo.n === 'Isabel Robledo' && r.yo.r === 'v', r.yo);
@@ -152,6 +152,107 @@ r = J({ action:'usuarios', op:'apagar', adminKey:'adminclave10' });
 const sinLogin = J({ action:'list' });
 chk('8e · apagar: todo como antes', r.ok && r.activo === 0 && sinLogin.ok && sinLogin.pedidos.length === 4 && sinLogin.pedidos.filter(p => !/^__/.test(p.id)).every(p => p.cliente), [r.ok, r.activo, sinLogin.ok, sinLogin.error]);
 chk('8f · ningún registro con contraseñas: «Rechazos» sin nada de esto', S.rechazos().length === 0 && !JSON.stringify(S.props).match(new RegExp(cI.clave + '|nuevaclave1')), JSON.stringify(S.rechazos()).slice(0,300));
+
+/* 9. La revisión de Fable (28/11) */
+{
+  const T = servidor(fs.readFileSync(GS, 'utf8'));
+  const Q = (o) => JSON.parse(T.post(JSON.stringify(o)));
+  T.props.ADMIN_KEY = 'adminclave10';
+  [ped('q1', 'Isabel Robledo', 'CLIENTA UNO'), ped('q2', 'María Flores', 'CLIENTE DOS'),
+   ped('q3', 'María Flores', 'MULTICENTER SRL', { direccion:'SALIÓ DE TIENDA · Carmelo', zona:'TIENDA', fecha:'', productos:[{ codigo:'CH1', desc:'COLCHON X', medida:'140x190', cant:1, precio:2500, avisa:'2026-12-09' }] }),
+   ped('kommo-77', '', 'LEAD SIN VENDEDORA')].forEach(x => T.guardar(x));
+  const A = (o) => Object.assign({ adminKey:'adminclave10' }, o);
+  const cI = Q(A({ action:'usuarios', op:'crear', u:'isa', n:'Isabel Robledo', r:'v' })), cAd = Q(A({ action:'usuarios', op:'crear', u:'jefe', n:'Administración', r:'t' }));
+  Q(A({ action:'usuarios', op:'activar' }));
+  const sI = Q({ action:'login', u:'isa', p:cI.clave, ap:'compuIsa' });
+  const sis = (id, obj) => ({ id, fecha:'', vendedor:'', cliente:'(sistema)', productos:[], observaciones:JSON.stringify(obj) });
+  let r;
+  r = Q({ action:'loQueSea', ses:sI.ses, pedido:Object.assign(T.fila('q2'), { cliente:'PISADO POR OTRA ACCION' }) });
+  chk('9a · GRAVE: una acción desconocida no se saltea el control (no pisa lo de María)', !r.ok && r.error === 'ajeno' && T.fila('q2').cliente === 'CLIENTE DOS', r);
+  r = Q({ action:'save', ses:sI.ses });
+  chk('9b · un guardado sin pedido: ajeno, sin romper nada', !r.ok && r.error === 'ajeno', r);
+  Q(A({ action:'save', pedido:sis('__avisos_conta__', { v:1, a:[{ id:'a1', pid:'q1', vend:'Isabel Robledo' }, { id:'a2', pid:'q2', vend:'María Flores', cli:'CLIENTE DOS' }] }) }));
+  Q(A({ action:'save', pedido:sis('__destinos__', { v:1, k:[JSON.stringify(['d', 'CLIENTA UNO', 'ISABEL ROBLEDO', 1, 'https://m/1', '', '', '', 'Isabel Robledo']), JSON.stringify(['d', 'CLIENTE DOS', 'MARIA FLORES', 1, 'https://m/2', '', '', '', 'María Flores'])] }) }));
+  Q(A({ action:'save', pedido:sis('__metas__', { v:1, m:{ '2026-12':{ heaven:[1, 2], vd:{ 'Isabel Robledo':[1, 2], 'María Flores':[3, 4] } } } }) }));
+  Q(A({ action:'save', pedido:sis('__cierre_comercial__', { v:1, m:{ '2026-11':{ c:1, vt:[{ v:'Isabel Robledo', g:'heaven', bs:9 }, { v:'María Flores', g:'heaven', bs:7 }], s:{ q1:[0, 9, 0], q2:[1, 7, 0] }, aj:{ q2:[1, 1, 0, '2026-10'] } } } }) }));
+  r = Q({ action:'list', ses:sI.ses });
+  const LI = r, de = (id) => JSON.parse(LI.pedidos.find(x => x.id === id).observaciones);
+  chk('9c · los avisos de Contabilidad: solo los suyos', de('__avisos_conta__').a.length === 1 && de('__avisos_conta__').a[0].id === 'a1', de('__avisos_conta__'));
+  chk('9d · los lugares guardados: solo los suyos', de('__destinos__').k.length === 1 && /CLIENTA UNO/.test(de('__destinos__').k[0]), de('__destinos__'));
+  chk('9e · las metas: la de la marca y solo la suya por vendedora', JSON.stringify(de('__metas__').m['2026-12'].vd) === '{"Isabel Robledo":[1,2]}' && de('__metas__').m['2026-12'].heaven, de('__metas__'));
+  const cc = de('__cierre_comercial__').m['2026-11'];
+  chk('9f · el cierre comercial: lo suyo, sin lo de María', cc.vt[0].v === 'Isabel Robledo' && cc.vt[1].v === '' && !cc.vt[1].bs && cc.s.q1 && !cc.s.q2 && !cc.aj.q2, cc);
+  const q3 = r.pedidos.find(x => x.id === 'q3');
+  chk('9g · ajeno: la clase del cliente (Multicenter), la venta de tienda y el «avisa» quedan; el nombre no', q3.oculto && q3.cliente === 'MULTICENTER' && /^SALIÓ DE TIENDA/.test(q3.direccion) && q3.zona === 'TIENDA' && q3.productos[0].avisa === '2026-12-09', q3);
+  r = Q({ action:'save', ses:sI.ses, pedido:sis('__mio', { v:1 }) });
+  chk('9g2 · una fila «__algo» inventada no la crea una vendedora', !r.ok && r.error === 'permiso' && !T.fila('__mio'), r);
+  /* Isabel marca su aviso con la lista que le llegó (sin el de María): el de María sigue */
+  const avMio = de('__avisos_conta__'); avMio.a[0].ok = 123; avMio.a[0].okPor = 'Isabel';
+  r = Q({ action:'save', ses:sI.ses, juntar:true, pedido:Object.assign(sis('__avisos_conta__', avMio), { rev:1 }) });
+  const avSrv = JSON.parse(T.fila('__avisos_conta__').observaciones);
+  chk('9h · marcar «corregido» con su lista NO borra el aviso de María', r.ok && avSrv.a.length === 2 && avSrv.a.find(a => a.id === 'a1').ok === 123 && !avSrv.a.find(a => a.id === 'a2').ok, [r.error, avSrv]);
+  chk('9i · y la respuesta le vuelve filtrada', r.pedido && JSON.parse(r.pedido.observaciones).a.length === 1, r.pedido && r.pedido.observaciones);
+  const dsMio = de('__destinos__'); dsMio.k = [JSON.stringify(['d', 'CLIENTA NUEVA', 'ISABEL ROBLEDO', 2, 'https://m/3', '', '', '', 'Isabel Robledo'])];
+  r = Q({ action:'save', ses:sI.ses, juntar:true, pedido:sis('__destinos__', dsMio) });
+  const dsSrv = JSON.parse(T.fila('__destinos__').observaciones).k;
+  chk('9j · guardar sus lugares no borra los de María', r.ok && dsSrv.length === 2 && dsSrv.some(k => /CLIENTE DOS/.test(k)) && dsSrv.some(k => /CLIENTA NUEVA/.test(k)) && !dsSrv.some(k => /CLIENTA UNO/.test(k)), [r.error, dsSrv]);
+  r = Q({ action:'save', ses:sI.ses, pedido:sis('__metas__', { v:1, m:{} }) });
+  const r2b = Q({ action:'save', ses:sI.ses, pedido:sis('__al_dia_sem__', { v:1, s:{} }) });
+  chk('9k · una vendedora no escribe metas ni la foto del bono', !r.ok && r.error === 'permiso' && !r2b.ok && r2b.error === 'permiso' && JSON.parse(T.fila('__metas__').observaciones).m['2026-12'], [r, r2b]);
+  r = Q({ action:'delete', ses:sI.ses, id:'__destinos__' });
+  chk('9l · ni borra una fila del sistema', !r.ok && r.error === 'permiso' && !!T.fila('__destinos__'), r);
+  r = Q({ action:'save', ses:sI.ses, pedido:{ id:'__ret_9', fecha:'2026-12-01', vendedor:'Luis Pierre', chofer:'Isabel Robledo', cliente:'(retiro)', productos:[], acuenta:500 } });
+  chk('9m · un retiro que entregó un chofer y retiró ella: lo puede cargar', r.ok, r.error);
+  r = Q({ action:'save', ses:sI.ses, pedido:Object.assign(T.fila('kommo-77'), { vendedor:'Isabel Robledo', cliente:'LEAD TOMADO' }) });
+  chk('9n · un borrador de Kommo sin vendedora: lo completa', r.ok && T.fila('kommo-77').vendedor === 'Isabel Robledo', r.error);
+  r = Q({ action:'kommoCierre', ses:sI.ses, id:'q2' });
+  chk('9o · no cierra en Kommo la venta de otra', !r.ok && r.error === 'ajeno', r);
+  Q(A({ action:'save', pedido:Object.assign(T.fila('q2'), { fotos:['FOTOdeMARIA1234567'] }) }));
+  r = Q({ action:'borrarFoto', ses:sI.ses, fotoId:'FOTOdeMARIA1234567' });
+  chk('9p · no borra una foto de un pedido de María', !r.ok && r.error === 'ajeno', r);
+  r = Q({ action:'mallLeer', ses:sI.ses });
+  chk('9q · el mostrador del mall sí lo lee', r.error !== 'permiso', r.error);
+  /* Las sesiones con tope: una por usuario y aparato */
+  const s2 = Q({ action:'login', u:'isa', p:cI.clave, ap:'compuIsa' });
+  const nIsa = Object.values(JSON.parse(T.props.SESIONES)).filter(x => x[0] === 'isa').length;
+  chk('9r · volver a entrar desde el mismo aparato reemplaza la sesión de antes', s2.ok && nIsa === 1 && !Q({ action:'list', ses:sI.ses }).ok, nIsa);
+  for (let i = 0; i < 80; i++) Q({ action:'login', u:'jefe', p:cAd.clave, ap:'ap' + i });
+  const SS = T.props.SESIONES;
+  chk('9s · nunca más de 60 sesiones ni de 8.000 letras (la propiedad aguanta 9 KB)', Object.keys(JSON.parse(SS)).length <= 60 && SS.length <= 8000 && Q({ action:'list', ses:s2.ses }).ok, [Object.keys(JSON.parse(SS)).length, SS.length]);
+  /* Cambiar la contraseña cierra las otras sesiones de esa cuenta */
+  const s3 = Q({ action:'login', u:'isa', p:cI.clave, ap:'celuIsa' });
+  r = Q({ action:'miClave', ses:s3.ses, actual:cI.clave, nueva:'otraclave99', ap:'celuIsa' });
+  chk('9t · cambiar la contraseña cierra las otras sesiones (esta sigue)', r.ok && Q({ action:'list', ses:s3.ses }).ok && !Q({ action:'list', ses:s2.ses }).ok, r.error);
+  /* El freno por aparato: el de otra persona no la deja afuera */
+  for (let i = 0; i < 6; i++) Q({ action:'login', u:'isa', p:'mala' + i, ap:'intruso' });
+  r = Q({ action:'login', u:'isa', p:'otraclave99', ap:'intruso' });
+  const rB = Q({ action:'login', u:'isa', p:'otraclave99', ap:'celuIsa' });
+  chk('9u · 5 malas frenan ESE aparato; el suyo entra igual', !r.ok && r.error === 'login_frenado' && rB.ok, [r.error, rB.error]);
+  for (let i = 0; i < 25; i++) Q({ action:'login', u:'isa', p:'mala' + i, ap:'x' + i });
+  r = Q({ action:'login', u:'isa', p:'otraclave99', ap:'nuevo' });
+  const rC = Q({ action:'login', u:'isa', p:'otraclave99', ap:'celuIsa' });
+  chk('9v · con 25 malas en total: uno nuevo espera, el que ya entró antes sí entra', !r.ok && r.error === 'login_frenado' && rC.ok, [r.error, rC.error]);
+  r = Q({ action:'miClave', ses:rC.ses, actual:'mala', nueva:'xxxxxxx1', ap:'intruso' });
+  chk('9w · cambiar la contraseña respeta el freno', !r.ok && r.error === 'login_frenado', r);
+  /* El último que ve todo no se borra con el login prendido */
+  r = Q(A({ action:'usuarios', op:'borrar', u:'jefe' }));
+  const rR = Q(A({ action:'usuarios', op:'crear', u:'jefe', n:'Jefe', r:'v', reemplazar:true }));
+  chk('9x · no se borra (ni se vuelve vendedora) el último usuario que ve todo', !r.ok && r.error === 'ultimo_admin' && !rR.ok && rR.error === 'ultimo_admin', [r, rR]);
+  /* Si Google no deja leer las Propiedades: no pasa y no borra a nadie */
+  const antesU = T.props.USUARIOS, antesS = T.props.SESIONES;
+  const pp = T.ctx.PropertiesService.getScriptProperties;
+  T.ctx.PropertiesService.getScriptProperties = () => ({ getProperty: () => { throw new Error('cupo'); }, getProperties: () => { throw new Error('cupo'); }, setProperty: () => {} });
+  r = Q({ action:'list', ses:rC.ses });
+  const rL = Q({ action:'login', u:'isa', p:'otraclave99', ap:'celuIsa' });
+  T.ctx.PropertiesService.getScriptProperties = pp;
+  chk('9y · sin poder leer las Propiedades: busy (ni pasa ni deja entrar)', !r.ok && r.error === 'busy' && !rL.ok && rL.error === 'busy', [r, rL]);
+  const ro = { getProperty: (k) => { if (k === 'SESIONES' || k === 'USUARIOS') throw new Error('cupo'); return T.props[k] != null ? T.props[k] : null; }, getProperties: () => Object.assign({}, T.props), setProperty: (k, v) => { T.props[k] = v; } };
+  T.ctx.PropertiesService.getScriptProperties = () => ro;
+  r = Q({ action:'login', u:'isa', p:'otraclave99', ap:'celuIsa' });
+  const rS = Q({ action:'salir', ses:rC.ses });
+  T.ctx.PropertiesService.getScriptProperties = pp;
+  chk('9z · y una lectura que falla adentro del candado no borra usuarios ni sesiones', !r.ok && r.error === 'busy' && !rS.ok && T.props.USUARIOS === antesU && Object.keys(JSON.parse(T.props.SESIONES)).length > 0, [r.error, rS.error]);
+}
 
 console.log(`\n${PASS} bien · ${FAIL} mal`);
 process.exit(FAIL ? 1 : 0);

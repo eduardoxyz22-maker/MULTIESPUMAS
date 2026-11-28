@@ -2068,6 +2068,7 @@ body.desh-on .av-pila{ bottom:calc(92px + env(safe-area-inset-bottom,0px)); }
 .login-h{ display:flex; gap:12px; align-items:center; margin-bottom:6px; } .login-h b{ font-size:1.2rem; display:block; } .login-h small{ color:#4d6b6a; }
 .login-l{ font-weight:600; font-size:.85rem; margin-top:4px; } .login-c input{ font:inherit; font-size:1rem; padding:11px 12px; border:1.5px solid #99DDD9; border-radius:11px; min-height:44px; width:100%; box-sizing:border-box; }
 .login-pr{ display:flex; gap:8px; align-items:center; } .login-pr input{ flex:1; min-width:0; }
+.login-adm{ background:none; border:0; color:#0f766e; font-weight:700; font-size:.84rem; text-decoration:underline; cursor:pointer; padding:6px 0; min-height:34px; }
 .login-msg{ background:#fdecec; color:#8a1c1c; border-radius:10px; padding:9px 11px; font-size:.88rem; } .login-b{ min-height:46px; font-size:1rem; margin-top:6px; } .login-pie{ color:#5b6b7d; text-align:center; }
 .usu-t{ width:100%; border-collapse:collapse; font-size:.86rem; } .usu-t td,.usu-t th{ padding:7px 6px; border-bottom:1px solid #e3eeee; text-align:left; vertical-align:top; }
 .usu-form{ display:grid; gap:8px; } .usu-form label{ display:flex; flex-direction:column; gap:3px; font-weight:600; font-size:.85rem; } .usu-form input,.usu-form select{ font:inherit; padding:9px 10px; border:1.5px solid #99DDD9; border-radius:10px; }
@@ -10981,8 +10982,25 @@ function saveMirror(o){
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
 function upsert(rec){ for(var i=0;i<STATE.length;i++){ if(STATE[i].id===rec.id){ STATE[i]=rec; return; } } STATE.unshift(rec); }
 
-function getPending(){ try{ return JSON.parse(localStorage.getItem(LS_PEND))||[]; }catch(e){ return []; } }
-function setPending(a){ try{ lsPoner(LS_PEND, JSON.stringify(a)); }catch(e){} }   // 🛟 (§4oa) sin lugar, primero se va la copia de la planilla
+/* 👤 (28/11, revisión de Fable) LA COLA ES DE QUIEN LA ARMÓ. En una compu compartida, lo que una persona dejó sin enviar no lo ve ni lo
+   manda la siguiente (el servidor se lo rechazaría como «ajeno» y quedaría de zombi): `LS_PEND_DE` dice de qué usuario es cada id. Lo de
+   antes del login (sin dueño) es de quien esté. `getPendingTodo` = la cola entera (para no borrar lo de otro al guardar). */
+var LS_PEND_DE='me_pending_de_v1';
+function pendYo(){ return (typeof SES!=='undefined' && SES && SES.u) ? String(SES.u) : ''; }
+function pendDuenos(){ try{ var o=JSON.parse(localStorage.getItem(LS_PEND_DE)||'{}'); return (o && typeof o==='object') ? o : {}; }catch(e){ return {}; } }
+function pendEsMio(x, D){ var d=D[String(x && x.id)]; return !d || d===pendYo(); }
+function getPendingTodo(){ try{ return JSON.parse(localStorage.getItem(LS_PEND))||[]; }catch(e){ return []; } }
+function getPending(){ var D=pendDuenos(); return getPendingTodo().filter(function(x){ return pendEsMio(x, D); }); }
+function setPending(a){
+  try{
+    var D=pendDuenos(), yo=pendYo(), otros=getPendingTodo().filter(function(x){ return !pendEsMio(x, D); }), todo=otros.concat(a||[]), quedan={}, D2={};
+    (a||[]).forEach(function(x){ if(x && x.id!=null && yo) D[String(x.id)]=yo; });
+    todo.forEach(function(x){ if(x && x.id!=null) quedan[String(x.id)]=1; });
+    Object.keys(D).forEach(function(k){ if(quedan[k]) D2[k]=D[k]; });
+    lsPoner(LS_PEND, JSON.stringify(todo));
+    try{ localStorage.setItem(LS_PEND_DE, JSON.stringify(D2)); }catch(e){}
+  }catch(e){}
+}   // 🛟 (§4oa) sin lugar, primero se va la copia de la planilla
 /* ⚠️ Un «no» FIRME del servidor (conflicto, día cerrado, cupos, OC repetida) no se encola:
    reintentarlo es exactamente pisar lo que el servidor protegió, y además quedaría de
    zombi para siempre. `apiSave` lo anota en NO_ENCOLAR y acá se respeta (§4ce). */
@@ -11606,7 +11624,7 @@ var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
 /* 🗑 `borrado` (28/09, .gs 2026-09-28-a): se guardó con sello una fila que ya no está — la borraron desde otro lado. Es un «no»
    definitivo: reintentarlo no la trae de vuelta, y volver a crearla es un pedido nuevo, a propósito. */
-var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1, feriado:1, falta_cliente:1};   // 🧾 (16/11) `falta_cliente`: .gs 2026-11-16-a   // (30/09) `feriado`: el portero del .gs 2026-09-30-a
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1, feriado:1, falta_cliente:1, ajeno:1, permiso:1};   // 👤 (28/11) `ajeno`/`permiso`: el login (.gs 2026-11-27-a)   // 🧾 (16/11) `falta_cliente`: .gs 2026-11-16-a   // (30/09) `feriado`: el portero del .gs 2026-09-30-a
 /* «El servidor estaba ocupado» NO es un guardado perdido: al no estar en `RECHAZOS_FIRMES`,
    el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
    anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
@@ -11629,6 +11647,7 @@ function apiPost(payload){
   if(window.PRACTICA && !practicaEsLectura(payload)) return practicaResponder(payload);
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
   if(SES && SES.t && payload.action!=='login') payload.ses=SES.t;   // 👤 (27/11) la sesión de quien entró
+  if(payload.action==='login' || payload.action==='miClave') payload.ap=loginAp();   // 👤 (28/11) el freno es por aparato
   /* 🫀 Quién guarda y cuánto tiene sin enviar (§4el): el servidor lo anota para que
      Administración vea desde SU pantalla qué dispositivo tiene una cola trabada y de quién es. */
   try {
@@ -12863,10 +12882,17 @@ try{ SES=JSON.parse(localStorage.getItem(SES_LS)||'null'); if(!SES || !SES.t || 
 function loginActivoPag(){ try{ return !(navigator.webdriver && !window.LOGIN_PRUEBA); }catch(e){ return true; } }
 function sesGuardar(s){ SES=s||null; try{ if(SES) localStorage.setItem(SES_LS, JSON.stringify(SES)); else localStorage.removeItem(SES_LS); }catch(e){} }
 function sesEsVend(){ return !!(SES && SES.r==='v'); }
+/* El aparato, para el freno del login (5 contraseñas malas frenan ESTE aparato, no la cuenta de la persona). */
+function loginAp(){ var id=''; try{ id=localStorage.getItem('me_login_ap')||''; if(!/^[a-z0-9]{16}$/.test(id)){ id=(Math.random().toString(36).slice(2)+Math.random().toString(36).slice(2)+'0000000000000000').slice(0,16); localStorage.setItem('me_login_ap', id); } }catch(e){} return id; }
+/* 🛡️ (28/11, revisión de Fable) Con el login prendido y sin nadie que vea todo, Administración entra a «👥 Usuarios» desde la pantalla
+   de entrada con la 🛡️ Clave para forzar (el servidor la acepta sin sesión). Mientras esa ventana está abierta no se vuelve a pedir el login. */
+var LOGIN_ADMIN_HASTA=0;
+function loginAdmin(){ LOGIN_ADMIN_HASTA=Date.now()+15*60000; loginCerrar(); usuAbrir(); }
 /* El servidor dice `login`: esta llamada no tiene sesión (o venció). */
 function loginPedir(){
   if(SES){ sesGuardar(null); }
   if(LOGIN_PIDE || !loginActivoPag()) return;
+  if(Date.now()<LOGIN_ADMIN_HASTA){ try{ var mo=document.getElementById('modal'); if(mo && mo.classList.contains('on')) return; }catch(e){} }
   LOGIN_PIDE=true; loginAbrir();
 }
 function loginAbrir(msg){
@@ -12885,6 +12911,7 @@ function loginAbrir(msg){
     '<div id="login-msg" class="login-msg"'+(msg?'':' hidden')+'>'+esc(msg||'')+'</div>'+
     '<button type="submit" id="login-btn" class="btn btn-primary login-b">Entrar</button>'+
     '<small class="login-pie">¿No tenés usuario o te olvidaste la contraseña? Pedíselo a Administración.</small>'+
+    '<button type="button" class="login-adm" onclick="loginAdmin()">🛡️ Soy Administración (con la Clave para forzar)</button>'+
   '</form>';
   box.hidden=false;
   setTimeout(function(){ try{ var u=document.getElementById('login-u'), pw=document.getElementById('login-p'); ((u && u.value) ? pw : u).focus(); }catch(e){} }, 60);
@@ -12925,6 +12952,13 @@ function loginLimpiarCopia(){
   try{ STATE=[]; LISTA_BASE=null; localStorage.removeItem(LS_KEY); }catch(e){}
   try{ saveMirror(); }catch(e){}
   try{ setVendedorMem(''); quienRol(''); quienSesion(''); }catch(e){}
+  /* 👤 (28/11, revisión de Fable) También lo de Administración y las copias de lo que veía la persona anterior: la clave para forzar, la
+     contraseña abierta, los retiros, los borradores de Kommo y las fotos de «qué cambió» / «visto». La cola NO: es de su dueño (getPending). */
+  try{ ADMIN_KEY_LOCAL=''; localStorage.removeItem(LS_ADMIN_KEY); }catch(e){}
+  try{ if(UNLOCKED && typeof admDiaCerrar==='function') admDiaCerrar(true); UNLOCKED=false; }catch(e){}
+  try{ RETIROS=[]; BORRADORES=[]; }catch(e){}
+  ['ME_RETIROS_V1','ME_BORRADORES_V1','me_cambio_foto','me_cambio_hoy','me_cambio_visto','me_ficha_vista','me_vistos','me_fcv_visto','me_ubic_pedida','me_mis_vendedor']
+    .forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
 }
 /* Quién es: una vendedora (su nombre de VENDEDORES) o, para quien ve todo, el rol que dice su nombre. */
 function loginIdentidad(){
@@ -12949,8 +12983,10 @@ function loginAplicar(){
   var ub=document.getElementById('usu-btn'); if(ub) ub.hidden=!!v;
 }
 function loginSalir(){
-  var t=SES && SES.t;
-  var r=preguntaYa('¿Salir del panel en esta compu?', { icono:'🚪', titulo:'¿Salir del panel?', lineas:['Para volver a entrar vas a necesitar tu usuario y tu contraseña.'], no:'Cancelar', si:'🚪 Salir' }, loginSalir);
+  var t=SES && SES.t, nCola=0; try{ nCola=getPending().length; }catch(e){}
+  var ls=['Para volver a entrar vas a necesitar tu usuario y tu contraseña.'];
+  if(nCola) ls.unshift('⚠️ Quedan '+nCola+' cambio'+(nCola===1?'':'s')+' tuyo'+(nCola===1?'':'s')+' sin enviar a la planilla: se mandan cuando vuelvas a entrar con tu usuario en esta compu (nadie más los manda).');
+  var r=preguntaYa('¿Salir del panel en esta compu?', { icono:'🚪', titulo:'¿Salir del panel?', aviso:!!nCola, lineas:ls, no:'Cancelar', si:'🚪 Salir' }, loginSalir);
   if(r!==true) return;
   if(t) apiPost({ action:'salir' }).then(function(){}, function(){});
   sesGuardar(null); loginLimpiarCopia(); loginAplicar();
@@ -12989,7 +13025,8 @@ function usuPedir(o){
       var e=j&&j.error;
       if(e==='admin'){ toast(j.motivo==='sin_clave' ? 'El servidor todavía no tiene la 🛡️ Clave para forzar puesta.' : 'La 🛡️ Clave para forzar de esta compu no es la del servidor.','err',9000); return; }
       toast({ existe:'Ese usuario ya existe.', no_existe:'Ese usuario no existe.', usuario:'El usuario no puede tener espacios ni comillas.', nombre:'Falta el nombre.',
-        sin_admin:'Primero creá un usuario que vea todo (Administración): si no, nadie podría entrar a manejar esto.' }[e] || ('No se pudo ('+(e||'sin respuesta')+'). ¿El servidor ya es la versión 2026-11-27-a?'),'err',9000);
+        sin_admin:'Primero creá un usuario que vea todo (Administración): si no, nadie podría entrar a manejar esto.',
+        ultimo_admin:'Es el último usuario que ve todo y el login está prendido: creá otro de Administración antes (o apagá el login).' }[e] || ('No se pudo ('+(e||'sin respuesta')+'). ¿El servidor ya es la versión 2026-11-27-a?'),'err',9000);
       return;
     }
     USU_V.lista=j.usuarios||[]; USU_V.activo=j.activo?1:0; USU_V.nueva=(j.clave ? { u:j.u, c:j.clave } : null);
@@ -20950,6 +20987,7 @@ function pryHistQuizas(R){
 }
 /* Sola, una vez por día desde las 17:00 (con el respiro de este aparato), si hoy todavía no hay una foto de la tarde. */
 function pryHistAuto(){
+  if(sesEsVend()) return;   // 👤 (28/11) con lo ajeno tapado la proyección del equipo saldría mal: la guarda otro aparato
   if(!pryHistActiva() || PRY_HIST_ENV || !CONNECTED || !ULTIMO_REFRESCO || Date.now()-ULTIMO_REFRESCO>5*60000) return;
   var hb=horaBolivia(), hoy=diaNegocio();
   if(hb.getHours()*60+hb.getMinutes() < PRY_HIST_HORA*60+PRY_HIST_RESPIRO || hoy.slice(0,7)<PRY_PRIMER_MES) return;
@@ -35536,7 +35574,7 @@ function leerCierresDeLista(lista, esDelServidor){
     else if(p && String(p.id)===ARQUEO_ID) arq=p;
     else if(p && String(p.id)===CARGA_ID) car=p;
     else if(esFilaStock(p)) stk=p;           // 📦 el conteo del depósito (§4cn)
-    else if(esFilaRetiro(p)) rets.push(p);
+    else if(esFilaRetiro(p)){ if(!p.oculto) rets.push(p); }   // 👤 (28/11) un retiro de otra persona llega tapado (solo id y sello): no es un retiro de verdad
     else if(esBorrador(p)){
       /* 📥 Un `list` que salió antes de que se escribiera la conversión trae la fila todavía
          como borrador. Si acá ya es un pedido con guardado reciente, manda la copia local
@@ -72715,6 +72753,7 @@ function histStockFoto(hoy){
 }
 function histStockAlDia(){
   try{
+    if(sesEsVend()) return false;   // 👤 (28/11) el historial del stock lo manda logística, no una vendedora
     if(HIST_EN_VUELO || !CONNECTED || !STOCK_CARGADO || !histServidorListo()) return false;
     var hoy=todayStr(), d=histStockFoto(hoy); if(!Object.keys(d).length) return false;
     var firma=hoy+'|'+histHuella(JSON.stringify(d)), ya='';
@@ -85343,6 +85382,7 @@ function alDiaSemGuardar(lun, dia){
 }
 /* Sola, con el reloj de siempre (`AUTO_TIMER`): el día de la foto desde las 08:00, si todavía no está la de este lunes. */
 function alDiaSemAuto(){
+  if(sesEsVend()) return null;   // 👤 (28/11) una vendedora ve lo ajeno tapado: la foto del bono la saca otro aparato (y el servidor no se la deja guardar)
   if(!alDiaBonoVa() || AL_DIA_SEM_ENV || !CONNECTED || !ULTIMO_REFRESCO || Date.now()-ULTIMO_REFRESCO>5*60000) return null;
   var hoy=diaNegocio(); if(hoy<AL_DIA_BONO_DESDE) return null;
   var lun=alDiaSemLunes(hoy); if(!lun || alDiaSemDiaFoto(lun)!==hoy || horaBolivia().getHours()<AL_DIA_SEM_HORA) return null;
